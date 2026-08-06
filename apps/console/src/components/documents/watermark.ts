@@ -20,46 +20,22 @@
 
 import { z } from "zod";
 
-export const maxWatermarkTextLength = 64;
-
-const textEncoder = new TextEncoder();
+const goWhitespacePattern = /^\p{White_Space}*$/u;
 
 export const exportSchema = z.object({
   withWatermark: z.boolean(),
   watermarkText: z.string().optional(),
   withSignatures: z.boolean(),
 }).refine(
-  data => !data.withWatermark || !!data.watermarkText?.trim(),
+  data => !data.withWatermark || !isWatermarkTextEmpty(data.watermarkText),
   {
     message: "Please enter watermark text",
-    path: ["watermarkText"],
-  },
-).refine(
-  data => !data.withWatermark
-    || getWatermarkTextLength(data.watermarkText ?? "") <= maxWatermarkTextLength,
-  {
-    message: `Watermark text must not exceed ${maxWatermarkTextLength} bytes`,
     path: ["watermarkText"],
   },
 );
 
 export type ExportFormData = z.infer<typeof exportSchema>;
 
-export function getWatermarkTextLength(watermarkText: string): number {
-  return textEncoder.encode(watermarkText).length;
-}
-
-export function truncateWatermarkText(watermarkText: string): string {
-  let truncated = "";
-
-  for (const character of watermarkText) {
-    const candidate = truncated + character;
-    if (getWatermarkTextLength(candidate) > maxWatermarkTextLength) {
-      break;
-    }
-
-    truncated = candidate;
-  }
-
-  return truncated;
+function isWatermarkTextEmpty(watermarkText: string | undefined): boolean {
+  return !watermarkText || goWhitespacePattern.test(watermarkText);
 }

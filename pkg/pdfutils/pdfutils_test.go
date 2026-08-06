@@ -45,8 +45,9 @@ func TestAddConfidentialWithTimestamp_WatermarkTextEmpty(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]string{
-		"empty":      "",
-		"whitespace": " \t\n",
+		"empty":              "",
+		"ASCII whitespace":   " \t\n",
+		"Unicode whitespace": "\u0085",
 	}
 
 	for name, watermarkText := range testCases {

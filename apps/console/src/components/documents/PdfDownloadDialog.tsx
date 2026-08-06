@@ -36,9 +36,6 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import {
   type ExportFormData,
   exportSchema,
-  getWatermarkTextLength,
-  maxWatermarkTextLength,
-  truncateWatermarkText,
 } from "./watermark";
 
 type Props = {
@@ -62,13 +59,12 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
       = useFormWithSchema(exportSchema, {
         defaultValues: {
           withWatermark: false,
-          watermarkText: truncateWatermarkText(defaultEmail),
+          watermarkText: defaultEmail,
           withSignatures: true,
         },
       });
 
     const watchWatermark = watch("withWatermark");
-    const watchWatermarkText = watch("watermarkText") ?? "";
     const watchSignatures = watch("withSignatures");
 
     useImperativeHandle(ref, () => ({
@@ -79,7 +75,9 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     const onSubmit = (data: ExportFormData) => {
       const options = {
         ...data,
-        watermarkText: data.withWatermark ? data.watermarkText : undefined,
+        watermarkText: data.withWatermark && data.watermarkText !== defaultEmail
+          ? data.watermarkText
+          : undefined,
       };
       onDownload(options);
       dialogRef.current?.close();
@@ -134,10 +132,6 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                       type="text"
                       placeholder={t("pdfDownloadDialog.watermark.textPlaceholder")}
                       error={formState.errors.watermarkText?.message}
-                      help={t("pdfDownloadDialog.watermark.byteCount", {
-                        count: getWatermarkTextLength(watchWatermarkText),
-                        max: maxWatermarkTextLength,
-                      })}
                       autoComplete="off"
                       required
                     />
