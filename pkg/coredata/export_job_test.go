@@ -62,6 +62,7 @@ func TestDocumentExportArguments_UnmarshalLegacyWatermarkEmail(t *testing.T) {
 		"watermark_email": "recipient@example.com",
 		"with_signatures": false
 	}`)
+
 	var arguments coredata.DocumentExportArguments
 
 	err := json.Unmarshal(data, &arguments)
