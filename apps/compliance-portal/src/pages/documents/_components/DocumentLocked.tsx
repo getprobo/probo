@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { LockSimpleIcon } from "@phosphor-icons/react";
+import { ClockIcon, FileTextIcon, LockSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { useTranslation } from "react-i18next";
 
 import { EmptyState } from "#/components/EmptyState/EmptyState";
@@ -30,11 +31,59 @@ interface DocumentLockedProps {
   onGetAccess: () => void;
   // Whether the access request is in flight.
   isRequesting: boolean;
+  // Whether an access request is already pending for this document.
+  requested: boolean;
+  // Localized /nda?continue=… href when the visitor still needs to sign the
+  // portal NDA; null otherwise.
+  ndaHref: string | null;
 }
 
-// Shown when the viewer resolves a document the visitor may not access, with a
-// Get Access CTA that requests access (prompting sign-in first when needed).
-export function DocumentLocked({ onGetAccess, isRequesting }: DocumentLockedProps) {
+function LockedAction({
+  onGetAccess,
+  isRequesting,
+  requested,
+  ndaHref,
+}: DocumentLockedProps) {
+  const { t } = useTranslation("documents");
+  const { t: tRoot } = useTranslation();
+
+  if (requested) {
+    return (
+      <Button color="neutral" disabled iconStart={<ClockIcon />}>
+        {t("actions.requested")}
+      </Button>
+    );
+  }
+
+  if (ndaHref != null) {
+    return (
+      <ButtonLink
+        to={ndaHref}
+        color="neutral"
+        highContrast
+        iconStart={<FileTextIcon />}
+      >
+        {tRoot("nda.unsignedBanner.sign")}
+      </ButtonLink>
+    );
+  }
+
+  return (
+    <Button
+      color="neutral"
+      highContrast
+      loading={isRequesting}
+      iconStart={<LockSimpleIcon />}
+      onClick={onGetAccess}
+    >
+      {t("actions.getAccess")}
+    </Button>
+  );
+}
+
+// Shown when the viewer resolves a document the visitor may not access. CTA
+// priority: Access requested → Sign NDA → Get Access.
+export function DocumentLocked(props: DocumentLockedProps) {
   const { t } = useTranslation("documents");
 
   return (
@@ -43,17 +92,7 @@ export function DocumentLocked({ onGetAccess, isRequesting }: DocumentLockedProp
         icon={<LockSimpleIcon />}
         title={t("viewer.locked.title")}
         description={t("viewer.locked.description")}
-        action={(
-          <Button
-            color="neutral"
-            highContrast
-            loading={isRequesting}
-            iconStart={<LockSimpleIcon />}
-            onClick={onGetAccess}
-          >
-            {t("actions.getAccess")}
-          </Button>
-        )}
+        action={<LockedAction {...props} />}
       />
     </div>
   );
