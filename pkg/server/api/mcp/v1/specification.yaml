@@ -6884,6 +6884,9 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentStatus"
               description: Document statuses
+            published:
+              type: boolean
+              description: Filter by whether a document has a published version
 
     ListDocumentsOutput:
       type: object

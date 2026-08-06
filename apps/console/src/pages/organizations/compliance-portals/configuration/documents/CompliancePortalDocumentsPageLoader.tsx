@@ -24,10 +24,12 @@ import { useParams } from "react-router";
 
 import type { CompliancePortalDocumentsPageQuery } from "#/__generated__/core/CompliancePortalDocumentsPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import CompliancePortalDocumentsPage, { compliancePortalDocumentsPageQuery } from "./CompliancePortalDocumentsPage";
+import { CompliancePortalDocumentsPage, compliancePortalDocumentsPageQuery } from "./CompliancePortalDocumentsPage";
 
 export default function CompliancePortalDocumentsPageLoader() {
+  const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const [queryRef, loadQuery] = useQueryLoader<CompliancePortalDocumentsPageQuery>(
     compliancePortalDocumentsPageQuery,
@@ -35,9 +37,9 @@ export default function CompliancePortalDocumentsPageLoader() {
 
   useEffect(() => {
     if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
+      loadQuery({ compliancePortalId, organizationId });
     }
-  }, [loadQuery, compliancePortalId]);
+  }, [loadQuery, compliancePortalId, organizationId]);
 
   if (!queryRef) {
     return <LinkCardSkeleton />;

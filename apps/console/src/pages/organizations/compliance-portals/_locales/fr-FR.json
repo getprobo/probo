@@ -385,28 +385,18 @@
     "description": "Gérez les politiques, procédures et documents de conformité"
   },
   "documentList": {
-    "addDocument": "Ajouter un document",
     "columns": {
+      "displayed": "Affiché",
       "name": "Nom",
       "type": "Type",
       "alias": "Alias",
       "visibility": "Visibilité"
     },
-    "empty": "Aucun document sur ce portail pour le moment",
-    "addDialog": {
-      "title": "Ajouter un document au portail",
-      "documentLabel": "Document",
-      "visibilityLabel": "Visibilité",
-      "submit": "Ajouter",
-      "cancel": "Annuler",
-      "loading": "Chargement des documents…",
-      "success": "Document ajouté au portail.",
-      "error": "Échec de l’ajout du document au portail"
-    }
+    "empty": "Aucun document actif et publié disponible"
   },
   "documentListItem": {
     "messages": {
-      "visibilityUpdated": "Visibilité du document mise à jour avec succès.",
+      "visibilityUpdated": "Paramètres du document sur le portail mis à jour avec succès.",
       "removed": "Document retiré du portail."
     },
     "errors": {
@@ -414,7 +404,7 @@
       "remove": "Échec du retrait du document du portail"
     },
     "actions": {
-      "remove": "Retirer du portail"
+      "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
     }
   },
   "domainPage": {

@@ -22,15 +22,26 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePortalDocumentsPageQuery } from "#/__generated__/core/CompliancePortalDocumentsPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { CompliancePortalDocumentList } from "./_components/CompliancePortalDocumentList";
 
 export const compliancePortalDocumentsPageQuery = graphql`
-  query CompliancePortalDocumentsPageQuery($compliancePortalId: ID!) {
+  query CompliancePortalDocumentsPageQuery(
+    $organizationId: ID!
+    $compliancePortalId: ID!
+  ) {
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        ...CompliancePortalDocumentList_organization
+          @arguments(compliancePortalId: $compliancePortalId)
+      }
+    }
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
-        ...CompliancePortalDocumentList_compliancePortalFragment
+        ...CompliancePortalDocumentList_compliancePortal
       }
     }
   }
@@ -40,15 +51,18 @@ interface CompliancePortalDocumentsPageProps {
   queryRef: PreloadedQuery<CompliancePortalDocumentsPageQuery>;
 }
 
-export default function CompliancePortalDocumentsPage({ queryRef }: CompliancePortalDocumentsPageProps) {
+export function CompliancePortalDocumentsPage({ queryRef }: CompliancePortalDocumentsPageProps) {
   const { t } = useTranslation("organizations/compliance-portals");
 
   const data = usePreloadedQuery<CompliancePortalDocumentsPageQuery>(
     compliancePortalDocumentsPageQuery,
     queryRef,
   );
-  if (data.compliancePortal.__typename !== "CompliancePortal") {
-    throw new Error("invalid type for node");
+  if (data.organization?.__typename !== "Organization") {
+    throw new NotFoundError("Organization not found");
+  }
+  if (data.compliancePortal?.__typename !== "CompliancePortal") {
+    throw new NotFoundError("Compliance portal not found");
   }
 
   return (
@@ -64,7 +78,10 @@ export default function CompliancePortalDocumentsPage({ queryRef }: CompliancePo
         </div>
       </div>
 
-      <CompliancePortalDocumentList compliancePortalRef={data.compliancePortal} />
+      <CompliancePortalDocumentList
+        organizationKey={data.organization}
+        compliancePortalKey={data.compliancePortal}
+      />
     </div>
   );
 }

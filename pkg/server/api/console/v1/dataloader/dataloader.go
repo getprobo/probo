@@ -28,6 +28,7 @@ import (
 	"net/http"
 
 	"github.com/vikstrous/dataloadgen"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -57,6 +58,12 @@ type (
 		Scope *coredata.Scope
 	}
 
+	CompliancePortalDocumentKey struct {
+		Scope              *coredata.Scope
+		CompliancePortalID gid.GID
+		DocumentID         gid.GID
+	}
+
 	Loaders struct {
 		Organization               *dataloadgen.Loader[gid.GID, *coredata.Organization]
 		Framework                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
@@ -73,14 +80,16 @@ type (
 		CommonTrackerPattern       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
 		CommonThirdParty           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
 		ThirdPartyAdministratorIDs *dataloadgen.Loader[gid.GID, []gid.GID]
+		CompliancePortalDocument   *dataloadgen.Loader[CompliancePortalDocumentKey, *coredata.CompliancePortalDocument]
 		Authorize                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 	}
 
 	batchFetcher struct {
-		probo        *probo.Service
-		iam          *iam.Service
-		cookieBanner *cookiebanner.Service
-		thirdParty   *thirdparty.Service
+		probo            *probo.Service
+		iam              *iam.Service
+		cookieBanner     *cookiebanner.Service
+		thirdParty       *thirdparty.Service
+		compliancePortal *management.Service
 	}
 )
 
@@ -90,15 +99,22 @@ func FromContext(ctx context.Context) *Loaders {
 	return ctx.Value(loadersKey).(*Loaders)
 }
 
-func NewMiddleware(proboSvc *probo.Service, iamSvc *iam.Service, cookieBannerSvc *cookiebanner.Service, thirdPartySvc *thirdparty.Service) func(http.Handler) http.Handler {
+func NewMiddleware(
+	proboSvc *probo.Service,
+	iamSvc *iam.Service,
+	cookieBannerSvc *cookiebanner.Service,
+	thirdPartySvc *thirdparty.Service,
+	compliancePortalSvc *management.Service,
+) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				f := &batchFetcher{
-					probo:        proboSvc,
-					iam:          iamSvc,
-					cookieBanner: cookieBannerSvc,
-					thirdParty:   thirdPartySvc,
+					probo:            proboSvc,
+					iam:              iamSvc,
+					cookieBanner:     cookieBannerSvc,
+					thirdParty:       thirdPartySvc,
+					compliancePortal: compliancePortalSvc,
 				}
 				loaders := f.newLoaders()
 				ctx := context.WithValue(r.Context(), loadersKey, loaders)
@@ -125,11 +141,58 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		CommonTrackerPattern:       dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
 		CommonThirdParty:           dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
 		ThirdPartyAdministratorIDs: dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
+		CompliancePortalDocument:   dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocuments),
 		Authorize: dataloadgen.NewMappedLoader(
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
 		),
 	}
+}
+
+func (f *batchFetcher) fetchCompliancePortalDocuments(
+	ctx context.Context,
+	keys []CompliancePortalDocumentKey,
+) (map[CompliancePortalDocumentKey]*coredata.CompliancePortalDocument, error) {
+	type groupKey struct {
+		scope              *coredata.Scope
+		compliancePortalID gid.GID
+	}
+
+	documentIDsByGroup := make(map[groupKey][]gid.GID)
+	for _, key := range keys {
+		group := groupKey{
+			scope:              key.Scope,
+			compliancePortalID: key.CompliancePortalID,
+		}
+		documentIDsByGroup[group] = append(documentIDsByGroup[group], key.DocumentID)
+	}
+
+	result := make(map[CompliancePortalDocumentKey]*coredata.CompliancePortalDocument, len(keys))
+	for group, documentIDs := range documentIDsByGroup {
+		links, err := f.compliancePortal.GetDocumentLinks(
+			ctx,
+			group.scope,
+			group.compliancePortalID,
+			documentIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal documents: %w", err)
+		}
+
+		for _, link := range links {
+			if link.Visibility == coredata.CompliancePortalVisibilityNone {
+				continue
+			}
+
+			result[CompliancePortalDocumentKey{
+				Scope:              group.scope,
+				CompliancePortalID: group.compliancePortalID,
+				DocumentID:         link.DocumentID,
+			}] = link
+		}
+	}
+
+	return result, nil
 }
 
 func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Organization, error) {

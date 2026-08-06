@@ -30,6 +30,33 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
+func (s *Service) GetDocumentLinks(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	documentIDs []gid.GID,
+) (coredata.CompliancePortalDocuments, error) {
+	var rows coredata.CompliancePortalDocuments
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return rows.LoadByCompliancePortalIDAndDocumentIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				documentIDs,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load portal document links: %w", err)
+	}
+
+	return rows, nil
+}
+
 // GetDocumentVisibility reports how a document is published on one compliance
 // portal. Publication lives on the portal/document join row, so a document with
 // no row for that portal is simply not published there.

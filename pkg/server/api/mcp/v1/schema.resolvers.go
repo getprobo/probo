@@ -2217,7 +2217,8 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 			WithWriteModes(input.Filter.WriteModes).
 			WithDocumentTypes(input.Filter.DocumentTypes).
 			WithClassifications(input.Filter.Classifications).
-			WithStatus(input.Filter.Status)
+			WithStatus(input.Filter.Status).
+			WithPublished(input.Filter.Published)
 
 		if len(input.Filter.Status) == 0 {
 			documentFilter = documentFilter.WithStatus([]coredata.DocumentStatus{coredata.DocumentStatusActive})
@@ -8276,13 +8277,23 @@ func (r *Resolver) UpdateCompliancePortalDocumentVisibilityTool(ctx context.Cont
 		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("cannot update compliance portal document visibility: %w", err)
 	}
 
-	entry, err := r.management.GetDocument(ctx, scope, input.CompliancePortalID, input.DocumentID)
+	link, err := r.management.GetDocumentLink(
+		ctx,
+		scope,
+		input.CompliancePortalID,
+		input.DocumentID,
+	)
 	if err != nil {
 		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("cannot get compliance portal document: %w", err)
 	}
 
+	document, err := r.proboSvc.Documents.Get(ctx, scope, input.DocumentID)
+	if err != nil {
+		return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{}, fmt.Errorf("cannot get document: %w", err)
+	}
+
 	return nil, types.UpdateCompliancePortalDocumentVisibilityOutput{
-		CatalogDocument: types.NewCompliancePortalCatalogDocument(entry),
+		CatalogDocument: types.NewCompliancePortalCatalogDocument(link, document),
 	}, nil
 }
 func (r *Resolver) DeleteCompliancePortalDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCompliancePortalDocumentInput) (*mcp.CallToolResult, types.DeleteCompliancePortalDocumentOutput, error) {
@@ -8417,17 +8428,42 @@ func (r *Resolver) ListCompliancePortalDocumentsTool(ctx context.Context, req *m
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	entryPage, err := r.management.ListDocuments(ctx, scope, input.CompliancePortalID, cursor)
+	documentPage, err := r.management.ListDocuments(ctx, scope, input.CompliancePortalID, cursor)
 	if err != nil {
 		return nil, types.ListCompliancePortalDocumentsOutput{}, fmt.Errorf("cannot list compliance portal documents: %w", err)
 	}
 
-	entries := make([]*types.CompliancePortalCatalogDocument, 0, len(entryPage.Data))
-	for _, entry := range entryPage.Data {
-		entries = append(entries, types.NewCompliancePortalCatalogDocument(entry))
+	documentIDs := make([]gid.GID, len(documentPage.Data))
+	for i, document := range documentPage.Data {
+		documentIDs[i] = document.ID
 	}
 
-	return nil, types.NewListCompliancePortalDocumentsOutput(entries, entryPage), nil
+	links, err := r.management.GetDocumentLinks(
+		ctx,
+		scope,
+		input.CompliancePortalID,
+		documentIDs,
+	)
+	if err != nil {
+		return nil, types.ListCompliancePortalDocumentsOutput{}, fmt.Errorf("cannot load compliance portal document links: %w", err)
+	}
+
+	linksByDocumentID := make(map[gid.GID]*coredata.CompliancePortalDocument, len(links))
+	for _, link := range links {
+		linksByDocumentID[link.DocumentID] = link
+	}
+
+	entries := make([]*types.CompliancePortalCatalogDocument, len(documentPage.Data))
+	for i, document := range documentPage.Data {
+		link := linksByDocumentID[document.ID]
+		if link == nil || link.Visibility == coredata.CompliancePortalVisibilityNone {
+			return nil, types.ListCompliancePortalDocumentsOutput{}, fmt.Errorf("missing compliance portal document link")
+		}
+
+		entries[i] = types.NewCompliancePortalCatalogDocument(link, document)
+	}
+
+	return nil, types.NewListCompliancePortalDocumentsOutput(entries, documentPage), nil
 }
 func (r *Resolver) ListCompliancePortalAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCompliancePortalAuditsInput) (*mcp.CallToolResult, types.ListCompliancePortalAuditsOutput, error) {
 	scope, err := r.Authorize(ctx, input.CompliancePortalID, management.ActionCompliancePortalGet)

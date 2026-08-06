@@ -380,28 +380,18 @@
     "description": "Manage policies, procedures and compliance documents"
   },
   "documentList": {
-    "addDocument": "Add document",
     "columns": {
+      "displayed": "Displayed",
       "name": "Name",
       "type": "Type",
       "alias": "Alias",
       "visibility": "Visibility"
     },
-    "empty": "No documents on this portal yet",
-    "addDialog": {
-      "title": "Add document to portal",
-      "documentLabel": "Document",
-      "visibilityLabel": "Visibility",
-      "submit": "Add",
-      "cancel": "Cancel",
-      "loading": "Loading documents…",
-      "success": "Document added to the portal.",
-      "error": "Failed to add document to the portal"
-    }
+    "empty": "No active published documents available"
   },
   "documentListItem": {
     "messages": {
-      "visibilityUpdated": "Document visibility updated successfully.",
+      "visibilityUpdated": "Document portal settings updated successfully.",
       "removed": "Document removed from the portal."
     },
     "errors": {
@@ -409,7 +399,7 @@
       "remove": "Failed to remove document from the portal"
     },
     "actions": {
-      "remove": "Remove from portal"
+      "toggle": "Toggle {{title}} on the compliance portal"
     }
   },
   "domainPage": {

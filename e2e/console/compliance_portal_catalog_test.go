@@ -28,21 +28,35 @@ const compliancePortalCatalogQuery = `
 		node(id: $id) {
 			... on CompliancePortal {
 				id
-				documents(first: 10) {
-					totalCount
-					edges {
-						node {
-							id
-							visibility
-							document { id }
-						}
-					}
-				}
 				audits(first: 10) {
 					totalCount
 				}
 				thirdParties(first: 10) {
 					totalCount
+				}
+			}
+		}
+	}
+`
+
+const organizationCompliancePortalDocumentsQuery = `
+	query OrganizationCompliancePortalDocuments($organizationId: ID!, $compliancePortalId: ID!) {
+		node(id: $organizationId) {
+			... on Organization {
+				documents(
+					first: 100
+					orderBy: { field: TITLE, direction: ASC }
+					filter: { status: [ACTIVE], published: true }
+				) {
+					edges {
+						node {
+							id
+							compliancePortalDocument(compliancePortalId: $compliancePortalId) {
+								id
+								visibility
+							}
+						}
+					}
 				}
 			}
 		}
@@ -68,50 +82,77 @@ func publishDocumentMinor(t *testing.T, owner *testutil.Client, documentID strin
 	require.NoError(t, err)
 }
 
-func TestCompliancePortal_CatalogListsOnlyLinkedResources(t *testing.T) {
+func TestCompliancePortal_OrganizationDocumentsExposePortalLink(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	compliancePortalID := compliancePortalID(t, owner)
+	draftDocumentID := factory.NewDocument(owner).Create()
+	publishedDocumentID := factory.NewDocument(owner).Create()
+	publishDocumentMinor(t, owner, publishedDocumentID)
 
-	documentID := factory.NewDocument(owner).Create()
-	publishDocumentMinor(t, owner, documentID)
+	type portalDocument struct {
+		ID         string `json:"id"`
+		Visibility string `json:"visibility"`
+		Document   struct {
+			ID string `json:"id"`
+		} `json:"document"`
+	}
 
-	var emptyResult struct {
+	type queryResult struct {
 		Node struct {
 			Documents struct {
-				TotalCount int `json:"totalCount"`
+				Edges []struct {
+					Node struct {
+						ID                       string          `json:"id"`
+						CompliancePortalDocument *portalDocument `json:"compliancePortalDocument"`
+					} `json:"node"`
+				} `json:"edges"`
 			} `json:"documents"`
-			Audits struct {
-				TotalCount int `json:"totalCount"`
-			} `json:"audits"`
-			ThirdParties struct {
-				TotalCount int `json:"totalCount"`
-			} `json:"thirdParties"`
 		} `json:"node"`
 	}
 
-	err := owner.Execute(compliancePortalCatalogQuery, map[string]any{
-		"id": compliancePortalID,
-	}, &emptyResult)
-	require.NoError(t, err)
-	assert.Equal(t, 0, emptyResult.Node.Documents.TotalCount)
-	assert.Equal(t, 0, emptyResult.Node.Audits.TotalCount)
-	assert.Equal(t, 0, emptyResult.Node.ThirdParties.TotalCount)
+	loadDocuments := func() queryResult {
+		var result queryResult
+		err := owner.Execute(
+			organizationCompliancePortalDocumentsQuery,
+			map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"compliancePortalId": compliancePortalID,
+			},
+			&result,
+		)
+		require.NoError(t, err)
+		return result
+	}
 
-	var addResult struct {
+	findDocument := func(result queryResult, documentID string) *portalDocument {
+		for _, edge := range result.Node.Documents.Edges {
+			if edge.Node.ID == documentID {
+				return edge.Node.CompliancePortalDocument
+			}
+		}
+		return nil
+	}
+
+	initialResult := loadDocuments()
+	publishedDocumentFound := false
+	for _, edge := range initialResult.Node.Documents.Edges {
+		assert.NotEqual(t, draftDocumentID, edge.Node.ID)
+		if edge.Node.ID == publishedDocumentID {
+			publishedDocumentFound = true
+		}
+	}
+	assert.True(t, publishedDocumentFound)
+	assert.Nil(t, findDocument(initialResult, publishedDocumentID))
+
+	var updateResult struct {
 		UpdateCompliancePortalDocumentVisibility struct {
-			CatalogDocument struct {
-				ID         string `json:"id"`
-				Visibility string `json:"visibility"`
-				Document   struct {
-					ID string `json:"id"`
-				} `json:"document"`
-			} `json:"catalogDocument"`
+			CatalogDocument portalDocument `json:"catalogDocument"`
 		} `json:"updateCompliancePortalDocumentVisibility"`
 	}
 
-	err = owner.Execute(`
+	err := owner.Execute(`
 		mutation($input: UpdateCompliancePortalDocumentVisibilityInput!) {
 			updateCompliancePortalDocumentVisibility(input: $input) {
 				catalogDocument {
@@ -124,28 +165,50 @@ func TestCompliancePortal_CatalogListsOnlyLinkedResources(t *testing.T) {
 	`, map[string]any{
 		"input": map[string]any{
 			"compliancePortalId":         compliancePortalID,
-			"documentId":                 documentID,
+			"documentId":                 publishedDocumentID,
+			"compliancePortalVisibility": "RESTRICTED",
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	assert.Equal(t, publishedDocumentID, updateResult.UpdateCompliancePortalDocumentVisibility.CatalogDocument.Document.ID)
+
+	restrictedDocument := findDocument(loadDocuments(), publishedDocumentID)
+	require.NotNil(t, restrictedDocument)
+	assert.Equal(t, updateResult.UpdateCompliancePortalDocumentVisibility.CatalogDocument.ID, restrictedDocument.ID)
+	assert.Equal(t, "RESTRICTED", restrictedDocument.Visibility)
+
+	err = owner.Execute(`
+		mutation($input: UpdateCompliancePortalDocumentVisibilityInput!) {
+			updateCompliancePortalDocumentVisibility(input: $input) {
+				catalogDocument { id visibility }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"compliancePortalId":         compliancePortalID,
+			"documentId":                 publishedDocumentID,
 			"compliancePortalVisibility": "PUBLIC",
 		},
-	}, &addResult)
+	}, &updateResult)
 	require.NoError(t, err)
-	assert.Equal(t, documentID, addResult.UpdateCompliancePortalDocumentVisibility.CatalogDocument.Document.ID)
-	assert.Equal(t, "PUBLIC", addResult.UpdateCompliancePortalDocumentVisibility.CatalogDocument.Visibility)
-	assert.NotEmpty(t, addResult.UpdateCompliancePortalDocumentVisibility.CatalogDocument.ID)
 
-	var linkedResult struct {
-		Node struct {
-			Documents struct {
-				TotalCount int `json:"totalCount"`
-			} `json:"documents"`
-		} `json:"node"`
-	}
+	publicDocument := findDocument(loadDocuments(), publishedDocumentID)
+	require.NotNil(t, publicDocument)
+	assert.Equal(t, "PUBLIC", publicDocument.Visibility)
 
-	err = owner.Execute(compliancePortalCatalogQuery, map[string]any{
-		"id": compliancePortalID,
-	}, &linkedResult)
+	err = owner.Execute(`
+		mutation($input: DeleteCompliancePortalDocumentInput!) {
+			deleteCompliancePortalDocument(input: $input) {
+				deletedCompliancePortalDocumentId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id": updateResult.UpdateCompliancePortalDocumentVisibility.CatalogDocument.ID,
+		},
+	}, nil)
 	require.NoError(t, err)
-	assert.Equal(t, 1, linkedResult.Node.Documents.TotalCount)
+	assert.Nil(t, findDocument(loadDocuments(), publishedDocumentID))
 }
 
 func TestCompliancePortal_CatalogRemoveDocument(t *testing.T) {
@@ -215,5 +278,17 @@ func TestCompliancePortal_CatalogTenantIsolation(t *testing.T) {
 	err := otherOwner.ExecuteShouldFail(compliancePortalCatalogQuery, map[string]any{
 		"id": compliancePortalID,
 	})
+	require.Error(t, err)
+
+	otherDocumentID := factory.NewDocument(otherOwner).Create()
+	publishDocumentMinor(t, otherOwner, otherDocumentID)
+
+	err = otherOwner.ExecuteShouldFail(
+		organizationCompliancePortalDocumentsQuery,
+		map[string]any{
+			"organizationId":     otherOwner.GetOrganizationID().String(),
+			"compliancePortalId": compliancePortalID,
+		},
+	)
 	require.Error(t, err)
 }

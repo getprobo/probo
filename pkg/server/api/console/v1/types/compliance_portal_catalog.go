@@ -34,13 +34,6 @@ type (
 		Visibility coredata.CompliancePortalVisibility
 	}
 
-	CompliancePortalDocumentConnection struct {
-		TotalCount int
-		Edges      []*CompliancePortalDocumentEdge
-		PageInfo   *PageInfo
-		ParentID   gid.GID
-	}
-
 	CompliancePortalAudit struct {
 		ID         gid.GID
 		Audit      *Audit
@@ -67,34 +60,11 @@ type (
 	}
 )
 
-func NewCompliancePortalDocument(entry *management.PortalDocument) *CompliancePortalDocument {
+func NewCompliancePortalDocument(link *coredata.CompliancePortalDocument) *CompliancePortalDocument {
 	return &CompliancePortalDocument{
-		ID:         entry.ID,
-		Document:   NewDocument(entry.Document),
-		Visibility: entry.Visibility,
-	}
-}
-
-func NewCompliancePortalDocumentEdge(entry *management.PortalDocument, orderBy coredata.DocumentOrderField) *CompliancePortalDocumentEdge {
-	return &CompliancePortalDocumentEdge{
-		Cursor: entry.Document.CursorKey(orderBy),
-		Node:   NewCompliancePortalDocument(entry),
-	}
-}
-
-func NewCompliancePortalDocumentConnection(
-	p *page.Page[*management.PortalDocument, coredata.DocumentOrderField],
-	parentID gid.GID,
-) *CompliancePortalDocumentConnection {
-	edges := make([]*CompliancePortalDocumentEdge, len(p.Data))
-	for i, entry := range p.Data {
-		edges[i] = NewCompliancePortalDocumentEdge(entry, p.Cursor.OrderBy.Field)
-	}
-
-	return &CompliancePortalDocumentConnection{
-		Edges:    edges,
-		PageInfo: NewPageInfo(p),
-		ParentID: parentID,
+		ID:         link.ID,
+		Document:   &Document{ID: link.DocumentID},
+		Visibility: link.Visibility,
 	}
 }
 

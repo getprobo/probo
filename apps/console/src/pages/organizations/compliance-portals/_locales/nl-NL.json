@@ -136,24 +136,13 @@
     "description": "Beheer beleid, procedures en compliancedocumenten"
   },
   "documentList": {
-    "addDocument": "Document toevoegen",
-    "columns": { "name": "Naam", "type": "Type", "alias": "Alias", "visibility": "Zichtbaarheid" },
-    "empty": "Nog geen documenten op deze pagina",
-    "addDialog": {
-      "title": "Document toevoegen aan pagina",
-      "documentLabel": "Document",
-      "visibilityLabel": "Zichtbaarheid",
-      "submit": "Toevoegen",
-      "cancel": "Annuleren",
-      "loading": "Documenten laden…",
-      "success": "Document toegevoegd aan de pagina.",
-      "error": "Toevoegen van document aan de pagina mislukt"
-    }
+    "columns": { "displayed": "Weergegeven", "name": "Naam", "type": "Type", "alias": "Alias", "visibility": "Zichtbaarheid" },
+    "empty": "Geen actieve gepubliceerde documenten beschikbaar"
   },
   "documentListItem": {
-    "messages": { "visibilityUpdated": "Zichtbaarheid van document succesvol bijgewerkt.", "removed": "Document verwijderd van de pagina." },
+    "messages": { "visibilityUpdated": "Portaalinstellingen van document succesvol bijgewerkt.", "removed": "Document verwijderd van de pagina." },
     "errors": { "updateVisibility": "Bijwerken van documentzichtbaarheid mislukt", "remove": "Verwijderen van document van de pagina mislukt" },
-    "actions": { "remove": "Verwijderen van pagina" }
+    "actions": { "toggle": "{{title}} weergeven of verbergen op de compliancepagina" }
   },
   "domainPage": {
     "title": "Aangepast domein",

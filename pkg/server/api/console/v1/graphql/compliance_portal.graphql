@@ -429,14 +429,6 @@ type CompliancePortal implements Node
         orderBy: CompliancePortalFileOrder
     ): CompliancePortalFileConnection! @goField(forceResolver: true)
 
-    documents(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: DocumentOrder
-    ): CompliancePortalDocumentConnection! @goField(forceResolver: true)
-
     audits(
         first: Int
         after: CursorKey
@@ -478,22 +470,8 @@ type CompliancePortalDocument
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocument"
     ) {
     id: ID!
-    document: Document!
+    document: Document! @goField(forceResolver: true)
     visibility: CompliancePortalLinkedVisibility!
-}
-
-type CompliancePortalDocumentConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalDocumentEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalDocumentEdge {
-    cursor: CursorKey!
-    node: CompliancePortalDocument!
 }
 
 type CompliancePortalAudit
@@ -1088,7 +1066,6 @@ input DeleteCompliancePortalThirdPartyInput {
 
 type UpdateCompliancePortalDocumentVisibilityPayload {
     catalogDocument: CompliancePortalDocument!
-    catalogDocumentEdge: CompliancePortalDocumentEdge!
 }
 
 type DeleteCompliancePortalDocumentPayload {

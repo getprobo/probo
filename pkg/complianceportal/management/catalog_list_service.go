@@ -32,12 +32,6 @@ import (
 )
 
 type (
-	PortalDocument struct {
-		ID         gid.GID
-		Document   *coredata.Document
-		Visibility coredata.CompliancePortalVisibility
-	}
-
 	PortalAudit struct {
 		ID         gid.GID
 		Audit      *coredata.Audit
@@ -49,10 +43,6 @@ type (
 		ThirdParty *coredata.ThirdParty
 	}
 )
-
-func (c *PortalDocument) CursorKey(field coredata.DocumentOrderField) page.CursorKey {
-	return c.Document.CursorKey(field)
-}
 
 func (c *PortalAudit) CursorKey(field coredata.AuditOrderField) page.CursorKey {
 	return c.Audit.CursorKey(field)
@@ -82,64 +72,22 @@ func (s *Service) loadPortalOrganizationID(
 	return portal.OrganizationID, nil
 }
 
-func (s *Service) CountDocuments(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePortalID gid.GID,
-) (int, error) {
-	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
-	if err != nil {
-		return 0, err
-	}
-
-	var count int
-
-	err = s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var documents coredata.Documents
-
-			var countErr error
-
-			count, countErr = documents.CountPublishedByCompliancePortalID(
-				ctx,
-				conn,
-				scope,
-				compliancePortalID,
-				organizationID,
-			)
-			if countErr != nil {
-				return countErr
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 func (s *Service) ListDocuments(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.DocumentOrderField],
-) (*page.Page[*PortalDocument, coredata.DocumentOrderField], error) {
+) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
 	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
 	if err != nil {
 		return nil, err
 	}
 
-	var entries []*PortalDocument
+	var documents coredata.Documents
 
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var documents coredata.Documents
-
 			if err := documents.LoadPublishedByCompliancePortalID(
 				ctx,
 				conn,
@@ -152,45 +100,6 @@ func (s *Service) ListDocuments(
 				return fmt.Errorf("cannot load portal documents: %w", err)
 			}
 
-			documentIDs := make([]gid.GID, len(documents))
-			for i, document := range documents {
-				documentIDs[i] = document.ID
-			}
-
-			var links coredata.CompliancePortalDocuments
-			if err := links.LoadByCompliancePortalIDAndDocumentIDs(
-				ctx,
-				conn,
-				scope,
-				compliancePortalID,
-				documentIDs,
-			); err != nil {
-				return fmt.Errorf("cannot load portal document links: %w", err)
-			}
-
-			linksByDocumentID := make(map[gid.GID]*coredata.CompliancePortalDocument, len(links))
-			for _, link := range links {
-				linksByDocumentID[link.DocumentID] = link
-			}
-
-			entries = make([]*PortalDocument, 0, len(documents))
-			for _, document := range documents {
-				link := linksByDocumentID[document.ID]
-				if link == nil {
-					continue
-				}
-
-				if link.Visibility == coredata.CompliancePortalVisibilityNone {
-					continue
-				}
-
-				entries = append(entries, &PortalDocument{
-					ID:         link.ID,
-					Document:   document,
-					Visibility: link.Visibility,
-				})
-			}
-
 			return nil
 		},
 	)
@@ -198,7 +107,7 @@ func (s *Service) ListDocuments(
 		return nil, err
 	}
 
-	return page.NewPage(entries, cursor), nil
+	return page.NewPage(documents, cursor), nil
 }
 
 func (s *Service) CountAudits(
@@ -437,14 +346,13 @@ func (s *Service) ListThirdParties(
 	return page.NewPage(entries, cursor), nil
 }
 
-func (s *Service) GetDocument(
+func (s *Service) GetDocumentLink(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	documentID gid.GID,
-) (*PortalDocument, error) {
+) (*coredata.CompliancePortalDocument, error) {
 	link := &coredata.CompliancePortalDocument{}
-	document := &coredata.Document{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -457,7 +365,7 @@ func (s *Service) GetDocument(
 				return coredata.ErrResourceNotFound
 			}
 
-			return document.LoadByID(ctx, conn, scope, documentID)
+			return nil
 		},
 	)
 	if err != nil {
@@ -468,11 +376,7 @@ func (s *Service) GetDocument(
 		return nil, fmt.Errorf("cannot load portal document catalog entry: %w", err)
 	}
 
-	return &PortalDocument{
-		ID:         link.ID,
-		Document:   document,
-		Visibility: link.Visibility,
-	}, nil
+	return link, nil
 }
 
 func (s *Service) GetAudit(

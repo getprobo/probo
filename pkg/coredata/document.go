@@ -321,18 +321,6 @@ WHERE
 	return count, nil
 }
 
-func (p *Documents) CountPublishedByCompliancePortalID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	compliancePortalID gid.GID,
-	organizationID gid.GID,
-) (int, error) {
-	filter := NewDocumentCompliancePortalFilter().WithCompliancePortalID(compliancePortalID)
-
-	return p.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
-}
-
 func (p *Documents) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
