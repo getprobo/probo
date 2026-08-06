@@ -132,6 +132,7 @@ func TestHubSpotOwnerUserID(t *testing.T) {
 		UserID: &activeID,
 	}))
 	assert.Equal(t, "", hubspotOwnerUserID(hubspotOwner{}))
+
 	zero := int64(0)
 	assert.Equal(t, "", hubspotOwnerUserID(hubspotOwner{
 		UserIDIncludingInactive: &zero,

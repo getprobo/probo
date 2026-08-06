@@ -31,8 +31,9 @@ import (
 
 func hubspotRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderHubSpot,
-		DisplayName: "HubSpot",
+		Provider:         coredata.ConnectorProviderHubSpot,
+		DisplayName:      "HubSpot",
+		DocumentationURL: accessReviewDocsURL("hubspot"),
 		Endpoints: Endpoints{
 			Auth:  "https://app.hubspot.com/oauth/authorize",
 			Token: "https://api.hubapi.com/oauth/v1/token",

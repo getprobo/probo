@@ -184,7 +184,9 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		}
 
 		records = append(records, record)
+
 		seen.mark(u.ID, u.Email)
+
 		// If we matched an archived owner by email only, also mark its
 		// settings user ID so the archived-only pass cannot emit a duplicate.
 		if inactive {
@@ -206,6 +208,7 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 		fullName := hubspotDisplayName(owner.FirstName, owner.LastName, owner.Email)
 		externalID := userID
+
 		if externalID == "" {
 			externalID = owner.ID
 		}
@@ -227,6 +230,7 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		}
 
 		records = append(records, record)
+
 		seen.mark(userID, owner.Email)
 	}
 
@@ -519,6 +523,7 @@ func hubspotApplyLastLogins(
 			if t, ok := byUserID[records[i].ExternalID]; ok {
 				last := t
 				records[i].LastLogin = &last
+
 				continue
 			}
 		}
