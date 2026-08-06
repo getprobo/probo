@@ -108,7 +108,11 @@ export default defineConfig(({ mode, command }) => {
         },
       },
     },
-    base: "./",
+    // Absolute base: host-routed SPA lives at site root (`/:lang/...`). A
+    // relative base (`./`) makes nested routes request `/en/documents/assets/`
+    // instead of `/assets/`, so the SPA fallback serves HTML and browsers
+    // block JS/CSS for the wrong MIME type.
+    base: "/",
     server: {
       port: 5174,
       proxy: proxyTarget
