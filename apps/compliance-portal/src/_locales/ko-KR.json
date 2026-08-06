@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "컴플라이언스 포털로 돌아가기",
-      "tryAgain": "다시 시도"
+      "tryAgain": "다시 시도",
+      "contactSupport": "지원팀에 문의",
+      "requestAccess": "액세스 요청"
     },
     "inline": {
       "message": "콘텐츠를 불러올 수 없습니다",

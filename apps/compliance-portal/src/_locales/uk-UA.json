@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Назад до порталу відповідності",
-      "tryAgain": "Спробувати ще раз"
+      "tryAgain": "Спробувати ще раз",
+      "contactSupport": "Зв’язатися з підтримкою",
+      "requestAccess": "Запитати доступ"
     },
     "inline": {
       "message": "Не вдалося завантажити вміст",

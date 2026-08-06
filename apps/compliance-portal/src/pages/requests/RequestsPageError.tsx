@@ -25,9 +25,10 @@ import { gateRedirectPath } from "#/lib/auth/continueUrl";
 import { NotFoundError } from "#/lib/relay/errors";
 
 // Relay's @throwOnFieldError discards the GraphQL extensions code and throws a
-// generic Error ("Unexpected response payload" / "Missing expected data"). On
-// this page that means the non-null myRightsRequests field failed — typically
-// NOT_FOUND when rights requests are disabled — so map it to the 404 UI.
+// generic Error ("Relay: Unexpected response payload" / "Missing expected
+// data"). On this page that usually means myRightsRequests failed with
+// NOT_FOUND (capability off) — map it to the 404 UI as a fallback when the
+// explicit rightsRequestsEnabled check did not run first.
 function isDisabledRequestsSurface(error: unknown): boolean {
   if (error instanceof NotFoundError) {
     return true;
@@ -45,7 +46,7 @@ function isDisabledRequestsSurface(error: unknown): boolean {
 }
 
 // Route ErrorBoundary for /requests. Renders inside MainLayout's Outlet so the
-// TopBar and footer stay visible.
+// TopBar and footer stay visible. Matches Figma "Page / 404 / App shell".
 export function RequestsPageError() {
   const error = useRouteError();
 
@@ -54,9 +55,13 @@ export function RequestsPageError() {
     return <Navigate replace to={gateRedirect} />;
   }
 
+  if (isDisabledRequestsSurface(error)) {
+    return <GlobalError error={new NotFoundError()} />;
+  }
+
   return (
     <GlobalError
-      error={isDisabledRequestsSurface(error) ? new NotFoundError() : error}
+      error={error}
       onRetry={() => window.location.reload()}
     />
   );

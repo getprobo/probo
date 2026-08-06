@@ -93,7 +93,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Terug naar het complianceportaal",
-      "tryAgain": "Opnieuw proberen"
+      "tryAgain": "Opnieuw proberen",
+      "contactSupport": "Contact opnemen met support",
+      "requestAccess": "Toegang aanvragen"
     },
     "inline": {
       "message": "Inhoud kan niet worden geladen",

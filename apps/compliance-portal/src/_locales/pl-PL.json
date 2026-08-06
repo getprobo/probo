@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Powrót do Portalu Zgodności",
-      "tryAgain": "Spróbuj ponownie"
+      "tryAgain": "Spróbuj ponownie",
+      "contactSupport": "Skontaktuj się z pomocą",
+      "requestAccess": "Poproś o dostęp"
     },
     "inline": {
       "message": "Nie można wczytać treści",

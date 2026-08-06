@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Uyumluluk Portalına geri dön",
-      "tryAgain": "Tekrar dene"
+      "tryAgain": "Tekrar dene",
+      "contactSupport": "Destek ile iletişime geç",
+      "requestAccess": "Erişim iste"
     },
     "inline": {
       "message": "İçerik yüklenemedi",

@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Zurück zum Compliance-Portal",
-      "tryAgain": "Erneut versuchen"
+      "tryAgain": "Erneut versuchen",
+      "contactSupport": "Support kontaktieren",
+      "requestAccess": "Zugang anfordern"
     },
     "inline": {
       "message": "Inhalt kann nicht geladen werden",

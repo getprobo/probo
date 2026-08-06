@@ -35,16 +35,23 @@ import {
   NEW_REQUEST_PARAM,
   redirectToInitiate,
 } from "#/lib/auth/continueUrl";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import type { RequestsPage_query$key } from "./__generated__/RequestsPage_query.graphql";
-import type { RequestsPageQuery } from "./__generated__/RequestsPageQuery.graphql";
+import type {
+  RequestsPageQuery$data,
+  RequestsPageQuery,
+} from "./__generated__/RequestsPageQuery.graphql";
 import type { RequestsPageRefetchQuery } from "./__generated__/RequestsPageRefetchQuery.graphql";
 import { NewRequestDialog } from "./_components/NewRequestDialog";
 import { RightsRequestListItem } from "./_components/RightsRequestListItem";
 import { requestsLayout } from "./variants";
 
 export const requestsPageQuery = graphql`
-  query RequestsPageQuery @throwOnFieldError {
+  query RequestsPageQuery {
+    currentCompliancePortal @required(action: THROW) {
+      rightsRequestsEnabled
+    }
     viewer {
       email
       fullName
@@ -59,7 +66,8 @@ const requestsPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     after: { type: "CursorKey" }
-  ) {
+  )
+  @throwOnFieldError {
     myRightsRequests(first: $first, after: $after)
     @connection(key: "RequestsPage_myRightsRequests") {
       __id
@@ -81,17 +89,34 @@ interface RequestsPageProps {
 // Request" flow gated behind sign-in for guests. Submission and the personal
 // list are scoped to the verified viewer's email server-side.
 export function RequestsPage({ queryRef }: RequestsPageProps) {
+  const data = usePreloadedQuery<RequestsPageQuery>(requestsPageQuery, queryRef);
+  const { currentCompliancePortal, viewer } = data;
+
+  // Disabled capability → explicit 404 before the list fragment is read (the
+  // API returns NOT_FOUND for myRightsRequests, which would otherwise surface
+  // as Relay's opaque field-error message).
+  if (!currentCompliancePortal.rightsRequestsEnabled) {
+    throw new NotFoundError();
+  }
+
+  return <RequestsPageContent queryKey={data} viewer={viewer} />;
+}
+
+interface RequestsPageContentProps {
+  queryKey: RequestsPage_query$key;
+  viewer: RequestsPageQuery$data["viewer"];
+}
+
+function RequestsPageContent({ queryKey, viewer }: RequestsPageContentProps) {
   const { t } = useTranslation("requests");
-  const root = usePreloadedQuery<RequestsPageQuery>(requestsPageQuery, queryRef);
   const { data, loadNext, hasNext, isLoadingNext, refetch } = usePaginationFragment<
     RequestsPageRefetchQuery,
     RequestsPage_query$key
-  >(requestsPageFragment, root);
+  >(requestsPageFragment, queryKey);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const viewer = root.viewer;
   const requests = data.myRightsRequests?.edges?.map(edge => edge.node) ?? [];
   const connectionId = data.myRightsRequests?.__id ?? "";
 

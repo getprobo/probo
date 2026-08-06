@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Volver al portal de cumplimiento",
-      "tryAgain": "Reintentar"
+      "tryAgain": "Reintentar",
+      "contactSupport": "Contactar con soporte",
+      "requestAccess": "Solicitar acceso"
     },
     "inline": {
       "message": "No se ha podido cargar el contenido",

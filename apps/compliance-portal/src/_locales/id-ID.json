@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Kembali ke portal kepatuhan",
-      "tryAgain": "Coba lagi"
+      "tryAgain": "Coba lagi",
+      "contactSupport": "Hubungi dukungan",
+      "requestAccess": "Minta akses"
     },
     "inline": {
       "message": "Konten tidak dapat dimuat",

@@ -83,7 +83,9 @@
     },
     "actions": {
       "backToCompliancePortal": "返回合规门户",
-      "tryAgain": "重试"
+      "tryAgain": "重试",
+      "contactSupport": "联系支持",
+      "requestAccess": "申请访问"
     },
     "inline": {
       "message": "无法加载内容",
