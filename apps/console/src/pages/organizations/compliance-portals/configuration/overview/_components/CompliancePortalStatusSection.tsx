@@ -143,6 +143,7 @@ export function CompliancePortalStatusSection(props: {
             checked={compliancePortal.rightsRequestsEnabled}
             onChange={checked => void handleToggleRightsRequests(checked)}
             disabled={!compliancePortal.canUpdate}
+            aria-label={t("statusSection.rightsRequests.title")}
           />
         </div>
       </Card>

@@ -24,25 +24,11 @@ import { GlobalError } from "#/components/errors/GlobalError";
 import { gateRedirectPath } from "#/lib/auth/continueUrl";
 import { NotFoundError } from "#/lib/relay/errors";
 
-// Relay's @throwOnFieldError discards the GraphQL extensions code and throws a
-// generic Error ("Relay: Unexpected response payload" / "Missing expected
-// data"). On this page that usually means myRightsRequests failed with
-// NOT_FOUND (capability off) — map it to the 404 UI as a fallback when the
-// explicit rightsRequestsEnabled check did not run first.
-function isDisabledRequestsSurface(error: unknown): boolean {
+function isNotFound(error: unknown): boolean {
   if (error instanceof NotFoundError) {
     return true;
   }
-  if (isRouteErrorResponse(error) && error.status === 404) {
-    return true;
-  }
-  if (!(error instanceof Error)) {
-    return false;
-  }
-  return (
-    error.message.includes("Unexpected response payload")
-    || error.message.includes("Missing expected data")
-  );
+  return isRouteErrorResponse(error) && error.status === 404;
 }
 
 // Route ErrorBoundary for /requests. Renders inside MainLayout's Outlet so the
@@ -55,7 +41,7 @@ export function RequestsPageError() {
     return <Navigate replace to={gateRedirect} />;
   }
 
-  if (isDisabledRequestsSurface(error)) {
+  if (isNotFound(error)) {
     return <GlobalError error={new NotFoundError()} />;
   }
 
