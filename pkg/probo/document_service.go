@@ -2636,7 +2636,7 @@ func (o ExportPDFOptions) validate() error {
 		return nil
 	}
 
-	if o.WatermarkText == nil {
+	if o.WatermarkText == nil || strings.TrimSpace(*o.WatermarkText) == "" {
 		return fmt.Errorf("watermark text is required when with watermark is true")
 	}
 

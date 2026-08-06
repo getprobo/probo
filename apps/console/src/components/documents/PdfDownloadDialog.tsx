@@ -30,34 +30,20 @@ import {
 } from "@probo/ui";
 import { forwardRef, type ReactNode, useImperativeHandle } from "react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
-const maxWatermarkTextLength = 64;
-
-const pdfDownloadSchema = z.object({
-  withWatermark: z.boolean(),
-  watermarkText: z.string().refine(
-    value => new TextEncoder().encode(value).length <= maxWatermarkTextLength,
-    `Watermark text must not exceed ${maxWatermarkTextLength} bytes`,
-  ).optional().or(z.literal("")),
-  withSignatures: z.boolean(),
-}).refine((data) => {
-  if (data.withWatermark && (!data.watermarkText || data.watermarkText.trim() === "")) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Please enter watermark text",
-  path: ["watermarkText"],
-});
-
-type PdfDownloadFormData = z.infer<typeof pdfDownloadSchema>;
+import {
+  getWatermarkTextLength,
+  maxWatermarkTextLength,
+  truncateWatermarkText,
+  type WatermarkExportFormData,
+  watermarkExportSchema,
+} from "./watermark";
 
 type Props = {
   children?: ReactNode;
-  onDownload: (options: PdfDownloadFormData) => void;
+  onDownload: (options: WatermarkExportFormData) => void;
   isLoading?: boolean;
   defaultEmail: string;
 };
@@ -73,15 +59,16 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     const dialogRef = useDialogRef();
 
     const { register, handleSubmit, formState, watch, setValue }
-      = useFormWithSchema(pdfDownloadSchema, {
+      = useFormWithSchema(watermarkExportSchema, {
         defaultValues: {
           withWatermark: false,
-          watermarkText: defaultEmail,
+          watermarkText: truncateWatermarkText(defaultEmail),
           withSignatures: true,
         },
       });
 
     const watchWatermark = watch("withWatermark");
+    const watchWatermarkText = watch("watermarkText") ?? "";
     const watchSignatures = watch("withSignatures");
 
     useImperativeHandle(ref, () => ({
@@ -89,7 +76,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
       close: () => dialogRef.current?.close(),
     }));
 
-    const onSubmit = (data: PdfDownloadFormData) => {
+    const onSubmit = (data: WatermarkExportFormData) => {
       const options = {
         ...data,
         watermarkText: data.withWatermark ? data.watermarkText : undefined,
@@ -145,9 +132,12 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                       label={t("pdfDownloadDialog.watermark.textLabel")}
                       {...register("watermarkText")}
                       type="text"
-                      maxLength={maxWatermarkTextLength}
                       placeholder={t("pdfDownloadDialog.watermark.textPlaceholder")}
                       error={formState.errors.watermarkText?.message}
+                      help={t("pdfDownloadDialog.watermark.byteCount", {
+                        count: getWatermarkTextLength(watchWatermarkText),
+                        max: maxWatermarkTextLength,
+                      })}
                       autoComplete="off"
                       required
                     />

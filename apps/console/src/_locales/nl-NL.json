@@ -1036,7 +1036,8 @@
       "label": "Watermerk toevoegen",
       "description": "Voeg een vertrouwelijk watermerk met aangepaste tekst en een tijdstempel toe aan alle PDF's",
       "textLabel": "Watermerktekst",
-      "textPlaceholder": "Voer watermerktekst in"
+      "textPlaceholder": "Voer watermerktekst in",
+      "byteCount": "{{count}} / {{max}} bytes"
     },
     "notice": "De documenten worden geëxporteerd als afzonderlijke PDF's in een ZIP-bestand. U ontvangt een e-mail zodra de export gereed is om te downloaden.",
     "actions": {
@@ -1077,7 +1078,8 @@
       "label": "Watermerk toevoegen",
       "description": "Voeg een vertrouwelijk watermerk met aangepaste tekst en een tijdstempel toe",
       "textLabel": "Watermerktekst",
-      "textPlaceholder": "Voer watermerktekst in"
+      "textPlaceholder": "Voer watermerktekst in",
+      "byteCount": "{{count}} / {{max}} bytes"
     },
     "actions": {
       "download": "PDF downloaden",

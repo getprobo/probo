@@ -40,3 +40,62 @@ func TestAddConfidentialWithTimestamp_WatermarkTextTooLong(t *testing.T) {
 	assert.Nil(t, pdf)
 	assert.ErrorContains(t, err, "watermark text must not exceed 64 bytes")
 }
+
+func TestAddConfidentialWithTimestamp_WatermarkTextEmpty(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]string{
+		"empty":      "",
+		"whitespace": " \t\n",
+	}
+
+	for name, watermarkText := range testCases {
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				pdf, err := pdfutils.AddConfidentialWithTimestamp(nil, watermarkText)
+
+				require.Error(t, err)
+				assert.Nil(t, pdf)
+				assert.ErrorContains(t, err, "watermark text is required")
+			},
+		)
+	}
+}
+
+func TestTruncateWatermarkText(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		input    string
+		expected string
+	}{
+		"within limit": {
+			input:    "recipient@example.com",
+			expected: "recipient@example.com",
+		},
+		"ASCII over limit": {
+			input:    strings.Repeat("a", pdfutils.MaxWatermarkTextLength+1),
+			expected: strings.Repeat("a", pdfutils.MaxWatermarkTextLength),
+		},
+		"multibyte rune at boundary": {
+			input:    strings.Repeat("a", pdfutils.MaxWatermarkTextLength-1) + "é",
+			expected: strings.Repeat("a", pdfutils.MaxWatermarkTextLength-1),
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				actual := pdfutils.TruncateWatermarkText(testCase.input)
+
+				assert.Equal(t, testCase.expected, actual)
+			},
+		)
+	}
+}

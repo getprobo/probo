@@ -30,34 +30,20 @@ import {
 } from "@probo/ui";
 import { forwardRef, type ReactNode, useImperativeHandle } from "react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
-const maxWatermarkTextLength = 64;
-
-const bulkExportSchema = z.object({
-  withWatermark: z.boolean(),
-  watermarkText: z.string().refine(
-    value => new TextEncoder().encode(value).length <= maxWatermarkTextLength,
-    `Watermark text must not exceed ${maxWatermarkTextLength} bytes`,
-  ).optional().or(z.literal("")),
-  withSignatures: z.boolean(),
-}).refine((data) => {
-  if (data.withWatermark && (!data.watermarkText || data.watermarkText.trim() === "")) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Please enter watermark text",
-  path: ["watermarkText"],
-});
-
-type BulkExportFormData = z.infer<typeof bulkExportSchema>;
+import {
+  getWatermarkTextLength,
+  maxWatermarkTextLength,
+  truncateWatermarkText,
+  type WatermarkExportFormData,
+  watermarkExportSchema,
+} from "./watermark";
 
 type Props = {
   children: ReactNode;
-  onExport: (options: BulkExportFormData) => Promise<void>;
+  onExport: (options: WatermarkExportFormData) => Promise<void>;
   isLoading?: boolean;
   defaultEmail: string;
   selectedCount: number;
@@ -74,17 +60,18 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
     const dialogRef = useDialogRef();
 
     const { register, handleSubmit, formState, watch, setValue } = useFormWithSchema(
-      bulkExportSchema,
+      watermarkExportSchema,
       {
         defaultValues: {
           withWatermark: false,
-          watermarkText: defaultEmail,
+          watermarkText: truncateWatermarkText(defaultEmail),
           withSignatures: true,
         },
       },
     );
 
     const watchWatermark = watch("withWatermark");
+    const watchWatermarkText = watch("watermarkText") ?? "";
     const watchSignatures = watch("withSignatures");
 
     useImperativeHandle(ref, () => ({
@@ -92,7 +79,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
       close: () => dialogRef.current?.close(),
     }));
 
-    const onSubmit = async (data: BulkExportFormData) => {
+    const onSubmit = async (data: WatermarkExportFormData) => {
       const options = {
         ...data,
         watermarkText: data.withWatermark ? data.watermarkText : undefined,
@@ -148,9 +135,12 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                       label={t("bulkExportDialog.watermark.textLabel")}
                       {...register("watermarkText")}
                       type="text"
-                      maxLength={maxWatermarkTextLength}
                       placeholder={t("bulkExportDialog.watermark.textPlaceholder")}
                       error={formState.errors.watermarkText?.message}
+                      help={t("bulkExportDialog.watermark.byteCount", {
+                        count: getWatermarkTextLength(watchWatermarkText),
+                        max: maxWatermarkTextLength,
+                      })}
                       autoComplete="off"
                       required
                     />

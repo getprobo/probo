@@ -505,7 +505,8 @@
       "label": "Add watermark",
       "description": "Add a confidential watermark with custom text and a timestamp to all PDFs",
       "textLabel": "Watermark text",
-      "textPlaceholder": "Enter watermark text"
+      "textPlaceholder": "Enter watermark text",
+      "byteCount": "{{count}} / {{max}} bytes"
     },
     "notice": "The documents will be exported as individual PDFs in a ZIP file. You will receive an email when the export is ready for download.",
     "actions": {
@@ -546,7 +547,8 @@
       "label": "Add watermark",
       "description": "Add a confidential watermark with custom text and a timestamp",
       "textLabel": "Watermark text",
-      "textPlaceholder": "Enter watermark text"
+      "textPlaceholder": "Enter watermark text",
+      "byteCount": "{{count}} / {{max}} bytes"
     },
     "actions": {
       "download": "Download PDF",
