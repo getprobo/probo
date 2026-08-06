@@ -25,15 +25,21 @@ import {
   IconCircleX,
 } from "@probo/ui";
 
-const MS_PER_MINUTE = 1000 * 60;
+const MS_PER_SECOND = 1000;
+const MS_PER_MINUTE = MS_PER_SECOND * 60;
 const MS_PER_HOUR = MS_PER_MINUTE * 60;
 const MS_PER_DAY = MS_PER_HOUR * 24;
 
-// Compact elapsed age for dense list cells (e.g. "20m", "4h", "1d", "1m", "2y").
+// Compact elapsed age for dense list cells (e.g. "now", "5s", "20m", "4h", "1d", "1mo", "2y").
 function shortAgeFormat(date: string, now: Date = new Date()): string {
   const elapsedMs = Math.max(0, now.getTime() - parseDate(date).getTime());
-  const minutes = Math.floor(elapsedMs / MS_PER_MINUTE);
+  const seconds = Math.floor(elapsedMs / MS_PER_SECOND);
 
+  if (seconds < 60) {
+    return seconds === 0 ? "now" : `${seconds}s`;
+  }
+
+  const minutes = Math.floor(elapsedMs / MS_PER_MINUTE);
   if (minutes < 60) {
     return `${minutes}m`;
   }
