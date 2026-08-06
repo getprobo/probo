@@ -56,7 +56,7 @@ type (
 	DocumentExportArguments struct {
 		DocumentIDs    []gid.GID `json:"document_ids"`
 		WithWatermark  bool      `json:"with_watermark"`
-		WatermarkText  *string   `json:"watermark_email"`
+		WatermarkText  *string   `json:"watermark_text"`
 		WithSignatures bool      `json:"with_signatures"`
 	}
 
@@ -73,6 +73,30 @@ type (
 var (
 	ErrNoExportJobAvailable = errors.New("no export job available")
 )
+
+func (a *DocumentExportArguments) UnmarshalJSON(data []byte) error {
+	var arguments struct {
+		DocumentIDs    []gid.GID `json:"document_ids"`
+		WithWatermark  bool      `json:"with_watermark"`
+		WatermarkText  *string   `json:"watermark_text"`
+		WatermarkEmail *string   `json:"watermark_email"`
+		WithSignatures bool      `json:"with_signatures"`
+	}
+
+	if err := json.Unmarshal(data, &arguments); err != nil {
+		return fmt.Errorf("cannot unmarshal document export arguments: %w", err)
+	}
+
+	a.DocumentIDs = arguments.DocumentIDs
+	a.WithWatermark = arguments.WithWatermark
+	a.WatermarkText = arguments.WatermarkText
+	if a.WatermarkText == nil {
+		a.WatermarkText = arguments.WatermarkEmail
+	}
+	a.WithSignatures = arguments.WithSignatures
+
+	return nil
+}
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (ej *ExportJob) AuthorizationAttributes(

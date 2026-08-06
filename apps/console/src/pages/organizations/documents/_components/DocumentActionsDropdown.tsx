@@ -235,7 +235,7 @@ export function DocumentActionsDropdown(props: {
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
       ...(options.withWatermark
-        && options.watermarkText && { watermarkEmail: options.watermarkText }),
+        && options.watermarkText && { watermarkText: options.watermarkText }),
     };
 
     exportDocumentVersion({

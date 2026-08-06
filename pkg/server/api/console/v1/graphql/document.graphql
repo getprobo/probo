@@ -622,7 +622,7 @@ input DeleteDocumentInput {
 input ExportDocumentVersionPDFInput {
     documentVersionId: ID!
     withWatermark: Boolean!
-    watermarkEmail: String
+    watermarkText: String
     withSignatures: Boolean!
 }
 
@@ -662,7 +662,7 @@ input BulkUnarchiveDocumentsInput {
 input BulkExportDocumentsInput {
     documentIds: [ID!]!
     withWatermark: Boolean!
-    watermarkEmail: String
+    watermarkText: String
     withSignatures: Boolean!
 }
 

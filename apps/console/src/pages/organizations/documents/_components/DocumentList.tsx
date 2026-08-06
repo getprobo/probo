@@ -280,7 +280,7 @@ export function DocumentList(props: {
       documentIds: selection,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
-      ...(options.withWatermark && options.watermarkText && { watermarkEmail: options.watermarkText }),
+      ...(options.withWatermark && options.watermarkText && { watermarkText: options.watermarkText }),
     };
     await bulkExportDocuments({ variables: { input } });
     clear();

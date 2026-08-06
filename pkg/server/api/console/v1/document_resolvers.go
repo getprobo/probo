@@ -17,6 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -1266,7 +1267,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
 		WithSignatures: input.WithSignatures,
-		WatermarkText:  input.WatermarkEmail,
+		WatermarkText:  input.WatermarkText,
 	}
 
 	documentExport, exportErr := r.probo.Documents.RequestExport(ctx, scope, input.DocumentIds, identity.EmailAddress, identity.FullName, options)
@@ -1563,10 +1564,10 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 		return nil, err
 	}
 
-	watermarkText := input.WatermarkEmail
+	watermarkText := input.WatermarkText
 	if input.WithWatermark && watermarkText == nil {
 		identity := authn.IdentityFromContext(ctx)
-		watermarkText = new(identity.EmailAddress.String())
+		watermarkText = new(pdfutils.TruncateWatermarkText(identity.EmailAddress.String()))
 	}
 
 	options := probo.ExportPDFOptions{
@@ -1620,7 +1621,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	options := probo.ExportPDFOptions{
 		WithSignatures: false,
 		WithWatermark:  true,
-		WatermarkText:  new(identity.EmailAddress.String()),
+		WatermarkText:  new(pdfutils.TruncateWatermarkText(identity.EmailAddress.String())),
 	}
 
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)

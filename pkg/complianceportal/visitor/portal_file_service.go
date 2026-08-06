@@ -119,7 +119,8 @@ func (s *Service) ExportPortalFile(
 	}
 
 	if mimeType == "application/pdf" {
-		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(fileData, email.String())
+		watermarkText := pdfutils.TruncateWatermarkText(email.String())
+		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(fileData, watermarkText)
 		if err != nil {
 			return nil, "", fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}

@@ -28,7 +28,9 @@ import (
 	"image/png"
 	"io"
 	"math"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
@@ -69,6 +71,10 @@ func MergePDFs(pdfs ...[]byte) ([]byte, error) {
 }
 
 func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte, error) {
+	if strings.TrimSpace(watermarkText) == "" {
+		return nil, fmt.Errorf("watermark text is required")
+	}
+
 	if len(watermarkText) > MaxWatermarkTextLength {
 		return nil, fmt.Errorf("watermark text must not exceed %d bytes", MaxWatermarkTextLength)
 	}
@@ -113,6 +119,15 @@ func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte,
 	}
 
 	return buf.Bytes(), nil
+}
+
+func TruncateWatermarkText(watermarkText string) string {
+	for len(watermarkText) > MaxWatermarkTextLength {
+		_, size := utf8.DecodeLastRuneInString(watermarkText)
+		watermarkText = watermarkText[:len(watermarkText)-size]
+	}
+
+	return watermarkText
 }
 
 func generateTextImage(lines []string) (*image.RGBA, error) {
