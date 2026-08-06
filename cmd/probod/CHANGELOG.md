@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.249.1] - 2026-08-06
+
+### Fixed
+
+- Compliance portal PDF preview no longer fails to load when export/download still worked: the viewer worker is now bundled from the same pdf.js version as react-pdf
+
 ## [0.249.0] - 2026-08-05
 
 ### Added
