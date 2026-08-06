@@ -3135,6 +3135,11 @@
       "disabled": "Uitgeschakeld",
       "unknown": "Onbekend"
     },
+    "accountStatus": {
+      "active": "Actief",
+      "disabled": "Uitgeschakeld",
+      "unknown": "Onbekend"
+    },
     "authMethod": {
       "sso": "SSO",
       "password": "Wachtwoord",
@@ -3203,7 +3208,8 @@
       "allConnectors": "Alle connectoren",
       "allMfa": "Alle MFA",
       "allAuthMethods": "Alle authenticatiemethoden",
-      "allAdmin": "Alle beheerders"
+      "allAdmin": "Alle beheerders",
+      "allAccountStatuses": "Alle statussen"
     },
     "columns": {
       "name": "Naam",
