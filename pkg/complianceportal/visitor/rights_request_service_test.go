@@ -121,6 +121,7 @@ func TestRightsRequestService_CreateDisabledReturnsErr(t *testing.T) {
 	require.ErrorIs(t, err, ErrRightsRequestsDisabled)
 
 	var requestCount int
+
 	err = client.WithConn(
 		t.Context(),
 		func(ctx context.Context, conn pg.Querier) error {
@@ -135,6 +136,7 @@ func TestRightsRequestService_CreateDisabledReturnsErr(t *testing.T) {
 	assert.Equal(t, 0, requestCount)
 
 	var webhookCount int
+
 	err = client.WithConn(
 		t.Context(),
 		func(ctx context.Context, conn pg.Querier) error {
