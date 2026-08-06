@@ -106,7 +106,7 @@ export function TopBarMobileNav({ identityKey, compliancePortalKey }: TopBarMobi
     : null;
 
   const navItems = TOP_BAR_NAV_ITEMS.filter(
-    (item) => item.to !== "/requests" || compliancePortal.rightsRequestsEnabled,
+    item => item.to !== "/requests" || compliancePortal.rightsRequestsEnabled,
   );
 
   const close = () => setOpen(false);
