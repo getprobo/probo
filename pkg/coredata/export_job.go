@@ -90,6 +90,7 @@ func (a *DocumentExportArguments) UnmarshalJSON(data []byte) error {
 	a.DocumentIDs = arguments.DocumentIDs
 	a.WithWatermark = arguments.WithWatermark
 	a.WatermarkText = arguments.WatermarkText
+
 	if a.WatermarkText == nil {
 		a.WatermarkText = arguments.WatermarkEmail
 	}
