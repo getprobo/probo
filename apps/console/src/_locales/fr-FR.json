@@ -3118,6 +3118,11 @@
       "disabled": "Désactivé",
       "unknown": "Inconnu"
     },
+    "accountStatus": {
+      "active": "Actif",
+      "disabled": "Désactivé",
+      "unknown": "Inconnu"
+    },
     "authMethod": {
       "sso": "SSO",
       "password": "Mot de passe",
@@ -3186,7 +3191,8 @@
       "allConnectors": "Tous les connecteurs",
       "allMfa": "Tous les MFA",
       "allAuthMethods": "Toutes les méthodes d’auth",
-      "allAdmin": "Tous les administrateurs"
+      "allAdmin": "Tous les administrateurs",
+      "allAccountStatuses": "Tous les statuts"
     },
     "columns": {
       "name": "Nom",

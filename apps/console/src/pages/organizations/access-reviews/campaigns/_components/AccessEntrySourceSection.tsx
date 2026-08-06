@@ -70,6 +70,7 @@ const accessEntrySourceSectionEntryFragment = graphql`
     email
     fullName
     isAdmin
+    active
     mfaStatus
     authMethod
   }
@@ -81,6 +82,7 @@ export type EntryFilters = {
   mfa: ReadonlyArray<string>;
   authMethod: ReadonlyArray<string>;
   admin: ReadonlyArray<string>;
+  active: ReadonlyArray<string>;
 };
 
 // What the section contributes to the page-wide selection: the entries it
@@ -119,6 +121,17 @@ function entryMatchesFilters(
   if (filters.admin.length > 0) {
     const adminValue = entry.isAdmin ? "YES" : "NO";
     if (!filters.admin.includes(adminValue)) {
+      return false;
+    }
+  }
+
+  if (filters.active.length > 0) {
+    const activeValue = entry.active == null
+      ? "UNKNOWN"
+      : entry.active
+        ? "ACTIVE"
+        : "DISABLED";
+    if (!filters.active.includes(activeValue)) {
       return false;
     }
   }
@@ -168,7 +181,8 @@ export function AccessEntrySourceSection({
   const hasEntryFilters = filters.email !== ""
     || filters.mfa.length > 0
     || filters.authMethod.length > 0
-    || filters.admin.length > 0;
+    || filters.admin.length > 0
+    || filters.active.length > 0;
 
   const matchedEntries = useMemo(
     () => source.entries.edges

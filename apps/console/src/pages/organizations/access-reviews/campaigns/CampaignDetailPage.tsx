@@ -225,6 +225,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [mfaFilter, setMfaFilter] = useState<string[]>([]);
   const [authMethodFilter, setAuthMethodFilter] = useState<string[]>([]);
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string[]>([]);
   const [sourceMatches, setSourceMatches] = useState<Record<string, SourceMatches>>({});
   const [, startTransition] = useTransition();
 
@@ -260,6 +261,12 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const handleAdminFilterChange = useCallback(
     (value: string[]) => {
       startTransition(() => setAdminFilter(value));
+    },
+    [],
+  );
+  const handleActiveFilterChange = useCallback(
+    (value: string[]) => {
+      startTransition(() => setActiveFilter(value));
     },
     [],
   );
@@ -330,14 +337,16 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     mfa: mfaFilter,
     authMethod: authMethodFilter,
     admin: adminFilter,
-  }), [appliedEmailFilter, connectorFilter, mfaFilter, authMethodFilter, adminFilter]);
+    active: activeFilter,
+  }), [appliedEmailFilter, connectorFilter, mfaFilter, authMethodFilter, adminFilter, activeFilter]);
   const deferredFilters = useDeferredValue(filters);
 
   const hasActiveFilters = deferredFilters.email !== ""
     || deferredFilters.connectorIds.length > 0
     || deferredFilters.mfa.length > 0
     || deferredFilters.authMethod.length > 0
-    || deferredFilters.admin.length > 0;
+    || deferredFilters.admin.length > 0
+    || deferredFilters.active.length > 0;
 
   // Each source section paginates on its own and reports the entries it shows,
   // so the page can still offer select-all and shift-range across connectors.
@@ -859,6 +868,8 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           onAuthMethodFilterChange={handleAuthMethodFilterChange}
           adminFilter={adminFilter}
           onAdminFilterChange={handleAdminFilterChange}
+          activeFilter={activeFilter}
+          onActiveFilterChange={handleActiveFilterChange}
         />
       )}
 

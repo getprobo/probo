@@ -35,6 +35,8 @@ type Props = {
   onAuthMethodFilterChange: (value: string[]) => void;
   adminFilter: ReadonlyArray<string>;
   onAdminFilterChange: (value: string[]) => void;
+  activeFilter: ReadonlyArray<string>;
+  onActiveFilterChange: (value: string[]) => void;
 };
 
 // Filter row styled like the compliance-portal subprocessors toolbar:
@@ -51,6 +53,8 @@ export function AccessEntriesToolbar({
   onAuthMethodFilterChange,
   adminFilter,
   onAdminFilterChange,
+  activeFilter,
+  onActiveFilterChange,
 }: Props) {
   const { t } = useTranslation();
 
@@ -102,6 +106,18 @@ export function AccessEntriesToolbar({
           ]}
           value={adminFilter}
           onChange={onAdminFilterChange}
+        />
+      </div>
+      <div className="w-40 max-sm:w-full">
+        <FilterMultiSelect
+          placeholder={t("campaignDetailPage.filters.allAccountStatuses")}
+          options={[
+            { value: "ACTIVE", label: t("campaignDetailPage.accountStatus.active") },
+            { value: "DISABLED", label: t("campaignDetailPage.accountStatus.disabled") },
+            { value: "UNKNOWN", label: t("campaignDetailPage.accountStatus.unknown") },
+          ]}
+          value={activeFilter}
+          onChange={onActiveFilterChange}
         />
       </div>
       <div className="min-w-60 flex-1 max-sm:w-full max-sm:min-w-0">
