@@ -47,14 +47,6 @@ function LockedAction({
   const { t } = useTranslation("documents");
   const { t: tRoot } = useTranslation();
 
-  if (requested) {
-    return (
-      <Button color="neutral" disabled iconStart={<ClockIcon />}>
-        {t("actions.requested")}
-      </Button>
-    );
-  }
-
   if (ndaHref != null) {
     return (
       <ButtonLink
@@ -65,6 +57,14 @@ function LockedAction({
       >
         {tRoot("nda.unsignedBanner.sign")}
       </ButtonLink>
+    );
+  }
+
+  if (requested) {
+    return (
+      <Button color="neutral" disabled iconStart={<ClockIcon />}>
+        {t("actions.requested")}
+      </Button>
     );
   }
 
@@ -82,7 +82,7 @@ function LockedAction({
 }
 
 // Shown when the viewer resolves a document the visitor may not access. CTA
-// priority: Access requested → Sign NDA → Get Access.
+// priority: Sign NDA → Access requested → Get Access.
 export function DocumentLocked(props: DocumentLockedProps) {
   const { t } = useTranslation("documents");
 
