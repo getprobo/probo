@@ -292,18 +292,20 @@ export function AuthMethodStatus({
   );
 }
 
-export function BooleanStatusIcon({
-  value,
+// Spelled out rather than a check/cross icon: next to MFA a green check reads as
+// "compliant", but holding admin rights is the risk signal a reviewer looks for.
+export function AdminStatus({
+  isAdmin,
   trueLabel,
   falseLabel,
   unknownLabel,
 }: {
-  value: boolean | null | undefined;
+  isAdmin: boolean | null | undefined;
   trueLabel: string;
   falseLabel: string;
   unknownLabel: string;
 }) {
-  if (value == null) {
+  if (isAdmin == null) {
     return (
       <span role="img" aria-label={unknownLabel} title={unknownLabel} className="inline-flex text-txt-tertiary">
         <IconCircleQuestionmark size={16} />
@@ -311,17 +313,17 @@ export function BooleanStatusIcon({
     );
   }
 
-  if (value) {
+  if (isAdmin) {
     return (
-      <span role="img" aria-label={trueLabel} title={trueLabel} className="inline-flex text-txt-success">
-        <IconCircleCheck size={16} />
+      <span aria-label={trueLabel} title={trueLabel} className="text-xs font-medium text-txt-warning">
+        {trueLabel}
       </span>
     );
   }
 
   return (
-    <span role="img" aria-label={falseLabel} title={falseLabel} className="inline-flex text-txt-danger">
-      <IconCircleX size={16} />
+    <span aria-label={falseLabel} title={falseLabel} className="text-xs text-txt-tertiary">
+      {falseLabel}
     </span>
   );
 }

@@ -26,8 +26,8 @@ import { graphql, useFragment } from "react-relay";
 import type { AccessEntryListItem_entry$key } from "#/__generated__/core/AccessEntryListItem_entry.graphql";
 
 import {
+  AdminStatus,
   AuthMethodStatus,
-  BooleanStatusIcon,
   decisionBadgeVariant,
   flagBadgeVariant,
   LastLoginStatus,
@@ -160,8 +160,8 @@ export function AccessEntryListItem({
       <div className={trailing()}>
         <div className={status()}>
           <span className={statusLabel()}>{t("campaignDetailPage.columns.admin")}</span>
-          <BooleanStatusIcon
-            value={entry.isAdmin}
+          <AdminStatus
+            isAdmin={entry.isAdmin}
             trueLabel={t("campaignDetailPage.values.yes")}
             falseLabel={t("campaignDetailPage.values.no")}
             unknownLabel={t("campaignDetailPage.values.unknown")}
