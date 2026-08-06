@@ -623,6 +623,7 @@ input ExportDocumentVersionPDFInput {
     documentVersionId: ID!
     withWatermark: Boolean!
     watermarkText: String
+    watermarkEmail: EmailAddr @deprecated(reason: "Use watermarkText.")
     withSignatures: Boolean!
 }
 
@@ -663,6 +664,7 @@ input BulkExportDocumentsInput {
     documentIds: [ID!]!
     withWatermark: Boolean!
     watermarkText: String
+    watermarkEmail: EmailAddr @deprecated(reason: "Use watermarkText.")
     withSignatures: Boolean!
 }
 

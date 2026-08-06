@@ -2636,12 +2636,12 @@ func (o ExportPDFOptions) validate() error {
 		return nil
 	}
 
-	if o.WatermarkText == nil || strings.TrimSpace(*o.WatermarkText) == "" {
+	if o.WatermarkText == nil {
 		return fmt.Errorf("watermark text is required when with watermark is true")
 	}
 
-	if len(*o.WatermarkText) > pdfutils.MaxWatermarkTextLength {
-		return fmt.Errorf("watermark text must not exceed %d bytes", pdfutils.MaxWatermarkTextLength)
+	if err := pdfutils.ValidateWatermarkText(*o.WatermarkText); err != nil {
+		return fmt.Errorf("cannot validate watermark text: %w", err)
 	}
 
 	return nil

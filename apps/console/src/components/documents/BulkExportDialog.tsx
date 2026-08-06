@@ -36,9 +36,6 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import {
   type ExportFormData,
   exportSchema,
-  getWatermarkTextLength,
-  maxWatermarkTextLength,
-  truncateWatermarkText,
 } from "./watermark";
 
 type Props = {
@@ -64,14 +61,13 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
       {
         defaultValues: {
           withWatermark: false,
-          watermarkText: truncateWatermarkText(defaultEmail),
+          watermarkText: defaultEmail,
           withSignatures: true,
         },
       },
     );
 
     const watchWatermark = watch("withWatermark");
-    const watchWatermarkText = watch("watermarkText") ?? "";
     const watchSignatures = watch("withSignatures");
 
     useImperativeHandle(ref, () => ({
@@ -82,7 +78,9 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
     const onSubmit = async (data: ExportFormData) => {
       const options = {
         ...data,
-        watermarkText: data.withWatermark ? data.watermarkText : undefined,
+        watermarkText: data.withWatermark && data.watermarkText !== defaultEmail
+          ? data.watermarkText
+          : undefined,
       };
       await onExport(options);
       dialogRef.current?.close();
@@ -137,10 +135,6 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                       type="text"
                       placeholder={t("bulkExportDialog.watermark.textPlaceholder")}
                       error={formState.errors.watermarkText?.message}
-                      help={t("bulkExportDialog.watermark.byteCount", {
-                        count: getWatermarkTextLength(watchWatermarkText),
-                        max: maxWatermarkTextLength,
-                      })}
                       autoComplete="off"
                       required
                     />

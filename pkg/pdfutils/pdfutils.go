@@ -71,12 +71,8 @@ func MergePDFs(pdfs ...[]byte) ([]byte, error) {
 }
 
 func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte, error) {
-	if strings.TrimSpace(watermarkText) == "" {
-		return nil, fmt.Errorf("watermark text is required")
-	}
-
-	if len(watermarkText) > MaxWatermarkTextLength {
-		return nil, fmt.Errorf("watermark text must not exceed %d bytes", MaxWatermarkTextLength)
+	if err := ValidateWatermarkText(watermarkText); err != nil {
+		return nil, fmt.Errorf("cannot validate watermark text: %w", err)
 	}
 
 	reader := bytes.NewReader(pdfData)
@@ -119,6 +115,18 @@ func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte,
 	}
 
 	return buf.Bytes(), nil
+}
+
+func ValidateWatermarkText(watermarkText string) error {
+	if strings.TrimSpace(watermarkText) == "" {
+		return fmt.Errorf("watermark text is required")
+	}
+
+	if len(watermarkText) > MaxWatermarkTextLength {
+		return fmt.Errorf("watermark text must not exceed %d bytes", MaxWatermarkTextLength)
+	}
+
+	return nil
 }
 
 func TruncateWatermarkText(watermarkText string) string {

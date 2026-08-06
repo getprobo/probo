@@ -1264,10 +1264,23 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
 	identity := authn.IdentityFromContext(ctx)
 
+	watermarkText := input.WatermarkText
+	if watermarkText == nil && input.WatermarkEmail != nil {
+		watermarkText = new(pdfutils.TruncateWatermarkText(input.WatermarkEmail.String()))
+	}
+	if input.WithWatermark && watermarkText == nil {
+		watermarkText = new(pdfutils.TruncateWatermarkText(identity.EmailAddress.String()))
+	}
+	if input.WithWatermark {
+		if err := pdfutils.ValidateWatermarkText(*watermarkText); err != nil {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+	}
+
 	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
 		WithSignatures: input.WithSignatures,
-		WatermarkText:  input.WatermarkText,
+		WatermarkText:  watermarkText,
 	}
 
 	documentExport, exportErr := r.probo.Documents.RequestExport(ctx, scope, input.DocumentIds, identity.EmailAddress, identity.FullName, options)
@@ -1565,9 +1578,17 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 	}
 
 	watermarkText := input.WatermarkText
+	if watermarkText == nil && input.WatermarkEmail != nil {
+		watermarkText = new(pdfutils.TruncateWatermarkText(input.WatermarkEmail.String()))
+	}
 	if input.WithWatermark && watermarkText == nil {
 		identity := authn.IdentityFromContext(ctx)
 		watermarkText = new(pdfutils.TruncateWatermarkText(identity.EmailAddress.String()))
+	}
+	if input.WithWatermark {
+		if err := pdfutils.ValidateWatermarkText(*watermarkText); err != nil {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 	}
 
 	options := probo.ExportPDFOptions{

@@ -1032,8 +1032,7 @@
       "label": "Ajouter un filigrane",
       "description": "Ajouter un filigrane confidentiel avec un texte personnalisé et un horodatage à tous les PDF",
       "textLabel": "Texte du filigrane",
-      "textPlaceholder": "Saisissez le texte du filigrane",
-      "byteCount": "{{count}} / {{max}} octets"
+      "textPlaceholder": "Saisissez le texte du filigrane"
     },
     "notice": "Les documents seront exportés sous forme de fichiers PDF individuels dans une archive ZIP. Vous recevrez un e-mail lorsque l’export sera prêt à être téléchargé.",
     "actions": {
@@ -1074,8 +1073,7 @@
       "label": "Ajouter un filigrane",
       "description": "Ajouter un filigrane confidentiel avec un texte personnalisé et un horodatage",
       "textLabel": "Texte du filigrane",
-      "textPlaceholder": "Saisissez le texte du filigrane",
-      "byteCount": "{{count}} / {{max}} octets"
+      "textPlaceholder": "Saisissez le texte du filigrane"
     },
     "actions": {
       "download": "Télécharger le PDF",
