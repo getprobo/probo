@@ -142,12 +142,12 @@ func insertPortalRequestWebhookPortal(
 		TenantID:       organizationID.TenantID(),
 		Active:         true,
 		// Slugs are constrained to ^[a-z0-9_-]+$, so lowercase the base64url GID.
-		Slug:                  strings.ToLower(portalID.String()),
-		SearchEngineIndexing:  coredata.SearchEngineIndexingNotIndexable,
-		RightsRequestsEnabled: true,
-		EntityName:            "Portal Request Webhook",
-		CreatedAt:             now,
-		UpdatedAt:             now,
+		Slug:                 strings.ToLower(portalID.String()),
+		SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
+		Capabilities:         coredata.DefaultCompliancePortalCapabilities(),
+		EntityName:           "Portal Request Webhook",
+		CreatedAt:            now,
+		UpdatedAt:            now,
 	}
 
 	err := client.WithTx(

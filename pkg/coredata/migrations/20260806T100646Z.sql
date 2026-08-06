@@ -19,7 +19,7 @@
 -- SOFTWARE.
 
 ALTER TABLE compliance_portals
-  ADD COLUMN rights_requests_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+  ADD COLUMN capabilities JSONB NOT NULL DEFAULT '{"rights_requests": true}'::jsonb;
 
 ALTER TABLE compliance_portals
-  ALTER COLUMN rights_requests_enabled DROP DEFAULT;
+  ALTER COLUMN capabilities DROP DEFAULT;

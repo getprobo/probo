@@ -31,7 +31,7 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 		OrganizationID:        tc.OrganizationID,
 		Active:                tc.Active,
 		SearchEngineIndexing:  tc.SearchEngineIndexing,
-		RightsRequestsEnabled: tc.RightsRequestsEnabled,
+		RightsRequestsEnabled: tc.Capabilities.RightsRequests,
 		EntityName:            tc.EntityName,
 		Description:           tc.Description,
 		WebsiteURL:            tc.WebsiteURL,

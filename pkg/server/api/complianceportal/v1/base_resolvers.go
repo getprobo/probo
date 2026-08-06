@@ -249,7 +249,7 @@ func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
 	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
-	if !compliancePage.RightsRequestsEnabled {
+	if !compliancePage.Capabilities.RightsRequests {
 		return nil, gqlutils.NotFoundf(ctx, "rights requests are not available on this compliance portal")
 	}
 

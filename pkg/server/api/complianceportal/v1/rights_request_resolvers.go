@@ -47,6 +47,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create rights request", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

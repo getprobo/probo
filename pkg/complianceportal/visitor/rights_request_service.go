@@ -91,7 +91,7 @@ func (s *Service) CreateRightsRequest(
 				return err
 			}
 
-			if !compliancePortal.RightsRequestsEnabled {
+			if !compliancePortal.Capabilities.RightsRequests {
 				return ErrRightsRequestsDisabled
 			}
 

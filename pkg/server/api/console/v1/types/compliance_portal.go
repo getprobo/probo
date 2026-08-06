@@ -78,7 +78,7 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 		},
 		Active:                tc.Active,
 		SearchEngineIndexing:  tc.SearchEngineIndexing,
-		RightsRequestsEnabled: tc.RightsRequestsEnabled,
+		RightsRequestsEnabled: tc.Capabilities.RightsRequests,
 		Description:           tc.Description,
 		WebsiteURL:            tc.WebsiteURL,
 		Email:                 tc.Email,

@@ -210,16 +210,16 @@ func (s *Service) Create(
 			}
 
 			portal = &coredata.CompliancePortal{
-				ID:                    gid.New(tenantID, coredata.CompliancePortalEntityType),
-				OrganizationID:        organization.ID,
-				TenantID:              tenantID,
-				Active:                false,
-				EntityName:            req.EntityName,
-				SearchEngineIndexing:  coredata.SearchEngineIndexingNotIndexable,
-				RightsRequestsEnabled: true,
-				MailingListID:         &mailingList.ID,
-				CreatedAt:             now,
-				UpdatedAt:             now,
+				ID:                   gid.New(tenantID, coredata.CompliancePortalEntityType),
+				OrganizationID:       organization.ID,
+				TenantID:             tenantID,
+				Active:               false,
+				EntityName:           req.EntityName,
+				SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
+				Capabilities:         coredata.DefaultCompliancePortalCapabilities(),
+				MailingListID:        &mailingList.ID,
+				CreatedAt:            now,
+				UpdatedAt:            now,
 			}
 
 			const maxSlugAttempts = 5
@@ -407,7 +407,7 @@ func (s *Service) Update(
 			}
 
 			if req.RightsRequestsEnabled != nil {
-				portal.RightsRequestsEnabled = *req.RightsRequestsEnabled
+				portal.Capabilities.RightsRequests = *req.RightsRequestsEnabled
 			}
 
 			if req.EntityName != nil {
