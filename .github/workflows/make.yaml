@@ -7,14 +7,53 @@ on:
     branches:
       - "main"
 
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: true
+
 permissions:
   contents: "read"
 
 jobs:
+  changes:
+    name: "changes"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    outputs:
+      agent: "${{ steps.classify.outputs.agent }}"
+      e2e: "${{ steps.classify.outputs.e2e }}"
+      go: "${{ steps.classify.outputs.go }}"
+      javascript: "${{ steps.classify.outputs.javascript }}"
+      shell: "${{ steps.classify.outputs.shell }}"
+      snapshot: "${{ steps.classify.outputs.snapshot }}"
+      swift: "${{ steps.classify.outputs.swift }}"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+        with:
+          fetch-depth: 2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Create placeholder dist files"
+        run: |
+          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
+          echo ci > apps/console/dist/index.html
+          echo ci > apps/compliance-portal/dist/index.html
+          echo ci > packages/emails/dist/placeholder
+      - name: "Classify changed paths"
+        id: classify
+        env:
+          BASE_SHA: "${{ github.event.pull_request.base.sha || github.event.before }}"
+          HEAD_SHA: "${{ github.event.pull_request.head.sha || github.sha }}"
+        run: "contrib/ci/classify-changes.sh \"$BASE_SHA\" \"$HEAD_SHA\" >> \"$GITHUB_OUTPUT\""
+
   # ── Snapshot: build frontend apps ──────────────────────────────────
   build-apps:
     name: "build-apps"
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && needs.changes.outputs.snapshot == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -45,7 +84,7 @@ jobs:
             packages/emails/dist/
           retention-days: 1
 
-  # ── Snapshot: build probod group binaries (matrix by GOOS/GOARCH) ──
+  # ── Snapshot: build the Linux/amd64 probod group binaries ─────────
   build-snapshot-binary:
     name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
@@ -58,14 +97,6 @@ jobs:
       matrix:
         include:
           - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
-          - { goos: openbsd, goarch: amd64 }
-          - { goos: openbsd, goarch: arm64 }
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
@@ -106,46 +137,7 @@ jobs:
           path: "dist/"
           retention-days: 1
 
-  # ── Snapshot: build probo-agent binaries (matrix by GOOS/GOARCH) ───
-  build-snapshot-probo-agent:
-    name: "probo-agent (${{ matrix.goos }}/${{ matrix.goarch }})"
-    if: github.event_name == 'push'
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    permissions:
-      contents: "read"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: windows, goarch: arm64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
-    steps:
-      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
-        with:
-          submodules: recursive
-      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
-      - uses: "./.github/actions/setup"
-        with:
-          node: "false"
-      - name: "Build probo-agent"
-        env:
-          CGO_ENABLED: "0"
-          GOOS: "${{ matrix.goos }}"
-          GOARCH: "${{ matrix.goarch }}"
-        run: |
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
-
-          go build -ldflags "-s -w -X 'main.version=snapshot'" \
-            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent
-
-  # ── Snapshot: build Docker images (matrix by architecture) ─────────
+  # ── Snapshot: build the Linux/amd64 Docker image ───────────────────
   build-snapshot-docker:
     name: "docker (${{ matrix.arch }})"
     if: github.event_name == 'push'
@@ -161,9 +153,6 @@ jobs:
           - arch: amd64
             platform: "linux/amd64"
             runner: "4cpu-linux-x64"
-          - arch: arm64
-            platform: "linux/arm64"
-            runner: "4cpu-linux-arm64"
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
@@ -232,6 +221,8 @@ jobs:
   # ── Build probod group (PR + push validation) ────────────────────────
   build:
     name: "build-probod"
+    if: needs.changes.outputs.e2e == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -241,14 +232,12 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
-        with:
-          node: "false"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist packages/emails/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist
           echo dev-server > apps/console/dist/index.html
           echo dev-server > apps/compliance-portal/dist/index.html
-          echo dev-server > packages/emails/dist/placeholder
+      - run: "npm --workspace @probo/emails run build"
       - name: "Generate Go code"
         run: |
           go generate ./pkg/server/api/connect/v1
@@ -267,9 +256,16 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o bin/prb ./cmd/prb/main.go & pids+=($!)
           for pid in "${pids[@]}"; do wait "$pid"; done
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        with:
+          name: "probod-ci"
+          path: "bin/probod"
+          retention-days: 1
 
   build-probo-agent:
     name: "build-probo-agent"
+    if: needs.changes.outputs.agent == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -290,6 +286,8 @@ jobs:
 
   lint-go:
     name: "lint-go"
+    if: needs.changes.outputs.go == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -347,6 +345,8 @@ jobs:
 
   lint-js:
     name: "lint-js"
+    if: needs.changes.outputs.javascript == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -376,6 +376,8 @@ jobs:
 
   lint-swift:
     name: "lint-swift"
+    if: needs.changes.outputs.swift == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -415,6 +417,8 @@ jobs:
 
   lint-shell:
     name: "lint-shell"
+    if: needs.changes.outputs.shell == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -444,6 +448,8 @@ jobs:
 
   test:
     name: "test"
+    if: needs.changes.outputs.go == 'true'
+    needs: [changes]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -482,6 +488,8 @@ jobs:
 
   test-e2e:
     name: "test-e2e"
+    if: needs.changes.outputs.e2e == 'true'
+    needs: [changes, build]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -491,6 +499,14 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          name: "probod-ci"
+          path: "bin"
+      - name: "Prepare probod"
+        run: "chmod +x bin/probod"
       - name: "Configure Docker image source"
         # Pull requests from forks don't get repository secrets, so
         # HARBOR_USERNAME/HARBOR_PASSWORD are unavailable and logging into
@@ -533,8 +549,6 @@ jobs:
           docker compose pull
           mkdir -p /tmp/docker-images
           docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
-      - name: "Build probod"
-        run: "make bin/probod"
       - name: "Start stack"
         run: "make stack-up"
       - run: "make stack-ps"

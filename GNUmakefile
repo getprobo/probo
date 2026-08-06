@@ -37,6 +37,8 @@ SHELL_SCRIPTS := \
 	cmd/probo-agent/installer/macos/reinstall.sh \
 	cmd/probo-agent/installer/macos/uninstall.sh \
 	compose/postgres/01_probod.sh \
+	contrib/ci/classify-changes.sh \
+	contrib/ci/go-package-affected.sh \
 	contrib/lima/provision.sh \
 	contrib/lima/sandbox.sh \
 	contrib/merge-graphql-schema.sh \
