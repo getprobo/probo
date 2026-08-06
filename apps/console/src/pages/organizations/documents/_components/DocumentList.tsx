@@ -274,13 +274,13 @@ export function DocumentList(props: {
   const handleBulkExport = async (options: {
     withWatermark: boolean;
     withSignatures: boolean;
-    watermarkEmail?: string;
+    watermarkText?: string;
   }) => {
     const input = {
       documentIds: selection,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
-      ...(options.withWatermark && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+      ...(options.withWatermark && options.watermarkText && { watermarkEmail: options.watermarkText }),
     };
     await bulkExportDocuments({ variables: { input } });
     clear();

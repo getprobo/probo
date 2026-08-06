@@ -1266,7 +1266,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
 		WithSignatures: input.WithSignatures,
-		WatermarkEmail: input.WatermarkEmail,
+		WatermarkText:  input.WatermarkEmail,
 	}
 
 	documentExport, exportErr := r.probo.Documents.RequestExport(ctx, scope, input.DocumentIds, identity.EmailAddress, identity.FullName, options)
@@ -1563,16 +1563,16 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 		return nil, err
 	}
 
-	watermarkEmail := input.WatermarkEmail
-	if input.WithWatermark && watermarkEmail == nil {
+	watermarkText := input.WatermarkEmail
+	if input.WithWatermark && watermarkText == nil {
 		identity := authn.IdentityFromContext(ctx)
-		watermarkEmail = &identity.EmailAddress
+		watermarkText = new(identity.EmailAddress.String())
 	}
 
 	options := probo.ExportPDFOptions{
 		WithSignatures: input.WithSignatures,
 		WithWatermark:  input.WithWatermark,
-		WatermarkEmail: watermarkEmail,
+		WatermarkText:  watermarkText,
 	}
 
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)
@@ -1620,7 +1620,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	options := probo.ExportPDFOptions{
 		WithSignatures: false,
 		WithWatermark:  true,
-		WatermarkEmail: &identity.EmailAddress,
+		WatermarkText:  new(identity.EmailAddress.String()),
 	}
 
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)

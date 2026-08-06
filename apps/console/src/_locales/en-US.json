@@ -503,9 +503,9 @@
     },
     "watermark": {
       "label": "Add watermark",
-      "description": "Add confidential watermark with email and timestamp to all PDFs",
-      "emailLabel": "Watermark email",
-      "emailPlaceholder": "Enter email address"
+      "description": "Add a confidential watermark with custom text and a timestamp to all PDFs",
+      "textLabel": "Watermark text",
+      "textPlaceholder": "Enter watermark text"
     },
     "notice": "The documents will be exported as individual PDFs in a ZIP file. You will receive an email when the export is ready for download.",
     "actions": {
@@ -544,9 +544,9 @@
     },
     "watermark": {
       "label": "Add watermark",
-      "description": "Add confidential watermark with email and timestamp",
-      "emailLabel": "Watermark email",
-      "emailPlaceholder": "Enter email address"
+      "description": "Add a confidential watermark with custom text and a timestamp",
+      "textLabel": "Watermark text",
+      "textPlaceholder": "Enter watermark text"
     },
     "actions": {
       "download": "Download PDF",

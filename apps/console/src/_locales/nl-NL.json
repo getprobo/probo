@@ -1034,9 +1034,9 @@
     },
     "watermark": {
       "label": "Watermerk toevoegen",
-      "description": "Voeg een vertrouwelijk watermerk toe met e-mailadres en tijdstempel aan alle PDF's",
-      "emailLabel": "E-mailadres watermerk",
-      "emailPlaceholder": "Voer e-mailadres in"
+      "description": "Voeg een vertrouwelijk watermerk met aangepaste tekst en een tijdstempel toe aan alle PDF's",
+      "textLabel": "Watermerktekst",
+      "textPlaceholder": "Voer watermerktekst in"
     },
     "notice": "De documenten worden geëxporteerd als afzonderlijke PDF's in een ZIP-bestand. U ontvangt een e-mail zodra de export gereed is om te downloaden.",
     "actions": {
@@ -1075,9 +1075,9 @@
     },
     "watermark": {
       "label": "Watermerk toevoegen",
-      "description": "Voeg een vertrouwelijk watermerk toe met e-mailadres en tijdstempel",
-      "emailLabel": "E-mailadres watermerk",
-      "emailPlaceholder": "Voer e-mailadres in"
+      "description": "Voeg een vertrouwelijk watermerk met aangepaste tekst en een tijdstempel toe",
+      "textLabel": "Watermerktekst",
+      "textPlaceholder": "Voer watermerktekst in"
     },
     "actions": {
       "download": "PDF downloaden",

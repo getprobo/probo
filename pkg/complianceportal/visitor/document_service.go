@@ -90,7 +90,7 @@ func (s *Service) ExportDocumentPDF(
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
-	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email.String())
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}

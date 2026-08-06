@@ -36,19 +36,16 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const bulkExportSchema = z.object({
   withWatermark: z.boolean(),
-  watermarkEmail: z.string().optional().or(z.literal("")),
+  watermarkText: z.string().optional().or(z.literal("")),
   withSignatures: z.boolean(),
 }).refine((data) => {
-  if (data.withWatermark && (!data.watermarkEmail || data.watermarkEmail === "")) {
-    return false;
-  }
-  if (data.withWatermark && data.watermarkEmail && !z.string().email().safeParse(data.watermarkEmail).success) {
+  if (data.withWatermark && (!data.watermarkText || data.watermarkText.trim() === "")) {
     return false;
   }
   return true;
 }, {
-  message: "Please enter a valid email address",
-  path: ["watermarkEmail"],
+  message: "Please enter watermark text",
+  path: ["watermarkText"],
 });
 
 type BulkExportFormData = z.infer<typeof bulkExportSchema>;
@@ -76,7 +73,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
       {
         defaultValues: {
           withWatermark: false,
-          watermarkEmail: defaultEmail,
+          watermarkText: defaultEmail,
           withSignatures: true,
         },
       },
@@ -93,7 +90,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
     const onSubmit = async (data: BulkExportFormData) => {
       const options = {
         ...data,
-        watermarkEmail: data.withWatermark ? data.watermarkEmail : undefined,
+        watermarkText: data.withWatermark ? data.watermarkText : undefined,
       };
       await onExport(options);
       dialogRef.current?.close();
@@ -143,11 +140,11 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
                 {watchWatermark && (
                   <div className="ml-6">
                     <Field
-                      label={t("bulkExportDialog.watermark.emailLabel")}
-                      {...register("watermarkEmail")}
-                      type="email"
-                      placeholder={t("bulkExportDialog.watermark.emailPlaceholder")}
-                      error={formState.errors.watermarkEmail?.message}
+                      label={t("bulkExportDialog.watermark.textLabel")}
+                      {...register("watermarkText")}
+                      type="text"
+                      placeholder={t("bulkExportDialog.watermark.textPlaceholder")}
+                      error={formState.errors.watermarkText?.message}
                       autoComplete="off"
                       required
                     />
