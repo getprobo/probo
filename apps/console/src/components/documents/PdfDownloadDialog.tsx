@@ -34,16 +34,16 @@ import { useTranslation } from "react-i18next";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import {
+  type ExportFormData,
+  exportSchema,
   getWatermarkTextLength,
   maxWatermarkTextLength,
   truncateWatermarkText,
-  type WatermarkExportFormData,
-  watermarkExportSchema,
 } from "./watermark";
 
 type Props = {
   children?: ReactNode;
-  onDownload: (options: WatermarkExportFormData) => void;
+  onDownload: (options: ExportFormData) => void;
   isLoading?: boolean;
   defaultEmail: string;
 };
@@ -59,7 +59,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     const dialogRef = useDialogRef();
 
     const { register, handleSubmit, formState, watch, setValue }
-      = useFormWithSchema(watermarkExportSchema, {
+      = useFormWithSchema(exportSchema, {
         defaultValues: {
           withWatermark: false,
           watermarkText: truncateWatermarkText(defaultEmail),
@@ -76,7 +76,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
       close: () => dialogRef.current?.close(),
     }));
 
-    const onSubmit = (data: WatermarkExportFormData) => {
+    const onSubmit = (data: ExportFormData) => {
       const options = {
         ...data,
         watermarkText: data.withWatermark ? data.watermarkText : undefined,

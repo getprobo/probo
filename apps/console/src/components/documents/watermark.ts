@@ -24,7 +24,7 @@ export const maxWatermarkTextLength = 64;
 
 const textEncoder = new TextEncoder();
 
-export const watermarkExportSchema = z.object({
+export const exportSchema = z.object({
   withWatermark: z.boolean(),
   watermarkText: z.string().optional(),
   withSignatures: z.boolean(),
@@ -43,7 +43,7 @@ export const watermarkExportSchema = z.object({
   },
 );
 
-export type WatermarkExportFormData = z.infer<typeof watermarkExportSchema>;
+export type ExportFormData = z.infer<typeof exportSchema>;
 
 export function getWatermarkTextLength(watermarkText: string): number {
   return textEncoder.encode(watermarkText).length;
