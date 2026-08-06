@@ -42,7 +42,11 @@ func hubspotRegistration() *Registration {
 			// the host.
 			APIBase: "https://api.hubapi.com",
 		},
-		OAuth2Scopes:   []string{"settings.users.read", "crm.objects.owners.read"},
+		OAuth2Scopes: []string{
+			"settings.users.read",
+			"crm.objects.owners.read",
+			"account-info.security.read",
+		},
 		SupportsAPIKey: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewHubSpotDriver(c, ep.APIBase), nil

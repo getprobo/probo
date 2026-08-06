@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- HubSpot access-review connector now derives last login from successful events on the Account Activity login API (past 90 days). Existing HubSpot connectors must reconnect (or private apps must grant `account-info.security.read`) before last-login population works; missing scope leaves last login unset rather than failing the fetch.
+
 ### Fixed
 
 - HubSpot access-review connector now marks deactivated/archived users as inactive by consulting the Owners API (`archived=true`) instead of treating every Settings Users row as active. Existing HubSpot connectors must reconnect (or private apps must grant `crm.objects.owners.read`) before inactive detection works.

@@ -1,8 +1,9 @@
 # Hand-authored cassette for HubSpot access-review fetch (Bearer token
-# stripped by the recorder). Three interactions mirror ListAccounts:
+# stripped by the recorder). Four interactions mirror ListAccounts:
 #   1. GET /settings/v3/users/roles — role name map
 #   2. GET /settings/v3/users — provisioned users (no status field)
 #   3. GET /crm/v3/owners?archived=true — deactivated owners
+#   4. GET /account-info/v3/activity/login — last login (past 90 days)
 # Coverage: active super-admin with a role, still-listed deactivated user
 # matched by userIdIncludingInactive, archived-only owner with empty name
 # (display falls back to email), and a non-PERSON queue owner that is skipped.
@@ -85,6 +86,34 @@ interactions:
         content_length: -1
         uncompressed: true
         body: '{"results":[{"id":"owner-2","email":"jane.doe@example.com","firstName":"Jane","lastName":"Doe","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000002},{"id":"owner-3","email":"gone@example.com","firstName":"","lastName":"","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":10000003},{"id":"queue-1","email":"queue@example.com","type":"QUEUE","archived":true,"userId":null,"userIdIncludingInactive":null}]}'
+        headers:
+            Content-Type:
+                - application/json;charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.hubapi.com
+        form:
+            limit:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.hubapi.com/account-info/v3/activity/login?limit=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[{"id":"login-1","loginAt":"2025-02-07T14:12:13.544Z","userId":10000001,"email":"john.smith@example.com","loginSucceeded":true},{"id":"login-2","loginAt":"2025-01-01T10:00:00.000Z","userId":10000001,"email":"john.smith@example.com","loginSucceeded":true},{"id":"login-3","loginAt":"2025-02-08T09:00:00.000Z","userId":10000002,"email":"jane.doe@example.com","loginSucceeded":false},{"id":"login-4","loginAt":"2025-01-15T12:00:00.000Z","userId":10000002,"email":"jane.doe@example.com","loginSucceeded":true}]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8

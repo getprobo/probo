@@ -1,7 +1,6 @@
-# Hand-authored cassette: Settings user ID differs from the archived owner's
-# userIdIncludingInactive, but emails match (case-insensitive). The driver
-# must mark the settings row inactive and must not emit a second archived-only
-# row for the same person.
+# Hand-authored cassette: login activity rejects the token for missing
+# account-info.security.read. Users and owners succeed; the driver must
+# still return accounts with LastLogin unset rather than failing the fetch.
 version: 2
 interactions:
     - id: 0
@@ -50,7 +49,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"settings-1","email":"Jane.Doe@example.com","firstName":"Jane","lastName":"Doe","roleIds":[],"superAdmin":true}]}'
+        body: '{"results":[{"id":"10000001","email":"john.smith@example.com","firstName":"John","lastName":"Smith","roleIds":[],"superAdmin":false}]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
@@ -80,7 +79,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[{"id":"owner-9","email":"jane.doe@example.com","firstName":"","lastName":"","type":"PERSON","archived":true,"userId":null,"userIdIncludingInactive":999}]}'
+        body: '{"results":[]}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
@@ -108,10 +107,10 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"results":[]}'
+        body: '{"status":"error","message":"This app hasn''t been granted all required scopes to make this call.","category":"MISSING_SCOPES"}'
         headers:
             Content-Type:
                 - application/json;charset=utf-8
-        status: 200 OK
-        code: 200
+        status: 403 Forbidden
+        code: 403
         duration: 100ms
