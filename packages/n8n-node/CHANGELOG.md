@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.215.1] - 2026-08-06
+
+### Fixed
+
+- Organization Get Many: send `states: ['ACTIVE']` instead of the removed `state` field so the operation works again against servers that only accept the multi-value `ProfileFilter`
+
 ## [0.215.0] - 2026-08-05
 
 ### Added
