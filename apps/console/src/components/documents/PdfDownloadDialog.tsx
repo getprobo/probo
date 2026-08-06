@@ -36,12 +36,16 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 const pdfDownloadSchema = z.object({
   withWatermark: z.boolean(),
-  watermarkEmail: z
-    .string()
-    .email("Please enter a valid email address")
-    .optional()
-    .or(z.literal("")),
+  watermarkText: z.string().optional().or(z.literal("")),
   withSignatures: z.boolean(),
+}).refine((data) => {
+  if (data.withWatermark && (!data.watermarkText || data.watermarkText.trim() === "")) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please enter watermark text",
+  path: ["watermarkText"],
 });
 
 type PdfDownloadFormData = z.infer<typeof pdfDownloadSchema>;
@@ -67,7 +71,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
       = useFormWithSchema(pdfDownloadSchema, {
         defaultValues: {
           withWatermark: false,
-          watermarkEmail: defaultEmail,
+          watermarkText: defaultEmail,
           withSignatures: true,
         },
       });
@@ -83,7 +87,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     const onSubmit = (data: PdfDownloadFormData) => {
       const options = {
         ...data,
-        watermarkEmail: data.withWatermark ? data.watermarkEmail : undefined,
+        watermarkText: data.withWatermark ? data.watermarkText : undefined,
       };
       onDownload(options);
       dialogRef.current?.close();
@@ -133,11 +137,11 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                 {watchWatermark && (
                   <div className="ml-6">
                     <Field
-                      label={t("pdfDownloadDialog.watermark.emailLabel")}
-                      {...register("watermarkEmail")}
-                      type="email"
-                      placeholder={t("pdfDownloadDialog.watermark.emailPlaceholder")}
-                      error={formState.errors.watermarkEmail?.message}
+                      label={t("pdfDownloadDialog.watermark.textLabel")}
+                      {...register("watermarkText")}
+                      type="text"
+                      placeholder={t("pdfDownloadDialog.watermark.textPlaceholder")}
+                      error={formState.errors.watermarkText?.message}
                       autoComplete="off"
                       required
                     />
