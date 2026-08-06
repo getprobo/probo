@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.212.0] - 2026-08-06
+
+### Added
+
+- `--rights-requests-enabled` flag on `prb compliance-portal update`, to enable or disable the public Requests surface on the compliance portal
+
 ## [0.211.0] - 2026-08-05
 
 ### Added
