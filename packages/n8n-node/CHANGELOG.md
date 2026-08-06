@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.216.0] - 2026-08-06
+
+### Added
+
+- Access Review: `Read Campaign Access Entries` operation, to read the access entries for an access review campaign
+- Compliance Portal `Update`: `Rights Requests Enabled` option, to enable or disable rights requests on the compliance portal
+
 ## [0.215.1] - 2026-08-06
 
 ### Fixed
