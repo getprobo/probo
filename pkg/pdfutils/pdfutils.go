@@ -39,6 +39,7 @@ import (
 )
 
 const (
+	MaxWatermarkTextLength  = 64
 	watermarkFontSize       = 90
 	watermarkRotationDegree = -55.0
 	watermarkOpacity        = 0.1
@@ -68,6 +69,10 @@ func MergePDFs(pdfs ...[]byte) ([]byte, error) {
 }
 
 func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte, error) {
+	if len(watermarkText) > MaxWatermarkTextLength {
+		return nil, fmt.Errorf("watermark text must not exceed %d bytes", MaxWatermarkTextLength)
+	}
+
 	reader := bytes.NewReader(pdfData)
 
 	watermarkLines := []string{

@@ -34,9 +34,14 @@ import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
+const maxWatermarkTextLength = 64;
+
 const pdfDownloadSchema = z.object({
   withWatermark: z.boolean(),
-  watermarkText: z.string().optional().or(z.literal("")),
+  watermarkText: z.string().refine(
+    value => new TextEncoder().encode(value).length <= maxWatermarkTextLength,
+    `Watermark text must not exceed ${maxWatermarkTextLength} bytes`,
+  ).optional().or(z.literal("")),
   withSignatures: z.boolean(),
 }).refine((data) => {
   if (data.withWatermark && (!data.watermarkText || data.watermarkText.trim() === "")) {
@@ -140,6 +145,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                       label={t("pdfDownloadDialog.watermark.textLabel")}
                       {...register("watermarkText")}
                       type="text"
+                      maxLength={maxWatermarkTextLength}
                       placeholder={t("pdfDownloadDialog.watermark.textPlaceholder")}
                       error={formState.errors.watermarkText?.message}
                       autoComplete="off"

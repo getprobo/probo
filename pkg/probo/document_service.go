@@ -1788,10 +1788,8 @@ func (s *DocumentService) RequestExport(
 
 	exportJob := &coredata.ExportJob{}
 
-	if options.WithWatermark {
-		if options.WatermarkText == nil {
-			return nil, fmt.Errorf("watermark text is required when with watermark is true")
-		}
+	if err := options.validate(); err != nil {
+		return nil, fmt.Errorf("cannot validate PDF export options: %w", err)
 	}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
@@ -2633,12 +2631,32 @@ type ExportPDFOptions struct {
 	WithSignatures bool
 }
 
+func (o ExportPDFOptions) validate() error {
+	if !o.WithWatermark {
+		return nil
+	}
+
+	if o.WatermarkText == nil {
+		return fmt.Errorf("watermark text is required when with watermark is true")
+	}
+
+	if len(*o.WatermarkText) > pdfutils.MaxWatermarkTextLength {
+		return fmt.Errorf("watermark text must not exceed %d bytes", pdfutils.MaxWatermarkTextLength)
+	}
+
+	return nil
+}
+
 func (s *DocumentService) ExportPDF(
 	ctx context.Context, scope coredata.Scoper,
 	documentVersionID gid.GID,
 	options ExportPDFOptions,
 ) ([]byte, error) {
 	var data []byte
+
+	if err := options.validate(); err != nil {
+		return nil, fmt.Errorf("cannot validate PDF export options: %w", err)
+	}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -3116,6 +3134,10 @@ func (s *DocumentService) Export(
 	file io.Writer,
 	options ExportPDFOptions,
 ) (err error) {
+	if err := options.validate(); err != nil {
+		return fmt.Errorf("cannot validate PDF export options: %w", err)
+	}
+
 	archive := zip.NewWriter(file)
 
 	defer func() {
