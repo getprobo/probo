@@ -367,6 +367,7 @@ type CompliancePortal implements Node
     id: ID!
     active: Boolean!
     searchEngineIndexing: SearchEngineIndexing!
+    rightsRequestsEnabled: Boolean!
     logo: File @goField(forceResolver: true)
     darkLogo: File @goField(forceResolver: true)
     nda: File @goField(forceResolver: true)
@@ -915,6 +916,7 @@ input UpdateCompliancePortalInput {
     compliancePortalId: ID!
     active: Boolean
     searchEngineIndexing: SearchEngineIndexing
+    rightsRequestsEnabled: Boolean
     entityName: String
     description: String @goField(omittable: true)
     websiteUrl: String @goField(omittable: true)

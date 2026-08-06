@@ -36,6 +36,7 @@ mutation($input: UpdateCompliancePortalInput!) {
       id
       active
       searchEngineIndexing
+      rightsRequestsEnabled
       entityName
       description
       websiteUrl
@@ -49,28 +50,30 @@ mutation($input: UpdateCompliancePortalInput!) {
 type updateResponse struct {
 	UpdateCompliancePortal struct {
 		CompliancePortal struct {
-			ID                   string  `json:"id"`
-			Active               bool    `json:"active"`
-			SearchEngineIndexing string  `json:"searchEngineIndexing"`
-			EntityName           string  `json:"entityName"`
-			Description          *string `json:"description"`
-			WebsiteURL           *string `json:"websiteUrl"`
-			Email                *string `json:"email"`
-			HeadquarterAddress   *string `json:"headquarterAddress"`
+			ID                    string  `json:"id"`
+			Active                bool    `json:"active"`
+			SearchEngineIndexing  string  `json:"searchEngineIndexing"`
+			RightsRequestsEnabled bool    `json:"rightsRequestsEnabled"`
+			EntityName            string  `json:"entityName"`
+			Description           *string `json:"description"`
+			WebsiteURL            *string `json:"websiteUrl"`
+			Email                 *string `json:"email"`
+			HeadquarterAddress    *string `json:"headquarterAddress"`
 		} `json:"compliancePortal"`
 	} `json:"updateCompliancePortal"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagPortal               string
-		flagActive               bool
-		flagSearchEngineIndexing string
-		flagDescription          string
-		flagWebsiteURL           string
-		flagEmail                string
-		flagHeadquarterAddress   string
-		flagEntityName           string
+		flagPortal                string
+		flagActive                bool
+		flagSearchEngineIndexing  string
+		flagRightsRequestsEnabled bool
+		flagDescription           string
+		flagWebsiteURL            string
+		flagEmail                 string
+		flagHeadquarterAddress    string
+		flagEntityName            string
 	)
 
 	cmd := &cobra.Command{
@@ -80,7 +83,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
   prb compliance-portal update --active
 
   # Disable search engine indexing
-  prb compliance-portal update --search-engine-indexing NOT_INDEXABLE`,
+  prb compliance-portal update --search-engine-indexing NOT_INDEXABLE
+
+  # Disable rights requests on the portal
+  prb compliance-portal update --rights-requests-enabled=false`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -115,6 +121,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				input["searchEngineIndexing"] = flagSearchEngineIndexing
+			}
+
+			if cmd.Flags().Changed("rights-requests-enabled") {
+				input["rightsRequestsEnabled"] = flagRightsRequestsEnabled
 			}
 
 			if cmd.Flags().Changed("description") {
@@ -174,6 +184,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().BoolVar(&flagActive, "active", false, "Enable or disable the compliance portal")
 	cmd.Flags().StringVar(&flagSearchEngineIndexing, "search-engine-indexing", "", "Search engine indexing: INDEXABLE, NOT_INDEXABLE")
+	cmd.Flags().BoolVar(&flagRightsRequestsEnabled, "rights-requests-enabled", false, "Enable or disable rights requests on the compliance portal")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Compliance page description")
 	cmd.Flags().StringVar(&flagWebsiteURL, "website-url", "", "Compliance page website URL")
 	cmd.Flags().StringVar(&flagEmail, "email", "", "Compliance page contact email")

@@ -43,6 +43,7 @@ type (
 		Active                       bool                 `db:"active"`
 		Slug                         string               `db:"slug"`
 		SearchEngineIndexing         SearchEngineIndexing `db:"search_engine_indexing"`
+		RightsRequestsEnabled        bool                 `db:"rights_requests_enabled"`
 		MailingListID                *gid.GID             `db:"mailing_list_id"`
 		LogoFileID                   *gid.GID             `db:"logo_file_id"`
 		DarkLogoFileID               *gid.GID             `db:"dark_logo_file_id"`
@@ -126,6 +127,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	rights_requests_enabled,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -185,6 +187,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	rights_requests_enabled,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -245,6 +248,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	rights_requests_enabled,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -332,6 +336,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	rights_requests_enabled,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -391,6 +396,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	rights_requests_enabled,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -446,6 +452,7 @@ INSERT INTO compliance_portals (
 	active,
 	slug,
 	search_engine_indexing,
+	rights_requests_enabled,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -466,6 +473,7 @@ INSERT INTO compliance_portals (
 	@active,
 	@slug,
 	@search_engine_indexing,
+	@rights_requests_enabled,
 	@non_disclosure_agreement_file_id,
 	@default_domain_id,
 	@custom_domain_id,
@@ -489,6 +497,7 @@ INSERT INTO compliance_portals (
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
+		"rights_requests_enabled":          tc.RightsRequestsEnabled,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,
@@ -526,6 +535,7 @@ SET
 	active = @active,
 	slug = @slug,
 	search_engine_indexing = @search_engine_indexing,
+	rights_requests_enabled = @rights_requests_enabled,
 	logo_file_id = @logo_file_id,
 	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
@@ -551,6 +561,7 @@ WHERE
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
+		"rights_requests_enabled":          tc.RightsRequestsEnabled,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,

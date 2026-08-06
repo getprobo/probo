@@ -44,7 +44,7 @@ import { RightsRequestListItem } from "./_components/RightsRequestListItem";
 import { requestsLayout } from "./variants";
 
 export const requestsPageQuery = graphql`
-  query RequestsPageQuery {
+  query RequestsPageQuery @throwOnFieldError {
     viewer {
       email
       fullName

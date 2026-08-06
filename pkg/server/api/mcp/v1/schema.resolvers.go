@@ -5027,6 +5027,10 @@ func (r *Resolver) UpdateCompliancePortalTool(ctx context.Context, req *mcp.Call
 		updateReq.SearchEngineIndexing = *sei
 	}
 
+	if rightsRequestsEnabled := UnwrapOmittable(input.RightsRequestsEnabled); rightsRequestsEnabled != nil {
+		updateReq.RightsRequestsEnabled = *rightsRequestsEnabled
+	}
+
 	updateReq.Description = UnwrapOmittable(input.Description)
 	updateReq.WebsiteURL = UnwrapOmittable(input.WebsiteURL)
 	updateReq.Email = UnwrapOmittable(input.Email)

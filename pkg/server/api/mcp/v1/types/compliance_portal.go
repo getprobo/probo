@@ -27,17 +27,18 @@ import (
 
 func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	return &CompliancePortal{
-		ID:                   tc.ID,
-		OrganizationID:       tc.OrganizationID,
-		Active:               tc.Active,
-		SearchEngineIndexing: tc.SearchEngineIndexing,
-		EntityName:           tc.EntityName,
-		Description:          tc.Description,
-		WebsiteURL:           tc.WebsiteURL,
-		Email:                tc.Email,
-		HeadquarterAddress:   tc.HeadquarterAddress,
-		CreatedAt:            tc.CreatedAt,
-		UpdatedAt:            tc.UpdatedAt,
+		ID:                    tc.ID,
+		OrganizationID:        tc.OrganizationID,
+		Active:                tc.Active,
+		SearchEngineIndexing:  tc.SearchEngineIndexing,
+		RightsRequestsEnabled: tc.RightsRequestsEnabled,
+		EntityName:            tc.EntityName,
+		Description:           tc.Description,
+		WebsiteURL:            tc.WebsiteURL,
+		Email:                 tc.Email,
+		HeadquarterAddress:    tc.HeadquarterAddress,
+		CreatedAt:             tc.CreatedAt,
+		UpdatedAt:             tc.UpdatedAt,
 	}
 }
 

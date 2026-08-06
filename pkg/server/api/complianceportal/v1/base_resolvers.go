@@ -248,13 +248,17 @@ func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after 
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
+	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
+	if !compliancePage.RightsRequestsEnabled {
+		return nil, gqlutils.NotFoundf(ctx, "rights requests are not available on this compliance portal")
+	}
+
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		emptyPage := page.NewPage([]*coredata.RightsRequest{}, cursor)
 		return types.NewRightsRequestConnection(emptyPage), nil
 	}
 
-	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 
 	result, err := r.visitor.ListRightsRequestsForCompliancePortalIDAndContact(

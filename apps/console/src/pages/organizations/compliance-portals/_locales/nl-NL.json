@@ -195,7 +195,11 @@
   "statusSection": {
     "title": "Status van compliancepagina",
     "activation": { "title": "Compliancepagina activeren", "description": "Maak uw compliancepagina openbaar toegankelijk om het vertrouwen van klanten te vergroten" },
-    "indexing": { "title": "Indexering door zoekmachines", "description": "Sta toe dat zoekmachines uw compliancepagina indexeren en vindbaar maken", "disabledHint": "Activeer eerst uw compliancepagina om indexering door zoekmachines mogelijk te maken" }
+    "indexing": { "title": "Indexering door zoekmachines", "description": "Sta toe dat zoekmachines uw compliancepagina indexeren en vindbaar maken", "disabledHint": "Activeer eerst uw compliancepagina om indexering door zoekmachines mogelijk te maken" },
+    "rightsRequests": {
+      "title": "Rechtenverzoeken",
+      "description": "Laat bezoekers verzoeken om rechten van betrokkenen indienen op uw compliancepagina"
+    }
   },
   "slackSection": {
     "title": "Integraties",

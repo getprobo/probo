@@ -477,6 +477,10 @@
       "title": "Search engine indexing",
       "description": "Allow search engines to index your compliance portal and make it discoverable",
       "disabledHint": "Activate your compliance portal first to enable search engine indexing"
+    },
+    "rightsRequests": {
+      "title": "Rights requests",
+      "description": "Let visitors submit data subject rights requests on your compliance portal"
     }
   },
   "slackSection": {

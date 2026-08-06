@@ -480,6 +480,10 @@
       "title": "Indexation par les moteurs de recherche",
       "description": "Autorisez les moteurs de recherche à indexer votre portail de conformité et à la rendre repérable",
       "disabledHint": "Activez d’abord votre portail de conformité pour permettre l’indexation par les moteurs de recherche"
+    },
+    "rightsRequests": {
+      "title": "Demandes de droits",
+      "description": "Permettez aux visiteurs de soumettre des demandes relatives aux droits des personnes concernées sur votre portail de conformité"
     }
   },
   "slackSection": {

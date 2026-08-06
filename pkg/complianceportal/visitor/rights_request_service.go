@@ -91,6 +91,10 @@ func (s *Service) CreateRightsRequest(
 				return err
 			}
 
+			if !compliancePortal.RightsRequestsEnabled {
+				return ErrRightsRequestsDisabled
+			}
+
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, tx, scope, compliancePortal.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)

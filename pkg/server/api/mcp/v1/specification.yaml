@@ -9827,6 +9827,7 @@ components:
         - organization_id
         - active
         - search_engine_indexing
+        - rights_requests_enabled
         - entity_name
         - created_at
         - updated_at
@@ -9839,6 +9840,9 @@ components:
           type: boolean
         search_engine_indexing:
           $ref: "#/components/schemas/SearchEngineIndexing"
+        rights_requests_enabled:
+          type: boolean
+          description: Whether visitors can submit rights requests on the compliance portal
         logo:
           $ref: "#/components/schemas/File"
         dark_logo:
@@ -10118,6 +10122,12 @@ components:
             - $ref: "#/components/schemas/SearchEngineIndexing"
             - type: "null"
           description: Search engine indexing setting
+          go.probo.inc/mcpgen/omittable: true
+        rights_requests_enabled:
+          type:
+            - boolean
+            - "null"
+          description: Whether visitors can submit rights requests on the compliance portal
           go.probo.inc/mcpgen/omittable: true
         description:
           type:

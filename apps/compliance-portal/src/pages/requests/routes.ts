@@ -21,6 +21,7 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
+import { RequestsPageError } from "./RequestsPageError";
 import { RequestsPageSkeleton } from "./RequestsPageSkeleton";
 
 export const requestRoutes = [
@@ -28,5 +29,6 @@ export const requestRoutes = [
     path: "requests",
     Fallback: RequestsPageSkeleton,
     Component: lazy(() => import("./RequestsPageLoader")),
+    ErrorBoundary: RequestsPageError,
   },
 ] satisfies AppRoute[];

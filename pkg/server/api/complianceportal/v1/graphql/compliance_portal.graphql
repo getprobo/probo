@@ -1,6 +1,7 @@
 type CompliancePortal implements Node {
   id: ID!
   active: Boolean!
+  rightsRequestsEnabled: Boolean!
   slug: String!
   logo: File @goField(forceResolver: true)
   darkLogo: File @goField(forceResolver: true)

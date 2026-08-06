@@ -52,6 +52,7 @@ export async function execute(
 					slug
 					active
 					searchEngineIndexing
+					rightsRequestsEnabled
 					entityName
 					description
 					websiteUrl

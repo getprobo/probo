@@ -77,6 +77,33 @@ export const description: INodeProperties[] = [
 		description: 'Whether search engines should index the compliance portal',
 	},
 	{
+		displayName: 'Rights Requests Enabled',
+		name: 'rightsRequestsEnabled',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['compliancePortal'],
+				operation: ['update'],
+			},
+		},
+		options: [
+			{
+				name: '(Unchanged)',
+				value: '',
+			},
+			{
+				name: 'Enabled',
+				value: 'true',
+			},
+			{
+				name: 'Disabled',
+				value: 'false',
+			},
+		],
+		default: '',
+		description: 'Whether visitors can submit rights requests on the compliance portal',
+	},
+	{
 		displayName: 'Entity Name',
 		name: 'entityName',
 		type: 'string',
@@ -151,6 +178,7 @@ export async function execute(
 	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
 	const active = this.getNodeParameter('active', itemIndex) as boolean | undefined;
 	const searchEngineIndexing = this.getNodeParameter('searchEngineIndexing', itemIndex, '') as string;
+	const rightsRequestsEnabled = this.getNodeParameter('rightsRequestsEnabled', itemIndex, '') as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
 	const email = this.getNodeParameter('email', itemIndex, '') as string;
@@ -164,6 +192,7 @@ export async function execute(
 					id
 					active
 					searchEngineIndexing
+					rightsRequestsEnabled
 					entityName
 					description
 					websiteUrl
@@ -186,6 +215,8 @@ export async function execute(
 	};
 	if (active !== undefined) input.active = active;
 	if (searchEngineIndexing) input.searchEngineIndexing = searchEngineIndexing;
+	if (rightsRequestsEnabled === 'true') input.rightsRequestsEnabled = true;
+	if (rightsRequestsEnabled === 'false') input.rightsRequestsEnabled = false;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 
