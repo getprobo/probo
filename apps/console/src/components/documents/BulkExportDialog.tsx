@@ -34,16 +34,16 @@ import { useTranslation } from "react-i18next";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
 import {
+  type ExportFormData,
+  exportSchema,
   getWatermarkTextLength,
   maxWatermarkTextLength,
   truncateWatermarkText,
-  type WatermarkExportFormData,
-  watermarkExportSchema,
 } from "./watermark";
 
 type Props = {
   children: ReactNode;
-  onExport: (options: WatermarkExportFormData) => Promise<void>;
+  onExport: (options: ExportFormData) => Promise<void>;
   isLoading?: boolean;
   defaultEmail: string;
   selectedCount: number;
@@ -60,7 +60,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
     const dialogRef = useDialogRef();
 
     const { register, handleSubmit, formState, watch, setValue } = useFormWithSchema(
-      watermarkExportSchema,
+      exportSchema,
       {
         defaultValues: {
           withWatermark: false,
@@ -79,7 +79,7 @@ export const BulkExportDialog = forwardRef<BulkExportDialogRef, Props>(
       close: () => dialogRef.current?.close(),
     }));
 
-    const onSubmit = async (data: WatermarkExportFormData) => {
+    const onSubmit = async (data: ExportFormData) => {
       const options = {
         ...data,
         watermarkText: data.withWatermark ? data.watermarkText : undefined,
