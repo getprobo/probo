@@ -22,7 +22,7 @@
   },
   "actions": {
     "view": "Переглянути",
-    "getAccess": "Отримати доступ",
+    "getAccess": "Запитати доступ",
     "requested": "Доступ запитано"
   },
   "selection": {

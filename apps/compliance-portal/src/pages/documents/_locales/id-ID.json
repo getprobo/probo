@@ -22,7 +22,7 @@
   },
   "actions": {
     "view": "Lihat",
-    "getAccess": "Dapatkan Akses",
+    "getAccess": "Minta Akses",
     "requested": "Akses telah diminta"
   },
   "selection": {

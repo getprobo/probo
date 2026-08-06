@@ -22,7 +22,7 @@
   },
   "actions": {
     "view": "Consulter",
-    "getAccess": "Obtenir l'accès",
+    "getAccess": "Demander l'accès",
     "requested": "Accès demandé"
   },
   "selection": {

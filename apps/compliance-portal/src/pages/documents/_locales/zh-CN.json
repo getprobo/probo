@@ -22,7 +22,7 @@
   },
   "actions": {
     "view": "查看",
-    "getAccess": "获取访问权限",
+    "getAccess": "申请访问权限",
     "requested": "已申请访问权限"
   },
   "selection": {
