@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.251.0] - 2026-08-06
+
+### Added
+
+- Compliance portal Requests surface (rights requests) can now be enabled or disabled per organization from the console overview; when disabled, the portal hides the nav item and treats `/requests` as not found.
+- Document export watermarks now accept custom text instead of only an email address, with a 64-byte size limit and validation; existing `watermarkEmail` usage keeps working.
+- Access review campaign entries can now be filtered by account status (Active, Disabled, Unknown), mirroring the existing MFA filter.
+
+### Changed
+
+- Portal "Get Access" CTA is now labeled "Request Access" throughout the TopBar and document flows.
+- Access review campaign entries now show admin status as Yes/No text instead of a check/X icon, so admins stand out instead of non-admins looking flagged.
+
+### Fixed
+
+- Locked document viewer now shows the correct CTA — Sign NDA takes priority over Request Access when the portal NDA is incomplete — instead of always showing Get Access regardless of a pending request.
+- Compliance portal asset URLs on nested routes (e.g. `/en/documents/...`) no longer resolve under the route path and serve HTML instead of the expected chunk.
+
 ## [0.250.0] - 2026-08-06
 
 ### Added
