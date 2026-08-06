@@ -93,6 +93,7 @@ func (a *DocumentExportArguments) UnmarshalJSON(data []byte) error {
 	if a.WatermarkText == nil {
 		a.WatermarkText = arguments.WatermarkEmail
 	}
+
 	a.WithSignatures = arguments.WithSignatures
 
 	return nil
