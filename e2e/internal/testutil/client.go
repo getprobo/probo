@@ -508,18 +508,48 @@ func (c *Client) SignIn(email string, password string) error {
 func NewUnauthenticatedClient(t testing.TB) *Client {
 	t.Helper()
 
+	return NewUnauthenticatedClientFor(t, GetBaseURL())
+}
+
+// NewUnauthenticatedClientFor returns a client pointed at baseURL with no
+// session cookie. Used with IsolatedEnv to exercise process-config gates.
+func NewUnauthenticatedClientFor(t testing.TB, baseURL string) *Client {
+	t.Helper()
+
 	jar, err := cookiejar.New(nil)
 	require.NoError(t, err, "cannot create cookie jar")
 
 	return &Client{
 		T:              t,
-		baseURL:        GetBaseURL(),
+		baseURL:        baseURL,
 		mailpitBaseURL: GetMailpitBaseURL(),
 		httpClient: &http.Client{
 			Jar:     jar,
 			Timeout: 30 * time.Second,
 		},
 	}
+}
+
+// SignInWithMagicLink opens a session for email via the magic-link HTTP flow.
+// When the email is unknown, AuthService creates the identity (even when
+// password signup is disabled), which is how compliance-portal visitors and
+// invitees reach a session on private instances.
+func (c *Client) SignInWithMagicLink(email string) {
+	c.T.Helper()
+
+	continueURL := c.baseURL + "/"
+	c.postConnectMagicLink(email, continueURL)
+
+	token := c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Connect to\"", email))
+	verifyURL := c.baseURL + "/api/connect/v1/magic-link/verify?token=" + url.QueryEscape(token)
+
+	resp := c.redirectHTTPResponse(c.httpClient, verifyURL)
+	require.Equal(
+		c.T,
+		http.StatusFound,
+		resp.StatusCode,
+		"magic-link verify must redirect after opening a session",
+	)
 }
 
 // pollForLinkToken polls mailpit for a message matching searchQuery and
@@ -752,7 +782,12 @@ func (c *Client) postConnectMagicLink(email, continueURL string) {
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := c.proboHTTPClient.Do(req)
+	httpClient := c.proboHTTPClient
+	if httpClient == nil {
+		httpClient = c.httpClient
+	}
+
+	resp, err := httpClient.Do(req)
 	require.NoError(c.T, err, "magic-link send request failed")
 
 	defer func() { _ = resp.Body.Close() }()

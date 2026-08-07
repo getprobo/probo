@@ -37,6 +37,7 @@ import { MembershipCard } from "./_components/MembershipCard";
 
 export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {
+    signUpEnabled
     viewer @required(action: THROW) {
       profiles(
         first: 1000
@@ -74,11 +75,17 @@ export function MembershipsPage(props: {
 
   const { queryRef } = props;
   const {
+    signUpEnabled,
     viewer: {
       profiles: { edges: initialProfiles },
       invitingOrganizations,
     },
   } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
+
+  // Mirrors the server rule: with signup disabled, only identities that
+  // already belong to an organization may create another one.
+  const canCreateOrganization = signUpEnabled || initialProfiles.length > 0;
+  const hasNoAccess = !canCreateOrganization && invitingOrganizations.length === 0;
 
   const profiles = useMemo(() => {
     if (!search.trim()) {
@@ -136,22 +143,34 @@ export function MembershipsPage(props: {
                   )}
             </div>
           )}
-          <Card padded>
-            <h2 className="text-xl font-semibold mb-1">
-              {t("membershipsPage.createOrganization.title")}
-            </h2>
-            <p className="text-txt-tertiary mb-4">
-              {t("membershipsPage.createOrganization.description")}
-            </p>
-            <Button
-              to="/organizations/new"
-              variant="quaternary"
-              icon={IconPlusLarge}
-              className="w-full"
-            >
-              {t("membershipsPage.createOrganization.action")}
-            </Button>
-          </Card>
+          {hasNoAccess && (
+            <Card padded>
+              <h2 className="text-xl font-semibold mb-1">
+                {t("noOrganizationAccess.title")}
+              </h2>
+              <p className="text-txt-tertiary">
+                {t("noOrganizationAccess.description")}
+              </p>
+            </Card>
+          )}
+          {canCreateOrganization && (
+            <Card padded>
+              <h2 className="text-xl font-semibold mb-1">
+                {t("membershipsPage.createOrganization.title")}
+              </h2>
+              <p className="text-txt-tertiary mb-4">
+                {t("membershipsPage.createOrganization.description")}
+              </p>
+              <Button
+                to="/organizations/new"
+                variant="quaternary"
+                icon={IconPlusLarge}
+                className="w-full"
+              >
+                {t("membershipsPage.createOrganization.action")}
+              </Button>
+            </Card>
+          )}
         </div>
       </div>
     </>

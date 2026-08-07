@@ -31,6 +31,25 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	// 	return nil, nil
 	// }
 
+	// On an instance with signup disabled, an identity created through a
+	// self-service magic-link or OIDC sign-in must not be able to bootstrap
+	// itself into the console by creating an organization.
+	if !r.iam.IsSignUpEnabled() {
+		hasMembership, err := r.iam.IdentityHasMembership(ctx, identity.ID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot check identity membership", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		if !hasMembership {
+			return nil, gqlutils.MembershipRequiredf(
+				ctx,
+				"an organization membership is required to create an organization",
+			)
+		}
+	}
+
 	var (
 		logoFile           *iam.UploadedFile
 		horizontalLogoFile *iam.UploadedFile

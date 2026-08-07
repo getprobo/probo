@@ -145,17 +145,24 @@ func (c *Client) doWithEndpoint(endpoint string, query string, variables map[str
 		return nil, fmt.Errorf("cannot read response: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
-	}
-
 	var gqlResp GraphQLResponse
 	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+		}
+
 		return nil, fmt.Errorf("cannot decode response: %w", err)
 	}
 
+	// Auth middlewares (identity presence, membership gate) short-circuit with
+	// non-200 statuses while still returning a GraphQL errors payload. Prefer
+	// that typed error so callers can assert on extensions.code.
 	if len(gqlResp.Errors) > 0 {
 		return &gqlResp, GraphQLErrors(gqlResp.Errors)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return &gqlResp, nil
@@ -398,6 +405,14 @@ func (c *Client) ExecuteShouldFail(query string, variables map[string]any) error
 	c.T.Helper()
 	_, err := c.Do(query, variables)
 	require.Error(c.T, err, "expected GraphQL request to fail but it succeeded")
+
+	return err
+}
+
+func (c *Client) ExecuteConnectShouldFail(query string, variables map[string]any) error {
+	c.T.Helper()
+	_, err := c.DoConnect(query, variables)
+	require.Error(c.T, err, "expected Connect GraphQL request to fail but it succeeded")
 
 	return err
 }

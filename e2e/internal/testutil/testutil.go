@@ -51,6 +51,17 @@ type TestEnv struct {
 	outputWriter   *switchableWriter
 }
 
+// configOptions tunes the generated probod config. Zero values keep the
+// default shared e2e suite settings.
+type configOptions struct {
+	DisableSignup  bool
+	APIAddr        string
+	BaseURL        string
+	MetricsAddr    string
+	TrustHTTPAddr  string
+	TrustHTTPSAddr string
+}
+
 type switchableWriter struct {
 	mu sync.Mutex
 	w  io.Writer
@@ -88,7 +99,7 @@ func Setup() {
 			}
 		}
 
-		configPath, err := generateConfig()
+		configPath, err := generateConfig(configOptions{})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "e2etest: cannot generate config: %v\n", err)
 			os.Exit(1)
@@ -137,14 +148,14 @@ func Setup() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		if err := waitForServer(ctx, testEnv.BaseURL+"/api/console/v1/graphql", 30*time.Second); err != nil {
+		if err := waitForServer(ctx, testEnv.done, testEnv.BaseURL+"/api/console/v1/graphql", 30*time.Second); err != nil {
 			testEnv.dumpOutputOnFailure("API server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
 
 			os.Exit(1)
 		}
 
-		if err := waitForServer(ctx, testEnv.MailpitBaseURL+"/api/v1/messages", 30*time.Second); err != nil {
+		if err := waitForServer(ctx, testEnv.done, testEnv.MailpitBaseURL+"/api/v1/messages", 30*time.Second); err != nil {
 			testEnv.dumpOutputOnFailure("MailPit server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
 
@@ -186,7 +197,7 @@ func (e *TestEnv) dumpOutputOnFailure(context string, err error) {
 	}
 }
 
-func waitForServer(ctx context.Context, url string, timeout time.Duration) error {
+func waitForServer(ctx context.Context, done chan error, url string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	client := &http.Client{Timeout: 2 * time.Second}
 
@@ -194,8 +205,8 @@ func waitForServer(ctx context.Context, url string, timeout time.Duration) error
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case err := <-testEnv.done:
-			testEnv.done <- err
+		case err := <-done:
+			done <- err
 			return fmt.Errorf("process exited before becoming ready: %v", err)
 		default:
 		}
@@ -254,10 +265,40 @@ func GetMailpitBaseURL() string {
 // bootstrap package (which auto-generates SAML credentials) and
 // writes it to a temp file. A fresh OAuth2 signing key is minted
 // here and injected via env. Returns the path.
-func generateConfig() (string, error) {
+func generateConfig(opts configOptions) (string, error) {
 	oauth2SigningKey, err := bootstrap.GenerateOAuth2SigningKey()
 	if err != nil {
 		return "", fmt.Errorf("generate oauth2 signing key: %w", err)
+	}
+
+	apiAddr := opts.APIAddr
+	if apiAddr == "" {
+		apiAddr = "localhost:18080"
+	}
+
+	baseURL := opts.BaseURL
+	if baseURL == "" {
+		baseURL = "http://" + apiAddr
+	}
+
+	metricsAddr := opts.MetricsAddr
+	if metricsAddr == "" {
+		metricsAddr = "localhost:19081"
+	}
+
+	trustHTTPAddr := opts.TrustHTTPAddr
+	if trustHTTPAddr == "" {
+		trustHTTPAddr = ":10080"
+	}
+
+	trustHTTPSAddr := opts.TrustHTTPSAddr
+	if trustHTTPSAddr == "" {
+		trustHTTPSAddr = ":8443"
+	}
+
+	disableSignup := "false"
+	if opts.DisableSignup {
+		disableSignup = "true"
 	}
 
 	env := map[string]string{
@@ -268,15 +309,15 @@ func generateConfig() (string, error) {
 		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": oauth2SigningKey,
 
 		// Unit.
-		"PROBOD_METRICS_ADDR": "localhost:19081",
+		"PROBOD_METRICS_ADDR": metricsAddr,
 		"PROBOD_TRACING_ADDR": "localhost:14317",
 
 		// Probod base.
-		"PROBOD_BASE_URL": "http://localhost:18080",
+		"PROBOD_BASE_URL": baseURL,
 
 		// API.
-		"PROBOD_API_ADDR":                 "localhost:18080",
-		"PROBOD_API_CORS_ALLOWED_ORIGINS": "http://localhost:18080",
+		"PROBOD_API_ADDR":                 apiAddr,
+		"PROBOD_API_CORS_ALLOWED_ORIGINS": baseURL,
 
 		// PG.
 		"PROBOD_PG_DATABASE":      "probod_test",
@@ -286,6 +327,7 @@ func generateConfig() (string, error) {
 		// Auth.
 		"PROBOD_AUTH_COOKIE_SECURE":       "false",
 		"PROBOD_AUTH_PASSWORD_ITERATIONS": "600000",
+		"PROBOD_AUTH_DISABLE_SIGNUP":      disableSignup,
 
 		// OAuth2 server durations kept small for faster e2e flows.
 		"PROBOD_OAUTH2_SERVER_ACCESS_TOKEN_DURATION":       "10",
@@ -297,8 +339,8 @@ func generateConfig() (string, error) {
 		// dedicated listener, addressed by Host/SNI. The managed base domain
 		// yields {slug}.probopage.localhost subdomains for pages without a
 		// customer custom domain.
-		"PROBOD_TRUST_CENTER_HTTP_ADDR":   ":10080",
-		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  ":8443",
+		"PROBOD_TRUST_CENTER_HTTP_ADDR":   trustHTTPAddr,
+		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  trustHTTPSAddr,
 		"PROBOD_TRUST_CENTER_BASE_DOMAIN": "probopage.localhost",
 
 		// Keep certificate provisioning snappy so trust-center e2e flows do not

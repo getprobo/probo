@@ -2251,6 +2251,17 @@
       "action": "Organisatie aanmaken"
     }
   },
+  "noOrganizationAccess": {
+    "title": "Geen toegang tot een organisatie",
+    "description": "Uw account is geen lid van een organisatie op deze instantie. Vraag een beheerder om u uit te nodigen.",
+    "errors": {
+      "requestFailed": "Verzoek mislukt",
+      "cannotSignOut": "Kan niet worden uitgelogd"
+    },
+    "actions": {
+      "signOut": "Uitloggen"
+    }
+  },
   "invitingOrganizationCard": {
     "checkEmail": "Controleer uw e-mail"
   },

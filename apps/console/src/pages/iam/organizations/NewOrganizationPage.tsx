@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
+import { MembershipRequiredError } from "@probo/relay";
 import {
   Button,
   Card,
@@ -90,6 +91,15 @@ function NewOrganizationPageInner() {
         });
       },
       onError: (e) => {
+        if (e instanceof MembershipRequiredError) {
+          toast({
+            title: t("noOrganizationAccess.title"),
+            description: t("noOrganizationAccess.description"),
+            variant: "error",
+          });
+          return;
+        }
+
         toast({
           title: t("common.error"),
           description: e.message,

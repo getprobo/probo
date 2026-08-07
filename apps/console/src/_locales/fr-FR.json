@@ -2245,6 +2245,17 @@
       "action": "Créer une organisation"
     }
   },
+  "noOrganizationAccess": {
+    "title": "Aucun accès à une organisation",
+    "description": "Votre compte n'est membre d'aucune organisation sur cette instance. Demandez à un administrateur de vous inviter.",
+    "errors": {
+      "requestFailed": "La requête a échoué",
+      "cannotSignOut": "Impossible de se déconnecter"
+    },
+    "actions": {
+      "signOut": "Se déconnecter"
+    }
+  },
   "invitingOrganizationCard": {
     "checkEmail": "Consultez votre e-mail"
   },
