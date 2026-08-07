@@ -47,6 +47,35 @@ func NewState() *State {
 	}
 }
 
+func NewStateFromDocument(document *Document) (*State, error) {
+	state := NewState()
+	for i := range document.Changes {
+		change := &document.Changes[i]
+		if change.Sequence > state.actorSequence[change.Actor] {
+			state.actorSequence[change.Actor] = change.Sequence
+		}
+		if change.Hash != nil {
+			state.changes[*change.Hash] = change
+		}
+		for _, operation := range change.Operations {
+			if _, exists := state.operations[operation.ID]; exists {
+				return nil, fmt.Errorf("duplicate snapshot operation ID %v", operation.ID)
+			}
+			state.operations[operation.ID] = operation
+			for _, successor := range operation.Successors {
+				state.superseded[operation.ID] = struct{}{}
+				if successor.Counter == 0 {
+					return nil, fmt.Errorf("invalid zero successor for operation %v", operation.ID)
+				}
+			}
+		}
+	}
+	for _, head := range document.Heads {
+		state.heads[head] = struct{}{}
+	}
+	return state, nil
+}
+
 func (s *State) ApplyChange(change *Change) error {
 	if change.Hash == nil {
 		return fmt.Errorf("change hash is required")
@@ -105,32 +134,65 @@ func (s *State) Heads() []ChangeHash {
 }
 
 func (s *State) Text(property string) (string, error) {
+	objectOperation, ok := s.visibleMapOperation(property, ActionMakeText)
+	if !ok {
+		return "", fmt.Errorf("text property %q does not exist", property)
+	}
+
+	sequence := s.sequence(objectOperation.ID)
+	var output strings.Builder
+	for _, operation := range sequence {
+		if operation.Value != nil && operation.Value.Type == ScalarString {
+			output.WriteString(operation.Value.String)
+		}
+	}
+	return output.String(), nil
+}
+
+func (s *State) visibleMapOperation(property string, action Action) (Operation, bool) {
 	var (
-		objectOperation Operation
-		found           bool
+		result Operation
+		found  bool
 	)
 	for _, operation := range s.operations {
 		if !operation.Object.IsRoot ||
 			operation.Key.Property == nil ||
 			*operation.Key.Property != property ||
-			operation.Action != ActionMakeText ||
+			operation.Action != action ||
 			s.isSuperseded(operation.ID) {
 			continue
 		}
-		if !found || operation.ID.Compare(objectOperation.ID) > 0 {
-			objectOperation = operation
+		if !found || operation.ID.Compare(result.ID) > 0 {
+			result = operation
 			found = true
 		}
 	}
-	if !found {
-		return "", fmt.Errorf("text property %q does not exist", property)
-	}
+	return result, found
+}
 
+func (s *State) visibleMapOperations(property string) []Operation {
+	operations := make([]Operation, 0)
+	for _, operation := range s.operations {
+		if !operation.Object.IsRoot ||
+			operation.Key.Property == nil ||
+			*operation.Key.Property != property ||
+			s.isSuperseded(operation.ID) {
+			continue
+		}
+		operations = append(operations, operation)
+	}
+	sort.Slice(operations, func(i, j int) bool {
+		return operations[i].ID.Compare(operations[j].ID) < 0
+	})
+	return operations
+}
+
+func (s *State) sequence(object OpID) []Operation {
 	children := make(map[OpID][]Operation)
 	var head []Operation
 	for _, operation := range s.operations {
 		if operation.Object.IsRoot ||
-			operation.Object.OpID != objectOperation.ID ||
+			operation.Object.OpID != object ||
 			!operation.Insert ||
 			operation.Action != ActionSet {
 			continue
@@ -146,13 +208,13 @@ func (s *State) Text(property string) (string, error) {
 		}
 	}
 
-	var output strings.Builder
-	s.appendSequence(&output, head, children, make(map[OpID]struct{}))
-	return output.String(), nil
+	operations := make([]Operation, 0)
+	s.appendSequence(&operations, head, children, make(map[OpID]struct{}))
+	return operations
 }
 
 func (s *State) appendSequence(
-	output *strings.Builder,
+	output *[]Operation,
 	operations []Operation,
 	children map[OpID][]Operation,
 	visited map[OpID]struct{},
@@ -168,10 +230,8 @@ func (s *State) appendSequence(
 			continue
 		}
 		visited[operation.ID] = struct{}{}
-		if !s.isSuperseded(operation.ID) &&
-			operation.Value != nil &&
-			operation.Value.Type == ScalarString {
-			output.WriteString(operation.Value.String)
+		if !s.isSuperseded(operation.ID) {
+			*output = append(*output, operation)
 		}
 		s.appendSequence(output, children[operation.ID], children, visited)
 	}
@@ -180,4 +240,44 @@ func (s *State) appendSequence(
 func (s *State) isSuperseded(id OpID) bool {
 	_, ok := s.superseded[id]
 	return ok
+}
+
+func (s *State) maxOpGlobal() uint64 {
+	var maximum uint64
+	for id := range s.operations {
+		if id.Counter > maximum {
+			maximum = id.Counter
+		}
+	}
+	return maximum
+}
+
+func (s *State) sequenceForActor(actor ActorID) uint64 {
+	return s.actorSequence[actor]
+}
+
+func (s *State) applyPending(operations []Operation) error {
+	for _, operation := range operations {
+		if _, exists := s.operations[operation.ID]; exists {
+			return fmt.Errorf("duplicate pending operation ID %v", operation.ID)
+		}
+		s.operations[operation.ID] = operation
+		for _, predecessor := range operation.Predecessors {
+			s.superseded[predecessor] = struct{}{}
+		}
+	}
+	return nil
+}
+
+func (s *State) recordAppliedChange(change *Change) error {
+	if change.Hash == nil {
+		return fmt.Errorf("change hash is required")
+	}
+	for _, dependency := range change.Dependencies {
+		delete(s.heads, dependency)
+	}
+	s.heads[*change.Hash] = struct{}{}
+	s.changes[*change.Hash] = change
+	s.actorSequence[change.Actor] = change.Sequence
+	return nil
 }

@@ -34,6 +34,7 @@ import (
 	"sync"
 	"time"
 
+	"go.probo.inc/probo/pkg/automerge/internal/native"
 	"go.probo.inc/probo/pkg/automerge/internal/reference"
 )
 
@@ -97,6 +98,7 @@ var (
 	ErrSyncStateClosed = errors.New("Automerge sync state is closed")
 
 	_ backend = (*reference.Backend)(nil)
+	_ backend = (*native.Backend)(nil)
 )
 
 const rootObject uint32 = 0
@@ -126,6 +128,22 @@ func New(ctx context.Context, actorID ActorID) (*Document, error) {
 	return &Document{backend: b}, nil
 }
 
+// NewPureGo creates an empty document using the experimental native Go engine.
+//
+// The native engine is intended for differential testing until its complete
+// feature surface reaches parity with the reference backend.
+func NewPureGo(ctx context.Context, actorID ActorID) (*Document, error) {
+	b, err := native.NewBackend(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create native Automerge backend: %w", err)
+	}
+	if err := b.SetActor(ctx, actorID[:]); err != nil {
+		_ = b.Close(ctx)
+		return nil, fmt.Errorf("cannot initialize native Automerge actor: %w", err)
+	}
+	return &Document{backend: b}, nil
+}
+
 // Load creates a document from Automerge binary data and assigns a new writer.
 func Load(ctx context.Context, data []byte, actorID ActorID) (*Document, error) {
 	b, err := reference.Load(ctx, data)
@@ -138,6 +156,23 @@ func Load(ctx context.Context, data []byte, actorID ActorID) (*Document, error) 
 		return nil, fmt.Errorf("cannot assign loaded Automerge actor: %w", err)
 	}
 
+	return &Document{backend: b}, nil
+}
+
+// LoadPureGo loads Automerge data using the experimental native Go engine.
+func LoadPureGo(
+	ctx context.Context,
+	data []byte,
+	actorID ActorID,
+) (*Document, error) {
+	b, err := native.LoadBackend(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load native Automerge backend: %w", err)
+	}
+	if err := b.SetActor(ctx, actorID[:]); err != nil {
+		_ = b.Close(ctx)
+		return nil, fmt.Errorf("cannot assign native Automerge actor: %w", err)
+	}
 	return &Document{backend: b}, nil
 }
 

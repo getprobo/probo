@@ -140,6 +140,14 @@ func TestConformance_GoLoadsJavaScriptDocument(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, heads, 1)
 	assert.Equal(t, response.Heads[0], heads[0].String())
+
+	nativeDocument, err := native.Decode(data)
+	require.NoError(t, err)
+	nativeState, err := native.NewStateFromDocument(nativeDocument)
+	require.NoError(t, err)
+	nativeText, err := nativeState.Text("body")
+	require.NoError(t, err)
+	assert.Equal(t, "Hello from JavaScript 😀", nativeText)
 }
 
 func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {

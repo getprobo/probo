@@ -214,7 +214,7 @@ func encodeOperationColumns(
 
 func encodeScalar(value *Scalar) (optional[uint64], []byte, error) {
 	if value == nil {
-		return optional[uint64]{}, nil, nil
+		return some(uint64(ScalarNull)), nil, nil
 	}
 
 	var data []byte
@@ -314,13 +314,6 @@ func encodeStrings(values []optional[string]) []byte {
 
 func encodeBooleans(values []bool) []byte {
 	if len(values) == 0 {
-		return nil
-	}
-	allFalse := true
-	for _, value := range values {
-		allFalse = allFalse && !value
-	}
-	if allFalse {
 		return nil
 	}
 
