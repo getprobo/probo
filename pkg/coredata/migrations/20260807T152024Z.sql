@@ -23,8 +23,13 @@
 ALTER TABLE cp_document_accesses
     ADD COLUMN requested_at TIMESTAMP WITH TIME ZONE;
 
--- Pending visitor requests are the only status that is unambiguously from the
--- visitor BulkInsert path today; stamp them for the new flag.
+-- Historical provenance (no requested_at yet):
+-- - Visitor BulkInsert creates REQUESTED with created_at = updated_at.
+-- - Later grant/reject/revoke only bumps updated_at, so created_at < updated_at.
+-- - Console Merge inserts GRANTED/etc. with created_at = updated_at (same @now).
+-- Stamp pending requests and any row whose lifecycle advanced after insert so
+-- prior visitor requests that are no longer REQUESTED still flip the flag.
 UPDATE cp_document_accesses
 SET requested_at = created_at
-WHERE status = 'REQUESTED'::compliance_portal_document_access_status;
+WHERE status = 'REQUESTED'::compliance_portal_document_access_status
+   OR created_at < updated_at;

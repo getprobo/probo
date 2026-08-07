@@ -97,6 +97,14 @@ func (s *Service) RequestPortalAccess(
 			newDocumentIDs := filterExistingIDs(req.DocumentIDs, existingDocumentIDs)
 			newReportIDs := filterExistingIDs(req.ReportIDs, existingReportIDs)
 			newCompliancePortalFileIDs := filterExistingIDs(req.CompliancePortalFileIDs, existingCompliancePortalFileIDs)
+			// IDs that already have a row: REJECTED/REVOKED retries need a status
+			// reset and a requested_at stamp (BulkInsert skips them via ON CONFLICT).
+			rerequestDocumentIDs := filterPresentIDs(req.DocumentIDs, existingDocumentIDs)
+			rerequestReportIDs := filterPresentIDs(req.ReportIDs, existingReportIDs)
+			rerequestCompliancePortalFileIDs := filterPresentIDs(
+				req.CompliancePortalFileIDs,
+				existingCompliancePortalFileIDs,
+			)
 
 			var accesses coredata.CompliancePortalDocumentAccesses
 
@@ -137,6 +145,39 @@ func (s *Service) RequestPortalAccess(
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot bulk insert compliance page file accesses: %w", err)
+			}
+
+			if err := coredata.RerequestByDocumentIDs(
+				ctx,
+				tx,
+				scope,
+				access.ID,
+				rerequestDocumentIDs,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot rerequest compliance page document accesses: %w", err)
+			}
+
+			if err := coredata.RerequestByReportFileIDs(
+				ctx,
+				tx,
+				scope,
+				access.ID,
+				rerequestReportIDs,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot rerequest compliance page report accesses: %w", err)
+			}
+
+			if err := coredata.RerequestByCompliancePortalFileIDs(
+				ctx,
+				tx,
+				scope,
+				access.ID,
+				rerequestCompliancePortalFileIDs,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot rerequest compliance page file accesses: %w", err)
 			}
 
 			return nil
@@ -707,6 +748,24 @@ func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
 	}
 
 	return newIDs
+}
+
+// filterPresentIDs returns the subset of allIDs that already exist.
+func filterPresentIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
+	existingMap := make(map[gid.GID]bool)
+	for _, id := range existingIDs {
+		existingMap[id] = true
+	}
+
+	var presentIDs []gid.GID
+
+	for _, id := range allIDs {
+		if existingMap[id] {
+			presentIDs = append(presentIDs, id)
+		}
+	}
+
+	return presentIDs
 }
 
 func reportAccessLabels(
