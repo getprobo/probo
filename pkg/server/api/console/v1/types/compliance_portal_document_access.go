@@ -21,8 +21,6 @@
 package types
 
 import (
-	"time"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -39,37 +37,12 @@ type (
 		Resolver any
 		ParentID gid.GID
 	}
-
-	CompliancePortalDocumentAccess struct {
-		ID                     gid.GID                                       `json:"id"`
-		OrganizationID         gid.GID                                       `json:"-"`
-		Status                 coredata.CompliancePortalDocumentAccessStatus `json:"status"`
-		CreatedAt              time.Time                                     `json:"createdAt"`
-		UpdatedAt              time.Time                                     `json:"updatedAt"`
-		CompliancePortalAccess *CompliancePortalAccess                       `json:"compliancePortalAccess"`
-		Document               *Document                                     `json:"document,omitempty"`
-		ReportFile             *File                                         `json:"reportFile,omitempty"`
-		CompliancePortalFile   *CompliancePortalFile                         `json:"compliancePortalFile,omitempty"`
-
-		// Internal fields used by resolvers
-		CompliancePortalAccessID gid.GID  `json:"-"`
-		DocumentID               *gid.GID `json:"-"`
-		ReportFileID             *gid.GID `json:"-"`
-		CompliancePortalFileID   *gid.GID `json:"-"`
-	}
 )
 
 func NewCompliancePortalDocumentAccess(tcda *coredata.CompliancePortalDocumentAccess) *CompliancePortalDocumentAccess {
 	object := &CompliancePortalDocumentAccess{
-		ID:                       tcda.ID,
-		OrganizationID:           tcda.OrganizationID,
-		Status:                   tcda.Status,
-		CreatedAt:                tcda.CreatedAt,
-		UpdatedAt:                tcda.UpdatedAt,
-		CompliancePortalAccessID: tcda.CompliancePortalAccessID,
-		DocumentID:               tcda.DocumentID,
-		ReportFileID:             tcda.ReportFileID,
-		CompliancePortalFileID:   tcda.CompliancePortalFileID,
+		ID:     tcda.ID,
+		Status: tcda.Status,
 	}
 
 	if tcda.DocumentID != nil {

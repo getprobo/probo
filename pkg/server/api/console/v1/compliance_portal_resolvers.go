@@ -32,13 +32,17 @@ func (r *complianceCustomLinkResolver) Permission(ctx context.Context, obj *type
 
 // Framework is the resolver for the framework field.
 func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error) {
-	if _, err := r.authorize(ctx, obj.FrameworkID, probo.ActionFrameworkGet); err != nil {
+	if obj.Framework == nil {
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if _, err := r.authorize(ctx, obj.Framework.ID, probo.ActionFrameworkGet); err != nil {
 		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
 
-	framework, err := loaders.Framework.Load(ctx, obj.FrameworkID)
+	framework, err := loaders.Framework.Load(ctx, obj.Framework.ID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -691,16 +695,16 @@ func (r *compliancePortalDocumentResolver) Document(ctx context.Context, obj *ty
 
 // Document is the resolver for the document field.
 func (r *compliancePortalDocumentAccessResolver) Document(ctx context.Context, obj *types.CompliancePortalDocumentAccess) (*types.Document, error) {
+	if obj.Document == nil {
+		return nil, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
 	if err != nil {
 		return nil, err
 	}
 
-	if obj.DocumentID == nil {
-		return nil, nil
-	}
-
-	document, err := r.probo.Documents.Get(ctx, scope, *obj.DocumentID)
+	document, err := r.probo.Documents.Get(ctx, scope, obj.Document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -742,16 +746,16 @@ func (r *compliancePortalDocumentAccessResolver) ReportFile(ctx context.Context,
 
 // Audit is the resolver for the audit field.
 func (r *compliancePortalDocumentAccessResolver) Audit(ctx context.Context, obj *types.CompliancePortalDocumentAccess) (*types.Audit, error) {
+	if obj.ReportFile == nil {
+		return nil, nil
+	}
+
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
 	if err != nil {
 		return nil, err
 	}
 
-	if obj.ReportFileID == nil {
-		return nil, nil
-	}
-
-	audit, err := r.probo.Audits.GetByReportFileID(ctx, scope, *obj.ReportFileID)
+	audit, err := r.probo.Audits.GetByReportFileID(ctx, scope, obj.ReportFile.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -767,16 +771,16 @@ func (r *compliancePortalDocumentAccessResolver) Audit(ctx context.Context, obj 
 
 // CompliancePortalFile is the resolver for the compliancePortalFile field.
 func (r *compliancePortalDocumentAccessResolver) CompliancePortalFile(ctx context.Context, obj *types.CompliancePortalDocumentAccess) (*types.CompliancePortalFile, error) {
-	scope, err := r.authorize(ctx, obj.CompliancePortalAccessID, management.ActionCompliancePortalFileGet)
+	if obj.CompliancePortalFile == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileGet)
 	if err != nil {
 		return nil, err
 	}
 
-	if obj.CompliancePortalFileID == nil {
-		return nil, nil
-	}
-
-	compliancePortalFile, err := r.management.GetFile(ctx, scope, *obj.CompliancePortalFileID)
+	compliancePortalFile, err := r.management.GetFile(ctx, scope, obj.CompliancePortalFile.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

@@ -21,8 +21,6 @@
 package types
 
 import (
-	"time"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -30,33 +28,6 @@ import (
 
 type (
 	CompliancePortalOrderBy OrderBy[coredata.CompliancePortalOrderField]
-
-	CompliancePortal struct {
-		ID                    gid.GID                              `json:"id"`
-		Active                bool                                 `json:"active"`
-		SearchEngineIndexing  coredata.SearchEngineIndexing        `json:"searchEngineIndexing"`
-		RightsRequestsEnabled bool                                 `json:"rightsRequestsEnabled"`
-		Logo                  *File                                `json:"logo,omitempty"`
-		DarkLogo              *File                                `json:"darkLogo,omitempty"`
-		Nda                   *File                                `json:"nda,omitempty"`
-		Description           *string                              `json:"description,omitempty"`
-		WebsiteURL            *string                              `json:"websiteUrl,omitempty"`
-		Email                 *string                              `json:"email,omitempty"`
-		HeadquarterAddress    *string                              `json:"headquarterAddress,omitempty"`
-		EntityName            string                               `json:"entityName"`
-		Slug                  string                               `json:"slug"`
-		CreatedAt             time.Time                            `json:"createdAt"`
-		UpdatedAt             time.Time                            `json:"updatedAt"`
-		Organization          *Organization                        `json:"organization"`
-		Accesses              *CompliancePortalAccessConnection    `json:"accesses"`
-		References            *CompliancePortalReferenceConnection `json:"references"`
-		ComplianceFrameworks  *ComplianceFrameworkConnection       `json:"complianceFrameworks"`
-		CustomLinks           *ComplianceCustomLinkConnection      `json:"customLinks"`
-		MailingList           *MailingList                         `json:"mailingList,omitempty"`
-		DefaultDomain         *CustomDomain                        `json:"defaultDomain,omitempty"`
-		CustomDomain          *CustomDomain                        `json:"customDomain,omitempty"`
-		Permission            bool                                 `json:"permission"`
-	}
 
 	CompliancePortalConnection struct {
 		TotalCount int
@@ -66,9 +37,6 @@ type (
 		ParentID gid.GID
 	}
 )
-
-func (CompliancePortal) IsNode()          {}
-func (t CompliancePortal) GetID() gid.GID { return t.ID }
 
 func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	compliancePortal := &CompliancePortal{

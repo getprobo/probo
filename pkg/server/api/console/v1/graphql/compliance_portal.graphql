@@ -360,10 +360,7 @@ input CompliancePortalOrder
     field: CompliancePortalOrderField!
 }
 
-type CompliancePortal implements Node
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortal"
-    ) {
+type CompliancePortal implements Node {
     id: ID!
     active: Boolean!
     searchEngineIndexing: SearchEngineIndexing!
@@ -465,19 +462,13 @@ type CompliancePortalConnection
     pageInfo: PageInfo!
 }
 
-type CompliancePortalDocument
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocument"
-    ) {
+type CompliancePortalDocument {
     id: ID!
     document: Document! @goField(forceResolver: true)
     visibility: CompliancePortalLinkedVisibility!
 }
 
-type CompliancePortalAudit
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAudit"
-    ) {
+type CompliancePortalAudit {
     id: ID!
     audit: Audit!
     visibility: CompliancePortalLinkedVisibility!
@@ -497,10 +488,7 @@ type CompliancePortalAuditEdge {
     node: CompliancePortalAudit!
 }
 
-type CompliancePortalThirdParty
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalThirdParty"
-    ) {
+type CompliancePortalThirdParty {
     id: ID!
     thirdParty: ThirdParty!
 }
@@ -547,10 +535,7 @@ type CompliancePortalAccess implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type CompliancePortalDocumentAccess
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentAccess"
-    ) {
+type CompliancePortalDocumentAccess {
     id: ID!
     status: CompliancePortalDocumentAccessStatus!
     document: Document @goField(forceResolver: true)
@@ -670,10 +655,7 @@ type CompliancePortalCommitmentEdge {
     node: CompliancePortalCommitment!
 }
 
-type ComplianceFramework implements Node
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFramework"
-    ) {
+type ComplianceFramework implements Node {
     id: ID!
     framework: Framework! @goField(forceResolver: true)
     rank: Int!

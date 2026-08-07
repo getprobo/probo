@@ -28,28 +28,11 @@ import (
 )
 
 type (
-	CompliancePortalDocument struct {
-		ID         gid.GID
-		Document   *Document
-		Visibility coredata.CompliancePortalVisibility
-	}
-
-	CompliancePortalAudit struct {
-		ID         gid.GID
-		Audit      *Audit
-		Visibility coredata.CompliancePortalVisibility
-	}
-
 	CompliancePortalAuditConnection struct {
 		TotalCount int
 		Edges      []*CompliancePortalAuditEdge
 		PageInfo   *PageInfo
 		ParentID   gid.GID
-	}
-
-	CompliancePortalThirdParty struct {
-		ID         gid.GID
-		ThirdParty *ThirdParty
 	}
 
 	CompliancePortalThirdPartyConnection struct {
