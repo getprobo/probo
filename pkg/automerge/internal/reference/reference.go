@@ -341,6 +341,97 @@ func (b *Backend) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
 	return heads, nil
 }
 
+func (b *Backend) NewSyncState(ctx context.Context) (uint32, error) {
+	result, err := b.call(ctx, "am_sync_new")
+	if err != nil {
+		return 0, fmt.Errorf("cannot create reference sync state: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, b.operationError(ctx, "cannot create reference sync state")
+	}
+
+	return uint32(handle), nil
+}
+
+func (b *Backend) CloseSyncState(ctx context.Context, handle uint32) error {
+	if err := b.run(ctx, "am_sync_free", uint64(handle)); err != nil {
+		return fmt.Errorf("cannot close reference sync state: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) GenerateSyncMessage(
+	ctx context.Context,
+	handle uint32,
+) ([]byte, bool, error) {
+	if err := b.run(ctx, "am_sync_generate", uint64(handle)); err != nil {
+		return nil, false, fmt.Errorf("cannot generate reference sync message: %w", err)
+	}
+
+	message, err := b.output(ctx)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot copy reference sync message: %w", err)
+	}
+
+	return message, len(message) > 0, nil
+}
+
+func (b *Backend) ReceiveSyncMessage(ctx context.Context, handle uint32, message []byte) error {
+	pointer, length, err := b.write(ctx, message)
+	if err != nil {
+		return fmt.Errorf("cannot write reference sync message: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_sync_receive",
+		uint64(handle),
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return fmt.Errorf("cannot receive reference sync message: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) SaveSyncState(ctx context.Context, handle uint32) ([]byte, error) {
+	if err := b.run(ctx, "am_sync_save", uint64(handle)); err != nil {
+		return nil, fmt.Errorf("cannot save reference sync state: %w", err)
+	}
+
+	data, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference sync state: %w", err)
+	}
+
+	return data, nil
+}
+
+func (b *Backend) LoadSyncState(ctx context.Context, data []byte) (uint32, error) {
+	pointer, length, err := b.write(ctx, data)
+	if err != nil {
+		return 0, fmt.Errorf("cannot write reference sync state: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	result, err := b.call(ctx, "am_sync_load", uint64(pointer), uint64(length))
+	if err != nil {
+		return 0, fmt.Errorf("cannot load reference sync state: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, b.operationError(ctx, "cannot load reference sync state")
+	}
+
+	return uint32(handle), nil
+}
+
 func (b *Backend) runBytes(ctx context.Context, function string, value []byte) error {
 	pointer, length, err := b.write(ctx, value)
 	if err != nil {

@@ -23,12 +23,14 @@ use std::mem;
 use std::ptr;
 use std::slice;
 
+use automerge::sync::{Message, State as SyncState, SyncDoc};
 use automerge::transaction::{CommitOptions, Transactable};
 use automerge::{ActorId, AutoCommit, ObjId, ObjType, ReadDoc, Value, ROOT};
 
 struct State {
     doc: AutoCommit,
     objects: Vec<ObjId>,
+    sync_states: Vec<Option<SyncState>>,
     output: Vec<u8>,
     error: String,
 }
@@ -38,6 +40,7 @@ impl State {
         Self {
             doc: AutoCommit::new(),
             objects: vec![ROOT],
+            sync_states: Vec::new(),
             output: Vec::new(),
             error: String::new(),
         }
@@ -47,6 +50,7 @@ impl State {
         self.doc = doc;
         self.objects.clear();
         self.objects.push(ROOT);
+        self.sync_states.clear();
         self.output.clear();
         self.error.clear();
     }
@@ -429,5 +433,132 @@ pub extern "C" fn am_merge(pointer: u32, length: u32) -> i32 {
             }
             Err(error) => state.fail(error),
         }
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_sync_new() -> i64 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let handle = match u32::try_from(state.sync_states.len()) {
+            Ok(handle) => handle,
+            Err(_) => {
+                state.fail("too many sync states");
+                return -1;
+            }
+        };
+        state.sync_states.push(Some(SyncState::new()));
+        state.error.clear();
+        i64::from(handle)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_sync_free(handle: u32) -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let Some(sync_state) = state.sync_states.get_mut(handle as usize) else {
+            return state.fail(format!("invalid sync state handle {handle}"));
+        };
+        if sync_state.take().is_none() {
+            return state.fail(format!("sync state handle {handle} is closed"));
+        }
+        state.error.clear();
+        0
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_sync_generate(handle: u32) -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let State {
+            doc,
+            sync_states,
+            output,
+            error,
+            ..
+        } = &mut *state;
+        let Some(Some(sync_state)) = sync_states.get_mut(handle as usize) else {
+            return state.fail(format!("invalid sync state handle {handle}"));
+        };
+
+        *output = doc
+            .sync()
+            .generate_sync_message(sync_state)
+            .map(Message::encode)
+            .unwrap_or_default();
+        error.clear();
+        0
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_sync_receive(handle: u32, pointer: u32, length: u32) -> i32 {
+    let bytes = input_bytes(pointer, length);
+    let message = match Message::decode(&bytes) {
+        Ok(message) => message,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        if !matches!(state.sync_states.get(handle as usize), Some(Some(_))) {
+            return state.fail(format!("invalid sync state handle {handle}"));
+        }
+
+        let result = {
+            let State {
+                doc, sync_states, ..
+            } = &mut *state;
+            let sync_state = sync_states[handle as usize].as_mut().unwrap();
+            doc.sync().receive_sync_message(sync_state, message)
+        };
+        match result {
+            Ok(()) => {
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_sync_save(handle: u32) -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let Some(Some(sync_state)) = state.sync_states.get(handle as usize) else {
+            return state.fail(format!("invalid sync state handle {handle}"));
+        };
+        state.output = sync_state.encode();
+        state.error.clear();
+        0
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_sync_load(pointer: u32, length: u32) -> i64 {
+    let bytes = input_bytes(pointer, length);
+    let sync_state = match SyncState::decode(&bytes) {
+        Ok(sync_state) => sync_state,
+        Err(error) => {
+            STATE.with(|state| state.borrow_mut().fail(error));
+            return -1;
+        }
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let handle = match u32::try_from(state.sync_states.len()) {
+            Ok(handle) => handle,
+            Err(_) => {
+                state.fail("too many sync states");
+                return -1;
+            }
+        };
+        state.sync_states.push(Some(sync_state));
+        state.error.clear();
+        i64::from(handle)
     })
 }

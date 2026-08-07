@@ -48,6 +48,44 @@ func closeDocument(t *testing.T, document *automerge.Document) {
 	)
 }
 
+func closeSyncState(t *testing.T, state *automerge.SyncState) {
+	t.Helper()
+	t.Cleanup(
+		func() {
+			require.NoError(t, state.Close(context.Background()))
+		},
+	)
+}
+
+func synchronize(t *testing.T, left, right *automerge.SyncState) {
+	t.Helper()
+
+	ctx := context.Background()
+	for range 100 {
+		progressed := false
+
+		message, ok, err := left.GenerateMessage(ctx)
+		require.NoError(t, err)
+		if ok {
+			require.NoError(t, right.ReceiveMessage(ctx, message))
+			progressed = true
+		}
+
+		message, ok, err = right.GenerateMessage(ctx)
+		require.NoError(t, err)
+		if ok {
+			require.NoError(t, left.ReceiveMessage(ctx, message))
+			progressed = true
+		}
+
+		if !progressed {
+			return
+		}
+	}
+
+	require.Fail(t, "sync did not quiesce")
+}
+
 func newBaseDocument(t *testing.T) []byte {
 	t.Helper()
 
@@ -176,6 +214,72 @@ func TestText_SpliceUsesUTF16Offsets(t *testing.T) {
 	value, err := text.String(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, "AB", value)
+}
+
+func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	left, err := automerge.Load(ctx, newBaseDocument(t), actor(2))
+	require.NoError(t, err)
+	closeDocument(t, left)
+	right, err := automerge.New(ctx, actor(3))
+	require.NoError(t, err)
+	closeDocument(t, right)
+
+	leftSync, err := left.NewSyncState(ctx)
+	require.NoError(t, err)
+	closeSyncState(t, leftSync)
+	rightSync, err := right.NewSyncState(ctx)
+	require.NoError(t, err)
+	closeSyncState(t, rightSync)
+
+	synchronize(t, leftSync, rightSync)
+
+	leftText, err := left.Text(ctx, "body")
+	require.NoError(t, err)
+	rightText, err := right.Text(ctx, "body")
+	require.NoError(t, err)
+	require.NoError(t, leftText.Splice(ctx, 5, 0, " left"))
+	_, err = left.Commit(ctx, "Edit left", commitTime.Add(time.Second))
+	require.NoError(t, err)
+	require.NoError(t, rightText.Splice(ctx, 5, 0, " right"))
+	_, err = right.Commit(ctx, "Edit right", commitTime.Add(2*time.Second))
+	require.NoError(t, err)
+
+	synchronize(t, leftSync, rightSync)
+
+	leftValue, err := leftText.String(ctx)
+	require.NoError(t, err)
+	rightValue, err := rightText.String(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, leftValue, rightValue)
+	leftHeads, err := left.Heads(ctx)
+	require.NoError(t, err)
+	rightHeads, err := right.Heads(ctx)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, leftHeads, rightHeads)
+}
+
+func TestSyncState_SaveAndLoad(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	document, err := automerge.New(ctx, actor(1))
+	require.NoError(t, err)
+	closeDocument(t, document)
+
+	state, err := document.NewSyncState(ctx)
+	require.NoError(t, err)
+	data, err := state.Save(ctx)
+	require.NoError(t, err)
+	require.NoError(t, state.Close(ctx))
+
+	loaded, err := document.LoadSyncState(ctx, data)
+	require.NoError(t, err)
+	closeSyncState(t, loaded)
+	_, _, err = loaded.GenerateMessage(ctx)
+	require.NoError(t, err)
 }
 
 func TestDocument_CloseIsIdempotent(t *testing.T) {

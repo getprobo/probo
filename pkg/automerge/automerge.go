@@ -57,6 +57,13 @@ type (
 		handle   uint32
 	}
 
+	// SyncState tracks one document's synchronization with one remote peer.
+	SyncState struct {
+		document *Document
+		handle   uint32
+		closed   bool
+	}
+
 	backend interface {
 		Close(context.Context) error
 		Save(context.Context) ([]byte, error)
@@ -69,12 +76,19 @@ type (
 		Commit(context.Context, string, time.Time) ([32]byte, error)
 		Heads(context.Context) ([][32]byte, error)
 		Merge(context.Context, []byte) ([][32]byte, error)
+		NewSyncState(context.Context) (uint32, error)
+		CloseSyncState(context.Context, uint32) error
+		GenerateSyncMessage(context.Context, uint32) ([]byte, bool, error)
+		ReceiveSyncMessage(context.Context, uint32, []byte) error
+		SaveSyncState(context.Context, uint32) ([]byte, error)
+		LoadSyncState(context.Context, []byte) (uint32, error)
 	}
 )
 
 var (
-	ErrClosed       = errors.New("Automerge document is closed")
-	ErrSameDocument = errors.New("cannot merge an Automerge document into itself")
+	ErrClosed          = errors.New("Automerge document is closed")
+	ErrSameDocument    = errors.New("cannot merge an Automerge document into itself")
+	ErrSyncStateClosed = errors.New("Automerge sync state is closed")
 
 	_ backend = (*reference.Backend)(nil)
 )
@@ -279,6 +293,40 @@ func (d *Document) Merge(ctx context.Context, other *Document) ([]Hash, error) {
 	return heads, nil
 }
 
+// NewSyncState starts synchronization with a remote peer.
+func (d *Document) NewSyncState(ctx context.Context) (*SyncState, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	handle, err := d.backend.NewSyncState(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create Automerge sync state: %w", err)
+	}
+
+	return &SyncState{document: d, handle: handle}, nil
+}
+
+// LoadSyncState resumes a previously serialized remote-peer session.
+func (d *Document) LoadSyncState(ctx context.Context, data []byte) (*SyncState, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	handle, err := d.backend.LoadSyncState(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load Automerge sync state: %w", err)
+	}
+
+	return &SyncState{document: d, handle: handle}, nil
+}
+
 // Splice replaces deleteCount UTF-16 code units at index with value.
 func (t *Text) Splice(ctx context.Context, index uint32, deleteCount int32, value string) error {
 	t.document.mu.Lock()
@@ -310,6 +358,85 @@ func (t *Text) String(ctx context.Context) (string, error) {
 	}
 
 	return value, nil
+}
+
+// Close releases the peer-specific synchronization state.
+func (s *SyncState) Close(ctx context.Context) error {
+	s.document.mu.Lock()
+	defer s.document.mu.Unlock()
+
+	if s.closed {
+		return nil
+	}
+	s.closed = true
+
+	if s.document.closed {
+		return nil
+	}
+	if err := s.document.backend.CloseSyncState(ctx, s.handle); err != nil {
+		return fmt.Errorf("cannot close Automerge sync state: %w", err)
+	}
+
+	return nil
+}
+
+// GenerateMessage returns the next message for the remote peer.
+func (s *SyncState) GenerateMessage(ctx context.Context) ([]byte, bool, error) {
+	s.document.mu.Lock()
+	defer s.document.mu.Unlock()
+
+	if s.document.closed {
+		return nil, false, ErrClosed
+	}
+	if s.closed {
+		return nil, false, ErrSyncStateClosed
+	}
+
+	message, ok, err := s.document.backend.GenerateSyncMessage(ctx, s.handle)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot generate Automerge sync message: %w", err)
+	}
+
+	return message, ok, nil
+}
+
+// ReceiveMessage applies a message received from the remote peer.
+func (s *SyncState) ReceiveMessage(ctx context.Context, message []byte) error {
+	s.document.mu.Lock()
+	defer s.document.mu.Unlock()
+
+	if s.document.closed {
+		return ErrClosed
+	}
+	if s.closed {
+		return ErrSyncStateClosed
+	}
+
+	if err := s.document.backend.ReceiveSyncMessage(ctx, s.handle, message); err != nil {
+		return fmt.Errorf("cannot receive Automerge sync message: %w", err)
+	}
+
+	return nil
+}
+
+// Save serializes the peer-specific synchronization state.
+func (s *SyncState) Save(ctx context.Context) ([]byte, error) {
+	s.document.mu.Lock()
+	defer s.document.mu.Unlock()
+
+	if s.document.closed {
+		return nil, ErrClosed
+	}
+	if s.closed {
+		return nil, ErrSyncStateClosed
+	}
+
+	data, err := s.document.backend.SaveSyncState(ctx, s.handle)
+	if err != nil {
+		return nil, fmt.Errorf("cannot save Automerge sync state: %w", err)
+	}
+
+	return data, nil
 }
 
 // String returns the lowercase hexadecimal change hash.
