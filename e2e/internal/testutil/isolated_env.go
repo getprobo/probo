@@ -89,6 +89,7 @@ func StartIsolatedEnv(t testing.TB, opts IsolatedEnvOptions) *IsolatedEnv {
 	cmd.Env = os.Environ()
 
 	var buf bytes.Buffer
+
 	env.outputBuf = &buf
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
