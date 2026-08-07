@@ -301,6 +301,23 @@ func (r *compliancePortalResolver) ViewerSubscription(ctx context.Context, obj *
 	return types.NewMailingListSubscriber(subscriber), nil
 }
 
+// ViewerHasRequestedAccess is the resolver for the viewerHasRequestedAccess field.
+func (r *compliancePortalResolver) ViewerHasRequestedAccess(ctx context.Context, obj *types.CompliancePortal) (bool, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	hasRequested, err := r.visitor.HasRequestedAccess(ctx, scope, obj.ID, identity.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot check viewer requested access", log.Error(err))
+		return false, gqlutils.Internal(ctx)
+	}
+
+	return hasRequested, nil
+}
+
 // Documents is the resolver for the documents field.
 func (r *compliancePortalResolver) Documents(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.CompliancePortalVisibilityFilter) (*types.DocumentConnection, error) {
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
@@ -1086,7 +1103,8 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	}
 
 	return &types.RequestDocumentAccessPayload{
-		Document: types.NewDocument(document),
+		Document:         types.NewDocument(document),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}, nil
 }
 
@@ -1135,7 +1153,8 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	}
 
 	return &types.RequestReportAccessPayload{
-		Audit: types.NewAudit(audit),
+		Audit:            types.NewAudit(audit),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}, nil
 }
 
@@ -1184,7 +1203,8 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 	}
 
 	return &types.RequestFileAccessPayload{
-		File: types.NewCompliancePortalFile(portalFile),
+		File:             types.NewCompliancePortalFile(portalFile),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}, nil
 }
 
@@ -1208,9 +1228,10 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 	// per-resource resolvers, which load and guard ahead of the request). Only
 	// the resolved, non-public ids are forwarded to RequestPortalAccess.
 	payload := &types.RequestAccessesResultPayload{
-		Documents: make([]*types.Document, 0, len(input.DocumentIds)),
-		Audits:    make([]*types.Audit, 0, len(input.ReportIds)),
-		Files:     make([]*types.CompliancePortalFile, 0, len(input.CompliancePortalFileIds)),
+		Documents:        make([]*types.Document, 0, len(input.DocumentIds)),
+		Audits:           make([]*types.Audit, 0, len(input.ReportIds)),
+		Files:            make([]*types.CompliancePortalFile, 0, len(input.CompliancePortalFileIds)),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}
 
 	requestDocumentIDs := make([]gid.GID, 0, len(input.DocumentIds))
