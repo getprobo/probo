@@ -432,6 +432,11 @@ generate-automerge-reference: ## Rebuild the embedded official Automerge WASM ba
 	$(CP) $(AUTOMERGE_REFERENCE_DIR)/wasm/target/wasm32-wasip1/release/probo_automerge_reference.wasm $(AUTOMERGE_REFERENCE_WASM)
 	cd $(AUTOMERGE_REFERENCE_DIR) && $(SHA256SUM) reference.wasm > reference.wasm.sha256
 
+.PHONY: audit-automerge-reference
+audit-automerge-reference: ## Audit Automerge Rust advisories, licenses, bans, and sources
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		$(CARGO) +$(RUST_TOOLCHAIN) deny check
+
 .PHONY: embed
 embed: $(EMBEDDED)
 
