@@ -33,6 +33,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/automerge/internal/native"
 )
 
 type (
@@ -47,6 +48,7 @@ type (
 
 	oracleResponse struct {
 		Body     string   `json:"body"`
+		Change   string   `json:"change"`
 		Document string   `json:"document"`
 		Heads    []string `json:"heads"`
 	}
@@ -165,4 +167,32 @@ func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
 	assert.Equal(t, automerge.SpanTypeText, spans[1].Type)
 	assert.Equal(t, "Policy", spans[1].Text)
 	assert.Equal(t, true, spans[1].Marks["strong"])
+}
+
+func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(13)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action:    "createChange",
+			Actor:     hex.EncodeToString(actorID[:]),
+			Message:   "Create policy",
+			Timestamp: commitTime.Unix(),
+		},
+	)
+
+	data, err := base64.StdEncoding.DecodeString(response.Change)
+	require.NoError(t, err)
+	change, err := native.ParseChange(data)
+	require.NoError(t, err)
+	assert.Equal(t, actorID[:], change.Actor)
+	assert.Equal(t, uint64(1), change.Sequence)
+	assert.Equal(t, uint64(1), change.StartOp)
+	assert.Equal(t, commitTime.Unix(), change.Timestamp)
+	assert.Equal(t, "Create policy", change.Message)
+	assert.Empty(t, change.Dependencies)
+	assert.NotEmpty(t, change.Columns)
+	assert.Equal(t, response.Heads[0], hex.EncodeToString(change.Hash[:]))
 }

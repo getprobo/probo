@@ -79,6 +79,27 @@ switch (request.action) {
     );
     break;
   }
+  case "createChange": {
+    let document = Automerge.init({ actor: request.actor });
+    document = Automerge.change(
+      document,
+      {
+        message: request.message,
+        time: request.timestamp,
+      },
+      draft => {
+        draft.title = "Policy";
+      },
+    );
+    const changes = Automerge.getAllChanges(document);
+    process.stdout.write(
+      JSON.stringify({
+        change: Buffer.from(changes[0]).toString("base64"),
+        heads: Automerge.getHeads(document),
+      }),
+    );
+    break;
+  }
   case "inspect": {
     const document = Automerge.load(Buffer.from(request.document, "base64"));
     process.stdout.write(
