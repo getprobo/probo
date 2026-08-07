@@ -22,6 +22,7 @@ require (
 	github.com/chromedp/chromedp v0.16.0
 	github.com/coder/websocket v1.8.15
 	github.com/crewjam/saml v0.5.1
+	github.com/develerltd/go-automerge v0.8.0
 	github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-chi/cors v1.2.2
@@ -115,6 +116,7 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
+	github.com/google/btree v1.1.3 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
 	github.com/google/go-containerregistry v0.21.8 // indirect
 	github.com/gorilla/css v1.0.1 // indirect

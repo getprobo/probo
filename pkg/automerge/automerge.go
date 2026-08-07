@@ -34,6 +34,7 @@ import (
 	"sync"
 	"time"
 
+	"go.probo.inc/probo/pkg/automerge/internal/native"
 	"go.probo.inc/probo/pkg/automerge/internal/reference"
 )
 
@@ -96,6 +97,7 @@ var (
 	ErrSameDocument    = errors.New("cannot merge an Automerge document into itself")
 	ErrSyncStateClosed = errors.New("Automerge sync state is closed")
 
+	_ backend = (*native.Backend)(nil)
 	_ backend = (*reference.Backend)(nil)
 )
 
@@ -126,6 +128,24 @@ func New(ctx context.Context, actorID ActorID) (*Document, error) {
 	return &Document{backend: b}, nil
 }
 
+// NewPureGo creates an empty document using the experimental pure-Go backend.
+//
+// New continues to use the reference backend. Callers must opt in explicitly
+// while the native implementation's compatibility surface is being validated.
+func NewPureGo(ctx context.Context, actorID ActorID) (*Document, error) {
+	b, err := native.New(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create pure-Go Automerge backend: %w", err)
+	}
+
+	if err := b.SetActor(ctx, actorID[:]); err != nil {
+		_ = b.Close(ctx)
+		return nil, fmt.Errorf("cannot initialize pure-Go Automerge actor: %w", err)
+	}
+
+	return &Document{backend: b}, nil
+}
+
 // Load creates a document from Automerge binary data and assigns a new writer.
 func Load(ctx context.Context, data []byte, actorID ActorID) (*Document, error) {
 	b, err := reference.Load(ctx, data)
@@ -141,7 +161,22 @@ func Load(ctx context.Context, data []byte, actorID ActorID) (*Document, error) 
 	return &Document{backend: b}, nil
 }
 
-// Close releases the document's WASM module instance.
+// LoadPureGo loads Automerge binary data using the experimental pure-Go backend.
+func LoadPureGo(ctx context.Context, data []byte, actorID ActorID) (*Document, error) {
+	b, err := native.Load(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load pure-Go Automerge backend: %w", err)
+	}
+
+	if err := b.SetActor(ctx, actorID[:]); err != nil {
+		_ = b.Close(ctx)
+		return nil, fmt.Errorf("cannot assign pure-Go Automerge actor: %w", err)
+	}
+
+	return &Document{backend: b}, nil
+}
+
+// Close releases the document's backend resources.
 func (d *Document) Close(ctx context.Context) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
