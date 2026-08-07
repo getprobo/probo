@@ -1,0 +1,92 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "1. Purpose" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "This document provides a comprehensive register of AI systems within the organization, including their roles, risk classification, oversight mechanisms, and review schedule." }]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "2. AI Systems Overview" }]
+    },
+    {
+      "type": "table",
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Name", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Version", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Company Roles", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Status", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Owner", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Risk Class.", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Deployment", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Next Review", "marks": [{ "type": "bold" }] }] }] }
+          ]
+        }{{range .Rows}},
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Name}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Version}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .CompanyRoles}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Status}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Owner}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .RiskClassification}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .DeploymentDate}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .NextReviewDate}} }] }] }
+          ]
+        }{{end}}
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "3. AI Systems Details" }]
+    },
+    {
+      "type": "table",
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Name", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Source", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Purpose", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Intended Use Cases", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Autonomy Level", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Human Oversight", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Key Stakeholders", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Data Sources", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Last Review", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Notes", "marks": [{ "type": "bold" }] }] }] }
+          ]
+        }{{range .Rows}},
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Name}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Source}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Purpose}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .IntendedUseCases}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .AutonomyLevel}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .HumanOversightMechanism}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .KeyStakeholders}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .DataSourcesAndType}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [80] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .LastReviewDate}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [100] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Notes}} }] }] }
+          ]
+        }{{end}}
+      ]
+    }
+  ]
+}

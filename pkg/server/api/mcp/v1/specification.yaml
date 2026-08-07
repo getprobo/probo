@@ -4525,6 +4525,414 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted business function ID
 
+    AiSystemStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - IN_DEVELOPMENT
+        - DECOMMISSIONED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemStatus
+
+    AiSystemRiskClassification:
+      type: string
+      enum:
+        - HIGH_RISK
+        - LIMITED
+        - MINIMAL
+        - GPAI
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemRiskClassification
+
+    AiSystemCompanyRole:
+      type: string
+      enum:
+        - PROVIDER
+        - DEPLOYER
+        - USER
+        - DEVELOPER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemCompanyRole
+
+    AiSystemOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+        - STATUS
+        - RISK_CLASSIFICATION
+        - DEPLOYMENT_DATE
+        - LAST_REVIEW_DATE
+        - NEXT_REVIEW_DATE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemOrderField
+
+    AiSystemOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AiSystemOrderField"
+          description: AI system order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: AI system order direction
+
+    AiSystem:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - company_roles
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        version:
+          type:
+            - string
+            - "null"
+          description: Version
+        company_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystemCompanyRole"
+          description: Company roles
+        status:
+          $ref: "#/components/schemas/AiSystemStatus"
+          description: Status
+        owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+        source:
+          type:
+            - string
+            - "null"
+          description: Source
+        purpose:
+          type:
+            - string
+            - "null"
+          description: Purpose
+        intended_use_cases:
+          type:
+            - string
+            - "null"
+          description: Intended use cases
+        autonomy_level:
+          type:
+            - string
+            - "null"
+          description: Autonomy level
+        human_oversight_mechanism:
+          type:
+            - string
+            - "null"
+          description: Human oversight mechanism
+        risk_classification:
+          anyOf:
+            - $ref: "#/components/schemas/AiSystemRiskClassification"
+            - type: "null"
+          description: Risk classification
+        key_stakeholders:
+          type:
+            - string
+            - "null"
+          description: Key stakeholders
+        data_sources_and_type:
+          type:
+            - string
+            - "null"
+          description: Data sources and type
+        deployment_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Deployment date
+        last_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next review date
+        notes:
+          type:
+            - string
+            - "null"
+          description: Notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListAiSystemsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AiSystemOrderBy"
+          description: AI system order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            status:
+              anyOf:
+                - $ref: "#/components/schemas/AiSystemStatus"
+                - type: "null"
+              description: Filter by status. Defaults to null which returns all statuses.
+            risk_classification:
+              anyOf:
+                - $ref: "#/components/schemas/AiSystemRiskClassification"
+                - type: "null"
+              description: Filter by risk classification. Defaults to null which returns all classifications.
+
+    ListAiSystemsOutput:
+      type: object
+      required:
+        - ai_systems
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        ai_systems:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystem"
+
+    GetAiSystemInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+
+    GetAiSystemOutput:
+      type: object
+      required:
+        - ai_system
+      properties:
+        ai_system:
+          $ref: "#/components/schemas/AiSystem"
+
+    AddAiSystemInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - status
+        - risk_classification
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        version:
+          type: string
+          description: Version
+        company_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystemCompanyRole"
+          description: Company roles
+        status:
+          $ref: "#/components/schemas/AiSystemStatus"
+          description: Status
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        source:
+          type: string
+          description: Source
+        purpose:
+          type: string
+          description: Purpose
+        intended_use_cases:
+          type: string
+          description: Intended use cases
+        autonomy_level:
+          type: string
+          description: Autonomy level
+        human_oversight_mechanism:
+          type: string
+          description: Human oversight mechanism
+        risk_classification:
+          $ref: "#/components/schemas/AiSystemRiskClassification"
+          description: Risk classification
+        key_stakeholders:
+          type: string
+          description: Key stakeholders
+        data_sources_and_type:
+          type: string
+          description: Data sources and type
+        deployment_date:
+          type: string
+          format: date-time
+          description: Deployment date
+        last_review_date:
+          type: string
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type: string
+          format: date-time
+          description: Next review date
+        notes:
+          type: string
+          description: Notes
+
+    AddAiSystemOutput:
+      type: object
+      required:
+        - ai_system
+      properties:
+        ai_system:
+          $ref: "#/components/schemas/AiSystem"
+
+    UpdateAiSystemInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+        name:
+          type: string
+          description: Name
+        version:
+          type: ["string", "null"]
+          description: Version
+          go.probo.inc/mcpgen/omittable: true
+        company_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystemCompanyRole"
+          description: Company roles
+        status:
+          $ref: "#/components/schemas/AiSystemStatus"
+          description: Status
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        source:
+          type: ["string", "null"]
+          description: Source
+          go.probo.inc/mcpgen/omittable: true
+        purpose:
+          type: ["string", "null"]
+          description: Purpose
+          go.probo.inc/mcpgen/omittable: true
+        intended_use_cases:
+          type: ["string", "null"]
+          description: Intended use cases
+          go.probo.inc/mcpgen/omittable: true
+        autonomy_level:
+          type: ["string", "null"]
+          description: Autonomy level
+          go.probo.inc/mcpgen/omittable: true
+        human_oversight_mechanism:
+          type: ["string", "null"]
+          description: Human oversight mechanism
+          go.probo.inc/mcpgen/omittable: true
+        risk_classification:
+          anyOf:
+            - $ref: "#/components/schemas/AiSystemRiskClassification"
+            - type: "null"
+          description: Risk classification
+          go.probo.inc/mcpgen/omittable: true
+        key_stakeholders:
+          type: ["string", "null"]
+          description: Key stakeholders
+          go.probo.inc/mcpgen/omittable: true
+        data_sources_and_type:
+          type: ["string", "null"]
+          description: Data sources and type
+          go.probo.inc/mcpgen/omittable: true
+        deployment_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Deployment date
+          go.probo.inc/mcpgen/omittable: true
+        last_review_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Last review date
+          go.probo.inc/mcpgen/omittable: true
+        next_review_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Next review date
+          go.probo.inc/mcpgen/omittable: true
+        notes:
+          type: ["string", "null"]
+          description: Notes
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateAiSystemOutput:
+      type: object
+      required:
+        - ai_system
+      properties:
+        ai_system:
+          $ref: "#/components/schemas/AiSystem"
+
+    DeleteAiSystemInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+
+    DeleteAiSystemOutput:
+      type: object
+      required:
+        - deleted_ai_system_id
+      properties:
+        deleted_ai_system_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted AI system ID
+
     ProcessingActivityRole:
       type: string
       enum:
@@ -8016,6 +8424,37 @@ components:
           description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
     PublishBusinessFunctionListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishAiSystemListInput:
+      type: object
+      required:
+        - organization_id
+        - minor
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+
+    PublishAiSystemListOutput:
       type: object
       required:
         - document_id
@@ -15274,6 +15713,66 @@ tools:
       $ref: "#/components/schemas/DeleteBusinessFunctionInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteBusinessFunctionOutput"
+  - name: listAiSystems
+    title: List AI Systems
+    description: List all AI systems for the organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAiSystemsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAiSystemsOutput"
+  - name: getAiSystem
+    title: Get AI System
+    description: Get an AI system by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAiSystemOutput"
+  - name: addAiSystem
+    title: Add AI System
+    description: Add a new AI system to the organization
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddAiSystemOutput"
+  - name: updateAiSystem
+    title: Update AI System
+    description: Update an existing AI system
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAiSystemOutput"
+  - name: deleteAiSystem
+    title: Delete AI System
+    description: Delete an AI system
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAiSystemOutput"
   - name: listProcessingActivities
     title: List Processing Activities
     description: List all processing activities for the organization
@@ -16138,6 +16637,18 @@ tools:
       $ref: "#/components/schemas/PublishBusinessFunctionListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishBusinessFunctionListOutput"
+  - name: publishAiSystemList
+    title: Publish AI System List
+    description: Publish the AI system register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishAiSystemListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishAiSystemListOutput"
   - name: publishProcessingActivityList
     title: Publish Processing Activity List
     description: Publish the processing activity register for an organization as a document. If a document already exists, a new version is created.

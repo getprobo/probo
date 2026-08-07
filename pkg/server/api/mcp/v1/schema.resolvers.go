@@ -8697,3 +8697,191 @@ func (r *Resolver) PublishBusinessFunctionListTool(ctx context.Context, req *mcp
 		DocumentVersionID: documentVersion.ID,
 	}, nil
 }
+
+func (r *Resolver) ListAiSystemsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAiSystemsInput) (*mcp.CallToolResult, types.ListAiSystemsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAiSystemList)
+	if err != nil {
+		return nil, types.ListAiSystemsOutput{}, err
+	}
+
+	prb := r.proboSvc
+
+	pageOrderBy := page.OrderBy[coredata.AiSystemOrderField]{
+		Field:     coredata.AiSystemOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AiSystemOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var (
+		status             *coredata.AiSystemStatus
+		riskClassification *coredata.AiSystemRiskClassification
+	)
+
+	if input.Filter != nil {
+		status = input.Filter.Status
+		riskClassification = input.Filter.RiskClassification
+	}
+
+	aiSystemFilter := coredata.NewAiSystemFilter(status, riskClassification)
+
+	pageResult, err := prb.AiSystems.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, aiSystemFilter)
+	if err != nil {
+		return nil, types.ListAiSystemsOutput{}, fmt.Errorf("cannot list organization ai systems: %w", err)
+	}
+
+	return nil, types.NewListAiSystemsOutput(pageResult), nil
+}
+
+func (r *Resolver) GetAiSystemTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAiSystemInput) (*mcp.CallToolResult, types.GetAiSystemOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAiSystemGet)
+	if err != nil {
+		return nil, types.GetAiSystemOutput{}, err
+	}
+
+	prb := r.proboSvc
+
+	aiSystem, err := prb.AiSystems.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetAiSystemOutput{}, fmt.Errorf("cannot get ai system: %w", err)
+	}
+
+	return nil, types.GetAiSystemOutput{
+		AiSystem: types.NewAiSystem(aiSystem),
+	}, nil
+}
+
+func (r *Resolver) AddAiSystemTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAiSystemInput) (*mcp.CallToolResult, types.AddAiSystemOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAiSystemCreate)
+	if err != nil {
+		return nil, types.AddAiSystemOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	riskClassification := input.RiskClassification
+
+	aiSystem, err := svc.AiSystems.Create(
+		ctx,
+		scope,
+		&probo.CreateAiSystemRequest{
+			OrganizationID:          input.OrganizationID,
+			Name:                    input.Name,
+			Version:                 input.Version,
+			CompanyRoles:            input.CompanyRoles,
+			Status:                  input.Status,
+			OwnerID:                 input.OwnerID,
+			Source:                  input.Source,
+			Purpose:                 input.Purpose,
+			IntendedUseCases:        input.IntendedUseCases,
+			AutonomyLevel:           input.AutonomyLevel,
+			HumanOversightMechanism: input.HumanOversightMechanism,
+			RiskClassification:      &riskClassification,
+			KeyStakeholders:         input.KeyStakeholders,
+			DataSourcesAndType:      input.DataSourcesAndType,
+			DeploymentDate:          input.DeploymentDate,
+			LastReviewDate:          input.LastReviewDate,
+			NextReviewDate:          input.NextReviewDate,
+			Notes:                   input.Notes,
+		},
+	)
+	if err != nil {
+		return nil, types.AddAiSystemOutput{}, fmt.Errorf("cannot create ai system: %w", err)
+	}
+
+	return nil, types.AddAiSystemOutput{
+		AiSystem: types.NewAiSystem(aiSystem),
+	}, nil
+}
+
+func (r *Resolver) UpdateAiSystemTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAiSystemInput) (*mcp.CallToolResult, types.UpdateAiSystemOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAiSystemUpdate)
+	if err != nil {
+		return nil, types.UpdateAiSystemOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	updateReq := &probo.UpdateAiSystemRequest{
+		ID:                      input.ID,
+		Name:                    input.Name,
+		Version:                 UnwrapOmittable(input.Version),
+		Status:                  input.Status,
+		OwnerID:                 UnwrapOmittable(input.OwnerID),
+		Source:                  UnwrapOmittable(input.Source),
+		Purpose:                 UnwrapOmittable(input.Purpose),
+		IntendedUseCases:        UnwrapOmittable(input.IntendedUseCases),
+		AutonomyLevel:           UnwrapOmittable(input.AutonomyLevel),
+		HumanOversightMechanism: UnwrapOmittable(input.HumanOversightMechanism),
+		RiskClassification:      UnwrapOmittable(input.RiskClassification),
+		KeyStakeholders:         UnwrapOmittable(input.KeyStakeholders),
+		DataSourcesAndType:      UnwrapOmittable(input.DataSourcesAndType),
+		DeploymentDate:          UnwrapOmittable(input.DeploymentDate),
+		LastReviewDate:          UnwrapOmittable(input.LastReviewDate),
+		NextReviewDate:          UnwrapOmittable(input.NextReviewDate),
+		Notes:                   UnwrapOmittable(input.Notes),
+	}
+
+	if input.CompanyRoles != nil {
+		updateReq.CompanyRoles = &input.CompanyRoles
+	}
+
+	aiSystem, err := svc.AiSystems.Update(ctx, scope, updateReq)
+	if err != nil {
+		return nil, types.UpdateAiSystemOutput{}, fmt.Errorf("cannot update ai system: %w", err)
+	}
+
+	return nil, types.UpdateAiSystemOutput{
+		AiSystem: types.NewAiSystem(aiSystem),
+	}, nil
+}
+
+func (r *Resolver) DeleteAiSystemTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAiSystemInput) (*mcp.CallToolResult, types.DeleteAiSystemOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionAiSystemDelete)
+	if err != nil {
+		return nil, types.DeleteAiSystemOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	err = svc.AiSystems.Delete(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteAiSystemOutput{}, fmt.Errorf("cannot delete ai system: %w", err)
+	}
+
+	return nil, types.DeleteAiSystemOutput{
+		DeletedAiSystemID: input.ID,
+	}, nil
+}
+
+func (r *Resolver) PublishAiSystemListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishAiSystemListInput) (*mcp.CallToolResult, types.PublishAiSystemListOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAiSystemPublish)
+	if err != nil {
+		return nil, types.PublishAiSystemListOutput{}, err
+	}
+
+	svc := r.proboSvc
+
+	document, documentVersion, err := svc.GeneratedDocuments.PublishAiSystemList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
+	if err != nil {
+		return nil, types.PublishAiSystemListOutput{}, fmt.Errorf("cannot publish ai system list: %w", err)
+	}
+
+	return nil, types.PublishAiSystemListOutput{
+		DocumentID:        document.ID,
+		DocumentVersionID: documentVersion.ID,
+	}, nil
+}

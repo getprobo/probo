@@ -284,6 +284,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAudit(audit), nil
 		}
+	case coredata.AiSystemEntityType:
+		action = probo.ActionAiSystemList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			aiSystem, err := r.probo.AiSystems.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAiSystem(aiSystem), nil
+		}
 	case coredata.FindingEntityType:
 		action = probo.ActionFindingList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

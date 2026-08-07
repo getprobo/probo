@@ -23,6 +23,7 @@ package root
 import (
 	"github.com/spf13/cobra"
 	accessreview "go.probo.inc/probo/pkg/cmd/access-review"
+	"go.probo.inc/probo/pkg/cmd/aisystem"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
 	"go.probo.inc/probo/pkg/cmd/asset"
 	"go.probo.inc/probo/pkg/cmd/audit"
@@ -99,6 +100,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd.AddCommand(accessreview.NewCmdAccessReview(f))
+	cmd.AddCommand(aisystem.NewCmdAiSystem(f))
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
 	cmd.AddCommand(asset.NewCmdAsset(f))
 	cmd.AddCommand(audit.NewCmdAudit(f))
