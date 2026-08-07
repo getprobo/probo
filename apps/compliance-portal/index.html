@@ -3,27 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <script>
-    (function () {
-      var m = location.pathname.match(/^\/trust\/[^/]+/);
-      var b = document.createElement("base");
-      b.href = m ? m[0] + "/" : "/";
-      document.head.appendChild(b);
-    })();
-  </script>
-
-  <script>
-    // FOUC guard: apply the OS preference before JS bundles load. Runtime
-    // overrides (and further system-preference changes) are owned by
-    // src/lib/displayMode/displayMode.ts once the app boots.
-    (function () {
-      if (!window.matchMedia) return;
-      document.documentElement.classList.toggle(
-        "dark",
-        window.matchMedia("(prefers-color-scheme: dark)").matches,
-      );
-    })();
-  </script>
+  <script src="/scripts/fouc-dark.js"></script>
 
   <meta name="color-scheme" content="light dark" />
 
