@@ -99,7 +99,7 @@ func TestPureGo_LoadsAndExtendsReferenceHistory(t *testing.T) {
 	closeDocument(t, nativeDocument)
 	text, err := nativeDocument.Text(ctx, "body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 1, 0, " native"))
+	require.NoError(t, text.Splice(ctx, 3, 0, " native"))
 	nativeHash, err := nativeDocument.Commit(ctx, "Edit in pure Go", commitTime.Add(time.Second))
 	require.NoError(t, err)
 
@@ -108,7 +108,7 @@ func TestPureGo_LoadsAndExtendsReferenceHistory(t *testing.T) {
 	loadedByReference, err := automerge.Load(ctx, nativeData, actor(24))
 	require.NoError(t, err)
 	closeDocument(t, loadedByReference)
-	assert.Equal(t, "A nativeéB", readBody(t, loadedByReference))
+	assert.Equal(t, "AéB native", readBody(t, loadedByReference))
 	heads, err := loadedByReference.Heads(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, []automerge.Hash{nativeHash}, heads)

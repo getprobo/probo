@@ -355,6 +355,9 @@ func (b *Backend) Commit(
 	_ string,
 	_ time.Time,
 ) ([32]byte, error) {
+	// The low-level transaction API does not yet expose change message and time
+	// fields, so this prototype preserves operations and causality but not those
+	// two optional metadata values.
 	if err := b.ready(ctx); err != nil {
 		return [32]byte{}, err
 	}
