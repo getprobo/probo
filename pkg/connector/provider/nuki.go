@@ -35,29 +35,17 @@ func nukiRegistration() *Registration {
 		DisplayName:      "Nuki",
 		DocumentationURL: accessReviewDocsURL("nuki"),
 		SupportsAPIKey:   true,
-		// A Nuki Web API token (Nuki Web > Menu > API, scopes `account` and
-		// `smartlock.auth`) authenticates as a standard Bearer token, so the
-		// default APIKeyConnection mode applies; no Header/Scheme/BasicAuth
-		// override is needed. Nuki also offers OAuth2, but only with an
-		// implicit flow, which yields no refreshable credential for a
-		// background fetch — the API token is the supported path.
-		//
-		// The token is bound to one Nuki Web account and /account/user returns
-		// every account user of it, so there is nothing to pick (Pattern 3): no
-		// settings struct, no picker.
+		// Nuki Web API token (Menu > API). Required scopes: account,
+		// smartlock.auth. Optional: smartlock.readOnly (door names). OAuth2
+		// implicit flow has no refreshable credential, so only API tokens are
+		// supported. One token = one account; nothing to pick (Pattern 3).
 		Endpoints: Endpoints{
-			// Both the driver and the name resolver join their paths onto this
-			// root, so an override moves the whole connector.
 			APIBase: "https://api.nuki.io",
-			// The connection check confirms the token with the same lightweight
-			// GET the driver uses; a token that is dead or missing a scope
-			// returns 401. Same host as APIBase, as Register requires.
-			Probe: "https://api.nuki.io/account/user?limit=1",
+			Probe:   "https://api.nuki.io/account/user?limit=1",
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewNukiDriver(c, ep.APIBase), nil
 		},
-		// GET /account names the source after the Nuki Web account itself.
 		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
 			return drivers.NewNukiNameResolver(c, ep.APIBase)
 		},
