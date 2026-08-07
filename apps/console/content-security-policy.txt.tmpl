@@ -1,0 +1,11 @@
+default-src 'self';
+script-src 'self';
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+img-src 'self' data: {{.AppOrigin}} https://www.google.com https:;
+font-src 'self' https://fonts.gstatic.com;
+connect-src 'self' {{.AppOrigin}} https:;
+worker-src 'self' blob:;
+object-src 'none';
+base-uri 'self';
+form-action 'self';
+frame-ancestors 'none'

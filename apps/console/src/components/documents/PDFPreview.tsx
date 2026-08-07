@@ -27,14 +27,19 @@ import {
   Spinner,
 } from "@probo/ui";
 import { IconMinusLarge } from "@probo/ui/src/Atoms/Icons/IconMinusLarge";
+// Vite `?url` import resolves to the bundled worker URL (string); the import-x
+// resolver doesn't understand the suffix, and `vite/client` types cover it.
+// eslint-disable-next-line import-x/default
+import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { type ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 
-// Worker for PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Bundle the pdf.js worker with the app (via Vite's `?url`) instead of loading
+// it from a CDN, so the viewer works under a strict console CSP.
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const btnClass
   = "size-8 grid place-items-center hover:bg-secondary-hover cursor-pointer rounded-sm disabled:opacity-30 transition-all";

@@ -18,12 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { readFileSync } from "node:fs";
 import { fileURLToPath, URL } from "node:url";
 
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
+
+const cspTemplatePath = fileURLToPath(
+  new URL("./content-security-policy.txt.tmpl", import.meta.url),
+);
+
+// Same policy as production (apps/compliance-portal/csp.go), with ws:/wss:
+// appended to connect-src for Vite HMR.
+function compliancePortalContentSecurityPolicy(appOrigin: string): string {
+  const template = readFileSync(cspTemplatePath, "utf8");
+  const policy = template.replaceAll("{{.AppOrigin}}", appOrigin).trim();
+  return policy.replace(
+    /connect-src 'self' ([^;]+);/,
+    "connect-src 'self' $1 ws: wss:;",
+  );
+}
+
+function appOriginFromEnv(env: Record<string, string>): string {
+  const explicit = env.COMPLIANCE_PORTAL_APP_ORIGIN?.trim();
+  if (explicit) {
+    return explicit.replace(/\/$/, "");
+  }
+
+  const apiURL = env.VITE_API_URL?.trim();
+  if (!apiURL) {
+    return "";
+  }
+
+  const formatted
+    = apiURL.startsWith("http://") || apiURL.startsWith("https://")
+      ? apiURL
+      : `https://${apiURL}`;
+
+  return new URL(formatted).origin;
+}
 
 // index.html is also a Go html/template for the production SPA shell. Vite's
 // dev server does not execute those actions, so bare {{if}}/{{range}} text is
@@ -115,6 +150,15 @@ export default defineConfig(({ mode, command }) => {
     base: "/",
     server: {
       port: 5174,
+      headers: {
+        "Content-Security-Policy": compliancePortalContentSecurityPolicy(
+          appOriginFromEnv(env),
+        ),
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Permissions-Policy": "microphone=(), camera=(), geolocation=()",
+      },
       proxy: proxyTarget
         ? {
             // Host-routed compliance-portal API (trust-center HTTPS listener).

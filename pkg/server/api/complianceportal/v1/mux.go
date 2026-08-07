@@ -15,10 +15,12 @@
 package complianceportal_v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
+	complianceportalstatics "go.probo.inc/probo/apps/compliance-portal"
 	"go.probo.inc/probo/pkg/baseurl"
 	visitor "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
@@ -58,8 +60,25 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 
 	r := chi.NewRouter()
 
+	appOrigin := ""
+	if cfg.BaseURL != nil {
+		appOrigin = cfg.BaseURL.Scheme() + "://" + cfg.BaseURL.Host()
+	}
+
+	csp, err := complianceportalstatics.ContentSecurityPolicy(appOrigin)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build content security policy: %w", err)
+	}
+
 	r.Use(complianceportal.NewSNIMiddleware(cfg.Visitor))
-	r.Use(server.NewSecurityHeadersMiddleware(cfg.ExtraHeaderFields))
+	r.Use(
+		server.NewSecurityHeadersMiddleware(
+			server.SecurityHeadersOptions{
+				ExtraHeaderFields:     cfg.ExtraHeaderFields,
+				ContentSecurityPolicy: csp,
+			},
+		),
+	)
 
 	markdownHandler := complianceportal.NewHandler(cfg.Visitor)
 
