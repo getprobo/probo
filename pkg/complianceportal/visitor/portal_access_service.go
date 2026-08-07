@@ -171,6 +171,57 @@ func (s *Service) GetPortalAccess(
 	return access, err
 }
 
+func (s *Service) HasRequestedAccess(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	identityID gid.GID,
+) (bool, error) {
+	var hasRequested bool
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			access := &coredata.CompliancePortalAccess{}
+			if err := access.LoadByCompliancePortalIDAndIdentityID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				identityID,
+			); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					hasRequested = false
+					return nil
+				}
+
+				return fmt.Errorf("cannot load compliance portal access: %w", err)
+			}
+
+			var documentAccesses coredata.CompliancePortalDocumentAccesses
+
+			count, err := documentAccesses.CountByCompliancePortalAccessID(
+				ctx,
+				conn,
+				scope,
+				access.ID,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot count document accesses: %w", err)
+			}
+
+			hasRequested = count > 0
+
+			return nil
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return hasRequested, nil
+}
+
 func (s *Service) GetPortalDocumentAccess(
 	ctx context.Context,
 	scope coredata.Scoper,

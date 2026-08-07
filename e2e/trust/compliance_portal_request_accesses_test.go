@@ -131,6 +131,90 @@ func TestCompliancePortal_RequestAccesses_TenantIsolation(t *testing.T) {
 	)
 }
 
+// TestCompliancePortal_ViewerHasRequestedAccess verifies the portal-level flag
+// used to defer the unsigned-NDA banner until the visitor has engaged with
+// private content: false before any access row, true after requestDocumentAccess.
+func TestCompliancePortal_ViewerHasRequestedAccess(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	documentID, compliancePortalID := setupRestrictedPortalDocument(t, owner)
+	trustHost := lookupTrustHost(t, owner, compliancePortalID)
+
+	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
+
+	assert.False(
+		t,
+		queryViewerHasRequestedAccess(t, visitor, trustHost),
+		"a newly signed-in visitor must not appear to have requested access yet",
+	)
+
+	const mutation = `
+		mutation RequestDocumentAccess($input: RequestDocumentAccessInput!) {
+			requestDocumentAccess(input: $input) {
+				document { id }
+				compliancePortal {
+					id
+					viewerHasRequestedAccess
+				}
+			}
+		}
+	`
+
+	var result struct {
+		RequestDocumentAccess struct {
+			Document struct {
+				ID string `json:"id"`
+			} `json:"document"`
+			CompliancePortal struct {
+				ViewerHasRequestedAccess bool `json:"viewerHasRequestedAccess"`
+			} `json:"compliancePortal"`
+		} `json:"requestDocumentAccess"`
+	}
+
+	err := visitor.ExecuteTrust(trustHost, mutation, map[string]any{
+		"input": map[string]any{
+			"documentId": documentID,
+		},
+	}, &result)
+	require.NoError(t, err, "an authenticated visitor must be able to request document access")
+
+	assert.True(
+		t,
+		result.RequestDocumentAccess.CompliancePortal.ViewerHasRequestedAccess,
+		"the mutation payload must flip viewerHasRequestedAccess so clients can update without a refetch",
+	)
+	assert.True(
+		t,
+		queryViewerHasRequestedAccess(t, visitor, trustHost),
+		"viewerHasRequestedAccess must remain true on a subsequent portal query",
+	)
+}
+
+func queryViewerHasRequestedAccess(t *testing.T, visitor *testutil.Client, trustHost string) bool {
+	t.Helper()
+
+	const query = `
+		query {
+			currentCompliancePortal {
+				viewerHasRequestedAccess
+			}
+		}
+	`
+
+	var result struct {
+		CurrentCompliancePortal struct {
+			ViewerHasRequestedAccess bool `json:"viewerHasRequestedAccess"`
+		} `json:"currentCompliancePortal"`
+	}
+
+	err := visitor.ExecuteTrust(trustHost, query, nil, &result)
+	require.NoError(t, err)
+
+	return result.CurrentCompliancePortal.ViewerHasRequestedAccess
+}
+
 // TestCompliancePortal_RequestAccesses_EmptyRejects verifies that requestAccesses
 // with no document, report, or file ids is rejected — there is no "request all"
 // shortcut; callers must always name the targets explicitly.

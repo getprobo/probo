@@ -16,6 +16,8 @@ type CompliancePortal implements Node {
 
   viewerSubscription: MailingListSubscriber @goField(forceResolver: true)
 
+  viewerHasRequestedAccess: Boolean! @goField(forceResolver: true)
+
   documents(
     first: Int
     after: CursorKey
@@ -496,14 +498,17 @@ extend type Mutation {
 
 type RequestDocumentAccessPayload {
   document: Document
+  compliancePortal: CompliancePortal!
 }
 
 type RequestReportAccessPayload {
   audit: Audit
+  compliancePortal: CompliancePortal!
 }
 
 type RequestFileAccessPayload {
   file: CompliancePortalFile
+  compliancePortal: CompliancePortal!
 }
 
 # Returns the affected nodes so the client can update each row in place. Mirrors
@@ -512,6 +517,7 @@ type RequestAccessesResultPayload {
   documents: [Document!]!
   audits: [Audit!]!
   files: [CompliancePortalFile!]!
+  compliancePortal: CompliancePortal!
 }
 
 input ExportDocumentPDFInput {
