@@ -143,6 +143,19 @@ switch (request.action) {
     );
     break;
   }
+  case "inspectChange": {
+    const change = Buffer.from(request.change, "base64");
+    const decoded = Automerge.decodeChange(change);
+    const [document] = Automerge.applyChanges(Automerge.init(), [change]);
+    process.stdout.write(
+      JSON.stringify({
+        body: document.title,
+        message: decoded.message,
+        heads: [decoded.hash],
+      }),
+    );
+    break;
+  }
   case "inspect": {
     const document = Automerge.load(Buffer.from(request.document, "base64"));
     process.stdout.write(

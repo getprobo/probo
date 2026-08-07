@@ -42,6 +42,7 @@ type (
 		Actor     string `json:"actor,omitempty"`
 		ActorB    string `json:"actorB,omitempty"`
 		ActorC    string `json:"actorC,omitempty"`
+		Change    string `json:"change,omitempty"`
 		Document  string `json:"document,omitempty"`
 		Message   string `json:"message,omitempty"`
 		Text      string `json:"text,omitempty"`
@@ -54,6 +55,7 @@ type (
 		Changes  []string `json:"changes"`
 		Document string   `json:"document"`
 		Heads    []string `json:"heads"`
+		Message  string   `json:"message"`
 		Sync     string   `json:"sync"`
 	}
 )
@@ -225,6 +227,20 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 	title, err := state.Text("title")
 	require.NoError(t, err)
 	assert.Equal(t, "Policy", title)
+
+	nativeEncoded, err := native.EncodeChange(change)
+	require.NoError(t, err)
+	inspection := runOracle(
+		t,
+		oracleRequest{
+			Action: "inspectChange",
+			Change: base64.StdEncoding.EncodeToString(nativeEncoded),
+		},
+	)
+	assert.Equal(t, "Policy", inspection.Body)
+	assert.Equal(t, "Create policy", inspection.Message)
+	require.NotNil(t, change.Hash)
+	assert.Equal(t, inspection.Heads[0], change.Hash.String())
 }
 
 func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
