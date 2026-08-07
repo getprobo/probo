@@ -200,14 +200,14 @@ func (s *Service) HasRequestedAccess(
 
 			var documentAccesses coredata.CompliancePortalDocumentAccesses
 
-			count, err := documentAccesses.CountByCompliancePortalAccessID(
+			count, err := documentAccesses.CountVisitorRequestedByCompliancePortalAccessID(
 				ctx,
 				conn,
 				scope,
 				access.ID,
 			)
 			if err != nil {
-				return fmt.Errorf("cannot count document accesses: %w", err)
+				return fmt.Errorf("cannot count visitor-requested document accesses: %w", err)
 			}
 
 			hasRequested = count > 0
