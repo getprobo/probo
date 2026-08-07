@@ -119,4 +119,9 @@ export { EditableRow } from "./Molecules/Table/EditableRow";
 export { Toasts, useToast } from "./Atoms/Toasts/Toasts";
 
 // Rich editor
-export { RichEditor } from "./RichEditor/RichEditor";
+export {
+  createRichEditorAutomergeDocument,
+  RichEditor,
+  supportsRichEditorCollaboration,
+} from "./RichEditor/RichEditor";
+export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";

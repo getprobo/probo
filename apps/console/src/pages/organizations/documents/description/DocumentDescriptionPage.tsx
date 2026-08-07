@@ -19,8 +19,13 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { RichEditor, useToast } from "@probo/ui";
-import { useCallback, useState } from "react";
+import {
+  createRichEditorAutomergeDocument,
+  RichEditor,
+  supportsRichEditorCollaboration,
+  useToast,
+} from "@probo/ui";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useOutletContext } from "react-router";
@@ -30,7 +35,19 @@ import { useDebounceCallback } from "usehooks-ts";
 import type { DocumentDescriptionPage_updateContentMutation } from "#/__generated__/core/DocumentDescriptionPage_updateContentMutation.graphql";
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 
+import {
+  type AutomergeDocumentHandle,
+  connectAutomergeDocument,
+} from "./_lib/AutomergeDocumentHandle";
+
 const autoSaveIntervalMs = 1000;
+
+type CollaborationState = {
+  versionID: string;
+  handle?: AutomergeDocumentHandle;
+  failed?: boolean;
+  established?: boolean;
+};
 
 export const documentDescriptionPageQuery = graphql`
   query DocumentDescriptionPageQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
@@ -158,6 +175,86 @@ export function DocumentDescriptionPage(props: {
     && document.canUpdate
     && document.status !== "ARCHIVED"
     && document.writeMode !== "GENERATED";
+  const collaborationSupported = canEdit
+    && supportsRichEditorCollaboration(currentVersion.content);
+  const [collaboration, setCollaboration] = useState<CollaborationState>();
+
+  useEffect(() => {
+    if (!collaborationSupported) return;
+
+    let cancelled = false;
+    let activeHandle: AutomergeDocumentHandle | undefined;
+
+    void connectAutomergeDocument(
+      currentVersion.id,
+      content => createRichEditorAutomergeDocument(content),
+      () => {
+        if (cancelled) return;
+
+        setCollaboration({
+          versionID: currentVersion.id,
+          failed: true,
+          established: true,
+        });
+        toast({
+          title: t("documentDescriptionPage.errors.title"),
+          description: t("documentDescriptionPage.errors.save"),
+          variant: "error",
+        });
+      },
+    ).then((handle) => {
+      if (cancelled) {
+        handle.close();
+        return;
+      }
+
+      activeHandle = handle;
+      setCollaboration({
+        versionID: currentVersion.id,
+        handle,
+        established: true,
+      });
+    }).catch((error) => {
+      if (cancelled) return;
+
+      setCollaboration({
+        versionID: currentVersion.id,
+        failed: true,
+      });
+      toast({
+        title: t("documentDescriptionPage.errors.title"),
+        description: error instanceof Error
+          ? error.message
+          : t("documentDescriptionPage.errors.save"),
+        variant: "error",
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      activeHandle?.close();
+    };
+  }, [
+    collaborationSupported,
+    currentVersion.id,
+    t,
+    toast,
+  ]);
+
+  const collaborationConnecting = collaborationSupported
+    && (
+      collaboration?.versionID !== currentVersion.id
+      || (!collaboration?.handle && !collaboration?.failed)
+    );
+  const collaborationHandle = collaborationSupported
+    && collaboration?.versionID === currentVersion.id
+    && !collaboration.failed
+    ? collaboration.handle
+    : undefined;
+  const collaborationUnavailable = collaborationSupported
+    && collaboration?.versionID === currentVersion.id
+    && collaboration.failed
+    && collaboration.established;
 
   // The editor key must change on explicit actions (delete draft, edit
   // title/type) but NOT on auto-save side effects (cursor preservation).
@@ -199,7 +296,8 @@ export function DocumentDescriptionPage(props: {
       className="flex-1"
       content={currentVersion.content}
       data-theme="document"
-      disabled={!canEdit}
+      disabled={!canEdit || collaborationConnecting || collaborationUnavailable}
+      collaborationHandle={collaborationHandle}
       onChangeContent={handleUpdate}
     />
   );
