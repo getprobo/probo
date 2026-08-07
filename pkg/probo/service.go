@@ -111,6 +111,7 @@ type (
 		Findings                              *FindingService
 		Obligations                           *ObligationService
 		BusinessFunctions                     *BusinessFunctionService
+		AiSystems                             *AiSystemService
 		RightsRequests                        *RightsRequestService
 		ProcessingActivities                  *ProcessingActivityService
 		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
@@ -226,6 +227,7 @@ func NewService(
 	svc.Findings = &FindingService{svc: svc}
 	svc.Obligations = &ObligationService{svc: svc}
 	svc.BusinessFunctions = &BusinessFunctionService{svc: svc}
+	svc.AiSystems = &AiSystemService{svc: svc}
 	svc.RightsRequests = &RightsRequestService{svc: svc}
 	svc.ProcessingActivities = &ProcessingActivityService{svc: svc}
 	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}

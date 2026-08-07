@@ -117,6 +117,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "AuditLogEntry"
 	case BusinessFunctionEntityType:
 		return "BusinessFunction"
+	case AiSystemEntityType:
+		return "AiSystem"
 	default:
 		return "Unknown"
 	}

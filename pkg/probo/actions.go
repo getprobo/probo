@@ -237,6 +237,14 @@ const (
 	ActionBusinessFunctionDelete  = "core:business-function:delete"
 	ActionBusinessFunctionPublish = "core:business-function:publish"
 
+	// AiSystem actions
+	ActionAiSystemGet     = "core:ai-system:get"
+	ActionAiSystemList    = "core:ai-system:list"
+	ActionAiSystemCreate  = "core:ai-system:create"
+	ActionAiSystemUpdate  = "core:ai-system:update"
+	ActionAiSystemDelete  = "core:ai-system:delete"
+	ActionAiSystemPublish = "core:ai-system:publish"
+
 	// ProcessingActivity actions
 	ActionProcessingActivityList    = "core:processing-activity:list"
 	ActionProcessingActivityGet     = "core:processing-activity:get"

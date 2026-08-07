@@ -45,6 +45,7 @@ const (
 	CLIClientScopes = "openid profile email offline_access " +
 		"v1:access-review " +
 		"v1:agent " +
+		"v1:ai-system " +
 		"v1:asset " +
 		"v1:audit " +
 		"v1:business-function " +
