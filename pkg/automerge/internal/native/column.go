@@ -47,6 +47,20 @@ func (s ColumnSpec) Deflated() bool {
 	return uint32(s)&0x08 != 0
 }
 
+func (s ColumnSpec) normalized() uint32 {
+	return uint32(s) &^ 0x08
+}
+
+func findColumn(columns []RawColumn, specification ColumnSpec) []byte {
+	target := specification.normalized()
+	for _, column := range columns {
+		if column.Spec.normalized() == target {
+			return column.Data
+		}
+	}
+	return nil
+}
+
 func readColumnMetadata(r *reader) ([]columnMetadata, error) {
 	count, err := r.readULEB128()
 	if err != nil {

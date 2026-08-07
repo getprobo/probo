@@ -100,6 +100,31 @@ switch (request.action) {
     );
     break;
   }
+  case "createConcurrentChanges": {
+    const base = Automerge.from({ body: "" }, { actor: request.actor });
+    let left = Automerge.load(Automerge.save(base), { actor: request.actorB });
+    let right = Automerge.load(Automerge.save(base), { actor: request.actorC });
+    left = Automerge.change(left, draft => {
+      Automerge.splice(draft, ["body"], 0, 0, "L");
+    });
+    right = Automerge.change(right, draft => {
+      Automerge.splice(draft, ["body"], 0, 0, "R");
+    });
+    const changes = [
+      ...Automerge.getAllChanges(base),
+      ...Automerge.getChanges(base, left),
+      ...Automerge.getChanges(base, right),
+    ];
+    const merged = Automerge.merge(left, right);
+    process.stdout.write(
+      JSON.stringify({
+        body: merged.body,
+        changes: changes.map(change => Buffer.from(change).toString("base64")),
+        heads: Automerge.getHeads(merged),
+      }),
+    );
+    break;
+  }
   case "inspect": {
     const document = Automerge.load(Buffer.from(request.document, "base64"));
     process.stdout.write(

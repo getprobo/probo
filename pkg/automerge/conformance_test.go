@@ -40,6 +40,8 @@ type (
 	oracleRequest struct {
 		Action    string `json:"action"`
 		Actor     string `json:"actor,omitempty"`
+		ActorB    string `json:"actorB,omitempty"`
+		ActorC    string `json:"actorC,omitempty"`
 		Document  string `json:"document,omitempty"`
 		Message   string `json:"message,omitempty"`
 		Text      string `json:"text,omitempty"`
@@ -49,6 +51,7 @@ type (
 	oracleResponse struct {
 		Body     string   `json:"body"`
 		Change   string   `json:"change"`
+		Changes  []string `json:"changes"`
 		Document string   `json:"document"`
 		Heads    []string `json:"heads"`
 	}
@@ -195,4 +198,83 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 	assert.Empty(t, change.Dependencies)
 	assert.NotEmpty(t, change.Columns)
 	assert.Equal(t, response.Heads[0], hex.EncodeToString(change.Hash[:]))
+
+	operations, err := change.Operations()
+	require.NoError(t, err)
+	require.Len(t, operations, 7)
+	assert.Equal(t, native.ActionMakeText, operations[0].Action)
+	assert.True(t, operations[0].Object.Root)
+	assert.True(t, operations[0].Key.Map)
+	assert.Equal(t, "title", operations[0].Key.Property)
+	assert.Equal(t, uint64(1), operations[0].ID.Counter)
+	assert.Equal(t, uint64(0), operations[0].ID.ActorIndex)
+	assert.Equal(t, native.ActionSet, operations[1].Action)
+	assert.Equal(t, uint64(1), operations[1].Object.OpID.Counter)
+	assert.True(t, operations[1].Key.Head)
+	assert.Equal(t, "P", operations[1].Value.Value)
+	assert.Equal(t, uint64(6), operations[6].Key.Element.Counter)
+	assert.Equal(t, "y", operations[6].Value.Value)
+
+	state := native.NewState()
+	require.NoError(t, state.ApplyChange(change))
+	title, err := state.Text("title")
+	require.NoError(t, err)
+	assert.Equal(t, "Policy", title)
+}
+
+func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
+	t.Parallel()
+
+	actorA := actor(20)
+	actorB := actor(21)
+	actorC := actor(22)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createConcurrentChanges",
+			Actor:  hex.EncodeToString(actorA[:]),
+			ActorB: hex.EncodeToString(actorB[:]),
+			ActorC: hex.EncodeToString(actorC[:]),
+		},
+	)
+	require.Len(t, response.Changes, 3)
+
+	changes := make([]*native.Change, len(response.Changes))
+	for i, encoded := range response.Changes {
+		data, err := base64.StdEncoding.DecodeString(encoded)
+		require.NoError(t, err)
+		changes[i], err = native.ParseChange(data)
+		require.NoError(t, err)
+	}
+
+	leftFirst := native.NewState()
+	require.NoError(t, leftFirst.ApplyChange(changes[0]))
+	require.NoError(t, leftFirst.ApplyChange(changes[1]))
+	require.NoError(t, leftFirst.ApplyChange(changes[2]))
+
+	rightFirst := native.NewState()
+	require.NoError(t, rightFirst.ApplyChange(changes[0]))
+	require.NoError(t, rightFirst.ApplyChange(changes[2]))
+	require.NoError(t, rightFirst.ApplyChange(changes[1]))
+
+	leftText, err := leftFirst.Text("body")
+	require.NoError(t, err)
+	rightText, err := rightFirst.Text("body")
+	require.NoError(t, err)
+	assert.Equal(t, response.Body, leftText)
+	assert.Equal(t, response.Body, rightText)
+
+	leftHeads := leftFirst.Heads()
+	rightHeads := rightFirst.Heads()
+	require.Len(t, leftHeads, 2)
+	require.Len(t, rightHeads, 2)
+	assert.ElementsMatch(
+		t,
+		response.Heads,
+		[]string{
+			hex.EncodeToString(leftHeads[0][:]),
+			hex.EncodeToString(leftHeads[1][:]),
+		},
+	)
+	assert.Equal(t, leftHeads, rightHeads)
 }

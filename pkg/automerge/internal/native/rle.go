@@ -99,6 +99,10 @@ func (d *rleDecoder[T]) next() (value T, null bool, err error) {
 	return *d.lastValue, false, nil
 }
 
+func (d *rleDecoder[T]) done() bool {
+	return d.remaining == 0 && d.reader.done()
+}
+
 func decodeRLEUint(data []byte) *rleDecoder[uint64] {
 	return newRLEDecoder(
 		data,
