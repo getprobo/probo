@@ -22,7 +22,6 @@ package management
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/pg"
@@ -55,86 +54,4 @@ func (s *Service) GetDocumentLinks(
 	}
 
 	return rows, nil
-}
-
-// GetDocumentVisibility reports how a document is published on one compliance
-// portal. Publication lives on the portal/document join row, so a document with
-// no row for that portal is simply not published there.
-func (s *Service) GetDocumentVisibility(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePortalID gid.GID,
-	documentID gid.GID,
-) (coredata.CompliancePortalVisibility, error) {
-	row := &coredata.CompliancePortalDocument{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return row.LoadByCompliancePortalIDAndDocumentID(ctx, conn, scope, compliancePortalID, documentID)
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return coredata.CompliancePortalVisibilityNone, nil
-		}
-
-		return "", fmt.Errorf("cannot load portal document: %w", err)
-	}
-
-	return row.Visibility, nil
-}
-
-// GetAuditVisibility reports how an audit is published on one compliance
-// portal.
-func (s *Service) GetAuditVisibility(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePortalID gid.GID,
-	auditID gid.GID,
-) (coredata.CompliancePortalVisibility, error) {
-	row := &coredata.CompliancePortalAudit{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return row.LoadByCompliancePortalIDAndAuditID(ctx, conn, scope, compliancePortalID, auditID)
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return coredata.CompliancePortalVisibilityNone, nil
-		}
-
-		return "", fmt.Errorf("cannot load portal audit: %w", err)
-	}
-
-	return row.Visibility, nil
-}
-
-// IsThirdPartyPublished reports whether a third party is listed as a
-// subprocessor on one compliance portal.
-func (s *Service) IsThirdPartyPublished(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePortalID gid.GID,
-	thirdPartyID gid.GID,
-) (bool, error) {
-	row := &coredata.CompliancePortalThirdParty{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return row.LoadByCompliancePortalIDAndThirdPartyID(ctx, conn, scope, compliancePortalID, thirdPartyID)
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("cannot load portal third party: %w", err)
-	}
-
-	return true, nil
 }
