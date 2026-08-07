@@ -44,8 +44,11 @@ type (
 		ReportFileID             *gid.GID                             `db:"report_file_id"`
 		CompliancePortalFileID   *gid.GID                             `db:"compliance_portal_file_id"`
 		Status                   CompliancePortalDocumentAccessStatus `db:"status"`
-		CreatedAt                time.Time                            `db:"created_at"`
-		UpdatedAt                time.Time                            `db:"updated_at"`
+		// RequestedAt is set when the visitor request flow creates the row and
+		// preserved across later status changes. Nil for admin-created grants.
+		RequestedAt *time.Time `db:"requested_at"`
+		CreatedAt   time.Time  `db:"created_at"`
+		UpdatedAt   time.Time  `db:"updated_at"`
 	}
 
 	CompliancePortalDocumentAccesses []*CompliancePortalDocumentAccess
@@ -114,6 +117,7 @@ SELECT
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
@@ -164,6 +168,7 @@ SELECT
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
@@ -218,6 +223,7 @@ SELECT
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
@@ -271,6 +277,7 @@ INSERT INTO cp_document_accesses (
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 ) VALUES (
@@ -282,6 +289,7 @@ INSERT INTO cp_document_accesses (
     @report_file_id,
     @compliance_portal_file_id,
     @status::compliance_portal_document_access_status,
+    @requested_at,
     @created_at,
     @updated_at
 )
@@ -296,6 +304,7 @@ INSERT INTO cp_document_accesses (
 		"report_file_id":              tcda.ReportFileID,
 		"compliance_portal_file_id":   tcda.CompliancePortalFileID,
 		"status":                      tcda.Status,
+		"requested_at":                tcda.RequestedAt,
 		"created_at":                  tcda.CreatedAt,
 		"updated_at":                  tcda.UpdatedAt,
 	}
@@ -391,6 +400,43 @@ FROM
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+// CountVisitorRequestedByCompliancePortalAccessID counts access rows stamped by
+// the visitor request flow (requested_at IS NOT NULL), regardless of later
+// status changes. Admin-created grants leave requested_at NULL.
+func (tcdas *CompliancePortalDocumentAccesses) CountVisitorRequestedByCompliancePortalAccessID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(id)
+FROM
+    cp_document_accesses
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND requested_at IS NOT NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -564,6 +610,7 @@ final_items AS (
       ai.report_file_id,
       ai.compliance_portal_file_id,
       COALESCE(tcda.status, 'REQUESTED'::compliance_portal_document_access_status) AS status,
+      tcda.requested_at AS requested_at,
       COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
       COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
   FROM all_items ai
@@ -584,6 +631,7 @@ SELECT
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM final_items
@@ -629,6 +677,7 @@ SELECT
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
@@ -911,6 +960,7 @@ WITH document_access_data AS (
         null::text AS report_file_id,
         null::text AS compliance_portal_file_id,
         @status::compliance_portal_document_access_status AS status,
+        @created_at::timestamptz AS requested_at,
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
@@ -923,6 +973,7 @@ INSERT INTO cp_document_accesses (
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 )
@@ -1046,6 +1097,7 @@ WITH report_file_access_data AS (
         unnest(@report_file_ids::text[]) AS report_file_id,
         null::text AS compliance_portal_file_id,
         @status::compliance_portal_document_access_status AS status,
+        @created_at::timestamptz AS requested_at,
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
@@ -1058,6 +1110,7 @@ INSERT INTO cp_document_accesses (
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 )
@@ -1099,6 +1152,7 @@ SELECT
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
@@ -1304,6 +1358,7 @@ WITH compliance_portal_file_access_data AS (
         null::text AS report_file_id,
         unnest(@compliance_portal_file_ids::text[]) AS compliance_portal_file_id,
         @status::compliance_portal_document_access_status AS status,
+        @created_at::timestamptz AS requested_at,
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
@@ -1316,6 +1371,7 @@ INSERT INTO cp_document_accesses (
     report_file_id,
     compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 )

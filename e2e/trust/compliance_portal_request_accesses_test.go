@@ -132,8 +132,8 @@ func TestCompliancePortal_RequestAccesses_TenantIsolation(t *testing.T) {
 }
 
 // TestCompliancePortal_ViewerHasRequestedAccess verifies the portal-level flag
-// used to defer the unsigned-NDA banner until the visitor has engaged with
-// private content: false before any access row, true after requestDocumentAccess.
+// used to defer the unsigned-NDA banner until the visitor requests private
+// access: false before any visitor request, true after requestDocumentAccess.
 func TestCompliancePortal_ViewerHasRequestedAccess(t *testing.T) {
 	t.Parallel()
 
