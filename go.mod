@@ -6,6 +6,7 @@ require (
 	codeberg.org/miekg/dns v0.6.87
 	fyne.io/systray v1.12.2
 	github.com/99designs/gqlgen v0.17.94
+	github.com/MichaelMure/gotomerge v0.1.0
 	github.com/anthropics/anthropic-sdk-go v1.61.0
 	github.com/aws/aws-sdk-go-v2 v1.43.3
 	github.com/aws/aws-sdk-go-v2/config v1.32.34
@@ -22,7 +23,6 @@ require (
 	github.com/chromedp/chromedp v0.16.0
 	github.com/coder/websocket v1.8.15
 	github.com/crewjam/saml v0.5.1
-	github.com/develerltd/go-automerge v0.8.0
 	github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-chi/cors v1.2.2
@@ -60,6 +60,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
+	github.com/MichaelMure/leb128 v0.0.0-20260413192917-d3edb4944c27 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
@@ -116,7 +117,6 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/google/btree v1.1.3 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
 	github.com/google/go-containerregistry v0.21.8 // indirect
 	github.com/gorilla/css v1.0.1 // indirect

@@ -70,13 +70,12 @@ func TestPureGo_DifferentialMapAndTextChange(t *testing.T) {
 	referenceDocument, referenceHash := exerciseMapAndText(t, automerge.New)
 	nativeDocument, nativeHash := exerciseMapAndText(t, automerge.NewPureGo)
 
-	assert.Equal(t, referenceHash, nativeHash)
-
 	referenceHeads, err := referenceDocument.Heads(context.Background())
 	require.NoError(t, err)
 	nativeHeads, err := nativeDocument.Heads(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, referenceHeads, nativeHeads)
+	assert.Equal(t, []automerge.Hash{referenceHash}, referenceHeads)
+	assert.Equal(t, []automerge.Hash{nativeHash}, nativeHeads)
 	assert.Equal(t, readBody(t, referenceDocument), readBody(t, nativeDocument))
 
 	nativeData, err := nativeDocument.Save(context.Background())
