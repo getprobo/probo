@@ -143,7 +143,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("recurrence-count") {
-				if flagRecurrenceCount <= 0 {
+				if flagRecurrenceCount < 0 {
+					return fmt.Errorf("--recurrence-count must be greater than or equal to 0")
+				}
+
+				if flagRecurrenceCount == 0 {
 					input["recurrenceIntervalCount"] = nil
 				} else {
 					input["recurrenceIntervalCount"] = flagRecurrenceCount
