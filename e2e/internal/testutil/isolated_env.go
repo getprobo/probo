@@ -102,8 +102,9 @@ func StartIsolatedEnv(t testing.TB, opts IsolatedEnvOptions) *IsolatedEnv {
 
 	// Serialize allocate → config → release → start so parallel isolated envs
 	// cannot steal each other's briefly-freed ports.
-	isolatedEnvStartMu.Lock()
 	startUnlocked := false
+
+	isolatedEnvStartMu.Lock()
 	defer func() {
 		if !startUnlocked {
 			isolatedEnvStartMu.Unlock()
