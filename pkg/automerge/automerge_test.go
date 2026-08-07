@@ -216,6 +216,27 @@ func TestText_SpliceUsesUTF16Offsets(t *testing.T) {
 	assert.Equal(t, "AB", value)
 }
 
+func TestText_CursorTracksConcurrentEdits(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	document, err := automerge.Load(ctx, newBaseDocument(t), actor(2))
+	require.NoError(t, err)
+	closeDocument(t, document)
+	text, err := document.Text(ctx, "body")
+	require.NoError(t, err)
+
+	cursor, err := text.Cursor(ctx, 4)
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(ctx, 0, 0, "A"))
+	_, err = document.Commit(ctx, "Insert prefix", commitTime.Add(time.Second))
+	require.NoError(t, err)
+
+	position, err := text.CursorPosition(ctx, cursor)
+	require.NoError(t, err)
+	assert.Equal(t, uint32(5), position)
+}
+
 func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
 	t.Parallel()
 

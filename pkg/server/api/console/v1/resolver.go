@@ -106,6 +106,7 @@ func NewMux(
 	providerRegistry *provider.Registry,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
+	allowedOrigins []string,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
@@ -139,6 +140,13 @@ func NewMux(
 		graphqlLimits,
 		itamSvc,
 	)
+	collaborationHandler := &documentCollaborationHandler{
+		logger:         logger,
+		probo:          proboSvc,
+		iam:            iamSvc,
+		baseURL:        baseURL,
+		allowedOrigins: allowedOrigins,
+	}
 
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
@@ -148,6 +156,10 @@ func NewMux(
 		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc, cookieBannerSvc, thirdPartySvc))
 
 		r.Handle("/graphql", graphqlHandler)
+		r.Get(
+			"/document-versions/{documentVersionID}/sync",
+			collaborationHandler.handle,
+		)
 
 		r.Get(
 			"/connectors/initiate",

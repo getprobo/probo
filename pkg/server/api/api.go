@@ -219,6 +219,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ProviderRegistry,
 			cfg.File,
 			cfg.BaseURL,
+			cfg.AllowedOrigins,
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,

@@ -37,6 +37,11 @@ import (
 //go:embed reference.wasm
 var wasm []byte
 
+const (
+	referenceABIVersion       uint64 = 1
+	referenceMemoryLimitPages uint32 = 1_024
+)
+
 type (
 	Object = uint32
 
@@ -85,7 +90,10 @@ func instantiate(ctx context.Context) (*Backend, error) {
 	runtimeOnce.Do(
 		func() {
 			runtimeContext := context.Background()
-			runtimeInstance = wazero.NewRuntime(runtimeContext)
+			runtimeInstance = wazero.NewRuntimeWithConfig(
+				runtimeContext,
+				wazero.NewRuntimeConfig().WithMemoryLimitPages(referenceMemoryLimitPages),
+			)
 			if _, err := wasi_snapshot_preview1.Instantiate(runtimeContext, runtimeInstance); err != nil {
 				runtimeErr = fmt.Errorf("cannot instantiate WASI: %w", err)
 				return
@@ -111,7 +119,22 @@ func instantiate(ctx context.Context) (*Backend, error) {
 		return nil, fmt.Errorf("cannot instantiate reference module: %w", err)
 	}
 
-	return &Backend{module: module}, nil
+	backend := &Backend{module: module}
+	version, err := backend.call(ctx, "am_abi_version")
+	if err != nil {
+		_ = module.Close(ctx)
+		return nil, fmt.Errorf("cannot read reference ABI version: %w", err)
+	}
+	if version[0] != referenceABIVersion {
+		_ = module.Close(ctx)
+		return nil, fmt.Errorf(
+			"unsupported reference ABI version %d, expected %d",
+			version[0],
+			referenceABIVersion,
+		)
+	}
+
+	return backend, nil
 }
 
 func (b *Backend) Close(ctx context.Context) error {
@@ -262,6 +285,57 @@ func (b *Backend) Text(ctx context.Context, object Object) (string, error) {
 	}
 
 	return string(output), nil
+}
+
+func (b *Backend) TextCursor(ctx context.Context, object Object, index uint32) ([]byte, error) {
+	if err := b.run(
+		ctx,
+		"am_text_cursor",
+		uint64(object),
+		uint64(index),
+	); err != nil {
+		return nil, fmt.Errorf("cannot create reference text cursor: %w", err)
+	}
+
+	cursor, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference text cursor: %w", err)
+	}
+
+	return cursor, nil
+}
+
+func (b *Backend) TextCursorPosition(
+	ctx context.Context,
+	object Object,
+	cursor []byte,
+) (uint32, error) {
+	pointer, length, err := b.write(ctx, cursor)
+	if err != nil {
+		return 0, fmt.Errorf("cannot write reference text cursor: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	result, err := b.call(
+		ctx,
+		"am_text_cursor_position",
+		uint64(object),
+		uint64(pointer),
+		uint64(length),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot resolve reference text cursor: %w", err)
+	}
+
+	position := int64(result[0])
+	if position < 0 {
+		return 0, b.operationError(ctx, "cannot resolve reference text cursor")
+	}
+	if position > int64(^uint32(0)) {
+		return 0, fmt.Errorf("cannot resolve reference text cursor: position %d exceeds uint32", position)
+	}
+
+	return uint32(position), nil
 }
 
 func (b *Backend) Commit(

@@ -44,6 +44,9 @@ type (
 	// Hash identifies an Automerge change.
 	Hash [32]byte
 
+	// Cursor is a stable position in an Automerge sequence.
+	Cursor []byte
+
 	// Document is a concurrency-safe Automerge document.
 	Document struct {
 		mu      sync.Mutex
@@ -73,6 +76,8 @@ type (
 		GetText(context.Context, uint32, string) (uint32, error)
 		SpliceText(context.Context, uint32, uint32, int32, string) error
 		Text(context.Context, uint32) (string, error)
+		TextCursor(context.Context, uint32, uint32) ([]byte, error)
+		TextCursorPosition(context.Context, uint32, []byte) (uint32, error)
 		Commit(context.Context, string, time.Time) ([32]byte, error)
 		Heads(context.Context) ([][32]byte, error)
 		Merge(context.Context, []byte) ([][32]byte, error)
@@ -358,6 +363,40 @@ func (t *Text) String(ctx context.Context) (string, error) {
 	}
 
 	return value, nil
+}
+
+// Cursor returns a stable address for the UTF-16 position at index.
+func (t *Text) Cursor(ctx context.Context, index uint32) (Cursor, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return nil, ErrClosed
+	}
+
+	cursor, err := t.document.backend.TextCursor(ctx, t.handle, index)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create Automerge text cursor: %w", err)
+	}
+
+	return Cursor(cursor), nil
+}
+
+// CursorPosition resolves a stable cursor in the current document.
+func (t *Text) CursorPosition(ctx context.Context, cursor Cursor) (uint32, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return 0, ErrClosed
+	}
+
+	position, err := t.document.backend.TextCursorPosition(ctx, t.handle, cursor)
+	if err != nil {
+		return 0, fmt.Errorf("cannot resolve Automerge text cursor: %w", err)
+	}
+
+	return position, nil
 }
 
 // Close releases the peer-specific synchronization state.

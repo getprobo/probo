@@ -25,7 +25,7 @@ use std::slice;
 
 use automerge::sync::{Message, State as SyncState, SyncDoc};
 use automerge::transaction::{CommitOptions, Transactable};
-use automerge::{ActorId, AutoCommit, ObjId, ObjType, ReadDoc, Value, ROOT};
+use automerge::{ActorId, AutoCommit, Cursor, ObjId, ObjType, ReadDoc, Value, ROOT};
 
 struct State {
     doc: AutoCommit,
@@ -77,6 +77,11 @@ impl State {
 
 thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::new());
+}
+
+#[no_mangle]
+pub extern "C" fn am_abi_version() -> u32 {
+    1
 }
 
 fn input_bytes(pointer: u32, length: u32) -> Vec<u8> {
@@ -370,6 +375,64 @@ pub extern "C" fn am_text(object_handle: u32) -> i32 {
                 0
             }
             Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_text_cursor(object_handle: u32, index: u32) -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        match state.doc.get_cursor(&object, index as usize, None) {
+            Ok(cursor) => {
+                state.output = cursor.to_bytes();
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_text_cursor_position(object_handle: u32, pointer: u32, length: u32) -> i64 {
+    let bytes = input_bytes(pointer, length);
+    let cursor = match Cursor::try_from(bytes) {
+        Ok(cursor) => cursor,
+        Err(error) => {
+            STATE.with(|state| state.borrow_mut().fail(error));
+            return -1;
+        }
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => {
+                state.fail(error);
+                return -1;
+            }
+        };
+        match state.doc.get_cursor_position(&object, &cursor, None) {
+            Ok(position) => match i64::try_from(position) {
+                Ok(position) => {
+                    state.error.clear();
+                    position
+                }
+                Err(error) => {
+                    state.fail(error);
+                    -1
+                }
+            },
+            Err(error) => {
+                state.fail(error);
+                -1
+            }
         }
     })
 }
