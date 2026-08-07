@@ -73,8 +73,6 @@ func classifyProvisioningError(err error) string {
 		return ProvisioningErrorDNSCNAME
 	case strings.Contains(msg, "status: invalid"), strings.Contains(msg, "order is in unexpected status \"invalid\""):
 		return ProvisioningErrorACMEInvalidOrder
-	case strings.Contains(msg, "unauthorized"), strings.Contains(msg, "lacks sufficient authorization"):
-		return ProvisioningErrorACMEInvalidOrder
 	default:
 		return ProvisioningErrorACMETemporary
 	}

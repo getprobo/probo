@@ -56,6 +56,13 @@ func TestClassifyProvisioningError(t *testing.T) {
 			),
 		),
 	)
+	// Unrelated errors that happen to mention "unauthorized" must stay temporary
+	// so we do not clear a resumable ACME order URL.
+	assert.Equal(
+		t,
+		ProvisioningErrorACMETemporary,
+		classifyProvisioningError(errors.New("dns resolver unauthorized")),
+	)
 }
 
 func TestDecideProvisioningOutcome_RateLimitKeepsRetryCountAndOrder(t *testing.T) {
