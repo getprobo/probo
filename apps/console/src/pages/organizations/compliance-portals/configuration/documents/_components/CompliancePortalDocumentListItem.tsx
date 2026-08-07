@@ -207,7 +207,7 @@ export function CompliancePortalDocumentListItem(props: {
             },
           },
           updater: (store) => {
-            store.get(document.id)?.setLinkedRecord(
+            store.get(document.id)?.setValue(
               null,
               "compliancePortalDocument",
               { compliancePortalId: compliancePortal.id },
