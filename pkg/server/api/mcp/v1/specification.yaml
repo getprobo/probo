@@ -179,6 +179,8 @@ components:
         - EMPLOYEE
         - VIEWER
         - AUDITOR
+        - COMPLIANCE_PORTAL_MANAGER
+        - COMPLIANCE_PORTAL_ACCESS_MANAGER
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipRole
 
     ProfileState:

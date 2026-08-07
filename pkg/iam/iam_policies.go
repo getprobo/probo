@@ -422,3 +422,25 @@ var IAMViewerPolicy = policy.NewPolicy(
 		),
 ).
 	WithDescription("Read-only IAM access for organization viewers")
+
+// IAMCompliancePortalAccessManagerPolicy defines the minimal IAM access needed
+// by compliance portal access managers. The role reviews visitor access
+// requests and has no business browsing members, invitations, or audit logs;
+// access to its own identity, memberships, and profile comes from the
+// identity-scoped self-manage policies. MembershipProfileGet is granted so
+// access-request profile fields can resolve (authorized against the access
+// entity's organization_id), without MembershipProfileList which would open
+// the People directory.
+var IAMCompliancePortalAccessManagerPolicy = policy.NewPolicy(
+	"iam:compliance-portal-access-manager",
+	"Compliance Portal Access Manager",
+
+	policy.Allow(ActionOrganizationGet).
+		WithSID("org-read-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	policy.Allow(ActionMembershipProfileGet).
+		WithSID("membership-profile-get-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+).
+	WithDescription("Minimal IAM access for compliance portal access managers")

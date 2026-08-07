@@ -44,8 +44,8 @@ const fragment = graphql`
     eyebrow
     title
     description
-    canUpdate: permission(action: "core:compliance-portal-commitment:update")
-    canDelete: permission(action: "core:compliance-portal-commitment:delete")
+    canUpdate: permission(action: "compliance-portal:commitment:update")
+    canDelete: permission(action: "compliance-portal:commitment:delete")
   }
 `;
 

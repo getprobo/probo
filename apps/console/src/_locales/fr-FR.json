@@ -932,6 +932,10 @@
       "title": "Page introuvable",
       "description": "La page que vous recherchez n’existe pas."
     },
+    "forbidden": {
+      "title": "Vous n’avez pas accès à cette page",
+      "description": "Votre rôle ne vous permet pas de consulter cette page. Contactez un administrateur de l’organisation si vous avez besoin d’un accès."
+    },
     "unexpected": {
       "title": "Un problème est survenu",
       "description": "Nous avons rencontré une erreur inattendue. Retournez à l’accueil pour continuer."
@@ -1683,7 +1687,9 @@
       "admin": "Administrateur",
       "viewer": "Lecteur",
       "auditor": "Auditeur",
-      "employee": "Employé"
+      "employee": "Employé",
+      "compliancePortalManager": "Gestionnaire du portail de conformité",
+      "compliancePortalAccessManager": "Gestionnaire d’accès du portail de conformité"
     },
     "registryStatus": {
       "open": "Ouvert",
@@ -2519,7 +2525,9 @@
       "admin": "Accès complet sauf la configuration de l’organisation et les clés API",
       "viewer": "Accès en lecture seule",
       "auditor": "Accès en lecture seule sans les paramètres et les tâches",
-      "employee": "Accès à la page employé"
+      "employee": "Accès à la page employé",
+      "compliancePortalManager": "Peut gérer le portail de conformité",
+      "compliancePortalAccessManager": "Peut gérer les accès visiteurs du portail de conformité"
     },
     "kinds": {
       "EMPLOYEE": "Employé",

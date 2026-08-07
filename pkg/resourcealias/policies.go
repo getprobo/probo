@@ -27,8 +27,8 @@ import (
 
 var organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
 
-// FullAccessPolicy grants complete resource-alias access to organization owners
-// and admins.
+// FullAccessPolicy grants complete resource-alias access to organization owners,
+// admins, and compliance portal managers.
 var FullAccessPolicy = policy.NewPolicy(
 	"resourcealias:full-access",
 	"Resource Alias Full Access",
@@ -39,7 +39,8 @@ var FullAccessPolicy = policy.NewPolicy(
 	).WithSID("resource-alias-full-access").When(organizationCondition),
 ).WithDescription("Full resource-alias access including set and remove")
 
-// ReadAccessPolicy grants read-only resource-alias access to viewers and auditors.
+// ReadAccessPolicy grants read-only resource-alias access to viewers, auditors,
+// and compliance portal access managers.
 var ReadAccessPolicy = policy.NewPolicy(
 	"resourcealias:read-access",
 	"Resource Alias Read Access",
@@ -57,5 +58,7 @@ func PolicySet() *iam.PolicySet {
 		AddRolePolicy("OWNER", FullAccessPolicy).
 		AddRolePolicy("ADMIN", FullAccessPolicy).
 		AddRolePolicy("VIEWER", ReadAccessPolicy).
-		AddRolePolicy("AUDITOR", ReadAccessPolicy)
+		AddRolePolicy("AUDITOR", ReadAccessPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", FullAccessPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_ACCESS_MANAGER", ReadAccessPolicy)
 }

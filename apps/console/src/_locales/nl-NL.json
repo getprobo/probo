@@ -936,6 +936,10 @@
       "title": "Pagina niet gevonden",
       "description": "De pagina die u zoekt, bestaat niet."
     },
+    "forbidden": {
+      "title": "U heeft geen toegang tot deze pagina",
+      "description": "Uw rol staat niet toe om deze pagina te bekijken. Vraag een organisatiebeheerder om toegang als u die nodig heeft."
+    },
     "unexpected": {
       "title": "Er is iets misgegaan",
       "description": "Er is een onverwachte fout opgetreden. Ga terug naar de startpagina om verder te gaan."
@@ -1689,7 +1693,9 @@
       "admin": "Beheerder",
       "viewer": "Lezer",
       "auditor": "Auditor",
-      "employee": "Werknemer"
+      "employee": "Werknemer",
+      "compliancePortalManager": "Complianceportaalbeheerder",
+      "compliancePortalAccessManager": "Toegangsbeheerder complianceportaal"
     },
     "registryStatus": {
       "open": "Open",
@@ -2524,7 +2530,9 @@
       "admin": "Volledige toegang, behalve organisatie-instellingen en API-sleutels",
       "viewer": "Alleen-lezen toegang",
       "auditor": "Alleen-lezen toegang zonder instellingen en taken",
-      "employee": "Toegang tot de medewerkerspagina"
+      "employee": "Toegang tot de medewerkerspagina",
+      "compliancePortalManager": "Kan het compliance-portaal beheren",
+      "compliancePortalAccessManager": "Kan bezoekers toegang tot het compliance-portaal beheren"
     },
     "kinds": {
       "EMPLOYEE": "Werknemer",
