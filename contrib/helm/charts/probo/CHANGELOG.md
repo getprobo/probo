@@ -4,6 +4,12 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.14.0] - 2026-08-07
+
+### Added
+
+- Helm value `probo.geolocation.subdivisionProvider` to enable IP-to-subdivision lookups for resolving state/province privacy regulations and jurisdiction on consent records
+
 ## [0.13.0] - 2026-07-29
 
 ### Added
