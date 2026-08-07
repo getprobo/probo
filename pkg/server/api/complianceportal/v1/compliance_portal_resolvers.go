@@ -312,6 +312,7 @@ func (r *compliancePortalResolver) ViewerHasRequestedAccess(ctx context.Context,
 	}
 
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	hasRequested, err := r.visitor.HasRequestedAccess(ctx, scope, obj.ID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check viewer requested access", log.Error(err))
