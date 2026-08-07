@@ -1385,7 +1385,9 @@
     "errors": {
       "create": "Échec de la création de la tâche",
       "update": "Échec de la mise à jour de la tâche",
-      "recurrenceRequiresDeadline": "Une échéance est requise pour une tâche récurrente"
+      "recurrenceRequiresDeadline": "Une échéance est requise pour une tâche récurrente",
+      "recurrenceRequiresCount": "Le nombre de répétitions est requis",
+      "recurrenceRequiresUnit": "L'unité de répétition est requise"
     },
     "actions": {
       "create": "Créer la tâche",

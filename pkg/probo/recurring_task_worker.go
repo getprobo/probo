@@ -78,7 +78,11 @@ func (h *recurringTaskHandler) Claim(ctx context.Context) (coredata.Task, error)
 
 			unit := *task.RecurrenceIntervalUnit
 			count := *task.RecurrenceIntervalCount
-			deadline := nextRecurrenceDeadline(*task.Deadline, unit, count, now)
+
+			deadline, err := nextRecurrenceDeadline(*task.Deadline, unit, count, now)
+			if err != nil {
+				return fmt.Errorf("cannot compute next deadline of task %q: %w", task.ID, err)
+			}
 
 			task.RecurrenceIntervalUnit = nil
 			task.RecurrenceIntervalCount = nil
@@ -146,7 +150,20 @@ func (h *recurringTaskHandler) Process(ctx context.Context, task coredata.Task) 
 // until the result is after now. This collapses any number of missed cycles
 // (e.g. after a long outage) into a single upcoming occurrence instead of
 // backfilling one task per missed cycle.
-func nextRecurrenceDeadline(deadline time.Time, unit coredata.TaskRecurrenceIntervalUnit, count int, now time.Time) time.Time {
+//
+// It errors on any recurrence that cannot move a deadline forward — a
+// non-positive count or a unit this function does not handle — because such a
+// recurrence would otherwise spin the loop forever.
+func nextRecurrenceDeadline(
+	deadline time.Time,
+	unit coredata.TaskRecurrenceIntervalUnit,
+	count int,
+	now time.Time,
+) (time.Time, error) {
+	if count < 1 {
+		return time.Time{}, fmt.Errorf("recurrence interval count must be at least 1, got %d", count)
+	}
+
 	next := deadline
 
 	for !next.After(now) {
@@ -159,8 +176,10 @@ func nextRecurrenceDeadline(deadline time.Time, unit coredata.TaskRecurrenceInte
 			next = next.AddDate(0, count, 0)
 		case coredata.TaskRecurrenceIntervalUnitYear:
 			next = next.AddDate(count, 0, 0)
+		default:
+			return time.Time{}, fmt.Errorf("unhandled recurrence interval unit %q", unit)
 		}
 	}
 
-	return next
+	return next, nil
 }

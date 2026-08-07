@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -89,10 +90,58 @@ func TestNextRecurrenceDeadline(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := nextRecurrenceDeadline(tt.deadline, tt.unit, tt.count, now)
+			got, err := nextRecurrenceDeadline(tt.deadline, tt.unit, tt.count, now)
 
+			require.NoError(t, err)
 			assert.True(t, got.After(now), "next deadline must be strictly after now")
 			assert.True(t, got.Equal(tt.want), "got %v, want %v", got, tt.want)
+		})
+	}
+}
+
+// TestNextRecurrenceDeadlineInvalidRecurrence covers recurrences that cannot
+// move a deadline forward: they must be rejected rather than spin the advance
+// loop forever and hang the worker.
+func TestNextRecurrenceDeadlineInvalidRecurrence(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, time.July, 28, 12, 0, 0, 0, time.UTC)
+	oneDayOverdue := now.AddDate(0, 0, -1)
+
+	tests := []struct {
+		name  string
+		unit  coredata.TaskRecurrenceIntervalUnit
+		count int
+	}{
+		{
+			name:  "zero count never advances",
+			unit:  coredata.TaskRecurrenceIntervalUnitDay,
+			count: 0,
+		},
+		{
+			name:  "negative count advances backwards",
+			unit:  coredata.TaskRecurrenceIntervalUnitDay,
+			count: -1,
+		},
+		{
+			name:  "unknown unit is not handled by the switch",
+			unit:  coredata.TaskRecurrenceIntervalUnit("QUARTER"),
+			count: 1,
+		},
+		{
+			name:  "empty unit is not handled by the switch",
+			unit:  coredata.TaskRecurrenceIntervalUnit(""),
+			count: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := nextRecurrenceDeadline(oneDayOverdue, tt.unit, tt.count, now)
+
+			assert.Error(t, err)
 		})
 	}
 }

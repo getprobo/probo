@@ -115,6 +115,16 @@ const recurrenceIntervalCountField = z.preprocess(
   z.number().int().min(1).nullable().optional(),
 );
 
+// Recurrence refinements emit translation keys instead of literal messages so
+// the form can localize them at render time.
+const recurrenceErrorKeys = [
+  "taskFormDialog.errors.recurrenceRequiresCount",
+  "taskFormDialog.errors.recurrenceRequiresUnit",
+  "taskFormDialog.errors.recurrenceRequiresDeadline",
+] as const;
+
+const recurrenceErrorKeySet = new Set<string>(recurrenceErrorKeys);
+
 function refineRecurrence<T extends z.ZodType<{
   deadline?: string | null;
   recurrenceIntervalUnit?: string | null;
@@ -123,15 +133,15 @@ function refineRecurrence<T extends z.ZodType<{
   return schema
     .refine(
       data => !(data.recurrenceIntervalUnit && !data.recurrenceIntervalCount),
-      { message: "Recurrence count is required", path: ["recurrenceIntervalCount"] },
+      { message: recurrenceErrorKeys[0], path: ["recurrenceIntervalCount"] },
     )
     .refine(
       data => !(data.recurrenceIntervalCount && !data.recurrenceIntervalUnit),
-      { message: "Recurrence unit is required", path: ["recurrenceIntervalUnit"] },
+      { message: recurrenceErrorKeys[1], path: ["recurrenceIntervalUnit"] },
     )
     .refine(
       data => !(data.recurrenceIntervalUnit && !data.deadline),
-      { message: "Deadline is required for a recurring task", path: ["deadline"] },
+      { message: recurrenceErrorKeys[2], path: ["deadline"] },
     );
 }
 
@@ -230,6 +240,10 @@ export default function TaskFormDialog(props: Props) {
   }, [
     task, reset, measureId,
   ]);
+
+  // Zod default messages come back as plain text, recurrence ones as keys.
+  const translateError = (message?: string) =>
+    message && recurrenceErrorKeySet.has(message) ? t(message) : message;
 
   const onSubmit = async (data: z.infer<typeof updateTaskSchema | typeof createTaskSchema>) => {
     if (task) {
@@ -434,16 +448,16 @@ export default function TaskFormDialog(props: Props) {
             </PropertyRow>
             <PropertyRow
               label={t("taskFormDialog.fields.deadline.label")}
-              error={formState.errors.deadline?.message}
+              error={translateError(formState.errors.deadline?.message)}
             >
               <Input id="deadline" type="date" {...register("deadline")} />
             </PropertyRow>
             <PropertyRow
               label={t("taskFormDialog.fields.recurrence.label")}
-              error={
+              error={translateError(
                 formState.errors.recurrenceIntervalUnit?.message
-                ?? formState.errors.recurrenceIntervalCount?.message
-              }
+                ?? formState.errors.recurrenceIntervalCount?.message,
+              )}
             >
               <div className="flex items-center gap-2">
                 <Input

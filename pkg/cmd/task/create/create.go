@@ -139,6 +139,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
 
+			if flagRecurrenceUnit != "" || flagRecurrenceCount != 0 {
+				if flagRecurrenceUnit == "" {
+					return fmt.Errorf("--recurrence-unit is required when --recurrence-count is set")
+				}
+
+				if flagRecurrenceCount <= 0 {
+					return fmt.Errorf("--recurrence-count must be greater than 0 when --recurrence-unit is set")
+				}
+			}
+
 			input := map[string]any{
 				"organizationId": flagOrg,
 				"name":           flagName,

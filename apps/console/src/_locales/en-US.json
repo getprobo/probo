@@ -786,7 +786,7 @@
     "priorities": { "urgent": "Urgent", "high": "High", "medium": "Medium", "low": "Low" },
     "recurrenceIntervalUnits": { "none": "Does not repeat", "day": "Day", "week": "Week", "month": "Month", "year": "Year" },
     "messages": { "created": "Task created successfully.", "updated": "Task updated successfully." },
-    "errors": { "create": "Failed to create task", "update": "Failed to update task", "recurrenceRequiresDeadline": "Deadline is required for a recurring task" },
+    "errors": { "create": "Failed to create task", "update": "Failed to update task", "recurrenceRequiresDeadline": "Deadline is required for a recurring task", "recurrenceRequiresCount": "Recurrence count is required", "recurrenceRequiresUnit": "Recurrence unit is required" },
     "actions": { "create": "Create task", "update": "Update task" }
   },
   "tasksCard": {
