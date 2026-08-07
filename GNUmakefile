@@ -14,6 +14,7 @@ NPM ?=	npm
 NPX ?=	npx
 OPENSSL ?=	openssl
 SED ?= sed
+SHA256SUM ?= sha256sum
 SYFT ?=	syft
 TAIL ?= tail
 ECHO ?= echo
@@ -429,6 +430,7 @@ generate-automerge-reference: ## Rebuild the embedded official Automerge WASM ba
 	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
 		$(CARGO) +$(RUST_TOOLCHAIN) build --locked --release --target wasm32-wasip1
 	$(CP) $(AUTOMERGE_REFERENCE_DIR)/wasm/target/wasm32-wasip1/release/probo_automerge_reference.wasm $(AUTOMERGE_REFERENCE_WASM)
+	cd $(AUTOMERGE_REFERENCE_DIR) && $(SHA256SUM) reference.wasm > reference.wasm.sha256
 
 .PHONY: embed
 embed: $(EMBEDDED)

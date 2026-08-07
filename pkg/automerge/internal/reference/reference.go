@@ -23,8 +23,11 @@ package reference
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -36,6 +39,9 @@ import (
 
 //go:embed reference.wasm
 var wasm []byte
+
+//go:embed reference.wasm.sha256
+var wasmChecksum []byte
 
 const (
 	referenceABIVersion       uint64 = 1
@@ -89,6 +95,22 @@ func Load(ctx context.Context, document []byte) (*Backend, error) {
 func instantiate(ctx context.Context) (*Backend, error) {
 	runtimeOnce.Do(
 		func() {
+			fields := strings.Fields(string(wasmChecksum))
+			if len(fields) == 0 {
+				runtimeErr = fmt.Errorf("Automerge reference checksum is empty")
+				return
+			}
+			checksum := sha256.Sum256(wasm)
+			actualChecksum := hex.EncodeToString(checksum[:])
+			if !strings.EqualFold(fields[0], actualChecksum) {
+				runtimeErr = fmt.Errorf(
+					"Automerge reference checksum mismatch: expected %s, got %s",
+					fields[0],
+					actualChecksum,
+				)
+				return
+			}
+
 			runtimeContext := context.Background()
 			runtimeInstance = wazero.NewRuntimeWithConfig(
 				runtimeContext,

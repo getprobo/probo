@@ -81,7 +81,8 @@ const extensions = [
 const collaborationExtensions = extensions.filter(extension =>
   extension !== HorizontalRule
   && extension !== HardBreak
-  && extension !== tableExtension,
+  && extension !== tableExtension
+  && extension !== UndoRedo,
 );
 
 const richEditorVariants = tv({

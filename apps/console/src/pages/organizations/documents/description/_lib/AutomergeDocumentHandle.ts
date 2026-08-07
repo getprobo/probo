@@ -25,6 +25,7 @@ import type { RichEditorAutomergeDocument } from "@probo/ui";
 const collaborationProtocol = "automerge-sync-v1";
 const maxGeneratedMessages = 100;
 const initializationTimeoutMs = 35_000;
+const reconnectMaxDelayMs = 10_000;
 
 type CollaborationHandshake = {
   type: "ready";
@@ -46,27 +47,30 @@ type DocumentHandleChangePayload = {
 };
 
 export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDocument> {
-  readonly #socket: WebSocket;
+  readonly #endpoint: URL;
+  #socket: WebSocket;
   #document: Automerge.Doc<RichEditorAutomergeDocument>;
   #syncState: Automerge.SyncState;
   #listeners = new Set<ChangeListener>();
-  #onDisconnect?: () => void;
+  #onConnectionState?: (connected: boolean) => void;
   #closed = false;
-  #disconnectNotified = false;
+  #ready = false;
+  #reconnectAttempt = 0;
+  #reconnectTimer?: number;
 
   constructor(
+    endpoint: URL,
     socket: WebSocket,
     document: Automerge.Doc<RichEditorAutomergeDocument>,
-    onDisconnect?: () => void,
+    onConnectionState?: (connected: boolean) => void,
   ) {
+    this.#endpoint = endpoint;
     this.#socket = socket;
     this.#document = document;
     this.#syncState = Automerge.initSyncState();
-    this.#onDisconnect = onDisconnect;
+    this.#onConnectionState = onConnectionState;
 
-    socket.addEventListener("message", this.#handleMessage);
-    socket.addEventListener("close", this.#handleDisconnect);
-    socket.addEventListener("error", this.#handleDisconnect);
+    this.#attachSocket(socket);
     this.#sendAvailableMessages();
   }
 
@@ -104,15 +108,19 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
 
   close(): void {
     this.#closed = true;
-    this.#socket.removeEventListener("message", this.#handleMessage);
-    this.#socket.removeEventListener("close", this.#handleDisconnect);
-    this.#socket.removeEventListener("error", this.#handleDisconnect);
+    if (this.#reconnectTimer !== undefined) {
+      window.clearTimeout(this.#reconnectTimer);
+    }
+    this.#detachSocket(this.#socket);
     this.#socket.close(1000);
     this.#listeners.clear();
   }
 
   waitUntilReady(): Promise<void> {
-    if (typeof this.#document.body === "string") return Promise.resolve();
+    if (typeof this.#document.body === "string") {
+      this.#ready = true;
+      return Promise.resolve();
+    }
 
     return new Promise((resolve, reject) => {
       const timeout = window.setTimeout(() => {
@@ -123,6 +131,7 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
       const handleChange: ChangeListener = ({ doc }) => {
         if (typeof doc.body !== "string") return;
         cleanup();
+        this.#ready = true;
         resolve();
       };
       const handleClose = () => {
@@ -163,10 +172,59 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
   };
 
   #handleDisconnect = () => {
-    if (this.#closed || this.#disconnectNotified) return;
-    this.#disconnectNotified = true;
-    this.#onDisconnect?.();
+    if (this.#closed || !this.#ready || this.#reconnectTimer !== undefined) return;
+
+    this.#detachSocket(this.#socket);
+    this.#onConnectionState?.(false);
+    const delay = Math.min(
+      500 * 2 ** this.#reconnectAttempt,
+      reconnectMaxDelayMs,
+    );
+    this.#reconnectAttempt++;
+    this.#reconnectTimer = window.setTimeout(() => {
+      this.#reconnectTimer = undefined;
+      void this.#reconnect();
+    }, delay);
   };
+
+  async #reconnect(): Promise<void> {
+    if (this.#closed) return;
+
+    const socket = createSocket(this.#endpoint);
+    try {
+      await waitForHandshake(socket);
+      if (this.#closed) {
+        socket.close(1000);
+        return;
+      }
+
+      this.#socket = socket;
+      this.#syncState = Automerge.initSyncState();
+      this.#reconnectAttempt = 0;
+      this.#attachSocket(socket);
+      this.#sendAvailableMessages();
+      this.#onConnectionState?.(true);
+    } catch {
+      socket.close();
+      if (this.#closed) return;
+      this.#reconnectTimer = window.setTimeout(() => {
+        this.#reconnectTimer = undefined;
+        void this.#reconnect();
+      }, reconnectMaxDelayMs);
+    }
+  }
+
+  #attachSocket(socket: WebSocket): void {
+    socket.addEventListener("message", this.#handleMessage);
+    socket.addEventListener("close", this.#handleDisconnect);
+    socket.addEventListener("error", this.#handleDisconnect);
+  }
+
+  #detachSocket(socket: WebSocket): void {
+    socket.removeEventListener("message", this.#handleMessage);
+    socket.removeEventListener("close", this.#handleDisconnect);
+    socket.removeEventListener("error", this.#handleDisconnect);
+  }
 
   #sendAvailableMessages(): void {
     if (this.#socket.readyState !== WebSocket.OPEN) return;
@@ -205,7 +263,7 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
 export async function connectAutomergeDocument(
   documentVersionID: string,
   createSeed: (content: string) => Automerge.Doc<RichEditorAutomergeDocument>,
-  onDisconnect?: () => void,
+  onConnectionState?: (connected: boolean) => void,
 ): Promise<AutomergeDocumentHandle> {
   const endpoint = new URL(window.location.origin);
   endpoint.protocol = endpoint.protocol === "https:" ? "wss:" : "ws:";
@@ -218,26 +276,32 @@ export async function connectAutomergeDocument(
     "sync",
   ].join("/");
 
-  const socket = new WebSocket(endpoint, collaborationProtocol);
-  socket.binaryType = "arraybuffer";
+  const socket = createSocket(endpoint);
 
   const handshake = await waitForHandshake(socket);
   const document = handshake.needsSeed
     ? createSeed(handshake.seedContent ?? "")
     : Automerge.init<RichEditorAutomergeDocument>();
 
-  let ready = false;
-  const handle = new AutomergeDocumentHandle(socket, document, () => {
-    if (ready) onDisconnect?.();
-  });
+  const handle = new AutomergeDocumentHandle(
+    endpoint,
+    socket,
+    document,
+    onConnectionState,
+  );
   try {
     await handle.waitUntilReady();
-    ready = true;
     return handle;
   } catch (error) {
     handle.close();
     throw error;
   }
+}
+
+function createSocket(endpoint: URL): WebSocket {
+  const socket = new WebSocket(endpoint, collaborationProtocol);
+  socket.binaryType = "arraybuffer";
+  return socket;
 }
 
 function waitForHandshake(socket: WebSocket): Promise<CollaborationHandshake> {

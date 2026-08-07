@@ -46,7 +46,7 @@ type CollaborationState = {
   versionID: string;
   handle?: AutomergeDocumentHandle;
   failed?: boolean;
-  established?: boolean;
+  reconnecting?: boolean;
 };
 
 export const documentDescriptionPageQuery = graphql`
@@ -188,19 +188,21 @@ export function DocumentDescriptionPage(props: {
     void connectAutomergeDocument(
       currentVersion.id,
       content => createRichEditorAutomergeDocument(content),
-      () => {
+      (connected) => {
         if (cancelled) return;
 
         setCollaboration({
           versionID: currentVersion.id,
-          failed: true,
-          established: true,
+          handle: activeHandle,
+          reconnecting: !connected,
         });
-        toast({
-          title: t("documentDescriptionPage.errors.title"),
-          description: t("documentDescriptionPage.errors.save"),
-          variant: "error",
-        });
+        if (!connected) {
+          toast({
+            title: t("documentDescriptionPage.errors.title"),
+            description: t("documentDescriptionPage.errors.save"),
+            variant: "error",
+          });
+        }
       },
     ).then((handle) => {
       if (cancelled) {
@@ -212,7 +214,6 @@ export function DocumentDescriptionPage(props: {
       setCollaboration({
         versionID: currentVersion.id,
         handle,
-        established: true,
       });
     }).catch((error) => {
       if (cancelled) return;
@@ -251,10 +252,9 @@ export function DocumentDescriptionPage(props: {
     && !collaboration.failed
     ? collaboration.handle
     : undefined;
-  const collaborationUnavailable = collaborationSupported
+  const collaborationReconnecting = collaborationSupported
     && collaboration?.versionID === currentVersion.id
-    && collaboration.failed
-    && collaboration.established;
+    && collaboration.reconnecting;
 
   // The editor key must change on explicit actions (delete draft, edit
   // title/type) but NOT on auto-save side effects (cursor preservation).
@@ -296,7 +296,7 @@ export function DocumentDescriptionPage(props: {
       className="flex-1"
       content={currentVersion.content}
       data-theme="document"
-      disabled={!canEdit || collaborationConnecting || collaborationUnavailable}
+      disabled={!canEdit || collaborationConnecting || collaborationReconnecting}
       collaborationHandle={collaborationHandle}
       onChangeContent={handleUpdate}
     />
