@@ -264,8 +264,9 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 .PHONY: build
 build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap bin/proboctl $(PROBO_AGENT_BIN)
 
-CFG_DEV_OAUTH2_KEY = cfg/.dev-oauth2-signing-key.pem
-DEV_ENV            = .env
+CFG_DEV_OAUTH2_KEY       = cfg/.dev-oauth2-signing-key.pem
+CFG_DEV_ACME_ACCOUNT_KEY = cfg/.dev-acme-account-key.pem
+DEV_ENV                  = .env
 
 .PHONY: dev-config
 dev-config: cfg/dev.yaml ## Generate cfg/dev.yaml via probod-bootstrap (picks up edits to .env)
@@ -274,7 +275,13 @@ $(CFG_DEV_OAUTH2_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) genrsa -out $@ 2048
 
-cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
+# Stable ACME account key for local step-ca. Without this, each probod restart
+# registers a new account and orphaned in-flight orders return 401 unauthorized.
+$(CFG_DEV_ACME_ACCOUNT_KEY):
+	@$(MKDIR) $(@D)
+	$(OPENSSL) ecparam -name prime256v1 -genkey -noout -out $@
+
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_ACME_ACCOUNT_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
 	PROBOD_BASE_URL=http://localhost:8080; \
@@ -308,6 +315,8 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/step-ca/certs/r
 	PROBOD_CHROME_DP_ADDR=localhost:9222; \
 	PROBOD_ACME_DIRECTORY=https://localhost:9000/acme/acme/directory; \
 	PROBOD_ACME_EMAIL=admin@probo.com; \
+	PROBOD_ACME_KEY_TYPE=EC256; \
+	PROBOD_ACME_ACCOUNT_KEY="$$($(CAT) $(CFG_DEV_ACME_ACCOUNT_KEY))"; \
 	PROBOD_ACME_ROOT_CA="$$($(CAT) compose/step-ca/certs/root_ca.crt)"; \
 	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \
 	set +a; \

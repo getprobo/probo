@@ -58,11 +58,22 @@ func classifyProvisioningError(err error) string {
 		return ProvisioningErrorDNSCAA
 	}
 
+	// An order that another ACME account created (typical after an ephemeral
+	// account-key restart) cannot be resumed; clear state like an invalid order.
+	if acmeErr, ok := errors.AsType[*ACMEError](err); ok {
+		problemType := strings.ToLower(acmeErr.ProblemType())
+		if strings.Contains(problemType, "unauthorized") || acmeErr.StatusCode() == 401 {
+			return ProvisioningErrorACMEInvalidOrder
+		}
+	}
+
 	msg := strings.ToLower(err.Error())
 	switch {
 	case strings.Contains(msg, "cname"):
 		return ProvisioningErrorDNSCNAME
 	case strings.Contains(msg, "status: invalid"), strings.Contains(msg, "order is in unexpected status \"invalid\""):
+		return ProvisioningErrorACMEInvalidOrder
+	case strings.Contains(msg, "unauthorized"), strings.Contains(msg, "lacks sufficient authorization"):
 		return ProvisioningErrorACMEInvalidOrder
 	default:
 		return ProvisioningErrorACMETemporary

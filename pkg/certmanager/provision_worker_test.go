@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"golang.org/x/crypto/acme"
 )
 
 func TestClassifyProvisioningError(t *testing.T) {
@@ -41,6 +42,20 @@ func TestClassifyProvisioningError(t *testing.T) {
 	// A CAA resolver/transport failure shares the "caa records" wording with a
 	// real CAA misconfiguration but must consume the normal retry budget.
 	assert.Equal(t, ProvisioningErrorACMETemporary, classifyProvisioningError(errors.New("cannot exchange dns message for caa records: i/o timeout")))
+	assert.Equal(
+		t,
+		ProvisioningErrorACMEInvalidOrder,
+		classifyProvisioningError(
+			newACMEError(
+				"cannot get order",
+				&acme.Error{
+					StatusCode:  401,
+					ProblemType: "urn:ietf:params:acme:error:unauthorized",
+					Detail:      "The client lacks sufficient authorization",
+				},
+			),
+		),
+	)
 }
 
 func TestDecideProvisioningOutcome_RateLimitKeepsRetryCountAndOrder(t *testing.T) {
