@@ -105,7 +105,11 @@ export function CompliancePortalDocumentList(props: {
 
   return (
     <div className="space-y-2.5">
-      <SortableTable {...pagination} refetch={refetch}>
+      <SortableTable
+        {...pagination}
+        refetch={refetch}
+        initialOrder={{ field: "TITLE", direction: "ASC" }}
+      >
         <Thead>
           <Tr>
             <Th className="w-24">{t("documentList.columns.displayed")}</Th>

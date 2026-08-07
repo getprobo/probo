@@ -72,7 +72,7 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 	link, err := dataloader.FromContext(ctx).CompliancePortalDocument.Load(
 		ctx,
 		dataloader.CompliancePortalDocumentKey{
-			Scope:              scope,
+			TenantID:           scope.GetTenantID(),
 			CompliancePortalID: compliancePortalID,
 			DocumentID:         obj.ID,
 		},

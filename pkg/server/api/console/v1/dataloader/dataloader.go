@@ -59,7 +59,9 @@ type (
 	}
 
 	CompliancePortalDocumentKey struct {
-		Scope              *coredata.Scope
+		// TenantID (not *Scope) so keys group and cache by tenant identity
+		// across authorize calls that allocate distinct Scope pointers.
+		TenantID           gid.TenantID
 		CompliancePortalID gid.GID
 		DocumentID         gid.GID
 	}
@@ -154,7 +156,7 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 	keys []CompliancePortalDocumentKey,
 ) (map[CompliancePortalDocumentKey]*coredata.CompliancePortalDocument, error) {
 	type groupKey struct {
-		scope              *coredata.Scope
+		tenantID           gid.TenantID
 		compliancePortalID gid.GID
 	}
 
@@ -162,7 +164,7 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 
 	for _, key := range keys {
 		group := groupKey{
-			scope:              key.Scope,
+			tenantID:           key.TenantID,
 			compliancePortalID: key.CompliancePortalID,
 		}
 		documentIDsByGroup[group] = append(documentIDsByGroup[group], key.DocumentID)
@@ -173,7 +175,7 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 	for group, documentIDs := range documentIDsByGroup {
 		links, err := f.compliancePortal.GetDocumentLinks(
 			ctx,
-			group.scope,
+			coredata.NewScope(group.tenantID),
 			group.compliancePortalID,
 			documentIDs,
 		)
@@ -181,13 +183,11 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 			return nil, fmt.Errorf("cannot batch load compliance portal documents: %w", err)
 		}
 
+		// Return every link, including visibility NONE. That field is the
+		// console's linked-vs-unlinked signal; callers filter displayed rows.
 		for _, link := range links {
-			if link.Visibility == coredata.CompliancePortalVisibilityNone {
-				continue
-			}
-
 			result[CompliancePortalDocumentKey{
-				Scope:              group.scope,
+				TenantID:           group.tenantID,
 				CompliancePortalID: group.compliancePortalID,
 				DocumentID:         link.DocumentID,
 			}] = link

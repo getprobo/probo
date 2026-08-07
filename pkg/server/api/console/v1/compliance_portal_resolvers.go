@@ -775,7 +775,7 @@ func (r *compliancePortalDocumentAccessResolver) CompliancePortalFile(ctx contex
 		return nil, nil
 	}
 
-	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileGet)
+	scope, err := r.authorize(ctx, obj.CompliancePortalFile.ID, management.ActionCompliancePortalFileGet)
 	if err != nil {
 		return nil, err
 	}
