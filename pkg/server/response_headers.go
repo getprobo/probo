@@ -22,7 +22,15 @@ package server
 
 import "net/http"
 
-const strictTransportSecurityValue = "max-age=31536000; includeSubDomains; preload"
+const (
+	strictTransportSecurityValue = "max-age=31536000; includeSubDomains; preload"
+	permissionsPolicyValue       = "microphone=(), camera=(), geolocation=()"
+)
+
+type SecurityHeadersOptions struct {
+	ExtraHeaderFields     map[string]string
+	ContentSecurityPolicy string
+}
 
 func ApplyExtraHeaders(w http.ResponseWriter, extraHeaderFields map[string]string) {
 	for key, value := range extraHeaderFields {
@@ -30,12 +38,21 @@ func ApplyExtraHeaders(w http.ResponseWriter, extraHeaderFields map[string]strin
 	}
 }
 
-func NewSecurityHeadersMiddleware(extraHeaderFields map[string]string) func(next http.Handler) http.Handler {
+func NewSecurityHeadersMiddleware(opts SecurityHeadersOptions) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Strict-Transport-Security", strictTransportSecurityValue)
-				ApplyExtraHeaders(w, extraHeaderFields)
+
+				if opts.ContentSecurityPolicy != "" {
+					w.Header().Set("Content-Security-Policy", opts.ContentSecurityPolicy)
+					w.Header().Set("X-Frame-Options", "DENY")
+					w.Header().Set("X-Content-Type-Options", "nosniff")
+					w.Header().Set("Referrer-Policy", "no-referrer")
+					w.Header().Set("Permissions-Policy", permissionsPolicyValue)
+				}
+
+				ApplyExtraHeaders(w, opts.ExtraHeaderFields)
 
 				next.ServeHTTP(w, r)
 			},
