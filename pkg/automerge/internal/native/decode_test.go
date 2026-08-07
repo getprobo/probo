@@ -43,16 +43,19 @@ func fixture(t *testing.T, encoded string) []byte {
 
 	data, err := base64.StdEncoding.DecodeString(encoded)
 	require.NoError(t, err)
+
 	return data
 }
 
 func scalarOperations(document *Document) map[string]Scalar {
 	result := make(map[string]Scalar)
+
 	for _, operation := range document.Changes[0].Operations {
 		if operation.Action == ActionSet && operation.Key.Property != nil && operation.Value != nil {
 			result[*operation.Key.Property] = *operation.Value
 		}
 	}
+
 	return result
 }
 
@@ -127,6 +130,7 @@ func TestDecode_CompressedOfficialChangeFixture(t *testing.T) {
 	require.NoError(t, err)
 
 	var compressed bytes.Buffer
+
 	writer, err := flate.NewWriter(&compressed, flate.BestCompression)
 	require.NoError(t, err)
 	_, err = writer.Write(content)
@@ -247,6 +251,7 @@ func TestValidateSnapshotGraph_RejectsCycle(t *testing.T) {
 
 	actor, err := NewActorID([]byte{1})
 	require.NoError(t, err)
+
 	changes := []Change{
 		{
 			Actor:             actor,
@@ -272,6 +277,7 @@ func TestValidateSnapshotGraph_RejectsSequenceGap(t *testing.T) {
 
 	actor, err := NewActorID([]byte{1})
 	require.NoError(t, err)
+
 	changes := []Change{
 		{Actor: actor, Sequence: 1, MaxOp: 1},
 		{Actor: actor, Sequence: 3, MaxOp: 2, DependencyIndexes: []uint64{0}},

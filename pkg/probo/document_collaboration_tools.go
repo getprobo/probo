@@ -83,11 +83,13 @@ func (s *DocumentService) CollaborationTools(
 			"Edit the collaborative document using the revision returned by read_live_document. Re-read and retry if the document changed concurrently.",
 			func(ctx context.Context, params editLiveDocumentParams) (agent.ToolResult, error) {
 				var cursor automerge.Cursor
+
 				if params.Cursor != "" {
 					decoded, err := base64.StdEncoding.DecodeString(params.Cursor)
 					if err != nil {
 						return agent.ToolResult{}, fmt.Errorf("cannot decode live document cursor: %w", err)
 					}
+
 					cursor = automerge.Cursor(decoded)
 				}
 

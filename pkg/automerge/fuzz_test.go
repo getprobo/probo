@@ -41,6 +41,7 @@ func FuzzLoad(f *testing.F) {
 		if err != nil {
 			return
 		}
+
 		_ = document.Close(context.Background())
 	})
 }

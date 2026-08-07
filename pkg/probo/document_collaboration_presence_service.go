@@ -72,6 +72,7 @@ func (s *DocumentService) SaveCollaborationPresence(
 			}
 
 			now := time.Now()
+
 			presence := coredata.DocumentVersionCollaborationPresence{
 				ConnectionID:      connectionID,
 				DocumentVersionID: documentVersionID,
@@ -85,6 +86,7 @@ func (s *DocumentService) SaveCollaborationPresence(
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot update document collaboration presence: %w", err)
 				}
+
 				if err := presence.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document collaboration presence: %w", err)
 				}
@@ -99,6 +101,7 @@ func (s *DocumentService) SaveCollaborationPresence(
 			); err != nil {
 				return fmt.Errorf("cannot clean document collaboration presences: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -111,6 +114,7 @@ func (s *DocumentService) ListCollaborationPresences(
 	excludeConnectionID string,
 ) ([]DocumentCollaborationPresence, error) {
 	var stored coredata.DocumentVersionCollaborationPresences
+
 	if err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -155,6 +159,7 @@ func (s *DocumentService) DeleteCollaborationPresence(
 			if err := presence.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete document collaboration presence: %w", err)
 			}
+
 			return nil
 		},
 	)

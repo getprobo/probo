@@ -39,6 +39,7 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 		histories = 20
 		steps     = 30
 	)
+
 	characters := []rune("abcXYZ😀é")
 
 	for history := range histories {
@@ -59,11 +60,13 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 		var model []rune
 		for step := range steps {
 			offsets := utf16Offsets(model)
+
 			var (
 				index       uint32
 				deleteCount int32
 				insert      string
 			)
+
 			if len(model) > 0 && random.Intn(3) == 0 {
 				position := random.Intn(len(model))
 				index = offsets[position]
@@ -74,6 +77,7 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 				index = offsets[position]
 				character := characters[random.Intn(len(characters))]
 				insert = string(character)
+
 				model = append(model, 0)
 				copy(model[position+1:], model[position:])
 				model[position] = character
@@ -81,6 +85,7 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 
 			require.NoError(t, nativeText.Splice(ctx, index, deleteCount, insert))
 			require.NoError(t, referenceText.Splice(ctx, index, deleteCount, insert))
+
 			message := fmt.Sprintf("history %d step %d", history, step)
 			_, err = nativeDocument.Commit(ctx, message, commitTime)
 			require.NoError(t, err)
@@ -113,5 +118,6 @@ func utf16Offsets(value []rune) []uint32 {
 	for i, character := range value {
 		offsets[i+1] = offsets[i] + uint32(len(utf16.Encode([]rune{character})))
 	}
+
 	return offsets
 }

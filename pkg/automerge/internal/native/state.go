@@ -56,18 +56,22 @@ func NewState() *State {
 
 func NewStateFromDocument(document *Document) (*State, error) {
 	state := NewState()
+
 	for i := range document.Changes {
 		change := &document.Changes[i]
 		if change.Sequence > state.actorSequence[change.Actor] {
 			state.actorSequence[change.Actor] = change.Sequence
 		}
+
 		if change.Hash != nil {
 			state.changes[*change.Hash] = change
 		}
+
 		for _, operation := range change.Operations {
 			if _, exists := state.operations[operation.ID]; exists {
 				return nil, fmt.Errorf("duplicate snapshot operation ID %v", operation.ID)
 			}
+
 			state.operations[operation.ID] = operation
 			for _, successor := range operation.Successors {
 				state.superseded[operation.ID] = struct{}{}
@@ -77,9 +81,11 @@ func NewStateFromDocument(document *Document) (*State, error) {
 			}
 		}
 	}
+
 	for _, head := range document.Heads {
 		state.heads[head] = struct{}{}
 	}
+
 	return state, nil
 }
 
@@ -87,9 +93,11 @@ func (s *State) ApplyChange(change *Change) error {
 	if change.Hash == nil {
 		return fmt.Errorf("change hash is required")
 	}
+
 	if _, ok := s.changes[*change.Hash]; ok {
 		return nil
 	}
+
 	for _, dependency := range change.Dependencies {
 		if _, ok := s.changes[dependency]; !ok {
 			return fmt.Errorf("missing change dependency %s", dependency)
@@ -110,6 +118,7 @@ func (s *State) ApplyChange(change *Change) error {
 			return fmt.Errorf("duplicate operation ID %v", operation.ID)
 		}
 	}
+
 	for _, operation := range change.Operations {
 		s.operations[operation.ID] = operation
 		for _, predecessor := range operation.Predecessors {
@@ -118,11 +127,14 @@ func (s *State) ApplyChange(change *Change) error {
 	}
 
 	s.changes[*change.Hash] = change
+
 	s.actorSequence[change.Actor] = change.Sequence
 	for _, dependency := range change.Dependencies {
 		delete(s.heads, dependency)
 	}
+
 	s.heads[*change.Hash] = struct{}{}
+
 	return nil
 }
 
@@ -131,12 +143,14 @@ func (s *State) Heads() []ChangeHash {
 	for head := range s.heads {
 		heads = append(heads, head)
 	}
+
 	sort.Slice(
 		heads,
 		func(i, j int) bool {
 			return bytes.Compare(heads[i][:], heads[j][:]) < 0
 		},
 	)
+
 	return heads
 }
 
@@ -147,12 +161,15 @@ func (s *State) Text(property string) (string, error) {
 	}
 
 	sequence := s.sequence(objectOperation.ID)
+
 	var output strings.Builder
+
 	for _, operation := range sequence {
 		if operation.Value != nil && operation.Value.Type == ScalarString {
 			output.WriteString(operation.Value.String)
 		}
 	}
+
 	return output.String(), nil
 }
 
@@ -161,6 +178,7 @@ func (s *State) visibleMapOperation(property string, action Action) (Operation, 
 		result Operation
 		found  bool
 	)
+
 	for _, operation := range s.operations {
 		if !operation.Object.IsRoot ||
 			operation.Key.Property == nil ||
@@ -169,11 +187,13 @@ func (s *State) visibleMapOperation(property string, action Action) (Operation, 
 			s.isSuperseded(operation.ID) {
 			continue
 		}
+
 		if !found || operation.ID.Compare(result.ID) > 0 {
 			result = operation
 			found = true
 		}
 	}
+
 	return result, found
 }
 
@@ -186,28 +206,35 @@ func (s *State) visibleMapOperations(property string) []Operation {
 			s.isSuperseded(operation.ID) {
 			continue
 		}
+
 		operations = append(operations, operation)
 	}
+
 	sort.Slice(operations, func(i, j int) bool {
 		return operations[i].ID.Compare(operations[j].ID) < 0
 	})
+
 	return operations
 }
 
 func (s *State) sequence(object OpID) []Operation {
 	operations := s.sequenceElements(object)
+
 	result := operations[:0]
 	for _, operation := range operations {
 		if operation.Action == ActionSet {
 			result = append(result, operation)
 		}
 	}
+
 	return result
 }
 
 func (s *State) sequenceElements(object OpID) []Operation {
 	children := make(map[OpID][]Operation)
+
 	var head []Operation
+
 	for _, operation := range s.operations {
 		if operation.Object.IsRoot ||
 			operation.Object.OpID != object ||
@@ -215,6 +242,7 @@ func (s *State) sequenceElements(object OpID) []Operation {
 			operation.Action == ActionMark {
 			continue
 		}
+
 		switch {
 		case operation.Key.IsHead:
 			head = append(head, operation)
@@ -234,12 +262,15 @@ func (s *State) sequenceElements(object OpID) []Operation {
 		make(map[OpID]struct{}),
 		false,
 	)
+
 	return operations
 }
 
 func (s *State) sequenceAll(object OpID) []Operation {
 	children := make(map[OpID][]Operation)
+
 	var head []Operation
+
 	for _, operation := range s.operations {
 		if operation.Object.IsRoot ||
 			operation.Object.OpID != object ||
@@ -247,6 +278,7 @@ func (s *State) sequenceAll(object OpID) []Operation {
 			operation.Action == ActionMark {
 			continue
 		}
+
 		if operation.Key.IsHead {
 			head = append(head, operation)
 		} else if operation.Key.Element != nil {
@@ -265,6 +297,7 @@ func (s *State) sequenceAll(object OpID) []Operation {
 		make(map[OpID]struct{}),
 		true,
 	)
+
 	return operations
 }
 
@@ -280,20 +313,25 @@ func (s *State) RichTextSpans(object OpID) ([]RichSpan, error) {
 			if err != nil {
 				return nil, fmt.Errorf("cannot hydrate block %v: %w", operation.ID, err)
 			}
+
 			spans = append(spans, RichSpan{Type: "block", Value: value})
 		case ActionSet:
 			if operation.Value == nil || operation.Value.Type != ScalarString {
 				continue
 			}
+
 			activeMarks := make(map[string]any)
+
 			for _, mark := range marks {
 				if i >= mark.start && i < mark.end {
 					activeMarks[mark.name] = mark.value
 				}
 			}
+
 			if len(activeMarks) == 0 {
 				activeMarks = nil
 			}
+
 			if len(spans) > 0 &&
 				spans[len(spans)-1].Type == "text" &&
 				reflect.DeepEqual(spans[len(spans)-1].Marks, activeMarks) {
@@ -311,6 +349,7 @@ func (s *State) RichTextSpans(object OpID) ([]RichSpan, error) {
 			}
 		}
 	}
+
 	return spans, nil
 }
 
@@ -328,6 +367,7 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 	}
 
 	markOperations := make([]Operation, 0)
+
 	for _, operation := range s.operations {
 		if !operation.Object.IsRoot &&
 			operation.Object.OpID == object &&
@@ -336,6 +376,7 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 			markOperations = append(markOperations, operation)
 		}
 	}
+
 	sort.Slice(markOperations, func(i, j int) bool {
 		return markOperations[i].ID.Compare(markOperations[j].ID) < 0
 	})
@@ -343,15 +384,19 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 	marks := make([]richTextMark, 0, len(markOperations)/2)
 	for i := 0; i+1 < len(markOperations); i += 2 {
 		begin := markOperations[i]
+
 		end := markOperations[i+1]
 		if begin.MarkName == nil || begin.Key.Element == nil || end.Key.Element == nil {
 			continue
 		}
+
 		startPosition, startOK := positions[*begin.Key.Element]
+
 		endPosition, endOK := positions[*end.Key.Element]
 		if !startOK || !endOK || startPosition >= endPosition {
 			continue
 		}
+
 		marks = append(
 			marks,
 			richTextMark{
@@ -362,6 +407,7 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 			},
 		)
 	}
+
 	return marks
 }
 
@@ -372,10 +418,12 @@ func (s *State) mapValue(
 	if _, ok := visited[object]; ok {
 		return nil, fmt.Errorf("object cycle detected")
 	}
+
 	visited[object] = struct{}{}
 	defer delete(visited, object)
 
 	properties := make(map[string][]Operation)
+
 	for _, operation := range s.operations {
 		if operation.Object.IsRoot ||
 			operation.Object.OpID != object ||
@@ -383,6 +431,7 @@ func (s *State) mapValue(
 			s.isSuperseded(operation.ID) {
 			continue
 		}
+
 		property := *operation.Key.Property
 		properties[property] = append(properties[property], operation)
 	}
@@ -392,6 +441,7 @@ func (s *State) mapValue(
 		sort.Slice(operations, func(i, j int) bool {
 			return operations[i].ID.Compare(operations[j].ID) > 0
 		})
+
 		operation := operations[0]
 		switch operation.Action {
 		case ActionMakeMap:
@@ -399,21 +449,25 @@ func (s *State) mapValue(
 			if err != nil {
 				return nil, err
 			}
+
 			result[property] = value
 		case ActionMakeList:
 			result[property] = []any{}
 		case ActionMakeText:
 			var value strings.Builder
+
 			for _, element := range s.sequence(operation.ID) {
 				if element.Value != nil && element.Value.Type == ScalarString {
 					value.WriteString(element.Value.String)
 				}
 			}
+
 			result[property] = value.String()
 		case ActionSet:
 			result[property] = scalarMaterializedValue(operation.Value)
 		}
 	}
+
 	return result, nil
 }
 
@@ -421,6 +475,7 @@ func scalarMaterializedValue(value *Scalar) any {
 	if value == nil {
 		return nil
 	}
+
 	switch value.Type {
 	case ScalarNull:
 		return nil
@@ -456,14 +511,17 @@ func (s *State) appendSequence(
 			return operations[i].ID.Compare(operations[j].ID) > 0
 		},
 	)
+
 	for _, operation := range operations {
 		if _, ok := visited[operation.ID]; ok {
 			continue
 		}
+
 		visited[operation.ID] = struct{}{}
 		if includeSuperseded || !s.isSuperseded(operation.ID) {
 			*output = append(*output, operation)
 		}
+
 		s.appendSequence(
 			output,
 			children[operation.ID],
@@ -486,6 +544,7 @@ func (s *State) maxOpGlobal() uint64 {
 			maximum = id.Counter
 		}
 	}
+
 	return maximum
 }
 
@@ -498,11 +557,13 @@ func (s *State) applyPending(operations []Operation) error {
 		if _, exists := s.operations[operation.ID]; exists {
 			return fmt.Errorf("duplicate pending operation ID %v", operation.ID)
 		}
+
 		s.operations[operation.ID] = operation
 		for _, predecessor := range operation.Predecessors {
 			s.superseded[predecessor] = struct{}{}
 		}
 	}
+
 	return nil
 }
 
@@ -510,11 +571,14 @@ func (s *State) recordAppliedChange(change *Change) error {
 	if change.Hash == nil {
 		return fmt.Errorf("change hash is required")
 	}
+
 	for _, dependency := range change.Dependencies {
 		delete(s.heads, dependency)
 	}
+
 	s.heads[*change.Hash] = struct{}{}
 	s.changes[*change.Hash] = change
 	s.actorSequence[change.Actor] = change.Sequence
+
 	return nil
 }

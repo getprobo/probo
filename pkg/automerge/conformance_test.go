@@ -78,6 +78,7 @@ func runOracle(t *testing.T, request oracleRequest) oracleResponse {
 
 	var response oracleResponse
 	require.NoError(t, json.Unmarshal(output, &response))
+
 	return response
 }
 
@@ -278,11 +279,14 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	require.Len(t, response.Changes, 3)
 
 	var combined []byte
+
 	for _, encoded := range response.Changes {
 		data, err := base64.StdEncoding.DecodeString(encoded)
 		require.NoError(t, err)
+
 		combined = append(combined, data...)
 	}
+
 	decoded, err := native.Decode(combined)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 3)
@@ -311,6 +315,7 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 
 	leftHeads := leftFirst.Heads()
 	rightHeads := rightFirst.Heads()
+
 	require.Len(t, leftHeads, 2)
 	require.Len(t, rightHeads, 2)
 	assert.ElementsMatch(

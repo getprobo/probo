@@ -309,9 +309,11 @@ func TestPureGoDocument_SynchronizesWithNativePeer(t *testing.T) {
 	right, err := automerge.NewPureGo(ctx, actor(71))
 	require.NoError(t, err)
 	closeDocument(t, right)
+
 	leftSync, err := left.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
+
 	rightSync, err := right.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
@@ -341,9 +343,11 @@ func TestPureGoDocument_SynchronizesWithReferencePeer(t *testing.T) {
 	right, err := automerge.NewReference(ctx, actor(73))
 	require.NoError(t, err)
 	closeDocument(t, right)
+
 	leftSync, err := left.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
+
 	rightSync, err := right.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
@@ -373,9 +377,11 @@ func TestPureGoDocument_ReceivesReferenceSync(t *testing.T) {
 	right, err := automerge.NewPureGo(ctx, actor(75))
 	require.NoError(t, err)
 	closeDocument(t, right)
+
 	leftSync, err := left.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
+
 	rightSync, err := right.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
@@ -404,19 +410,23 @@ func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 	referenceDocument, err := automerge.NewReference(ctx, actor(77))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
+
 	nativeSync, err := nativeDocument.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, nativeSync)
+
 	referenceSync, err := referenceDocument.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, referenceSync)
 	synchronize(t, nativeSync, referenceSync)
+
 	referenceText, err := referenceDocument.Text(ctx, "body")
 	require.NoError(t, err)
 
 	for iteration := range 20 {
 		nativeValue, err := nativeText.String(ctx)
 		require.NoError(t, err)
+
 		nativeOffset := utf16Offsets([]rune(nativeValue))
 		require.NoError(
 			t,
@@ -432,6 +442,7 @@ func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 
 		referenceValue, err := referenceText.String(ctx)
 		require.NoError(t, err)
+
 		referenceOffset := utf16Offsets([]rune(referenceValue))
 		require.NoError(
 			t,
@@ -446,6 +457,7 @@ func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 		require.NoError(t, err)
 
 		synchronize(t, nativeSync, referenceSync)
+
 		nativeValue, err = nativeText.String(ctx)
 		require.NoError(t, err)
 		referenceValue, err = referenceText.String(ctx)

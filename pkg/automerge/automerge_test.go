@@ -35,7 +35,9 @@ var commitTime = time.Date(2026, time.August, 7, 12, 0, 0, 0, time.UTC)
 
 func actor(value byte) automerge.ActorID {
 	var actorID automerge.ActorID
+
 	actorID[0] = value
+
 	return actorID
 }
 
@@ -61,20 +63,25 @@ func synchronize(t *testing.T, left, right *automerge.SyncState) {
 	t.Helper()
 
 	ctx := context.Background()
+
 	for range 100 {
 		progressed := false
 
 		message, ok, err := left.GenerateMessage(ctx)
 		require.NoError(t, err)
+
 		if ok {
 			require.NoError(t, right.ReceiveMessage(ctx, message))
+
 			progressed = true
 		}
 
 		message, ok, err = right.GenerateMessage(ctx)
 		require.NoError(t, err)
+
 		if ok {
 			require.NoError(t, left.ReceiveMessage(ctx, message))
+
 			progressed = true
 		}
 
@@ -102,6 +109,7 @@ func newBaseDocument(t *testing.T) []byte {
 
 	data, err := document.Save(ctx)
 	require.NoError(t, err)
+
 	return data
 }
 
@@ -172,6 +180,7 @@ func TestDocument_ConcurrentChangesConverge(t *testing.T) {
 	leftFirst, err := automerge.Load(ctx, leftData, actor(4))
 	require.NoError(t, err)
 	closeDocument(t, leftFirst)
+
 	rightFirst, err := automerge.Load(ctx, rightData, actor(5))
 	require.NoError(t, err)
 	closeDocument(t, rightFirst)
@@ -244,6 +253,7 @@ func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
 	left, err := automerge.Load(ctx, newBaseDocument(t), actor(2))
 	require.NoError(t, err)
 	closeDocument(t, left)
+
 	right, err := automerge.New(ctx, actor(3))
 	require.NoError(t, err)
 	closeDocument(t, right)
@@ -251,6 +261,7 @@ func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
 	leftSync, err := left.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
+
 	rightSync, err := right.NewSyncState(ctx)
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
@@ -275,6 +286,7 @@ func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
 	rightValue, err := rightText.String(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, leftValue, rightValue)
+
 	leftHeads, err := left.Heads(ctx)
 	require.NoError(t, err)
 	rightHeads, err := right.Heads(ctx)

@@ -97,6 +97,7 @@ type (
 
 func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Request) {
 	documentVersionIDString := chi.URLParam(r, "documentVersionID")
+
 	documentVersionID, err := gid.ParseGID(documentVersionIDString)
 	if err != nil || documentVersionID.EntityType() != coredata.DocumentVersionEntityType {
 		jsonx.RenderNotFound(w, fmt.Errorf("document version not found"))
@@ -108,7 +109,9 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		h.renderAuthorizationError(w, err)
 		return
 	}
+
 	identity := authn.IdentityFromContext(r.Context())
+
 	connectionID, err := newDocumentCollaborationConnectionID()
 	if err != nil {
 		jsonx.RenderInternalServerError(w)
@@ -124,10 +127,12 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		h.renderServiceError(w, r, documentVersionIDString, err)
 		return
 	}
+
 	defer func() { _ = collaboration.Document.Close(context.Background()) }()
 	defer func() {
 		deleteCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+
 		if err := h.probo.Documents.DeleteCollaborationPresence(
 			deleteCtx,
 			scope,
@@ -141,10 +146,12 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 			)
 		}
 	}()
+
 	if collaboration.NeedsSeed {
 		defer func() {
 			releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
+
 			if err := h.probo.Documents.ReleaseCollaborationSeed(
 				releaseCtx,
 				scope,
@@ -177,11 +184,14 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 			log.Error(err),
 			log.String("document_version_id", documentVersionIDString),
 		)
+
 		return
 	}
+
 	defer func() {
 		_ = connection.Close(websocket.StatusNormalClosure, "")
 	}()
+
 	connection.SetReadLimit(documentCollaborationMessageMaxBytes)
 
 	if connection.Subprotocol() != documentCollaborationProtocol {
@@ -194,12 +204,14 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		h.closeWithError(r.Context(), connection, documentVersionIDString, err)
 		return
 	}
+
 	defer func() { _ = syncState.Close(context.Background()) }()
 
 	seedContent := ""
 	if collaboration.NeedsSeed {
 		seedContent = collaboration.SeedContent
 	}
+
 	handshake, err := json.Marshal(
 		documentCollaborationHandshake{
 			Type:         "ready",
@@ -226,6 +238,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 	); err != nil {
 		return
 	}
+
 	if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
 		h.closeWithError(ctx, connection, documentVersionIDString, err)
 		return
@@ -235,6 +248,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 	go readCollaborationMessages(ctx, connection, incoming)
 
 	revision := collaboration.Revision
+
 	ticker := time.NewTicker(documentCollaborationRefreshInterval)
 	defer ticker.Stop()
 
@@ -248,14 +262,17 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 					websocket.CloseStatus(message.Err) == websocket.StatusGoingAway {
 					return
 				}
+
 				h.logger.WarnCtx(
 					ctx,
 					"document collaboration connection closed with read error",
 					log.Error(message.Err),
 					log.String("document_version_id", documentVersionIDString),
 				)
+
 				return
 			}
+
 			if message.MessageType != websocket.MessageBinary {
 				if message.MessageType != websocket.MessageText {
 					_ = connection.Close(websocket.StatusUnsupportedData, "unsupported message type")
@@ -268,6 +285,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 					_ = connection.Close(websocket.StatusInvalidFramePayloadData, "invalid presence message")
 					return
 				}
+
 				if err := h.probo.Documents.SaveCollaborationPresence(
 					ctx,
 					scope,
@@ -280,12 +298,15 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 					h.closeWithError(ctx, connection, documentVersionIDString, err)
 					return
 				}
+
 				continue
 			}
+
 			if err := syncState.ReceiveMessage(ctx, message.Data); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 				return
 			}
+
 			revision, err = h.probo.Documents.PersistCollaboration(
 				ctx,
 				scope,
@@ -296,12 +317,14 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 				return
 			}
+
 			if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 				return
 			}
 		case <-ticker.C:
 			var changed bool
+
 			revision, changed, err = h.probo.Documents.RefreshCollaboration(
 				ctx,
 				scope,
@@ -313,12 +336,14 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 				return
 			}
+
 			if changed {
 				if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
 					h.closeWithError(ctx, connection, documentVersionIDString, err)
 					return
 				}
 			}
+
 			if err := h.sendPresences(
 				ctx,
 				connection,
@@ -359,6 +384,7 @@ func (h *documentCollaborationHandler) sendPresences(
 			HeadPosition:   presence.HeadPosition,
 		}
 	}
+
 	data, err := json.Marshal(
 		documentCollaborationPresenceSnapshot{
 			Type:      "presence",
@@ -368,6 +394,7 @@ func (h *documentCollaborationHandler) sendPresences(
 	if err != nil {
 		return fmt.Errorf("cannot marshal document collaboration presences: %w", err)
 	}
+
 	if err := writeCollaborationMessage(ctx, connection, websocket.MessageText, data); err != nil {
 		return fmt.Errorf("cannot send document collaboration presences: %w", err)
 	}
@@ -380,6 +407,7 @@ func newDocumentCollaborationConnectionID() (string, error) {
 	if _, err := rand.Read(value[:]); err != nil {
 		return "", fmt.Errorf("cannot generate document collaboration connection ID: %w", err)
 	}
+
 	return hex.EncodeToString(value[:]), nil
 }
 
@@ -416,6 +444,7 @@ func (h *documentCollaborationHandler) authorizeResource(
 ) (*coredata.Scope, error) {
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)
+
 	params := iam.AuthorizeParams{
 		Principal:          identity.ID,
 		Resource:           resourceID,
@@ -438,8 +467,10 @@ func (h *documentCollaborationHandler) renderAuthorizationError(w http.ResponseW
 	if scopeErr, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
 		bearertoken.SetBearerInsufficientScope(w, h.baseURL, scopeErr.Scopes...)
 		jsonx.RenderForbidden(w)
+
 		return
 	}
+
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
 		jsonx.RenderForbidden(w)
 		return
@@ -458,14 +489,17 @@ func (h *documentCollaborationHandler) renderServiceError(
 		jsonx.RenderNotFound(w, fmt.Errorf("document version not found"))
 		return
 	}
+
 	if _, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
 	}
+
 	if _, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
 	}
+
 	if _, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
@@ -492,6 +526,7 @@ func (h *documentCollaborationHandler) closeWithError(
 		log.Error(err),
 		log.String("document_version_id", documentVersionID),
 	)
+
 	_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
 }
 
@@ -502,6 +537,7 @@ func readCollaborationMessages(
 ) {
 	for {
 		messageType, data, err := connection.Read(ctx)
+
 		message := documentCollaborationIncoming{
 			MessageType: messageType,
 			Data:        data,
@@ -512,6 +548,7 @@ func readCollaborationMessages(
 		case <-ctx.Done():
 			return
 		}
+
 		if err != nil {
 			return
 		}
@@ -528,9 +565,11 @@ func sendAvailableSyncMessages(
 		if err != nil {
 			return fmt.Errorf("cannot generate sync message: %w", err)
 		}
+
 		if !ok {
 			return nil
 		}
+
 		if err := writeCollaborationMessage(
 			ctx,
 			connection,

@@ -37,6 +37,7 @@ func EncodeChange(change *Change) ([]byte, error) {
 	if len(change.Actor) == 0 {
 		return nil, fmt.Errorf("change actor cannot be empty")
 	}
+
 	if change.Sequence == 0 || change.StartOp == 0 {
 		return nil, fmt.Errorf("change sequence and start operation must be positive")
 	}
@@ -45,22 +46,26 @@ func EncodeChange(change *Change) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	columns, err := encodeOperationColumns(change, actorIndexes)
 	if err != nil {
 		return nil, err
 	}
 
 	var body []byte
+
 	body = appendHashesNative(body, change.Dependencies)
 	body = appendLengthPrefixedNative(body, change.Actor.Bytes())
 	body = appendULEB(body, change.Sequence)
 	body = appendULEB(body, change.StartOp)
 	body = appendLEB(body, change.Time)
 	body = appendLengthPrefixedNative(body, []byte(change.Message))
+
 	body = appendULEB(body, uint64(len(actors)))
 	for _, actor := range actors {
 		body = appendLengthPrefixedNative(body, actor.Bytes())
 	}
+
 	body = appendColumns(body, columns)
 	body = append(body, change.ExtraBytes...)
 
@@ -75,6 +80,7 @@ func EncodeChange(change *Change) ([]byte, error) {
 	raw = append(raw, byte(ChunkChange))
 	raw = appendULEB(raw, uint64(len(body)))
 	raw = append(raw, body...)
+
 	return raw, nil
 }
 
@@ -87,6 +93,7 @@ func changeActorTable(
 			actorSet[actor] = struct{}{}
 		}
 	}
+
 	for i, operation := range change.Operations {
 		expectedID := OpID{
 			Actor:   change.Actor,
@@ -100,12 +107,15 @@ func changeActorTable(
 				expectedID,
 			)
 		}
+
 		if !operation.Object.IsRoot {
 			add(operation.Object.OpID.Actor)
 		}
+
 		if operation.Key.Element != nil {
 			add(operation.Key.Element.Actor)
 		}
+
 		for _, predecessor := range operation.Predecessors {
 			add(predecessor.Actor)
 		}
@@ -115,13 +125,16 @@ func changeActorTable(
 	for actor := range actorSet {
 		actors = append(actors, actor)
 	}
+
 	sort.Slice(actors, func(i, j int) bool {
 		return actors[i].Compare(actors[j]) < 0
 	})
+
 	indexes := map[ActorID]uint64{change.Actor: 0}
 	for i, actor := range actors {
 		indexes[actor] = uint64(i + 1)
 	}
+
 	return actors, indexes, nil
 }
 
@@ -139,6 +152,7 @@ func encodeOperationColumns(
 	actions := make([]optional[uint64], count)
 	valueMetadata := make([]optional[uint64], count)
 	predGroups := make([]optional[uint64], count)
+
 	var (
 		valueData    []byte
 		predActors   []optional[uint64]
@@ -151,9 +165,11 @@ func encodeOperationColumns(
 			if !ok {
 				return nil, fmt.Errorf("operation %d object actor is unknown", i)
 			}
+
 			objActors[i] = some(actorIndex)
 			objCounters[i] = some(operation.Object.OpID.Counter)
 		}
+
 		switch {
 		case operation.Key.Property != nil:
 			keyStrings[i] = some(*operation.Key.Property)
@@ -164,6 +180,7 @@ func encodeOperationColumns(
 			if !ok {
 				return nil, fmt.Errorf("operation %d key actor is unknown", i)
 			}
+
 			keyActors[i] = some(actorIndex)
 			keyCounters[i] = some(int64(operation.Key.Element.Counter))
 		default:
@@ -172,18 +189,23 @@ func encodeOperationColumns(
 
 		inserts[i] = operation.Insert
 		actions[i] = some(uint64(operation.Action))
+
 		meta, data, err := encodeScalar(operation.Value)
 		if err != nil {
 			return nil, fmt.Errorf("cannot encode operation %d value: %w", i, err)
 		}
+
 		valueMetadata[i] = meta
+
 		valueData = append(valueData, data...)
+
 		predGroups[i] = some(uint64(len(operation.Predecessors)))
 		for _, predecessor := range operation.Predecessors {
 			actorIndex, ok := actorIndexes[predecessor.Actor]
 			if !ok {
 				return nil, fmt.Errorf("operation %d predecessor actor is unknown", i)
 			}
+
 			predActors = append(predActors, some(actorIndex))
 			predCounters = append(predCounters, some(int64(predecessor.Counter)))
 		}
@@ -203,12 +225,14 @@ func encodeOperationColumns(
 		{specification: 113, data: encodeRLE(predActors, appendULEB)},
 		{specification: 115, data: encodeDelta(predCounters)},
 	}
+
 	filtered := columns[:0]
 	for _, column := range columns {
 		if len(column.data) > 0 {
 			filtered = append(filtered, column)
 		}
 	}
+
 	return filtered, nil
 }
 
@@ -218,6 +242,7 @@ func encodeScalar(value *Scalar) (optional[uint64], []byte, error) {
 	}
 
 	var data []byte
+
 	switch value.Type {
 	case ScalarNull:
 	case ScalarFalse, ScalarTrue:
@@ -236,7 +261,9 @@ func encodeScalar(value *Scalar) (optional[uint64], []byte, error) {
 	default:
 		data = append([]byte(nil), value.Raw...)
 	}
+
 	meta := uint64(len(data))<<4 | uint64(value.Type)
+
 	return some(meta), data, nil
 }
 
@@ -244,14 +271,17 @@ func appendColumns(data []byte, columns []encodedColumn) []byte {
 	sort.Slice(columns, func(i, j int) bool {
 		return columns[i].specification < columns[j].specification
 	})
+
 	data = appendULEB(data, uint64(len(columns)))
 	for _, column := range columns {
 		data = appendULEB(data, uint64(column.specification))
 		data = appendULEB(data, uint64(len(column.data)))
 	}
+
 	for _, column := range columns {
 		data = append(data, column.data...)
 	}
+
 	return data
 }
 
@@ -260,15 +290,18 @@ func encodeRLE[T comparable](
 	appendValue func([]byte, T) []byte,
 ) []byte {
 	var data []byte
+
 	for index := 0; index < len(values); {
 		if !values[index].valid {
 			end := index + 1
 			for end < len(values) && !values[end].valid {
 				end++
 			}
+
 			data = appendLEB(data, 0)
 			data = appendULEB(data, uint64(end-index))
 			index = end
+
 			continue
 		}
 
@@ -276,15 +309,19 @@ func encodeRLE[T comparable](
 		for end < len(values) && values[end].valid {
 			end++
 		}
+
 		data = appendLEB(data, -int64(end-index))
 		for _, value := range values[index:end] {
 			data = appendValue(data, value.value)
 		}
+
 		index = end
 	}
+
 	if allNull(values) {
 		return nil
 	}
+
 	return data
 }
 
@@ -297,9 +334,11 @@ func encodeDelta(values []optional[int64]) []byte {
 		if !value.valid {
 			continue
 		}
+
 		deltas[i] = some(value.value - previous)
 		previous = value.value
 	}
+
 	return encodeRLE(deltas, appendLEB)
 }
 
@@ -327,10 +366,12 @@ func encodeBooleans(values []bool) []byte {
 			count++
 			continue
 		}
+
 		data = appendULEB(data, count)
 		current = value
 		count = 1
 	}
+
 	return appendULEB(data, count)
 }
 
@@ -338,11 +379,13 @@ func appendLEB(data []byte, value int64) []byte {
 	for {
 		current := byte(value & 0x7f)
 		value >>= 7
+
 		done := (value == 0 && current&0x40 == 0) ||
 			(value == -1 && current&0x40 != 0)
 		if !done {
 			current |= 0x80
 		}
+
 		data = append(data, current)
 		if done {
 			return data
@@ -355,6 +398,7 @@ func appendHashesNative(data []byte, hashes []ChangeHash) []byte {
 	for _, hash := range hashes {
 		data = append(data, hash[:]...)
 	}
+
 	return data
 }
 
@@ -373,5 +417,6 @@ func allNull[T any](values []optional[T]) bool {
 			return false
 		}
 	}
+
 	return true
 }

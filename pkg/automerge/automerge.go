@@ -93,9 +93,9 @@ type (
 )
 
 var (
-	ErrClosed          = errors.New("Automerge document is closed")
+	ErrClosed          = errors.New("automerge document is closed")
 	ErrSameDocument    = errors.New("cannot merge an Automerge document into itself")
-	ErrSyncStateClosed = errors.New("Automerge sync state is closed")
+	ErrSyncStateClosed = errors.New("automerge sync state is closed")
 
 	_ backend = (*reference.Backend)(nil)
 	_ backend = (*native.Backend)(nil)
@@ -143,10 +143,12 @@ func NewPureGo(ctx context.Context, actorID ActorID) (*Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot create native Automerge backend: %w", err)
 	}
+
 	if err := b.SetActor(ctx, actorID[:]); err != nil {
 		_ = b.Close(ctx)
 		return nil, fmt.Errorf("cannot initialize native Automerge actor: %w", err)
 	}
+
 	return &Document{backend: b}, nil
 }
 
@@ -184,10 +186,12 @@ func LoadPureGo(
 	if err != nil {
 		return nil, fmt.Errorf("cannot load native Automerge backend: %w", err)
 	}
+
 	if err := b.SetActor(ctx, actorID[:]); err != nil {
 		_ = b.Close(ctx)
 		return nil, fmt.Errorf("cannot assign native Automerge actor: %w", err)
 	}
+
 	return &Document{backend: b}, nil
 }
 
@@ -199,6 +203,7 @@ func (d *Document) Close(ctx context.Context) error {
 	if d.closed {
 		return nil
 	}
+
 	d.closed = true
 
 	if err := d.backend.Close(ctx); err != nil {
@@ -458,11 +463,13 @@ func (s *SyncState) Close(ctx context.Context) error {
 	if s.closed {
 		return nil
 	}
+
 	s.closed = true
 
 	if s.document.closed {
 		return nil
 	}
+
 	if err := s.document.backend.CloseSyncState(ctx, s.handle); err != nil {
 		return fmt.Errorf("cannot close Automerge sync state: %w", err)
 	}
@@ -478,6 +485,7 @@ func (s *SyncState) GenerateMessage(ctx context.Context) ([]byte, bool, error) {
 	if s.document.closed {
 		return nil, false, ErrClosed
 	}
+
 	if s.closed {
 		return nil, false, ErrSyncStateClosed
 	}
@@ -498,6 +506,7 @@ func (s *SyncState) ReceiveMessage(ctx context.Context, message []byte) error {
 	if s.document.closed {
 		return ErrClosed
 	}
+
 	if s.closed {
 		return ErrSyncStateClosed
 	}
@@ -517,6 +526,7 @@ func (s *SyncState) Save(ctx context.Context) ([]byte, error) {
 	if s.document.closed {
 		return nil, ErrClosed
 	}
+
 	if s.closed {
 		return nil, ErrSyncStateClosed
 	}

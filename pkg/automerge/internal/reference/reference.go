@@ -97,21 +97,25 @@ func instantiate(ctx context.Context) (*Backend, error) {
 		func() {
 			fields := strings.Fields(string(wasmChecksum))
 			if len(fields) == 0 {
-				runtimeErr = fmt.Errorf("Automerge reference checksum is empty")
+				runtimeErr = fmt.Errorf("automerge reference checksum is empty")
 				return
 			}
+
 			checksum := sha256.Sum256(wasm)
+
 			actualChecksum := hex.EncodeToString(checksum[:])
 			if !strings.EqualFold(fields[0], actualChecksum) {
 				runtimeErr = fmt.Errorf(
-					"Automerge reference checksum mismatch: expected %s, got %s",
+					"automerge reference checksum mismatch: expected %s, got %s",
 					fields[0],
 					actualChecksum,
 				)
+
 				return
 			}
 
 			runtimeContext := context.Background()
+
 			runtimeInstance = wazero.NewRuntimeWithConfig(
 				runtimeContext,
 				wazero.NewRuntimeConfig().WithMemoryLimitPages(referenceMemoryLimitPages),
@@ -127,11 +131,13 @@ func instantiate(ctx context.Context) (*Backend, error) {
 			}
 		},
 	)
+
 	if runtimeErr != nil {
 		return nil, runtimeErr
 	}
 
 	name := fmt.Sprintf("automerge-reference-%d", moduleSequence.Add(1))
+
 	module, err := runtimeInstance.InstantiateModule(
 		ctx,
 		compiledModule,
@@ -142,13 +148,16 @@ func instantiate(ctx context.Context) (*Backend, error) {
 	}
 
 	backend := &Backend{module: module}
+
 	version, err := backend.call(ctx, "am_abi_version")
 	if err != nil {
 		_ = module.Close(ctx)
 		return nil, fmt.Errorf("cannot read reference ABI version: %w", err)
 	}
+
 	if version[0] != referenceABIVersion {
 		_ = module.Close(ctx)
+
 		return nil, fmt.Errorf(
 			"unsupported reference ABI version %d, expected %d",
 			version[0],
@@ -366,6 +375,7 @@ func (b *Backend) TextCursorPosition(
 	if position < 0 {
 		return 0, b.operationError(ctx, "cannot resolve reference text cursor")
 	}
+
 	if position > int64(^uint32(0)) {
 		return 0, fmt.Errorf("cannot resolve reference text cursor: position %d exceeds uint32", position)
 	}
@@ -400,11 +410,13 @@ func (b *Backend) Commit(
 	if err != nil {
 		return hash, fmt.Errorf("cannot copy reference commit hash: %w", err)
 	}
+
 	if len(output) != len(hash) {
 		return hash, fmt.Errorf("cannot decode reference commit hash: expected 32 bytes, got %d", len(output))
 	}
 
 	copy(hash[:], output)
+
 	return hash, nil
 }
 
@@ -417,6 +429,7 @@ func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference heads: %w", err)
 	}
+
 	if len(output)%32 != 0 {
 		return nil, fmt.Errorf("cannot decode reference heads: length %d is not divisible by 32", len(output))
 	}
@@ -438,6 +451,7 @@ func (b *Backend) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy merged reference heads: %w", err)
 	}
+
 	if len(output)%32 != 0 {
 		return nil, fmt.Errorf("cannot decode merged reference heads: length %d is not divisible by 32", len(output))
 	}
@@ -560,6 +574,7 @@ func (b *Backend) run(ctx context.Context, function string, parameters ...uint64
 	if err != nil {
 		return fmt.Errorf("cannot call %s: %w", function, err)
 	}
+
 	if int32(result[0]) != 0 {
 		return b.operationError(ctx, fmt.Sprintf("%s failed", function))
 	}

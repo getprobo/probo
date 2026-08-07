@@ -56,16 +56,18 @@ func DecodePartial(data []byte) (*Document, error) {
 
 func decode(data []byte, validateHistory bool) (*Document, error) {
 	if len(data) == 0 {
-		return nil, fmt.Errorf("Automerge file is empty")
+		return nil, fmt.Errorf("automerge file is empty")
 	}
 
 	r := &reader{data: data}
 	document := &Document{}
+
 	for r.remaining() > 0 {
 		chunk, err := decodeChunk(r)
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode chunk %d: %w", len(document.ChunkTypes), err)
 		}
+
 		document.ChunkTypes = append(document.ChunkTypes, chunk.kind)
 
 		switch chunk.kind {
@@ -73,6 +75,7 @@ func decode(data []byte, validateHistory bool) (*Document, error) {
 			if len(document.ChunkTypes) != 1 {
 				return nil, fmt.Errorf("only the first chunk may be a document chunk")
 			}
+
 			if err := decodeDocumentChunk(document, chunk.content); err != nil {
 				return nil, fmt.Errorf("cannot decode document chunk: %w", err)
 			}
@@ -81,6 +84,7 @@ func decode(data []byte, validateHistory bool) (*Document, error) {
 			if err != nil {
 				return nil, fmt.Errorf("cannot decode change chunk: %w", err)
 			}
+
 			document.Changes = append(document.Changes, change)
 			document.Actors = mergeActors(document.Actors, actors)
 			document.UnknownColumns = append(document.UnknownColumns, unknown...)
@@ -94,6 +98,7 @@ func decode(data []byte, validateHistory bool) (*Document, error) {
 			return nil, fmt.Errorf("invalid dependency graph: %w", err)
 		}
 	}
+
 	return document, nil
 }
 
@@ -102,6 +107,7 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 	if err != nil {
 		return decodedChunk{}, fmt.Errorf("cannot read magic bytes: %w", err)
 	}
+
 	if !bytes.Equal(header, magic[:]) {
 		return decodedChunk{}, fmt.Errorf("invalid magic bytes %x", header)
 	}
@@ -110,21 +116,26 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 	if err != nil {
 		return decodedChunk{}, fmt.Errorf("cannot read checksum: %w", err)
 	}
+
 	rawType, err := r.byte()
 	if err != nil {
 		return decodedChunk{}, fmt.Errorf("cannot read chunk type: %w", err)
 	}
+
 	kind := ChunkType(rawType)
 	if kind > ChunkCompressedChange {
 		return decodedChunk{}, fmt.Errorf("unknown chunk type %d", kind)
 	}
 
 	lengthStart := r.offset
+
 	length, err := r.uleb()
 	if err != nil {
 		return decodedChunk{}, fmt.Errorf("cannot read chunk length: %w", err)
 	}
+
 	lengthBytes := append([]byte(nil), r.data[lengthStart:r.offset]...)
+
 	content, err := r.bytes(length)
 	if err != nil {
 		return decodedChunk{}, fmt.Errorf("cannot read chunk content: %w", err)
@@ -133,17 +144,22 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 	hashInput := make([]byte, 0, 1+len(lengthBytes)+len(content))
 	hashKind := kind
 	hashContent := content
+
 	if kind == ChunkCompressedChange {
 		hashKind = ChunkChange
+
 		hashContent, err = inflate(content)
 		if err != nil {
 			return decodedChunk{}, fmt.Errorf("cannot inflate compressed change: %w", err)
 		}
+
 		lengthBytes = appendULEB(nil, uint64(len(hashContent)))
 	}
+
 	hashInput = append(hashInput, byte(hashKind))
 	hashInput = append(hashInput, lengthBytes...)
 	hashInput = append(hashInput, hashContent...)
+
 	digest := sha256.Sum256(hashInput)
 	if !bytes.Equal(checksum, digest[:4]) {
 		return decodedChunk{}, fmt.Errorf(
@@ -158,16 +174,19 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 		hash := ChangeHash(digest)
 		chunk.hash = &hash
 	}
+
 	return chunk, nil
 }
 
 func appendULEB(destination []byte, value uint64) []byte {
 	for {
 		current := byte(value & 0x7f)
+
 		value >>= 7
 		if value != 0 {
 			current |= 0x80
 		}
+
 		destination = append(destination, current)
 		if value == 0 {
 			return destination
@@ -177,26 +196,32 @@ func appendULEB(destination []byte, value uint64) []byte {
 
 func decodeDocumentChunk(document *Document, data []byte) error {
 	r := &reader{data: data}
+
 	actors, err := decodeActorArray(r, true)
 	if err != nil {
 		return fmt.Errorf("cannot decode actors: %w", err)
 	}
+
 	heads, err := decodeHashArray(r, true)
 	if err != nil {
 		return fmt.Errorf("cannot decode heads: %w", err)
 	}
+
 	changeMetadata, err := parseColumnMetadata(r, true)
 	if err != nil {
 		return fmt.Errorf("cannot decode change column metadata: %w", err)
 	}
+
 	operationMetadata, err := parseColumnMetadata(r, true)
 	if err != nil {
 		return fmt.Errorf("cannot decode operation column metadata: %w", err)
 	}
+
 	changeColumns, err := readColumns(r, changeMetadata)
 	if err != nil {
 		return fmt.Errorf("cannot decode change columns: %w", err)
 	}
+
 	operationColumns, err := readColumns(r, operationMetadata)
 	if err != nil {
 		return fmt.Errorf("cannot decode operation columns: %w", err)
@@ -206,10 +231,12 @@ func decodeDocumentChunk(document *Document, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("cannot decode changes: %w", err)
 	}
+
 	operations, unknownOperations, err := decodeOperations(operationColumns, actors, false, nil)
 	if err != nil {
 		return fmt.Errorf("cannot decode operations: %w", err)
 	}
+
 	if err := assignOperations(changes, operations); err != nil {
 		return fmt.Errorf("cannot assign operations: %w", err)
 	}
@@ -220,19 +247,25 @@ func decodeDocumentChunk(document *Document, data []byte) error {
 		if err != nil {
 			return fmt.Errorf("cannot decode head index %d: %w", i, err)
 		}
+
 		if index >= uint64(len(changes)) {
 			return fmt.Errorf("head index %d is out of bounds", index)
 		}
+
 		headIndexes[i] = index
+
 		hash := heads[i]
 		if changes[index].Hash != nil && *changes[index].Hash != hash {
 			return fmt.Errorf("head index %d is assigned conflicting hashes", index)
 		}
+
 		changes[index].Hash = &hash
 	}
+
 	if r.remaining() != 0 {
 		return fmt.Errorf("document chunk has %d trailing bytes", r.remaining())
 	}
+
 	if err := validateSnapshotGraph(changes, headIndexes); err != nil {
 		return err
 	}
@@ -240,7 +273,9 @@ func decodeDocumentChunk(document *Document, data []byte) error {
 	document.Actors = actors
 	document.Heads = heads
 	document.Changes = changes
+
 	document.UnknownColumns = append(unknownChanges, unknownOperations...)
+
 	return nil
 }
 
@@ -256,10 +291,12 @@ func decodeDocumentChanges(
 	if err != nil {
 		return nil, nil, err
 	}
+
 	actorIndexes, err := decodeULEBColumn(actorData)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode actor column: %w", err)
 	}
+
 	count := len(actorIndexes)
 	if err := requireItems("actor", actorIndexes, count, false); err != nil {
 		return nil, nil, err
@@ -269,14 +306,17 @@ func decodeDocumentChanges(
 	if err != nil {
 		return nil, nil, err
 	}
+
 	maxOps, err := decodeRequiredDelta(columns, 19, "maxOp", count)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	times, err := decodeOptionalSignedDelta(columns, 35, "time", count)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	messages, err := decodeOptionalStrings(columns, 53, "message", count)
 	if err != nil {
 		return nil, nil, err
@@ -286,27 +326,34 @@ func decodeDocumentChanges(
 	if err != nil {
 		return nil, nil, err
 	}
+
 	groups, err := decodeULEBColumn(groupData)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode dependency groups: %w", err)
 	}
+
 	if err := requireItems("dependency group", groups, count, false); err != nil {
 		return nil, nil, err
 	}
+
 	dependencyCount, err := sumGroups(groups)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	dependencies := make([]optional[uint64], 0)
+
 	if dependencyCount > 0 {
 		dependencyData, err := requireColumn(columns, 67)
 		if err != nil {
 			return nil, nil, err
 		}
+
 		dependencies, err = decodeDeltaColumn(dependencyData)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot decode dependencies: %w", err)
 		}
+
 		if err := requireItems("dependency", dependencies, dependencyCount, false); err != nil {
 			return nil, nil, err
 		}
@@ -319,11 +366,13 @@ func decodeDocumentChanges(
 
 	changes := make([]Change, count)
 	dependencyOffset := 0
+
 	for i := range changes {
 		actorIndex := actorIndexes[i].value
 		if actorIndex >= uint64(len(actors)) {
 			return nil, nil, fmt.Errorf("change %d actor index %d is out of bounds", i, actorIndex)
 		}
+
 		changes[i] = Change{
 			Actor:    actors[actorIndex],
 			Sequence: sequence[i].value,
@@ -332,22 +381,28 @@ func decodeDocumentChanges(
 		if times[i].valid {
 			changes[i].Time = times[i].value
 		}
+
 		if messages[i].valid {
 			changes[i].Message = messages[i].value
 		}
+
 		if extras[i].valid {
 			extra := extras[i].value
 			changes[i].Extra = &extra
 		}
+
 		groupLength := int(groups[i].value)
+
 		changes[i].DependencyIndexes = make([]uint64, groupLength)
 		for j := range groupLength {
 			changes[i].DependencyIndexes[j] = dependencies[dependencyOffset+j].value
 		}
+
 		dependencyOffset += groupLength
 	}
 
 	unknown := collectUnknown(columns)
+
 	return changes, unknown, nil
 }
 
@@ -356,47 +411,59 @@ func decodeChangeChunk(
 	hash ChangeHash,
 ) (Change, []ActorID, []RawColumn, error) {
 	r := &reader{data: data}
+
 	dependencies, err := decodeHashArray(r, false)
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode dependencies: %w", err)
 	}
+
 	actorBytes, err := decodeLengthPrefixed(r)
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode actor: %w", err)
 	}
+
 	actor, err := NewActorID(actorBytes)
 	if err != nil {
 		return Change{}, nil, nil, err
 	}
+
 	sequence, err := r.uleb()
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode sequence: %w", err)
 	}
+
 	if sequence == 0 {
 		return Change{}, nil, nil, fmt.Errorf("sequence is zero")
 	}
+
 	startOp, err := r.uleb()
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode start op: %w", err)
 	}
+
 	if startOp == 0 {
 		return Change{}, nil, nil, fmt.Errorf("start op is zero")
 	}
+
 	timestamp, err := r.leb()
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode time: %w", err)
 	}
+
 	messageBytes, err := decodeLengthPrefixed(r)
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode message: %w", err)
 	}
+
 	if !utf8.Valid(messageBytes) {
 		return Change{}, nil, nil, fmt.Errorf("message is not valid UTF-8")
 	}
+
 	otherActors, err := decodeActorArray(r, true)
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode other actors: %w", err)
 	}
+
 	for _, other := range otherActors {
 		if other == actor {
 			return Change{}, nil, nil, fmt.Errorf("other actors contains the change actor")
@@ -407,11 +474,14 @@ func decodeChangeChunk(
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode operation metadata: %w", err)
 	}
+
 	columns, err := readColumns(r, metadata)
 	if err != nil {
 		return Change{}, nil, nil, fmt.Errorf("cannot decode operation columns: %w", err)
 	}
+
 	actors := append([]ActorID{actor}, otherActors...)
+
 	operations, unknown, err := decodeOperations(
 		columns,
 		actors,
@@ -421,12 +491,15 @@ func decodeChangeChunk(
 	if err != nil {
 		return Change{}, nil, nil, err
 	}
+
 	if len(operations) == 0 {
 		return Change{}, nil, nil, fmt.Errorf("change contains no operations")
 	}
+
 	if startOp > math.MaxUint64-uint64(len(operations))+1 {
 		return Change{}, nil, nil, fmt.Errorf("operation range overflows uint64")
 	}
+
 	maxOp := startOp + uint64(len(operations)) - 1
 	for i, operation := range operations {
 		expected := startOp + uint64(i)
@@ -456,6 +529,7 @@ func decodeChangeChunk(
 	if r.remaining() > 0 {
 		change.ExtraBytes = append([]byte(nil), r.data[r.offset:]...)
 	}
+
 	return change, actors, unknown, nil
 }
 
@@ -473,10 +547,12 @@ func decodeOperations(
 	if err != nil {
 		return nil, nil, err
 	}
+
 	actions, err := decodeULEBColumn(actionData)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode actions: %w", err)
 	}
+
 	count := len(actions)
 	if err := requireItems("action", actions, count, false); err != nil {
 		return nil, nil, err
@@ -488,6 +564,7 @@ func decodeOperations(
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot decode operation actors: %w", err)
 		}
+
 		if err := requireItems("operation actor", idActors, count, false); err != nil {
 			return nil, nil, err
 		}
@@ -505,6 +582,7 @@ func decodeOperations(
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot decode operation counters: %w", err)
 		}
+
 		if err := requireItems("operation counter", idCounters, count, false); err != nil {
 			return nil, nil, err
 		}
@@ -513,6 +591,7 @@ func decodeOperations(
 			if implicitIDs.startOp > math.MaxUint64-uint64(i) {
 				return nil, nil, fmt.Errorf("implicit operation counter overflows uint64")
 			}
+
 			idCounters[i] = optional[uint64]{
 				value: implicitIDs.startOp + uint64(i),
 				valid: true,
@@ -521,22 +600,27 @@ func decodeOperations(
 	} else {
 		return nil, nil, fmt.Errorf("required column 35 is missing")
 	}
+
 	objectActors, err := decodeOptionalULEB(columns, 1, "object actor", count)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	objectCounters, err := decodeOptionalULEB(columns, 2, "object counter", count)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	keyActors, err := decodeOptionalULEB(columns, 17, "key actor", count)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	keyCounters, err := decodeOptionalDelta(columns, 19, "key counter", count)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	keyStrings, err := decodeOptionalStrings(columns, 21, "key string", count)
 	if err != nil {
 		return nil, nil, err
@@ -549,6 +633,7 @@ func decodeOperations(
 			return nil, nil, fmt.Errorf("cannot decode insert column: %w", err)
 		}
 	}
+
 	values, err := decodeOptionalScalars(columns, 86, 87, count)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode values: %w", err)
@@ -560,6 +645,7 @@ func decodeOperations(
 	} else {
 		related, err = decodeGroupedOpIDs(columns, actors, 128, 129, 131, count, "successor")
 	}
+
 	if err != nil {
 		return nil, nil, err
 	}
@@ -568,6 +654,7 @@ func decodeOperations(
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode mark expand: %w", err)
 	}
+
 	markNames, err := decodeOptionalStrings(columns, 165, "mark name", count)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot decode mark name: %w", err)
@@ -579,10 +666,12 @@ func decodeOperations(
 		if err != nil {
 			return nil, nil, fmt.Errorf("operation %d ID: %w", i, err)
 		}
+
 		object, err := objectIDFromIndexes(objectActors[i], objectCounters[i], actors)
 		if err != nil {
 			return nil, nil, fmt.Errorf("operation %d object: %w", i, err)
 		}
+
 		key, err := keyFromColumns(
 			keyActors[i],
 			keyCounters[i],
@@ -611,6 +700,7 @@ func decodeOperations(
 			value := values[i].value
 			operations[i].Value = &value
 		}
+
 		if changeChunk {
 			operations[i].Predecessors = related[i]
 		} else {
@@ -619,10 +709,12 @@ func decodeOperations(
 				return nil, nil, fmt.Errorf("document operation %d explicitly encodes a delete", i)
 			}
 		}
+
 		if markExpand[i].valid {
 			value := markExpand[i].value
 			operations[i].MarkExpand = &value
 		}
+
 		if markNames[i].valid {
 			value := markNames[i].value
 			operations[i].MarkName = &value

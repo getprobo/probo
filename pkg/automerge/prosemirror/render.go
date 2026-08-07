@@ -72,9 +72,11 @@ func Render(spans []automerge.Span) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if consumed != len(blocks) {
 		return "", fmt.Errorf("cannot render Automerge blocks: consumed %d of %d", consumed, len(blocks))
 	}
+
 	if len(content) == 0 {
 		content = []node{{Type: "paragraph"}}
 	}
@@ -89,6 +91,7 @@ func Render(spans []automerge.Span) (string, error) {
 
 func collectBlocks(spans []automerge.Span) ([]block, error) {
 	blocks := make([]block, 0)
+
 	for i, span := range spans {
 		switch span.Type {
 		case automerge.SpanTypeBlock:
@@ -96,20 +99,25 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 			if !ok || blockType == "" {
 				return nil, fmt.Errorf("cannot collect Automerge block span %d: missing type", i)
 			}
+
 			if blockType == blockTypeHardBreak {
 				if len(blocks) == 0 {
 					return nil, fmt.Errorf("cannot collect Automerge hard break span %d without a parent block", i)
 				}
+
 				blocks[len(blocks)-1].Content = append(
 					blocks[len(blocks)-1].Content,
 					node{Type: "hardBreak"},
 				)
+
 				continue
 			}
+
 			parents, err := stringSlice(span.Block["parents"])
 			if err != nil {
 				return nil, fmt.Errorf("cannot collect Automerge block span %d parents: %w", i, err)
 			}
+
 			attrs, _ := span.Block["attrs"].(map[string]any)
 			blocks = append(
 				blocks,
@@ -123,10 +131,12 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 			if len(blocks) == 0 {
 				blocks = append(blocks, block{Type: blockTypeParagraph})
 			}
+
 			marks, err := renderMarks(span.Marks)
 			if err != nil {
 				return nil, fmt.Errorf("cannot collect Automerge text span %d marks: %w", i, err)
 			}
+
 			if span.Text != "" {
 				blocks[len(blocks)-1].Content = append(
 					blocks[len(blocks)-1].Content,
@@ -156,14 +166,17 @@ func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
 		}
 
 		childParents := append(append([]string(nil), parents...), current.Type)
+
 		childEnd := consumed + 1
 		for childEnd < len(blocks) && hasPrefix(blocks[childEnd].Parents, childParents) {
 			childEnd++
 		}
+
 		children, childConsumed, err := renderBlocks(blocks[consumed+1:childEnd], childParents)
 		if err != nil {
 			return nil, 0, err
 		}
+
 		if childConsumed != childEnd-consumed-1 {
 			return nil, 0, fmt.Errorf("cannot render children of Automerge block %q", current.Type)
 		}
@@ -172,6 +185,7 @@ func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
 		if err != nil {
 			return nil, 0, err
 		}
+
 		if listType != "" {
 			if len(content) > 0 && content[len(content)-1].Type == listType {
 				content[len(content)-1].Content = append(content[len(content)-1].Content, rendered)
@@ -187,6 +201,7 @@ func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
 		} else {
 			content = append(content, rendered)
 		}
+
 		consumed = childEnd
 	}
 
@@ -199,15 +214,18 @@ func renderBlock(source block, children []node) (node, string, error) {
 		if len(children) > 0 {
 			return node{}, "", fmt.Errorf("paragraph Automerge block cannot contain child blocks")
 		}
+
 		return node{Type: "paragraph", Content: source.Content}, "", nil
 	case blockTypeHeading:
 		if len(children) > 0 {
 			return node{}, "", fmt.Errorf("heading Automerge block cannot contain child blocks")
 		}
+
 		level := intAttribute(source.Attrs, "level", 1)
 		if level < 1 || level > 6 {
 			level = 1
 		}
+
 		return node{
 			Type:    "heading",
 			Attrs:   map[string]any{"level": level},
@@ -217,30 +235,36 @@ func renderBlock(source block, children []node) (node, string, error) {
 		if len(children) > 0 {
 			return node{}, "", fmt.Errorf("code Automerge block cannot contain child blocks")
 		}
+
 		attrs := map[string]any{"language": nil}
 		if language, ok := source.Attrs["language"].(string); ok {
 			attrs["language"] = language
 		}
+
 		return node{Type: "codeBlock", Attrs: attrs, Content: source.Content}, "", nil
 	case blockTypeHorizontalRule:
 		if len(source.Content) > 0 || len(children) > 0 {
 			return node{}, "", fmt.Errorf("horizontal rule Automerge block cannot contain content")
 		}
+
 		return node{Type: "horizontalRule"}, "", nil
 	case blockTypeBlockquote:
 		paragraph := node{Type: "paragraph", Content: source.Content}
+
 		return node{
 			Type:    "blockquote",
 			Content: append([]node{paragraph}, children...),
 		}, "", nil
 	case blockTypeOrderedListItem:
 		paragraph := node{Type: "paragraph", Content: source.Content}
+
 		return node{
 			Type:    "listItem",
 			Content: append([]node{paragraph}, children...),
 		}, "orderedList", nil
 	case blockTypeUnorderedListItem:
 		paragraph := node{Type: "paragraph", Content: source.Content}
+
 		return node{
 			Type:    "listItem",
 			Content: append([]node{paragraph}, children...),
@@ -259,6 +283,7 @@ func renderMarks(values map[string]any) ([]mark, error) {
 	for name := range values {
 		names = append(names, name)
 	}
+
 	sort.Strings(names)
 
 	marks := make([]mark, 0, len(names))
@@ -275,10 +300,12 @@ func renderMarks(values map[string]any) ([]mark, error) {
 			if !ok {
 				return nil, fmt.Errorf("link mark value must be a string")
 			}
+
 			var attrs map[string]any
 			if err := json.Unmarshal([]byte(raw), &attrs); err != nil {
 				return nil, fmt.Errorf("cannot decode link mark: %w", err)
 			}
+
 			marks = append(marks, mark{Type: "link", Attrs: attrs})
 		default:
 			return nil, fmt.Errorf("unsupported Automerge mark %q", name)
@@ -292,6 +319,7 @@ func stringSlice(value any) ([]string, error) {
 	if value == nil {
 		return nil, nil
 	}
+
 	values, ok := value.([]any)
 	if !ok {
 		return nil, fmt.Errorf("expected an array")
@@ -304,6 +332,7 @@ func stringSlice(value any) ([]string, error) {
 			return nil, fmt.Errorf("value %d is not a string", i)
 		}
 	}
+
 	return result, nil
 }
 
@@ -312,6 +341,7 @@ func intAttribute(attrs map[string]any, name string, fallback int) int {
 	if !ok {
 		return fallback
 	}
+
 	return int(value)
 }
 

@@ -90,6 +90,7 @@ WHERE
 	if forUpdate {
 		q += "FOR UPDATE\n"
 	}
+
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
@@ -115,6 +116,7 @@ WHERE
 	}
 
 	*s = state
+
 	return nil
 }
 
@@ -254,6 +256,7 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update document version Automerge state: %w", err)
 	}
+
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}

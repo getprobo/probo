@@ -117,6 +117,7 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update document collaboration presence: %w", err)
 	}
+
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
@@ -175,6 +176,7 @@ LIMIT @limit
 	}
 
 	*ps = presences
+
 	return nil
 }
 
