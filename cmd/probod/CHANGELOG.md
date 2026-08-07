@@ -4,6 +4,20 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.252.0] - 2026-08-07
+
+### Changed
+
+- Organization risk assessments are now named risk analyses across the database, console API, MCP API, CLI, and console UI. Third-party assessments and Statement of Applicability control flags keep their existing naming.
+- Compliance portal document, audit, and subprocessor selection is reversed: the console now lists the organization's own documents, audits, and subprocessors with checkboxes for inline portal membership, replacing the portal-only rows plus separate add dialogs.
+- Compliance portal catalog document, audit, and third-party rows are now exposed as Relay Nodes in the console API.
+
+### Fixed
+
+- Unchecking a compliance portal document no longer reports a remove error after the deletion actually succeeded.
+- `probod` now persists its local ACME account key across restarts, so pending certificate orders no longer fail with 401 after a restart; unauthorized order polls now clear resumable state and retry provisioning instead of stalling.
+- Compliance portal document table now spaces the alias and visibility controls instead of rendering them flush against each other.
+
 ## [0.251.0] - 2026-08-06
 
 ### Added
