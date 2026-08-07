@@ -30,8 +30,10 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/automerge"
+	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const (
@@ -52,15 +54,17 @@ type (
 	}
 
 	DocumentCollaborationTextEdit struct {
-		Index       uint32
-		Cursor      automerge.Cursor
-		DeleteCount int32
-		Text        string
+		ExpectedRevision int64
+		Index            uint32
+		Cursor           automerge.Cursor
+		DeleteCount      int32
+		Text             string
 	}
 )
 
 var (
 	ErrDocumentCollaborationNotSeeded = errors.New("document collaboration is not initialized")
+	ErrDocumentCollaborationStale     = errors.New("document collaboration changed; read it again before editing")
 )
 
 func (e ErrDocumentCollaborationStateTooLarge) Error() string {
@@ -192,7 +196,13 @@ func (s *DocumentService) PersistCollaboration(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if _, err := s.loadEditableCollaborationVersion(ctx, tx, scope, documentVersionID); err != nil {
+			version, err := s.loadEditableCollaborationVersion(
+				ctx,
+				tx,
+				scope,
+				documentVersionID,
+			)
+			if err != nil {
 				return err
 			}
 
@@ -240,15 +250,34 @@ func (s *DocumentService) PersistCollaboration(
 
 			seeded := state.Seeded || len(after) > 0
 			if !slices.Equal(before, after) || seeded != state.Seeded {
+				now := time.Now()
 				state.Snapshot = canonicalSnapshot
 				state.Revision++
 				state.Seeded = seeded
 				if seeded {
 					state.SeedClaimedAt = nil
 				}
-				state.UpdatedAt = time.Now()
+				state.UpdatedAt = now
 				if err := state.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot persist document collaboration state: %w", err)
+				}
+				if seeded {
+					content, err := materializeCollaboration(ctx, canonical)
+					if err != nil {
+						return fmt.Errorf("cannot materialize document collaboration: %w", err)
+					}
+					req := UpdateDocumentRequest{
+						DocumentID: version.DocumentID,
+						Content:    new(content),
+					}
+					if err := req.Validate(); err != nil {
+						return fmt.Errorf("cannot validate materialized collaboration: %w", err)
+					}
+					version.Content = content
+					version.UpdatedAt = now
+					if err := version.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update materialized document version: %w", err)
+					}
 				}
 			}
 			revision = state.Revision
@@ -362,6 +391,9 @@ func (s *DocumentService) ApplyCollaborationTextEdit(
 	if collaboration.NeedsSeed {
 		return 0, ErrDocumentCollaborationNotSeeded
 	}
+	if edit.ExpectedRevision != collaboration.Revision {
+		return 0, ErrDocumentCollaborationStale
+	}
 
 	text, err := collaboration.Document.Text(ctx, "body")
 	if err != nil {
@@ -402,6 +434,32 @@ func (s *DocumentService) ApplyCollaborationTextEdit(
 	}
 
 	return revision, nil
+}
+
+func (s *DocumentService) ReadCollaborationText(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentVersionID gid.GID,
+) (string, int64, error) {
+	collaboration, err := s.OpenCollaboration(ctx, scope, documentVersionID)
+	if err != nil {
+		return "", 0, fmt.Errorf("cannot open collaboration for reading: %w", err)
+	}
+	defer func() { _ = collaboration.Document.Close(context.Background()) }()
+	if collaboration.NeedsSeed {
+		return "", 0, ErrDocumentCollaborationNotSeeded
+	}
+
+	text, err := collaboration.Document.Text(ctx, "body")
+	if err != nil {
+		return "", 0, fmt.Errorf("cannot get collaboration body for reading: %w", err)
+	}
+	content, err := text.String(ctx)
+	if err != nil {
+		return "", 0, fmt.Errorf("cannot read collaboration body: %w", err)
+	}
+
+	return content, collaboration.Revision, nil
 }
 
 func (s *DocumentService) loadEditableCollaborationVersion(
@@ -482,4 +540,28 @@ func claimCollaborationSeed(
 	}
 
 	return true, nil
+}
+
+func materializeCollaboration(
+	ctx context.Context,
+	document *automerge.Document,
+) (string, error) {
+	text, err := document.Text(ctx, "body")
+	if err != nil {
+		return "", fmt.Errorf("cannot get collaboration body: %w", err)
+	}
+	spans, err := text.Spans(ctx)
+	if err != nil {
+		return "", fmt.Errorf("cannot get collaboration spans: %w", err)
+	}
+	content, err := automergeprosemirror.Render(spans)
+	if err != nil {
+		return "", fmt.Errorf("cannot render collaboration spans: %w", err)
+	}
+	content, err = prosemirror.SanitizeDocumentJSON(content)
+	if err != nil {
+		return "", fmt.Errorf("cannot sanitize collaboration content: %w", err)
+	}
+
+	return content, nil
 }

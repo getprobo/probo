@@ -287,6 +287,19 @@ func (b *Backend) Text(ctx context.Context, object Object) (string, error) {
 	return string(output), nil
 }
 
+func (b *Backend) TextSpans(ctx context.Context, object Object) ([]byte, error) {
+	if err := b.run(ctx, "am_text_spans", uint64(object)); err != nil {
+		return nil, fmt.Errorf("cannot read reference text spans: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference text spans: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) TextCursor(ctx context.Context, object Object, index uint32) ([]byte, error) {
 	if err := b.run(
 		ctx,

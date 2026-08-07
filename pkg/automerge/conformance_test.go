@@ -133,3 +133,36 @@ func TestConformance_GoLoadsJavaScriptDocument(t *testing.T) {
 	require.Len(t, heads, 1)
 	assert.Equal(t, response.Heads[0], heads[0].String())
 }
+
+func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(11)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createRichText",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+
+	data, err := base64.StdEncoding.DecodeString(response.Document)
+	require.NoError(t, err)
+	document, err := automerge.Load(context.Background(), data, actor(12))
+	require.NoError(t, err)
+	closeDocument(t, document)
+
+	text, err := document.Text(context.Background(), "body")
+	require.NoError(t, err)
+	spans, err := text.Spans(context.Background())
+	require.NoError(t, err)
+	require.Len(t, spans, 2)
+	assert.Equal(t, automerge.SpanTypeBlock, spans[0].Type)
+	assert.Equal(t, "heading", spans[0].Block["type"])
+	attrs, ok := spans[0].Block["attrs"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, float64(2), attrs["level"])
+	assert.Equal(t, automerge.SpanTypeText, spans[1].Type)
+	assert.Equal(t, "Policy", spans[1].Text)
+	assert.Equal(t, true, spans[1].Marks["strong"])
+}

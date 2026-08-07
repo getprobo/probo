@@ -19,6 +19,8 @@
 // SOFTWARE.
 
 import * as Automerge from "@automerge/automerge";
+import { Buffer } from "node:buffer";
+import process from "node:process";
 
 const chunks = [];
 for await (const chunk of process.stdin) {
@@ -41,6 +43,34 @@ switch (request.action) {
         Automerge.splice(draft, ["body"], 0, 0, request.text);
       },
     );
+    process.stdout.write(
+      JSON.stringify({
+        document: Buffer.from(Automerge.save(document)).toString("base64"),
+        heads: Automerge.getHeads(document),
+      }),
+    );
+    break;
+  }
+  case "createRichText": {
+    let document = Automerge.from({ body: "" }, { actor: request.actor });
+    document = Automerge.change(document, draft => {
+      Automerge.updateSpans(draft, ["body"], [
+        {
+          type: "block",
+          value: {
+            type: "heading",
+            parents: [],
+            isEmbed: false,
+            attrs: { level: 2 },
+          },
+        },
+        {
+          type: "text",
+          value: "Policy",
+          marks: { strong: true },
+        },
+      ]);
+    });
     process.stdout.write(
       JSON.stringify({
         document: Buffer.from(Automerge.save(document)).toString("base64"),

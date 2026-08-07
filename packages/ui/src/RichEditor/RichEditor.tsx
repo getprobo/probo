@@ -113,9 +113,10 @@ export function RichEditor(props: RichEditorProps) {
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
+      if (collaborationHandle) return;
       onChangeContent(JSON.stringify(editor.getJSON()));
     },
-    [onChangeContent],
+    [collaborationHandle, onChangeContent],
   );
 
   const editorExtensions = useMemo(

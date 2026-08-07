@@ -76,6 +76,7 @@ type (
 		GetText(context.Context, uint32, string) (uint32, error)
 		SpliceText(context.Context, uint32, uint32, int32, string) error
 		Text(context.Context, uint32) (string, error)
+		TextSpans(context.Context, uint32) ([]byte, error)
 		TextCursor(context.Context, uint32, uint32) ([]byte, error)
 		TextCursorPosition(context.Context, uint32, []byte) (uint32, error)
 		Commit(context.Context, string, time.Time) ([32]byte, error)

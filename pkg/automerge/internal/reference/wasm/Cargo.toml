@@ -30,6 +30,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 automerge = { version = "=0.10.0", features = ["utf16-indexing"] }
+serde_json = "1"
 
 [profile.release]
 codegen-units = 1

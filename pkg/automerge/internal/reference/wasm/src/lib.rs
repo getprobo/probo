@@ -380,6 +380,52 @@ pub extern "C" fn am_text(object_handle: u32) -> i32 {
 }
 
 #[no_mangle]
+pub extern "C" fn am_text_spans(object_handle: u32) -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        let spans = match state.doc.spans(&object) {
+            Ok(spans) => spans,
+            Err(error) => return state.fail(error),
+        };
+
+        let values = spans
+            .map(|span| match span {
+                automerge::Span::Text { text, marks } => {
+                    let mut value = serde_json::Map::new();
+                    value.insert("type".to_owned(), serde_json::json!("text"));
+                    value.insert("value".to_owned(), serde_json::json!(text.to_string()));
+                    if let Some(marks) = marks {
+                        let marks = marks
+                            .iter()
+                            .map(|(name, value)| (name.to_string(), scalar_to_json(value)))
+                            .collect();
+                        value.insert("marks".to_owned(), serde_json::Value::Object(marks));
+                    }
+                    serde_json::Value::Object(value)
+                }
+                automerge::Span::Block(block) => serde_json::json!({
+                    "type": "block",
+                    "value": hydrate_map_to_json(&block),
+                }),
+            })
+            .collect::<Vec<_>>();
+
+        match serde_json::to_vec(&values) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn am_text_cursor(object_handle: u32, index: u32) -> i32 {
     STATE.with(|state| {
         let mut state = state.borrow_mut();
@@ -396,6 +442,43 @@ pub extern "C" fn am_text_cursor(object_handle: u32, index: u32) -> i32 {
             Err(error) => state.fail(error),
         }
     })
+}
+
+fn hydrate_map_to_json(map: &automerge::hydrate::Map) -> serde_json::Value {
+    serde_json::Value::Object(
+        map.iter()
+            .map(|(key, value)| (key.to_owned(), hydrate_value_to_json(&value.value)))
+            .collect(),
+    )
+}
+
+fn hydrate_value_to_json(value: &automerge::hydrate::Value) -> serde_json::Value {
+    match value {
+        automerge::hydrate::Value::Scalar(value) => scalar_to_json(value),
+        automerge::hydrate::Value::Map(value) => hydrate_map_to_json(value),
+        automerge::hydrate::Value::List(value) => serde_json::Value::Array(
+            value
+                .iter()
+                .map(|value| hydrate_value_to_json(&value.value))
+                .collect(),
+        ),
+        automerge::hydrate::Value::Text(value) => serde_json::json!(value.to_string()),
+    }
+}
+
+fn scalar_to_json(value: &automerge::ScalarValue) -> serde_json::Value {
+    match value {
+        automerge::ScalarValue::Bytes(value) => serde_json::json!(value),
+        automerge::ScalarValue::Str(value) => serde_json::json!(value),
+        automerge::ScalarValue::Int(value) => serde_json::json!(value),
+        automerge::ScalarValue::Uint(value) => serde_json::json!(value),
+        automerge::ScalarValue::F64(value) => serde_json::json!(value),
+        automerge::ScalarValue::Counter(value) => serde_json::json!(i64::from(value)),
+        automerge::ScalarValue::Timestamp(value) => serde_json::json!(value),
+        automerge::ScalarValue::Boolean(value) => serde_json::json!(value),
+        automerge::ScalarValue::Null => serde_json::Value::Null,
+        automerge::ScalarValue::Unknown { bytes, .. } => serde_json::json!(bytes),
+    }
 }
 
 #[no_mangle]
