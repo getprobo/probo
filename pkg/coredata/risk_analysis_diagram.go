@@ -35,7 +35,7 @@ import (
 )
 
 type (
-	RiskAnalysisScope struct {
+	RiskAnalysisDiagram struct {
 		ID             gid.GID   `db:"id"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		RiskAnalysisID gid.GID   `db:"risk_analysis_id"`
@@ -44,26 +44,26 @@ type (
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
-	RiskAnalysisScopes []*RiskAnalysisScope
+	RiskAnalysisDiagrams []*RiskAnalysisDiagram
 )
 
-func (s *RiskAnalysisScope) CursorKey(orderBy RiskAnalysisScopeOrderField) page.CursorKey {
+func (s *RiskAnalysisDiagram) CursorKey(orderBy RiskAnalysisDiagramOrderField) page.CursorKey {
 	switch orderBy {
-	case RiskAnalysisScopeOrderFieldCreatedAt:
+	case RiskAnalysisDiagramOrderFieldCreatedAt:
 		return page.CursorKey{ID: s.ID, Value: s.CreatedAt}
-	case RiskAnalysisScopeOrderFieldName:
+	case RiskAnalysisDiagramOrderFieldName:
 		return page.CursorKey{ID: s.ID, Value: s.Name}
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *RiskAnalysisScope) AuthorizationAttributes(
+func (s *RiskAnalysisDiagram) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM risk_analysis_scopes WHERE id = ANY(@resource_ids)`
+	q := `SELECT id, organization_id FROM risk_analysis_diagrams WHERE id = ANY(@resource_ids)`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -97,12 +97,12 @@ func (s *RiskAnalysisScope) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (ss *RiskAnalysisScopes) LoadByRiskAnalysisID(
+func (ss *RiskAnalysisDiagrams) LoadByRiskAnalysisID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	riskAnalysisID gid.GID,
-	cursor *page.Cursor[RiskAnalysisScopeOrderField],
+	cursor *page.Cursor[RiskAnalysisDiagramOrderField],
 ) error {
 	q := `
 SELECT
@@ -113,7 +113,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	risk_analysis_scopes
+	risk_analysis_diagrams
 WHERE
 	%s
 	AND risk_analysis_id = @risk_analysis_id
@@ -126,12 +126,12 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query risk assessment scopes: %w", err)
+		return fmt.Errorf("cannot query risk analysis diagrams: %w", err)
 	}
 
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAnalysisScope])
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAnalysisDiagram])
 	if err != nil {
-		return fmt.Errorf("cannot collect risk assessment scopes: %w", err)
+		return fmt.Errorf("cannot collect risk analysis diagrams: %w", err)
 	}
 
 	*ss = results
@@ -139,7 +139,7 @@ WHERE
 	return nil
 }
 
-func (ss *RiskAnalysisScopes) CountByRiskAnalysisID(
+func (ss *RiskAnalysisDiagrams) CountByRiskAnalysisID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -149,7 +149,7 @@ func (ss *RiskAnalysisScopes) CountByRiskAnalysisID(
 SELECT
 	COUNT(id)
 FROM
-	risk_analysis_scopes
+	risk_analysis_diagrams
 WHERE
 	%s
 	AND risk_analysis_id = @risk_analysis_id
@@ -161,13 +161,13 @@ WHERE
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot count risk assessment scopes: %w", err)
+		return 0, fmt.Errorf("cannot count risk analysis diagrams: %w", err)
 	}
 
 	return count, nil
 }
 
-func (s *RiskAnalysisScope) LoadByID(ctx context.Context, conn pg.Querier, scope Scoper, id gid.GID) error {
+func (s *RiskAnalysisDiagram) LoadByID(ctx context.Context, conn pg.Querier, scope Scoper, id gid.GID) error {
 	q := `
 SELECT
 	id,
@@ -177,7 +177,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	risk_analysis_scopes
+	risk_analysis_diagrams
 WHERE
 	%s
 	AND id = @id
@@ -189,16 +189,16 @@ LIMIT 1
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query risk assessment scope: %w", err)
+		return fmt.Errorf("cannot query risk analysis diagram: %w", err)
 	}
 
-	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RiskAnalysisScope])
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RiskAnalysisDiagram])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect risk assessment scope: %w", err)
+		return fmt.Errorf("cannot collect risk analysis diagram: %w", err)
 	}
 
 	*s = result
@@ -206,9 +206,9 @@ LIMIT 1
 	return nil
 }
 
-func (s *RiskAnalysisScope) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (s *RiskAnalysisDiagram) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
-INSERT INTO risk_analysis_scopes (
+INSERT INTO risk_analysis_diagrams (
 	id,
 	tenant_id,
 	organization_id,
@@ -238,15 +238,15 @@ INSERT INTO risk_analysis_scopes (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert risk assessment scope: %w", err)
+		return fmt.Errorf("cannot insert risk analysis diagram: %w", err)
 	}
 
 	return nil
 }
 
-func (s *RiskAnalysisScope) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (s *RiskAnalysisDiagram) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
-UPDATE risk_analysis_scopes
+UPDATE risk_analysis_diagrams
 SET
 	name = @name,
 	updated_at = @updated_at
@@ -260,7 +260,7 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update risk assessment scope: %w", err)
+		return fmt.Errorf("cannot update risk analysis diagram: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -270,9 +270,9 @@ WHERE
 	return nil
 }
 
-func (s *RiskAnalysisScope) Delete(ctx context.Context, conn pg.Tx, scope Scoper, id gid.GID) error {
+func (s *RiskAnalysisDiagram) Delete(ctx context.Context, conn pg.Tx, scope Scoper, id gid.GID) error {
 	q := `
-DELETE FROM risk_analysis_scopes
+DELETE FROM risk_analysis_diagrams
 WHERE
 	%s
 	AND id = @id

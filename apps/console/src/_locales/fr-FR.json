@@ -4732,7 +4732,7 @@
     "errors": {
       "delete": "Échec de la suppression de l’analyse des risques"
     },
-    "deleteConfirmation": "Cette action supprimera définitivement cette analyse des risques ainsi que toutes ses portées, nœuds, processus et menaces. Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement cette analyse des risques ainsi que tous ses diagrammes, nœuds, processus et menaces. Cette action est irréversible.",
     "actions": {
       "delete": "Supprimer"
     },
@@ -4741,12 +4741,12 @@
       "createdAt": "Créé le",
       "updatedAt": "Mis à jour le"
     },
-    "scopes": "Portées",
-    "emptyScopes": "Aucune portée pour l’instant. Créez une portée pour commencer à définir des nœuds, des processus et des menaces."
+    "diagrams": "Diagrammes",
+    "emptyDiagrams": "Aucun diagramme pour l’instant. Créez un diagramme pour commencer à définir des nœuds, des processus et des menaces."
   },
   "riskAnalysesPage": {
     "title": "Analyses des risques",
-    "description": "Gérez les analyses des risques avec leurs portées, nœuds, processus, menaces et scénarios.",
+    "description": "Gérez les analyses des risques avec leurs diagrammes, nœuds, processus, menaces et scénarios.",
     "columns": {
       "name": "Nom",
       "description": "Description",
@@ -4854,7 +4854,7 @@
       "create": "Créer"
     }
   },
-  "createScenarioInScopeDialog": {
+  "createScenarioInDiagramDialog": {
     "breadcrumb": {
       "scenarios": "Scénarios",
       "addScenario": "Ajouter un scénario"
@@ -4879,10 +4879,10 @@
       "add": "Ajouter"
     }
   },
-  "createRiskAnalysisScopeDialog": {
+  "createRiskAnalysisDiagramDialog": {
     "breadcrumb": {
-      "scopes": "Portées",
-      "newScope": "Nouvelle portée"
+      "diagrams": "Diagrammes",
+      "newDiagram": "Nouveau diagramme"
     },
     "fields": {
       "name": "Nom"
@@ -4894,7 +4894,7 @@
       "name": "par ex. Couche API"
     },
     "actions": {
-      "addScope": "Ajouter une portée",
+      "addDiagram": "Ajouter un diagramme",
       "create": "Créer"
     }
   },
@@ -4994,12 +4994,12 @@
       "save": "Enregistrer"
     }
   },
-  "riskAnalysisScopeActions": {
+  "riskAnalysisDiagramActions": {
     "breadcrumb": {
-      "scopes": "Portées",
-      "editScope": "Modifier la portée"
+      "diagrams": "Diagrammes",
+      "editDiagram": "Modifier le diagramme"
     },
-    "deleteConfirmation": "Supprimer cette portée ainsi que tous ses nœuds, processus et menaces ?",
+    "deleteConfirmation": "Supprimer ce diagramme ainsi que tous ses nœuds, processus et menaces ?",
     "fields": {
       "name": "Nom"
     },
@@ -5012,12 +5012,8 @@
       "save": "Enregistrer"
     }
   },
-  "scopeCard": {
+  "diagramCard": {
     "summary": "{{nodes}} nœuds · {{processes}} processus · {{threats}} menaces · {{scenarios}} scénarios",
-    "diagram": {
-      "title": "Diagramme",
-      "description": "Visualisation des nœuds, processus et menaces de cette portée."
-    },
     "sectionTitle": {
       "nodes_one": "Nœuds ({{count}})",
       "nodes_other": "Nœuds ({{count}})",
@@ -5031,7 +5027,7 @@
       "scenarios_other": "Scénarios ({{count}})"
     },
     "hints": {
-      "nodes": "Entités, périmètres, actifs et données impliqués dans cette portée.",
+      "nodes": "Entités, périmètres, actifs et données impliqués dans ce diagramme.",
       "processes": "Flux de données et interactions entre les nœuds.",
       "boundaries": "Regroupements qui contiennent des nœuds et peuvent être imbriqués dans d’autres périmètres.",
       "threats": "Menaces potentielles visant un processus. Associez les menaces aux risques via des scénarios.",
@@ -5059,7 +5055,7 @@
       "scenarios": "Aucun scénario"
     }
   },
-  "scopeDiagram": {
+  "diagramChart": {
     "empty": "Ajoutez des nœuds et des processus pour voir le diagramme.",
     "errorTitle": "Erreur",
     "copyError": "Échec de la copie dans le presse-papiers",

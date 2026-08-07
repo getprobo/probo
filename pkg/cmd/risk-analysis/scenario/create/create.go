@@ -36,7 +36,7 @@ mutation($input: CreateRiskAnalysisScenarioInput!) {
     riskAnalysisScenarioEdge {
       node {
         id
-        riskAnalysisScopeId
+        riskAnalysisDiagramId
         name
         description
         createdAt
@@ -51,12 +51,12 @@ type createResponse struct {
 	CreateRiskAnalysisScenario struct {
 		RiskAnalysisScenarioEdge struct {
 			Node struct {
-				ID                  string  `json:"id"`
-				RiskAnalysisScopeId string  `json:"riskAnalysisScopeId"`
-				Name                string  `json:"name"`
-				Description         *string `json:"description"`
-				CreatedAt           string  `json:"createdAt"`
-				UpdatedAt           string  `json:"updatedAt"`
+				ID                    string  `json:"id"`
+				RiskAnalysisDiagramId string  `json:"riskAnalysisDiagramId"`
+				Name                  string  `json:"name"`
+				Description           *string `json:"description"`
+				CreatedAt             string  `json:"createdAt"`
+				UpdatedAt             string  `json:"updatedAt"`
 			} `json:"node"`
 		} `json:"riskAnalysisScenarioEdge"`
 	} `json:"createRiskAnalysisScenario"`
@@ -64,7 +64,7 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScopeId     string
+		flagDiagramId   string
 		flagName        string
 		flagDescription string
 	)
@@ -73,10 +73,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new risk analysis scenario",
 		Example: `  # Create a scenario interactively
-  prb risk-analysis scenario create --scope-id <id>
+  prb risk-analysis scenario create --diagram-id <id>
 
   # Create a scenario non-interactively
-  prb risk-analysis scenario create --scope-id <id> --name "Data breach scenario" --description "Unauthorized access to PII"`,
+  prb risk-analysis scenario create --diagram-id <id> --name "Data breach scenario" --description "Unauthorized access to PII"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -113,8 +113,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			input := map[string]any{
-				"riskAnalysisScopeId": flagScopeId,
-				"name":                flagName,
+				"riskAnalysisDiagramId": flagDiagramId,
+				"name":                  flagName,
 			}
 
 			if flagDescription != "" {
@@ -146,11 +146,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagScopeId, "scope-id", "", "Risk analysis scope ID (required)")
+	cmd.Flags().StringVar(&flagDiagramId, "diagram-id", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Scenario name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Scenario description")
 
-	_ = cmd.MarkFlagRequired("scope-id")
+	_ = cmd.MarkFlagRequired("diagram-id")
 
 	return cmd
 }

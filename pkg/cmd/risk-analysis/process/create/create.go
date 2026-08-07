@@ -36,7 +36,7 @@ mutation($input: CreateRiskAnalysisProcessInput!) {
     riskAnalysisProcessEdge {
       node {
         id
-        riskAnalysisScopeId
+        riskAnalysisDiagramId
         sourceNodeId
         targetNodeId
         name
@@ -52,13 +52,13 @@ type createResponse struct {
 	CreateRiskAnalysisProcess struct {
 		RiskAnalysisProcessEdge struct {
 			Node struct {
-				ID                  string `json:"id"`
-				RiskAnalysisScopeId string `json:"riskAnalysisScopeId"`
-				SourceNodeId        string `json:"sourceNodeId"`
-				TargetNodeId        string `json:"targetNodeId"`
-				Name                string `json:"name"`
-				CreatedAt           string `json:"createdAt"`
-				UpdatedAt           string `json:"updatedAt"`
+				ID                    string `json:"id"`
+				RiskAnalysisDiagramId string `json:"riskAnalysisDiagramId"`
+				SourceNodeId          string `json:"sourceNodeId"`
+				TargetNodeId          string `json:"targetNodeId"`
+				Name                  string `json:"name"`
+				CreatedAt             string `json:"createdAt"`
+				UpdatedAt             string `json:"updatedAt"`
 			} `json:"node"`
 		} `json:"riskAnalysisProcessEdge"`
 	} `json:"createRiskAnalysisProcess"`
@@ -66,7 +66,7 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScopeId      string
+		flagDiagramId    string
 		flagSourceNodeId string
 		flagTargetNodeId string
 		flagName         string
@@ -76,10 +76,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new risk analysis process",
 		Example: `  # Create a process interactively
-  prb risk-analysis process create --scope-id <id> --source-node-id <id> --target-node-id <id>
+  prb risk-analysis process create --diagram-id <id> --source-node-id <id> --target-node-id <id>
 
   # Create a process non-interactively
-  prb risk-analysis process create --scope-id <id> --source-node-id <id> --target-node-id <id> --name "Data flow"`,
+  prb risk-analysis process create --diagram-id <id> --source-node-id <id> --target-node-id <id> --name "Data flow"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -116,10 +116,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			input := map[string]any{
-				"riskAnalysisScopeId": flagScopeId,
-				"sourceNodeId":        flagSourceNodeId,
-				"targetNodeId":        flagTargetNodeId,
-				"name":                flagName,
+				"riskAnalysisDiagramId": flagDiagramId,
+				"sourceNodeId":          flagSourceNodeId,
+				"targetNodeId":          flagTargetNodeId,
+				"name":                  flagName,
 			}
 
 			data, err := client.Do(
@@ -147,12 +147,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagScopeId, "scope-id", "", "Risk analysis scope ID (required)")
+	cmd.Flags().StringVar(&flagDiagramId, "diagram-id", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().StringVar(&flagSourceNodeId, "source-node-id", "", "Source node ID (required)")
 	cmd.Flags().StringVar(&flagTargetNodeId, "target-node-id", "", "Target node ID (required)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Process name (required)")
 
-	_ = cmd.MarkFlagRequired("scope-id")
+	_ = cmd.MarkFlagRequired("diagram-id")
 	_ = cmd.MarkFlagRequired("source-node-id")
 	_ = cmd.MarkFlagRequired("target-node-id")
 

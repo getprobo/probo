@@ -18,50 +18,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package mermaid
+package delete
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const mermaidQuery = `
-query($id: ID!) {
-  node(id: $id) {
-    __typename
-    ... on RiskAnalysisScope {
-      id
-      name
-      mermaidChart
-    }
+const deleteMutation = `
+mutation($input: DeleteRiskAnalysisDiagramInput!) {
+  deleteRiskAnalysisDiagram(input: $input) {
+    deletedRiskAnalysisDiagramId
   }
 }
 `
 
-type mermaidResponse struct {
-	Node *struct {
-		Typename     string `json:"__typename"`
-		ID           string `json:"id"`
-		Name         string `json:"name"`
-		MermaidChart string `json:"mermaidChart"`
-	} `json:"node"`
-}
+func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
+	var flagYes bool
 
-func NewCmdMermaid(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mermaid <id>",
-		Short: "Get the Mermaid chart for a risk analysis scope",
-		Example: `  # Print the Mermaid chart for a scope
-  prb risk-analysis scope mermaid <id>
-
-  # Output as JSON
-  prb risk-analysis scope mermaid <id> --json`,
-		Args: cobra.ExactArgs(1),
+		Use:   "delete <id>",
+		Short: "Delete a risk analysis diagram",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !flagYes {
+				if !f.IOStreams.IsInteractive() {
+					return fmt.Errorf("cannot delete risk analysis diagram: confirmation required, use --yes to confirm")
+				}
+
+				var confirmed bool
+
+				err := huh.NewConfirm().
+					Title(fmt.Sprintf("Delete risk analysis diagram %s?", args[0])).
+					Value(&confirmed).
+					Run()
+				if err != nil {
+					return err
+				}
+
+				if !confirmed {
+					return nil
+				}
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -80,32 +83,29 @@ func NewCmdMermaid(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(
-				mermaidQuery,
-				map[string]any{"id": args[0]},
+			_, err = client.Do(
+				deleteMutation,
+				map[string]any{
+					"input": map[string]any{
+						"riskAnalysisDiagramId": args[0],
+					},
+				},
 			)
 			if err != nil {
 				return err
 			}
 
-			var resp mermaidResponse
-			if err := json.Unmarshal(data, &resp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if resp.Node == nil {
-				return fmt.Errorf("risk analysis scope %s not found", args[0])
-			}
-
-			if resp.Node.Typename != "RiskAnalysisScope" {
-				return fmt.Errorf("expected RiskAnalysisScope node, got %s", resp.Node.Typename)
-			}
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, resp.Node.MermaidChart)
+			_, _ = fmt.Fprintf(
+				f.IOStreams.Out,
+				"Deleted risk analysis diagram %s\n",
+				args[0],
+			)
 
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt")
 
 	return cmd
 }

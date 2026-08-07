@@ -18,48 +18,62 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package update
+package create
 
 import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const updateMutation = `
-mutation($input: UpdateRiskAnalysisScopeInput!) {
-  updateRiskAnalysisScope(input: $input) {
-    riskAnalysisScope {
-      id
-      name
-      createdAt
-      updatedAt
+const createMutation = `
+mutation($input: CreateRiskAnalysisDiagramInput!) {
+  createRiskAnalysisDiagram(input: $input) {
+    riskAnalysisDiagramEdge {
+      node {
+        id
+        riskAnalysisId
+        name
+        createdAt
+        updatedAt
+      }
     }
   }
 }
 `
 
-type updateResponse struct {
-	UpdateRiskAnalysisScope struct {
-		RiskAnalysisScope struct {
-			ID        string `json:"id"`
-			Name      string `json:"name"`
-			CreatedAt string `json:"createdAt"`
-			UpdatedAt string `json:"updatedAt"`
-		} `json:"riskAnalysisScope"`
-	} `json:"updateRiskAnalysisScope"`
+type createResponse struct {
+	CreateRiskAnalysisDiagram struct {
+		RiskAnalysisDiagramEdge struct {
+			Node struct {
+				ID             string `json:"id"`
+				RiskAnalysisId string `json:"riskAnalysisId"`
+				Name           string `json:"name"`
+				CreatedAt      string `json:"createdAt"`
+				UpdatedAt      string `json:"updatedAt"`
+			} `json:"node"`
+		} `json:"riskAnalysisDiagramEdge"`
+	} `json:"createRiskAnalysisDiagram"`
 }
 
-func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
-	var flagName string
+func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagRiskAnalysisId string
+		flagName           string
+	)
 
 	cmd := &cobra.Command{
-		Use:   "update <id>",
-		Short: "Update a risk analysis scope",
-		Args:  cobra.ExactArgs(1),
+		Use:   "create",
+		Short: "Create a new risk analysis diagram",
+		Example: `  # Create a diagram interactively
+  prb risk-analysis diagram create --risk-analysis-id <id>
+
+  # Create a diagram non-interactively
+  prb risk-analysis diagram create --risk-analysis-id <id> --name "Network diagram"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -79,35 +93,44 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
+			if f.IOStreams.IsInteractive() {
+				if flagName == "" {
+					err := huh.NewInput().
+						Title("Diagram name").
+						Value(&flagName).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			if flagName == "" {
+				return fmt.Errorf("name is required; pass --name or run interactively")
+			}
+
 			input := map[string]any{
-				"id": args[0],
-			}
-
-			if cmd.Flags().Changed("name") {
-				input["name"] = flagName
-			}
-
-			if len(input) == 1 {
-				return fmt.Errorf("at least one field must be specified for update")
+				"riskAnalysisId": flagRiskAnalysisId,
+				"name":           flagName,
 			}
 
 			data, err := client.Do(
-				updateMutation,
+				createMutation,
 				map[string]any{"input": input},
 			)
 			if err != nil {
 				return err
 			}
 
-			var resp updateResponse
+			var resp createResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			r := resp.UpdateRiskAnalysisScope.RiskAnalysisScope
+			r := resp.CreateRiskAnalysisDiagram.RiskAnalysisDiagramEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Updated risk analysis scope %s (%s)\n",
+				"Created risk analysis diagram %s (%s)\n",
 				r.ID,
 				r.Name,
 			)
@@ -116,7 +139,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagName, "name", "", "Scope name")
+	cmd.Flags().StringVar(&flagRiskAnalysisId, "risk-analysis-id", "", "Risk analysis ID (required)")
+	cmd.Flags().StringVar(&flagName, "name", "", "Diagram name (required)")
+
+	_ = cmd.MarkFlagRequired("risk-analysis-id")
 
 	return cmd
 }

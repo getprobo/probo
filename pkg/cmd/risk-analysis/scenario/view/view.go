@@ -36,7 +36,7 @@ query($id: ID!) {
     __typename
     ... on RiskAnalysisScenario {
       id
-      riskAnalysisScopeId
+      riskAnalysisDiagramId
       name
       description
       createdAt
@@ -48,13 +48,13 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename            string  `json:"__typename"`
-		ID                  string  `json:"id"`
-		RiskAnalysisScopeId string  `json:"riskAnalysisScopeId"`
-		Name                string  `json:"name"`
-		Description         *string `json:"description"`
-		CreatedAt           string  `json:"createdAt"`
-		UpdatedAt           string  `json:"updatedAt"`
+		Typename              string  `json:"__typename"`
+		ID                    string  `json:"id"`
+		RiskAnalysisDiagramId string  `json:"riskAnalysisDiagramId"`
+		Name                  string  `json:"name"`
+		Description           *string `json:"description"`
+		CreatedAt             string  `json:"createdAt"`
+		UpdatedAt             string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -122,7 +122,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Scope:"), r.RiskAnalysisScopeId)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Diagram:"), r.RiskAnalysisDiagramId)
 
 			if r.Description != nil && *r.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)

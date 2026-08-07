@@ -33,13 +33,13 @@ const listQuery = `
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisProcessOrder) {
   node(id: $id) {
     __typename
-    ... on RiskAnalysisScope {
+    ... on RiskAnalysisDiagram {
       processes(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {
             id
-            riskAnalysisScopeId
+            riskAnalysisDiagramId
             sourceNodeId
             targetNodeId
             name
@@ -58,18 +58,18 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisProcessOrd
 `
 
 type riskAnalysisProcess struct {
-	ID                  string `json:"id"`
-	RiskAnalysisScopeId string `json:"riskAnalysisScopeId"`
-	SourceNodeId        string `json:"sourceNodeId"`
-	TargetNodeId        string `json:"targetNodeId"`
-	Name                string `json:"name"`
-	CreatedAt           string `json:"createdAt"`
-	UpdatedAt           string `json:"updatedAt"`
+	ID                    string `json:"id"`
+	RiskAnalysisDiagramId string `json:"riskAnalysisDiagramId"`
+	SourceNodeId          string `json:"sourceNodeId"`
+	TargetNodeId          string `json:"targetNodeId"`
+	Name                  string `json:"name"`
+	CreatedAt             string `json:"createdAt"`
+	UpdatedAt             string `json:"updatedAt"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScope    string
+		flagDiagram  string
 		flagLimit    int
 		flagOrderBy  string
 		flagOrderDir string
@@ -78,13 +78,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List processes in a risk analysis scope",
+		Short:   "List processes in a risk analysis diagram",
 		Aliases: []string{"ls"},
-		Example: `  # List processes in a scope
-  prb risk-analysis process list --scope <id>
+		Example: `  # List processes in a diagram
+  prb risk-analysis process list --diagram <id>
 
   # List processes as JSON
-  prb risk-analysis process ls --scope <id> --json`,
+  prb risk-analysis process ls --diagram <id> --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -109,12 +109,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagScope == "" {
-				return fmt.Errorf("scope is required; pass --scope")
+			if flagDiagram == "" {
+				return fmt.Errorf("diagram is required; pass --diagram")
 			}
 
 			variables := map[string]any{
-				"id": flagScope,
+				"id": flagDiagram,
 			}
 
 			if flagOrderBy != "" {
@@ -145,11 +145,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					}
 
 					if resp.Node == nil {
-						return nil, fmt.Errorf("scope %s not found", flagScope)
+						return nil, fmt.Errorf("diagram %s not found", flagDiagram)
 					}
 
-					if resp.Node.Typename != "RiskAnalysisScope" {
-						return nil, fmt.Errorf("expected RiskAnalysisScope node, got %s", resp.Node.Typename)
+					if resp.Node.Typename != "RiskAnalysisDiagram" {
+						return nil, fmt.Errorf("expected RiskAnalysisDiagram node, got %s", resp.Node.Typename)
 					}
 
 					return &resp.Node.Processes, nil
@@ -196,13 +196,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagScope, "scope", "", "Risk analysis scope ID (required)")
+	cmd.Flags().StringVar(&flagDiagram, "diagram", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of processes to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
-	_ = cmd.MarkFlagRequired("scope")
+	_ = cmd.MarkFlagRequired("diagram")
 
 	return cmd
 }

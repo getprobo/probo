@@ -4683,7 +4683,7 @@
     "errors": {
       "delete": "Verwijderen van risicobeoordeling mislukt"
     },
-    "deleteConfirmation": "Hiermee worden deze risicobeoordeling en alle bijbehorende scopes, nodes, processen en dreigingen permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee worden deze risicobeoordeling en alle bijbehorende diagrammen, nodes, processen en dreigingen permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "delete": "Verwijderen"
     },
@@ -4692,12 +4692,12 @@
       "createdAt": "Aangemaakt op",
       "updatedAt": "Bijgewerkt op"
     },
-    "scopes": "Scopes",
-    "emptyScopes": "Nog geen scopes. Maak een scope aan om nodes, processen en dreigingen te definiëren."
+    "diagrams": "Diagrammen",
+    "emptyDiagrams": "Nog geen diagrammen. Maak een diagram aan om nodes, processen en dreigingen te definiëren."
   },
   "riskAnalysesPage": {
     "title": "Risicobeoordelingen",
-    "description": "Beheer risicoanalyses met scopes, nodes, processen, dreigingen en scenario's.",
+    "description": "Beheer risicoanalyses met diagrammen, nodes, processen, dreigingen en scenario's.",
     "columns": {
       "name": "Naam",
       "description": "Beschrijving",
@@ -4805,7 +4805,7 @@
       "create": "Aanmaken"
     }
   },
-  "createScenarioInScopeDialog": {
+  "createScenarioInDiagramDialog": {
     "breadcrumb": {
       "scenarios": "Scenario's",
       "addScenario": "Scenario toevoegen"
@@ -4830,10 +4830,10 @@
       "add": "Toevoegen"
     }
   },
-  "createRiskAnalysisScopeDialog": {
+  "createRiskAnalysisDiagramDialog": {
     "breadcrumb": {
-      "scopes": "Scopes",
-      "newScope": "Nieuwe scope"
+      "diagrams": "Diagrammen",
+      "newDiagram": "Nieuw diagram"
     },
     "fields": {
       "name": "Naam"
@@ -4845,7 +4845,7 @@
       "name": "bijv. API-laag"
     },
     "actions": {
-      "addScope": "Scope toevoegen",
+      "addDiagram": "Diagram toevoegen",
       "create": "Aanmaken"
     }
   },
@@ -4945,12 +4945,12 @@
       "save": "Opslaan"
     }
   },
-  "riskAnalysisScopeActions": {
+  "riskAnalysisDiagramActions": {
     "breadcrumb": {
-      "scopes": "Scopes",
-      "editScope": "Scope bewerken"
+      "diagrams": "Diagrammen",
+      "editDiagram": "Diagram bewerken"
     },
-    "deleteConfirmation": "Deze scope en alle bijbehorende nodes, processen en dreigingen verwijderen?",
+    "deleteConfirmation": "Dit diagram en alle bijbehorende nodes, processen en dreigingen verwijderen?",
     "fields": {
       "name": "Naam"
     },
@@ -4963,12 +4963,8 @@
       "save": "Opslaan"
     }
   },
-  "scopeCard": {
+  "diagramCard": {
     "summary": "{{nodes}} nodes · {{processes}} processen · {{threats}} dreigingen · {{scenarios}} scenario's",
-    "diagram": {
-      "title": "Diagram",
-      "description": "Visualisatie van nodes, processen en dreigingen in deze scope."
-    },
     "sectionTitle": {
       "nodes_one": "Nodes ({{count}})",
       "nodes_other": "Nodes ({{count}})",
@@ -5010,7 +5006,7 @@
       "scenarios": "Geen scenario's"
     }
   },
-  "scopeDiagram": {
+  "diagramChart": {
     "empty": "Voeg nodes en processen toe om het diagram te zien.",
     "errorTitle": "Fout",
     "copyError": "Kopiëren naar klembord mislukt",

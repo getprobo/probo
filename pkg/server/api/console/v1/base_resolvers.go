@@ -174,15 +174,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewRiskAnalysisThreat(t), nil
 		}
-	case coredata.RiskAnalysisScopeEntityType:
-		action = probo.ActionRiskAnalysisScopeGet
+	case coredata.RiskAnalysisDiagramEntityType:
+		action = probo.ActionRiskAnalysisDiagramGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			s, err := r.riskManagement.GetScope(ctx, scope, id)
+			s, err := r.riskManagement.GetDiagram(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAnalysisScope(s), nil
+			return types.NewRiskAnalysisDiagram(s), nil
 		}
 	case coredata.RiskAnalysisBoundaryEntityType:
 		action = probo.ActionRiskAnalysisBoundaryGet

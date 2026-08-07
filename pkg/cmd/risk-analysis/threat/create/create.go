@@ -36,7 +36,7 @@ mutation($input: CreateRiskAnalysisThreatInput!) {
     riskAnalysisThreatEdge {
       node {
         id
-        riskAnalysisScopeId
+        riskAnalysisDiagramId
         processId
         name
         category
@@ -52,13 +52,13 @@ type createResponse struct {
 	CreateRiskAnalysisThreat struct {
 		RiskAnalysisThreatEdge struct {
 			Node struct {
-				ID                  string `json:"id"`
-				RiskAnalysisScopeId string `json:"riskAnalysisScopeId"`
-				ProcessId           string `json:"processId"`
-				Name                string `json:"name"`
-				Category            string `json:"category"`
-				CreatedAt           string `json:"createdAt"`
-				UpdatedAt           string `json:"updatedAt"`
+				ID                    string `json:"id"`
+				RiskAnalysisDiagramId string `json:"riskAnalysisDiagramId"`
+				ProcessId             string `json:"processId"`
+				Name                  string `json:"name"`
+				Category              string `json:"category"`
+				CreatedAt             string `json:"createdAt"`
+				UpdatedAt             string `json:"updatedAt"`
 			} `json:"node"`
 		} `json:"riskAnalysisThreatEdge"`
 	} `json:"createRiskAnalysisThreat"`
@@ -66,7 +66,7 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScopeId   string
+		flagDiagramId string
 		flagProcessId string
 		flagName      string
 		flagCategory  string
@@ -76,10 +76,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new risk analysis threat",
 		Example: `  # Create a threat interactively
-  prb risk-analysis threat create --scope-id <id> --process-id <id>
+  prb risk-analysis threat create --diagram-id <id> --process-id <id>
 
   # Create a threat non-interactively
-  prb risk-analysis threat create --scope-id <id> --process-id <id> --name "SQL injection" --category "Application"`,
+  prb risk-analysis threat create --diagram-id <id> --process-id <id> --name "SQL injection" --category "Application"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -130,10 +130,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			input := map[string]any{
-				"riskAnalysisScopeId": flagScopeId,
-				"processId":           flagProcessId,
-				"name":                flagName,
-				"category":            flagCategory,
+				"riskAnalysisDiagramId": flagDiagramId,
+				"processId":             flagProcessId,
+				"name":                  flagName,
+				"category":              flagCategory,
 			}
 
 			data, err := client.Do(
@@ -161,12 +161,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagScopeId, "scope-id", "", "Risk analysis scope ID (required)")
+	cmd.Flags().StringVar(&flagDiagramId, "diagram-id", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().StringVar(&flagProcessId, "process-id", "", "Process ID (required)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Threat name (required)")
 	cmd.Flags().StringVar(&flagCategory, "category", "", "Threat category (required)")
 
-	_ = cmd.MarkFlagRequired("scope-id")
+	_ = cmd.MarkFlagRequired("diagram-id")
 	_ = cmd.MarkFlagRequired("process-id")
 
 	return cmd

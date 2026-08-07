@@ -50,7 +50,7 @@ const createNodeMutation = graphql`
 `;
 
 export function CreateNodeDialog(props: {
-  scopeId: string;
+  diagramId: string;
   connectionId: string;
   boundaries: { id: string; name: string }[];
 }) {
@@ -64,7 +64,7 @@ export function CreateNodeDialog(props: {
     createNode({
       variables: {
         input: {
-          riskAnalysisScopeId: props.scopeId,
+          riskAnalysisDiagramId: props.diagramId,
           nodeType: data.nodeType as "ENTITY" | "ASSET" | "DATA",
           name: data.name,
           boundaryId: data.boundaryId === "none" ? null : data.boundaryId,

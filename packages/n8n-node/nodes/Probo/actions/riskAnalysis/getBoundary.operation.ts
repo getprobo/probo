@@ -49,7 +49,7 @@ export async function execute(
 			node(id: $id) {
 				... on RiskAnalysisBoundary {
 					id
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 					parentBoundaryId
 					name
 					createdAt

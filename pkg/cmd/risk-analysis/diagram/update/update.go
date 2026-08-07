@@ -18,53 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package delete
+package update
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const deleteMutation = `
-mutation($input: DeleteRiskAnalysisScopeInput!) {
-  deleteRiskAnalysisScope(input: $input) {
-    deletedRiskAnalysisScopeId
+const updateMutation = `
+mutation($input: UpdateRiskAnalysisDiagramInput!) {
+  updateRiskAnalysisDiagram(input: $input) {
+    riskAnalysisDiagram {
+      id
+      name
+      createdAt
+      updatedAt
+    }
   }
 }
 `
 
-func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
-	var flagYes bool
+type updateResponse struct {
+	UpdateRiskAnalysisDiagram struct {
+		RiskAnalysisDiagram struct {
+			ID        string `json:"id"`
+			Name      string `json:"name"`
+			CreatedAt string `json:"createdAt"`
+			UpdatedAt string `json:"updatedAt"`
+		} `json:"riskAnalysisDiagram"`
+	} `json:"updateRiskAnalysisDiagram"`
+}
+
+func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
+	var flagName string
 
 	cmd := &cobra.Command{
-		Use:   "delete <id>",
-		Short: "Delete a risk analysis scope",
+		Use:   "update <id>",
+		Short: "Update a risk analysis diagram",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !flagYes {
-				if !f.IOStreams.IsInteractive() {
-					return fmt.Errorf("cannot delete risk analysis scope: confirmation required, use --yes to confirm")
-				}
-
-				var confirmed bool
-
-				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Delete risk analysis scope %s?", args[0])).
-					Value(&confirmed).
-					Run()
-				if err != nil {
-					return err
-				}
-
-				if !confirmed {
-					return nil
-				}
-			}
-
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -83,29 +79,44 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			_, err = client.Do(
-				deleteMutation,
-				map[string]any{
-					"input": map[string]any{
-						"riskAnalysisScopeId": args[0],
-					},
-				},
+			input := map[string]any{
+				"id": args[0],
+			}
+
+			if cmd.Flags().Changed("name") {
+				input["name"] = flagName
+			}
+
+			if len(input) == 1 {
+				return fmt.Errorf("at least one field must be specified for update")
+			}
+
+			data, err := client.Do(
+				updateMutation,
+				map[string]any{"input": input},
 			)
 			if err != nil {
 				return err
 			}
 
+			var resp updateResponse
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			r := resp.UpdateRiskAnalysisDiagram.RiskAnalysisDiagram
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Deleted risk analysis scope %s\n",
-				args[0],
+				"Updated risk analysis diagram %s (%s)\n",
+				r.ID,
+				r.Name,
 			)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt")
+	cmd.Flags().StringVar(&flagName, "name", "", "Diagram name")
 
 	return cmd
 }

@@ -23,17 +23,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Scope ID',
-		name: 'scopeId',
+		displayName: 'Diagram ID',
+		name: 'diagramId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['deleteScope'],
+				operation: ['getDiagram'],
 			},
 		},
 		default: '',
-		description: 'The ID of the scope to delete',
+		description: 'The ID of the diagram',
 		required: true,
 	},
 ];
@@ -42,19 +42,23 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const scopeId = this.getNodeParameter('scopeId', itemIndex) as string;
+	const diagramId = this.getNodeParameter('diagramId', itemIndex) as string;
 
 	const query = `
-		mutation DeleteRiskAnalysisScope($input: DeleteRiskAnalysisScopeInput!) {
-			deleteRiskAnalysisScope(input: $input) {
-				deletedRiskAnalysisScopeId
+		query GetRiskAnalysisDiagram($id: ID!) {
+			node(id: $id) {
+				... on RiskAnalysisDiagram {
+					id
+					riskAnalysisId
+					name
+					createdAt
+					updatedAt
+				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, {
-		input: { riskAnalysisScopeId: scopeId },
-	});
+	const responseData = await proboApiRequest.call(this, query, { id: diagramId });
 
 	return {
 		json: responseData,

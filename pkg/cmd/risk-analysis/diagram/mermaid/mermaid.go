@@ -18,60 +18,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package view
+package mermaid
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const viewQuery = `
+const mermaidQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
-    ... on RiskAnalysisThreat {
+    ... on RiskAnalysisDiagram {
       id
-      riskAnalysisDiagramId
-      processId
       name
-      category
-      createdAt
-      updatedAt
+      mermaidChart
     }
   }
 }
 `
 
-type viewResponse struct {
+type mermaidResponse struct {
 	Node *struct {
-		Typename              string `json:"__typename"`
-		ID                    string `json:"id"`
-		RiskAnalysisDiagramId string `json:"riskAnalysisDiagramId"`
-		ProcessId             string `json:"processId"`
-		Name                  string `json:"name"`
-		Category              string `json:"category"`
-		CreatedAt             string `json:"createdAt"`
-		UpdatedAt             string `json:"updatedAt"`
+		Typename     string `json:"__typename"`
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		MermaidChart string `json:"mermaidChart"`
 	} `json:"node"`
 }
 
-func NewCmdView(f *cmdutil.Factory) *cobra.Command {
-	var flagOutput *string
-
+func NewCmdMermaid(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "view <id>",
-		Short: "View a risk analysis threat",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
-				return err
-			}
+		Use:   "mermaid <id>",
+		Short: "Get the Mermaid chart for a risk analysis diagram",
+		Example: `  # Print the Mermaid chart for a diagram
+  prb risk-analysis diagram mermaid <id>
 
+  # Output as JSON
+  prb risk-analysis diagram mermaid <id> --json`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -91,52 +81,31 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			data, err := client.Do(
-				viewQuery,
+				mermaidQuery,
 				map[string]any{"id": args[0]},
 			)
 			if err != nil {
 				return err
 			}
 
-			var resp viewResponse
+			var resp mermaidResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
 			if resp.Node == nil {
-				return fmt.Errorf("risk analysis threat %s not found", args[0])
+				return fmt.Errorf("risk analysis diagram %s not found", args[0])
 			}
 
-			if resp.Node.Typename != "RiskAnalysisThreat" {
-				return fmt.Errorf("expected RiskAnalysisThreat node, got %s", resp.Node.Typename)
+			if resp.Node.Typename != "RiskAnalysisDiagram" {
+				return fmt.Errorf("expected RiskAnalysisDiagram node, got %s", resp.Node.Typename)
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, resp.Node)
-			}
-
-			r := resp.Node
-			out := f.IOStreams.Out
-
-			bold := lipgloss.NewStyle().Bold(true)
-			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
-
-			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
-
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Diagram:"), r.RiskAnalysisDiagramId)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Process:"), r.ProcessId)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), r.Category)
-
-			_, _ = fmt.Fprintln(out)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(r.CreatedAt))
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(r.UpdatedAt))
+			_, _ = fmt.Fprintln(f.IOStreams.Out, resp.Node.MermaidChart)
 
 			return nil
 		},
 	}
-
-	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
 }

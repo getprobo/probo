@@ -78,7 +78,7 @@ func TestRiskAnalysisBoundary_RBAC(t *testing.T) {
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 		raID := factory.CreateRiskAnalysis(owner)
-		scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+		scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 
 		_, err := viewer.Do(`
 			mutation($input: CreateRiskAnalysisBoundaryInput!) {
@@ -88,8 +88,8 @@ func TestRiskAnalysisBoundary_RBAC(t *testing.T) {
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"riskAnalysisScopeId": scopeID,
-				"name":                "Nope",
+				"riskAnalysisDiagramId": scopeID,
+				"name":                  "Nope",
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer cannot create risk analysis boundary")
@@ -100,7 +100,7 @@ func TestRiskAnalysisBoundary_RBAC(t *testing.T) {
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 		raID := factory.CreateRiskAnalysis(owner)
-		scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+		scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 		boundaryID := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "Visible"})
 
 		var result struct {

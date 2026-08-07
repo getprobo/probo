@@ -57,8 +57,8 @@ func NewListRiskAnalysesOutput(
 	}
 }
 
-func NewRiskAnalysisScope(s *coredata.RiskAnalysisScope) *RiskAnalysisScope {
-	return &RiskAnalysisScope{
+func NewRiskAnalysisDiagram(s *coredata.RiskAnalysisDiagram) *RiskAnalysisDiagram {
+	return &RiskAnalysisDiagram{
 		ID:             s.ID,
 		OrganizationID: s.OrganizationID,
 		RiskAnalysisID: s.RiskAnalysisID,
@@ -68,12 +68,12 @@ func NewRiskAnalysisScope(s *coredata.RiskAnalysisScope) *RiskAnalysisScope {
 	}
 }
 
-func NewListRiskAnalysisScopesOutput(
-	p *page.Page[*coredata.RiskAnalysisScope, coredata.RiskAnalysisScopeOrderField],
-) ListRiskAnalysisScopesOutput {
-	items := make([]*RiskAnalysisScope, 0, len(p.Data))
+func NewListRiskAnalysisDiagramsOutput(
+	p *page.Page[*coredata.RiskAnalysisDiagram, coredata.RiskAnalysisDiagramOrderField],
+) ListRiskAnalysisDiagramsOutput {
+	items := make([]*RiskAnalysisDiagram, 0, len(p.Data))
 	for _, v := range p.Data {
-		items = append(items, NewRiskAnalysisScope(v))
+		items = append(items, NewRiskAnalysisDiagram(v))
 	}
 
 	var nextCursor *page.CursorKey
@@ -83,34 +83,34 @@ func NewListRiskAnalysisScopesOutput(
 		nextCursor = &cursorKey
 	}
 
-	return ListRiskAnalysisScopesOutput{
-		NextCursor:         nextCursor,
-		RiskAnalysisScopes: items,
+	return ListRiskAnalysisDiagramsOutput{
+		NextCursor:           nextCursor,
+		RiskAnalysisDiagrams: items,
 	}
 }
 
 func NewRiskAnalysisNode(n *coredata.RiskAnalysisNode) *RiskAnalysisNode {
 	return &RiskAnalysisNode{
-		ID:                  n.ID,
-		OrganizationID:      n.OrganizationID,
-		RiskAnalysisScopeID: n.RiskAnalysisScopeID,
-		BoundaryID:          n.BoundaryID,
-		NodeType:            n.NodeType,
-		Name:                n.Name,
-		CreatedAt:           n.CreatedAt,
-		UpdatedAt:           n.UpdatedAt,
+		ID:                    n.ID,
+		OrganizationID:        n.OrganizationID,
+		RiskAnalysisDiagramID: n.RiskAnalysisDiagramID,
+		BoundaryID:            n.BoundaryID,
+		NodeType:              n.NodeType,
+		Name:                  n.Name,
+		CreatedAt:             n.CreatedAt,
+		UpdatedAt:             n.UpdatedAt,
 	}
 }
 
 func NewRiskAnalysisBoundary(b *coredata.RiskAnalysisBoundary) *RiskAnalysisBoundary {
 	return &RiskAnalysisBoundary{
-		ID:                  b.ID,
-		OrganizationID:      b.OrganizationID,
-		RiskAnalysisScopeID: b.RiskAnalysisScopeID,
-		ParentBoundaryID:    b.ParentBoundaryID,
-		Name:                b.Name,
-		CreatedAt:           b.CreatedAt,
-		UpdatedAt:           b.UpdatedAt,
+		ID:                    b.ID,
+		OrganizationID:        b.OrganizationID,
+		RiskAnalysisDiagramID: b.RiskAnalysisDiagramID,
+		ParentBoundaryID:      b.ParentBoundaryID,
+		Name:                  b.Name,
+		CreatedAt:             b.CreatedAt,
+		UpdatedAt:             b.UpdatedAt,
 	}
 }
 
@@ -158,14 +158,14 @@ func NewListRiskAnalysisNodesOutput(
 
 func NewRiskAnalysisProcess(p *coredata.RiskAnalysisProcess) *RiskAnalysisProcess {
 	return &RiskAnalysisProcess{
-		ID:                  p.ID,
-		OrganizationID:      p.OrganizationID,
-		RiskAnalysisScopeID: p.RiskAnalysisScopeID,
-		SourceNodeID:        p.SourceNodeID,
-		TargetNodeID:        p.TargetNodeID,
-		Name:                p.Name,
-		CreatedAt:           p.CreatedAt,
-		UpdatedAt:           p.UpdatedAt,
+		ID:                    p.ID,
+		OrganizationID:        p.OrganizationID,
+		RiskAnalysisDiagramID: p.RiskAnalysisDiagramID,
+		SourceNodeID:          p.SourceNodeID,
+		TargetNodeID:          p.TargetNodeID,
+		Name:                  p.Name,
+		CreatedAt:             p.CreatedAt,
+		UpdatedAt:             p.UpdatedAt,
 	}
 }
 
@@ -192,14 +192,14 @@ func NewListRiskAnalysisProcessesOutput(
 
 func NewRiskAnalysisThreat(t *coredata.RiskAnalysisThreat) *RiskAnalysisThreat {
 	return &RiskAnalysisThreat{
-		ID:                  t.ID,
-		OrganizationID:      t.OrganizationID,
-		RiskAnalysisScopeID: t.RiskAnalysisScopeID,
-		ProcessID:           t.ProcessID,
-		Name:                t.Name,
-		Category:            t.Category,
-		CreatedAt:           t.CreatedAt,
-		UpdatedAt:           t.UpdatedAt,
+		ID:                    t.ID,
+		OrganizationID:        t.OrganizationID,
+		RiskAnalysisDiagramID: t.RiskAnalysisDiagramID,
+		ProcessID:             t.ProcessID,
+		Name:                  t.Name,
+		Category:              t.Category,
+		CreatedAt:             t.CreatedAt,
+		UpdatedAt:             t.UpdatedAt,
 	}
 }
 
@@ -226,13 +226,13 @@ func NewListRiskAnalysisThreatsOutput(
 
 func NewRiskAnalysisScenario(s *coredata.RiskAnalysisScenario) *RiskAnalysisScenario {
 	return &RiskAnalysisScenario{
-		ID:                  s.ID,
-		OrganizationID:      s.OrganizationID,
-		RiskAnalysisScopeID: s.RiskAnalysisScopeID,
-		Name:                s.Name,
-		Description:         s.Description,
-		CreatedAt:           s.CreatedAt,
-		UpdatedAt:           s.UpdatedAt,
+		ID:                    s.ID,
+		OrganizationID:        s.OrganizationID,
+		RiskAnalysisDiagramID: s.RiskAnalysisDiagramID,
+		Name:                  s.Name,
+		Description:           s.Description,
+		CreatedAt:             s.CreatedAt,
+		UpdatedAt:             s.UpdatedAt,
 	}
 }
 

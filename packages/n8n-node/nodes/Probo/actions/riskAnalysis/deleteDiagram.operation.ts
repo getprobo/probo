@@ -23,40 +23,18 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Scope ID',
-		name: 'scopeId',
+		displayName: 'Diagram ID',
+		name: 'diagramId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['updateScope'],
+				operation: ['deleteDiagram'],
 			},
 		},
 		default: '',
-		description: 'The ID of the scope to update',
+		description: 'The ID of the diagram to delete',
 		required: true,
-	},
-	{
-		displayName: 'Additional Fields',
-		name: 'additionalFields',
-		type: 'collection',
-		placeholder: 'Add Field',
-		default: {},
-		displayOptions: {
-			show: {
-				resource: ['riskAnalysis'],
-				operation: ['updateScope'],
-			},
-		},
-		options: [
-			{
-				displayName: 'Name',
-				name: 'name',
-				type: 'string',
-				default: '',
-				description: 'The name of the scope',
-			},
-		],
 	},
 ];
 
@@ -64,33 +42,19 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const scopeId = this.getNodeParameter('scopeId', itemIndex) as string;
-	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
-		name?: string;
-	};
+	const diagramId = this.getNodeParameter('diagramId', itemIndex) as string;
 
 	const query = `
-		mutation UpdateRiskAnalysisScope($input: UpdateRiskAnalysisScopeInput!) {
-			updateRiskAnalysisScope(input: $input) {
-				riskAnalysisScope {
-					id
-					riskAnalysisId
-					name
-					createdAt
-					updatedAt
-				}
+		mutation DeleteRiskAnalysisDiagram($input: DeleteRiskAnalysisDiagramInput!) {
+			deleteRiskAnalysisDiagram(input: $input) {
+				deletedRiskAnalysisDiagramId
 			}
 		}
 	`;
 
-	const input: Record<string, unknown> = { id: scopeId };
-	if (additionalFields.name) input.name = additionalFields.name;
-
-	if (Object.keys(input).length === 1) {
-		throw new Error('At least one field must be provided to update');
-	}
-
-	const responseData = await proboApiRequest.call(this, query, { input });
+	const responseData = await proboApiRequest.call(this, query, {
+		input: { riskAnalysisDiagramId: diagramId },
+	});
 
 	return {
 		json: responseData,

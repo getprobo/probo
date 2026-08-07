@@ -37,14 +37,14 @@ import (
 
 type (
 	RiskAnalysisNode struct {
-		ID                  gid.GID              `db:"id"`
-		OrganizationID      gid.GID              `db:"organization_id"`
-		RiskAnalysisScopeID gid.GID              `db:"risk_analysis_scope_id"`
-		BoundaryID          *gid.GID             `db:"boundary_id"`
-		NodeType            RiskAnalysisNodeType `db:"node_type"`
-		Name                string               `db:"name"`
-		CreatedAt           time.Time            `db:"created_at"`
-		UpdatedAt           time.Time            `db:"updated_at"`
+		ID                    gid.GID              `db:"id"`
+		OrganizationID        gid.GID              `db:"organization_id"`
+		RiskAnalysisDiagramID gid.GID              `db:"risk_analysis_diagram_id"`
+		BoundaryID            *gid.GID             `db:"boundary_id"`
+		NodeType              RiskAnalysisNodeType `db:"node_type"`
+		Name                  string               `db:"name"`
+		CreatedAt             time.Time            `db:"created_at"`
+		UpdatedAt             time.Time            `db:"updated_at"`
 	}
 
 	RiskAnalysisNodes []*RiskAnalysisNode
@@ -100,18 +100,18 @@ func (n *RiskAnalysisNode) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (ns *RiskAnalysisNodes) LoadByRiskAnalysisScopeID(
+func (ns *RiskAnalysisNodes) LoadByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 	cursor *page.Cursor[RiskAnalysisNodeOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	boundary_id,
 	node_type,
 	name,
@@ -121,11 +121,11 @@ FROM
 	risk_analysis_nodes
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -144,11 +144,11 @@ WHERE
 	return nil
 }
 
-func (ns *RiskAnalysisNodes) CountByRiskAnalysisScopeID(
+func (ns *RiskAnalysisNodes) CountByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -157,11 +157,11 @@ FROM
 	risk_analysis_nodes
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -177,7 +177,7 @@ func (n *RiskAnalysisNode) LoadByID(ctx context.Context, conn pg.Querier, scope 
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	boundary_id,
 	node_type,
 	name,
@@ -219,7 +219,7 @@ INSERT INTO risk_analysis_nodes (
 	id,
 	tenant_id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	boundary_id,
 	node_type,
 	name,
@@ -229,7 +229,7 @@ INSERT INTO risk_analysis_nodes (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@risk_analysis_scope_id,
+	@risk_analysis_diagram_id,
 	@boundary_id,
 	@node_type,
 	@name,
@@ -238,15 +238,15 @@ INSERT INTO risk_analysis_nodes (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"id":                     n.ID,
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        n.OrganizationID,
-		"risk_analysis_scope_id": n.RiskAnalysisScopeID,
-		"boundary_id":            n.BoundaryID,
-		"node_type":              n.NodeType,
-		"name":                   n.Name,
-		"created_at":             n.CreatedAt,
-		"updated_at":             n.UpdatedAt,
+		"id":                       n.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"organization_id":          n.OrganizationID,
+		"risk_analysis_diagram_id": n.RiskAnalysisDiagramID,
+		"boundary_id":              n.BoundaryID,
+		"node_type":                n.NodeType,
+		"name":                     n.Name,
+		"created_at":               n.CreatedAt,
+		"updated_at":               n.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

@@ -106,17 +106,17 @@ func (r *mutationResolver) DeleteRiskAnalysis(ctx context.Context, input types.D
 	return &types.DeleteRiskAnalysisPayload{DeletedRiskAnalysisID: input.RiskAnalysisID}, nil
 }
 
-// CreateRiskAnalysisScope is the resolver for the createRiskAnalysisScope field.
-func (r *mutationResolver) CreateRiskAnalysisScope(ctx context.Context, input types.CreateRiskAnalysisScopeInput) (*types.CreateRiskAnalysisScopePayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisID, probo.ActionRiskAnalysisScopeCreate)
+// CreateRiskAnalysisDiagram is the resolver for the createRiskAnalysisDiagram field.
+func (r *mutationResolver) CreateRiskAnalysisDiagram(ctx context.Context, input types.CreateRiskAnalysisDiagramInput) (*types.CreateRiskAnalysisDiagramPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskAnalysisID, probo.ActionRiskAnalysisDiagramCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	raScope, err := r.riskManagement.CreateScope(
+	raDiagram, err := r.riskManagement.CreateDiagram(
 		ctx,
 		scope,
-		riskmanagement.CreateRiskAnalysisScopeRequest{
+		riskmanagement.CreateRiskAnalysisDiagramRequest{
 			RiskAnalysisID: input.RiskAnalysisID,
 			Name:           input.Name,
 		},
@@ -135,22 +135,22 @@ func (r *mutationResolver) CreateRiskAnalysisScope(ctx context.Context, input ty
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.CreateRiskAnalysisScopePayload{
-		RiskAnalysisScopeEdge: types.NewRiskAnalysisScopeConnectionEdge(raScope, coredata.RiskAnalysisScopeOrderFieldCreatedAt),
+	return &types.CreateRiskAnalysisDiagramPayload{
+		RiskAnalysisDiagramEdge: types.NewRiskAnalysisDiagramConnectionEdge(raDiagram, coredata.RiskAnalysisDiagramOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateRiskAnalysisScope is the resolver for the updateRiskAnalysisScope field.
-func (r *mutationResolver) UpdateRiskAnalysisScope(ctx context.Context, input types.UpdateRiskAnalysisScopeInput) (*types.UpdateRiskAnalysisScopePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisScopeUpdate)
+// UpdateRiskAnalysisDiagram is the resolver for the updateRiskAnalysisDiagram field.
+func (r *mutationResolver) UpdateRiskAnalysisDiagram(ctx context.Context, input types.UpdateRiskAnalysisDiagramInput) (*types.UpdateRiskAnalysisDiagramPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisDiagramUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	raScope, err := r.riskManagement.UpdateScope(
+	raDiagram, err := r.riskManagement.UpdateDiagram(
 		ctx,
 		scope,
-		riskmanagement.UpdateRiskAnalysisScopeRequest{
+		riskmanagement.UpdateRiskAnalysisDiagramRequest{
 			ID:   input.ID,
 			Name: input.Name,
 		},
@@ -165,17 +165,17 @@ func (r *mutationResolver) UpdateRiskAnalysisScope(ctx context.Context, input ty
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.UpdateRiskAnalysisScopePayload{RiskAnalysisScope: types.NewRiskAnalysisScope(raScope)}, nil
+	return &types.UpdateRiskAnalysisDiagramPayload{RiskAnalysisDiagram: types.NewRiskAnalysisDiagram(raDiagram)}, nil
 }
 
-// DeleteRiskAnalysisScope is the resolver for the deleteRiskAnalysisScope field.
-func (r *mutationResolver) DeleteRiskAnalysisScope(ctx context.Context, input types.DeleteRiskAnalysisScopeInput) (*types.DeleteRiskAnalysisScopePayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScopeID, probo.ActionRiskAnalysisScopeDelete)
+// DeleteRiskAnalysisDiagram is the resolver for the deleteRiskAnalysisDiagram field.
+func (r *mutationResolver) DeleteRiskAnalysisDiagram(ctx context.Context, input types.DeleteRiskAnalysisDiagramInput) (*types.DeleteRiskAnalysisDiagramPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisDiagramDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.riskManagement.DeleteScope(ctx, scope, input.RiskAnalysisScopeID); err != nil {
+	if err := r.riskManagement.DeleteDiagram(ctx, scope, input.RiskAnalysisDiagramID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -185,12 +185,12 @@ func (r *mutationResolver) DeleteRiskAnalysisScope(ctx context.Context, input ty
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteRiskAnalysisScopePayload{DeletedRiskAnalysisScopeID: input.RiskAnalysisScopeID}, nil
+	return &types.DeleteRiskAnalysisDiagramPayload{DeletedRiskAnalysisDiagramID: input.RiskAnalysisDiagramID}, nil
 }
 
 // CreateRiskAnalysisNode is the resolver for the createRiskAnalysisNode field.
 func (r *mutationResolver) CreateRiskAnalysisNode(ctx context.Context, input types.CreateRiskAnalysisNodeInput) (*types.CreateRiskAnalysisNodePayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScopeID, probo.ActionRiskAnalysisNodeCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisNodeCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -199,10 +199,10 @@ func (r *mutationResolver) CreateRiskAnalysisNode(ctx context.Context, input typ
 		ctx,
 		scope,
 		riskmanagement.CreateRiskAnalysisNodeRequest{
-			RiskAnalysisScopeID: input.RiskAnalysisScopeID,
-			BoundaryID:          input.BoundaryID,
-			NodeType:            input.NodeType,
-			Name:                input.Name,
+			RiskAnalysisDiagramID: input.RiskAnalysisDiagramID,
+			BoundaryID:            input.BoundaryID,
+			NodeType:              input.NodeType,
+			Name:                  input.Name,
 		},
 	)
 	if err != nil {
@@ -279,7 +279,7 @@ func (r *mutationResolver) DeleteRiskAnalysisNode(ctx context.Context, input typ
 
 // CreateRiskAnalysisBoundary is the resolver for the createRiskAnalysisBoundary field.
 func (r *mutationResolver) CreateRiskAnalysisBoundary(ctx context.Context, input types.CreateRiskAnalysisBoundaryInput) (*types.CreateRiskAnalysisBoundaryPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScopeID, probo.ActionRiskAnalysisBoundaryCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisBoundaryCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -288,9 +288,9 @@ func (r *mutationResolver) CreateRiskAnalysisBoundary(ctx context.Context, input
 		ctx,
 		scope,
 		riskmanagement.CreateRiskAnalysisBoundaryRequest{
-			RiskAnalysisScopeID: input.RiskAnalysisScopeID,
-			ParentBoundaryID:    input.ParentBoundaryID,
-			Name:                input.Name,
+			RiskAnalysisDiagramID: input.RiskAnalysisDiagramID,
+			ParentBoundaryID:      input.ParentBoundaryID,
+			Name:                  input.Name,
 		},
 	)
 	if err != nil {
@@ -370,7 +370,7 @@ func (r *mutationResolver) DeleteRiskAnalysisBoundary(ctx context.Context, input
 
 // CreateRiskAnalysisProcess is the resolver for the createRiskAnalysisProcess field.
 func (r *mutationResolver) CreateRiskAnalysisProcess(ctx context.Context, input types.CreateRiskAnalysisProcessInput) (*types.CreateRiskAnalysisProcessPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScopeID, probo.ActionRiskAnalysisProcessCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisProcessCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -379,10 +379,10 @@ func (r *mutationResolver) CreateRiskAnalysisProcess(ctx context.Context, input 
 		ctx,
 		scope,
 		riskmanagement.CreateRiskAnalysisProcessRequest{
-			RiskAnalysisScopeID: input.RiskAnalysisScopeID,
-			SourceNodeID:        input.SourceNodeID,
-			TargetNodeID:        input.TargetNodeID,
-			Name:                input.Name,
+			RiskAnalysisDiagramID: input.RiskAnalysisDiagramID,
+			SourceNodeID:          input.SourceNodeID,
+			TargetNodeID:          input.TargetNodeID,
+			Name:                  input.Name,
 		},
 	)
 	if err != nil {
@@ -459,7 +459,7 @@ func (r *mutationResolver) DeleteRiskAnalysisProcess(ctx context.Context, input 
 
 // CreateRiskAnalysisThreat is the resolver for the createRiskAnalysisThreat field.
 func (r *mutationResolver) CreateRiskAnalysisThreat(ctx context.Context, input types.CreateRiskAnalysisThreatInput) (*types.CreateRiskAnalysisThreatPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScopeID, probo.ActionRiskAnalysisThreatCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisThreatCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -468,10 +468,10 @@ func (r *mutationResolver) CreateRiskAnalysisThreat(ctx context.Context, input t
 		ctx,
 		scope,
 		riskmanagement.CreateRiskAnalysisThreatRequest{
-			RiskAnalysisScopeID: input.RiskAnalysisScopeID,
-			ProcessID:           input.ProcessID,
-			Name:                input.Name,
-			Category:            input.Category,
+			RiskAnalysisDiagramID: input.RiskAnalysisDiagramID,
+			ProcessID:             input.ProcessID,
+			Name:                  input.Name,
+			Category:              input.Category,
 		},
 	)
 	if err != nil {
@@ -548,7 +548,7 @@ func (r *mutationResolver) DeleteRiskAnalysisThreat(ctx context.Context, input t
 
 // CreateRiskAnalysisScenario is the resolver for the createRiskAnalysisScenario field.
 func (r *mutationResolver) CreateRiskAnalysisScenario(ctx context.Context, input types.CreateRiskAnalysisScenarioInput) (*types.CreateRiskAnalysisScenarioPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScopeID, probo.ActionRiskAnalysisScenarioCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisScenarioCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -557,9 +557,9 @@ func (r *mutationResolver) CreateRiskAnalysisScenario(ctx context.Context, input
 		ctx,
 		scope,
 		riskmanagement.CreateRiskAnalysisScenarioRequest{
-			RiskAnalysisScopeID: input.RiskAnalysisScopeID,
-			Name:                input.Name,
-			Description:         input.Description,
+			RiskAnalysisDiagramID: input.RiskAnalysisDiagramID,
+			Name:                  input.Name,
+			Description:           input.Description,
 		},
 	)
 	if err != nil {
@@ -806,30 +806,30 @@ func (r *riskAnalysisResolver) Organization(ctx context.Context, obj *types.Risk
 	return types.NewOrganization(organization), nil
 }
 
-// Scopes is the resolver for the scopes field.
-func (r *riskAnalysisResolver) Scopes(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScopeOrderBy) (*types.RiskAnalysisScopeConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScopeList)
+// Diagrams is the resolver for the diagrams field.
+func (r *riskAnalysisResolver) Diagrams(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisDiagramOrderBy) (*types.RiskAnalysisDiagramConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisDiagramList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAnalysisScopeOrderField]{
-		Field:     coredata.RiskAnalysisScopeOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisDiagramOrderField]{
+		Field:     coredata.RiskAnalysisDiagramOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAnalysisScopeOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisDiagramOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := r.riskManagement.ListScopesForRiskAnalysisID(ctx, scope, obj.ID, cursor)
+	p, err := r.riskManagement.ListDiagramsForRiskAnalysisID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk assessment scopes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAnalysisScopeConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisDiagramConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -844,7 +844,7 @@ func (r *riskAnalysisBoundaryConnectionResolver) TotalCount(ctx context.Context,
 		return nil, err
 	}
 
-	count, err := r.riskManagement.CountBoundariesForScopeID(ctx, scope, obj.ParentID)
+	count, err := r.riskManagement.CountBoundariesForDiagramID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count risk assessment boundaries", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -869,6 +869,168 @@ func (r *riskAnalysisConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	return &count, nil
 }
 
+// Nodes is the resolver for the nodes field.
+func (r *riskAnalysisDiagramResolver) Nodes(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisNodeOrderBy) (*types.RiskAnalysisNodeConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisNodeList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisNodeOrderField]{
+		Field:     coredata.RiskAnalysisNodeOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisNodeOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListNodesForDiagramID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk assessment nodes", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAnalysisNodeConnection(p, r, obj.ID), nil
+}
+
+// Boundaries is the resolver for the boundaries field.
+func (r *riskAnalysisDiagramResolver) Boundaries(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisBoundaryOrderBy) (*types.RiskAnalysisBoundaryConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisBoundaryList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisBoundaryOrderField]{
+		Field:     coredata.RiskAnalysisBoundaryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisBoundaryOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListBoundariesForDiagramID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk assessment boundaries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAnalysisBoundaryConnection(p, r, obj.ID), nil
+}
+
+// Processes is the resolver for the processes field.
+func (r *riskAnalysisDiagramResolver) Processes(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisProcessOrderBy) (*types.RiskAnalysisProcessConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisProcessList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisProcessOrderField]{
+		Field:     coredata.RiskAnalysisProcessOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisProcessOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListProcessesForDiagramID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk assessment processes", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAnalysisProcessConnection(p, r, obj.ID), nil
+}
+
+// Threats is the resolver for the threats field.
+func (r *riskAnalysisDiagramResolver) Threats(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisThreatOrderBy) (*types.RiskAnalysisThreatConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisThreatList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisThreatOrderField]{
+		Field:     coredata.RiskAnalysisThreatOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisThreatOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListThreatsForDiagramID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk threats", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAnalysisThreatConnection(p, r, obj.ID), nil
+}
+
+// Scenarios is the resolver for the scenarios field.
+func (r *riskAnalysisDiagramResolver) Scenarios(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
+		Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListScenariosForDiagramID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
+}
+
+// MermaidChart is the resolver for the mermaidChart field.
+func (r *riskAnalysisDiagramResolver) MermaidChart(ctx context.Context, obj *types.RiskAnalysisDiagram) (string, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisDiagramGet)
+	if err != nil {
+		return "", err
+	}
+
+	chart, err := r.riskManagement.BuildDiagramMermaidChart(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build risk assessment scope mermaid chart", log.Error(err))
+		return "", gqlutils.Internal(ctx)
+	}
+
+	return chart, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *riskAnalysisDiagramConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisDiagramConnection) (*int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisDiagramList)
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := r.riskManagement.CountDiagramsForRiskAnalysisID(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count risk assessment scopes", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &count, nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisNodeConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisNodeConnection) (*int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisNodeList)
@@ -876,7 +1038,7 @@ func (r *riskAnalysisNodeConnectionResolver) TotalCount(ctx context.Context, obj
 		return nil, err
 	}
 
-	count, err := r.riskManagement.CountNodesForScopeID(ctx, scope, obj.ParentID)
+	count, err := r.riskManagement.CountNodesForDiagramID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count risk assessment nodes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -892,7 +1054,7 @@ func (r *riskAnalysisProcessConnectionResolver) TotalCount(ctx context.Context, 
 		return nil, err
 	}
 
-	count, err := r.riskManagement.CountProcessesForScopeID(ctx, scope, obj.ParentID)
+	count, err := r.riskManagement.CountProcessesForDiagramID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count risk assessment processes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -901,20 +1063,20 @@ func (r *riskAnalysisProcessConnectionResolver) TotalCount(ctx context.Context, 
 	return &count, nil
 }
 
-// Scope is the resolver for the scope field.
-func (r *riskAnalysisScenarioResolver) Scope(ctx context.Context, obj *types.RiskAnalysisScenario) (*types.RiskAnalysisScope, error) {
-	scope, err := r.authorize(ctx, obj.RiskAnalysisScopeID, probo.ActionRiskAnalysisScopeGet)
+// Diagram is the resolver for the diagram field.
+func (r *riskAnalysisScenarioResolver) Diagram(ctx context.Context, obj *types.RiskAnalysisScenario) (*types.RiskAnalysisDiagram, error) {
+	scope, err := r.authorize(ctx, obj.RiskAnalysisDiagramID, probo.ActionRiskAnalysisDiagramGet)
 	if err != nil {
 		return nil, err
 	}
 
-	raScope, err := r.riskManagement.GetScope(ctx, scope, obj.RiskAnalysisScopeID)
+	raDiagram, err := r.riskManagement.GetDiagram(ctx, scope, obj.RiskAnalysisDiagramID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load risk assessment scope", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAnalysisScope(raScope), nil
+	return types.NewRiskAnalysisDiagram(raDiagram), nil
 }
 
 // Threats is the resolver for the threats field.
@@ -977,8 +1139,8 @@ func (r *riskAnalysisScenarioConnectionResolver) TotalCount(ctx context.Context,
 	}
 
 	switch obj.Resolver.(type) {
-	case *riskAnalysisScopeResolver:
-		count, err := r.riskManagement.CountScenariosForScopeID(ctx, scope, obj.ParentID)
+	case *riskAnalysisDiagramResolver:
+		count, err := r.riskManagement.CountScenariosForDiagramID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risk scenarios", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -1004,168 +1166,6 @@ func (r *riskAnalysisScenarioConnectionResolver) TotalCount(ctx context.Context,
 	}
 }
 
-// Nodes is the resolver for the nodes field.
-func (r *riskAnalysisScopeResolver) Nodes(ctx context.Context, obj *types.RiskAnalysisScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisNodeOrderBy) (*types.RiskAnalysisNodeConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisNodeList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.RiskAnalysisNodeOrderField]{
-		Field:     coredata.RiskAnalysisNodeOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAnalysisNodeOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.riskManagement.ListNodesForScopeID(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessment nodes", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewRiskAnalysisNodeConnection(p, r, obj.ID), nil
-}
-
-// Boundaries is the resolver for the boundaries field.
-func (r *riskAnalysisScopeResolver) Boundaries(ctx context.Context, obj *types.RiskAnalysisScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisBoundaryOrderBy) (*types.RiskAnalysisBoundaryConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisBoundaryList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.RiskAnalysisBoundaryOrderField]{
-		Field:     coredata.RiskAnalysisBoundaryOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAnalysisBoundaryOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.riskManagement.ListBoundariesForScopeID(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessment boundaries", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewRiskAnalysisBoundaryConnection(p, r, obj.ID), nil
-}
-
-// Processes is the resolver for the processes field.
-func (r *riskAnalysisScopeResolver) Processes(ctx context.Context, obj *types.RiskAnalysisScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisProcessOrderBy) (*types.RiskAnalysisProcessConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisProcessList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.RiskAnalysisProcessOrderField]{
-		Field:     coredata.RiskAnalysisProcessOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAnalysisProcessOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.riskManagement.ListProcessesForScopeID(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk assessment processes", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewRiskAnalysisProcessConnection(p, r, obj.ID), nil
-}
-
-// Threats is the resolver for the threats field.
-func (r *riskAnalysisScopeResolver) Threats(ctx context.Context, obj *types.RiskAnalysisScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisThreatOrderBy) (*types.RiskAnalysisThreatConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisThreatList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.RiskAnalysisThreatOrderField]{
-		Field:     coredata.RiskAnalysisThreatOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAnalysisThreatOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.riskManagement.ListThreatsForScopeID(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk threats", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewRiskAnalysisThreatConnection(p, r, obj.ID), nil
-}
-
-// Scenarios is the resolver for the scenarios field.
-func (r *riskAnalysisScopeResolver) Scenarios(ctx context.Context, obj *types.RiskAnalysisScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
-		Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.riskManagement.ListScenariosForScopeID(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
-}
-
-// MermaidChart is the resolver for the mermaidChart field.
-func (r *riskAnalysisScopeResolver) MermaidChart(ctx context.Context, obj *types.RiskAnalysisScope) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScopeGet)
-	if err != nil {
-		return "", err
-	}
-
-	chart, err := r.riskManagement.BuildScopeMermaidChart(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot build risk assessment scope mermaid chart", log.Error(err))
-		return "", gqlutils.Internal(ctx)
-	}
-
-	return chart, nil
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *riskAnalysisScopeConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisScopeConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisScopeList)
-	if err != nil {
-		return nil, err
-	}
-
-	count, err := r.riskManagement.CountScopesForRiskAnalysisID(ctx, scope, obj.ParentID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count risk assessment scopes", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &count, nil
-}
-
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisThreatConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisThreatConnection) (*int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisThreatList)
@@ -1183,7 +1183,7 @@ func (r *riskAnalysisThreatConnectionResolver) TotalCount(ctx context.Context, o
 
 		return &count, nil
 	default:
-		count, err := r.riskManagement.CountThreatsForScopeID(ctx, scope, obj.ParentID)
+		count, err := r.riskManagement.CountThreatsForDiagramID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risk threats", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -1206,6 +1206,16 @@ func (r *Resolver) RiskAnalysisConnection() schema.RiskAnalysisConnectionResolve
 	return &riskAnalysisConnectionResolver{r}
 }
 
+// RiskAnalysisDiagram returns schema.RiskAnalysisDiagramResolver implementation.
+func (r *Resolver) RiskAnalysisDiagram() schema.RiskAnalysisDiagramResolver {
+	return &riskAnalysisDiagramResolver{r}
+}
+
+// RiskAnalysisDiagramConnection returns schema.RiskAnalysisDiagramConnectionResolver implementation.
+func (r *Resolver) RiskAnalysisDiagramConnection() schema.RiskAnalysisDiagramConnectionResolver {
+	return &riskAnalysisDiagramConnectionResolver{r}
+}
+
 // RiskAnalysisNodeConnection returns schema.RiskAnalysisNodeConnectionResolver implementation.
 func (r *Resolver) RiskAnalysisNodeConnection() schema.RiskAnalysisNodeConnectionResolver {
 	return &riskAnalysisNodeConnectionResolver{r}
@@ -1226,16 +1236,6 @@ func (r *Resolver) RiskAnalysisScenarioConnection() schema.RiskAnalysisScenarioC
 	return &riskAnalysisScenarioConnectionResolver{r}
 }
 
-// RiskAnalysisScope returns schema.RiskAnalysisScopeResolver implementation.
-func (r *Resolver) RiskAnalysisScope() schema.RiskAnalysisScopeResolver {
-	return &riskAnalysisScopeResolver{r}
-}
-
-// RiskAnalysisScopeConnection returns schema.RiskAnalysisScopeConnectionResolver implementation.
-func (r *Resolver) RiskAnalysisScopeConnection() schema.RiskAnalysisScopeConnectionResolver {
-	return &riskAnalysisScopeConnectionResolver{r}
-}
-
 // RiskAnalysisThreatConnection returns schema.RiskAnalysisThreatConnectionResolver implementation.
 func (r *Resolver) RiskAnalysisThreatConnection() schema.RiskAnalysisThreatConnectionResolver {
 	return &riskAnalysisThreatConnectionResolver{r}
@@ -1245,11 +1245,11 @@ type (
 	riskAnalysisResolver                   struct{ *Resolver }
 	riskAnalysisBoundaryConnectionResolver struct{ *Resolver }
 	riskAnalysisConnectionResolver         struct{ *Resolver }
+	riskAnalysisDiagramResolver            struct{ *Resolver }
+	riskAnalysisDiagramConnectionResolver  struct{ *Resolver }
 	riskAnalysisNodeConnectionResolver     struct{ *Resolver }
 	riskAnalysisProcessConnectionResolver  struct{ *Resolver }
 	riskAnalysisScenarioResolver           struct{ *Resolver }
 	riskAnalysisScenarioConnectionResolver struct{ *Resolver }
-	riskAnalysisScopeResolver              struct{ *Resolver }
-	riskAnalysisScopeConnectionResolver    struct{ *Resolver }
 	riskAnalysisThreatConnectionResolver   struct{ *Resolver }
 )

@@ -45,8 +45,8 @@ import type { RiskAnalysisDetailPageDeleteMutation } from "#/__generated__/core/
 import type { RiskAnalysisDetailPageQuery } from "#/__generated__/core/RiskAnalysisDetailPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { CreateScopeDialog } from "./_components/CreateScopeDialog";
-import { ScopeCard } from "./_components/ScopeCard";
+import { CreateDiagramDialog } from "./_components/CreateDiagramDialog";
+import { DiagramCard } from "./_components/DiagramCard";
 
 export const riskAnalysisDetailPageQuery = graphql`
   query RiskAnalysisDetailPageQuery($riskAnalysisId: ID!) {
@@ -58,13 +58,13 @@ export const riskAnalysisDetailPageQuery = graphql`
         createdAt
         updatedAt
         canDelete: permission(action: "core:risk-analysis:delete")
-        scopes(first: 50)
-          @connection(key: "RiskAnalysisDetailPage_scopes", filters: []) {
+        diagrams(first: 50)
+          @connection(key: "RiskAnalysisDetailPage_diagrams", filters: []) {
           __id
           edges {
             node {
               id
-              ...ScopeCardFragment
+              ...DiagramCardFragment
             }
           }
         }
@@ -107,8 +107,8 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
   }
 
   const raId = ra.id;
-  const scopes = ra.scopes?.edges.map(e => e.node) ?? [];
-  const scopesConnectionId = ra.scopes?.__id ?? "";
+  const diagrams = ra.diagrams?.edges.map(e => e.node) ?? [];
+  const diagramsConnectionId = ra.diagrams?.__id ?? "";
   const listConnectionId = ConnectionHandler.getConnectionID(
     organizationId,
     RiskAnalysesConnectionKey,
@@ -205,25 +205,25 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">{t("riskAnalysisDetailPage.scopes")}</h2>
-          <CreateScopeDialog
-            connectionId={scopesConnectionId}
+          <h2 className="text-base font-medium">{t("riskAnalysisDetailPage.diagrams")}</h2>
+          <CreateDiagramDialog
+            connectionId={diagramsConnectionId}
           />
         </div>
 
-        {scopes.length === 0 && (
+        {diagrams.length === 0 && (
           <Card padded>
             <div className="text-center text-txt-secondary">
-              {t("riskAnalysisDetailPage.emptyScopes")}
+              {t("riskAnalysisDetailPage.emptyDiagrams")}
             </div>
           </Card>
         )}
 
-        {scopes.map(scope => (
-          <ScopeCard
-            key={scope.id}
-            scopeRef={scope}
-            scopesConnectionId={scopesConnectionId}
+        {diagrams.map(diagram => (
+          <DiagramCard
+            key={diagram.id}
+            diagramRef={diagram}
+            diagramsConnectionId={diagramsConnectionId}
           />
         ))}
       </div>

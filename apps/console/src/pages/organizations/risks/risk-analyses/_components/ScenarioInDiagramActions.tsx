@@ -41,17 +41,17 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
-import type { ScenarioInScopeActionsDeleteMutation } from "#/__generated__/core/ScenarioInScopeActionsDeleteMutation.graphql";
-import type { ScenarioInScopeActionsLinkRiskMutation } from "#/__generated__/core/ScenarioInScopeActionsLinkRiskMutation.graphql";
-import type { ScenarioInScopeActionsLinkThreatMutation } from "#/__generated__/core/ScenarioInScopeActionsLinkThreatMutation.graphql";
-import type { ScenarioInScopeActionsRisksQuery } from "#/__generated__/core/ScenarioInScopeActionsRisksQuery.graphql";
-import type { ScenarioInScopeActionsUnlinkRiskMutation } from "#/__generated__/core/ScenarioInScopeActionsUnlinkRiskMutation.graphql";
-import type { ScenarioInScopeActionsUnlinkThreatMutation } from "#/__generated__/core/ScenarioInScopeActionsUnlinkThreatMutation.graphql";
-import type { ScenarioInScopeActionsUpdateMutation } from "#/__generated__/core/ScenarioInScopeActionsUpdateMutation.graphql";
+import type { ScenarioInDiagramActionsDeleteMutation } from "#/__generated__/core/ScenarioInDiagramActionsDeleteMutation.graphql";
+import type { ScenarioInDiagramActionsLinkRiskMutation } from "#/__generated__/core/ScenarioInDiagramActionsLinkRiskMutation.graphql";
+import type { ScenarioInDiagramActionsLinkThreatMutation } from "#/__generated__/core/ScenarioInDiagramActionsLinkThreatMutation.graphql";
+import type { ScenarioInDiagramActionsRisksQuery } from "#/__generated__/core/ScenarioInDiagramActionsRisksQuery.graphql";
+import type { ScenarioInDiagramActionsUnlinkRiskMutation } from "#/__generated__/core/ScenarioInDiagramActionsUnlinkRiskMutation.graphql";
+import type { ScenarioInDiagramActionsUnlinkThreatMutation } from "#/__generated__/core/ScenarioInDiagramActionsUnlinkThreatMutation.graphql";
+import type { ScenarioInDiagramActionsUpdateMutation } from "#/__generated__/core/ScenarioInDiagramActionsUpdateMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const updateScenarioMutation = graphql`
-  mutation ScenarioInScopeActionsUpdateMutation($input: UpdateRiskAnalysisScenarioInput!) {
+  mutation ScenarioInDiagramActionsUpdateMutation($input: UpdateRiskAnalysisScenarioInput!) {
     updateRiskAnalysisScenario(input: $input) {
       riskAnalysisScenario {
         id name description
@@ -63,7 +63,7 @@ const updateScenarioMutation = graphql`
 `;
 
 const deleteScenarioMutation = graphql`
-  mutation ScenarioInScopeActionsDeleteMutation(
+  mutation ScenarioInDiagramActionsDeleteMutation(
     $input: DeleteRiskAnalysisScenarioInput!
     $connections: [ID!]!
   ) {
@@ -74,7 +74,7 @@ const deleteScenarioMutation = graphql`
 `;
 
 const linkThreatMutation = graphql`
-  mutation ScenarioInScopeActionsLinkThreatMutation($input: LinkRiskAnalysisScenarioThreatInput!) {
+  mutation ScenarioInDiagramActionsLinkThreatMutation($input: LinkRiskAnalysisScenarioThreatInput!) {
     linkRiskAnalysisScenarioThreat(input: $input) {
       riskAnalysisScenario {
         id
@@ -85,7 +85,7 @@ const linkThreatMutation = graphql`
 `;
 
 const unlinkThreatMutation = graphql`
-  mutation ScenarioInScopeActionsUnlinkThreatMutation($input: UnlinkRiskAnalysisScenarioThreatInput!) {
+  mutation ScenarioInDiagramActionsUnlinkThreatMutation($input: UnlinkRiskAnalysisScenarioThreatInput!) {
     unlinkRiskAnalysisScenarioThreat(input: $input) {
       riskAnalysisScenario {
         id
@@ -96,7 +96,7 @@ const unlinkThreatMutation = graphql`
 `;
 
 const linkRiskMutation = graphql`
-  mutation ScenarioInScopeActionsLinkRiskMutation($input: LinkRiskAnalysisScenarioRiskInput!) {
+  mutation ScenarioInDiagramActionsLinkRiskMutation($input: LinkRiskAnalysisScenarioRiskInput!) {
     linkRiskAnalysisScenarioRisk(input: $input) {
       riskAnalysisScenario {
         id
@@ -108,7 +108,7 @@ const linkRiskMutation = graphql`
 `;
 
 const unlinkRiskMutation = graphql`
-  mutation ScenarioInScopeActionsUnlinkRiskMutation($input: UnlinkRiskAnalysisScenarioRiskInput!) {
+  mutation ScenarioInDiagramActionsUnlinkRiskMutation($input: UnlinkRiskAnalysisScenarioRiskInput!) {
     unlinkRiskAnalysisScenarioRisk(input: $input) {
       riskAnalysisScenario {
         id
@@ -120,7 +120,7 @@ const unlinkRiskMutation = graphql`
 `;
 
 const risksQuery = graphql`
-  query ScenarioInScopeActionsRisksQuery($organizationId: ID!) {
+  query ScenarioInDiagramActionsRisksQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         risks(first: 100) {
@@ -137,8 +137,8 @@ function RiskSelector(props: {
 }) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const [linkRisk] = useMutation<ScenarioInScopeActionsLinkRiskMutation>(linkRiskMutation);
-  const data = useLazyLoadQuery<ScenarioInScopeActionsRisksQuery>(
+  const [linkRisk] = useMutation<ScenarioInDiagramActionsLinkRiskMutation>(linkRiskMutation);
+  const data = useLazyLoadQuery<ScenarioInDiagramActionsRisksQuery>(
     risksQuery,
     { organizationId },
     { fetchPolicy: "store-or-network" },
@@ -167,7 +167,7 @@ function RiskSelector(props: {
   );
 }
 
-export function ScenarioInScopeActions(props: {
+export function ScenarioInDiagramActions(props: {
   scenario: {
     id: string;
     name: string;
@@ -175,24 +175,24 @@ export function ScenarioInScopeActions(props: {
     risks: readonly { id: string; name: string }[];
     threats: readonly { id: string; name: string }[];
   };
-  scopeThreats: readonly { id: string; name: string }[];
+  diagramThreats: readonly { id: string; name: string }[];
   connectionId: string;
 }) {
   const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
-  const [updateScenario] = useMutation<ScenarioInScopeActionsUpdateMutation>(updateScenarioMutation);
-  const [deleteScenario] = useMutation<ScenarioInScopeActionsDeleteMutation>(deleteScenarioMutation);
-  const [linkThreat] = useMutation<ScenarioInScopeActionsLinkThreatMutation>(linkThreatMutation);
-  const [unlinkThreat] = useMutation<ScenarioInScopeActionsUnlinkThreatMutation>(unlinkThreatMutation);
-  const [unlinkRisk] = useMutation<ScenarioInScopeActionsUnlinkRiskMutation>(unlinkRiskMutation);
+  const [updateScenario] = useMutation<ScenarioInDiagramActionsUpdateMutation>(updateScenarioMutation);
+  const [deleteScenario] = useMutation<ScenarioInDiagramActionsDeleteMutation>(deleteScenarioMutation);
+  const [linkThreat] = useMutation<ScenarioInDiagramActionsLinkThreatMutation>(linkThreatMutation);
+  const [unlinkThreat] = useMutation<ScenarioInDiagramActionsUnlinkThreatMutation>(unlinkThreatMutation);
+  const [unlinkRisk] = useMutation<ScenarioInDiagramActionsUnlinkRiskMutation>(unlinkRiskMutation);
   const { register, handleSubmit } = useForm({
     values: { name: props.scenario.name, description: props.scenario.description ?? "" },
   });
 
   const linkedThreatIds = new Set(props.scenario.threats.map(t => t.id));
   const linkedRiskIds = new Set(props.scenario.risks.map(r => r.id));
-  const availableThreats = props.scopeThreats.filter(t => !linkedThreatIds.has(t.id));
+  const availableThreats = props.diagramThreats.filter(t => !linkedThreatIds.has(t.id));
 
   return (
     <>

@@ -61,12 +61,12 @@ func NewRiskAnalysisThreatConnection(
 
 func NewRiskAnalysisThreat(t *coredata.RiskAnalysisThreat) *RiskAnalysisThreat {
 	return &RiskAnalysisThreat{
-		ID:                  t.ID,
-		RiskAnalysisScopeID: t.RiskAnalysisScopeID,
-		ProcessID:           t.ProcessID,
-		Name:                t.Name,
-		Category:            t.Category,
-		CreatedAt:           t.CreatedAt,
-		UpdatedAt:           t.UpdatedAt,
+		ID:                    t.ID,
+		RiskAnalysisDiagramID: t.RiskAnalysisDiagramID,
+		ProcessID:             t.ProcessID,
+		Name:                  t.Name,
+		Category:              t.Category,
+		CreatedAt:             t.CreatedAt,
+		UpdatedAt:             t.UpdatedAt,
 	}
 }

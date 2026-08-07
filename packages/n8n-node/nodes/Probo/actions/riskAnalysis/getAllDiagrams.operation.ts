@@ -29,7 +29,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['getAllScopes'],
+				operation: ['getAllDiagrams'],
 			},
 		},
 		default: '',
@@ -43,7 +43,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['getAllScopes'],
+				operation: ['getAllDiagrams'],
 			},
 		},
 		default: false,
@@ -56,7 +56,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['getAllScopes'],
+				operation: ['getAllDiagrams'],
 				returnAll: [false],
 			},
 		},
@@ -77,10 +77,10 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetScopes($riskAnalysisId: ID!, $first: Int, $after: CursorKey) {
+		query GetDiagrams($riskAnalysisId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $riskAnalysisId) {
 				... on RiskAnalysis {
-					scopes(first: $first, after: $after) {
+					diagrams(first: $first, after: $after) {
 						edges {
 							node {
 								id
@@ -100,21 +100,23 @@ export async function execute(
 		}
 	`;
 
-	const scopes = await proboApiRequestAllItems.call(
+	const diagrams = await proboApiRequestAllItems.call(
 		this,
 		query,
 		{ riskAnalysisId },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.scopes as IDataObject | undefined;
+			return node?.diagrams as IDataObject | undefined;
 		},
 		returnAll,
 		limit,
 	);
 
 	return {
-		json: { scopes },
+		json: {
+			diagrams: diagrams,
+		},
 		pairedItem: { item: itemIndex },
 	};
 }

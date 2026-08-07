@@ -135,7 +135,7 @@ func populateOrganizationRelationGraph(
 		owner,
 		factory.Attrs{"name": marker + " assessment"},
 	)
-	scopeID := factory.CreateRiskAnalysisScope(
+	scopeID := factory.CreateRiskAnalysisDiagram(
 		owner,
 		g.riskAnalysisID,
 		factory.Attrs{"name": marker + " scope"},

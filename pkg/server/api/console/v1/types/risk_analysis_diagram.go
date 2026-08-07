@@ -27,31 +27,31 @@ import (
 )
 
 type (
-	RiskAnalysisScopeOrderBy OrderBy[coredata.RiskAnalysisScopeOrderField]
+	RiskAnalysisDiagramOrderBy OrderBy[coredata.RiskAnalysisDiagramOrderField]
 
-	RiskAnalysisScopeConnection struct {
+	RiskAnalysisDiagramConnection struct {
 		TotalCount int
-		Edges      []*RiskAnalysisScopeConnectionEdge
+		Edges      []*RiskAnalysisDiagramConnectionEdge
 		PageInfo   PageInfo
 		Resolver   any
 		ParentID   gid.GID
 	}
 )
 
-func NewRiskAnalysisScopeConnection(
-	p *page.Page[*coredata.RiskAnalysisScope, coredata.RiskAnalysisScopeOrderField],
+func NewRiskAnalysisDiagramConnection(
+	p *page.Page[*coredata.RiskAnalysisDiagram, coredata.RiskAnalysisDiagramOrderField],
 	parentType any,
 	parentID gid.GID,
-) *RiskAnalysisScopeConnection {
-	edges := make([]*RiskAnalysisScopeConnectionEdge, len(p.Data))
+) *RiskAnalysisDiagramConnection {
+	edges := make([]*RiskAnalysisDiagramConnectionEdge, len(p.Data))
 	for i := range edges {
-		edges[i] = &RiskAnalysisScopeConnectionEdge{
+		edges[i] = &RiskAnalysisDiagramConnectionEdge{
 			Cursor: p.Data[i].CursorKey(p.Cursor.OrderBy.Field),
-			Node:   NewRiskAnalysisScope(p.Data[i]),
+			Node:   NewRiskAnalysisDiagram(p.Data[i]),
 		}
 	}
 
-	return &RiskAnalysisScopeConnection{
+	return &RiskAnalysisDiagramConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 		Resolver: parentType,
@@ -59,15 +59,15 @@ func NewRiskAnalysisScopeConnection(
 	}
 }
 
-func NewRiskAnalysisScopeConnectionEdge(s *coredata.RiskAnalysisScope, orderBy coredata.RiskAnalysisScopeOrderField) *RiskAnalysisScopeConnectionEdge {
-	return &RiskAnalysisScopeConnectionEdge{
+func NewRiskAnalysisDiagramConnectionEdge(s *coredata.RiskAnalysisDiagram, orderBy coredata.RiskAnalysisDiagramOrderField) *RiskAnalysisDiagramConnectionEdge {
+	return &RiskAnalysisDiagramConnectionEdge{
 		Cursor: s.CursorKey(orderBy),
-		Node:   NewRiskAnalysisScope(s),
+		Node:   NewRiskAnalysisDiagram(s),
 	}
 }
 
-func NewRiskAnalysisScope(s *coredata.RiskAnalysisScope) *RiskAnalysisScope {
-	return &RiskAnalysisScope{
+func NewRiskAnalysisDiagram(s *coredata.RiskAnalysisDiagram) *RiskAnalysisDiagram {
+	return &RiskAnalysisDiagram{
 		ID:             s.ID,
 		RiskAnalysisID: s.RiskAnalysisID,
 		Name:           s.Name,

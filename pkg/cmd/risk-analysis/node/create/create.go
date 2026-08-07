@@ -36,7 +36,7 @@ mutation($input: CreateRiskAnalysisNodeInput!) {
     riskAnalysisNodeEdge {
       node {
         id
-        riskAnalysisScopeId
+        riskAnalysisDiagramId
         nodeType
         name
         createdAt
@@ -51,12 +51,12 @@ type createResponse struct {
 	CreateRiskAnalysisNode struct {
 		RiskAnalysisNodeEdge struct {
 			Node struct {
-				ID                  string `json:"id"`
-				RiskAnalysisScopeId string `json:"riskAnalysisScopeId"`
-				NodeType            string `json:"nodeType"`
-				Name                string `json:"name"`
-				CreatedAt           string `json:"createdAt"`
-				UpdatedAt           string `json:"updatedAt"`
+				ID                    string `json:"id"`
+				RiskAnalysisDiagramId string `json:"riskAnalysisDiagramId"`
+				NodeType              string `json:"nodeType"`
+				Name                  string `json:"name"`
+				CreatedAt             string `json:"createdAt"`
+				UpdatedAt             string `json:"updatedAt"`
 			} `json:"node"`
 		} `json:"riskAnalysisNodeEdge"`
 	} `json:"createRiskAnalysisNode"`
@@ -64,7 +64,7 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScopeId    string
+		flagDiagramId  string
 		flagBoundaryId string
 		flagNodeType   string
 		flagName       string
@@ -74,10 +74,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new risk analysis node",
 		Example: `  # Create a node interactively
-  prb risk-analysis node create --scope-id <id>
+  prb risk-analysis node create --diagram-id <id>
 
   # Create a node non-interactively
-  prb risk-analysis node create --scope-id <id> --node-type ASSET --name "Database server"`,
+  prb risk-analysis node create --diagram-id <id> --node-type ASSET --name "Database server"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -137,9 +137,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			input := map[string]any{
-				"riskAnalysisScopeId": flagScopeId,
-				"nodeType":            flagNodeType,
-				"name":                flagName,
+				"riskAnalysisDiagramId": flagDiagramId,
+				"nodeType":              flagNodeType,
+				"name":                  flagName,
 			}
 
 			if flagBoundaryId != "" {
@@ -171,12 +171,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagScopeId, "scope-id", "", "Risk analysis scope ID (required)")
+	cmd.Flags().StringVar(&flagDiagramId, "diagram-id", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().StringVar(&flagBoundaryId, "boundary-id", "", "Boundary ID that contains this node (optional)")
 	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, ASSET, DATA (required)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Node name (required)")
 
-	_ = cmd.MarkFlagRequired("scope-id")
+	_ = cmd.MarkFlagRequired("diagram-id")
 
 	return cmd
 }

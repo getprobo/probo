@@ -24,15 +24,15 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment, useRelayEnvironment } from "react-relay";
 
-import type { ScopeDiagram_scope$key } from "#/__generated__/core/ScopeDiagram_scope.graphql";
-import type { ScopeDiagramMermaidQuery } from "#/__generated__/core/ScopeDiagramMermaidQuery.graphql";
+import type { DiagramChart_diagram$key } from "#/__generated__/core/DiagramChart_diagram.graphql";
+import type { DiagramChartMermaidQuery } from "#/__generated__/core/DiagramChartMermaidQuery.graphql";
 
-const scopeDiagramFragment = graphql`
-  fragment ScopeDiagram_scope on RiskAnalysisScope {
+const diagramChartFragment = graphql`
+  fragment DiagramChart_diagram on RiskAnalysisDiagram {
     id
     mermaidChart
     nodes(first: 100)
-      @connection(key: "RiskAnalysisScope_nodes", filters: []) {
+      @connection(key: "RiskAnalysisDiagram_nodes", filters: []) {
       edges {
         node {
           id
@@ -43,7 +43,7 @@ const scopeDiagramFragment = graphql`
       }
     }
     boundaries(first: 100)
-      @connection(key: "RiskAnalysisScope_boundaries", filters: []) {
+      @connection(key: "RiskAnalysisDiagram_boundaries", filters: []) {
       edges {
         node {
           id
@@ -53,7 +53,7 @@ const scopeDiagramFragment = graphql`
       }
     }
     processes(first: 100)
-      @connection(key: "RiskAnalysisScope_processes", filters: []) {
+      @connection(key: "RiskAnalysisDiagram_processes", filters: []) {
       edges {
         node {
           id
@@ -64,7 +64,7 @@ const scopeDiagramFragment = graphql`
       }
     }
     threats(first: 100)
-      @connection(key: "RiskAnalysisScope_threats", filters: []) {
+      @connection(key: "RiskAnalysisDiagram_threats", filters: []) {
       edges {
         node {
           id
@@ -77,10 +77,10 @@ const scopeDiagramFragment = graphql`
   }
 `;
 
-const scopeDiagramMermaidQuery = graphql`
-  query ScopeDiagramMermaidQuery($scopeId: ID!) {
-    node(id: $scopeId) {
-      ... on RiskAnalysisScope {
+const diagramChartMermaidQuery = graphql`
+  query DiagramChartMermaidQuery($diagramId: ID!) {
+    node(id: $diagramId) {
+      ... on RiskAnalysisDiagram {
         id
         mermaidChart
       }
@@ -88,26 +88,26 @@ const scopeDiagramMermaidQuery = graphql`
   }
 `;
 
-interface ScopeDiagramProps {
-  scopeKey: ScopeDiagram_scope$key;
+interface DiagramChartProps {
+  diagramKey: DiagramChart_diagram$key;
 }
 
-export function ScopeDiagram({ scopeKey }: ScopeDiagramProps) {
+export function DiagramChart({ diagramKey }: DiagramChartProps) {
   const { t } = useTranslation();
   const environment = useRelayEnvironment();
-  const scope = useFragment(scopeDiagramFragment, scopeKey);
-  const mermaidChart = scope.mermaidChart;
+  const diagram = useFragment(diagramChartFragment, diagramKey);
+  const mermaidChart = diagram.mermaidChart;
 
-  const nodeSignature = scope.nodes?.edges
+  const nodeSignature = diagram.nodes?.edges
     .map(e => `${e.node.id}|${e.node.name}|${e.node.nodeType}|${e.node.boundaryId ?? ""}`)
     .join(";") ?? "";
-  const boundarySignature = scope.boundaries?.edges
+  const boundarySignature = diagram.boundaries?.edges
     .map(e => `${e.node.id}|${e.node.name}|${e.node.parentBoundaryId ?? ""}`)
     .join(";") ?? "";
-  const processSignature = scope.processes?.edges
+  const processSignature = diagram.processes?.edges
     .map(e => `${e.node.id}|${e.node.name}|${e.node.sourceNodeId}|${e.node.targetNodeId}`)
     .join(";") ?? "";
-  const threatSignature = scope.threats?.edges
+  const threatSignature = diagram.threats?.edges
     .map(e => `${e.node.id}|${e.node.name}|${e.node.processId}|${e.node.category}`)
     .join(";") ?? "";
   const signature = `${nodeSignature}::${boundarySignature}::${processSignature}::${threatSignature}`;
@@ -117,19 +117,19 @@ export function ScopeDiagram({ scopeKey }: ScopeDiagramProps) {
       return;
     }
     previousSignature.current = signature;
-    const subscription = fetchQuery<ScopeDiagramMermaidQuery>(
+    const subscription = fetchQuery<DiagramChartMermaidQuery>(
       environment,
-      scopeDiagramMermaidQuery,
-      { scopeId: scope.id },
+      diagramChartMermaidQuery,
+      { diagramId: diagram.id },
       { fetchPolicy: "network-only" },
     ).subscribe({});
     return () => subscription.unsubscribe();
-  }, [signature, environment, scope.id]);
+  }, [signature, environment, diagram.id]);
 
   if (!mermaidChart) {
     return (
       <div className="text-center text-txt-secondary text-sm py-6">
-        {t("scopeDiagram.empty")}
+        {t("diagramChart.empty")}
       </div>
     );
   }
@@ -159,8 +159,8 @@ function CopyChartButton({ chart }: CopyChartButtonProps) {
   const onClick = () => {
     const onFailure = () => {
       toast({
-        title: t("scopeDiagram.errorTitle"),
-        description: t("scopeDiagram.copyError"),
+        title: t("diagramChart.errorTitle"),
+        description: t("diagramChart.copyError"),
         variant: "error",
       });
     };
@@ -188,8 +188,8 @@ function CopyChartButton({ chart }: CopyChartButtonProps) {
       variant="secondary"
       icon={copied ? CheckIcon : CopyIcon}
       onClick={onClick}
-      aria-label={t("scopeDiagram.copyMermaidSource")}
-      title={t("scopeDiagram.copyMermaidSource")}
+      aria-label={t("diagramChart.copyMermaidSource")}
+      title={t("diagramChart.copyMermaidSource")}
     />
   );
 }
@@ -207,11 +207,11 @@ type LegendItem = {
 function Legend() {
   const { t } = useTranslation();
   const items: LegendItem[] = [
-    { label: t("scopeDiagram.legend.entity"), shape: "stadium", fill: "#dbeafe", stroke: "#1d4ed8", text: "#1e3a8a" },
-    { label: t("scopeDiagram.legend.boundary"), shape: "rectangle", fill: "#ffffff", stroke: "#b45309", text: "#78350f" },
-    { label: t("scopeDiagram.legend.asset"), shape: "rectangle", fill: "#e5e7eb", stroke: "#374151", text: "#111827" },
-    { label: t("scopeDiagram.legend.data"), shape: "cylinder", fill: "#dcfce7", stroke: "#15803d", text: "#14532d" },
-    { label: t("scopeDiagram.legend.threat"), shape: "hexagon", fill: "#fee2e2", stroke: "#b91c1c", text: "#7f1d1d" },
+    { label: t("diagramChart.legend.entity"), shape: "stadium", fill: "#dbeafe", stroke: "#1d4ed8", text: "#1e3a8a" },
+    { label: t("diagramChart.legend.boundary"), shape: "rectangle", fill: "#ffffff", stroke: "#b45309", text: "#78350f" },
+    { label: t("diagramChart.legend.asset"), shape: "rectangle", fill: "#e5e7eb", stroke: "#374151", text: "#111827" },
+    { label: t("diagramChart.legend.data"), shape: "cylinder", fill: "#dcfce7", stroke: "#15803d", text: "#14532d" },
+    { label: t("diagramChart.legend.threat"), shape: "hexagon", fill: "#fee2e2", stroke: "#b91c1c", text: "#7f1d1d" },
   ];
   return (
     <div className="flex flex-wrap items-center gap-3 mt-3">

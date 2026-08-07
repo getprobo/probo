@@ -36,50 +36,50 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
-import type { ScopeActionsDeleteMutation } from "#/__generated__/core/ScopeActionsDeleteMutation.graphql";
-import type { ScopeActionsUpdateMutation } from "#/__generated__/core/ScopeActionsUpdateMutation.graphql";
+import type { DiagramActionsDeleteMutation } from "#/__generated__/core/DiagramActionsDeleteMutation.graphql";
+import type { DiagramActionsUpdateMutation } from "#/__generated__/core/DiagramActionsUpdateMutation.graphql";
 
-const updateScopeMutation = graphql`
-  mutation ScopeActionsUpdateMutation(
-    $input: UpdateRiskAnalysisScopeInput!
+const updateDiagramMutation = graphql`
+  mutation DiagramActionsUpdateMutation(
+    $input: UpdateRiskAnalysisDiagramInput!
   ) {
-    updateRiskAnalysisScope(input: $input) {
-      riskAnalysisScope { id name }
+    updateRiskAnalysisDiagram(input: $input) {
+      riskAnalysisDiagram { id name }
     }
   }
 `;
 
-const deleteScopeMutation = graphql`
-  mutation ScopeActionsDeleteMutation(
-    $input: DeleteRiskAnalysisScopeInput!
+const deleteDiagramMutation = graphql`
+  mutation DiagramActionsDeleteMutation(
+    $input: DeleteRiskAnalysisDiagramInput!
     $connections: [ID!]!
   ) {
-    deleteRiskAnalysisScope(input: $input) {
-      deletedRiskAnalysisScopeId @deleteEdge(connections: $connections)
+    deleteRiskAnalysisDiagram(input: $input) {
+      deletedRiskAnalysisDiagramId @deleteEdge(connections: $connections)
     }
   }
 `;
 
-export function ScopeActions(props: {
-  scope: { id: string; name: string };
+export function DiagramActions(props: {
+  diagram: { id: string; name: string };
   connectionId: string;
 }) {
   const { t } = useTranslation();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
-  const [updateScope] = useMutation<ScopeActionsUpdateMutation>(updateScopeMutation);
-  const [deleteScope] = useMutation<ScopeActionsDeleteMutation>(deleteScopeMutation);
+  const [updateDiagram] = useMutation<DiagramActionsUpdateMutation>(updateDiagramMutation);
+  const [deleteDiagram] = useMutation<DiagramActionsDeleteMutation>(deleteDiagramMutation);
   const { register, handleSubmit, formState } = useForm({
     values: {
-      name: props.scope.name,
+      name: props.diagram.name,
     },
   });
 
   const onEdit = (data: { name: string }) => {
-    updateScope({
+    updateDiagram({
       variables: {
         input: {
-          id: props.scope.id,
+          id: props.diagram.id,
           name: data.name,
         },
       },
@@ -92,14 +92,14 @@ export function ScopeActions(props: {
   const onDelete = () => {
     confirm(
       () => {
-        deleteScope({
+        deleteDiagram({
           variables: {
-            input: { riskAnalysisScopeId: props.scope.id },
+            input: { riskAnalysisDiagramId: props.diagram.id },
             connections: [props.connectionId],
           },
         });
       },
-      { message: t("riskAnalysisScopeActions.deleteConfirmation") },
+      { message: t("riskAnalysisDiagramActions.deleteConfirmation") },
     );
   };
 
@@ -107,28 +107,28 @@ export function ScopeActions(props: {
     <>
       <ActionDropdown>
         <DropdownItem icon={IconPencil} onSelect={() => dialogRef.current?.open()}>
-          {t("riskAnalysisScopeActions.actions.edit")}
+          {t("riskAnalysisDiagramActions.actions.edit")}
         </DropdownItem>
         <DropdownItem icon={IconTrashCan} variant="danger" onSelect={onDelete}>
-          {t("riskAnalysisScopeActions.actions.delete")}
+          {t("riskAnalysisDiagramActions.actions.delete")}
         </DropdownItem>
       </ActionDropdown>
       <Dialog
         className="max-w-lg"
         ref={dialogRef}
-        title={<Breadcrumb items={[t("riskAnalysisScopeActions.breadcrumb.scopes"), t("riskAnalysisScopeActions.breadcrumb.editScope")]} />}
+        title={<Breadcrumb items={[t("riskAnalysisDiagramActions.breadcrumb.diagrams"), t("riskAnalysisDiagramActions.breadcrumb.editDiagram")]} />}
       >
         <form onSubmit={e => void handleSubmit(onEdit)(e)}>
           <DialogContent padded className="space-y-4">
             <Field
-              label={t("riskAnalysisScopeActions.fields.name")}
-              {...register("name", { required: t("riskAnalysisScopeActions.validation.nameRequired") })}
+              label={t("riskAnalysisDiagramActions.fields.name")}
+              {...register("name", { required: t("riskAnalysisDiagramActions.validation.nameRequired") })}
               type="text"
               error={formState.errors.name?.message}
             />
           </DialogContent>
           <DialogFooter>
-            <Button type="submit">{t("riskAnalysisScopeActions.actions.save")}</Button>
+            <Button type="submit">{t("riskAnalysisDiagramActions.actions.save")}</Button>
           </DialogFooter>
         </form>
       </Dialog>

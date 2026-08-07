@@ -37,14 +37,14 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
-import type { CreateScenarioInScopeDialogLinkRiskMutation } from "#/__generated__/core/CreateScenarioInScopeDialogLinkRiskMutation.graphql";
-import type { CreateScenarioInScopeDialogLinkThreatMutation } from "#/__generated__/core/CreateScenarioInScopeDialogLinkThreatMutation.graphql";
-import type { CreateScenarioInScopeDialogMutation } from "#/__generated__/core/CreateScenarioInScopeDialogMutation.graphql";
-import type { CreateScenarioInScopeDialogRisksQuery } from "#/__generated__/core/CreateScenarioInScopeDialogRisksQuery.graphql";
+import type { CreateScenarioInDiagramDialogLinkRiskMutation } from "#/__generated__/core/CreateScenarioInDiagramDialogLinkRiskMutation.graphql";
+import type { CreateScenarioInDiagramDialogLinkThreatMutation } from "#/__generated__/core/CreateScenarioInDiagramDialogLinkThreatMutation.graphql";
+import type { CreateScenarioInDiagramDialogMutation } from "#/__generated__/core/CreateScenarioInDiagramDialogMutation.graphql";
+import type { CreateScenarioInDiagramDialogRisksQuery } from "#/__generated__/core/CreateScenarioInDiagramDialogRisksQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createScenarioMutation = graphql`
-  mutation CreateScenarioInScopeDialogMutation(
+  mutation CreateScenarioInDiagramDialogMutation(
     $input: CreateRiskAnalysisScenarioInput!
     $connections: [ID!]!
   ) {
@@ -61,7 +61,7 @@ const createScenarioMutation = graphql`
 `;
 
 const linkThreatMutation = graphql`
-  mutation CreateScenarioInScopeDialogLinkThreatMutation(
+  mutation CreateScenarioInDiagramDialogLinkThreatMutation(
     $input: LinkRiskAnalysisScenarioThreatInput!
   ) {
     linkRiskAnalysisScenarioThreat(input: $input) {
@@ -74,7 +74,7 @@ const linkThreatMutation = graphql`
 `;
 
 const linkRiskMutation = graphql`
-  mutation CreateScenarioInScopeDialogLinkRiskMutation(
+  mutation CreateScenarioInDiagramDialogLinkRiskMutation(
     $input: LinkRiskAnalysisScenarioRiskInput!
   ) {
     linkRiskAnalysisScenarioRisk(input: $input) {
@@ -88,7 +88,7 @@ const linkRiskMutation = graphql`
 `;
 
 const risksQuery = graphql`
-  query CreateScenarioInScopeDialogRisksQuery($organizationId: ID!) {
+  query CreateScenarioInDiagramDialogRisksQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
         risks(first: 100) {
@@ -105,7 +105,7 @@ function RiskSelector(props: {
 }) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const data = useLazyLoadQuery<CreateScenarioInScopeDialogRisksQuery>(
+  const data = useLazyLoadQuery<CreateScenarioInDiagramDialogRisksQuery>(
     risksQuery,
     { organizationId },
     { fetchPolicy: "store-or-network" },
@@ -114,13 +114,13 @@ function RiskSelector(props: {
   const available = allRisks.filter(r => !props.selectedRisks.has(r.id));
 
   if (available.length === 0) {
-    return <p className="text-xs text-txt-tertiary">{t("createScenarioInScopeDialog.noMoreRisks")}</p>;
+    return <p className="text-xs text-txt-tertiary">{t("createScenarioInDiagramDialog.noMoreRisks")}</p>;
   }
 
   return (
     <Select
       key={props.selectedRisks.size}
-      placeholder={t("createScenarioInScopeDialog.placeholders.riskToLink")}
+      placeholder={t("createScenarioInDiagramDialog.placeholders.riskToLink")}
       onValueChange={(riskId) => {
         if (typeof riskId !== "string") return;
         const risk = allRisks.find(r => r.id === riskId);
@@ -134,8 +134,8 @@ function RiskSelector(props: {
   );
 }
 
-export function CreateScenarioInScopeDialog(props: {
-  scopeId: string;
+export function CreateScenarioInDiagramDialog(props: {
+  diagramId: string;
   threats: { id: string; name: string }[];
   connectionId: string;
 }) {
@@ -143,9 +143,9 @@ export function CreateScenarioInScopeDialog(props: {
   const dialogRef = useDialogRef();
   const [selectedThreats, setSelectedThreats] = useState<Map<string, string>>(new Map());
   const [selectedRisks, setSelectedRisks] = useState<Map<string, string>>(new Map());
-  const [createScenario, isCreating] = useMutation<CreateScenarioInScopeDialogMutation>(createScenarioMutation);
-  const [linkThreat] = useMutation<CreateScenarioInScopeDialogLinkThreatMutation>(linkThreatMutation);
-  const [linkRisk] = useMutation<CreateScenarioInScopeDialogLinkRiskMutation>(linkRiskMutation);
+  const [createScenario, isCreating] = useMutation<CreateScenarioInDiagramDialogMutation>(createScenarioMutation);
+  const [linkThreat] = useMutation<CreateScenarioInDiagramDialogLinkThreatMutation>(linkThreatMutation);
+  const [linkRisk] = useMutation<CreateScenarioInDiagramDialogLinkRiskMutation>(linkRiskMutation);
   const { register, handleSubmit, reset, formState } = useForm({
     defaultValues: { name: "", description: "" },
   });
@@ -156,7 +156,7 @@ export function CreateScenarioInScopeDialog(props: {
     createScenario({
       variables: {
         input: {
-          riskAnalysisScopeId: props.scopeId,
+          riskAnalysisDiagramId: props.diagramId,
           name: data.name,
           description: data.description || null,
         },
@@ -190,27 +190,27 @@ export function CreateScenarioInScopeDialog(props: {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={<Button icon={IconPlusLarge} variant="secondary">{t("createScenarioInScopeDialog.actions.add")}</Button>}
-      title={<Breadcrumb items={[t("createScenarioInScopeDialog.breadcrumb.scenarios"), t("createScenarioInScopeDialog.breadcrumb.addScenario")]} />}
+      trigger={<Button icon={IconPlusLarge} variant="secondary">{t("createScenarioInDiagramDialog.actions.add")}</Button>}
+      title={<Breadcrumb items={[t("createScenarioInDiagramDialog.breadcrumb.scenarios"), t("createScenarioInDiagramDialog.breadcrumb.addScenario")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={t("createScenarioInScopeDialog.fields.name")}
-            {...register("name", { required: t("createScenarioInScopeDialog.validation.nameRequired") })}
+            label={t("createScenarioInDiagramDialog.fields.name")}
+            {...register("name", { required: t("createScenarioInDiagramDialog.validation.nameRequired") })}
             type="text"
             error={formState.errors.name?.message}
-            placeholder={t("createScenarioInScopeDialog.placeholders.name")}
+            placeholder={t("createScenarioInDiagramDialog.placeholders.name")}
           />
           <Field
-            label={t("createScenarioInScopeDialog.fields.description")}
+            label={t("createScenarioInDiagramDialog.fields.description")}
             {...register("description")}
             type="textarea"
             rows={3}
           />
           {props.threats.length > 0 && (
             <div>
-              <div className="text-sm font-medium mb-2">{t("createScenarioInScopeDialog.fields.threats")}</div>
+              <div className="text-sm font-medium mb-2">{t("createScenarioInDiagramDialog.fields.threats")}</div>
               {selectedThreats.size > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {[...selectedThreats.entries()].map(([id, name]) => (
@@ -236,7 +236,7 @@ export function CreateScenarioInScopeDialog(props: {
               {availableThreats.length > 0 && (
                 <Select
                   key={selectedThreats.size}
-                  placeholder={t("createScenarioInScopeDialog.placeholders.threatToLink")}
+                  placeholder={t("createScenarioInDiagramDialog.placeholders.threatToLink")}
                   onValueChange={(threatId) => {
                     if (typeof threatId !== "string") return;
                     const threat = props.threats.find(t => t.id === threatId);
@@ -258,7 +258,7 @@ export function CreateScenarioInScopeDialog(props: {
           )}
 
           <div>
-            <div className="text-sm font-medium mb-2">{t("createScenarioInScopeDialog.fields.risks")}</div>
+            <div className="text-sm font-medium mb-2">{t("createScenarioInDiagramDialog.fields.risks")}</div>
             {selectedRisks.size > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {[...selectedRisks.entries()].map(([id, name]) => (
@@ -281,7 +281,7 @@ export function CreateScenarioInScopeDialog(props: {
                 ))}
               </div>
             )}
-            <Suspense fallback={<p className="text-xs text-txt-tertiary">{t("createScenarioInScopeDialog.loadingRisks")}</p>}>
+            <Suspense fallback={<p className="text-xs text-txt-tertiary">{t("createScenarioInDiagramDialog.loadingRisks")}</p>}>
               <RiskSelector
                 selectedRisks={selectedRisks}
                 onSelect={(id, name) => {
@@ -295,7 +295,7 @@ export function CreateScenarioInScopeDialog(props: {
             </Suspense>
           </div>
         </DialogContent>
-        <DialogFooter><Button type="submit" disabled={isCreating}>{t("createScenarioInScopeDialog.actions.add")}</Button></DialogFooter>
+        <DialogFooter><Button type="submit" disabled={isCreating}>{t("createScenarioInDiagramDialog.actions.add")}</Button></DialogFooter>
       </form>
     </Dialog>
   );

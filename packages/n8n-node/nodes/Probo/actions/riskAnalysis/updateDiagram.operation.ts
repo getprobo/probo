@@ -23,32 +23,40 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Risk Analysis ID',
-		name: 'riskAnalysisId',
+		displayName: 'Diagram ID',
+		name: 'diagramId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['createScope'],
+				operation: ['updateDiagram'],
 			},
 		},
 		default: '',
-		description: 'The ID of the risk analysis',
+		description: 'The ID of the diagram to update',
 		required: true,
 	},
 	{
-		displayName: 'Name',
-		name: 'name',
-		type: 'string',
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['createScope'],
+				operation: ['updateDiagram'],
 			},
 		},
-		default: '',
-		description: 'The name of the scope',
-		required: true,
+		options: [
+			{
+				displayName: 'Name',
+				name: 'name',
+				type: 'string',
+				default: '',
+				description: 'The name of the diagram',
+			},
+		],
 	},
 ];
 
@@ -56,28 +64,33 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex) as string;
-	const name = this.getNodeParameter('name', itemIndex) as string;
+	const diagramId = this.getNodeParameter('diagramId', itemIndex) as string;
+	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
+		name?: string;
+	};
 
 	const query = `
-		mutation CreateRiskAnalysisScope($input: CreateRiskAnalysisScopeInput!) {
-			createRiskAnalysisScope(input: $input) {
-				riskAnalysisScopeEdge {
-					node {
-						id
-						riskAnalysisId
-						name
-						createdAt
-						updatedAt
-					}
+		mutation UpdateRiskAnalysisDiagram($input: UpdateRiskAnalysisDiagramInput!) {
+			updateRiskAnalysisDiagram(input: $input) {
+				riskAnalysisDiagram {
+					id
+					riskAnalysisId
+					name
+					createdAt
+					updatedAt
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, {
-		input: { riskAnalysisId, name },
-	});
+	const input: Record<string, unknown> = { id: diagramId };
+	if (additionalFields.name) input.name = additionalFields.name;
+
+	if (Object.keys(input).length === 1) {
+		throw new Error('At least one field must be provided to update');
+	}
+
+	const responseData = await proboApiRequest.call(this, query, { input });
 
 	return {
 		json: responseData,

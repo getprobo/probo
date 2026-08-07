@@ -18,23 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package scope
+package diagram
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/risk-analysis/scope/create"
-	"go.probo.inc/probo/pkg/cmd/risk-analysis/scope/delete"
-	"go.probo.inc/probo/pkg/cmd/risk-analysis/scope/list"
-	"go.probo.inc/probo/pkg/cmd/risk-analysis/scope/mermaid"
-	"go.probo.inc/probo/pkg/cmd/risk-analysis/scope/update"
-	"go.probo.inc/probo/pkg/cmd/risk-analysis/scope/view"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/diagram/create"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/diagram/delete"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/diagram/list"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/diagram/mermaid"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/diagram/update"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/diagram/view"
 )
 
-func NewCmdScope(f *cmdutil.Factory) *cobra.Command {
+func NewCmdDiagram(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "scope <command>",
-		Short: "Manage risk analysis scopes",
+		Use:   "diagram <command>",
+		Short: "Manage risk analysis diagrams",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))

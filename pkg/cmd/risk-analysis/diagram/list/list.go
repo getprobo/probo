@@ -30,11 +30,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisScopeOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisDiagramOrder) {
   node(id: $id) {
     __typename
     ... on RiskAnalysis {
-      scopes(first: $first, after: $after, orderBy: $orderBy) {
+      diagrams(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {
@@ -55,7 +55,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisScopeOrder
 }
 `
 
-type riskAnalysisScope struct {
+type riskAnalysisDiagram struct {
 	ID             string `json:"id"`
 	RiskAnalysisId string `json:"riskAnalysisId"`
 	Name           string `json:"name"`
@@ -74,13 +74,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List scopes in a risk analysis",
+		Short:   "List diagrams in a risk analysis",
 		Aliases: []string{"ls"},
-		Example: `  # List scopes for a risk analysis
-  prb risk-analysis scope list --risk-analysis <id>
+		Example: `  # List diagrams for a risk analysis
+  prb risk-analysis diagram list --risk-analysis <id>
 
-  # List scopes as JSON
-  prb risk-analysis scope ls --risk-analysis <id> --json`,
+  # List diagrams as JSON
+  prb risk-analysis diagram ls --risk-analysis <id> --json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -124,16 +124,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			scopes, totalCount, err := api.Paginate(
+			diagrams, totalCount, err := api.Paginate(
 				client,
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[riskAnalysisScope], error) {
+				func(data json.RawMessage) (*api.Connection[riskAnalysisDiagram], error) {
 					var resp struct {
 						Node *struct {
-							Typename string                            `json:"__typename"`
-							Scopes   api.Connection[riskAnalysisScope] `json:"scopes"`
+							Typename string                              `json:"__typename"`
+							Diagrams api.Connection[riskAnalysisDiagram] `json:"diagrams"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -148,7 +148,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return nil, fmt.Errorf("expected RiskAnalysis node, got %s", resp.Node.Typename)
 					}
 
-					return &resp.Node.Scopes, nil
+					return &resp.Node.Diagrams, nil
 				},
 			)
 			if err != nil {
@@ -156,16 +156,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, scopes)
+				return cmdutil.PrintJSON(f.IOStreams.Out, diagrams)
 			}
 
-			if len(scopes) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No scopes found.")
+			if len(diagrams) == 0 {
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No diagrams found.")
 				return nil
 			}
 
-			rows := make([][]string, 0, len(scopes))
-			for _, s := range scopes {
+			rows := make([][]string, 0, len(diagrams))
+			for _, s := range diagrams {
 				rows = append(rows, []string{
 					s.ID,
 					s.Name,
@@ -177,11 +177,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
-			if totalCount > len(scopes) {
+			if totalCount > len(diagrams) {
 				_, _ = fmt.Fprintf(
 					f.IOStreams.ErrOut,
-					"\nShowing %d of %d scopes\n",
-					len(scopes),
+					"\nShowing %d of %d diagrams\n",
+					len(diagrams),
 					totalCount,
 				)
 			}
@@ -191,7 +191,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagRiskAnalysis, "risk-analysis", "", "Risk analysis ID (required)")
-	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of scopes to list")
+	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of diagrams to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

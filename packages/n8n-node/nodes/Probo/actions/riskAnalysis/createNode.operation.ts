@@ -23,8 +23,8 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Scope ID',
-		name: 'riskAnalysisScopeId',
+		displayName: 'Diagram ID',
+		name: 'riskAnalysisDiagramId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the scope',
+		description: 'The ID of the diagram',
 		required: true,
 	},
 	{
@@ -97,7 +97,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskAnalysisScopeId = this.getNodeParameter('riskAnalysisScopeId', itemIndex) as string;
+	const riskAnalysisDiagramId = this.getNodeParameter('riskAnalysisDiagramId', itemIndex) as string;
 	const nodeType = this.getNodeParameter('nodeType', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const boundaryId = this.getNodeParameter('boundaryId', itemIndex, '') as string;
@@ -108,7 +108,7 @@ export async function execute(
 				riskAnalysisNodeEdge {
 					node {
 						id
-						riskAnalysisScopeId
+						riskAnalysisDiagramId
 						boundaryId
 						nodeType
 						name
@@ -120,7 +120,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { riskAnalysisScopeId, nodeType, name };
+	const input: Record<string, unknown> = { riskAnalysisDiagramId, nodeType, name };
 	if (boundaryId) input.boundaryId = boundaryId;
 
 	const responseData = await proboApiRequest.call(this, query, { input });

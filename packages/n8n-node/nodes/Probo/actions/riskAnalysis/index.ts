@@ -24,12 +24,12 @@ import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
-import * as createScopeOp from './createScope.operation';
-import * as getScopeOp from './getScope.operation';
-import * as getAllScopesOp from './getAllScopes.operation';
-import * as updateScopeOp from './updateScope.operation';
-import * as deleteScopeOp from './deleteScope.operation';
-import * as getScopeMermaidChartOp from './getScopeMermaidChart.operation';
+import * as createDiagramOp from './createDiagram.operation';
+import * as getDiagramOp from './getDiagram.operation';
+import * as getAllDiagramsOp from './getAllDiagrams.operation';
+import * as updateDiagramOp from './updateDiagram.operation';
+import * as deleteDiagramOp from './deleteDiagram.operation';
+import * as getDiagramMermaidChartOp from './getDiagramMermaidChart.operation';
 import * as createNodeOp from './createNode.operation';
 import * as getNodeOp from './getNode.operation';
 import * as getAllNodesOp from './getAllNodes.operation';
@@ -81,37 +81,37 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Create Boundary',
 				value: 'createBoundary',
-				description: 'Create a boundary in a scope',
+				description: 'Create a boundary in a diagram',
 				action: 'Create a boundary',
+			},
+			{
+				name: 'Create Diagram',
+				value: 'createDiagram',
+				description: 'Create a diagram in a risk analysis',
+				action: 'Create a diagram',
 			},
 			{
 				name: 'Create Node',
 				value: 'createNode',
-				description: 'Create a node in a scope',
+				description: 'Create a node in a diagram',
 				action: 'Create a node',
 			},
 			{
 				name: 'Create Process',
 				value: 'createProcess',
-				description: 'Create a process in a scope',
+				description: 'Create a process in a diagram',
 				action: 'Create a process',
 			},
 			{
 				name: 'Create Scenario',
 				value: 'createScenario',
-				description: 'Create a scenario in a scope',
+				description: 'Create a scenario in a diagram',
 				action: 'Create a scenario',
-			},
-			{
-				name: 'Create Scope',
-				value: 'createScope',
-				description: 'Create a scope in a risk analysis',
-				action: 'Create a scope',
 			},
 			{
 				name: 'Create Threat',
 				value: 'createThreat',
-				description: 'Create a threat in a scope',
+				description: 'Create a threat in a diagram',
 				action: 'Create a threat',
 			},
 			{
@@ -125,6 +125,12 @@ export const description: INodeProperties[] = [
 				value: 'deleteBoundary',
 				description: 'Delete a boundary',
 				action: 'Delete a boundary',
+			},
+			{
+				name: 'Delete Diagram',
+				value: 'deleteDiagram',
+				description: 'Delete a diagram',
+				action: 'Delete a diagram',
 			},
 			{
 				name: 'Delete Node',
@@ -145,12 +151,6 @@ export const description: INodeProperties[] = [
 				action: 'Delete a scenario',
 			},
 			{
-				name: 'Delete Scope',
-				value: 'deleteScope',
-				description: 'Delete a scope',
-				action: 'Delete a scope',
-			},
-			{
 				name: 'Delete Threat',
 				value: 'deleteThreat',
 				description: 'Delete a threat',
@@ -169,6 +169,18 @@ export const description: INodeProperties[] = [
 				action: 'Get a boundary',
 			},
 			{
+				name: 'Get Diagram',
+				value: 'getDiagram',
+				description: 'Get a diagram',
+				action: 'Get a diagram',
+			},
+			{
+				name: 'Get Diagram Mermaid Chart',
+				value: 'getDiagramMermaidChart',
+				description: 'Get the Mermaid chart for a diagram',
+				action: 'Get a diagram mermaid chart',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many risk analyses',
@@ -178,6 +190,11 @@ export const description: INodeProperties[] = [
 				name: 'Get Many Boundaries',
 				value: 'getAllBoundaries',
 				action: 'Get many boundaries',
+			},
+			{
+				name: 'Get Many Diagrams',
+				value: 'getAllDiagrams',
+				action: 'Get many diagrams',
 			},
 			{
 				name: 'Get Many Nodes',
@@ -193,11 +210,6 @@ export const description: INodeProperties[] = [
 				name: 'Get Many Scenarios',
 				value: 'getAllScenarios',
 				action: 'Get many scenarios',
-			},
-			{
-				name: 'Get Many Scopes',
-				value: 'getAllScopes',
-				action: 'Get many scopes',
 			},
 			{
 				name: 'Get Many Threats',
@@ -221,18 +233,6 @@ export const description: INodeProperties[] = [
 				value: 'getScenario',
 				description: 'Get a scenario',
 				action: 'Get a scenario',
-			},
-			{
-				name: 'Get Scope',
-				value: 'getScope',
-				description: 'Get a scope',
-				action: 'Get a scope',
-			},
-			{
-				name: 'Get Scope Mermaid Chart',
-				value: 'getScopeMermaidChart',
-				description: 'Get the Mermaid diagram for a scope',
-				action: 'Get a scope mermaid chart',
 			},
 			{
 				name: 'Get Threat',
@@ -277,6 +277,12 @@ export const description: INodeProperties[] = [
 				action: 'Update a boundary',
 			},
 			{
+				name: 'Update Diagram',
+				value: 'updateDiagram',
+				description: 'Update a diagram',
+				action: 'Update a diagram',
+			},
+			{
 				name: 'Update Node',
 				value: 'updateNode',
 				description: 'Update a node',
@@ -295,12 +301,6 @@ export const description: INodeProperties[] = [
 				action: 'Update a scenario',
 			},
 			{
-				name: 'Update Scope',
-				value: 'updateScope',
-				description: 'Update a scope',
-				action: 'Update a scope',
-			},
-			{
 				name: 'Update Threat',
 				value: 'updateThreat',
 				description: 'Update a threat',
@@ -314,12 +314,12 @@ export const description: INodeProperties[] = [
 	...getAllOp.description,
 	...updateOp.description,
 	...deleteOp.description,
-	...createScopeOp.description,
-	...getScopeOp.description,
-	...getAllScopesOp.description,
-	...updateScopeOp.description,
-	...deleteScopeOp.description,
-	...getScopeMermaidChartOp.description,
+	...createDiagramOp.description,
+	...getDiagramOp.description,
+	...getAllDiagramsOp.description,
+	...updateDiagramOp.description,
+	...deleteDiagramOp.description,
+	...getDiagramMermaidChartOp.description,
 	...createNodeOp.description,
 	...getNodeOp.description,
 	...getAllNodesOp.description,
@@ -357,12 +357,12 @@ export {
 	getAllOp as getAll,
 	updateOp as update,
 	deleteOp as delete,
-	createScopeOp as createScope,
-	getScopeOp as getScope,
-	getAllScopesOp as getAllScopes,
-	updateScopeOp as updateScope,
-	deleteScopeOp as deleteScope,
-	getScopeMermaidChartOp as getScopeMermaidChart,
+	createDiagramOp as createDiagram,
+	getDiagramOp as getDiagram,
+	getAllDiagramsOp as getAllDiagrams,
+	updateDiagramOp as updateDiagram,
+	deleteDiagramOp as deleteDiagram,
+	getDiagramMermaidChartOp as getDiagramMermaidChart,
 	createNodeOp as createNode,
 	getNodeOp as getNode,
 	getAllNodesOp as getAllNodes,

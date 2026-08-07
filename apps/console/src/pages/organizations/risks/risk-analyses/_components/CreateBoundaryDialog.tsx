@@ -50,7 +50,7 @@ const createBoundaryMutation = graphql`
 `;
 
 export function CreateBoundaryDialog(props: {
-  scopeId: string;
+  diagramId: string;
   connectionId: string;
   boundaries: { id: string; name: string }[];
 }) {
@@ -64,7 +64,7 @@ export function CreateBoundaryDialog(props: {
     createBoundary({
       variables: {
         input: {
-          riskAnalysisScopeId: props.scopeId,
+          riskAnalysisDiagramId: props.diagramId,
           name: data.name,
           parentBoundaryId: data.parentBoundaryId === "none" ? null : data.parentBoundaryId,
         },

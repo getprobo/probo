@@ -33,35 +33,35 @@ import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 import { useParams } from "react-router";
 
-import type { CreateScopeDialogMutation } from "#/__generated__/core/CreateScopeDialogMutation.graphql";
+import type { CreateDiagramDialogMutation } from "#/__generated__/core/CreateDiagramDialogMutation.graphql";
 
-const createScopeMutation = graphql`
-  mutation CreateScopeDialogMutation(
-    $input: CreateRiskAnalysisScopeInput!
+const createDiagramMutation = graphql`
+  mutation CreateDiagramDialogMutation(
+    $input: CreateRiskAnalysisDiagramInput!
     $connections: [ID!]!
   ) {
-    createRiskAnalysisScope(input: $input) {
-      riskAnalysisScopeEdge @appendEdge(connections: $connections) {
+    createRiskAnalysisDiagram(input: $input) {
+      riskAnalysisDiagramEdge @appendEdge(connections: $connections) {
         node {
           id
-          ...ScopeCardFragment
+          ...DiagramCardFragment
         }
       }
     }
   }
 `;
 
-export function CreateScopeDialog(props: { connectionId: string }) {
+export function CreateDiagramDialog(props: { connectionId: string }) {
   const { riskAnalysisId } = useParams<{ riskAnalysisId: string }>();
   const { t } = useTranslation();
   const dialogRef = useDialogRef();
-  const [createScope, isCreating] = useMutation<CreateScopeDialogMutation>(createScopeMutation);
+  const [createDiagram, isCreating] = useMutation<CreateDiagramDialogMutation>(createDiagramMutation);
   const { register, handleSubmit, reset, formState } = useForm({
     defaultValues: { name: "" },
   });
   const onSubmit = (data: { name: string }) => {
     if (!riskAnalysisId) return;
-    createScope({
+    createDiagram({
       variables: {
         input: { riskAnalysisId, name: data.name },
         connections: [props.connectionId],
@@ -76,14 +76,14 @@ export function CreateScopeDialog(props: { connectionId: string }) {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={<Button icon={IconPlusLarge} variant="secondary">{t("createRiskAnalysisScopeDialog.actions.addScope")}</Button>}
-      title={<Breadcrumb items={[t("createRiskAnalysisScopeDialog.breadcrumb.scopes"), t("createRiskAnalysisScopeDialog.breadcrumb.newScope")]} />}
+      trigger={<Button icon={IconPlusLarge} variant="secondary">{t("createRiskAnalysisDiagramDialog.actions.addDiagram")}</Button>}
+      title={<Breadcrumb items={[t("createRiskAnalysisDiagramDialog.breadcrumb.diagrams"), t("createRiskAnalysisDiagramDialog.breadcrumb.newDiagram")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <Field label={t("createRiskAnalysisScopeDialog.fields.name")} {...register("name", { required: t("createRiskAnalysisScopeDialog.validation.nameRequired") })} type="text" error={formState.errors.name?.message} placeholder={t("createRiskAnalysisScopeDialog.placeholders.name")} />
+          <Field label={t("createRiskAnalysisDiagramDialog.fields.name")} {...register("name", { required: t("createRiskAnalysisDiagramDialog.validation.nameRequired") })} type="text" error={formState.errors.name?.message} placeholder={t("createRiskAnalysisDiagramDialog.placeholders.name")} />
         </DialogContent>
-        <DialogFooter><Button type="submit" disabled={isCreating}>{t("createRiskAnalysisScopeDialog.actions.create")}</Button></DialogFooter>
+        <DialogFooter><Button type="submit" disabled={isCreating}>{t("createRiskAnalysisDiagramDialog.actions.create")}</Button></DialogFooter>
       </form>
     </Dialog>
   );

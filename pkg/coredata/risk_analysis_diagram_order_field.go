@@ -27,50 +27,50 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type RiskAnalysisScopeOrderField string
+type RiskAnalysisDiagramOrderField string
 
 const (
-	RiskAnalysisScopeOrderFieldCreatedAt RiskAnalysisScopeOrderField = "CREATED_AT"
-	RiskAnalysisScopeOrderFieldName      RiskAnalysisScopeOrderField = "NAME"
+	RiskAnalysisDiagramOrderFieldCreatedAt RiskAnalysisDiagramOrderField = "CREATED_AT"
+	RiskAnalysisDiagramOrderFieldName      RiskAnalysisDiagramOrderField = "NAME"
 )
 
 var (
-	_ page.OrderField          = RiskAnalysisScopeOrderField("")
-	_ fmt.Stringer             = RiskAnalysisScopeOrderField("")
-	_ encoding.TextMarshaler   = RiskAnalysisScopeOrderField("")
-	_ encoding.TextUnmarshaler = (*RiskAnalysisScopeOrderField)(nil)
+	_ page.OrderField          = RiskAnalysisDiagramOrderField("")
+	_ fmt.Stringer             = RiskAnalysisDiagramOrderField("")
+	_ encoding.TextMarshaler   = RiskAnalysisDiagramOrderField("")
+	_ encoding.TextUnmarshaler = (*RiskAnalysisDiagramOrderField)(nil)
 )
 
-func RiskAnalysisScopeOrderFields() []RiskAnalysisScopeOrderField {
-	return []RiskAnalysisScopeOrderField{
-		RiskAnalysisScopeOrderFieldCreatedAt,
-		RiskAnalysisScopeOrderFieldName,
+func RiskAnalysisDiagramOrderFields() []RiskAnalysisDiagramOrderField {
+	return []RiskAnalysisDiagramOrderField{
+		RiskAnalysisDiagramOrderFieldCreatedAt,
+		RiskAnalysisDiagramOrderFieldName,
 	}
 }
 
-func (v RiskAnalysisScopeOrderField) IsValid() bool {
+func (v RiskAnalysisDiagramOrderField) IsValid() bool {
 	switch v {
 	case
-		RiskAnalysisScopeOrderFieldCreatedAt,
-		RiskAnalysisScopeOrderFieldName:
+		RiskAnalysisDiagramOrderFieldCreatedAt,
+		RiskAnalysisDiagramOrderFieldName:
 		return true
 	}
 
 	return false
 }
 
-func (v RiskAnalysisScopeOrderField) String() string {
+func (v RiskAnalysisDiagramOrderField) String() string {
 	return string(v)
 }
 
-func (v RiskAnalysisScopeOrderField) MarshalText() ([]byte, error) {
+func (v RiskAnalysisDiagramOrderField) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *RiskAnalysisScopeOrderField) UnmarshalText(text []byte) error {
-	val := RiskAnalysisScopeOrderField(text)
+func (v *RiskAnalysisDiagramOrderField) UnmarshalText(text []byte) error {
+	val := RiskAnalysisDiagramOrderField(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid RiskAnalysisScopeOrderField value: %q", string(text))
+		return fmt.Errorf("invalid RiskAnalysisDiagramOrderField value: %q", string(text))
 	}
 
 	*v = val
@@ -78,4 +78,4 @@ func (v *RiskAnalysisScopeOrderField) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (p RiskAnalysisScopeOrderField) Column() string { return string(p) }
+func (p RiskAnalysisDiagramOrderField) Column() string { return string(p) }

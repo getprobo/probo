@@ -23,8 +23,8 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Scope ID',
-		name: 'riskAnalysisScopeId',
+		displayName: 'Diagram ID',
+		name: 'riskAnalysisDiagramId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the scope',
+		description: 'The ID of the diagram',
 		required: true,
 	},
 	{
@@ -78,7 +78,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskAnalysisScopeId = this.getNodeParameter('riskAnalysisScopeId', itemIndex) as string;
+	const riskAnalysisDiagramId = this.getNodeParameter('riskAnalysisDiagramId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		description?: string;
@@ -90,7 +90,7 @@ export async function execute(
 				riskAnalysisScenarioEdge {
 					node {
 						id
-						riskAnalysisScopeId
+						riskAnalysisDiagramId
 						name
 						description
 						createdAt
@@ -102,7 +102,7 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = {
-		riskAnalysisScopeId,
+		riskAnalysisDiagramId,
 		name,
 	};
 	if (additionalFields.description) input.description = additionalFields.description;

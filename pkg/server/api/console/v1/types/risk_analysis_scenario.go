@@ -61,11 +61,11 @@ func NewRiskAnalysisScenarioConnection(
 
 func NewRiskAnalysisScenario(s *coredata.RiskAnalysisScenario) *RiskAnalysisScenario {
 	return &RiskAnalysisScenario{
-		ID:                  s.ID,
-		RiskAnalysisScopeID: s.RiskAnalysisScopeID,
-		Name:                s.Name,
-		Description:         s.Description,
-		CreatedAt:           s.CreatedAt,
-		UpdatedAt:           s.UpdatedAt,
+		ID:                    s.ID,
+		RiskAnalysisDiagramID: s.RiskAnalysisDiagramID,
+		Name:                  s.Name,
+		Description:           s.Description,
+		CreatedAt:             s.CreatedAt,
+		UpdatedAt:             s.UpdatedAt,
 	}
 }

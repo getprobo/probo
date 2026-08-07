@@ -34,7 +34,7 @@ const viewQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
-    ... on RiskAnalysisScope {
+    ... on RiskAnalysisDiagram {
       id
       riskAnalysisId
       name
@@ -61,7 +61,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
-		Short: "View a risk analysis scope",
+		Short: "View a risk analysis diagram",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -100,11 +100,11 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if resp.Node == nil {
-				return fmt.Errorf("risk analysis scope %s not found", args[0])
+				return fmt.Errorf("risk analysis diagram %s not found", args[0])
 			}
 
-			if resp.Node.Typename != "RiskAnalysisScope" {
-				return fmt.Errorf("expected RiskAnalysisScope node, got %s", resp.Node.Typename)
+			if resp.Node.Typename != "RiskAnalysisDiagram" {
+				return fmt.Errorf("expected RiskAnalysisDiagram node, got %s", resp.Node.Typename)
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {

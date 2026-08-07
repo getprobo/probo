@@ -74,7 +74,7 @@ func TestRiskAnalysis_Delete(t *testing.T) {
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		raID := factory.CreateRiskAnalysis(owner)
-		scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+		scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 
 		_, err := owner.Do(`
 			mutation($input: DeleteRiskAnalysisInput!) {
@@ -89,13 +89,13 @@ func TestRiskAnalysis_Delete(t *testing.T) {
 			} `json:"node"`
 		}
 
-		err = owner.Execute(`query($id: ID!) { node(id: $id) { ... on RiskAnalysisScope { id } } }`,
+		err = owner.Execute(`query($id: ID!) { node(id: $id) { ... on RiskAnalysisDiagram { id } } }`,
 			map[string]any{"id": scopeID}, &result)
-		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "RiskAnalysisScope")
+		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "RiskAnalysisDiagram")
 	})
 }
 
-func TestRiskAnalysisScope_CRUD(t *testing.T) {
+func TestRiskAnalysisDiagram_CRUD(t *testing.T) {
 	t.Parallel()
 
 	t.Run("create and list via assessment", func(t *testing.T) {
@@ -103,8 +103,8 @@ func TestRiskAnalysisScope_CRUD(t *testing.T) {
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
 		raID := factory.CreateRiskAnalysis(owner)
-		factory.CreateRiskAnalysisScope(owner, raID, factory.Attrs{"name": "API scope"})
-		factory.CreateRiskAnalysisScope(owner, raID, factory.Attrs{"name": "Infra scope"})
+		factory.CreateRiskAnalysisDiagram(owner, raID, factory.Attrs{"name": "API scope"})
+		factory.CreateRiskAnalysisDiagram(owner, raID, factory.Attrs{"name": "Infra diagram"})
 
 		var result struct {
 			Node struct {
@@ -116,7 +116,7 @@ func TestRiskAnalysisScope_CRUD(t *testing.T) {
 							Name string `json:"name"`
 						} `json:"node"`
 					} `json:"edges"`
-				} `json:"scopes"`
+				} `json:"diagrams"`
 			} `json:"node"`
 		}
 
@@ -124,7 +124,7 @@ func TestRiskAnalysisScope_CRUD(t *testing.T) {
 			query($id: ID!) {
 				node(id: $id) {
 					... on RiskAnalysis {
-						scopes(first: 10) {
+						diagrams(first: 10) {
 							totalCount
 							edges { node { id name } }
 						}
@@ -147,7 +147,7 @@ func TestRiskAnalysisNode_Create(t *testing.T) {
 			t.Parallel()
 			owner := testutil.NewClient(t, testutil.RoleOwner)
 			raID := factory.CreateRiskAnalysis(owner)
-			scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+			scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 
 			var result struct {
 				CreateRiskAnalysisNode struct {
@@ -168,9 +168,9 @@ func TestRiskAnalysisNode_Create(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"riskAnalysisScopeId": scopeID,
-					"nodeType":            nodeType,
-					"name":                "Node-" + nodeType,
+					"riskAnalysisDiagramId": scopeID,
+					"nodeType":              nodeType,
+					"name":                  "Node-" + nodeType,
 				},
 			}, &result)
 
@@ -185,7 +185,7 @@ func TestRiskAnalysisProcess_Create(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	src := factory.CreateRiskAnalysisNode(owner, scopeID, factory.Attrs{"nodeType": "ENTITY"})
 	dst := factory.CreateRiskAnalysisNode(owner, scopeID, factory.Attrs{"nodeType": "ASSET"})
 
@@ -210,10 +210,10 @@ func TestRiskAnalysisProcess_Create(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"riskAnalysisScopeId": scopeID,
-			"sourceNodeId":        src,
-			"targetNodeId":        dst,
-			"name":                "User → API",
+			"riskAnalysisDiagramId": scopeID,
+			"sourceNodeId":          src,
+			"targetNodeId":          dst,
+			"name":                  "User → API",
 		},
 	}, &result)
 
@@ -227,7 +227,7 @@ func TestRiskAnalysisThreat_Create(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	src := factory.CreateRiskAnalysisNode(owner, scopeID)
 	dst := factory.CreateRiskAnalysisNode(owner, scopeID)
 	processID := factory.CreateRiskAnalysisProcess(owner, scopeID, src, dst)
@@ -252,10 +252,10 @@ func TestRiskAnalysisThreat_Create(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"riskAnalysisScopeId": scopeID,
-			"processId":           processID,
-			"name":                "SQL injection",
-			"category":            "Confidentiality",
+			"riskAnalysisDiagramId": scopeID,
+			"processId":             processID,
+			"name":                  "SQL injection",
+			"category":              "Confidentiality",
 		},
 	}, &result)
 
@@ -269,7 +269,7 @@ func TestRiskAnalysisScenario_Create(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 
 	var result struct {
 		CreateRiskAnalysisScenario struct {
@@ -290,8 +290,8 @@ func TestRiskAnalysisScenario_Create(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"riskAnalysisScopeId": scopeID,
-			"name":                "SQL injection impacts data breach risk",
+			"riskAnalysisDiagramId": scopeID,
+			"name":                  "SQL injection impacts data breach risk",
 		},
 	}, &result)
 
@@ -306,7 +306,7 @@ func TestRiskAnalysisScenario_ListViaRisk(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	riskID := factory.CreateRisk(owner)
 	s1 := factory.CreateRiskAnalysisScenario(owner, scopeID, factory.Attrs{"name": "S1"})
 	s2 := factory.CreateRiskAnalysisScenario(owner, scopeID, factory.Attrs{"name": "S2"})
@@ -352,7 +352,7 @@ func TestRiskAnalysisScenario_ListViaScope(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	factory.CreateRiskAnalysisScenario(owner, scopeID, factory.Attrs{"name": "Scenario A"})
 	factory.CreateRiskAnalysisScenario(owner, scopeID, factory.Attrs{"name": "Scenario B"})
 
@@ -373,7 +373,7 @@ func TestRiskAnalysisScenario_ListViaScope(t *testing.T) {
 	err := owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
-				... on RiskAnalysisScope {
+				... on RiskAnalysisDiagram {
 					scenarios(first: 10) {
 						totalCount
 						edges { node { id name } }
@@ -424,26 +424,26 @@ func TestRiskAnalysis_Update(t *testing.T) {
 	assert.Equal(t, "New description", *result.UpdateRiskAnalysis.RiskAnalysis.Description)
 }
 
-func TestRiskAnalysisScope_Update(t *testing.T) {
+func TestRiskAnalysisDiagram_Update(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID, factory.Attrs{"name": "Original"})
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID, factory.Attrs{"name": "Original"})
 
 	var result struct {
-		UpdateRiskAnalysisScope struct {
-			RiskAnalysisScope struct {
+		UpdateRiskAnalysisDiagram struct {
+			RiskAnalysisDiagram struct {
 				ID   string `json:"id"`
 				Name string `json:"name"`
-			} `json:"riskAnalysisScope"`
-		} `json:"updateRiskAnalysisScope"`
+			} `json:"riskAnalysisDiagram"`
+		} `json:"updateRiskAnalysisDiagram"`
 	}
 
 	err := owner.Execute(`
-		mutation($input: UpdateRiskAnalysisScopeInput!) {
-			updateRiskAnalysisScope(input: $input) {
-				riskAnalysisScope { id name }
+		mutation($input: UpdateRiskAnalysisDiagramInput!) {
+			updateRiskAnalysisDiagram(input: $input) {
+				riskAnalysisDiagram { id name }
 			}
 		}
 	`, map[string]any{
@@ -454,7 +454,7 @@ func TestRiskAnalysisScope_Update(t *testing.T) {
 	}, &result)
 
 	require.NoError(t, err)
-	assert.Equal(t, "Updated scope", result.UpdateRiskAnalysisScope.RiskAnalysisScope.Name)
+	assert.Equal(t, "Updated scope", result.UpdateRiskAnalysisDiagram.RiskAnalysisDiagram.Name)
 }
 
 func TestRiskAnalysisNode_Update(t *testing.T) {
@@ -462,7 +462,7 @@ func TestRiskAnalysisNode_Update(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	nodeID := factory.CreateRiskAnalysisNode(owner, scopeID, factory.Attrs{"nodeType": "ENTITY", "name": "Original"})
 
 	var result struct {
@@ -499,7 +499,7 @@ func TestRiskAnalysisProcess_Update(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	src := factory.CreateRiskAnalysisNode(owner, scopeID, factory.Attrs{"nodeType": "ENTITY"})
 	dst := factory.CreateRiskAnalysisNode(owner, scopeID, factory.Attrs{"nodeType": "ASSET"})
 	processID := factory.CreateRiskAnalysisProcess(owner, scopeID, src, dst)
@@ -535,7 +535,7 @@ func TestRiskAnalysisThreat_Update(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	src := factory.CreateRiskAnalysisNode(owner, scopeID)
 	dst := factory.CreateRiskAnalysisNode(owner, scopeID)
 	processID := factory.CreateRiskAnalysisProcess(owner, scopeID, src, dst)
@@ -575,7 +575,7 @@ func TestRiskAnalysisScenario_Update(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	scenarioID := factory.CreateRiskAnalysisScenario(owner, scopeID, factory.Attrs{"name": "Original"})
 
 	var result struct {
@@ -614,7 +614,7 @@ func TestRiskAnalysisScenario_LinkUnlinkThreat(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	src := factory.CreateRiskAnalysisNode(owner, scopeID)
 	dst := factory.CreateRiskAnalysisNode(owner, scopeID)
 	processID := factory.CreateRiskAnalysisProcess(owner, scopeID, src, dst)
@@ -674,7 +674,7 @@ func TestRiskAnalysisScenario_LinkUnlinkRisk(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	riskID := factory.CreateRisk(owner)
 	scenarioID := factory.CreateRiskAnalysisScenario(owner, scopeID)
 
@@ -730,7 +730,7 @@ func TestRiskAnalysisBoundary_Create(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	parentID := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "External Zone"})
 
 	var result struct {
@@ -753,9 +753,9 @@ func TestRiskAnalysisBoundary_Create(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"riskAnalysisScopeId": scopeID,
-			"parentBoundaryId":    parentID,
-			"name":                "Internal Network",
+			"riskAnalysisDiagramId": scopeID,
+			"parentBoundaryId":      parentID,
+			"name":                  "Internal Network",
 		},
 	}, &result)
 
@@ -773,7 +773,7 @@ func TestRiskAnalysisBoundary_ListViaScope(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "Zone A"})
 	factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "Zone B"})
 
@@ -794,7 +794,7 @@ func TestRiskAnalysisBoundary_ListViaScope(t *testing.T) {
 	err := owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
-				... on RiskAnalysisScope {
+				... on RiskAnalysisDiagram {
 					boundaries(first: 10) {
 						totalCount
 						edges { node { id name } }
@@ -814,7 +814,7 @@ func TestRiskAnalysisBoundary_Update(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	parentID := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "Parent"})
 	boundaryID := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "Original"})
 
@@ -865,7 +865,7 @@ func TestRiskAnalysisBoundary_PreventCycle(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	a := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "A"})
 	b := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "B", "parentBoundaryId": a})
 
@@ -890,7 +890,7 @@ func TestRiskAnalysisBoundary_Delete(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	parentID := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "Parent"})
 	childID := factory.CreateRiskAnalysisBoundary(owner, scopeID, factory.Attrs{"name": "Child", "parentBoundaryId": parentID})
 	nodeID := factory.CreateRiskAnalysisNode(owner, scopeID, factory.Attrs{"name": "Member", "boundaryId": parentID})
@@ -931,7 +931,7 @@ func TestRiskAnalysisNode_WithBoundary(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	raID := factory.CreateRiskAnalysis(owner)
-	scopeID := factory.CreateRiskAnalysisScope(owner, raID)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
 	boundaryID := factory.CreateRiskAnalysisBoundary(owner, scopeID)
 
 	var createResult struct {
@@ -953,10 +953,10 @@ func TestRiskAnalysisNode_WithBoundary(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"riskAnalysisScopeId": scopeID,
-			"nodeType":            "ASSET",
-			"name":                "Member",
-			"boundaryId":          boundaryID,
+			"riskAnalysisDiagramId": scopeID,
+			"nodeType":              "ASSET",
+			"name":                  "Member",
+			"boundaryId":            boundaryID,
 		},
 	}, &createResult)
 	require.NoError(t, err)

@@ -37,13 +37,13 @@ import (
 
 type (
 	RiskAnalysisBoundary struct {
-		ID                  gid.GID   `db:"id"`
-		OrganizationID      gid.GID   `db:"organization_id"`
-		RiskAnalysisScopeID gid.GID   `db:"risk_analysis_scope_id"`
-		ParentBoundaryID    *gid.GID  `db:"parent_boundary_id"`
-		Name                string    `db:"name"`
-		CreatedAt           time.Time `db:"created_at"`
-		UpdatedAt           time.Time `db:"updated_at"`
+		ID                    gid.GID   `db:"id"`
+		OrganizationID        gid.GID   `db:"organization_id"`
+		RiskAnalysisDiagramID gid.GID   `db:"risk_analysis_diagram_id"`
+		ParentBoundaryID      *gid.GID  `db:"parent_boundary_id"`
+		Name                  string    `db:"name"`
+		CreatedAt             time.Time `db:"created_at"`
+		UpdatedAt             time.Time `db:"updated_at"`
 	}
 
 	RiskAnalysisBoundaries []*RiskAnalysisBoundary
@@ -99,18 +99,18 @@ func (b *RiskAnalysisBoundary) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (bs *RiskAnalysisBoundaries) LoadByRiskAnalysisScopeID(
+func (bs *RiskAnalysisBoundaries) LoadByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 	cursor *page.Cursor[RiskAnalysisBoundaryOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	parent_boundary_id,
 	name,
 	created_at,
@@ -119,11 +119,11 @@ FROM
 	risk_analysis_boundaries
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -142,11 +142,11 @@ WHERE
 	return nil
 }
 
-func (bs *RiskAnalysisBoundaries) CountByRiskAnalysisScopeID(
+func (bs *RiskAnalysisBoundaries) CountByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -155,11 +155,11 @@ FROM
 	risk_analysis_boundaries
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -175,7 +175,7 @@ func (b *RiskAnalysisBoundary) LoadByID(ctx context.Context, conn pg.Querier, sc
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	parent_boundary_id,
 	name,
 	created_at,
@@ -216,7 +216,7 @@ INSERT INTO risk_analysis_boundaries (
 	id,
 	tenant_id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	parent_boundary_id,
 	name,
 	created_at,
@@ -225,7 +225,7 @@ INSERT INTO risk_analysis_boundaries (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@risk_analysis_scope_id,
+	@risk_analysis_diagram_id,
 	@parent_boundary_id,
 	@name,
 	@created_at,
@@ -233,14 +233,14 @@ INSERT INTO risk_analysis_boundaries (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"id":                     b.ID,
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        b.OrganizationID,
-		"risk_analysis_scope_id": b.RiskAnalysisScopeID,
-		"parent_boundary_id":     b.ParentBoundaryID,
-		"name":                   b.Name,
-		"created_at":             b.CreatedAt,
-		"updated_at":             b.UpdatedAt,
+		"id":                       b.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"organization_id":          b.OrganizationID,
+		"risk_analysis_diagram_id": b.RiskAnalysisDiagramID,
+		"parent_boundary_id":       b.ParentBoundaryID,
+		"name":                     b.Name,
+		"created_at":               b.CreatedAt,
+		"updated_at":               b.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

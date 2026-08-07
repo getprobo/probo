@@ -36,7 +36,7 @@ mutation($input: CreateRiskAnalysisBoundaryInput!) {
     riskAnalysisBoundaryEdge {
       node {
         id
-        riskAnalysisScopeId
+        riskAnalysisDiagramId
         parentBoundaryId
         name
         createdAt
@@ -51,12 +51,12 @@ type createResponse struct {
 	CreateRiskAnalysisBoundary struct {
 		RiskAnalysisBoundaryEdge struct {
 			Node struct {
-				ID                  string  `json:"id"`
-				RiskAnalysisScopeId string  `json:"riskAnalysisScopeId"`
-				ParentBoundaryId    *string `json:"parentBoundaryId"`
-				Name                string  `json:"name"`
-				CreatedAt           string  `json:"createdAt"`
-				UpdatedAt           string  `json:"updatedAt"`
+				ID                    string  `json:"id"`
+				RiskAnalysisDiagramId string  `json:"riskAnalysisDiagramId"`
+				ParentBoundaryId      *string `json:"parentBoundaryId"`
+				Name                  string  `json:"name"`
+				CreatedAt             string  `json:"createdAt"`
+				UpdatedAt             string  `json:"updatedAt"`
 			} `json:"node"`
 		} `json:"riskAnalysisBoundaryEdge"`
 	} `json:"createRiskAnalysisBoundary"`
@@ -64,22 +64,22 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScopeId  string
-		flagParentId string
-		flagName     string
+		flagDiagramId string
+		flagParentId  string
+		flagName      string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new risk analysis boundary",
 		Example: `  # Create a boundary interactively
-  prb risk-analysis boundary create --scope-id <id>
+  prb risk-analysis boundary create --diagram-id <id>
 
   # Create a boundary non-interactively
-  prb risk-analysis boundary create --scope-id <id> --name "Production environment"
+  prb risk-analysis boundary create --diagram-id <id> --name "Production environment"
 
   # Create a boundary nested inside another boundary
-  prb risk-analysis boundary create --scope-id <id> --name "Database tier" --parent-id <boundary-id>`,
+  prb risk-analysis boundary create --diagram-id <id> --name "Database tier" --parent-id <boundary-id>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -116,8 +116,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			input := map[string]any{
-				"riskAnalysisScopeId": flagScopeId,
-				"name":                flagName,
+				"riskAnalysisDiagramId": flagDiagramId,
+				"name":                  flagName,
 			}
 
 			if flagParentId != "" {
@@ -149,11 +149,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagScopeId, "scope-id", "", "Risk analysis scope ID (required)")
+	cmd.Flags().StringVar(&flagDiagramId, "diagram-id", "", "Risk analysis diagram ID (required)")
 	cmd.Flags().StringVar(&flagParentId, "parent-id", "", "Parent boundary ID (optional, for nested boundaries)")
 	cmd.Flags().StringVar(&flagName, "name", "", "Boundary name (required)")
 
-	_ = cmd.MarkFlagRequired("scope-id")
+	_ = cmd.MarkFlagRequired("diagram-id")
 
 	return cmd
 }

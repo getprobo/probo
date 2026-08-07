@@ -128,7 +128,7 @@ const (
 	RiskAnalysisNodeEntityType                       uint16 = 96
 	RiskAnalysisProcessEntityType                    uint16 = 97
 	RiskAnalysisThreatEntityType                     uint16 = 98
-	RiskAnalysisScopeEntityType                      uint16 = 99
+	RiskAnalysisDiagramEntityType                    uint16 = 99
 	RiskAnalysisScenarioEntityType                   uint16 = 100
 	RiskAnalysisBoundaryEntityType                   uint16 = 101
 	AccessReviewCampaignSourceEntityType             uint16 = 102
@@ -328,8 +328,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &RiskAnalysisProcess{ID: id}, true
 	case RiskAnalysisThreatEntityType:
 		return &RiskAnalysisThreat{ID: id}, true
-	case RiskAnalysisScopeEntityType:
-		return &RiskAnalysisScope{ID: id}, true
+	case RiskAnalysisDiagramEntityType:
+		return &RiskAnalysisDiagram{ID: id}, true
 	case RiskAnalysisScenarioEntityType:
 		return &RiskAnalysisScenario{ID: id}, true
 	case RiskAnalysisBoundaryEntityType:

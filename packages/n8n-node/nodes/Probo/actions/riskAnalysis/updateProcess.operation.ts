@@ -90,7 +90,7 @@ export async function execute(
 			updateRiskAnalysisProcess(input: $input) {
 				riskAnalysisProcess {
 					id
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 					sourceNodeId
 					targetNodeId
 					name

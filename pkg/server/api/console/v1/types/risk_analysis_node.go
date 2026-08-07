@@ -61,12 +61,12 @@ func NewRiskAnalysisNodeConnection(
 
 func NewRiskAnalysisNode(n *coredata.RiskAnalysisNode) *RiskAnalysisNode {
 	return &RiskAnalysisNode{
-		ID:                  n.ID,
-		RiskAnalysisScopeID: n.RiskAnalysisScopeID,
-		BoundaryID:          n.BoundaryID,
-		NodeType:            n.NodeType,
-		Name:                n.Name,
-		CreatedAt:           n.CreatedAt,
-		UpdatedAt:           n.UpdatedAt,
+		ID:                    n.ID,
+		RiskAnalysisDiagramID: n.RiskAnalysisDiagramID,
+		BoundaryID:            n.BoundaryID,
+		NodeType:              n.NodeType,
+		Name:                  n.Name,
+		CreatedAt:             n.CreatedAt,
+		UpdatedAt:             n.UpdatedAt,
 	}
 }

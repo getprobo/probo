@@ -50,7 +50,7 @@ const createProcessMutation = graphql`
 `;
 
 export function CreateProcessDialog(props: {
-  scopeId: string;
+  diagramId: string;
   nodes: { id: string; name: string }[];
   connectionId: string;
 }) {
@@ -64,7 +64,7 @@ export function CreateProcessDialog(props: {
     createProcess({
       variables: {
         input: {
-          riskAnalysisScopeId: props.scopeId,
+          riskAnalysisDiagramId: props.diagramId,
           sourceNodeId: data.sourceNodeId,
           targetNodeId: data.targetNodeId,
           name: data.name,

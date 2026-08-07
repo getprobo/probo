@@ -23,17 +23,31 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Scope ID',
-		name: 'scopeId',
+		displayName: 'Risk Analysis ID',
+		name: 'riskAnalysisId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['riskAnalysis'],
-				operation: ['getScopeMermaidChart'],
+				operation: ['createDiagram'],
 			},
 		},
 		default: '',
-		description: 'The ID of the risk analysis scope',
+		description: 'The ID of the risk analysis',
+		required: true,
+	},
+	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['riskAnalysis'],
+				operation: ['createDiagram'],
+			},
+		},
+		default: '',
+		description: 'The name of the diagram',
 		required: true,
 	},
 ];
@@ -42,21 +56,28 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const scopeId = this.getNodeParameter('scopeId', itemIndex) as string;
+	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex) as string;
+	const name = this.getNodeParameter('name', itemIndex) as string;
 
 	const query = `
-		query GetScopeMermaidChart($id: ID!) {
-			node(id: $id) {
-				... on RiskAnalysisScope {
-					id
-					name
-					mermaidChart
+		mutation CreateRiskAnalysisDiagram($input: CreateRiskAnalysisDiagramInput!) {
+			createRiskAnalysisDiagram(input: $input) {
+				riskAnalysisDiagramEdge {
+					node {
+						id
+						riskAnalysisId
+						name
+						createdAt
+						updatedAt
+					}
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { id: scopeId });
+	const responseData = await proboApiRequest.call(this, query, {
+		input: { riskAnalysisId, name },
+	});
 
 	return {
 		json: responseData,
