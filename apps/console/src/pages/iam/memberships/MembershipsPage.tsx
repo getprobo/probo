@@ -49,6 +49,9 @@ export const membershipsPageQuery = graphql`
         edges @required(action: THROW) {
           node {
             id
+            membership @required(action: THROW) {
+              role
+            }
             ...MembershipCardFragment
             organization @required(action: THROW) {
               name
@@ -82,10 +85,15 @@ export function MembershipsPage(props: {
     },
   } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
 
-  // Mirrors the server rule: with signup disabled, only identities that
-  // already belong to an organization may create another one.
-  const canCreateOrganization = signUpEnabled || initialProfiles.length > 0;
-  const hasNoAccess = !canCreateOrganization && invitingOrganizations.length === 0;
+  // Mirrors the server rule: with signup disabled, only owners of an existing
+  // organization may create another one.
+  const canCreateOrganization
+    = signUpEnabled
+      || initialProfiles.some(({ node }) => node.membership.role === "OWNER");
+  const hasNoAccess
+    = !signUpEnabled
+      && initialProfiles.length === 0
+      && invitingOrganizations.length === 0;
 
   const profiles = useMemo(() => {
     if (!search.trim()) {

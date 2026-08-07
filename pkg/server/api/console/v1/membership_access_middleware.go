@@ -58,7 +58,7 @@ func newMembershipAccessMiddleware(iamSvc *iam.Service, logger *log.Logger) func
 					return
 				}
 
-				hasMembership, err := iamSvc.IdentityHasMembership(ctx, identity.ID)
+				hasMembership, err := iamSvc.IdentityHasMembership(ctx, identity.ID, nil)
 				if err != nil {
 					logger.ErrorCtx(ctx, "cannot check identity membership", log.Error(err))
 					httpserver.RenderJSON(

@@ -266,14 +266,20 @@ func (s *Service) IsSignUpEnabled() bool {
 	return !s.disableSignup
 }
 
-func (s *Service) IdentityHasMembership(ctx context.Context, identityID gid.GID) (bool, error) {
-	count, err := s.AccountService.CountProfiles(
-		ctx,
-		identityID,
-		coredata.NewMembershipProfileFilter(nil).
-			WithMembership().
-			WithStates(coredata.ProfileStateActive),
-	)
+func (s *Service) IdentityHasMembership(
+	ctx context.Context,
+	identityID gid.GID,
+	role *coredata.MembershipRole,
+) (bool, error) {
+	filter := coredata.NewMembershipProfileFilter(nil).
+		WithMembership().
+		WithStates(coredata.ProfileStateActive)
+
+	if role != nil {
+		filter = filter.WithRole(*role)
+	}
+
+	count, err := s.AccountService.CountProfiles(ctx, identityID, filter)
 	if err != nil {
 		return false, fmt.Errorf("cannot count memberships: %w", err)
 	}

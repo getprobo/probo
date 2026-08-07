@@ -32,8 +32,9 @@ import (
 // TestMembershipAccess_DisableSignupJourney covers the private-instance gate:
 // when PROBOD_AUTH_DISABLE_SIGNUP is set, an authenticated identity without an
 // active organization membership must not create organizations or reach the
-// console API. Magic-link identity creation itself stays allowed so the
-// compliance portal keeps working.
+// console API. Members who are not owners also cannot create organizations.
+// Magic-link identity creation itself stays allowed so the compliance portal
+// keeps working.
 func TestMembershipAccess_DisableSignupJourney(t *testing.T) {
 	t.Parallel()
 
@@ -123,16 +124,38 @@ func TestMembershipAccess_DisableSignupJourney(t *testing.T) {
 		},
 	)
 
+	bobOnPrivate := world.NewUnauthenticatedActorFor(
+		"Bob on private instance",
+		env.BaseURL,
+	)
+
+	bobOnPrivate.Step(
+		"signs in with a magic link as a non-owner member",
+		func() error {
+			bobOnPrivate.Client().SignInWithMagicLink(bob.Client().GetEmail())
+			return nil
+		},
+	)
+
+	bobOnPrivate.Step(
+		"cannot create an organization without an owner role",
+		func() error {
+			err := createOrganizationShouldFail(
+				t,
+				bobOnPrivate.Client(),
+				factory.SafeName("Viewer organization"),
+			)
+			testutil.RequireForbiddenError(t, err)
+
+			return nil
+		},
+	)
+
 	alice.Step(
 		"deactivates Bob's membership",
 		func() error {
 			return deactivateUser(t, alice.Client(), bob.Client())
 		},
-	)
-
-	bobOnPrivate := world.NewUnauthenticatedActorFor(
-		"Bob on private instance",
-		env.BaseURL,
 	)
 
 	bobOnPrivate.Step(
