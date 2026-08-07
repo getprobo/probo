@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.253.0] - 2026-08-07
+
+### Fixed
+
+- Evidence uploads now display in the PDF viewer instead of a degraded fallback when the display mode was changed or the browser navigated away and back
+
 ## [0.252.0] - 2026-08-07
 
 ### Changed
