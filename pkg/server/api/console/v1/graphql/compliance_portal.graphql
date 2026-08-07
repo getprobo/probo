@@ -446,19 +446,19 @@ type CompliancePortalConnection
     pageInfo: PageInfo!
 }
 
-type CompliancePortalDocument {
+type CompliancePortalDocument implements Node {
     id: ID!
     document: Document! @goField(forceResolver: true)
     visibility: CompliancePortalLinkedVisibility!
 }
 
-type CompliancePortalAudit {
+type CompliancePortalAudit implements Node {
     id: ID!
     audit: Audit! @goField(forceResolver: true)
     visibility: CompliancePortalLinkedVisibility!
 }
 
-type CompliancePortalThirdParty {
+type CompliancePortalThirdParty implements Node {
     id: ID!
     thirdParty: ThirdParty! @goField(forceResolver: true)
 }
@@ -1004,26 +1004,32 @@ input DeleteCompliancePortalThirdPartyInput {
 
 type UpdateCompliancePortalDocumentVisibilityPayload {
     catalogDocument: CompliancePortalDocument!
+    document: Document!
 }
 
 type DeleteCompliancePortalDocumentPayload {
     deletedCompliancePortalDocumentId: ID!
+    document: Document!
 }
 
 type UpdateCompliancePortalAuditVisibilityPayload {
     catalogAudit: CompliancePortalAudit!
+    audit: Audit!
 }
 
 type DeleteCompliancePortalAuditPayload {
     deletedCompliancePortalAuditId: ID!
+    audit: Audit!
 }
 
 type UpdateCompliancePortalThirdPartyPublishedPayload {
     catalogThirdParty: CompliancePortalThirdParty!
+    thirdParty: ThirdParty!
 }
 
 type DeleteCompliancePortalThirdPartyPayload {
     deletedCompliancePortalThirdPartyId: ID!
+    thirdParty: ThirdParty!
 }
 
 input UpdateCompliancePortalFileInput {

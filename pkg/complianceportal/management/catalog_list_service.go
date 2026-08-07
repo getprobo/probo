@@ -265,6 +265,30 @@ func (s *Service) ListThirdParties(
 	return page.NewPage(entries, cursor), nil
 }
 
+func (s *Service) GetDocumentLinkByID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentLinkID gid.GID,
+) (*coredata.CompliancePortalDocument, error) {
+	link := &coredata.CompliancePortalDocument{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByID(ctx, conn, scope, documentLinkID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal document catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
 func (s *Service) GetDocumentLink(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -293,6 +317,30 @@ func (s *Service) GetDocumentLink(
 		}
 
 		return nil, fmt.Errorf("cannot load portal document catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetAuditLinkByID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditLinkID gid.GID,
+) (*coredata.CompliancePortalAudit, error) {
+	link := &coredata.CompliancePortalAudit{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByID(ctx, conn, scope, auditLinkID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal audit catalog entry: %w", err)
 	}
 
 	return link, nil
@@ -363,6 +411,30 @@ func (s *Service) GetAudit(
 		Audit:      audit,
 		Visibility: link.Visibility,
 	}, nil
+}
+
+func (s *Service) GetThirdPartyLinkByID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	thirdPartyLinkID gid.GID,
+) (*coredata.CompliancePortalThirdParty, error) {
+	link := &coredata.CompliancePortalThirdParty{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByID(ctx, conn, scope, thirdPartyLinkID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal third party catalog entry: %w", err)
+	}
+
+	return link, nil
 }
 
 func (s *Service) GetThirdPartyLink(

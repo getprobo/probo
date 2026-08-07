@@ -61,11 +61,15 @@ const thirdPartyFragment = graphql`
 const linkThirdPartyMutation = graphql`
   mutation CompliancePortalThirdPartyListItem_linkMutation(
     $input: UpdateCompliancePortalThirdPartyPublishedInput!
+    $compliancePortalId: ID!
   ) {
     updateCompliancePortalThirdPartyPublished(input: $input) {
       catalogThirdParty {
         id
-        thirdParty {
+      }
+      thirdParty {
+        id
+        compliancePortalThirdParty(compliancePortalId: $compliancePortalId) {
           id
         }
       }
@@ -76,9 +80,16 @@ const linkThirdPartyMutation = graphql`
 const removeThirdPartyMutation = graphql`
   mutation CompliancePortalThirdPartyListItem_removeMutation(
     $input: DeleteCompliancePortalThirdPartyInput!
+    $compliancePortalId: ID!
   ) {
     deleteCompliancePortalThirdParty(input: $input) {
       deletedCompliancePortalThirdPartyId @deleteRecord
+      thirdParty {
+        id
+        compliancePortalThirdParty(compliancePortalId: $compliancePortalId) {
+          id
+        }
+      }
     }
   }
 `;
@@ -138,20 +149,7 @@ export function CompliancePortalThirdPartyListItem(props: {
                 thirdPartyId: thirdParty.id,
                 published: true,
               },
-            },
-            updater: (store) => {
-              const payload = store.getRootField(
-                "updateCompliancePortalThirdPartyPublished",
-              );
-              const link = payload?.getLinkedRecord("catalogThirdParty");
-              const thirdPartyRecord = store.get(thirdParty.id);
-              if (link && thirdPartyRecord) {
-                thirdPartyRecord.setLinkedRecord(
-                  link,
-                  "compliancePortalThirdParty",
-                  { compliancePortalId: compliancePortal.id },
-                );
-              }
+              compliancePortalId: compliancePortal.id,
             },
           });
           setPendingLinked(null);
@@ -168,13 +166,7 @@ export function CompliancePortalThirdPartyListItem(props: {
             input: {
               id: catalogThirdParty.id,
             },
-          },
-          updater: (store) => {
-            store.get(thirdParty.id)?.setValue(
-              null,
-              "compliancePortalThirdParty",
-              { compliancePortalId: compliancePortal.id },
-            );
+            compliancePortalId: compliancePortal.id,
           },
         });
         setPendingLinked(null);

@@ -993,10 +993,9 @@ func (r *mutationResolver) UpdateCompliancePortalDocumentVisibility(ctx context.
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	catalogDocument := types.NewCompliancePortalDocument(link)
-
 	return &types.UpdateCompliancePortalDocumentVisibilityPayload{
-		CatalogDocument: catalogDocument,
+		CatalogDocument: types.NewCompliancePortalDocument(link),
+		Document:        &types.Document{ID: link.DocumentID},
 	}, nil
 }
 
@@ -1005,6 +1004,17 @@ func (r *mutationResolver) DeleteCompliancePortalDocument(ctx context.Context, i
 	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
 	if err != nil {
 		return nil, err
+	}
+
+	link, err := r.management.GetDocumentLinkByID(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "compliance portal document %q not found", input.ID)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal document link", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	err = r.management.DeleteDocument(
@@ -1026,6 +1036,7 @@ func (r *mutationResolver) DeleteCompliancePortalDocument(ctx context.Context, i
 
 	return &types.DeleteCompliancePortalDocumentPayload{
 		DeletedCompliancePortalDocumentID: input.ID,
+		Document:                          &types.Document{ID: link.DocumentID},
 	}, nil
 }
 
@@ -1068,6 +1079,7 @@ func (r *mutationResolver) UpdateCompliancePortalAuditVisibility(ctx context.Con
 
 	return &types.UpdateCompliancePortalAuditVisibilityPayload{
 		CatalogAudit: types.NewCompliancePortalAudit(link),
+		Audit:        &types.Audit{ID: link.AuditID},
 	}, nil
 }
 
@@ -1076,6 +1088,17 @@ func (r *mutationResolver) DeleteCompliancePortalAudit(ctx context.Context, inpu
 	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
 	if err != nil {
 		return nil, err
+	}
+
+	link, err := r.management.GetAuditLinkByID(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "compliance portal audit %q not found", input.ID)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit link", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	err = r.management.DeleteAudit(
@@ -1097,6 +1120,7 @@ func (r *mutationResolver) DeleteCompliancePortalAudit(ctx context.Context, inpu
 
 	return &types.DeleteCompliancePortalAuditPayload{
 		DeletedCompliancePortalAuditID: input.ID,
+		Audit:                          &types.Audit{ID: link.AuditID},
 	}, nil
 }
 
@@ -1139,6 +1163,7 @@ func (r *mutationResolver) UpdateCompliancePortalThirdPartyPublished(ctx context
 
 	return &types.UpdateCompliancePortalThirdPartyPublishedPayload{
 		CatalogThirdParty: types.NewCompliancePortalThirdParty(link),
+		ThirdParty:        &types.ThirdParty{ID: link.ThirdPartyID},
 	}, nil
 }
 
@@ -1147,6 +1172,17 @@ func (r *mutationResolver) DeleteCompliancePortalThirdParty(ctx context.Context,
 	scope, err := r.authorize(ctx, input.ID, management.ActionCompliancePortalUpdate)
 	if err != nil {
 		return nil, err
+	}
+
+	link, err := r.management.GetThirdPartyLinkByID(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "compliance portal third party %q not found", input.ID)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal third party link", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	err = r.management.DeleteThirdParty(
@@ -1168,6 +1204,7 @@ func (r *mutationResolver) DeleteCompliancePortalThirdParty(ctx context.Context,
 
 	return &types.DeleteCompliancePortalThirdPartyPayload{
 		DeletedCompliancePortalThirdPartyID: input.ID,
+		ThirdParty:                          &types.ThirdParty{ID: link.ThirdPartyID},
 	}, nil
 }
 

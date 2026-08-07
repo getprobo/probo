@@ -84,6 +84,53 @@ func (cpa *CompliancePortalAudit) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
+func (cpa *CompliancePortalAudit) LoadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	auditLinkID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	compliance_portal_id,
+	audit_id,
+	visibility,
+	created_at,
+	updated_at
+FROM
+	cp_audits
+WHERE
+	%s
+	AND id = @audit_link_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"audit_link_id": auditLinkID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal audit: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalAudit])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal audit: %w", err)
+	}
+
+	*cpa = row
+
+	return nil
+}
+
 func (cpa *CompliancePortalAudit) LoadByCompliancePortalIDAndAuditID(
 	ctx context.Context,
 	conn pg.Querier,

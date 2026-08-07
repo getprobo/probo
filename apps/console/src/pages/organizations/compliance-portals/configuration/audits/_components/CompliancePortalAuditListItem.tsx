@@ -68,13 +68,18 @@ const auditFragment = graphql`
 const updateAuditVisibilityMutation = graphql`
   mutation CompliancePortalAuditListItem_updateVisibilityMutation(
     $input: UpdateCompliancePortalAuditVisibilityInput!
+    $compliancePortalId: ID!
   ) {
     updateCompliancePortalAuditVisibility(input: $input) {
       catalogAudit {
         id
         visibility
-        audit {
+      }
+      audit {
+        id
+        compliancePortalAudit(compliancePortalId: $compliancePortalId) {
           id
+          visibility
         }
       }
     }
@@ -84,9 +89,16 @@ const updateAuditVisibilityMutation = graphql`
 const removeAuditMutation = graphql`
   mutation CompliancePortalAuditListItem_removeMutation(
     $input: DeleteCompliancePortalAuditInput!
+    $compliancePortalId: ID!
   ) {
     deleteCompliancePortalAudit(input: $input) {
       deletedCompliancePortalAuditId @deleteRecord
+      audit {
+        id
+        compliancePortalAudit(compliancePortalId: $compliancePortalId) {
+          id
+        }
+      }
     }
   }
 `;
@@ -144,6 +156,7 @@ export function CompliancePortalAuditListItem(props: {
             auditId: audit.id,
             compliancePortalVisibility: typedValue,
           },
+          compliancePortalId: compliancePortal.id,
         },
       });
     },
@@ -167,18 +180,7 @@ export function CompliancePortalAuditListItem(props: {
                 auditId: audit.id,
                 compliancePortalVisibility: "RESTRICTED",
               },
-            },
-            updater: (store) => {
-              const payload = store.getRootField("updateCompliancePortalAuditVisibility");
-              const link = payload?.getLinkedRecord("catalogAudit");
-              const auditRecord = store.get(audit.id);
-              if (link && auditRecord) {
-                auditRecord.setLinkedRecord(
-                  link,
-                  "compliancePortalAudit",
-                  { compliancePortalId: compliancePortal.id },
-                );
-              }
+              compliancePortalId: compliancePortal.id,
             },
           });
           setPendingLinked(null);
@@ -195,13 +197,7 @@ export function CompliancePortalAuditListItem(props: {
             input: {
               id: catalogAudit.id,
             },
-          },
-          updater: (store) => {
-            store.get(audit.id)?.setValue(
-              null,
-              "compliancePortalAudit",
-              { compliancePortalId: compliancePortal.id },
-            );
+            compliancePortalId: compliancePortal.id,
           },
         });
         setPendingLinked(null);
@@ -210,13 +206,13 @@ export function CompliancePortalAuditListItem(props: {
       }
     },
     [
-      audit.id,
       catalogAudit,
       compliancePortal.canUpdate,
       compliancePortal.id,
       isLinked,
       removeAudit,
       updateAuditVisibility,
+      audit.id,
     ],
   );
 

@@ -366,6 +366,36 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewCompliancePortalAccess(compliancePortalAccess), nil
 		}
+	case coredata.CompliancePortalDocumentEntityType:
+		action = management.ActionCompliancePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			link, err := r.management.GetDocumentLinkByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCompliancePortalDocument(link), nil
+		}
+	case coredata.CompliancePortalAuditEntityType:
+		action = management.ActionCompliancePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			link, err := r.management.GetAuditLinkByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCompliancePortalAudit(link), nil
+		}
+	case coredata.CompliancePortalThirdPartyEntityType:
+		action = management.ActionCompliancePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			link, err := r.management.GetThirdPartyLinkByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCompliancePortalThirdParty(link), nil
+		}
 	case coredata.MailingListSubscriberEntityType:
 		action = management.ActionMailingListSubscriberList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
