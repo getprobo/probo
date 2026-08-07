@@ -169,3 +169,60 @@ func TestRender_NestedList(t *testing.T) {
 	_, err = prosemirror.Parse(content)
 	require.NoError(t, err)
 }
+
+func TestRender_HardBreakAndHorizontalRule(t *testing.T) {
+	t.Parallel()
+
+	content, err := automergeprosemirror.Render(
+		[]automerge.Span{
+			{
+				Type: automerge.SpanTypeBlock,
+				Block: map[string]any{
+					"type":    "paragraph",
+					"parents": []any{},
+				},
+			},
+			{Type: automerge.SpanTypeText, Text: "A"},
+			{
+				Type: automerge.SpanTypeBlock,
+				Block: map[string]any{
+					"type":    "hard-break",
+					"parents": []any{"paragraph"},
+					"isEmbed": true,
+				},
+			},
+			{Type: automerge.SpanTypeText, Text: "B"},
+			{
+				Type: automerge.SpanTypeBlock,
+				Block: map[string]any{
+					"type":    "horizontal-rule",
+					"parents": []any{},
+					"isEmbed": true,
+				},
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{
+			"type": "doc",
+			"content": [
+				{
+					"type": "paragraph",
+					"content": [
+						{"type": "text", "text": "A"},
+						{"type": "hardBreak"},
+						{"type": "text", "text": "B"}
+					]
+				},
+				{"type": "horizontalRule"}
+			]
+		}`,
+		content,
+	)
+
+	_, err = prosemirror.Parse(content)
+	require.NoError(t, err)
+}

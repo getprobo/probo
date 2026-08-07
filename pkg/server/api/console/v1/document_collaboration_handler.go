@@ -22,6 +22,8 @@ package console_v1
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -60,17 +62,36 @@ type (
 	}
 
 	documentCollaborationHandshake struct {
-		Type        string `json:"type"`
-		Version     int    `json:"version"`
-		Revision    int64  `json:"revision"`
-		NeedsSeed   bool   `json:"needsSeed"`
-		SeedContent string `json:"seedContent,omitempty"`
+		Type         string `json:"type"`
+		Version      int    `json:"version"`
+		Revision     int64  `json:"revision"`
+		NeedsSeed    bool   `json:"needsSeed"`
+		SeedContent  string `json:"seedContent,omitempty"`
+		ConnectionID string `json:"connectionId"`
 	}
 
 	documentCollaborationIncoming struct {
 		MessageType websocket.MessageType
 		Data        []byte
 		Err         error
+	}
+
+	documentCollaborationPresenceInput struct {
+		Type           string `json:"type"`
+		AnchorPosition int    `json:"anchorPosition"`
+		HeadPosition   int    `json:"headPosition"`
+	}
+
+	documentCollaborationPresence struct {
+		ConnectionID   string `json:"connectionId"`
+		IdentityID     string `json:"identityId"`
+		AnchorPosition int    `json:"anchorPosition"`
+		HeadPosition   int    `json:"headPosition"`
+	}
+
+	documentCollaborationPresenceSnapshot struct {
+		Type      string                          `json:"type"`
+		Presences []documentCollaborationPresence `json:"presences"`
 	}
 )
 
@@ -87,6 +108,12 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		h.renderAuthorizationError(w, err)
 		return
 	}
+	identity := authn.IdentityFromContext(r.Context())
+	connectionID, err := newDocumentCollaborationConnectionID()
+	if err != nil {
+		jsonx.RenderInternalServerError(w)
+		return
+	}
 
 	collaboration, err := h.probo.Documents.OpenCollaboration(
 		r.Context(),
@@ -98,6 +125,22 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		return
 	}
 	defer func() { _ = collaboration.Document.Close(context.Background()) }()
+	defer func() {
+		deleteCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := h.probo.Documents.DeleteCollaborationPresence(
+			deleteCtx,
+			scope,
+			connectionID,
+		); err != nil {
+			h.logger.WarnCtx(
+				deleteCtx,
+				"cannot delete document collaboration presence",
+				log.Error(err),
+				log.String("document_version_id", documentVersionIDString),
+			)
+		}
+	}()
 	if collaboration.NeedsSeed {
 		defer func() {
 			releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -159,11 +202,12 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 	}
 	handshake, err := json.Marshal(
 		documentCollaborationHandshake{
-			Type:        "ready",
-			Version:     1,
-			Revision:    collaboration.Revision,
-			NeedsSeed:   collaboration.NeedsSeed,
-			SeedContent: seedContent,
+			Type:         "ready",
+			Version:      1,
+			Revision:     collaboration.Revision,
+			NeedsSeed:    collaboration.NeedsSeed,
+			SeedContent:  seedContent,
+			ConnectionID: connectionID,
 		},
 	)
 	if err != nil {
@@ -213,8 +257,30 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				return
 			}
 			if message.MessageType != websocket.MessageBinary {
-				_ = connection.Close(websocket.StatusUnsupportedData, "binary sync messages required")
-				return
+				if message.MessageType != websocket.MessageText {
+					_ = connection.Close(websocket.StatusUnsupportedData, "unsupported message type")
+					return
+				}
+
+				var presence documentCollaborationPresenceInput
+				if err := json.Unmarshal(message.Data, &presence); err != nil ||
+					presence.Type != "presence" {
+					_ = connection.Close(websocket.StatusInvalidFramePayloadData, "invalid presence message")
+					return
+				}
+				if err := h.probo.Documents.SaveCollaborationPresence(
+					ctx,
+					scope,
+					documentVersionID,
+					identity.ID,
+					connectionID,
+					presence.AnchorPosition,
+					presence.HeadPosition,
+				); err != nil {
+					h.closeWithError(ctx, connection, documentVersionIDString, err)
+					return
+				}
+				continue
 			}
 			if err := syncState.ReceiveMessage(ctx, message.Data); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
@@ -253,8 +319,68 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 					return
 				}
 			}
+			if err := h.sendPresences(
+				ctx,
+				connection,
+				scope,
+				documentVersionID,
+				connectionID,
+			); err != nil {
+				h.closeWithError(ctx, connection, documentVersionIDString, err)
+				return
+			}
 		}
 	}
+}
+
+func (h *documentCollaborationHandler) sendPresences(
+	ctx context.Context,
+	connection *websocket.Conn,
+	scope coredata.Scoper,
+	documentVersionID gid.GID,
+	connectionID string,
+) error {
+	stored, err := h.probo.Documents.ListCollaborationPresences(
+		ctx,
+		scope,
+		documentVersionID,
+		connectionID,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot list document collaboration presences: %w", err)
+	}
+
+	presences := make([]documentCollaborationPresence, len(stored))
+	for i, presence := range stored {
+		presences[i] = documentCollaborationPresence{
+			ConnectionID:   presence.ConnectionID,
+			IdentityID:     presence.IdentityID.String(),
+			AnchorPosition: presence.AnchorPosition,
+			HeadPosition:   presence.HeadPosition,
+		}
+	}
+	data, err := json.Marshal(
+		documentCollaborationPresenceSnapshot{
+			Type:      "presence",
+			Presences: presences,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot marshal document collaboration presences: %w", err)
+	}
+	if err := writeCollaborationMessage(ctx, connection, websocket.MessageText, data); err != nil {
+		return fmt.Errorf("cannot send document collaboration presences: %w", err)
+	}
+
+	return nil
+}
+
+func newDocumentCollaborationConnectionID() (string, error) {
+	var value [16]byte
+	if _, err := rand.Read(value[:]); err != nil {
+		return "", fmt.Errorf("cannot generate document collaboration connection ID: %w", err)
+	}
+	return hex.EncodeToString(value[:]), nil
 }
 
 func (h *documentCollaborationHandler) authorize(

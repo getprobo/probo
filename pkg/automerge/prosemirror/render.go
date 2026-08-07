@@ -54,7 +54,9 @@ type (
 const (
 	blockTypeBlockquote        = "blockquote"
 	blockTypeCode              = "code-block"
+	blockTypeHardBreak         = "hard-break"
 	blockTypeHeading           = "heading"
+	blockTypeHorizontalRule    = "horizontal-rule"
 	blockTypeOrderedListItem   = "ordered-list-item"
 	blockTypeParagraph         = "paragraph"
 	blockTypeUnorderedListItem = "unordered-list-item"
@@ -93,6 +95,16 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 			blockType, ok := span.Block["type"].(string)
 			if !ok || blockType == "" {
 				return nil, fmt.Errorf("cannot collect Automerge block span %d: missing type", i)
+			}
+			if blockType == blockTypeHardBreak {
+				if len(blocks) == 0 {
+					return nil, fmt.Errorf("cannot collect Automerge hard break span %d without a parent block", i)
+				}
+				blocks[len(blocks)-1].Content = append(
+					blocks[len(blocks)-1].Content,
+					node{Type: "hardBreak"},
+				)
+				continue
 			}
 			parents, err := stringSlice(span.Block["parents"])
 			if err != nil {
@@ -210,6 +222,11 @@ func renderBlock(source block, children []node) (node, string, error) {
 			attrs["language"] = language
 		}
 		return node{Type: "codeBlock", Attrs: attrs, Content: source.Content}, "", nil
+	case blockTypeHorizontalRule:
+		if len(source.Content) > 0 || len(children) > 0 {
+			return node{}, "", fmt.Errorf("horizontal rule Automerge block cannot contain content")
+		}
+		return node{Type: "horizontalRule"}, "", nil
 	case blockTypeBlockquote:
 		paragraph := node{Type: "paragraph", Content: source.Content}
 		return node{

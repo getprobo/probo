@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-import type { DocHandle } from "@automerge/prosemirror";
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
 import { Code } from "@tiptap/extension-code";
@@ -30,13 +29,16 @@ import {
   createRichEditorAutomergeDocument as createAutomergeDocument,
   createRichEditorCollaborationExtension,
   richEditorAutomergeContent,
-  type RichEditorAutomergeDocument,
   supportsRichEditorCollaboration as supportsCollaboration,
 } from "./collaboration";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension } from "./PlaceholderExtension";
+import {
+  createRichEditorPresenceExtension,
+  type RichEditorCollaborationHandle,
+} from "./presence";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
@@ -79,9 +81,7 @@ const extensions = [
 ];
 
 const collaborationExtensions = extensions.filter(extension =>
-  extension !== HorizontalRule
-  && extension !== HardBreak
-  && extension !== tableExtension
+  extension !== tableExtension
   && extension !== UndoRedo,
 );
 
@@ -99,7 +99,7 @@ type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
   onChangeContent: (content: string) => void;
-  collaborationHandle?: DocHandle<RichEditorAutomergeDocument>;
+  collaborationHandle?: RichEditorCollaborationHandle;
 };
 
 export function RichEditor(props: RichEditorProps) {
@@ -128,6 +128,7 @@ export function RichEditor(props: RichEditorProps) {
             collaborationHandle,
             collaborationExtensions,
           ),
+          createRichEditorPresenceExtension(collaborationHandle),
         ]
       : extensions,
     [collaborationHandle],
@@ -146,6 +147,12 @@ export function RichEditor(props: RichEditorProps) {
     extensions: editorExtensions,
     content: initialContent,
     onUpdate: handleUpdate,
+    onSelectionUpdate: ({ editor }) => {
+      collaborationHandle?.updatePresence?.(
+        editor.state.selection.anchor,
+        editor.state.selection.head,
+      );
+    },
   }, [collaborationHandle]);
 
   useEffect(() => {

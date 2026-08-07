@@ -45,6 +45,8 @@ const supportedNodeNames = new Set([
   "heading",
   "blockquote",
   "codeBlock",
+  "horizontalRule",
+  "hardBreak",
   "bulletList",
   "orderedList",
   "listItem",
@@ -198,6 +200,10 @@ function automergeNodeMapping(name: string): MappedNodeSpec["automerge"] {
       return { block: "blockquote" };
     case "codeBlock":
       return { block: "code-block" };
+    case "horizontalRule":
+      return { block: "horizontal-rule", isEmbed: true };
+    case "hardBreak":
+      return { block: "hard-break", isEmbed: true };
     case "listItem":
       return {
         block: {

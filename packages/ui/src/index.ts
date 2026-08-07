@@ -125,3 +125,7 @@ export {
   supportsRichEditorCollaboration,
 } from "./RichEditor/RichEditor";
 export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
+export type {
+  RichEditorCollaborationHandle,
+  RichEditorPresence,
+} from "./RichEditor/presence";
