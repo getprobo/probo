@@ -34,6 +34,7 @@ import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 
 import type { EvidenceGraphFileQuery } from "#/__generated__/core/EvidenceGraphFileQuery.graphql";
+import { PDFPreview } from "#/components/documents/PDFPreview";
 import { evidenceFileQuery } from "#/hooks/graph/EvidenceGraph";
 
 type Props = {
@@ -157,11 +158,12 @@ function EvidencePreviewContent({
     );
   } else if (evidence.file.mimeType?.includes("pdf")) {
     preview = (
-      <iframe
-        src={evidence.file.downloadUrl}
-        className="w-full h-[70vh]"
-        title={evidence.file.fileName}
-      />
+      <div className="h-[70vh] overflow-hidden">
+        <PDFPreview
+          src={evidence.file.downloadUrl}
+          name={evidence.file.fileName}
+        />
+      </div>
     );
   } else {
     preview = (
