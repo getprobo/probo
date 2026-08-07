@@ -26,42 +26,37 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
-	// nukiAccountSegment is the Nuki Web account the token belongs to; the name
-	// resolver reads its `name` to title the access source.
-	nukiAccountSegment = "account"
-	// nukiUserSegment completes the account-users collection: the people (and
-	// companies) the account holder has invited and can grant smart lock
-	// authorizations to. It needs both the `account` and `smartlock.auth`
-	// scopes.
-	nukiUserSegment = "user"
-	// nukiAccountUsersPageSize is the requested page size. Nuki documents an
-	// undocumented server-side maximum ("If the value exceeds the maximum, then
-	// the maximum value will be used"), so the pagination loop must not assume
-	// a page of this size, only that a full page was not the last one.
-	nukiAccountUsersPageSize = 100
-	// nukiAccountUserTypeCompany is the AccountUser.type value marking an
-	// account user that stands for a company rather than a person (0 .. user,
-	// 1 .. company). Only caretaker accounts can create the company form.
+	nukiAccountSegment   = "account"
+	nukiUserSegment      = "user"
+	nukiSmartlockSegment = "smartlock"
+	nukiAuthSegment      = "auth"
+	// Nuki clamps limit to an undocumented maximum, so pagination must not
+	// treat a short page as the end of the collection.
+	nukiAccountUsersPageSize   = 100
+	nukiAuthsPageSize          = 100
 	nukiAccountUserTypeCompany = 1
+	nukiAuthTypeApp            = 0
+	nukiAuthTypeBridge         = 1
+	nukiAuthTypeFob            = 2
+	nukiAuthTypeKeypad         = 3
+	nukiAuthTypeKeypadCode     = 13
+	nukiAuthTypeZKey           = 14
+	nukiAuthTypeVirtual        = 15
+	nukiRemoteAccessRole       = "Remote access"
 )
 
-// NukiDriver lists the account users of a single Nuki Web account. A Nuki Web
-// API token is bound to one account, so GET /account/user returns every account
-// user of that account with no tenant selector. Pagination is offset/limit
-// based.
-//
-// Nuki's access model has two layers: account users (this endpoint) are the
-// identities that hold access, while the individual door grants live in
-// per-device smart lock authorizations (/smartlock/auth). This driver reviews
-// the identity layer, which is what an access review asks for — who can open
-// the doors at all.
+// NukiDriver lists account users and smartlock authorizations for one Nuki Web
+// account. Authorizations without an accountUserId (keypad codes, fobs, …) are
+// emitted as service accounts.
 type NukiDriver struct {
 	httpClient *http.Client
 	baseURL    string
@@ -69,19 +64,48 @@ type NukiDriver struct {
 
 var _ Driver = (*NukiDriver)(nil)
 
-// nukiAccountUser mirrors the documented AccountUser schema. There is no
-// status, role, or last-login field: an account user exists or it does not, and
-// what it may open is expressed by its smart lock authorizations.
-type nukiAccountUser struct {
-	AccountUserID int    `json:"accountUserId"`
-	AccountID     int    `json:"accountId"`
-	Type          int    `json:"type"`
-	Email         string `json:"email"`
-	Name          string `json:"name"`
-	Language      string `json:"language"`
-	CreationDate  string `json:"creationDate"`
-	UpdateDate    string `json:"updateDate"`
-}
+type (
+	nukiAccountUser struct {
+		AccountUserID int    `json:"accountUserId"`
+		AccountID     int    `json:"accountId"`
+		Type          int    `json:"type"`
+		Email         string `json:"email"`
+		Name          string `json:"name"`
+		Language      string `json:"language"`
+		CreationDate  string `json:"creationDate"`
+		UpdateDate    string `json:"updateDate"`
+	}
+
+	// Enabled and RemoteAllowed are pointers: Nuki omits defaults, and a bare
+	// bool would treat "missing" as false.
+	nukiSmartlockAuth struct {
+		ID               string `json:"id"`
+		SmartlockID      int64  `json:"smartlockId"`
+		AccountUserID    int    `json:"accountUserId"`
+		AuthID           int    `json:"authId"`
+		Type             int    `json:"type"`
+		Name             string `json:"name"`
+		Enabled          *bool  `json:"enabled"`
+		RemoteAllowed    *bool  `json:"remoteAllowed"`
+		AllowedFromDate  string `json:"allowedFromDate"`
+		AllowedUntilDate string `json:"allowedUntilDate"`
+		LastActiveDate   string `json:"lastActiveDate"`
+		CreationDate     string `json:"creationDate"`
+	}
+
+	nukiSmartlock struct {
+		SmartlockID int64  `json:"smartlockId"`
+		Name        string `json:"name"`
+	}
+
+	nukiAuthPage struct {
+		Results    []nukiSmartlockAuth `json:"results"`
+		Pagination struct {
+			TotalPages  int `json:"totalPages"`
+			CurrentPage int `json:"currentPage"`
+		} `json:"pagination"`
+	}
+)
 
 func NewNukiDriver(httpClient *http.Client, baseURL string) *NukiDriver {
 	return &NukiDriver{
@@ -96,6 +120,27 @@ func NewNukiDriver(httpClient *http.Client, baseURL string) *NukiDriver {
 }
 
 func (d *NukiDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
+	// Best-effort: needs smartlock.readOnly, which existing tokens may lack.
+	lockNames, _ := d.fetchSmartlockNames(ctx)
+
+	auths, err := d.fetchAllAuths(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	authsByUser := make(map[int][]nukiSmartlockAuth)
+	var orphanAuths []nukiSmartlockAuth
+
+	for _, auth := range auths {
+		if auth.AccountUserID > 0 {
+			authsByUser[auth.AccountUserID] = append(authsByUser[auth.AccountUserID], auth)
+
+			continue
+		}
+
+		orphanAuths = append(orphanAuths, auth)
+	}
+
 	var records []AccountRecord
 
 	offset := 0
@@ -106,17 +151,21 @@ func (d *NukiDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 			return nil, err
 		}
 
-		// An empty page is the only reliable end-of-collection signal. Nuki
-		// silently clamps `limit` to an undocumented maximum, so a page shorter
-		// than nukiAccountUsersPageSize may well be a full page and stopping on
-		// it would truncate the review. Advancing by the number of rows
-		// actually returned keeps the walk correct under any clamp.
 		if len(users) == 0 {
+			for _, auth := range orphanAuths {
+				record, err := nukiServiceAccountRecord(auth, lockNames)
+				if err != nil {
+					return nil, err
+				}
+
+				records = append(records, record)
+			}
+
 			return records, nil
 		}
 
 		for _, u := range users {
-			record, err := nukiAccountRecord(u)
+			record, err := nukiAccountRecord(u, authsByUser[u.AccountUserID], lockNames)
 			if err != nil {
 				return nil, err
 			}
@@ -169,13 +218,123 @@ func (d *NukiDriver) fetchAccountUsers(ctx context.Context, offset int) ([]nukiA
 	return users, nil
 }
 
-// nukiAccountRecord maps one account user onto an AccountRecord.
-//
-// A row with neither an email nor a positive account user ID carries no stable
-// identity, and the review keys entries on exactly that pair: emitting it would
-// collide with every other identity-less row, so a malformed page fails the
-// whole fetch rather than silently merging or dropping accounts.
-func nukiAccountRecord(u nukiAccountUser) (AccountRecord, error) {
+func (d *NukiDriver) fetchAllAuths(ctx context.Context) ([]nukiSmartlockAuth, error) {
+	var (
+		auths []nukiSmartlockAuth
+		page  int
+	)
+
+	for range maxPaginationPages {
+		resp, err := d.fetchAuthPage(ctx, page)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(resp.Results) == 0 {
+			return auths, nil
+		}
+
+		auths = append(auths, resp.Results...)
+
+		if resp.Pagination.TotalPages > 0 && page+1 >= resp.Pagination.TotalPages {
+			return auths, nil
+		}
+
+		if resp.Pagination.TotalPages <= 0 && len(resp.Results) < nukiAuthsPageSize {
+			return auths, nil
+		}
+
+		page++
+	}
+
+	return nil, fmt.Errorf("cannot list all nuki smartlock authorizations: %w", ErrPaginationLimitReached)
+}
+
+func (d *NukiDriver) fetchAuthPage(ctx context.Context, page int) (*nukiAuthPage, error) {
+	endpoint, err := url.JoinPath(d.baseURL, nukiSmartlockSegment, nukiAuthSegment, "paged")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build nuki smartlock auth URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create nuki smartlock auth request: %w", err)
+	}
+
+	q := req.URL.Query()
+	q.Set("page", strconv.Itoa(page))
+	q.Set("size", strconv.Itoa(nukiAuthsPageSize))
+	req.URL.RawQuery = q.Encode()
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute nuki smartlock auth request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot fetch nuki smartlock authorizations: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp nukiAuthPage
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("cannot decode nuki smartlock auth response: %w", err)
+	}
+
+	return &resp, nil
+}
+
+func (d *NukiDriver) fetchSmartlockNames(ctx context.Context) (map[int64]string, error) {
+	endpoint, err := url.JoinPath(d.baseURL, nukiSmartlockSegment)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build nuki smartlocks URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create nuki smartlocks request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute nuki smartlocks request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot fetch nuki smartlocks: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var locks []nukiSmartlock
+	if err := json.NewDecoder(httpResp.Body).Decode(&locks); err != nil {
+		return nil, fmt.Errorf("cannot decode nuki smartlocks response: %w", err)
+	}
+
+	names := make(map[int64]string, len(locks))
+	for _, lock := range locks {
+		if name := strings.TrimSpace(lock.Name); name != "" {
+			names[lock.SmartlockID] = name
+		}
+	}
+
+	return names, nil
+}
+
+func nukiAccountRecord(
+	u nukiAccountUser,
+	auths []nukiSmartlockAuth,
+	lockNames map[int64]string,
+) (AccountRecord, error) {
 	email := strings.TrimSpace(u.Email)
 
 	externalID := ""
@@ -188,42 +347,55 @@ func nukiAccountRecord(u nukiAccountUser) (AccountRecord, error) {
 	}
 
 	return AccountRecord{
-		Email:    email,
-		FullName: nukiFullName(u, email, externalID),
-		// GET /account/user exposes no role or permission field: an account
-		// user's rights are the smart lock authorizations granted to it, not an
-		// account-level role. Nuki's administrative rights bitmask lives on
-		// accounts and sub-accounts (/account/sub), a different population.
-		Roles: nil,
-		// Same reason: no account user is an administrator of the Nuki Web
-		// account. Administrators are the account and its sub-accounts.
-		IsAdmin: false,
-		// A company account user is an organisation holding a key rather than a
-		// person, which is what SERVICE_ACCOUNT marks for reviewers.
+		Email:       email,
+		FullName:    nukiFullName(u, email, externalID),
+		Roles:       nukiRoles(auths, lockNames),
+		IsAdmin:     false,
 		AccountType: nukiAccountType(u.Type),
-		// Nuki has no deactivated state for an account user — it is deleted
-		// instead — so there is no active/inactive signal to report. The
-		// `operationId` field means "locked by an in-flight operation", which
-		// is transient and says nothing about access.
-		Active: nil,
-		// One-time password enrolment is a property of the authenticated Nuki
-		// account (Account.Config.otpEnabledDate), not of the account users it
-		// invited, so MFA is unknown per account user.
-		MFAStatus: coredata.MFAStatusUnknown,
-		// An account user is reached by email invitation and may or may not
-		// have redeemed it into a password-backed Nuki account; the endpoint
-		// does not say which.
-		AuthMethod: coredata.AccessReviewEntryAuthMethodUnknown,
-		CreatedAt:  parseRFC3339Ptr(u.CreationDate),
-		// No last-login signal: `updateDate` tracks edits to the account user
-		// record, and door activity lives in the smart lock logs.
-		LastLogin:  nil,
-		ExternalID: externalID,
+		Active:      nukiActiveFromAuths(auths, time.Now()),
+		MFAStatus:   coredata.MFAStatusUnknown,
+		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+		CreatedAt:   parseRFC3339Ptr(u.CreationDate),
+		LastLogin:   nukiLastActive(auths),
+		ExternalID:  externalID,
 	}, nil
 }
 
-// nukiFullName returns the account user's display name, falling back to the
-// email and then to the account user ID when Nuki carries no name.
+func nukiServiceAccountRecord(
+	auth nukiSmartlockAuth,
+	lockNames map[int64]string,
+) (AccountRecord, error) {
+	externalID := strings.TrimSpace(auth.ID)
+	if externalID == "" && auth.AuthID > 0 {
+		externalID = strconv.Itoa(auth.AuthID)
+	}
+
+	if externalID == "" {
+		return AccountRecord{}, fmt.Errorf(
+			"cannot map nuki smartlock authorization: row has neither an id nor an auth id (smartlock %d)",
+			auth.SmartlockID,
+		)
+	}
+
+	fullName := strings.TrimSpace(auth.Name)
+	if fullName == "" {
+		fullName = nukiAuthTypeLabel(auth.Type)
+	}
+
+	return AccountRecord{
+		FullName:    fullName,
+		Roles:       nukiRoles([]nukiSmartlockAuth{auth}, lockNames),
+		IsAdmin:     false,
+		AccountType: coredata.AccessReviewEntryAccountTypeServiceAccount,
+		Active:      nukiAuthActive(auth, time.Now()),
+		MFAStatus:   coredata.MFAStatusUnknown,
+		AuthMethod:  coredata.AccessReviewEntryAuthMethodServiceAccount,
+		CreatedAt:   parseRFC3339Ptr(auth.CreationDate),
+		LastLogin:   parseRFC3339Ptr(auth.LastActiveDate),
+		ExternalID:  externalID,
+	}, nil
+}
+
 func nukiFullName(u nukiAccountUser, email, externalID string) string {
 	if name := strings.TrimSpace(u.Name); name != "" {
 		return name
@@ -236,8 +408,6 @@ func nukiFullName(u nukiAccountUser, email, externalID string) string {
 	return externalID
 }
 
-// nukiAccountType maps AccountUser.type onto the review's account taxonomy:
-// a company account user is a non-human key holder, anything else a person.
 func nukiAccountType(accountUserType int) coredata.AccessReviewEntryAccountType {
 	if accountUserType == nukiAccountUserTypeCompany {
 		return coredata.AccessReviewEntryAccountTypeServiceAccount
@@ -246,10 +416,121 @@ func nukiAccountType(accountUserType int) coredata.AccessReviewEntryAccountType 
 	return coredata.AccessReviewEntryAccountTypeUser
 }
 
-// nukiNameResolver names the source after the Nuki Web account the API token
-// belongs to, via GET /account. Nuki has no organisation or workspace above the
-// account, and a token is bound to exactly one account, so "the account's own
-// name" is the only instance label available.
+func nukiRoles(auths []nukiSmartlockAuth, lockNames map[int64]string) []string {
+	if len(auths) == 0 {
+		return nil
+	}
+
+	seen := make(map[string]struct{}, len(auths)+1)
+	remote := false
+
+	for _, auth := range auths {
+		role := nukiLockRole(auth.SmartlockID, lockNames)
+		if role == "" {
+			role = nukiAuthTypeLabel(auth.Type)
+		}
+
+		if role != "" {
+			seen[role] = struct{}{}
+		}
+
+		if auth.RemoteAllowed != nil && *auth.RemoteAllowed {
+			remote = true
+		}
+	}
+
+	if remote {
+		seen[nukiRemoteAccessRole] = struct{}{}
+	}
+
+	roles := make([]string, 0, len(seen))
+	for role := range seen {
+		roles = append(roles, role)
+	}
+
+	sort.Strings(roles)
+
+	return roles
+}
+
+func nukiLockRole(smartlockID int64, lockNames map[int64]string) string {
+	if smartlockID <= 0 {
+		return ""
+	}
+
+	if name := strings.TrimSpace(lockNames[smartlockID]); name != "" {
+		return name
+	}
+
+	return "Smartlock " + strconv.FormatInt(smartlockID, 10)
+}
+
+func nukiAuthTypeLabel(authType int) string {
+	switch authType {
+	case nukiAuthTypeApp:
+		return "App"
+	case nukiAuthTypeBridge:
+		return "Bridge"
+	case nukiAuthTypeFob:
+		return "Fob"
+	case nukiAuthTypeKeypad:
+		return "Keypad"
+	case nukiAuthTypeKeypadCode:
+		return "Keypad code"
+	case nukiAuthTypeZKey:
+		return "Z-Key"
+	case nukiAuthTypeVirtual:
+		return "Virtual"
+	default:
+		return "Authorization"
+	}
+}
+
+// nukiActiveFromAuths returns nil when there are no grants (no signal on the
+// account-user row alone); otherwise whether any grant is currently usable.
+func nukiActiveFromAuths(auths []nukiSmartlockAuth, now time.Time) *bool {
+	if len(auths) == 0 {
+		return nil
+	}
+
+	for _, auth := range auths {
+		if active := nukiAuthActive(auth, now); active != nil && *active {
+			return new(true)
+		}
+	}
+
+	return new(false)
+}
+
+func nukiAuthActive(auth nukiSmartlockAuth, now time.Time) *bool {
+	if auth.Enabled != nil && !*auth.Enabled {
+		return new(false)
+	}
+
+	if until := parseRFC3339Ptr(auth.AllowedUntilDate); until != nil && now.After(*until) {
+		return new(false)
+	}
+
+	return new(true)
+}
+
+func nukiLastActive(auths []nukiSmartlockAuth) *time.Time {
+	var latest *time.Time
+
+	for _, auth := range auths {
+		t := parseRFC3339Ptr(auth.LastActiveDate)
+		if t == nil {
+			continue
+		}
+
+		if latest == nil || t.After(*latest) {
+			latest = t
+		}
+	}
+
+	return latest
+}
+
 type nukiNameResolver struct {
 	httpClient *http.Client
 	baseURL    string
@@ -279,10 +560,7 @@ func (r *nukiNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 
 	defer func() { _ = httpResp.Body.Close() }()
 
-	// Best-effort: a non-2xx (revoked token, or a token without the `account`
-	// scope) must not make the source-name worker retry forever. Give up
-	// gracefully and keep the generic source name; a dead token surfaces on the
-	// next ListAccounts.
+	// Soft-fail: keep the generic source name rather than retrying forever.
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return "", nil
 	}
@@ -294,7 +572,6 @@ func (r *nukiNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 		return "", fmt.Errorf("cannot decode nuki account response: %w", err)
 	}
 
-	// Never fall back to the account's email: the source name is displayed to
-	// every reviewer, and an empty result simply keeps the generic name.
+	// Do not fall back to the account email; it is shown to every reviewer.
 	return resp.Name, nil
 }

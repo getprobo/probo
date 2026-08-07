@@ -1,18 +1,63 @@
 ---
-# Hand-authored cassette for GET /account/user (Nuki Web API, Bearer token,
-# stripped by the recorder). The row shape mirrors a live response: `type` is
-# omitted entirely for a person (0 is the default and Nuki does not serialise
-# it), and `operationId` is absent unless the account user is locked by an
-# in-flight operation.
-#
-# Three synthetic account users cover a person, a company (type=1 -> service
-# account), and a row with no name (full name falls back to the email). The
-# first page is short but non-empty, so the driver must still request the next
-# offset: only the empty second page ends the walk. That second interaction is
-# what pins the behaviour.
+# Hand-authored: /smartlock, /smartlock/auth/paged, then /account/user (paged).
 version: 2
 interactions:
     - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.nuki.io
+        headers:
+            Accept:
+                - application/json
+        url: https://api.nuki.io/smartlock
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"smartlockId":18891899123,"name":"Office front door"},{"smartlockId":18891899124,"name":"Server room"}]'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.nuki.io
+        form:
+            page:
+                - "0"
+            size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.nuki.io/smartlock/auth/paged?page=0&size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[{"id":"auth-alice-office","smartlockId":18891899123,"accountUserId":1859620430,"authId":101,"type":0,"name":"Alice Martin","enabled":true,"remoteAllowed":true,"lastActiveDate":"2025-07-01T09:15:00.000Z","creationDate":"2025-05-12T15:00:00.000Z"},{"id":"auth-alice-server","smartlockId":18891899124,"accountUserId":1859620430,"authId":102,"type":0,"name":"Alice Martin","enabled":true,"remoteAllowed":false,"creationDate":"2025-05-12T15:01:00.000Z"},{"id":"auth-keypad-office","smartlockId":18891899123,"authId":201,"type":13,"name":"Cleaning keypad","enabled":true,"remoteAllowed":false,"lastActiveDate":"2025-07-07T12:00:00.000Z","creationDate":"2025-05-12T16:00:00.000Z"}],"pagination":{"totalItems":3,"totalPages":1,"currentPage":0,"pageSize":100}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 2
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -42,7 +87,7 @@ interactions:
         status: 200 OK
         code: 200
         duration: 100ms
-    - id: 1
+    - id: 3
       request:
         proto: HTTP/1.1
         proto_major: 1
