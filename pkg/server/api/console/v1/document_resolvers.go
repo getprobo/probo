@@ -83,6 +83,7 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

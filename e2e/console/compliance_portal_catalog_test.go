@@ -114,6 +114,7 @@ func TestCompliancePortal_OrganizationDocumentsExposePortalLink(t *testing.T) {
 
 	loadDocuments := func() queryResult {
 		var result queryResult
+
 		err := owner.Execute(
 			organizationCompliancePortalDocumentsQuery,
 			map[string]any{
@@ -123,6 +124,7 @@ func TestCompliancePortal_OrganizationDocumentsExposePortalLink(t *testing.T) {
 			&result,
 		)
 		require.NoError(t, err)
+
 		return result
 	}
 
@@ -132,17 +134,21 @@ func TestCompliancePortal_OrganizationDocumentsExposePortalLink(t *testing.T) {
 				return edge.Node.CompliancePortalDocument
 			}
 		}
+
 		return nil
 	}
 
 	initialResult := loadDocuments()
 	publishedDocumentFound := false
+
 	for _, edge := range initialResult.Node.Documents.Edges {
 		assert.NotEqual(t, draftDocumentID, edge.Node.ID)
+
 		if edge.Node.ID == publishedDocumentID {
 			publishedDocumentFound = true
 		}
 	}
+
 	assert.True(t, publishedDocumentFound)
 	assert.Nil(t, findDocument(initialResult, publishedDocumentID))
 

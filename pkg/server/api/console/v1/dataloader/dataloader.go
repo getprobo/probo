@@ -159,6 +159,7 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 	}
 
 	documentIDsByGroup := make(map[groupKey][]gid.GID)
+
 	for _, key := range keys {
 		group := groupKey{
 			scope:              key.Scope,
@@ -168,6 +169,7 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 	}
 
 	result := make(map[CompliancePortalDocumentKey]*coredata.CompliancePortalDocument, len(keys))
+
 	for group, documentIDs := range documentIDsByGroup {
 		links, err := f.compliancePortal.GetDocumentLinks(
 			ctx,
