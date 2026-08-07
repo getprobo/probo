@@ -164,7 +164,7 @@ func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
 
 	data, err := base64.StdEncoding.DecodeString(response.Document)
 	require.NoError(t, err)
-	document, err := automerge.Load(context.Background(), data, actor(12))
+	document, err := automerge.LoadReference(context.Background(), data, actor(12))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
@@ -181,6 +181,15 @@ func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
 	assert.Equal(t, automerge.SpanTypeText, spans[1].Type)
 	assert.Equal(t, "Policy", spans[1].Text)
 	assert.Equal(t, true, spans[1].Marks["strong"])
+
+	nativeDocument, err := automerge.LoadPureGo(context.Background(), data, actor(14))
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	nativeSpans, err := nativeText.Spans(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, spans, nativeSpans)
 }
 
 func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
@@ -345,4 +354,41 @@ func TestConformance_NativeSyncMessageRoundTrip(t *testing.T) {
 	encoded, err := message.Encode()
 	require.NoError(t, err)
 	assert.Equal(t, data, encoded)
+}
+
+func TestConformance_NativeComplexRichTextSpans(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(31)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createComplexRichText",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(response.Document)
+	require.NoError(t, err)
+
+	referenceDocument, err := automerge.LoadReference(
+		context.Background(),
+		data,
+		actor(32),
+	)
+	require.NoError(t, err)
+	closeDocument(t, referenceDocument)
+	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	referenceSpans, err := referenceText.Spans(context.Background())
+	require.NoError(t, err)
+
+	nativeDocument, err := automerge.Load(context.Background(), data, actor(33))
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	nativeSpans, err := nativeText.Spans(context.Background())
+	require.NoError(t, err)
+
+	assert.Equal(t, referenceSpans, nativeSpans)
 }

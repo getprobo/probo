@@ -44,7 +44,7 @@ func TestPureGoDocument_ReferenceLoadsNativeHistory(t *testing.T) {
 	data, err := nativeDocument.Save(ctx)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.Load(ctx, data, actor(41))
+	referenceDocument, err := automerge.LoadReference(ctx, data, actor(41))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 	referenceText, err := referenceDocument.Text(ctx, "body")
@@ -69,7 +69,7 @@ func TestPureGoDocument_ExtendsReferenceSnapshot(t *testing.T) {
 	data, err := nativeDocument.Save(ctx)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.Load(ctx, data, actor(43))
+	referenceDocument, err := automerge.LoadReference(ctx, data, actor(43))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 	referenceText, err := referenceDocument.Text(ctx, "body")
@@ -94,7 +94,7 @@ func TestPureGoDocument_InsertsInsideReferenceText(t *testing.T) {
 	data, err := nativeDocument.Save(ctx)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.Load(ctx, data, actor(47))
+	referenceDocument, err := automerge.LoadReference(ctx, data, actor(47))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 	referenceText, err := referenceDocument.Text(ctx, "body")
@@ -119,7 +119,7 @@ func TestPureGoDocument_DeletesReferenceText(t *testing.T) {
 	data, err := nativeDocument.Save(ctx)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.Load(ctx, data, actor(49))
+	referenceDocument, err := automerge.LoadReference(ctx, data, actor(49))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 	referenceText, err := referenceDocument.Text(ctx, "body")
@@ -139,12 +139,49 @@ func TestPureGoDocument_EmptySnapshotLoadsInReference(t *testing.T) {
 	data, err := nativeDocument.Save(ctx)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.Load(ctx, data, actor(45))
+	referenceDocument, err := automerge.LoadReference(ctx, data, actor(45))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 	heads, err := referenceDocument.Heads(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, heads)
+}
+
+func TestPureGoDocument_ReusesActorAfterLoad(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	actorID := actor(55)
+	document, err := automerge.NewPureGo(ctx, actorID)
+	require.NoError(t, err)
+	closeDocument(t, document)
+	text, err := document.CreateText(ctx, "body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(ctx, 0, 0, "A"))
+	_, err = document.Commit(ctx, "First change", commitTime)
+	require.NoError(t, err)
+	data, err := document.Save(ctx)
+	require.NoError(t, err)
+
+	loaded, err := automerge.LoadPureGo(ctx, data, actorID)
+	require.NoError(t, err)
+	closeDocument(t, loaded)
+	loadedText, err := loaded.Text(ctx, "body")
+	require.NoError(t, err)
+	require.NoError(t, loadedText.Splice(ctx, 1, 0, "B"))
+	_, err = loaded.Commit(ctx, "Second change", commitTime)
+	require.NoError(t, err)
+	data, err = loaded.Save(ctx)
+	require.NoError(t, err)
+
+	reference, err := automerge.LoadReference(ctx, data, actor(56))
+	require.NoError(t, err)
+	closeDocument(t, reference)
+	referenceText, err := reference.Text(ctx, "body")
+	require.NoError(t, err)
+	value, err := referenceText.String(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "AB", value)
 }
 
 func TestPureGoDocument_ConcurrentChangesConverge(t *testing.T) {
@@ -211,7 +248,7 @@ func TestPureGoDocument_CursorMatchesReference(t *testing.T) {
 	nativeCursor, err := nativeText.Cursor(ctx, 2)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.Load(ctx, baseData, actor(61))
+	referenceDocument, err := automerge.LoadReference(ctx, baseData, actor(61))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 	referenceText, err := referenceDocument.Text(ctx, "body")
@@ -224,6 +261,36 @@ func TestPureGoDocument_CursorMatchesReference(t *testing.T) {
 	position, err := nativeText.CursorPosition(ctx, nativeCursor)
 	require.NoError(t, err)
 	assert.Equal(t, uint32(3), position)
+}
+
+func TestPureGoDocument_DeletedCursorMatchesReference(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	baseData := newBaseDocument(t)
+	nativeDocument, err := automerge.LoadPureGo(ctx, baseData, actor(62))
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.Text(ctx, "body")
+	require.NoError(t, err)
+	cursor, err := nativeText.Cursor(ctx, 2)
+	require.NoError(t, err)
+	require.NoError(t, nativeText.Splice(ctx, 2, 1, ""))
+	_, err = nativeDocument.Commit(ctx, "Delete cursor target", commitTime)
+	require.NoError(t, err)
+	nativePosition, err := nativeText.CursorPosition(ctx, cursor)
+	require.NoError(t, err)
+
+	data, err := nativeDocument.Save(ctx)
+	require.NoError(t, err)
+	referenceDocument, err := automerge.LoadReference(ctx, data, actor(63))
+	require.NoError(t, err)
+	closeDocument(t, referenceDocument)
+	referenceText, err := referenceDocument.Text(ctx, "body")
+	require.NoError(t, err)
+	referencePosition, err := referenceText.CursorPosition(ctx, cursor)
+	require.NoError(t, err)
+	assert.Equal(t, referencePosition, nativePosition)
 }
 
 func TestPureGoDocument_SynchronizesWithNativePeer(t *testing.T) {
@@ -271,7 +338,7 @@ func TestPureGoDocument_SynchronizesWithReferencePeer(t *testing.T) {
 	_, err = left.Commit(ctx, "Create sync body", commitTime)
 	require.NoError(t, err)
 
-	right, err := automerge.New(ctx, actor(73))
+	right, err := automerge.NewReference(ctx, actor(73))
 	require.NoError(t, err)
 	closeDocument(t, right)
 	leftSync, err := left.NewSyncState(ctx)
@@ -294,7 +361,7 @@ func TestPureGoDocument_ReceivesReferenceSync(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	left, err := automerge.New(ctx, actor(74))
+	left, err := automerge.NewReference(ctx, actor(74))
 	require.NoError(t, err)
 	closeDocument(t, left)
 	text, err := left.CreateText(ctx, "body")
@@ -320,4 +387,69 @@ func TestPureGoDocument_ReceivesReferenceSync(t *testing.T) {
 	value, err := rightText.String(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, "From reference", value)
+}
+
+func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	nativeDocument, err := automerge.NewPureGo(ctx, actor(76))
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.CreateText(ctx, "body")
+	require.NoError(t, err)
+	_, err = nativeDocument.Commit(ctx, "Create native body", commitTime)
+	require.NoError(t, err)
+
+	referenceDocument, err := automerge.NewReference(ctx, actor(77))
+	require.NoError(t, err)
+	closeDocument(t, referenceDocument)
+	nativeSync, err := nativeDocument.NewSyncState(ctx)
+	require.NoError(t, err)
+	closeSyncState(t, nativeSync)
+	referenceSync, err := referenceDocument.NewSyncState(ctx)
+	require.NoError(t, err)
+	closeSyncState(t, referenceSync)
+	synchronize(t, nativeSync, referenceSync)
+	referenceText, err := referenceDocument.Text(ctx, "body")
+	require.NoError(t, err)
+
+	for iteration := range 20 {
+		nativeValue, err := nativeText.String(ctx)
+		require.NoError(t, err)
+		nativeOffset := utf16Offsets([]rune(nativeValue))
+		require.NoError(
+			t,
+			nativeText.Splice(
+				ctx,
+				nativeOffset[len(nativeOffset)-1],
+				0,
+				"N",
+			),
+		)
+		_, err = nativeDocument.Commit(ctx, "Native edit", commitTime)
+		require.NoError(t, err)
+
+		referenceValue, err := referenceText.String(ctx)
+		require.NoError(t, err)
+		referenceOffset := utf16Offsets([]rune(referenceValue))
+		require.NoError(
+			t,
+			referenceText.Splice(
+				ctx,
+				referenceOffset[len(referenceOffset)-1],
+				0,
+				"R",
+			),
+		)
+		_, err = referenceDocument.Commit(ctx, "Reference edit", commitTime)
+		require.NoError(t, err)
+
+		synchronize(t, nativeSync, referenceSync)
+		nativeValue, err = nativeText.String(ctx)
+		require.NoError(t, err)
+		referenceValue, err = referenceText.String(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, referenceValue, nativeValue, "iteration %d", iteration)
+	}
 }

@@ -25,7 +25,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 	"unicode/utf16"
@@ -42,8 +41,6 @@ type Backend struct {
 	syncStates    map[uint32]*nativeSyncState
 	nextSyncState uint32
 }
-
-var ErrUnsupported = errors.New("operation is not implemented by the native Automerge backend")
 
 type nativeSyncState struct {
 	RemoteHeads [][32]byte `json:"remoteHeads"`
@@ -278,8 +275,26 @@ func (b *Backend) Text(ctx context.Context, handle uint32) (string, error) {
 	return "", fmt.Errorf("text object does not exist")
 }
 
-func (b *Backend) TextSpans(context.Context, uint32) ([]byte, error) {
-	return nil, ErrUnsupported
+func (b *Backend) TextSpans(
+	ctx context.Context,
+	handle uint32,
+) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	object, err := b.object(handle)
+	if err != nil {
+		return nil, err
+	}
+	spans, err := b.state.RichTextSpans(object.OpID)
+	if err != nil {
+		return nil, err
+	}
+	data, err := json.Marshal(spans)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode native rich-text spans: %w", err)
+	}
+	return data, nil
 }
 
 func (b *Backend) TextCursor(
@@ -321,17 +336,19 @@ func (b *Backend) TextCursorPosition(
 	if err != nil {
 		return 0, err
 	}
-	target, err := decodeCursor(cursor)
+	target, _, err := decodeCursor(cursor)
 	if err != nil {
 		return 0, err
 	}
 
 	position := uint32(0)
-	for _, operation := range b.state.sequence(object.OpID) {
+	for _, operation := range b.state.sequenceAll(object.OpID) {
 		if operation.ID == target {
 			return position, nil
 		}
-		position += uint32(utf16Length(operation))
+		if !b.state.isSuperseded(operation.ID) {
+			position += uint32(utf16Length(operation))
+		}
 	}
 	return 0, fmt.Errorf("text cursor target does not exist")
 }
@@ -390,6 +407,9 @@ func (b *Backend) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 		return nil, err
 	}
 	document, err := Decode(data)
+	if err != nil {
+		document, err = DecodePartial(data)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -683,33 +703,33 @@ func encodeEmptyDocument() []byte {
 	return append(raw, body...)
 }
 
-func decodeCursor(data []byte) (OpID, error) {
+func decodeCursor(data []byte) (OpID, byte, error) {
 	r := &reader{data: data}
 	version, err := r.byte()
 	if err != nil || version != 1 {
-		return OpID{}, fmt.Errorf("invalid cursor version")
+		return OpID{}, 0, fmt.Errorf("invalid cursor version")
 	}
 	cursorType, err := r.byte()
 	if err != nil || cursorType != 3 {
-		return OpID{}, fmt.Errorf("unsupported cursor type")
+		return OpID{}, 0, fmt.Errorf("unsupported cursor type")
 	}
 	actorBytes, err := decodeLengthPrefixed(r)
 	if err != nil {
-		return OpID{}, fmt.Errorf("cannot decode cursor actor: %w", err)
+		return OpID{}, 0, fmt.Errorf("cannot decode cursor actor: %w", err)
 	}
 	actor, err := NewActorID(actorBytes)
 	if err != nil {
-		return OpID{}, err
+		return OpID{}, 0, err
 	}
 	counter, err := r.uleb()
 	if err != nil {
-		return OpID{}, fmt.Errorf("cannot decode cursor counter: %w", err)
+		return OpID{}, 0, fmt.Errorf("cannot decode cursor counter: %w", err)
 	}
 	move, err := r.byte()
 	if err != nil || (move != 1 && move != 2) || r.remaining() != 0 {
-		return OpID{}, fmt.Errorf("invalid cursor movement")
+		return OpID{}, 0, fmt.Errorf("invalid cursor movement")
 	}
-	return OpID{Actor: actor, Counter: counter}, nil
+	return OpID{Actor: actor, Counter: counter}, move, nil
 }
 
 func equalHashes(left, right [][32]byte) bool {

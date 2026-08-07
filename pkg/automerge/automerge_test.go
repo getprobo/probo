@@ -90,7 +90,7 @@ func newBaseDocument(t *testing.T) []byte {
 	t.Helper()
 
 	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(1))
+	document, err := automerge.NewReference(ctx, actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 

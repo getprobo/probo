@@ -156,6 +156,39 @@ switch (request.action) {
     );
     break;
   }
+  case "createComplexRichText": {
+    let document = Automerge.from({ body: "" }, { actor: request.actor });
+    document = Automerge.change(document, draft => {
+      Automerge.updateSpans(draft, ["body"], [
+        {
+          type: "block",
+          value: {
+            type: "paragraph",
+            parents: [],
+            isEmbed: false,
+            attrs: {},
+          },
+        },
+        {
+          type: "text",
+          value: "A",
+          marks: { strong: true, em: true },
+        },
+        {
+          type: "text",
+          value: "B",
+          marks: { em: true },
+        },
+      ]);
+    });
+    process.stdout.write(
+      JSON.stringify({
+        document: Buffer.from(Automerge.save(document)).toString("base64"),
+        heads: Automerge.getHeads(document),
+      }),
+    );
+    break;
+  }
   case "inspect": {
     const document = Automerge.load(Buffer.from(request.document, "base64"));
     process.stdout.write(

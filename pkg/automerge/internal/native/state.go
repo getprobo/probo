@@ -23,6 +23,7 @@ package native
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 )
@@ -34,6 +35,12 @@ type (
 		operations    map[OpID]Operation
 		superseded    map[OpID]struct{}
 		heads         map[ChangeHash]struct{}
+	}
+
+	RichSpan struct {
+		Type  string         `json:"type"`
+		Value any            `json:"value"`
+		Marks map[string]any `json:"marks,omitempty"`
 	}
 )
 
@@ -188,13 +195,24 @@ func (s *State) visibleMapOperations(property string) []Operation {
 }
 
 func (s *State) sequence(object OpID) []Operation {
+	operations := s.sequenceElements(object)
+	result := operations[:0]
+	for _, operation := range operations {
+		if operation.Action == ActionSet {
+			result = append(result, operation)
+		}
+	}
+	return result
+}
+
+func (s *State) sequenceElements(object OpID) []Operation {
 	children := make(map[OpID][]Operation)
 	var head []Operation
 	for _, operation := range s.operations {
 		if operation.Object.IsRoot ||
 			operation.Object.OpID != object ||
 			!operation.Insert ||
-			operation.Action != ActionSet {
+			operation.Action == ActionMark {
 			continue
 		}
 		switch {
@@ -209,8 +227,220 @@ func (s *State) sequence(object OpID) []Operation {
 	}
 
 	operations := make([]Operation, 0)
-	s.appendSequence(&operations, head, children, make(map[OpID]struct{}))
+	s.appendSequence(
+		&operations,
+		head,
+		children,
+		make(map[OpID]struct{}),
+		false,
+	)
 	return operations
+}
+
+func (s *State) sequenceAll(object OpID) []Operation {
+	children := make(map[OpID][]Operation)
+	var head []Operation
+	for _, operation := range s.operations {
+		if operation.Object.IsRoot ||
+			operation.Object.OpID != object ||
+			!operation.Insert ||
+			operation.Action == ActionMark {
+			continue
+		}
+		if operation.Key.IsHead {
+			head = append(head, operation)
+		} else if operation.Key.Element != nil {
+			children[*operation.Key.Element] = append(
+				children[*operation.Key.Element],
+				operation,
+			)
+		}
+	}
+
+	operations := make([]Operation, 0)
+	s.appendSequence(
+		&operations,
+		head,
+		children,
+		make(map[OpID]struct{}),
+		true,
+	)
+	return operations
+}
+
+func (s *State) RichTextSpans(object OpID) ([]RichSpan, error) {
+	elements := s.sequenceElements(object)
+	marks := s.richTextMarks(object, elements)
+	spans := make([]RichSpan, 0)
+
+	for i, operation := range elements {
+		switch operation.Action {
+		case ActionMakeMap:
+			value, err := s.mapValue(operation.ID, make(map[OpID]struct{}))
+			if err != nil {
+				return nil, fmt.Errorf("cannot hydrate block %v: %w", operation.ID, err)
+			}
+			spans = append(spans, RichSpan{Type: "block", Value: value})
+		case ActionSet:
+			if operation.Value == nil || operation.Value.Type != ScalarString {
+				continue
+			}
+			activeMarks := make(map[string]any)
+			for _, mark := range marks {
+				if i >= mark.start && i < mark.end {
+					activeMarks[mark.name] = mark.value
+				}
+			}
+			if len(activeMarks) == 0 {
+				activeMarks = nil
+			}
+			if len(spans) > 0 &&
+				spans[len(spans)-1].Type == "text" &&
+				reflect.DeepEqual(spans[len(spans)-1].Marks, activeMarks) {
+				spans[len(spans)-1].Value = spans[len(spans)-1].Value.(string) +
+					operation.Value.String
+			} else {
+				spans = append(
+					spans,
+					RichSpan{
+						Type:  "text",
+						Value: operation.Value.String,
+						Marks: activeMarks,
+					},
+				)
+			}
+		}
+	}
+	return spans, nil
+}
+
+type richTextMark struct {
+	start int
+	end   int
+	name  string
+	value any
+}
+
+func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark {
+	positions := make(map[OpID]int, len(elements))
+	for i, element := range elements {
+		positions[element.ID] = i
+	}
+
+	markOperations := make([]Operation, 0)
+	for _, operation := range s.operations {
+		if !operation.Object.IsRoot &&
+			operation.Object.OpID == object &&
+			operation.Action == ActionMark &&
+			!s.isSuperseded(operation.ID) {
+			markOperations = append(markOperations, operation)
+		}
+	}
+	sort.Slice(markOperations, func(i, j int) bool {
+		return markOperations[i].ID.Compare(markOperations[j].ID) < 0
+	})
+
+	marks := make([]richTextMark, 0, len(markOperations)/2)
+	for i := 0; i+1 < len(markOperations); i += 2 {
+		begin := markOperations[i]
+		end := markOperations[i+1]
+		if begin.MarkName == nil || begin.Key.Element == nil || end.Key.Element == nil {
+			continue
+		}
+		startPosition, startOK := positions[*begin.Key.Element]
+		endPosition, endOK := positions[*end.Key.Element]
+		if !startOK || !endOK || startPosition >= endPosition {
+			continue
+		}
+		marks = append(
+			marks,
+			richTextMark{
+				start: startPosition + 1,
+				end:   endPosition + 1,
+				name:  *begin.MarkName,
+				value: scalarMaterializedValue(begin.Value),
+			},
+		)
+	}
+	return marks
+}
+
+func (s *State) mapValue(
+	object OpID,
+	visited map[OpID]struct{},
+) (map[string]any, error) {
+	if _, ok := visited[object]; ok {
+		return nil, fmt.Errorf("object cycle detected")
+	}
+	visited[object] = struct{}{}
+	defer delete(visited, object)
+
+	properties := make(map[string][]Operation)
+	for _, operation := range s.operations {
+		if operation.Object.IsRoot ||
+			operation.Object.OpID != object ||
+			operation.Key.Property == nil ||
+			s.isSuperseded(operation.ID) {
+			continue
+		}
+		property := *operation.Key.Property
+		properties[property] = append(properties[property], operation)
+	}
+
+	result := make(map[string]any, len(properties))
+	for property, operations := range properties {
+		sort.Slice(operations, func(i, j int) bool {
+			return operations[i].ID.Compare(operations[j].ID) > 0
+		})
+		operation := operations[0]
+		switch operation.Action {
+		case ActionMakeMap:
+			value, err := s.mapValue(operation.ID, visited)
+			if err != nil {
+				return nil, err
+			}
+			result[property] = value
+		case ActionMakeList:
+			result[property] = []any{}
+		case ActionMakeText:
+			var value strings.Builder
+			for _, element := range s.sequence(operation.ID) {
+				if element.Value != nil && element.Value.Type == ScalarString {
+					value.WriteString(element.Value.String)
+				}
+			}
+			result[property] = value.String()
+		case ActionSet:
+			result[property] = scalarMaterializedValue(operation.Value)
+		}
+	}
+	return result, nil
+}
+
+func scalarMaterializedValue(value *Scalar) any {
+	if value == nil {
+		return nil
+	}
+	switch value.Type {
+	case ScalarNull:
+		return nil
+	case ScalarFalse:
+		return false
+	case ScalarTrue:
+		return true
+	case ScalarUint:
+		return value.Uint
+	case ScalarInt, ScalarCounter, ScalarTimestamp:
+		return value.Int
+	case ScalarFloat64:
+		return value.Float
+	case ScalarString:
+		return value.String
+	case ScalarBytes:
+		return append([]byte(nil), value.Bytes...)
+	default:
+		return append([]byte(nil), value.Raw...)
+	}
 }
 
 func (s *State) appendSequence(
@@ -218,6 +448,7 @@ func (s *State) appendSequence(
 	operations []Operation,
 	children map[OpID][]Operation,
 	visited map[OpID]struct{},
+	includeSuperseded bool,
 ) {
 	sort.Slice(
 		operations,
@@ -230,10 +461,16 @@ func (s *State) appendSequence(
 			continue
 		}
 		visited[operation.ID] = struct{}{}
-		if !s.isSuperseded(operation.ID) {
+		if includeSuperseded || !s.isSuperseded(operation.ID) {
 			*output = append(*output, operation)
 		}
-		s.appendSequence(output, children[operation.ID], children, visited)
+		s.appendSequence(
+			output,
+			children[operation.ID],
+			children,
+			visited,
+			includeSuperseded,
+		)
 	}
 }
 

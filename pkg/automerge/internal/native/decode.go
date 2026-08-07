@@ -44,6 +44,17 @@ type implicitOperationIDs struct {
 // Decode parses all chunks in data and validates the resulting dependency
 // graph. It accepts document, change, and compressed change chunks.
 func Decode(data []byte) (*Document, error) {
+	return decode(data, true)
+}
+
+// DecodePartial parses chunks whose causal dependencies may already exist in
+// another document. Column and operation ownership validation still happens
+// while whole-history frontier validation is deferred to the caller.
+func DecodePartial(data []byte) (*Document, error) {
+	return decode(data, false)
+}
+
+func decode(data []byte, validateHistory bool) (*Document, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("Automerge file is empty")
 	}
@@ -78,8 +89,10 @@ func Decode(data []byte) (*Document, error) {
 		}
 	}
 
-	if err := validateDocument(document); err != nil {
-		return nil, fmt.Errorf("invalid dependency graph: %w", err)
+	if validateHistory {
+		if err := validateDocument(document); err != nil {
+			return nil, fmt.Errorf("invalid dependency graph: %w", err)
+		}
 	}
 	return document, nil
 }

@@ -134,6 +134,8 @@ const (
 	ActionDelete    Action = 3
 	ActionMakeText  Action = 4
 	ActionIncrement Action = 5
+	ActionMakeTable Action = 6
+	ActionMark      Action = 7
 
 	ScalarNull      ScalarType = 0
 	ScalarFalse     ScalarType = 1

@@ -50,7 +50,7 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 		nativeText, err := nativeDocument.CreateText(ctx, "body")
 		require.NoError(t, err)
 
-		referenceDocument, err := automerge.New(ctx, actor(byte(80+history)))
+		referenceDocument, err := automerge.NewReference(ctx, actor(byte(80+history)))
 		require.NoError(t, err)
 		closeDocument(t, referenceDocument)
 		referenceText, err := referenceDocument.CreateText(ctx, "body")
@@ -97,7 +97,7 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 
 		data, err := nativeDocument.Save(ctx)
 		require.NoError(t, err)
-		loaded, err := automerge.Load(ctx, data, actor(byte(120+history)))
+		loaded, err := automerge.LoadReference(ctx, data, actor(byte(120+history)))
 		require.NoError(t, err)
 		closeDocument(t, loaded)
 		loadedText, err := loaded.Text(ctx, "body")

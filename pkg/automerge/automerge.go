@@ -113,8 +113,14 @@ func NewActorID() (ActorID, error) {
 	return actorID, nil
 }
 
-// New creates an empty document using the reference backend.
+// New creates an empty document using the native Go engine.
 func New(ctx context.Context, actorID ActorID) (*Document, error) {
+	return NewPureGo(ctx, actorID)
+}
+
+// NewReference creates an empty document using the official WASM reference
+// engine. It is retained as a differential oracle for the native backend.
+func NewReference(ctx context.Context, actorID ActorID) (*Document, error) {
 	b, err := reference.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create Automerge backend: %w", err)
@@ -144,8 +150,17 @@ func NewPureGo(ctx context.Context, actorID ActorID) (*Document, error) {
 	return &Document{backend: b}, nil
 }
 
-// Load creates a document from Automerge binary data and assigns a new writer.
+// Load creates a document using the native Go engine and assigns a new writer.
 func Load(ctx context.Context, data []byte, actorID ActorID) (*Document, error) {
+	return LoadPureGo(ctx, data, actorID)
+}
+
+// LoadReference loads a document using the official WASM reference engine.
+func LoadReference(
+	ctx context.Context,
+	data []byte,
+	actorID ActorID,
+) (*Document, error) {
 	b, err := reference.Load(ctx, data)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load Automerge backend: %w", err)
