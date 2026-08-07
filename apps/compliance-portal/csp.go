@@ -43,6 +43,7 @@ type contentSecurityPolicyData struct {
 // substituted (scheme://host of PROBOD_BASE_URL / file download origin).
 func ContentSecurityPolicy(appOrigin string) (string, error) {
 	var buf bytes.Buffer
+
 	err := contentSecurityPolicyTmpl.Execute(
 		&buf,
 		contentSecurityPolicyData{AppOrigin: appOrigin},
