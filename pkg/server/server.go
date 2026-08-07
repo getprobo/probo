@@ -21,11 +21,13 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/apps/console"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -86,16 +88,17 @@ type Config struct {
 }
 
 type Server struct {
-	cfg                Config
-	apiServer          *api.Server
-	mailActionsHandler http.Handler
-	consoleWebServer   *console_web.Server
-	router             *chi.Mux
-	extraHeaderFields  map[string]string
-	baseURL            string
-	proboService       *probo.Service
-	iamService         *iam.Service
-	logger             *log.Logger
+	cfg                   Config
+	apiServer             *api.Server
+	mailActionsHandler    http.Handler
+	consoleWebServer      *console_web.Server
+	consoleSecurityPolicy string
+	router                *chi.Mux
+	extraHeaderFields     map[string]string
+	baseURL               string
+	proboService          *probo.Service
+	iamService            *iam.Service
+	logger                *log.Logger
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -138,19 +141,30 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
+	appOrigin := ""
+	if cfg.BaseURL != nil {
+		appOrigin = cfg.BaseURL.Scheme() + "://" + cfg.BaseURL.Host()
+	}
+
+	consoleCSP, err := console.ContentSecurityPolicy(appOrigin)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build console content security policy: %w", err)
+	}
+
 	router := chi.NewRouter()
 
 	server := &Server{
-		cfg:                cfg,
-		apiServer:          apiServer,
-		mailActionsHandler: mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
-		consoleWebServer:   consoleWebServer,
-		router:             router,
-		extraHeaderFields:  cfg.ExtraHeaderFields,
-		baseURL:            cfg.BaseURL.String(),
-		proboService:       cfg.Probo,
-		iamService:         cfg.IAM,
-		logger:             cfg.Logger,
+		cfg:                   cfg,
+		apiServer:             apiServer,
+		mailActionsHandler:    mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
+		consoleWebServer:      consoleWebServer,
+		consoleSecurityPolicy: consoleCSP,
+		router:                router,
+		extraHeaderFields:     cfg.ExtraHeaderFields,
+		baseURL:               cfg.BaseURL.String(),
+		proboService:          cfg.Probo,
+		iamService:            cfg.IAM,
+		logger:                cfg.Logger,
 	}
 
 	server.setupRoutes()
@@ -168,7 +182,15 @@ func (s *Server) setupRoutes() {
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
 
-	s.router.Mount("/", s.consoleWebServer)
+	s.router.Mount(
+		"/",
+		NewSecurityHeadersMiddleware(
+			SecurityHeadersOptions{
+				ExtraHeaderFields:     s.extraHeaderFields,
+				ContentSecurityPolicy: s.consoleSecurityPolicy,
+			},
+		)(s.consoleWebServer),
+	)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -18,15 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath, URL } from "node:url";
 
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
 const require = createRequire(import.meta.url);
+
+const cspTemplatePath = fileURLToPath(
+  new URL("./content-security-policy.txt.tmpl", import.meta.url),
+);
+
+// Same policy as production (apps/console/csp.go), with ws:/wss: appended to
+// connect-src for Vite HMR.
+function consoleContentSecurityPolicy(appOrigin: string): string {
+  const template = readFileSync(cspTemplatePath, "utf8");
+  const policy = template.replaceAll("{{.AppOrigin}}", appOrigin).trim();
+  return policy.replace(
+    /connect-src 'self' ([^;]+);/,
+    "connect-src 'self' $1 ws: wss:;",
+  );
+}
+
+function appOriginFromEnv(env: Record<string, string>): string {
+  const explicit = env.CONSOLE_APP_ORIGIN?.trim();
+  if (explicit) {
+    return explicit.replace(/\/$/, "");
+  }
+
+  const apiURL = env.VITE_API_URL?.trim() || "http://localhost:8080";
+  const formatted
+    = apiURL.startsWith("http://") || apiURL.startsWith("https://")
+      ? apiURL
+      : `https://${apiURL}`;
+
+  return new URL(formatted).origin;
+}
 
 // @vitejs/plugin-react@6 (Vite 8) no longer runs Babel, so the Relay tagged
 // template transform is applied via @rolldown/plugin-babel instead. The iam
@@ -34,47 +65,62 @@ const require = createRequire(import.meta.url);
 const iamFiles = /src[/\\]pages[/\\]iam[/\\]/;
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    react(),
-    babel({
-      exclude: [/[/\\]node_modules[/\\]/, /\0rolldown[/\\]runtime\.js/, iamFiles],
-      plugins: [
-        [
-          "relay",
-          {
-            eagerEsModules: true,
-            artifactDirectory: "src/__generated__/core",
-          },
+export default defineConfig(({ mode }) => {
+  const envDir = fileURLToPath(new URL(".", import.meta.url));
+  // Empty prefix: load non-VITE_ vars too (CSP app origin is Node-only).
+  const env = loadEnv(mode, envDir, "");
+
+  return {
+    plugins: [
+      react(),
+      babel({
+        exclude: [/[/\\]node_modules[/\\]/, /\0rolldown[/\\]runtime\.js/, iamFiles],
+        plugins: [
+          [
+            "relay",
+            {
+              eagerEsModules: true,
+              artifactDirectory: "src/__generated__/core",
+            },
+          ],
         ],
-      ],
-    }),
-    babel({
-      include: /src[/\\]pages[/\\]iam[/\\].*\.[jt]sx?(?:$|\?)/,
-      plugins: [
-        [
-          "relay",
-          {
-            eagerEsModules: true,
-            artifactDirectory: "src/__generated__/iam",
-          },
+      }),
+      babel({
+        include: /src[/\\]pages[/\\]iam[/\\].*\.[jt]sx?(?:$|\?)/,
+        plugins: [
+          [
+            "relay",
+            {
+              eagerEsModules: true,
+              artifactDirectory: "src/__generated__/iam",
+            },
+          ],
         ],
-      ],
-    }),
-    tailwindcss(),
-  ],
-  server: {
-    proxy: {
-      "/api": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
+      }),
+      tailwindcss(),
+    ],
+    server: {
+      headers: {
+        "Content-Security-Policy": consoleContentSecurityPolicy(
+          appOriginFromEnv(env),
+        ),
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "Permissions-Policy": "microphone=(), camera=(), geolocation=()",
+      },
+      proxy: {
+        "/api": {
+          target: "http://localhost:8080",
+          changeOrigin: true,
+        },
       },
     },
-  },
-  resolve: {
-    alias: {
-      "#": fileURLToPath(new URL("./src", import.meta.url)),
-      "mermaid": require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
+    resolve: {
+      alias: {
+        "#": fileURLToPath(new URL("./src", import.meta.url)),
+        "mermaid": require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
+      },
     },
-  },
+  };
 });
