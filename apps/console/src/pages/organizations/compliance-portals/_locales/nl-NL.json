@@ -62,24 +62,13 @@
     "description": "Beheer auditrapporten en compliancecertificeringen"
   },
   "auditList": {
-    "addAudit": "Audit toevoegen",
-    "columns": { "framework": "Framework", "name": "Naam", "validUntil": "Geldig tot", "state": "Status", "visibility": "Zichtbaarheid" },
-    "empty": "Nog geen audits op deze pagina",
-    "addDialog": {
-      "title": "Audit toevoegen aan pagina",
-      "auditLabel": "Audit",
-      "visibilityLabel": "Zichtbaarheid",
-      "submit": "Toevoegen",
-      "cancel": "Annuleren",
-      "loading": "Audits laden…",
-      "success": "Audit toegevoegd aan de pagina.",
-      "error": "Toevoegen van audit aan de pagina mislukt"
-    }
+    "columns": { "displayed": "Weergegeven", "framework": "Framework", "name": "Naam", "validUntil": "Geldig tot", "state": "Status", "visibility": "Zichtbaarheid" },
+    "empty": "Geen audits beschikbaar"
   },
   "auditListItem": {
-    "messages": { "visibilityUpdated": "Zichtbaarheid van audit succesvol bijgewerkt.", "removed": "Audit verwijderd van de pagina." },
+    "messages": { "visibilityUpdated": "Portaalinstellingen van audit succesvol bijgewerkt.", "removed": "Audit verwijderd van de pagina." },
     "errors": { "updateVisibility": "Bijwerken van auditzichtbaarheid mislukt", "remove": "Verwijderen van audit van de pagina mislukt" },
-    "actions": { "remove": "Verwijderen van pagina" },
+    "actions": { "toggle": "{{title}} weergeven of verbergen op de compliancepagina" },
     "noExpiry": "Geen vervaldatum",
     "untitled": "Zonder titel",
     "states": { "not_started": "Niet gestart", "in_progress": "In behandeling", "completed": "Voltooid", "rejected": "Afgewezen", "outdated": "Verouderd" }
@@ -149,23 +138,13 @@
     "empty": { "description": "Voeg uw eigen domein toe om uw compliancepagina professioneler te maken" }
   },
   "thirdPartyListItem": {
-    "messages": { "visibilityUpdated": "Zichtbaarheid van subverwerker succesvol bijgewerkt.", "removed": "Subverwerker verwijderd van de pagina." },
-    "errors": { "visibilityUpdate": "Bijwerken van zichtbaarheid van subverwerker mislukt", "remove": "Verwijderen van subverwerker van de pagina mislukt" },
-    "actions": { "remove": "Verwijderen van pagina" }
+    "messages": { "linked": "Subverwerker toegevoegd aan de pagina.", "removed": "Subverwerker verwijderd van de pagina." },
+    "errors": { "link": "Toevoegen van subverwerker aan de pagina mislukt", "remove": "Verwijderen van subverwerker van de pagina mislukt" },
+    "actions": { "toggle": "{{title}} weergeven of verbergen op de compliancepagina" }
   },
   "thirdPartyList": {
-    "addThirdParty": "Subverwerker toevoegen",
-    "columns": { "name": "Naam", "category": "Categorie" },
-    "empty": "Nog geen subverwerkers op deze pagina",
-    "addDialog": {
-      "title": "Subverwerker toevoegen aan pagina",
-      "thirdPartyLabel": "Subverwerker",
-      "submit": "Toevoegen",
-      "cancel": "Annuleren",
-      "loading": "Subverwerkers laden…",
-      "success": "Subverwerker toegevoegd aan de pagina.",
-      "error": "Toevoegen van subverwerker aan de pagina mislukt"
-    }
+    "columns": { "displayed": "Weergegeven", "name": "Naam", "category": "Categorie" },
+    "empty": "Geen subverwerkers beschikbaar"
   },
   "thirdPartiesPage": {
     "title": "Subverwerkers",

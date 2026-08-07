@@ -55,3 +55,77 @@ func (s *Service) GetDocumentLinks(
 
 	return rows, nil
 }
+
+func (s *Service) GetAuditLinks(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	auditIDs []gid.GID,
+) (coredata.CompliancePortalAudits, error) {
+	var rows coredata.CompliancePortalAudits
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			byAuditID, err := coredata.LoadCompliancePortalAuditsByCompliancePortalIDAndAuditIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				auditIDs,
+			)
+			if err != nil {
+				return err
+			}
+
+			rows = make(coredata.CompliancePortalAudits, 0, len(byAuditID))
+			for _, link := range byAuditID {
+				rows = append(rows, link)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load portal audit links: %w", err)
+	}
+
+	return rows, nil
+}
+
+func (s *Service) GetThirdPartyLinks(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	thirdPartyIDs []gid.GID,
+) (coredata.CompliancePortalThirdParties, error) {
+	var rows coredata.CompliancePortalThirdParties
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			byThirdPartyID, err := coredata.LoadCompliancePortalThirdPartiesByCompliancePortalIDAndThirdPartyIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				thirdPartyIDs,
+			)
+			if err != nil {
+				return err
+			}
+
+			rows = make(coredata.CompliancePortalThirdParties, 0, len(byThirdPartyID))
+			for _, link := range byThirdPartyID {
+				rows = append(rows, link)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load portal third party links: %w", err)
+	}
+
+	return rows, nil
+}

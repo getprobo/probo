@@ -110,46 +110,6 @@ func (s *Service) ListDocuments(
 	return page.NewPage(documents, cursor), nil
 }
 
-func (s *Service) CountAudits(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePortalID gid.GID,
-) (int, error) {
-	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
-	if err != nil {
-		return 0, err
-	}
-
-	var count int
-
-	err = s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var audits coredata.Audits
-
-			var countErr error
-
-			count, countErr = audits.CountByCompliancePortalID(
-				ctx,
-				conn,
-				scope,
-				compliancePortalID,
-				organizationID,
-			)
-			if countErr != nil {
-				return countErr
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 func (s *Service) ListAudits(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -228,47 +188,6 @@ func (s *Service) ListAudits(
 	}
 
 	return page.NewPage(entries, cursor), nil
-}
-
-func (s *Service) CountThirdParties(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePortalID gid.GID,
-) (int, error) {
-	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
-	if err != nil {
-		return 0, err
-	}
-
-	var count int
-
-	err = s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var thirdParties coredata.ThirdParties
-
-			var countErr error
-
-			count, countErr = thirdParties.CountByCompliancePortalID(
-				ctx,
-				conn,
-				scope,
-				compliancePortalID,
-				organizationID,
-				nil,
-			)
-			if countErr != nil {
-				return countErr
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 func (s *Service) ListThirdParties(
@@ -379,14 +298,13 @@ func (s *Service) GetDocumentLink(
 	return link, nil
 }
 
-func (s *Service) GetAudit(
+func (s *Service) GetAuditLink(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	auditID gid.GID,
-) (*PortalAudit, error) {
+) (*coredata.CompliancePortalAudit, error) {
 	link := &coredata.CompliancePortalAudit{}
-	audit := &coredata.Audit{}
 
 	err := s.pg.WithConn(
 		ctx,
@@ -399,6 +317,36 @@ func (s *Service) GetAudit(
 				return coredata.ErrResourceNotFound
 			}
 
+			return nil
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal audit catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetAudit(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	auditID gid.GID,
+) (*PortalAudit, error) {
+	link, err := s.GetAuditLink(ctx, scope, compliancePortalID, auditID)
+	if err != nil {
+		return nil, err
+	}
+
+	audit := &coredata.Audit{}
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
 			return audit.LoadByID(ctx, conn, scope, auditID)
 		},
 	)
@@ -417,22 +365,47 @@ func (s *Service) GetAudit(
 	}, nil
 }
 
+func (s *Service) GetThirdPartyLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	thirdPartyID gid.GID,
+) (*coredata.CompliancePortalThirdParty, error) {
+	link := &coredata.CompliancePortalThirdParty{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByCompliancePortalIDAndThirdPartyID(ctx, conn, scope, compliancePortalID, thirdPartyID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal third party catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
 func (s *Service) GetThirdParty(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	thirdPartyID gid.GID,
 ) (*PortalThirdParty, error) {
-	link := &coredata.CompliancePortalThirdParty{}
+	link, err := s.GetThirdPartyLink(ctx, scope, compliancePortalID, thirdPartyID)
+	if err != nil {
+		return nil, err
+	}
+
 	thirdParty := &coredata.ThirdParty{}
 
-	err := s.pg.WithConn(
+	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := link.LoadByCompliancePortalIDAndThirdPartyID(ctx, conn, scope, compliancePortalID, thirdPartyID); err != nil {
-				return err
-			}
-
 			return thirdParty.LoadByID(ctx, conn, scope, thirdPartyID)
 		},
 	)

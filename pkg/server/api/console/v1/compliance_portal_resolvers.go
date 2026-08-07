@@ -304,64 +304,6 @@ func (r *compliancePortalResolver) CompliancePortalFiles(ctx context.Context, ob
 	return types.NewCompliancePortalFileConnection(pageResult, obj.ID), nil
 }
 
-// Audits is the resolver for the audits field.
-func (r *compliancePortalResolver) Audits(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.CompliancePortalAuditConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
-		Field:     coredata.AuditOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	pageResult, err := r.management.ListAudits(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list compliance portal audit catalog", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewCompliancePortalAuditConnection(pageResult, obj.ID), nil
-}
-
-// ThirdParties is the resolver for the thirdParties field.
-func (r *compliancePortalResolver) ThirdParties(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.CompliancePortalThirdPartyConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
-		Field:     coredata.ThirdPartyOrderFieldName,
-		Direction: page.OrderDirectionAsc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	pageResult, err := r.management.ListThirdParties(ctx, scope, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list compliance portal third party catalog", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewCompliancePortalThirdPartyConnection(pageResult, obj.ID), nil
-}
-
 // MailingList is the resolver for the mailingList field.
 func (r *compliancePortalResolver) MailingList(ctx context.Context, obj *types.CompliancePortal) (*types.MailingList, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionMailingListSubscriberList)
@@ -568,20 +510,25 @@ func (r *compliancePortalAccessResolver) Permission(ctx context.Context, obj *ty
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *compliancePortalAuditConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalAuditConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalGet)
+// Audit is the resolver for the audit field.
+func (r *compliancePortalAuditResolver) Audit(ctx context.Context, obj *types.CompliancePortalAudit) (*types.Audit, error) {
+	scope, err := r.authorize(ctx, obj.Audit.ID, probo.ActionAuditGet)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	count, err := r.management.CountAudits(ctx, scope, obj.ParentID)
+	audit, err := r.probo.Audits.Get(ctx, scope, obj.Audit.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count compliance portal audit catalog", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return count, nil
+	return types.NewAudit(audit), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -902,20 +849,24 @@ func (r *compliancePortalReferenceConnectionResolver) TotalCount(ctx context.Con
 	return count, nil
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *compliancePortalThirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *types.CompliancePortalThirdPartyConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalGet)
-	if err != nil {
-		return 0, err
+// ThirdParty is the resolver for the thirdParty field.
+func (r *compliancePortalThirdPartyResolver) ThirdParty(ctx context.Context, obj *types.CompliancePortalThirdParty) (*types.ThirdParty, error) {
+	if _, err := r.authorize(ctx, obj.ThirdParty.ID, probo.ActionThirdPartyGet); err != nil {
+		return nil, err
 	}
 
-	count, err := r.management.CountThirdParties(ctx, scope, obj.ParentID)
+	thirdParty, err := dataloader.FromContext(ctx).ThirdParty.Load(ctx, obj.ThirdParty.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count compliance portal third party catalog", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
-	return count, nil
+	return types.NewThirdParty(thirdParty), nil
 }
 
 // Certificate is the resolver for the certificate field.
@@ -1108,21 +1059,15 @@ func (r *mutationResolver) UpdateCompliancePortalAuditVisibility(ctx context.Con
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	audit, err := r.management.GetAudit(ctx, scope, input.CompliancePortalID, input.AuditID)
+	link, err := r.management.GetAuditLink(ctx, scope, input.CompliancePortalID, input.AuditID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit catalog entry", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	catalogAudit := types.NewCompliancePortalAudit(audit)
-
 	return &types.UpdateCompliancePortalAuditVisibilityPayload{
-		CatalogAudit: catalogAudit,
-		CatalogAuditEdge: types.NewCompliancePortalAuditEdge(
-			audit,
-			coredata.AuditOrderFieldCreatedAt,
-		),
+		CatalogAudit: types.NewCompliancePortalAudit(link),
 	}, nil
 }
 
@@ -1185,21 +1130,15 @@ func (r *mutationResolver) UpdateCompliancePortalThirdPartyPublished(ctx context
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	catalogThirdParty, err := r.management.GetThirdParty(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
+	link, err := r.management.GetThirdPartyLink(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load third party catalog entry", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	catalogEntry := types.NewCompliancePortalThirdParty(catalogThirdParty)
-
 	return &types.UpdateCompliancePortalThirdPartyPublishedPayload{
-		CatalogThirdParty: catalogEntry,
-		CatalogThirdPartyEdge: types.NewCompliancePortalThirdPartyEdge(
-			catalogThirdParty,
-			coredata.ThirdPartyOrderFieldName,
-		),
+		CatalogThirdParty: types.NewCompliancePortalThirdParty(link),
 	}, nil
 }
 
@@ -2044,9 +1983,9 @@ func (r *Resolver) CompliancePortalAccess() schema.CompliancePortalAccessResolve
 	return &compliancePortalAccessResolver{r}
 }
 
-// CompliancePortalAuditConnection returns schema.CompliancePortalAuditConnectionResolver implementation.
-func (r *Resolver) CompliancePortalAuditConnection() schema.CompliancePortalAuditConnectionResolver {
-	return &compliancePortalAuditConnectionResolver{r}
+// CompliancePortalAudit returns schema.CompliancePortalAuditResolver implementation.
+func (r *Resolver) CompliancePortalAudit() schema.CompliancePortalAuditResolver {
+	return &compliancePortalAuditResolver{r}
 }
 
 // CompliancePortalCommitment returns schema.CompliancePortalCommitmentResolver implementation.
@@ -2109,9 +2048,9 @@ func (r *Resolver) CompliancePortalReferenceConnection() schema.CompliancePortal
 	return &compliancePortalReferenceConnectionResolver{r}
 }
 
-// CompliancePortalThirdPartyConnection returns schema.CompliancePortalThirdPartyConnectionResolver implementation.
-func (r *Resolver) CompliancePortalThirdPartyConnection() schema.CompliancePortalThirdPartyConnectionResolver {
-	return &compliancePortalThirdPartyConnectionResolver{r}
+// CompliancePortalThirdParty returns schema.CompliancePortalThirdPartyResolver implementation.
+func (r *Resolver) CompliancePortalThirdParty() schema.CompliancePortalThirdPartyResolver {
+	return &compliancePortalThirdPartyResolver{r}
 }
 
 // CustomDomain returns schema.CustomDomainResolver implementation.
@@ -2122,7 +2061,7 @@ type (
 	complianceFrameworkResolver                       struct{ *Resolver }
 	compliancePortalResolver                          struct{ *Resolver }
 	compliancePortalAccessResolver                    struct{ *Resolver }
-	compliancePortalAuditConnectionResolver           struct{ *Resolver }
+	compliancePortalAuditResolver                     struct{ *Resolver }
 	compliancePortalCommitmentResolver                struct{ *Resolver }
 	compliancePortalCommitmentConnectionResolver      struct{ *Resolver }
 	compliancePortalCommitmentGroupResolver           struct{ *Resolver }
@@ -2135,6 +2074,6 @@ type (
 	compliancePortalFileConnectionResolver            struct{ *Resolver }
 	compliancePortalReferenceResolver                 struct{ *Resolver }
 	compliancePortalReferenceConnectionResolver       struct{ *Resolver }
-	compliancePortalThirdPartyConnectionResolver      struct{ *Resolver }
+	compliancePortalThirdPartyResolver                struct{ *Resolver }
 	customDomainResolver                              struct{ *Resolver }
 )

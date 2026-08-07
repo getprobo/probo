@@ -66,6 +66,18 @@ type (
 		DocumentID         gid.GID
 	}
 
+	CompliancePortalAuditKey struct {
+		TenantID           gid.TenantID
+		CompliancePortalID gid.GID
+		AuditID            gid.GID
+	}
+
+	CompliancePortalThirdPartyKey struct {
+		TenantID           gid.TenantID
+		CompliancePortalID gid.GID
+		ThirdPartyID       gid.GID
+	}
+
 	Loaders struct {
 		Organization               *dataloadgen.Loader[gid.GID, *coredata.Organization]
 		Framework                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
@@ -83,6 +95,8 @@ type (
 		CommonThirdParty           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
 		ThirdPartyAdministratorIDs *dataloadgen.Loader[gid.GID, []gid.GID]
 		CompliancePortalDocument   *dataloadgen.Loader[CompliancePortalDocumentKey, *coredata.CompliancePortalDocument]
+		CompliancePortalAudit      *dataloadgen.Loader[CompliancePortalAuditKey, *coredata.CompliancePortalAudit]
+		CompliancePortalThirdParty *dataloadgen.Loader[CompliancePortalThirdPartyKey, *coredata.CompliancePortalThirdParty]
 		Authorize                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 	}
 
@@ -144,6 +158,8 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		CommonThirdParty:           dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
 		ThirdPartyAdministratorIDs: dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
 		CompliancePortalDocument:   dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocuments),
+		CompliancePortalAudit:      dataloadgen.NewMappedLoader(f.fetchCompliancePortalAudits),
+		CompliancePortalThirdParty: dataloadgen.NewMappedLoader(f.fetchCompliancePortalThirdParties),
 		Authorize: dataloadgen.NewMappedLoader(
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
@@ -190,6 +206,96 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 				TenantID:           group.tenantID,
 				CompliancePortalID: group.compliancePortalID,
 				DocumentID:         link.DocumentID,
+			}] = link
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalAudits(
+	ctx context.Context,
+	keys []CompliancePortalAuditKey,
+) (map[CompliancePortalAuditKey]*coredata.CompliancePortalAudit, error) {
+	type groupKey struct {
+		tenantID           gid.TenantID
+		compliancePortalID gid.GID
+	}
+
+	auditIDsByGroup := make(map[groupKey][]gid.GID)
+
+	for _, key := range keys {
+		group := groupKey{
+			tenantID:           key.TenantID,
+			compliancePortalID: key.CompliancePortalID,
+		}
+		auditIDsByGroup[group] = append(auditIDsByGroup[group], key.AuditID)
+	}
+
+	result := make(map[CompliancePortalAuditKey]*coredata.CompliancePortalAudit, len(keys))
+
+	for group, auditIDs := range auditIDsByGroup {
+		links, err := f.compliancePortal.GetAuditLinks(
+			ctx,
+			coredata.NewScope(group.tenantID),
+			group.compliancePortalID,
+			auditIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal audits: %w", err)
+		}
+
+		// Return every link, including visibility NONE. That field is the
+		// console's linked-vs-unlinked signal; callers filter displayed rows.
+		for _, link := range links {
+			result[CompliancePortalAuditKey{
+				TenantID:           group.tenantID,
+				CompliancePortalID: group.compliancePortalID,
+				AuditID:            link.AuditID,
+			}] = link
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalThirdParties(
+	ctx context.Context,
+	keys []CompliancePortalThirdPartyKey,
+) (map[CompliancePortalThirdPartyKey]*coredata.CompliancePortalThirdParty, error) {
+	type groupKey struct {
+		tenantID           gid.TenantID
+		compliancePortalID gid.GID
+	}
+
+	thirdPartyIDsByGroup := make(map[groupKey][]gid.GID)
+
+	for _, key := range keys {
+		group := groupKey{
+			tenantID:           key.TenantID,
+			compliancePortalID: key.CompliancePortalID,
+		}
+		thirdPartyIDsByGroup[group] = append(thirdPartyIDsByGroup[group], key.ThirdPartyID)
+	}
+
+	result := make(map[CompliancePortalThirdPartyKey]*coredata.CompliancePortalThirdParty, len(keys))
+
+	for group, thirdPartyIDs := range thirdPartyIDsByGroup {
+		links, err := f.compliancePortal.GetThirdPartyLinks(
+			ctx,
+			coredata.NewScope(group.tenantID),
+			group.compliancePortalID,
+			thirdPartyIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal third parties: %w", err)
+		}
+
+		for _, link := range links {
+			result[CompliancePortalThirdPartyKey{
+				TenantID:           group.tenantID,
+				CompliancePortalID: group.compliancePortalID,
+				ThirdPartyID:       link.ThirdPartyID,
 			}] = link
 		}
 	}

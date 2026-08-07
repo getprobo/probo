@@ -426,22 +426,6 @@ type CompliancePortal implements Node {
         orderBy: CompliancePortalFileOrder
     ): CompliancePortalFileConnection! @goField(forceResolver: true)
 
-    audits(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: AuditOrder
-    ): CompliancePortalAuditConnection! @goField(forceResolver: true)
-
-    thirdParties(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: ThirdPartyOrder
-    ): CompliancePortalThirdPartyConnection! @goField(forceResolver: true)
-
     mailingList: MailingList @goField(forceResolver: true)
 
     defaultDomain: CustomDomain @goField(forceResolver: true)
@@ -470,41 +454,13 @@ type CompliancePortalDocument {
 
 type CompliancePortalAudit {
     id: ID!
-    audit: Audit!
+    audit: Audit! @goField(forceResolver: true)
     visibility: CompliancePortalLinkedVisibility!
-}
-
-type CompliancePortalAuditConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAuditConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalAuditEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalAuditEdge {
-    cursor: CursorKey!
-    node: CompliancePortalAudit!
 }
 
 type CompliancePortalThirdParty {
     id: ID!
-    thirdParty: ThirdParty!
-}
-
-type CompliancePortalThirdPartyConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalThirdPartyConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalThirdPartyEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalThirdPartyEdge {
-    cursor: CursorKey!
-    node: CompliancePortalThirdParty!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
 }
 
 type CompliancePortalEdge {
@@ -1056,7 +1012,6 @@ type DeleteCompliancePortalDocumentPayload {
 
 type UpdateCompliancePortalAuditVisibilityPayload {
     catalogAudit: CompliancePortalAudit!
-    catalogAuditEdge: CompliancePortalAuditEdge!
 }
 
 type DeleteCompliancePortalAuditPayload {
@@ -1065,7 +1020,6 @@ type DeleteCompliancePortalAuditPayload {
 
 type UpdateCompliancePortalThirdPartyPublishedPayload {
     catalogThirdParty: CompliancePortalThirdParty!
-    catalogThirdPartyEdge: CompliancePortalThirdPartyEdge!
 }
 
 type DeleteCompliancePortalThirdPartyPayload {
