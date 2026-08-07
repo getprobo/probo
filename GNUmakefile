@@ -2,6 +2,7 @@ NPROC ?=	$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || getconf _
 MAKEFLAGS := --jobs=$(NPROC)
 
 CAT ?=	cat
+CARGO ?=	cargo
 CP ?=	cp
 DOCKER ?=	docker
 GO ?=	go
@@ -19,6 +20,7 @@ ECHO ?= echo
 GOLINTCMD ?= golangci-lint
 SWIFTLINTCMD ?= swiftlint
 SWIFTCMD ?= swift
+RUST_TOOLCHAIN ?= 1.89.0
 SWIFT_ENROLL_UI ?= cmd/probo-agent/installer/macos/enroll-ui
 SWIFT_FORMAT_CONFIG ?= .swift-format
 SWIFTLINT_CONFIG ?= .swiftlint.yml
@@ -103,6 +105,9 @@ GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 EMBEDDED= apps/console/dist/index.html \
 	apps/compliance-portal/dist/index.html \
 	@probo/emails
+
+AUTOMERGE_REFERENCE_DIR=	pkg/automerge/internal/reference
+AUTOMERGE_REFERENCE_WASM=	$(AUTOMERGE_REFERENCE_DIR)/reference.wasm
 
 PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
@@ -207,6 +212,11 @@ test-verbose: test ## Run tests with verbose output
 .PHONY: test-short
 test-short: TEST_FLAGS+=-short
 test-short: test ## Run short tests only
+
+.PHONY: test-automerge-conformance
+test-automerge-conformance: ## Test Go binary compatibility with official Automerge JS
+	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
+		$(GO_BASE) test -count=1 ./pkg/automerge
 
 .PHONY: coverage-report
 coverage-report: test ## Generate HTML coverage report
@@ -413,6 +423,12 @@ pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceport
 
 .PHONY: generate
 generate: $(GENERATED)
+
+.PHONY: generate-automerge-reference
+generate-automerge-reference: ## Rebuild the embedded official Automerge WASM backend
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		$(CARGO) +$(RUST_TOOLCHAIN) build --locked --release --target wasm32-wasip1
+	$(CP) $(AUTOMERGE_REFERENCE_DIR)/wasm/target/wasm32-wasip1/release/probo_automerge_reference.wasm $(AUTOMERGE_REFERENCE_WASM)
 
 .PHONY: embed
 embed: $(EMBEDDED)

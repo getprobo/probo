@@ -37,6 +37,7 @@ require (
 	github.com/scim2/filter-parser/v2 v2.3.1
 	github.com/sigstore/sigstore-go v1.3.0
 	github.com/stretchr/testify v1.11.1
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/vektah/gqlparser/v2 v2.5.36
 	github.com/vikstrous/dataloadgen v0.0.10
 	github.com/yuin/goldmark v1.8.5
