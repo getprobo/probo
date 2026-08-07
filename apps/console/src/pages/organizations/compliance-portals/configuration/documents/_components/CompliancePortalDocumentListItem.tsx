@@ -253,7 +253,7 @@ export function CompliancePortalDocumentListItem(props: {
       <Td>
         {latestVersion && <DocumentTypeBadge type={latestVersion.documentType} />}
       </Td>
-      <Td noLink>
+      <Td noLink className="pr-4">
         <CompliancePortalAliasField
           resourceId={document.id}
           alias={document.alias}
