@@ -1,7 +1,7 @@
 default-src 'self';
 script-src 'self';
 style-src 'self' 'unsafe-inline';
-img-src 'self' data: {{.AppOrigin}};
+img-src 'self' data: {{.AppOrigin}} https://www.google.com;
 font-src 'self';
 connect-src 'self' {{.AppOrigin}};
 worker-src 'self' blob:;
