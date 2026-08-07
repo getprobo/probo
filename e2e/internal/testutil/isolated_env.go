@@ -27,6 +27,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -35,21 +36,59 @@ import (
 	"go.gearno.de/kit/log"
 )
 
-// IsolatedEnv is a short-lived probod process with its own listen addresses.
-// It shares Postgres and Mailpit with the main e2e suite so identities created
-// against the default server remain visible, which is how a disable-signup
-// instance is bootstrapped in production (orgs exist before the flag flips).
-type IsolatedEnv struct {
-	BaseURL        string
-	MailpitBaseURL string
+var isolatedEnvStartMu sync.Mutex
 
-	cmd       *exec.Cmd
-	done      chan error
-	outputBuf *bytes.Buffer
+type (
+	// IsolatedEnv is a short-lived probod process with its own listen addresses.
+	// It shares Postgres and Mailpit with the main e2e suite so identities created
+	// against the default server remain visible, which is how a disable-signup
+	// instance is bootstrapped in production (orgs exist before the flag flips).
+	IsolatedEnv struct {
+		BaseURL        string
+		MailpitBaseURL string
+
+		cmd       *exec.Cmd
+		done      chan error
+		outputBuf *lockedBuffer
+	}
+
+	IsolatedEnvOptions struct {
+		DisableSignup bool
+	}
+
+	lockedBuffer struct {
+		mu  sync.Mutex
+		buf bytes.Buffer
+	}
+
+	reservedTCPPort struct {
+		port     string
+		listener net.Listener
+	}
+)
+
+func (b *lockedBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.buf.Write(p)
 }
 
-type IsolatedEnvOptions struct {
-	DisableSignup bool
+func (b *lockedBuffer) Len() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.buf.Len()
+}
+
+func (b *lockedBuffer) Bytes() []byte {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	out := make([]byte, b.buf.Len())
+	copy(out, b.buf.Bytes())
+
+	return out
 }
 
 // StartIsolatedEnv launches a second probod for gates that depend on process
@@ -61,41 +100,58 @@ func StartIsolatedEnv(t testing.TB, opts IsolatedEnvOptions) *IsolatedEnv {
 	binaryPath := os.Getenv("PROBO_E2E_BINARY")
 	require.NotEmpty(t, binaryPath, "PROBO_E2E_BINARY is required")
 
-	apiPort := freeTCPPort(t)
-	metricsPort := freeTCPPort(t)
-	trustHTTPPort := freeTCPPort(t)
-	trustHTTPSPort := freeTCPPort(t)
+	// Serialize allocate → config → release → start so parallel isolated envs
+	// cannot steal each other's briefly-freed ports.
+	isolatedEnvStartMu.Lock()
+	startUnlocked := false
+	defer func() {
+		if !startUnlocked {
+			isolatedEnvStartMu.Unlock()
+		}
+	}()
 
-	apiAddr := "localhost:" + apiPort
+	apiPort := reserveTCPPort(t)
+	metricsPort := reserveTCPPort(t)
+	trustHTTPPort := reserveTCPPort(t)
+	trustHTTPSPort := reserveTCPPort(t)
+
+	ports := []reservedTCPPort{apiPort, metricsPort, trustHTTPPort, trustHTTPSPort}
+	defer closeReservedPorts(ports)
+
+	apiAddr := "localhost:" + apiPort.port
 	baseURL := "http://" + apiAddr
 
-	configPath, err := generateConfig(configOptions{
-		DisableSignup:  opts.DisableSignup,
-		APIAddr:        apiAddr,
-		BaseURL:        baseURL,
-		MetricsAddr:    "localhost:" + metricsPort,
-		TrustHTTPAddr:  ":" + trustHTTPPort,
-		TrustHTTPSAddr: ":" + trustHTTPSPort,
-	})
+	configPath, err := generateConfig(
+		configOptions{
+			DisableSignup:  opts.DisableSignup,
+			APIAddr:        apiAddr,
+			BaseURL:        baseURL,
+			MetricsAddr:    "localhost:" + metricsPort.port,
+			TrustHTTPAddr:  ":" + trustHTTPPort.port,
+			TrustHTTPSAddr: ":" + trustHTTPSPort.port,
+		},
+	)
 	require.NoError(t, err, "cannot generate isolated env config")
 
 	env := &IsolatedEnv{
 		BaseURL:        baseURL,
 		MailpitBaseURL: GetMailpitBaseURL(),
 		done:           make(chan error, 1),
+		outputBuf:      &lockedBuffer{},
 	}
 
 	cmd := exec.Command(binaryPath, "-cfg-file", configPath, "-format", log.FormatPretty)
 	cmd.Env = os.Environ()
-
-	var buf bytes.Buffer
-
-	env.outputBuf = &buf
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+	cmd.Stdout = env.outputBuf
+	cmd.Stderr = env.outputBuf
 	env.cmd = cmd
 
+	closeReservedPorts(ports)
+
 	require.NoError(t, cmd.Start(), "cannot start isolated probod")
+
+	startUnlocked = true
+	isolatedEnvStartMu.Unlock()
 
 	go func() {
 		env.done <- cmd.Wait()
@@ -150,16 +206,23 @@ func (e *IsolatedEnv) dumpOutput(contextMsg string, err error) {
 	fmt.Fprintf(os.Stderr, "--- isolated probod output start ---\n%s\n--- isolated probod output end ---\n", output)
 }
 
-func freeTCPPort(t testing.TB) string {
+func reserveTCPPort(t testing.TB) reservedTCPPort {
 	t.Helper()
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err, "cannot allocate free TCP port")
 
-	defer func() { _ = listener.Close() }()
-
 	_, port, err := net.SplitHostPort(listener.Addr().String())
 	require.NoError(t, err, "cannot parse allocated TCP port")
 
-	return port
+	return reservedTCPPort{port: port, listener: listener}
+}
+
+func closeReservedPorts(ports []reservedTCPPort) {
+	for i := range ports {
+		if ports[i].listener != nil {
+			_ = ports[i].listener.Close()
+			ports[i].listener = nil
+		}
+	}
 }

@@ -115,6 +115,30 @@ func (e GraphQLErrors) Error() string {
 	return strings.Join(details, "; ")
 }
 
+// parseGraphQLHTTPResponse prefers a GraphQL errors payload over a non-200
+// HTTP status so callers can assert on extensions.code when auth middlewares
+// short-circuit with 403 (or similar) while still returning GraphQL errors.
+func parseGraphQLHTTPResponse(statusCode int, body []byte) (*GraphQLResponse, error) {
+	var gqlResp GraphQLResponse
+	if err := json.Unmarshal(body, &gqlResp); err != nil {
+		if statusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status %d: %s", statusCode, string(body))
+		}
+
+		return nil, fmt.Errorf("cannot decode response: %w", err)
+	}
+
+	if len(gqlResp.Errors) > 0 {
+		return &gqlResp, GraphQLErrors(gqlResp.Errors)
+	}
+
+	if statusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", statusCode, string(body))
+	}
+
+	return &gqlResp, nil
+}
+
 func (c *Client) doWithEndpoint(endpoint string, query string, variables map[string]any) (*GraphQLResponse, error) {
 	reqBody := GraphQLRequest{
 		Query:     query,
@@ -145,27 +169,7 @@ func (c *Client) doWithEndpoint(endpoint string, query string, variables map[str
 		return nil, fmt.Errorf("cannot read response: %w", err)
 	}
 
-	var gqlResp GraphQLResponse
-	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
-		}
-
-		return nil, fmt.Errorf("cannot decode response: %w", err)
-	}
-
-	// Auth middlewares (identity presence, membership gate) short-circuit with
-	// non-200 statuses while still returning a GraphQL errors payload. Prefer
-	// that typed error so callers can assert on extensions.code.
-	if len(gqlResp.Errors) > 0 {
-		return &gqlResp, GraphQLErrors(gqlResp.Errors)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	return &gqlResp, nil
+	return parseGraphQLHTTPResponse(resp.StatusCode, respBody)
 }
 
 func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, error) {
@@ -222,20 +226,7 @@ func ConsoleGraphQLWithAccessToken(
 		return nil, fmt.Errorf("cannot read response: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var gqlResp GraphQLResponse
-	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
-		return nil, fmt.Errorf("cannot decode response: %w", err)
-	}
-
-	if len(gqlResp.Errors) > 0 {
-		return &gqlResp, GraphQLErrors(gqlResp.Errors)
-	}
-
-	return &gqlResp, nil
+	return parseGraphQLHTTPResponse(resp.StatusCode, respBody)
 }
 
 // trustHTTPClient builds an HTTP client that always dials the dedicated
@@ -334,20 +325,7 @@ func (c *Client) DoTrust(host string, query string, variables map[string]any) (*
 		return nil, fmt.Errorf("cannot read response: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var gqlResp GraphQLResponse
-	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
-		return nil, fmt.Errorf("cannot decode response: %w", err)
-	}
-
-	if len(gqlResp.Errors) > 0 {
-		return &gqlResp, GraphQLErrors(gqlResp.Errors)
-	}
-
-	return &gqlResp, nil
+	return parseGraphQLHTTPResponse(resp.StatusCode, respBody)
 }
 
 func (c *Client) Execute(query string, variables map[string]any, result any) error {
@@ -537,17 +515,9 @@ func (c *Client) executeMultipart(endpoint string, query string, variables map[s
 		return fmt.Errorf("cannot read response: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var gqlResp GraphQLResponse
-	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
-		return fmt.Errorf("cannot decode response: %w", err)
-	}
-
-	if len(gqlResp.Errors) > 0 {
-		return GraphQLErrors(gqlResp.Errors)
+	gqlResp, err := parseGraphQLHTTPResponse(resp.StatusCode, respBody)
+	if err != nil {
+		return err
 	}
 
 	if result != nil && gqlResp.DataString() != "" {
