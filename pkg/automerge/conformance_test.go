@@ -54,6 +54,7 @@ type (
 		Changes  []string `json:"changes"`
 		Document string   `json:"document"`
 		Heads    []string `json:"heads"`
+		Sync     string   `json:"sync"`
 	}
 )
 
@@ -277,4 +278,36 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 		},
 	)
 	assert.Equal(t, leftHeads, rightHeads)
+}
+
+func TestConformance_NativeSyncMessageRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(30)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createSyncMessage",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(response.Sync)
+	require.NoError(t, err)
+
+	message, err := native.ParseSyncMessage(data)
+	require.NoError(t, err)
+	assert.Contains(
+		t,
+		[]native.SyncMessageVersion{
+			native.SyncMessageVersion1,
+			native.SyncMessageVersion2,
+		},
+		message.Version,
+	)
+	require.Len(t, message.Heads, 1)
+	assert.Equal(t, response.Heads[0], hex.EncodeToString(message.Heads[0][:]))
+
+	encoded, err := message.Encode()
+	require.NoError(t, err)
+	assert.Equal(t, data, encoded)
 }

@@ -125,6 +125,24 @@ switch (request.action) {
     );
     break;
   }
+  case "createSyncMessage": {
+    const document = Automerge.from(
+      { title: "Policy" },
+      { actor: request.actor },
+    );
+    const [, message] = Automerge.generateSyncMessage(
+      document,
+      Automerge.initSyncState(),
+    );
+    if (!message) throw new Error("expected an initial sync message");
+    process.stdout.write(
+      JSON.stringify({
+        sync: Buffer.from(message).toString("base64"),
+        heads: Automerge.getHeads(document),
+      }),
+    );
+    break;
+  }
   case "inspect": {
     const document = Automerge.load(Buffer.from(request.document, "base64"));
     process.stdout.write(
