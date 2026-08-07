@@ -48,28 +48,30 @@ const (
 	maxSyncChanges     = 1024 * 1024
 	maxSyncBloomBytes  = 1024 * 1024
 	maxSyncFlagsBytes  = 1024
+	maxSyncChunkBytes  = 64 * 1024 * 1024
+	maxSyncHashes      = 1024 * 1024
 )
 
 func ParseSyncMessage(data []byte) (*SyncMessage, error) {
-	r := newReader(data)
-	versionBytes, err := r.read(1)
+	r := &reader{data: data}
+	versionByte, err := r.byte()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read sync message version: %w", err)
 	}
-	version := SyncMessageVersion(versionBytes[0])
+	version := SyncMessageVersion(versionByte)
 	if version != SyncMessageVersion1 && version != SyncMessageVersion2 {
 		return nil, fmt.Errorf("unsupported sync message version 0x%02x", version)
 	}
 
-	heads, err := readHashes(r, maxDependencies)
+	heads, err := readSyncHashes(r)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read sync heads: %w", err)
 	}
-	need, err := readHashes(r, maxDependencies)
+	need, err := readSyncHashes(r)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read sync needs: %w", err)
 	}
-	haveCount, err := r.readULEB128()
+	haveCount, err := r.uleb()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read sync have count: %w", err)
 	}
@@ -78,17 +80,17 @@ func ParseSyncMessage(data []byte) (*SyncMessage, error) {
 	}
 	have := make([]SyncHave, int(haveCount))
 	for i := range have {
-		have[i].LastSync, err = readHashes(r, maxDependencies)
+		have[i].LastSync, err = readSyncHashes(r)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read sync have %d heads: %w", i, err)
 		}
-		have[i].Bloom, err = r.readLengthPrefixedBytes(maxSyncBloomBytes)
+		have[i].Bloom, err = readSyncBytes(r, maxSyncBloomBytes)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read sync have %d bloom: %w", i, err)
 		}
 	}
 
-	changeCount, err := r.readULEB128()
+	changeCount, err := r.uleb()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read sync change count: %w", err)
 	}
@@ -97,20 +99,20 @@ func ParseSyncMessage(data []byte) (*SyncMessage, error) {
 	}
 	changes := make([][]byte, int(changeCount))
 	for i := range changes {
-		changes[i], err = r.readLengthPrefixedBytes(maxChunkBytes)
+		changes[i], err = readSyncBytes(r, maxSyncChunkBytes)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read sync change %d: %w", i, err)
 		}
 	}
 
 	var flags []byte
-	if !r.done() {
-		flags, err = r.readLengthPrefixedBytes(maxSyncFlagsBytes)
+	if r.remaining() > 0 {
+		flags, err = readSyncBytes(r, maxSyncFlagsBytes)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read sync flags: %w", err)
 		}
 	}
-	if !r.done() {
+	if r.remaining() > 0 {
 		return nil, fmt.Errorf("sync message contains trailing bytes")
 	}
 
@@ -135,12 +137,12 @@ func (m SyncMessage) Encode() ([]byte, error) {
 	data := []byte{byte(m.Version)}
 	data = appendHashes(data, m.Heads)
 	data = appendHashes(data, m.Need)
-	data = appendULEB128(data, uint64(len(m.Have)))
+	data = appendULEB(data, uint64(len(m.Have)))
 	for _, have := range m.Have {
 		data = appendHashes(data, have.LastSync)
 		data = appendLengthPrefixedBytes(data, have.Bloom)
 	}
-	data = appendULEB128(data, uint64(len(m.Changes)))
+	data = appendULEB(data, uint64(len(m.Changes)))
 	for _, change := range m.Changes {
 		data = appendLengthPrefixedBytes(data, change)
 	}
@@ -151,7 +153,7 @@ func (m SyncMessage) Encode() ([]byte, error) {
 }
 
 func appendHashes(data []byte, hashes [][32]byte) []byte {
-	data = appendULEB128(data, uint64(len(hashes)))
+	data = appendULEB(data, uint64(len(hashes)))
 	for _, hash := range hashes {
 		data = append(data, hash[:]...)
 	}
@@ -159,6 +161,41 @@ func appendHashes(data []byte, hashes [][32]byte) []byte {
 }
 
 func appendLengthPrefixedBytes(data, value []byte) []byte {
-	data = appendULEB128(data, uint64(len(value)))
+	data = appendULEB(data, uint64(len(value)))
 	return append(data, value...)
+}
+
+func readSyncHashes(r *reader) ([][32]byte, error) {
+	count, err := r.uleb()
+	if err != nil {
+		return nil, err
+	}
+	if count > maxSyncHashes {
+		return nil, fmt.Errorf("sync hash count %d exceeds limit", count)
+	}
+
+	hashes := make([][32]byte, int(count))
+	for i := range hashes {
+		value, err := r.bytes(32)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read sync hash %d: %w", i, err)
+		}
+		copy(hashes[i][:], value)
+	}
+	return hashes, nil
+}
+
+func readSyncBytes(r *reader, limit uint64) ([]byte, error) {
+	length, err := r.uleb()
+	if err != nil {
+		return nil, err
+	}
+	if length > limit {
+		return nil, fmt.Errorf("sync byte length %d exceeds limit %d", length, limit)
+	}
+	value, err := r.bytes(length)
+	if err != nil {
+		return nil, err
+	}
+	return append([]byte(nil), value...), nil
 }

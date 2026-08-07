@@ -189,32 +189,36 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 
 	data, err := base64.StdEncoding.DecodeString(response.Change)
 	require.NoError(t, err)
-	change, err := native.ParseChange(data)
+	decoded, err := native.Decode(data)
 	require.NoError(t, err)
-	assert.Equal(t, actorID[:], change.Actor)
+	require.Len(t, decoded.Changes, 1)
+	change := &decoded.Changes[0]
+	assert.Equal(t, actorID[:], change.Actor.Bytes())
 	assert.Equal(t, uint64(1), change.Sequence)
 	assert.Equal(t, uint64(1), change.StartOp)
-	assert.Equal(t, commitTime.Unix(), change.Timestamp)
+	assert.Equal(t, commitTime.Unix(), change.Time)
 	assert.Equal(t, "Create policy", change.Message)
 	assert.Empty(t, change.Dependencies)
-	assert.NotEmpty(t, change.Columns)
-	assert.Equal(t, response.Heads[0], hex.EncodeToString(change.Hash[:]))
+	require.NotNil(t, change.Hash)
+	assert.Equal(t, response.Heads[0], change.Hash.String())
 
-	operations, err := change.Operations()
-	require.NoError(t, err)
+	operations := change.Operations
 	require.Len(t, operations, 7)
 	assert.Equal(t, native.ActionMakeText, operations[0].Action)
-	assert.True(t, operations[0].Object.Root)
-	assert.True(t, operations[0].Key.Map)
-	assert.Equal(t, "title", operations[0].Key.Property)
+	assert.True(t, operations[0].Object.IsRoot)
+	require.NotNil(t, operations[0].Key.Property)
+	assert.Equal(t, "title", *operations[0].Key.Property)
 	assert.Equal(t, uint64(1), operations[0].ID.Counter)
-	assert.Equal(t, uint64(0), operations[0].ID.ActorIndex)
+	assert.Equal(t, native.ActorID(string(actorID[:])), operations[0].ID.Actor)
 	assert.Equal(t, native.ActionSet, operations[1].Action)
 	assert.Equal(t, uint64(1), operations[1].Object.OpID.Counter)
-	assert.True(t, operations[1].Key.Head)
-	assert.Equal(t, "P", operations[1].Value.Value)
+	assert.True(t, operations[1].Key.IsHead)
+	require.NotNil(t, operations[1].Value)
+	assert.Equal(t, "P", operations[1].Value.String)
+	require.NotNil(t, operations[6].Key.Element)
 	assert.Equal(t, uint64(6), operations[6].Key.Element.Counter)
-	assert.Equal(t, "y", operations[6].Value.Value)
+	require.NotNil(t, operations[6].Value)
+	assert.Equal(t, "y", operations[6].Value.String)
 
 	state := native.NewState()
 	require.NoError(t, state.ApplyChange(change))
@@ -240,12 +244,19 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	)
 	require.Len(t, response.Changes, 3)
 
-	changes := make([]*native.Change, len(response.Changes))
-	for i, encoded := range response.Changes {
+	var combined []byte
+	for _, encoded := range response.Changes {
 		data, err := base64.StdEncoding.DecodeString(encoded)
 		require.NoError(t, err)
-		changes[i], err = native.ParseChange(data)
-		require.NoError(t, err)
+		combined = append(combined, data...)
+	}
+	decoded, err := native.Decode(combined)
+	require.NoError(t, err)
+	require.Len(t, decoded.Changes, 3)
+	changes := []*native.Change{
+		&decoded.Changes[0],
+		&decoded.Changes[1],
+		&decoded.Changes[2],
 	}
 
 	leftFirst := native.NewState()
