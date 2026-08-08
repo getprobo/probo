@@ -227,6 +227,42 @@ func TestRender_HardBreakAndHorizontalRule(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestRender_HorizontalRuleFollowedByText(t *testing.T) {
+	t.Parallel()
+
+	content, err := automergeprosemirror.Render(
+		[]automerge.Span{
+			{
+				Type: automerge.SpanTypeBlock,
+				Block: map[string]any{
+					"type":    "horizontal-rule",
+					"parents": []any{},
+				},
+			},
+			{Type: automerge.SpanTypeText, Text: "Preserved"},
+		},
+	)
+
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{
+			"type": "doc",
+			"content": [
+				{"type": "horizontalRule"},
+				{
+					"type": "paragraph",
+					"content": [{"type": "text", "text": "Preserved"}]
+				}
+			]
+		}`,
+		content,
+	)
+
+	_, err = prosemirror.Parse(content)
+	require.NoError(t, err)
+}
+
 func TestRender_TableStructure(t *testing.T) {
 	t.Parallel()
 
