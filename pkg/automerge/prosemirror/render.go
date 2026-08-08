@@ -132,8 +132,23 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 				},
 			)
 		case automerge.SpanTypeText:
-			if len(blocks) == 0 {
-				blocks = append(blocks, block{Type: blockTypeParagraph})
+			if len(blocks) == 0 ||
+				blocks[len(blocks)-1].Type == blockTypeHorizontalRule {
+				var parents []string
+				if len(blocks) > 0 {
+					parents = append(
+						[]string(nil),
+						blocks[len(blocks)-1].Parents...,
+					)
+				}
+
+				blocks = append(
+					blocks,
+					block{
+						Type:    blockTypeParagraph,
+						Parents: parents,
+					},
+				)
 			}
 
 			marks, err := renderMarks(span.Marks)
