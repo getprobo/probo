@@ -25,8 +25,8 @@ export const AutomergeTableIDExtension = Extension.create({
           default: null,
           parseHTML: element =>
             element.getAttribute("data-collaboration-id"),
-          renderHTML: attributes => {
-            const id = attributes[collaborationIDAttribute];
+          renderHTML: (attributes) => {
+            const id: unknown = attributes[collaborationIDAttribute];
             return typeof id === "string" && id
               ? { "data-collaboration-id": id }
               : {};

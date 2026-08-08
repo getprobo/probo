@@ -105,7 +105,7 @@ export function spliceAutomergeTableCellText(
   deleteCount: number,
   value: string,
 ): Automerge.Doc<AutomergeTableStore> {
-  return Automerge.change(document, draft => {
+  return Automerge.change(document, (draft) => {
     const location = findCell(draft, tableID, cellID);
     Automerge.splice(
       draft,
@@ -131,7 +131,7 @@ export function insertAutomergeTableRow(
   index: number,
   createID: IDFactory = () => crypto.randomUUID(),
 ): Automerge.Doc<AutomergeTableStore> {
-  return Automerge.change(document, draft => {
+  return Automerge.change(document, (draft) => {
     const table = requireTable(draft, tableID);
     const reference = table.rows[Math.min(index, table.rows.length - 1)];
     if (!reference) throw new Error("cannot add a row to an empty table");
@@ -154,7 +154,7 @@ export function insertAutomergeTableColumn(
   index: number,
   createID: IDFactory = () => crypto.randomUUID(),
 ): Automerge.Doc<AutomergeTableStore> {
-  return Automerge.change(document, draft => {
+  return Automerge.change(document, (draft) => {
     const table = requireTable(draft, tableID);
     for (const row of table.rows) {
       const reference = row.cells[Math.min(index, row.cells.length - 1)];
@@ -201,11 +201,12 @@ function readCellNode(node: TiptapNode, createID: IDFactory): AutomergeTableCell
   }
   const paragraph = node.content[0];
   const children = paragraph.content ?? [];
-  if (children.some(child =>
-    child.type !== "text"
-    || typeof child.text !== "string"
-    || Boolean(child.marks?.length)
-  )) {
+  const hasUnsupportedContent = children.some((child) => {
+    return child.type !== "text"
+      || typeof child.text !== "string"
+      || Boolean(child.marks?.length);
+  });
+  if (hasUnsupportedContent) {
     throw new Error("collaborative cells currently support plain text only");
   }
 
@@ -240,13 +241,14 @@ function readPositiveInteger(value: unknown, fallback: number): number {
 }
 
 function readColumnWidths(value: unknown): number[] | null {
-  if (
-    !Array.isArray(value)
-    || !value.every(width => typeof width === "number" && width > 0)
-  ) {
-    return null;
-  }
-  return value;
+  return isColumnWidthArray(value) ? value : null;
+}
+
+function isColumnWidthArray(value: unknown): value is number[] {
+  return Array.isArray(value)
+    && value.every((width: unknown) =>
+      typeof width === "number" && width > 0
+    );
 }
 
 function requireTable(
