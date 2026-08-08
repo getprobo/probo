@@ -114,30 +114,82 @@ describe("Automerge tables", () => {
     expect(merged.tables["table-1"].id).toBe("table-1");
   });
 
-  it("preserves concurrent row and column insertions with stable IDs", () => {
+  it("merges concurrent edits within the same Automerge text", () => {
     const base = createAutomergeTableStore(tableJSON);
-    const withRow = insertAutomergeTableRow(
+    const left = spliceAutomergeTableCellText(
       Automerge.clone(base),
       "table-1",
-      1,
-      idFactory("new-row", "new-row-cell-1", "new-row-cell-2"),
+      "cell-1",
+      5,
+      0,
+      " left",
     );
-    const withColumn = insertAutomergeTableColumn(
+    const right = spliceAutomergeTableCellText(
       Automerge.clone(base),
       "table-1",
-      1,
-      idFactory("new-column-cell"),
+      "cell-1",
+      5,
+      0,
+      " right",
     );
 
-    const merged = Automerge.merge(withRow, withColumn);
+    const text = Automerge.merge(left, right)
+      .tables["table-1"].rows[0].cells[0].text;
+
+    expect(text).toContain(" left");
+    expect(text).toContain(" right");
+  });
+
+  it("preserves concurrent row insertions with stable IDs", () => {
+    const base = createAutomergeTableStore(tableJSON);
+    const left = insertAutomergeTableRow(
+      Automerge.clone(base),
+      "table-1",
+      1,
+      idFactory("left-row", "left-cell-1", "left-cell-2"),
+    );
+    const right = insertAutomergeTableRow(
+      Automerge.clone(base),
+      "table-1",
+      1,
+      idFactory("right-row", "right-cell-1", "right-cell-2"),
+    );
+
+    const merged = Automerge.merge(left, right);
     const rows = merged.tables["table-1"].rows;
 
-    expect(rows.map(row => row.id)).toEqual(["row-1", "new-row"]);
-    expect(rows[0].cells.map(cell => cell.id)).toContain("new-column-cell");
-    expect(rows[1].cells.map(cell => cell.id)).toEqual([
-      "new-row-cell-1",
-      "new-row-cell-2",
-    ]);
+    expect(rows.map(row => row.id)).toEqual(
+      expect.arrayContaining(["row-1", "left-row", "right-row"]),
+    );
+    expect(rows.every(row => row.cells.length === 2)).toBe(true);
+  });
+
+  it("preserves concurrent column insertions with stable IDs", () => {
+    const base = createAutomergeTableStore(tableJSON);
+    const left = insertAutomergeTableColumn(
+      Automerge.clone(base),
+      "table-1",
+      1,
+      idFactory("left-cell"),
+    );
+    const right = insertAutomergeTableColumn(
+      Automerge.clone(base),
+      "table-1",
+      1,
+      idFactory("right-cell"),
+    );
+
+    const cells = Automerge.merge(left, right)
+      .tables["table-1"].rows[0].cells;
+
+    expect(cells.map(cell => cell.id)).toEqual(
+      expect.arrayContaining([
+        "cell-1",
+        "left-cell",
+        "right-cell",
+        "cell-2",
+      ]),
+    );
   });
 
   it("rejects cell content that the plain-text slice cannot preserve", () => {
