@@ -13,7 +13,13 @@ import { Italic } from "@tiptap/extension-italic";
 import { BulletList, ListItem, ListKeymap, OrderedList } from "@tiptap/extension-list";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Strike } from "@tiptap/extension-strike";
-import { TableKit } from "@tiptap/extension-table";
+import {
+  Table,
+  TableCell,
+  TableHeader,
+  TableKit,
+  TableRow,
+} from "@tiptap/extension-table";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
@@ -29,6 +35,7 @@ import {
   createRichEditorAutomergeDocument as createAutomergeDocument,
   createRichEditorCollaborationExtension,
   richEditorAutomergeContent,
+  richEditorAutomergeDocumentContent,
   supportsRichEditorCollaboration as supportsCollaboration,
 } from "./collaboration";
 import { LinkExtension } from "./LinkExtension";
@@ -44,9 +51,47 @@ import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
 import { TableSelectionOverlay } from "./TableSelectionOverlay";
+import { automergeIDAttribute } from "./tableCollaboration";
 
 const tableExtension = TableKit.configure({
   table: { resizable: true },
+});
+
+const collaborationIDAttribute = {
+  default: null,
+  rendered: false,
+};
+const CollaborationTable = Table.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      [automergeIDAttribute]: collaborationIDAttribute,
+    };
+  },
+}).configure({ resizable: true });
+const CollaborationTableRow = TableRow.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      [automergeIDAttribute]: collaborationIDAttribute,
+    };
+  },
+});
+const CollaborationTableCell = TableCell.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      [automergeIDAttribute]: collaborationIDAttribute,
+    };
+  },
+});
+const CollaborationTableHeader = TableHeader.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      [automergeIDAttribute]: collaborationIDAttribute,
+    };
+  },
 });
 
 const extensions = [
@@ -81,9 +126,13 @@ const extensions = [
 ];
 
 const collaborationExtensions = extensions.filter(extension =>
-  extension !== tableExtension
-  && extension !== UndoRedo,
-);
+  extension !== tableExtension && extension !== UndoRedo
+).concat([
+  CollaborationTable,
+  CollaborationTableRow,
+  CollaborationTableCell,
+  CollaborationTableHeader,
+]);
 
 const richEditorVariants = tv({
   base: ["relative flex-1 min-w-0 overflow-auto py-14 pr-8 bg-level-1 shadow-base"],
@@ -195,4 +244,10 @@ export function createRichEditorAutomergeDocument(
 
 export function supportsRichEditorCollaboration(content: string): boolean {
   return supportsCollaboration(content);
+}
+
+export function readRichEditorAutomergeDocument(
+  document: Parameters<typeof richEditorAutomergeDocumentContent>[0],
+) {
+  return richEditorAutomergeDocumentContent(document, collaborationExtensions);
 }

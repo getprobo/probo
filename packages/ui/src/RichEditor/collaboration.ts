@@ -18,25 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import * as Automerge from "@automerge/automerge";
+import type * as Automerge from "@automerge/automerge";
 import {
   type DocHandle,
   type MappedMarkSpec,
   type MappedNodeSpec,
   type MappedSchemaSpec,
-  pmDocFromSpans,
-  pmNodeToSpans,
   SchemaAdapter,
-  syncPlugin,
 } from "@automerge/prosemirror";
 import { Extension, type Extensions, getSchema } from "@tiptap/core";
 import type { Mark, Schema } from "@tiptap/pm/model";
 
-export type RichEditorAutomergeDocument = {
-  body: string;
-};
+import {
+  createTableRichEditorAutomergeDocument,
+  pmDocFromTableRichEditorAutomergeDocument,
+  type TableRichEditorAutomergeDocument,
+  tableSyncPlugin,
+} from "./tableCollaboration";
 
-const textPath: Automerge.Prop[] = ["body"];
+export type RichEditorAutomergeDocument = TableRichEditorAutomergeDocument;
 
 const supportedNodeNames = new Set([
   "doc",
@@ -50,6 +50,10 @@ const supportedNodeNames = new Set([
   "bulletList",
   "orderedList",
   "listItem",
+  "table",
+  "tableRow",
+  "tableCell",
+  "tableHeader",
 ]);
 
 const supportedMarkNames = new Set([
@@ -97,22 +101,24 @@ export function createRichEditorAutomergeDocument(
     ? parseJSONObject(content)
     : { type: "doc", content: [{ type: "paragraph" }] };
   const pmDocument = adapter.schema.nodeFromJSON(documentJSON);
-  const spans = pmNodeToSpans(adapter, pmDocument);
-  const document = Automerge.from<RichEditorAutomergeDocument>({ body: "" });
-
-  return Automerge.change(document, (draft) => {
-    Automerge.updateSpans(draft, textPath, spans, adapter.updateSpansConfig());
-  });
+  return createTableRichEditorAutomergeDocument(adapter, pmDocument);
 }
 
 export function richEditorAutomergeContent(
   handle: DocHandle<RichEditorAutomergeDocument>,
   extensions: Extensions,
 ): object {
+  return richEditorAutomergeDocumentContent(handle.doc(), extensions);
+}
+
+export function richEditorAutomergeDocumentContent(
+  document: Automerge.Doc<RichEditorAutomergeDocument>,
+  extensions: Extensions,
+): object {
   const adapter = createSchemaAdapter(extensions);
-  const content: unknown = pmDocFromSpans(
+  const content: unknown = pmDocFromTableRichEditorAutomergeDocument(
     adapter,
-    Automerge.spans(handle.doc(), textPath),
+    document,
   ).toJSON();
   if (!isJSONObject(content)) {
     throw new Error("Automerge produced invalid ProseMirror content");
@@ -131,11 +137,7 @@ export function createRichEditorCollaborationExtension(
     addProseMirrorPlugins() {
       const adapter = createSchemaAdapter(extensions, this.editor.schema);
       return [
-        syncPlugin({
-          adapter,
-          handle,
-          path: textPath,
-        }),
+        tableSyncPlugin(adapter, handle),
       ];
     },
   });

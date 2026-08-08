@@ -23,6 +23,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createRichEditorAutomergeDocument,
+  readRichEditorAutomergeDocument,
   supportsRichEditorCollaboration,
 } from "./RichEditor";
 
@@ -52,14 +53,121 @@ describe("RichEditor collaboration", () => {
     expect(document.body).toContain("Hello world");
   });
 
-  it("rejects schema nodes that cannot round-trip yet", () => {
+  it("round-trips table rows and cells with stable IDs", () => {
+    const document = createRichEditorAutomergeDocument(tableJSON);
+    const table = Object.values(document.tables)[0];
+
+    expect(table.rowIDs).toHaveLength(2);
+    expect(table.rowIDs[0]).not.toBe(table.rowIDs[1]);
+    expect(table.rows[table.rowIDs[0]].cellIDs).toHaveLength(2);
+    expect(table.rows[table.rowIDs[1]].cellIDs).toHaveLength(2);
+
+    const content = readRichEditorAutomergeDocument(document) as {
+      content: Array<{ type: string; content: unknown[] }>;
+    };
+    const roundTrippedTable = content.content[0];
+    expect(roundTrippedTable.type).toBe("table");
+    expect(roundTrippedTable.content).toHaveLength(2);
     expect(
-      supportsRichEditorCollaboration(
-        JSON.stringify({
-          type: "doc",
-          content: [{ type: "table", content: [] }],
-        }),
-      ),
-    ).toBe(false);
+      (roundTrippedTable.content[0] as { content: unknown[] }).content,
+    ).toHaveLength(2);
+    expect(
+      (roundTrippedTable.content[1] as { content: unknown[] }).content,
+    ).toHaveLength(2);
+  });
+
+  it("merges concurrent edits in different cells independently", () => {
+    const base = createRichEditorAutomergeDocument(tableJSON);
+    let left = Automerge.load(
+      Automerge.save(base),
+      { actor: "aa".repeat(16) },
+    );
+    let right = Automerge.load(
+      Automerge.save(base),
+      { actor: "bb".repeat(16) },
+    );
+    const table = Object.values(base.tables)[0];
+    const firstRow = table.rows[table.rowIDs[0]];
+    const secondRow = table.rows[table.rowIDs[1]];
+    const firstCellID = firstRow.cellIDs[0];
+    const lastCellID = secondRow.cellIDs[1];
+
+    left = Automerge.change(left, (draft) => {
+      Automerge.splice(
+        draft,
+        cellBodyPath(table.id, firstRow.id, firstCellID),
+        1,
+        0,
+        "-left",
+      );
+    });
+    right = Automerge.change(right, (draft) => {
+      Automerge.splice(
+        draft,
+        cellBodyPath(table.id, secondRow.id, lastCellID),
+        1,
+        0,
+        "-right",
+      );
+    });
+
+    const merged = Automerge.merge(left, right);
+    expect(merged.tables[table.id].rows[firstRow.id].cells[firstCellID].body)
+      .toBe("A-left");
+    expect(merged.tables[table.id].rows[secondRow.id].cells[lastCellID].body)
+      .toBe("D-right");
+    expect(merged.tables[table.id].rowIDs).toHaveLength(2);
+  });
+
+  it("accepts Tiptap table nodes for collaboration", () => {
+    expect(supportsRichEditorCollaboration(tableJSON)).toBe(true);
   });
 });
+
+const tableJSON = JSON.stringify({
+  type: "doc",
+  content: [
+    {
+      type: "table",
+      content: [
+        {
+          type: "tableRow",
+          content: [
+            tableCell("tableHeader", "A"),
+            tableCell("tableHeader", "B"),
+          ],
+        },
+        {
+          type: "tableRow",
+          content: [
+            tableCell("tableCell", "C"),
+            tableCell("tableCell", "D"),
+          ],
+        },
+      ],
+    },
+  ],
+});
+
+function tableCell(type: "tableCell" | "tableHeader", text: string) {
+  return {
+    type,
+    attrs: { colspan: 1, rowspan: 1, colwidth: null, align: null },
+    content: [{
+      type: "paragraph",
+      content: [{ type: "text", text }],
+    }],
+  };
+}
+
+function cellBodyPath(tableID: string, rowID: string, cellID: string) {
+  return [
+    "tables",
+    tableID,
+    "rows",
+    rowID,
+    "cells",
+    cellID,
+    "body",
+  ];
+}
