@@ -93,6 +93,7 @@ func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	collaborationEvents *realtime.Events,
+	shutdownContext context.Context,
 	resourceAliasSvc *resourcealias.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
@@ -142,6 +143,11 @@ func NewMux(
 		graphqlLimits,
 		itamSvc,
 	)
+
+	if shutdownContext == nil {
+		shutdownContext = context.Background()
+	}
+
 	collaborationHandler := &documentCollaborationHandler{
 		logger:         logger,
 		probo:          proboSvc,
@@ -152,6 +158,7 @@ func NewMux(
 			proboSvc.Documents,
 			collaborationEvents,
 		),
+		shutdown: shutdownContext,
 	}
 
 	r.Group(func(r chi.Router) {

@@ -21,6 +21,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -62,6 +63,7 @@ type Config struct {
 	ExtraHeaderFields   map[string]string
 	Probo               *probo.Service
 	CollaborationEvents *realtime.Events
+	ShutdownContext     context.Context
 	ResourceAlias       *resourcealias.Service
 	File                *filemanager.Service
 	IAM                 *iam.Service
@@ -106,6 +108,7 @@ func NewServer(cfg Config) (*Server, error) {
 		AllowedOrigins:      cfg.AllowedOrigins,
 		Probo:               cfg.Probo,
 		CollaborationEvents: cfg.CollaborationEvents,
+		ShutdownContext:     cfg.ShutdownContext,
 		ResourceAlias:       cfg.ResourceAlias,
 		File:                cfg.File,
 		IAM:                 cfg.IAM,

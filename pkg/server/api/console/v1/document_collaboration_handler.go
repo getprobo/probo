@@ -60,6 +60,7 @@ type (
 		baseURL        *baseurl.BaseURL
 		allowedOrigins []string
 		hub            *documentCollaborationHub
+		shutdown       context.Context
 	}
 
 	documentCollaborationHandshake struct {
@@ -259,6 +260,10 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 
 	for {
 		select {
+		case <-h.shutdown.Done():
+			_ = connection.CloseNow()
+
+			return
 		case <-ctx.Done():
 			return
 		case message := <-incoming:

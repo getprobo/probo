@@ -21,6 +21,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -69,6 +70,7 @@ type (
 		AllowedOrigins      []string
 		Probo               *probo.Service
 		CollaborationEvents *realtime.Events
+		ShutdownContext     context.Context
 		ResourceAlias       *resourcealias.Service
 		File                *filemanager.Service
 		IAM                 *iam.Service
@@ -207,6 +209,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
 			cfg.CollaborationEvents,
+			cfg.ShutdownContext,
 			cfg.ResourceAlias,
 			cfg.IAM,
 			cfg.ESign,

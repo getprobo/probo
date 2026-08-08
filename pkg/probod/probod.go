@@ -803,12 +803,16 @@ func (impl *Implm) Run(
 		l.Named("itam"),
 	)
 
+	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
+	defer stopApiServer()
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:      impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields:   impl.cfg.Api.ExtraHeaderFields,
 			Probo:               proboService,
 			CollaborationEvents: collaborationEvents,
+			ShutdownContext:     apiServerCtx,
 			ResourceAlias:       resourceAliasService,
 			File:                fileManagerService,
 			IAM:                 iamService,
@@ -880,9 +884,6 @@ func (impl *Implm) Run(
 			}
 		},
 	)
-
-	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
-	defer stopApiServer()
 
 	wg.Go(
 		func() {
@@ -1248,6 +1249,7 @@ func (impl *Implm) Run(
 	<-ctx.Done()
 
 	stopApiServer()
+	stopNotifications()
 	stopCompliancePortalServer()
 	stopWebhookWorker()
 	stopESignService()

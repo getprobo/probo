@@ -96,7 +96,7 @@ type (
 
 const (
 	documentCollaborationPersistDebounce = 50 * time.Millisecond
-	documentCollaborationPersistTimeout  = 30 * time.Second
+	documentCollaborationPersistTimeout  = 5 * time.Second
 )
 
 func newDocumentCollaborationHub(
