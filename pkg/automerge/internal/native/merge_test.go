@@ -70,4 +70,20 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	value, err := target.Text(ctx, targetText)
 	require.NoError(t, err)
 	assert.Equal(t, "ABC", value)
+
+	separate, err := LoadBackend(ctx, baseData)
+	require.NoError(t, err)
+	_, err = separate.Merge(ctx, child)
+	require.NoError(t, err)
+	assert.Len(t, separate.queuedChanges, 1)
+
+	_, err = separate.Merge(ctx, parent)
+	require.NoError(t, err)
+	assert.Empty(t, separate.queuedChanges)
+
+	separateText, err := separate.GetText(ctx, 0, "body")
+	require.NoError(t, err)
+	separateValue, err := separate.Text(ctx, separateText)
+	require.NoError(t, err)
+	assert.Equal(t, "ABC", separateValue)
 }

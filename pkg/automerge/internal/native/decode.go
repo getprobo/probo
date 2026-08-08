@@ -34,6 +34,7 @@ type decodedChunk struct {
 	kind    ChunkType
 	content []byte
 	hash    *ChangeHash
+	raw     []byte
 }
 
 type implicitOperationIDs struct {
@@ -85,6 +86,8 @@ func decode(data []byte, validateHistory bool) (*Document, error) {
 				return nil, fmt.Errorf("cannot decode change chunk: %w", err)
 			}
 
+			change.Raw = append([]byte(nil), chunk.raw...)
+
 			document.Changes = append(document.Changes, change)
 			document.Actors = mergeActors(document.Actors, actors)
 			document.UnknownColumns = append(document.UnknownColumns, unknown...)
@@ -103,6 +106,8 @@ func decode(data []byte, validateHistory bool) (*Document, error) {
 }
 
 func decodeChunk(r *reader) (decodedChunk, error) {
+	start := r.offset
+
 	header, err := r.bytes(4)
 	if err != nil {
 		return decodedChunk{}, fmt.Errorf("cannot read magic bytes: %w", err)
@@ -169,7 +174,11 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 		)
 	}
 
-	chunk := decodedChunk{kind: kind, content: hashContent}
+	chunk := decodedChunk{
+		kind:    kind,
+		content: hashContent,
+		raw:     append([]byte(nil), r.data[start:r.offset]...),
+	}
 	if kind == ChunkChange || kind == ChunkCompressedChange {
 		hash := ChangeHash(digest)
 		chunk.hash = &hash

@@ -21,11 +21,13 @@
 package native
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 	"unicode/utf16"
 )
@@ -40,6 +42,8 @@ type Backend struct {
 	nextHandle    uint32
 	syncStates    map[uint32]*nativeSyncState
 	nextSyncState uint32
+	queuedChanges map[ChangeHash]*Change
+	queuedBytes   int
 }
 
 type nativeSyncState struct {
@@ -48,6 +52,11 @@ type nativeSyncState struct {
 	NeedsAck    bool       `json:"needsAck"`
 	InFlight    bool       `json:"inFlight"`
 }
+
+const (
+	maxQueuedChangeBytes = 64 * 1024 * 1024
+	maxQueuedChanges     = 100_000
+)
 
 func NewBackend(ctx context.Context) (*Backend, error) {
 	if err := ctx.Err(); err != nil {
@@ -79,6 +88,7 @@ func NewBackend(ctx context.Context) (*Backend, error) {
 		nextHandle:    1,
 		syncStates:    make(map[uint32]*nativeSyncState),
 		nextSyncState: 1,
+		queuedChanges: make(map[ChangeHash]*Change),
 	}, nil
 }
 
@@ -110,6 +120,7 @@ func LoadBackend(ctx context.Context, data []byte) (*Backend, error) {
 		nextHandle:    1,
 		syncStates:    make(map[uint32]*nativeSyncState),
 		nextSyncState: 1,
+		queuedChanges: make(map[ChangeHash]*Change),
 	}, nil
 }
 
@@ -500,48 +511,59 @@ func (b *Backend) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 }
 
 func (b *Backend) applyMergedChanges(changes []Change) error {
-	pending := make([]*Change, 0, len(changes))
 	for i := range changes {
 		change := &changes[i]
 		if change.Hash == nil || b.state.hasChange(*change.Hash) {
 			continue
 		}
 
-		pending = append(pending, change)
+		if _, queued := b.queuedChanges[*change.Hash]; queued {
+			continue
+		}
+
+		if len(change.Raw) == 0 {
+			return fmt.Errorf(
+				"cannot preserve merged change %s: original bytes are unavailable",
+				change.Hash,
+			)
+		}
+
+		if len(b.queuedChanges) >= maxQueuedChanges ||
+			b.queuedBytes+len(change.Raw) > maxQueuedChangeBytes {
+			return fmt.Errorf("merged change queue exceeds its resource limit")
+		}
+
+		clone := *change
+		clone.Raw = append([]byte(nil), change.Raw...)
+		b.queuedChanges[*change.Hash] = &clone
+		b.queuedBytes += len(clone.Raw)
 	}
 
-	for len(pending) > 0 {
+	for len(b.queuedChanges) > 0 {
 		progressed := false
-		remaining := pending[:0]
 
-		for _, change := range pending {
+		for hash, change := range b.queuedChanges {
 			if !b.state.hasDependencies(change) {
-				remaining = append(remaining, change)
-
 				continue
-			}
-
-			raw, err := EncodeChange(change)
-			if err != nil {
-				return fmt.Errorf("cannot encode merged native change: %w", err)
 			}
 
 			if err := b.state.ApplyChange(change); err != nil {
 				return fmt.Errorf("cannot apply merged native change: %w", err)
 			}
 
-			b.appended = append(b.appended, raw)
+			b.appended = append(
+				b.appended,
+				append([]byte(nil), change.Raw...),
+			)
+			b.queuedBytes -= len(change.Raw)
+			delete(b.queuedChanges, hash)
+
 			progressed = true
 		}
 
 		if !progressed {
-			return fmt.Errorf(
-				"cannot apply %d merged native changes: dependencies are unavailable",
-				len(remaining),
-			)
+			break
 		}
-
-		pending = remaining
 	}
 
 	return nil
@@ -652,12 +674,30 @@ func (b *Backend) ReceiveSyncMessage(
 
 	state.RemoteHeads = append([][32]byte(nil), message.Heads...)
 
-	state.Need = state.Need[:0]
+	needed := make(map[[32]byte]struct{})
+
 	for _, head := range message.Heads {
 		if _, ok := b.state.changes[ChangeHash(head)]; !ok {
-			state.Need = append(state.Need, head)
+			needed[head] = struct{}{}
 		}
 	}
+
+	for _, change := range b.queuedChanges {
+		for _, dependency := range change.Dependencies {
+			if !b.state.hasChange(dependency) {
+				needed[[32]byte(dependency)] = struct{}{}
+			}
+		}
+	}
+
+	state.Need = state.Need[:0]
+	for dependency := range needed {
+		state.Need = append(state.Need, dependency)
+	}
+
+	sort.Slice(state.Need, func(i, j int) bool {
+		return bytes.Compare(state.Need[i][:], state.Need[j][:]) < 0
+	})
 
 	state.NeedsAck = len(message.Changes) > 0
 

@@ -106,6 +106,7 @@ type (
 		Operations        []Operation
 		Extra             *Scalar
 		ExtraBytes        []byte
+		Raw               []byte
 	}
 
 	// ChunkType identifies an Automerge storage chunk.

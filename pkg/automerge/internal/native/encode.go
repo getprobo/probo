@@ -80,6 +80,7 @@ func EncodeChange(change *Change) ([]byte, error) {
 	raw = append(raw, byte(ChunkChange))
 	raw = appendULEB(raw, uint64(len(body)))
 	raw = append(raw, body...)
+	change.Raw = append([]byte(nil), raw...)
 
 	return raw, nil
 }

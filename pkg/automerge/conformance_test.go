@@ -278,13 +278,17 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	)
 	require.Len(t, response.Changes, 3)
 
-	var combined []byte
+	var (
+		combined   []byte
+		rawChanges [][]byte
+	)
 
 	for _, encoded := range response.Changes {
 		data, err := base64.StdEncoding.DecodeString(encoded)
 		require.NoError(t, err)
 
 		combined = append(combined, data...)
+		rawChanges = append(rawChanges, data)
 	}
 
 	decoded, err := native.Decode(combined)
@@ -327,6 +331,14 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 		},
 	)
 	assert.Equal(t, leftHeads, rightHeads)
+
+	backend, err := native.LoadBackend(context.Background(), rawChanges[0])
+	require.NoError(t, err)
+	_, err = backend.Merge(context.Background(), rawChanges[1])
+	require.NoError(t, err)
+	saved, err := backend.Save(context.Background())
+	require.NoError(t, err)
+	assert.True(t, bytes.Contains(saved, rawChanges[1]))
 }
 
 func TestConformance_NativeSyncMessageRoundTrip(t *testing.T) {
