@@ -61,13 +61,11 @@ const BLOCK_ITEMS: BlockItem[] = [
 type BlockMenuContentProps = {
   editor: Editor;
   slashState: { active: boolean; query: string; from: number };
-  allowTable: boolean;
 };
 
 export function BlockMenuContent({
   editor,
   slashState,
-  allowTable,
 }: BlockMenuContentProps) {
   const [slashNav, setSlashNav] = useState({ index: 0, query: "" });
   const slashDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -77,15 +75,11 @@ export function BlockMenuContent({
     : 0;
 
   const filteredItems = useMemo(() => {
-    const availableItems = allowTable
-      ? BLOCK_ITEMS
-      : BLOCK_ITEMS.filter(item => item.label !== "Table");
-
-    if (!slashState.active) return availableItems;
+    if (!slashState.active) return BLOCK_ITEMS;
     const q = slashState.query.toLowerCase();
-    if (q.length === 0) return availableItems;
-    return availableItems.filter(item => item.label.toLowerCase().includes(q));
-  }, [allowTable, slashState.active, slashState.query]);
+    if (q.length === 0) return BLOCK_ITEMS;
+    return BLOCK_ITEMS.filter(item => item.label.toLowerCase().includes(q));
+  }, [slashState.active, slashState.query]);
 
   const {
     refs: slashMenuRefs,

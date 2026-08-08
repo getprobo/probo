@@ -452,7 +452,12 @@ func (s *State) mapValue(
 
 			result[property] = value
 		case ActionMakeList:
-			result[property] = []any{}
+			value, err := s.listValue(operation.ID, visited)
+			if err != nil {
+				return nil, err
+			}
+
+			result[property] = value
 		case ActionMakeText:
 			var value strings.Builder
 
@@ -465,6 +470,55 @@ func (s *State) mapValue(
 			result[property] = value.String()
 		case ActionSet:
 			result[property] = scalarMaterializedValue(operation.Value)
+		}
+	}
+
+	return result, nil
+}
+
+func (s *State) listValue(
+	object OpID,
+	visited map[OpID]struct{},
+) ([]any, error) {
+	if _, ok := visited[object]; ok {
+		return nil, fmt.Errorf("object cycle detected")
+	}
+
+	visited[object] = struct{}{}
+	defer delete(visited, object)
+
+	elements := s.sequenceElements(object)
+	result := make([]any, 0, len(elements))
+
+	for _, element := range elements {
+		switch element.Action {
+		case ActionMakeMap:
+			value, err := s.mapValue(element.ID, visited)
+			if err != nil {
+				return nil, err
+			}
+
+			result = append(result, value)
+		case ActionMakeList:
+			value, err := s.listValue(element.ID, visited)
+			if err != nil {
+				return nil, err
+			}
+
+			result = append(result, value)
+		case ActionMakeText:
+			var value strings.Builder
+
+			for _, textElement := range s.sequence(element.ID) {
+				if textElement.Value != nil &&
+					textElement.Value.Type == ScalarString {
+					value.WriteString(textElement.Value.String)
+				}
+			}
+
+			result = append(result, value.String())
+		case ActionSet:
+			result = append(result, scalarMaterializedValue(element.Value))
 		}
 	}
 

@@ -189,6 +189,41 @@ switch (request.action) {
     );
     break;
   }
+  case "createTableRichText": {
+    let document = Automerge.from({ body: "" }, { actor: request.actor });
+    document = Automerge.change(document, draft => {
+      Automerge.updateSpans(draft, ["body"], [
+        tableBlock("table", []),
+        tableBlock("table-row", ["table"]),
+        tableBlock("table-header", ["table", "table-row"], {
+          colspan: 1,
+          rowspan: 1,
+          colwidth: null,
+        }),
+        { type: "text", value: "A" },
+        tableBlock("table-cell", ["table", "table-row"], {
+          colspan: 1,
+          rowspan: 1,
+          colwidth: null,
+        }),
+        { type: "text", value: "B" },
+        tableBlock("table-row", ["table"]),
+        tableBlock("table-cell", ["table", "table-row"], {
+          colspan: 1,
+          rowspan: 1,
+          colwidth: null,
+        }),
+        { type: "text", value: "C" },
+      ]);
+    });
+    process.stdout.write(
+      JSON.stringify({
+        document: Buffer.from(Automerge.save(document)).toString("base64"),
+        heads: Automerge.getHeads(document),
+      }),
+    );
+    break;
+  }
   case "inspect": {
     const document = Automerge.load(Buffer.from(request.document, "base64"));
     process.stdout.write(
@@ -201,4 +236,16 @@ switch (request.action) {
   }
   default:
     throw new Error(`unsupported action: ${request.action}`);
+}
+
+function tableBlock(type, parents, attrs = {}) {
+  return {
+    type: "block",
+    value: {
+      type,
+      parents,
+      attrs,
+      isEmbed: false,
+    },
+  };
 }

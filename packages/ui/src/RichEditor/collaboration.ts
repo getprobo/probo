@@ -50,6 +50,10 @@ const supportedNodeNames = new Set([
   "bulletList",
   "orderedList",
   "listItem",
+  "table",
+  "tableRow",
+  "tableCell",
+  "tableHeader",
 ]);
 
 const supportedMarkNames = new Set([
@@ -96,6 +100,7 @@ export function createRichEditorAutomergeDocument(
   const documentJSON: Record<string, unknown> = content
     ? parseJSONObject(content)
     : { type: "doc", content: [{ type: "paragraph" }] };
+  markTableStructure(documentJSON);
   const pmDocument = adapter.schema.nodeFromJSON(documentJSON);
   const spans = pmNodeToSpans(adapter, pmDocument);
   const document = Automerge.from<RichEditorAutomergeDocument>({ body: "" });
@@ -141,7 +146,7 @@ export function createRichEditorCollaborationExtension(
   });
 }
 
-function createSchemaAdapter(
+export function createSchemaAdapter(
   extensions: Extensions,
   targetSchema?: Schema,
 ): SchemaAdapter {
@@ -213,6 +218,27 @@ function automergeNodeMapping(name: string): MappedNodeSpec["automerge"] {
           },
         },
       };
+    case "table":
+      return { block: "table" };
+    case "tableRow":
+      return { block: "table-row" };
+    case "tableCell":
+    case "tableHeader":
+      return {
+        block: name === "tableCell" ? "table-cell" : "table-header",
+        attrParsers: {
+          fromAutomerge: block => ({
+            colspan: readNumberAttribute(block.attrs, "colspan", 1),
+            rowspan: readNumberAttribute(block.attrs, "rowspan", 1),
+            colwidth: readNumberArrayAttribute(block.attrs, "colwidth"),
+          }),
+          fromProsemirror: node => ({
+            colspan: readNumberAttribute(node.attrs, "colspan", 1),
+            rowspan: readNumberAttribute(node.attrs, "rowspan", 1),
+            colwidth: readNumberArrayAttribute(node.attrs, "colwidth"),
+          }),
+        },
+      };
     case "automergeUnknownBlock":
       return { unknownBlock: true };
     default:
@@ -265,6 +291,25 @@ function isJSONObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function markTableStructure(node: Record<string, unknown>): void {
+  const type = node.type;
+  if (
+    type === "table"
+    || type === "tableRow"
+    || type === "tableCell"
+    || type === "tableHeader"
+  ) {
+    const attrs = isJSONObject(node.attrs) ? node.attrs : {};
+    attrs.isAmgBlock = true;
+    node.attrs = attrs;
+  }
+
+  if (!Array.isArray(node.content)) return;
+  for (const child of node.content) {
+    if (isJSONObject(child)) markTableStructure(child);
+  }
+}
+
 function readNumberAttribute(
   attributes: unknown,
   name: string,
@@ -292,4 +337,16 @@ function readNullableStringAttribute(
   if (!isJSONObject(attributes)) return null;
   const value = attributes[name];
   return typeof value === "string" ? value : null;
+}
+
+function readNumberArrayAttribute(
+  attributes: unknown,
+  name: string,
+): number[] | null {
+  if (!isJSONObject(attributes)) return null;
+  const value = attributes[name];
+  if (!Array.isArray(value)) return null;
+
+  const numbers = value.filter(item => typeof item === "number");
+  return numbers.length === value.length ? numbers : null;
 }

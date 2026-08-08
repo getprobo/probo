@@ -21,6 +21,7 @@ import { type Content, Editor, EditorContent, useEditor } from "@tiptap/react";
 import { type ComponentProps, useCallback, useEffect, useMemo } from "react";
 import { tv } from "tailwind-variants";
 
+import { AutomergeTableStructureExtension } from "./AutomergeTableStructureExtension";
 import { AutomergeUnknownBlockExtension } from "./AutomergeUnknownBlockExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
@@ -80,10 +81,10 @@ const extensions = [
   MarkdownPasteExtension,
 ];
 
-const collaborationExtensions = extensions.filter(extension =>
-  extension !== tableExtension
-  && extension !== UndoRedo,
-);
+export const richEditorCollaborationExtensions = [
+  ...extensions.filter(extension => extension !== UndoRedo),
+  AutomergeTableStructureExtension,
+];
 
 const richEditorVariants = tv({
   base: ["relative flex-1 min-w-0 overflow-auto py-14 pr-8 bg-level-1 shadow-base"],
@@ -123,10 +124,10 @@ export function RichEditor(props: RichEditorProps) {
   const editorExtensions = useMemo(
     () => collaborationHandle
       ? [
-          ...collaborationExtensions,
+          ...richEditorCollaborationExtensions,
           createRichEditorCollaborationExtension(
             collaborationHandle,
-            collaborationExtensions,
+            richEditorCollaborationExtensions,
           ),
           createRichEditorPresenceExtension(collaborationHandle),
         ]
@@ -134,7 +135,10 @@ export function RichEditor(props: RichEditorProps) {
     [collaborationHandle],
   );
   const initialContent = collaborationHandle
-    ? richEditorAutomergeContent(collaborationHandle, collaborationExtensions)
+    ? richEditorAutomergeContent(
+        collaborationHandle,
+        richEditorCollaborationExtensions,
+      )
     : (content ? JSON.parse(content) : "") as Content;
 
   const editor = useEditor({
@@ -168,20 +172,12 @@ export function RichEditor(props: RichEditorProps) {
         && (
           <>
             <BubbleMenu editor={editor} />
-            <BlockMenu
-              editor={editor}
-              allowTable={!collaborationHandle}
-            />
+            <BlockMenu editor={editor} />
             <OptionsMenu editor={editor} />
-            {!collaborationHandle
-              && (
-                <>
-                  <TableSelectionOverlay editor={editor} />
-                  <TableCellMenu editor={editor} />
-                  <TableColumnMenu editor={editor} />
-                  <TableRowMenu editor={editor} />
-                </>
-              )}
+            <TableSelectionOverlay editor={editor} />
+            <TableCellMenu editor={editor} />
+            <TableColumnMenu editor={editor} />
+            <TableRowMenu editor={editor} />
           </>
         )}
 
@@ -193,7 +189,7 @@ export function RichEditor(props: RichEditorProps) {
 export function createRichEditorAutomergeDocument(
   content: string,
 ) {
-  return createAutomergeDocument(content, collaborationExtensions);
+  return createAutomergeDocument(content, richEditorCollaborationExtensions);
 }
 
 export function supportsRichEditorCollaboration(content: string): boolean {

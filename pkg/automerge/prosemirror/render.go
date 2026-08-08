@@ -59,6 +59,10 @@ const (
 	blockTypeHorizontalRule    = "horizontal-rule"
 	blockTypeOrderedListItem   = "ordered-list-item"
 	blockTypeParagraph         = "paragraph"
+	blockTypeTable             = "table"
+	blockTypeTableCell         = "table-cell"
+	blockTypeTableHeader       = "table-header"
+	blockTypeTableRow          = "table-row"
 	blockTypeUnorderedListItem = "unordered-list-item"
 )
 
@@ -269,6 +273,41 @@ func renderBlock(source block, children []node) (node, string, error) {
 			Type:    "listItem",
 			Content: append([]node{paragraph}, children...),
 		}, "bulletList", nil
+	case blockTypeTable:
+		if len(source.Content) > 0 {
+			return node{}, "", fmt.Errorf("table Automerge block cannot contain inline content")
+		}
+
+		return node{Type: "table", Content: children}, "", nil
+	case blockTypeTableRow:
+		if len(source.Content) > 0 {
+			return node{}, "", fmt.Errorf("table row Automerge block cannot contain inline content")
+		}
+
+		return node{Type: "tableRow", Content: children}, "", nil
+	case blockTypeTableCell, blockTypeTableHeader:
+		content := children
+		if len(source.Content) > 0 || len(children) == 0 {
+			paragraph := node{Type: "paragraph", Content: source.Content}
+			content = append([]node{paragraph}, children...)
+		}
+
+		attrs := map[string]any{
+			"colspan":  intAttribute(source.Attrs, "colspan", 1),
+			"rowspan":  intAttribute(source.Attrs, "rowspan", 1),
+			"colwidth": intSliceAttribute(source.Attrs, "colwidth"),
+		}
+
+		nodeType := "tableCell"
+		if source.Type == blockTypeTableHeader {
+			nodeType = "tableHeader"
+		}
+
+		return node{
+			Type:    nodeType,
+			Attrs:   attrs,
+			Content: content,
+		}, "", nil
 	default:
 		return node{}, "", fmt.Errorf("unsupported Automerge block type %q", source.Type)
 	}
@@ -343,6 +382,25 @@ func intAttribute(attrs map[string]any, name string, fallback int) int {
 	}
 
 	return int(value)
+}
+
+func intSliceAttribute(attrs map[string]any, name string) []int {
+	values, ok := attrs[name].([]any)
+	if !ok {
+		return nil
+	}
+
+	result := make([]int, 0, len(values))
+	for _, value := range values {
+		number, ok := value.(float64)
+		if !ok {
+			return nil
+		}
+
+		result = append(result, int(number))
+	}
+
+	return result
 }
 
 func hasPrefix(values, prefix []string) bool {

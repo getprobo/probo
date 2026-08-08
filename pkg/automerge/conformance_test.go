@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/automerge/internal/native"
+	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 )
 
 type (
@@ -408,4 +409,59 @@ func TestConformance_NativeComplexRichTextSpans(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, referenceSpans, nativeSpans)
+}
+
+func TestConformance_NativeTableRichTextSpans(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(34)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createTableRichText",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(response.Document)
+	require.NoError(t, err)
+
+	referenceDocument, err := automerge.LoadReference(
+		context.Background(),
+		data,
+		actor(35),
+	)
+	require.NoError(t, err)
+	closeDocument(t, referenceDocument)
+	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	referenceSpans, err := referenceText.Spans(context.Background())
+	require.NoError(t, err)
+
+	nativeDocument, err := automerge.Load(context.Background(), data, actor(36))
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	nativeSpans, err := nativeText.Spans(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, referenceSpans, nativeSpans)
+
+	content, err := automergeprosemirror.Render(nativeSpans)
+	require.NoError(t, err)
+
+	var document struct {
+		Content []struct {
+			Type    string `json:"type"`
+			Content []struct {
+				Type    string            `json:"type"`
+				Content []json.RawMessage `json:"content"`
+			} `json:"content"`
+		} `json:"content"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(content), &document))
+	require.Len(t, document.Content, 1)
+	assert.Equal(t, "table", document.Content[0].Type)
+	require.Len(t, document.Content[0].Content, 2)
+	assert.Equal(t, "tableRow", document.Content[0].Content[0].Type)
+	assert.Len(t, document.Content[0].Content[0].Content, 2)
 }

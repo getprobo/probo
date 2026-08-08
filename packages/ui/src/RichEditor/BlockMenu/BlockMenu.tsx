@@ -12,10 +12,9 @@ import { BlockMenuTrigger } from "./BlockMenuTrigger";
 
 type BlockMenuProps = {
   editor: Editor;
-  allowTable?: boolean;
 };
 
-export function BlockMenu({ editor, allowTable = true }: BlockMenuProps) {
+export function BlockMenu({ editor }: BlockMenuProps) {
   const slashState = useEditorState({
     editor,
     selector: ({ editor: e }) => {
@@ -42,7 +41,6 @@ export function BlockMenu({ editor, allowTable = true }: BlockMenuProps) {
         <BlockMenuContent
           editor={editor}
           slashState={slashState}
-          allowTable={allowTable}
         />
       )}
     </>

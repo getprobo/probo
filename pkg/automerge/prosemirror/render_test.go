@@ -226,3 +226,125 @@ func TestRender_HardBreakAndHorizontalRule(t *testing.T) {
 	_, err = prosemirror.Parse(content)
 	require.NoError(t, err)
 }
+
+func TestRender_TableStructure(t *testing.T) {
+	t.Parallel()
+
+	content, err := automergeprosemirror.Render(
+		[]automerge.Span{
+			tableBlock("table", nil, nil),
+			tableBlock("table-row", []any{"table"}, nil),
+			tableBlock(
+				"table-header",
+				[]any{"table", "table-row"},
+				map[string]any{
+					"colspan":  float64(1),
+					"rowspan":  float64(1),
+					"colwidth": nil,
+				},
+			),
+			{Type: automerge.SpanTypeText, Text: "A"},
+			tableBlock(
+				"table-cell",
+				[]any{"table", "table-row"},
+				map[string]any{
+					"colspan":  float64(2),
+					"rowspan":  float64(1),
+					"colwidth": []any{float64(100), float64(120)},
+				},
+			),
+			{Type: automerge.SpanTypeText, Text: "B"},
+			tableBlock("table-row", []any{"table"}, nil),
+			tableBlock(
+				"table-cell",
+				[]any{"table", "table-row"},
+				map[string]any{
+					"colspan":  float64(1),
+					"rowspan":  float64(1),
+					"colwidth": nil,
+				},
+			),
+			{Type: automerge.SpanTypeText, Text: "C"},
+		},
+	)
+
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{
+			"type": "doc",
+			"content": [{
+				"type": "table",
+				"content": [
+					{
+						"type": "tableRow",
+						"content": [
+							{
+								"type": "tableHeader",
+								"attrs": {
+									"colspan": 1,
+									"rowspan": 1,
+									"colwidth": null
+								},
+								"content": [{
+									"type": "paragraph",
+									"content": [{"type": "text", "text": "A"}]
+								}]
+							},
+							{
+								"type": "tableCell",
+								"attrs": {
+									"colspan": 2,
+									"rowspan": 1,
+									"colwidth": [100, 120]
+								},
+								"content": [{
+									"type": "paragraph",
+									"content": [{"type": "text", "text": "B"}]
+								}]
+							}
+						]
+					},
+					{
+						"type": "tableRow",
+						"content": [{
+							"type": "tableCell",
+							"attrs": {
+								"colspan": 1,
+								"rowspan": 1,
+								"colwidth": null
+							},
+							"content": [{
+								"type": "paragraph",
+								"content": [{"type": "text", "text": "C"}]
+							}]
+						}]
+					}
+				]
+			}]
+		}`,
+		content,
+	)
+
+	_, err = prosemirror.Parse(content)
+	require.NoError(t, err)
+}
+
+func tableBlock(
+	blockType string,
+	parents []any,
+	attrs map[string]any,
+) automerge.Span {
+	if attrs == nil {
+		attrs = map[string]any{}
+	}
+
+	return automerge.Span{
+		Type: automerge.SpanTypeBlock,
+		Block: map[string]any{
+			"type":    blockType,
+			"parents": parents,
+			"attrs":   attrs,
+		},
+	}
+}
