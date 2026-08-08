@@ -46,6 +46,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -64,32 +65,33 @@ import (
 
 type (
 	Config struct {
-		BaseURL           *baseurl.BaseURL
-		AllowedOrigins    []string
-		Probo             *probo.Service
-		ResourceAlias     *resourcealias.Service
-		File              *filemanager.Service
-		IAM               *iam.Service
-		Visitor           *visitor.Service
-		ESign             *esign.Service
-		Management        *management.Service
-		CertManager       *certmanager.Service
-		AccessReview      *accessreview.Service
-		AgentRun          *agentrun.Service
-		Slack             *slack.Service
-		Mailman           *mailman.Service
-		CookieBanner      *cookiebanner.Service
-		Geoloc            *geoloc.Service
-		ThirdParty        *thirdparty.Service
-		RiskManagement    *riskmanagement.Service
-		ITAM              *itam.Service
-		Cookie            securecookie.Config
-		TokenSecret       string
-		ConnectorRegistry *connector.ConnectorRegistry
-		ProviderRegistry  *provider.Registry
-		CustomDomainCname string
-		GraphQLLimits     gqlutils.Limits
-		Logger            *log.Logger
+		BaseURL             *baseurl.BaseURL
+		AllowedOrigins      []string
+		Probo               *probo.Service
+		CollaborationEvents *realtime.Events
+		ResourceAlias       *resourcealias.Service
+		File                *filemanager.Service
+		IAM                 *iam.Service
+		Visitor             *visitor.Service
+		ESign               *esign.Service
+		Management          *management.Service
+		CertManager         *certmanager.Service
+		AccessReview        *accessreview.Service
+		AgentRun            *agentrun.Service
+		Slack               *slack.Service
+		Mailman             *mailman.Service
+		CookieBanner        *cookiebanner.Service
+		Geoloc              *geoloc.Service
+		ThirdParty          *thirdparty.Service
+		RiskManagement      *riskmanagement.Service
+		ITAM                *itam.Service
+		Cookie              securecookie.Config
+		TokenSecret         string
+		ConnectorRegistry   *connector.ConnectorRegistry
+		ProviderRegistry    *provider.Registry
+		CustomDomainCname   string
+		GraphQLLimits       gqlutils.Limits
+		Logger              *log.Logger
 	}
 
 	MCPConfig struct {
@@ -204,6 +206,7 @@ func NewServer(cfg Config) (*Server, error) {
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
+			cfg.CollaborationEvents,
 			cfg.ResourceAlias,
 			cfg.IAM,
 			cfg.ESign,

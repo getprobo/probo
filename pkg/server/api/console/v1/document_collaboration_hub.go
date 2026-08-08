@@ -31,9 +31,14 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/realtime"
 )
 
 type (
+	documentCollaborationWake struct {
+		refresh bool
+	}
+
 	documentCollaborationDocuments interface {
 		OpenCollaboration(
 			context.Context,
@@ -61,7 +66,7 @@ type (
 		scope         coredata.Scoper
 		versionID     gid.GID
 		revision      atomic.Int64
-		peers         map[uint64]chan struct{}
+		peers         map[uint64]chan documentCollaborationWake
 		nextPeerID    uint64
 		dirty         chan struct{}
 		stop          chan struct{}
@@ -74,7 +79,7 @@ type (
 		documentVersionID gid.GID
 		room              *documentCollaborationRoom
 		peerID            uint64
-		Wake              <-chan struct{}
+		Wake              <-chan documentCollaborationWake
 		seedOwner         bool
 		once              sync.Once
 	}
@@ -87,11 +92,17 @@ const (
 
 func newDocumentCollaborationHub(
 	documents documentCollaborationDocuments,
+	events *realtime.Events,
 ) *documentCollaborationHub {
-	return &documentCollaborationHub{
+	hub := &documentCollaborationHub{
 		documents: documents,
 		rooms:     make(map[gid.GID]*documentCollaborationRoom),
 	}
+	if events != nil {
+		events.Subscribe(hub.notifyExternal)
+	}
+
+	return hub
 }
 
 func (h *documentCollaborationHub) acquire(
@@ -123,7 +134,7 @@ func (h *documentCollaborationHub) acquire(
 		documents:     h.documents,
 		scope:         scope,
 		versionID:     documentVersionID,
-		peers:         make(map[uint64]chan struct{}),
+		peers:         make(map[uint64]chan documentCollaborationWake),
 		dirty:         make(chan struct{}, 1),
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),
@@ -156,7 +167,7 @@ func (h *documentCollaborationHub) addPeerLocked(
 	room.mu.Lock()
 	peerID := room.nextPeerID
 	room.nextPeerID++
-	wake := make(chan struct{}, 1)
+	wake := make(chan documentCollaborationWake, 1)
 	room.peers[peerID] = wake
 	room.mu.Unlock()
 
@@ -195,7 +206,32 @@ func (l *documentCollaborationRoomLease) NotifyPeers() {
 		}
 
 		select {
-		case wake <- struct{}{}:
+		case wake <- documentCollaborationWake{}:
+		default:
+		}
+	}
+}
+
+func (h *documentCollaborationHub) notifyExternal(payload string) {
+	documentVersionID, err := gid.ParseGID(payload)
+	if err != nil || documentVersionID.EntityType() != coredata.DocumentVersionEntityType {
+		return
+	}
+
+	h.mu.Lock()
+	room := h.rooms[documentVersionID]
+	h.mu.Unlock()
+
+	if room == nil {
+		return
+	}
+
+	room.mu.Lock()
+	defer room.mu.Unlock()
+
+	for _, wake := range room.peers {
+		select {
+		case wake <- documentCollaborationWake{refresh: true}:
 		default:
 		}
 	}

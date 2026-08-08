@@ -49,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -91,6 +92,7 @@ type (
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
+	collaborationEvents *realtime.Events,
 	resourceAliasSvc *resourcealias.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
@@ -146,7 +148,10 @@ func NewMux(
 		iam:            iamSvc,
 		baseURL:        baseURL,
 		allowedOrigins: allowedOrigins,
-		hub:            newDocumentCollaborationHub(proboSvc.Documents),
+		hub: newDocumentCollaborationHub(
+			proboSvc.Documents,
+			collaborationEvents,
+		),
 	}
 
 	r.Group(func(r chi.Router) {

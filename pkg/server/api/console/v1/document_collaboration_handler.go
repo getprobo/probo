@@ -366,14 +366,37 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 				return
 			}
-		case <-lease.Wake:
+		case wake := <-lease.Wake:
 			if err := lease.PersistError(); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 
 				return
 			}
 
-			revision = lease.Revision()
+			if wake.refresh {
+				var changed bool
+
+				revision, changed, err = h.probo.Documents.RefreshCollaboration(
+					ctx,
+					scope,
+					documentVersionID,
+					collaboration.Document,
+					revision,
+				)
+				if err != nil {
+					h.closeWithError(ctx, connection, documentVersionIDString, err)
+
+					return
+				}
+
+				lease.SetRevision(revision)
+
+				if !changed {
+					continue
+				}
+			} else {
+				revision = lease.Revision()
+			}
 
 			if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)

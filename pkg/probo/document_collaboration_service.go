@@ -28,12 +28,14 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/automerge"
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/realtime"
 )
 
 const (
@@ -375,6 +377,17 @@ func (s *DocumentService) PersistCollaboration(
 				state.UpdatedAt = now
 				if err := state.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot persist document collaboration state: %w", err)
+				}
+
+				if _, err := tx.Exec(
+					ctx,
+					`SELECT pg_notify(@channel, @payload)`,
+					pgx.StrictNamedArgs{
+						"channel": realtime.DocumentCollaborationChannel,
+						"payload": documentVersionID.String(),
+					},
+				); err != nil {
+					return fmt.Errorf("cannot notify document collaboration change: %w", err)
 				}
 
 				if seeded {

@@ -77,7 +77,7 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 			Document: document,
 			Revision: 1,
 		},
-		peers: make(map[uint64]chan struct{}),
+		peers: make(map[uint64]chan documentCollaborationWake),
 	}
 	room.revision.Store(1)
 	hub := &documentCollaborationHub{
@@ -108,6 +108,20 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 	default:
 	}
 
+	hub.notifyExternal(versionID.String())
+
+	for _, wakeChannel := range []<-chan documentCollaborationWake{
+		first.Wake,
+		second.Wake,
+	} {
+		select {
+		case wake := <-wakeChannel:
+			assert.True(t, wake.refresh)
+		default:
+			require.Fail(t, "external notification did not wake peer")
+		}
+	}
+
 	first.Close()
 	assert.Contains(t, hub.rooms, versionID)
 	second.Close()
@@ -134,7 +148,7 @@ func TestDocumentCollaborationRoom_DebouncesPersistence(t *testing.T) {
 		documents:     documents,
 		scope:         coredata.NewScope(tenantID),
 		versionID:     versionID,
-		peers:         make(map[uint64]chan struct{}),
+		peers:         make(map[uint64]chan documentCollaborationWake),
 		dirty:         make(chan struct{}, 1),
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),
