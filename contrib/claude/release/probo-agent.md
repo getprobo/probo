@@ -34,20 +34,22 @@ and FreeBSD builds stay pure Go (no tray).
 
 ## Notes
 
-CI builds binaries for linux, windows, and freebsd (amd64/arm64) on
-Linux runners, and builds **CGO-enabled** darwin archives plus a
-signed/notarized fat `.pkg` on a macOS runner. The GitHub
-Release includes those archives, `probo-agent_*_darwin.pkg`,
-`install.sh`, signed checksums, SBOM, and build attestations. The agent
-auto-update path downloads the matching archive plus `checksums.txt` and
-verifies the cosign bundle before installing.
+CI builds linux and freebsd (amd64/arm64) on Linux runners, builds
+**CGO-enabled** darwin archives plus a signed/notarized fat `.pkg` on a
+macOS runner, and builds **Windows** zip archives plus Authenticode-signed
+MSIs on `windows-latest` (Azure Trusted Signing). The GitHub Release
+includes those archives, `probo-agent_*_darwin.pkg`,
+`probo-agent_*_windows_*.msi`, `install.sh`, signed checksums, SBOM, and
+build attestations. The agent auto-update path downloads the matching
+archive plus `checksums.txt` and verifies the cosign bundle before
+installing.
 
 The menu bar / tray enrollment flow is **macOS and Windows only**.
 Linux and FreeBSD use `probo-agent install --server …
 --enrollment-token …` from the shell, or the curl-to-sh installer
-documented below. Windows release binaries are cross-compiled from
-Linux with `CGO_ENABLED=0` (tray is pure Go). macOS release binaries
-and the `.pkg` are built on macOS with `CGO_ENABLED=1`.
+documented below. Windows release binaries are built natively on
+Windows runners with `CGO_ENABLED=0` (tray is pure Go). macOS release
+binaries and the `.pkg` are built on macOS with `CGO_ENABLED=1`.
 
 ### macOS `.pkg` (MDM / GUI install)
 
@@ -143,15 +145,70 @@ export APPLE_ID_PASSWORD="app-specific-password"
 # optional: NOTARYTOOL_KEYCHAIN_PROFILE=probo-agent-notary (default)
 ```
 
+### Windows MSI (MDM / GUI install)
+
+Release builds use `cmd/probo-agent/installer/windows/build.ps1` (WiX)
+on `windows-latest`. The MSI installs `probo-agent.exe` under
+`C:\Program Files\Probo\` and registers a machine-wide `probo://`
+handler (HKLM). It does **not** create the Windows service — enrollment
+(`probo-agent install` / deep link) still owns `sc.exe create`, same
+idea as the macOS LaunchDaemon-after-enroll flow.
+
+Published assets per arch:
+
+| Artifact | Role |
+|----------|------|
+| `probo-agent_*_windows_*.msi` | Initial install (double-click or `msiexec /i … /qn`) |
+| `probo-agent_Windows_*.zip` | Auto-update only (unchanged updater contract) |
+
+Both the nested `probo-agent.exe` and the MSI are Authenticode-signed
+with **Azure Trusted Signing** before upload. Local unsigned MSI builds
+(no signing) are fine for layout testing:
+
+```powershell
+# Requires: go, and `dotnet tool install --global wix`
+$Version = Get-Content cmd/probo-agent/VERSION -Raw
+$Version = $Version.Trim()
+go build -ldflags "-X 'main.version=$Version'" -o dist/probo-agent.exe ./cmd/probo-agent
+./cmd/probo-agent/installer/windows/build.ps1 `
+  -Binary dist/probo-agent.exe `
+  -Version $Version `
+  -Arch amd64
+```
+
+For per-user protocol registration without the MSI (dev machines),
+`cmd/probo-agent/installer/windows/register-protocol.ps1` still writes
+an HKCU handler pointing at `%ProgramFiles%\Probo\probo-agent.exe`.
+
+### Azure Trusted Signing (GitHub)
+
+The `build-windows` job signs with Azure Artifact Signing (Trusted
+Signing) only — no PFX in repository secrets. The job uses the GitHub
+Environment `probo-agent-release` and OIDC (no client secret).
+
+**Full setup guide:**
+[`probo-agent-windows-signing.md`](./probo-agent-windows-signing.md)
+
+Quick reference (names must match the guide and workflow):
+
+| Name | Kind | Purpose |
+|------|------|---------|
+| `AZURE_CLIENT_ID` | secret | Entra app (federated credential) |
+| `AZURE_TENANT_ID` | secret | Entra tenant |
+| `AZURE_SUBSCRIPTION_ID` | secret | Azure subscription |
+| `AZURE_TRUSTED_SIGNING_ENDPOINT` | variable | e.g. `https://eus.codesigning.azure.net/` |
+| `AZURE_TRUSTED_SIGNING_ACCOUNT` | variable | Artifact Signing account name |
+| `AZURE_TRUSTED_SIGNING_PROFILE` | variable | Certificate profile name |
+
+Timestamps use Microsoft ACS (`http://timestamp.acs.microsoft.com`).
+Leaf certificates are short-lived; the RFC3161 timestamp is required.
+
 Windows enrollment is browser-driven: the console issues a
 `probo://enroll?server=...&token=...` deep link handled by
 `Probo Agent.app` on macOS (PKG-installed helper + XPC) or
-`probo-agent enroll-url` on Windows. After install, register the protocol for the
-current user with
-`cmd/probo-agent/installer/windows/register-protocol.ps1` (per-user
-`HKCU` handler pointing at `probo-agent.exe`). The system tray helper
-(`probo-agent tray`) shows enrollment status; enrollment itself happens
-in the browser.
+`probo-agent enroll-url` on Windows (MSI-registered protocol). The
+system tray helper (`probo-agent tray`) shows enrollment status;
+enrollment itself happens in the browser.
 
 Region labels and console URLs for the macOS installer HTML live in
 `cmd/probo-agent/installer/regions.json`. A Go test keeps US/EU URLs in
