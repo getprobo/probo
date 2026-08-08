@@ -246,8 +246,8 @@ function readColumnWidths(value: unknown): number[] | null {
 
 function isColumnWidthArray(value: unknown): value is number[] {
   return Array.isArray(value)
-    && value.every((width: unknown) =>
-      typeof width === "number" && width > 0
+    && value.every(
+      (width: unknown) => typeof width === "number" && width > 0,
     );
 }
 
