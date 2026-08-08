@@ -651,3 +651,81 @@ func (s *State) hasDependencies(change *Change) bool {
 
 	return true
 }
+
+func (s *State) changesSince(heads []ChangeHash) ([]*Change, bool) {
+	known, ok := s.changeClosure(heads)
+	if !ok {
+		return nil, false
+	}
+
+	ordered := make([]*Change, 0)
+	visited := make(map[ChangeHash]struct{})
+
+	var visit func(ChangeHash) bool
+
+	visit = func(hash ChangeHash) bool {
+		if _, ok := visited[hash]; ok {
+			return true
+		}
+
+		visited[hash] = struct{}{}
+
+		change, ok := s.changes[hash]
+		if !ok {
+			return false
+		}
+
+		for _, dependency := range change.Dependencies {
+			if !visit(dependency) {
+				return false
+			}
+		}
+
+		if _, ok := known[hash]; ok {
+			return true
+		}
+
+		if len(change.Raw) == 0 {
+			return false
+		}
+
+		ordered = append(ordered, change)
+
+		return true
+	}
+
+	for _, head := range s.Heads() {
+		if !visit(head) {
+			return nil, false
+		}
+	}
+
+	return ordered, true
+}
+
+func (s *State) changeClosure(heads []ChangeHash) (map[ChangeHash]struct{}, bool) {
+	closure := make(map[ChangeHash]struct{})
+
+	pending := append([]ChangeHash(nil), heads...)
+
+	for len(pending) > 0 {
+		index := len(pending) - 1
+		hash := pending[index]
+		pending = pending[:index]
+
+		if _, ok := closure[hash]; ok {
+			continue
+		}
+
+		change, ok := s.changes[hash]
+		if !ok {
+			return nil, false
+		}
+
+		closure[hash] = struct{}{}
+
+		pending = append(pending, change.Dependencies...)
+	}
+
+	return closure, true
+}

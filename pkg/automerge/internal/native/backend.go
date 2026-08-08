@@ -49,6 +49,7 @@ type Backend struct {
 type nativeSyncState struct {
 	RemoteHeads [][32]byte `json:"remoteHeads"`
 	Need        [][32]byte `json:"need"`
+	Requested   [][32]byte `json:"requested"`
 	NeedsAck    bool       `json:"needsAck"`
 	InFlight    bool       `json:"inFlight"`
 }
@@ -626,13 +627,45 @@ func (b *Backend) GenerateSyncMessage(
 		Heads:   heads,
 		Need:    append([][32]byte(nil), state.Need...),
 	}
-	if !state.NeedsAck && len(state.Need) == 0 {
-		document, err := b.Save(ctx)
-		if err != nil {
-			return nil, false, err
-		}
+	if !state.NeedsAck {
+		switch {
+		case len(state.Requested) > 0:
+			for _, requested := range state.Requested {
+				change, ok := b.state.changes[ChangeHash(requested)]
+				if !ok || len(change.Raw) == 0 {
+					continue
+				}
 
-		message.Changes = [][]byte{document}
+				message.Changes = append(
+					message.Changes,
+					append([]byte(nil), change.Raw...),
+				)
+			}
+
+			state.Requested = nil
+		case len(state.Need) == 0:
+			remoteHeads := make([]ChangeHash, len(state.RemoteHeads))
+			for i, head := range state.RemoteHeads {
+				remoteHeads[i] = ChangeHash(head)
+			}
+
+			changes, incremental := b.state.changesSince(remoteHeads)
+			if incremental {
+				for _, change := range changes {
+					message.Changes = append(
+						message.Changes,
+						append([]byte(nil), change.Raw...),
+					)
+				}
+			} else {
+				document, err := b.Save(ctx)
+				if err != nil {
+					return nil, false, err
+				}
+
+				message.Changes = [][]byte{document}
+			}
+		}
 	}
 
 	if !state.NeedsAck {
@@ -673,6 +706,7 @@ func (b *Backend) ReceiveSyncMessage(
 	}
 
 	state.RemoteHeads = append([][32]byte(nil), message.Heads...)
+	state.Requested = append(state.Requested[:0], message.Need...)
 
 	needed := make(map[[32]byte]struct{})
 
