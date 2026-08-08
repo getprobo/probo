@@ -360,6 +360,53 @@ describe("RichEditor collaboration", () => {
       ],
     });
   });
+
+  it("preserves Mermaid code-block language", () => {
+    const document = createRichEditorAutomergeDocument(
+      JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "codeBlock",
+            attrs: { language: "mermaid" },
+            content: [{ type: "text", text: "graph TD; A-->B" }],
+          },
+        ],
+      }),
+    );
+    const spans = Automerge.spans(document, ["body"]);
+    const block = spans.find(span => span.type === "block");
+    if (block?.type !== "block") throw new Error("expected block span");
+    const attrs = block.value.attrs;
+    if (
+      attrs === null
+      || typeof attrs !== "object"
+      || !("language" in attrs)
+    ) {
+      throw new Error("expected code-block language");
+    }
+    expect(attrs.language).toBe("mermaid");
+
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: () => {},
+      on: () => {},
+      off: () => {},
+    };
+    const roundTrip = richEditorAutomergeContent(
+      handle,
+      richEditorCollaborationExtensions,
+    ) as {
+      content: Array<{
+        type: string;
+        attrs: { language: string | null };
+      }>;
+    };
+    expect(roundTrip.content[0]).toMatchObject({
+      type: "codeBlock",
+      attrs: { language: "mermaid" },
+    });
+  });
 });
 
 function tableDocumentJSON(): string {

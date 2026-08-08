@@ -204,7 +204,17 @@ function automergeNodeMapping(name: string): MappedNodeSpec["automerge"] {
     case "blockquote":
       return { block: "blockquote" };
     case "codeBlock":
-      return { block: "code-block" };
+      return {
+        block: "code-block",
+        attrParsers: {
+          fromAutomerge: block => ({
+            language: readNullableStringAttribute(block.attrs, "language"),
+          }),
+          fromProsemirror: node => ({
+            language: readNullableStringAttribute(node.attrs, "language"),
+          }),
+        },
+      };
     case "horizontalRule":
       return { block: "horizontal-rule" };
     case "hardBreak":

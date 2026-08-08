@@ -330,6 +330,49 @@ func TestRender_TableStructure(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestRender_CodeBlockLanguage(t *testing.T) {
+	t.Parallel()
+
+	content, err := automergeprosemirror.Render(
+		[]automerge.Span{
+			{
+				Type: automerge.SpanTypeBlock,
+				Block: map[string]any{
+					"type":    "code-block",
+					"parents": []any{},
+					"attrs": map[string]any{
+						"language": "mermaid",
+					},
+				},
+			},
+			{
+				Type: automerge.SpanTypeText,
+				Text: "graph TD; A-->B",
+			},
+		},
+	)
+
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{
+			"type": "doc",
+			"content": [{
+				"type": "codeBlock",
+				"attrs": {"language": "mermaid"},
+				"content": [{
+					"type": "text",
+					"text": "graph TD; A-->B"
+				}]
+			}]
+		}`,
+		content,
+	)
+
+	_, err = prosemirror.Parse(content)
+	require.NoError(t, err)
+}
+
 func tableBlock(
 	blockType string,
 	parents []any,
