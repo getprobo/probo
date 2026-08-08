@@ -125,6 +125,19 @@ export {
   supportsRichEditorCollaboration,
 } from "./RichEditor/RichEditor";
 export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
+export {
+  automergeTableToTiptap,
+  createAutomergeTableStore,
+  insertAutomergeTableColumn,
+  insertAutomergeTableRow,
+  spliceAutomergeTableCellText,
+} from "./RichEditor/automergeTable";
+export type {
+  AutomergeTable,
+  AutomergeTableCell,
+  AutomergeTableRow,
+  AutomergeTableStore,
+} from "./RichEditor/automergeTable";
 export type {
   RichEditorCollaborationHandle,
   RichEditorPresence,

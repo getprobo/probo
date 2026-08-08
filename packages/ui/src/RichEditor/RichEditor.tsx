@@ -21,6 +21,7 @@ import { type Content, Editor, EditorContent, useEditor } from "@tiptap/react";
 import { type ComponentProps, useCallback, useEffect, useMemo } from "react";
 import { tv } from "tailwind-variants";
 
+import { AutomergeTableIDExtension } from "./AutomergeTableIDExtension";
 import { AutomergeUnknownBlockExtension } from "./AutomergeUnknownBlockExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
@@ -76,12 +77,14 @@ const extensions = [
   }),
   UndoRedo,
   tableExtension,
+  AutomergeTableIDExtension,
   AutomergeUnknownBlockExtension,
   MarkdownPasteExtension,
 ];
 
 const collaborationExtensions = extensions.filter(extension =>
   extension !== tableExtension
+  && extension !== AutomergeTableIDExtension
   && extension !== UndoRedo,
 );
 
