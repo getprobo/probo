@@ -963,36 +963,102 @@ func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Sco
 				}
 			}
 
-			profile = &coredata.MembershipProfile{
-				ID:                       gid.New(req.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
-				IdentityID:               identity.ID,
-				OrganizationID:           req.OrganizationID,
-				EmailAddress:             req.EmailAddress,
-				Source:                   coredata.ProfileSourceManual,
-				FullName:                 req.FullName,
-				Kind:                     req.Kind,
-				AdditionalEmailAddresses: req.AdditionalEmailAddresses,
-				Position:                 req.Position,
-				// User is pending until they accept an invitation.
-				State:     coredata.ProfileStatePending,
-				CreatedAt: now,
-				UpdatedAt: now,
+			existingProfile := &coredata.MembershipProfile{}
+
+			err := existingProfile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				identity.ID,
+				req.OrganizationID,
+			)
+			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
-			if req.ContractStartDate != nil {
-				profile.ContractStartDate = *req.ContractStartDate
-			}
+			if err == nil {
+				if existingProfile.Source == coredata.ProfileSourceSCIM {
+					return NewUserManagedBySCIMError(existingProfile.ID)
+				}
 
-			if req.ContractEndDate != nil {
-				profile.ContractEndDate = *req.ContractEndDate
-			}
+				existingMembership := &coredata.Membership{}
 
-			if err := profile.Insert(ctx, conn); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+				err := existingMembership.LoadByIdentityIDAndOrganizationID(
+					ctx,
+					conn,
+					scope,
+					identity.ID,
+					req.OrganizationID,
+				)
+				if err == nil {
 					return NewUserAlreadyExistsError(identity.ID, req.OrganizationID)
 				}
 
-				return fmt.Errorf("cannot insert profile: %w", err)
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
+				// Reuse orphan / compliance-portal profiles so the same person
+				// record can later receive a console membership. Keep state as-is:
+				// portal access requires ACTIVE, and CreateUser is already
+				// authorized to grant the requested role.
+				profile = existingProfile
+				profile.FullName = req.FullName
+				profile.Kind = req.Kind
+				profile.AdditionalEmailAddresses = req.AdditionalEmailAddresses
+				profile.Position = req.Position
+				profile.UpdatedAt = now
+
+				if req.ContractStartDate != nil {
+					profile.ContractStartDate = *req.ContractStartDate
+				}
+
+				if req.ContractEndDate != nil {
+					profile.ContractEndDate = *req.ContractEndDate
+				}
+
+				if err := profile.Update(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot update profile: %w", err)
+				}
+
+				if profile.ContractEndDate != nil && profile.ContractEndDate.Before(now) {
+					signatures := &coredata.DocumentVersionSignatures{}
+					if err := signatures.DeleteRequestedBySignatory(ctx, conn, scope, profile.ID); err != nil {
+						return fmt.Errorf("cannot delete requested signatures: %w", err)
+					}
+				}
+			} else {
+				profile = &coredata.MembershipProfile{
+					ID:                       gid.New(req.OrganizationID.TenantID(), coredata.MembershipProfileEntityType),
+					IdentityID:               identity.ID,
+					OrganizationID:           req.OrganizationID,
+					EmailAddress:             req.EmailAddress,
+					Source:                   coredata.ProfileSourceManual,
+					FullName:                 req.FullName,
+					Kind:                     req.Kind,
+					AdditionalEmailAddresses: req.AdditionalEmailAddresses,
+					Position:                 req.Position,
+					// User is pending until they accept an invitation.
+					State:     coredata.ProfileStatePending,
+					CreatedAt: now,
+					UpdatedAt: now,
+				}
+
+				if req.ContractStartDate != nil {
+					profile.ContractStartDate = *req.ContractStartDate
+				}
+
+				if req.ContractEndDate != nil {
+					profile.ContractEndDate = *req.ContractEndDate
+				}
+
+				if err := profile.Insert(ctx, conn); err != nil {
+					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+						return NewUserAlreadyExistsError(identity.ID, req.OrganizationID)
+					}
+
+					return fmt.Errorf("cannot insert profile: %w", err)
+				}
 			}
 
 			membership := &coredata.Membership{
@@ -1004,6 +1070,10 @@ func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Sco
 				UpdatedAt:      now,
 			}
 			if err := membership.Insert(ctx, conn, scope); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return NewUserAlreadyExistsError(identity.ID, req.OrganizationID)
+				}
+
 				return fmt.Errorf("cannot insert membership: %w", err)
 			}
 

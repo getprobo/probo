@@ -52,6 +52,10 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be created manually")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

@@ -2878,6 +2878,10 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 			return nil, types.CreateUserOutput{}, fmt.Errorf("user with email already exists: %w", err)
 		}
 
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
+			return nil, types.CreateUserOutput{}, fmt.Errorf("user managed by SCIM: %w", err)
+		}
+
 		return nil, types.CreateUserOutput{}, fmt.Errorf("create user: %w", err)
 	}
 
