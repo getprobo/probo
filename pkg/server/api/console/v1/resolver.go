@@ -146,6 +146,7 @@ func NewMux(
 		iam:            iamSvc,
 		baseURL:        baseURL,
 		allowedOrigins: allowedOrigins,
+		hub:            newDocumentCollaborationHub(proboSvc.Documents),
 	}
 
 	r.Group(func(r chi.Router) {

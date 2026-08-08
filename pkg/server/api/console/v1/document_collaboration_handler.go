@@ -59,6 +59,7 @@ type (
 		iam            *iam.Service
 		baseURL        *baseurl.BaseURL
 		allowedOrigins []string
+		hub            *documentCollaborationHub
 	}
 
 	documentCollaborationHandshake struct {
@@ -118,7 +119,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	collaboration, err := h.probo.Documents.OpenCollaboration(
+	lease, err := h.hub.acquire(
 		r.Context(),
 		scope,
 		documentVersionID,
@@ -128,7 +129,10 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	defer func() { _ = collaboration.Document.Close(context.Background()) }()
+	defer lease.Close()
+
+	collaboration := lease.Collaboration()
+
 	defer func() {
 		deleteCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -147,7 +151,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		}
 	}()
 
-	if collaboration.NeedsSeed {
+	if lease.SeedOwner() {
 		defer func() {
 			releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -208,7 +212,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 	defer func() { _ = syncState.Close(context.Background()) }()
 
 	seedContent := ""
-	if collaboration.NeedsSeed {
+	if lease.SeedOwner() {
 		seedContent = collaboration.SeedContent
 	}
 
@@ -216,8 +220,8 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		documentCollaborationHandshake{
 			Type:         "ready",
 			Version:      1,
-			Revision:     collaboration.Revision,
-			NeedsSeed:    collaboration.NeedsSeed,
+			Revision:     lease.Revision(),
+			NeedsSeed:    lease.SeedOwner(),
 			SeedContent:  seedContent,
 			ConnectionID: connectionID,
 		},
@@ -247,7 +251,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 	incoming := make(chan documentCollaborationIncoming, 1)
 	go readCollaborationMessages(ctx, connection, incoming)
 
-	revision := collaboration.Revision
+	revision := lease.Revision()
 
 	ticker := time.NewTicker(documentCollaborationRefreshInterval)
 	defer ticker.Stop()
@@ -307,6 +311,8 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				return
 			}
 
+			lease.NotifyPeers()
+
 			revision, err = h.probo.Documents.PersistCollaboration(
 				ctx,
 				scope,
@@ -317,6 +323,8 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 				return
 			}
+
+			lease.SetRevision(revision)
 
 			if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
@@ -338,6 +346,8 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 			}
 
 			if changed {
+				lease.SetRevision(revision)
+
 				if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
 					h.closeWithError(ctx, connection, documentVersionIDString, err)
 					return
@@ -352,6 +362,14 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				connectionID,
 			); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
+				return
+			}
+		case <-lease.Wake:
+			revision = lease.Revision()
+
+			if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
+				h.closeWithError(ctx, connection, documentVersionIDString, err)
+
 				return
 			}
 		}
