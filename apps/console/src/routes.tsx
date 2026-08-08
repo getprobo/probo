@@ -38,6 +38,7 @@ import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/routes";
 import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
+import { onboardingRoutes } from "./pages/organizations/onboarding/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
@@ -192,6 +193,7 @@ const routes = [
         path: "assume",
         Component: lazy(() => import("./pages/iam/organizations/AssumePageLoader")),
       },
+      ...onboardingRoutes,
       {
         path: "employee",
         ErrorBoundary: OrganizationErrorBoundary,
