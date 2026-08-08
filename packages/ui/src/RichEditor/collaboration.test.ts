@@ -22,6 +22,7 @@ import * as Automerge from "@automerge/automerge";
 import {
   type DocHandle,
   pmDocFromSpans,
+  pmNodeToSpans,
   type SchemaAdapter,
 } from "@automerge/prosemirror";
 import { getSchema } from "@tiptap/core";
@@ -30,7 +31,10 @@ import { Fragment } from "@tiptap/pm/model";
 import { EditorState, type Transaction } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
-import { createAutomergeSyncPlugin } from "./AutomergeSyncPlugin";
+import {
+  createAutomergeSyncPlugin,
+  reconcileAutomergeDocument,
+} from "./AutomergeSyncPlugin";
 import {
   createSchemaAdapter,
   explicitBlockIdentityPlugin,
@@ -523,6 +527,65 @@ describe("RichEditor collaboration", () => {
     const laterRemote = pmDocFromSpans(initialAdapter, laterSpans);
     expect(laterRemote.textContent).toBe("BeforeAfterLater");
     expect(laterRemote.child(3).textContent).toBe("Later");
+  });
+
+  it("reconciles remote text between empty structural blocks", () => {
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    let document = createRichEditorAutomergeDocument(
+      JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Before" }],
+          },
+          { type: "horizontalRule" },
+          { type: "paragraph" },
+          { type: "paragraph" },
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "After" }],
+          },
+        ],
+      }),
+    );
+    const initialDocument = pmDocFromSpans(
+      adapter,
+      Automerge.spans(document, ["body"]),
+    );
+    const state = EditorState.create({
+      schema: adapter.schema,
+      doc: initialDocument,
+    });
+    const emptyParagraphPositions: number[] = [];
+    state.doc.descendants((node, position) => {
+      if (node.type.name === "paragraph" && node.content.size === 0) {
+        emptyParagraphPositions.push(position);
+      }
+    });
+    expect(emptyParagraphPositions).toHaveLength(2);
+
+    const changedDocument = state.tr.insertText(
+      "X",
+      emptyParagraphPositions[0] + 1,
+    ).doc;
+    document = Automerge.change(document, (draft) => {
+      Automerge.updateSpans(
+        draft,
+        ["body"],
+        pmNodeToSpans(adapter, changedDocument),
+        adapter.updateSpansConfig(),
+      );
+    });
+
+    const transaction = reconcileAutomergeDocument(
+      adapter,
+      ["body"],
+      document,
+      state,
+    );
+    const reconciled = state.apply(transaction);
+    expect(reconciled.doc.eq(changedDocument)).toBe(true);
   });
 
   it("preserves Mermaid code-block language", () => {

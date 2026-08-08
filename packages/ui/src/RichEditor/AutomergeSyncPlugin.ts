@@ -28,8 +28,17 @@ import type {
 } from "@automerge/prosemirror";
 import { patchesToTr } from "@automerge/prosemirror/dist/patchesToTr.js";
 import pmToAm from "@automerge/prosemirror/dist/pmToAm.js";
-import { pmNodeToSpans } from "@automerge/prosemirror/dist/traversal.js";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import {
+  pmDocFromSpans,
+  pmNodeToSpans,
+} from "@automerge/prosemirror/dist/traversal.js";
+import type { Fragment } from "@tiptap/pm/model";
+import {
+  type EditorState,
+  Plugin,
+  PluginKey,
+  type Transaction,
+} from "@tiptap/pm/state";
 
 import type { RichEditorAutomergeDocument } from "./collaboration";
 import {
@@ -72,14 +81,16 @@ export function createAutomergeSyncPlugin(
           prosemirror: summarizeProseMirrorDocument(view.state.doc),
         });
 
-        const transaction = patchesToTr({
-          adapter,
-          path,
-          before: patchInfo.before,
-          after: doc,
-          patches,
-          state: view.state,
-        });
+        const transaction = hasHorizontalRule(view.state.doc)
+          ? reconcileAutomergeDocument(adapter, path, doc, view.state)
+          : patchesToTr({
+              adapter,
+              path,
+              before: patchInfo.before,
+              after: doc,
+              patches,
+              state: view.state,
+            });
         ignoreTransaction = true;
         view.dispatch(transaction);
         ignoreTransaction = false;
@@ -108,7 +119,7 @@ export function createAutomergeSyncPlugin(
       collaborationDebug("local-before", {
         transactionCount: changedTransactions.length,
         steps: changedTransactions.flatMap(transaction =>
-          transaction.steps.map(step => step.toJSON().stepType)
+          transaction.steps.map(step => step.constructor.name),
         ),
         heads: Automerge.getHeads(handle.doc()),
         spans: summarizeAutomergeSpans(handle.doc()),
@@ -152,6 +163,29 @@ export function createAutomergeSyncPlugin(
   });
 }
 
+export function reconcileAutomergeDocument(
+  adapter: SchemaAdapter,
+  path: Automerge.Prop[],
+  document: Automerge.Doc<RichEditorAutomergeDocument>,
+  state: EditorState,
+): Transaction {
+  const nextDocument = pmDocFromSpans(
+    adapter,
+    Automerge.spans(document, path),
+  );
+  const transaction = state.tr;
+  const change = findDocumentDiff(state.doc.content, nextDocument.content);
+  if (!change) return transaction;
+
+  transaction.replace(
+    change.start,
+    change.endBefore,
+    nextDocument.slice(change.start, change.endAfter),
+  );
+  transaction.setMeta("addToHistory", false);
+  return transaction;
+}
+
 function hasHorizontalRule(document: {
   descendants: (
     callback: (node: { type: { name: string } }) => boolean,
@@ -167,4 +201,55 @@ function hasHorizontalRule(document: {
     return true;
   });
   return found;
+}
+
+function findDocumentDiff(
+  before: Fragment,
+  after: Fragment,
+): {
+  start: number;
+  endBefore: number;
+  endAfter: number;
+} | null {
+  let start = before.findDiffStart(after);
+  if (start === null) return null;
+
+  const end = before.findDiffEnd(after);
+  if (!end) return null;
+
+  let endBefore = end.a;
+  let endAfter = end.b;
+  if (endBefore < start && before.size < after.size) {
+    if (
+      start > 0
+      && start < after.size
+      && isSurrogatePair(after.textBetween(start - 1, start + 1))
+    ) {
+      start--;
+    }
+    endAfter = start + endAfter - endBefore;
+    endBefore = start;
+  } else if (endAfter < start) {
+    if (
+      start > 0
+      && start < before.size
+      && isSurrogatePair(before.textBetween(start - 1, start + 1))
+    ) {
+      start--;
+    }
+    endBefore = start + endBefore - endAfter;
+    endAfter = start;
+  }
+
+  return { start, endBefore, endAfter };
+}
+
+function isSurrogatePair(value: string): boolean {
+  if (value.length !== 2) return false;
+  const first = value.charCodeAt(0);
+  const second = value.charCodeAt(1);
+  return first >= 0xdc00
+    && first <= 0xdfff
+    && second >= 0xd800
+    && second <= 0xdbff;
 }
