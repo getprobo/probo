@@ -129,3 +129,7 @@ export type {
   RichEditorCollaborationHandle,
   RichEditorPresence,
 } from "./RichEditor/presence";
+export {
+  collaborationDebug,
+  summarizeAutomergeSpans,
+} from "./RichEditor/collaborationDebug";

@@ -32,6 +32,11 @@ import { pmNodeToSpans } from "@automerge/prosemirror/dist/traversal.js";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 
 import type { RichEditorAutomergeDocument } from "./collaboration";
+import {
+  collaborationDebug,
+  summarizeAutomergeSpans,
+  summarizeProseMirrorDocument,
+} from "./collaborationDebug";
 
 export const automergeSyncPluginKey = new PluginKey("automerge-sync");
 
@@ -56,6 +61,17 @@ export function createAutomergeSyncPlugin(
       }) => {
         if (ignoreTransaction) return;
 
+        collaborationDebug("remote-patches", {
+          patchCount: patches.length,
+          patches: patches.map(patch => ({
+            action: patch.action,
+            path: patch.path,
+          })),
+          heads: Automerge.getHeads(doc),
+          spans: summarizeAutomergeSpans(doc),
+          prosemirror: summarizeProseMirrorDocument(view.state.doc),
+        });
+
         const transaction = patchesToTr({
           adapter,
           path,
@@ -67,6 +83,10 @@ export function createAutomergeSyncPlugin(
         ignoreTransaction = true;
         view.dispatch(transaction);
         ignoreTransaction = false;
+        collaborationDebug("remote-applied", {
+          stepCount: transaction.steps.length,
+          prosemirror: summarizeProseMirrorDocument(view.state.doc),
+        });
       };
 
       handle.on("change", onPatch);
@@ -84,6 +104,17 @@ export function createAutomergeSyncPlugin(
         transaction => transaction.docChanged,
       );
       if (changedTransactions.length === 0) return undefined;
+
+      collaborationDebug("local-before", {
+        transactionCount: changedTransactions.length,
+        steps: changedTransactions.flatMap(transaction =>
+          transaction.steps.map(step => step.toJSON().stepType)
+        ),
+        heads: Automerge.getHeads(handle.doc()),
+        spans: summarizeAutomergeSpans(handle.doc()),
+        prosemirror: summarizeProseMirrorDocument(state.doc),
+        structuralLeaf: hasHorizontalRule(state.doc),
+      });
 
       ignoreTransaction = true;
       handle.change((document) => {
@@ -109,6 +140,12 @@ export function createAutomergeSyncPlugin(
         }
       });
       ignoreTransaction = false;
+
+      collaborationDebug("local-after", {
+        heads: Automerge.getHeads(handle.doc()),
+        spans: summarizeAutomergeSpans(handle.doc()),
+        prosemirror: summarizeProseMirrorDocument(state.doc),
+      });
 
       return undefined;
     },

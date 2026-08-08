@@ -20,9 +20,11 @@
 
 import * as Automerge from "@automerge/automerge";
 import type { DocHandle } from "@automerge/prosemirror";
-import type {
-  RichEditorAutomergeDocument,
-  RichEditorPresence,
+import {
+  collaborationDebug,
+  summarizeAutomergeSpans,
+  type RichEditorAutomergeDocument,
+  type RichEditorPresence,
 } from "@probo/ui";
 
 const collaborationProtocol = "automerge-sync-v1";
@@ -105,6 +107,7 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
   change(fn: (document: RichEditorAutomergeDocument) => void): void {
     let patches: Automerge.Patch[] = [];
     let patchInfo: Automerge.PatchInfo<RichEditorAutomergeDocument> | undefined;
+    const headsBefore = Automerge.getHeads(this.#document);
 
     this.#document = Automerge.change(
       this.#document,
@@ -116,6 +119,12 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
       },
       fn,
     );
+    collaborationDebug("handle-local-change", {
+      headsBefore,
+      headsAfter: Automerge.getHeads(this.#document),
+      patches: summarizePatches(patches),
+      spans: summarizeAutomergeSpans(this.#document),
+    });
     if (patchInfo) {
       this.#emit(patches, patchInfo);
     }
@@ -219,6 +228,7 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
 
     let patches: Automerge.Patch[] = [];
     let patchInfo: Automerge.PatchInfo<RichEditorAutomergeDocument> | undefined;
+    const headsBefore = Automerge.getHeads(this.#document);
     [this.#document, this.#syncState] = Automerge.receiveSyncMessage(
       this.#document,
       this.#syncState,
@@ -230,6 +240,13 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
         },
       },
     );
+    collaborationDebug("sync-receive", {
+      bytes: event.data.byteLength,
+      headsBefore,
+      headsAfter: Automerge.getHeads(this.#document),
+      patches: summarizePatches(patches),
+      spans: summarizeAutomergeSpans(this.#document),
+    });
     if (patchInfo) {
       this.#emit(patches, patchInfo);
     }
@@ -239,6 +256,11 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
   #handleDisconnect = () => {
     if (this.#closed || !this.#ready || this.#reconnectTimer !== undefined) return;
 
+    collaborationDebug("socket-disconnected", {
+      ready: this.#ready,
+      attempt: this.#reconnectAttempt,
+      heads: Automerge.getHeads(this.#document),
+    });
     this.#detachSocket(this.#socket);
     this.#onConnectionState?.(false);
     const delay = Math.min(
@@ -270,6 +292,9 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
       this.#sendAvailableMessages();
       this.#sendPresence();
       this.#onConnectionState?.(true);
+      collaborationDebug("socket-reconnected", {
+        heads: Automerge.getHeads(this.#document),
+      });
     } catch {
       socket.close();
       if (this.#closed) return;
@@ -304,6 +329,11 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
       if (!message) return;
       const data = new ArrayBuffer(message.byteLength);
       new Uint8Array(data).set(message);
+      collaborationDebug("sync-send", {
+        sequence: i,
+        bytes: message.byteLength,
+        heads: Automerge.getHeads(this.#document),
+      });
       this.#socket.send(data);
     }
 
@@ -360,6 +390,11 @@ export async function connectAutomergeDocument(
   const socket = createSocket(endpoint);
 
   const handshake = await waitForHandshake(socket);
+  collaborationDebug("handshake", {
+    revision: handshake.revision,
+    needsSeed: handshake.needsSeed,
+    connectionId: handshake.connectionId,
+  });
   const document = handshake.needsSeed
     ? createSeed(handshake.seedContent ?? "")
     : Automerge.init<RichEditorAutomergeDocument>();
@@ -383,6 +418,15 @@ function createSocket(endpoint: URL): WebSocket {
   const socket = new WebSocket(endpoint, collaborationProtocol);
   socket.binaryType = "arraybuffer";
   return socket;
+}
+
+function summarizePatches(
+  patches: Automerge.Patch[],
+): Array<Record<string, unknown>> {
+  return patches.map(patch => ({
+    action: patch.action,
+    path: patch.path,
+  }));
 }
 
 function waitForHandshake(socket: WebSocket): Promise<CollaborationHandshake> {
