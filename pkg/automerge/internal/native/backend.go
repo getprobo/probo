@@ -492,29 +492,59 @@ func (b *Backend) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 		return b.Heads(ctx)
 	}
 
-	for i := range document.Changes {
-		change := &document.Changes[i]
-		if change.Hash == nil {
-			continue
-		}
-
-		if _, exists := b.state.changes[*change.Hash]; exists {
-			continue
-		}
-
-		raw, err := EncodeChange(change)
-		if err != nil {
-			return nil, fmt.Errorf("cannot encode merged native change: %w", err)
-		}
-
-		if err := b.state.ApplyChange(change); err != nil {
-			return nil, fmt.Errorf("cannot apply merged native change: %w", err)
-		}
-
-		b.appended = append(b.appended, raw)
+	if err := b.applyMergedChanges(document.Changes); err != nil {
+		return nil, err
 	}
 
 	return b.Heads(ctx)
+}
+
+func (b *Backend) applyMergedChanges(changes []Change) error {
+	pending := make([]*Change, 0, len(changes))
+	for i := range changes {
+		change := &changes[i]
+		if change.Hash == nil || b.state.hasChange(*change.Hash) {
+			continue
+		}
+
+		pending = append(pending, change)
+	}
+
+	for len(pending) > 0 {
+		progressed := false
+		remaining := pending[:0]
+
+		for _, change := range pending {
+			if !b.state.hasDependencies(change) {
+				remaining = append(remaining, change)
+
+				continue
+			}
+
+			raw, err := EncodeChange(change)
+			if err != nil {
+				return fmt.Errorf("cannot encode merged native change: %w", err)
+			}
+
+			if err := b.state.ApplyChange(change); err != nil {
+				return fmt.Errorf("cannot apply merged native change: %w", err)
+			}
+
+			b.appended = append(b.appended, raw)
+			progressed = true
+		}
+
+		if !progressed {
+			return fmt.Errorf(
+				"cannot apply %d merged native changes: dependencies are unavailable",
+				len(remaining),
+			)
+		}
+
+		pending = remaining
+	}
+
+	return nil
 }
 
 func (b *Backend) NewSyncState(ctx context.Context) (uint32, error) {

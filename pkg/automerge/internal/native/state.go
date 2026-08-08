@@ -582,3 +582,18 @@ func (s *State) recordAppliedChange(change *Change) error {
 
 	return nil
 }
+
+func (s *State) hasChange(hash ChangeHash) bool {
+	_, ok := s.changes[hash]
+	return ok
+}
+
+func (s *State) hasDependencies(change *Change) bool {
+	for _, dependency := range change.Dependencies {
+		if !s.hasChange(dependency) {
+			return false
+		}
+	}
+
+	return true
+}
