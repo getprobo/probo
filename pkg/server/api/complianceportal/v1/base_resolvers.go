@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
@@ -173,6 +174,24 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewCompliancePortalFile(portalFile), nil
+
+	case coredata.MailingListUpdateEntityType:
+		if compliancePortal.MailingListID == nil {
+			return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+		}
+
+		update, err := r.mailman.GetSentMailingListUpdate(ctx, *compliancePortal.MailingListID, id)
+		if err != nil {
+			if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot get mailing list update", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return types.NewMailingListUpdate(update), nil
 
 	default:
 		return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
