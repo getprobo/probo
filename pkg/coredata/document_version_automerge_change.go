@@ -137,3 +137,31 @@ LIMIT @limit
 
 	return nil
 }
+
+func DeleteDocumentVersionAutomergeChangesThroughRevision(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	documentVersionID gid.GID,
+	revision int64,
+) error {
+	q := `
+DELETE FROM document_version_automerge_changes
+WHERE
+	%s
+	AND document_version_id = @document_version_id
+	AND revision <= @revision
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"document_version_id": documentVersionID,
+		"revision":            revision,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := tx.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete compacted document version Automerge changes: %w", err)
+	}
+
+	return nil
+}

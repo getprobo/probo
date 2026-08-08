@@ -37,9 +37,10 @@ import (
 )
 
 const (
-	documentCollaborationChangeBatchSize  = 1000
-	documentCollaborationSeedLease        = 30 * time.Second
-	documentCollaborationSnapshotMaxBytes = 8 * 1024 * 1024
+	documentCollaborationChangeBatchSize   = 1000
+	documentCollaborationCompactionChanges = 500
+	documentCollaborationSeedLease         = 30 * time.Second
+	documentCollaborationSnapshotMaxBytes  = 8 * 1024 * 1024
 )
 
 type (
@@ -340,6 +341,31 @@ func (s *DocumentService) PersistCollaboration(
 				state.Revision++
 				state.ChangeRevision = nextChangeRevision
 				state.Heads = encodeAutomergeHeads(after)
+
+				if state.ChangeRevision-state.SnapshotRevision >=
+					documentCollaborationCompactionChanges {
+					snapshot, err := canonical.Save(ctx)
+					if err != nil {
+						return fmt.Errorf("cannot compact collaboration snapshot: %w", err)
+					}
+
+					if len(snapshot) > documentCollaborationSnapshotMaxBytes {
+						return &ErrDocumentCollaborationStateTooLarge{Size: len(snapshot)}
+					}
+
+					state.Snapshot = snapshot
+					state.SnapshotRevision = state.ChangeRevision
+
+					if err := coredata.DeleteDocumentVersionAutomergeChangesThroughRevision(
+						ctx,
+						tx,
+						scope,
+						documentVersionID,
+						state.SnapshotRevision,
+					); err != nil {
+						return fmt.Errorf("cannot delete compacted collaboration changes: %w", err)
+					}
+				}
 
 				state.Seeded = seeded
 				if seeded {
