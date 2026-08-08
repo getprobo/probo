@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@ariakit/react": "^0.4.35",
+    "@automerge/automerge": "^3.4.0",
+    "@automerge/prosemirror": "^0.2.0",
     "@base-ui/react": "^1.6.0",
     "@floating-ui/react": "^0.27.20",
     "@fontsource-variable/inter": "^5.3.0",
@@ -30,6 +32,7 @@
     "@radix-ui/react-scroll-area": "^1.2.18",
     "@radix-ui/react-select": "^2.3.7",
     "@radix-ui/react-tabs": "^1.1.21",
+    "@tiptap/core": "^3.29.2",
     "@tiptap/extension-table": "^3.29.2",
     "@tiptap/pm": "^3.29.2",
     "@tiptap/react": "^3.29.2",

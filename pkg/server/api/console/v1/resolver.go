@@ -49,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -91,6 +92,8 @@ type (
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
+	collaborationEvents *realtime.Events,
+	shutdownContext context.Context,
 	resourceAliasSvc *resourcealias.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
@@ -106,6 +109,7 @@ func NewMux(
 	providerRegistry *provider.Registry,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
+	allowedOrigins []string,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
@@ -140,6 +144,23 @@ func NewMux(
 		itamSvc,
 	)
 
+	if shutdownContext == nil {
+		shutdownContext = context.Background()
+	}
+
+	collaborationHandler := &documentCollaborationHandler{
+		logger:         logger,
+		probo:          proboSvc,
+		iam:            iamSvc,
+		baseURL:        baseURL,
+		allowedOrigins: allowedOrigins,
+		hub: newDocumentCollaborationHub(
+			proboSvc.Documents,
+			collaborationEvents,
+		),
+		shutdown: shutdownContext,
+	}
+
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
@@ -155,6 +176,10 @@ func NewMux(
 		))
 
 		r.Handle("/graphql", graphqlHandler)
+		r.Get(
+			"/document-versions/{documentVersionID}/sync",
+			collaborationHandler.handle,
+		)
 
 		r.Get(
 			"/connectors/initiate",
