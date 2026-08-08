@@ -22,9 +22,9 @@ import * as Automerge from "@automerge/automerge";
 import type { DocHandle } from "@automerge/prosemirror";
 import {
   collaborationDebug,
-  summarizeAutomergeSpans,
   type RichEditorAutomergeDocument,
   type RichEditorPresence,
+  summarizeAutomergeSpans,
 } from "@probo/ui";
 
 const collaborationProtocol = "automerge-sync-v1";
