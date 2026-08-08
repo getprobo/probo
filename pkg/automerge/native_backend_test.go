@@ -327,6 +327,33 @@ func TestPureGoDocument_SynchronizesWithNativePeer(t *testing.T) {
 	assert.Equal(t, "Native sync", value)
 }
 
+func TestPureGoDocument_SyncWaitsForPeerResponse(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	document, err := automerge.NewPureGo(ctx, actor(78))
+	require.NoError(t, err)
+	closeDocument(t, document)
+	text, err := document.CreateText(ctx, "body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(ctx, 0, 0, "Wait"))
+	_, err = document.Commit(ctx, "Create body", commitTime)
+	require.NoError(t, err)
+
+	state, err := document.NewSyncState(ctx)
+	require.NoError(t, err)
+	closeSyncState(t, state)
+	first, ok, err := state.GenerateMessage(ctx)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	assert.NotEmpty(t, first)
+
+	second, ok, err := state.GenerateMessage(ctx)
+	require.NoError(t, err)
+	assert.False(t, ok)
+	assert.Empty(t, second)
+}
+
 func TestPureGoDocument_SynchronizesWithReferencePeer(t *testing.T) {
 	t.Parallel()
 

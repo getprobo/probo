@@ -46,6 +46,7 @@ type nativeSyncState struct {
 	RemoteHeads [][32]byte `json:"remoteHeads"`
 	Need        [][32]byte `json:"need"`
 	NeedsAck    bool       `json:"needsAck"`
+	InFlight    bool       `json:"inFlight"`
 }
 
 func NewBackend(ctx context.Context) (*Backend, error) {
@@ -555,6 +556,10 @@ func (b *Backend) GenerateSyncMessage(
 		return nil, false, err
 	}
 
+	if state.InFlight {
+		return nil, false, nil
+	}
+
 	heads, err := b.Heads(ctx)
 	if err != nil {
 		return nil, false, err
@@ -576,6 +581,10 @@ func (b *Backend) GenerateSyncMessage(
 		}
 
 		message.Changes = [][]byte{document}
+	}
+
+	if !state.NeedsAck {
+		state.InFlight = true
 	}
 
 	state.NeedsAck = false
@@ -602,6 +611,8 @@ func (b *Backend) ReceiveSyncMessage(
 	if err != nil {
 		return err
 	}
+
+	state.InFlight = false
 
 	for _, change := range message.Changes {
 		if _, err := b.Merge(ctx, change); err != nil {
