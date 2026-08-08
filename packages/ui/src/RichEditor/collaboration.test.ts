@@ -21,12 +21,12 @@
 import * as Automerge from "@automerge/automerge";
 import { describe, expect, it } from "vitest";
 
+import type { RichEditorAutomergeDocument } from "./collaboration";
 import {
   createRichEditorAutomergeDocument,
   readRichEditorAutomergeDocument,
   supportsRichEditorCollaboration,
 } from "./RichEditor";
-import type { RichEditorAutomergeDocument } from "./collaboration";
 
 describe("RichEditor collaboration", () => {
   it("imports supported ProseMirror content into Automerge rich text", () => {

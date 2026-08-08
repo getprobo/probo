@@ -157,7 +157,7 @@ export function tableSyncPlugin(
   let applyingAutomerge = false;
 
   return new Plugin({
-    view: view => {
+    view: (view) => {
       const onChange = () => {
         if (applyingAutomerge) return;
         const nextDocument = pmDocFromTableRichEditorAutomergeDocument(
@@ -407,7 +407,7 @@ function readID(node: ProseMirrorNode): string | null {
 }
 
 function attributesWithoutID(node: ProseMirrorNode): JSONAttributes {
-  const attributes = { ...node.attrs } as JSONAttributes;
+  const attributes = { ...node.attrs };
   delete attributes[automergeIDAttribute];
   return attributes;
 }

@@ -47,11 +47,11 @@ import {
   type RichEditorCollaborationHandle,
 } from "./presence";
 import { SlashCommandExtension } from "./SlashCommandExtension";
+import { automergeIDAttribute } from "./tableCollaboration";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
 import { TableSelectionOverlay } from "./TableSelectionOverlay";
-import { automergeIDAttribute } from "./tableCollaboration";
 
 const tableExtension = TableKit.configure({
   table: { resizable: true },
@@ -125,8 +125,8 @@ const extensions = [
   MarkdownPasteExtension,
 ];
 
-const collaborationExtensions = extensions.filter(extension =>
-  extension !== tableExtension && extension !== UndoRedo
+const collaborationExtensions = extensions.filter((extension) =>
+  extension !== tableExtension && extension !== UndoRedo,
 ).concat([
   CollaborationTable,
   CollaborationTableRow,
