@@ -48,6 +48,12 @@ type (
 	// Cursor is a stable position in an Automerge sequence.
 	Cursor []byte
 
+	// Change is one immutable encoded Automerge change.
+	Change struct {
+		Hash  Hash
+		Bytes []byte
+	}
+
 	// Document is a concurrency-safe Automerge document.
 	Document struct {
 		mu      sync.Mutex
@@ -89,6 +95,14 @@ type (
 		ReceiveSyncMessage(context.Context, uint32, []byte) error
 		SaveSyncState(context.Context, uint32) ([]byte, error)
 		LoadSyncState(context.Context, []byte) (uint32, error)
+	}
+
+	changeBackend interface {
+		ChangesSince(context.Context, [][32]byte) ([][]byte, [][32]byte, error)
+	}
+
+	changeApplier interface {
+		ApplyChanges(context.Context, [][]byte) error
 	}
 )
 
@@ -321,6 +335,77 @@ func (d *Document) Heads(ctx context.Context) ([]Hash, error) {
 	}
 
 	return heads, nil
+}
+
+// ChangesSince returns encoded changes not covered by heads.
+func (d *Document) ChangesSince(
+	ctx context.Context,
+	heads []Hash,
+) ([]Change, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	changeSource, ok := d.backend.(changeBackend)
+	if !ok {
+		return nil, fmt.Errorf("automerge backend does not expose incremental changes")
+	}
+
+	backendHeads := make([][32]byte, len(heads))
+	for i, head := range heads {
+		backendHeads[i] = [32]byte(head)
+	}
+
+	raw, hashes, err := changeSource.ChangesSince(ctx, backendHeads)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get incremental Automerge changes: %w", err)
+	}
+
+	if len(raw) != len(hashes) {
+		return nil, fmt.Errorf(
+			"cannot get incremental Automerge changes: %d changes for %d hashes",
+			len(raw),
+			len(hashes),
+		)
+	}
+
+	changes := make([]Change, len(raw))
+	for i := range raw {
+		changes[i] = Change{
+			Hash:  Hash(hashes[i]),
+			Bytes: append([]byte(nil), raw[i]...),
+		}
+	}
+
+	return changes, nil
+}
+
+// ApplyChanges applies encoded changes whose dependencies may already exist in
+// the document.
+func (d *Document) ApplyChanges(
+	ctx context.Context,
+	changes [][]byte,
+) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return ErrClosed
+	}
+
+	applier, ok := d.backend.(changeApplier)
+	if !ok {
+		return fmt.Errorf("automerge backend does not accept incremental changes")
+	}
+
+	if err := applier.ApplyChanges(ctx, changes); err != nil {
+		return fmt.Errorf("cannot apply incremental Automerge changes: %w", err)
+	}
+
+	return nil
 }
 
 // Merge applies all changes from another document.

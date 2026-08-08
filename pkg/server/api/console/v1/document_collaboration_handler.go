@@ -313,6 +313,12 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 
 			lease.NotifyPeers()
 
+			if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
+				h.closeWithError(ctx, connection, documentVersionIDString, err)
+
+				return
+			}
+
 			revision, err = h.probo.Documents.PersistCollaboration(
 				ctx,
 				scope,
@@ -325,11 +331,6 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 			}
 
 			lease.SetRevision(revision)
-
-			if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {
-				h.closeWithError(ctx, connection, documentVersionIDString, err)
-				return
-			}
 		case <-ticker.C:
 			var changed bool
 

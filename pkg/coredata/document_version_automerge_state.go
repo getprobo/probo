@@ -38,7 +38,10 @@ type (
 		DocumentVersionID gid.GID    `db:"document_version_id"`
 		OrganizationID    gid.GID    `db:"organization_id"`
 		Snapshot          []byte     `db:"snapshot"`
+		Heads             []byte     `db:"heads"`
 		Revision          int64      `db:"revision"`
+		SnapshotRevision  int64      `db:"snapshot_revision"`
+		ChangeRevision    int64      `db:"change_revision"`
 		Seeded            bool       `db:"seeded"`
 		SeedClaimedAt     *time.Time `db:"seed_claimed_at"`
 		CreatedAt         time.Time  `db:"created_at"`
@@ -76,7 +79,10 @@ SELECT
 	document_version_id,
 	organization_id,
 	snapshot,
+	heads,
 	revision,
+	snapshot_revision,
+	change_revision,
 	seeded,
 	seed_claimed_at,
 	created_at,
@@ -131,7 +137,10 @@ INSERT INTO document_version_automerge_states (
 	document_version_id,
 	organization_id,
 	snapshot,
+	heads,
 	revision,
+	snapshot_revision,
+	change_revision,
 	seeded,
 	seed_claimed_at,
 	created_at,
@@ -142,7 +151,10 @@ VALUES (
 	@document_version_id,
 	@organization_id,
 	@snapshot,
+	@heads,
 	@revision,
+	@snapshot_revision,
+	@change_revision,
 	@seeded,
 	@seed_claimed_at,
 	@created_at,
@@ -154,7 +166,10 @@ VALUES (
 		"document_version_id": s.DocumentVersionID,
 		"organization_id":     s.OrganizationID,
 		"snapshot":            s.Snapshot,
+		"heads":               s.Heads,
 		"revision":            s.Revision,
+		"snapshot_revision":   s.SnapshotRevision,
+		"change_revision":     s.ChangeRevision,
 		"seeded":              s.Seeded,
 		"seed_claimed_at":     s.SeedClaimedAt,
 		"created_at":          s.CreatedAt,
@@ -185,7 +200,10 @@ INSERT INTO document_version_automerge_states (
 	document_version_id,
 	organization_id,
 	snapshot,
+	heads,
 	revision,
+	snapshot_revision,
+	change_revision,
 	seeded,
 	seed_claimed_at,
 	created_at,
@@ -196,7 +214,10 @@ VALUES (
 	@document_version_id,
 	@organization_id,
 	@snapshot,
+	@heads,
 	@revision,
+	@snapshot_revision,
+	@change_revision,
 	@seeded,
 	@seed_claimed_at,
 	@created_at,
@@ -209,7 +230,10 @@ ON CONFLICT (document_version_id) DO NOTHING
 		"document_version_id": s.DocumentVersionID,
 		"organization_id":     s.OrganizationID,
 		"snapshot":            s.Snapshot,
+		"heads":               s.Heads,
 		"revision":            s.Revision,
+		"snapshot_revision":   s.SnapshotRevision,
+		"change_revision":     s.ChangeRevision,
 		"seeded":              s.Seeded,
 		"seed_claimed_at":     s.SeedClaimedAt,
 		"created_at":          s.CreatedAt,
@@ -232,7 +256,10 @@ func (s DocumentVersionAutomergeState) Update(
 	q := `
 UPDATE document_version_automerge_states SET
 	snapshot = @snapshot,
+	heads = @heads,
 	revision = @revision,
+	snapshot_revision = @snapshot_revision,
+	change_revision = @change_revision,
 	seeded = @seeded,
 	seed_claimed_at = @seed_claimed_at,
 	updated_at = @updated_at
@@ -245,7 +272,10 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"document_version_id": s.DocumentVersionID,
 		"snapshot":            s.Snapshot,
+		"heads":               s.Heads,
 		"revision":            s.Revision,
+		"snapshot_revision":   s.SnapshotRevision,
+		"change_revision":     s.ChangeRevision,
 		"seeded":              s.Seeded,
 		"seed_claimed_at":     s.SeedClaimedAt,
 		"updated_at":          s.UpdatedAt,

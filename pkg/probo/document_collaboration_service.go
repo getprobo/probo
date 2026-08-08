@@ -37,6 +37,7 @@ import (
 )
 
 const (
+	documentCollaborationChangeBatchSize  = 1000
 	documentCollaborationSeedLease        = 30 * time.Second
 	documentCollaborationSnapshotMaxBytes = 8 * 1024 * 1024
 )
@@ -81,10 +82,12 @@ func (s *DocumentService) OpenCollaboration(
 	documentVersionID gid.GID,
 ) (*DocumentCollaboration, error) {
 	var (
-		snapshot    []byte
-		revision    int64
-		seedContent string
-		needsSeed   bool
+		snapshot         []byte
+		revision         int64
+		snapshotRevision int64
+		changeRevision   int64
+		seedContent      string
+		needsSeed        bool
 	)
 
 	err := s.svc.pg.WithTx(
@@ -109,6 +112,8 @@ func (s *DocumentService) OpenCollaboration(
 				}
 
 				revision = state.Revision
+				snapshotRevision = state.SnapshotRevision
+				changeRevision = state.ChangeRevision
 
 				return nil
 			}
@@ -134,7 +139,10 @@ func (s *DocumentService) OpenCollaboration(
 				DocumentVersionID: documentVersionID,
 				OrganizationID:    version.OrganizationID,
 				Snapshot:          snapshot,
+				Heads:             nil,
 				Revision:          1,
+				SnapshotRevision:  1,
+				ChangeRevision:    1,
 				Seeded:            false,
 				SeedClaimedAt:     new(now),
 				CreatedAt:         now,
@@ -167,6 +175,8 @@ func (s *DocumentService) OpenCollaboration(
 			}
 
 			revision = state.Revision
+			snapshotRevision = state.SnapshotRevision
+			changeRevision = state.ChangeRevision
 
 			return nil
 		},
@@ -178,6 +188,19 @@ func (s *DocumentService) OpenCollaboration(
 	document, err := loadAutomergeDocument(ctx, snapshot)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open collaboration snapshot: %w", err)
+	}
+
+	if err := s.loadCollaborationChanges(
+		ctx,
+		scope,
+		documentVersionID,
+		document,
+		snapshotRevision,
+		changeRevision,
+	); err != nil {
+		_ = document.Close(context.Background())
+
+		return nil, fmt.Errorf("cannot load collaboration changes: %w", err)
 	}
 
 	return &DocumentCollaboration{
@@ -194,6 +217,11 @@ func (s *DocumentService) PersistCollaboration(
 	documentVersionID gid.GID,
 	document *automerge.Document,
 ) (int64, error) {
+	localHeads, err := document.Heads(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("cannot read local collaboration heads: %w", err)
+	}
+
 	localSnapshot, err := document.Save(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("cannot save local collaboration document: %w", err)
@@ -204,8 +232,8 @@ func (s *DocumentService) PersistCollaboration(
 	}
 
 	var (
-		canonicalSnapshot []byte
-		revision          int64
+		canonicalChangesForLocal [][]byte
+		revision                 int64
 	)
 
 	err = s.svc.pg.WithTx(
@@ -238,6 +266,17 @@ func (s *DocumentService) PersistCollaboration(
 
 			defer func() { _ = canonical.Close(context.Background()) }()
 
+			if err := s.loadCollaborationChanges(
+				ctx,
+				scope,
+				documentVersionID,
+				canonical,
+				state.SnapshotRevision,
+				state.ChangeRevision,
+			); err != nil {
+				return fmt.Errorf("cannot load canonical collaboration changes: %w", err)
+			}
+
 			local, err := loadAutomergeDocument(ctx, localSnapshot)
 			if err != nil {
 				return fmt.Errorf("cannot load local collaboration document: %w", err)
@@ -259,20 +298,48 @@ func (s *DocumentService) PersistCollaboration(
 				return fmt.Errorf("cannot read merged collaboration heads: %w", err)
 			}
 
-			canonicalSnapshot, err = canonical.Save(ctx)
+			incrementalChanges, err := canonical.ChangesSince(ctx, before)
 			if err != nil {
-				return fmt.Errorf("cannot save canonical collaboration document: %w", err)
+				return fmt.Errorf("cannot read merged collaboration changes: %w", err)
 			}
 
-			if len(canonicalSnapshot) > documentCollaborationSnapshotMaxBytes {
-				return &ErrDocumentCollaborationStateTooLarge{Size: len(canonicalSnapshot)}
+			localChanges, err := canonical.ChangesSince(ctx, localHeads)
+			if err != nil {
+				return fmt.Errorf("cannot read canonical changes for local document: %w", err)
+			}
+
+			canonicalChangesForLocal = make([][]byte, len(localChanges))
+			for i, change := range localChanges {
+				canonicalChangesForLocal[i] = change.Bytes
 			}
 
 			seeded := state.Seeded || len(after) > 0
 			if !slices.Equal(before, after) || seeded != state.Seeded {
 				now := time.Now()
-				state.Snapshot = canonicalSnapshot
+				nextChangeRevision := state.ChangeRevision
+
+				for _, change := range incrementalChanges {
+					nextChangeRevision++
+
+					storedChange := coredata.DocumentVersionAutomergeChange{
+						DocumentVersionID: documentVersionID,
+						OrganizationID:    version.OrganizationID,
+						Revision:          nextChangeRevision,
+						ChangeHash:        append([]byte(nil), change.Hash[:]...),
+						ChangeBytes:       change.Bytes,
+						CreatedAt:         now,
+					}
+					if err := storedChange.Insert(ctx, tx, scope); err != nil {
+						return fmt.Errorf(
+							"cannot append document collaboration change: %w",
+							err,
+						)
+					}
+				}
+
 				state.Revision++
+				state.ChangeRevision = nextChangeRevision
+				state.Heads = encodeAutomergeHeads(after)
 
 				state.Seeded = seeded
 				if seeded {
@@ -316,14 +383,7 @@ func (s *DocumentService) PersistCollaboration(
 		return 0, err
 	}
 
-	canonical, err := loadAutomergeDocument(ctx, canonicalSnapshot)
-	if err != nil {
-		return 0, fmt.Errorf("cannot reload canonical collaboration document: %w", err)
-	}
-
-	defer func() { _ = canonical.Close(context.Background()) }()
-
-	if _, err := document.Merge(ctx, canonical); err != nil {
+	if err := document.ApplyChanges(ctx, canonicalChangesForLocal); err != nil {
 		return 0, fmt.Errorf("cannot refresh local collaboration document: %w", err)
 	}
 
@@ -403,6 +463,17 @@ func (s *DocumentService) RefreshCollaboration(
 	}
 
 	defer func() { _ = canonical.Close(context.Background()) }()
+
+	if err := s.loadCollaborationChanges(
+		ctx,
+		scope,
+		documentVersionID,
+		canonical,
+		state.SnapshotRevision,
+		state.ChangeRevision,
+	); err != nil {
+		return 0, false, fmt.Errorf("cannot load refreshed collaboration changes: %w", err)
+	}
 
 	if _, err := document.Merge(ctx, canonical); err != nil {
 		return 0, false, fmt.Errorf("cannot merge refreshed collaboration document: %w", err)
@@ -568,6 +639,74 @@ func loadAutomergeDocument(ctx context.Context, snapshot []byte) (*automerge.Doc
 	}
 
 	return document, nil
+}
+
+func (s *DocumentService) loadCollaborationChanges(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentVersionID gid.GID,
+	document *automerge.Document,
+	snapshotRevision int64,
+	latestRevision int64,
+) error {
+	currentRevision := snapshotRevision
+
+	for currentRevision < latestRevision {
+		var batch coredata.DocumentVersionAutomergeChanges
+
+		if err := s.svc.pg.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return batch.LoadAfterRevision(
+					ctx,
+					conn,
+					scope,
+					documentVersionID,
+					currentRevision,
+					documentCollaborationChangeBatchSize,
+				)
+			},
+		); err != nil {
+			return fmt.Errorf("cannot load collaboration change batch: %w", err)
+		}
+
+		if len(batch) == 0 {
+			return fmt.Errorf(
+				"collaboration change log ends at revision %d, expected %d",
+				currentRevision,
+				latestRevision,
+			)
+		}
+
+		changes := make([][]byte, len(batch))
+		for i, change := range batch {
+			if change.Revision != currentRevision+1 {
+				return fmt.Errorf(
+					"collaboration change revision is %d, expected %d",
+					change.Revision,
+					currentRevision+1,
+				)
+			}
+
+			changes[i] = change.ChangeBytes
+			currentRevision = change.Revision
+		}
+
+		if err := document.ApplyChanges(ctx, changes); err != nil {
+			return fmt.Errorf("cannot apply collaboration change batch: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func encodeAutomergeHeads(heads []automerge.Hash) []byte {
+	encoded := make([]byte, 0, len(heads)*32)
+	for _, head := range heads {
+		encoded = append(encoded, head[:]...)
+	}
+
+	return encoded
 }
 
 func claimCollaborationSeed(

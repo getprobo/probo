@@ -476,6 +476,52 @@ func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	return result, nil
 }
 
+func (b *Backend) ChangesSince(
+	ctx context.Context,
+	heads [][32]byte,
+) ([][]byte, [][32]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	knownHeads := make([]ChangeHash, len(heads))
+	for i, head := range heads {
+		knownHeads[i] = ChangeHash(head)
+	}
+
+	changes, ok := b.state.changesSince(knownHeads)
+	if !ok {
+		return nil, nil, fmt.Errorf("cannot compute changes from unknown heads")
+	}
+
+	raw := make([][]byte, len(changes))
+
+	hashes := make([][32]byte, len(changes))
+	for i, change := range changes {
+		if change.Hash == nil {
+			return nil, nil, fmt.Errorf("change %d has no hash", i)
+		}
+
+		raw[i] = append([]byte(nil), change.Raw...)
+		hashes[i] = [32]byte(*change.Hash)
+	}
+
+	return raw, hashes, nil
+}
+
+func (b *Backend) ApplyChanges(
+	ctx context.Context,
+	changes [][]byte,
+) error {
+	for i, change := range changes {
+		if _, err := b.Merge(ctx, change); err != nil {
+			return fmt.Errorf("cannot apply native change %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
 func (b *Backend) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
