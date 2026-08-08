@@ -30,6 +30,7 @@ const maxGeneratedMessages = 100;
 const initializationTimeoutMs = 35_000;
 const reconnectMaxDelayMs = 10_000;
 const presenceHeartbeatMs = 5_000;
+const presenceUpdateThrottleMs = 50;
 
 type CollaborationHandshake = {
   type: "ready";
@@ -136,7 +137,7 @@ export class AutomergeDocumentHandle implements DocHandle<RichEditorAutomergeDoc
     this.#presenceTimer = window.setTimeout(() => {
       this.#presenceTimer = undefined;
       this.#sendPresence();
-    }, 150);
+    }, presenceUpdateThrottleMs);
   }
 
   onPresence(listener: (presences: RichEditorPresence[]) => void): () => void {

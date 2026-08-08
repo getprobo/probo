@@ -77,7 +77,8 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 			Document: document,
 			Revision: 1,
 		},
-		peers: make(map[uint64]chan documentCollaborationWake),
+		peers:     make(map[uint64]documentCollaborationRoomPeer),
+		presences: make(map[string]documentCollaborationPresence),
 	}
 	room.revision.Store(1)
 	hub := &documentCollaborationHub{
@@ -87,8 +88,8 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 	}
 
 	hub.mu.Lock()
-	first := hub.addPeerLocked(versionID, room)
-	second := hub.addPeerLocked(versionID, room)
+	first := hub.addPeerLocked(versionID, room, "first")
+	second := hub.addPeerLocked(versionID, room, "second")
 	hub.mu.Unlock()
 
 	first.SetRevision(2)
@@ -122,6 +123,24 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 		}
 	}
 
+	first.UpdatePresence(
+		documentCollaborationPresence{
+			ConnectionID:   "first",
+			IdentityID:     "identity",
+			AnchorPosition: 3,
+			HeadPosition:   4,
+		},
+	)
+	sourcePresence := <-first.Wake
+	assert.True(t, sourcePresence.presence)
+	assert.Empty(t, sourcePresence.presences)
+
+	remotePresence := <-second.Wake
+	assert.True(t, remotePresence.presence)
+	require.Len(t, remotePresence.presences, 1)
+	assert.Equal(t, "first", remotePresence.presences[0].ConnectionID)
+	assert.Equal(t, 3, remotePresence.presences[0].AnchorPosition)
+
 	first.Close()
 	assert.Contains(t, hub.rooms, versionID)
 	second.Close()
@@ -148,7 +167,8 @@ func TestDocumentCollaborationRoom_DebouncesPersistence(t *testing.T) {
 		documents:     documents,
 		scope:         coredata.NewScope(tenantID),
 		versionID:     versionID,
-		peers:         make(map[uint64]chan documentCollaborationWake),
+		peers:         make(map[uint64]documentCollaborationRoomPeer),
+		presences:     make(map[string]documentCollaborationPresence),
 		dirty:         make(chan struct{}, 1),
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),

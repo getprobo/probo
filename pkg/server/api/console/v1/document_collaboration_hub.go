@@ -23,6 +23,7 @@ package console_v1
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -36,7 +37,14 @@ import (
 
 type (
 	documentCollaborationWake struct {
-		refresh bool
+		refresh   bool
+		presence  bool
+		presences []documentCollaborationPresence
+	}
+
+	documentCollaborationRoomPeer struct {
+		connectionID string
+		wake         chan documentCollaborationWake
 	}
 
 	documentCollaborationDocuments interface {
@@ -66,7 +74,8 @@ type (
 		scope         coredata.Scoper
 		versionID     gid.GID
 		revision      atomic.Int64
-		peers         map[uint64]chan documentCollaborationWake
+		peers         map[uint64]documentCollaborationRoomPeer
+		presences     map[string]documentCollaborationPresence
 		nextPeerID    uint64
 		dirty         chan struct{}
 		stop          chan struct{}
@@ -109,10 +118,11 @@ func (h *documentCollaborationHub) acquire(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentVersionID gid.GID,
+	connectionID string,
 ) (*documentCollaborationRoomLease, error) {
 	h.mu.Lock()
 	if room := h.rooms[documentVersionID]; room != nil {
-		lease := h.addPeerLocked(documentVersionID, room)
+		lease := h.addPeerLocked(documentVersionID, room, connectionID)
 		h.mu.Unlock()
 
 		return lease, nil
@@ -134,7 +144,8 @@ func (h *documentCollaborationHub) acquire(
 		documents:     h.documents,
 		scope:         scope,
 		versionID:     documentVersionID,
-		peers:         make(map[uint64]chan documentCollaborationWake),
+		peers:         make(map[uint64]documentCollaborationRoomPeer),
+		presences:     make(map[string]documentCollaborationPresence),
 		dirty:         make(chan struct{}, 1),
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),
@@ -144,14 +155,14 @@ func (h *documentCollaborationHub) acquire(
 	h.mu.Lock()
 	if existing := h.rooms[documentVersionID]; existing != nil {
 		_ = collaboration.Document.Close(context.Background())
-		lease := h.addPeerLocked(documentVersionID, existing)
+		lease := h.addPeerLocked(documentVersionID, existing, connectionID)
 		h.mu.Unlock()
 
 		return lease, nil
 	}
 
 	h.rooms[documentVersionID] = room
-	lease := h.addPeerLocked(documentVersionID, room)
+	lease := h.addPeerLocked(documentVersionID, room, connectionID)
 	lease.seedOwner = collaboration.NeedsSeed
 
 	go room.run()
@@ -163,12 +174,16 @@ func (h *documentCollaborationHub) acquire(
 func (h *documentCollaborationHub) addPeerLocked(
 	documentVersionID gid.GID,
 	room *documentCollaborationRoom,
+	connectionID string,
 ) *documentCollaborationRoomLease {
 	room.mu.Lock()
 	peerID := room.nextPeerID
 	room.nextPeerID++
-	wake := make(chan documentCollaborationWake, 1)
-	room.peers[peerID] = wake
+	wake := make(chan documentCollaborationWake, 8)
+	room.peers[peerID] = documentCollaborationRoomPeer{
+		connectionID: connectionID,
+		wake:         wake,
+	}
 	room.mu.Unlock()
 
 	return &documentCollaborationRoomLease{
@@ -200,13 +215,46 @@ func (l *documentCollaborationRoomLease) NotifyPeers() {
 	l.room.mu.Lock()
 	defer l.room.mu.Unlock()
 
-	for peerID, wake := range l.room.peers {
+	for peerID, peer := range l.room.peers {
 		if peerID == l.peerID {
 			continue
 		}
 
 		select {
-		case wake <- documentCollaborationWake{}:
+		case peer.wake <- documentCollaborationWake{}:
+		default:
+		}
+	}
+}
+
+func (l *documentCollaborationRoomLease) UpdatePresence(
+	presence documentCollaborationPresence,
+) {
+	l.room.mu.Lock()
+	defer l.room.mu.Unlock()
+
+	l.room.presences[presence.ConnectionID] = presence
+	l.room.notifyPresenceLocked()
+}
+
+func (r *documentCollaborationRoom) notifyPresenceLocked() {
+	for _, peer := range r.peers {
+		presences := make([]documentCollaborationPresence, 0, len(r.presences))
+		for connectionID, presence := range r.presences {
+			if connectionID != peer.connectionID {
+				presences = append(presences, presence)
+			}
+		}
+
+		sort.Slice(presences, func(i, j int) bool {
+			return presences[i].ConnectionID < presences[j].ConnectionID
+		})
+
+		select {
+		case peer.wake <- documentCollaborationWake{
+			presence:  true,
+			presences: presences,
+		}:
 		default:
 		}
 	}
@@ -229,9 +277,9 @@ func (h *documentCollaborationHub) notifyExternal(payload string) {
 	room.mu.Lock()
 	defer room.mu.Unlock()
 
-	for _, wake := range room.peers {
+	for _, peer := range room.peers {
 		select {
-		case wake <- documentCollaborationWake{refresh: true}:
+		case peer.wake <- documentCollaborationWake{refresh: true}:
 		default:
 		}
 	}
@@ -255,8 +303,15 @@ func (l *documentCollaborationRoomLease) Close() {
 	l.once.Do(func() {
 		l.hub.mu.Lock()
 		l.room.mu.Lock()
+		peer := l.room.peers[l.peerID]
 		delete(l.room.peers, l.peerID)
+		delete(l.room.presences, peer.connectionID)
+
 		empty := len(l.room.peers) == 0
+		if !empty {
+			l.room.notifyPresenceLocked()
+		}
+
 		l.room.mu.Unlock()
 
 		if !empty {

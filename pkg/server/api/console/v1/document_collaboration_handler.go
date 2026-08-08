@@ -123,6 +123,7 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 		r.Context(),
 		scope,
 		documentVersionID,
+		connectionID,
 	)
 	if err != nil {
 		h.renderServiceError(w, r, documentVersionIDString, err)
@@ -290,6 +291,15 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 					return
 				}
 
+				lease.UpdatePresence(
+					documentCollaborationPresence{
+						ConnectionID:   connectionID,
+						IdentityID:     identity.ID.String(),
+						AnchorPosition: presence.AnchorPosition,
+						HeadPosition:   presence.HeadPosition,
+					},
+				)
+
 				if err := h.probo.Documents.SaveCollaborationPresence(
 					ctx,
 					scope,
@@ -367,6 +377,20 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				return
 			}
 		case wake := <-lease.Wake:
+			if wake.presence {
+				if err := writeCollaborationPresences(
+					ctx,
+					connection,
+					wake.presences,
+				); err != nil {
+					h.closeWithError(ctx, connection, documentVersionIDString, err)
+
+					return
+				}
+
+				continue
+			}
+
 			if err := lease.PersistError(); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
 
@@ -434,6 +458,14 @@ func (h *documentCollaborationHandler) sendPresences(
 		}
 	}
 
+	return writeCollaborationPresences(ctx, connection, presences)
+}
+
+func writeCollaborationPresences(
+	ctx context.Context,
+	connection *websocket.Conn,
+	presences []documentCollaborationPresence,
+) error {
 	data, err := json.Marshal(
 		documentCollaborationPresenceSnapshot{
 			Type:      "presence",
