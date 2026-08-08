@@ -47,8 +47,8 @@ import {
   type RichEditorCollaborationHandle,
 } from "./presence";
 import { SlashCommandExtension } from "./SlashCommandExtension";
-import { automergeIDAttribute } from "./tableCollaboration";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
+import { automergeIDAttribute } from "./tableCollaboration";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
 import { TableSelectionOverlay } from "./TableSelectionOverlay";
@@ -125,7 +125,7 @@ const extensions = [
   MarkdownPasteExtension,
 ];
 
-const collaborationExtensions = extensions.filter((extension) =>
+const collaborationExtensions = extensions.filter(extension =>
   extension !== tableExtension && extension !== UndoRedo,
 ).concat([
   CollaborationTable,
