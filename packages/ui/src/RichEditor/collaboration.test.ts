@@ -24,12 +24,15 @@ import {
   pmDocFromSpans,
   syncPlugin,
 } from "@automerge/prosemirror";
+import { getSchema } from "@tiptap/core";
 import { history, undo } from "@tiptap/pm/history";
+import { Fragment } from "@tiptap/pm/model";
 import { EditorState, type Transaction } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
 import {
   createSchemaAdapter,
+  normalizeStructuralLeafFollowers,
   richEditorAutomergeContent,
   type RichEditorAutomergeDocument,
 } from "./collaboration";
@@ -361,6 +364,134 @@ describe("RichEditor collaboration", () => {
     });
   });
 
+  it("synchronizes text typed after a newly inserted divider", () => {
+    let document = createRichEditorAutomergeDocument(
+      JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Before" }],
+          },
+        ],
+      }),
+    );
+    const targetSchema = getSchema(richEditorCollaborationExtensions);
+    const adapter = createSchemaAdapter(
+      richEditorCollaborationExtensions,
+      targetSchema,
+    );
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: (change) => {
+        document = Automerge.change(document, (draft) => {
+          change(draft);
+          normalizeStructuralLeafFollowers(draft, adapter);
+        });
+      },
+      on: () => {},
+      off: () => {},
+    };
+    const initialAdapter = createSchemaAdapter(
+      richEditorCollaborationExtensions,
+    );
+    const pmDocument = targetSchema.nodeFromJSON(
+      pmDocFromSpans(
+        initialAdapter,
+        Automerge.spans(document, ["body"]),
+      ).toJSON(),
+    );
+    let state = EditorState.create({
+      schema: targetSchema,
+      doc: pmDocument,
+      plugins: [
+        syncPlugin({
+          adapter,
+          handle,
+          path: ["body"],
+        }),
+      ],
+    });
+    const divider = targetSchema.nodes.horizontalRule.create();
+    const paragraph = targetSchema.nodes.paragraph.create();
+    state = state.applyTransaction(
+      state.tr.insert(
+        state.doc.content.size,
+        Fragment.fromArray([divider, paragraph]),
+      ),
+    ).state;
+    expect(
+      Automerge.spans(document, ["body"])
+        .filter(span => span.type === "block")
+        .map(span => Automerge.isImmutableString(span.value.type)
+          ? span.value.type.val
+          : span.value.type),
+    ).toEqual([
+      "paragraph",
+      "horizontal-rule",
+      "paragraph",
+    ]);
+
+    const lastParagraphPosition = state.doc.content.size - paragraph.nodeSize;
+    let insertionError: unknown;
+    try {
+      state.applyTransaction(
+        state.tr.insertText("After", lastParagraphPosition + 1),
+      );
+    } catch (error) {
+      insertionError = error;
+    }
+
+    const spans = Automerge.spans(document, ["body"]);
+    expect(
+      spans
+        .filter(span => span.type === "block")
+        .map(span => Automerge.isImmutableString(span.value.type)
+          ? span.value.type.val
+          : span.value.type),
+    ).toEqual([
+      "paragraph",
+      "horizontal-rule",
+      "paragraph",
+    ]);
+    expect(
+      spans
+        .filter(span => span.type === "block")
+        .map(span => ({
+          type: automergeString(span.value.type),
+          isEmbed: span.value.isEmbed,
+          parents: automergeStringArray(span.value.parents),
+        })),
+    ).toEqual([
+      { type: "paragraph", isEmbed: false, parents: [] },
+      { type: "horizontal-rule", isEmbed: false, parents: [] },
+      { type: "paragraph", isEmbed: false, parents: [] },
+    ]);
+    expect(
+      spans
+        .filter(span => span.type === "text")
+        .map(span => span.value)
+        .join(""),
+    ).toBe("BeforeAfter");
+    expect(
+      spans.map(span => span.type === "text"
+        ? `text:${span.value}`
+        : `block:${automergeString(span.value.type)}`),
+    ).toEqual([
+      "block:paragraph",
+      "text:Before",
+      "block:horizontal-rule",
+      "block:paragraph",
+      "text:After",
+    ]);
+    expect(insertionError).toBeUndefined();
+
+    const remoteDocument = pmDocFromSpans(initialAdapter, spans);
+    expect(remoteDocument.textContent).toBe("BeforeAfter");
+    expect(remoteDocument.child(1).type.name).toBe("horizontalRule");
+    expect(remoteDocument.child(2).textContent).toBe("After");
+  });
+
   it("preserves Mermaid code-block language", () => {
     const document = createRichEditorAutomergeDocument(
       JSON.stringify({
@@ -434,6 +565,17 @@ function tableDocumentJSON(): string {
       },
     ],
   });
+}
+
+function automergeString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Automerge.isImmutableString(value)) return value.val;
+  throw new Error("expected Automerge string");
+}
+
+function automergeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) throw new Error("expected Automerge string array");
+  return value.map(automergeString);
 }
 
 function tableCell(text: string) {

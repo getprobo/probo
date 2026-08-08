@@ -135,15 +135,78 @@ export function createRichEditorCollaborationExtension(
 
     addProseMirrorPlugins() {
       const adapter = createSchemaAdapter(extensions, this.editor.schema);
+      const normalizedHandle: DocHandle<RichEditorAutomergeDocument> = {
+        doc: () => handle.doc(),
+        change: (change) => {
+          handle.change((document) => {
+            change(document);
+            normalizeStructuralLeafFollowers(document, adapter);
+          });
+        },
+        on: (event, callback) => handle.on(event, callback),
+        off: (event, callback) => handle.off(event, callback),
+      };
       return [
         syncPlugin({
           adapter,
-          handle,
+          handle: normalizedHandle,
           path: textPath,
         }),
       ];
     },
   });
+}
+
+export function normalizeStructuralLeafFollowers(
+  document: RichEditorAutomergeDocument,
+  adapter: SchemaAdapter,
+): void {
+  const spans = Automerge.spans(document, textPath);
+  const normalized: Automerge.Span[] = [];
+  let changed = false;
+
+  for (let index = 0; index < spans.length; index++) {
+    const span = spans[index];
+    normalized.push(span);
+    if (!isBlockType(span, "horizontal-rule")) continue;
+
+    let paragraphIndex = index + 1;
+    while (
+      paragraphIndex < spans.length
+      && spans[paragraphIndex].type === "text"
+    ) {
+      paragraphIndex++;
+    }
+    if (
+      paragraphIndex === index + 1
+      || paragraphIndex >= spans.length
+      || !isBlockType(spans[paragraphIndex], "paragraph")
+    ) {
+      continue;
+    }
+
+    normalized.push(spans[paragraphIndex]);
+    normalized.push(...spans.slice(index + 1, paragraphIndex));
+    index = paragraphIndex;
+    changed = true;
+  }
+
+  if (changed) {
+    Automerge.updateSpans(
+      document,
+      textPath,
+      normalized,
+      adapter.updateSpansConfig(),
+    );
+  }
+}
+
+function isBlockType(span: Automerge.Span, expected: string): boolean {
+  if (span.type !== "block") return false;
+  const blockType = span.value.type;
+  return Automerge.isImmutableString(blockType)
+    ? blockType.val === expected
+    : blockType === expected;
 }
 
 export function createSchemaAdapter(
