@@ -26,7 +26,13 @@ export const AutomergeTableStructureExtension = Extension.create({
   addGlobalAttributes() {
     return [
       {
-        types: ["table", "tableRow", "tableCell", "tableHeader"],
+        types: [
+          "horizontalRule",
+          "table",
+          "tableRow",
+          "tableCell",
+          "tableHeader",
+        ],
         attributes: {
           isAmgBlock: {
             default: true,

@@ -206,7 +206,7 @@ function automergeNodeMapping(name: string): MappedNodeSpec["automerge"] {
     case "codeBlock":
       return { block: "code-block" };
     case "horizontalRule":
-      return { block: "horizontal-rule", isEmbed: true };
+      return { block: "horizontal-rule" };
     case "hardBreak":
       return { block: "hard-break", isEmbed: true };
     case "listItem":
@@ -294,7 +294,8 @@ function isJSONObject(value: unknown): value is Record<string, unknown> {
 function markTableStructure(node: Record<string, unknown>): void {
   const type = node.type;
   if (
-    type === "table"
+    type === "horizontalRule"
+    || type === "table"
     || type === "tableRow"
     || type === "tableCell"
     || type === "tableHeader"

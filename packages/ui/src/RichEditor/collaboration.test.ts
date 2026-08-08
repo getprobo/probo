@@ -291,6 +291,75 @@ describe("RichEditor collaboration", () => {
     state.applyTransaction(undoTransaction);
     expect(document.body).not.toContain("AX");
   });
+
+  it("inserts a divider as a structural block", () => {
+    let document = createRichEditorAutomergeDocument(
+      JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "A" }],
+          },
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "B" }],
+          },
+        ],
+      }),
+    );
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: (change) => {
+        document = Automerge.change(document, change);
+      },
+      on: () => {},
+      off: () => {},
+    };
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    const pmDocument = pmDocFromSpans(
+      adapter,
+      Automerge.spans(document, ["body"]),
+    );
+    const state = EditorState.create({
+      schema: adapter.schema,
+      doc: pmDocument,
+      plugins: [
+        syncPlugin({
+          adapter,
+          handle,
+          path: ["body"],
+        }),
+      ],
+    });
+    const firstParagraph = state.doc.firstChild;
+    if (!firstParagraph) throw new Error("expected first paragraph");
+
+    state.applyTransaction(
+      state.tr.insert(
+        firstParagraph.nodeSize,
+        adapter.schema.nodes.horizontalRule.create({ isAmgBlock: true }),
+      ),
+    );
+
+    const spans = Automerge.spans(document, ["body"]);
+    expect(
+      spans.some(span =>
+        span.type === "block"
+        && Automerge.isImmutableString(span.value.type)
+        && span.value.type.val === "horizontal-rule",
+      ),
+    ).toBe(true);
+    expect(
+      pmDocFromSpans(adapter, spans).toJSON(),
+    ).toMatchObject({
+      content: [
+        { type: "paragraph" },
+        { type: "horizontalRule" },
+        { type: "paragraph" },
+      ],
+    });
+  });
 });
 
 function tableDocumentJSON(): string {
