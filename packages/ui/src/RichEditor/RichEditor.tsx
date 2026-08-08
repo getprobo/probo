@@ -168,7 +168,10 @@ export function RichEditor(props: RichEditorProps) {
         && (
           <>
             <BubbleMenu editor={editor} />
-            {!collaborationHandle && <BlockMenu editor={editor} />}
+            <BlockMenu
+              editor={editor}
+              allowTable={!collaborationHandle}
+            />
             <OptionsMenu editor={editor} />
             {!collaborationHandle
               && (
