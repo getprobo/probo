@@ -142,7 +142,7 @@ func (s *DocumentService) OpenCollaboration(
 				DocumentVersionID: documentVersionID,
 				OrganizationID:    version.OrganizationID,
 				Snapshot:          snapshot,
-				Heads:             nil,
+				Heads:             encodeAutomergeHeads(nil),
 				Revision:          1,
 				SnapshotRevision:  1,
 				ChangeRevision:    1,
