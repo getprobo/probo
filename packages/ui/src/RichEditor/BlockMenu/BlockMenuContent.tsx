@@ -27,7 +27,6 @@ import {
 import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { getSlashStorage } from "../_lib/getSlashStorage";
 import { MenuButton } from "../MenuButton";
 import { deactivateSlashCommand } from "../SlashCommandExtension";
 
@@ -112,30 +111,20 @@ export function BlockMenuContent({
   }, [slashState.active, slashState.from, editor, slashMenuRefs]);
 
   const deactivateSlash = useCallback(() => {
-    if (!editor) return;
-    const s = getSlashStorage(editor);
-    if (s) deactivateSlashCommand(s);
+    deactivateSlashCommand(editor.view);
     setSlashNav({ index: 0, query: "" });
   }, [editor]);
 
   const handleSlashAction = useCallback(
     (item: BlockItem) => {
       if (!slashState.active) return;
-      const { from } = slashState;
-      const cursorPos = editor.state.selection.from;
 
       try {
-        editor.chain()
-          .focus()
-          .deleteRange({ from, to: cursorPos })
-          .run();
-
+        deactivateSlash();
         item.action(editor.chain().focus()).run();
       } catch {
         // Block may no longer be in the document
       }
-
-      deactivateSlash();
     },
     [editor, slashState, deactivateSlash],
   );
