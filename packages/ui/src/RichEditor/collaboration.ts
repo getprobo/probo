@@ -27,10 +27,16 @@ import {
   pmDocFromSpans,
   pmNodeToSpans,
   SchemaAdapter,
-  syncPlugin,
 } from "@automerge/prosemirror";
 import { Extension, type Extensions, getSchema } from "@tiptap/core";
-import type { Mark, Schema } from "@tiptap/pm/model";
+import type {
+  Mark,
+  Node as ProseMirrorNode,
+  Schema,
+} from "@tiptap/pm/model";
+import { Plugin } from "@tiptap/pm/state";
+
+import { createAutomergeSyncPlugin } from "./AutomergeSyncPlugin";
 
 export type RichEditorAutomergeDocument = {
   body: string;
@@ -125,6 +131,34 @@ export function richEditorAutomergeContent(
   return content;
 }
 
+export function reconcileRichEditorAutomergeDocument(
+  handle: DocHandle<RichEditorAutomergeDocument>,
+  document: ProseMirrorNode,
+  extensions: Extensions,
+): void {
+  let hasStructuralLeaf = false;
+  document.descendants((node) => {
+    if (node.type.name === "horizontalRule") {
+      hasStructuralLeaf = true;
+      return false;
+    }
+
+    return true;
+  });
+  if (!hasStructuralLeaf) return;
+
+  const adapter = createSchemaAdapter(extensions, document.type.schema);
+  const spans = pmNodeToSpans(adapter, document);
+  handle.change((draft) => {
+    Automerge.updateSpans(
+      draft,
+      textPath,
+      spans,
+      adapter.updateSpansConfig(),
+    );
+  });
+}
+
 export function createRichEditorCollaborationExtension(
   handle: DocHandle<RichEditorAutomergeDocument>,
   extensions: Extensions,
@@ -135,78 +169,55 @@ export function createRichEditorCollaborationExtension(
 
     addProseMirrorPlugins() {
       const adapter = createSchemaAdapter(extensions, this.editor.schema);
-      const normalizedHandle: DocHandle<RichEditorAutomergeDocument> = {
-        doc: () => handle.doc(),
-        change: (change) => {
-          handle.change((document) => {
-            change(document);
-            normalizeStructuralLeafFollowers(document, adapter);
-          });
-        },
-        on: (event, callback) => handle.on(event, callback),
-        off: (event, callback) => handle.off(event, callback),
-      };
       return [
-        syncPlugin({
-          adapter,
-          handle: normalizedHandle,
-          path: textPath,
-        }),
+        explicitBlockIdentityPlugin(),
+        createAutomergeSyncPlugin(adapter, handle, textPath),
       ];
     },
   });
 }
 
-export function normalizeStructuralLeafFollowers(
-  document: RichEditorAutomergeDocument,
-  adapter: SchemaAdapter,
-): void {
-  const spans = Automerge.spans(document, textPath);
-  const normalized: Automerge.Span[] = [];
-  let changed = false;
+export function explicitBlockIdentityPlugin(): Plugin {
+  return new Plugin({
+    appendTransaction(transactions, _oldState, state) {
+      if (!transactions.some(transaction => transaction.docChanged)) {
+        return null;
+      }
 
-  for (let index = 0; index < spans.length; index++) {
-    const span = spans[index];
-    normalized.push(span);
-    if (!isBlockType(span, "horizontal-rule")) continue;
+      const transaction = state.tr;
+      let changed = false;
+      state.doc.descendants((node, position, parent) => {
+        if (node.attrs.isAmgBlock !== false) return true;
 
-    let paragraphIndex = index + 1;
-    while (
-      paragraphIndex < spans.length
-      && spans[paragraphIndex].type === "text"
-    ) {
-      paragraphIndex++;
-    }
-    if (
-      paragraphIndex === index + 1
-      || paragraphIndex >= spans.length
-      || !isBlockType(spans[paragraphIndex], "paragraph")
-    ) {
-      continue;
-    }
+        const isTopLevelTextBlock = parent === state.doc && (
+          node.type.name === "paragraph"
+          || node.type.name === "heading"
+          || node.type.name === "blockquote"
+          || node.type.name === "codeBlock"
+        );
+        if (!isTopLevelTextBlock && node.type.name !== "listItem") {
+          return true;
+        }
 
-    normalized.push(spans[paragraphIndex]);
-    normalized.push(...spans.slice(index + 1, paragraphIndex));
-    index = paragraphIndex;
-    changed = true;
-  }
+        transaction.setNodeMarkup(
+          position,
+          undefined,
+          {
+            ...node.attrs,
+            isAmgBlock: true,
+          },
+        );
+        changed = true;
 
-  if (changed) {
-    Automerge.updateSpans(
-      document,
-      textPath,
-      normalized,
-      adapter.updateSpansConfig(),
-    );
-  }
-}
+        return true;
+      });
+      if (!changed) return null;
 
-function isBlockType(span: Automerge.Span, expected: string): boolean {
-  if (span.type !== "block") return false;
-  const blockType = span.value.type;
-  return Automerge.isImmutableString(blockType)
-    ? blockType.val === expected
-    : blockType === expected;
+      transaction.setMeta("addToHistory", false);
+
+      return transaction;
+    },
+  });
 }
 
 export function createSchemaAdapter(

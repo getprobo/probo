@@ -27,6 +27,27 @@ export const AutomergeTableStructureExtension = Extension.create({
     return [
       {
         types: [
+          "automergeUnknownBlock",
+          "blockquote",
+          "codeBlock",
+          "heading",
+          "listItem",
+          "paragraph",
+        ],
+        attributes: {
+          isAmgBlock: {
+            default: false,
+            rendered: false,
+            keepOnSplit: true,
+          },
+          unknownAttrs: {
+            default: null,
+            rendered: false,
+          },
+        },
+      },
+      {
+        types: [
           "horizontalRule",
           "table",
           "tableRow",

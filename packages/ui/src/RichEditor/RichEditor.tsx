@@ -116,6 +116,7 @@ export function RichEditor(props: RichEditorProps) {
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
       if (collaborationHandle) return;
+
       onChangeContent(JSON.stringify(editor.getJSON()));
     },
     [collaborationHandle, onChangeContent],

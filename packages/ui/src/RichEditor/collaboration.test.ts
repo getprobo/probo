@@ -22,7 +22,7 @@ import * as Automerge from "@automerge/automerge";
 import {
   type DocHandle,
   pmDocFromSpans,
-  syncPlugin,
+  type SchemaAdapter,
 } from "@automerge/prosemirror";
 import { getSchema } from "@tiptap/core";
 import { history, undo } from "@tiptap/pm/history";
@@ -30,9 +30,10 @@ import { Fragment } from "@tiptap/pm/model";
 import { EditorState, type Transaction } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
+import { createAutomergeSyncPlugin } from "./AutomergeSyncPlugin";
 import {
   createSchemaAdapter,
-  normalizeStructuralLeafFollowers,
+  explicitBlockIdentityPlugin,
   richEditorAutomergeContent,
   type RichEditorAutomergeDocument,
 } from "./collaboration";
@@ -41,6 +42,18 @@ import {
   richEditorCollaborationExtensions,
   supportsRichEditorCollaboration,
 } from "./RichEditor";
+
+function syncPlugin({
+  adapter,
+  handle,
+  path,
+}: {
+  adapter: SchemaAdapter;
+  handle: DocHandle<RichEditorAutomergeDocument>;
+  path: Automerge.Prop[];
+}) {
+  return createAutomergeSyncPlugin(adapter, handle, path);
+}
 
 describe("RichEditor collaboration", () => {
   it("imports supported ProseMirror content into Automerge rich text", () => {
@@ -384,10 +397,7 @@ describe("RichEditor collaboration", () => {
     const handle: DocHandle<RichEditorAutomergeDocument> = {
       doc: () => document,
       change: (change) => {
-        document = Automerge.change(document, (draft) => {
-          change(draft);
-          normalizeStructuralLeafFollowers(draft, adapter);
-        });
+        document = Automerge.change(document, change);
       },
       on: () => {},
       off: () => {},
@@ -405,11 +415,8 @@ describe("RichEditor collaboration", () => {
       schema: targetSchema,
       doc: pmDocument,
       plugins: [
-        syncPlugin({
-          adapter,
-          handle,
-          path: ["body"],
-        }),
+        explicitBlockIdentityPlugin(),
+        createAutomergeSyncPlugin(adapter, handle, ["body"]),
       ],
     });
     const divider = targetSchema.nodes.horizontalRule.create();
@@ -431,13 +438,14 @@ describe("RichEditor collaboration", () => {
       "horizontal-rule",
       "paragraph",
     ]);
+    expect(state.doc.lastChild?.attrs.isAmgBlock).toBe(true);
 
     const lastParagraphPosition = state.doc.content.size - paragraph.nodeSize;
     let insertionError: unknown;
     try {
-      state.applyTransaction(
+      state = state.applyTransaction(
         state.tr.insertText("After", lastParagraphPosition + 1),
-      );
+      ).state;
     } catch (error) {
       insertionError = error;
     }
@@ -490,6 +498,31 @@ describe("RichEditor collaboration", () => {
     expect(remoteDocument.textContent).toBe("BeforeAfter");
     expect(remoteDocument.child(1).type.name).toBe("horizontalRule");
     expect(remoteDocument.child(2).textContent).toBe("After");
+
+    const nextParagraph = targetSchema.nodes.paragraph.create();
+    state = state.applyTransaction(
+      state.tr.insert(state.doc.content.size, nextParagraph),
+    ).state;
+    const nextPosition = state.doc.content.size - nextParagraph.nodeSize + 1;
+    state.applyTransaction(state.tr.insertText("Later", nextPosition));
+
+    const laterSpans = Automerge.spans(document, ["body"]);
+    expect(
+      laterSpans.map(span => span.type === "text"
+        ? `text:${span.value}`
+        : `block:${automergeString(span.value.type)}`),
+    ).toEqual([
+      "block:paragraph",
+      "text:Before",
+      "block:horizontal-rule",
+      "block:paragraph",
+      "text:After",
+      "block:paragraph",
+      "text:Later",
+    ]);
+    const laterRemote = pmDocFromSpans(initialAdapter, laterSpans);
+    expect(laterRemote.textContent).toBe("BeforeAfterLater");
+    expect(laterRemote.child(3).textContent).toBe("Later");
   });
 
   it("preserves Mermaid code-block language", () => {
