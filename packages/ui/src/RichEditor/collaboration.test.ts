@@ -26,6 +26,7 @@ import {
   readRichEditorAutomergeDocument,
   supportsRichEditorCollaboration,
 } from "./RichEditor";
+import type { RichEditorAutomergeDocument } from "./collaboration";
 
 describe("RichEditor collaboration", () => {
   it("imports supported ProseMirror content into Automerge rich text", () => {
@@ -78,11 +79,11 @@ describe("RichEditor collaboration", () => {
 
   it("merges concurrent edits in different cells independently", () => {
     const base = createRichEditorAutomergeDocument(tableJSON);
-    let left = Automerge.load(
+    let left = Automerge.load<RichEditorAutomergeDocument>(
       Automerge.save(base),
       { actor: "aa".repeat(16) },
     );
-    let right = Automerge.load(
+    let right = Automerge.load<RichEditorAutomergeDocument>(
       Automerge.save(base),
       { actor: "bb".repeat(16) },
     );

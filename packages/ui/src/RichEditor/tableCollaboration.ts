@@ -386,7 +386,11 @@ function tableIDsFromBody(
 function tableIDFromSpan(span: Automerge.Span): string | null {
   if (span.type !== "block") return null;
   if (immutableStringValue(span.value.type) !== tableBlockType) return null;
-  const id = span.value.attrs.id;
+  const attributes = span.value.attrs;
+  if (!attributes || typeof attributes !== "object" || Array.isArray(attributes)) {
+    return null;
+  }
+  const id = (attributes as Record<string, unknown>).id;
   return typeof id === "string" ? id : null;
 }
 
