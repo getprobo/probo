@@ -492,3 +492,59 @@ func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 		assert.Equal(t, referenceValue, nativeValue, "iteration %d", iteration)
 	}
 }
+
+func TestPureGoDocument_ReferenceEditsWhileMessageInFlight(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	client, err := automerge.NewReference(ctx, actor(79))
+	require.NoError(t, err)
+	closeDocument(t, client)
+	clientText, err := client.CreateText(ctx, "body")
+	require.NoError(t, err)
+	require.NoError(t, clientText.Splice(ctx, 0, 0, "A"))
+	_, err = client.Commit(ctx, "initial", commitTime)
+	require.NoError(t, err)
+
+	server, err := automerge.NewPureGo(ctx, actor(80))
+	require.NoError(t, err)
+	closeDocument(t, server)
+
+	clientSync, err := client.NewSyncState(ctx)
+	require.NoError(t, err)
+	closeSyncState(t, clientSync)
+
+	serverSync, err := server.NewSyncState(ctx)
+	require.NoError(t, err)
+	closeSyncState(t, serverSync)
+	synchronize(t, clientSync, serverSync)
+
+	require.NoError(t, clientText.Splice(ctx, 1, 0, "B"))
+	_, err = client.Commit(ctx, "first edit", commitTime)
+	require.NoError(t, err)
+	first, ok, err := clientSync.GenerateMessage(ctx)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	require.NoError(t, clientText.Splice(ctx, 2, 0, "C"))
+	_, err = client.Commit(ctx, "second edit", commitTime)
+	require.NoError(t, err)
+
+	require.NoError(t, serverSync.ReceiveMessage(ctx, first))
+	ack, ok, err := serverSync.GenerateMessage(ctx)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.NoError(t, clientSync.ReceiveMessage(ctx, ack))
+
+	second, ok, err := clientSync.GenerateMessage(ctx)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.NoError(t, serverSync.ReceiveMessage(ctx, second))
+	synchronize(t, clientSync, serverSync)
+
+	serverText, err := server.Text(ctx, "body")
+	require.NoError(t, err)
+	value, err := serverText.String(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, "ABC", value)
+}
