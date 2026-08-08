@@ -319,19 +319,20 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				return
 			}
 
-			revision, err = h.probo.Documents.PersistCollaboration(
-				ctx,
-				scope,
-				documentVersionID,
-				collaboration.Document,
-			)
-			if err != nil {
+			if err := lease.PersistError(); err != nil {
 				h.closeWithError(ctx, connection, documentVersionIDString, err)
+
 				return
 			}
 
-			lease.SetRevision(revision)
+			lease.SchedulePersist()
 		case <-ticker.C:
+			if err := lease.PersistError(); err != nil {
+				h.closeWithError(ctx, connection, documentVersionIDString, err)
+
+				return
+			}
+
 			var changed bool
 
 			revision, changed, err = h.probo.Documents.RefreshCollaboration(
@@ -366,6 +367,12 @@ func (h *documentCollaborationHandler) handle(w http.ResponseWriter, r *http.Req
 				return
 			}
 		case <-lease.Wake:
+			if err := lease.PersistError(); err != nil {
+				h.closeWithError(ctx, connection, documentVersionIDString, err)
+
+				return
+			}
+
 			revision = lease.Revision()
 
 			if err := sendAvailableSyncMessages(ctx, connection, syncState); err != nil {

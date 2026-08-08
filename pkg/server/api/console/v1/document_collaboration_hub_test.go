@@ -22,7 +22,9 @@ package console_v1
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,6 +33,36 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 )
+
+type fakeDocumentCollaborationDocuments struct {
+	collaboration *probo.DocumentCollaboration
+	persisted     atomic.Int64
+	persistedCh   chan struct{}
+}
+
+func (f *fakeDocumentCollaborationDocuments) OpenCollaboration(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+) (*probo.DocumentCollaboration, error) {
+	return f.collaboration, nil
+}
+
+func (f *fakeDocumentCollaborationDocuments) PersistCollaboration(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	*automerge.Document,
+) (int64, error) {
+	revision := f.persisted.Add(1) + 1
+
+	select {
+	case f.persistedCh <- struct{}{}:
+	default:
+	}
+
+	return revision, nil
+}
 
 func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 	t.Parallel()
@@ -80,4 +112,52 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 	assert.Contains(t, hub.rooms, versionID)
 	second.Close()
 	assert.NotContains(t, hub.rooms, versionID)
+}
+
+func TestDocumentCollaborationRoom_DebouncesPersistence(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	document, err := automerge.New(context.Background(), automerge.ActorID{2})
+	require.NoError(t, err)
+
+	documents := &fakeDocumentCollaborationDocuments{
+		collaboration: &probo.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+		persistedCh: make(chan struct{}, 1),
+	}
+	room := &documentCollaborationRoom{
+		collaboration: documents.collaboration,
+		documents:     documents,
+		scope:         coredata.NewScope(tenantID),
+		versionID:     versionID,
+		peers:         make(map[uint64]chan struct{}),
+		dirty:         make(chan struct{}, 1),
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
+	}
+
+	room.revision.Store(1)
+	go room.run()
+
+	lease := &documentCollaborationRoomLease{room: room}
+	for range 20 {
+		lease.SchedulePersist()
+	}
+
+	select {
+	case <-documents.persistedCh:
+	case <-time.After(time.Second):
+		require.Fail(t, "collaboration room did not persist")
+	}
+
+	assert.Equal(t, int64(1), documents.persisted.Load())
+	assert.Equal(t, int64(2), room.revision.Load())
+
+	close(room.stop)
+	<-room.done
+	require.NoError(t, document.Close(context.Background()))
 }

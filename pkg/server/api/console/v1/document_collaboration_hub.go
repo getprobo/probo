@@ -25,25 +25,48 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
+	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 )
 
 type (
+	documentCollaborationDocuments interface {
+		OpenCollaboration(
+			context.Context,
+			coredata.Scoper,
+			gid.GID,
+		) (*probo.DocumentCollaboration, error)
+		PersistCollaboration(
+			context.Context,
+			coredata.Scoper,
+			gid.GID,
+			*automerge.Document,
+		) (int64, error)
+	}
+
 	documentCollaborationHub struct {
 		mu        sync.Mutex
-		documents *probo.DocumentService
+		documents documentCollaborationDocuments
 		rooms     map[gid.GID]*documentCollaborationRoom
 	}
 
 	documentCollaborationRoom struct {
 		mu            sync.Mutex
 		collaboration *probo.DocumentCollaboration
+		documents     documentCollaborationDocuments
+		scope         coredata.Scoper
+		versionID     gid.GID
 		revision      atomic.Int64
 		peers         map[uint64]chan struct{}
 		nextPeerID    uint64
+		dirty         chan struct{}
+		stop          chan struct{}
+		done          chan struct{}
+		persistErr    error
 	}
 
 	documentCollaborationRoomLease struct {
@@ -57,8 +80,13 @@ type (
 	}
 )
 
+const (
+	documentCollaborationPersistDebounce = 50 * time.Millisecond
+	documentCollaborationPersistTimeout  = 30 * time.Second
+)
+
 func newDocumentCollaborationHub(
-	documents *probo.DocumentService,
+	documents documentCollaborationDocuments,
 ) *documentCollaborationHub {
 	return &documentCollaborationHub{
 		documents: documents,
@@ -92,7 +120,13 @@ func (h *documentCollaborationHub) acquire(
 
 	room := &documentCollaborationRoom{
 		collaboration: collaboration,
+		documents:     h.documents,
+		scope:         scope,
+		versionID:     documentVersionID,
 		peers:         make(map[uint64]chan struct{}),
+		dirty:         make(chan struct{}, 1),
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
 	}
 	room.revision.Store(collaboration.Revision)
 
@@ -108,6 +142,8 @@ func (h *documentCollaborationHub) acquire(
 	h.rooms[documentVersionID] = room
 	lease := h.addPeerLocked(documentVersionID, room)
 	lease.seedOwner = collaboration.NeedsSeed
+
+	go room.run()
 	h.mu.Unlock()
 
 	return lease, nil
@@ -165,21 +201,116 @@ func (l *documentCollaborationRoomLease) NotifyPeers() {
 	}
 }
 
+func (l *documentCollaborationRoomLease) SchedulePersist() {
+	select {
+	case l.room.dirty <- struct{}{}:
+	default:
+	}
+}
+
+func (l *documentCollaborationRoomLease) PersistError() error {
+	l.room.mu.Lock()
+	defer l.room.mu.Unlock()
+
+	return l.room.persistErr
+}
+
 func (l *documentCollaborationRoomLease) Close() {
 	l.once.Do(func() {
 		l.hub.mu.Lock()
-		defer l.hub.mu.Unlock()
-
 		l.room.mu.Lock()
 		delete(l.room.peers, l.peerID)
 		empty := len(l.room.peers) == 0
 		l.room.mu.Unlock()
 
 		if !empty {
+			l.hub.mu.Unlock()
+
 			return
 		}
 
 		delete(l.hub.rooms, l.documentVersionID)
+		l.hub.mu.Unlock()
+
+		if l.room.stop != nil {
+			close(l.room.stop)
+			<-l.room.done
+		}
+
 		_ = l.room.collaboration.Document.Close(context.Background())
 	})
+}
+
+func (r *documentCollaborationRoom) run() {
+	defer close(r.done)
+
+	var timer *time.Timer
+
+	dirty := false
+
+	for {
+		var timerChannel <-chan time.Time
+		if timer != nil {
+			timerChannel = timer.C
+		}
+
+		select {
+		case <-r.dirty:
+			dirty = true
+
+			if timer == nil {
+				timer = time.NewTimer(documentCollaborationPersistDebounce)
+			} else {
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+
+				timer.Reset(documentCollaborationPersistDebounce)
+			}
+		case <-timerChannel:
+			if dirty {
+				r.persist()
+
+				dirty = false
+			}
+
+			timer = nil
+		case <-r.stop:
+			if timer != nil {
+				timer.Stop()
+			}
+
+			if dirty {
+				r.persist()
+			}
+
+			return
+		}
+	}
+}
+
+func (r *documentCollaborationRoom) persist() {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		documentCollaborationPersistTimeout,
+	)
+	defer cancel()
+
+	revision, err := r.documents.PersistCollaboration(
+		ctx,
+		r.scope,
+		r.versionID,
+		r.collaboration.Document,
+	)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.persistErr = err
+	if err == nil {
+		r.revision.Store(revision)
+	}
 }
