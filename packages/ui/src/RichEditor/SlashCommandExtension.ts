@@ -131,14 +131,24 @@ export function createSlashCommandPlugin(
         if (!current?.active) return DecorationSet.empty;
 
         try {
-          state.doc.resolve(current.from);
-          return DecorationSet.create(state.doc, [
+          const $from = state.doc.resolve(current.from);
+          const decorations = [
             Decoration.widget(
               current.from,
               () => createSlashCommandWidget(current.query),
               { key: `slash-command:${current.query}`, side: -1 },
             ),
-          ]);
+          ];
+          if ($from.depth > 0 && $from.parent.isTextblock) {
+            decorations.push(
+              Decoration.node(
+                $from.before($from.depth),
+                $from.after($from.depth),
+                { class: "slash-command-active" },
+              ),
+            );
+          }
+          return DecorationSet.create(state.doc, decorations);
         } catch {
           return DecorationSet.empty;
         }
