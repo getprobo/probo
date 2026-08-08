@@ -707,6 +707,40 @@ func (s *Service) ListSentMailingListUpdates(
 	return page.NewPage(items, cursor), nil
 }
 
+func (s *Service) GetSentMailingListUpdate(
+	ctx context.Context,
+	mailingListID gid.GID,
+	id gid.GID,
+) (*coredata.MailingListUpdate, error) {
+	scope := coredata.NewScopeFromObjectID(mailingListID)
+
+	var mlu coredata.MailingListUpdate
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrMailingListUpdateNotFound
+				}
+
+				return fmt.Errorf("cannot load mailing list update: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if mlu.MailingListID != mailingListID || mlu.Status != coredata.MailingListUpdateStatusSent {
+		return nil, ErrMailingListUpdateNotFound
+	}
+
+	return &mlu, nil
+}
+
 func (s *Service) CountMailingListUpdates(
 	ctx context.Context,
 	mailingListID gid.GID,
