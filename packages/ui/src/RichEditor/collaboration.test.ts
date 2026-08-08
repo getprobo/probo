@@ -24,7 +24,8 @@ import {
   pmDocFromSpans,
   syncPlugin,
 } from "@automerge/prosemirror";
-import { EditorState } from "@tiptap/pm/state";
+import { history, undo } from "@tiptap/pm/history";
+import { EditorState, type Transaction } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -238,6 +239,57 @@ describe("RichEditor collaboration", () => {
     expect(pmDocument.firstChild?.childCount).toBe(4);
     expect(pmDocument.textContent).toContain("L");
     expect(pmDocument.textContent).toContain("R");
+  });
+
+  it("records local table edits in collaborative undo history", () => {
+    let document = createRichEditorAutomergeDocument(tableDocumentJSON());
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: (change) => {
+        document = Automerge.change(document, change);
+      },
+      on: () => {},
+      off: () => {},
+    };
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    let state = EditorState.create({
+      schema: adapter.schema,
+      doc: pmDocFromSpans(adapter, Automerge.spans(document, ["body"])),
+      plugins: [
+        history(),
+        syncPlugin({
+          adapter,
+          handle,
+          path: ["body"],
+        }),
+      ],
+    });
+    let textPosition: number | undefined;
+    state.doc.descendants((node, position) => {
+      if (node.isText && node.text === "A") {
+        textPosition = position;
+        return false;
+      }
+
+      return true;
+    });
+    if (textPosition === undefined) throw new Error("expected cell text");
+
+    state = state.applyTransaction(
+      state.tr.insertText("X", textPosition + 1),
+    ).state;
+    expect(document.body).toContain("AX");
+
+    let undoTransaction: Transaction | undefined;
+    expect(
+      undo(state, (transaction) => {
+        undoTransaction = transaction;
+      }),
+    ).toBe(true);
+    if (!undoTransaction) throw new Error("expected undo transaction");
+
+    state.applyTransaction(undoTransaction);
+    expect(document.body).not.toContain("AX");
   });
 });
 

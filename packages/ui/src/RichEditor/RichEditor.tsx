@@ -82,7 +82,7 @@ const extensions = [
 ];
 
 export const richEditorCollaborationExtensions = [
-  ...extensions.filter(extension => extension !== UndoRedo),
+  ...extensions,
   AutomergeTableStructureExtension,
 ];
 
