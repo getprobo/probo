@@ -1,0 +1,119 @@
+---
+# Hand-authored: /smartlock, /smartlock/auth/paged, then /account/user (paged).
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.nuki.io
+        headers:
+            Accept:
+                - application/json
+        url: https://api.nuki.io/smartlock
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"smartlockId":18891899123,"name":"Office front door"},{"smartlockId":18891899124,"name":"Server room"}]'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.nuki.io
+        form:
+            page:
+                - "0"
+            size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.nuki.io/smartlock/auth/paged?page=0&size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[{"id":"auth-alice-office","smartlockId":18891899123,"accountUserId":1859620430,"authId":101,"type":0,"name":"Alice Martin","enabled":true,"remoteAllowed":true,"lastActiveDate":"2025-07-01T09:15:00.000Z","creationDate":"2025-05-12T15:00:00.000Z"},{"id":"auth-alice-server","smartlockId":18891899124,"accountUserId":1859620430,"authId":102,"type":0,"name":"Alice Martin","enabled":true,"remoteAllowed":false,"creationDate":"2025-05-12T15:01:00.000Z"},{"id":"auth-keypad-office","smartlockId":18891899123,"authId":201,"type":13,"name":"Cleaning keypad","enabled":true,"remoteAllowed":false,"lastActiveDate":"2025-07-07T12:00:00.000Z","creationDate":"2025-05-12T16:00:00.000Z"}],"pagination":{"totalItems":3,"totalPages":1,"currentPage":0,"pageSize":100}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.nuki.io
+        form:
+            limit:
+                - "100"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.nuki.io/account/user?limit=100&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"accountUserId":1859620430,"accountId":499103089,"email":"alice.martin@example.com","name":"Alice Martin","language":"en","creationDate":"2025-05-12T14:45:40.629Z","updateDate":"2025-05-12T14:45:40.629Z"},{"accountUserId":718259920,"accountId":499103089,"type":1,"email":"contact@cleaning.example.com","name":"Cleaning Co","language":"nl","creationDate":"2025-05-12T14:48:08.200Z","updateDate":"2025-07-07T12:03:19.321Z"},{"accountUserId":568452711,"accountId":499103089,"email":"nameless@example.com","language":"de","creationDate":"2025-05-12T14:49:13.480Z","updateDate":"2025-05-12T14:49:13.480Z"}]'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.nuki.io
+        form:
+            limit:
+                - "100"
+            offset:
+                - "3"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.nuki.io/account/user?limit=100&offset=3
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[]'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms

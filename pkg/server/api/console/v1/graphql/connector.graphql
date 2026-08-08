@@ -110,6 +110,7 @@ enum ConnectorProvider
         )
     UPCLOUD
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUpCloud")
+    NUKI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNuki")
 }
 
 type ConnectorProviderInfo {
