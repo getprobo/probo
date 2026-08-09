@@ -1402,5 +1402,165 @@
       "TestDocument_RollbackMatchesReference"
     ],
     "rationale": "Pending scalar and object operations are rolled back, committed values and heads remain unchanged, and Rust reports the same cancelled operation count."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "repeated_list_assignment_which_resolves_conflict_not_ignored",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_RepeatedListAssignmentResolvesConflict"
+    ],
+    "rationale": "A list element is assigned across a merge and then reassigned; both engines resolve to the single winning value and agree on heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "add_increments_only_to_preceeded_values",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_AddIncrementsOnlyToPreceededValues"
+    ],
+    "rationale": "Two actors create and increment separate counters at the same key; the increments stay attached to their own counters, yielding conflicting values 1 and 3 on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "assignment_conflicts_of_different_types",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_AssignmentConflictsOfDifferentTypes"
+    ],
+    "rationale": "Three actors assign a string, a list, and a map to the same key; both engines pick the same winner and produce identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "changes_within_conflicting_map_field",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ChangesWithinConflictingMapField"
+    ],
+    "rationale": "A string and a populated map conflict at one key; both engines expose the winning map with its inner value and agree on heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "changes_within_conflicting_list_element",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ChangesWithinConflictingListElement"
+    ],
+    "rationale": "Two actors replace the same list element with maps and mutate them across merges; both engines expose the same winning map contents and heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrently_assigned_nested_maps_should_not_merge",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentlyAssignedNestedMapsShouldNotMerge"
+    ],
+    "rationale": "Two actors assign different maps to the same key; the maps do not merge and the winning map keeps exactly one key on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_deletion_of_same_list_element",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentDeletionOfSameListElement"
+    ],
+    "rationale": "Both actors delete the same list element concurrently; the element is removed once and the surviving order matches on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_updates_at_different_levels",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentUpdatesAtDifferentLevels"
+    ],
+    "rationale": "One actor edits a nested map while another deletes it; the deletion wins and only the sibling list remains on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "concurrent_updates_of_concurrently_deleted_objects",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects"
+    ],
+    "rationale": "One actor updates a nested object another actor deleted concurrently; the deletion wins and the parent becomes empty on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "insertion_consistent_with_causality",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_InsertionConsistentWithCausality"
+    ],
+    "rationale": "Interleaved head insertions across repeated merges produce the causally ordered list one,two,three,four on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_restore_complex1",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_SaveRestoreComplex1"
+    ],
+    "rationale": "A todo list with a conflicting title survives save and reload; both engines expose both conflicting titles and the retained boolean."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "save_restore_complex_transactional",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_SaveRestoreComplexTransactional"
+    ],
+    "rationale": "The transactional variant groups writes into single commits; the reloaded document exposes the same conflicting titles and boolean on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "big_list",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_BigList"
+    ],
+    "rationale": "A list of many null elements is replaced with map objects; both engines materialize N+1 maps that survive a cross-engine save/load with identical heads."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "invalid_index",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_InvalidIndex"
+    ],
+    "rationale": "Inserting or putting beyond the end of a list is rejected by both engines while an in-bounds put succeeds."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "has_our_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_HasOurChanges"
+    ],
+    "rationale": "Two peers with concurrent changes synchronize until each contains the other's change and both converge to identical heads on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "make_sure_load_incremental_doesnt_skip_a_load_with_a_common_head",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_LoadIncrementalWithCommonHead"
+    ],
+    "rationale": "Incremental loads that share a common head are not skipped; both engines end with the expected merged two-head frontier."
   }
 ]

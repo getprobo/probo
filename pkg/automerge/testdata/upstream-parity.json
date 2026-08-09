@@ -4046,10 +4046,12 @@
       "file": "tests/test.rs",
       "line": 221,
       "name": "add_increments_only_to_preceeded_values",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_AddIncrementsOnlyToPreceededValues"
+      ],
+      "rationale": "Two actors create and increment separate counters at the same key; the increments stay attached to their own counters, yielding conflicting values 1 and 3 on both engines.",
       "runtimeName": "add_increments_only_to_preceeded_values"
     },
     {
@@ -4120,10 +4122,12 @@
       "file": "tests/test.rs",
       "line": 296,
       "name": "assignment_conflicts_of_different_types",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_AssignmentConflictsOfDifferentTypes"
+      ],
+      "rationale": "Three actors assign a string, a list, and a map to the same key; both engines pick the same winner and produce identical heads.",
       "runtimeName": "assignment_conflicts_of_different_types"
     },
     {
@@ -4765,10 +4769,12 @@
       "file": "tests/test.rs",
       "line": 1703,
       "name": "big_list",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_BigList"
+      ],
+      "rationale": "A list of many null elements is replaced with map objects; both engines materialize N+1 maps that survive a cross-engine save/load with identical heads.",
       "runtimeName": "big_list"
     },
     {
@@ -4849,10 +4855,12 @@
       "file": "tests/test.rs",
       "line": 347,
       "name": "changes_within_conflicting_list_element",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ChangesWithinConflictingListElement"
+      ],
+      "rationale": "Two actors replace the same list element with maps and mutate them across merges; both engines expose the same winning map contents and heads.",
       "runtimeName": "changes_within_conflicting_list_element"
     },
     {
@@ -4861,10 +4869,12 @@
       "file": "tests/test.rs",
       "line": 321,
       "name": "changes_within_conflicting_map_field",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ChangesWithinConflictingMapField"
+      ],
+      "rationale": "A string and a populated map conflict at one key; both engines expose the winning map with its inner value and agree on heads.",
       "runtimeName": "changes_within_conflicting_map_field"
     },
     {
@@ -5153,10 +5163,12 @@
       "file": "tests/test.rs",
       "line": 608,
       "name": "concurrent_deletion_of_same_list_element",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ConcurrentDeletionOfSameListElement"
+      ],
+      "rationale": "Both actors delete the same list element concurrently; the element is removed once and the surviving order matches on both engines.",
       "runtimeName": "concurrent_deletion_of_same_list_element"
     },
     {
@@ -5193,10 +5205,12 @@
       "file": "tests/test.rs",
       "line": 650,
       "name": "concurrent_updates_at_different_levels",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ConcurrentUpdatesAtDifferentLevels"
+      ],
+      "rationale": "One actor edits a nested map while another deletes it; the deletion wins and only the sibling list remains on both engines.",
       "runtimeName": "concurrent_updates_at_different_levels"
     },
     {
@@ -5205,10 +5219,12 @@
       "file": "tests/test.rs",
       "line": 695,
       "name": "concurrent_updates_of_concurrently_deleted_objects",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects"
+      ],
+      "rationale": "One actor updates a nested object another actor deleted concurrently; the deletion wins and the parent becomes empty on both engines.",
       "runtimeName": "concurrent_updates_of_concurrently_deleted_objects"
     },
     {
@@ -5245,10 +5261,12 @@
       "file": "tests/test.rs",
       "line": 390,
       "name": "concurrently_assigned_nested_maps_should_not_merge",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ConcurrentlyAssignedNestedMapsShouldNotMerge"
+      ],
+      "rationale": "Two actors assign different maps to the same key; the maps do not merge and the winning map keeps exactly one key on both engines.",
       "runtimeName": "concurrently_assigned_nested_maps_should_not_merge"
     },
     {
@@ -5528,10 +5546,12 @@
       "file": "tests/test.rs",
       "line": 2340,
       "name": "has_our_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_HasOurChanges"
+      ],
+      "rationale": "Two peers with concurrent changes synchronize until each contains the other's change and both converge to identical heads on both engines.",
       "runtimeName": "has_our_changes"
     },
     {
@@ -5668,10 +5688,12 @@
       "file": "tests/test.rs",
       "line": 834,
       "name": "insertion_consistent_with_causality",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_InsertionConsistentWithCausality"
+      ],
+      "rationale": "Interleaved head insertions across repeated merges produce the causally ordered list one,two,three,four on both engines.",
       "runtimeName": "insertion_consistent_with_causality"
     },
     {
@@ -5692,10 +5714,12 @@
       "file": "tests/test.rs",
       "line": 2388,
       "name": "invalid_index",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_InvalidIndex"
+      ],
+      "rationale": "Inserting or putting beyond the end of a list is rejected by both engines while an in-bounds put succeeds.",
       "runtimeName": "invalid_index"
     },
     {
@@ -5904,10 +5928,12 @@
       "file": "tests/test.rs",
       "line": 2425,
       "name": "make_sure_load_incremental_doesnt_skip_a_load_with_a_common_head",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_LoadIncrementalWithCommonHead"
+      ],
+      "rationale": "Incremental loads that share a common head are not skipped; both engines end with the expected merged two-head frontier.",
       "runtimeName": "make_sure_load_incremental_doesnt_skip_a_load_with_a_common_head"
     },
     {
@@ -6940,10 +6966,12 @@
       "file": "tests/test.rs",
       "line": 126,
       "name": "repeated_list_assignment_which_resolves_conflict_not_ignored",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_RepeatedListAssignmentResolvesConflict"
+      ],
+      "rationale": "A list element is assigned across a merge and then reassigned; both engines resolve to the single winning value and agree on heads.",
       "runtimeName": "repeated_list_assignment_which_resolves_conflict_not_ignored"
     },
     {
@@ -7058,10 +7086,12 @@
       "file": "tests/test.rs",
       "line": 927,
       "name": "save_restore_complex_transactional",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_SaveRestoreComplexTransactional"
+      ],
+      "rationale": "The transactional variant groups writes into single commits; the reloaded document exposes the same conflicting titles and boolean on both engines.",
       "runtimeName": "save_restore_complex_transactional"
     },
     {
@@ -7070,10 +7100,12 @@
       "file": "tests/test.rs",
       "line": 871,
       "name": "save_restore_complex1",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_SaveRestoreComplex1"
+      ],
+      "rationale": "A todo list with a conflicting title survives save and reload; both engines expose both conflicting titles and the retained boolean.",
       "runtimeName": "save_restore_complex1"
     },
     {
