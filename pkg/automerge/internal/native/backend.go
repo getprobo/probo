@@ -1613,6 +1613,34 @@ func (b *Backend) Rollback(ctx context.Context) (uint64, error) {
 	return cancelled, nil
 }
 
+func (b *Backend) Stats(ctx context.Context) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	actors := make(map[ActorID]struct{})
+	for id := range b.state.operations {
+		actors[id.Actor] = struct{}{}
+	}
+
+	stats := struct {
+		NumChanges uint64 `json:"numChanges"`
+		NumOps     uint64 `json:"numOps"`
+		NumActors  uint64 `json:"numActors"`
+	}{
+		NumChanges: uint64(len(b.state.changes)),
+		NumOps:     uint64(len(b.state.operations)),
+		NumActors:  uint64(len(actors)),
+	}
+
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode native stats: %w", err)
+	}
+
+	return data, nil
+}
+
 func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err

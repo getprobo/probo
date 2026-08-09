@@ -1699,6 +1699,27 @@ pub extern "C" fn am_heads() -> i32 {
 }
 
 #[no_mangle]
+pub extern "C" fn am_stats() -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let stats = state.doc.stats();
+        let value = serde_json::json!({
+            "numChanges": stats.num_changes,
+            "numOps": stats.num_ops,
+            "numActors": stats.num_actors,
+        });
+        match serde_json::to_vec(&value) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn am_has_heads(pointer: u32, length: u32) -> i32 {
     let heads = match input_heads(pointer, length) {
         Ok(heads) => heads,

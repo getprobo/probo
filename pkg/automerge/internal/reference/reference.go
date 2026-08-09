@@ -1275,6 +1275,19 @@ func (b *Backend) Rollback(ctx context.Context) (uint64, error) {
 	return uint64(cancelled), nil
 }
 
+func (b *Backend) Stats(ctx context.Context) ([]byte, error) {
+	if err := b.run(ctx, "am_stats"); err != nil {
+		return nil, fmt.Errorf("cannot read reference stats: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference stats: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	if err := b.run(ctx, "am_heads"); err != nil {
 		return nil, fmt.Errorf("cannot read reference heads: %w", err)

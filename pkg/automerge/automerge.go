@@ -29,6 +29,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -77,6 +78,7 @@ type (
 	backend interface {
 		Close(context.Context) error
 		Save(context.Context) ([]byte, error)
+		Stats(context.Context) ([]byte, error)
 		SaveIncremental(context.Context) ([]byte, error)
 		LoadIncremental(context.Context, []byte) (uint64, error)
 		SetActor(context.Context, []byte) error
@@ -278,6 +280,35 @@ func (d *Document) Save(ctx context.Context) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// Stats reports aggregate document statistics.
+type Stats struct {
+	NumChanges uint64 `json:"numChanges"`
+	NumOps     uint64 `json:"numOps"`
+	NumActors  uint64 `json:"numActors"`
+}
+
+// Stats returns the number of changes, operations, and actors in the document.
+func (d *Document) Stats(ctx context.Context) (Stats, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return Stats{}, ErrClosed
+	}
+
+	data, err := d.backend.Stats(ctx)
+	if err != nil {
+		return Stats{}, fmt.Errorf("cannot read Automerge stats: %w", err)
+	}
+
+	var stats Stats
+	if err := json.Unmarshal(data, &stats); err != nil {
+		return Stats{}, fmt.Errorf("cannot decode Automerge stats: %w", err)
+	}
+
+	return stats, nil
 }
 
 // Fork creates an independent writer with the same document history.
