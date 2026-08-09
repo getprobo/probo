@@ -2112,5 +2112,35 @@
       "TestRustCurrentState_InsertAndUpdate"
     ],
     "rationale": "Inserting then overwriting list elements materializes the updated values identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_should_reverse_deletion_of_object_in_list_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_ReverseDeletionOfObjectInList"
+    ],
+    "rationale": "Diffing after a list-object deletion back to before re-inserts the object and materializes its text identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_should_reverse_deletion_of_object_in_map_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_ReverseDeletionOfObjectInMap"
+    ],
+    "rationale": "Diffing after a map-object deletion back to before re-puts the object and materializes its text identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_should_reverse_deletion_of_block_in_text_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_ReverseDeletionOfBlockInText"
+    ],
+    "rationale": "Diffing after a text-block deletion back to before re-inserts the block and materializes its properties identically on both engines."
   }
 ]

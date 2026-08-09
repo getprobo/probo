@@ -5372,10 +5372,12 @@
       "file": "tests/test.rs",
       "line": 2234,
       "name": "diff_should_reverse_deletion_of_block_in_text_correctly",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiff_ReverseDeletionOfBlockInText"
+      ],
+      "rationale": "Diffing after a text-block deletion back to before re-inserts the block and materializes its properties identically on both engines.",
       "runtimeName": "diff_should_reverse_deletion_of_block_in_text_correctly"
     },
     {
@@ -5384,10 +5386,12 @@
       "file": "tests/test.rs",
       "line": 2163,
       "name": "diff_should_reverse_deletion_of_object_in_list_correctly",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiff_ReverseDeletionOfObjectInList"
+      ],
+      "rationale": "Diffing after a list-object deletion back to before re-inserts the object and materializes its text identically on both engines.",
       "runtimeName": "diff_should_reverse_deletion_of_object_in_list_correctly"
     },
     {
@@ -5396,10 +5400,12 @@
       "file": "tests/test.rs",
       "line": 2199,
       "name": "diff_should_reverse_deletion_of_object_in_map_correctly",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiff_ReverseDeletionOfObjectInMap"
+      ],
+      "rationale": "Diffing after a map-object deletion back to before re-puts the object and materializes its text identically on both engines.",
       "runtimeName": "diff_should_reverse_deletion_of_object_in_map_correctly"
     },
     {
