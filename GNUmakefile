@@ -22,6 +22,7 @@ GOLINTCMD ?= golangci-lint
 SWIFTLINTCMD ?= swiftlint
 SWIFTCMD ?= swift
 RUST_TOOLCHAIN ?= 1.89.0
+AUTOMERGE_FUZZ_TIME ?= 10s
 SWIFT_ENROLL_UI ?= cmd/probo-agent/installer/macos/enroll-ui
 SWIFT_FORMAT_CONFIG ?= .swift-format
 SWIFTLINT_CONFIG ?= .swiftlint.yml
@@ -218,6 +219,34 @@ test-short: test ## Run short tests only
 test-automerge-conformance: ## Test Go binary compatibility with official Automerge JS
 	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
 		$(GO_BASE) test -count=1 ./pkg/automerge
+
+.PHONY: audit-automerge-parity
+audit-automerge-parity: test-automerge-conformance
+audit-automerge-parity: ## Require every pinned upstream Automerge test to be mapped
+	AUTOMERGE_REQUIRE_FULL_PARITY=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: audit-automerge-interop
+audit-automerge-interop: test-automerge-conformance
+audit-automerge-interop: ## Require complete Rust/JS wire and state interoperability
+	AUTOMERGE_REQUIRE_FULL_INTEROP=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: benchmark-automerge
+benchmark-automerge: ## Benchmark native and Rust/WASM Automerge engines
+	$(GO_BASE) test -run '^$$' -bench . -benchmem ./pkg/automerge
+
+.PHONY: benchmark-automerge-native
+benchmark-automerge-native: ## Compare optimized native Go and native Rust
+	$(NPM) -w @probo/automerge-benchmark run compare
+
+.PHONY: fuzz-automerge
+fuzz-automerge: ## Fuzz Automerge public, wire, sync, and projection surfaces
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzLoad$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzCoreOperations$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecode$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzParseSyncMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzRender$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/prosemirror
 
 .PHONY: coverage-report
 coverage-report: test ## Generate HTML coverage report

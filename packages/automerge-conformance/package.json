@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "check": "node --check oracle.mjs"
+    "check": "node --check oracle.mjs && node --check generate-parity-inventory.mjs"
   },
   "dependencies": {
     "@automerge/automerge": "^3.4.0"
