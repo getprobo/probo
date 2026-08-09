@@ -2719,10 +2719,12 @@
       "file": "marks.ts",
       "line": 107,
       "name": "patches properly report marks on end of expand true",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestRustText_ExpandMarksAreReportedInPatches"
+      ],
+      "rationale": "Mark and unmark operations are reported as Mark patches, and text spliced into an expanding mark carries it, matching the reference."
     },
     {
       "id": "javascript:marks.ts:6:should allow marks that can be seen in patches",
@@ -2730,10 +2732,12 @@
       "file": "marks.ts",
       "line": 6,
       "name": "should allow marks that can be seen in patches",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSMarks_MarksSeenInPatches"
+      ],
+      "rationale": "Mark and unmark operations are reported as Mark patches, and text spliced into an expanding mark carries it, matching the reference."
     },
     {
       "id": "javascript:marks.ts:73:should do unicode sensibly",

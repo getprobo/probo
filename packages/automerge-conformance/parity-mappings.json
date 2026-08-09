@@ -1,5 +1,25 @@
 [
   {
+    "source": "javascript",
+    "file": "marks.ts",
+    "name": "should allow marks that can be seen in patches",
+    "classification": "covered",
+    "localTests": [
+      "TestJSMarks_MarksSeenInPatches"
+    ],
+    "rationale": "Mark and unmark operations are reported as Mark patches, and text spliced into an expanding mark carries it, matching the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "marks.ts",
+    "name": "patches properly report marks on end of expand true",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_ExpandMarksAreReportedInPatches"
+    ],
+    "rationale": "Mark and unmark operations are reported as Mark patches, and text spliced into an expanding mark carries it, matching the reference."
+  },
+  {
     "source": "rust",
     "file": "tests/test.rs",
     "name": "test_change_encoding_expanded_change_round_trip",

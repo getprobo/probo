@@ -2733,15 +2733,11 @@ func mergeTextMarkPatches(
 	identifier string,
 	patches []patchOut,
 ) ([]patchOut, error) {
-	// The reference derives mark patches from mark operations, not from state
-	// comparison, so a mark range that merely grew because text was spliced into
-	// an expanding mark produces no mark patch (the marks ride on the splice
-	// patch instead). Only emit mark patches when the diff window actually
-	// contains a mark operation on this object.
-	if !windowHasMarkOperation(source, target, object) {
-		return patches, nil
-	}
-
+	// The reference derives mark patches from the mark operations applied in the
+	// window, not from state comparison, so a mark range that merely grew because
+	// text was spliced into an expanding mark produces no mark patch (the marks
+	// ride on the splice patch instead), and a partial unmark reports the literal
+	// operation range rather than the resulting split.
 	marks, err := diffMarkPatches(source, target, object)
 	if err != nil {
 		return nil, err
@@ -2781,64 +2777,48 @@ func mergeTextMarkPatches(
 	return merged, nil
 }
 
-// windowHasMarkOperation reports whether the diff window between the source and
-// target states contains a mark operation on the object, i.e. a mark was
-// created or removed rather than merely expanded by a neighbouring splice.
-func windowHasMarkOperation(source, target *State, object ObjectID) bool {
+// diffMarkPatches reports the mark and unmark operations applied in the window
+// between the source and target states as Mark patch entries, ordered by the
+// operation identifier so they appear in application order. Each entry carries
+// the operation's literal UTF-16 range and value (null for an unmark), matching
+// the reference's operation-based diff rather than a state comparison.
+func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, error) {
+	begins := make([]Operation, 0)
+
 	for id, operation := range target.operations {
-		if operation.Action != ActionMark || operation.Object != object {
+		if operation.Action != ActionMark ||
+			operation.Object != object ||
+			operation.MarkName == nil {
 			continue
 		}
 
-		if _, ok := source.operations[id]; !ok {
-			return true
-		}
-	}
-
-	return false
-}
-
-// diffMarkPatches computes the mark changes transforming the source text state
-// into the target text state, in target order followed by removals.
-func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, error) {
-	sourceMarks := source.Marks(object.OpID)
-	targetMarks := target.Marks(object.OpID)
-
-	presentInSource := func(mark MarkRange) bool {
-		for _, candidate := range sourceMarks {
-			if candidate.Start == mark.Start &&
-				candidate.End == mark.End &&
-				candidate.Name == mark.Name &&
-				markValuesEqual(candidate.Value, mark.Value) {
-				return true
-			}
+		if _, ok := source.operations[id]; ok {
+			continue
 		}
 
-		return false
+		begins = append(begins, operation)
 	}
 
-	rangeInTarget := func(mark MarkRange) bool {
-		for _, candidate := range targetMarks {
-			if candidate.Start == mark.Start &&
-				candidate.End == mark.End &&
-				candidate.Name == mark.Name {
-				return true
-			}
+	sort.Slice(begins, func(i, j int) bool {
+		return begins[i].ID.Compare(begins[j].ID) < 0
+	})
+
+	out := make([]markPatchOut, 0, len(begins))
+
+	for _, begin := range begins {
+		end, ok := target.operations[OpID{Actor: begin.ID.Actor, Counter: begin.ID.Counter + 1}]
+		if !ok {
+			continue
 		}
 
-		return false
-	}
-
-	out := make([]markPatchOut, 0)
-
-	for _, mark := range targetMarks {
-		if presentInSource(mark) {
+		start, finish, ok := target.markOpUTF16Range(object.OpID, begin, end)
+		if !ok {
 			continue
 		}
 
 		value := Scalar{Type: ScalarNull}
-		if mark.Value != nil {
-			value = *mark.Value
+		if begin.Value != nil {
+			value = *begin.Value
 		}
 
 		encoded, err := encodeScalarWire(value)
@@ -2847,27 +2827,9 @@ func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, er
 		}
 
 		out = append(out, markPatchOut{
-			Start: mark.Start,
-			End:   mark.End,
-			Name:  mark.Name,
-			Value: json.RawMessage(encoded),
-		})
-	}
-
-	for _, mark := range sourceMarks {
-		if rangeInTarget(mark) {
-			continue
-		}
-
-		encoded, err := encodeScalarWire(Scalar{Type: ScalarNull})
-		if err != nil {
-			return nil, err
-		}
-
-		out = append(out, markPatchOut{
-			Start: mark.Start,
-			End:   mark.End,
-			Name:  mark.Name,
+			Start: start,
+			End:   finish,
+			Name:  *begin.MarkName,
 			Value: json.RawMessage(encoded),
 		})
 	}
@@ -2980,14 +2942,6 @@ func textRunsWithMarks(
 	}
 
 	return runs, nil
-}
-
-func markValuesEqual(left, right *Scalar) bool {
-	if left == nil || right == nil {
-		return left == right
-	}
-
-	return scalarValuesEqual(*left, *right)
 }
 
 func diffMapPatches(

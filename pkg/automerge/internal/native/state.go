@@ -837,6 +837,46 @@ func (s *State) markRangeHasSurvivingElement(
 	return false
 }
 
+// markOpUTF16Range returns the literal UTF-16 range a mark operation pair spans,
+// without boundary-expansion adjustment. It is used to report mark and unmark
+// operations as Mark patches, matching the reference's operation-based diff.
+func (s *State) markOpUTF16Range(object OpID, begin, end Operation) (uint32, uint32, bool) {
+	elements := s.sequenceElements(object)
+
+	positions := make(map[OpID]int, len(elements))
+	for index, element := range elements {
+		positions[element.ID] = index
+	}
+
+	beginExpand := begin.MarkExpand != nil && *begin.MarkExpand
+	endExpand := end.MarkExpand != nil && *end.MarkExpand
+
+	startIndex, startOK := s.markAnchorPosition(
+		object, begin.Key, begin.ID, true, beginExpand, positions, elements, false, make(map[OpID]struct{}),
+	)
+	endIndex, endOK := s.markAnchorPosition(
+		object, end.Key, end.ID, false, endExpand, positions, elements, false, make(map[OpID]struct{}),
+	)
+
+	if !startOK || !endOK {
+		return 0, 0, false
+	}
+
+	return utf16PrefixLength(elements, startIndex), utf16PrefixLength(elements, endIndex), true
+}
+
+// utf16PrefixLength sums the UTF-16 width of the first count elements, so a mark
+// anchor expressed as an element index becomes a UTF-16 position.
+func utf16PrefixLength(elements []Operation, count int) uint32 {
+	var position uint32
+
+	for i := 0; i < count && i < len(elements); i++ {
+		position += elementLength(elements[i])
+	}
+
+	return position
+}
+
 func (s *State) markAnchorPosition(
 	object OpID,
 	key Key,

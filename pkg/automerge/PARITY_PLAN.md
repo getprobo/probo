@@ -53,11 +53,10 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/test_save_load_orphans.rs` | 2 | preserving orphan changes across a document save and discarding them on request (needs a native document-chunk encoder) |
 | Rust `AutoCommit` doctests | 3 | commit options, diff, and incremental diff |
 | Curated JavaScript scalar boundaries | 3 | immutable strings, raw-string compatibility, and numeric wrappers |
-| Curated JavaScript mark boundaries | 2 | patch-visible marks and expansion at text end |
 | Rust iterator behavior | 1 | document iteration with conflicts |
 | Remaining Rust public/doctest cases | 6 | hydration, autoserde, manual transaction, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **34**.
+Total required pending entries: **32**.
 
 Legacy V1 sync protocol interoperability (V1↔V2 sessions, compressed changes in
 V1 sessions, and old-peer capability fallback) is intentionally out of scope:
