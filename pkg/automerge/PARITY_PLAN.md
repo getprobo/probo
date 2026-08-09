@@ -34,7 +34,7 @@ The generator verifies both Git revisions before updating the ledger.
 
 | Classification | Covered | Pending |
 |---|---:|---:|
-| Required Rust + JavaScript boundary behavior | 155 | 207 |
+| Required Rust + JavaScript boundary behavior | 168 | 194 |
 | Non-blocking JavaScript convenience behavior | 44 | 196 |
 | Private or language-specific behavior | 110 | — |
 
@@ -47,7 +47,7 @@ document are informational and must be updated whenever the manifest changes.
 |---|---:|---|
 | `rust/tests/test.rs` | 17 | patch-log misuse, transactions and isolation, historical marks, reverse-diff patches, large list patches, iterators, and regression corpus |
 | `rust/tests/diff_marks.rs` | 31 | adjacent/nested/overlapping marks, expansion and contraction, value changes, empty spans, whitespace, combining characters, emoji, blocks, and mark removal |
-| `rust/src/sync.rs` | 21 | Bloom false positives, branching histories, reset/data-loss recovery, remaining read-only transitions, multi-consumer topologies, explicit requests, and old-peer behavior |
+| `rust/src/sync.rs` | 8 | Bloom false positives, branching histories, reset/data-loss recovery, remaining read-only transitions, multi-consumer topologies, explicit requests, and old-peer behavior |
 | `rust/tests/block_tests.rs` | 18 | block property updates, simultaneous text/block changes, mark boundaries across blocks, update-spans configuration, merge diffs, and block patches |
 | `rust/tests/text.rs` | 16 | update-text diffing, mark expansion patches, deleted marks, block-adjacent marks, large graphemes, remote patches, and zero-length spans |
 | `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
@@ -67,7 +67,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **207**.
+Total required pending entries: **194**.
 
 ## Optional JavaScript convenience backlog
 

@@ -7593,10 +7593,12 @@
       "file": "src/sync.rs",
       "line": 1510,
       "name": "both_read_only_one_makes_local_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_BothReadOnlyOneMakesLocalChanges"
+      ],
+      "rationale": "Both peers are read-only; local changes on one are not transferred to the other and the session still quiesces.",
       "runtimeName": "sync::tests::both_read_only_one_makes_local_changes"
     },
     {
@@ -7605,10 +7607,12 @@
       "file": "src/sync.rs",
       "line": 1610,
       "name": "both_read_only_simultaneous_changes_during_sync",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_BothReadOnlySimultaneousChanges"
+      ],
+      "rationale": "Both read-only peers make simultaneous changes across two rounds; neither receives the other's data and both quiesce.",
       "runtimeName": "sync::tests::both_read_only_simultaneous_changes_during_sync"
     },
     {
@@ -7617,10 +7621,12 @@
       "file": "src/sync.rs",
       "line": 2382,
       "name": "both_toggle_after_multiple_read_only_rounds",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_BothToggleAfterMultipleReadOnlyRounds"
+      ],
+      "rationale": "Both peers accumulate changes across read-only rounds and exchange all of them after both switch to read-write.",
       "runtimeName": "sync::tests::both_toggle_after_multiple_read_only_rounds"
     },
     {
@@ -7683,10 +7689,12 @@
       "file": "src/sync.rs",
       "line": 968,
       "name": "first_response_is_some_even_if_no_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_FirstResponseIsSomeEvenIfNoChanges"
+      ],
+      "rationale": "Two peers at identical heads still exchange a first sync message so each learns the other's heads.",
       "runtimeName": "sync::tests::first_response_is_some_even_if_no_changes"
     },
     {
@@ -7791,10 +7799,12 @@
       "file": "src/sync.rs",
       "line": 1830,
       "name": "read_only_fully_connected_triangle",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_ReadOnlyFullyConnectedTriangle"
+      ],
+      "rationale": "A read-only peer publishes to two read-write peers that then merge; both gain all three change sets while the publisher keeps only its own.",
       "runtimeName": "sync::tests::read_only_fully_connected_triangle"
     },
     {
@@ -7815,10 +7825,12 @@
       "file": "src/sync.rs",
       "line": 1651,
       "name": "read_only_peer_new_changes_between_sync_rounds",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_ReadOnlyPeerNewChangesBetweenRounds"
+      ],
+      "rationale": "A read-only publisher's new changes flow to the read-write peer as a conflict while the publisher never receives the consumer's data.",
       "runtimeName": "sync::tests::read_only_peer_new_changes_between_sync_rounds"
     },
     {
@@ -7827,10 +7839,12 @@
       "file": "src/sync.rs",
       "line": 1932,
       "name": "read_only_peer_receives_same_changes_from_two_peers",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_ReadOnlyPeerReceivesSameChangesFromTwoPeers"
+      ],
+      "rationale": "A read-only publisher announced the same changes by two peers keeps only its own history and later distributes a new change to both.",
       "runtimeName": "sync::tests::read_only_peer_receives_same_changes_from_two_peers"
     },
     {
@@ -7839,10 +7853,12 @@
       "file": "src/sync.rs",
       "line": 1748,
       "name": "read_only_publisher_to_multiple_consumers",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_ReadOnlyPublisherToMultipleConsumers"
+      ],
+      "rationale": "A read-only publisher's changes reach two independent consumers, and one consumer's changes never reach the other through the publisher.",
       "runtimeName": "sync::tests::read_only_publisher_to_multiple_consumers"
     },
     {
@@ -7865,10 +7881,12 @@
       "file": "src/sync.rs",
       "line": 1017,
       "name": "should_allow_simultaneous_messages_during_synchronisation",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_AllowSimultaneousMessages"
+      ],
+      "rationale": "Two peers each committing five concurrent changes exchange messages in both directions and converge to identical heads with each other's keys.",
       "runtimeName": "sync::tests::should_allow_simultaneous_messages_during_synchronisation"
     },
     {
@@ -7925,10 +7943,12 @@
       "file": "src/sync.rs",
       "line": 1885,
       "name": "stale_shared_heads_after_read_only_sync",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_StaleSharedHeadsAfterReadOnlySync"
+      ],
+      "rationale": "A consumer that already has the read-only publisher's changes via a third peer re-syncs directly and still quiesces without the publisher accepting data.",
       "runtimeName": "sync::tests::stale_shared_heads_after_read_only_sync"
     },
     {
@@ -7951,10 +7971,12 @@
       "file": "src/sync.rs",
       "line": 2060,
       "name": "switch_read_only_to_read_write_with_multiple_rounds",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_SwitchReadOnlyToReadWriteMultipleRounds"
+      ],
+      "rationale": "A read-only peer that ignored several rounds of changes receives all of them after switching to read-write and converges.",
       "runtimeName": "sync::tests::switch_read_only_to_read_write_with_multiple_rounds"
     },
     {
@@ -7963,10 +7985,12 @@
       "file": "src/sync.rs",
       "line": 2021,
       "name": "switch_read_write_to_read_only_mid_session",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_SwitchReadWriteToReadOnlyMidSession"
+      ],
+      "rationale": "A peer switched to read-only mid-session still publishes its own new change but no longer accepts the peer's new change.",
       "runtimeName": "sync::tests::switch_read_write_to_read_only_mid_session"
     },
     {
@@ -7987,10 +8011,12 @@
       "file": "src/sync.rs",
       "line": 2104,
       "name": "toggle_read_only_multiple_times",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_ToggleReadOnlyMultipleTimes"
+      ],
+      "rationale": "Toggling read-only on and off across rounds gates change acceptance correctly and converges once read-write.",
       "runtimeName": "sync::tests::toggle_read_only_multiple_times"
     },
     {
