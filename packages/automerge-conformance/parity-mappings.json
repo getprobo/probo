@@ -1952,5 +1952,35 @@
       "TestRustRichText_SpliceWithMark"
     ],
     "rationale": "Replacing text exactly at two mark boundaries preserves the expanding mark while dropping the non-expanding mark, matching upstream issue #935."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "get_marks_at_heads",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_GetMarksAtHeads"
+    ],
+    "rationale": "Marks active at a text index resolved at a historical frontier match the reference after the mark is later removed."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "inserting_text_near_deleted_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_InsertingTextNearDeletedMarks"
+    ],
+    "rationale": "Inserting text around ranges whose marked elements were deleted yields the same active marks as the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "removed_marks_should_not_appear_in_get_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_RemovedMarksNotInGetMarks"
+    ],
+    "rationale": "A mark removed by a null value does not appear in the active mark set on either engine."
   }
 ]

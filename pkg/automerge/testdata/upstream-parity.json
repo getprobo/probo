@@ -5529,10 +5529,12 @@
       "file": "tests/test.rs",
       "line": 1947,
       "name": "get_marks_at_heads",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_GetMarksAtHeads"
+      ],
+      "rationale": "Marks active at a text index resolved at a historical frontier match the reference after the mark is later removed.",
       "runtimeName": "get_marks_at_heads"
     },
     {
@@ -5672,10 +5674,12 @@
       "file": "tests/test.rs",
       "line": 1884,
       "name": "inserting_text_near_deleted_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_InsertingTextNearDeletedMarks"
+      ],
+      "rationale": "Inserting text around ranges whose marked elements were deleted yields the same active marks as the reference.",
       "runtimeName": "inserting_text_near_deleted_marks"
     },
     {
@@ -6968,10 +6972,12 @@
       "file": "tests/text.rs",
       "line": 836,
       "name": "removed_marks_should_not_appear_in_get_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_RemovedMarksNotInGetMarks"
+      ],
+      "rationale": "A mark removed by a null value does not appear in the active mark set on either engine.",
       "runtimeName": "removed_marks_should_not_appear_in_get_marks"
     },
     {

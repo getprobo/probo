@@ -29,6 +29,7 @@ package automerge_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -184,6 +185,126 @@ func TestRustRichText_SpliceWithMark(t *testing.T) {
 	})
 
 	assert.Equal(t, spans["reference"], spans["native"])
+}
+
+func textMarks(
+	t *testing.T,
+	build func(t *testing.T, ctx context.Context, text *automerge.Text),
+) map[string][]automerge.Mark {
+	t.Helper()
+
+	ctx := context.Background()
+	marks := make(map[string][]automerge.Mark)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+
+		build(t, ctx, text)
+
+		_, err = document.CommitNow(ctx, "marks")
+		require.NoError(t, err)
+
+		result, err := text.Marks(ctx)
+		require.NoError(t, err)
+
+		marks[engine.name] = result
+	}
+
+	return marks
+}
+
+// TestRustRichText_RemovedMarksNotInGetMarks reproduces
+// removed_marks_should_not_appear_in_get_marks.
+func TestRustRichText_RemovedMarksNotInGetMarks(t *testing.T) {
+	t.Parallel()
+
+	marks := textMarks(t, func(t *testing.T, ctx context.Context, text *automerge.Text) {
+		require.NoError(t, text.Splice(ctx, 0, 0, "abcdefg"))
+		require.NoError(t, text.Mark(
+			ctx,
+			0,
+			1,
+			"name1",
+			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+			automerge.MarkExpandNone,
+		))
+		require.NoError(t, text.Unmark(ctx, 0, 1, "name1", automerge.MarkExpandNone))
+	})
+
+	assert.Equal(t, marks["reference"], marks["native"])
+	assert.Empty(t, marks["native"])
+}
+
+// TestRustRichText_InsertingTextNearDeletedMarks reproduces
+// inserting_text_near_deleted_marks.
+func TestRustRichText_InsertingTextNearDeletedMarks(t *testing.T) {
+	t.Parallel()
+
+	marks := textMarks(t, func(t *testing.T, ctx context.Context, text *automerge.Text) {
+		require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
+		require.NoError(t, text.Mark(ctx, 2, 8, "bold", markTrue(), automerge.MarkExpandAfter))
+		require.NoError(t, text.Mark(ctx, 3, 6, "link", markTrue(), automerge.MarkExpandNone))
+		require.NoError(t, text.Splice(ctx, 1, 10, ""))
+		require.NoError(t, text.Splice(ctx, 0, 0, "a"))
+		require.NoError(t, text.Splice(ctx, 2, 0, "a"))
+	})
+
+	assert.Equal(t, marks["reference"], marks["native"])
+}
+
+// TestRustRichText_GetMarksAtHeads reproduces get_marks_at_heads: marks active
+// at a specific index resolved at a historical frontier.
+func TestRustRichText_GetMarksAtHeads(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	active := make(map[string]map[string]int64)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
+		require.NoError(t, text.Mark(ctx, 0, 10, "bold", markTrue(), automerge.MarkExpandAfter))
+		_, err = document.Commit(ctx, "bold", commitTime)
+		require.NoError(t, err)
+
+		heads, err := document.Heads(ctx)
+		require.NoError(t, err)
+
+		require.NoError(t, text.Unmark(ctx, 0, 10, "bold", automerge.MarkExpandNone))
+		_, err = document.Commit(ctx, "unbold", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		marks, err := text.MarksAt(ctx, heads)
+		require.NoError(t, err)
+
+		atIndex := make(map[string]int64)
+
+		for _, mark := range marks {
+			if uint32(1) >= mark.Start && uint32(1) < mark.End {
+				value := int64(0)
+				if mark.Value.Bool {
+					value = 1
+				}
+
+				atIndex[mark.Name] = value
+			}
+		}
+
+		active[engine.name] = atIndex
+	}
+
+	assert.Equal(t, active["reference"], active["native"])
+	assert.Equal(t, map[string]int64{"bold": 1}, active["native"])
 }
 
 // TestRustRichText_EmptyMarksBeforeBlockMarker reproduces
