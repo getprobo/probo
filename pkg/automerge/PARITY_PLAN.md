@@ -125,6 +125,18 @@ expand- and visibility-aware insertion positioning in the native sequence path
 (porting the Rust `InsertQuery` boundary logic) plus computing spans by running
 a mark state machine over mark ops embedded in sequence order.
 
+**Independent re-encoding of concurrent edits (determinism, not interop).**
+The randomized `TestDifferentialStress_ConcurrentMerge` harness applies the same
+concurrent edits to a native and a reference peer and merges them. The two
+engines always converge to identical materialized values, but in rare cases a
+single change ends up with different bytes (and therefore a different hash)
+between the engines. This does not affect real interoperability: in a live
+session each change is created once by one engine and shipped as bytes to the
+other, which the interop suite verifies. It only means the two engines are not
+guaranteed to pick byte-identical encodings when independently re-encoding the
+same logical edit. The convergence test therefore compares materialized values;
+head-hash equality is asserted only for the single-actor determinism test.
+
 ## Optional JavaScript convenience backlog
 
 These do not block Go/Rust engine parity but remain tracked:
