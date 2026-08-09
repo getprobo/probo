@@ -144,29 +144,45 @@ WHERE
 
 type (
 	ProcessingActivity struct {
-		ID                                   gid.GID                                          `db:"id"`
-		OrganizationID                       gid.GID                                          `db:"organization_id"`
-		Name                                 string                                           `db:"name"`
-		Purpose                              *string                                          `db:"purpose"`
-		DataSubjectCategory                  *string                                          `db:"data_subject_category"`
-		PersonalDataCategory                 *string                                          `db:"personal_data_category"`
-		SpecialOrCriminalData                ProcessingActivitySpecialOrCriminalDatum         `db:"special_or_criminal_data"`
-		ConsentEvidenceLink                  *string                                          `db:"consent_evidence_link"`
-		LawfulBasis                          ProcessingActivityLawfulBasis                    `db:"lawful_basis"`
-		Recipients                           *string                                          `db:"recipients"`
-		Location                             *string                                          `db:"location"`
-		InternationalTransfers               bool                                             `db:"international_transfers"`
-		TransferSafeguard                    *ProcessingActivityTransferSafeguard             `db:"transfer_safeguards"`
-		RetentionPeriod                      *string                                          `db:"retention_period"`
-		SecurityMeasures                     *string                                          `db:"security_measures"`
-		DataProtectionImpactAssessmentNeeded ProcessingActivityDataProtectionImpactAssessment `db:"data_protection_impact_assessment_needed"`
-		TransferImpactAssessmentNeeded       ProcessingActivityTransferImpactAssessment       `db:"transfer_impact_assessment_needed"`
-		LastReviewDate                       *time.Time                                       `db:"last_review_date"`
-		NextReviewDate                       *time.Time                                       `db:"next_review_date"`
-		Role                                 ProcessingActivityRole                           `db:"role"`
-		DataProtectionOfficerID              *gid.GID                                         `db:"dpo_profile_id"`
-		CreatedAt                            time.Time                                        `db:"created_at"`
-		UpdatedAt                            time.Time                                        `db:"updated_at"`
+		ID                                           gid.GID                                          `db:"id"`
+		OrganizationID                               gid.GID                                          `db:"organization_id"`
+		Name                                         string                                           `db:"name"`
+		Purpose                                      *string                                          `db:"purpose"`
+		DataSubjectCategory                          *string                                          `db:"data_subject_category"`
+		PersonalDataCategory                         *string                                          `db:"personal_data_category"`
+		SpecialOrCriminalData                        ProcessingActivitySpecialOrCriminalDatum         `db:"special_or_criminal_data"`
+		ConsentEvidenceLink                          *string                                          `db:"consent_evidence_link"`
+		LawfulBasis                                  ProcessingActivityLawfulBasis                    `db:"lawful_basis"`
+		Recipients                                   *string                                          `db:"recipients"`
+		Location                                     *string                                          `db:"location"`
+		InternationalTransfers                       bool                                             `db:"international_transfers"`
+		TransferSafeguard                            *ProcessingActivityTransferSafeguard             `db:"transfer_safeguards"`
+		RetentionPeriod                              *string                                          `db:"retention_period"`
+		SecurityMeasures                             *string                                          `db:"security_measures"`
+		DataProtectionImpactAssessmentNeeded         ProcessingActivityDataProtectionImpactAssessment `db:"data_protection_impact_assessment_needed"`
+		TransferImpactAssessmentNeeded               ProcessingActivityTransferImpactAssessment       `db:"transfer_impact_assessment_needed"`
+		LastReviewDate                               *time.Time                                       `db:"last_review_date"`
+		NextReviewDate                               *time.Time                                       `db:"next_review_date"`
+		Role                                         ProcessingActivityRole                           `db:"role"`
+		DataProtectionOfficerID                      *gid.GID                                         `db:"dpo_profile_id"`
+		MalaysiaDPIATotalDataSubjects                int64                                            `db:"malaysia_dpia_total_data_subjects"`
+		MalaysiaDPIASensitiveDataSubjects            int64                                            `db:"malaysia_dpia_sensitive_data_subjects"`
+		MalaysiaDPIALegalOrSignificantEffects        bool                                             `db:"malaysia_dpia_legal_or_significant_effects"`
+		MalaysiaDPIASystematicMonitoring             bool                                             `db:"malaysia_dpia_systematic_monitoring"`
+		MalaysiaDPIAInnovativeTechnology             bool                                             `db:"malaysia_dpia_innovative_technology"`
+		MalaysiaDPIADenialOrRestrictionOfRights      bool                                             `db:"malaysia_dpia_denial_or_restriction_of_rights"`
+		MalaysiaDPIALocationOrBehaviourTracking      bool                                             `db:"malaysia_dpia_location_or_behaviour_tracking"`
+		MalaysiaDPIAChildrenOrVulnerableDataSubjects bool                                             `db:"malaysia_dpia_children_or_vulnerable_data_subjects"`
+		MalaysiaDPIAHighRiskAutomatedDecisionMaking  bool                                             `db:"malaysia_dpia_high_risk_automated_decision_making"`
+		MalaysiaDPIAOtherHighRiskFactors             *string                                          `db:"malaysia_dpia_other_high_risk_factors"`
+		MalaysiaDPIARecommendation                   MalaysiaPDPADPIARecommendation                   `db:"malaysia_dpia_recommendation"`
+		MalaysiaDPIAReasons                          []string                                         `db:"malaysia_dpia_reasons"`
+		MalaysiaDPIAAssessedByProfileID              *gid.GID                                         `db:"malaysia_dpia_assessed_by_profile_id"`
+		MalaysiaDPIAAssessedAt                       *time.Time                                       `db:"malaysia_dpia_assessed_at"`
+		MalaysiaDPIARuleVersion                      *string                                          `db:"malaysia_dpia_rule_version"`
+		MalaysiaDPIARuleSource                       *string                                          `db:"malaysia_dpia_rule_source"`
+		CreatedAt                                    time.Time                                        `db:"created_at"`
+		UpdatedAt                                    time.Time                                        `db:"updated_at"`
 	}
 
 	ProcessingActivities []*ProcessingActivity
@@ -251,6 +267,22 @@ SELECT
 	next_review_date,
 	role,
 	dpo_profile_id,
+	malaysia_dpia_total_data_subjects,
+	malaysia_dpia_sensitive_data_subjects,
+	malaysia_dpia_legal_or_significant_effects,
+	malaysia_dpia_systematic_monitoring,
+	malaysia_dpia_innovative_technology,
+	malaysia_dpia_denial_or_restriction_of_rights,
+	malaysia_dpia_location_or_behaviour_tracking,
+	malaysia_dpia_children_or_vulnerable_data_subjects,
+	malaysia_dpia_high_risk_automated_decision_making,
+	malaysia_dpia_other_high_risk_factors,
+	malaysia_dpia_recommendation,
+	malaysia_dpia_reasons,
+	malaysia_dpia_assessed_by_profile_id,
+	malaysia_dpia_assessed_at,
+	malaysia_dpia_rule_version,
+	malaysia_dpia_rule_source,
 	created_at,
 	updated_at
 FROM
@@ -348,6 +380,22 @@ SELECT
 	next_review_date,
 	role,
 	dpo_profile_id,
+	malaysia_dpia_total_data_subjects,
+	malaysia_dpia_sensitive_data_subjects,
+	malaysia_dpia_legal_or_significant_effects,
+	malaysia_dpia_systematic_monitoring,
+	malaysia_dpia_innovative_technology,
+	malaysia_dpia_denial_or_restriction_of_rights,
+	malaysia_dpia_location_or_behaviour_tracking,
+	malaysia_dpia_children_or_vulnerable_data_subjects,
+	malaysia_dpia_high_risk_automated_decision_making,
+	malaysia_dpia_other_high_risk_factors,
+	malaysia_dpia_recommendation,
+	malaysia_dpia_reasons,
+	malaysia_dpia_assessed_by_profile_id,
+	malaysia_dpia_assessed_at,
+	malaysia_dpia_rule_version,
+	malaysia_dpia_rule_source,
 	created_at,
 	updated_at
 FROM
@@ -416,6 +464,22 @@ SELECT
 	next_review_date,
 	role,
 	dpo_profile_id,
+	malaysia_dpia_total_data_subjects,
+	malaysia_dpia_sensitive_data_subjects,
+	malaysia_dpia_legal_or_significant_effects,
+	malaysia_dpia_systematic_monitoring,
+	malaysia_dpia_innovative_technology,
+	malaysia_dpia_denial_or_restriction_of_rights,
+	malaysia_dpia_location_or_behaviour_tracking,
+	malaysia_dpia_children_or_vulnerable_data_subjects,
+	malaysia_dpia_high_risk_automated_decision_making,
+	malaysia_dpia_other_high_risk_factors,
+	malaysia_dpia_recommendation,
+	malaysia_dpia_reasons,
+	malaysia_dpia_assessed_by_profile_id,
+	malaysia_dpia_assessed_at,
+	malaysia_dpia_rule_version,
+	malaysia_dpia_rule_source,
 	created_at,
 	updated_at
 FROM
@@ -476,6 +540,22 @@ INSERT INTO processing_activities (
 	next_review_date,
 	role,
 	dpo_profile_id,
+	malaysia_dpia_total_data_subjects,
+	malaysia_dpia_sensitive_data_subjects,
+	malaysia_dpia_legal_or_significant_effects,
+	malaysia_dpia_systematic_monitoring,
+	malaysia_dpia_innovative_technology,
+	malaysia_dpia_denial_or_restriction_of_rights,
+	malaysia_dpia_location_or_behaviour_tracking,
+	malaysia_dpia_children_or_vulnerable_data_subjects,
+	malaysia_dpia_high_risk_automated_decision_making,
+	malaysia_dpia_other_high_risk_factors,
+	malaysia_dpia_recommendation,
+	malaysia_dpia_reasons,
+	malaysia_dpia_assessed_by_profile_id,
+	malaysia_dpia_assessed_at,
+	malaysia_dpia_rule_version,
+	malaysia_dpia_rule_source,
 	created_at,
 	updated_at
 ) VALUES (
@@ -501,6 +581,22 @@ INSERT INTO processing_activities (
 	@next_review_date,
 	@role,
 	@dpo_profile_id,
+	@malaysia_dpia_total_data_subjects,
+	@malaysia_dpia_sensitive_data_subjects,
+	@malaysia_dpia_legal_or_significant_effects,
+	@malaysia_dpia_systematic_monitoring,
+	@malaysia_dpia_innovative_technology,
+	@malaysia_dpia_denial_or_restriction_of_rights,
+	@malaysia_dpia_location_or_behaviour_tracking,
+	@malaysia_dpia_children_or_vulnerable_data_subjects,
+	@malaysia_dpia_high_risk_automated_decision_making,
+	@malaysia_dpia_other_high_risk_factors,
+	@malaysia_dpia_recommendation,
+	@malaysia_dpia_reasons,
+	@malaysia_dpia_assessed_by_profile_id,
+	@malaysia_dpia_assessed_at,
+	@malaysia_dpia_rule_version,
+	@malaysia_dpia_rule_source,
 	@created_at,
 	@updated_at
 )
@@ -523,14 +619,30 @@ INSERT INTO processing_activities (
 		"transfer_safeguards":      p.TransferSafeguard,
 		"retention_period":         p.RetentionPeriod,
 		"security_measures":        p.SecurityMeasures,
-		"data_protection_impact_assessment_needed": p.DataProtectionImpactAssessmentNeeded,
-		"transfer_impact_assessment_needed":        p.TransferImpactAssessmentNeeded,
-		"last_review_date":                         p.LastReviewDate,
-		"next_review_date":                         p.NextReviewDate,
-		"role":                                     p.Role,
-		"dpo_profile_id":                           p.DataProtectionOfficerID,
-		"created_at":                               p.CreatedAt,
-		"updated_at":                               p.UpdatedAt,
+		"data_protection_impact_assessment_needed":           p.DataProtectionImpactAssessmentNeeded,
+		"transfer_impact_assessment_needed":                  p.TransferImpactAssessmentNeeded,
+		"last_review_date":                                   p.LastReviewDate,
+		"next_review_date":                                   p.NextReviewDate,
+		"role":                                               p.Role,
+		"dpo_profile_id":                                     p.DataProtectionOfficerID,
+		"malaysia_dpia_total_data_subjects":                  p.MalaysiaDPIATotalDataSubjects,
+		"malaysia_dpia_sensitive_data_subjects":              p.MalaysiaDPIASensitiveDataSubjects,
+		"malaysia_dpia_legal_or_significant_effects":         p.MalaysiaDPIALegalOrSignificantEffects,
+		"malaysia_dpia_systematic_monitoring":                p.MalaysiaDPIASystematicMonitoring,
+		"malaysia_dpia_innovative_technology":                p.MalaysiaDPIAInnovativeTechnology,
+		"malaysia_dpia_denial_or_restriction_of_rights":      p.MalaysiaDPIADenialOrRestrictionOfRights,
+		"malaysia_dpia_location_or_behaviour_tracking":       p.MalaysiaDPIALocationOrBehaviourTracking,
+		"malaysia_dpia_children_or_vulnerable_data_subjects": p.MalaysiaDPIAChildrenOrVulnerableDataSubjects,
+		"malaysia_dpia_high_risk_automated_decision_making":  p.MalaysiaDPIAHighRiskAutomatedDecisionMaking,
+		"malaysia_dpia_other_high_risk_factors":              p.MalaysiaDPIAOtherHighRiskFactors,
+		"malaysia_dpia_recommendation":                       p.MalaysiaDPIARecommendation,
+		"malaysia_dpia_reasons":                              p.MalaysiaDPIAReasons,
+		"malaysia_dpia_assessed_by_profile_id":               p.MalaysiaDPIAAssessedByProfileID,
+		"malaysia_dpia_assessed_at":                          p.MalaysiaDPIAAssessedAt,
+		"malaysia_dpia_rule_version":                         p.MalaysiaDPIARuleVersion,
+		"malaysia_dpia_rule_source":                          p.MalaysiaDPIARuleSource,
+		"created_at":                                         p.CreatedAt,
+		"updated_at":                                         p.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -568,6 +680,22 @@ SET
 	next_review_date = @next_review_date,
 	role = @role,
 	dpo_profile_id = @dpo_profile_id,
+	malaysia_dpia_total_data_subjects = @malaysia_dpia_total_data_subjects,
+	malaysia_dpia_sensitive_data_subjects = @malaysia_dpia_sensitive_data_subjects,
+	malaysia_dpia_legal_or_significant_effects = @malaysia_dpia_legal_or_significant_effects,
+	malaysia_dpia_systematic_monitoring = @malaysia_dpia_systematic_monitoring,
+	malaysia_dpia_innovative_technology = @malaysia_dpia_innovative_technology,
+	malaysia_dpia_denial_or_restriction_of_rights = @malaysia_dpia_denial_or_restriction_of_rights,
+	malaysia_dpia_location_or_behaviour_tracking = @malaysia_dpia_location_or_behaviour_tracking,
+	malaysia_dpia_children_or_vulnerable_data_subjects = @malaysia_dpia_children_or_vulnerable_data_subjects,
+	malaysia_dpia_high_risk_automated_decision_making = @malaysia_dpia_high_risk_automated_decision_making,
+	malaysia_dpia_other_high_risk_factors = @malaysia_dpia_other_high_risk_factors,
+	malaysia_dpia_recommendation = @malaysia_dpia_recommendation,
+	malaysia_dpia_reasons = @malaysia_dpia_reasons,
+	malaysia_dpia_assessed_by_profile_id = @malaysia_dpia_assessed_by_profile_id,
+	malaysia_dpia_assessed_at = @malaysia_dpia_assessed_at,
+	malaysia_dpia_rule_version = @malaysia_dpia_rule_version,
+	malaysia_dpia_rule_source = @malaysia_dpia_rule_source,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -591,13 +719,29 @@ WHERE
 		"transfer_safeguards":      p.TransferSafeguard,
 		"retention_period":         p.RetentionPeriod,
 		"security_measures":        p.SecurityMeasures,
-		"data_protection_impact_assessment_needed": p.DataProtectionImpactAssessmentNeeded,
-		"transfer_impact_assessment_needed":        p.TransferImpactAssessmentNeeded,
-		"last_review_date":                         p.LastReviewDate,
-		"next_review_date":                         p.NextReviewDate,
-		"role":                                     p.Role,
-		"dpo_profile_id":                           p.DataProtectionOfficerID,
-		"updated_at":                               p.UpdatedAt,
+		"data_protection_impact_assessment_needed":           p.DataProtectionImpactAssessmentNeeded,
+		"transfer_impact_assessment_needed":                  p.TransferImpactAssessmentNeeded,
+		"last_review_date":                                   p.LastReviewDate,
+		"next_review_date":                                   p.NextReviewDate,
+		"role":                                               p.Role,
+		"dpo_profile_id":                                     p.DataProtectionOfficerID,
+		"malaysia_dpia_total_data_subjects":                  p.MalaysiaDPIATotalDataSubjects,
+		"malaysia_dpia_sensitive_data_subjects":              p.MalaysiaDPIASensitiveDataSubjects,
+		"malaysia_dpia_legal_or_significant_effects":         p.MalaysiaDPIALegalOrSignificantEffects,
+		"malaysia_dpia_systematic_monitoring":                p.MalaysiaDPIASystematicMonitoring,
+		"malaysia_dpia_innovative_technology":                p.MalaysiaDPIAInnovativeTechnology,
+		"malaysia_dpia_denial_or_restriction_of_rights":      p.MalaysiaDPIADenialOrRestrictionOfRights,
+		"malaysia_dpia_location_or_behaviour_tracking":       p.MalaysiaDPIALocationOrBehaviourTracking,
+		"malaysia_dpia_children_or_vulnerable_data_subjects": p.MalaysiaDPIAChildrenOrVulnerableDataSubjects,
+		"malaysia_dpia_high_risk_automated_decision_making":  p.MalaysiaDPIAHighRiskAutomatedDecisionMaking,
+		"malaysia_dpia_other_high_risk_factors":              p.MalaysiaDPIAOtherHighRiskFactors,
+		"malaysia_dpia_recommendation":                       p.MalaysiaDPIARecommendation,
+		"malaysia_dpia_reasons":                              p.MalaysiaDPIAReasons,
+		"malaysia_dpia_assessed_by_profile_id":               p.MalaysiaDPIAAssessedByProfileID,
+		"malaysia_dpia_assessed_at":                          p.MalaysiaDPIAAssessedAt,
+		"malaysia_dpia_rule_version":                         p.MalaysiaDPIARuleVersion,
+		"malaysia_dpia_rule_source":                          p.MalaysiaDPIARuleSource,
+		"updated_at":                                         p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

@@ -15,10 +15,12 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // CreateProcessingActivity is the resolver for the createProcessingActivity field.
@@ -69,6 +71,37 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		return nil, err
 	}
 
+	var malaysiaPDPAScreening *probo.MalaysiaPDPADPIAScreeningRequest
+	if input.MalaysiaPDPADPIAScreening != nil {
+		activity, err := r.probo.ProcessingActivities.Get(ctx, scope, input.ID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load processing activity for Malaysia PDPA DPIA screening", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		identity := authn.IdentityFromContext(ctx)
+		assessor, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, activity.OrganizationID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot get Malaysia PDPA DPIA assessor profile", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		screening := input.MalaysiaPDPADPIAScreening
+		malaysiaPDPAScreening = &probo.MalaysiaPDPADPIAScreeningRequest{
+			TotalDataSubjects:                screening.TotalDataSubjects,
+			SensitiveDataSubjects:            screening.SensitiveDataSubjects,
+			LegalOrSignificantEffects:        screening.LegalOrSignificantEffects,
+			SystematicMonitoring:             screening.SystematicMonitoring,
+			InnovativeTechnology:             screening.InnovativeTechnology,
+			DenialOrRestrictionOfRights:      screening.DenialOrRestrictionOfRights,
+			LocationOrBehaviourTracking:      screening.LocationOrBehaviourTracking,
+			ChildrenOrVulnerableDataSubjects: screening.ChildrenOrVulnerableDataSubjects,
+			HighRiskAutomatedDecisionMaking:  screening.HighRiskAutomatedDecisionMaking,
+			OtherHighRiskFactors:             screening.OtherHighRiskFactors,
+			AssessedByProfileID:              assessor.ID,
+		}
+	}
+
 	req := probo.UpdateProcessingActivityRequest{
 		ID:                                   input.ID,
 		Name:                                 input.Name,
@@ -90,10 +123,15 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		Role:                                 input.Role,
 		DataProtectionOfficerID:              gqlutils.UnwrapOmittable(input.DataProtectionOfficerID),
 		ThirdPartyIDs:                        &input.ThirdPartyIds,
+		MalaysiaPDPADPIAScreening:            malaysiaPDPAScreening,
 	}
 
 	activity, err := r.probo.ProcessingActivities.Update(ctx, scope, &req)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot update processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

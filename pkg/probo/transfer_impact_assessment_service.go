@@ -28,6 +28,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/malaysiapdpa"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -37,6 +38,21 @@ type TransferImpactAssessmentService struct {
 }
 
 type (
+	MalaysiaPDPATransferRequest struct {
+		Basis                      coredata.MalaysiaPDPATransferBasis
+		DestinationCountry         coredata.CountryCode
+		RecipientThirdPartyID      gid.GID
+		ReceiverRegistrationNumber *string
+		ReceiverContact            string
+		TransferPurpose            string
+		PersonalDataCategories     string
+		Safeguards                 string
+		ApprovalStatus             coredata.MalaysiaPDPATransferApprovalStatus
+		ApprovalNotes              *string
+		ReviewEvidence             *string
+		ApprovedByProfileID        gid.GID
+	}
+
 	CreateTransferImpactAssessmentRequest struct {
 		ProcessingActivityID  gid.GID
 		DataSubjects          *string
@@ -44,6 +60,7 @@ type (
 		Transfer              *string
 		LocalLawRisk          *string
 		SupplementaryMeasures *string
+		MalaysiaPDPA          *MalaysiaPDPATransferRequest
 	}
 
 	UpdateTransferImpactAssessmentRequest struct {
@@ -53,6 +70,7 @@ type (
 		Transfer              **string
 		LocalLawRisk          **string
 		SupplementaryMeasures **string
+		MalaysiaPDPA          *MalaysiaPDPATransferRequest
 	}
 )
 
@@ -65,6 +83,7 @@ func (req *CreateTransferImpactAssessmentRequest) Validate() error {
 	v.Check(req.Transfer, "transfer", validator.SafeText(ContentMaxLength))
 	v.Check(req.LocalLawRisk, "local_law_risk", validator.SafeText(ContentMaxLength))
 	v.Check(req.SupplementaryMeasures, "supplementary_measures", validator.SafeText(ContentMaxLength))
+	validateMalaysiaPDPATransferRequest(v, req.MalaysiaPDPA)
 
 	return v.Error()
 }
@@ -78,6 +97,7 @@ func (req *UpdateTransferImpactAssessmentRequest) Validate() error {
 	v.Check(req.Transfer, "transfer", validator.SafeText(ContentMaxLength))
 	v.Check(req.LocalLawRisk, "local_law_risk", validator.SafeText(ContentMaxLength))
 	v.Check(req.SupplementaryMeasures, "supplementary_measures", validator.SafeText(ContentMaxLength))
+	validateMalaysiaPDPATransferRequest(v, req.MalaysiaPDPA)
 
 	return v.Error()
 }
@@ -207,6 +227,12 @@ func (s *TransferImpactAssessmentService) Create(
 
 			tia.OrganizationID = processingActivity.OrganizationID
 
+			if req.MalaysiaPDPA != nil {
+				if err := applyMalaysiaPDPATransfer(ctx, conn, scope, tia, processingActivity, req.MalaysiaPDPA); err != nil {
+					return err
+				}
+			}
+
 			if err := tia.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert transfer impact assessment: %w", err)
 			}
@@ -258,6 +284,17 @@ func (s *TransferImpactAssessmentService) Update(
 				tia.SupplementaryMeasures = *req.SupplementaryMeasures
 			}
 
+			if req.MalaysiaPDPA != nil {
+				processingActivity := &coredata.ProcessingActivity{}
+				if err := processingActivity.LoadByID(ctx, conn, scope, tia.ProcessingActivityID); err != nil {
+					return fmt.Errorf("cannot load processing activity for Malaysia PDPA transfer: %w", err)
+				}
+
+				if err := applyMalaysiaPDPATransfer(ctx, conn, scope, tia, processingActivity, req.MalaysiaPDPA); err != nil {
+					return err
+				}
+			}
+
 			tia.UpdatedAt = time.Now()
 
 			if err := tia.Update(ctx, conn, scope); err != nil {
@@ -272,6 +309,134 @@ func (s *TransferImpactAssessmentService) Update(
 	}
 
 	return tia, nil
+}
+
+func validateMalaysiaPDPATransferRequest(v *validator.Validator, req *MalaysiaPDPATransferRequest) {
+	if req == nil {
+		return
+	}
+
+	v.Check(req.Basis, "malaysia_pdpa.basis", validator.Required(), validator.OneOfSlice(coredata.MalaysiaPDPATransferBases()))
+	v.Check(req.RecipientThirdPartyID, "malaysia_pdpa.recipient_third_party_id", validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
+	if !isBlank(req.ReceiverRegistrationNumber) {
+		v.Check(req.ReceiverRegistrationNumber, "malaysia_pdpa.receiver_registration_number", validator.SafeTextNoNewLine(TitleMaxLength))
+	}
+	v.Check(req.ReceiverContact, "malaysia_pdpa.receiver_contact", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(req.TransferPurpose, "malaysia_pdpa.transfer_purpose", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(req.PersonalDataCategories, "malaysia_pdpa.personal_data_categories", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(req.Safeguards, "malaysia_pdpa.safeguards", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(req.ApprovalStatus, "malaysia_pdpa.approval_status", validator.Required(), validator.OneOfSlice(coredata.MalaysiaPDPATransferApprovalStatuses()))
+	if !isBlank(req.ApprovalNotes) {
+		v.Check(req.ApprovalNotes, "malaysia_pdpa.approval_notes", validator.SafeText(ContentMaxLength))
+	}
+	if !isBlank(req.ReviewEvidence) {
+		v.Check(req.ReviewEvidence, "malaysia_pdpa.review_evidence", validator.SafeText(ContentMaxLength))
+	}
+
+	if !req.DestinationCountry.IsValid() || req.DestinationCountry == coredata.CountryCodeMY || req.DestinationCountry == coredata.CountryCodeGlobal {
+		v.Check(req.DestinationCountry, "malaysia_pdpa.destination_country", func(any) *validator.ValidationError {
+			return &validator.ValidationError{Code: validator.ErrorCodeInvalidEnum, Message: "must be a foreign country"}
+		})
+	}
+
+	if req.ApprovalStatus == coredata.MalaysiaPDPATransferApprovalStatusApproved {
+		v.Check(req.ApprovedByProfileID, "malaysia_pdpa.approved_by_profile_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
+		if isBlank(req.ReviewEvidence) {
+			v.Check(req.ReviewEvidence, "malaysia_pdpa.review_evidence", func(any) *validator.ValidationError {
+				return &validator.ValidationError{Code: validator.ErrorCodeRequired, Message: "is required for approval"}
+			})
+		}
+	}
+
+	if req.ApprovalStatus == coredata.MalaysiaPDPATransferApprovalStatusRejected {
+		v.Check(req.ApprovedByProfileID, "malaysia_pdpa.approved_by_profile_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
+		if isBlank(req.ApprovalNotes) {
+			v.Check(req.ApprovalNotes, "malaysia_pdpa.approval_notes", func(any) *validator.ValidationError {
+				return &validator.ValidationError{Code: validator.ErrorCodeRequired, Message: "is required for rejection"}
+			})
+		}
+	}
+}
+
+func applyMalaysiaPDPATransfer(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	tia *coredata.TransferImpactAssessment,
+	processingActivity *coredata.ProcessingActivity,
+	req *MalaysiaPDPATransferRequest,
+) error {
+	if !processingActivity.InternationalTransfers {
+		return validator.ValidationErrors{
+			&validator.ValidationError{
+				Field:   "malaysia_pdpa",
+				Code:    validator.ErrorCodeCustom,
+				Message: "requires processing activity international_transfers to be true",
+				Value:   req,
+			},
+		}
+	}
+
+	recipient := &coredata.ThirdParty{}
+	if err := recipient.LoadByID(ctx, conn, scope, req.RecipientThirdPartyID); err != nil {
+		return fmt.Errorf("cannot load Malaysia PDPA transfer recipient: %w", err)
+	}
+	if recipient.OrganizationID != tia.OrganizationID {
+		return fmt.Errorf("Malaysia PDPA transfer recipient does not belong to the organization")
+	}
+
+	var approvedByProfileID *gid.GID
+	var reviewedAt *time.Time
+	var nextReviewAt *time.Time
+	if req.ApprovalStatus != coredata.MalaysiaPDPATransferApprovalStatusPending {
+		if err := validateProfileOrganization(ctx, conn, scope, req.ApprovedByProfileID, tia.OrganizationID, "transfer approver"); err != nil {
+			return err
+		}
+
+		now := time.Now()
+		approvedByProfileID = &req.ApprovedByProfileID
+		reviewedAt = &now
+		if req.ApprovalStatus == coredata.MalaysiaPDPATransferApprovalStatusApproved {
+			nextReviewAt = malaysiapdpa.TransferNextReviewAt(req.Basis, now)
+		}
+	}
+
+	basis := req.Basis
+	destination := req.DestinationCountry
+	recipientID := req.RecipientThirdPartyID
+	receiverContact := req.ReceiverContact
+	transferPurpose := req.TransferPurpose
+	personalDataCategories := req.PersonalDataCategories
+	safeguards := req.Safeguards
+	approvalStatus := req.ApprovalStatus
+	ruleVersion := malaysiapdpa.TransferRuleVersion
+	ruleSource := malaysiapdpa.TransferRuleSource
+	tia.MalaysiaTransferBasis = &basis
+	tia.MalaysiaDestinationCountry = &destination
+	tia.MalaysiaRecipientThirdPartyID = &recipientID
+	tia.MalaysiaReceiverRegistrationNumber = nilIfBlank(req.ReceiverRegistrationNumber)
+	tia.MalaysiaReceiverContact = &receiverContact
+	tia.MalaysiaTransferPurpose = &transferPurpose
+	tia.MalaysiaPersonalDataCategories = &personalDataCategories
+	tia.MalaysiaSafeguards = &safeguards
+	tia.MalaysiaApprovalStatus = &approvalStatus
+	tia.MalaysiaApprovedByProfileID = approvedByProfileID
+	tia.MalaysiaApprovalNotes = nilIfBlank(req.ApprovalNotes)
+	tia.MalaysiaReviewedAt = reviewedAt
+	tia.MalaysiaNextReviewAt = nextReviewAt
+	tia.MalaysiaReviewEvidence = nilIfBlank(req.ReviewEvidence)
+	tia.MalaysiaRuleVersion = &ruleVersion
+	tia.MalaysiaRuleSource = &ruleSource
+
+	return nil
+}
+
+func nilIfBlank(value *string) *string {
+	if isBlank(value) {
+		return nil
+	}
+
+	return value
 }
 
 func (s *TransferImpactAssessmentService) Delete(

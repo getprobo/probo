@@ -159,6 +159,8 @@ export const processingActivityNodeQuery = graphql`
         )
         canUpdate: permission(action: "core:processing-activity:update")
         canDelete: permission(action: "core:processing-activity:delete")
+        ...MalaysiaPDPADPIAScreeningSection_activity
+        ...MalaysiaPDPATransferSection_activity
       }
     }
   }
@@ -238,6 +240,22 @@ export const updateProcessingActivityMutation = graphql`
         lastReviewDate
         nextReviewDate
         role
+        malaysiaPDPADPIATotalDataSubjects
+        malaysiaPDPADPIASensitiveDataSubjects
+        malaysiaPDPADPIALegalOrSignificantEffects
+        malaysiaPDPADPIASystematicMonitoring
+        malaysiaPDPADPIAInnovativeTechnology
+        malaysiaPDPADPIADenialOrRestrictionOfRights
+        malaysiaPDPADPIALocationOrBehaviourTracking
+        malaysiaPDPADPIAChildrenOrVulnerableDataSubjects
+        malaysiaPDPADPIAHighRiskAutomatedDecisionMaking
+        malaysiaPDPADPIAOtherHighRiskFactors
+        malaysiaPDPADPIARecommendation
+        malaysiaPDPADPIAReasons
+        malaysiaPDPADPIAAssessedByProfileId
+        malaysiaPDPADPIAAssessedAt
+        malaysiaPDPADPIARuleVersion
+        malaysiaPDPADPIARuleSource
         dataProtectionOfficer {
           id
           fullName
@@ -326,6 +344,18 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
     role: string;
     dataProtectionOfficerId?: string;
     thirdPartyIds?: string[];
+    malaysiaPDPADPIAScreening?: {
+      totalDataSubjects: number;
+      sensitiveDataSubjects: number;
+      legalOrSignificantEffects: boolean;
+      systematicMonitoring: boolean;
+      innovativeTechnology: boolean;
+      denialOrRestrictionOfRights: boolean;
+      locationOrBehaviourTracking: boolean;
+      childrenOrVulnerableDataSubjects: boolean;
+      highRiskAutomatedDecisionMaking: boolean;
+      otherHighRiskFactors?: string;
+    };
   }) => {
     if (!input.organizationId) {
       return alert(
@@ -397,6 +427,18 @@ export const useUpdateProcessingActivity = () => {
     role?: string;
     dataProtectionOfficerId?: string | null;
     thirdPartyIds?: string[];
+    malaysiaPDPADPIAScreening?: {
+      totalDataSubjects: number;
+      sensitiveDataSubjects: number;
+      legalOrSignificantEffects: boolean;
+      systematicMonitoring: boolean;
+      innovativeTechnology: boolean;
+      denialOrRestrictionOfRights: boolean;
+      locationOrBehaviourTracking: boolean;
+      childrenOrVulnerableDataSubjects: boolean;
+      highRiskAutomatedDecisionMaking: boolean;
+      otherHighRiskFactors?: string;
+    };
   }) => {
     if (!input.id) {
       return alert(t("processingActivityGraph.errors.updateIdRequired"));
@@ -579,6 +621,22 @@ export const createTransferImpactAssessmentMutation = graphql`
         transfer
         localLawRisk
         supplementaryMeasures
+        malaysiaTransferBasis
+        malaysiaDestinationCountry
+        malaysiaRecipientThirdPartyId
+        malaysiaReceiverRegistrationNumber
+        malaysiaReceiverContact
+        malaysiaTransferPurpose
+        malaysiaPersonalDataCategories
+        malaysiaSafeguards
+        malaysiaApprovalStatus
+        malaysiaApprovedByProfileId
+        malaysiaApprovalNotes
+        malaysiaReviewedAt
+        malaysiaNextReviewAt
+        malaysiaReviewEvidence
+        malaysiaRuleVersion
+        malaysiaRuleSource
         createdAt
         updatedAt
         canUpdate: permission(
@@ -596,6 +654,22 @@ export const createTransferImpactAssessmentMutation = graphql`
             transfer
             localLawRisk
             supplementaryMeasures
+            malaysiaTransferBasis
+            malaysiaDestinationCountry
+            malaysiaRecipientThirdPartyId
+            malaysiaReceiverRegistrationNumber
+            malaysiaReceiverContact
+            malaysiaTransferPurpose
+            malaysiaPersonalDataCategories
+            malaysiaSafeguards
+            malaysiaApprovalStatus
+            malaysiaApprovedByProfileId
+            malaysiaApprovalNotes
+            malaysiaReviewedAt
+            malaysiaNextReviewAt
+            malaysiaReviewEvidence
+            malaysiaRuleVersion
+            malaysiaRuleSource
             createdAt
             updatedAt
             canUpdate: permission(
@@ -623,6 +697,22 @@ export const updateTransferImpactAssessmentMutation = graphql`
         transfer
         localLawRisk
         supplementaryMeasures
+        malaysiaTransferBasis
+        malaysiaDestinationCountry
+        malaysiaRecipientThirdPartyId
+        malaysiaReceiverRegistrationNumber
+        malaysiaReceiverContact
+        malaysiaTransferPurpose
+        malaysiaPersonalDataCategories
+        malaysiaSafeguards
+        malaysiaApprovalStatus
+        malaysiaApprovedByProfileId
+        malaysiaApprovalNotes
+        malaysiaReviewedAt
+        malaysiaNextReviewAt
+        malaysiaReviewEvidence
+        malaysiaRuleVersion
+        malaysiaRuleSource
         createdAt
         updatedAt
       }
@@ -652,6 +742,7 @@ export const useCreateTransferImpactAssessment = () => {
     transfer?: string;
     localLawRisk?: string;
     supplementaryMeasures?: string;
+    malaysiaPDPA?: MalaysiaPDPATransferInput;
   }) => {
     if (!input.processingActivityId) {
       return alert(
@@ -679,6 +770,7 @@ export const useUpdateTransferImpactAssessment = () => {
     transfer?: string;
     localLawRisk?: string;
     supplementaryMeasures?: string;
+    malaysiaPDPA?: MalaysiaPDPATransferInput;
   }) => {
     if (!input.id) {
       return alert(t("processingActivityGraph.errors.updateTiaIdRequired"));
@@ -690,6 +782,29 @@ export const useUpdateTransferImpactAssessment = () => {
       },
     });
   };
+};
+
+export type MalaysiaPDPATransferInput = {
+  basis:
+    | "SUBSTANTIALLY_SIMILAR_LAW"
+    | "ADEQUATE_EQUIVALENT_PROTECTION"
+    | "DATA_SUBJECT_CONSENT"
+    | "DATA_SUBJECT_CONTRACT"
+    | "THIRD_PARTY_CONTRACT"
+    | "LEGAL_PROCEEDINGS"
+    | "ADVERSE_ACTION"
+    | "REASONABLE_PRECAUTIONS"
+    | "VITAL_INTERESTS";
+  destinationCountry: string;
+  recipientThirdPartyId: string;
+  receiverRegistrationNumber?: string;
+  receiverContact: string;
+  transferPurpose: string;
+  personalDataCategories: string;
+  safeguards: string;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  approvalNotes?: string;
+  reviewEvidence?: string;
 };
 
 export const useDeleteTransferImpactAssessment = (

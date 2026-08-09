@@ -32,12 +32,11 @@ import (
 const createMutation = `
 mutation($input: CreateTransferImpactAssessmentInput!) {
   createTransferImpactAssessment(input: $input) {
-    transferImpactAssessmentEdge {
-      node {
-        id
-        dataSubjects
-        legalMechanism
-      }
+    transferImpactAssessment {
+      id
+      dataSubjects
+      legalMechanism
+      malaysiaApprovalStatus
     }
   }
 }
@@ -45,24 +44,33 @@ mutation($input: CreateTransferImpactAssessmentInput!) {
 
 type createResponse struct {
 	CreateTransferImpactAssessment struct {
-		TransferImpactAssessmentEdge struct {
-			Node struct {
-				ID             string `json:"id"`
-				DataSubjects   string `json:"dataSubjects"`
-				LegalMechanism string `json:"legalMechanism"`
-			} `json:"node"`
-		} `json:"transferImpactAssessmentEdge"`
+		TransferImpactAssessment struct {
+			ID             string `json:"id"`
+			DataSubjects   string `json:"dataSubjects"`
+			LegalMechanism string `json:"legalMechanism"`
+		} `json:"transferImpactAssessment"`
 	} `json:"createTransferImpactAssessment"`
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagProcessingActivity    string
-		flagDataSubjects          string
-		flagLegalMechanism        string
-		flagTransfer              string
-		flagLocalLawRisk          string
-		flagSupplementaryMeasures string
+		flagProcessingActivity                 string
+		flagDataSubjects                       string
+		flagLegalMechanism                     string
+		flagTransfer                           string
+		flagLocalLawRisk                       string
+		flagSupplementaryMeasures              string
+		flagMalaysiaBasis                      string
+		flagMalaysiaDestinationCountry         string
+		flagMalaysiaRecipientThirdParty        string
+		flagMalaysiaReceiverRegistrationNumber string
+		flagMalaysiaReceiverContact            string
+		flagMalaysiaTransferPurpose            string
+		flagMalaysiaPersonalDataCategories     string
+		flagMalaysiaSafeguards                 string
+		flagMalaysiaApprovalStatus             string
+		flagMalaysiaApprovalNotes              string
+		flagMalaysiaReviewEvidence             string
 	)
 
 	cmd := &cobra.Command{
@@ -120,6 +128,55 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["supplementaryMeasures"] = flagSupplementaryMeasures
 			}
 
+			malaysiaFlags := []string{
+				"malaysia-basis",
+				"malaysia-destination-country",
+				"malaysia-recipient-third-party",
+				"malaysia-receiver-registration-number",
+				"malaysia-receiver-contact",
+				"malaysia-transfer-purpose",
+				"malaysia-personal-data-categories",
+				"malaysia-safeguards",
+				"malaysia-approval-status",
+				"malaysia-approval-notes",
+				"malaysia-review-evidence",
+			}
+			malaysiaChanged := false
+			for _, name := range malaysiaFlags {
+				malaysiaChanged = malaysiaChanged || cmd.Flags().Changed(name)
+			}
+			if malaysiaChanged {
+				required := map[string]string{
+					"malaysia-basis":                    flagMalaysiaBasis,
+					"malaysia-destination-country":      flagMalaysiaDestinationCountry,
+					"malaysia-recipient-third-party":    flagMalaysiaRecipientThirdParty,
+					"malaysia-receiver-contact":         flagMalaysiaReceiverContact,
+					"malaysia-transfer-purpose":         flagMalaysiaTransferPurpose,
+					"malaysia-personal-data-categories": flagMalaysiaPersonalDataCategories,
+					"malaysia-safeguards":               flagMalaysiaSafeguards,
+					"malaysia-approval-status":          flagMalaysiaApprovalStatus,
+				}
+				for name, value := range required {
+					if value == "" {
+						return fmt.Errorf("--%s is required for a Malaysia PDPA transfer record", name)
+					}
+				}
+
+				input["malaysiaPDPA"] = map[string]any{
+					"basis":                      flagMalaysiaBasis,
+					"destinationCountry":         flagMalaysiaDestinationCountry,
+					"recipientThirdPartyId":      flagMalaysiaRecipientThirdParty,
+					"receiverRegistrationNumber": flagMalaysiaReceiverRegistrationNumber,
+					"receiverContact":            flagMalaysiaReceiverContact,
+					"transferPurpose":            flagMalaysiaTransferPurpose,
+					"personalDataCategories":     flagMalaysiaPersonalDataCategories,
+					"safeguards":                 flagMalaysiaSafeguards,
+					"approvalStatus":             flagMalaysiaApprovalStatus,
+					"approvalNotes":              flagMalaysiaApprovalNotes,
+					"reviewEvidence":             flagMalaysiaReviewEvidence,
+				}
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -133,7 +190,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			r := resp.CreateTransferImpactAssessment.TransferImpactAssessmentEdge.Node
+			r := resp.CreateTransferImpactAssessment.TransferImpactAssessment
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Created transfer impact assessment %s\n",
@@ -150,6 +207,17 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTransfer, "transfer", "", "Transfer")
 	cmd.Flags().StringVar(&flagLocalLawRisk, "local-law-risk", "", "Local law risk")
 	cmd.Flags().StringVar(&flagSupplementaryMeasures, "supplementary-measures", "", "Supplementary measures")
+	cmd.Flags().StringVar(&flagMalaysiaBasis, "malaysia-basis", "", "Malaysia PDPA section 129 transfer basis")
+	cmd.Flags().StringVar(&flagMalaysiaDestinationCountry, "malaysia-destination-country", "", "Foreign destination country code")
+	cmd.Flags().StringVar(&flagMalaysiaRecipientThirdParty, "malaysia-recipient-third-party", "", "Recipient third-party ID")
+	cmd.Flags().StringVar(&flagMalaysiaReceiverRegistrationNumber, "malaysia-receiver-registration-number", "", "Receiver company registration number")
+	cmd.Flags().StringVar(&flagMalaysiaReceiverContact, "malaysia-receiver-contact", "", "Receiver DPO or responsible contact")
+	cmd.Flags().StringVar(&flagMalaysiaTransferPurpose, "malaysia-transfer-purpose", "", "Purpose of the cross-border transfer")
+	cmd.Flags().StringVar(&flagMalaysiaPersonalDataCategories, "malaysia-personal-data-categories", "", "Personal data categories transferred")
+	cmd.Flags().StringVar(&flagMalaysiaSafeguards, "malaysia-safeguards", "", "Transfer safeguards and evidence")
+	cmd.Flags().StringVar(&flagMalaysiaApprovalStatus, "malaysia-approval-status", "", "Approval status: PENDING, APPROVED, REJECTED")
+	cmd.Flags().StringVar(&flagMalaysiaApprovalNotes, "malaysia-approval-notes", "", "Approval or rejection notes")
+	cmd.Flags().StringVar(&flagMalaysiaReviewEvidence, "malaysia-review-evidence", "", "Review evidence required for approval")
 
 	_ = cmd.MarkFlagRequired("processing-activity")
 

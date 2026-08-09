@@ -373,6 +373,11 @@ type (
 		NextReviewDate                       string
 		DataProtectionOfficer                string
 		ThirdParties                         string
+		MalaysiaDPIARecommendation           string
+		MalaysiaDPIAReasons                  string
+		MalaysiaDPIAAssessedAt               string
+		MalaysiaDPIARuleVersion              string
+		MalaysiaDPIARuleSource               string
 	}
 
 	DataProtectionImpactAssessmentListData struct {
@@ -401,12 +406,28 @@ type (
 	}
 
 	TransferImpactAssessmentListRow struct {
-		ProcessingActivityName string
-		DataSubjects           string
-		Transfer               string
-		LegalMechanism         string
-		LocalLawRisk           string
-		SupplementaryMeasures  string
+		ProcessingActivityName             string
+		DataSubjects                       string
+		Transfer                           string
+		LegalMechanism                     string
+		LocalLawRisk                       string
+		SupplementaryMeasures              string
+		MalaysiaTransferBasis              string
+		MalaysiaDestinationCountry         string
+		MalaysiaRecipientThirdPartyID      string
+		MalaysiaReceiverRegistrationNumber string
+		MalaysiaReceiverContact            string
+		MalaysiaTransferPurpose            string
+		MalaysiaPersonalDataCategories     string
+		MalaysiaSafeguards                 string
+		MalaysiaApprovalStatus             string
+		MalaysiaApprovedByProfileID        string
+		MalaysiaApprovalNotes              string
+		MalaysiaReviewedAt                 string
+		MalaysiaNextReviewAt               string
+		MalaysiaReviewEvidence             string
+		MalaysiaRuleVersion                string
+		MalaysiaRuleSource                 string
 	}
 
 	ThirdPartyListData struct {

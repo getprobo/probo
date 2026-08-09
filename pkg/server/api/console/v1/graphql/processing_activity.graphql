@@ -116,6 +116,24 @@ enum ProcessingActivityRole
         )
 }
 
+enum MalaysiaPDPADPIARecommendation
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPADPIARecommendation"
+    ) {
+    NOT_INDICATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPADPIARecommendationNotIndicated"
+        )
+    DPO_REVIEW_REQUIRED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPADPIARecommendationDPOReviewRequired"
+        )
+    REQUIRED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPADPIARecommendationRequired"
+        )
+}
+
 enum ProcessingActivityOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderField"
@@ -160,6 +178,22 @@ type ProcessingActivity implements Node {
     nextReviewDate: Datetime
     role: ProcessingActivityRole!
     dataProtectionOfficer: Profile @goField(forceResolver: true)
+    malaysiaPDPADPIATotalDataSubjects: BigInt!
+    malaysiaPDPADPIASensitiveDataSubjects: BigInt!
+    malaysiaPDPADPIALegalOrSignificantEffects: Boolean!
+    malaysiaPDPADPIASystematicMonitoring: Boolean!
+    malaysiaPDPADPIAInnovativeTechnology: Boolean!
+    malaysiaPDPADPIADenialOrRestrictionOfRights: Boolean!
+    malaysiaPDPADPIALocationOrBehaviourTracking: Boolean!
+    malaysiaPDPADPIAChildrenOrVulnerableDataSubjects: Boolean!
+    malaysiaPDPADPIAHighRiskAutomatedDecisionMaking: Boolean!
+    malaysiaPDPADPIAOtherHighRiskFactors: String
+    malaysiaPDPADPIARecommendation: MalaysiaPDPADPIARecommendation!
+    malaysiaPDPADPIAReasons: [String!]!
+    malaysiaPDPADPIAAssessedByProfileId: ID
+    malaysiaPDPADPIAAssessedAt: Datetime
+    malaysiaPDPADPIARuleVersion: String
+    malaysiaPDPADPIARuleSource: String
     thirdParties(
         first: Int
         after: CursorKey
@@ -253,6 +287,20 @@ input UpdateProcessingActivityInput {
     role: ProcessingActivityRole
     dataProtectionOfficerId: ID @goField(omittable: true)
     thirdPartyIds: [ID!]
+    malaysiaPDPADPIAScreening: MalaysiaPDPADPIAScreeningInput
+}
+
+input MalaysiaPDPADPIAScreeningInput {
+    totalDataSubjects: BigInt!
+    sensitiveDataSubjects: BigInt!
+    legalOrSignificantEffects: Boolean!
+    systematicMonitoring: Boolean!
+    innovativeTechnology: Boolean!
+    denialOrRestrictionOfRights: Boolean!
+    locationOrBehaviourTracking: Boolean!
+    childrenOrVulnerableDataSubjects: Boolean!
+    highRiskAutomatedDecisionMaking: Boolean!
+    otherHighRiskFactors: String
 }
 
 input DeleteProcessingActivityInput {

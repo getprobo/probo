@@ -145,16 +145,32 @@ WHERE
 
 type (
 	TransferImpactAssessment struct {
-		ID                    gid.GID   `db:"id"`
-		OrganizationID        gid.GID   `db:"organization_id"`
-		ProcessingActivityID  gid.GID   `db:"processing_activity_id"`
-		DataSubjects          *string   `db:"data_subjects"`
-		LegalMechanism        *string   `db:"legal_mechanism"`
-		Transfer              *string   `db:"transfer"`
-		LocalLawRisk          *string   `db:"local_law_risk"`
-		SupplementaryMeasures *string   `db:"supplementary_measures"`
-		CreatedAt             time.Time `db:"created_at"`
-		UpdatedAt             time.Time `db:"updated_at"`
+		ID                                 gid.GID                             `db:"id"`
+		OrganizationID                     gid.GID                             `db:"organization_id"`
+		ProcessingActivityID               gid.GID                             `db:"processing_activity_id"`
+		DataSubjects                       *string                             `db:"data_subjects"`
+		LegalMechanism                     *string                             `db:"legal_mechanism"`
+		Transfer                           *string                             `db:"transfer"`
+		LocalLawRisk                       *string                             `db:"local_law_risk"`
+		SupplementaryMeasures              *string                             `db:"supplementary_measures"`
+		MalaysiaTransferBasis              *MalaysiaPDPATransferBasis          `db:"malaysia_transfer_basis"`
+		MalaysiaDestinationCountry         *CountryCode                        `db:"malaysia_destination_country"`
+		MalaysiaRecipientThirdPartyID      *gid.GID                            `db:"malaysia_recipient_third_party_id"`
+		MalaysiaReceiverRegistrationNumber *string                             `db:"malaysia_receiver_registration_number"`
+		MalaysiaReceiverContact            *string                             `db:"malaysia_receiver_contact"`
+		MalaysiaTransferPurpose            *string                             `db:"malaysia_transfer_purpose"`
+		MalaysiaPersonalDataCategories     *string                             `db:"malaysia_personal_data_categories"`
+		MalaysiaSafeguards                 *string                             `db:"malaysia_safeguards"`
+		MalaysiaApprovalStatus             *MalaysiaPDPATransferApprovalStatus `db:"malaysia_approval_status"`
+		MalaysiaApprovedByProfileID        *gid.GID                            `db:"malaysia_approved_by_profile_id"`
+		MalaysiaApprovalNotes              *string                             `db:"malaysia_approval_notes"`
+		MalaysiaReviewedAt                 *time.Time                          `db:"malaysia_reviewed_at"`
+		MalaysiaNextReviewAt               *time.Time                          `db:"malaysia_next_review_at"`
+		MalaysiaReviewEvidence             *string                             `db:"malaysia_review_evidence"`
+		MalaysiaRuleVersion                *string                             `db:"malaysia_rule_version"`
+		MalaysiaRuleSource                 *string                             `db:"malaysia_rule_source"`
+		CreatedAt                          time.Time                           `db:"created_at"`
+		UpdatedAt                          time.Time                           `db:"updated_at"`
 	}
 
 	TransferImpactAssessments []*TransferImpactAssessment
@@ -258,6 +274,22 @@ SELECT
 	transfer,
 	local_law_risk,
 	supplementary_measures,
+	malaysia_transfer_basis,
+	malaysia_destination_country,
+	malaysia_recipient_third_party_id,
+	malaysia_receiver_registration_number,
+	malaysia_receiver_contact,
+	malaysia_transfer_purpose,
+	malaysia_personal_data_categories,
+	malaysia_safeguards,
+	malaysia_approval_status,
+	malaysia_approved_by_profile_id,
+	malaysia_approval_notes,
+	malaysia_reviewed_at,
+	malaysia_next_review_at,
+	malaysia_review_evidence,
+	malaysia_rule_version,
+	malaysia_rule_source,
 	created_at,
 	updated_at
 FROM
@@ -305,6 +337,22 @@ SELECT
 	transfer,
 	local_law_risk,
 	supplementary_measures,
+	malaysia_transfer_basis,
+	malaysia_destination_country,
+	malaysia_recipient_third_party_id,
+	malaysia_receiver_registration_number,
+	malaysia_receiver_contact,
+	malaysia_transfer_purpose,
+	malaysia_personal_data_categories,
+	malaysia_safeguards,
+	malaysia_approval_status,
+	malaysia_approved_by_profile_id,
+	malaysia_approval_notes,
+	malaysia_reviewed_at,
+	malaysia_next_review_at,
+	malaysia_review_evidence,
+	malaysia_rule_version,
+	malaysia_rule_source,
 	created_at,
 	updated_at
 FROM
@@ -355,6 +403,22 @@ SELECT
 	transfer,
 	local_law_risk,
 	supplementary_measures,
+	malaysia_transfer_basis,
+	malaysia_destination_country,
+	malaysia_recipient_third_party_id,
+	malaysia_receiver_registration_number,
+	malaysia_receiver_contact,
+	malaysia_transfer_purpose,
+	malaysia_personal_data_categories,
+	malaysia_safeguards,
+	malaysia_approval_status,
+	malaysia_approved_by_profile_id,
+	malaysia_approval_notes,
+	malaysia_reviewed_at,
+	malaysia_next_review_at,
+	malaysia_review_evidence,
+	malaysia_rule_version,
+	malaysia_rule_source,
 	created_at,
 	updated_at
 FROM
@@ -405,6 +469,22 @@ INSERT INTO processing_activity_transfer_impact_assessments (
 	transfer,
 	local_law_risk,
 	supplementary_measures,
+	malaysia_transfer_basis,
+	malaysia_destination_country,
+	malaysia_recipient_third_party_id,
+	malaysia_receiver_registration_number,
+	malaysia_receiver_contact,
+	malaysia_transfer_purpose,
+	malaysia_personal_data_categories,
+	malaysia_safeguards,
+	malaysia_approval_status,
+	malaysia_approved_by_profile_id,
+	malaysia_approval_notes,
+	malaysia_reviewed_at,
+	malaysia_next_review_at,
+	malaysia_review_evidence,
+	malaysia_rule_version,
+	malaysia_rule_source,
 	created_at,
 	updated_at
 ) VALUES (
@@ -417,23 +497,55 @@ INSERT INTO processing_activity_transfer_impact_assessments (
 	@transfer,
 	@local_law_risk,
 	@supplementary_measures,
+	@malaysia_transfer_basis,
+	@malaysia_destination_country,
+	@malaysia_recipient_third_party_id,
+	@malaysia_receiver_registration_number,
+	@malaysia_receiver_contact,
+	@malaysia_transfer_purpose,
+	@malaysia_personal_data_categories,
+	@malaysia_safeguards,
+	@malaysia_approval_status,
+	@malaysia_approved_by_profile_id,
+	@malaysia_approval_notes,
+	@malaysia_reviewed_at,
+	@malaysia_next_review_at,
+	@malaysia_review_evidence,
+	@malaysia_rule_version,
+	@malaysia_rule_source,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                     tia.ID,
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        tia.OrganizationID,
-		"processing_activity_id": tia.ProcessingActivityID,
-		"data_subjects":          tia.DataSubjects,
-		"legal_mechanism":        tia.LegalMechanism,
-		"transfer":               tia.Transfer,
-		"local_law_risk":         tia.LocalLawRisk,
-		"supplementary_measures": tia.SupplementaryMeasures,
-		"created_at":             tia.CreatedAt,
-		"updated_at":             tia.UpdatedAt,
+		"id":                                    tia.ID,
+		"tenant_id":                             scope.GetTenantID(),
+		"organization_id":                       tia.OrganizationID,
+		"processing_activity_id":                tia.ProcessingActivityID,
+		"data_subjects":                         tia.DataSubjects,
+		"legal_mechanism":                       tia.LegalMechanism,
+		"transfer":                              tia.Transfer,
+		"local_law_risk":                        tia.LocalLawRisk,
+		"supplementary_measures":                tia.SupplementaryMeasures,
+		"malaysia_transfer_basis":               tia.MalaysiaTransferBasis,
+		"malaysia_destination_country":          tia.MalaysiaDestinationCountry,
+		"malaysia_recipient_third_party_id":     tia.MalaysiaRecipientThirdPartyID,
+		"malaysia_receiver_registration_number": tia.MalaysiaReceiverRegistrationNumber,
+		"malaysia_receiver_contact":             tia.MalaysiaReceiverContact,
+		"malaysia_transfer_purpose":             tia.MalaysiaTransferPurpose,
+		"malaysia_personal_data_categories":     tia.MalaysiaPersonalDataCategories,
+		"malaysia_safeguards":                   tia.MalaysiaSafeguards,
+		"malaysia_approval_status":              tia.MalaysiaApprovalStatus,
+		"malaysia_approved_by_profile_id":       tia.MalaysiaApprovedByProfileID,
+		"malaysia_approval_notes":               tia.MalaysiaApprovalNotes,
+		"malaysia_reviewed_at":                  tia.MalaysiaReviewedAt,
+		"malaysia_next_review_at":               tia.MalaysiaNextReviewAt,
+		"malaysia_review_evidence":              tia.MalaysiaReviewEvidence,
+		"malaysia_rule_version":                 tia.MalaysiaRuleVersion,
+		"malaysia_rule_source":                  tia.MalaysiaRuleSource,
+		"created_at":                            tia.CreatedAt,
+		"updated_at":                            tia.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -462,6 +574,22 @@ UPDATE processing_activity_transfer_impact_assessments SET
 	transfer = @transfer,
 	local_law_risk = @local_law_risk,
 	supplementary_measures = @supplementary_measures,
+	malaysia_transfer_basis = @malaysia_transfer_basis,
+	malaysia_destination_country = @malaysia_destination_country,
+	malaysia_recipient_third_party_id = @malaysia_recipient_third_party_id,
+	malaysia_receiver_registration_number = @malaysia_receiver_registration_number,
+	malaysia_receiver_contact = @malaysia_receiver_contact,
+	malaysia_transfer_purpose = @malaysia_transfer_purpose,
+	malaysia_personal_data_categories = @malaysia_personal_data_categories,
+	malaysia_safeguards = @malaysia_safeguards,
+	malaysia_approval_status = @malaysia_approval_status,
+	malaysia_approved_by_profile_id = @malaysia_approved_by_profile_id,
+	malaysia_approval_notes = @malaysia_approval_notes,
+	malaysia_reviewed_at = @malaysia_reviewed_at,
+	malaysia_next_review_at = @malaysia_next_review_at,
+	malaysia_review_evidence = @malaysia_review_evidence,
+	malaysia_rule_version = @malaysia_rule_version,
+	malaysia_rule_source = @malaysia_rule_source,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -471,13 +599,29 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                     tia.ID,
-		"data_subjects":          tia.DataSubjects,
-		"legal_mechanism":        tia.LegalMechanism,
-		"transfer":               tia.Transfer,
-		"local_law_risk":         tia.LocalLawRisk,
-		"supplementary_measures": tia.SupplementaryMeasures,
-		"updated_at":             tia.UpdatedAt,
+		"id":                                    tia.ID,
+		"data_subjects":                         tia.DataSubjects,
+		"legal_mechanism":                       tia.LegalMechanism,
+		"transfer":                              tia.Transfer,
+		"local_law_risk":                        tia.LocalLawRisk,
+		"supplementary_measures":                tia.SupplementaryMeasures,
+		"malaysia_transfer_basis":               tia.MalaysiaTransferBasis,
+		"malaysia_destination_country":          tia.MalaysiaDestinationCountry,
+		"malaysia_recipient_third_party_id":     tia.MalaysiaRecipientThirdPartyID,
+		"malaysia_receiver_registration_number": tia.MalaysiaReceiverRegistrationNumber,
+		"malaysia_receiver_contact":             tia.MalaysiaReceiverContact,
+		"malaysia_transfer_purpose":             tia.MalaysiaTransferPurpose,
+		"malaysia_personal_data_categories":     tia.MalaysiaPersonalDataCategories,
+		"malaysia_safeguards":                   tia.MalaysiaSafeguards,
+		"malaysia_approval_status":              tia.MalaysiaApprovalStatus,
+		"malaysia_approved_by_profile_id":       tia.MalaysiaApprovedByProfileID,
+		"malaysia_approval_notes":               tia.MalaysiaApprovalNotes,
+		"malaysia_reviewed_at":                  tia.MalaysiaReviewedAt,
+		"malaysia_next_review_at":               tia.MalaysiaNextReviewAt,
+		"malaysia_review_evidence":              tia.MalaysiaReviewEvidence,
+		"malaysia_rule_version":                 tia.MalaysiaRuleVersion,
+		"malaysia_rule_source":                  tia.MalaysiaRuleSource,
+		"updated_at":                            tia.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

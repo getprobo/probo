@@ -8,7 +8,7 @@
     },
     {
       "type": "paragraph",
-      "content": [{ "type": "text", "text": "This document contains Transfer Impact Assessments (TIAs) conducted for processing activities involving international transfers of personal data to countries outside the European Economic Area (EEA). TIAs evaluate the legal mechanisms used for transfers, assess risks related to local laws in destination countries, and document supplementary measures implemented to ensure an adequate level of data protection." }]
+      "content": [{ "type": "text", "text": "This document contains Transfer Impact Assessments (TIAs) for processing activities involving cross-border transfers of personal data. TIAs record the applicable transfer basis, destination and recipient, assess risks in the destination jurisdiction, and preserve safeguards, approvals, and review evidence under the applicable data-protection regime." }]
     },
     { "type": "horizontalRule" },
     {
@@ -56,6 +56,123 @@
         { "type": "text", "text": "Supplementary Measures: ", "marks": [{ "type": "bold" }] },
         { "type": "text", "text": {{json $r.SupplementaryMeasures}} }
       ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "Malaysia PDPA Transfer Record" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Section 129 Basis: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaTransferBasis}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Destination Country: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaDestinationCountry}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Recipient Third-Party ID: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaRecipientThirdPartyID}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Receiver Registration Number: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaReceiverRegistrationNumber}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Receiver Contact: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaReceiverContact}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Transfer Purpose: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaTransferPurpose}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Personal Data Categories: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaPersonalDataCategories}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Safeguards and Evidence: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaSafeguards}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Approval Status: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaApprovalStatus}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Decision Recorded By Profile ID: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaApprovedByProfileID}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Approval Notes: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaApprovalNotes}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Reviewed At: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaReviewedAt}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Next Review Due: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaNextReviewAt}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Review Evidence: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaReviewEvidence}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Rule Version: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaRuleVersion}} }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Rule Source: ", "marks": [{ "type": "bold" }] },
+        { "type": "text", "text": {{json $r.MalaysiaRuleSource}} }
+      ]
     }{{end}},
     { "type": "horizontalRule" },
     {
@@ -66,11 +183,11 @@
     {
       "type": "bulletList",
       "content": [
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Data Subjects: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The categories of individuals whose personal data is being transferred outside the European Economic Area (e.g., employees, customers, end users)." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Data Subjects: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The categories of individuals whose personal data is transferred across borders (e.g., employees, customers, end users)." }] }] },
         { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Transfer: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "A description of the international transfer being assessed, including the source and destination countries and the nature of the data flow." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Legal Mechanism: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The legal basis used to authorise the transfer (e.g., Standard Contractual Clauses, Binding Corporate Rules, an adequacy decision, or a derogation under Article 49 GDPR)." }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Legal Mechanism: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The legal basis used to authorise the transfer under the applicable regime, including a Malaysia PDPA section 129 basis where relevant." }] }] },
         { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Local Law Risk: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The assessment of laws and practices in the destination country that may impinge on the level of protection afforded to transferred personal data, including government access regimes." }] }] },
-        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Supplementary Measures: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The technical, contractual, and organisational measures put in place to bring the level of protection up to the EU standard when the chosen legal mechanism alone is not sufficient." }] }] }
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Supplementary Measures: ", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "The technical, contractual, and organisational measures used to meet the required protection standard when the transfer basis alone is not sufficient." }] }] }
       ]
     }
   ]

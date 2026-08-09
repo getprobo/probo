@@ -18,7 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type {
+	IDataObject,
+	INodeProperties,
+	IExecuteFunctions,
+	INodeExecutionData,
+} from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -132,6 +137,76 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'The lawful basis for the processing activity',
 	},
+	{
+		displayName: 'Run Malaysia PDPA DPIA Screening',
+		name: 'runMalaysiaPDPADPIAScreening',
+		type: 'boolean',
+		displayOptions: { show: { resource: ['processingActivity'], operation: ['update'] } },
+		default: false,
+		description: 'Whether to assess the Malaysia DPIA high-risk criteria on this update',
+	},
+	...[
+		['Total Data Subjects', 'malaysiaTotalDataSubjects', 'Estimated total data subjects'],
+		[
+			'Sensitive Data Subjects',
+			'malaysiaSensitiveDataSubjects',
+			'Estimated sensitive or financial data subjects',
+		],
+	].map(
+		([displayName, name, description]): INodeProperties => ({
+			displayName,
+			name,
+			type: 'number',
+			typeOptions: { minValue: 0, numberPrecision: 0 },
+			displayOptions: {
+				show: {
+					resource: ['processingActivity'],
+					operation: ['update'],
+					runMalaysiaPDPADPIAScreening: [true],
+				},
+			},
+			default: 0,
+			description,
+			required: true,
+		}),
+	),
+	...[
+		['Legal or Significant Effects', 'malaysiaLegalOrSignificantEffects'],
+		['Systematic Monitoring', 'malaysiaSystematicMonitoring'],
+		['Innovative Technology', 'malaysiaInnovativeTechnology'],
+		['Denial or Restriction of Rights', 'malaysiaDenialOrRestrictionOfRights'],
+		['Location or Behaviour Tracking', 'malaysiaLocationOrBehaviourTracking'],
+		['Children or Vulnerable Data Subjects', 'malaysiaChildrenOrVulnerableDataSubjects'],
+		['High-Risk Automated Decision Making', 'malaysiaHighRiskAutomatedDecisionMaking'],
+	].map(
+		([displayName, name]): INodeProperties => ({
+			displayName,
+			name,
+			type: 'boolean',
+			displayOptions: {
+				show: {
+					resource: ['processingActivity'],
+					operation: ['update'],
+					runMalaysiaPDPADPIAScreening: [true],
+				},
+			},
+			default: false,
+		}),
+	),
+	{
+		displayName: 'Other High-Risk Factors',
+		name: 'malaysiaOtherHighRiskFactors',
+		type: 'string',
+		typeOptions: { rows: 3 },
+		displayOptions: {
+			show: {
+				resource: ['processingActivity'],
+				operation: ['update'],
+				runMalaysiaPDPADPIAScreening: [true],
+			},
+		},
+		default: '',
+	},
 ];
 
 export async function execute(
@@ -143,6 +218,11 @@ export async function execute(
 	const purpose = this.getNodeParameter('purpose', itemIndex, '') as string;
 	const role = this.getNodeParameter('role', itemIndex, '') as string;
 	const lawfulBasis = this.getNodeParameter('lawfulBasis', itemIndex, '') as string;
+	const runMalaysiaScreening = this.getNodeParameter(
+		'runMalaysiaPDPADPIAScreening',
+		itemIndex,
+		false,
+	) as boolean;
 
 	const query = `
 		mutation UpdateProcessingActivity($input: UpdateProcessingActivityInput!) {
@@ -155,16 +235,65 @@ export async function execute(
 					lawfulBasis
 					createdAt
 					updatedAt
+					malaysiaPDPADPIARecommendation
+					malaysiaPDPADPIAReasons
+					malaysiaPDPADPIAAssessedAt
+					malaysiaPDPADPIARuleSource
 				}
 			}
 		}
 	`;
 
-	const input: Record<string, string> = { id };
+	const input: IDataObject = { id };
 	if (name) input.name = name;
 	if (purpose) input.purpose = purpose;
 	if (role) input.role = role;
 	if (lawfulBasis) input.lawfulBasis = lawfulBasis;
+	if (runMalaysiaScreening) {
+		input.malaysiaPDPADPIAScreening = {
+			totalDataSubjects: this.getNodeParameter(
+				'malaysiaTotalDataSubjects',
+				itemIndex,
+			) as number,
+			sensitiveDataSubjects: this.getNodeParameter(
+				'malaysiaSensitiveDataSubjects',
+				itemIndex,
+			) as number,
+			legalOrSignificantEffects: this.getNodeParameter(
+				'malaysiaLegalOrSignificantEffects',
+				itemIndex,
+			) as boolean,
+			systematicMonitoring: this.getNodeParameter(
+				'malaysiaSystematicMonitoring',
+				itemIndex,
+			) as boolean,
+			innovativeTechnology: this.getNodeParameter(
+				'malaysiaInnovativeTechnology',
+				itemIndex,
+			) as boolean,
+			denialOrRestrictionOfRights: this.getNodeParameter(
+				'malaysiaDenialOrRestrictionOfRights',
+				itemIndex,
+			) as boolean,
+			locationOrBehaviourTracking: this.getNodeParameter(
+				'malaysiaLocationOrBehaviourTracking',
+				itemIndex,
+			) as boolean,
+			childrenOrVulnerableDataSubjects: this.getNodeParameter(
+				'malaysiaChildrenOrVulnerableDataSubjects',
+				itemIndex,
+			) as boolean,
+			highRiskAutomatedDecisionMaking: this.getNodeParameter(
+				'malaysiaHighRiskAutomatedDecisionMaking',
+				itemIndex,
+			) as boolean,
+			otherHighRiskFactors: this.getNodeParameter(
+				'malaysiaOtherHighRiskFactors',
+				itemIndex,
+				'',
+			) as string,
+		};
+	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

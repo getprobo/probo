@@ -189,6 +189,17 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 		return nil, err
 	}
 
+	activity, err := r.probo.ProcessingActivities.Get(ctx, scope, input.ProcessingActivityID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load processing activity for Malaysia PDPA transfer", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	malaysiaPDPA, err := r.newMalaysiaPDPATransferRequest(ctx, activity.OrganizationID, input.MalaysiaPdpa)
+	if err != nil {
+		return nil, err
+	}
+
 	req := probo.CreateTransferImpactAssessmentRequest{
 		ProcessingActivityID:  input.ProcessingActivityID,
 		DataSubjects:          input.DataSubjects,
@@ -196,6 +207,7 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 		Transfer:              input.Transfer,
 		LocalLawRisk:          input.LocalLawRisk,
 		SupplementaryMeasures: input.SupplementaryMeasures,
+		MalaysiaPDPA:          malaysiaPDPA,
 	}
 
 	tia, err := r.probo.TransferImpactAssessments.Create(ctx, scope, &req)
@@ -225,6 +237,17 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 		return nil, err
 	}
 
+	currentTIA, err := r.probo.TransferImpactAssessments.Get(ctx, scope, input.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load transfer impact assessment for Malaysia PDPA transfer", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	malaysiaPDPA, err := r.newMalaysiaPDPATransferRequest(ctx, currentTIA.OrganizationID, input.MalaysiaPdpa)
+	if err != nil {
+		return nil, err
+	}
+
 	req := probo.UpdateTransferImpactAssessmentRequest{
 		ID:                    input.ID,
 		DataSubjects:          gqlutils.UnwrapOmittable(input.DataSubjects),
@@ -232,6 +255,7 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 		Transfer:              gqlutils.UnwrapOmittable(input.Transfer),
 		LocalLawRisk:          gqlutils.UnwrapOmittable(input.LocalLawRisk),
 		SupplementaryMeasures: gqlutils.UnwrapOmittable(input.SupplementaryMeasures),
+		MalaysiaPDPA:          malaysiaPDPA,
 	}
 
 	tia, err := r.probo.TransferImpactAssessments.Update(ctx, scope, &req)

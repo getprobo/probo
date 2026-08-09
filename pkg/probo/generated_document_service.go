@@ -1704,6 +1704,11 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 			thirdPartyStr = strings.Join(thirdPartyNames, ", ")
 		}
 
+		malaysiaDPIAReasons := "None"
+		if len(pa.MalaysiaDPIAReasons) > 0 {
+			malaysiaDPIAReasons = strings.Join(pa.MalaysiaDPIAReasons, ", ")
+		}
+
 		rows = append(rows, docgen.ProcessingActivityListRow{
 			Name:                                 pa.Name,
 			Purpose:                              derefStringOrNotSpecified(pa.Purpose),
@@ -1725,6 +1730,11 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 			NextReviewDate:                       formatDateOrNotSpecified(pa.NextReviewDate),
 			DataProtectionOfficer:                dpoName,
 			ThirdParties:                         thirdPartyStr,
+			MalaysiaDPIARecommendation:           pa.MalaysiaDPIARecommendation.String(),
+			MalaysiaDPIAReasons:                  malaysiaDPIAReasons,
+			MalaysiaDPIAAssessedAt:               formatDateOrNotSpecified(pa.MalaysiaDPIAAssessedAt),
+			MalaysiaDPIARuleVersion:              derefStringOrNotSpecified(pa.MalaysiaDPIARuleVersion),
+			MalaysiaDPIARuleSource:               derefStringOrNotSpecified(pa.MalaysiaDPIARuleSource),
 		})
 	}
 
@@ -2312,12 +2322,28 @@ func (s *GeneratedDocumentService) buildTransferImpactAssessmentListDocumentData
 		}
 
 		rows = append(rows, docgen.TransferImpactAssessmentListRow{
-			ProcessingActivityName: paName,
-			DataSubjects:           derefStringOrNotSpecified(a.DataSubjects),
-			Transfer:               derefStringOrNotSpecified(a.Transfer),
-			LegalMechanism:         derefStringOrNotSpecified(a.LegalMechanism),
-			LocalLawRisk:           derefStringOrNotSpecified(a.LocalLawRisk),
-			SupplementaryMeasures:  derefStringOrNotSpecified(a.SupplementaryMeasures),
+			ProcessingActivityName:             paName,
+			DataSubjects:                       derefStringOrNotSpecified(a.DataSubjects),
+			Transfer:                           derefStringOrNotSpecified(a.Transfer),
+			LegalMechanism:                     derefStringOrNotSpecified(a.LegalMechanism),
+			LocalLawRisk:                       derefStringOrNotSpecified(a.LocalLawRisk),
+			SupplementaryMeasures:              derefStringOrNotSpecified(a.SupplementaryMeasures),
+			MalaysiaTransferBasis:              formatMalaysiaTransferBasis(a.MalaysiaTransferBasis),
+			MalaysiaDestinationCountry:         formatCountryCode(a.MalaysiaDestinationCountry),
+			MalaysiaRecipientThirdPartyID:      formatGID(a.MalaysiaRecipientThirdPartyID),
+			MalaysiaReceiverRegistrationNumber: derefStringOrNotSpecified(a.MalaysiaReceiverRegistrationNumber),
+			MalaysiaReceiverContact:            derefStringOrNotSpecified(a.MalaysiaReceiverContact),
+			MalaysiaTransferPurpose:            derefStringOrNotSpecified(a.MalaysiaTransferPurpose),
+			MalaysiaPersonalDataCategories:     derefStringOrNotSpecified(a.MalaysiaPersonalDataCategories),
+			MalaysiaSafeguards:                 derefStringOrNotSpecified(a.MalaysiaSafeguards),
+			MalaysiaApprovalStatus:             formatMalaysiaTransferApprovalStatus(a.MalaysiaApprovalStatus),
+			MalaysiaApprovedByProfileID:        formatGID(a.MalaysiaApprovedByProfileID),
+			MalaysiaApprovalNotes:              derefStringOrNotSpecified(a.MalaysiaApprovalNotes),
+			MalaysiaReviewedAt:                 formatDateOrNotSpecified(a.MalaysiaReviewedAt),
+			MalaysiaNextReviewAt:               formatDateOrNotSpecified(a.MalaysiaNextReviewAt),
+			MalaysiaReviewEvidence:             derefStringOrNotSpecified(a.MalaysiaReviewEvidence),
+			MalaysiaRuleVersion:                derefStringOrNotSpecified(a.MalaysiaRuleVersion),
+			MalaysiaRuleSource:                 derefStringOrNotSpecified(a.MalaysiaRuleSource),
 		})
 	}
 
@@ -2328,6 +2354,38 @@ func (s *GeneratedDocumentService) buildTransferImpactAssessmentListDocumentData
 		TotalTransferImpactAssessments: len(assessments),
 		Rows:                           rows,
 	}, nil
+}
+
+func formatMalaysiaTransferBasis(value *coredata.MalaysiaPDPATransferBasis) string {
+	if value == nil {
+		return "Not specified"
+	}
+
+	return value.String()
+}
+
+func formatMalaysiaTransferApprovalStatus(value *coredata.MalaysiaPDPATransferApprovalStatus) string {
+	if value == nil {
+		return "Not specified"
+	}
+
+	return value.String()
+}
+
+func formatCountryCode(value *coredata.CountryCode) string {
+	if value == nil {
+		return "Not specified"
+	}
+
+	return value.String()
+}
+
+func formatGID(value *gid.GID) string {
+	if value == nil {
+		return "Not specified"
+	}
+
+	return value.String()
 }
 
 var transferImpactAssessmentListTemplate = template.Must(

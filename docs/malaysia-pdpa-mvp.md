@@ -105,6 +105,26 @@ destination jurisdiction, recipient, safeguards, approval, and review fields.
 Add a Malaysia high-risk screening questionnaire that can open an existing
 DPIA.
 
+The screening reuses the DPO guideline's strict volume thresholds: more than
+20,000 total data subjects or more than 10,000 sensitive/financial data
+subjects produces a `REQUIRED` recommendation. Qualitative high-risk factors,
+including systematic monitoring, legal or similarly significant effects,
+innovative technology, rights restrictions, location or behaviour tracking,
+vulnerable data subjects, and high-risk automated decisions, produce a
+`DPO_REVIEW_REQUIRED` recommendation when neither numeric threshold is crossed.
+The server records the reasons, assessor, assessment time, and rule version.
+Opening the existing DPIA form remains an explicit user action.
+
+The transfer record supports each basis in section 129(2) and section 129(3),
+links the foreign recipient to an existing third party in the same
+organization, and rejects Malaysia or `GLOBAL` as the destination. The current
+authenticated user is recorded as the approver when a transfer is approved or
+rejected. Approval requires review evidence; rejection requires notes. For the
+substantially-similar-law and adequate-equivalent-protection bases, an approved
+record receives a server-calculated review date no later than three years after
+the assessment. Clients cannot supply the approver, review timestamp, next
+review date, or rule version.
+
 ## Phase 4: cybersecurity evidence
 
 Integrate the existing OpenList security scanner as an isolated agent/service.
