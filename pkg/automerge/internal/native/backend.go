@@ -2060,6 +2060,15 @@ func mergeTextMarkPatches(
 	identifier string,
 	patches []patchOut,
 ) ([]patchOut, error) {
+	// The reference derives mark patches from mark operations, not from state
+	// comparison, so a mark range that merely grew because text was spliced into
+	// an expanding mark produces no mark patch (the marks ride on the splice
+	// patch instead). Only emit mark patches when the diff window actually
+	// contains a mark operation on this object.
+	if !windowHasMarkOperation(source, target, object) {
+		return patches, nil
+	}
+
 	marks, err := diffMarkPatches(source, target, object)
 	if err != nil {
 		return nil, err
@@ -2097,6 +2106,23 @@ func mergeTextMarkPatches(
 	merged = append(merged, patches[insertAt:]...)
 
 	return merged, nil
+}
+
+// windowHasMarkOperation reports whether the diff window between the source and
+// target states contains a mark operation on the object, i.e. a mark was
+// created or removed rather than merely expanded by a neighbouring splice.
+func windowHasMarkOperation(source, target *State, object ObjectID) bool {
+	for id, operation := range target.operations {
+		if operation.Action != ActionMark || operation.Object != object {
+			continue
+		}
+
+		if _, ok := source.operations[id]; !ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // diffMarkPatches computes the mark changes transforming the source text state

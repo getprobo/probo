@@ -5668,10 +5668,12 @@
       "file": "tests/text.rs",
       "line": 85,
       "name": "incremental_splice_patches_include_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_IncrementalSplicePatchesIncludeMarks"
+      ],
+      "rationale": "Text spliced inside an expanding mark is reported as a splice_text patch carrying that mark, with no separate mark patch for the range growth.",
       "runtimeName": "incremental_splice_patches_include_marks"
     },
     {
@@ -6470,10 +6472,12 @@
       "file": "tests/text.rs",
       "line": 505,
       "name": "noexpand_marks_at_the_end_of_text_should_not_emit_marked_patches_on_following_insertions",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_NoexpandMarksAtEndOfText"
+      ],
+      "rationale": "Text appended after a non-expanding mark does not inherit it, so the splice patch carries no marks.",
       "runtimeName": "noexpand_marks_at_the_end_of_text_should_not_emit_marked_patches_on_following_insertions"
     },
     {

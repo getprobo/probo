@@ -311,6 +311,95 @@ func TestRustTextEncoding_PatchDelete(t *testing.T) {
 	assert.Equal(t, patches["reference"], patches["native"])
 }
 
+// TestRustText_IncrementalSplicePatchesIncludeMarks reproduces
+// incremental_splice_patches_include_marks: text spliced inside an expanding
+// mark is reported as a splice_text patch carrying that mark, with no separate
+// mark patch for the range growth.
+func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, _, text := seedText(t, ctx, engine, "12345")
+		require.NoError(t, text.Mark(
+			ctx, 1, 2, "strong",
+			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+			automerge.MarkExpandBoth,
+		))
+		_, err := document.Commit(ctx, "mark", commitTime)
+		require.NoError(t, err)
+		require.NoError(t, document.UpdateDiffCursor(ctx))
+
+		var patches []automerge.Patch
+
+		require.NoError(t, text.Splice(ctx, 1, 0, "-"))
+		_, err = document.Commit(ctx, "s1", commitTime)
+		require.NoError(t, err)
+		first, err := document.DiffIncremental(ctx)
+		require.NoError(t, err)
+		patches = append(patches, first...)
+
+		require.NoError(t, text.Splice(ctx, 2, 0, "-"))
+		_, err = document.Commit(ctx, "s2", commitTime)
+		require.NoError(t, err)
+		second, err := document.DiffIncremental(ctx)
+		require.NoError(t, err)
+		patches = append(patches, second...)
+
+		result[engine.name] = patches
+	}
+
+	require.Len(t, result["reference"], 2)
+
+	for _, patch := range result["reference"] {
+		assert.Equal(t, automerge.PatchSpliceText, patch.Action)
+		require.Len(t, patch.Marks, 1)
+		assert.Equal(t, "strong", patch.Marks[0].Name)
+	}
+
+	assert.Equal(t, uint64(1), result["reference"][0].Index)
+	assert.Equal(t, uint64(2), result["reference"][1].Index)
+	assert.Equal(t, result["reference"], result["native"])
+}
+
+// TestRustText_NoexpandMarksAtEndOfText reproduces
+// noexpand_marks_at_the_end_of_text_should_not_emit_marked_patches_on_following_insertions:
+// text appended after a non-expanding mark does not inherit it, so the splice
+// patch carries no marks.
+func TestRustText_NoexpandMarksAtEndOfText(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, _, text := seedText(t, ctx, engine, "Hello world")
+		require.NoError(t, text.Mark(
+			ctx, 10, 11, "strong",
+			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+			automerge.MarkExpandNone,
+		))
+		_, err := document.Commit(ctx, "mark", commitTime)
+		require.NoError(t, err)
+		require.NoError(t, document.UpdateDiffCursor(ctx))
+
+		require.NoError(t, text.Splice(ctx, 11, 0, "a"))
+		_, err = document.Commit(ctx, "append", commitTime)
+		require.NoError(t, err)
+
+		patches, err := document.DiffIncremental(ctx)
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	require.Len(t, result["reference"], 1)
+	assert.Equal(t, automerge.PatchSpliceText, result["reference"][0].Action)
+	assert.Empty(t, result["reference"][0].Marks)
+	assert.Equal(t, result["reference"], result["native"])
+}
+
 // TestRustText_LocalPatchesCreatedForMarks reproduces local_patches_created_for_marks:
 // materializing marked text through the diff cursor splits it into one
 // splice_text patch per mark run, each carrying the marks active on that run.
