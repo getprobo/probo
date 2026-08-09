@@ -966,7 +966,10 @@ func (b *Backend) SpliceText(
 		return err
 	}
 
-	sequence := b.state.sequence(object.OpID)
+	// Splice positions share the unified rich-text index space with marks and
+	// blocks, so walk the full visible element sequence (text and block markers)
+	// rather than the text-only view.
+	sequence := b.state.sequenceElements(object.OpID)
 
 	start, end, previous, err := sequenceRange(sequence, index, uint32(deleteCount))
 	if err != nil {
@@ -986,7 +989,6 @@ func (b *Backend) SpliceText(
 		}
 	}
 
-	inserted := make([]Operation, 0, len(value))
 	for _, character := range value {
 		key := Key{IsHead: previous == nil}
 		if previous != nil {
@@ -1005,25 +1007,8 @@ func (b *Backend) SpliceText(
 			return err
 		}
 
-		inserted = append(inserted, operation)
 		previous = new(operation.ID)
 	}
-
-	var updated []Operation
-	if start == len(sequence) && end == len(sequence) {
-		updated = append(sequence, inserted...)
-	} else {
-		updated = make(
-			[]Operation,
-			0,
-			len(sequence)-(end-start)+len(inserted),
-		)
-		updated = append(updated, sequence[:start]...)
-		updated = append(updated, inserted...)
-		updated = append(updated, sequence[end:]...)
-	}
-
-	b.state.setSequenceCache(object.OpID, updated)
 
 	return nil
 }
@@ -2489,9 +2474,12 @@ func (b *Backend) textMarkKey(
 	object ObjectID,
 	index uint32,
 ) (Key, error) {
-	sequence := b.state.sequence(object.OpID)
+	// Mark positions share the unified rich-text index space with splice and
+	// block operations, so block markers occupy a position (length 1) just like
+	// a character. Walk the full element sequence, not the text-only view.
+	sequence := b.state.sequenceElements(object.OpID)
 
-	_, _, previous, err := sequenceRange(sequence, index, 0)
+	_, previous, err := richTextPosition(sequence, index)
 	if err != nil {
 		return Key{}, err
 	}
@@ -2574,7 +2562,7 @@ func sequenceRange(
 			break
 		}
 
-		length := uint32(utf16Length(operation))
+		length := elementLength(operation)
 		if position+length > index {
 			return 0, 0, nil, fmt.Errorf("text index splits a Unicode character")
 		}
@@ -2596,7 +2584,7 @@ func sequenceRange(
 
 	end := start
 	for end < len(sequence) && position < target {
-		position += uint32(utf16Length(sequence[end]))
+		position += elementLength(sequence[end])
 		if position > target {
 			return 0, 0, nil, fmt.Errorf("text deletion splits a Unicode character")
 		}
@@ -2609,6 +2597,17 @@ func sequenceRange(
 	}
 
 	return start, end, previous, nil
+}
+
+// elementLength returns the position an operation occupies in the unified
+// rich-text index space: block markers count as a single position, while text
+// characters count by their UTF-16 code-unit length.
+func elementLength(operation Operation) uint32 {
+	if operation.Action == ActionMakeMap {
+		return 1
+	}
+
+	return uint32(utf16Length(operation))
 }
 
 func utf16Length(operation Operation) int {
