@@ -2,6 +2,16 @@
   {
     "source": "rust",
     "file": "tests/text.rs",
+    "name": "marks_which_cross_optree_boundaries_are_not_double_counted_in_splice_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_CrossPageMarksNotDoubleCounted"
+    ],
+    "rationale": "A non-expanding mark crossing an operation-tree page boundary does not leak onto text appended after repeated block insertions."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
     "name": "expand_marks_are_reported_in_patches",
     "classification": "covered",
     "localTests": [

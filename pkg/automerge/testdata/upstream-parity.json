@@ -6278,10 +6278,12 @@
       "file": "tests/text.rs",
       "line": 418,
       "name": "marks_which_cross_optree_boundaries_are_not_double_counted_in_splice_patches",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_CrossPageMarksNotDoubleCounted"
+      ],
+      "rationale": "A non-expanding mark crossing an operation-tree page boundary does not leak onto text appended after repeated block insertions.",
       "runtimeName": "marks_which_cross_optree_boundaries_are_not_double_counted_in_splice_patches"
     },
     {

@@ -28,6 +28,7 @@ package automerge_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -490,6 +491,65 @@ func TestRustMarks_ExpansionAndUnmark(t *testing.T) {
 	assert.Equal(t, uint32(14), result["native"][0].End)
 	assert.Equal(t, "bold", result["native"][0].Name)
 	assert.Equal(t, markTrue(), result["native"][0].Value)
+}
+
+// TestRustText_CrossPageMarksNotDoubleCounted reproduces
+// marks_which_cross_optree_boundaries_are_not_double_counted_in_splice_patches.
+// A mark crossing the reference engine's operation-tree page boundary must not
+// leak onto text appended much later after unrelated block insertions.
+func TestRustText_CrossPageMarksNotDoubleCounted(t *testing.T) {
+	t.Parallel()
+
+	const pageSize = 16
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			document, err := engine.open(ctx, actor(0xaa))
+			require.NoError(t, err)
+			closeDocument(t, document)
+
+			text, err := document.CreateText(ctx, "text")
+			require.NoError(t, err)
+			textObject, err := document.Root().Object(ctx, "text")
+			require.NoError(t, err)
+
+			require.NoError(t, text.Splice(ctx, 0, 0, strings.Repeat("a", pageSize*2)))
+			require.NoError(t, text.Mark(
+				ctx,
+				pageSize-1,
+				pageSize+1,
+				"strong",
+				markTrue(),
+				automerge.MarkExpandNone,
+			))
+			_, err = document.Commit(ctx, "seed", commitTime)
+			require.NoError(t, err)
+
+			for iteration := 0; iteration < 100; iteration++ {
+				length, err := textObject.Len(ctx)
+				require.NoError(t, err)
+				_, err = text.SplitBlock(ctx, uint32(length))
+				require.NoError(t, err)
+				_, err = document.Commit(ctx, "block", commitTime.Add(time.Duration(iteration+1)*time.Second))
+				require.NoError(t, err)
+				require.NoError(t, document.UpdateDiffCursor(ctx))
+
+				length, err = textObject.Len(ctx)
+				require.NoError(t, err)
+				require.NoError(t, text.Splice(ctx, uint32(length), 0, "a"))
+				_, err = document.Commit(ctx, "append", commitTime.Add(time.Duration(iteration+101)*time.Second))
+				require.NoError(t, err)
+
+				patches, err := document.DiffIncremental(ctx)
+				require.NoError(t, err)
+				require.Len(t, patches, 1)
+				assert.Equal(t, automerge.PatchSpliceText, patches[0].Action)
+				assert.Empty(t, patches[0].Marks)
+			}
+		})
+	}
 }
 
 // TestRustRichText_EmptyMarksBeforeBlockMarker reproduces
