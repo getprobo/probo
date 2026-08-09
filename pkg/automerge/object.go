@@ -307,6 +307,40 @@ func (o *Object) InsertObject(
 	}, nil
 }
 
+// PutObjectAt replaces a list element with a new composite value.
+func (o *Object) PutObjectAt(
+	ctx context.Context,
+	index uint64,
+	objectType ObjectType,
+) (*Object, error) {
+	o.document.mu.Lock()
+	defer o.document.mu.Unlock()
+
+	if o.document.closed {
+		return nil, ErrClosed
+	}
+
+	if !validObjectType(objectType) {
+		return nil, fmt.Errorf("unknown Automerge object type %q", objectType)
+	}
+
+	handle, err := o.document.backend.PutObjectAt(
+		ctx,
+		o.handle,
+		index,
+		string(objectType),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot replace Automerge object: %w", err)
+	}
+
+	return &Object{
+		document: o.document,
+		handle:   handle,
+		Type:     objectType,
+	}, nil
+}
+
 // ScalarAt returns a typed scalar from a list index.
 func (o *Object) ScalarAt(ctx context.Context, index uint64) (Scalar, error) {
 	o.document.mu.Lock()
