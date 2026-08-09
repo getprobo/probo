@@ -52,6 +52,12 @@ type (
 		// every other mutation drops the entry so it is recomputed.
 		sequenceValuesCache   map[OpID][]sequenceValue
 		sequenceElementsCache map[OpID][]Operation
+
+		// mapKeyIndex groups operation IDs by the map property they address so
+		// reading a key does not scan the whole operation set. It is built on
+		// first use and then maintained as operations are applied.
+		mapKeyIndex      map[ObjectID]map[string][]OpID
+		mapKeyIndexBuilt bool
 	}
 
 	RichSpan struct {
@@ -68,15 +74,16 @@ type (
 
 func NewState() *State {
 	return &State{
-		changes:          make(map[ChangeHash]*Change),
-		actorSequence:    make(map[ActorID]uint64),
-		operations:       make(map[OpID]Operation),
-		superseded:       make(map[OpID]struct{}),
-		heads:            make(map[ChangeHash]struct{}),
-		sequenceCache:       make(map[OpID][]Operation),
-		insertOrderCache:    make(map[OpID][]OpID),
+		changes:               make(map[ChangeHash]*Change),
+		actorSequence:         make(map[ActorID]uint64),
+		operations:            make(map[OpID]Operation),
+		superseded:            make(map[OpID]struct{}),
+		heads:                 make(map[ChangeHash]struct{}),
+		sequenceCache:         make(map[OpID][]Operation),
+		insertOrderCache:      make(map[OpID][]OpID),
 		sequenceValuesCache:   make(map[OpID][]sequenceValue),
 		sequenceElementsCache: make(map[OpID][]Operation),
+		mapKeyIndex:           make(map[ObjectID]map[string][]OpID),
 	}
 }
 
@@ -166,6 +173,7 @@ func (s *State) ApplyChange(change *Change) error {
 			delete(s.sequenceElementsCache, operation.Object.OpID)
 		}
 
+		s.indexMapKeyOperation(operation)
 		s.supersedePredecessors(operation)
 	}
 
@@ -343,15 +351,54 @@ func (s *State) visibleMapOperations(property string) []Operation {
 	return s.visibleMapObjectOperations(RootObject(), property)
 }
 
+// mapKeyOperationIDs returns every operation addressing a map property,
+// building the property index on first use.
+func (s *State) mapKeyOperationIDs(object ObjectID, property string) []OpID {
+	if !s.mapKeyIndexBuilt {
+		s.mapKeyIndexBuilt = true
+
+		for _, operation := range s.operations {
+			s.indexMapKeyOperation(operation)
+		}
+	}
+
+	properties, ok := s.mapKeyIndex[object]
+	if !ok {
+		return nil
+	}
+
+	return properties[property]
+}
+
+// indexMapKeyOperation records an operation under the map property it
+// addresses. It is a no-op until the index has been built, because the pending
+// build will pick the operation up from the operation set.
+func (s *State) indexMapKeyOperation(operation Operation) {
+	if !s.mapKeyIndexBuilt || operation.Key.Property == nil {
+		return
+	}
+
+	properties, ok := s.mapKeyIndex[operation.Object]
+	if !ok {
+		properties = make(map[string][]OpID)
+		s.mapKeyIndex[operation.Object] = properties
+	}
+
+	properties[*operation.Key.Property] = append(
+		properties[*operation.Key.Property],
+		operation.ID,
+	)
+}
+
 func (s *State) visibleMapObjectOperations(
 	object ObjectID,
 	property string,
 ) []Operation {
 	operations := make([]Operation, 0)
-	for _, operation := range s.operations {
-		if operation.Object != object ||
-			operation.Key.Property == nil ||
-			*operation.Key.Property != property ||
+
+	for _, id := range s.mapKeyOperationIDs(object, property) {
+		operation, ok := s.operations[id]
+		if !ok ||
 			operation.Action == ActionDelete ||
 			operation.Action == ActionIncrement ||
 			s.isSuperseded(operation.ID) {
@@ -1428,6 +1475,7 @@ func (s *State) applyPending(operations []Operation) error {
 
 		s.spliceInsertOrder(operation)
 		s.updateSequenceValues(operation)
+		s.indexMapKeyOperation(operation)
 		s.supersedePredecessors(operation)
 	}
 
