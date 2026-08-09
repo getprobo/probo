@@ -34,7 +34,7 @@ The generator verifies both Git revisions before updating the ledger.
 
 | Classification | Covered | Pending |
 |---|---:|---:|
-| Required Rust + JavaScript boundary behavior | 168 | 194 |
+| Required Rust + JavaScript boundary behavior | 173 | 189 |
 | Non-blocking JavaScript convenience behavior | 44 | 196 |
 | Private or language-specific behavior | 110 | — |
 
@@ -52,7 +52,7 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/text.rs` | 16 | update-text diffing, mark expansion patches, deleted marks, block-adjacent marks, large graphemes, remote patches, and zero-length spans |
 | `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
 | `rust/tests/text_encoding.rs` | 10 | UTF-16 length/get/put/insert/delete/split behavior and patch index units |
-| `rust/tests/batch_insert.rs` | 10 | patch output, merge behavior, invalid scalar insertion, transaction behavior, existing-map replacement, and repeated batches |
+| `rust/tests/batch_insert.rs` | 5 | patch output, invalid-scalar rejection, and transaction integration |
 | `rust/src/automerge/current_state.rs` | 9 | current-state materialization and map/list/counter/mark patch conflicts |
 | `javascript/block_test.ts` | 11 | `updateSpans`, block attributes, mark configuration, historical marks, and immutable attribute conversion |
 | `javascript/text_test.ts` | 9 | initialization, text in arrays, update diffing, grapheme clusters, implicit deletion, mixed operations, and assigned-object mutation |
@@ -67,7 +67,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **194**.
+Total required pending entries: **189**.
 
 ## Optional JavaScript convenience backlog
 

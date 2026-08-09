@@ -4489,10 +4489,12 @@
       "file": "tests/batch_insert.rs",
       "line": 399,
       "name": "batch_insert_into_existing_map",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatch_InsertIntoExistingMap"
+      ],
+      "rationale": "Batch-creating a nested map inside a populated map preserves the existing key and materializes the new nested values.",
       "runtimeName": "batch_insert_into_existing_map"
     },
     {
@@ -4591,10 +4593,12 @@
       "file": "tests/batch_insert.rs",
       "line": 353,
       "name": "batch_insert_merges_correctly",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatch_MergesCorrectly"
+      ],
+      "rationale": "Two forks each batch-create a distinct nested map; after merge both objects and their fields are present, verified against the reference.",
       "runtimeName": "batch_insert_merges_correctly"
     },
     {
@@ -4744,10 +4748,12 @@
       "file": "tests/batch_insert.rs",
       "line": 682,
       "name": "batch_put_overwrite_with_nested_structure",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatch_PutOverwriteWithNestedStructure"
+      ],
+      "rationale": "Overwriting a list element with a deeply nested map and child list keeps the sibling element and materializes the nested structure.",
       "runtimeName": "batch_put_overwrite_with_nested_structure"
     },
     {
@@ -6320,10 +6326,12 @@
       "file": "tests/batch_insert.rs",
       "line": 378,
       "name": "multiple_batch_inserts",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatch_MultipleInserts"
+      ],
+      "rationale": "Three sequential batch-created maps each retain their scalar fields on both engines.",
       "runtimeName": "multiple_batch_inserts"
     },
     {
@@ -7385,10 +7393,12 @@
       "file": "tests/batch_insert.rs",
       "line": 1013,
       "name": "splice_merges_correctly",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatch_SpliceMergesCorrectly"
+      ],
+      "rationale": "Concurrent hydrated splices into a shared list merge to length three with the shared element retained.",
       "runtimeName": "splice_merges_correctly"
     },
     {

@@ -1772,5 +1772,55 @@
       "TestRustSync_BothToggleAfterMultipleReadOnlyRounds"
     ],
     "rationale": "Both peers accumulate changes across read-only rounds and exchange all of them after both switch to read-write."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_merges_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_MergesCorrectly"
+    ],
+    "rationale": "Two forks each batch-create a distinct nested map; after merge both objects and their fields are present, verified against the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "multiple_batch_inserts",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_MultipleInserts"
+    ],
+    "rationale": "Three sequential batch-created maps each retain their scalar fields on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_into_existing_map",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_InsertIntoExistingMap"
+    ],
+    "rationale": "Batch-creating a nested map inside a populated map preserves the existing key and materializes the new nested values."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_put_overwrite_with_nested_structure",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_PutOverwriteWithNestedStructure"
+    ],
+    "rationale": "Overwriting a list element with a deeply nested map and child list keeps the sibling element and materializes the nested structure."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "splice_merges_correctly",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatch_SpliceMergesCorrectly"
+    ],
+    "rationale": "Concurrent hydrated splices into a shared list merge to length three with the shared element retained."
   }
 ]
