@@ -1970,6 +1970,51 @@ func (b *Backend) TextCursorMoving(
 	return nil, fmt.Errorf("text cursor index %d is out of bounds", index)
 }
 
+func (b *Backend) TextCursorMovingAt(
+	ctx context.Context,
+	handle uint32,
+	index uint32,
+	moveBefore bool,
+	heads [][32]byte,
+) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	object, err := b.textObject(handle)
+	if err != nil {
+		return nil, err
+	}
+
+	historical, ok := b.state.at(nativeHashes(heads))
+	if !ok {
+		return nil, fmt.Errorf("historical heads are unknown")
+	}
+
+	position := uint32(0)
+
+	for _, operation := range historical.sequence(object.OpID) {
+		length := uint32(utf16Length(operation))
+		if index >= position && index < position+length {
+			data := []byte{1, 3}
+			data = appendLengthPrefixedNative(data, operation.ID.Actor.Bytes())
+			data = appendULEB(data, operation.ID.Counter)
+
+			if moveBefore {
+				data = append(data, 1)
+			} else {
+				data = append(data, 2)
+			}
+
+			return data, nil
+		}
+
+		position += length
+	}
+
+	return nil, fmt.Errorf("text cursor index %d is out of bounds", index)
+}
+
 func (b *Backend) TextCursorPosition(
 	ctx context.Context,
 	handle uint32,

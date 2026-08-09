@@ -51,7 +51,6 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/batch_insert.rs` | 2 | invalid-scalar rejection and transaction integration |
 | `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
 | Rust storage doctests | 6 | parser splitting, ranges, incomplete data, and document parsing contracts |
-| `javascript/cursors.ts` | 3 | cursors at historical heads, shallow copies, and patch source metadata |
 | `rust/tests/test_save_load_orphans.rs` | 2 | preserving orphan changes across a document save and discarding them on request (needs a native document-chunk encoder) |
 | `rust/src/sync/v1_compat_test` | 3 | V1→V2, V2→V1, and compressed-change compatibility |
 | Rust `AutoCommit` doctests | 3 | commit options, diff, and incremental diff |
@@ -60,7 +59,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 1 | document iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **55**.
+Total required pending entries: **52**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 

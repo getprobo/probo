@@ -1160,10 +1160,12 @@
       "file": "cursors.ts",
       "line": 153,
       "name": "getCursor should respect heads",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSCursors_GetCursorRespectsHeads"
+      ],
+      "rationale": "Cursors created against a historical view resolve to the same positions on both engines."
     },
     {
       "id": "javascript:cursors.ts:178:should allow for usage of start/end cursors",
@@ -1223,10 +1225,10 @@
       "file": "cursors.ts",
       "line": 24,
       "name": "should be able to pass a doc to from() to make a shallow copy",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript Automerge.from(doc) shallow-copy binding helper; Go clones via save/load."
     },
     {
       "id": "javascript:cursors.ts:37:can use cursors in common text operations",
@@ -1273,10 +1275,10 @@
       "file": "cursors.ts",
       "line": 76,
       "name": "patch callbacks inform where they came from",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript patchCallback PatchSource metadata; a binding-specific callback channel with no wire or state interop meaning."
     },
     {
       "id": "javascript:error.ts:5:proxy handler throws an error, not a string",

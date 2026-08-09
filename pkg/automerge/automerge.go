@@ -124,6 +124,7 @@ type (
 		MarksAt(context.Context, uint32, [][32]byte) ([]byte, error)
 		TextCursor(context.Context, uint32, uint32) ([]byte, error)
 		TextCursorMoving(context.Context, uint32, uint32, bool) ([]byte, error)
+		TextCursorMovingAt(context.Context, uint32, uint32, bool, [][32]byte) ([]byte, error)
 		TextCursorPosition(context.Context, uint32, []byte) (uint32, error)
 		Commit(context.Context, string, time.Time) ([32]byte, error)
 		EmptyCommit(context.Context, string, time.Time) ([32]byte, error)

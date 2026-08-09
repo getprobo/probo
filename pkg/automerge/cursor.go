@@ -86,6 +86,53 @@ func (t *Text) CursorFor(
 	return Cursor(cursor), nil
 }
 
+// CursorForAt returns a stable cursor for an index resolved against the text as
+// it existed at a historical frontier, mirroring get_cursor with heads.
+func (t *Text) CursorForAt(
+	ctx context.Context,
+	index int64,
+	move CursorMove,
+	heads []Hash,
+) (Cursor, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return nil, ErrClosed
+	}
+
+	if move != CursorMoveBefore && move != CursorMoveAfter {
+		return nil, fmt.Errorf("unknown Automerge cursor movement %q", move)
+	}
+
+	if index < 0 {
+		return StartCursor(), nil
+	}
+
+	value, err := t.document.backend.TextAt(ctx, t.handle, backendHashes(heads))
+	if err != nil {
+		return nil, fmt.Errorf("cannot read historical Automerge text for cursor: %w", err)
+	}
+
+	length := int64(utf16StringLength(value))
+	if index >= length {
+		return EndCursor(), nil
+	}
+
+	cursor, err := t.document.backend.TextCursorMovingAt(
+		ctx,
+		t.handle,
+		uint32(index),
+		move == CursorMoveBefore,
+		backendHashes(heads),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create historical Automerge text cursor: %w", err)
+	}
+
+	return Cursor(cursor), nil
+}
+
 // SpliceCursor resolves cursor and applies a text splice at its current position.
 func (t *Text) SpliceCursor(
 	ctx context.Context,

@@ -1,5 +1,31 @@
 [
   {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "getCursor should respect heads",
+    "classification": "covered",
+    "localTests": [
+      "TestJSCursors_GetCursorRespectsHeads"
+    ],
+    "rationale": "Cursors created against a historical view resolve to the same positions on both engines."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should be able to pass a doc to from() to make a shallow copy",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript Automerge.from(doc) shallow-copy binding helper; Go clones via save/load."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "patch callbacks inform where they came from",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript patchCallback PatchSource metadata; a binding-specific callback channel with no wire or state interop meaning."
+  },
+  {
     "source": "rust",
     "file": "tests/convert_string_to_text.rs",
     "name": "test_strings_in_maps_are_converted_to_text",

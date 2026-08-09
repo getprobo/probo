@@ -1787,6 +1787,44 @@ pub extern "C" fn am_text_cursor_moving(object_handle: u32, index: u32, move_bef
     })
 }
 
+#[no_mangle]
+pub extern "C" fn am_text_cursor_moving_at(
+    object_handle: u32,
+    index: u32,
+    move_before: u32,
+    heads_pointer: u32,
+    heads_length: u32,
+) -> i32 {
+    let heads = match input_heads(heads_pointer, heads_length) {
+        Ok(heads) => heads,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        let movement = if move_before != 0 {
+            MoveCursor::Before
+        } else {
+            MoveCursor::After
+        };
+        match state
+            .doc
+            .get_cursor_moving(&object, index as usize, Some(&heads), movement)
+        {
+            Ok(cursor) => {
+                state.output = cursor.to_bytes();
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
 fn hydrate_map_to_json(map: &automerge::hydrate::Map) -> serde_json::Value {
     serde_json::Value::Object(
         map.iter()

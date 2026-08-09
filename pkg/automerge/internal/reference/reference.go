@@ -1246,6 +1246,44 @@ func (b *Backend) TextCursorMoving(
 	return cursor, nil
 }
 
+func (b *Backend) TextCursorMovingAt(
+	ctx context.Context,
+	object Object,
+	index uint32,
+	moveBefore bool,
+	heads [][32]byte,
+) ([]byte, error) {
+	var movement uint64
+	if moveBefore {
+		movement = 1
+	}
+
+	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write cursor heads: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_text_cursor_moving_at",
+		uint64(object),
+		uint64(index),
+		movement,
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return nil, fmt.Errorf("cannot create historical reference text cursor: %w", err)
+	}
+
+	cursor, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy historical reference text cursor: %w", err)
+	}
+
+	return cursor, nil
+}
+
 func (b *Backend) TextCursorPosition(
 	ctx context.Context,
 	object Object,
