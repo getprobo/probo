@@ -34,7 +34,7 @@ The generator verifies both Git revisions before updating the ledger.
 
 | Classification | Covered | Pending |
 |---|---:|---:|
-| Required Rust + JavaScript boundary behavior | 173 | 189 |
+| Required Rust + JavaScript boundary behavior | 174 | 188 |
 | Non-blocking JavaScript convenience behavior | 44 | 196 |
 | Private or language-specific behavior | 110 | — |
 
@@ -58,7 +58,7 @@ document are informational and must be updated whenever the manifest changes.
 | `javascript/text_test.ts` | 9 | initialization, text in arrays, update diffing, grapheme clusters, implicit deletion, mixed operations, and assigned-object mutation |
 | Rust storage doctests | 6 | parser splitting, ranges, incomplete data, and document parsing contracts |
 | `javascript/cursors.ts` | 4 | cursors at historical heads, cross-document values, shallow copies, and patch source metadata |
-| `rust/tests/test_save_load_orphans.rs` | 3 | preserving or discarding orphan changes and rejecting missing incremental dependencies |
+| `rust/tests/test_save_load_orphans.rs` | 2 | preserving orphan changes across a document save and discarding them on request (needs a native document-chunk encoder) |
 | `rust/tests/convert_string_to_text.rs` | 3 | map/list string migration and no-op save size |
 | `rust/src/sync/v1_compat_test` | 3 | V1→V2, V2→V1, and compressed-change compatibility |
 | Rust `AutoCommit` doctests | 3 | commit options, diff, and incremental diff |
@@ -67,7 +67,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **189**.
+Total required pending entries: **188**.
 
 ## Optional JavaScript convenience backlog
 

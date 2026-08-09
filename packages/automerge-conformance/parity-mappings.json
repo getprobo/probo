@@ -1822,5 +1822,15 @@
       "TestRustBatch_SpliceMergesCorrectly"
     ],
     "rationale": "Concurrent hydrated splices into a shared list merge to length three with the shared element retained."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test_save_load_orphans.rs",
+    "name": "load_incremental_change_without_deps_throws",
+    "classification": "covered",
+    "localTests": [
+      "TestRustOrphans_LoadIncrementalChangeWithoutDepsThrows"
+    ],
+    "rationale": "Loading a bare change chunk whose dependencies are absent is rejected by both engines."
   }
 ]
