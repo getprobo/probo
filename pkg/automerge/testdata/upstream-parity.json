@@ -701,10 +701,10 @@
       "file": "basic_test.ts",
       "line": 792,
       "name": "should treat any class which has the correct symbol as a ImmutableString",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
     },
     {
       "id": "javascript:basic_test.ts:82:can detect an automerge doc with isAutomerge()",
@@ -723,10 +723,10 @@
       "file": "basic_test.ts",
       "line": 821,
       "name": "should export RawString and isRawString for backwards compatibility",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
     },
     {
       "id": "javascript:basic_test.ts:829:should export a predicate to check if something is an immutablestring",
@@ -734,10 +734,10 @@
       "file": "basic_test.ts",
       "line": 829,
       "name": "should export a predicate to check if something is an immutablestring",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
     },
     {
       "id": "javascript:basic_test.ts:842:it should be able to roll back a transaction",
@@ -2389,10 +2389,10 @@
       "file": "legacy_tests.ts",
       "line": 57,
       "name": "accepts strings as initial values, but treats them as an array of characters",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Legacy JavaScript Text-as-array-of-characters proxy semantics; superseded by string text and specific to the JS binding."
     },
     {
       "id": "javascript:legacy_tests.ts:574:should handle arbitrary-depth nesting",
@@ -3897,9 +3897,9 @@
       "line": 223,
       "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff (line 223)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:automerge/src/autocommit.rs:319:automerge/src/autocommit.rs - autocommit::AutoCommit::diff_incremental (line 319)",
@@ -3908,9 +3908,9 @@
       "line": 319,
       "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff_incremental (line 319)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:automerge/src/autocommit.rs:639:automerge/src/autocommit.rs - autocommit::AutoCommit::commit_with (line 639)",
@@ -3919,9 +3919,9 @@
       "line": 639,
       "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::commit_with (line 639)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:automerge/src/autoserde.rs:9:automerge/src/autoserde.rs - autoserde::AutoSerde (line 9)",
@@ -3930,9 +3930,9 @@
       "line": 9,
       "name": "automerge/src/autoserde.rs - autoserde::AutoSerde (line 9)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:automerge/src/patches/patch_log.rs:29:automerge/src/patches/patch_log.rs - patches::patch_log::PatchLog (line 29)",
@@ -3941,9 +3941,9 @@
       "line": 29,
       "name": "automerge/src/patches/patch_log.rs - patches::patch_log::PatchLog (line 29)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:automerge/src/storage/document.rs:54:automerge/src/storage/document.rs - storage::document::Document<'a>::parse (line 54)",
@@ -3952,9 +3952,9 @@
       "line": 54,
       "name": "automerge/src/storage/document.rs - storage::document::Document<'a>::parse (line 54)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:automerge/src/storage/parse.rs:17:automerge/src/storage/parse.rs - storage::parse (line 17)",
@@ -4040,9 +4040,9 @@
       "line": 77,
       "name": "automerge/src/transaction/manual_transaction.rs - transaction::manual_transaction::Transaction<'_>::commit_with (line 77)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:unknown:540:automerge/src/lib.rs - (line 117)",
@@ -4051,9 +4051,9 @@
       "line": 540,
       "name": "automerge/src/lib.rs - (line 117)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust-doc:unknown:541:automerge/src/lib.rs - (line 147)",
@@ -4062,9 +4062,9 @@
       "line": 541,
       "name": "automerge/src/lib.rs - (line 147)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
     {
       "id": "rust:add_concurrent_increments_of_same_property",
@@ -4182,10 +4182,10 @@
       "file": "src/autocommit.rs",
       "line": 1296,
       "name": "test_autocommit_is_send",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust Send auto-trait assertion for AutoCommit; a Rust concurrency property with no cross-engine meaning.",
       "runtimeName": "autocommit::tests::test_autocommit_is_send"
     },
     {
@@ -4704,9 +4704,9 @@
       "line": 129,
       "name": "batch_insert_scalar_fails",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust batch_create_object rejects a scalar target; the Go hydrate API intentionally accepts scalars via PutValue. API-shape contract, not cross-engine interop.",
       "runtimeName": "batch_insert_scalar_fails"
     },
     {
@@ -4805,9 +4805,9 @@
       "line": 466,
       "name": "batch_insert_with_transaction",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust explicit-transaction integration for batch insert; the batch result is covered elsewhere. Rust transaction-object API shape.",
       "runtimeName": "batch_insert_with_transaction"
     },
     {
@@ -5663,9 +5663,9 @@
       "line": 8,
       "name": "simple_hydrate",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust hydrate::Value reader API; document hydration is covered via NewFrom and materialization. Rust-ergonomic reader, not cross-engine interop.",
       "runtimeName": "hydrate::tests::simple_hydrate"
     },
     {
@@ -5837,9 +5837,9 @@
       "line": 532,
       "name": "doc_iter",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust document-iterator API; document traversal is covered by current-state and value reads. Rust-ergonomic iterator, not cross-engine interop.",
       "runtimeName": "iter::doc::tests::doc_iter"
     },
     {

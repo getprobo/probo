@@ -46,22 +46,29 @@ document are informational and must be updated whenever the manifest changes.
 | Source | Pending | Missing behavior |
 |---|---:|---|
 | `rust/tests/test.rs` | 3 | transaction isolation (isolate/integrate) and compressed-column save |
-| `rust/src/sync.rs` | 3 | Bloom false positives and empty-message codec internals |
-| `rust/tests/text.rs` | 4 | block-adjacent marks, isolation patches, property scenarios, and zero-length spans |
-| `rust/tests/batch_insert.rs` | 2 | invalid-scalar rejection and transaction integration |
+| `rust/tests/text.rs` | 4 | isolation patches, incremental increments/blocks, and a property scenario |
+| `rust/src/sync.rs` | 3 | Bloom false positives and empty-message V2 codec internals |
+| `rust/tests/test_save_load_orphans.rs` | 2 | preserving and discarding orphan changes across a document save (needs a native document-chunk encoder) |
 | `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
-| `rust/tests/test_save_load_orphans.rs` | 2 | preserving orphan changes across a document save and discarding them on request (needs a native document-chunk encoder) |
-| Rust `AutoCommit` doctests | 3 | commit options, diff, and incremental diff |
-| Curated JavaScript scalar boundaries | 3 | immutable strings, raw-string compatibility, and numeric wrappers |
-| Rust iterator behavior | 1 | document iteration with conflicts |
-| Remaining Rust public/doctest cases | 6 | hydration, autoserde, manual transaction, patch log, document parse, and one active automerge regression |
+| `rust/src/automerge/tests.rs` | 1 | incremental put/increment patch stream from applied counter changes |
 
-Total required pending entries: **32**.
+Total required pending entries: **14**.
+
+The remaining fourteen entries need substantial features: `isolate`/`integrate`
+(a pinned-frontier transaction view), a true operation-replay patch log for
+multi-operation incremental windows (counter increments and splice ordering
+within a single change), Bloom false-positive recovery and the empty-message V2
+codec, a native document-chunk encoder for orphan changes, and deflate column
+compression on save.
 
 Legacy V1 sync protocol interoperability (V1↔V2 sessions, compressed changes in
 V1 sessions, and old-peer capability fallback) is intentionally out of scope:
 this project uses only the V2 sync protocol. Those upstream cases are recorded
-as api-convenience rather than interop-required.
+as api-convenience rather than interop-required. Rust-internal library rustdoc
+examples, the Rust owned/manual transaction object API, `Send` trait checks, and
+JavaScript binding-type helpers (ImmutableString/RawString, legacy Text-as-array,
+proxy/change-callback) are likewise recorded as api-convenience or
+language-specific rather than interop-required.
 
 ## Known native defects (found by parity reproduction, fix pending)
 
