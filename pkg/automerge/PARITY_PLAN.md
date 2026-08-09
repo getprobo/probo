@@ -58,10 +58,10 @@ document are informational and must be updated whenever the manifest changes.
 | Rust `AutoCommit` doctests | 3 | commit options, diff, and incremental diff |
 | Curated JavaScript scalar boundaries | 3 | immutable strings, raw-string compatibility, and numeric wrappers |
 | Curated JavaScript mark boundaries | 2 | patch-visible marks and expansion at text end |
-| Rust iterator behavior | 3 | document and list-range iteration with conflicts |
+| Rust iterator behavior | 1 | document iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **60**.
+Total required pending entries: **58**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 

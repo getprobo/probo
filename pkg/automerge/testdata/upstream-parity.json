@@ -5842,10 +5842,12 @@
       "file": "src/iter/list_range.rs",
       "line": 374,
       "name": "list_range_bounds",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustListRange_Bounds"
+      ],
+      "rationale": "List values and per-element conflict flags match the reference.",
       "runtimeName": "iter::list_range::tests::list_range_bounds"
     },
     {
@@ -5854,10 +5856,12 @@
       "file": "src/iter/list_range.rs",
       "line": 400,
       "name": "list_range_conflict",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustListRange_Conflict"
+      ],
+      "rationale": "List values and per-element conflict flags match the reference.",
       "runtimeName": "iter::list_range::tests::list_range_conflict"
     },
     {

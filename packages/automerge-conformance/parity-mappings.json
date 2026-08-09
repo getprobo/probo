@@ -1,6 +1,26 @@
 [
   {
     "source": "rust",
+    "file": "src/iter/list_range.rs",
+    "name": "list_range_bounds",
+    "classification": "covered",
+    "localTests": [
+      "TestRustListRange_Bounds"
+    ],
+    "rationale": "List values and per-element conflict flags match the reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/iter/list_range.rs",
+    "name": "list_range_conflict",
+    "classification": "covered",
+    "localTests": [
+      "TestRustListRange_Conflict"
+    ],
+    "rationale": "List values and per-element conflict flags match the reference."
+  },
+  {
+    "source": "rust",
     "file": "tests/test_mark_patches.rs",
     "name": "mark_patches_at_end_of_text",
     "classification": "covered",
