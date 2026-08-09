@@ -471,6 +471,99 @@ func mergeDocuments(t *testing.T, ctx context.Context, left, right *automerge.Do
 	require.NoError(t, err)
 }
 
+// FuzzDifferentialOperations drives the lockstep native/reference comparison
+// from fuzzer-provided bytes so continuous fuzzing can keep exploring the
+// operation space. Each byte selects and parameterizes one operation; after
+// every commit the two engines must agree on materialized values.
+func FuzzDifferentialOperations(f *testing.F) {
+	f.Add([]byte{0x05, 0x41, 0x05, 0x42, 0x02, 0x10, 0x00, 0x03, 0x00, 0x20})
+	f.Add([]byte{0x02, 0x00, 0x11, 0x02, 0x01, 0x22, 0x06, 0x00, 0x33, 0x05, 0x00})
+
+	f.Fuzz(func(t *testing.T, script []byte) {
+		ctx := context.Background()
+
+		native := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
+		reference := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
+
+		present := make(map[string]bool)
+
+		for cursor := 0; cursor+1 < len(script); cursor += 2 {
+			op := scriptOperation(
+				script[cursor],
+				script[cursor+1],
+				mustLen(t, ctx, native.list),
+				mustTextLen(t, ctx, native.text),
+				present,
+			)
+			if op == nil {
+				continue
+			}
+
+			applyStressOperation(t, ctx, native, *op)
+			applyStressOperation(t, ctx, reference, *op)
+
+			switch op.kind {
+			case opMapPut:
+				present[op.key] = true
+			case opMapDelete:
+				delete(present, op.key)
+			}
+
+			nativeCommitted := tolerantCommit(t, ctx, native.document)
+			referenceCommitted := tolerantCommit(t, ctx, reference.document)
+			require.Equal(t, referenceCommitted, nativeCommitted, "commit divergence for %+v", *op)
+
+			require.Equal(t,
+				canonicalValues(t, ctx, reference.document),
+				canonicalValues(t, ctx, native.document),
+				"value divergence after %+v", *op,
+			)
+		}
+	})
+}
+
+// scriptOperation decodes a two-byte instruction into a valid operation for the
+// current model sizes, or nil when the instruction cannot form a valid one.
+func scriptOperation(selector, param byte, listLen, textLen uint64, present map[string]bool) *stressOperation {
+	key := stressMapKeys[int(param)%len(stressMapKeys)]
+	scalar := automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(param)}
+
+	switch selector % 7 {
+	case 0:
+		return &stressOperation{kind: opMapPut, key: key, scalar: scalar}
+	case 1:
+		if !present[key] {
+			return nil
+		}
+
+		return &stressOperation{kind: opMapDelete, key: key}
+	case 2:
+		return &stressOperation{kind: opListInsert, index: uint64(param) % (listLen + 1), scalar: scalar}
+	case 3:
+		if listLen == 0 {
+			return nil
+		}
+
+		return &stressOperation{kind: opListPut, index: uint64(param) % listLen, scalar: scalar}
+	case 4:
+		if listLen == 0 {
+			return nil
+		}
+
+		return &stressOperation{kind: opListDelete, index: uint64(param) % listLen}
+	case 5:
+		return &stressOperation{kind: opTextInsert, index: uint64(param) % (textLen + 1), value: string(rune('a' + int(param)%26))}
+	case 6:
+		if textLen == 0 {
+			return nil
+		}
+
+		return &stressOperation{kind: opTextDelete, index: uint64(param) % textLen, count: 1}
+	}
+
+	return nil
+}
+
 func mustLen(t *testing.T, ctx context.Context, object *automerge.Object) uint64 {
 	t.Helper()
 
