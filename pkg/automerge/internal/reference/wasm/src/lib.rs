@@ -1218,6 +1218,33 @@ pub extern "C" fn am_text_splice(
 }
 
 #[no_mangle]
+pub extern "C" fn am_text_update(
+    object_handle: u32,
+    value_pointer: u32,
+    value_length: u32,
+) -> i32 {
+    let value = match input_string(value_pointer, value_length) {
+        Ok(value) => value,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        match state.doc.update_text(&object, &value) {
+            Ok(()) => {
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn am_text_mark(
     object_handle: u32,
     start: u32,

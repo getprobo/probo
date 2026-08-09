@@ -890,6 +890,30 @@ func (b *Backend) SpliceText(
 	return nil
 }
 
+func (b *Backend) UpdateText(
+	ctx context.Context,
+	object Object,
+	value string,
+) error {
+	valuePointer, valueLength, err := b.write(ctx, []byte(value))
+	if err != nil {
+		return fmt.Errorf("cannot write update value: %w", err)
+	}
+	defer b.free(ctx, valuePointer, valueLength)
+
+	if err := b.run(
+		ctx,
+		"am_text_update",
+		uint64(object),
+		uint64(valuePointer),
+		uint64(valueLength),
+	); err != nil {
+		return fmt.Errorf("cannot update reference text: %w", err)
+	}
+
+	return nil
+}
+
 func (b *Backend) MarkText(
 	ctx context.Context,
 	object Object,

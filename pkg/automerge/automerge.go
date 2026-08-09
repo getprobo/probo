@@ -108,6 +108,7 @@ type (
 		PutText(context.Context, uint32, string) (uint32, error)
 		GetText(context.Context, uint32, string) (uint32, error)
 		SpliceText(context.Context, uint32, uint32, int32, string) error
+		UpdateText(context.Context, uint32, string) error
 		MarkText(context.Context, uint32, uint32, uint32, string, []byte, string) error
 		SplitBlock(context.Context, uint32, uint32) (uint32, error)
 		JoinBlock(context.Context, uint32, uint32) error
@@ -724,6 +725,24 @@ func (t *Text) Splice(ctx context.Context, index uint32, deleteCount int32, valu
 
 	if err := t.document.backend.SpliceText(ctx, t.handle, index, deleteCount, value); err != nil {
 		return fmt.Errorf("cannot splice Automerge text: %w", err)
+	}
+
+	return nil
+}
+
+// Update replaces the text content with value using a minimal splice so that
+// concurrent edits to unaffected regions merge cleanly. It mirrors the Rust
+// AutoCommit::update_text and JavaScript updateText helpers.
+func (t *Text) Update(ctx context.Context, value string) error {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return ErrClosed
+	}
+
+	if err := t.document.backend.UpdateText(ctx, t.handle, value); err != nil {
+		return fmt.Errorf("cannot update Automerge text: %w", err)
 	}
 
 	return nil

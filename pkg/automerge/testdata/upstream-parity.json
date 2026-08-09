@@ -7293,10 +7293,12 @@
       "file": "tests/text.rs",
       "line": 17,
       "name": "simple_update_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_SimpleUpdateText"
+      ],
+      "rationale": "update_text computes a minimal grapheme diff so concurrent edits to disjoint words merge into a combined document, matching the reference change history.",
       "runtimeName": "simple_update_text"
     },
     {
@@ -8724,10 +8726,12 @@
       "file": "tests/text.rs",
       "line": 33,
       "name": "update_text_big_ole_graphemes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_UpdateTextBigOleGraphemes"
+      ],
+      "rationale": "update_text treats emoji ZWJ sequences as single grapheme clusters so concurrent family swaps merge side by side, matching the reference change history.",
       "runtimeName": "update_text_big_ole_graphemes"
     },
     {
