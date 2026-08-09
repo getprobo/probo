@@ -658,17 +658,32 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 		}
 
 		startPosition, startOK := s.markAnchorPosition(
+			object,
 			begin.Key,
+			begin.MarkExpand != nil && *begin.MarkExpand,
 			positions,
 			make(map[OpID]struct{}),
 		)
 
 		endPosition, endOK := s.markAnchorPosition(
+			object,
 			end.Key,
+			end.MarkExpand != nil && *end.MarkExpand,
 			positions,
 			make(map[OpID]struct{}),
 		)
 		if !startOK || !endOK || startPosition >= endPosition {
+			continue
+		}
+
+		// If a mark started at the document head and every element that
+		// existed in its original range has since been deleted, replacement
+		// text inserted at the head must not inherit the mark. A visible
+		// left-hand anchor (or any surviving original marked element) keeps
+		// boundary expansion active; this distinction matches Rust's splice
+		// behavior when replacing some marked text versus all of it.
+		if begin.Key.IsHead &&
+			!s.markRangeHasSurvivingElement(object, begin, end) {
 			continue
 		}
 
@@ -686,8 +701,53 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 	return marks
 }
 
+func (s *State) markRangeHasSurvivingElement(
+	object OpID,
+	begin Operation,
+	end Operation,
+) bool {
+	elements := s.sequenceAll(object)
+	start := 0
+
+	if begin.Key.Element != nil {
+		for i, element := range elements {
+			if element.ID == *begin.Key.Element {
+				start = i + 1
+
+				break
+			}
+		}
+	}
+
+	stop := len(elements)
+	if end.Key.Element != nil {
+		for i, element := range elements {
+			if element.ID == *end.Key.Element {
+				stop = i + 1
+
+				break
+			}
+		}
+	}
+
+	if start > stop {
+		return false
+	}
+
+	for _, element := range elements[start:stop] {
+		if element.ID.Compare(begin.ID) < 0 &&
+			!s.isSuperseded(element.ID) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s *State) markAnchorPosition(
+	object OpID,
 	key Key,
+	expand bool,
 	positions map[OpID]int,
 	visited map[OpID]struct{},
 ) (int, bool) {
@@ -710,11 +770,46 @@ func (s *State) markAnchorPosition(
 	visited[*key.Element] = struct{}{}
 
 	operation, ok := s.operations[*key.Element]
-	if !ok || operation.Action != ActionMark {
+	if !ok {
 		return 0, false
 	}
 
-	return s.markAnchorPosition(operation.Key, positions, visited)
+	if operation.Action == ActionMark {
+		return s.markAnchorPosition(
+			object,
+			operation.Key,
+			expand,
+			positions,
+			visited,
+		)
+	}
+
+	if expand {
+		position := 0
+
+		for _, element := range s.sequenceAll(object) {
+			if element.ID == operation.ID {
+				return position, true
+			}
+
+			if !s.isSuperseded(element.ID) {
+				position++
+			}
+		}
+
+		return 0, false
+	}
+
+	// A non-expanding marker anchored to a deleted element stays before
+	// insertions at that element's former position. Follow the deleted
+	// element's own predecessor chain to find that position.
+	return s.markAnchorPosition(
+		object,
+		operation.Key,
+		expand,
+		positions,
+		visited,
+	)
 }
 
 func (s *State) mapValue(
