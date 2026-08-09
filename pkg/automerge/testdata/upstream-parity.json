@@ -2121,10 +2121,12 @@
       "file": "legacy_tests.ts",
       "line": 316,
       "name": "should support Date objects in maps",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestConformance_NativePreservesJavaScriptDataModel"
+      ],
+      "rationale": "A JavaScript Date stored in a map round-trips through the native Go engine and is re-read identically by JavaScript."
     },
     {
       "id": "javascript:legacy_tests.ts:325:should support Date objects in lists",
@@ -2132,10 +2134,12 @@
       "file": "legacy_tests.ts",
       "line": 325,
       "name": "should support Date objects in lists",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestConformance_NativePreservesJavaScriptDataModel"
+      ],
+      "rationale": "A JavaScript Date stored in a list round-trips through the native Go engine and is re-read identically by JavaScript."
     },
     {
       "id": "javascript:legacy_tests.ts:334:should call patchCallback if supplied",

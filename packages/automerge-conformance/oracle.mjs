@@ -370,7 +370,7 @@ switch (request.action) {
         timestamp: new Date("2026-08-08T00:00:00.000Z"),
         counter: new Automerge.Counter(5),
       };
-      draft.list = ["first", 2, true, null];
+      draft.list = ["first", 2, true, null, new Date("2026-08-08T00:00:00.000Z")];
       draft.text = "";
       Automerge.splice(draft, ["text"], 0, 0, "A😀B");
     });

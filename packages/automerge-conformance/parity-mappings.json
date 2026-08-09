@@ -1992,5 +1992,25 @@
       "TestRustSync_BranchingAndMerging"
     ],
     "rationale": "Two peers exchange many concurrent changes, a third peer's concurrent change is merged into one, and a final synchronization converges both peers to identical heads on both engines."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should support Date objects in maps",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativePreservesJavaScriptDataModel"
+    ],
+    "rationale": "A JavaScript Date stored in a map round-trips through the native Go engine and is re-read identically by JavaScript."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "should support Date objects in lists",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_NativePreservesJavaScriptDataModel"
+    ],
+    "rationale": "A JavaScript Date stored in a list round-trips through the native Go engine and is re-read identically by JavaScript."
   }
 ]
