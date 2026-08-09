@@ -4611,6 +4611,18 @@ func (b *Backend) textMarkKey(
 	// a character. Walk the full element sequence, not the text-only view.
 	sequence := b.state.sequenceElements(object.OpID)
 
+	// A mark boundary past the end of the text is clamped to the end, matching
+	// the reference, whose insert query positions such an anchor at the tail
+	// rather than rejecting it.
+	var length uint32
+	for i := range sequence {
+		length += elementLength(sequence[i])
+	}
+
+	if index > length {
+		index = length
+	}
+
 	_, previous, err := richTextPosition(sequence, index)
 	if err != nil {
 		return Key{}, err
@@ -4728,10 +4740,9 @@ func sequenceRange(
 		end++
 	}
 
-	if position < target {
-		return 0, 0, nil, fmt.Errorf("text deletion extends beyond the document")
-	}
-
+	// A deletion that runs past the end of the sequence is clamped to the
+	// remaining elements rather than rejected, matching the reference, whose
+	// splice stops once there are no more elements to delete.
 	return start, end, previous, nil
 }
 

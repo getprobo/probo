@@ -125,12 +125,15 @@ Two behaviours were essential to get right and are easy to regress:
 
 Randomized differential testing that compares mark *values* against the
 reference (a stronger assertion than upstream `marks_are_okay`, which only
-checks span consolidation and text) now survives roughly five times as many
-generated scenarios as before the fix, but still finds divergences in deeper
-combinations of overlapping marks, blocks, and deletions. Those remain to be
-characterized; `TestRustText_MarksAreOkay` asserts the upstream invariants on
-both engines, and the value-level differential can be re-enabled there to
-reproduce the remaining cases.
+checks span consolidation and text) drove several fixes this pass: an over-long
+splice deletion and an over-long mark range are now clamped to the end of the
+text rather than rejected, matching the reference. One characterized case
+remains: marking an empty text with a range that clamps to zero length and the
+`ExpandMark::Both` flag, then inserting at the head, should capture the inserted
+text (the reference reports it as marked) but native does not, because the
+insert query withdraws the begin candidate when it meets the matching end. The
+`TestRustText_MarksAreOkay` value-level differential can be re-enabled to
+reproduce it.
 
 **Independent re-encoding of concurrent edits (determinism, not interop).**
 The randomized `TestDifferentialStress_ConcurrentMerge` harness applies the same
