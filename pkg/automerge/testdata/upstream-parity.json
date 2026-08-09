@@ -4154,10 +4154,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 201,
       "name": "basic_test",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_Basic"
+      ],
+      "rationale": "Materializing a document with a scalar, nested map, list, and text produces the same ordered patch stream on the native and reference engines.",
       "runtimeName": "automerge::current_state::tests::basic_test"
     },
     {
@@ -4190,10 +4192,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 260,
       "name": "test_deleted_ops_omitted",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_DeletedOpsOmitted"
+      ],
+      "rationale": "Deleted scalars, map keys, and list elements are omitted from the materialization patches identically on both engines.",
       "runtimeName": "automerge::current_state::tests::test_deleted_ops_omitted"
     },
     {

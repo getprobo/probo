@@ -2032,5 +2032,25 @@
       "TestDocument_StatsMatchReference"
     ],
     "rationale": "Two committed puts report two changes, two ops, and one actor identically on the native and reference engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "basic_test",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_Basic"
+    ],
+    "rationale": "Materializing a document with a scalar, nested map, list, and text produces the same ordered patch stream on the native and reference engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_deleted_ops_omitted",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_DeletedOpsOmitted"
+    ],
+    "rationale": "Deleted scalars, map keys, and list elements are omitted from the materialization patches identically on both engines."
   }
 ]
