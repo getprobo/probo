@@ -31,6 +31,52 @@ import (
 	"go.probo.inc/probo/pkg/automerge/internal/native"
 )
 
+// TestDocument_StatsMatchReference reproduces stats_smoke_test.
+func TestDocument_StatsMatchReference(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	factories := map[string]func(
+		context.Context,
+		automerge.ActorID,
+	) (*automerge.Document, error){
+		"native":    automerge.New,
+		"reference": automerge.NewReference,
+	}
+
+	for name, factory := range factories {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			document, err := factory(ctx, actor(1))
+			require.NoError(t, err)
+			closeDocument(t, document)
+
+			require.NoError(t, document.Root().PutScalar(
+				ctx,
+				"a",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+			))
+			_, err = document.Commit(ctx, "a", commitTime)
+			require.NoError(t, err)
+
+			require.NoError(t, document.Root().PutScalar(
+				ctx,
+				"b",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
+			))
+			_, err = document.Commit(ctx, "b", commitTime.Add(time.Second))
+			require.NoError(t, err)
+
+			stats, err := document.Stats(ctx)
+			require.NoError(t, err)
+			assert.Equal(t, uint64(2), stats.NumChanges)
+			assert.Equal(t, uint64(2), stats.NumOps)
+			assert.Equal(t, uint64(1), stats.NumActors)
+		})
+	}
+}
+
 func TestDocument_CommitTimeParity(t *testing.T) {
 	t.Parallel()
 

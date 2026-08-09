@@ -2022,5 +2022,15 @@
       "TestConformance_DatesFlowBetweenDocuments"
     ],
     "rationale": "A JavaScript Date read from one document as a timestamp scalar is written into another document through the native engine and re-read as a Date by JavaScript, in both a map and a list."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "stats_smoke_test",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_StatsMatchReference"
+    ],
+    "rationale": "Two committed puts report two changes, two ops, and one actor identically on the native and reference engines."
   }
 ]

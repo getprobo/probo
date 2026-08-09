@@ -7505,10 +7505,12 @@
       "file": "tests/test.rs",
       "line": 2376,
       "name": "stats_smoke_test",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestDocument_StatsMatchReference"
+      ],
+      "rationale": "Two committed puts report two changes, two ops, and one actor identically on the native and reference engines.",
       "runtimeName": "stats_smoke_test"
     },
     {
