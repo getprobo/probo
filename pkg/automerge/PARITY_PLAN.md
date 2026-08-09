@@ -34,7 +34,7 @@ The generator verifies both Git revisions before updating the ledger.
 
 | Classification | Covered | Pending |
 |---|---:|---:|
-| Required Rust + JavaScript boundary behavior | 185 | 177 |
+| Required Rust + JavaScript boundary behavior | 186 | 176 |
 | Non-blocking JavaScript convenience behavior | 44 | 196 |
 | Private or language-specific behavior | 110 | — |
 
@@ -48,7 +48,7 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/test.rs` | 17 | patch-log misuse, transactions and isolation, historical marks, reverse-diff patches, large list patches, iterators, and regression corpus |
 | `rust/tests/diff_marks.rs` | 31 | adjacent/nested/overlapping marks, expansion and contraction, value changes, empty spans, whitespace, combining characters, emoji, blocks, and mark removal |
 | `rust/src/sync.rs` | 6 | Bloom false positives, branching histories, reset/data-loss recovery, old-peer fallback, and message encode/decode internals |
-| `rust/tests/block_tests.rs` | 12 | block property updates, simultaneous text/block changes, mark boundaries across blocks, update-spans configuration, merge diffs, and block patches |
+| `rust/tests/block_tests.rs` | 11 | block property updates, simultaneous text/block changes, update-spans configuration, merge diffs, and block patches |
 | `rust/tests/text.rs` | 13 | update-text diffing, mark expansion patches, deleted marks, block-adjacent marks, large graphemes, remote patches, and zero-length spans |
 | `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
 | `rust/tests/text_encoding.rs` | 10 | UTF-16 length/get/put/insert/delete/split behavior and patch index units |
@@ -67,16 +67,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **177**.
-
-## Known native defects (found by parity reproduction, fix pending)
-
-These upstream behaviors are reproduced by tests that currently fail only on
-the native engine (the Rust/WASM reference passes), so they are recorded here
-and left pending until the native engine is fixed:
-
-- Replacing marked text at a mark boundary drops an expanding mark and merges
-  spans (`test_splice_with_mark`, upstream issue #935).
+Total required pending entries: **176**.
 
 ## Optional JavaScript convenience backlog
 

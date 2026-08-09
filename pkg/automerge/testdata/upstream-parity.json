@@ -8266,10 +8266,12 @@
       "file": "tests/block_tests.rs",
       "line": 816,
       "name": "test_splice_with_mark",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_SpliceWithMark"
+      ],
+      "rationale": "Replacing text exactly at two mark boundaries preserves the expanding mark while dropping the non-expanding mark, matching upstream issue #935.",
       "runtimeName": "test_splice_with_mark"
     },
     {

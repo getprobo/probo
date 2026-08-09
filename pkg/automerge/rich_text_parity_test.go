@@ -39,6 +39,10 @@ func markTrue() automerge.Scalar {
 	return automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true}
 }
 
+func markString(value string) automerge.Scalar {
+	return automerge.Scalar{Type: automerge.ScalarTypeString, String: value}
+}
+
 // richTextSpans builds a rich-text document with the given closure on each
 // engine and returns the resulting span stream keyed by engine name.
 func richTextSpans(
@@ -152,6 +156,34 @@ func TestRustRichText_SpansConsolidateEmptyThenDeletedMarks(t *testing.T) {
 	assert.Equal(t, spans["reference"], spans["native"])
 	require.Len(t, spans["native"], 1)
 	assert.Equal(t, "hello world", spans["native"][0].Text)
+}
+
+// TestRustRichText_SpliceWithMark reproduces test_splice_with_mark.
+func TestRustRichText_SpliceWithMark(t *testing.T) {
+	t.Parallel()
+
+	spans := richTextSpans(t, func(t *testing.T, ctx context.Context, text *automerge.Text) {
+		require.NoError(t, text.Splice(ctx, 0, 0, "abc"))
+		require.NoError(t, text.Mark(
+			ctx,
+			1,
+			2,
+			"some_nonexpanding_mark_type",
+			markString("marked"),
+			automerge.MarkExpandNone,
+		))
+		require.NoError(t, text.Mark(
+			ctx,
+			1,
+			2,
+			"some_expanding_mark_type",
+			markString("marked"),
+			automerge.MarkExpandBoth,
+		))
+		require.NoError(t, text.Splice(ctx, 1, 1, "d"))
+	})
+
+	assert.Equal(t, spans["reference"], spans["native"])
 }
 
 // TestRustRichText_EmptyMarksBeforeBlockMarker reproduces

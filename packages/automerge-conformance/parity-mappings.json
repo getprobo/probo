@@ -1942,5 +1942,15 @@
       "TestRustRichText_EmptyMarksBeforeBlockMarker"
     ],
     "rationale": "Empty marks and text inserted around block markers do not duplicate text; both engines report two block spans followed by a single text span."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "test_splice_with_mark",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpliceWithMark"
+    ],
+    "rationale": "Replacing text exactly at two mark boundaries preserves the expanding mark while dropping the non-expanding mark, matching upstream issue #935."
   }
 ]
