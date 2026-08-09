@@ -2,6 +2,16 @@
   {
     "source": "rust",
     "file": "tests/text_encoding.rs",
+    "name": "patch_put_seq",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchPutSeq"
+    ],
+    "rationale": "An in-place text put reported through the incremental diff cursor produces a PutSeq patch at a UTF-16 index."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
     "name": "patch_mark",
     "classification": "covered",
     "localTests": [

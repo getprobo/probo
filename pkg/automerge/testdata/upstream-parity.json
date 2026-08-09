@@ -6936,10 +6936,12 @@
       "file": "tests/text_encoding.rs",
       "line": 412,
       "name": "patch_put_seq",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_PatchPutSeq"
+      ],
+      "rationale": "An in-place text put reported through the incremental diff cursor produces a PutSeq patch at a UTF-16 index.",
       "runtimeName": "patch_put_seq"
     },
     {

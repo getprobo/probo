@@ -311,6 +311,101 @@ func TestRustTextEncoding_PatchDelete(t *testing.T) {
 	assert.Equal(t, patches["reference"], patches["native"])
 }
 
+// TestRustTextEncoding_PatchPutSeq reproduces the utf16 case of patch_put_seq:
+// an in-place text put reported through the incremental diff cursor produces a
+// PutSeq patch addressed by UTF-16 code units.
+func TestRustTextEncoding_PatchPutSeq(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, object, _ := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
+
+		require.NoError(t, document.UpdateDiffCursor(ctx))
+		require.NoError(t, object.PutScalarAt(
+			ctx,
+			13,
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
+		))
+		_, err := document.Commit(ctx, "put", commitTime)
+		require.NoError(t, err)
+
+		patches, err := document.DiffIncremental(ctx)
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	require.Len(t, result["reference"], 1)
+	assert.Equal(t, automerge.PatchPutSeq, result["reference"][0].Action)
+	assert.Equal(t, uint64(13), result["reference"][0].Index)
+	require.NotNil(t, result["reference"][0].Value.Scalar)
+	assert.Equal(t, "L", result["reference"][0].Value.Scalar.String)
+	assert.Equal(t, result["reference"], result["native"])
+}
+
+// TestDocument_IncrementalDiffMatchesReference exercises the incremental diff
+// cursor across map, list, and text mutations and asserts the native and
+// reference patch streams agree for each committed change.
+func TestDocument_IncrementalDiffMatchesReference(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	scenarios := []struct {
+		name   string
+		mutate func(ctx context.Context, object *automerge.Object, text *automerge.Text) error
+	}{
+		{"text_put", func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
+			return object.PutScalarAt(ctx, 13, automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"})
+		}},
+		{"text_insert", func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
+			return object.InsertScalar(ctx, 13, automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"})
+		}},
+		{"text_splice", func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
+			return text.Splice(ctx, 13, 0, "AB")
+		}},
+		{"text_delete", func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
+			return object.DeleteIndex(ctx, 13)
+		}},
+		{"text_mark", func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
+			return text.Mark(
+				ctx,
+				1,
+				13,
+				"bold",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				automerge.MarkExpandBoth,
+			)
+		}},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := make(map[string][]automerge.Patch)
+
+			for _, engine := range rustParityEngines() {
+				document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
+
+				require.NoError(t, document.UpdateDiffCursor(ctx))
+				require.NoError(t, scenario.mutate(ctx, object, text))
+				_, err := document.Commit(ctx, scenario.name, commitTime)
+				require.NoError(t, err)
+
+				patches, err := document.DiffIncremental(ctx)
+				require.NoError(t, err)
+				result[engine.name] = patches
+			}
+
+			assert.NotEmpty(t, result["reference"])
+			assert.Equal(t, result["reference"], result["native"])
+		})
+	}
+}
+
 // TestRustTextEncoding_PatchMark reproduces the utf16 case of patch_mark: a
 // mark produces a Mark patch whose start and end are UTF-16 code units.
 func TestRustTextEncoding_PatchMark(t *testing.T) {

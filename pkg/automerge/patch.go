@@ -128,6 +128,43 @@ func (d *Document) CurrentState(ctx context.Context) ([]Patch, error) {
 	return decodePatches(data)
 }
 
+// UpdateDiffCursor records the current heads as the incremental diff cursor so a
+// following DiffIncremental reports only the changes committed since this call.
+func (d *Document) UpdateDiffCursor(ctx context.Context) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return ErrClosed
+	}
+
+	if err := d.backend.UpdateDiffCursor(ctx); err != nil {
+		return fmt.Errorf("cannot update Automerge diff cursor: %w", err)
+	}
+
+	return nil
+}
+
+// DiffIncremental returns the patches for the changes committed since the diff
+// cursor and advances the cursor to the current heads. It mirrors the Rust
+// AutoCommit::diff_incremental helper, reporting operations from the recorded
+// patch log so an in-place text replacement is a put rather than a splice.
+func (d *Document) DiffIncremental(ctx context.Context) ([]Patch, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := d.backend.DiffIncremental(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot compute Automerge incremental diff: %w", err)
+	}
+
+	return decodePatches(data)
+}
+
 // Diff returns the patches that transform the document state at the before
 // heads into the state at the after heads.
 func (d *Document) Diff(

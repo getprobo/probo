@@ -1852,6 +1852,32 @@ pub extern "C" fn am_diff(
 }
 
 #[no_mangle]
+pub extern "C" fn am_update_diff_cursor() -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.doc.update_diff_cursor();
+        state.error.clear();
+        0
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_diff_incremental() -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let patches = state.doc.diff_incremental();
+        match patches_to_output(&patches) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn am_current_state() -> i32 {
     STATE.with(|state| {
         let mut state = state.borrow_mut();

@@ -48,6 +48,7 @@ type Backend struct {
 	nextSyncState uint32
 	queuedChanges map[ChangeHash]*Change
 	queuedBytes   int
+	diffCursor    [][32]byte
 }
 
 type nativeSyncState struct {
@@ -1902,6 +1903,76 @@ func (b *Backend) Diff(
 		return nil, err
 	}
 
+	patches, err := b.diffPatches(beforeHeads, afterHeads, false)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := json.Marshal(patches)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode native diff patches: %w", err)
+	}
+
+	return data, nil
+}
+
+// UpdateDiffCursor records the current heads as the incremental diff cursor so a
+// following DiffIncremental reports only the changes committed since this call.
+func (b *Backend) UpdateDiffCursor(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	heads, err := b.Heads(ctx)
+	if err != nil {
+		return err
+	}
+
+	b.diffCursor = heads
+
+	return nil
+}
+
+// DiffIncremental returns the patches for the changes committed since the diff
+// cursor (or from an empty document when the cursor is unset) and advances the
+// cursor to the current heads, mirroring the reference diff_incremental helper.
+func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	heads, err := b.Heads(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	patches, err := b.incrementalPatches(b.diffCursor, heads)
+	if err != nil {
+		return nil, err
+	}
+
+	b.diffCursor = heads
+
+	data, err := json.Marshal(patches)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode native incremental diff patches: %w", err)
+	}
+
+	return data, nil
+}
+
+func (b *Backend) incrementalPatches(
+	beforeHeads [][32]byte,
+	afterHeads [][32]byte,
+) ([]patchOut, error) {
+	return b.diffPatches(beforeHeads, afterHeads, true)
+}
+
+func (b *Backend) diffPatches(
+	beforeHeads [][32]byte,
+	afterHeads [][32]byte,
+	incremental bool,
+) ([]patchOut, error) {
 	source, ok := b.state.at(nativeHashes(beforeHeads))
 	if !ok {
 		return nil, fmt.Errorf("before heads are unknown")
@@ -1921,7 +1992,7 @@ func (b *Backend) Diff(
 		)
 
 		if objectVisibleInState(source, object) {
-			objectPatches, err = diffObjectPatches(source, target, object)
+			objectPatches, err = diffObjectPatches(source, target, object, incremental)
 		} else {
 			objectPatches, err = materializeObjectPatches(target, object)
 		}
@@ -1933,17 +2004,12 @@ func (b *Backend) Diff(
 		patches = append(patches, objectPatches...)
 	}
 
-	data, err := json.Marshal(patches)
-	if err != nil {
-		return nil, fmt.Errorf("cannot encode native diff patches: %w", err)
-	}
-
-	return data, nil
+	return patches, nil
 }
 
 // diffObjectPatches emits patches transforming an object from the source state
 // into the target state, for an object present in both.
-func diffObjectPatches(source, target *State, object ObjectID) ([]patchOut, error) {
+func diffObjectPatches(source, target *State, object ObjectID, incremental bool) ([]patchOut, error) {
 	objectType, err := objectTypeInState(target, object)
 	if err != nil {
 		return nil, err
@@ -1955,9 +2021,9 @@ func diffObjectPatches(source, target *State, object ObjectID) ([]patchOut, erro
 	case "map", "table":
 		return diffMapPatches(source, target, object, identifier)
 	case "list":
-		return diffSequencePatches(source, target, object, objectType, identifier)
+		return diffSequencePatches(source, target, object, objectType, identifier, incremental)
 	case "text":
-		patches, err := diffSequencePatches(source, target, object, objectType, identifier)
+		patches, err := diffSequencePatches(source, target, object, objectType, identifier, incremental)
 		if err != nil {
 			return nil, err
 		}
@@ -2162,6 +2228,7 @@ func diffSequencePatches(
 	object ObjectID,
 	objectType string,
 	identifier string,
+	incremental bool,
 ) ([]patchOut, error) {
 	sourceValues := source.sequenceValues(object.OpID)
 	targetValues := target.sequenceValues(object.OpID)
@@ -2201,10 +2268,11 @@ func diffSequencePatches(
 				continue
 			}
 
-			// Same element, different winning value. Text cannot express an
-			// in-place replacement, so it becomes a delete followed by a splice;
-			// lists use put_seq. This mirrors the reference diff output.
-			if objectType == "text" {
+			// Same element, different winning value. A state-comparison diff of
+			// text cannot express an in-place replacement, so it becomes a
+			// delete followed by a splice; the incremental patch log and every
+			// list report a put_seq instead, mirroring the reference.
+			if objectType == "text" && !incremental {
 				patches = append(patches, patchOut{
 					Obj: identifier,
 					Action: patchActionOut{
@@ -2241,7 +2309,7 @@ func diffSequencePatches(
 						Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
 					},
 				})
-				position++
+				position += width(targetValues[j])
 			}
 
 			i++

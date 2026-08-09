@@ -1325,6 +1325,27 @@ func (b *Backend) CurrentState(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
+func (b *Backend) UpdateDiffCursor(ctx context.Context) error {
+	if err := b.run(ctx, "am_update_diff_cursor"); err != nil {
+		return fmt.Errorf("cannot update reference diff cursor: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
+	if err := b.run(ctx, "am_diff_incremental"); err != nil {
+		return nil, fmt.Errorf("cannot read reference incremental diff: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference incremental diff: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) Diff(
 	ctx context.Context,
 	before [][32]byte,
