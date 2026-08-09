@@ -1,6 +1,36 @@
 [
   {
     "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "marks_on_spans_respect_heads",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlock_MarksOnSpansRespectHeads"
+    ],
+    "rationale": "Historical spans and block insertion diffs match the reference patch and span output."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "diff_emits_block_updates",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlock_DiffEmitsBlockUpdates"
+    ],
+    "rationale": "Historical spans and block insertion diffs match the reference patch and span output."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "merge_produces_block_insertion_diffs",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlock_MergeProducesBlockInsertionDiffs"
+    ],
+    "rationale": "Historical spans and block insertion diffs match the reference patch and span output."
+  },
+  {
+    "source": "rust",
     "file": "tests/batch_insert.rs",
     "name": "batch_insert_generates_patches",
     "classification": "covered",

@@ -1589,27 +1589,64 @@ pub extern "C" fn am_text_spans(object_handle: u32) -> i32 {
             Err(error) => return state.fail(error),
         };
 
-        let values = spans
-            .map(|span| match span {
-                automerge::Span::Text { text, marks } => {
-                    let mut value = serde_json::Map::new();
-                    value.insert("type".to_owned(), serde_json::json!("text"));
-                    value.insert("value".to_owned(), serde_json::json!(text.to_string()));
-                    if let Some(marks) = marks {
-                        let marks = marks
-                            .iter()
-                            .map(|(name, value)| (name.to_string(), scalar_to_json(value)))
-                            .collect();
-                        value.insert("marks".to_owned(), serde_json::Value::Object(marks));
-                    }
-                    serde_json::Value::Object(value)
-                }
-                automerge::Span::Block(block) => serde_json::json!({
-                    "type": "block",
-                    "value": hydrate_map_to_json(&block),
-                }),
-            })
-            .collect::<Vec<_>>();
+        let values = spans.map(span_to_json).collect::<Vec<_>>();
+
+        match serde_json::to_vec(&values) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+fn span_to_json(span: automerge::Span) -> serde_json::Value {
+    match span {
+        automerge::Span::Text { text, marks } => {
+            let mut value = serde_json::Map::new();
+            value.insert("type".to_owned(), serde_json::json!("text"));
+            value.insert("value".to_owned(), serde_json::json!(text.to_string()));
+            if let Some(marks) = marks {
+                let marks = marks
+                    .iter()
+                    .map(|(name, value)| (name.to_string(), scalar_to_json(value)))
+                    .collect();
+                value.insert("marks".to_owned(), serde_json::Value::Object(marks));
+            }
+            serde_json::Value::Object(value)
+        }
+        automerge::Span::Block(block) => serde_json::json!({
+            "type": "block",
+            "value": hydrate_map_to_json(&block),
+        }),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn am_text_spans_at(
+    object_handle: u32,
+    heads_pointer: u32,
+    heads_length: u32,
+) -> i32 {
+    let heads = match input_heads(heads_pointer, heads_length) {
+        Ok(heads) => heads,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        let spans = match state.doc.spans_at(&object, &heads) {
+            Ok(spans) => spans,
+            Err(error) => return state.fail(error),
+        };
+
+        let values = spans.map(span_to_json).collect::<Vec<_>>();
 
         match serde_json::to_vec(&values) {
             Ok(output) => {

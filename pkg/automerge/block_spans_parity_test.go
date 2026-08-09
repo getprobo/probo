@@ -28,6 +28,7 @@ package automerge_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -277,6 +278,146 @@ func TestRustBlockSpans(t *testing.T) {
 			assert.Equal(t, result["reference"], result["native"])
 		})
 	}
+}
+
+// TestRustBlock_MarksOnSpansRespectHeads reproduces marks_on_spans_respect_heads:
+// spans_at reports the marks active at a historical frontier, excluding marks
+// added afterward.
+func TestRustBlock_MarksOnSpansRespectHeads(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Span)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
+		require.NoError(t, text.Mark(ctx, 0, 5, "bold", markBool(), automerge.MarkExpandAfter))
+		heads, err := document.Commit(ctx, "bold", commitTime)
+		require.NoError(t, err)
+
+		require.NoError(t, text.Mark(ctx, 5, 11, "italic", markBool(), automerge.MarkExpandAfter))
+		_, err = document.Commit(ctx, "italic", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		spans, err := text.SpansAt(ctx, []automerge.Hash{heads})
+		require.NoError(t, err)
+		result[engine.name] = spans
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+	require.Len(t, result["native"], 2)
+	assert.Equal(t, "hello", result["native"][0].Text)
+	assert.Equal(t, map[string]any{"bold": true}, result["native"][0].Marks)
+	assert.Equal(t, " world", result["native"][1].Text)
+}
+
+// TestRustBlock_DiffEmitsBlockUpdates reproduces diff_emits_block_updates: a diff
+// from the empty frontier inserts the block and materializes its nested parents
+// list.
+func TestRustBlock_DiffEmitsBlockUpdates(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+
+		block, err := text.SplitBlock(ctx, 0)
+		require.NoError(t, err)
+		_, err = block.CreateObject(ctx, "parents", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		_, err = document.Commit(ctx, "block", commitTime)
+		require.NoError(t, err)
+
+		heads, err := document.Heads(ctx)
+		require.NoError(t, err)
+
+		patches, err := document.Diff(ctx, nil, heads)
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	reference := result["reference"]
+	require.NotEmpty(t, reference)
+
+	hasBlockInsert := false
+	hasParents := false
+
+	for _, patch := range reference {
+		if patch.Action == automerge.PatchInsert && len(patch.Values) == 1 &&
+			patch.Values[0].Value.Object == automerge.ObjectTypeMap {
+			hasBlockInsert = true
+		}
+
+		if patch.Action == automerge.PatchPutMap && patch.Key == "parents" {
+			hasParents = true
+		}
+	}
+
+	assert.True(t, hasBlockInsert, "expected a block insert patch")
+	assert.True(t, hasParents, "expected a parents put_map patch")
+	assert.Equal(t, result["reference"], result["native"])
+}
+
+// TestRustBlock_MergeProducesBlockInsertionDiffs reproduces
+// merge_produces_block_insertion_diffs: merging a peer that inserted a block
+// yields a block insertion patch.
+func TestRustBlock_MergeProducesBlockInsertionDiffs(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+		_, err = document.Commit(ctx, "seed", commitTime)
+		require.NoError(t, err)
+
+		other, err := document.Fork(ctx, actor(0xbb))
+		require.NoError(t, err)
+		closeDocument(t, other)
+
+		_, err = text.SplitBlock(ctx, 0)
+		require.NoError(t, err)
+		_, err = document.Commit(ctx, "block", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		require.NoError(t, other.UpdateDiffCursor(ctx))
+		before, err := other.Heads(ctx)
+		require.NoError(t, err)
+		_, err = other.Merge(ctx, document)
+		require.NoError(t, err)
+		after, err := other.Heads(ctx)
+		require.NoError(t, err)
+
+		patches, err := other.Diff(ctx, before, after)
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	reference := result["reference"]
+	require.NotEmpty(t, reference)
+	assert.Equal(t, automerge.PatchInsert, reference[0].Action)
+	require.Len(t, reference[0].Values, 1)
+	assert.Equal(t, automerge.ObjectTypeMap, reference[0].Values[0].Value.Object)
+	assert.Equal(t, result["reference"], result["native"])
 }
 
 // TestRustBlockSpans_Noop reproduces update_blocks_noop: re-applying the current

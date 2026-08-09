@@ -1111,6 +1111,35 @@ func (b *Backend) TextSpans(ctx context.Context, object Object) ([]byte, error) 
 	return output, nil
 }
 
+func (b *Backend) TextSpansAt(
+	ctx context.Context,
+	object Object,
+	heads [][32]byte,
+) ([]byte, error) {
+	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write historical span heads: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_text_spans_at",
+		uint64(object),
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return nil, fmt.Errorf("cannot read historical reference text spans: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy historical reference text spans: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) Marks(ctx context.Context, object Object) ([]byte, error) {
 	if err := b.run(ctx, "am_marks", uint64(object)); err != nil {
 		return nil, fmt.Errorf("cannot read reference marks: %w", err)

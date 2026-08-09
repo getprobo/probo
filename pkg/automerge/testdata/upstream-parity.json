@@ -5380,10 +5380,12 @@
       "file": "tests/block_tests.rs",
       "line": 729,
       "name": "diff_emits_block_updates",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlock_DiffEmitsBlockUpdates"
+      ],
+      "rationale": "Historical spans and block insertion diffs match the reference patch and span output.",
       "runtimeName": "diff_emits_block_updates"
     },
     {
@@ -6300,10 +6302,12 @@
       "file": "tests/block_tests.rs",
       "line": 395,
       "name": "marks_on_spans_respect_heads",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlock_MarksOnSpansRespectHeads"
+      ],
+      "rationale": "Historical spans and block insertion diffs match the reference patch and span output.",
       "runtimeName": "marks_on_spans_respect_heads"
     },
     {
@@ -6410,10 +6414,12 @@
       "file": "tests/block_tests.rs",
       "line": 785,
       "name": "merge_produces_block_insertion_diffs",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlock_MergeProducesBlockInsertionDiffs"
+      ],
+      "rationale": "Historical spans and block insertion diffs match the reference patch and span output.",
       "runtimeName": "merge_produces_block_insertion_diffs"
     },
     {

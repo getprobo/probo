@@ -345,6 +345,27 @@ func (t *Text) Spans(ctx context.Context) ([]Span, error) {
 		return nil, fmt.Errorf("cannot read Automerge rich-text spans: %w", err)
 	}
 
+	return decodeSpans(data)
+}
+
+// SpansAt returns the rich-text spans as they existed at a historical frontier.
+func (t *Text) SpansAt(ctx context.Context, heads []Hash) ([]Span, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := t.document.backend.TextSpansAt(ctx, t.handle, backendHashes(heads))
+	if err != nil {
+		return nil, fmt.Errorf("cannot read historical Automerge rich-text spans: %w", err)
+	}
+
+	return decodeSpans(data)
+}
+
+func decodeSpans(data []byte) ([]Span, error) {
 	var encoded []encodedSpan
 	if err := json.Unmarshal(data, &encoded); err != nil {
 		return nil, fmt.Errorf("cannot decode Automerge rich-text spans: %w", err)

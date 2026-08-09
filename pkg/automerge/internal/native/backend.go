@@ -1817,6 +1817,38 @@ func (b *Backend) TextSpans(
 	return data, nil
 }
 
+func (b *Backend) TextSpansAt(
+	ctx context.Context,
+	handle uint32,
+	heads [][32]byte,
+) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	object, err := b.textObject(handle)
+	if err != nil {
+		return nil, err
+	}
+
+	historical, ok := b.state.at(nativeHashes(heads))
+	if !ok {
+		return nil, fmt.Errorf("historical heads are unknown")
+	}
+
+	spans, err := historical.RichTextSpans(object.OpID)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := json.Marshal(spans)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode native historical rich-text spans: %w", err)
+	}
+
+	return data, nil
+}
+
 func encodeMarks(marks []MarkRange) ([]byte, error) {
 	type markWire struct {
 		Start uint32          `json:"start"`
@@ -2423,35 +2455,78 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 			Action: patchActionOut{Type: "insert", Index: 0, Values: inserts},
 		}}, nil
 	case "text":
-		var text strings.Builder
+		patches := make([]patchOut, 0)
+		position := uint64(0)
+
+		var run strings.Builder
+
+		runStart := uint64(0)
+
+		flush := func() error {
+			if run.Len() == 0 {
+				return nil
+			}
+
+			runs, err := textRunsWithMarks(state, object, runStart, run.String())
+			if err != nil {
+				return err
+			}
+
+			for _, textRun := range runs {
+				patches = append(patches, patchOut{
+					Obj: identifier,
+					Action: patchActionOut{
+						Type:  "splice_text",
+						Index: textRun.index,
+						Text:  textRun.text,
+						Marks: textRun.marks,
+					},
+				})
+			}
+
+			run.Reset()
+
+			return nil
+		}
 
 		for _, value := range state.sequenceValues(object.OpID) {
 			operation := value.Operation
+
+			if operation.Action == ActionMakeMap {
+				if err := flush(); err != nil {
+					return nil, err
+				}
+
+				blockValue, err := patchValueForOperation(state, operation)
+				if err != nil {
+					return nil, err
+				}
+
+				patches = append(patches, patchOut{
+					Obj: identifier,
+					Action: patchActionOut{
+						Type:   "insert",
+						Index:  position,
+						Values: []patchInsertOut{{Value: blockValue}},
+					},
+				})
+				position++
+
+				continue
+			}
+
 			if operation.Value != nil && operation.Value.Type == ScalarString {
-				text.WriteString(operation.Value.String)
+				if run.Len() == 0 {
+					runStart = position
+				}
+
+				run.WriteString(operation.Value.String)
+				position += uint64(utf16Width(operation.Value.String))
 			}
 		}
 
-		if text.Len() == 0 {
-			return nil, nil
-		}
-
-		runs, err := textRunsWithMarks(state, object, 0, text.String())
-		if err != nil {
+		if err := flush(); err != nil {
 			return nil, err
-		}
-
-		patches := make([]patchOut, 0, len(runs))
-		for _, run := range runs {
-			patches = append(patches, patchOut{
-				Obj: identifier,
-				Action: patchActionOut{
-					Type:  "splice_text",
-					Index: run.index,
-					Text:  run.text,
-					Marks: run.marks,
-				},
-			})
 		}
 
 		return patches, nil
