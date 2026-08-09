@@ -1632,5 +1632,15 @@
       "TestRust_BadChangeOnOptreeNodeBoundary"
     ],
     "rationale": "A document grown across an op-tree node boundary is saved, reloaded elsewhere, and a further change is transferred and reloaded with matching state and heads on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "list_counter_del",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_ListCounterDel"
+    ],
+    "rationale": "Three actors write conflicting counters and an integer to the same list elements; increments apply to every conflicting counter and delete the non-counter, and the conflict sets, lengths, and reloads match the reference engine."
   }
 ]

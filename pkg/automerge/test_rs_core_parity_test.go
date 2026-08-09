@@ -31,6 +31,7 @@ package automerge_test
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"testing"
@@ -1446,6 +1447,134 @@ func TestRust_SaveWithOpsReferencingActorsOnlyViaDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func sortedScalarsAt(
+	t *testing.T,
+	ctx context.Context,
+	object *automerge.Object,
+	index uint64,
+) []string {
+	t.Helper()
+
+	values, err := object.ScalarsAt(ctx, index)
+	require.NoError(t, err)
+
+	result := make([]string, len(values))
+	for i, value := range values {
+		result[i] = fmt.Sprintf("%s:%d:%d", value.Type, value.Int, value.Uint)
+	}
+
+	sort.Strings(result)
+
+	return result
+}
+
+// TestRust_ListCounterDel reproduces list_counter_del: three actors write
+// conflicting counters (and one integer) to the same list elements, increments
+// are applied and merged, and the elements are deleted. The conflicting value
+// sets and lengths are compared directly against the reference engine.
+func TestRust_ListCounterDel(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	index1 := make(map[string][]string)
+	index2 := make(map[string][]string)
+
+	for _, engine := range rustParityEngines() {
+		doc1, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, doc1)
+		list1, err := doc1.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		require.NoError(t, list1.InsertValues(ctx, 0, []automerge.Value{
+			hydratedString("a"),
+			hydratedString("b"),
+			hydratedString("c"),
+		}))
+		_, err = doc1.Commit(ctx, "base", commitTime)
+		require.NoError(t, err)
+
+		base, err := doc1.Save(ctx)
+		require.NoError(t, err)
+		doc2, err := engine.load(ctx, base, actor(2))
+		require.NoError(t, err)
+		closeDocument(t, doc2)
+		list2, err := doc2.Root().Object(ctx, "list")
+		require.NoError(t, err)
+		doc3, err := engine.load(ctx, base, actor(3))
+		require.NoError(t, err)
+		closeDocument(t, doc3)
+		list3, err := doc3.Root().Object(ctx, "list")
+		require.NoError(t, err)
+
+		counter := func(value int64) automerge.Scalar {
+			return automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: value}
+		}
+
+		require.NoError(t, list1.PutScalarAt(ctx, 1, counter(0)))
+		require.NoError(t, list2.PutScalarAt(ctx, 1, counter(10)))
+		require.NoError(t, list3.PutScalarAt(ctx, 1, counter(100)))
+
+		require.NoError(t, list1.PutScalarAt(ctx, 2, counter(0)))
+		require.NoError(t, list2.PutScalarAt(ctx, 2, counter(10)))
+		require.NoError(t, list3.PutScalarAt(
+			ctx,
+			2,
+			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 100},
+		))
+
+		require.NoError(t, list1.IncrementAt(ctx, 1, 1))
+		require.NoError(t, list1.IncrementAt(ctx, 2, 1))
+
+		_, err = doc1.Commit(ctx, "doc1", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		_, err = doc2.Commit(ctx, "doc2", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		_, err = doc3.Commit(ctx, "doc3", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		_, err = doc1.Merge(ctx, doc2)
+		require.NoError(t, err)
+		_, err = doc1.Merge(ctx, doc3)
+		require.NoError(t, err)
+
+		require.NoError(t, list1.IncrementAt(ctx, 1, 1))
+		require.NoError(t, list1.IncrementAt(ctx, 2, 1))
+		_, err = doc1.Commit(ctx, "increments", commitTime.Add(2*time.Second))
+		require.NoError(t, err)
+
+		index1[engine.name] = sortedScalarsAt(t, ctx, list1, 1)
+		index2[engine.name] = sortedScalarsAt(t, ctx, list1, 2)
+
+		require.NoError(t, list1.DeleteIndex(ctx, 2))
+		_, err = doc1.Commit(ctx, "delete 2", commitTime.Add(3*time.Second))
+		require.NoError(t, err)
+		length, err := list1.Len(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, uint64(2), length)
+
+		saved, err := doc1.Save(ctx)
+		require.NoError(t, err)
+		reloaded, err := engine.load(ctx, saved, actor(4))
+		require.NoError(t, err)
+		closeDocument(t, reloaded)
+		reloadedList, err := reloaded.Root().Object(ctx, "list")
+		require.NoError(t, err)
+		reloadedLength, err := reloadedList.Len(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, uint64(2), reloadedLength)
+
+		require.NoError(t, list1.DeleteIndex(ctx, 1))
+		_, err = doc1.Commit(ctx, "delete 1", commitTime.Add(4*time.Second))
+		require.NoError(t, err)
+		length, err = list1.Len(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, uint64(1), length)
+	}
+
+	assert.Equal(t, index1["reference"], index1["native"])
+	assert.Equal(t, index2["reference"], index2["native"])
 }
 
 // TestRust_SimpleBadSaveload reproduces simple_bad_saveload: an empty commit

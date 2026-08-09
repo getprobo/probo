@@ -5838,10 +5838,12 @@
       "file": "tests/test.rs",
       "line": 974,
       "name": "list_counter_del",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ListCounterDel"
+      ],
+      "rationale": "Three actors write conflicting counters and an integer to the same list elements; increments apply to every conflicting counter and delete the non-counter, and the conflict sets, lengths, and reloads match the reference engine.",
       "runtimeName": "list_counter_del"
     },
     {
