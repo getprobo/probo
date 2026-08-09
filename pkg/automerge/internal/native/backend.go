@@ -804,6 +804,15 @@ func (b *Backend) PutScalarAt(
 		return err
 	}
 
+	// Assigning the identical value to a list element with a single visible
+	// value is a no-op, matching the reference and native's map put. A
+	// conflicted element still records the assignment so the conflict resolves.
+	if existingValue, scalar := b.state.scalarValue(target.Operation); scalar &&
+		scalarValuesEqual(existingValue, value) &&
+		len(b.state.visibleSequenceElementOperations(target.Element)) == 1 {
+		return nil
+	}
+
 	return b.addPending(Operation{
 		ID:           b.nextOperationID(),
 		Object:       objectID,
