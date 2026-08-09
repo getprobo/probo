@@ -45,11 +45,11 @@ document are informational and must be updated whenever the manifest changes.
 
 | Source | Pending | Missing behavior |
 |---|---:|---|
-| `rust/tests/test.rs` | 10 | patch-log misuse, transactions and isolation, iterators, and regression corpus |
+| `rust/tests/test.rs` | 9 | patch-log misuse, transactions and isolation, iterators, and regression corpus |
 | `rust/tests/diff_marks.rs` | 31 | adjacent/nested/overlapping marks, expansion and contraction, value changes, empty spans, whitespace, combining characters, emoji, blocks, and mark removal |
 | `rust/src/sync.rs` | 5 | Bloom false positives, reset/data-loss recovery, old-peer fallback, and message encode/decode internals |
 | `rust/tests/block_tests.rs` | 11 | block property updates, simultaneous text/block changes, update-spans configuration, merge diffs, and block patches |
-| `rust/tests/text.rs` | 7 | end-boundary mark expansion patches, block-adjacent marks, remote patches, and zero-length spans |
+| `rust/tests/text.rs` | 5 | block-adjacent marks, isolation patches, property scenarios, and zero-length spans |
 | `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
 | `rust/tests/batch_insert.rs` | 5 | patch output, invalid-scalar rejection, and transaction integration |
 | `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
@@ -66,19 +66,12 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **141**.
+Total required pending entries: **138**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 
-These upstream behaviors are reproduced by tests that currently fail only on
-the native engine (the Rust/WASM reference passes), so they are recorded here
-and left pending until the native engine is fixed:
-
-- A mark with `after`/`both` expansion does not grow to include text spliced at
-  its boundary; native keeps the original range while Rust and JavaScript
-  expand it (`tests/test.rs` `marks`). This affects both `spans()` and
-  `marks()` materialization and requires ordering mark boundary markers
-  relative to same-anchor insertions by their expand flag.
+No reproduced native-only defects are currently known. New differential
+failures must be recorded here until fixed.
 
 ## Optional JavaScript convenience backlog
 

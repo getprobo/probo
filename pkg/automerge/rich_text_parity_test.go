@@ -307,6 +307,191 @@ func TestRustRichText_GetMarksAtHeads(t *testing.T) {
 	assert.Equal(t, map[string]int64{"bold": 1}, active["native"])
 }
 
+// TestRustText_ExpandMarksAreReportedInPatches reproduces
+// expand_marks_are_reported_in_patches: a both-expanding mark includes text
+// inserted at either boundary and both incremental splice patches carry it.
+func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+	marks := make(map[string][]automerge.Mark)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 0, 0, "aaabbbccc"))
+		require.NoError(t, text.Mark(
+			ctx,
+			3,
+			6,
+			"strong",
+			markTrue(),
+			automerge.MarkExpandBoth,
+		))
+		_, err = document.Commit(ctx, "seed", commitTime)
+		require.NoError(t, err)
+		require.NoError(t, document.UpdateDiffCursor(ctx))
+
+		var patches []automerge.Patch
+
+		require.NoError(t, text.Splice(ctx, 6, 0, "<"))
+		_, err = document.Commit(ctx, "end", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		endPatches, err := document.DiffIncremental(ctx)
+		require.NoError(t, err)
+		patches = append(patches, endPatches...)
+
+		require.NoError(t, text.Splice(ctx, 3, 0, ">"))
+		_, err = document.Commit(ctx, "start", commitTime.Add(2*time.Second))
+		require.NoError(t, err)
+		startPatches, err := document.DiffIncremental(ctx)
+		require.NoError(t, err)
+		patches = append(patches, startPatches...)
+
+		result[engine.name] = patches
+		marks[engine.name], err = text.Marks(ctx)
+		require.NoError(t, err)
+	}
+
+	reference := result["reference"]
+	require.Len(t, reference, 2)
+
+	for _, patch := range reference {
+		assert.Equal(t, automerge.PatchSpliceText, patch.Action)
+		require.Len(t, patch.Marks, 1)
+		assert.Equal(t, "strong", patch.Marks[0].Name)
+	}
+
+	assert.Equal(t, uint64(6), reference[0].Index)
+	assert.Equal(t, "<", reference[0].Text)
+	assert.Equal(t, uint64(3), reference[1].Index)
+	assert.Equal(t, ">", reference[1].Text)
+	assert.Equal(t, result["reference"], result["native"])
+	assert.Equal(t, marks["reference"], marks["native"])
+	assert.Equal(t, uint32(3), marks["native"][0].Start)
+	assert.Equal(t, uint32(8), marks["native"][0].End)
+}
+
+// TestRustText_RemotePatchesForExpandAfter reproduces
+// test_remote_patches_for_marks_with_expand_after: applying a remote insertion
+// at an after-expanding boundary produces the same marked splice patch as the
+// local document.
+func TestRustText_RemotePatchesForExpandAfter(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		documentA, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, documentA)
+
+		textA, err := documentA.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, textA.Splice(ctx, 0, 0, "fox"))
+		require.NoError(t, textA.Mark(
+			ctx,
+			0,
+			3,
+			"strong",
+			markTrue(),
+			automerge.MarkExpandAfter,
+		))
+		_, err = documentA.Commit(ctx, "seed", commitTime)
+		require.NoError(t, err)
+
+		documentB, err := documentA.Fork(ctx, actor(0xbb))
+		require.NoError(t, err)
+		closeDocument(t, documentB)
+
+		beforeA, err := documentA.Heads(ctx)
+		require.NoError(t, err)
+		require.NoError(t, textA.Splice(ctx, 3, 0, "a"))
+		afterA, err := documentA.Commit(ctx, "append", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		require.NoError(t, documentB.UpdateDiffCursor(ctx))
+		beforeB, err := documentB.Heads(ctx)
+		require.NoError(t, err)
+		_, err = documentB.Merge(ctx, documentA)
+		require.NoError(t, err)
+		afterB, err := documentB.Heads(ctx)
+		require.NoError(t, err)
+
+		local, err := documentA.Diff(ctx, beforeA, []automerge.Hash{afterA})
+		require.NoError(t, err)
+		remote, err := documentB.Diff(ctx, beforeB, afterB)
+		require.NoError(t, err)
+
+		assert.Equal(t, local, remote)
+		result[engine.name] = local
+	}
+
+	reference := result["reference"]
+	require.Len(t, reference, 1)
+	assert.Equal(t, automerge.PatchSpliceText, reference[0].Action)
+	assert.Equal(t, uint64(3), reference[0].Index)
+	assert.Equal(t, "a", reference[0].Text)
+	require.Len(t, reference[0].Marks, 1)
+	assert.Equal(t, "strong", reference[0].Marks[0].Name)
+	assert.Equal(t, result["reference"], result["native"])
+}
+
+// TestRustMarks_ExpansionAndUnmark reproduces tests/test.rs marks: a
+// both-expanding mark grows at its end, an unmark removes only the original
+// prefix, and text inserted before the unmarked range remains unmarked.
+func TestRustMarks_ExpansionAndUnmark(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Mark)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
+		require.NoError(t, text.Mark(
+			ctx,
+			0,
+			5,
+			"bold",
+			markTrue(),
+			automerge.MarkExpandBoth,
+		))
+		require.NoError(t, text.Splice(ctx, 5, 0, " cool"))
+		require.NoError(t, text.Unmark(
+			ctx,
+			0,
+			5,
+			"bold",
+			automerge.MarkExpandBefore,
+		))
+		require.NoError(t, text.Splice(ctx, 0, 0, "why "))
+		_, err = document.Commit(ctx, "marks", commitTime)
+		require.NoError(t, err)
+
+		result[engine.name], err = text.Marks(ctx)
+		require.NoError(t, err)
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+	require.Len(t, result["native"], 1)
+	assert.Equal(t, uint32(9), result["native"][0].Start)
+	assert.Equal(t, uint32(14), result["native"][0].End)
+	assert.Equal(t, "bold", result["native"][0].Name)
+	assert.Equal(t, markTrue(), result["native"][0].Value)
+}
+
 // TestRustRichText_EmptyMarksBeforeBlockMarker reproduces
 // empty_marks_before_block_marker_dont_repeat_text.
 func TestRustRichText_EmptyMarksBeforeBlockMarker(t *testing.T) {

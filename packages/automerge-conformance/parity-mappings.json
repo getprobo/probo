@@ -1,6 +1,36 @@
 [
   {
     "source": "rust",
+    "file": "tests/text.rs",
+    "name": "expand_marks_are_reported_in_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_ExpandMarksAreReportedInPatches"
+    ],
+    "rationale": "A both-expanding mark includes text inserted at either boundary and both incremental splice patches carry it."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "test_remote_patches_for_marks_with_expand_after",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_RemotePatchesForExpandAfter"
+    ],
+    "rationale": "A remote insertion at an after-expanding boundary produces the same marked splice patch as the local edit."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustMarks_ExpansionAndUnmark"
+    ],
+    "rationale": "A both-expanding mark grows at its end, unmark removes only the original prefix, and prepended text remains unmarked."
+  },
+  {
+    "source": "rust",
     "file": "tests/text_encoding.rs",
     "name": "patch_put_seq",
     "classification": "covered",

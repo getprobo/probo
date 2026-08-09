@@ -669,16 +669,24 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 		startPosition, startOK := s.markAnchorPosition(
 			object,
 			begin.Key,
+			begin.ID,
+			true,
 			begin.MarkExpand != nil && *begin.MarkExpand,
 			positions,
+			elements,
+			true,
 			make(map[OpID]struct{}),
 		)
 
 		endPosition, endOK := s.markAnchorPosition(
 			object,
 			end.Key,
+			end.ID,
+			false,
 			end.MarkExpand != nil && *end.MarkExpand,
 			positions,
+			elements,
+			true,
 			make(map[OpID]struct{}),
 		)
 		if !startOK || !endOK || startPosition >= endPosition {
@@ -832,12 +840,21 @@ func (s *State) markRangeHasSurvivingElement(
 func (s *State) markAnchorPosition(
 	object OpID,
 	key Key,
+	marker OpID,
+	start bool,
 	expand bool,
 	positions map[OpID]int,
+	elements []Operation,
+	adjustBoundary bool,
 	visited map[OpID]struct{},
 ) (int, bool) {
 	if key.IsHead {
-		return 0, true
+		position := 0
+		if adjustBoundary && ((start && !expand) || (!start && expand)) {
+			position = s.markBoundaryInsertionEnd(key, marker, position, elements)
+		}
+
+		return position, true
 	}
 
 	if key.Element == nil {
@@ -845,7 +862,12 @@ func (s *State) markAnchorPosition(
 	}
 
 	if position, ok := positions[*key.Element]; ok {
-		return position + 1, true
+		position++
+		if adjustBoundary && ((start && !expand) || (!start && expand)) {
+			position = s.markBoundaryInsertionEnd(key, marker, position, elements)
+		}
+
+		return position, true
 	}
 
 	if _, ok := visited[*key.Element]; ok {
@@ -863,8 +885,12 @@ func (s *State) markAnchorPosition(
 		return s.markAnchorPosition(
 			object,
 			operation.Key,
+			marker,
+			start,
 			expand,
 			positions,
+			elements,
+			false,
 			visited,
 		)
 	}
@@ -891,10 +917,77 @@ func (s *State) markAnchorPosition(
 	return s.markAnchorPosition(
 		object,
 		operation.Key,
+		marker,
+		start,
 		expand,
 		positions,
+		elements,
+		false,
 		visited,
 	)
+}
+
+// markBoundaryInsertionEnd returns the position after insertion branches that
+// were created at a mark boundary after the marker operation. Mark markers and
+// ordinary sequence insertions share an anchor in the Automerge operation tree;
+// their relative operation IDs determine which side of the marker a later
+// insertion occupies. Expanding end markers and non-expanding begin markers sit
+// after these branches, while the opposite expansion modes sit before them.
+func (s *State) markBoundaryInsertionEnd(
+	key Key,
+	marker OpID,
+	position int,
+	elements []Operation,
+) int {
+	for position < len(elements) {
+		child, ok := s.boundaryChild(elements[position], key, make(map[OpID]struct{}))
+		if !ok || child.Compare(marker) <= 0 {
+			break
+		}
+
+		position++
+	}
+
+	return position
+}
+
+// boundaryChild returns the direct insertion child of a boundary anchor for an
+// element, following insertion ancestry through the sequence tree.
+func (s *State) boundaryChild(
+	element Operation,
+	boundary Key,
+	visited map[OpID]struct{},
+) (OpID, bool) {
+	current := element
+
+	for {
+		if _, ok := visited[current.ID]; ok {
+			return OpID{}, false
+		}
+
+		visited[current.ID] = struct{}{}
+
+		if boundary.IsHead && current.Key.IsHead {
+			return current.ID, true
+		}
+
+		if boundary.Element != nil &&
+			current.Key.Element != nil &&
+			*current.Key.Element == *boundary.Element {
+			return current.ID, true
+		}
+
+		if current.Key.Element == nil {
+			return OpID{}, false
+		}
+
+		parent, ok := s.operations[*current.Key.Element]
+		if !ok || parent.Action == ActionMark {
+			return OpID{}, false
+		}
+
+		current = parent
+	}
 }
 
 func (s *State) mapValue(

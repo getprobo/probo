@@ -5506,10 +5506,12 @@
       "file": "tests/text.rs",
       "line": 543,
       "name": "expand_marks_are_reported_in_patches",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_ExpandMarksAreReportedInPatches"
+      ],
+      "rationale": "A both-expanding mark includes text inserted at either boundary and both incremental splice patches carry it.",
       "runtimeName": "expand_marks_are_reported_in_patches"
     },
     {
@@ -6186,10 +6188,12 @@
       "file": "tests/test.rs",
       "line": 1742,
       "name": "marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustMarks_ExpansionAndUnmark"
+      ],
+      "rationale": "A both-expanding mark grows at its end, unmark removes only the original prefix, and prepended text remains unmarked.",
       "runtimeName": "marks"
     },
     {
@@ -8322,10 +8326,12 @@
       "file": "tests/text.rs",
       "line": 615,
       "name": "test_remote_patches_for_marks_with_expand_after",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_RemotePatchesForExpandAfter"
+      ],
+      "rationale": "A remote insertion at an after-expanding boundary produces the same marked splice patch as the local edit.",
       "runtimeName": "test_remote_patches_for_marks_with_expand_after"
     },
     {
