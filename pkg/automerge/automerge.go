@@ -111,6 +111,8 @@ type (
 		Text(context.Context, uint32) (string, error)
 		TextAt(context.Context, uint32, [][32]byte) (string, error)
 		TextSpans(context.Context, uint32) ([]byte, error)
+		Marks(context.Context, uint32) ([]byte, error)
+		MarksAt(context.Context, uint32, [][32]byte) ([]byte, error)
 		TextCursor(context.Context, uint32, uint32) ([]byte, error)
 		TextCursorMoving(context.Context, uint32, uint32, bool) ([]byte, error)
 		TextCursorPosition(context.Context, uint32, []byte) (uint32, error)

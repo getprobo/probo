@@ -1427,6 +1427,71 @@ pub extern "C" fn am_text_spans(object_handle: u32) -> i32 {
     })
 }
 
+fn marks_to_output(marks: Vec<automerge::marks::Mark>) -> Result<Vec<u8>, String> {
+    let mut values = Vec::with_capacity(marks.len());
+    for mark in &marks {
+        values.push(serde_json::json!({
+            "start": mark.start,
+            "end": mark.end,
+            "name": mark.name(),
+            "value": scalar_json(mark.value())?,
+        }));
+    }
+
+    serde_json::to_vec(&values).map_err(|error| error.to_string())
+}
+
+#[no_mangle]
+pub extern "C" fn am_marks(object_handle: u32) -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        let marks = match state.doc.marks(&object) {
+            Ok(marks) => marks,
+            Err(error) => return state.fail(error),
+        };
+        match marks_to_output(marks) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn am_marks_at(object_handle: u32, heads_pointer: u32, heads_length: u32) -> i32 {
+    let heads = match input_heads(heads_pointer, heads_length) {
+        Ok(heads) => heads,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        let marks = match state.doc.marks_at(&object, &heads) {
+            Ok(marks) => marks,
+            Err(error) => return state.fail(error),
+        };
+        match marks_to_output(marks) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
 #[no_mangle]
 pub extern "C" fn am_text_cursor(object_handle: u32, index: u32) -> i32 {
     STATE.with(|state| {

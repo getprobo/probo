@@ -172,6 +172,81 @@ func (t *Text) ReplaceBlock(ctx context.Context, index uint32) (*Object, error) 
 	}, nil
 }
 
+type (
+	// Mark is one active annotation over a UTF-16 range of a text object.
+	Mark struct {
+		Start uint32
+		End   uint32
+		Name  string
+		Value Scalar
+	}
+
+	encodedMark struct {
+		Start uint32          `json:"start"`
+		End   uint32          `json:"end"`
+		Name  string          `json:"name"`
+		Value json.RawMessage `json:"value"`
+	}
+)
+
+// Marks returns the active marks over the text object as UTF-16 ranges.
+func (t *Text) Marks(ctx context.Context) ([]Mark, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := t.document.backend.Marks(ctx, t.handle)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read Automerge marks: %w", err)
+	}
+
+	return decodeMarks(data)
+}
+
+// MarksAt returns the active marks over the text object at a historical frontier.
+func (t *Text) MarksAt(ctx context.Context, heads []Hash) ([]Mark, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := t.document.backend.MarksAt(ctx, t.handle, backendHashes(heads))
+	if err != nil {
+		return nil, fmt.Errorf("cannot read historical Automerge marks: %w", err)
+	}
+
+	return decodeMarks(data)
+}
+
+func decodeMarks(data []byte) ([]Mark, error) {
+	var encoded []encodedMark
+	if err := json.Unmarshal(data, &encoded); err != nil {
+		return nil, fmt.Errorf("cannot decode Automerge marks: %w", err)
+	}
+
+	marks := make([]Mark, len(encoded))
+	for i, source := range encoded {
+		value, err := decodeScalarWire(source.Value)
+		if err != nil {
+			return nil, fmt.Errorf("cannot decode Automerge mark %d value: %w", i, err)
+		}
+
+		marks[i] = Mark{
+			Start: source.Start,
+			End:   source.End,
+			Name:  source.Name,
+			Value: value,
+		}
+	}
+
+	return marks, nil
+}
+
 func (t *Text) Spans(ctx context.Context) ([]Span, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()

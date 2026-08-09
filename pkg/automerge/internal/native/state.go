@@ -611,10 +611,19 @@ func (s *State) RichTextSpans(object OpID) ([]RichSpan, error) {
 }
 
 type richTextMark struct {
-	start int
-	end   int
-	name  string
-	value any
+	start  int
+	end    int
+	name   string
+	value  any
+	scalar *Scalar
+}
+
+// MarkRange is one active mark over a UTF-16 range of a text object.
+type MarkRange struct {
+	Start uint32
+	End   uint32
+	Name  string
+	Value *Scalar
 }
 
 func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark {
@@ -690,15 +699,91 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 		marks = append(
 			marks,
 			richTextMark{
-				start: startPosition,
-				end:   endPosition,
-				name:  *begin.MarkName,
-				value: scalarMaterializedValue(begin.Value),
+				start:  startPosition,
+				end:    endPosition,
+				name:   *begin.MarkName,
+				value:  scalarMaterializedValue(begin.Value),
+				scalar: begin.Value,
 			},
 		)
 	}
 
 	return marks
+}
+
+// Marks returns the active marks over a text object as UTF-16 ranges, matching
+// upstream Rust's marks(): contiguous runs of an identical (name, value) mark
+// are merged, block markers occupy one position, and marks removed by a null
+// value are excluded.
+func (s *State) Marks(object OpID) []MarkRange {
+	elements := s.sequenceElements(object)
+	marks := s.richTextMarks(object, elements)
+
+	type openMark struct {
+		start uint32
+		value *Scalar
+	}
+
+	open := make(map[string]openMark)
+
+	result := make([]MarkRange, 0)
+
+	var position uint32
+
+	closeMark := func(name string, mark openMark, end uint32) {
+		result = append(result, MarkRange{
+			Start: mark.start,
+			End:   end,
+			Name:  name,
+			Value: mark.value,
+		})
+	}
+
+	for index, element := range elements {
+		active := make(map[string]*Scalar)
+
+		for _, mark := range marks {
+			if index < mark.start || index >= mark.end {
+				continue
+			}
+
+			if mark.scalar == nil || mark.scalar.Type == ScalarNull {
+				delete(active, mark.name)
+			} else {
+				active[mark.name] = mark.scalar
+			}
+		}
+
+		for name, mark := range open {
+			value, ok := active[name]
+			if !ok || !scalarValuesEqual(*value, *mark.value) {
+				closeMark(name, mark, position)
+				delete(open, name)
+			}
+		}
+
+		for name, value := range active {
+			if _, ok := open[name]; !ok {
+				open[name] = openMark{start: position, value: value}
+			}
+		}
+
+		position += elementLength(element)
+	}
+
+	for name, mark := range open {
+		closeMark(name, mark, position)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Start != result[j].Start {
+			return result[i].Start < result[j].Start
+		}
+
+		return result[i].Name < result[j].Name
+	})
+
+	return result
 }
 
 func (s *State) markRangeHasSurvivingElement(

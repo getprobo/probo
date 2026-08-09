@@ -1249,6 +1249,78 @@ func (b *Backend) TextSpans(
 	return data, nil
 }
 
+func encodeMarks(marks []MarkRange) ([]byte, error) {
+	type markWire struct {
+		Start uint32          `json:"start"`
+		End   uint32          `json:"end"`
+		Name  string          `json:"name"`
+		Value json.RawMessage `json:"value"`
+	}
+
+	wire := make([]markWire, 0, len(marks))
+
+	for _, mark := range marks {
+		value := &Scalar{Type: ScalarNull}
+		if mark.Value != nil {
+			value = mark.Value
+		}
+
+		encoded, err := encodeScalarWire(*value)
+		if err != nil {
+			return nil, err
+		}
+
+		wire = append(wire, markWire{
+			Start: mark.Start,
+			End:   mark.End,
+			Name:  mark.Name,
+			Value: json.RawMessage(encoded),
+		})
+	}
+
+	data, err := json.Marshal(wire)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode native marks: %w", err)
+	}
+
+	return data, nil
+}
+
+func (b *Backend) Marks(ctx context.Context, handle uint32) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	object, err := b.textObject(handle)
+	if err != nil {
+		return nil, err
+	}
+
+	return encodeMarks(b.state.Marks(object.OpID))
+}
+
+func (b *Backend) MarksAt(
+	ctx context.Context,
+	handle uint32,
+	heads [][32]byte,
+) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	object, err := b.textObject(handle)
+	if err != nil {
+		return nil, err
+	}
+
+	historical, ok := b.state.at(nativeHashes(heads))
+	if !ok {
+		return nil, fmt.Errorf("historical heads are unknown")
+	}
+
+	return encodeMarks(historical.Marks(object.OpID))
+}
+
 func (b *Backend) TextCursor(
 	ctx context.Context,
 	handle uint32,
