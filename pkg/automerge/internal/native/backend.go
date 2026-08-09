@@ -1324,6 +1324,37 @@ func (b *Backend) cursorMoveBeforePosition(
 	}
 }
 
+// changeDependencies computes the dependency set for a new change authored by
+// this backend's actor at the given sequence number. The dependencies are the
+// current heads plus, matching upstream Rust, the actor's own previous change
+// hash when it is not already a head (so that direct causal succession from the
+// author's prior change is always recorded explicitly).
+func (b *Backend) changeDependencies(sequence uint64) []ChangeHash {
+	dependencies := b.state.Heads()
+
+	if sequence > 1 {
+		last, ok := b.state.hashForActorSequence(b.actor, sequence-1)
+		if ok && !containsHash(dependencies, last) {
+			dependencies = append(dependencies, last)
+			sort.Slice(dependencies, func(i, j int) bool {
+				return bytes.Compare(dependencies[i][:], dependencies[j][:]) < 0
+			})
+		}
+	}
+
+	return dependencies
+}
+
+func containsHash(hashes []ChangeHash, target ChangeHash) bool {
+	for _, hash := range hashes {
+		if hash == target {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (b *Backend) Commit(
 	ctx context.Context,
 	message string,
@@ -1337,11 +1368,12 @@ func (b *Backend) Commit(
 		return [32]byte{}, fmt.Errorf("change contains no operations")
 	}
 
-	dependencies := b.state.Heads()
+	sequence := b.state.sequenceForActor(b.actor) + 1
+	dependencies := b.changeDependencies(sequence)
 
 	change := &Change{
 		Actor:        b.actor,
-		Sequence:     b.state.sequenceForActor(b.actor) + 1,
+		Sequence:     sequence,
 		StartOp:      b.pending[0].ID.Counter,
 		MaxOp:        b.pending[len(b.pending)-1].ID.Counter,
 		Time:         timestamp.Unix(),
@@ -1381,14 +1413,16 @@ func (b *Backend) EmptyCommit(
 		return [32]byte{}, fmt.Errorf("cannot create empty change with pending operations")
 	}
 
+	sequence := b.state.sequenceForActor(b.actor) + 1
+
 	change := &Change{
 		Actor:        b.actor,
-		Sequence:     b.state.sequenceForActor(b.actor) + 1,
+		Sequence:     sequence,
 		StartOp:      b.nextOp,
 		MaxOp:        b.nextOp - 1,
 		Time:         timestamp.Unix(),
 		Message:      message,
-		Dependencies: b.state.Heads(),
+		Dependencies: b.changeDependencies(sequence),
 	}
 	if timestamp.IsZero() {
 		change.Time = 0

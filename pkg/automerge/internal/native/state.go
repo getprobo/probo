@@ -851,6 +851,21 @@ func (s *State) sequenceForActor(actor ActorID) uint64 {
 	return s.actorSequence[actor]
 }
 
+// hashForActorSequence returns the hash of the change authored by actor at the
+// given sequence number, if it is known.
+func (s *State) hashForActorSequence(
+	actor ActorID,
+	sequence uint64,
+) (ChangeHash, bool) {
+	for hash, change := range s.changes {
+		if change.Actor == actor && change.Sequence == sequence {
+			return hash, true
+		}
+	}
+
+	return ChangeHash{}, false
+}
+
 func (s *State) applyPending(operations []Operation) error {
 	for _, operation := range operations {
 		if _, exists := s.operations[operation.ID]; exists {
