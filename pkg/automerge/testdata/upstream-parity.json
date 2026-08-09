@@ -5320,10 +5320,12 @@
       "file": "tests/text_encoding.rs",
       "line": 365,
       "name": "delete",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_Delete"
+      ],
+      "rationale": "Transactable::delete removes the element addressed by a UTF-16 index.",
       "runtimeName": "delete"
     },
     {
@@ -5531,10 +5533,12 @@
       "file": "tests/text_encoding.rs",
       "line": 303,
       "name": "get",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_Get"
+      ],
+      "rationale": "ReadDoc::get resolves a UTF-16 index across a multi-code-point grapheme to the correct element.",
       "runtimeName": "get"
     },
     {
@@ -5868,10 +5872,12 @@
       "file": "tests/text_encoding.rs",
       "line": 186,
       "name": "length",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_Length"
+      ],
+      "rationale": "ReadDoc::length reports UTF-16 code units for text; a family emoji counts as 11 units.",
       "runtimeName": "length"
     },
     {
@@ -6948,10 +6954,12 @@
       "file": "tests/text_encoding.rs",
       "line": 327,
       "name": "put",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_Put"
+      ],
+      "rationale": "Transactable::put replaces the element at a UTF-16 index, materializing the winning value for text.",
       "runtimeName": "put"
     },
     {
@@ -7519,10 +7527,12 @@
       "file": "tests/text_encoding.rs",
       "line": 384,
       "name": "split_block",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_SplitBlock"
+      ],
+      "rationale": "Transactable::split_block splits text at a UTF-16 index between grapheme clusters.",
       "runtimeName": "split_block"
     },
     {

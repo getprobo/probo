@@ -898,7 +898,18 @@ func (b *Backend) Length(ctx context.Context, object uint32) (uint64, error) {
 		return 0, fmt.Errorf("object does not have a length")
 	}
 
-	return uint64(len(b.state.sequenceValues(objectID.OpID))), nil
+	sequence := b.state.sequenceValues(objectID.OpID)
+
+	if operation.Action == ActionMakeText {
+		total := uint64(0)
+		for _, value := range sequence {
+			total += sequenceValueUTF16Width(value)
+		}
+
+		return total, nil
+	}
+
+	return uint64(len(sequence)), nil
 }
 
 func (b *Backend) PutText(
@@ -1184,7 +1195,10 @@ func (b *Backend) Text(ctx context.Context, handle uint32) (string, error) {
 
 	var output strings.Builder
 
-	for _, operation := range b.state.sequence(object.OpID) {
+	// Materialize the winning value of every visible element so that a put over
+	// a text position replaces the original character, matching the reference.
+	for _, value := range b.state.sequenceValues(object.OpID) {
+		operation := value.Operation
 		if operation.Value != nil && operation.Value.Type == ScalarString {
 			output.WriteString(operation.Value.String)
 		}
@@ -2915,7 +2929,9 @@ func (b *Backend) insertSequenceOperation(
 	}
 
 	sequence := b.state.sequenceValues(object.OpID)
-	if index > uint64(len(sequence)) {
+
+	element, ok := b.resolveSequenceIndex(object, sequence, index)
+	if !ok || element > uint64(len(sequence)) {
 		return Operation{}, fmt.Errorf(
 			"sequence index %d is out of bounds for length %d",
 			index,
@@ -2923,9 +2939,9 @@ func (b *Backend) insertSequenceOperation(
 		)
 	}
 
-	key := Key{IsHead: index == 0}
-	if index > 0 {
-		key.Element = new(sequence[index-1].Element)
+	key := Key{IsHead: element == 0}
+	if element > 0 {
+		key.Element = new(sequence[element-1].Element)
 	}
 
 	operation := Operation{
@@ -2973,7 +2989,9 @@ func (b *Backend) sequenceOperation(
 	}
 
 	sequence := b.state.sequenceValues(object.OpID)
-	if index >= uint64(len(sequence)) {
+
+	element, ok := b.resolveSequenceIndex(object, sequence, index)
+	if !ok || element >= uint64(len(sequence)) {
 		return sequenceValue{}, fmt.Errorf(
 			"sequence index %d is out of bounds for length %d",
 			index,
@@ -2981,7 +2999,62 @@ func (b *Backend) sequenceOperation(
 		)
 	}
 
-	return sequence[index], nil
+	return sequence[element], nil
+}
+
+// resolveSequenceIndex maps a caller-supplied index to a raw element index in
+// the visible sequence. Text objects address positions in UTF-16 code units to
+// match the reference encoding, so the index is translated to the element that
+// begins at that code-unit boundary (a position inside a surrogate pair is
+// advanced to the following boundary, as upstream Rust does); other sequences
+// use element indices directly. The boolean reports whether the index resolves
+// to a boundary at or before the end of the sequence.
+func (b *Backend) resolveSequenceIndex(
+	object ObjectID,
+	sequence []sequenceValue,
+	index uint64,
+) (uint64, bool) {
+	if !b.isTextObject(object) {
+		return index, true
+	}
+
+	position := uint64(0)
+
+	for i, value := range sequence {
+		if position == index {
+			return uint64(i), true
+		}
+
+		position += sequenceValueUTF16Width(value)
+		if position > index {
+			return uint64(i + 1), true
+		}
+	}
+
+	if position == index {
+		return uint64(len(sequence)), true
+	}
+
+	return 0, false
+}
+
+func (b *Backend) isTextObject(object ObjectID) bool {
+	if object.IsRoot {
+		return false
+	}
+
+	operation, ok := b.state.operations[object.OpID]
+
+	return ok && operation.Action == ActionMakeText
+}
+
+func sequenceValueUTF16Width(value sequenceValue) uint64 {
+	operation := value.Operation
+	if operation.Value != nil && operation.Value.Type == ScalarString {
+		return uint64(utf16Width(operation.Value.String))
+	}
+
+	return 1
 }
 
 func objectAction(rawType string) (Action, error) {

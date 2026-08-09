@@ -1,6 +1,56 @@
 [
   {
     "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "length",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Length"
+    ],
+    "rationale": "ReadDoc::length reports UTF-16 code units for text; a family emoji counts as 11 units."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "get",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Get"
+    ],
+    "rationale": "ReadDoc::get resolves a UTF-16 index across a multi-code-point grapheme to the correct element."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "put",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Put"
+    ],
+    "rationale": "Transactable::put replaces the element at a UTF-16 index, materializing the winning value for text."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "delete",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_Delete"
+    ],
+    "rationale": "Transactable::delete removes the element addressed by a UTF-16 index."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "split_block",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_SplitBlock"
+    ],
+    "rationale": "Transactable::split_block splits text at a UTF-16 index between grapheme clusters."
+  },
+  {
+    "source": "rust",
     "file": "tests/text.rs",
     "name": "simple_update_text",
     "classification": "covered",
