@@ -5806,10 +5806,12 @@
       "file": "tests/test.rs",
       "line": 2120,
       "name": "large_patches_in_lists_are_correct",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiff_LargePatchesInLists"
+      ],
+      "rationale": "A string list element counts as one index, so a run of 500 following objects is indexed identically in the native and reference diff patch streams.",
       "runtimeName": "large_patches_in_lists_are_correct"
     },
     {

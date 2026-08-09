@@ -34,6 +34,53 @@ import (
 	"go.probo.inc/probo/pkg/automerge"
 )
 
+// TestRustDiff_LargePatchesInLists reproduces large_patches_in_lists_are_correct:
+// a string list element counts as a single index, so a long run of following
+// objects is indexed correctly in the diff patch stream.
+func TestRustDiff_LargePatchesInLists(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		before, err := document.Heads(ctx)
+		require.NoError(t, err)
+
+		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "123456"}))
+
+		for i := 1; i < 501; i++ {
+			inner, err := list.InsertObject(ctx, uint64(i), automerge.ObjectTypeMap)
+			require.NoError(t, err)
+			require.NoError(t, inner.PutScalar(ctx, "a", automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)}))
+		}
+
+		_, err = document.Commit(ctx, "large", commitTime)
+		require.NoError(t, err)
+		after, err := document.Heads(ctx)
+		require.NoError(t, err)
+
+		patches, err := document.Diff(ctx, before, after)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+
+	last := result["native"][len(result["native"])-1]
+	assert.Equal(t, automerge.PatchPutMap, last.Action)
+	assert.Equal(t, "a", last.Key)
+	require.NotNil(t, last.Value.Scalar)
+	assert.Equal(t, int64(500), last.Value.Scalar.Int)
+}
+
 // TestRustDiff_ReverseDeletionOfObjectInList reproduces
 // diff_should_reverse_deletion_of_object_in_list_correctly.
 func TestRustDiff_ReverseDeletionOfObjectInList(t *testing.T) {

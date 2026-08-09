@@ -2142,5 +2142,15 @@
       "TestRustDiff_ReverseDeletionOfBlockInText"
     ],
     "rationale": "Diffing after a text-block deletion back to before re-inserts the block and materializes its properties identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "large_patches_in_lists_are_correct",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiff_LargePatchesInLists"
+    ],
+    "rationale": "A string list element counts as one index, so a run of 500 following objects is indexed identically in the native and reference diff patch streams."
   }
 ]
