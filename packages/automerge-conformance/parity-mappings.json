@@ -1982,5 +1982,15 @@
       "TestRustRichText_RemovedMarksNotInGetMarks"
     ],
     "rationale": "A mark removed by a null value does not appear in the active mark set on either engine."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_handle_lots_of_branching_and_merging",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_BranchingAndMerging"
+    ],
+    "rationale": "Two peers exchange many concurrent changes, a third peer's concurrent change is merged into one, and a final synchronization converges both peers to identical heads on both engines."
   }
 ]

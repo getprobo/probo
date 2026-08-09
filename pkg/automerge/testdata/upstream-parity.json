@@ -7953,10 +7953,12 @@
       "file": "src/sync.rs",
       "line": 1255,
       "name": "should_handle_lots_of_branching_and_merging",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_BranchingAndMerging"
+      ],
+      "rationale": "Two peers exchange many concurrent changes, a third peer's concurrent change is merged into one, and a final synchronization converges both peers to identical heads on both engines.",
       "runtimeName": "sync::tests::should_handle_lots_of_branching_and_merging"
     },
     {

@@ -132,6 +132,90 @@ func putRoot(
 	require.NoError(t, err)
 }
 
+func putInt(
+	t *testing.T,
+	ctx context.Context,
+	document *automerge.Document,
+	key string,
+	value int64,
+	message string,
+	when time.Time,
+) {
+	t.Helper()
+
+	require.NoError(t, document.Root().PutScalar(
+		ctx,
+		key,
+		automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
+	))
+	_, err := document.Commit(ctx, message, when)
+	require.NoError(t, err)
+}
+
+// TestRustSync_BranchingAndMerging reproduces
+// should_handle_lots_of_branching_and_merging: two peers exchange many
+// concurrent changes, a third peer's change is merged into one of them, and a
+// final synchronization must converge both peers to identical heads.
+func TestRustSync_BranchingAndMerging(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc1, err := engine.open(ctx, actor(0x01))
+			require.NoError(t, err)
+			closeDocument(t, doc1)
+
+			doc2, err := engine.open(ctx, actor(0x89))
+			require.NoError(t, err)
+			closeDocument(t, doc2)
+
+			doc3, err := engine.open(ctx, actor(0xfe))
+			require.NoError(t, err)
+			closeDocument(t, doc3)
+
+			putInt(t, ctx, doc1, "x", 0, "x0", commitTime)
+			_, err = doc2.Merge(ctx, doc1)
+			require.NoError(t, err)
+			_, err = doc3.Merge(ctx, doc1)
+			require.NoError(t, err)
+
+			putInt(t, ctx, doc3, "x", 1, "x1", commitTime.Add(time.Second))
+
+			for i := int64(1); i < 20; i++ {
+				when := commitTime.Add(time.Duration(i+1) * time.Second)
+				putInt(t, ctx, doc1, "n1", i, "n1", when)
+				putInt(t, ctx, doc2, "n2", i, "n2", when)
+				_, err = doc1.Merge(ctx, doc2)
+				require.NoError(t, err)
+				_, err = doc2.Merge(ctx, doc1)
+				require.NoError(t, err)
+			}
+
+			s1 := readWriteSyncState(t, ctx, doc1)
+			s2 := readWriteSyncState(t, ctx, doc2)
+			syncQuiescent(t, ctx, s1, s2)
+
+			// doc3's change is concurrent to the last sync heads, forcing the
+			// slower reconciliation path on the next synchronization.
+			_, err = doc2.Merge(ctx, doc3)
+			require.NoError(t, err)
+
+			putInt(t, ctx, doc1, "n1", 100, "n1 final", commitTime.Add(time.Hour))
+			putInt(t, ctx, doc2, "n1", 100, "n1 final", commitTime.Add(time.Hour))
+
+			s1 = readWriteSyncState(t, ctx, doc1)
+			s2 = readWriteSyncState(t, ctx, doc2)
+			syncQuiescent(t, ctx, s1, s2)
+
+			assert.Equal(t, sortedHeadHex(t, ctx, doc1), sortedHeadHex(t, ctx, doc2))
+		})
+	}
+}
+
 // TestRustSync_FirstResponseIsSomeEvenIfNoChanges reproduces
 // first_response_is_some_even_if_no_changes.
 func TestRustSync_FirstResponseIsSomeEvenIfNoChanges(t *testing.T) {
