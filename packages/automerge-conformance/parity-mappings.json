@@ -1,6 +1,36 @@
 [
   {
     "source": "rust",
+    "file": "tests/convert_string_to_text.rs",
+    "name": "test_strings_in_maps_are_converted_to_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustConvert_StringsInMapsAreConvertedToText"
+    ],
+    "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/convert_string_to_text.rs",
+    "name": "test_strings_in_lists_are_converted_to_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustConvert_StringsInListsAreConvertedToText"
+    ],
+    "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/convert_string_to_text.rs",
+    "name": "test_does_not_add_size_when_strings_are_not_converted",
+    "classification": "covered",
+    "localTests": [
+      "TestRustConvert_DoesNotAddSizeWhenStringsAreNotConverted"
+    ],
+    "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference."
+  },
+  {
+    "source": "rust",
     "file": "src/iter/list_range.rs",
     "name": "list_range_bounds",
     "classification": "covered",

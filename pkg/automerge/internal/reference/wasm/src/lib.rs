@@ -327,6 +327,23 @@ pub extern "C" fn am_load(pointer: u32, length: u32) -> i32 {
 }
 
 #[no_mangle]
+pub extern "C" fn am_load_convert_strings(pointer: u32, length: u32) -> i32 {
+    let bytes = input_bytes(pointer, length);
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let options = automerge::LoadOptions::new()
+            .migrate_strings(automerge::StringMigration::ConvertToText);
+        match AutoCommit::load_with_options(&bytes, options) {
+            Ok(doc) => {
+                state.reset(doc);
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn am_save() -> i32 {
     STATE.with(|state| {
         let mut state = state.borrow_mut();

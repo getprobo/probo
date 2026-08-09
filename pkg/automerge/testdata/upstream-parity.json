@@ -8321,10 +8321,12 @@
       "file": "tests/convert_string_to_text.rs",
       "line": 61,
       "name": "test_does_not_add_size_when_strings_are_not_converted",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustConvert_DoesNotAddSizeWhenStringsAreNotConverted"
+      ],
+      "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference.",
       "runtimeName": "test_does_not_add_size_when_strings_are_not_converted"
     },
     {
@@ -8460,10 +8462,12 @@
       "file": "tests/convert_string_to_text.rs",
       "line": 34,
       "name": "test_strings_in_lists_are_converted_to_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustConvert_StringsInListsAreConvertedToText"
+      ],
+      "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference.",
       "runtimeName": "test_strings_in_lists_are_converted_to_text"
     },
     {
@@ -8472,10 +8476,12 @@
       "file": "tests/convert_string_to_text.rs",
       "line": 8,
       "name": "test_strings_in_maps_are_converted_to_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustConvert_StringsInMapsAreConvertedToText"
+      ],
+      "rationale": "Loading with the string-to-text migration converts string scalars in maps and lists into text objects, matching the reference.",
       "runtimeName": "test_strings_in_maps_are_converted_to_text"
     },
     {

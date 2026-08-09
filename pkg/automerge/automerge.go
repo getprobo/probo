@@ -235,6 +235,178 @@ func LoadReference(
 	return &Document{backend: b}, nil
 }
 
+// LoadConvertingStrings loads a document with the native engine, converting
+// every string scalar stored in a map or list into a text object. It mirrors
+// the Rust StringMigration::ConvertToText load option.
+func LoadConvertingStrings(
+	ctx context.Context,
+	data []byte,
+	actorID ActorID,
+) (*Document, error) {
+	document, err := LoadPureGo(ctx, data, actorID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := document.convertStringsToText(ctx); err != nil {
+		_ = document.Close(ctx)
+
+		return nil, err
+	}
+
+	return document, nil
+}
+
+// LoadReferenceConvertingStrings loads a document with the reference engine and
+// the string-to-text migration applied.
+func LoadReferenceConvertingStrings(
+	ctx context.Context,
+	data []byte,
+	actorID ActorID,
+) (*Document, error) {
+	b, err := reference.LoadConvertingStrings(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load Automerge backend: %w", err)
+	}
+
+	if err := b.SetActor(ctx, actorID[:]); err != nil {
+		_ = b.Close(ctx)
+
+		return nil, fmt.Errorf("cannot assign loaded Automerge actor: %w", err)
+	}
+
+	return &Document{backend: b}, nil
+}
+
+// convertStringsToText replaces every string scalar reachable from the root in
+// a map or list with a text object holding that string, then commits the
+// conversion when anything changed. It backs the string-to-text load migration.
+func (d *Document) convertStringsToText(ctx context.Context) error {
+	changed, err := convertObjectStrings(ctx, d.Root())
+	if err != nil {
+		return fmt.Errorf("cannot migrate strings to text: %w", err)
+	}
+
+	if !changed {
+		return nil
+	}
+
+	if _, err := d.Commit(ctx, "convert strings to text", time.Unix(0, 0)); err != nil {
+		return fmt.Errorf("cannot commit string migration: %w", err)
+	}
+
+	return nil
+}
+
+func convertObjectStrings(ctx context.Context, object *Object) (bool, error) {
+	switch object.Type {
+	case ObjectTypeMap, ObjectTypeTable:
+		return convertMapStrings(ctx, object)
+	case ObjectTypeList:
+		return convertListStrings(ctx, object)
+	default:
+		return false, nil
+	}
+}
+
+func convertMapStrings(ctx context.Context, object *Object) (bool, error) {
+	keys, err := object.Keys(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	changed := false
+
+	for _, key := range keys {
+		if scalar, err := object.Scalar(ctx, key); err == nil {
+			if scalar.Type != ScalarTypeString {
+				continue
+			}
+
+			text, err := object.CreateObject(ctx, key, ObjectTypeText)
+			if err != nil {
+				return false, err
+			}
+
+			handle, err := text.Text()
+			if err != nil {
+				return false, err
+			}
+
+			if err := handle.Splice(ctx, 0, 0, scalar.String); err != nil {
+				return false, err
+			}
+
+			changed = true
+
+			continue
+		}
+
+		child, err := object.Object(ctx, key)
+		if err != nil {
+			continue
+		}
+
+		childChanged, err := convertObjectStrings(ctx, child)
+		if err != nil {
+			return false, err
+		}
+
+		changed = changed || childChanged
+	}
+
+	return changed, nil
+}
+
+func convertListStrings(ctx context.Context, object *Object) (bool, error) {
+	length, err := object.Len(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	changed := false
+
+	for index := uint64(0); index < length; index++ {
+		if scalar, err := object.ScalarAt(ctx, index); err == nil {
+			if scalar.Type != ScalarTypeString {
+				continue
+			}
+
+			text, err := object.PutObjectAt(ctx, index, ObjectTypeText)
+			if err != nil {
+				return false, err
+			}
+
+			handle, err := text.Text()
+			if err != nil {
+				return false, err
+			}
+
+			if err := handle.Splice(ctx, 0, 0, scalar.String); err != nil {
+				return false, err
+			}
+
+			changed = true
+
+			continue
+		}
+
+		child, err := object.ObjectAt(ctx, index)
+		if err != nil {
+			continue
+		}
+
+		childChanged, err := convertObjectStrings(ctx, child)
+		if err != nil {
+			return false, err
+		}
+
+		changed = changed || childChanged
+	}
+
+	return changed, nil
+}
+
 // LoadPureGo loads Automerge data using the experimental native Go engine.
 func LoadPureGo(
 	ctx context.Context,

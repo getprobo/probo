@@ -93,6 +93,23 @@ func Load(ctx context.Context, document []byte) (*Backend, error) {
 	return backend, nil
 }
 
+// LoadConvertingStrings loads a document, converting every string scalar in a
+// map or list into a text object, mirroring StringMigration::ConvertToText.
+func LoadConvertingStrings(ctx context.Context, document []byte) (*Backend, error) {
+	backend, err := instantiate(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot instantiate Automerge reference backend: %w", err)
+	}
+
+	if err := backend.runBytes(ctx, "am_load_convert_strings", document); err != nil {
+		_ = backend.Close(ctx)
+
+		return nil, fmt.Errorf("cannot load Automerge document with string migration: %w", err)
+	}
+
+	return backend, nil
+}
+
 func instantiate(ctx context.Context) (*Backend, error) {
 	runtimeOnce.Do(
 		func() {
