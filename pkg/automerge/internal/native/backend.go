@@ -2564,7 +2564,15 @@ func sequenceRange(
 
 		length := elementLength(operation)
 		if position+length > index {
-			return 0, 0, nil, fmt.Errorf("text index splits a Unicode character")
+			// UTF-16 callers can address the middle of a surrogate pair.
+			// Upstream Rust advances such a position to the boundary after
+			// the character rather than rejecting the edit.
+			position += length
+			previousValue = operation.ID
+			previous = &previousValue
+			start = i + 1
+
+			break
 		}
 
 		position += length
@@ -2580,19 +2588,15 @@ func sequenceRange(
 		start = len(sequence)
 	}
 
-	target := index + deleteCount
+	target := position + deleteCount
 
 	end := start
 	for end < len(sequence) && position < target {
 		position += elementLength(sequence[end])
-		if position > target {
-			return 0, 0, nil, fmt.Errorf("text deletion splits a Unicode character")
-		}
-
 		end++
 	}
 
-	if position != target {
+	if position < target {
 		return 0, 0, nil, fmt.Errorf("text deletion extends beyond the document")
 	}
 
