@@ -120,10 +120,44 @@ surrounding `MarkBegin(expand.before())`/`MarkEnd(expand.after())` ops:
 
 Both cases still satisfy the upstream `marks_are_okay` invariants (spans stay
 consolidated and reproduce the text), so `rust/tests/text.rs::marks_are_okay`
-is covered; the value-level divergence is tracked here. A full fix requires
-expand- and visibility-aware insertion positioning in the native sequence path
-(porting the Rust `InsertQuery` boundary logic) plus computing spans by running
-a mark state machine over mark ops embedded in sequence order.
+is covered; the value-level divergence is tracked here.
+
+Minimal reproduction of the first case:
+
+1. splice `"B"` into an empty text object;
+2. mark `[0,1)` with `ExpandMark::Both`;
+3. splice `"a"` at index 0, giving `"aB"` — both engines correctly report the
+   whole span as marked, so boundary expansion at insertion time already works;
+4. delete `"B"`. The reference still reports `"a"` as marked; native drops the
+   mark.
+
+Native cannot distinguish this from the case that must *not* keep the mark
+(delete all marked content first, then insert at the head) because both
+insertions are anchored at the head with identical keys. The discriminating
+information is which side of the mark's begin operation the insertion lands on,
+which the reference records in the insertion's key and native does not.
+
+A fix therefore needs three coordinated changes:
+
+1. mark begin and end operations must occupy positions in the RGA order (they
+   are already `insert` operations with keys, so they slot into the tree once
+   the order stops filtering them out) while element views keep filtering them;
+2. insertions must anchor relative to those operations using the reference's
+   expand-aware insert query (`op_set2/op_set/insert.rs`), where an expanding
+   begin and a non-expanding end each offer a position after themselves and
+   reaching the end of a begin that offered a position cancels that offer;
+3. spans must be computed by running a mark state machine over that order
+   rather than by resolving anchor positions.
+
+An attempt at all three is recorded here because the failure mode is
+instructive: getting step 2 wrong loses marks entirely rather than degrading
+gracefully. In particular the cancellation rule interacts with a splice that
+replaces marked content — the deleted element sits between the begin and end
+operations, so a naive implementation cancels the candidate and anchors the
+replacement outside the mark, which regressed roughly two dozen mark and span
+tests. The next attempt should port the reference's insert query and span
+iterator faithfully rather than approximating them, and can use the randomized
+differential stress tests and `FuzzDifferentialOperations` as guardrails.
 
 **Independent re-encoding of concurrent edits (determinism, not interop).**
 The randomized `TestDifferentialStress_ConcurrentMerge` harness applies the same
