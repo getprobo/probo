@@ -45,6 +45,13 @@ type (
 		// current maximum) splice in next to their anchor, while merged changes
 		// and rollbacks invalidate the entry so it is rebuilt lazily.
 		insertOrderCache map[OpID][]OpID
+
+		// sequenceValuesCache holds the materialized visible values of a
+		// sequence object, and sequenceElementsCache the materialized visible
+		// elements. Appending a new element at the end extends them in place;
+		// every other mutation drops the entry so it is recomputed.
+		sequenceValuesCache   map[OpID][]sequenceValue
+		sequenceElementsCache map[OpID][]Operation
 	}
 
 	RichSpan struct {
@@ -66,8 +73,10 @@ func NewState() *State {
 		operations:       make(map[OpID]Operation),
 		superseded:       make(map[OpID]struct{}),
 		heads:            make(map[ChangeHash]struct{}),
-		sequenceCache:    make(map[OpID][]Operation),
-		insertOrderCache: make(map[OpID][]OpID),
+		sequenceCache:       make(map[OpID][]Operation),
+		insertOrderCache:    make(map[OpID][]OpID),
+		sequenceValuesCache:   make(map[OpID][]sequenceValue),
+		sequenceElementsCache: make(map[OpID][]Operation),
 	}
 }
 
@@ -153,6 +162,8 @@ func (s *State) ApplyChange(change *Change) error {
 		if !operation.Object.IsRoot {
 			delete(s.sequenceCache, operation.Object.OpID)
 			delete(s.insertOrderCache, operation.Object.OpID)
+			delete(s.sequenceValuesCache, operation.Object.OpID)
+			delete(s.sequenceElementsCache, operation.Object.OpID)
 		}
 
 		s.supersedePredecessors(operation)
@@ -407,6 +418,10 @@ func (s *State) setSequenceCache(object OpID, operations []Operation) {
 }
 
 func (s *State) sequenceElements(object OpID) []Operation {
+	if cached, ok := s.sequenceElementsCache[object]; ok {
+		return cached
+	}
+
 	order := s.insertOrder(object)
 
 	operations := make([]Operation, 0, len(order))
@@ -420,6 +435,8 @@ func (s *State) sequenceElements(object OpID) []Operation {
 			operations = append(operations, operation)
 		}
 	}
+
+	s.sequenceElementsCache[object] = operations
 
 	return operations
 }
@@ -547,31 +564,32 @@ func (s *State) spliceInsertOrder(operation Operation) {
 }
 
 func (s *State) sequenceValues(object OpID) []sequenceValue {
+	if cached, ok := s.sequenceValuesCache[object]; ok {
+		return cached
+	}
+
 	insertions := s.sequenceAll(object)
 	values := make([]sequenceValue, 0, len(insertions))
+
+	// Collect the winning replacement value per element in a single pass. Doing
+	// this per insertion would rescan every operation for every element, which
+	// is quadratic in the size of the document.
+	winners := s.elementValueWinners()
 
 	for _, insertion := range insertions {
 		var (
 			value Operation
 			found bool
 		)
+
 		if !s.isSuperseded(insertion.ID) {
 			value = insertion
 			found = true
 		}
 
-		for _, operation := range s.operations {
-			if operation.Insert ||
-				operation.Action == ActionDelete ||
-				operation.Action == ActionIncrement ||
-				operation.Key.Element == nil ||
-				*operation.Key.Element != insertion.ID ||
-				s.isSuperseded(operation.ID) {
-				continue
-			}
-
-			if !found || operation.ID.Compare(value.ID) > 0 {
-				value = operation
+		if replacement, ok := winners[insertion.ID]; ok {
+			if !found || replacement.ID.Compare(value.ID) > 0 {
+				value = replacement
 				found = true
 			}
 		}
@@ -587,7 +605,70 @@ func (s *State) sequenceValues(object OpID) []sequenceValue {
 		}
 	}
 
+	s.sequenceValuesCache[object] = values
+
 	return values
+}
+
+// updateSequenceValues keeps the materialized sequence values coherent after an
+// operation is applied. Appending a brand new element at the end of the
+// sequence extends the cached slice, which keeps sequential editing linear;
+// anything else (a replacement, a deletion, an insertion in the middle) can
+// change which values win, so the entry is dropped and rebuilt on demand.
+func (s *State) updateSequenceValues(operation Operation) {
+	if operation.Object.IsRoot || operation.Action == ActionMark {
+		return
+	}
+
+	object := operation.Object.OpID
+
+	order := s.insertOrderCache[object]
+	appended := operation.Insert &&
+		len(operation.Predecessors) == 0 &&
+		len(order) > 0 &&
+		order[len(order)-1] == operation.ID
+
+	if !appended {
+		delete(s.sequenceValuesCache, object)
+		delete(s.sequenceElementsCache, object)
+
+		return
+	}
+
+	if cached, ok := s.sequenceValuesCache[object]; ok {
+		s.sequenceValuesCache[object] = append(cached, sequenceValue{
+			Element:   operation.ID,
+			Operation: operation,
+		})
+	}
+
+	if cached, ok := s.sequenceElementsCache[object]; ok {
+		s.sequenceElementsCache[object] = append(cached, operation)
+	}
+}
+
+// elementValueWinners returns, for every list element that has been assigned a
+// replacement value, the visible operation with the highest ID. Element IDs are
+// globally unique, so a single map covers every object.
+func (s *State) elementValueWinners() map[OpID]Operation {
+	winners := make(map[OpID]Operation)
+
+	for _, operation := range s.operations {
+		if operation.Insert ||
+			operation.Action == ActionDelete ||
+			operation.Action == ActionIncrement ||
+			operation.Key.Element == nil ||
+			s.isSuperseded(operation.ID) {
+			continue
+		}
+
+		element := *operation.Key.Element
+		if current, ok := winners[element]; !ok || operation.ID.Compare(current.ID) > 0 {
+			winners[element] = operation
+		}
+	}
+
+	return winners
 }
 
 // visibleSequenceElementOperations returns every visible value operation whose
@@ -1346,6 +1427,7 @@ func (s *State) applyPending(operations []Operation) error {
 		}
 
 		s.spliceInsertOrder(operation)
+		s.updateSequenceValues(operation)
 		s.supersedePredecessors(operation)
 	}
 
