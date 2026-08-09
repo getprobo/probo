@@ -207,6 +207,44 @@ func (b *Backend) Save(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
+// SaveNoCompress serializes the document without DEFLATE compression, mirroring
+// AutoCommit::save_nocompress.
+func (b *Backend) SaveNoCompress(ctx context.Context) ([]byte, error) {
+	if err := b.run(ctx, "am_save_nocompress"); err != nil {
+		return nil, fmt.Errorf("cannot save reference document: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read saved reference document: %w", err)
+	}
+
+	return output, nil
+}
+
+// SaveWithOptions serializes the document, optionally discarding orphan changes.
+// Retaining orphans uses the default am_save; discarding them uses
+// save_with_options(retain_orphans=false).
+func (b *Backend) SaveWithOptions(
+	ctx context.Context,
+	retainOrphans bool,
+) ([]byte, error) {
+	if retainOrphans {
+		return b.Save(ctx)
+	}
+
+	if err := b.run(ctx, "am_save_no_orphans"); err != nil {
+		return nil, fmt.Errorf("cannot save reference document: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read saved reference document: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) SaveIncremental(ctx context.Context) ([]byte, error) {
 	if err := b.run(ctx, "am_save_incremental"); err != nil {
 		return nil, fmt.Errorf("cannot save incremental reference changes: %w", err)
@@ -246,6 +284,24 @@ func (b *Backend) LoadIncremental(
 	}
 
 	return uint64(applied), nil
+}
+
+// Isolate pins the document to the given heads, mirroring AutoCommit::isolate.
+func (b *Backend) Isolate(ctx context.Context, heads [][32]byte) error {
+	if err := b.runBytes(ctx, "am_isolate", flattenHashes(heads)); err != nil {
+		return fmt.Errorf("cannot isolate reference document: %w", err)
+	}
+
+	return nil
+}
+
+// Integrate ends isolation, mirroring AutoCommit::integrate.
+func (b *Backend) Integrate(ctx context.Context) error {
+	if err := b.run(ctx, "am_integrate"); err != nil {
+		return fmt.Errorf("cannot integrate reference document: %w", err)
+	}
+
+	return nil
 }
 
 func (b *Backend) SetActor(ctx context.Context, actor []byte) error {
@@ -1544,6 +1600,43 @@ func (b *Backend) HasHeads(
 	value := int32(result[0])
 	if value < 0 {
 		return false, b.operationError(ctx, "cannot inspect reference heads")
+	}
+
+	return value != 0, nil
+}
+
+// BloomContains builds a sync Bloom filter from the seed change hashes and
+// reports whether it contains the target hash. Because Bloom filters admit
+// false positives, a true result does not guarantee membership; parity tests
+// use this to reproduce the upstream false-positive search deterministically.
+func (b *Backend) BloomContains(
+	ctx context.Context,
+	target [32]byte,
+	seeds [][32]byte,
+) (bool, error) {
+	input := make([]byte, 0, (len(seeds)+1)*32)
+	input = append(input, target[:]...)
+	input = append(input, flattenHashes(seeds)...)
+
+	pointer, length, err := b.write(ctx, input)
+	if err != nil {
+		return false, fmt.Errorf("cannot write bloom hashes: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	result, err := b.call(
+		ctx,
+		"am_bloom_contains",
+		uint64(pointer),
+		uint64(length),
+	)
+	if err != nil {
+		return false, fmt.Errorf("cannot evaluate reference bloom filter: %w", err)
+	}
+
+	value := int32(result[0])
+	if value < 0 {
+		return false, b.operationError(ctx, "cannot evaluate reference bloom filter")
 	}
 
 	return value != 0, nil

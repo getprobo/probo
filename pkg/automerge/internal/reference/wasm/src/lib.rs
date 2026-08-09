@@ -353,6 +353,35 @@ pub extern "C" fn am_save() -> i32 {
     0
 }
 
+// am_save_nocompress serializes the document without DEFLATE-compressing the RLE
+// columns, mirroring AutoCommit::save_nocompress.
+#[no_mangle]
+pub extern "C" fn am_save_nocompress() -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.output = state.doc.save_nocompress();
+        state.error.clear();
+    });
+    0
+}
+
+// am_save_no_orphans serializes the document while discarding orphan changes
+// (changes whose dependencies are missing), mirroring SaveOptions.retain_orphans
+// set to false. The default am_save retains orphans.
+#[no_mangle]
+pub extern "C" fn am_save_no_orphans() -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let options = automerge::SaveOptions {
+            deflate: false,
+            retain_orphans: false,
+        };
+        state.output = state.doc.save_with_options(options);
+        state.error.clear();
+    });
+    0
+}
+
 #[no_mangle]
 pub extern "C" fn am_save_incremental() -> i32 {
     STATE.with(|state| {
@@ -1983,6 +2012,102 @@ pub extern "C" fn am_heads() -> i32 {
         state.error.clear();
     });
     0
+}
+
+// am_isolate pins the document to a set of heads (a concatenation of 32-byte
+// change hashes) so subsequent reads and writes are scoped to that frontier,
+// mirroring AutoCommit::isolate.
+#[no_mangle]
+pub extern "C" fn am_isolate(pointer: u32, length: u32) -> i32 {
+    let bytes = input_bytes(pointer, length);
+    if bytes.len() % 32 != 0 {
+        return STATE.with(|state| {
+            state
+                .borrow_mut()
+                .fail("isolation heads must be a multiple of 32 bytes")
+        });
+    }
+
+    let mut heads = Vec::with_capacity(bytes.len() / 32);
+    for chunk in bytes.chunks(32) {
+        match ChangeHash::try_from(chunk) {
+            Ok(hash) => heads.push(hash),
+            Err(error) => {
+                return STATE.with(|state| {
+                    state.borrow_mut().fail(format!("invalid head: {error}"))
+                });
+            }
+        }
+    }
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.doc.isolate(&heads);
+        state.error.clear();
+    });
+
+    0
+}
+
+// am_integrate ends isolation, returning to the full document history, mirroring
+// AutoCommit::integrate.
+#[no_mangle]
+pub extern "C" fn am_integrate() -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.doc.integrate();
+        state.error.clear();
+    });
+
+    0
+}
+
+// am_bloom_contains builds a sync Bloom filter from a set of change hashes and
+// reports whether it (possibly falsely) contains a target hash. The input is a
+// concatenation of 32-byte change hashes: the first hash is the target and the
+// remaining hashes seed the filter. The single output byte is 1 when the filter
+// contains the target and 0 otherwise. It exists so parity tests can reproduce
+// the upstream Bloom false-positive search deterministically.
+#[no_mangle]
+pub extern "C" fn am_bloom_contains(pointer: u32, length: u32) -> i32 {
+    let bytes = input_bytes(pointer, length);
+    if bytes.len() < 32 || bytes.len() % 32 != 0 {
+        STATE.with(|state| {
+            let mut state = state.borrow_mut();
+            state.error = "bloom input must be a non-empty multiple of 32 bytes".to_string();
+        });
+        return -1;
+    }
+
+    let target = match ChangeHash::try_from(&bytes[0..32]) {
+        Ok(hash) => hash,
+        Err(error) => {
+            STATE.with(|state| {
+                state.borrow_mut().error = format!("invalid target hash: {error}");
+            });
+            return -1;
+        }
+    };
+
+    let mut hashes = Vec::with_capacity(bytes.len() / 32 - 1);
+    for chunk in bytes[32..].chunks(32) {
+        match ChangeHash::try_from(chunk) {
+            Ok(hash) => hashes.push(hash),
+            Err(error) => {
+                STATE.with(|state| {
+                    state.borrow_mut().error = format!("invalid seed hash: {error}");
+                });
+                return -1;
+            }
+        }
+    }
+
+    let bloom = automerge::sync::BloomFilter::from_hashes(hashes.iter());
+    let contains = bloom.contains_hash(&target);
+
+    STATE.with(|state| state.borrow_mut().error.clear());
+
+    i32::from(contains)
 }
 
 fn patch_prop_json(prop: &Prop) -> serde_json::Value {
