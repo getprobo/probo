@@ -1,5 +1,25 @@
 [
   {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "rollback_discards_ops",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTransaction_RollbackDiscardsOps"
+    ],
+    "rationale": "Transaction rollback discards uncommitted operations and reports the discarded count, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "rollback_undoes_writes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Transaction rollback discards uncommitted operations and reports the discarded count, matching the reference."
+  },
+  {
     "source": "javascript",
     "file": "block_test.ts",
     "name": "should update marks",

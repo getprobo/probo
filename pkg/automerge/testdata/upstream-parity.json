@@ -8565,9 +8565,9 @@
       "line": 157,
       "name": "commit_with_options",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::commit_with_options"
     },
     {
@@ -8577,9 +8577,9 @@
       "line": 261,
       "name": "empty_commit_returns_none_hash",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::empty_commit_returns_none_hash"
     },
     {
@@ -8589,9 +8589,9 @@
       "line": 236,
       "name": "get_heads_returns_pre_tx_heads",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::get_heads_returns_pre_tx_heads"
     },
     {
@@ -8601,9 +8601,9 @@
       "line": 223,
       "name": "log_patches",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::log_patches"
     },
     {
@@ -8613,9 +8613,9 @@
       "line": 145,
       "name": "nested_objects",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::nested_objects"
     },
     {
@@ -8625,9 +8625,9 @@
       "line": 196,
       "name": "owned_transaction_at",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::owned_transaction_at"
     },
     {
@@ -8637,9 +8637,9 @@
       "line": 249,
       "name": "pending_ops",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::pending_ops"
     },
     {
@@ -8649,9 +8649,9 @@
       "line": 121,
       "name": "put_and_get_roundtrip",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::put_and_get_roundtrip"
     },
     {
@@ -8661,9 +8661,9 @@
       "line": 134,
       "name": "read_during_transaction",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
       "runtimeName": "transaction::owned_transaction::tests::read_during_transaction"
     },
     {
@@ -8672,10 +8672,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 168,
       "name": "rollback_discards_ops",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTransaction_RollbackDiscardsOps"
+      ],
+      "rationale": "Transaction rollback discards uncommitted operations and reports the discarded count, matching the reference.",
       "runtimeName": "transaction::owned_transaction::tests::rollback_discards_ops"
     },
     {
@@ -8684,10 +8686,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 186,
       "name": "rollback_undoes_writes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTransaction_RollbackUndoesWrites"
+      ],
+      "rationale": "Transaction rollback discards uncommitted operations and reports the discarded count, matching the reference.",
       "runtimeName": "transaction::owned_transaction::tests::rollback_undoes_writes"
     },
     {

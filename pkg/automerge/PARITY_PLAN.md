@@ -48,7 +48,6 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/test.rs` | 9 | patch-log misuse, transactions and isolation, iterators, and regression corpus |
 | `rust/src/sync.rs` | 5 | Bloom false positives, reset/data-loss recovery, old-peer fallback, and message encode/decode internals |
 | `rust/tests/text.rs` | 4 | block-adjacent marks, isolation patches, property scenarios, and zero-length spans |
-| `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
 | `rust/tests/batch_insert.rs` | 2 | invalid-scalar rejection and transaction integration |
 | `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
 | Rust storage doctests | 6 | parser splitting, ranges, incomplete data, and document parsing contracts |
@@ -62,7 +61,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **72**.
+Total required pending entries: **61**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 
