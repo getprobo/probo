@@ -1,6 +1,16 @@
 [
   {
     "source": "rust",
+    "file": "tests/test_mark_patches.rs",
+    "name": "mark_patches_at_end_of_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustMarkPatches_AtEndOfText"
+    ],
+    "rationale": "A mark loaded incrementally into another document produces a single Mark patch through the diff cursor."
+  },
+  {
+    "source": "rust",
     "file": "src/transaction/owned_transaction.rs",
     "name": "rollback_discards_ops",
     "classification": "covered",

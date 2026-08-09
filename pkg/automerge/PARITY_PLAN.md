@@ -61,7 +61,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **61**.
+Total required pending entries: **60**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 

@@ -6166,10 +6166,12 @@
       "file": "tests/test_mark_patches.rs",
       "line": 9,
       "name": "mark_patches_at_end_of_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustMarkPatches_AtEndOfText"
+      ],
+      "rationale": "A mark loaded incrementally into another document produces a single Mark patch through the diff cursor.",
       "runtimeName": "mark_patches_at_end_of_text"
     },
     {

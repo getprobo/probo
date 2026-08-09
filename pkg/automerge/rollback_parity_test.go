@@ -28,11 +28,63 @@ package automerge_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
 )
+
+// TestRustMarkPatches_AtEndOfText reproduces mark_patches_at_end_of_text: a mark
+// applied at the end of text and loaded incrementally into another document
+// produces a single Mark patch through the diff cursor.
+func TestRustMarkPatches_AtEndOfText(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		author, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, author)
+
+		text, err := author.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 0, 0, "sample"))
+		_, err = author.Commit(ctx, "seed", commitTime)
+		require.NoError(t, err)
+
+		saved, err := author.Save(ctx)
+		require.NoError(t, err)
+
+		follower, err := engine.load(ctx, saved, actor(0xbb))
+		require.NoError(t, err)
+		closeDocument(t, follower)
+
+		require.NoError(t, text.Mark(ctx, 5, 6, "bold", markBool(), automerge.MarkExpandAfter))
+		_, err = author.Commit(ctx, "mark", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		incremental, err := author.SaveIncremental(ctx)
+		require.NoError(t, err)
+
+		require.NoError(t, follower.UpdateDiffCursor(ctx))
+		_, err = follower.LoadIncremental(ctx, incremental)
+		require.NoError(t, err)
+
+		patches, err := follower.DiffIncremental(ctx)
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	reference := result["reference"]
+	require.Len(t, reference, 1)
+	assert.Equal(t, automerge.PatchMark, reference[0].Action)
+	require.Len(t, reference[0].Marks, 1)
+	assert.Equal(t, "bold", reference[0].Marks[0].Name)
+	assert.Equal(t, result["reference"], result["native"])
+}
 
 // TestRustTransaction_RollbackDiscardsOps reproduces rollback_discards_ops: a
 // rollback with no pending writes discards nothing and preserves prior state.
