@@ -27,12 +27,46 @@ package automerge_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
 )
+
+// TestRustCurrentState_LoadChanges reproduces test_load_changes: loading a stored
+// document and materializing its current state yields a single put of the
+// counter's summed value.
+func TestRustCurrentState_LoadChanges(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	data, err := os.ReadFile("testdata/fixtures/counter_value_is_ok.automerge")
+	require.NoError(t, err)
+
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.load(ctx, data, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		patches, err := document.CurrentState(ctx)
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	reference := result["reference"]
+	require.Len(t, reference, 1)
+	assert.Equal(t, automerge.PatchPutMap, reference[0].Action)
+	assert.Equal(t, "a", reference[0].Key)
+	require.NotNil(t, reference[0].Value.Scalar)
+	assert.Equal(t, automerge.ScalarTypeCounter, reference[0].Value.Scalar.Type)
+	assert.Equal(t, int64(2000), reference[0].Value.Scalar.Int)
+	assert.Equal(t, result["reference"], result["native"])
+}
 
 func loadConvertingEngines() []struct {
 	name string

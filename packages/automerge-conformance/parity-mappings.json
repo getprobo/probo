@@ -1,5 +1,15 @@
 [
   {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_load_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_LoadChanges"
+    ],
+    "rationale": "Loading a stored document and materializing current state yields the summed counter put, matching the reference."
+  },
+  {
     "source": "javascript",
     "file": "marks.ts",
     "name": "should allow marks that can be seen in patches",

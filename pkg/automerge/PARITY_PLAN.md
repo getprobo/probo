@@ -49,10 +49,9 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/text.rs` | 4 | isolation patches, incremental increments/blocks, and a property scenario |
 | `rust/src/sync.rs` | 3 | Bloom false positives and empty-message V2 codec internals |
 | `rust/tests/test_save_load_orphans.rs` | 2 | preserving and discarding orphan changes across a document save (needs a native document-chunk encoder) |
-| `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
 | `rust/src/automerge/tests.rs` | 1 | incremental put/increment patch stream from applied counter changes |
 
-Total required pending entries: **14**.
+Total required pending entries: **13**.
 
 The remaining fourteen entries need substantial features: `isolate`/`integrate`
 (a pinned-frontier transaction view), a true operation-replay patch log for

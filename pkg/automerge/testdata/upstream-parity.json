@@ -4278,10 +4278,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 520,
       "name": "test_load_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_LoadChanges"
+      ],
+      "rationale": "Loading a stored document and materializing current state yields the summed counter put, matching the reference.",
       "runtimeName": "automerge::current_state::tests::test_load_changes"
     },
     {
