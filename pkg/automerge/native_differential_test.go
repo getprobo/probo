@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 	"unicode/utf16"
 
 	"github.com/stretchr/testify/assert"
@@ -111,6 +112,144 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, string(model), loadedValue)
 	}
+}
+
+func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
+	t.Parallel()
+
+	const (
+		histories = 10
+		rounds    = 20
+	)
+
+	ctx := context.Background()
+	characters := []rune("abcXYZ😀é")
+
+	for history := range histories {
+		random := rand.New(rand.NewSource(int64(10_000 + history)))
+		nativeDocument, err := automerge.NewPureGo(
+			ctx,
+			actor(byte(140+history)),
+		)
+		require.NoError(t, err)
+		closeDocument(t, nativeDocument)
+		nativeText, err := nativeDocument.CreateText(ctx, "body")
+		require.NoError(t, err)
+		_, err = nativeDocument.Commit(ctx, "create body", commitTime)
+		require.NoError(t, err)
+
+		referenceDocument, err := automerge.NewReference(
+			ctx,
+			actor(byte(160+history)),
+		)
+		require.NoError(t, err)
+		closeDocument(t, referenceDocument)
+
+		nativeSync, err := nativeDocument.NewSyncState(ctx)
+		require.NoError(t, err)
+		closeSyncState(t, nativeSync)
+
+		referenceSync, err := referenceDocument.NewSyncState(ctx)
+		require.NoError(t, err)
+		closeSyncState(t, referenceSync)
+		synchronize(t, nativeSync, referenceSync)
+
+		referenceText, err := referenceDocument.Text(ctx, "body")
+		require.NoError(t, err)
+
+		for round := range rounds {
+			randomTextMutation(
+				t,
+				ctx,
+				random,
+				nativeText,
+				characters,
+			)
+			_, err = nativeDocument.Commit(
+				ctx,
+				fmt.Sprintf("native history %d round %d", history, round),
+				commitTime.Add(time.Duration(round+1)*time.Second),
+			)
+			require.NoError(t, err)
+
+			randomTextMutation(
+				t,
+				ctx,
+				random,
+				referenceText,
+				characters,
+			)
+			_, err = referenceDocument.Commit(
+				ctx,
+				fmt.Sprintf("reference history %d round %d", history, round),
+				commitTime.Add(time.Duration(round+1)*time.Second),
+			)
+			require.NoError(t, err)
+
+			synchronize(t, nativeSync, referenceSync)
+
+			nativeValue, err := nativeText.String(ctx)
+			require.NoError(t, err)
+			referenceValue, err := referenceText.String(ctx)
+			require.NoError(t, err)
+			assert.Equal(
+				t,
+				referenceValue,
+				nativeValue,
+				"history %d round %d",
+				history,
+				round,
+			)
+
+			nativeHeads, err := nativeDocument.Heads(ctx)
+			require.NoError(t, err)
+			referenceHeads, err := referenceDocument.Heads(ctx)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, referenceHeads, nativeHeads)
+		}
+	}
+}
+
+func randomTextMutation(
+	t *testing.T,
+	ctx context.Context,
+	random *rand.Rand,
+	text *automerge.Text,
+	characters []rune,
+) {
+	t.Helper()
+
+	value, err := text.String(ctx)
+	require.NoError(t, err)
+
+	runes := []rune(value)
+	offsets := utf16Offsets(runes)
+
+	if len(runes) > 0 && random.Intn(3) == 0 {
+		position := random.Intn(len(runes))
+		require.NoError(
+			t,
+			text.Splice(
+				ctx,
+				offsets[position],
+				int32(offsets[position+1]-offsets[position]),
+				"",
+			),
+		)
+
+		return
+	}
+
+	position := random.Intn(len(runes) + 1)
+	require.NoError(
+		t,
+		text.Splice(
+			ctx,
+			offsets[position],
+			0,
+			string(characters[random.Intn(len(characters))]),
+		),
+	)
 }
 
 func utf16Offsets(value []rune) []uint32 {

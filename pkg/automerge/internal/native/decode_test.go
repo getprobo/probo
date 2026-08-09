@@ -25,6 +25,7 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
+	"strings"
 	"testing"
 	"time"
 
@@ -147,6 +148,106 @@ func TestDecode_CompressedOfficialChangeFixture(t *testing.T) {
 	require.Len(t, document.Changes, 1)
 	assert.Equal(t, ChunkCompressedChange, document.ChunkTypes[0])
 	assert.Equal(t, "99c38e85f3aae8af5fc91b50329124c399d11a23eb834fe148b237280e4ba8a7", document.Heads[0].String())
+}
+
+func TestDecode_OfficialStorageCorpus(t *testing.T) {
+	t.Parallel()
+
+	valid := []string{
+		"counter_value_is_ok.automerge",
+		"two_change_chunks.automerge",
+		"two_change_chunks_compressed.automerge",
+		"two_change_chunks_out_of_order.automerge",
+	}
+	for _, name := range valid {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := base64.StdEncoding.DecodeString(
+				officialStorageFixtures[name],
+			)
+			require.NoError(t, err)
+			_, err = Decode(data)
+			require.NoError(t, err)
+		})
+	}
+
+	invalid := []string{
+		"counter_value_has_incorrect_meta.automerge",
+		"counter_value_is_overlong.automerge",
+	}
+	for _, name := range invalid {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := base64.StdEncoding.DecodeString(
+				officialStorageFixtures[name],
+			)
+			require.NoError(t, err)
+			_, err = Decode(data)
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestDecode_OfficialFuzzCrashersDoNotPanic(t *testing.T) {
+	t.Parallel()
+
+	for name, encoded := range officialStorageFixtures {
+		if !strings.HasPrefix(name, "fuzz-") {
+			continue
+		}
+
+		name := name
+		encoded := encoded
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := base64.StdEncoding.DecodeString(encoded)
+			require.NoError(t, err)
+
+			_, _ = Decode(data)
+		})
+	}
+}
+
+func TestDecode_Official64BitObjectIDs(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{
+		"64bit_obj_id_change.automerge",
+		"64bit_obj_id_doc.automerge",
+	} {
+		name := name
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := base64.StdEncoding.DecodeString(
+				officialStorageFixtures[name],
+			)
+			require.NoError(t, err)
+
+			document, err := Decode(data)
+			if err != nil {
+				return
+			}
+
+			require.NotEmpty(t, document.Changes)
+
+			found := false
+
+			for _, operation := range document.Changes[0].Operations {
+				if operation.ID.Counter == 1<<42 {
+					found = true
+				}
+			}
+
+			assert.True(t, found)
+		})
+	}
 }
 
 func TestDecode_ReferenceBackendDocument(t *testing.T) {

@@ -39,21 +39,23 @@ import (
 
 type (
 	oracleRequest struct {
-		Action    string `json:"action"`
-		Actor     string `json:"actor,omitempty"`
-		ActorB    string `json:"actorB,omitempty"`
-		ActorC    string `json:"actorC,omitempty"`
-		Change    string `json:"change,omitempty"`
-		Document  string `json:"document,omitempty"`
-		Message   string `json:"message,omitempty"`
-		Text      string `json:"text,omitempty"`
-		Timestamp int64  `json:"timestamp,omitempty"`
+		Action    string          `json:"action"`
+		Actor     string          `json:"actor,omitempty"`
+		ActorB    string          `json:"actorB,omitempty"`
+		ActorC    string          `json:"actorC,omitempty"`
+		Change    string          `json:"change,omitempty"`
+		Document  string          `json:"document,omitempty"`
+		Message   string          `json:"message,omitempty"`
+		Scenario  json.RawMessage `json:"scenario,omitempty"`
+		Text      string          `json:"text,omitempty"`
+		Timestamp int64           `json:"timestamp,omitempty"`
 	}
 
 	oracleResponse struct {
 		Body     string   `json:"body"`
 		Change   string   `json:"change"`
 		Changes  []string `json:"changes"`
+		Data     any      `json:"data"`
 		Document string   `json:"document"`
 		Heads    []string `json:"heads"`
 		Message  string   `json:"message"`
@@ -111,6 +113,40 @@ func TestConformance_JavaScriptLoadsGoDocument(t *testing.T) {
 	assert.Equal(t, []string{hash.String()}, response.Heads)
 }
 
+func TestConformance_JavaScriptPreservesGoChanges(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	document, err := automerge.New(ctx, actor(2))
+	require.NoError(t, err)
+	closeDocument(t, document)
+	text, err := document.CreateText(ctx, "body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(ctx, 0, 0, "ABC"))
+	hash, err := document.Commit(ctx, "Create in Go", commitTime)
+	require.NoError(t, err)
+	changes, err := document.ChangesSince(ctx, nil)
+	require.NoError(t, err)
+	require.Len(t, changes, 1)
+
+	data, err := document.Save(ctx)
+	require.NoError(t, err)
+
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action:   "inspectChanges",
+			Document: base64.StdEncoding.EncodeToString(data),
+		},
+	)
+
+	require.Equal(t, []string{hash.String()}, response.Heads)
+	require.Len(t, response.Changes, 1)
+	forwarded, err := base64.StdEncoding.DecodeString(response.Changes[0])
+	require.NoError(t, err)
+	assert.Equal(t, changes[0].Bytes, forwarded)
+}
+
 func TestConformance_GoLoadsJavaScriptDocument(t *testing.T) {
 	t.Parallel()
 
@@ -150,6 +186,37 @@ func TestConformance_GoLoadsJavaScriptDocument(t *testing.T) {
 	nativeText, err := nativeState.Text("body")
 	require.NoError(t, err)
 	assert.Equal(t, "Hello from JavaScript 😀", nativeText)
+}
+
+func TestConformance_NativePreservesJavaScriptDataModel(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(15)
+	created := runOracle(
+		t,
+		oracleRequest{
+			Action: "createDataModel",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(created.Document)
+	require.NoError(t, err)
+
+	document, err := automerge.Load(context.Background(), data, actor(16))
+	require.NoError(t, err)
+	closeDocument(t, document)
+	saved, err := document.Save(context.Background())
+	require.NoError(t, err)
+
+	inspected := runOracle(
+		t,
+		oracleRequest{
+			Action:   "inspectDataModel",
+			Document: base64.StdEncoding.EncodeToString(saved),
+		},
+	)
+	assert.Equal(t, created.Data, inspected.Data)
+	assert.Equal(t, created.Heads, inspected.Heads)
 }
 
 func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
@@ -260,6 +327,35 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 	assert.Equal(t, "Create policy", inspection.Message)
 	require.NotNil(t, change.Hash)
 	assert.Equal(t, inspection.Heads[0], change.Hash.String())
+}
+
+func TestConformance_NativeParsesJavaScriptEmptyChange(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(46)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action:    "createEmptyChange",
+			Actor:     hex.EncodeToString(actorID[:]),
+			Message:   "Empty",
+			Timestamp: 12_345,
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(response.Change)
+	require.NoError(t, err)
+	decoded, err := native.Decode(data)
+	require.NoError(t, err)
+	require.Len(t, decoded.Changes, 1)
+	change := decoded.Changes[0]
+	assert.Equal(t, uint64(1), change.Sequence)
+	assert.Equal(t, uint64(1), change.StartOp)
+	assert.Equal(t, uint64(0), change.MaxOp)
+	assert.Equal(t, int64(12_345), change.Time)
+	assert.Equal(t, "Empty", change.Message)
+	assert.Empty(t, change.Operations)
+	require.NotNil(t, change.Hash)
+	assert.Equal(t, response.Heads[0], change.Hash.String())
 }
 
 func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
@@ -401,6 +497,129 @@ func TestConformance_NativeComplexRichTextSpans(t *testing.T) {
 	require.NoError(t, err)
 
 	nativeDocument, err := automerge.Load(context.Background(), data, actor(33))
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	nativeSpans, err := nativeText.Spans(context.Background())
+	require.NoError(t, err)
+
+	assert.Equal(t, referenceSpans, nativeSpans)
+}
+
+func TestConformance_NativeBoundaryMarks(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(37)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createBoundaryMarks",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(response.Document)
+	require.NoError(t, err)
+
+	referenceDocument, err := automerge.LoadReference(
+		context.Background(),
+		data,
+		actor(38),
+	)
+	require.NoError(t, err)
+	closeDocument(t, referenceDocument)
+	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	referenceSpans, err := referenceText.Spans(context.Background())
+	require.NoError(t, err)
+
+	nativeDocument, err := automerge.Load(
+		context.Background(),
+		data,
+		actor(39),
+	)
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	nativeSpans, err := nativeText.Spans(context.Background())
+	require.NoError(t, err)
+
+	assert.Equal(t, referenceSpans, nativeSpans)
+}
+
+func TestConformance_NativeSplitMarks(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(40)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createSplitMarks",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(response.Document)
+	require.NoError(t, err)
+
+	referenceDocument, err := automerge.LoadReference(
+		context.Background(),
+		data,
+		actor(41),
+	)
+	require.NoError(t, err)
+	closeDocument(t, referenceDocument)
+	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	referenceSpans, err := referenceText.Spans(context.Background())
+	require.NoError(t, err)
+
+	nativeDocument, err := automerge.Load(
+		context.Background(),
+		data,
+		actor(42),
+	)
+	require.NoError(t, err)
+	closeDocument(t, nativeDocument)
+	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	nativeSpans, err := nativeText.Spans(context.Background())
+	require.NoError(t, err)
+
+	assert.Equal(t, referenceSpans, nativeSpans)
+}
+
+func TestConformance_NativeUnicodeMarks(t *testing.T) {
+	t.Parallel()
+
+	actorID := actor(43)
+	response := runOracle(
+		t,
+		oracleRequest{
+			Action: "createUnicodeMarks",
+			Actor:  hex.EncodeToString(actorID[:]),
+		},
+	)
+	data, err := base64.StdEncoding.DecodeString(response.Document)
+	require.NoError(t, err)
+
+	referenceDocument, err := automerge.LoadReference(
+		context.Background(),
+		data,
+		actor(44),
+	)
+	require.NoError(t, err)
+	closeDocument(t, referenceDocument)
+	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	require.NoError(t, err)
+	referenceSpans, err := referenceText.Spans(context.Background())
+	require.NoError(t, err)
+
+	nativeDocument, err := automerge.Load(
+		context.Background(),
+		data,
+		actor(45),
+	)
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
 	nativeText, err := nativeDocument.Text(context.Background(), "body")
