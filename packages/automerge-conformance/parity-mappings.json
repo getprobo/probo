@@ -1,6 +1,36 @@
 [
   {
     "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_generates_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatchInsert_GeneratesPatches"
+    ],
+    "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_text_generates_splice_patch",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatchInsert_TextGeneratesSplicePatch"
+    ],
+    "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_init_map_generates_patches",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBatchInit_MapGeneratesPatches"
+    ],
+    "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference."
+  },
+  {
+    "source": "rust",
     "file": "tests/block_tests.rs",
     "name": "update_blocks_change_block_properties",
     "classification": "covered",

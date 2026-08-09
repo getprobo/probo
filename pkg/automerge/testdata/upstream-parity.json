@@ -4328,10 +4328,12 @@
       "file": "tests/batch_insert.rs",
       "line": 817,
       "name": "batch_init_map_generates_patches",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatchInit_MapGeneratesPatches"
+      ],
+      "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference.",
       "runtimeName": "batch_init_map_generates_patches"
     },
     {
@@ -4490,10 +4492,12 @@
       "file": "tests/batch_insert.rs",
       "line": 617,
       "name": "batch_insert_generates_patches",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatchInsert_GeneratesPatches"
+      ],
+      "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference.",
       "runtimeName": "batch_insert_generates_patches"
     },
     {
@@ -4692,10 +4696,12 @@
       "file": "tests/batch_insert.rs",
       "line": 638,
       "name": "batch_insert_text_generates_splice_patch",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBatchInsert_TextGeneratesSplicePatch"
+      ],
+      "rationale": "A hydrated batch insertion emits the expected patch stream, matching the reference.",
       "runtimeName": "batch_insert_text_generates_splice_patch"
     },
     {
