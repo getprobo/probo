@@ -51,7 +51,7 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/block_tests.rs` | 11 | block property updates, simultaneous text/block changes, update-spans configuration, merge diffs, and block patches |
 | `rust/tests/text.rs` | 10 | mark expansion patches, block-adjacent marks, remote patches, and zero-length spans |
 | `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
-| `rust/tests/text_encoding.rs` | 5 | patch index units (PutSeq, Insert, SpliceText, DeleteSeq, Mark) |
+| `rust/tests/text_encoding.rs` | 2 | patch-log index units for put_seq and mark (needs incremental diff cursor) |
 | `rust/tests/batch_insert.rs` | 5 | patch output, invalid-scalar rejection, and transaction integration |
 | `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
 | `javascript/block_test.ts` | 11 | `updateSpans`, block attributes, mark configuration, historical marks, and immutable attribute conversion |
@@ -67,7 +67,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **149**.
+Total required pending entries: **146**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 

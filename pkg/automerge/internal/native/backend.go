@@ -1665,6 +1665,7 @@ type (
 		Type     string           `json:"type"`
 		Key      string           `json:"key,omitempty"`
 		Index    uint64           `json:"index"`
+		Length   uint64           `json:"length,omitempty"`
 		Value    *patchValueOut   `json:"value,omitempty"`
 		Values   []patchInsertOut `json:"values,omitempty"`
 		Text     string           `json:"text,omitempty"`
@@ -1862,7 +1863,8 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 	case "text":
 		var text strings.Builder
 
-		for _, operation := range state.sequence(object.OpID) {
+		for _, value := range state.sequenceValues(object.OpID) {
+			operation := value.Operation
 			if operation.Value != nil && operation.Value.Type == ScalarString {
 				text.WriteString(operation.Value.String)
 			}
@@ -2011,44 +2013,137 @@ func diffSequencePatches(
 	objectType string,
 	identifier string,
 ) ([]patchOut, error) {
-	sourceElements := make(map[OpID]struct{})
-	for _, value := range source.sequenceValues(object.OpID) {
+	sourceValues := source.sequenceValues(object.OpID)
+	targetValues := target.sequenceValues(object.OpID)
+
+	sourceElements := make(map[OpID]struct{}, len(sourceValues))
+	for _, value := range sourceValues {
 		sourceElements[value.Element] = struct{}{}
 	}
 
-	targetValues := target.sequenceValues(object.OpID)
+	targetElements := make(map[OpID]struct{}, len(targetValues))
+	for _, value := range targetValues {
+		targetElements[value.Element] = struct{}{}
+	}
+
+	// Text objects report positions in UTF-16 code units; other sequences use
+	// one unit per element.
+	width := func(value sequenceValue) uint64 {
+		if objectType == "text" {
+			return sequenceValueUTF16Width(value)
+		}
+
+		return 1
+	}
 
 	patches := make([]patchOut, 0)
+	position := uint64(0)
+	i, j := 0, 0
 
-	index := 0
+	for i < len(sourceValues) || j < len(targetValues) {
+		if i < len(sourceValues) && j < len(targetValues) &&
+			sourceValues[i].Element == targetValues[j].Element {
+			if sourceValues[i].Operation.ID == targetValues[j].Operation.ID {
+				position += width(targetValues[j])
+				i++
+				j++
 
-	for cursor := 0; cursor < len(targetValues); {
-		if _, ok := sourceElements[targetValues[cursor].Element]; ok {
-			index++
-			cursor++
+				continue
+			}
+
+			// Same element, different winning value. Text cannot express an
+			// in-place replacement, so it becomes a delete followed by a splice;
+			// lists use put_seq. This mirrors the reference diff output.
+			if objectType == "text" {
+				patches = append(patches, patchOut{
+					Obj: identifier,
+					Action: patchActionOut{
+						Type:   "delete_seq",
+						Index:  position,
+						Length: width(sourceValues[i]),
+					},
+				})
+
+				operation := targetValues[j].Operation
+				if operation.Value != nil && operation.Value.Type == ScalarString {
+					patches = append(patches, patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:  "splice_text",
+							Index: position,
+							Text:  operation.Value.String,
+						},
+					})
+					position += width(targetValues[j])
+				}
+			} else {
+				value, err := patchValueForOperation(target, targetValues[j].Operation)
+				if err != nil {
+					return nil, err
+				}
+
+				patches = append(patches, patchOut{
+					Obj: identifier,
+					Action: patchActionOut{
+						Type:     "put_seq",
+						Index:    position,
+						Value:    &value,
+						Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
+					},
+				})
+				position++
+			}
+
+			i++
+			j++
 
 			continue
+		}
+
+		if i < len(sourceValues) {
+			if _, ok := targetElements[sourceValues[i].Element]; !ok {
+				length := uint64(0)
+
+				for i < len(sourceValues) {
+					if _, ok := targetElements[sourceValues[i].Element]; ok {
+						break
+					}
+
+					length += width(sourceValues[i])
+					i++
+				}
+
+				patches = append(patches, patchOut{
+					Obj: identifier,
+					Action: patchActionOut{
+						Type:   "delete_seq",
+						Index:  position,
+						Length: length,
+					},
+				})
+
+				continue
+			}
 		}
 
 		if objectType == "text" {
 			var text strings.Builder
 
-			start := index
+			start := position
 
-			for cursor < len(targetValues) {
-				if _, ok := sourceElements[targetValues[cursor].Element]; ok {
+			for j < len(targetValues) {
+				if _, ok := sourceElements[targetValues[j].Element]; ok {
 					break
 				}
 
-				operation := targetValues[cursor].Operation
+				operation := targetValues[j].Operation
 				if operation.Value == nil || operation.Value.Type != ScalarString {
 					break
 				}
 
 				text.WriteString(operation.Value.String)
-
-				index++
-				cursor++
+				position += width(targetValues[j])
+				j++
 			}
 
 			if text.Len() > 0 {
@@ -2056,7 +2151,7 @@ func diffSequencePatches(
 					Obj: identifier,
 					Action: patchActionOut{
 						Type:  "splice_text",
-						Index: uint64(start),
+						Index: start,
 						Text:  text.String(),
 					},
 				})
@@ -2066,31 +2161,35 @@ func diffSequencePatches(
 		}
 
 		inserts := make([]patchInsertOut, 0)
-		start := index
+		start := position
 
-		for cursor < len(targetValues) {
-			if _, ok := sourceElements[targetValues[cursor].Element]; ok {
+		for j < len(targetValues) {
+			if _, ok := sourceElements[targetValues[j].Element]; ok {
 				break
 			}
 
-			value, err := patchValueForOperation(target, targetValues[cursor].Operation)
+			value, err := patchValueForOperation(target, targetValues[j].Operation)
 			if err != nil {
 				return nil, err
 			}
 
 			inserts = append(inserts, patchInsertOut{
 				Value:    value,
-				Conflict: len(target.visibleSequenceElementOperations(targetValues[cursor].Element)) > 1,
+				Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
 			})
-			index++
-			cursor++
+			position++
+			j++
+		}
+
+		if len(inserts) == 0 {
+			break
 		}
 
 		patches = append(patches, patchOut{
 			Obj: identifier,
 			Action: patchActionOut{
 				Type:   "insert",
-				Index:  uint64(start),
+				Index:  start,
 				Values: inserts,
 			},
 		})

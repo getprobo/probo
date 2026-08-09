@@ -212,6 +212,105 @@ func TestRustTextEncoding_Delete(t *testing.T) {
 	assert.Equal(t, heads["reference"], heads["native"])
 }
 
+// diffTextPatches seeds a text object, runs the mutation, and returns the diff
+// between the states before and after the mutation for each engine.
+func diffTextPatches(
+	t *testing.T,
+	ctx context.Context,
+	content string,
+	mutate func(ctx context.Context, object *automerge.Object, text *automerge.Text) error,
+) map[string][]automerge.Patch {
+	t.Helper()
+
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, object, text := seedText(t, ctx, engine, content)
+
+		before, err := document.Heads(ctx)
+		require.NoError(t, err)
+		require.NoError(t, mutate(ctx, object, text))
+		after, err := document.Commit(ctx, "mutate", commitTime)
+		require.NoError(t, err)
+
+		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	return result
+}
+
+// TestRustTextEncoding_PatchInsert reproduces the utf16 case of patch_insert:
+// an insert produces a SpliceText patch addressed by UTF-16 code units.
+func TestRustTextEncoding_PatchInsert(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	patches := diffTextPatches(
+		t,
+		ctx,
+		"he"+familyEmoji+"llo",
+		func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
+			return object.InsertScalar(
+				ctx,
+				13,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
+			)
+		},
+	)
+
+	require.Len(t, patches["reference"], 1)
+	assert.Equal(t, automerge.PatchSpliceText, patches["reference"][0].Action)
+	assert.Equal(t, uint64(13), patches["reference"][0].Index)
+	assert.Equal(t, "L", patches["reference"][0].Text)
+	assert.Equal(t, patches["reference"], patches["native"])
+}
+
+// TestRustTextEncoding_PatchSpliceText reproduces the utf16 case of
+// patch_splice_text: a splice produces a SpliceText patch at a UTF-16 index.
+func TestRustTextEncoding_PatchSpliceText(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	patches := diffTextPatches(
+		t,
+		ctx,
+		"he"+familyEmoji+"llo",
+		func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
+			return text.Splice(ctx, 13, 0, "L")
+		},
+	)
+
+	require.Len(t, patches["reference"], 1)
+	assert.Equal(t, automerge.PatchSpliceText, patches["reference"][0].Action)
+	assert.Equal(t, uint64(13), patches["reference"][0].Index)
+	assert.Equal(t, "L", patches["reference"][0].Text)
+	assert.Equal(t, patches["reference"], patches["native"])
+}
+
+// TestRustTextEncoding_PatchDelete reproduces the utf16 case of patch_delete:
+// a delete produces a DeleteSeq patch at a UTF-16 index with length one.
+func TestRustTextEncoding_PatchDelete(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	patches := diffTextPatches(
+		t,
+		ctx,
+		"he"+familyEmoji+"llo",
+		func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
+			return object.DeleteIndex(ctx, 13)
+		},
+	)
+
+	require.Len(t, patches["reference"], 1)
+	assert.Equal(t, automerge.PatchDeleteSeq, patches["reference"][0].Action)
+	assert.Equal(t, uint64(13), patches["reference"][0].Index)
+	assert.Equal(t, uint64(1), patches["reference"][0].Length)
+	assert.Equal(t, patches["reference"], patches["native"])
+}
+
 // TestRustTextEncoding_SplitBlock reproduces the utf16 case of split_block.
 func TestRustTextEncoding_SplitBlock(t *testing.T) {
 	t.Parallel()

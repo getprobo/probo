@@ -2,6 +2,36 @@
   {
     "source": "rust",
     "file": "tests/text_encoding.rs",
+    "name": "patch_insert",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchInsert"
+    ],
+    "rationale": "An insert on text produces a SpliceText patch addressed by UTF-16 code units."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "patch_splice_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchSpliceText"
+    ],
+    "rationale": "A splice on text produces a SpliceText patch addressed by UTF-16 code units."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
+    "name": "patch_delete",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchDelete"
+    ],
+    "rationale": "A delete on text produces a DeleteSeq patch at a UTF-16 index with length one."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
     "name": "length",
     "classification": "covered",
     "localTests": [

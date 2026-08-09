@@ -6894,10 +6894,12 @@
       "file": "tests/text_encoding.rs",
       "line": 548,
       "name": "patch_delete",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_PatchDelete"
+      ],
+      "rationale": "A delete on text produces a DeleteSeq patch at a UTF-16 index with length one.",
       "runtimeName": "patch_delete"
     },
     {
@@ -6906,10 +6908,12 @@
       "file": "tests/text_encoding.rs",
       "line": 458,
       "name": "patch_insert",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_PatchInsert"
+      ],
+      "rationale": "An insert on text produces a SpliceText patch addressed by UTF-16 code units.",
       "runtimeName": "patch_insert"
     },
     {
@@ -6942,10 +6946,12 @@
       "file": "tests/text_encoding.rs",
       "line": 503,
       "name": "patch_splice_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_PatchSpliceText"
+      ],
+      "rationale": "A splice on text produces a SpliceText patch addressed by UTF-16 code units.",
       "runtimeName": "patch_splice_text"
     },
     {
