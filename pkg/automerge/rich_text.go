@@ -96,6 +96,80 @@ func (t *Text) Mark(
 	return nil
 }
 
+// SpanInput is one span supplied to UpdateSpans. Only text spans are currently
+// supported; Marks maps a mark name to the value active over the span.
+type SpanInput struct {
+	Text  string
+	Marks map[string]Scalar
+}
+
+// UpdateSpansConfig controls the mark expansion applied by UpdateSpans.
+type UpdateSpansConfig struct {
+	DefaultExpand  MarkExpand
+	PerMarkExpands map[string]MarkExpand
+}
+
+// UpdateSpans reconciles the text so its spans equal the supplied spans,
+// computing a minimal text diff and then setting the marks to exactly those
+// named on the spans. It mirrors the Rust updateSpans helper.
+func (t *Text) UpdateSpans(
+	ctx context.Context,
+	spans []SpanInput,
+	config UpdateSpansConfig,
+) error {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return ErrClosed
+	}
+
+	encodedSpans := make([]map[string]any, 0, len(spans))
+
+	for _, span := range spans {
+		marks := make(map[string]json.RawMessage, len(span.Marks))
+
+		for name, value := range span.Marks {
+			encoded, err := encodeScalarWire(value)
+			if err != nil {
+				return fmt.Errorf("cannot encode span mark %q: %w", name, err)
+			}
+
+			marks[name] = json.RawMessage(encoded)
+		}
+
+		encodedSpans = append(encodedSpans, map[string]any{
+			"type":  "text",
+			"text":  span.Text,
+			"marks": marks,
+		})
+	}
+
+	spansPayload, err := json.Marshal(encodedSpans)
+	if err != nil {
+		return fmt.Errorf("cannot encode Automerge spans: %w", err)
+	}
+
+	perMark := make(map[string]string, len(config.PerMarkExpands))
+	for name, expand := range config.PerMarkExpands {
+		perMark[name] = string(expand)
+	}
+
+	configPayload, err := json.Marshal(map[string]any{
+		"defaultExpand":  string(config.DefaultExpand),
+		"perMarkExpands": perMark,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot encode Automerge spans config: %w", err)
+	}
+
+	if err := t.document.backend.UpdateSpans(ctx, t.handle, spansPayload, configPayload); err != nil {
+		return fmt.Errorf("cannot update Automerge spans: %w", err)
+	}
+
+	return nil
+}
+
 // Unmark removes a named annotation from a UTF-16 text range.
 func (t *Text) Unmark(
 	ctx context.Context,

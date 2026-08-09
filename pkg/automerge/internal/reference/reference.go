@@ -914,6 +914,39 @@ func (b *Backend) UpdateText(
 	return nil
 }
 
+func (b *Backend) UpdateSpans(
+	ctx context.Context,
+	object Object,
+	spans []byte,
+	config []byte,
+) error {
+	spansPointer, spansLength, err := b.write(ctx, spans)
+	if err != nil {
+		return fmt.Errorf("cannot write update spans: %w", err)
+	}
+	defer b.free(ctx, spansPointer, spansLength)
+
+	configPointer, configLength, err := b.write(ctx, config)
+	if err != nil {
+		return fmt.Errorf("cannot write update spans config: %w", err)
+	}
+	defer b.free(ctx, configPointer, configLength)
+
+	if err := b.run(
+		ctx,
+		"am_update_spans",
+		uint64(object),
+		uint64(spansPointer),
+		uint64(spansLength),
+		uint64(configPointer),
+		uint64(configLength),
+	); err != nil {
+		return fmt.Errorf("cannot update reference spans: %w", err)
+	}
+
+	return nil
+}
+
 func (b *Backend) MarkText(
 	ctx context.Context,
 	object Object,

@@ -46,7 +46,7 @@ document are informational and must be updated whenever the manifest changes.
 | Source | Pending | Missing behavior |
 |---|---:|---|
 | `rust/tests/test.rs` | 9 | patch-log misuse, transactions and isolation, iterators, and regression corpus |
-| `rust/tests/diff_marks.rs` | 31 | adjacent/nested/overlapping marks, expansion and contraction, value changes, empty spans, whitespace, combining characters, emoji, blocks, and mark removal |
+| `rust/tests/diff_marks.rs` | 6 | block-valued update_spans (block properties, block/text mixes, block-only updates) |
 | `rust/src/sync.rs` | 5 | Bloom false positives, reset/data-loss recovery, old-peer fallback, and message encode/decode internals |
 | `rust/tests/block_tests.rs` | 11 | block property updates, simultaneous text/block changes, update-spans configuration, merge diffs, and block patches |
 | `rust/tests/text.rs` | 4 | block-adjacent marks, isolation patches, property scenarios, and zero-length spans |
@@ -66,7 +66,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **137**.
+Total required pending entries: **112**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 

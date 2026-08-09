@@ -1025,6 +1025,219 @@ func (b *Backend) SpliceText(
 	return nil
 }
 
+type (
+	updateSpanInput struct {
+		Type  string                     `json:"type"`
+		Text  string                     `json:"text"`
+		Marks map[string]json.RawMessage `json:"marks"`
+	}
+
+	updateSpansConfigInput struct {
+		DefaultExpand  string            `json:"defaultExpand"`
+		PerMarkExpands map[string]string `json:"perMarkExpands"`
+	}
+
+	desiredMark struct {
+		name  string
+		value Scalar
+		start uint32
+		end   uint32
+	}
+)
+
+// UpdateSpans transforms the text object so its spans equal the supplied spans,
+// mirroring the Rust AutoCommit::update_spans helper. The text content is
+// reconciled with a minimal grapheme diff and the marks are then set to exactly
+// the marks named on the spans, honoring the per-mark and default expand config.
+// Block spans are not yet supported.
+func (b *Backend) UpdateSpans(
+	ctx context.Context,
+	handle uint32,
+	spans []byte,
+	config []byte,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	object, err := b.textObject(handle)
+	if err != nil {
+		return err
+	}
+
+	var inputs []updateSpanInput
+	if err := json.Unmarshal(spans, &inputs); err != nil {
+		return fmt.Errorf("cannot decode update spans: %w", err)
+	}
+
+	var configuration updateSpansConfigInput
+	if err := json.Unmarshal(config, &configuration); err != nil {
+		return fmt.Errorf("cannot decode update spans config: %w", err)
+	}
+
+	var text strings.Builder
+
+	for _, span := range inputs {
+		if span.Type != "text" {
+			return fmt.Errorf("unsupported update span type %q", span.Type)
+		}
+
+		text.WriteString(span.Text)
+	}
+
+	if err := b.UpdateText(ctx, handle, text.String()); err != nil {
+		return err
+	}
+
+	desired, err := desiredMarks(inputs)
+	if err != nil {
+		return err
+	}
+
+	return b.reconcileMarks(ctx, handle, object, desired, configuration)
+}
+
+// desiredMarks flattens the marks named on text spans into absolute UTF-16
+// ranges in the order they appear.
+func desiredMarks(spans []updateSpanInput) ([]desiredMark, error) {
+	marks := make([]desiredMark, 0)
+	index := uint32(0)
+
+	for _, span := range spans {
+		width := uint32(utf16Width(span.Text))
+
+		names := make([]string, 0, len(span.Marks))
+		for name := range span.Marks {
+			names = append(names, name)
+		}
+
+		sort.Strings(names)
+
+		for _, name := range names {
+			value, err := decodeScalarWire(span.Marks[name])
+			if err != nil {
+				return nil, fmt.Errorf("cannot decode mark %q value: %w", name, err)
+			}
+
+			marks = append(marks, desiredMark{
+				name:  name,
+				value: value,
+				start: index,
+				end:   index + width,
+			})
+		}
+
+		index += width
+	}
+
+	return marks, nil
+}
+
+// reconcileMarks removes marks that are not desired and adds the ones that are
+// missing, matching the two-phase reconciliation upstream performs.
+func (b *Backend) reconcileMarks(
+	ctx context.Context,
+	handle uint32,
+	object ObjectID,
+	desired []desiredMark,
+	config updateSpansConfigInput,
+) error {
+	for _, current := range b.state.Marks(object.OpID) {
+		keep := false
+
+		for _, want := range desired {
+			if want.name == current.Name &&
+				want.start == current.Start &&
+				want.end == current.End &&
+				current.Value != nil &&
+				scalarValuesEqual(want.value, *current.Value) {
+				keep = true
+
+				break
+			}
+		}
+
+		if keep {
+			continue
+		}
+
+		if err := b.markRange(
+			ctx,
+			handle,
+			current.Start,
+			current.End,
+			current.Name,
+			Scalar{Type: ScalarNull},
+			config.expandFor(current.Name),
+		); err != nil {
+			return err
+		}
+	}
+
+	for _, want := range desired {
+		exists := false
+
+		for _, current := range b.state.Marks(object.OpID) {
+			if want.name == current.Name &&
+				want.start == current.Start &&
+				want.end == current.End &&
+				current.Value != nil &&
+				scalarValuesEqual(want.value, *current.Value) {
+				exists = true
+
+				break
+			}
+		}
+
+		if exists {
+			continue
+		}
+
+		if err := b.markRange(
+			ctx,
+			handle,
+			want.start,
+			want.end,
+			want.name,
+			want.value,
+			config.expandFor(want.name),
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (b *Backend) markRange(
+	ctx context.Context,
+	handle uint32,
+	start uint32,
+	end uint32,
+	name string,
+	value Scalar,
+	expand string,
+) error {
+	encoded, err := encodeScalarWire(value)
+	if err != nil {
+		return err
+	}
+
+	return b.MarkText(ctx, handle, start, end, name, encoded, expand)
+}
+
+func (c updateSpansConfigInput) expandFor(name string) string {
+	if expand, ok := c.PerMarkExpands[name]; ok && expand != "" {
+		return expand
+	}
+
+	if c.DefaultExpand != "" {
+		return c.DefaultExpand
+	}
+
+	return "both"
+}
+
 func (b *Backend) MarkText(
 	ctx context.Context,
 	handle uint32,

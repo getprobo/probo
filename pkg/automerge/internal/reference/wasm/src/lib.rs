@@ -23,7 +23,8 @@ use std::mem;
 use std::ptr;
 use std::slice;
 
-use automerge::marks::{ExpandMark, Mark};
+use automerge::iter::Span;
+use automerge::marks::{ExpandMark, Mark, MarkSet, UpdateSpansConfig};
 use automerge::sync::{Message, State as SyncState, SyncDoc};
 use automerge::transaction::{CommitOptions, Transactable};
 use automerge::{
@@ -105,6 +106,10 @@ fn input_string(pointer: u32, length: u32) -> Result<String, String> {
 fn input_scalar(pointer: u32, length: u32) -> Result<ScalarValue, String> {
     let value: serde_json::Value =
         serde_json::from_slice(&input_bytes(pointer, length)).map_err(|error| error.to_string())?;
+    scalar_from_value(&value)
+}
+
+fn scalar_from_value(value: &serde_json::Value) -> Result<ScalarValue, String> {
     let scalar_type = value
         .get("type")
         .and_then(serde_json::Value::as_str)
@@ -1235,6 +1240,121 @@ pub extern "C" fn am_text_update(
             Err(error) => return state.fail(error),
         };
         match state.doc.update_text(&object, &value) {
+            Ok(()) => {
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+fn expand_from_str(value: &str) -> Result<ExpandMark, String> {
+    match value {
+        "before" => Ok(ExpandMark::Before),
+        "after" => Ok(ExpandMark::After),
+        "both" => Ok(ExpandMark::Both),
+        "none" => Ok(ExpandMark::None),
+        other => Err(format!("unknown mark expansion {other:?}")),
+    }
+}
+
+fn spans_from_json(value: &serde_json::Value) -> Result<Vec<Span>, String> {
+    let array = value
+        .as_array()
+        .ok_or_else(|| "spans must be an array".to_owned())?;
+    let mut spans = Vec::with_capacity(array.len());
+
+    for entry in array {
+        let span_type = entry
+            .get("type")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "span type is missing".to_owned())?;
+
+        match span_type {
+            "text" => {
+                let text = entry
+                    .get("text")
+                    .and_then(serde_json::Value::as_str)
+                    .ok_or_else(|| "text span is missing text".to_owned())?
+                    .to_owned();
+
+                let marks = match entry.get("marks") {
+                    Some(serde_json::Value::Object(map)) if !map.is_empty() => {
+                        let mut set = Vec::with_capacity(map.len());
+                        for (name, value) in map {
+                            set.push((name.clone(), scalar_from_value(value)?));
+                        }
+                        Some(std::sync::Arc::new(set.into_iter().collect::<MarkSet>()))
+                    }
+                    _ => None,
+                };
+
+                spans.push(Span::Text { text, marks });
+            }
+            other => return Err(format!("unsupported span type {other:?}")),
+        }
+    }
+
+    Ok(spans)
+}
+
+fn config_from_json(value: &serde_json::Value) -> Result<UpdateSpansConfig, String> {
+    let mut config = UpdateSpansConfig::default();
+
+    if let Some(default) = value.get("defaultExpand").and_then(serde_json::Value::as_str) {
+        config.default_expand = expand_from_str(default)?;
+    }
+
+    if let Some(serde_json::Value::Object(map)) = value.get("perMarkExpands") {
+        for (name, expand) in map {
+            let expand = expand
+                .as_str()
+                .ok_or_else(|| "per-mark expand must be a string".to_owned())?;
+            config
+                .per_mark_expands
+                .insert(name.clone(), expand_from_str(expand)?);
+        }
+    }
+
+    Ok(config)
+}
+
+#[no_mangle]
+pub extern "C" fn am_update_spans(
+    object_handle: u32,
+    spans_pointer: u32,
+    spans_length: u32,
+    config_pointer: u32,
+    config_length: u32,
+) -> i32 {
+    let spans_value: serde_json::Value =
+        match serde_json::from_slice(&input_bytes(spans_pointer, spans_length)) {
+            Ok(value) => value,
+            Err(error) => return STATE.with(|state| state.borrow_mut().fail(error.to_string())),
+        };
+    let config_value: serde_json::Value =
+        match serde_json::from_slice(&input_bytes(config_pointer, config_length)) {
+            Ok(value) => value,
+            Err(error) => return STATE.with(|state| state.borrow_mut().fail(error.to_string())),
+        };
+
+    let spans = match spans_from_json(&spans_value) {
+        Ok(spans) => spans,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+    let config = match config_from_json(&config_value) {
+        Ok(config) => config,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        match state.doc.update_spans(&object, config, spans) {
             Ok(()) => {
                 state.error.clear();
                 0

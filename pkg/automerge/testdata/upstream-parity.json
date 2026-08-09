@@ -4066,10 +4066,12 @@
       "file": "tests/diff_marks.rs",
       "line": 377,
       "name": "adjacent_marks_merge",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/adjacent_marks_merge"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "adjacent_marks_merge"
     },
     {
@@ -4078,10 +4080,12 @@
       "file": "tests/diff_marks.rs",
       "line": 417,
       "name": "adjacent_marks_stay_separate",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/adjacent_marks_stay_separate"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "adjacent_marks_stay_separate"
     },
     {
@@ -4104,10 +4108,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1164,
       "name": "alternating_mark_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks_Alternating"
+      ],
+      "rationale": "Repeatedly adding and removing a mark converges on the final span set.",
       "runtimeName": "alternating_mark_changes"
     },
     {
@@ -5153,10 +5159,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1212,
       "name": "complex_unicode_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/complex_unicode_text"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "complex_unicode_text"
     },
     {
@@ -5470,10 +5478,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1295,
       "name": "empty_spans_between_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/empty_spans_between_marks"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "empty_spans_between_marks"
     },
     {
@@ -5618,10 +5628,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1130,
       "name": "idempotent_update_spans",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks_Idempotent"
+      ],
+      "rationale": "Repeating the same update_spans call produces no additional changes.",
       "runtimeName": "idempotent_update_spans"
     },
     {
@@ -6002,10 +6014,12 @@
       "file": "tests/diff_marks.rs",
       "line": 723,
       "name": "many_marks_on_same_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/many_marks_on_same_text"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "many_marks_on_same_text"
     },
     {
@@ -6028,10 +6042,12 @@
       "file": "tests/diff_marks.rs",
       "line": 231,
       "name": "mark_contracts",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_contracts"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_contracts"
     },
     {
@@ -6066,10 +6082,12 @@
       "file": "tests/diff_marks.rs",
       "line": 197,
       "name": "mark_expands",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_expands"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_expands"
     },
     {
@@ -6078,10 +6096,12 @@
       "file": "tests/diff_marks.rs",
       "line": 525,
       "name": "mark_on_empty_string",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_on_empty_string"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_on_empty_string"
     },
     {
@@ -6090,10 +6110,12 @@
       "file": "tests/diff_marks.rs",
       "line": 545,
       "name": "mark_on_whitespace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_on_whitespace"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_on_whitespace"
     },
     {
@@ -6114,10 +6136,12 @@
       "file": "tests/diff_marks.rs",
       "line": 277,
       "name": "mark_shifts_position",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_shifts_position"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_shifts_position"
     },
     {
@@ -6152,10 +6176,12 @@
       "file": "tests/diff_marks.rs",
       "line": 794,
       "name": "mark_value_changes_color",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_value_changes_color"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_value_changes_color"
     },
     {
@@ -6164,10 +6190,12 @@
       "file": "tests/diff_marks.rs",
       "line": 756,
       "name": "mark_value_changes_link_url",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_value_changes_link_url"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_value_changes_link_url"
     },
     {
@@ -6176,10 +6204,12 @@
       "file": "tests/diff_marks.rs",
       "line": 829,
       "name": "mark_value_type_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/mark_value_type_changes"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "mark_value_type_changes"
     },
     {
@@ -6228,10 +6258,12 @@
       "file": "tests/diff_marks.rs",
       "line": 978,
       "name": "marks_on_combining_characters",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/marks_on_combining_characters"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "marks_on_combining_characters"
     },
     {
@@ -6292,10 +6324,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1332,
       "name": "marks_with_different_values_same_name",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/marks_with_different_values_same_name"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "marks_with_different_values_same_name"
     },
     {
@@ -6304,10 +6338,12 @@
       "file": "tests/diff_marks.rs",
       "line": 906,
       "name": "marks_with_expand_none_at_boundaries",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/marks_with_expand_none_at_boundaries"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "marks_with_expand_none_at_boundaries"
     },
     {
@@ -6398,10 +6434,12 @@
       "file": "tests/diff_marks.rs",
       "line": 864,
       "name": "multiple_marks_different_expand_behaviors",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/multiple_marks_different_expand_behaviors"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "multiple_marks_different_expand_behaviors"
     },
     {
@@ -6452,10 +6490,12 @@
       "file": "tests/diff_marks.rs",
       "line": 691,
       "name": "nested_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/nested_marks"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "nested_marks"
     },
     {
@@ -6844,10 +6884,12 @@
       "file": "tests/diff_marks.rs",
       "line": 134,
       "name": "overlapping_marks_add_third_mark",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/overlapping_marks_add_third_mark"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "overlapping_marks_add_third_mark"
     },
     {
@@ -6856,10 +6898,12 @@
       "file": "tests/diff_marks.rs",
       "line": 73,
       "name": "overlapping_marks_change_boundaries",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/overlapping_marks_change_boundaries"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "overlapping_marks_change_boundaries"
     },
     {
@@ -6868,10 +6912,12 @@
       "file": "tests/diff_marks.rs",
       "line": 20,
       "name": "overlapping_marks_remove_one_keep_other",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/overlapping_marks_remove_one_keep_other"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "overlapping_marks_remove_one_keep_other"
     },
     {
@@ -7046,10 +7092,12 @@
       "file": "tests/diff_marks.rs",
       "line": 582,
       "name": "removing_all_text_from_marked_span",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/removing_all_text_from_marked_span"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "removing_all_text_from_marked_span"
     },
     {
@@ -8736,10 +8784,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1473,
       "name": "update_spans_which_inserts_at_the_end_of_expand_mark_doesnt_generate_mark_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustDiffMarks/update_spans_which_inserts_at_the_end_of_expand_mark_doesnt_generate_mark_changes"
+      ],
+      "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization.",
       "runtimeName": "update_spans_which_inserts_at_the_end_of_expand_mark_doesnt_generate_mark_changes"
     },
     {

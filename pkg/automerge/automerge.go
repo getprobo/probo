@@ -111,6 +111,7 @@ type (
 		GetText(context.Context, uint32, string) (uint32, error)
 		SpliceText(context.Context, uint32, uint32, int32, string) error
 		UpdateText(context.Context, uint32, string) error
+		UpdateSpans(context.Context, uint32, []byte, []byte) error
 		MarkText(context.Context, uint32, uint32, uint32, string, []byte, string) error
 		SplitBlock(context.Context, uint32, uint32) (uint32, error)
 		JoinBlock(context.Context, uint32, uint32) error

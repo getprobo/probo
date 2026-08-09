@@ -1,6 +1,256 @@
 [
   {
     "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "adjacent_marks_merge",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/adjacent_marks_merge"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "adjacent_marks_stay_separate",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/adjacent_marks_stay_separate"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "alternating_mark_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks_Alternating"
+    ],
+    "rationale": "Repeatedly adding and removing a mark converges on the final span set."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "complex_unicode_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/complex_unicode_text"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "empty_spans_between_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/empty_spans_between_marks"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "idempotent_update_spans",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks_Idempotent"
+    ],
+    "rationale": "Repeating the same update_spans call produces no additional changes."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "many_marks_on_same_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/many_marks_on_same_text"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_contracts",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_contracts"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_expands",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_expands"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_on_empty_string",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_on_empty_string"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_on_whitespace",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_on_whitespace"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_shifts_position",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_shifts_position"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_value_changes_color",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_value_changes_color"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_value_changes_link_url",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_value_changes_link_url"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_value_type_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/mark_value_type_changes"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_on_combining_characters",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/marks_on_combining_characters"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_with_different_values_same_name",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/marks_with_different_values_same_name"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_with_expand_none_at_boundaries",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/marks_with_expand_none_at_boundaries"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "multiple_marks_different_expand_behaviors",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/multiple_marks_different_expand_behaviors"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "nested_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/nested_marks"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "overlapping_marks_add_third_mark",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/overlapping_marks_add_third_mark"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "overlapping_marks_change_boundaries",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/overlapping_marks_change_boundaries"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "overlapping_marks_remove_one_keep_other",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/overlapping_marks_remove_one_keep_other"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "removing_all_text_from_marked_span",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/removing_all_text_from_marked_span"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "update_spans_which_inserts_at_the_end_of_expand_mark_doesnt_generate_mark_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustDiffMarks/update_spans_which_inserts_at_the_end_of_expand_mark_doesnt_generate_mark_changes"
+    ],
+    "rationale": "update_spans reconciles text and marks to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
     "file": "tests/text.rs",
     "name": "marks_which_cross_optree_boundaries_are_not_double_counted_in_splice_patches",
     "classification": "covered",
