@@ -4819,10 +4819,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1091,
       "name": "block_properties_change_with_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/block_properties_change_with_marks"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "block_properties_change_with_marks"
     },
     {
@@ -4831,10 +4833,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1250,
       "name": "block_with_marked_content",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/block_with_marked_content"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "block_with_marked_content"
     },
     {
@@ -6070,10 +6074,12 @@
       "file": "tests/diff_marks.rs",
       "line": 661,
       "name": "mark_ends_at_block_boundary",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/mark_ends_at_block_boundary"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "mark_ends_at_block_boundary"
     },
     {
@@ -6150,10 +6156,12 @@
       "file": "tests/diff_marks.rs",
       "line": 616,
       "name": "mark_spans_across_block",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/mark_spans_across_block"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "mark_spans_across_block"
     },
     {
@@ -6298,10 +6306,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1424,
       "name": "marks_survive_block_updates",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/marks_survive_block_updates"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "marks_survive_block_updates"
     },
     {
@@ -8688,10 +8698,12 @@
       "file": "tests/block_tests.rs",
       "line": 22,
       "name": "update_blocks_change_block_properties",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_blocks_change_block_properties"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_blocks_change_block_properties"
     },
     {
@@ -8700,10 +8712,12 @@
       "file": "tests/block_tests.rs",
       "line": 234,
       "name": "update_blocks_noop",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans_Noop"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_blocks_noop"
     },
     {
@@ -8712,10 +8726,12 @@
       "file": "tests/block_tests.rs",
       "line": 171,
       "name": "update_blocks_updates_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_blocks_updates_marks"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_blocks_updates_marks"
     },
     {
@@ -8724,10 +8740,12 @@
       "file": "tests/block_tests.rs",
       "line": 107,
       "name": "update_blocks_updates_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_blocks_updates_text"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_blocks_updates_text"
     },
     {
@@ -8736,10 +8754,12 @@
       "file": "tests/block_tests.rs",
       "line": 274,
       "name": "update_blocks_updates_text_and_blocks_at_once",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_blocks_updates_text_and_blocks_at_once"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_blocks_updates_text_and_blocks_at_once"
     },
     {
@@ -8748,10 +8768,12 @@
       "file": "tests/block_tests.rs",
       "line": 358,
       "name": "update_spans_delete_attribute",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_spans_delete_attribute"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_spans_delete_attribute"
     },
     {
@@ -8760,10 +8782,12 @@
       "file": "tests/block_tests.rs",
       "line": 621,
       "name": "update_spans_diffs_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_spans_diffs_marks"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_spans_diffs_marks"
     },
     {
@@ -8772,10 +8796,12 @@
       "file": "tests/block_tests.rs",
       "line": 676,
       "name": "update_spans_uses_expand_config",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_spans_uses_expand_config"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_spans_uses_expand_config"
     },
     {
@@ -8798,10 +8824,12 @@
       "file": "tests/diff_marks.rs",
       "line": 1398,
       "name": "update_spans_with_only_blocks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustBlockSpans/update_spans_with_only_blocks"
+      ],
+      "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization.",
       "runtimeName": "update_spans_with_only_blocks"
     },
     {

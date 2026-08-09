@@ -108,6 +108,10 @@ type textDiffHook struct {
 	err     error
 }
 
+func (h *textDiffHook) failed() bool {
+	return h.err != nil
+}
+
 func (h *textDiffHook) equal(oldIndex, _ int, length int) {
 	for i := 0; i < length; i++ {
 		h.idx += utf16Width(h.old[oldIndex+i])
@@ -150,11 +154,20 @@ func (h *textDiffHook) insert(_ int, newIndex, newLen int) {
 	h.idx += utf16Width(chars)
 }
 
+// diffSink receives the edit script produced by the Myers diff. Text and block
+// reconciliation implement it over their respective element sequences.
+type diffSink interface {
+	equal(oldIndex, newIndex, length int)
+	delete(oldIndex, oldLen, newIndex int)
+	insert(oldIndex, newIndex, newLen int)
+	failed() bool
+}
+
 // myersDiff computes the difference between old and new using Myers' O((N+M)D)
 // algorithm and reports edits to the hook. It is a direct port of the reference
 // Rust implementation (copied there from the similar crate) so the emitted
 // edit script—and therefore the resulting change—matches byte for byte.
-func myersDiff(hook *textDiffHook, before, after []string) {
+func myersDiff(hook diffSink, before, after []string) {
 	maximum := maxD(len(before), len(after))
 	vf := newVArray(maximum)
 	vb := newVArray(maximum)
@@ -279,12 +292,12 @@ func findMiddleSnake(
 }
 
 func conquer(
-	hook *textDiffHook,
+	hook diffSink,
 	before []string, oldStart, oldEnd int,
 	after []string, newStart, newEnd int,
 	vf, vb *vArray,
 ) {
-	if hook.err != nil {
+	if hook.failed() {
 		return
 	}
 
@@ -319,7 +332,7 @@ func conquer(
 		}
 	}
 
-	if hook.err != nil {
+	if hook.failed() {
 		return
 	}
 

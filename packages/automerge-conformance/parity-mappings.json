@@ -1,6 +1,146 @@
 [
   {
     "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_change_block_properties",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_change_block_properties"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_updates_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_updates_text"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_updates_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_updates_marks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_updates_text_and_blocks_at_once",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_blocks_updates_text_and_blocks_at_once"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_spans_delete_attribute",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_delete_attribute"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_spans_diffs_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_diffs_marks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_spans_uses_expand_config",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_uses_expand_config"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "update_blocks_noop",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans_Noop"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_spans_across_block",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/mark_spans_across_block"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "mark_ends_at_block_boundary",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/mark_ends_at_block_boundary"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "block_properties_change_with_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/block_properties_change_with_marks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "block_with_marked_content",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/block_with_marked_content"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "update_spans_with_only_blocks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/update_spans_with_only_blocks"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
+    "file": "tests/diff_marks.rs",
+    "name": "marks_survive_block_updates",
+    "classification": "covered",
+    "localTests": [
+      "TestRustBlockSpans/marks_survive_block_updates"
+    ],
+    "rationale": "update_spans reconciles text, marks, and block markers to the given spans, matching the reference materialization."
+  },
+  {
+    "source": "rust",
     "file": "tests/diff_marks.rs",
     "name": "adjacent_marks_merge",
     "classification": "covered",

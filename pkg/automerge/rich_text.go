@@ -96,11 +96,13 @@ func (t *Text) Mark(
 	return nil
 }
 
-// SpanInput is one span supplied to UpdateSpans. Only text spans are currently
-// supported; Marks maps a mark name to the value active over the span.
+// SpanInput is one span supplied to UpdateSpans. When Block is non-nil the span
+// is a block marker carrying those attributes; otherwise it is a text span whose
+// Marks map names the annotations active over the span.
 type SpanInput struct {
 	Text  string
 	Marks map[string]Scalar
+	Block map[string]any
 }
 
 // UpdateSpansConfig controls the mark expansion applied by UpdateSpans.
@@ -127,6 +129,15 @@ func (t *Text) UpdateSpans(
 	encodedSpans := make([]map[string]any, 0, len(spans))
 
 	for _, span := range spans {
+		if span.Block != nil {
+			encodedSpans = append(encodedSpans, map[string]any{
+				"type":  "block",
+				"block": span.Block,
+			})
+
+			continue
+		}
+
 		marks := make(map[string]json.RawMessage, len(span.Marks))
 
 		for name, value := range span.Marks {

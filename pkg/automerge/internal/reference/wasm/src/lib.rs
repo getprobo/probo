@@ -1292,11 +1292,59 @@ fn spans_from_json(value: &serde_json::Value) -> Result<Vec<Span>, String> {
 
                 spans.push(Span::Text { text, marks });
             }
+            "block" => {
+                let attributes = entry
+                    .get("block")
+                    .ok_or_else(|| "block span is missing attributes".to_owned())?;
+                match hydrate_from_json(attributes)? {
+                    automerge::hydrate::Value::Map(map) => spans.push(Span::Block(map)),
+                    _ => return Err("block span attributes must be a map".to_owned()),
+                }
+            }
             other => return Err(format!("unsupported span type {other:?}")),
         }
     }
 
     Ok(spans)
+}
+
+fn hydrate_from_json(
+    value: &serde_json::Value,
+) -> Result<automerge::hydrate::Value, String> {
+    use automerge::hydrate::Value as HydrateValue;
+
+    match value {
+        serde_json::Value::Null => Ok(HydrateValue::Scalar(ScalarValue::Null)),
+        serde_json::Value::Bool(value) => Ok(HydrateValue::Scalar(ScalarValue::Boolean(*value))),
+        serde_json::Value::Number(number) => {
+            if let Some(value) = number.as_i64() {
+                Ok(HydrateValue::Scalar(ScalarValue::Int(value)))
+            } else if let Some(value) = number.as_u64() {
+                Ok(HydrateValue::Scalar(ScalarValue::Uint(value)))
+            } else if let Some(value) = number.as_f64() {
+                Ok(HydrateValue::Scalar(ScalarValue::F64(value)))
+            } else {
+                Err("unsupported JSON number".to_owned())
+            }
+        }
+        serde_json::Value::String(value) => {
+            Ok(HydrateValue::Scalar(ScalarValue::Str(value.as_str().into())))
+        }
+        serde_json::Value::Array(items) => {
+            let mut values = Vec::with_capacity(items.len());
+            for item in items {
+                values.push(hydrate_from_json(item)?);
+            }
+            Ok(HydrateValue::List(values.into()))
+        }
+        serde_json::Value::Object(entries) => {
+            let mut map = std::collections::HashMap::with_capacity(entries.len());
+            for (key, value) in entries {
+                map.insert(key.clone(), hydrate_from_json(value)?);
+            }
+            Ok(HydrateValue::Map(map.into()))
+        }
+    }
 }
 
 fn config_from_json(value: &serde_json::Value) -> Result<UpdateSpansConfig, String> {

@@ -1030,6 +1030,7 @@ type (
 		Type  string                     `json:"type"`
 		Text  string                     `json:"text"`
 		Marks map[string]json.RawMessage `json:"marks"`
+		Block json.RawMessage            `json:"block"`
 	}
 
 	updateSpansConfigInput struct {
@@ -1075,18 +1076,24 @@ func (b *Backend) UpdateSpans(
 		return fmt.Errorf("cannot decode update spans config: %w", err)
 	}
 
-	var text strings.Builder
-
-	for _, span := range inputs {
-		if span.Type != "text" {
-			return fmt.Errorf("unsupported update span type %q", span.Type)
-		}
-
-		text.WriteString(span.Text)
+	target, err := targetBlockGraphemes(inputs)
+	if err != nil {
+		return err
 	}
 
-	if err := b.UpdateText(ctx, handle, text.String()); err != nil {
-		return err
+	current := b.currentBlockGraphemes(object)
+
+	hook := &blockDiffHook{
+		ctx:     ctx,
+		backend: b,
+		handle:  handle,
+		old:     current,
+		new:     target,
+	}
+	myersDiff(hook, blockTokens(current), blockTokens(target))
+
+	if hook.err != nil {
+		return hook.err
 	}
 
 	desired, err := desiredMarks(inputs)
@@ -1097,6 +1104,201 @@ func (b *Backend) UpdateSpans(
 	return b.reconcileMarks(ctx, handle, object, desired, configuration)
 }
 
+// blockOrGrapheme is one unit of the block-aware span diff: either a block
+// marker with its attributes or a single grapheme cluster of text.
+type blockOrGrapheme struct {
+	block    map[string]any
+	isBlock  bool
+	grapheme string
+}
+
+func (item blockOrGrapheme) width() int {
+	if item.isBlock {
+		return 1
+	}
+
+	return utf16Width(item.grapheme)
+}
+
+// blockTokens renders each unit to a comparison token so the grapheme-based
+// Myers diff can compare blocks by their attributes and text by its clusters.
+func blockTokens(items []blockOrGrapheme) []string {
+	tokens := make([]string, len(items))
+
+	for i, item := range items {
+		if !item.isBlock {
+			tokens[i] = "g" + item.grapheme
+
+			continue
+		}
+
+		encoded, _ := json.Marshal(item.block)
+		tokens[i] = "b" + string(encoded)
+	}
+
+	return tokens
+}
+
+// currentBlockGraphemes materializes the text object as the block/grapheme units
+// the diff operates on: block markers become blocks and text runs are split into
+// grapheme clusters.
+func (b *Backend) currentBlockGraphemes(object ObjectID) []blockOrGrapheme {
+	items := make([]blockOrGrapheme, 0)
+
+	var run strings.Builder
+
+	flush := func() {
+		if run.Len() == 0 {
+			return
+		}
+
+		for _, grapheme := range graphemeClusters(run.String()) {
+			items = append(items, blockOrGrapheme{grapheme: grapheme})
+		}
+
+		run.Reset()
+	}
+
+	for _, value := range b.state.sequenceValues(object.OpID) {
+		operation := value.Operation
+
+		if operation.Action == ActionMakeMap {
+			flush()
+
+			attributes, err := b.state.mapValue(operation.ID, make(map[OpID]struct{}))
+			if err != nil || attributes == nil {
+				attributes = map[string]any{}
+			}
+
+			items = append(items, blockOrGrapheme{isBlock: true, block: attributes})
+
+			continue
+		}
+
+		if operation.Value != nil && operation.Value.Type == ScalarString {
+			run.WriteString(operation.Value.String)
+		}
+	}
+
+	flush()
+
+	return items
+}
+
+// targetBlockGraphemes converts the requested spans into block/grapheme units.
+func targetBlockGraphemes(spans []updateSpanInput) ([]blockOrGrapheme, error) {
+	items := make([]blockOrGrapheme, 0)
+
+	for _, span := range spans {
+		switch span.Type {
+		case "text":
+			for _, grapheme := range graphemeClusters(span.Text) {
+				items = append(items, blockOrGrapheme{grapheme: grapheme})
+			}
+		case "block":
+			attributes := map[string]any{}
+			if len(span.Block) > 0 {
+				if err := json.Unmarshal(span.Block, &attributes); err != nil {
+					return nil, fmt.Errorf("cannot decode block span: %w", err)
+				}
+			}
+
+			items = append(items, blockOrGrapheme{isBlock: true, block: attributes})
+		default:
+			return nil, fmt.Errorf("unsupported update span type %q", span.Type)
+		}
+	}
+
+	return items, nil
+}
+
+// blockDiffHook applies the block-aware Myers edit script, splicing text and
+// splitting, joining, or rewriting block markers as required.
+type blockDiffHook struct {
+	ctx     context.Context
+	backend *Backend
+	handle  uint32
+	old     []blockOrGrapheme
+	new     []blockOrGrapheme
+	idx     int
+	err     error
+}
+
+func (h *blockDiffHook) failed() bool {
+	return h.err != nil
+}
+
+func (h *blockDiffHook) equal(oldIndex, _ int, length int) {
+	for i := 0; i < length; i++ {
+		h.idx += h.old[oldIndex+i].width()
+	}
+}
+
+func (h *blockDiffHook) delete(oldIndex, oldLen, _ int) {
+	for i := 0; i < oldLen && h.err == nil; i++ {
+		item := h.old[oldIndex+i]
+		if item.isBlock {
+			h.err = h.backend.JoinBlock(h.ctx, h.handle, uint32(h.idx))
+
+			continue
+		}
+
+		h.err = h.backend.SpliceText(h.ctx, h.handle, uint32(h.idx), int32(item.width()), "")
+	}
+}
+
+func (h *blockDiffHook) insert(_ int, newIndex, newLen int) {
+	var run strings.Builder
+
+	flush := func() {
+		if run.Len() == 0 || h.err != nil {
+			return
+		}
+
+		chars := run.String()
+		if err := h.backend.SpliceText(h.ctx, h.handle, uint32(h.idx), 0, chars); err != nil {
+			h.err = err
+
+			return
+		}
+
+		h.idx += utf16Width(chars)
+		run.Reset()
+	}
+
+	for i := 0; i < newLen && h.err == nil; i++ {
+		item := h.new[newIndex+i]
+		if !item.isBlock {
+			run.WriteString(item.grapheme)
+
+			continue
+		}
+
+		flush()
+
+		if h.err != nil {
+			return
+		}
+
+		blockHandle, err := h.backend.SplitBlock(h.ctx, h.handle, uint32(h.idx))
+		if err != nil {
+			h.err = err
+
+			return
+		}
+
+		if err := h.backend.setBlockAttributes(h.ctx, blockHandle, item.block); err != nil {
+			h.err = err
+
+			return
+		}
+
+		h.idx++
+	}
+
+	flush()
+}
+
 // desiredMarks flattens the marks named on text spans into absolute UTF-16
 // ranges in the order they appear.
 func desiredMarks(spans []updateSpanInput) ([]desiredMark, error) {
@@ -1104,6 +1306,12 @@ func desiredMarks(spans []updateSpanInput) ([]desiredMark, error) {
 	index := uint32(0)
 
 	for _, span := range spans {
+		if span.Type == "block" {
+			index++
+
+			continue
+		}
+
 		width := uint32(utf16Width(span.Text))
 
 		names := make([]string, 0, len(span.Marks))
@@ -1207,6 +1415,138 @@ func (b *Backend) reconcileMarks(
 	}
 
 	return nil
+}
+
+// setBlockAttributes writes the attribute map onto a freshly created block
+// object, recursing into nested maps and lists.
+func (b *Backend) setBlockAttributes(
+	ctx context.Context,
+	handle uint32,
+	attributes map[string]any,
+) error {
+	keys := make([]string, 0, len(attributes))
+	for key := range attributes {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		if err := b.setMapValue(ctx, handle, key, attributes[key]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (b *Backend) setMapValue(
+	ctx context.Context,
+	handle uint32,
+	key string,
+	value any,
+) error {
+	switch typed := value.(type) {
+	case map[string]any:
+		child, err := b.PutObject(ctx, handle, key, "map")
+		if err != nil {
+			return err
+		}
+
+		return b.setBlockAttributes(ctx, child, typed)
+	case []any:
+		child, err := b.PutObject(ctx, handle, key, "list")
+		if err != nil {
+			return err
+		}
+
+		for index, element := range typed {
+			if err := b.insertListValue(ctx, child, uint64(index), element); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	default:
+		scalar, err := hydrateScalar(value)
+		if err != nil {
+			return err
+		}
+
+		encoded, err := encodeScalarWire(scalar)
+		if err != nil {
+			return err
+		}
+
+		return b.PutScalar(ctx, handle, key, encoded)
+	}
+}
+
+func (b *Backend) insertListValue(
+	ctx context.Context,
+	handle uint32,
+	index uint64,
+	value any,
+) error {
+	switch typed := value.(type) {
+	case map[string]any:
+		child, err := b.InsertObject(ctx, handle, index, "map")
+		if err != nil {
+			return err
+		}
+
+		return b.setBlockAttributes(ctx, child, typed)
+	case []any:
+		child, err := b.InsertObject(ctx, handle, index, "list")
+		if err != nil {
+			return err
+		}
+
+		for offset, element := range typed {
+			if err := b.insertListValue(ctx, child, uint64(offset), element); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	default:
+		scalar, err := hydrateScalar(value)
+		if err != nil {
+			return err
+		}
+
+		encoded, err := encodeScalarWire(scalar)
+		if err != nil {
+			return err
+		}
+
+		return b.InsertScalar(ctx, handle, index, encoded)
+	}
+}
+
+// hydrateScalar maps a decoded JSON scalar to an Automerge scalar, treating
+// integral numbers as integers to match the reference block hydration.
+func hydrateScalar(value any) (Scalar, error) {
+	switch typed := value.(type) {
+	case nil:
+		return Scalar{Type: ScalarNull}, nil
+	case bool:
+		if typed {
+			return Scalar{Type: ScalarTrue, Bool: true}, nil
+		}
+
+		return Scalar{Type: ScalarFalse}, nil
+	case string:
+		return Scalar{Type: ScalarString, String: typed}, nil
+	case float64:
+		if typed == float64(int64(typed)) {
+			return Scalar{Type: ScalarInt, Int: int64(typed)}, nil
+		}
+
+		return Scalar{Type: ScalarFloat64, Float: typed}, nil
+	default:
+		return Scalar{}, fmt.Errorf("unsupported block attribute value %T", value)
+	}
 }
 
 func (b *Backend) markRange(
