@@ -27,8 +27,8 @@ use automerge::marks::{ExpandMark, Mark};
 use automerge::sync::{Message, State as SyncState, SyncDoc};
 use automerge::transaction::{CommitOptions, Transactable};
 use automerge::{
-    ActorId, AutoCommit, ChangeHash, Cursor, MoveCursor, ObjId, ObjType, ReadDoc, ScalarValue,
-    Value, ROOT,
+    ActorId, AutoCommit, ChangeHash, Cursor, MoveCursor, ObjId, ObjType, Patch, PatchAction, Prop,
+    ReadDoc, ScalarValue, Value, ROOT,
 };
 
 struct State {
@@ -1696,6 +1696,118 @@ pub extern "C" fn am_heads() -> i32 {
         state.error.clear();
     });
     0
+}
+
+fn patch_prop_json(prop: &Prop) -> serde_json::Value {
+    match prop {
+        Prop::Map(key) => serde_json::json!({ "key": key }),
+        Prop::Seq(index) => serde_json::json!({ "index": index }),
+    }
+}
+
+fn patch_value_json(value: &Value<'_>, id: &ObjId) -> Result<serde_json::Value, String> {
+    match value {
+        Value::Scalar(scalar) => Ok(serde_json::json!({ "scalar": scalar_json(scalar)? })),
+        Value::Object(object_type) => Ok(serde_json::json!({
+            "object": encode_object_type(*object_type),
+            "id": id.to_string(),
+        })),
+    }
+}
+
+fn patches_to_output(patches: &[Patch]) -> Result<Vec<u8>, String> {
+    let mut output = Vec::with_capacity(patches.len());
+    for patch in patches {
+        let object = patch.obj.to_string();
+        let action = match &patch.action {
+            PatchAction::PutMap {
+                key,
+                value,
+                conflict,
+            } => serde_json::json!({
+                "type": "put_map",
+                "key": key,
+                "value": patch_value_json(&value.0, &value.1)?,
+                "conflict": conflict,
+            }),
+            PatchAction::PutSeq {
+                index,
+                value,
+                conflict,
+            } => serde_json::json!({
+                "type": "put_seq",
+                "index": index,
+                "value": patch_value_json(&value.0, &value.1)?,
+                "conflict": conflict,
+            }),
+            PatchAction::Insert { index, values } => {
+                let mut encoded = Vec::with_capacity(values.len());
+                for (value, id, conflict) in values.iter() {
+                    encoded.push(serde_json::json!({
+                        "value": patch_value_json(value, id)?,
+                        "conflict": conflict,
+                    }));
+                }
+                serde_json::json!({ "type": "insert", "index": index, "values": encoded })
+            }
+            PatchAction::SpliceText { index, value, .. } => serde_json::json!({
+                "type": "splice_text",
+                "index": index,
+                "text": value.make_string(),
+            }),
+            PatchAction::Increment { prop, value } => serde_json::json!({
+                "type": "increment",
+                "prop": patch_prop_json(prop),
+                "value": value,
+            }),
+            PatchAction::Conflict { prop } => serde_json::json!({
+                "type": "conflict",
+                "prop": patch_prop_json(prop),
+            }),
+            PatchAction::DeleteMap { key } => serde_json::json!({
+                "type": "delete_map",
+                "key": key,
+            }),
+            PatchAction::DeleteSeq { index, length } => serde_json::json!({
+                "type": "delete_seq",
+                "index": index,
+                "length": length,
+            }),
+            PatchAction::Mark { marks } => {
+                let encoded = marks
+                    .iter()
+                    .map(|mark| {
+                        Ok(serde_json::json!({
+                            "start": mark.start,
+                            "end": mark.end,
+                            "name": mark.name(),
+                            "value": scalar_json(mark.value())?,
+                        }))
+                    })
+                    .collect::<Result<Vec<_>, String>>()?;
+                serde_json::json!({ "type": "mark", "marks": encoded })
+            }
+        };
+        output.push(serde_json::json!({ "obj": object, "action": action }));
+    }
+
+    serde_json::to_vec(&output).map_err(|error| error.to_string())
+}
+
+#[no_mangle]
+pub extern "C" fn am_current_state() -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let patches = state.doc.document().current_state();
+        match patches_to_output(&patches) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
 }
 
 #[no_mangle]

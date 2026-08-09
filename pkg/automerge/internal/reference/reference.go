@@ -1288,6 +1288,19 @@ func (b *Backend) Stats(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
+func (b *Backend) CurrentState(ctx context.Context) ([]byte, error) {
+	if err := b.run(ctx, "am_current_state"); err != nil {
+		return nil, fmt.Errorf("cannot read reference current state: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference current state: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	if err := b.run(ctx, "am_heads"); err != nil {
 		return nil, fmt.Errorf("cannot read reference heads: %w", err)

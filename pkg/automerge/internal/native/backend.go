@@ -1641,6 +1641,240 @@ func (b *Backend) Stats(ctx context.Context) ([]byte, error) {
 	return data, nil
 }
 
+type (
+	patchOut struct {
+		Obj    string         `json:"obj"`
+		Action patchActionOut `json:"action"`
+	}
+
+	patchActionOut struct {
+		Type     string           `json:"type"`
+		Key      string           `json:"key,omitempty"`
+		Index    uint64           `json:"index"`
+		Value    *patchValueOut   `json:"value,omitempty"`
+		Values   []patchInsertOut `json:"values,omitempty"`
+		Text     string           `json:"text,omitempty"`
+		Conflict bool             `json:"conflict"`
+	}
+
+	patchInsertOut struct {
+		Value    patchValueOut `json:"value"`
+		Conflict bool          `json:"conflict"`
+	}
+
+	patchValueOut struct {
+		Scalar json.RawMessage `json:"scalar,omitempty"`
+		Object string          `json:"object,omitempty"`
+		ID     string          `json:"id,omitempty"`
+	}
+)
+
+func objectIDString(object ObjectID) string {
+	if object.IsRoot {
+		return "_root"
+	}
+
+	return fmt.Sprintf(
+		"%d@%s",
+		object.OpID.Counter,
+		hex.EncodeToString([]byte(object.OpID.Actor)),
+	)
+}
+
+func (b *Backend) patchValueForOperation(operation Operation) (patchValueOut, error) {
+	if objectType, err := actionObjectType(operation.Action); err == nil {
+		return patchValueOut{
+			Object: objectType,
+			ID:     objectIDString(ObjectID{OpID: operation.ID}),
+		}, nil
+	}
+
+	value, ok := b.state.scalarValue(operation)
+	if !ok {
+		return patchValueOut{}, fmt.Errorf("operation %v has no materializable value", operation.ID)
+	}
+
+	encoded, err := encodeScalarWire(value)
+	if err != nil {
+		return patchValueOut{}, err
+	}
+
+	return patchValueOut{Scalar: json.RawMessage(encoded)}, nil
+}
+
+// CurrentState returns the patches that materialize the document from empty,
+// ordered to match upstream Rust: the root first, then other objects by
+// creation operation ID, with map keys in lexical order and sequence elements
+// in index order.
+func (b *Backend) CurrentState(ctx context.Context) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	objects := b.orderedObjects()
+
+	patches := make([]patchOut, 0)
+
+	for _, object := range objects {
+		objectPatches, err := b.objectPatches(object)
+		if err != nil {
+			return nil, err
+		}
+
+		patches = append(patches, objectPatches...)
+	}
+
+	data, err := json.Marshal(patches)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode native patches: %w", err)
+	}
+
+	return data, nil
+}
+
+// orderedObjects returns the visible objects in the document, the root first and
+// then every non-deleted composite object ordered by its creation operation ID.
+func (b *Backend) orderedObjects() []ObjectID {
+	objects := []ObjectID{RootObject()}
+
+	makers := make([]Operation, 0)
+
+	for _, operation := range b.state.operations {
+		if _, err := actionObjectType(operation.Action); err != nil {
+			continue
+		}
+
+		if b.state.isSuperseded(operation.ID) {
+			continue
+		}
+
+		makers = append(makers, operation)
+	}
+
+	sort.Slice(makers, func(i, j int) bool {
+		return makers[i].ID.Compare(makers[j].ID) < 0
+	})
+
+	for _, operation := range makers {
+		objects = append(objects, ObjectID{OpID: operation.ID})
+	}
+
+	return objects
+}
+
+func (b *Backend) objectPatches(object ObjectID) ([]patchOut, error) {
+	objectType := "map"
+
+	if !object.IsRoot {
+		operation, ok := b.state.operations[object.OpID]
+		if !ok {
+			return nil, fmt.Errorf("object %v does not exist", object.OpID)
+		}
+
+		typeName, err := actionObjectType(operation.Action)
+		if err != nil {
+			return nil, err
+		}
+
+		objectType = typeName
+	}
+
+	switch objectType {
+	case "map", "table":
+		return b.mapObjectPatches(object)
+	case "list":
+		return b.listObjectPatches(object)
+	case "text":
+		return b.textObjectPatches(object)
+	default:
+		return nil, fmt.Errorf("unknown object type %q", objectType)
+	}
+}
+
+func (b *Backend) mapObjectPatches(object ObjectID) ([]patchOut, error) {
+	identifier := objectIDString(object)
+
+	patches := make([]patchOut, 0)
+
+	for _, key := range b.state.mapKeys(object) {
+		winner, ok := b.state.visibleMapObjectValue(object, key)
+		if !ok {
+			continue
+		}
+
+		value, err := b.patchValueForOperation(winner)
+		if err != nil {
+			return nil, err
+		}
+
+		conflict := len(b.state.visibleMapObjectOperations(object, key)) > 1
+
+		patches = append(patches, patchOut{
+			Obj: identifier,
+			Action: patchActionOut{
+				Type:     "put_map",
+				Key:      key,
+				Value:    &value,
+				Conflict: conflict,
+			},
+		})
+	}
+
+	return patches, nil
+}
+
+func (b *Backend) listObjectPatches(object ObjectID) ([]patchOut, error) {
+	values := b.state.sequenceValues(object.OpID)
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	inserts := make([]patchInsertOut, 0, len(values))
+
+	for index := range values {
+		value, err := b.patchValueForOperation(values[index].Operation)
+		if err != nil {
+			return nil, err
+		}
+
+		conflict := len(b.state.visibleSequenceElementOperations(values[index].Element)) > 1
+
+		inserts = append(inserts, patchInsertOut{Value: value, Conflict: conflict})
+	}
+
+	return []patchOut{{
+		Obj: objectIDString(object),
+		Action: patchActionOut{
+			Type:   "insert",
+			Index:  0,
+			Values: inserts,
+		},
+	}}, nil
+}
+
+func (b *Backend) textObjectPatches(object ObjectID) ([]patchOut, error) {
+	var text strings.Builder
+
+	for _, operation := range b.state.sequence(object.OpID) {
+		if operation.Value != nil && operation.Value.Type == ScalarString {
+			text.WriteString(operation.Value.String)
+		}
+	}
+
+	if text.Len() == 0 {
+		return nil, nil
+	}
+
+	return []patchOut{{
+		Obj: objectIDString(object),
+		Action: patchActionOut{
+			Type:  "splice_text",
+			Index: 0,
+			Text:  text.String(),
+		},
+	}}, nil
+}
+
 func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
