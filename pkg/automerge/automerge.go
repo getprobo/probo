@@ -77,22 +77,55 @@ type (
 	backend interface {
 		Close(context.Context) error
 		Save(context.Context) ([]byte, error)
+		SaveIncremental(context.Context) ([]byte, error)
+		LoadIncremental(context.Context, []byte) (uint64, error)
 		SetActor(context.Context, []byte) error
 		PutString(context.Context, uint32, string, string) error
+		GetString(context.Context, uint32, string) (string, error)
+		PutScalar(context.Context, uint32, string, []byte) error
+		GetScalar(context.Context, uint32, string) ([]byte, error)
+		GetScalarAtHeads(context.Context, uint32, string, [][32]byte) ([]byte, error)
+		GetAllScalars(context.Context, uint32, string) ([]byte, error)
+		PutObject(context.Context, uint32, string, string) (uint32, error)
+		GetObject(context.Context, uint32, string) (uint32, string, error)
+		InsertObject(context.Context, uint32, uint64, string) (uint32, error)
+		PutObjectAt(context.Context, uint32, uint64, string) (uint32, error)
+		GetObjectAt(context.Context, uint32, uint64) (uint32, string, error)
+		InsertScalar(context.Context, uint32, uint64, []byte) error
+		PutScalarAt(context.Context, uint32, uint64, []byte) error
+		GetScalarAt(context.Context, uint32, uint64) ([]byte, error)
+		DeleteMap(context.Context, uint32, string) error
+		DeleteSequence(context.Context, uint32, uint64) error
+		Increment(context.Context, uint32, string, int64) error
+		IncrementAt(context.Context, uint32, uint64, int64) error
+		Keys(context.Context, uint32) ([]string, error)
+		Length(context.Context, uint32) (uint64, error)
 		PutText(context.Context, uint32, string) (uint32, error)
 		GetText(context.Context, uint32, string) (uint32, error)
 		SpliceText(context.Context, uint32, uint32, int32, string) error
+		MarkText(context.Context, uint32, uint32, uint32, string, []byte, string) error
+		SplitBlock(context.Context, uint32, uint32) (uint32, error)
+		JoinBlock(context.Context, uint32, uint32) error
+		ReplaceBlock(context.Context, uint32, uint32) (uint32, error)
 		Text(context.Context, uint32) (string, error)
+		TextAt(context.Context, uint32, [][32]byte) (string, error)
 		TextSpans(context.Context, uint32) ([]byte, error)
 		TextCursor(context.Context, uint32, uint32) ([]byte, error)
+		TextCursorMoving(context.Context, uint32, uint32, bool) ([]byte, error)
 		TextCursorPosition(context.Context, uint32, []byte) (uint32, error)
 		Commit(context.Context, string, time.Time) ([32]byte, error)
+		EmptyCommit(context.Context, string, time.Time) ([32]byte, error)
+		Rollback(context.Context) (uint64, error)
 		Heads(context.Context) ([][32]byte, error)
+		HasHeads(context.Context, [][32]byte) (bool, error)
+		MissingDependencies(context.Context, [][32]byte) ([][32]byte, error)
 		Merge(context.Context, []byte) ([][32]byte, error)
 		NewSyncState(context.Context) (uint32, error)
 		CloseSyncState(context.Context, uint32) error
 		GenerateSyncMessage(context.Context, uint32) ([]byte, bool, error)
 		ReceiveSyncMessage(context.Context, uint32, []byte) error
+		SetSyncReadOnly(context.Context, uint32, bool) error
+		SyncPeerReadOnly(context.Context, uint32) (bool, error)
 		SaveSyncState(context.Context, uint32) ([]byte, error)
 		LoadSyncState(context.Context, []byte) (uint32, error)
 	}
@@ -244,6 +277,67 @@ func (d *Document) Save(ctx context.Context) ([]byte, error) {
 	return data, nil
 }
 
+// Fork creates an independent writer with the same document history.
+func (d *Document) Fork(
+	ctx context.Context,
+	actorID ActorID,
+) (*Document, error) {
+	d.mu.Lock()
+	if d.closed {
+		d.mu.Unlock()
+		return nil, ErrClosed
+	}
+
+	data, err := d.backend.Save(ctx)
+	if err != nil {
+		d.mu.Unlock()
+		return nil, fmt.Errorf("cannot save Automerge fork source: %w", err)
+	}
+
+	_, referenceBackend := d.backend.(*reference.Backend)
+	d.mu.Unlock()
+
+	if referenceBackend {
+		return LoadReference(ctx, data, actorID)
+	}
+
+	return Load(ctx, data, actorID)
+}
+
+// SaveIncremental serializes changes since the previous save operation.
+func (d *Document) SaveIncremental(ctx context.Context) ([]byte, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := d.backend.SaveIncremental(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot save incremental Automerge changes: %w", err)
+	}
+
+	return data, nil
+}
+
+// LoadIncremental applies incrementally encoded Automerge changes.
+func (d *Document) LoadIncremental(ctx context.Context, data []byte) (uint64, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return 0, ErrClosed
+	}
+
+	applied, err := d.backend.LoadIncremental(ctx, data)
+	if err != nil {
+		return 0, fmt.Errorf("cannot load incremental Automerge changes: %w", err)
+	}
+
+	return applied, nil
+}
+
 // PutString assigns a string at a key in the root map.
 func (d *Document) PutString(ctx context.Context, key, value string) error {
 	d.mu.Lock()
@@ -258,6 +352,23 @@ func (d *Document) PutString(ctx context.Context, key, value string) error {
 	}
 
 	return nil
+}
+
+// String returns a string value from a key in the root map.
+func (d *Document) String(ctx context.Context, key string) (string, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return "", ErrClosed
+	}
+
+	value, err := d.backend.GetString(ctx, rootObject, key)
+	if err != nil {
+		return "", fmt.Errorf("cannot get Automerge string: %w", err)
+	}
+
+	return value, nil
 }
 
 // CreateText creates collaborative text at a key in the root map.
@@ -315,6 +426,54 @@ func (d *Document) Commit(
 	return Hash(hash), nil
 }
 
+// CommitNow records pending operations using the current Unix timestamp.
+func (d *Document) CommitNow(ctx context.Context, message string) (Hash, error) {
+	return d.Commit(ctx, message, time.Now())
+}
+
+// EmptyCommit records a change without document operations.
+func (d *Document) EmptyCommit(
+	ctx context.Context,
+	message string,
+	timestamp time.Time,
+) (Hash, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return Hash{}, ErrClosed
+	}
+
+	hash, err := d.backend.EmptyCommit(ctx, message, timestamp)
+	if err != nil {
+		return Hash{}, fmt.Errorf("cannot commit empty Automerge change: %w", err)
+	}
+
+	return Hash(hash), nil
+}
+
+// EmptyCommitNow records an empty change using the current Unix timestamp.
+func (d *Document) EmptyCommitNow(ctx context.Context, message string) (Hash, error) {
+	return d.EmptyCommit(ctx, message, time.Now())
+}
+
+// Rollback discards every operation pending in the current change.
+func (d *Document) Rollback(ctx context.Context) (uint64, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return 0, ErrClosed
+	}
+
+	cancelled, err := d.backend.Rollback(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("cannot roll back Automerge document: %w", err)
+	}
+
+	return cancelled, nil
+}
+
 // Heads returns the hashes at the document's current frontier.
 func (d *Document) Heads(ctx context.Context) ([]Hash, error) {
 	d.mu.Lock()
@@ -335,6 +494,51 @@ func (d *Document) Heads(ctx context.Context) ([]Hash, error) {
 	}
 
 	return heads, nil
+}
+
+// HasHeads reports whether every hash exists in the document history.
+func (d *Document) HasHeads(ctx context.Context, heads []Hash) (bool, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return false, ErrClosed
+	}
+
+	hasHeads, err := d.backend.HasHeads(ctx, backendHashes(heads))
+	if err != nil {
+		return false, fmt.Errorf("cannot inspect Automerge heads: %w", err)
+	}
+
+	return hasHeads, nil
+}
+
+// MissingDependencies returns unknown hashes required to reach heads.
+func (d *Document) MissingDependencies(
+	ctx context.Context,
+	heads []Hash,
+) ([]Hash, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	missing, err := d.backend.MissingDependencies(
+		ctx,
+		backendHashes(heads),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get Automerge missing dependencies: %w", err)
+	}
+
+	result := make([]Hash, len(missing))
+	for i, hash := range missing {
+		result[i] = Hash(hash)
+	}
+
+	return result, nil
 }
 
 // ChangesSince returns encoded changes not covered by heads.
@@ -506,6 +710,27 @@ func (t *Text) String(ctx context.Context) (string, error) {
 	return value, nil
 }
 
+// StringAt returns text at a historical causal frontier.
+func (t *Text) StringAt(ctx context.Context, heads []Hash) (string, error) {
+	t.document.mu.Lock()
+	defer t.document.mu.Unlock()
+
+	if t.document.closed {
+		return "", ErrClosed
+	}
+
+	value, err := t.document.backend.TextAt(
+		ctx,
+		t.handle,
+		backendHashes(heads),
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot read historical Automerge text: %w", err)
+	}
+
+	return value, nil
+}
+
 // Cursor returns a stable address for the UTF-16 position at index.
 func (t *Text) Cursor(ctx context.Context, index uint32) (Cursor, error) {
 	t.document.mu.Lock()
@@ -601,6 +826,51 @@ func (s *SyncState) ReceiveMessage(ctx context.Context, message []byte) error {
 	}
 
 	return nil
+}
+
+// SetReadOnly controls whether incoming changes are applied by this peer.
+func (s *SyncState) SetReadOnly(ctx context.Context, readOnly bool) error {
+	s.document.mu.Lock()
+	defer s.document.mu.Unlock()
+
+	if s.document.closed {
+		return ErrClosed
+	}
+
+	if s.closed {
+		return ErrSyncStateClosed
+	}
+
+	if err := s.document.backend.SetSyncReadOnly(
+		ctx,
+		s.handle,
+		readOnly,
+	); err != nil {
+		return fmt.Errorf("cannot set Automerge sync read-only mode: %w", err)
+	}
+
+	return nil
+}
+
+// PeerReadOnly reports whether the remote peer advertised read-only mode.
+func (s *SyncState) PeerReadOnly(ctx context.Context) (bool, error) {
+	s.document.mu.Lock()
+	defer s.document.mu.Unlock()
+
+	if s.document.closed {
+		return false, ErrClosed
+	}
+
+	if s.closed {
+		return false, ErrSyncStateClosed
+	}
+
+	readOnly, err := s.document.backend.SyncPeerReadOnly(ctx, s.handle)
+	if err != nil {
+		return false, fmt.Errorf("cannot get Automerge peer read-only mode: %w", err)
+	}
+
+	return readOnly, nil
 }
 
 // Save serializes the peer-specific synchronization state.
