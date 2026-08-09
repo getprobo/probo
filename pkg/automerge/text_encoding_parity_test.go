@@ -311,6 +311,79 @@ func TestRustTextEncoding_PatchDelete(t *testing.T) {
 	assert.Equal(t, patches["reference"], patches["native"])
 }
 
+// TestRustText_LocalPatchesCreatedForMarks reproduces local_patches_created_for_marks:
+// materializing marked text through the diff cursor splits it into one
+// splice_text patch per mark run, each carrying the marks active on that run.
+func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 0, 0, "the quick fox jumps over the lazy dog"))
+		require.NoError(t, text.Mark(
+			ctx, 0, 37, "bold",
+			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+			automerge.MarkExpandBoth,
+		))
+		require.NoError(t, text.Mark(
+			ctx, 4, 19, "italic",
+			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+			automerge.MarkExpandBoth,
+		))
+		require.NoError(t, text.Mark(
+			ctx, 10, 13, "comment:somerandomcommentid",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "foxes are my favorite animal!"},
+			automerge.MarkExpandBoth,
+		))
+		_, err = document.Commit(ctx, "seed", commitTime)
+		require.NoError(t, err)
+
+		patches, err := document.DiffIncremental(ctx)
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	reference := result["reference"]
+	require.NotEmpty(t, reference)
+	assert.Equal(t, automerge.PatchPutMap, reference[0].Action)
+
+	runs := reference[1:]
+	require.Len(t, runs, 5)
+
+	expected := []struct {
+		text  string
+		names []string
+	}{
+		{"the ", []string{"bold"}},
+		{"quick ", []string{"bold", "italic"}},
+		{"fox", []string{"bold", "comment:somerandomcommentid", "italic"}},
+		{" jumps", []string{"bold", "italic"}},
+		{" over the lazy dog", []string{"bold"}},
+	}
+
+	for index, want := range expected {
+		assert.Equal(t, automerge.PatchSpliceText, runs[index].Action)
+		assert.Equal(t, want.text, runs[index].Text)
+
+		names := make([]string, 0, len(runs[index].Marks))
+		for _, mark := range runs[index].Marks {
+			names = append(names, mark.Name)
+		}
+
+		assert.Equal(t, want.names, names)
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+}
+
 // TestRustTextEncoding_PatchPutSeq reproduces the utf16 case of patch_put_seq:
 // an in-place text put reported through the incremental diff cursor produces a
 // PutSeq patch addressed by UTF-16 code units.

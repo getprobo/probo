@@ -102,6 +102,16 @@
   {
     "source": "rust",
     "file": "tests/text.rs",
+    "name": "local_patches_created_for_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_LocalPatchesCreatedForMarks"
+    ],
+    "rationale": "Materializing marked text through the diff cursor splits it into one splice_text patch per mark run, each carrying the active marks."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
     "name": "simple_update_text",
     "classification": "covered",
     "localTests": [

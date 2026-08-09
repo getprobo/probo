@@ -1883,10 +1883,25 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 			return nil, nil
 		}
 
-		return []patchOut{{
-			Obj:    identifier,
-			Action: patchActionOut{Type: "splice_text", Index: 0, Text: text.String()},
-		}}, nil
+		runs, err := textRunsWithMarks(state, object, 0, text.String())
+		if err != nil {
+			return nil, err
+		}
+
+		patches := make([]patchOut, 0, len(runs))
+		for _, run := range runs {
+			patches = append(patches, patchOut{
+				Obj: identifier,
+				Action: patchActionOut{
+					Type:  "splice_text",
+					Index: run.index,
+					Text:  run.text,
+					Marks: run.marks,
+				},
+			})
+		}
+
+		return patches, nil
 	default:
 		return nil, fmt.Errorf("unknown object type %q", objectType)
 	}
@@ -2161,6 +2176,113 @@ func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, er
 	return out, nil
 }
 
+type textRun struct {
+	index uint64
+	text  string
+	marks []markPatchOut
+}
+
+// textRunsWithMarks splits a run of text starting at the given UTF-16 position
+// into maximal sub-runs that share the same active mark set, attaching those
+// marks (sorted by name) to each sub-run. It mirrors the reference, which emits
+// one splice_text patch per mark run.
+func textRunsWithMarks(
+	state *State,
+	object ObjectID,
+	startPosition uint64,
+	text string,
+) ([]textRun, error) {
+	ranges := state.Marks(object.OpID)
+
+	activeMarks := func(position uint64) ([]markPatchOut, string, error) {
+		marks := make([]markPatchOut, 0)
+
+		for _, candidate := range ranges {
+			if uint64(candidate.Start) > position || position >= uint64(candidate.End) {
+				continue
+			}
+
+			value := Scalar{Type: ScalarNull}
+			if candidate.Value != nil {
+				value = *candidate.Value
+			}
+
+			encoded, err := encodeScalarWire(value)
+			if err != nil {
+				return nil, "", err
+			}
+
+			marks = append(marks, markPatchOut{
+				Name:  candidate.Name,
+				Value: json.RawMessage(encoded),
+			})
+		}
+
+		sort.Slice(marks, func(i, j int) bool {
+			return marks[i].Name < marks[j].Name
+		})
+
+		var key strings.Builder
+		for _, mark := range marks {
+			key.WriteString(mark.Name)
+			key.WriteByte('=')
+			key.Write(mark.Value)
+			key.WriteByte(';')
+		}
+
+		if len(marks) == 0 {
+			marks = nil
+		}
+
+		return marks, key.String(), nil
+	}
+
+	runs := make([]textRun, 0)
+
+	var (
+		builder  strings.Builder
+		runMarks []markPatchOut
+		runKey   string
+		runStart = startPosition
+		position = startPosition
+		haveRun  bool
+	)
+
+	for _, character := range text {
+		marks, key, err := activeMarks(position)
+		if err != nil {
+			return nil, err
+		}
+
+		if !haveRun {
+			runStart = position
+			runMarks = marks
+			runKey = key
+			haveRun = true
+		} else if key != runKey {
+			runs = append(runs, textRun{index: runStart, text: builder.String(), marks: runMarks})
+			builder.Reset()
+			runStart = position
+			runMarks = marks
+			runKey = key
+		}
+
+		builder.WriteRune(character)
+
+		if character > 0xFFFF {
+			position += 2
+		} else {
+			position++
+		}
+	}
+
+	if haveRun {
+		runs = append(runs, textRun{index: runStart, text: builder.String(), marks: runMarks})
+	}
+
+	return runs, nil
+}
+
 func markValuesEqual(left, right *Scalar) bool {
 	if left == nil || right == nil {
 		return left == right
@@ -2284,14 +2406,23 @@ func diffSequencePatches(
 
 				operation := targetValues[j].Operation
 				if operation.Value != nil && operation.Value.Type == ScalarString {
-					patches = append(patches, patchOut{
-						Obj: identifier,
-						Action: patchActionOut{
-							Type:  "splice_text",
-							Index: position,
-							Text:  operation.Value.String,
-						},
-					})
+					runs, err := textRunsWithMarks(target, object, position, operation.Value.String)
+					if err != nil {
+						return nil, err
+					}
+
+					for _, run := range runs {
+						patches = append(patches, patchOut{
+							Obj: identifier,
+							Action: patchActionOut{
+								Type:  "splice_text",
+								Index: run.index,
+								Text:  run.text,
+								Marks: run.marks,
+							},
+						})
+					}
+
 					position += width(targetValues[j])
 				}
 			} else {
@@ -2365,14 +2496,22 @@ func diffSequencePatches(
 			}
 
 			if text.Len() > 0 {
-				patches = append(patches, patchOut{
-					Obj: identifier,
-					Action: patchActionOut{
-						Type:  "splice_text",
-						Index: start,
-						Text:  text.String(),
-					},
-				})
+				runs, err := textRunsWithMarks(target, object, start, text.String())
+				if err != nil {
+					return nil, err
+				}
+
+				for _, run := range runs {
+					patches = append(patches, patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:  "splice_text",
+							Index: run.index,
+							Text:  run.text,
+							Marks: run.marks,
+						},
+					})
+				}
 
 				continue
 			}

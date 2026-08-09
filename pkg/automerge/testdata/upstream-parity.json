@@ -5970,10 +5970,12 @@
       "file": "tests/text.rs",
       "line": 164,
       "name": "local_patches_created_for_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_LocalPatchesCreatedForMarks"
+      ],
+      "rationale": "Materializing marked text through the diff cursor splits it into one splice_text patch per mark run, each carrying the active marks.",
       "runtimeName": "local_patches_created_for_marks"
     },
     {

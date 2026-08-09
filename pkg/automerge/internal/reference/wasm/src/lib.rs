@@ -1777,11 +1777,30 @@ fn patches_to_output(patches: &[Patch]) -> Result<Vec<u8>, String> {
                 }
                 serde_json::json!({ "type": "insert", "index": index, "values": encoded })
             }
-            PatchAction::SpliceText { index, value, .. } => serde_json::json!({
-                "type": "splice_text",
-                "index": index,
-                "text": value.make_string(),
-            }),
+            PatchAction::SpliceText {
+                index,
+                value,
+                marks,
+            } => {
+                let mut action = serde_json::json!({
+                    "type": "splice_text",
+                    "index": index,
+                    "text": value.make_string(),
+                });
+                if let Some(marks) = marks {
+                    let encoded = marks
+                        .iter()
+                        .map(|(name, value)| {
+                            Ok(serde_json::json!({
+                                "name": name,
+                                "value": scalar_json(value)?,
+                            }))
+                        })
+                        .collect::<Result<Vec<_>, String>>()?;
+                    action["marks"] = serde_json::Value::Array(encoded);
+                }
+                action
+            }
             PatchAction::Increment { prop, value } => serde_json::json!({
                 "type": "increment",
                 "prop": patch_prop_json(prop),

@@ -49,7 +49,7 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/diff_marks.rs` | 31 | adjacent/nested/overlapping marks, expansion and contraction, value changes, empty spans, whitespace, combining characters, emoji, blocks, and mark removal |
 | `rust/src/sync.rs` | 5 | Bloom false positives, reset/data-loss recovery, old-peer fallback, and message encode/decode internals |
 | `rust/tests/block_tests.rs` | 11 | block property updates, simultaneous text/block changes, update-spans configuration, merge diffs, and block patches |
-| `rust/tests/text.rs` | 10 | mark expansion patches, block-adjacent marks, remote patches, and zero-length spans |
+| `rust/tests/text.rs` | 9 | mark expansion patches, block-adjacent marks, remote patches, and zero-length spans |
 | `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
 | `rust/tests/batch_insert.rs` | 5 | patch output, invalid-scalar rejection, and transaction integration |
 | `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
@@ -66,7 +66,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **144**.
+Total required pending entries: **143**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 
