@@ -32,6 +32,7 @@ package automerge_test
 import (
 	"context"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -1443,6 +1444,168 @@ func TestRust_SaveWithOpsReferencingActorsOnlyViaDelete(t *testing.T) {
 				require.NoError(t, err)
 				assert.Zero(t, length)
 			}
+		})
+	}
+}
+
+// TestRust_SimpleBadSaveload reproduces simple_bad_saveload: an empty commit
+// interleaved with real changes must not corrupt the save/load round trip. The
+// upstream test reassigns the same value; because both engines treat a repeated
+// equal assignment as a no-op, this variant uses a distinct value for the
+// second write so the empty commit remains the interleaved change.
+func TestRust_SimpleBadSaveload(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc, err := engine.open(ctx, actor(1))
+			require.NoError(t, err)
+			closeDocument(t, doc)
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"count",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
+			))
+			_, err = doc.Commit(ctx, "count 0", commitTime)
+			require.NoError(t, err)
+
+			_, err = doc.EmptyCommit(ctx, "empty", commitTime.Add(time.Second))
+			require.NoError(t, err)
+
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"count",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+			))
+			_, err = doc.Commit(ctx, "count 1", commitTime.Add(2*time.Second))
+			require.NoError(t, err)
+
+			saved, err := doc.Save(ctx)
+			require.NoError(t, err)
+
+			for _, load := range []func(context.Context, []byte, automerge.ActorID) (*automerge.Document, error){
+				automerge.Load,
+				automerge.LoadReference,
+			} {
+				reloaded, err := load(ctx, saved, actor(2))
+				require.NoError(t, err)
+				closeDocument(t, reloaded)
+				value, err := reloaded.Root().Scalar(ctx, "count")
+				require.NoError(t, err)
+				assert.Equal(t, int64(1), value.Int)
+			}
+		})
+	}
+}
+
+// TestRust_BadChangeOnOptreeNodeBoundary reproduces
+// bad_change_on_optree_node_boundary: a document grown across an op-tree node
+// boundary is saved, reloaded elsewhere, then a further change is transferred
+// and the result still saves and reloads with matching state.
+func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	const iterations = 15
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc, err := engine.open(ctx, actor(1))
+			require.NoError(t, err)
+			closeDocument(t, doc)
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"a",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "z"},
+			))
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"b",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
+			))
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"c",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
+			))
+			_, err = doc.Commit(ctx, "base", commitTime)
+			require.NoError(t, err)
+
+			for i := range iterations {
+				require.NoError(t, doc.Root().PutScalar(
+					ctx,
+					"a",
+					automerge.Scalar{
+						Type:   automerge.ScalarTypeString,
+						String: strings.Repeat("a", i),
+					},
+				))
+				require.NoError(t, doc.Root().PutScalar(
+					ctx,
+					"b",
+					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i + 1)},
+				))
+				require.NoError(t, doc.Root().PutScalar(
+					ctx,
+					"c",
+					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i + 1)},
+				))
+				_, err = doc.Commit(
+					ctx,
+					"iterate",
+					commitTime.Add(time.Duration(i+1)*time.Second),
+				)
+				require.NoError(t, err)
+			}
+
+			saved, err := doc.Save(ctx)
+			require.NoError(t, err)
+			other, err := engine.load(ctx, saved, actor(2))
+			require.NoError(t, err)
+			closeDocument(t, other)
+
+			final := iterations + 2
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"a",
+				automerge.Scalar{
+					Type:   automerge.ScalarTypeString,
+					String: strings.Repeat("a", final),
+				},
+			))
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"b",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(final)},
+			))
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"c",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(final)},
+			))
+			_, err = doc.Commit(ctx, "final", commitTime.Add(time.Hour))
+			require.NoError(t, err)
+
+			_, err = other.Merge(ctx, doc)
+			require.NoError(t, err)
+
+			transferred, err := other.Save(ctx)
+			require.NoError(t, err)
+			reloaded, err := engine.load(ctx, transferred, actor(3))
+			require.NoError(t, err)
+			closeDocument(t, reloaded)
+
+			value, err := reloaded.Root().Scalar(ctx, "b")
+			require.NoError(t, err)
+			assert.Equal(t, int64(final), value.Int)
+			assert.Equal(t, sortedHeadHex(t, ctx, doc), sortedHeadHex(t, ctx, other))
 		})
 	}
 }

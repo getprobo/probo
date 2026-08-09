@@ -34,7 +34,7 @@ The generator verifies both Git revisions before updating the ledger.
 
 | Classification | Covered | Pending |
 |---|---:|---:|
-| Required Rust + JavaScript boundary behavior | 152 | 210 |
+| Required Rust + JavaScript boundary behavior | 154 | 208 |
 | Non-blocking JavaScript convenience behavior | 44 | 196 |
 | Private or language-specific behavior | 110 | — |
 
@@ -45,7 +45,7 @@ document are informational and must be updated whenever the manifest changes.
 
 | Source | Pending | Missing behavior |
 |---|---:|---|
-| `rust/tests/test.rs` | 20 | list-index counter conflicts, patch-log misuse, transactions and isolation, historical marks, reverse-diff patches, large list patches, iterators, and regression corpus |
+| `rust/tests/test.rs` | 18 | list-index counter conflicts, patch-log misuse, transactions and isolation, historical marks, reverse-diff patches, large list patches, iterators, and regression corpus |
 | `rust/tests/diff_marks.rs` | 31 | adjacent/nested/overlapping marks, expansion and contraction, value changes, empty spans, whitespace, combining characters, emoji, blocks, and mark removal |
 | `rust/src/sync.rs` | 21 | Bloom false positives, branching histories, reset/data-loss recovery, remaining read-only transitions, multi-consumer topologies, explicit requests, and old-peer behavior |
 | `rust/tests/block_tests.rs` | 18 | block property updates, simultaneous text/block changes, mark boundaries across blocks, update-spans configuration, merge diffs, and block patches |
@@ -67,7 +67,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **210**.
+Total required pending entries: **208**.
 
 ## Optional JavaScript convenience backlog
 

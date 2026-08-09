@@ -4256,10 +4256,12 @@
       "file": "tests/test.rs",
       "line": 1537,
       "name": "bad_change_on_optree_node_boundary",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_BadChangeOnOptreeNodeBoundary"
+      ],
+      "rationale": "A document grown across an op-tree node boundary is saved, reloaded elsewhere, and a further change is transferred and reloaded with matching state and heads on both engines.",
       "runtimeName": "bad_change_on_optree_node_boundary"
     },
     {
@@ -7223,10 +7225,12 @@
       "file": "tests/test.rs",
       "line": 1428,
       "name": "simple_bad_saveload",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_SimpleBadSaveload"
+      ],
+      "rationale": "An empty commit interleaved between real changes does not corrupt the save/load round trip on either engine.",
       "runtimeName": "simple_bad_saveload"
     },
     {

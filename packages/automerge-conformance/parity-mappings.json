@@ -1612,5 +1612,25 @@
       "TestRust_SaveWithOpsReferencingActorsOnlyViaDelete"
     ],
     "rationale": "A merged delete op references a fork's actor only through successors; the document still saves and reloads cleanly across both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "simple_bad_saveload",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_SimpleBadSaveload"
+    ],
+    "rationale": "An empty commit interleaved between real changes does not corrupt the save/load round trip on either engine."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "bad_change_on_optree_node_boundary",
+    "classification": "covered",
+    "localTests": [
+      "TestRust_BadChangeOnOptreeNodeBoundary"
+    ],
+    "rationale": "A document grown across an op-tree node boundary is saved, reloaded elsewhere, and a further change is transferred and reloaded with matching state and heads on both engines."
   }
 ]
