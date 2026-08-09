@@ -37,6 +37,14 @@ type (
 		superseded    map[OpID]struct{}
 		heads         map[ChangeHash]struct{}
 		sequenceCache map[OpID][]Operation
+
+		// insertOrderCache holds, per sequence object, the RGA-ordered list of
+		// insertion operation IDs (including tombstones, excluding marks). The
+		// order depends only on insertion operations and their anchors, so it is
+		// maintained incrementally: local inserts (whose IDs are always the
+		// current maximum) splice in next to their anchor, while merged changes
+		// and rollbacks invalidate the entry so it is rebuilt lazily.
+		insertOrderCache map[OpID][]OpID
 	}
 
 	RichSpan struct {
@@ -53,12 +61,13 @@ type (
 
 func NewState() *State {
 	return &State{
-		changes:       make(map[ChangeHash]*Change),
-		actorSequence: make(map[ActorID]uint64),
-		operations:    make(map[OpID]Operation),
-		superseded:    make(map[OpID]struct{}),
-		heads:         make(map[ChangeHash]struct{}),
-		sequenceCache: make(map[OpID][]Operation),
+		changes:          make(map[ChangeHash]*Change),
+		actorSequence:    make(map[ActorID]uint64),
+		operations:       make(map[OpID]Operation),
+		superseded:       make(map[OpID]struct{}),
+		heads:            make(map[ChangeHash]struct{}),
+		sequenceCache:    make(map[OpID][]Operation),
+		insertOrderCache: make(map[OpID][]OpID),
 	}
 }
 
@@ -143,6 +152,7 @@ func (s *State) ApplyChange(change *Change) error {
 		s.operations[operation.ID] = operation
 		if !operation.Object.IsRoot {
 			delete(s.sequenceCache, operation.Object.OpID)
+			delete(s.insertOrderCache, operation.Object.OpID)
 		}
 
 		s.supersedePredecessors(operation)
@@ -397,42 +407,45 @@ func (s *State) setSequenceCache(object OpID, operations []Operation) {
 }
 
 func (s *State) sequenceElements(object OpID) []Operation {
-	children := make(map[OpID][]Operation)
+	order := s.insertOrder(object)
 
-	var head []Operation
+	operations := make([]Operation, 0, len(order))
 
-	for _, operation := range s.operations {
-		if operation.Object.IsRoot ||
-			operation.Object.OpID != object ||
-			!operation.Insert ||
-			operation.Action == ActionMark {
+	for _, id := range order {
+		if s.isSuperseded(id) {
 			continue
 		}
 
-		switch {
-		case operation.Key.IsHead:
-			head = append(head, operation)
-		case operation.Key.Element != nil:
-			children[*operation.Key.Element] = append(
-				children[*operation.Key.Element],
-				operation,
-			)
+		if operation, ok := s.operations[id]; ok {
+			operations = append(operations, operation)
 		}
 	}
-
-	operations := make([]Operation, 0)
-	s.appendSequence(
-		&operations,
-		head,
-		children,
-		make(map[OpID]struct{}),
-		false,
-	)
 
 	return operations
 }
 
 func (s *State) sequenceAll(object OpID) []Operation {
+	order := s.insertOrder(object)
+
+	operations := make([]Operation, 0, len(order))
+
+	for _, id := range order {
+		if operation, ok := s.operations[id]; ok {
+			operations = append(operations, operation)
+		}
+	}
+
+	return operations
+}
+
+// insertOrder returns the RGA-ordered insertion operation IDs for a sequence
+// object (including tombstones, excluding marks), using the incremental cache
+// when present and rebuilding from the operation set otherwise.
+func (s *State) insertOrder(object OpID) []OpID {
+	if cached, ok := s.insertOrderCache[object]; ok {
+		return cached
+	}
+
 	children := make(map[OpID][]Operation)
 
 	var head []Operation
@@ -464,7 +477,73 @@ func (s *State) sequenceAll(object OpID) []Operation {
 		true,
 	)
 
-	return operations
+	order := make([]OpID, len(operations))
+	for i, operation := range operations {
+		order[i] = operation.ID
+	}
+
+	s.insertOrderCache[object] = order
+
+	return order
+}
+
+// spliceInsertOrder inserts a locally created insertion operation into the
+// cached RGA order. Local operations always carry the current maximum operation
+// ID, so they sort ahead of every existing sibling: a head-anchored insertion
+// goes to the front and an element-anchored one goes immediately after its
+// anchor. If the object's order has not been cached yet the splice is skipped
+// and the order is rebuilt on the next read.
+func (s *State) spliceInsertOrder(operation Operation) {
+	if !operation.Insert ||
+		operation.Action == ActionMark ||
+		operation.Object.IsRoot {
+		return
+	}
+
+	object := operation.Object.OpID
+
+	order, ok := s.insertOrderCache[object]
+	if !ok {
+		return
+	}
+
+	if operation.Key.IsHead {
+		s.insertOrderCache[object] = append([]OpID{operation.ID}, order...)
+
+		return
+	}
+
+	if operation.Key.Element == nil {
+		delete(s.insertOrderCache, object)
+
+		return
+	}
+
+	anchor := *operation.Key.Element
+
+	if len(order) > 0 && order[len(order)-1] == anchor {
+		s.insertOrderCache[object] = append(order, operation.ID)
+
+		return
+	}
+
+	for i, id := range order {
+		if id != anchor {
+			continue
+		}
+
+		position := i + 1
+		updated := make([]OpID, 0, len(order)+1)
+		updated = append(updated, order[:position]...)
+		updated = append(updated, operation.ID)
+		updated = append(updated, order[position:]...)
+		s.insertOrderCache[object] = updated
+
+		return
+	}
+
+	// The anchor is not present in the cached order; rebuild lazily.
+	delete(s.insertOrderCache, object)
 }
 
 func (s *State) sequenceValues(object OpID) []sequenceValue {
@@ -1266,6 +1345,7 @@ func (s *State) applyPending(operations []Operation) error {
 			delete(s.sequenceCache, operation.Object.OpID)
 		}
 
+		s.spliceInsertOrder(operation)
 		s.supersedePredecessors(operation)
 	}
 
