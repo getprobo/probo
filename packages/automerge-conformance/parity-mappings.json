@@ -1,6 +1,16 @@
 [
   {
     "source": "rust",
+    "file": "tests/text.rs",
+    "name": "insertions_after_noexpand_spans_are_not_marked",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_InsertionsAfterNoexpandSpans"
+    ],
+    "rationale": "Text appended after a block with no expanding mark in scope is reported by a diff as an unmarked splice."
+  },
+  {
+    "source": "rust",
     "file": "src/automerge/current_state.rs",
     "name": "test_load_changes",
     "classification": "covered",

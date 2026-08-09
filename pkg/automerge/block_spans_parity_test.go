@@ -280,6 +280,49 @@ func TestRustBlockSpans(t *testing.T) {
 	}
 }
 
+// TestRustText_InsertionsAfterNoexpandSpans reproduces
+// insertions_after_noexpand_spans_are_not_marked: text appended after a block,
+// with no expanding mark in scope, is reported by a diff as an unmarked splice.
+func TestRustText_InsertionsAfterNoexpandSpans(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandNone}
+	heading := map[string]any{"type": "heading", "parents": []any{}, "attrs": map[string]any{}}
+	paragraph := map[string]any{"type": "paragraph", "parents": []any{}, "attrs": map[string]any{}}
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, _, text := seedText(t, ctx, engine, "")
+
+		spans := []automerge.SpanInput{
+			blockSpan(heading),
+			textSpan("Heading"),
+			blockSpan(paragraph),
+			textSpan("a"),
+			blockSpan(paragraph),
+		}
+		require.NoError(t, text.UpdateSpans(ctx, spans, config))
+		_, err := document.Commit(ctx, "spans", commitTime)
+		require.NoError(t, err)
+
+		before, err := document.Heads(ctx)
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 11, 0, "a"))
+		after, err := document.Commit(ctx, "append", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	require.Len(t, result["reference"], 1)
+	assert.Equal(t, automerge.PatchSpliceText, result["reference"][0].Action)
+	assert.Empty(t, result["reference"][0].Marks)
+	assert.Equal(t, result["reference"], result["native"])
+}
+
 // TestRustBlock_MarksOnSpansRespectHeads reproduces marks_on_spans_respect_heads:
 // spans_at reports the marks active at a historical frontier, excluding marks
 // added afterward.

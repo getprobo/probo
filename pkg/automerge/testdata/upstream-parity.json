@@ -5812,10 +5812,12 @@
       "file": "tests/text.rs",
       "line": 351,
       "name": "insertions_after_noexpand_spans_are_not_marked",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_InsertionsAfterNoexpandSpans"
+      ],
+      "rationale": "Text appended after a block with no expanding mark in scope is reported by a diff as an unmarked splice.",
       "runtimeName": "insertions_after_noexpand_spans_are_not_marked"
     },
     {

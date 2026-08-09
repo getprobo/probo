@@ -46,12 +46,12 @@ document are informational and must be updated whenever the manifest changes.
 | Source | Pending | Missing behavior |
 |---|---:|---|
 | `rust/tests/test.rs` | 3 | transaction isolation (isolate/integrate) and compressed-column save |
-| `rust/tests/text.rs` | 4 | isolation patches, incremental increments/blocks, and a property scenario |
+| `rust/tests/text.rs` | 3 | isolation patches and a property scenario |
 | `rust/src/sync.rs` | 3 | Bloom false positives and empty-message V2 codec internals |
 | `rust/tests/test_save_load_orphans.rs` | 2 | preserving and discarding orphan changes across a document save (needs a native document-chunk encoder) |
 | `rust/src/automerge/tests.rs` | 1 | incremental put/increment patch stream from applied counter changes |
 
-Total required pending entries: **13**.
+Total required pending entries: **12**.
 
 The remaining fourteen entries need substantial features: `isolate`/`integrate`
 (a pinned-frontier transaction view), a true operation-replay patch log for
