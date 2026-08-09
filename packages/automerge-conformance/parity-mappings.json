@@ -1,5 +1,89 @@
 [
   {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should support implicit and explicit deletion",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_ImplicitAndExplicitDeletion"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should handle text and other ops in the same change",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_TextAndOtherOpsSameChange"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should initialize text in Automerge.from()",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_InitializeTextInFrom"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should encode the initial value as a change",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_InitializeTextInFrom"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should allow splicing into text in arrays",
+    "classification": "covered",
+    "localTests": [
+      "TestJSText_SplicingIntoArrays"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should calculate a diff when updating text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_SimpleUpdateText"
+    ],
+    "rationale": "Cross-engine text behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should serialize to JSON as a simple string",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript JSON.stringify serialization shape of the document proxy; no wire or state interop meaning."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should allow modification after an object is assigned to a document",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript mutable-proxy assignment semantics inside a change callback; Go mutates through explicit typed methods."
+  },
+  {
+    "source": "javascript",
+    "file": "text_test.ts",
+    "name": "should not allow modification outside of a change callback",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript change-callback guard on the mutable proxy; Go has no ambient-mutation API to guard."
+  },
+  {
     "source": "rust",
     "file": "tests/block_tests.rs",
     "name": "marks_on_spans_respect_heads",

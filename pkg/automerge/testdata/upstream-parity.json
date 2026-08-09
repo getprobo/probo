@@ -3696,10 +3696,12 @@
       "file": "text_test.ts",
       "line": 105,
       "name": "should encode the initial value as a change",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSText_InitializeTextInFrom"
+      ],
+      "rationale": "Cross-engine text behavior reproduced against the reference."
     },
     {
       "id": "javascript:text_test.ts:115:should support unicode when creating text",
@@ -3721,10 +3723,12 @@
       "file": "text_test.ts",
       "line": 122,
       "name": "should allow splicing into text in arrays",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSText_SplicingIntoArrays"
+      ],
+      "rationale": "Cross-engine text behavior reproduced against the reference."
     },
     {
       "id": "javascript:text_test.ts:132:should calculate a diff when updating text",
@@ -3732,10 +3736,12 @@
       "file": "text_test.ts",
       "line": 132,
       "name": "should calculate a diff when updating text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestRustText_SimpleUpdateText"
+      ],
+      "rationale": "Cross-engine text behavior reproduced against the reference."
     },
     {
       "id": "javascript:text_test.ts:148:should handle multi character grapheme clusters",
@@ -3783,10 +3789,12 @@
       "file": "text_test.ts",
       "line": 36,
       "name": "should support implicit and explicit deletion",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSText_ImplicitAndExplicitDeletion"
+      ],
+      "rationale": "Cross-engine text behavior reproduced against the reference."
     },
     {
       "id": "javascript:text_test.ts:48:should handle concurrent insertion",
@@ -3807,10 +3815,12 @@
       "file": "text_test.ts",
       "line": 60,
       "name": "should handle text and other ops in the same change",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSText_TextAndOtherOpsSameChange"
+      ],
+      "rationale": "Cross-engine text behavior reproduced against the reference."
     },
     {
       "id": "javascript:text_test.ts:70:should serialize to JSON as a simple string",
@@ -3818,10 +3828,10 @@
       "file": "text_test.ts",
       "line": 70,
       "name": "should serialize to JSON as a simple string",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript JSON.stringify serialization shape of the document proxy; no wire or state interop meaning."
     },
     {
       "id": "javascript:text_test.ts:77:should allow modification after an object is assigned to a document",
@@ -3829,10 +3839,10 @@
       "file": "text_test.ts",
       "line": 77,
       "name": "should allow modification after an object is assigned to a document",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript mutable-proxy assignment semantics inside a change callback; Go mutates through explicit typed methods."
     },
     {
       "id": "javascript:text_test.ts:87:should not allow modification outside of a change callback",
@@ -3840,10 +3850,10 @@
       "file": "text_test.ts",
       "line": 87,
       "name": "should not allow modification outside of a change callback",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript change-callback guard on the mutable proxy; Go has no ambient-mutation API to guard."
     },
     {
       "id": "javascript:text_test.ts:95:should initialize text in Automerge.from()",
@@ -3851,10 +3861,12 @@
       "file": "text_test.ts",
       "line": 95,
       "name": "should initialize text in Automerge.from()",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSText_InitializeTextInFrom"
+      ],
+      "rationale": "Cross-engine text behavior reproduced against the reference."
     },
     {
       "id": "rust-doc:automerge/src/autocommit.rs:223:automerge/src/autocommit.rs - autocommit::AutoCommit::diff (line 223)",
