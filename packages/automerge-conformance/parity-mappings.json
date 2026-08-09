@@ -1,6 +1,16 @@
 [
   {
     "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_change_encoding_expanded_change_round_trip",
+    "classification": "covered",
+    "localTests": [
+      "TestChangeEncodingExpandedRoundTrip"
+    ],
+    "rationale": "A change decoded from its canonical bytes re-encodes to exactly those bytes, validating change wire fidelity."
+  },
+  {
+    "source": "rust",
     "file": "src/sync.rs",
     "name": "if_first_message_has_no_heads_and_supports_v2_message_send_whole_doc",
     "classification": "covered",

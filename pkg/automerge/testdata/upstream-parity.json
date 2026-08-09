@@ -4153,9 +4153,9 @@
       "line": 36,
       "name": "applying_changes_with_patch_log_from_another_document_returns_error_not_panic",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "applying_changes_with_patch_log_from_another_document_returns_error_not_panic"
     },
     {
@@ -6999,9 +6999,9 @@
       "line": 71,
       "name": "owned_transaction_with_patch_log_from_another_document_does_not_panic",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "owned_transaction_with_patch_log_from_another_document_does_not_panic"
     },
     {
@@ -8214,9 +8214,9 @@
       "line": 2440,
       "name": "switch_to_read_write_with_old_peer",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::tests::switch_to_read_write_with_old_peer"
     },
     {
@@ -8254,9 +8254,9 @@
       "line": 473,
       "name": "sync_from_v1_to_v2",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::v1_compat_test::sync_from_v1_to_v2"
     },
     {
@@ -8266,9 +8266,9 @@
       "line": 496,
       "name": "sync_from_v2_to_v1",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::v1_compat_test::sync_from_v2_to_v1"
     },
     {
@@ -8278,9 +8278,9 @@
       "line": 519,
       "name": "sync_v1_to_v2_with_compressed_change",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::v1_compat_test::sync_v1_to_v2_with_compressed_change"
     },
     {
@@ -8289,10 +8289,12 @@
       "file": "tests/test.rs",
       "line": 1336,
       "name": "test_change_encoding_expanded_change_round_trip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestChangeEncodingExpandedRoundTrip"
+      ],
+      "rationale": "A change decoded from its canonical bytes re-encodes to exactly those bytes, validating change wire fidelity.",
       "runtimeName": "test_change_encoding_expanded_change_round_trip"
     },
     {
@@ -8547,9 +8549,9 @@
       "line": 60,
       "name": "transaction_at_with_patch_log_from_another_document_does_not_panic",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "transaction_at_with_patch_log_from_another_document_does_not_panic"
     },
     {
@@ -8559,9 +8561,9 @@
       "line": 50,
       "name": "transaction_with_patch_log_from_another_document_does_not_panic",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": "",
+      "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "transaction_with_patch_log_from_another_document_does_not_panic"
     },
     {

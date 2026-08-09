@@ -24,7 +24,42 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// TestChangeEncodingExpandedRoundTrip reproduces the upstream
+// test_change_encoding_expanded_change_round_trip: a change decoded from its
+// canonical bytes re-encodes to exactly those bytes.
+func TestChangeEncodingExpandedRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	changeBytes := []byte{
+		0x85, 0x6f, 0x4a, 0x83, // magic
+		0xb2, 0x98, 0x9e, 0xa9, // checksum
+		1, 61, 0, 2, 0x12, 0x34, // chunk type: change, length, deps, actor '1234'
+		1, 1, 252, 250, 220, 255, 5, // seq, startOp, time
+		14, 73, 110, 105, 116, 105, 97, 108, 105, 122, 97, 116, 105, 111, 110, // "Initialization"
+		0, 6, // actor list, column count
+		0x15, 3, 0x34, 1, 0x42, 2, // keyStr, insert, action
+		0x56, 2, 0x57, 1, 0x70, 2, // valLen, valRaw, predNum
+		0x7f, 1, 0x78, // keyStr: 'x'
+		1,       // insert: false
+		0x7f, 1, // action: set
+		0x7f, 19, // valLen: 1 byte of type uint
+		1,       // valRaw: 1
+		0x7f, 0, // predNum: 0
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, // 10 trailing bytes inside the chunk
+	}
+
+	document, consumed, err := DecodeIncremental(changeBytes)
+	require.NoError(t, err)
+	require.Equal(t, len(changeBytes), consumed)
+	require.Len(t, document.Changes, 1)
+
+	encoded, err := EncodeChange(&document.Changes[0])
+	require.NoError(t, err)
+	assert.Equal(t, changeBytes, encoded)
+}
 
 func TestEncodeRLE_CanonicalRuns(t *testing.T) {
 	t.Parallel()
