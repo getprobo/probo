@@ -167,6 +167,48 @@ func TestRustSync_FirstResponseIsSomeEvenIfNoChanges(t *testing.T) {
 	}
 }
 
+// TestRustSync_ShouldNotReplyIfNoDataAfterFirstRound reproduces
+// should_not_reply_if_we_have_no_data_after_first_round.
+func TestRustSync_ShouldNotReplyIfNoDataAfterFirstRound(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc1, err := engine.open(ctx, actor(1))
+			require.NoError(t, err)
+			closeDocument(t, doc1)
+
+			doc2, err := engine.open(ctx, actor(2))
+			require.NoError(t, err)
+			closeDocument(t, doc2)
+
+			s1 := readWriteSyncState(t, ctx, doc1)
+			s2 := readWriteSyncState(t, ctx, doc2)
+
+			message, ok, err := s1.GenerateMessage(ctx)
+			require.NoError(t, err)
+			require.True(t, ok)
+			require.NoError(t, s2.ReceiveMessage(ctx, message))
+
+			_, ok, err = s2.GenerateMessage(ctx)
+			require.NoError(t, err)
+			require.True(t, ok, "first round response expected")
+
+			_, ok, err = s1.GenerateMessage(ctx)
+			require.NoError(t, err)
+			assert.False(t, ok)
+
+			_, ok, err = s2.GenerateMessage(ctx)
+			require.NoError(t, err)
+			assert.False(t, ok)
+		})
+	}
+}
+
 // TestRustSync_AllowSimultaneousMessages reproduces
 // should_allow_simultaneous_messages_during_synchronisation.
 func TestRustSync_AllowSimultaneousMessages(t *testing.T) {
@@ -345,6 +387,58 @@ func TestRustSync_ReadOnlyPeerNewChangesBetweenRounds(t *testing.T) {
 			require.Len(t, doc1Values, 1)
 			assert.Equal(t, "new_from_doc1", doc1Values[0].String)
 			assert.False(t, rootHasKey(t, ctx, doc1, "from_doc2"))
+		})
+	}
+}
+
+// TestRustSync_ReadOnlyPeerConcurrentChanges reproduces
+// read_only_peer_concurrent_changes_during_sync.
+func TestRustSync_ReadOnlyPeerConcurrentChanges(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc1, err := engine.open(ctx, actor(0xab))
+			require.NoError(t, err)
+			closeDocument(t, doc1)
+
+			doc2, err := engine.open(ctx, actor(0xcd))
+			require.NoError(t, err)
+			closeDocument(t, doc2)
+
+			s1 := readOnlySyncState(t, ctx, doc1)
+			s2 := readWriteSyncState(t, ctx, doc2)
+			syncQuiescent(t, ctx, s1, s2)
+
+			require.NoError(t, doc2.Root().PutScalar(
+				ctx,
+				"x",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
+			))
+			_, err = doc2.Commit(ctx, "x", commitTime.Add(time.Second))
+			require.NoError(t, err)
+
+			message, ok, err := s2.GenerateMessage(ctx)
+			require.NoError(t, err)
+			require.True(t, ok)
+			require.NoError(t, s1.ReceiveMessage(ctx, message))
+
+			require.NoError(t, doc1.Root().PutScalar(
+				ctx,
+				"y",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+			))
+			_, err = doc1.Commit(ctx, "y", commitTime.Add(2*time.Second))
+			require.NoError(t, err)
+
+			syncQuiescent(t, ctx, s1, s2)
+
+			assert.True(t, rootHasKey(t, ctx, doc2, "y"))
+			assert.False(t, rootHasKey(t, ctx, doc1, "x"))
 		})
 	}
 }

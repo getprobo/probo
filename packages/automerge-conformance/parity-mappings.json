@@ -1832,5 +1832,25 @@
       "TestRustOrphans_LoadIncrementalChangeWithoutDepsThrows"
     ],
     "rationale": "Loading a bare change chunk whose dependencies are absent is rejected by both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_not_reply_if_we_have_no_data_after_first_round",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ShouldNotReplyIfNoDataAfterFirstRound"
+    ],
+    "rationale": "Two empty peers exchange a mandatory first message each, then fall silent once neither has anything to send."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "read_only_peer_concurrent_changes_during_sync",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ReadOnlyPeerConcurrentChanges"
+    ],
+    "rationale": "A read-only peer that commits a change mid-flight still publishes it to the read-write peer, which the read-only peer never consumes in return."
   }
 ]
