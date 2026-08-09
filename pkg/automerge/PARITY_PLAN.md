@@ -128,12 +128,16 @@ reference (a stronger assertion than upstream `marks_are_okay`, which only
 checks span consolidation and text) drove several fixes this pass: an over-long
 splice deletion and an over-long mark range are now clamped to the end of the
 text rather than rejected, matching the reference. One characterized case
-remains: marking an empty text with a range that clamps to zero length and the
-`ExpandMark::Both` flag, then inserting at the head, should capture the inserted
-text (the reference reports it as marked) but native does not, because the
-insert query withdraws the begin candidate when it meets the matching end. The
-`TestRustText_MarksAreOkay` value-level differential can be re-enabled to
-reproduce it.
+remains: marking an *empty* text with a range whose end is past the end (for
+example `mark(0, 2)`) and the `ExpandMark::Both` flag, then inserting at the
+head, should capture the inserted text — the reference reports it as marked and
+treats it differently from a true zero-length `mark(0, 0)`, which captures
+nothing. Native cannot reproduce this because on empty text both the start and
+the clamped end anchor resolve to the head with no predecessor element, so the
+two marks are structurally identical to it; distinguishing them needs a richer
+anchor representation for a boundary positioned beyond the end. The case is
+narrow (a mark past the end of an empty text followed by an insertion) and the
+`TestRustText_MarksAreOkay` value-level differential reproduces it.
 
 **Independent re-encoding of concurrent edits (determinism, not interop).**
 The randomized `TestDifferentialStress_ConcurrentMerge` harness applies the same
