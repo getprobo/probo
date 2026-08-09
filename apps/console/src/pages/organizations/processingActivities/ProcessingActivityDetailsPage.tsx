@@ -78,6 +78,9 @@ import {
   useUpdateTransferImpactAssessment,
 } from "../../../hooks/graph/ProcessingActivityGraph";
 
+import { MalaysiaPDPADPIAScreeningSection } from "./_components/MalaysiaPDPADPIAScreeningSection";
+import { MalaysiaPDPATransferSection } from "./_components/MalaysiaPDPATransferSection";
+
 type Props = {
   queryRef: PreloadedQuery<ProcessingActivityGraphNodeQuery>;
 };
@@ -800,6 +803,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "dpia" && (
         <Card>
           <div className="p-6">
+            <MalaysiaPDPADPIAScreeningSection
+              activityKey={activity}
+              onOpenDPIA={() => setShowDpiaForm(true)}
+            />
             {!showDpiaForm
               && (!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted)
               ? (
@@ -948,6 +955,14 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "tia" && (
         <Card>
           <div className="p-6">
+            <MalaysiaPDPATransferSection
+              activityKey={activity}
+              deleted={tiaDeleted}
+              onTIAAvailable={() => {
+                setTiaDeleted(false);
+                setShowTiaForm(true);
+              }}
+            />
             {!showTiaForm
               && (!activity?.transferImpactAssessment?.id || tiaDeleted)
               ? (

@@ -4270,6 +4270,50 @@ components:
         - NOT_NEEDED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment
 
+    MalaysiaPDPADPIARecommendation:
+      type: string
+      enum:
+        - NOT_INDICATED
+        - DPO_REVIEW_REQUIRED
+        - REQUIRED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MalaysiaPDPADPIARecommendation
+
+    MalaysiaPDPADPIAScreeningInput:
+      type: object
+      required:
+        - total_data_subjects
+        - sensitive_data_subjects
+        - legal_or_significant_effects
+        - systematic_monitoring
+        - innovative_technology
+        - denial_or_restriction_of_rights
+        - location_or_behaviour_tracking
+        - children_or_vulnerable_data_subjects
+        - high_risk_automated_decision_making
+      properties:
+        total_data_subjects:
+          type: integer
+          format: int64
+        sensitive_data_subjects:
+          type: integer
+          format: int64
+        legal_or_significant_effects:
+          type: boolean
+        systematic_monitoring:
+          type: boolean
+        innovative_technology:
+          type: boolean
+        denial_or_restriction_of_rights:
+          type: boolean
+        location_or_behaviour_tracking:
+          type: boolean
+        children_or_vulnerable_data_subjects:
+          type: boolean
+        high_risk_automated_decision_making:
+          type: boolean
+        other_high_risk_factors:
+          type: string
+
     ProcessingActivityOrderField:
       type: string
       enum:
@@ -4302,6 +4346,17 @@ components:
         - data_protection_impact_assessment_needed
         - transfer_impact_assessment_needed
         - role
+        - malaysia_pdpa_dpia_total_data_subjects
+        - malaysia_pdpa_dpia_sensitive_data_subjects
+        - malaysia_pdpa_dpia_legal_or_significant_effects
+        - malaysia_pdpa_dpia_systematic_monitoring
+        - malaysia_pdpa_dpia_innovative_technology
+        - malaysia_pdpa_dpia_denial_or_restriction_of_rights
+        - malaysia_pdpa_dpia_location_or_behaviour_tracking
+        - malaysia_pdpa_dpia_children_or_vulnerable_data_subjects
+        - malaysia_pdpa_dpia_high_risk_automated_decision_making
+        - malaysia_pdpa_dpia_recommendation
+        - malaysia_pdpa_dpia_reasons
         - created_at
         - updated_at
       properties:
@@ -4394,6 +4449,45 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Data protection officer profile ID
+        malaysia_pdpa_dpia_total_data_subjects:
+          type: integer
+          format: int64
+        malaysia_pdpa_dpia_sensitive_data_subjects:
+          type: integer
+          format: int64
+        malaysia_pdpa_dpia_legal_or_significant_effects:
+          type: boolean
+        malaysia_pdpa_dpia_systematic_monitoring:
+          type: boolean
+        malaysia_pdpa_dpia_innovative_technology:
+          type: boolean
+        malaysia_pdpa_dpia_denial_or_restriction_of_rights:
+          type: boolean
+        malaysia_pdpa_dpia_location_or_behaviour_tracking:
+          type: boolean
+        malaysia_pdpa_dpia_children_or_vulnerable_data_subjects:
+          type: boolean
+        malaysia_pdpa_dpia_high_risk_automated_decision_making:
+          type: boolean
+        malaysia_pdpa_dpia_other_high_risk_factors:
+          type: ["string", "null"]
+        malaysia_pdpa_dpia_recommendation:
+          $ref: "#/components/schemas/MalaysiaPDPADPIARecommendation"
+        malaysia_pdpa_dpia_reasons:
+          type: array
+          items:
+            type: string
+        malaysia_pdpa_dpia_assessed_by_profile_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+        malaysia_pdpa_dpia_assessed_at:
+          type: ["string", "null"]
+          format: date-time
+        malaysia_pdpa_dpia_rule_version:
+          type: ["string", "null"]
+        malaysia_pdpa_dpia_rule_source:
+          type: ["string", "null"]
         created_at:
           type: string
           format: date-time
@@ -4611,6 +4705,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GID"
+        malaysia_pdpa_dpia_screening:
+          $ref: "#/components/schemas/MalaysiaPDPADPIAScreeningInput"
 
     UpdateProcessingActivityOutput:
       type: object
@@ -4827,6 +4923,63 @@ components:
         - CREATED_AT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderField
 
+    MalaysiaPDPATransferBasis:
+      type: string
+      enum:
+        - SUBSTANTIALLY_SIMILAR_LAW
+        - ADEQUATE_EQUIVALENT_PROTECTION
+        - DATA_SUBJECT_CONSENT
+        - DATA_SUBJECT_CONTRACT
+        - THIRD_PARTY_CONTRACT
+        - LEGAL_PROCEEDINGS
+        - ADVERSE_ACTION
+        - REASONABLE_PRECAUTIONS
+        - VITAL_INTERESTS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasis
+
+    MalaysiaPDPATransferApprovalStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferApprovalStatus
+
+    MalaysiaPDPATransferInput:
+      type: object
+      required:
+        - basis
+        - destination_country
+        - recipient_third_party_id
+        - receiver_contact
+        - transfer_purpose
+        - personal_data_categories
+        - safeguards
+        - approval_status
+      properties:
+        basis:
+          $ref: "#/components/schemas/MalaysiaPDPATransferBasis"
+        destination_country:
+          $ref: "#/components/schemas/CountryCode"
+        recipient_third_party_id:
+          $ref: "#/components/schemas/GID"
+        receiver_registration_number:
+          type: string
+        receiver_contact:
+          type: string
+        transfer_purpose:
+          type: string
+        personal_data_categories:
+          type: string
+        safeguards:
+          type: string
+        approval_status:
+          $ref: "#/components/schemas/MalaysiaPDPATransferApprovalStatus"
+        approval_notes:
+          type: string
+        review_evidence:
+          type: string
+
     TransferImpactAssessmentOrderBy:
       type: object
       required:
@@ -4873,6 +5026,50 @@ components:
           type:
             - string
             - "null"
+        malaysia_transfer_basis:
+          anyOf:
+            - $ref: "#/components/schemas/MalaysiaPDPATransferBasis"
+            - type: "null"
+        malaysia_destination_country:
+          anyOf:
+            - $ref: "#/components/schemas/CountryCode"
+            - type: "null"
+        malaysia_recipient_third_party_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+        malaysia_receiver_registration_number:
+          type: ["string", "null"]
+        malaysia_receiver_contact:
+          type: ["string", "null"]
+        malaysia_transfer_purpose:
+          type: ["string", "null"]
+        malaysia_personal_data_categories:
+          type: ["string", "null"]
+        malaysia_safeguards:
+          type: ["string", "null"]
+        malaysia_approval_status:
+          anyOf:
+            - $ref: "#/components/schemas/MalaysiaPDPATransferApprovalStatus"
+            - type: "null"
+        malaysia_approved_by_profile_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+        malaysia_approval_notes:
+          type: ["string", "null"]
+        malaysia_reviewed_at:
+          type: ["string", "null"]
+          format: date-time
+        malaysia_next_review_at:
+          type: ["string", "null"]
+          format: date-time
+        malaysia_review_evidence:
+          type: ["string", "null"]
+        malaysia_rule_version:
+          type: ["string", "null"]
+        malaysia_rule_source:
+          type: ["string", "null"]
         created_at:
           type: string
           format: date-time
@@ -4939,6 +5136,8 @@ components:
           type: string
         supplementary_measures:
           type: string
+        malaysia_pdpa:
+          $ref: "#/components/schemas/MalaysiaPDPATransferInput"
 
     AddTransferImpactAssessmentOutput:
       type: object
@@ -4970,6 +5169,8 @@ components:
         supplementary_measures:
           type: ["string", "null"]
           go.probo.inc/mcpgen/omittable: true
+        malaysia_pdpa:
+          $ref: "#/components/schemas/MalaysiaPDPATransferInput"
 
     UpdateTransferImpactAssessmentOutput:
       type: object

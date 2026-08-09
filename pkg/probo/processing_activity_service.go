@@ -28,6 +28,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/malaysiapdpa"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -37,6 +38,20 @@ type ProcessingActivityService struct {
 }
 
 type (
+	MalaysiaPDPADPIAScreeningRequest struct {
+		TotalDataSubjects                int64
+		SensitiveDataSubjects            int64
+		LegalOrSignificantEffects        bool
+		SystematicMonitoring             bool
+		InnovativeTechnology             bool
+		DenialOrRestrictionOfRights      bool
+		LocationOrBehaviourTracking      bool
+		ChildrenOrVulnerableDataSubjects bool
+		HighRiskAutomatedDecisionMaking  bool
+		OtherHighRiskFactors             *string
+		AssessedByProfileID              gid.GID
+	}
+
 	CreateProcessingActivityRequest struct {
 		OrganizationID                       gid.GID
 		Name                                 string
@@ -83,6 +98,7 @@ type (
 		Role                                 *coredata.ProcessingActivityRole
 		DataProtectionOfficerID              **gid.GID
 		ThirdPartyIDs                        *[]gid.GID
+		MalaysiaPDPADPIAScreening            *MalaysiaPDPADPIAScreeningRequest
 	}
 )
 
@@ -138,6 +154,19 @@ func (upar *UpdateProcessingActivityRequest) Validate() error {
 		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.GID(coredata.ThirdPartyEntityType))
 	})
 
+	if screening := upar.MalaysiaPDPADPIAScreening; screening != nil {
+		v.Check(screening.TotalDataSubjects, "malaysia_pdpa_dpia_screening.total_data_subjects", validator.Min(0))
+		v.Check(screening.SensitiveDataSubjects, "malaysia_pdpa_dpia_screening.sensitive_data_subjects", validator.Min(0))
+		v.Check(screening.OtherHighRiskFactors, "malaysia_pdpa_dpia_screening.other_high_risk_factors", validator.SafeText(ContentMaxLength))
+		v.Check(screening.AssessedByProfileID, "malaysia_pdpa_dpia_screening.assessed_by_profile_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
+
+		if screening.SensitiveDataSubjects > screening.TotalDataSubjects {
+			v.Check(screening.SensitiveDataSubjects, "malaysia_pdpa_dpia_screening.sensitive_data_subjects", func(any) *validator.ValidationError {
+				return &validator.ValidationError{Code: validator.ErrorCodeCustom, Message: "must not exceed total_data_subjects"}
+			})
+		}
+	}
+
 	return v.Error()
 }
 
@@ -189,6 +218,8 @@ func (s *ProcessingActivityService) Create(
 		NextReviewDate:                       req.NextReviewDate,
 		Role:                                 req.Role,
 		DataProtectionOfficerID:              req.DataProtectionOfficerID,
+		MalaysiaDPIARecommendation:           coredata.MalaysiaPDPADPIARecommendationNotIndicated,
+		MalaysiaDPIAReasons:                  []string{},
 		CreatedAt:                            now,
 		UpdatedAt:                            now,
 	}
@@ -237,6 +268,10 @@ func (s *ProcessingActivityService) Update(
 	ctx context.Context, scope coredata.Scoper,
 	req *UpdateProcessingActivityRequest,
 ) (*coredata.ProcessingActivity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	processingActivity := &coredata.ProcessingActivity{}
 	processingActivityThirdParties := &coredata.ProcessingActivityThirdParties{}
 
@@ -328,6 +363,51 @@ func (s *ProcessingActivityService) Update(
 				}
 
 				processingActivity.DataProtectionOfficerID = *req.DataProtectionOfficerID
+			}
+
+			if screening := req.MalaysiaPDPADPIAScreening; screening != nil {
+				if err := validateProfileOrganization(ctx, conn, scope, screening.AssessedByProfileID, processingActivity.OrganizationID, "DPIA assessor"); err != nil {
+					return err
+				}
+
+				assessment, err := malaysiapdpa.AssessDPIAScreening(malaysiapdpa.DPIAScreeningInput{
+					TotalDataSubjects:                screening.TotalDataSubjects,
+					SensitiveDataSubjects:            screening.SensitiveDataSubjects,
+					LegalOrSignificantEffects:        screening.LegalOrSignificantEffects,
+					SystematicMonitoring:             screening.SystematicMonitoring,
+					InnovativeTechnology:             screening.InnovativeTechnology,
+					DenialOrRestrictionOfRights:      screening.DenialOrRestrictionOfRights,
+					LocationOrBehaviourTracking:      screening.LocationOrBehaviourTracking,
+					ChildrenOrVulnerableDataSubjects: screening.ChildrenOrVulnerableDataSubjects,
+					HighRiskAutomatedDecisionMaking:  screening.HighRiskAutomatedDecisionMaking,
+					OtherHighRiskFactors:             screening.OtherHighRiskFactors,
+				})
+				if err != nil {
+					return fmt.Errorf("cannot assess Malaysia PDPA DPIA screening: %w", err)
+				}
+
+				assessedAt := time.Now()
+				ruleVersion := malaysiapdpa.DPIAScreeningRuleVersion
+				ruleSource := malaysiapdpa.DPIAScreeningRuleSource
+				processingActivity.MalaysiaDPIATotalDataSubjects = screening.TotalDataSubjects
+				processingActivity.MalaysiaDPIASensitiveDataSubjects = screening.SensitiveDataSubjects
+				processingActivity.MalaysiaDPIALegalOrSignificantEffects = screening.LegalOrSignificantEffects
+				processingActivity.MalaysiaDPIASystematicMonitoring = screening.SystematicMonitoring
+				processingActivity.MalaysiaDPIAInnovativeTechnology = screening.InnovativeTechnology
+				processingActivity.MalaysiaDPIADenialOrRestrictionOfRights = screening.DenialOrRestrictionOfRights
+				processingActivity.MalaysiaDPIALocationOrBehaviourTracking = screening.LocationOrBehaviourTracking
+				processingActivity.MalaysiaDPIAChildrenOrVulnerableDataSubjects = screening.ChildrenOrVulnerableDataSubjects
+				processingActivity.MalaysiaDPIAHighRiskAutomatedDecisionMaking = screening.HighRiskAutomatedDecisionMaking
+				processingActivity.MalaysiaDPIAOtherHighRiskFactors = screening.OtherHighRiskFactors
+				processingActivity.MalaysiaDPIARecommendation = assessment.Recommendation
+				processingActivity.MalaysiaDPIAReasons = make([]string, len(assessment.Reasons))
+				for index, reason := range assessment.Reasons {
+					processingActivity.MalaysiaDPIAReasons[index] = string(reason)
+				}
+				processingActivity.MalaysiaDPIAAssessedByProfileID = &screening.AssessedByProfileID
+				processingActivity.MalaysiaDPIAAssessedAt = &assessedAt
+				processingActivity.MalaysiaDPIARuleVersion = &ruleVersion
+				processingActivity.MalaysiaDPIARuleSource = &ruleSource
 			}
 
 			processingActivity.UpdatedAt = time.Now()

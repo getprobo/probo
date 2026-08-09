@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { IDataObject, INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { getMalaysiaTransferInput, malaysiaTransferProperties } from './malaysia';
 
 export const description: INodeProperties[] = [
 	{
@@ -106,6 +107,7 @@ export const description: INodeProperties[] = [
 		description: 'The supplementary measures for the transfer',
 		required: true,
 	},
+	...malaysiaTransferProperties('create'),
 ];
 
 export async function execute(
@@ -122,8 +124,7 @@ export async function execute(
 	const query = `
 		mutation CreateTransferImpactAssessment($input: CreateTransferImpactAssessmentInput!) {
 			createTransferImpactAssessment(input: $input) {
-				transferImpactAssessmentEdge {
-					node {
+				transferImpactAssessment {
 						id
 						dataSubjects
 						legalMechanism
@@ -132,24 +133,29 @@ export async function execute(
 						supplementaryMeasures
 						createdAt
 						updatedAt
-					}
+						malaysiaTransferBasis
+						malaysiaDestinationCountry
+						malaysiaApprovalStatus
+						malaysiaReviewedAt
+						malaysiaNextReviewAt
+						malaysiaRuleSource
 				}
 			}
 		}
 	`;
 
-	const variables = {
-		input: {
+	const input: IDataObject = {
 			processingActivityId,
 			dataSubjects,
 			legalMechanism,
 			transfer,
 			localLawRisk,
 			supplementaryMeasures,
-		},
 	};
+	const malaysiaPDPA = getMalaysiaTransferInput(this, itemIndex);
+	if (malaysiaPDPA) input.malaysiaPDPA = malaysiaPDPA;
 
-	const responseData = await proboApiRequest.call(this, query, variables);
+	const responseData = await proboApiRequest.call(this, query, { input });
 
 	return {
 		json: responseData,

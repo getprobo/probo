@@ -36,6 +36,26 @@ enum TransferImpactAssessmentOrderField
         )
 }
 
+enum MalaysiaPDPATransferBasis
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasis") {
+    SUBSTANTIALLY_SIMILAR_LAW @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisSubstantiallySimilarLaw")
+    ADEQUATE_EQUIVALENT_PROTECTION @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisAdequateEquivalentProtection")
+    DATA_SUBJECT_CONSENT @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisDataSubjectConsent")
+    DATA_SUBJECT_CONTRACT @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisDataSubjectContract")
+    THIRD_PARTY_CONTRACT @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisThirdPartyContract")
+    LEGAL_PROCEEDINGS @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisLegalProceedings")
+    ADVERSE_ACTION @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisAdverseAction")
+    REASONABLE_PRECAUTIONS @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisReasonablePrecautions")
+    VITAL_INTERESTS @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferBasisVitalInterests")
+}
+
+enum MalaysiaPDPATransferApprovalStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferApprovalStatus") {
+    PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferApprovalStatusPending")
+    APPROVED @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferApprovalStatusApproved")
+    REJECTED @goEnum(value: "go.probo.inc/probo/pkg/coredata.MalaysiaPDPATransferApprovalStatusRejected")
+}
+
 input DataProtectionImpactAssessmentOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DataProtectionImpactAssessmentOrderBy"
@@ -76,6 +96,22 @@ type TransferImpactAssessment implements Node {
     transfer: String
     localLawRisk: String
     supplementaryMeasures: String
+    malaysiaTransferBasis: MalaysiaPDPATransferBasis
+    malaysiaDestinationCountry: CountryCode
+    malaysiaRecipientThirdPartyId: ID
+    malaysiaReceiverRegistrationNumber: String
+    malaysiaReceiverContact: String
+    malaysiaTransferPurpose: String
+    malaysiaPersonalDataCategories: String
+    malaysiaSafeguards: String
+    malaysiaApprovalStatus: MalaysiaPDPATransferApprovalStatus
+    malaysiaApprovedByProfileId: ID
+    malaysiaApprovalNotes: String
+    malaysiaReviewedAt: Datetime
+    malaysiaNextReviewAt: Datetime
+    malaysiaReviewEvidence: String
+    malaysiaRuleVersion: String
+    malaysiaRuleSource: String
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -166,6 +202,7 @@ input CreateTransferImpactAssessmentInput {
     transfer: String
     localLawRisk: String
     supplementaryMeasures: String
+    malaysiaPDPA: MalaysiaPDPATransferInput
 }
 
 input UpdateTransferImpactAssessmentInput {
@@ -175,6 +212,21 @@ input UpdateTransferImpactAssessmentInput {
     transfer: String @goField(omittable: true)
     localLawRisk: String @goField(omittable: true)
     supplementaryMeasures: String @goField(omittable: true)
+    malaysiaPDPA: MalaysiaPDPATransferInput
+}
+
+input MalaysiaPDPATransferInput {
+    basis: MalaysiaPDPATransferBasis!
+    destinationCountry: CountryCode!
+    recipientThirdPartyId: ID!
+    receiverRegistrationNumber: String
+    receiverContact: String!
+    transferPurpose: String!
+    personalDataCategories: String!
+    safeguards: String!
+    approvalStatus: MalaysiaPDPATransferApprovalStatus!
+    approvalNotes: String
+    reviewEvidence: String
 }
 
 input DeleteTransferImpactAssessmentInput {

@@ -1164,6 +1164,34 @@ func (r *Resolver) UpdateProcessingActivityTool(ctx context.Context, req *mcp.Ca
 		thirdPartyIDs = &input.ThirdPartyIds
 	}
 
+	var malaysiaPDPAScreening *probo.MalaysiaPDPADPIAScreeningRequest
+	if screening := input.MalaysiaPdpaDpiaScreening; screening != nil {
+		activity, err := svc.ProcessingActivities.Get(ctx, scope, input.ID)
+		if err != nil {
+			return nil, types.UpdateProcessingActivityOutput{}, fmt.Errorf("failed to load processing activity for Malaysia PDPA DPIA screening: %w", err)
+		}
+
+		identity := authn.IdentityFromContext(ctx)
+		assessor, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, activity.OrganizationID)
+		if err != nil {
+			return nil, types.UpdateProcessingActivityOutput{}, fmt.Errorf("failed to get Malaysia PDPA DPIA assessor profile: %w", err)
+		}
+
+		malaysiaPDPAScreening = &probo.MalaysiaPDPADPIAScreeningRequest{
+			TotalDataSubjects:                int64(screening.TotalDataSubjects),
+			SensitiveDataSubjects:            int64(screening.SensitiveDataSubjects),
+			LegalOrSignificantEffects:        screening.LegalOrSignificantEffects,
+			SystematicMonitoring:             screening.SystematicMonitoring,
+			InnovativeTechnology:             screening.InnovativeTechnology,
+			DenialOrRestrictionOfRights:      screening.DenialOrRestrictionOfRights,
+			LocationOrBehaviourTracking:      screening.LocationOrBehaviourTracking,
+			ChildrenOrVulnerableDataSubjects: screening.ChildrenOrVulnerableDataSubjects,
+			HighRiskAutomatedDecisionMaking:  screening.HighRiskAutomatedDecisionMaking,
+			OtherHighRiskFactors:             screening.OtherHighRiskFactors,
+			AssessedByProfileID:              assessor.ID,
+		}
+	}
+
 	processingActivity, err := svc.ProcessingActivities.Update(
 		ctx, scope,
 		&probo.UpdateProcessingActivityRequest{
@@ -1188,6 +1216,7 @@ func (r *Resolver) UpdateProcessingActivityTool(ctx context.Context, req *mcp.Ca
 			Role:                                 input.Role,
 			DataProtectionOfficerID:              UnwrapOmittable(input.DataProtectionOfficerID),
 			ThirdPartyIDs:                        thirdPartyIDs,
+			MalaysiaPDPADPIAScreening:            malaysiaPDPAScreening,
 		},
 	)
 	if err != nil {
@@ -1376,6 +1405,15 @@ func (r *Resolver) AddTransferImpactAssessmentTool(ctx context.Context, req *mcp
 	}
 
 	svc := r.proboSvc
+	activity, err := svc.ProcessingActivities.Get(ctx, scope, input.ProcessingActivityID)
+	if err != nil {
+		return nil, types.AddTransferImpactAssessmentOutput{}, fmt.Errorf("failed to load processing activity for Malaysia PDPA transfer: %w", err)
+	}
+
+	malaysiaPDPA, err := r.newMalaysiaPDPATransferRequest(ctx, activity.OrganizationID, input.MalaysiaPdpa)
+	if err != nil {
+		return nil, types.AddTransferImpactAssessmentOutput{}, err
+	}
 
 	tia, err := svc.TransferImpactAssessments.Create(
 		ctx, scope,
@@ -1386,6 +1424,7 @@ func (r *Resolver) AddTransferImpactAssessmentTool(ctx context.Context, req *mcp
 			Transfer:              input.Transfer,
 			LocalLawRisk:          input.LocalLawRisk,
 			SupplementaryMeasures: input.SupplementaryMeasures,
+			MalaysiaPDPA:          malaysiaPDPA,
 		},
 	)
 	if err != nil {
@@ -1404,6 +1443,15 @@ func (r *Resolver) UpdateTransferImpactAssessmentTool(ctx context.Context, req *
 	}
 
 	svc := r.proboSvc
+	currentTIA, err := svc.TransferImpactAssessments.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.UpdateTransferImpactAssessmentOutput{}, fmt.Errorf("failed to load transfer impact assessment for Malaysia PDPA transfer: %w", err)
+	}
+
+	malaysiaPDPA, err := r.newMalaysiaPDPATransferRequest(ctx, currentTIA.OrganizationID, input.MalaysiaPdpa)
+	if err != nil {
+		return nil, types.UpdateTransferImpactAssessmentOutput{}, err
+	}
 
 	tia, err := svc.TransferImpactAssessments.Update(
 		ctx, scope,
@@ -1414,6 +1462,7 @@ func (r *Resolver) UpdateTransferImpactAssessmentTool(ctx context.Context, req *
 			Transfer:              UnwrapOmittable(input.Transfer),
 			LocalLawRisk:          UnwrapOmittable(input.LocalLawRisk),
 			SupplementaryMeasures: UnwrapOmittable(input.SupplementaryMeasures),
+			MalaysiaPDPA:          malaysiaPDPA,
 		},
 	)
 	if err != nil {
@@ -1422,6 +1471,41 @@ func (r *Resolver) UpdateTransferImpactAssessmentTool(ctx context.Context, req *
 
 	return nil, types.UpdateTransferImpactAssessmentOutput{
 		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
+	}, nil
+}
+
+func (r *Resolver) newMalaysiaPDPATransferRequest(
+	ctx context.Context,
+	organizationID gid.GID,
+	input *types.MalaysiaPDPATransferInput,
+) (*probo.MalaysiaPDPATransferRequest, error) {
+	if input == nil {
+		return nil, nil
+	}
+
+	var approverProfileID gid.GID
+	if input.ApprovalStatus != coredata.MalaysiaPDPATransferApprovalStatusPending {
+		identity := authn.IdentityFromContext(ctx)
+		approver, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Malaysia PDPA transfer approver profile: %w", err)
+		}
+		approverProfileID = approver.ID
+	}
+
+	return &probo.MalaysiaPDPATransferRequest{
+		Basis:                      input.Basis,
+		DestinationCountry:         input.DestinationCountry,
+		RecipientThirdPartyID:      input.RecipientThirdPartyID,
+		ReceiverRegistrationNumber: input.ReceiverRegistrationNumber,
+		ReceiverContact:            input.ReceiverContact,
+		TransferPurpose:            input.TransferPurpose,
+		PersonalDataCategories:     input.PersonalDataCategories,
+		Safeguards:                 input.Safeguards,
+		ApprovalStatus:             input.ApprovalStatus,
+		ApprovalNotes:              input.ApprovalNotes,
+		ReviewEvidence:             input.ReviewEvidence,
+		ApprovedByProfileID:        approverProfileID,
 	}, nil
 }
 
@@ -8420,3 +8504,48 @@ func (r *Resolver) ListMalaysiaPDPABreachStatusHistoryTool(ctx context.Context, 
 
 	return nil, types.NewListMalaysiaPDPABreachStatusHistoryOutput(historyPage), nil
 }
+
+// ==============================================================================
+// Orphaned Handlers
+// ==============================================================================
+// The following handlers were found in the resolver file but are no longer
+// defined in the MCP specification. They have been preserved here as comments
+// in case you need to reference or restore them.
+// ==============================================================================
+
+// Orphaned: newMalaysiaPDPATransferRequest
+// Uncomment and update signature if you want to restore this handler.
+// func (r *Resolver) newMalaysiaPDPATransferRequest(
+// 	ctx context.Context,
+// 	organizationID gid.GID,
+// 	input *types.MalaysiaPDPATransferInput,
+// ) (*probo.MalaysiaPDPATransferRequest, error) {
+// 	if input == nil {
+// 		return nil, nil
+// 	}
+
+// 	var approverProfileID gid.GID
+// 	if input.ApprovalStatus != coredata.MalaysiaPDPATransferApprovalStatusPending {
+// 		identity := authn.IdentityFromContext(ctx)
+// 		approver, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
+// 		if err != nil {
+// 			return nil, fmt.Errorf("failed to get Malaysia PDPA transfer approver profile: %w", err)
+// 		}
+// 		approverProfileID = approver.ID
+// 	}
+
+// 	return &probo.MalaysiaPDPATransferRequest{
+// 		Basis:                      input.Basis,
+// 		DestinationCountry:         input.DestinationCountry,
+// 		RecipientThirdPartyID:      input.RecipientThirdPartyID,
+// 		ReceiverRegistrationNumber: input.ReceiverRegistrationNumber,
+// 		ReceiverContact:            input.ReceiverContact,
+// 		TransferPurpose:            input.TransferPurpose,
+// 		PersonalDataCategories:     input.PersonalDataCategories,
+// 		Safeguards:                 input.Safeguards,
+// 		ApprovalStatus:             input.ApprovalStatus,
+// 		ApprovalNotes:              input.ApprovalNotes,
+// 		ReviewEvidence:             input.ReviewEvidence,
+// 		ApprovedByProfileID:        approverProfileID,
+// 	}, nil
+// }

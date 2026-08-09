@@ -55,10 +55,20 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName        string
-		flagPurpose     string
-		flagRole        string
-		flagLawfulBasis string
+		flagName                                     string
+		flagPurpose                                  string
+		flagRole                                     string
+		flagLawfulBasis                              string
+		flagMalaysiaTotalDataSubjects                int64
+		flagMalaysiaSensitiveDataSubjects            int64
+		flagMalaysiaLegalOrSignificantEffects        bool
+		flagMalaysiaSystematicMonitoring             bool
+		flagMalaysiaInnovativeTechnology             bool
+		flagMalaysiaDenialOrRestrictionOfRights      bool
+		flagMalaysiaLocationOrBehaviourTracking      bool
+		flagMalaysiaChildrenOrVulnerableDataSubjects bool
+		flagMalaysiaHighRiskAutomatedDecisionMaking  bool
+		flagMalaysiaOtherHighRiskFactors             string
 	)
 
 	cmd := &cobra.Command{
@@ -104,6 +114,41 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["lawfulBasis"] = flagLawfulBasis
 			}
 
+			malaysiaFlags := []string{
+				"malaysia-total-data-subjects",
+				"malaysia-sensitive-data-subjects",
+				"malaysia-legal-or-significant-effects",
+				"malaysia-systematic-monitoring",
+				"malaysia-innovative-technology",
+				"malaysia-denial-or-restriction-of-rights",
+				"malaysia-location-or-behaviour-tracking",
+				"malaysia-children-or-vulnerable-data-subjects",
+				"malaysia-high-risk-automated-decision-making",
+				"malaysia-other-high-risk-factors",
+			}
+			malaysiaChanged := false
+			for _, name := range malaysiaFlags {
+				malaysiaChanged = malaysiaChanged || cmd.Flags().Changed(name)
+			}
+			if malaysiaChanged {
+				if !cmd.Flags().Changed("malaysia-total-data-subjects") || !cmd.Flags().Changed("malaysia-sensitive-data-subjects") {
+					return fmt.Errorf("--malaysia-total-data-subjects and --malaysia-sensitive-data-subjects are required for a Malaysia DPIA screening")
+				}
+
+				input["malaysiaPDPADPIAScreening"] = map[string]any{
+					"totalDataSubjects":                flagMalaysiaTotalDataSubjects,
+					"sensitiveDataSubjects":            flagMalaysiaSensitiveDataSubjects,
+					"legalOrSignificantEffects":        flagMalaysiaLegalOrSignificantEffects,
+					"systematicMonitoring":             flagMalaysiaSystematicMonitoring,
+					"innovativeTechnology":             flagMalaysiaInnovativeTechnology,
+					"denialOrRestrictionOfRights":      flagMalaysiaDenialOrRestrictionOfRights,
+					"locationOrBehaviourTracking":      flagMalaysiaLocationOrBehaviourTracking,
+					"childrenOrVulnerableDataSubjects": flagMalaysiaChildrenOrVulnerableDataSubjects,
+					"highRiskAutomatedDecisionMaking":  flagMalaysiaHighRiskAutomatedDecisionMaking,
+					"otherHighRiskFactors":             flagMalaysiaOtherHighRiskFactors,
+				}
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -137,6 +182,16 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagPurpose, "purpose", "", "Purpose of processing")
 	cmd.Flags().StringVar(&flagRole, "role", "", "Role: CONTROLLER, PROCESSOR")
 	cmd.Flags().StringVar(&flagLawfulBasis, "lawful-basis", "", "Lawful basis: LEGITIMATE_INTEREST, CONSENT, CONTRACTUAL_NECESSITY, LEGAL_OBLIGATION, VITAL_INTERESTS, PUBLIC_TASK")
+	cmd.Flags().Int64Var(&flagMalaysiaTotalDataSubjects, "malaysia-total-data-subjects", 0, "Estimated total data subjects for Malaysia DPIA screening")
+	cmd.Flags().Int64Var(&flagMalaysiaSensitiveDataSubjects, "malaysia-sensitive-data-subjects", 0, "Estimated sensitive or financial data subjects")
+	cmd.Flags().BoolVar(&flagMalaysiaLegalOrSignificantEffects, "malaysia-legal-or-significant-effects", false, "Processing may produce legal or similarly significant effects")
+	cmd.Flags().BoolVar(&flagMalaysiaSystematicMonitoring, "malaysia-systematic-monitoring", false, "Processing involves systematic monitoring")
+	cmd.Flags().BoolVar(&flagMalaysiaInnovativeTechnology, "malaysia-innovative-technology", false, "Processing uses innovative technology")
+	cmd.Flags().BoolVar(&flagMalaysiaDenialOrRestrictionOfRights, "malaysia-denial-or-restriction-of-rights", false, "Processing may deny or restrict rights or services")
+	cmd.Flags().BoolVar(&flagMalaysiaLocationOrBehaviourTracking, "malaysia-location-or-behaviour-tracking", false, "Processing tracks location or behaviour")
+	cmd.Flags().BoolVar(&flagMalaysiaChildrenOrVulnerableDataSubjects, "malaysia-children-or-vulnerable-data-subjects", false, "Processing concerns children or vulnerable individuals")
+	cmd.Flags().BoolVar(&flagMalaysiaHighRiskAutomatedDecisionMaking, "malaysia-high-risk-automated-decision-making", false, "Processing involves high-risk automated decisions or profiling")
+	cmd.Flags().StringVar(&flagMalaysiaOtherHighRiskFactors, "malaysia-other-high-risk-factors", "", "Other Malaysia DPIA high-risk factors")
 
 	return cmd
 }
