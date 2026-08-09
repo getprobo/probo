@@ -1852,5 +1852,85 @@
       "TestRustSync_ReadOnlyPeerConcurrentChanges"
     ],
     "rationale": "A read-only peer that commits a change mid-flight still publishes it to the read-write peer, which the read-only peer never consumes in return."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "marks_in_spans_cross_block_markers",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_MarksInSpansCrossBlockMarkers"
+    ],
+    "rationale": "A mark spanning text split by a block marker is reported as two marked text spans around the block, identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "test_mark_behavior_on_delete_insert",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_MarkBehaviorOnDeleteInsert"
+    ],
+    "rationale": "Deleting all marked text and inserting new text leaves the new text unmarked on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "spans_consolidates_marks_which_are_empty_due_to_deleted_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidateEmptyDueToDeletedMarks"
+    ],
+    "rationale": "Overlapping bold/italic marks partially removed consolidate into the expected three spans on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "spans_consolidates_marks_with_deleted_marks_followed_by_empty_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidateDeletedThenEmptyMarks"
+    ],
+    "rationale": "Marking then unmarking a leading range consolidates back to a single unmarked span on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "spans_consolidates_marks_with_empty_marks_followed_by_deleted_marks",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidateEmptyThenDeletedMarks"
+    ],
+    "rationale": "Marking then unmarking a trailing range consolidates back to a single span on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/block_tests.rs",
+    "name": "text_complex_block_properties",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_ComplexBlockProperties"
+    ],
+    "rationale": "A block populated with nested text and list properties materializes identical span block values on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "mark_created_after_insertion",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_MarkCreatedAfterInsertion"
+    ],
+    "rationale": "Two disjoint strong marks created after insertion produce identical spans on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "spans_are_consolidated_in_the_presence_of_zero_length_spans",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Zero-length marks do not fragment the span stream; both engines report a single consolidated text span."
   }
 ]

@@ -5992,10 +5992,12 @@
       "file": "tests/text.rs",
       "line": 144,
       "name": "mark_created_after_insertion",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_MarkCreatedAfterInsertion"
+      ],
+      "rationale": "Two disjoint strong marks created after insertion produce identical spans on both engines.",
       "runtimeName": "mark_created_after_insertion"
     },
     {
@@ -6162,10 +6164,12 @@
       "file": "tests/block_tests.rs",
       "line": 433,
       "name": "marks_in_spans_cross_block_markers",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_MarksInSpansCrossBlockMarkers"
+      ],
+      "rationale": "A mark spanning text split by a block marker is reported as two marked text spans around the block, identically on both engines.",
       "runtimeName": "marks_in_spans_cross_block_markers"
     },
     {
@@ -7263,10 +7267,12 @@
       "file": "tests/text.rs",
       "line": 298,
       "name": "spans_are_consolidated_in_the_presence_of_zero_length_spans",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+      ],
+      "rationale": "Zero-length marks do not fragment the span stream; both engines report a single consolidated text span.",
       "runtimeName": "spans_are_consolidated_in_the_presence_of_zero_length_spans"
     },
     {
@@ -7275,10 +7281,12 @@
       "file": "tests/block_tests.rs",
       "line": 496,
       "name": "spans_consolidates_marks_which_are_empty_due_to_deleted_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_SpansConsolidateEmptyDueToDeletedMarks"
+      ],
+      "rationale": "Overlapping bold/italic marks partially removed consolidate into the expected three spans on both engines.",
       "runtimeName": "spans_consolidates_marks_which_are_empty_due_to_deleted_marks"
     },
     {
@@ -7287,10 +7295,12 @@
       "file": "tests/block_tests.rs",
       "line": 555,
       "name": "spans_consolidates_marks_with_deleted_marks_followed_by_empty_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_SpansConsolidateDeletedThenEmptyMarks"
+      ],
+      "rationale": "Marking then unmarking a leading range consolidates back to a single unmarked span on both engines.",
       "runtimeName": "spans_consolidates_marks_with_deleted_marks_followed_by_empty_marks"
     },
     {
@@ -7299,10 +7309,12 @@
       "file": "tests/block_tests.rs",
       "line": 588,
       "name": "spans_consolidates_marks_with_empty_marks_followed_by_deleted_marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_SpansConsolidateEmptyThenDeletedMarks"
+      ],
+      "rationale": "Marking then unmarking a trailing range consolidates back to a single span on both engines.",
       "runtimeName": "spans_consolidates_marks_with_empty_marks_followed_by_deleted_marks"
     },
     {
@@ -8198,10 +8210,12 @@
       "file": "tests/block_tests.rs",
       "line": 464,
       "name": "test_mark_behavior_on_delete_insert",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_MarkBehaviorOnDeleteInsert"
+      ],
+      "rationale": "Deleting all marked text and inserting new text leaves the new text unmarked on both engines.",
       "runtimeName": "test_mark_behavior_on_delete_insert"
     },
     {
@@ -8286,10 +8300,12 @@
       "file": "tests/block_tests.rs",
       "line": 326,
       "name": "text_complex_block_properties",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_ComplexBlockProperties"
+      ],
+      "rationale": "A block populated with nested text and list properties materializes identical span block values on both engines.",
       "runtimeName": "text_complex_block_properties"
     },
     {
