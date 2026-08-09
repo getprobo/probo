@@ -77,9 +77,6 @@ and left pending until the native engine is fixed:
 
 - Replacing marked text at a mark boundary drops an expanding mark and merges
   spans (`test_splice_with_mark`, upstream issue #935).
-- A splice index that falls in the middle of a UTF-16 surrogate pair is
-  rejected instead of advancing to the following character
-  (`deleting_in_middle_of_multibyte_char_moves_the_cursor_to_after_the_character`).
 
 ## Optional JavaScript convenience backlog
 

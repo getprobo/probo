@@ -5327,9 +5327,9 @@
       "classification": "covered",
       "requirement": "interop-required",
       "localTests": [
-        "TestPureGoDocument_UTF16CursorBoundariesMatchReference"
+        "TestRustRichText_DeletingInMiddleOfMultibyteChar"
       ],
-      "rationale": "Interior UTF-16 cursors and their resolved positions are compared directly with Rust.",
+      "rationale": "Splice starts and deletion ends inside UTF-16 surrogate pairs are advanced to the following character boundary, with every intermediate text value compared directly against Rust.",
       "runtimeName": "deleting_in_middle_of_multibyte_char_moves_the_cursor_to_after_the_character"
     },
     {

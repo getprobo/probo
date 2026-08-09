@@ -226,3 +226,60 @@ func TestRustRichText_SpansConsolidatedWithZeroLengthSpans(t *testing.T) {
 	require.Len(t, spans["native"], 1)
 	assert.Equal(t, "1234", spans["native"][0].Text)
 }
+
+// TestRustRichText_DeletingInMiddleOfMultibyteChar reproduces
+// deleting_in_middle_of_multibyte_char_moves_the_cursor_to_after_the_character.
+func TestRustRichText_DeletingInMiddleOfMultibyteChar(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	results := make(map[string][]string)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+
+		var observed []string
+
+		require.NoError(t, text.Splice(ctx, 0, 0, "🐻🐻🐻🐻🐻🐻"))
+		value, err := text.String(ctx)
+		require.NoError(t, err)
+
+		observed = append(observed, value)
+
+		require.NoError(t, text.Splice(ctx, 2, 2, "A🐻A"))
+		value, err = text.String(ctx)
+		require.NoError(t, err)
+
+		observed = append(observed, value)
+
+		require.NoError(t, text.Splice(ctx, 4, 1, "X"))
+		value, err = text.String(ctx)
+		require.NoError(t, err)
+
+		observed = append(observed, value)
+
+		require.NoError(t, text.Splice(ctx, 4, 2, "Y"))
+		value, err = text.String(ctx)
+		require.NoError(t, err)
+
+		observed = append(observed, value)
+
+		_, err = document.CommitNow(ctx, "multibyte")
+		require.NoError(t, err)
+
+		results[engine.name] = observed
+	}
+
+	assert.Equal(t, results["reference"], results["native"])
+	assert.Equal(t, []string{
+		"🐻🐻🐻🐻🐻🐻",
+		"🐻A🐻A🐻🐻🐻🐻",
+		"🐻A🐻X🐻🐻🐻🐻",
+		"🐻A🐻Y🐻🐻🐻",
+	}, results["native"])
+}
