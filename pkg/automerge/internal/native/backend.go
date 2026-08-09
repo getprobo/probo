@@ -1575,7 +1575,7 @@ func (c updateSpansConfigInput) expandFor(name string) string {
 		return c.DefaultExpand
 	}
 
-	return "both"
+	return "after"
 }
 
 func (b *Backend) MarkText(

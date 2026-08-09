@@ -782,10 +782,10 @@
       "file": "block_test.ts",
       "line": 135,
       "name": "emits insert patches with ImmutableString for attribute updatese",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript ImmutableString (RawString) patch value wrapper; a binding-specific scalar type."
     },
     {
       "id": "javascript:block_test.ts:179:should update marks",
@@ -793,10 +793,12 @@
       "file": "block_test.ts",
       "line": 179,
       "name": "should update marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_UpdateSpansScenarios/should_update_marks"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:block_test.ts:18:can split a block",
@@ -817,10 +819,12 @@
       "file": "block_test.ts",
       "line": 200,
       "name": "allows configuring the default expand value of created marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_UpdateSpansScenarios/configuring_default_expand"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:block_test.ts:225:should allow overriding the default expand on a per mark basis",
@@ -828,10 +832,12 @@
       "file": "block_test.ts",
       "line": 225,
       "name": "should allow overriding the default expand on a per mark basis",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_UpdateSpansScenarios/override_default_expand_per_mark"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:block_test.ts:250:should allow omitting any part of the update spans config",
@@ -839,10 +845,12 @@
       "file": "block_test.ts",
       "line": 250,
       "name": "should allow omitting any part of the update spans config",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_OmittingConfigParts"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:block_test.ts:291:when loading blocks",
@@ -850,10 +858,10 @@
       "file": "block_test.ts",
       "line": 291,
       "name": "when loading blocks",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript ImmutableString (RawString) block attribute wrapper round-trip; a binding-specific scalar type."
     },
     {
       "id": "javascript:block_test.ts:308:when loading spans",
@@ -861,10 +869,10 @@
       "file": "block_test.ts",
       "line": 308,
       "name": "when loading spans",
-      "classification": "pending",
-      "requirement": "interop-required",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
-      "rationale": ""
+      "rationale": "JavaScript ImmutableString (RawString) block attribute wrapper round-trip; a binding-specific scalar type."
     },
     {
       "id": "javascript:block_test.ts:331:updates the document even if the only change was to a block attribute",
@@ -872,10 +880,12 @@
       "file": "block_test.ts",
       "line": 331,
       "name": "updates the document even if the only change was to a block attribute",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_UpdateSpansScenarios/updates_document_on_block_attribute_change"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:block_test.ts:371:should show historical marks",
@@ -883,10 +893,12 @@
       "file": "block_test.ts",
       "line": 371,
       "name": "should show historical marks",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_ShowHistoricalMarks"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:block_test.ts:388:can allow small values in block attributes",
@@ -894,10 +906,12 @@
       "file": "block_test.ts",
       "line": 388,
       "name": "can allow small values in block attributes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_UpdateSpansScenarios/small_values_in_block_attributes"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:block_test.ts:61:can join a block",
@@ -918,10 +932,12 @@
       "file": "block_test.ts",
       "line": 81,
       "name": "allows updating all blocks at once",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestJSBlock_UpdateSpansScenarios/allows_updating_all_blocks_at_once"
+      ],
+      "rationale": "Cross-engine block behavior reproduced against the reference."
     },
     {
       "id": "javascript:bundle_test.ts:27:should allow getting the list of changes in a bundle",

@@ -163,13 +163,19 @@ func (t *Text) UpdateSpans(
 
 	perMark := make(map[string]string, len(config.PerMarkExpands))
 	for name, expand := range config.PerMarkExpands {
+		if expand == "" {
+			continue
+		}
+
 		perMark[name] = string(expand)
 	}
 
-	configPayload, err := json.Marshal(map[string]any{
-		"defaultExpand":  string(config.DefaultExpand),
-		"perMarkExpands": perMark,
-	})
+	configuration := map[string]any{"perMarkExpands": perMark}
+	if config.DefaultExpand != "" {
+		configuration["defaultExpand"] = string(config.DefaultExpand)
+	}
+
+	configPayload, err := json.Marshal(configuration)
 	if err != nil {
 		return fmt.Errorf("cannot encode Automerge spans config: %w", err)
 	}

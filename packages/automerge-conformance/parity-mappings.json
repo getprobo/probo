@@ -1,6 +1,110 @@
 [
   {
     "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should update marks",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/should_update_marks"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "allows configuring the default expand value of created marks",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/configuring_default_expand"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should allow overriding the default expand on a per mark basis",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/override_default_expand_per_mark"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should allow omitting any part of the update spans config",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_OmittingConfigParts"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "updates the document even if the only change was to a block attribute",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/updates_document_on_block_attribute_change"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "should show historical marks",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_ShowHistoricalMarks"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "can allow small values in block attributes",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/small_values_in_block_attributes"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "allows updating all blocks at once",
+    "classification": "covered",
+    "localTests": [
+      "TestJSBlock_UpdateSpansScenarios/allows_updating_all_blocks_at_once"
+    ],
+    "rationale": "Cross-engine block behavior reproduced against the reference."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "emits insert patches with ImmutableString for attribute updatese",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString (RawString) patch value wrapper; a binding-specific scalar type."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "when loading blocks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString (RawString) block attribute wrapper round-trip; a binding-specific scalar type."
+  },
+  {
+    "source": "javascript",
+    "file": "block_test.ts",
+    "name": "when loading spans",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString (RawString) block attribute wrapper round-trip; a binding-specific scalar type."
+  },
+  {
+    "source": "javascript",
     "file": "text_test.ts",
     "name": "should support implicit and explicit deletion",
     "classification": "covered",
