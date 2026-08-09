@@ -49,6 +49,21 @@ type Backend struct {
 	queuedChanges map[ChangeHash]*Change
 	queuedBytes   int
 	diffCursor    [][32]byte
+
+	// isolation pins reads and writes to a historical frontier. While active,
+	// state points at a view built from the isolation heads and fullState keeps
+	// the complete history; committed isolated changes are applied to both, while
+	// merged changes are applied only to fullState.
+	isolationActive bool
+	fullState       *State
+	baseActor       ActorID
+
+	// isolationDiffTargets records the frontiers isolated to since the diff
+	// cursor was last set. When present, an incremental diff replays the
+	// transition from the cursor down to each isolation frontier and back up to
+	// the current heads, matching the reference's patch-log output across
+	// isolate/integrate rather than a direct state comparison.
+	isolationDiffTargets [][][32]byte
 }
 
 type nativeSyncState struct {
@@ -129,6 +144,15 @@ func LoadBackend(ctx context.Context, data []byte) (*Backend, error) {
 
 	document, err := Decode(data)
 	if err != nil {
+		// A document may retain orphan changes (changes whose dependencies are
+		// not present) that were preserved across a save. Strict decoding
+		// rejects them, so fall back to a tolerant load that applies every
+		// change whose dependencies are satisfiable and queues the rest. A load
+		// that cannot apply a single change (a bare orphan) still fails.
+		if backend, ok, tolerantErr := loadBackendRetainingOrphans(data, err); ok {
+			return backend, tolerantErr
+		}
+
 		return nil, fmt.Errorf("cannot decode native document: %w", err)
 	}
 
@@ -155,11 +179,144 @@ func LoadBackend(ctx context.Context, data []byte) (*Backend, error) {
 	}, nil
 }
 
+// loadBackendRetainingOrphans attempts a tolerant load for documents that carry
+// orphan changes. It returns ok=false when the tolerant path does not apply (the
+// data is corrupt beyond missing dependencies, or nothing can be applied), so
+// the caller reports the original strict error. On success the applied history
+// forms the base and the orphan changes are queued for later resolution.
+func loadBackendRetainingOrphans(
+	data []byte,
+	strictErr error,
+) (*Backend, bool, error) {
+	if !strings.Contains(strictErr.Error(), "missing dependency") {
+		return nil, false, nil
+	}
+
+	document, err := DecodePartial(data)
+	if err != nil {
+		return nil, false, nil
+	}
+
+	state := NewState()
+	queued := make(map[ChangeHash]*Change, len(document.Changes))
+
+	for i := range document.Changes {
+		change := &document.Changes[i]
+		if change.Hash == nil || len(change.Raw) == 0 {
+			return nil, false, nil
+		}
+
+		queued[*change.Hash] = change
+	}
+
+	applied := make([]*Change, 0, len(document.Changes))
+
+	for {
+		progressed := false
+
+		for _, change := range orderedQueuedChanges(queued) {
+			if !state.hasDependencies(change) {
+				continue
+			}
+
+			if err := state.ApplyChange(change); err != nil {
+				return nil, false, nil
+			}
+
+			applied = append(applied, change)
+			delete(queued, *change.Hash)
+
+			progressed = true
+		}
+
+		if !progressed {
+			break
+		}
+	}
+
+	if len(applied) == 0 {
+		return nil, false, nil
+	}
+
+	actor, err := randomActorID()
+	if err != nil {
+		return nil, true, err
+	}
+
+	base := make([]byte, 0, len(data))
+	for _, change := range applied {
+		base = append(base, change.Raw...)
+	}
+
+	queuedClone := make(map[ChangeHash]*Change, len(queued))
+	queuedBytes := 0
+
+	for hash, change := range queued {
+		clone := *change
+		clone.Raw = append([]byte(nil), change.Raw...)
+		queuedClone[hash] = &clone
+		queuedBytes += len(clone.Raw)
+	}
+
+	return &Backend{
+		state:         state,
+		actor:         actor,
+		nextOp:        state.maxOpGlobal() + 1,
+		base:          base,
+		objects:       map[uint32]ObjectID{0: RootObject()},
+		nextHandle:    1,
+		syncStates:    make(map[uint32]*nativeSyncState),
+		nextSyncState: 1,
+		queuedChanges: queuedClone,
+		queuedBytes:   queuedBytes,
+	}, true, nil
+}
+
+// orderedQueuedChanges returns queued changes in a deterministic order (by hash)
+// so tolerant loading applies and re-serializes changes reproducibly.
+func orderedQueuedChanges(queued map[ChangeHash]*Change) []*Change {
+	changes := make([]*Change, 0, len(queued))
+	for _, change := range queued {
+		changes = append(changes, change)
+	}
+
+	sort.Slice(changes, func(i, j int) bool {
+		return bytes.Compare(changes[i].Hash[:], changes[j].Hash[:]) < 0
+	})
+
+	return changes
+}
+
 func (b *Backend) Close(context.Context) error {
 	return nil
 }
 
 func (b *Backend) Save(ctx context.Context) ([]byte, error) {
+	return b.save(ctx, true, true)
+}
+
+// SaveNoCompress serializes the document without DEFLATE-compressing any change
+// chunks, mirroring Rust's AutoCommit::save_nocompress.
+func (b *Backend) SaveNoCompress(ctx context.Context) ([]byte, error) {
+	return b.save(ctx, true, false)
+}
+
+// SaveWithOptions serializes the document, optionally appending retained orphan
+// changes (queued changes whose dependencies are still missing) so they survive
+// a save/load round trip. It mirrors the Rust SaveOptions.retain_orphans flag;
+// the reference retains orphans by default.
+func (b *Backend) SaveWithOptions(
+	ctx context.Context,
+	retainOrphans bool,
+) ([]byte, error) {
+	return b.save(ctx, retainOrphans, true)
+}
+
+func (b *Backend) save(
+	ctx context.Context,
+	retainOrphans bool,
+	deflate bool,
+) ([]byte, error) {
 	if len(b.pending) > 0 {
 		if _, err := b.Commit(ctx, "", time.Time{}); err != nil {
 			return nil, err
@@ -172,15 +329,63 @@ func (b *Backend) Save(ctx context.Context) ([]byte, error) {
 	}
 
 	data := make([]byte, 0, total)
-
 	data = append(data, b.base...)
+
 	for _, change := range b.appended {
-		data = append(data, change...)
+		data = append(data, maybeCompressChangeChunk(change, deflate)...)
 	}
 
 	b.saveCursor = len(b.appended)
 
+	if retainOrphans {
+		for _, change := range orderedQueuedChanges(b.queuedChanges) {
+			data = append(data, maybeCompressChangeChunk(change.Raw, deflate)...)
+		}
+	}
+
 	return data, nil
+}
+
+// deflateMinSize matches Rust's change::DEFLATE_MIN_SIZE: change chunks whose
+// body is at least this many bytes are worth compressing.
+const deflateMinSize = 250
+
+// maybeCompressChangeChunk reframes an uncompressed change chunk as a compressed
+// change chunk when compression is requested and the body is large enough to
+// benefit. The 4-byte checksum is preserved because the reference (and native
+// decoder) recompute the hash from the inflated body. Any other chunk kind, a
+// small body, or a non-shrinking result is returned unchanged.
+func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
+	const headerSize = 9 // 4 magic + 4 checksum + 1 type
+
+	if !deflateEnabled || len(raw) <= headerSize || ChunkType(raw[8]) != ChunkChange {
+		return raw
+	}
+
+	reader := &reader{data: raw, offset: headerSize}
+
+	bodyLength, err := reader.uleb()
+	if err != nil || reader.offset+int(bodyLength) > len(raw) {
+		return raw
+	}
+
+	body := raw[reader.offset : reader.offset+int(bodyLength)]
+	if len(body) < deflateMinSize {
+		return raw
+	}
+
+	compressed, err := deflate(body)
+	if err != nil || len(compressed) >= len(body) {
+		return raw
+	}
+
+	out := make([]byte, 0, headerSize+len(compressed)+8)
+	out = append(out, raw[:8]...)
+	out = append(out, byte(ChunkCompressedChange))
+	out = appendULEB(out, uint64(len(compressed)))
+	out = append(out, compressed...)
+
+	return out
 }
 
 func (b *Backend) SaveIncremental(ctx context.Context) ([]byte, error) {
@@ -2137,6 +2342,103 @@ func containsHash(hashes []ChangeHash, target ChangeHash) bool {
 	return false
 }
 
+// Isolate pins the document to the given heads: subsequent reads reflect that
+// frontier plus isolated writes, and new changes branch from it using a derived
+// isolation actor so they never collide with the base actor's later history. It
+// mirrors Rust's AutoCommit::isolate. Repeated calls re-pin to fresh heads.
+func (b *Backend) Isolate(ctx context.Context, heads [][32]byte) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if len(b.pending) > 0 {
+		if _, err := b.Commit(ctx, "", time.Time{}); err != nil {
+			return err
+		}
+	}
+
+	full := b.fullState
+	if !b.isolationActive {
+		full = b.state
+	}
+
+	nativeHeads := nativeHashes(heads)
+
+	pinned, ok := full.at(nativeHeads)
+	if !ok {
+		return fmt.Errorf("isolation heads are unknown")
+	}
+
+	baseActor := b.baseActor
+	if !b.isolationActive {
+		baseActor = b.actor
+	}
+
+	b.isolationActive = true
+	b.fullState = full
+	b.baseActor = baseActor
+	b.state = pinned
+	b.actor = isolationActor(full, pinned, baseActor)
+	b.nextOp = full.maxOpGlobal() + 1
+
+	b.isolationDiffTargets = append(
+		b.isolationDiffTargets,
+		append([][32]byte(nil), nativeToArrayHeads(nativeHeads)...),
+	)
+
+	return nil
+}
+
+// nativeToArrayHeads converts change hashes to the [32]byte head form used by
+// the incremental diff cursor.
+func nativeToArrayHeads(heads []ChangeHash) [][32]byte {
+	result := make([][32]byte, len(heads))
+	for i, hash := range heads {
+		result[i] = [32]byte(hash)
+	}
+
+	return result
+}
+
+// Integrate ends isolation, returning reads and writes to the full history that
+// accumulated every isolated and merged change. It mirrors AutoCommit::integrate.
+func (b *Backend) Integrate(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if !b.isolationActive {
+		return nil
+	}
+
+	if len(b.pending) > 0 {
+		if _, err := b.Commit(ctx, "", time.Time{}); err != nil {
+			return err
+		}
+	}
+
+	b.state = b.fullState
+	b.actor = b.baseActor
+	b.fullState = nil
+	b.isolationActive = false
+	b.nextOp = b.state.maxOpGlobal() + 1
+
+	return nil
+}
+
+// isolationActor selects the actor for isolated writes: the base actor when all
+// of its operations are already covered by the isolation heads, otherwise the
+// lowest-level derived concurrency actor whose operations are covered, matching
+// Rust's isolate_actor.
+func isolationActor(full, pinned *State, base ActorID) ActorID {
+	for level := uint64(0); ; level++ {
+		candidate := base.WithConcurrency(level)
+		if full.maxOpForActor(candidate) == pinned.maxOpForActor(candidate) {
+			return candidate
+		}
+	}
+}
+
 func (b *Backend) Commit(
 	ctx context.Context,
 	message string,
@@ -2174,6 +2476,29 @@ func (b *Backend) Commit(
 
 	if err := b.state.recordAppliedChange(change); err != nil {
 		return [32]byte{}, err
+	}
+
+	// While isolated, the pinned view holds the change for subsequent reads, but
+	// the full history must also record it so integration sees every isolated
+	// change alongside merges. Decode a fresh copy from the encoded bytes so the
+	// two states never share mutable operation state.
+	if b.isolationActive && b.fullState != nil {
+		document, err := DecodePartial(raw)
+		if err != nil || len(document.Changes) == 0 {
+			return [32]byte{}, fmt.Errorf("cannot decode isolated change for full history: %w", err)
+		}
+
+		fullChange := document.Changes[0]
+
+		fullChange.Raw = append([]byte(nil), raw...)
+
+		if err := b.fullState.ApplyChange(&fullChange); err != nil {
+			return [32]byte{}, err
+		}
+
+		if next := b.fullState.maxOpGlobal() + 1; next > b.nextOp {
+			b.nextOp = next
+		}
 	}
 
 	b.appended = append(b.appended, raw)
@@ -2400,6 +2725,17 @@ func orderedObjectsInState(state *State) []ObjectID {
 			continue
 		}
 
+		// A composite object concurrently assigned to the same map key as another
+		// object is a conflict alternative; only the winning value is materialized
+		// (its content spliced), matching the reference. Losing alternatives still
+		// exist but are surfaced only through the put's conflict flag.
+		if !operation.Insert && operation.Key.Property != nil {
+			if winner, ok := state.visibleMapObjectValue(operation.Object, *operation.Key.Property); ok &&
+				winner.ID != operation.ID {
+				continue
+			}
+		}
+
 		makers = append(makers, operation)
 	}
 
@@ -2617,6 +2953,7 @@ func (b *Backend) UpdateDiffCursor(ctx context.Context) error {
 	}
 
 	b.diffCursor = heads
+	b.isolationDiffTargets = nil
 
 	return nil
 }
@@ -2634,12 +2971,13 @@ func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	patches, err := b.incrementalPatches(b.diffCursor, heads)
+	patches, err := b.incrementalDiffPatches(heads)
 	if err != nil {
 		return nil, err
 	}
 
 	b.diffCursor = heads
+	b.isolationDiffTargets = nil
 
 	data, err := json.Marshal(patches)
 	if err != nil {
@@ -2647,6 +2985,35 @@ func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// incrementalDiffPatches computes the incremental patches from the diff cursor
+// to the current heads. When isolation frontiers were recorded in the window,
+// the diff is chained through each of them (cursor to each isolation frontier
+// and finally to the current heads) so the patch stream matches the reference's
+// patch-log output across isolate/integrate.
+func (b *Backend) incrementalDiffPatches(heads [][32]byte) ([]patchOut, error) {
+	if len(b.isolationDiffTargets) == 0 {
+		return b.incrementalPatches(b.diffCursor, heads)
+	}
+
+	frontiers := make([][][32]byte, 0, len(b.isolationDiffTargets)+2)
+	frontiers = append(frontiers, b.diffCursor)
+	frontiers = append(frontiers, b.isolationDiffTargets...)
+	frontiers = append(frontiers, heads)
+
+	patches := make([]patchOut, 0)
+
+	for i := 0; i+1 < len(frontiers); i++ {
+		segment, err := b.incrementalPatches(frontiers[i], frontiers[i+1])
+		if err != nil {
+			return nil, err
+		}
+
+		patches = append(patches, segment...)
+	}
+
+	return patches, nil
 }
 
 func (b *Backend) incrementalPatches(
@@ -3326,6 +3693,17 @@ func (b *Backend) ApplyChanges(
 func (b *Backend) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
+	}
+
+	// While isolated, merged changes belong to the full history rather than the
+	// pinned view, so operate on the full state and keep the pinned view intact.
+	if b.isolationActive && b.fullState != nil {
+		b.state, b.fullState = b.fullState, b.state
+
+		defer func() {
+			b.state, b.fullState = b.fullState, b.state
+			b.nextOp = b.fullState.maxOpGlobal() + 1
+		}()
 	}
 
 	document, err := Decode(data)

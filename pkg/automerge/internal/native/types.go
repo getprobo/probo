@@ -178,6 +178,26 @@ func (a ActorID) Compare(other ActorID) int {
 	return bytes.Compare(a.Bytes(), other.Bytes())
 }
 
+// concurrencyMagicBytes prefixes actor IDs derived for isolated writes so they
+// cannot collide with real actor IDs. It matches Rust's CONCURRENCY_MAGIC_BYTES.
+var concurrencyMagicBytes = [4]byte{0x13, 0xb2, 0x23, 0x09}
+
+// WithConcurrency derives the isolation actor for the given concurrency level,
+// mirroring Rust's ActorId::with_concurrency: the magic bytes, a ULEB128 level,
+// then the base actor bytes. Level zero returns the base actor unchanged.
+func (a ActorID) WithConcurrency(level uint64) ActorID {
+	if level == 0 {
+		return a
+	}
+
+	bytes := make([]byte, 0, 4+16+len(a))
+	bytes = append(bytes, concurrencyMagicBytes[:]...)
+	bytes = appendULEB(bytes, level)
+	bytes = append(bytes, a.Bytes()...)
+
+	return ActorID(string(bytes))
+}
+
 // String returns the lowercase hexadecimal change hash.
 func (h ChangeHash) String() string {
 	return hex.EncodeToString(h[:])

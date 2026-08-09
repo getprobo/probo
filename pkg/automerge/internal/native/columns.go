@@ -480,6 +480,27 @@ func readColumns(r *reader, metadata []columnMeta) (map[uint32]column, error) {
 	return columns, nil
 }
 
+// deflate compresses data with raw DEFLATE at best compression, matching the
+// stream inflate reads. It is used to produce compressed change chunks.
+func deflate(data []byte) ([]byte, error) {
+	var buffer bytes.Buffer
+
+	writer, err := flate.NewWriter(&buffer, flate.BestCompression)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create DEFLATE writer: %w", err)
+	}
+
+	if _, err := writer.Write(data); err != nil {
+		return nil, fmt.Errorf("cannot write DEFLATE stream: %w", err)
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("cannot finish DEFLATE stream: %w", err)
+	}
+
+	return buffer.Bytes(), nil
+}
+
 func inflate(data []byte) ([]byte, error) {
 	compressed := flate.NewReader(bytes.NewReader(data))
 	defer func() { _ = compressed.Close() }()

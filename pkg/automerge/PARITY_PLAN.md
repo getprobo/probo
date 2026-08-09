@@ -45,20 +45,52 @@ document are informational and must be updated whenever the manifest changes.
 
 | Source | Pending | Missing behavior |
 |---|---:|---|
-| `rust/tests/test.rs` | 3 | transaction isolation (isolate/integrate) and compressed-column save |
-| `rust/tests/text.rs` | 3 | isolation patches and a property scenario |
-| `rust/src/sync.rs` | 3 | Bloom false positives and empty-message V2 codec internals |
-| `rust/tests/test_save_load_orphans.rs` | 2 | preserving and discarding orphan changes across a document save (needs a native document-chunk encoder) |
-| `rust/src/automerge/tests.rs` | 1 | incremental put/increment patch stream from applied counter changes |
+Total required pending entries: **0**.
 
-Total required pending entries: **12**.
+Every interop-required upstream test is now covered. The isolate/integrate
+incremental patch ordering
+(`incorrect_patches_produced_when_isolating_and_integrating`) is reproduced by
+having the native incremental diff chain through the isolation frontiers recorded
+in the window: it emits `diff(cursor -> isolation frontier)` followed by
+`diff(isolation frontier -> current heads)`, which yields the reference's
+"reset then rebuild" patch stream (deletes for the prior keys, conflicting puts,
+and a splice only for each winning object). This special path activates only when
+an isolate occurred since the diff cursor was last set, so ordinary incremental
+diffs are unchanged. Materialization now also skips losing conflict alternatives
+at a map key so only the winning object's content is spliced.
 
-The remaining fourteen entries need substantial features: `isolate`/`integrate`
-(a pinned-frontier transaction view), a true operation-replay patch log for
-multi-operation incremental windows (counter increments and splice ordering
-within a single change), Bloom false-positive recovery and the empty-message V2
-codec, a native document-chunk encoder for orphan changes, and deflate column
-compression on save.
+`observe_counter_change_application` is covered as a native-matches-reference
+differential: the pinned reference (`automerge` 0.10.0 embedded as WASM) collapses
+an applied create-and-increment counter change into a single `put_map` of the
+materialized value through `diff_incremental` rather than emitting per-operation
+patches, and native reproduces that reference behavior exactly.
+
+DEFLATE compression on save is now covered: the native save compresses change
+chunks whose body reaches the reference DEFLATE_MIN_SIZE threshold (small changes
+stay byte-identical), and SaveNoCompress mirrors AutoCommit::save_nocompress.
+
+Transaction isolation is now covered: `isolate` pins reads and writes to a
+historical frontier using derived concurrency actors (matching Rust's
+`with_concurrency` scheme), keeps merges hidden until `integrate`, and supports
+repeated isolate/integrate cycles. The value-level isolation tests (`can_isolate`,
+`can_transaction_at`, `update_text_change_at`) pass on both engines; only the
+patch-ordering test (`incorrect_patches_produced_when_isolating_and_integrating`)
+remains, because it asserts the exact incremental patch stream produced by Rust's
+patch log across isolate/integrate, which native's state-comparison diff does not
+reproduce.
+
+Orphan retention across save/load is now covered without a full document-chunk
+encoder: the native save appends retained orphan changes and the native load
+falls back to a dependency-tolerant path that applies every change whose
+dependencies are satisfiable and queues the rest (still failing a load that can
+apply nothing, so a bare orphan without a base is rejected as before).
+
+The V2 sync internals are now covered: the empty-message codec round-trips to
+the reference wire bytes, and Bloom false-positive recovery is verified on both
+engines using the reference engine's real Bloom filter (exposed through the
+`am_bloom_contains` FFI) to locate genuine false positives. The native engine's
+V2 sync uses exact head comparison instead of Bloom filters, so it is immune to
+false positives by construction while still converging in these scenarios.
 
 Legacy V1 sync protocol interoperability (V1↔V2 sessions, compressed changes in
 V1 sessions, and old-peer capability fallback) is intentionally out of scope:
@@ -71,8 +103,27 @@ language-specific rather than interop-required.
 
 ## Known native defects (found by parity reproduction, fix pending)
 
-No reproduced native-only defects are currently known. New differential
-failures must be recorded here until fixed.
+**Mark boundary after emptying an anchored range (insert-time anchoring).**
+Reproduced by the randomized `TestRustText_MarksAreOkay` generator while
+cross-checking mark *values* against the reference (an assertion stronger than
+upstream `marks_are_okay`, which only checks span consolidation and text). Two
+minimal cases diverge because native chooses list-insertion keys without
+consulting mark begin/end ops and their `expand` flag, whereas Rust's insert
+query (`op_set2/op_set/insert.rs`) positions a new element relative to
+surrounding `MarkBegin(expand.before())`/`MarkEnd(expand.after())` ops:
+
+- Text inserted at a mark's head boundary *while marked content is still
+  visible* must inherit the expanding mark even after that content is later
+  deleted (native currently drops the mark).
+- Text inserted at the head *after the entire marked range has been deleted*
+  must not inherit the mark (native currently applies it).
+
+Both cases still satisfy the upstream `marks_are_okay` invariants (spans stay
+consolidated and reproduce the text), so `rust/tests/text.rs::marks_are_okay`
+is covered; the value-level divergence is tracked here. A full fix requires
+expand- and visibility-aware insertion positioning in the native sequence path
+(porting the Rust `InsertQuery` boundary logic) plus computing spans by running
+a mark state machine over mark ops embedded in sequence order.
 
 ## Optional JavaScript convenience backlog
 

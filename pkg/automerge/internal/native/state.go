@@ -1225,6 +1225,21 @@ func (s *State) sequenceForActor(actor ActorID) uint64 {
 	return s.actorSequence[actor]
 }
 
+// maxOpForActor returns the highest operation counter authored by the actor in
+// this state, or zero if the actor has no operations. It is used to decide
+// whether an actor is fully covered by a set of heads when isolating writes.
+func (s *State) maxOpForActor(actor ActorID) uint64 {
+	var maximum uint64
+
+	for id := range s.operations {
+		if id.Actor == actor && id.Counter > maximum {
+			maximum = id.Counter
+		}
+	}
+
+	return maximum
+}
+
 // hashForActorSequence returns the hash of the change authored by actor at the
 // given sequence number, if it is known.
 func (s *State) hashForActorSequence(

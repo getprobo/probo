@@ -4889,10 +4889,12 @@
       "file": "tests/test.rs",
       "line": 1814,
       "name": "can_isolate",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTest_CanIsolate"
+      ],
+      "rationale": "Isolating to a historical frontier pins reads and branches writes with derived concurrency actors, merges during isolation stay hidden until integrate, and repeated isolate/integrate cycles reproduce the reference text and values exactly on both engines.",
       "runtimeName": "can_isolate"
     },
     {
@@ -4901,10 +4903,12 @@
       "file": "tests/test.rs",
       "line": 1772,
       "name": "can_transaction_at",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTest_CanTransactionAt"
+      ],
+      "rationale": "Writing at a pinned historical frontier (via isolate/integrate, the AutoCommit equivalent of transaction_at) branches from those heads and merges with concurrent writes, reproducing the reference text and values on both engines.",
       "runtimeName": "can_transaction_at"
     },
     {
@@ -5486,10 +5490,12 @@
       "file": "tests/test_save_load_orphans.rs",
       "line": 49,
       "name": "discard_orphans",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustOrphans_DiscardOrphans"
+      ],
+      "rationale": "Saving with retain_orphans disabled drops the orphan change on both engines, so a reload plus the missing dependency yields only the applicable value.",
       "runtimeName": "discard_orphans"
     },
     {
@@ -5690,10 +5696,12 @@
       "file": "tests/text.rs",
       "line": 869,
       "name": "incorrect_patches_produced_when_isolating_and_integrating",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating"
+      ],
+      "rationale": "An incremental diff across an isolate/integrate cycle with a conflicting object put resets to the isolate frontier and rebuilds: it emits deletes for the prior keys, conflicting puts, and a splice only for each winning object, matching the reference patch stream on both engines.",
       "runtimeName": "incorrect_patches_produced_when_isolating_and_integrating"
     },
     {
@@ -6292,10 +6300,12 @@
       "file": "tests/text.rs",
       "line": 660,
       "name": "marks_are_okay",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_MarksAreOkay"
+      ],
+      "rationale": "Randomized insert/delete/split-block/mark sequences keep spans consolidated (no adjacent identical mark sets) and reproduce the accumulated text on both engines, matching the upstream property invariants.",
       "runtimeName": "marks_are_okay"
     },
     {
@@ -6612,10 +6622,12 @@
       "file": "src/automerge/tests.rs",
       "line": 1915,
       "name": "observe_counter_change_application",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustAutomerge_ObserveCounterChangeApplication"
+      ],
+      "rationale": "Applying a change that creates and increments a counter yields identical incremental patches on both engines. The pinned reference (automerge 0.10.0 embedded as WASM) collapses the create-and-increment sequence into a single put of the materialized value through diff_incremental rather than emitting per-operation patches, and native matches that reference behavior exactly.",
       "runtimeName": "observe_counter_change_application"
     },
     {
@@ -7284,10 +7296,12 @@
       "file": "tests/test_save_load_orphans.rs",
       "line": 30,
       "name": "save_orphaned_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustOrphans_SaveOrphanedChanges"
+      ],
+      "rationale": "A retained orphan change survives a save/load round trip on both engines, so applying the missing dependency afterwards resolves it to the final value.",
       "runtimeName": "save_orphaned_changes"
     },
     {
@@ -7891,10 +7905,12 @@
       "file": "src/sync.rs",
       "line": 932,
       "name": "encode_decode_empty_message",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestSyncMessageEncodeDecodeEmptyV2"
+      ],
+      "rationale": "An empty V2 sync message encodes to the reference wire bytes (type byte then four zero collection counts) and parses back without error, keeping the native V2 codec byte-compatible.",
       "runtimeName": "sync::tests::encode_decode_empty_message"
     },
     {
@@ -8113,10 +8129,12 @@
       "file": "src/sync.rs",
       "line": 1190,
       "name": "should_handle_chains_of_false_positives",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_ShouldHandleChainsOfFalsePositives"
+      ],
+      "rationale": "Two chained changes that are both Bloom false positives (located with the reference engine's real Bloom filter) still converge under V2 sync on both engines.",
       "runtimeName": "sync::tests::should_handle_chains_of_false_positives"
     },
     {
@@ -8125,10 +8143,12 @@
       "file": "src/sync.rs",
       "line": 1134,
       "name": "should_handle_false_positive_head",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_ShouldHandleFalsePositiveHead"
+      ],
+      "rationale": "A concurrent head that is a Bloom false positive (located with the reference engine's real Bloom filter) still converges under V2 sync on both engines.",
       "runtimeName": "sync::tests::should_handle_false_positive_head"
     },
     {
@@ -8325,10 +8345,12 @@
       "file": "tests/test.rs",
       "line": 1312,
       "name": "test_compressed_doc_cols",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTest_CompressedDocCols"
+      ],
+      "rationale": "A large document saves smaller with DEFLATE compression than without on both engines (native compresses change chunks above the reference DEFLATE_MIN_SIZE), and the compressed save loads back to the same 200-element list.",
       "runtimeName": "test_compressed_doc_cols"
     },
     {
@@ -8924,10 +8946,12 @@
       "file": "tests/text.rs",
       "line": 645,
       "name": "update_text_change_at",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustText_UpdateTextChangeAt"
+      ],
+      "rationale": "An isolated update_text branches from the initial heads and integrates alongside the concurrent update, yielding the reference text on both engines.",
       "runtimeName": "update_text_change_at"
     },
     {

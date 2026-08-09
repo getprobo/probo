@@ -1,6 +1,126 @@
 [
   {
     "source": "rust",
+    "file": "src/sync.rs",
+    "name": "encode_decode_empty_message",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncMessageEncodeDecodeEmptyV2"
+    ],
+    "rationale": "An empty V2 sync message encodes to the reference wire bytes and parses back without error, keeping the native V2 codec byte-compatible."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_handle_false_positive_head",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ShouldHandleFalsePositiveHead"
+    ],
+    "rationale": "A concurrent head that is a Bloom false positive (located with the reference engine's real Bloom filter) still converges under V2 sync on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "should_handle_chains_of_false_positives",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_ShouldHandleChainsOfFalsePositives"
+    ],
+    "rationale": "Two chained changes that are both Bloom false positives (located with the reference engine's real Bloom filter) still converge under V2 sync on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/tests.rs",
+    "name": "observe_counter_change_application",
+    "classification": "covered",
+    "localTests": [
+      "TestRustAutomerge_ObserveCounterChangeApplication"
+    ],
+    "rationale": "Applying a change that creates and increments a counter yields identical incremental patches on both engines; the pinned reference collapses the sequence into a single put through diff_incremental and native matches it exactly."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "test_compressed_doc_cols",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CompressedDocCols"
+    ],
+    "rationale": "A large document saves smaller with DEFLATE compression than without on both engines, and the compressed save loads back to the same 200-element list."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "can_isolate",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CanIsolate"
+    ],
+    "rationale": "Isolating to a historical frontier pins reads and branches writes with derived concurrency actors; merges during isolation stay hidden until integrate; repeated isolate/integrate cycles reproduce the reference text and values on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "can_transaction_at",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CanTransactionAt"
+    ],
+    "rationale": "Writing at a pinned historical frontier via isolate/integrate branches from those heads and merges with concurrent writes, reproducing the reference text and values on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "incorrect_patches_produced_when_isolating_and_integrating",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating"
+    ],
+    "rationale": "An incremental diff across an isolate/integrate cycle with a conflicting object put resets to the isolate frontier and rebuilds, emitting deletes, conflicting puts, and a splice only for each winning object, matching the reference on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "update_text_change_at",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_UpdateTextChangeAt"
+    ],
+    "rationale": "An isolated update_text branches from the initial heads and integrates alongside the concurrent update, yielding the reference text on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test_save_load_orphans.rs",
+    "name": "save_orphaned_changes",
+    "classification": "covered",
+    "localTests": [
+      "TestRustOrphans_SaveOrphanedChanges"
+    ],
+    "rationale": "A retained orphan change survives a save/load round trip on both engines, so applying the missing dependency afterwards resolves it to the final value."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test_save_load_orphans.rs",
+    "name": "discard_orphans",
+    "classification": "covered",
+    "localTests": [
+      "TestRustOrphans_DiscardOrphans"
+    ],
+    "rationale": "Saving with retain_orphans disabled drops the orphan change on both engines, so a reload plus the missing dependency yields only the applicable value."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "marks_are_okay",
+    "classification": "covered",
+    "localTests": [
+      "TestRustText_MarksAreOkay"
+    ],
+    "rationale": "Randomized insert/delete/split-block/mark sequences keep spans consolidated and reproduce the accumulated text on both engines, matching the upstream property invariants."
+  },
+  {
+    "source": "rust",
     "file": "tests/text.rs",
     "name": "insertions_after_noexpand_spans_are_not_marked",
     "classification": "covered",

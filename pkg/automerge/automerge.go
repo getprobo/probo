@@ -78,6 +78,10 @@ type (
 	backend interface {
 		Close(context.Context) error
 		Save(context.Context) ([]byte, error)
+		SaveWithOptions(context.Context, bool) ([]byte, error)
+		SaveNoCompress(context.Context) ([]byte, error)
+		Isolate(context.Context, [][32]byte) error
+		Integrate(context.Context) error
 		Stats(context.Context) ([]byte, error)
 		CurrentState(context.Context) ([]byte, error)
 		Diff(context.Context, [][32]byte, [][32]byte) ([]byte, error)
@@ -462,6 +466,86 @@ func (d *Document) Save(ctx context.Context) ([]byte, error) {
 	return data, nil
 }
 
+// SaveWithOptions serializes the document, choosing whether to retain orphan
+// changes (changes whose dependencies are missing). Retaining them, the default
+// for Save, preserves them across a save/load round trip so they can be resolved
+// once their dependencies arrive; discarding them drops them permanently. It
+// mirrors the Rust SaveOptions.retain_orphans flag.
+func (d *Document) SaveWithOptions(
+	ctx context.Context,
+	retainOrphans bool,
+) ([]byte, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := d.backend.SaveWithOptions(ctx, retainOrphans)
+	if err != nil {
+		return nil, fmt.Errorf("cannot save Automerge document: %w", err)
+	}
+
+	return data, nil
+}
+
+// Isolate pins the document to the given heads so that subsequent reads reflect
+// that frontier plus writes made while isolated, and new changes branch from it.
+// Isolated changes still accumulate in the full history and become visible after
+// Integrate. It mirrors the Rust AutoCommit::isolate API.
+func (d *Document) Isolate(ctx context.Context, heads []Hash) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return ErrClosed
+	}
+
+	if err := d.backend.Isolate(ctx, backendHashes(heads)); err != nil {
+		return fmt.Errorf("cannot isolate Automerge document: %w", err)
+	}
+
+	return nil
+}
+
+// Integrate ends isolation, returning reads and writes to the full history that
+// includes every isolated and merged change. It mirrors AutoCommit::integrate.
+func (d *Document) Integrate(ctx context.Context) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return ErrClosed
+	}
+
+	if err := d.backend.Integrate(ctx); err != nil {
+		return fmt.Errorf("cannot integrate Automerge document: %w", err)
+	}
+
+	return nil
+}
+
+// SaveNoCompress serializes the document without DEFLATE-compressing its change
+// data. The default Save compresses large change chunks; this variant is useful
+// for comparing compressed and uncompressed sizes. It mirrors the Rust
+// AutoCommit::save_nocompress API.
+func (d *Document) SaveNoCompress(ctx context.Context) ([]byte, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := d.backend.SaveNoCompress(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot save Automerge document: %w", err)
+	}
+
+	return data, nil
+}
+
 // Stats reports aggregate document statistics.
 type Stats struct {
 	NumChanges uint64 `json:"numChanges"`
@@ -708,6 +792,39 @@ func (d *Document) Heads(ctx context.Context) ([]Hash, error) {
 	}
 
 	return heads, nil
+}
+
+// ReferenceBloomContains reports whether a sync Bloom filter built from the
+// seed change hashes (possibly falsely) contains the target hash. It is only
+// available on reference (WASM) documents and exists so parity tests can
+// reproduce the upstream Bloom false-positive search deterministically; the
+// native engine's V2 sync uses exact head comparison rather than Bloom filters,
+// so native documents return an error.
+func (d *Document) ReferenceBloomContains(
+	ctx context.Context,
+	seeds []Hash,
+	target Hash,
+) (bool, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return false, ErrClosed
+	}
+
+	backend, ok := d.backend.(*reference.Backend)
+	if !ok {
+		return false, fmt.Errorf(
+			"bloom filter membership is only available on reference documents",
+		)
+	}
+
+	seedArrays := make([][32]byte, len(seeds))
+	for i := range seeds {
+		seedArrays[i] = [32]byte(seeds[i])
+	}
+
+	return backend.BloomContains(ctx, [32]byte(target), seedArrays)
 }
 
 // HasHeads reports whether every hash exists in the document history.
