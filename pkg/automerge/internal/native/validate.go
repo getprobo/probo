@@ -665,6 +665,22 @@ func validateActorSequences(changes []Change) error {
 				)
 			}
 
+			if change.MaxOp < change.StartOp {
+				if change.MaxOp < previousMax {
+					return fmt.Errorf(
+						"actor %s sequence %d empty change maxOp %d precedes %d",
+						actor,
+						change.Sequence,
+						change.MaxOp,
+						previousMax,
+					)
+				}
+
+				previousMax = change.MaxOp
+
+				continue
+			}
+
 			if change.MaxOp <= previousMax {
 				return fmt.Errorf(
 					"actor %s sequence %d has non-increasing maxOp %d",

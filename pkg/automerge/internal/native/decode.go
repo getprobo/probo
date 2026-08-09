@@ -55,6 +55,33 @@ func DecodePartial(data []byte) (*Document, error) {
 	return decode(data, false)
 }
 
+// DecodeIncremental parses the complete chunk prefix and ignores an incomplete
+// or corrupt trailing fragment after at least one valid chunk.
+func DecodeIncremental(data []byte) (*Document, int, error) {
+	r := &reader{data: data}
+	consumed := 0
+
+	for r.remaining() > 0 {
+		start := r.offset
+		if _, err := decodeChunk(r); err != nil {
+			r.offset = start
+			break
+		}
+
+		consumed = r.offset
+	}
+
+	if consumed == 0 {
+		document, err := DecodePartial(data)
+
+		return document, 0, err
+	}
+
+	document, err := DecodePartial(data[:consumed])
+
+	return document, consumed, err
+}
+
 func decode(data []byte, validateHistory bool) (*Document, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("automerge file is empty")
@@ -501,15 +528,15 @@ func decodeChangeChunk(
 		return Change{}, nil, nil, err
 	}
 
-	if len(operations) == 0 {
-		return Change{}, nil, nil, fmt.Errorf("change contains no operations")
+	maxOp := startOp - 1
+	if len(operations) > 0 {
+		if startOp > math.MaxUint64-uint64(len(operations))+1 {
+			return Change{}, nil, nil, fmt.Errorf("operation range overflows uint64")
+		}
+
+		maxOp = startOp + uint64(len(operations)) - 1
 	}
 
-	if startOp > math.MaxUint64-uint64(len(operations))+1 {
-		return Change{}, nil, nil, fmt.Errorf("operation range overflows uint64")
-	}
-
-	maxOp := startOp + uint64(len(operations)) - 1
 	for i, operation := range operations {
 		expected := startOp + uint64(i)
 		if operation.ID.Actor != actor || operation.ID.Counter != expected {

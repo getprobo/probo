@@ -26,6 +26,7 @@ import (
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -189,6 +190,47 @@ func (b *Backend) Save(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
+func (b *Backend) SaveIncremental(ctx context.Context) ([]byte, error) {
+	if err := b.run(ctx, "am_save_incremental"); err != nil {
+		return nil, fmt.Errorf("cannot save incremental reference changes: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy incremental reference changes: %w", err)
+	}
+
+	return output, nil
+}
+
+func (b *Backend) LoadIncremental(
+	ctx context.Context,
+	data []byte,
+) (uint64, error) {
+	pointer, length, err := b.write(ctx, data)
+	if err != nil {
+		return 0, fmt.Errorf("cannot write incremental reference changes: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	result, err := b.call(
+		ctx,
+		"am_load_incremental",
+		uint64(pointer),
+		uint64(length),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot load incremental reference changes: %w", err)
+	}
+
+	applied := int64(result[0])
+	if applied < 0 {
+		return 0, b.operationError(ctx, "cannot load incremental reference changes")
+	}
+
+	return uint64(applied), nil
+}
+
 func (b *Backend) SetActor(ctx context.Context, actor []byte) error {
 	if err := b.runBytes(ctx, "am_set_actor", actor); err != nil {
 		return fmt.Errorf("cannot set reference actor: %w", err)
@@ -223,6 +265,527 @@ func (b *Backend) PutString(ctx context.Context, object Object, key, value strin
 	}
 
 	return nil
+}
+
+func (b *Backend) GetString(ctx context.Context, object Object, key string) (string, error) {
+	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return "", fmt.Errorf("cannot write map key: %w", err)
+	}
+	defer b.free(ctx, keyPointer, keyLength)
+
+	if err := b.run(
+		ctx,
+		"am_get_string",
+		uint64(object),
+		uint64(keyPointer),
+		uint64(keyLength),
+	); err != nil {
+		return "", fmt.Errorf("cannot get reference map value: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return "", fmt.Errorf("cannot copy reference map value: %w", err)
+	}
+
+	return string(output), nil
+}
+
+func (b *Backend) PutScalar(
+	ctx context.Context,
+	object Object,
+	key string,
+	value []byte,
+) error {
+	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return fmt.Errorf("cannot write scalar key: %w", err)
+	}
+	defer b.free(ctx, keyPointer, keyLength)
+
+	valuePointer, valueLength, err := b.write(ctx, value)
+	if err != nil {
+		return fmt.Errorf("cannot write scalar value: %w", err)
+	}
+	defer b.free(ctx, valuePointer, valueLength)
+
+	if err := b.run(
+		ctx,
+		"am_put_scalar",
+		uint64(object),
+		uint64(keyPointer),
+		uint64(keyLength),
+		uint64(valuePointer),
+		uint64(valueLength),
+	); err != nil {
+		return fmt.Errorf("cannot put reference scalar: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) GetScalar(
+	ctx context.Context,
+	object Object,
+	key string,
+) ([]byte, error) {
+	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write scalar key: %w", err)
+	}
+	defer b.free(ctx, keyPointer, keyLength)
+
+	if err := b.run(
+		ctx,
+		"am_get_scalar",
+		uint64(object),
+		uint64(keyPointer),
+		uint64(keyLength),
+	); err != nil {
+		return nil, fmt.Errorf("cannot get reference scalar: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference scalar: %w", err)
+	}
+
+	return output, nil
+}
+
+func (b *Backend) GetScalarAtHeads(
+	ctx context.Context,
+	object Object,
+	key string,
+	heads [][32]byte,
+) ([]byte, error) {
+	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write historical scalar key: %w", err)
+	}
+	defer b.free(ctx, keyPointer, keyLength)
+
+	headPointer, headLength, err := b.write(ctx, flattenHashes(heads))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write historical scalar heads: %w", err)
+	}
+	defer b.free(ctx, headPointer, headLength)
+
+	if err := b.run(
+		ctx,
+		"am_get_scalar_at_heads",
+		uint64(object),
+		uint64(keyPointer),
+		uint64(keyLength),
+		uint64(headPointer),
+		uint64(headLength),
+	); err != nil {
+		return nil, fmt.Errorf("cannot get historical reference scalar: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy historical reference scalar: %w", err)
+	}
+
+	return output, nil
+}
+
+func (b *Backend) GetAllScalars(
+	ctx context.Context,
+	object Object,
+	key string,
+) ([]byte, error) {
+	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write scalar key: %w", err)
+	}
+	defer b.free(ctx, keyPointer, keyLength)
+
+	if err := b.run(
+		ctx,
+		"am_get_all_scalars",
+		uint64(object),
+		uint64(keyPointer),
+		uint64(keyLength),
+	); err != nil {
+		return nil, fmt.Errorf("cannot get reference scalar conflicts: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference scalar conflicts: %w", err)
+	}
+
+	return output, nil
+}
+
+func (b *Backend) PutObject(
+	ctx context.Context,
+	object Object,
+	key string,
+	objectType string,
+) (Object, error) {
+	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return 0, fmt.Errorf("cannot write object key: %w", err)
+	}
+	defer b.free(ctx, keyPointer, keyLength)
+
+	typePointer, typeLength, err := b.write(ctx, []byte(objectType))
+	if err != nil {
+		return 0, fmt.Errorf("cannot write object type: %w", err)
+	}
+	defer b.free(ctx, typePointer, typeLength)
+
+	result, err := b.call(
+		ctx,
+		"am_put_object",
+		uint64(object),
+		uint64(keyPointer),
+		uint64(keyLength),
+		uint64(typePointer),
+		uint64(typeLength),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot create reference object: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, b.operationError(ctx, "cannot create reference object")
+	}
+
+	return Object(handle), nil
+}
+
+func (b *Backend) GetObject(
+	ctx context.Context,
+	object Object,
+	key string,
+) (Object, string, error) {
+	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return 0, "", fmt.Errorf("cannot write object key: %w", err)
+	}
+	defer b.free(ctx, keyPointer, keyLength)
+
+	result, err := b.call(
+		ctx,
+		"am_get_object",
+		uint64(object),
+		uint64(keyPointer),
+		uint64(keyLength),
+	)
+	if err != nil {
+		return 0, "", fmt.Errorf("cannot get reference object: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, "", b.operationError(ctx, "cannot get reference object")
+	}
+
+	rawType, err := b.output(ctx)
+	if err != nil {
+		return 0, "", fmt.Errorf("cannot copy reference object type: %w", err)
+	}
+
+	return Object(handle), string(rawType), nil
+}
+
+func (b *Backend) InsertScalar(
+	ctx context.Context,
+	object Object,
+	index uint64,
+	value []byte,
+) error {
+	pointer, length, err := b.write(ctx, value)
+	if err != nil {
+		return fmt.Errorf("cannot write sequence scalar: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_insert_scalar",
+		uint64(object),
+		index,
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return fmt.Errorf("cannot insert reference scalar: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) PutScalarAt(
+	ctx context.Context,
+	object Object,
+	index uint64,
+	value []byte,
+) error {
+	pointer, length, err := b.write(ctx, value)
+	if err != nil {
+		return fmt.Errorf("cannot write sequence scalar: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_put_scalar_at",
+		uint64(object),
+		index,
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return fmt.Errorf("cannot replace reference scalar: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) InsertObject(
+	ctx context.Context,
+	object Object,
+	index uint64,
+	objectType string,
+) (Object, error) {
+	pointer, length, err := b.write(ctx, []byte(objectType))
+	if err != nil {
+		return 0, fmt.Errorf("cannot write sequence object type: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	result, err := b.call(
+		ctx,
+		"am_insert_object",
+		uint64(object),
+		index,
+		uint64(pointer),
+		uint64(length),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot insert reference object: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, b.operationError(ctx, "cannot insert reference object")
+	}
+
+	return Object(handle), nil
+}
+
+func (b *Backend) PutObjectAt(
+	ctx context.Context,
+	object Object,
+	index uint64,
+	objectType string,
+) (Object, error) {
+	pointer, length, err := b.write(ctx, []byte(objectType))
+	if err != nil {
+		return 0, fmt.Errorf("cannot write replacement object type: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	result, err := b.call(
+		ctx,
+		"am_put_object_at",
+		uint64(object),
+		index,
+		uint64(pointer),
+		uint64(length),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot replace reference object: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, b.operationError(ctx, "cannot replace reference object")
+	}
+
+	return Object(handle), nil
+}
+
+func (b *Backend) GetScalarAt(
+	ctx context.Context,
+	object Object,
+	index uint64,
+) ([]byte, error) {
+	if err := b.run(
+		ctx,
+		"am_get_scalar_at",
+		uint64(object),
+		index,
+	); err != nil {
+		return nil, fmt.Errorf("cannot get reference sequence scalar: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference sequence scalar: %w", err)
+	}
+
+	return output, nil
+}
+
+func (b *Backend) GetObjectAt(
+	ctx context.Context,
+	object Object,
+	index uint64,
+) (Object, string, error) {
+	result, err := b.call(
+		ctx,
+		"am_get_object_at",
+		uint64(object),
+		index,
+	)
+	if err != nil {
+		return 0, "", fmt.Errorf("cannot get reference sequence object: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, "", b.operationError(
+			ctx,
+			"cannot get reference sequence object",
+		)
+	}
+
+	rawType, err := b.output(ctx)
+	if err != nil {
+		return 0, "", fmt.Errorf("cannot copy reference sequence object type: %w", err)
+	}
+
+	return Object(handle), string(rawType), nil
+}
+
+func (b *Backend) DeleteMap(
+	ctx context.Context,
+	object Object,
+	key string,
+) error {
+	pointer, length, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return fmt.Errorf("cannot write deleted map key: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_delete_map",
+		uint64(object),
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return fmt.Errorf("cannot delete reference map value: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) DeleteSequence(
+	ctx context.Context,
+	object Object,
+	index uint64,
+) error {
+	if err := b.run(
+		ctx,
+		"am_delete_sequence",
+		uint64(object),
+		index,
+	); err != nil {
+		return fmt.Errorf("cannot delete reference sequence value: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) Increment(
+	ctx context.Context,
+	object Object,
+	key string,
+	delta int64,
+) error {
+	pointer, length, err := b.write(ctx, []byte(key))
+	if err != nil {
+		return fmt.Errorf("cannot write incremented map key: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_increment",
+		uint64(object),
+		uint64(pointer),
+		uint64(length),
+		uint64(delta),
+	); err != nil {
+		return fmt.Errorf("cannot increment reference counter: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) IncrementAt(
+	ctx context.Context,
+	object Object,
+	index uint64,
+	delta int64,
+) error {
+	if err := b.run(
+		ctx,
+		"am_increment_at",
+		uint64(object),
+		index,
+		uint64(delta),
+	); err != nil {
+		return fmt.Errorf("cannot increment reference sequence counter: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) Keys(
+	ctx context.Context,
+	object Object,
+) ([]string, error) {
+	if err := b.run(ctx, "am_keys", uint64(object)); err != nil {
+		return nil, fmt.Errorf("cannot get reference map keys: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference map keys: %w", err)
+	}
+
+	var keys []string
+	if err := json.Unmarshal(output, &keys); err != nil {
+		return nil, fmt.Errorf("cannot decode reference map keys: %w", err)
+	}
+
+	return keys, nil
+}
+
+func (b *Backend) Length(
+	ctx context.Context,
+	object Object,
+) (uint64, error) {
+	result, err := b.call(ctx, "am_length", uint64(object))
+	if err != nil {
+		return 0, fmt.Errorf("cannot get reference object length: %w", err)
+	}
+
+	length := int64(result[0])
+	if length < 0 {
+		return 0, b.operationError(ctx, "cannot get reference object length")
+	}
+
+	return uint64(length), nil
 }
 
 func (b *Backend) PutText(ctx context.Context, object Object, key string) (Object, error) {
@@ -305,6 +868,115 @@ func (b *Backend) SpliceText(
 	return nil
 }
 
+func (b *Backend) MarkText(
+	ctx context.Context,
+	object Object,
+	start uint32,
+	end uint32,
+	name string,
+	value []byte,
+	expand string,
+) error {
+	namePointer, nameLength, err := b.write(ctx, []byte(name))
+	if err != nil {
+		return fmt.Errorf("cannot write mark name: %w", err)
+	}
+	defer b.free(ctx, namePointer, nameLength)
+
+	valuePointer, valueLength, err := b.write(ctx, value)
+	if err != nil {
+		return fmt.Errorf("cannot write mark value: %w", err)
+	}
+	defer b.free(ctx, valuePointer, valueLength)
+
+	expandPointer, expandLength, err := b.write(ctx, []byte(expand))
+	if err != nil {
+		return fmt.Errorf("cannot write mark expansion: %w", err)
+	}
+	defer b.free(ctx, expandPointer, expandLength)
+
+	if err := b.run(
+		ctx,
+		"am_text_mark",
+		uint64(object),
+		uint64(start),
+		uint64(end),
+		uint64(namePointer),
+		uint64(nameLength),
+		uint64(valuePointer),
+		uint64(valueLength),
+		uint64(expandPointer),
+		uint64(expandLength),
+	); err != nil {
+		return fmt.Errorf("cannot mark reference text: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) SplitBlock(
+	ctx context.Context,
+	object Object,
+	index uint32,
+) (Object, error) {
+	result, err := b.call(
+		ctx,
+		"am_split_block",
+		uint64(object),
+		uint64(index),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot split reference block: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, b.operationError(ctx, "cannot split reference block")
+	}
+
+	return Object(handle), nil
+}
+
+func (b *Backend) JoinBlock(
+	ctx context.Context,
+	object Object,
+	index uint32,
+) error {
+	if err := b.run(
+		ctx,
+		"am_join_block",
+		uint64(object),
+		uint64(index),
+	); err != nil {
+		return fmt.Errorf("cannot join reference block: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) ReplaceBlock(
+	ctx context.Context,
+	object Object,
+	index uint32,
+) (Object, error) {
+	result, err := b.call(
+		ctx,
+		"am_replace_block",
+		uint64(object),
+		uint64(index),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot replace reference block: %w", err)
+	}
+
+	handle := int64(result[0])
+	if handle < 0 {
+		return 0, b.operationError(ctx, "cannot replace reference block")
+	}
+
+	return Object(handle), nil
+}
+
 func (b *Backend) Text(ctx context.Context, object Object) (string, error) {
 	if err := b.run(ctx, "am_text", uint64(object)); err != nil {
 		return "", fmt.Errorf("cannot read reference text: %w", err)
@@ -313,6 +985,35 @@ func (b *Backend) Text(ctx context.Context, object Object) (string, error) {
 	output, err := b.output(ctx)
 	if err != nil {
 		return "", fmt.Errorf("cannot copy reference text: %w", err)
+	}
+
+	return string(output), nil
+}
+
+func (b *Backend) TextAt(
+	ctx context.Context,
+	object Object,
+	heads [][32]byte,
+) (string, error) {
+	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	if err != nil {
+		return "", fmt.Errorf("cannot write historical text heads: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_text_at",
+		uint64(object),
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return "", fmt.Errorf("cannot read historical reference text: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return "", fmt.Errorf("cannot copy historical reference text: %w", err)
 	}
 
 	return string(output), nil
@@ -344,6 +1045,35 @@ func (b *Backend) TextCursor(ctx context.Context, object Object, index uint32) (
 	cursor, err := b.output(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference text cursor: %w", err)
+	}
+
+	return cursor, nil
+}
+
+func (b *Backend) TextCursorMoving(
+	ctx context.Context,
+	object Object,
+	index uint32,
+	moveBefore bool,
+) ([]byte, error) {
+	var movement uint64
+	if moveBefore {
+		movement = 1
+	}
+
+	if err := b.run(
+		ctx,
+		"am_text_cursor_moving",
+		uint64(object),
+		uint64(index),
+		movement,
+	); err != nil {
+		return nil, fmt.Errorf("cannot create moving reference text cursor: %w", err)
+	}
+
+	cursor, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy moving reference text cursor: %w", err)
 	}
 
 	return cursor, nil
@@ -390,6 +1120,11 @@ func (b *Backend) Commit(
 ) ([32]byte, error) {
 	var hash [32]byte
 
+	timestampSeconds := timestamp.Unix()
+	if timestamp.IsZero() {
+		timestampSeconds = 0
+	}
+
 	messagePointer, messageLength, err := b.write(ctx, []byte(message))
 	if err != nil {
 		return hash, fmt.Errorf("cannot write commit message: %w", err)
@@ -401,7 +1136,7 @@ func (b *Backend) Commit(
 		"am_commit",
 		uint64(messagePointer),
 		uint64(messageLength),
-		uint64(timestamp.Unix()),
+		uint64(timestampSeconds),
 	); err != nil {
 		return hash, fmt.Errorf("cannot commit reference document: %w", err)
 	}
@@ -418,6 +1153,62 @@ func (b *Backend) Commit(
 	copy(hash[:], output)
 
 	return hash, nil
+}
+
+func (b *Backend) EmptyCommit(
+	ctx context.Context,
+	message string,
+	timestamp time.Time,
+) ([32]byte, error) {
+	var hash [32]byte
+
+	timestampSeconds := timestamp.Unix()
+	if timestamp.IsZero() {
+		timestampSeconds = 0
+	}
+
+	messagePointer, messageLength, err := b.write(ctx, []byte(message))
+	if err != nil {
+		return hash, fmt.Errorf("cannot write empty commit message: %w", err)
+	}
+	defer b.free(ctx, messagePointer, messageLength)
+
+	if err := b.run(
+		ctx,
+		"am_empty_commit",
+		uint64(messagePointer),
+		uint64(messageLength),
+		uint64(timestampSeconds),
+	); err != nil {
+		return hash, fmt.Errorf("cannot commit empty reference change: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return hash, fmt.Errorf("cannot copy empty reference change hash: %w", err)
+	}
+
+	if len(output) != len(hash) {
+		return hash, fmt.Errorf("invalid empty reference change hash length %d", len(output))
+	}
+
+	copy(hash[:], output)
+
+	return hash, nil
+}
+
+func (b *Backend) Rollback(ctx context.Context) (uint64, error) {
+	result, err := b.call(ctx, "am_rollback")
+	if err != nil {
+		return 0, fmt.Errorf("cannot roll back reference document: %w", err)
+	}
+
+	cancelled := int64(result[0])
+	if cancelled < 0 {
+		return 0, b.operationError(ctx, "cannot roll back reference document")
+	}
+
+	return uint64(cancelled), nil
 }
 
 func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
@@ -440,6 +1231,73 @@ func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	}
 
 	return heads, nil
+}
+
+func (b *Backend) HasHeads(
+	ctx context.Context,
+	heads [][32]byte,
+) (bool, error) {
+	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	if err != nil {
+		return false, fmt.Errorf("cannot write reference heads: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	result, err := b.call(
+		ctx,
+		"am_has_heads",
+		uint64(pointer),
+		uint64(length),
+	)
+	if err != nil {
+		return false, fmt.Errorf("cannot inspect reference heads: %w", err)
+	}
+
+	value := int32(result[0])
+	if value < 0 {
+		return false, b.operationError(ctx, "cannot inspect reference heads")
+	}
+
+	return value != 0, nil
+}
+
+func (b *Backend) MissingDependencies(
+	ctx context.Context,
+	heads [][32]byte,
+) ([][32]byte, error) {
+	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write dependency heads: %w", err)
+	}
+	defer b.free(ctx, pointer, length)
+
+	if err := b.run(
+		ctx,
+		"am_missing_dependencies",
+		uint64(pointer),
+		uint64(length),
+	); err != nil {
+		return nil, fmt.Errorf("cannot get reference missing dependencies: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference missing dependencies: %w", err)
+	}
+
+	if len(output)%32 != 0 {
+		return nil, fmt.Errorf(
+			"invalid reference dependency byte length %d",
+			len(output),
+		)
+	}
+
+	result := make([][32]byte, len(output)/32)
+	for i := range result {
+		copy(result[i][:], output[i*32:(i+1)*32])
+	}
+
+	return result, nil
 }
 
 func (b *Backend) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
@@ -484,6 +1342,52 @@ func (b *Backend) CloseSyncState(ctx context.Context, handle uint32) error {
 	}
 
 	return nil
+}
+
+func (b *Backend) SetSyncReadOnly(
+	ctx context.Context,
+	handle uint32,
+	readOnly bool,
+) error {
+	var value uint64
+	if readOnly {
+		value = 1
+	}
+
+	if err := b.run(
+		ctx,
+		"am_sync_set_read_only",
+		uint64(handle),
+		value,
+	); err != nil {
+		return fmt.Errorf("cannot set reference sync read-only mode: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Backend) SyncPeerReadOnly(
+	ctx context.Context,
+	handle uint32,
+) (bool, error) {
+	result, err := b.call(
+		ctx,
+		"am_sync_peer_read_only",
+		uint64(handle),
+	)
+	if err != nil {
+		return false, fmt.Errorf("cannot get reference peer read-only mode: %w", err)
+	}
+
+	value := int32(result[0])
+	if value < 0 {
+		return false, b.operationError(
+			ctx,
+			"cannot get reference peer read-only mode",
+		)
+	}
+
+	return value != 0, nil
 }
 
 func (b *Backend) GenerateSyncMessage(
@@ -702,4 +1606,13 @@ func (b *Backend) read(pointer, length uint32) ([]byte, error) {
 	}
 
 	return append([]byte(nil), value...), nil
+}
+
+func flattenHashes(hashes [][32]byte) []byte {
+	value := make([]byte, 0, len(hashes)*32)
+	for _, hash := range hashes {
+		value = append(value, hash[:]...)
+	}
+
+	return value
 }

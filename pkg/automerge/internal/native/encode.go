@@ -153,11 +153,14 @@ func encodeOperationColumns(
 	actions := make([]optional[uint64], count)
 	valueMetadata := make([]optional[uint64], count)
 	predGroups := make([]optional[uint64], count)
+	markExpands := make([]bool, count)
+	markNames := make([]optional[string], count)
 
 	var (
-		valueData    []byte
-		predActors   []optional[uint64]
-		predCounters []optional[int64]
+		valueData     []byte
+		predActors    []optional[uint64]
+		predCounters  []optional[int64]
+		hasMarkExpand bool
 	)
 
 	for i, operation := range change.Operations {
@@ -210,6 +213,20 @@ func encodeOperationColumns(
 			predActors = append(predActors, some(actorIndex))
 			predCounters = append(predCounters, some(int64(predecessor.Counter)))
 		}
+
+		if operation.MarkExpand != nil {
+			markExpands[i] = *operation.MarkExpand
+			hasMarkExpand = true
+		}
+
+		if operation.MarkName != nil {
+			markNames[i] = some(*operation.MarkName)
+		}
+	}
+
+	var markExpandData []byte
+	if hasMarkExpand {
+		markExpandData = encodeBooleans(markExpands)
 	}
 
 	columns := []encodedColumn{
@@ -225,6 +242,8 @@ func encodeOperationColumns(
 		{specification: 112, data: encodeRLE(predGroups, appendULEB)},
 		{specification: 113, data: encodeRLE(predActors, appendULEB)},
 		{specification: 115, data: encodeDelta(predCounters)},
+		{specification: 148, data: markExpandData},
+		{specification: 165, data: encodeStrings(markNames)},
 	}
 
 	filtered := columns[:0]
@@ -290,6 +309,13 @@ func encodeRLE[T comparable](
 	values []optional[T],
 	appendValue func([]byte, T) []byte,
 ) []byte {
+	if allNull(values) {
+		return nil
+	}
+
+	// Change hashes cover these encoded bytes. Use the reference encoder's
+	// canonical run grouping so another implementation does not re-encode an
+	// otherwise valid change under a different hash.
 	var data []byte
 
 	for index := 0; index < len(values); {
@@ -306,8 +332,31 @@ func encodeRLE[T comparable](
 			continue
 		}
 
+		if index+1 < len(values) &&
+			values[index+1].valid &&
+			values[index+1].value == values[index].value {
+			end := index + 2
+			for end < len(values) &&
+				values[end].valid &&
+				values[end].value == values[index].value {
+				end++
+			}
+
+			data = appendLEB(data, int64(end-index))
+			data = appendValue(data, values[index].value)
+			index = end
+
+			continue
+		}
+
 		end := index + 1
 		for end < len(values) && values[end].valid {
+			if end+1 < len(values) &&
+				values[end+1].valid &&
+				values[end+1].value == values[end].value {
+				break
+			}
+
 			end++
 		}
 
@@ -317,10 +366,6 @@ func encodeRLE[T comparable](
 		}
 
 		index = end
-	}
-
-	if allNull(values) {
-		return nil
 	}
 
 	return data
