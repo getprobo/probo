@@ -3959,9 +3959,9 @@
       "line": 17,
       "name": "automerge/src/storage/parse.rs - storage::parse (line 17)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
     {
       "id": "rust-doc:automerge/src/storage/parse.rs:264:automerge/src/storage/parse.rs - storage::parse::Input<'a>::split (line 264)",
@@ -3970,9 +3970,9 @@
       "line": 264,
       "name": "automerge/src/storage/parse.rs - storage::parse::Input<'a>::split (line 264)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
     {
       "id": "rust-doc:automerge/src/storage/parse.rs:325:automerge/src/storage/parse.rs - storage::parse::Split::remaining (line 325)",
@@ -3981,9 +3981,9 @@
       "line": 325,
       "name": "automerge/src/storage/parse.rs - storage::parse::Split::remaining (line 325)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
     {
       "id": "rust-doc:automerge/src/storage/parse.rs:56:automerge/src/storage/parse.rs - storage::parse (line 56)",
@@ -3992,9 +3992,9 @@
       "line": 56,
       "name": "automerge/src/storage/parse.rs - storage::parse (line 56)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
     {
       "id": "rust-doc:automerge/src/storage/parse.rs:561:automerge/src/storage/parse.rs - storage::parse::range_of (line 561)",
@@ -4003,9 +4003,9 @@
       "line": 561,
       "name": "automerge/src/storage/parse.rs - storage::parse::range_of (line 561)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
     {
       "id": "rust-doc:automerge/src/storage/parse.rs:69:automerge/src/storage/parse.rs - storage::parse (line 69)",
@@ -4014,9 +4014,9 @@
       "line": 69,
       "name": "automerge/src/storage/parse.rs - storage::parse (line 69)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
     {
       "id": "rust-doc:automerge/src/sync.rs:25:automerge/src/sync.rs - sync (line 25)",
@@ -4025,9 +4025,9 @@
       "line": 25,
       "name": "automerge/src/sync.rs - sync (line 25)",
       "classification": "pending",
-      "requirement": "interop-required",
+      "requirement": "api-convenience",
       "localTests": [],
-      "rationale": ""
+      "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
     {
       "id": "rust-doc:automerge/src/transaction/manual_transaction.rs:77:automerge/src/transaction/manual_transaction.rs - transaction::manual_transaction::Transaction<'_>::commit_with (line 77)",
@@ -7192,10 +7192,12 @@
       "file": "tests/test.rs",
       "line": 2523,
       "name": "reproduce_clock_cache_bug",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_ReproduceClockCacheBug"
+      ],
+      "rationale": "Merging many branches by distinct actors leaves no change outside the merged frontier, exercising vector-clock ancestry.",
       "runtimeName": "reproduce_clock_cache_bug"
     },
     {

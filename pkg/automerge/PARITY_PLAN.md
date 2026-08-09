@@ -45,21 +45,20 @@ document are informational and must be updated whenever the manifest changes.
 
 | Source | Pending | Missing behavior |
 |---|---:|---|
-| `rust/tests/test.rs` | 9 | patch-log misuse, transactions and isolation, iterators, and regression corpus |
+| `rust/tests/test.rs` | 8 | patch-log misuse, transactions and isolation, and change-encoding round-trips |
 | `rust/src/sync.rs` | 5 | Bloom false positives, reset/data-loss recovery, old-peer fallback, and message encode/decode internals |
 | `rust/tests/text.rs` | 4 | block-adjacent marks, isolation patches, property scenarios, and zero-length spans |
 | `rust/tests/batch_insert.rs` | 2 | invalid-scalar rejection and transaction integration |
 | `rust/src/automerge/current_state.rs` | 1 | loading current-state patches from a stored fixture |
-| Rust storage doctests | 6 | parser splitting, ranges, incomplete data, and document parsing contracts |
 | `rust/tests/test_save_load_orphans.rs` | 2 | preserving orphan changes across a document save and discarding them on request (needs a native document-chunk encoder) |
 | `rust/src/sync/v1_compat_test` | 3 | V1→V2, V2→V1, and compressed-change compatibility |
 | Rust `AutoCommit` doctests | 3 | commit options, diff, and incremental diff |
 | Curated JavaScript scalar boundaries | 3 | immutable strings, raw-string compatibility, and numeric wrappers |
 | Curated JavaScript mark boundaries | 2 | patch-visible marks and expansion at text end |
 | Rust iterator behavior | 1 | document iteration with conflicts |
-| Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
+| Remaining Rust public/doctest cases | 6 | hydration, autoserde, manual transaction, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **52**.
+Total required pending entries: **44**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 

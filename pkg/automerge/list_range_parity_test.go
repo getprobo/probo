@@ -28,11 +28,64 @@ package automerge_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
 )
+
+// TestRust_ReproduceClockCacheBug reproduces reproduce_clock_cache_bug: after
+// merging many branches authored by distinct actors, no change lies outside the
+// merged frontier, so ChangesSince(heads) is empty. A clock-caching defect would
+// omit some ancestors and report spurious changes.
+func TestRust_ReproduceClockCacheBug(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	base, err := automerge.New(ctx, actor(1))
+	require.NoError(t, err)
+	closeDocument(t, base)
+
+	for i := 0; i < 20; i++ {
+		require.NoError(t, base.Root().PutScalar(
+			ctx,
+			"initial_commit",
+			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)},
+		))
+		_, err := base.Commit(ctx, "initial", commitTime.Add(time.Duration(i)))
+		require.NoError(t, err)
+	}
+
+	const branches = 20
+
+	for branch := 0; branch < branches; branch++ {
+		fork, err := base.Fork(ctx, actor(byte(30+branch)))
+		require.NoError(t, err)
+		closeDocument(t, fork)
+
+		for commit := 0; commit < 2; commit++ {
+			require.NoError(t, fork.Root().PutScalar(
+				ctx,
+				"branch_value",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(branch*10 + commit)},
+			))
+			_, err := fork.Commit(ctx, "branch", commitTime.Add(time.Duration(branch*10+commit)))
+			require.NoError(t, err)
+		}
+
+		_, err = base.Merge(ctx, fork)
+		require.NoError(t, err)
+	}
+
+	heads, err := base.Heads(ctx)
+	require.NoError(t, err)
+
+	changes, err := base.ChangesSince(ctx, heads)
+	require.NoError(t, err)
+	assert.Empty(t, changes)
+}
 
 // TestRustListRange_Bounds reproduces list_range_bounds: reading the list yields
 // its values in order.
