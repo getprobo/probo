@@ -5426,10 +5426,12 @@
       "file": "tests/text.rs",
       "line": 322,
       "name": "empty_marks_before_block_marker_dont_repeat_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustRichText_EmptyMarksBeforeBlockMarker"
+      ],
+      "rationale": "Empty marks and text inserted around block markers do not duplicate text; both engines report two block spans followed by a single text span.",
       "runtimeName": "empty_marks_before_block_marker_dont_repeat_text"
     },
     {

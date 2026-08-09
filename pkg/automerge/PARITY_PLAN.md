@@ -34,7 +34,7 @@ The generator verifies both Git revisions before updating the ledger.
 
 | Classification | Covered | Pending |
 |---|---:|---:|
-| Required Rust + JavaScript boundary behavior | 184 | 178 |
+| Required Rust + JavaScript boundary behavior | 185 | 177 |
 | Non-blocking JavaScript convenience behavior | 44 | 196 |
 | Private or language-specific behavior | 110 | — |
 
@@ -49,7 +49,7 @@ document are informational and must be updated whenever the manifest changes.
 | `rust/tests/diff_marks.rs` | 31 | adjacent/nested/overlapping marks, expansion and contraction, value changes, empty spans, whitespace, combining characters, emoji, blocks, and mark removal |
 | `rust/src/sync.rs` | 6 | Bloom false positives, branching histories, reset/data-loss recovery, old-peer fallback, and message encode/decode internals |
 | `rust/tests/block_tests.rs` | 12 | block property updates, simultaneous text/block changes, mark boundaries across blocks, update-spans configuration, merge diffs, and block patches |
-| `rust/tests/text.rs` | 14 | update-text diffing, mark expansion patches, deleted marks, block-adjacent marks, large graphemes, remote patches, and zero-length spans |
+| `rust/tests/text.rs` | 13 | update-text diffing, mark expansion patches, deleted marks, block-adjacent marks, large graphemes, remote patches, and zero-length spans |
 | `rust/src/transaction/owned_transaction.rs` | 11 | pending reads/writes, nested objects, commit metadata, rollback, heads, historical transactions, and patch behavior |
 | `rust/tests/text_encoding.rs` | 10 | UTF-16 length/get/put/insert/delete/split behavior and patch index units |
 | `rust/tests/batch_insert.rs` | 5 | patch output, invalid-scalar rejection, and transaction integration |
@@ -67,7 +67,7 @@ document are informational and must be updated whenever the manifest changes.
 | Rust iterator behavior | 3 | document and list-range iteration with conflicts |
 | Remaining Rust public/doctest cases | 7 | hydration, autoserde, manual transaction, sync example, patch log, document parse, and one active automerge regression |
 
-Total required pending entries: **178**.
+Total required pending entries: **177**.
 
 ## Known native defects (found by parity reproduction, fix pending)
 
@@ -80,9 +80,6 @@ and left pending until the native engine is fixed:
 - A splice index that falls in the middle of a UTF-16 surrogate pair is
   rejected instead of advancing to the following character
   (`deleting_in_middle_of_multibyte_char_moves_the_cursor_to_after_the_character`).
-- Marking at an index adjacent to a block marker reports the index as out of
-  bounds because the native mark index space excludes block markers
-  (`empty_marks_before_block_marker_dont_repeat_text`).
 
 ## Optional JavaScript convenience backlog
 

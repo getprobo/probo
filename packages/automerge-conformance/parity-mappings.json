@@ -1932,5 +1932,15 @@
       "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
     ],
     "rationale": "Zero-length marks do not fragment the span stream; both engines report a single consolidated text span."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text.rs",
+    "name": "empty_marks_before_block_marker_dont_repeat_text",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_EmptyMarksBeforeBlockMarker"
+    ],
+    "rationale": "Empty marks and text inserted around block markers do not duplicate text; both engines report two block spans followed by a single text span."
   }
 ]

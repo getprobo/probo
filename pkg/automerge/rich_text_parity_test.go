@@ -154,6 +154,28 @@ func TestRustRichText_SpansConsolidateEmptyThenDeletedMarks(t *testing.T) {
 	assert.Equal(t, "hello world", spans["native"][0].Text)
 }
 
+// TestRustRichText_EmptyMarksBeforeBlockMarker reproduces
+// empty_marks_before_block_marker_dont_repeat_text.
+func TestRustRichText_EmptyMarksBeforeBlockMarker(t *testing.T) {
+	t.Parallel()
+
+	spans := richTextSpans(t, func(t *testing.T, ctx context.Context, text *automerge.Text) {
+		_, err := text.SplitBlock(ctx, 0)
+		require.NoError(t, err)
+		_, err = text.SplitBlock(ctx, 0)
+		require.NoError(t, err)
+		require.NoError(t, text.Mark(ctx, 1, 1, "strong", markTrue(), automerge.MarkExpandBoth))
+		require.NoError(t, text.Splice(ctx, 2, 0, "a"))
+	})
+
+	assert.Equal(t, spans["reference"], spans["native"])
+	require.Len(t, spans["native"], 3)
+	assert.Equal(t, automerge.SpanTypeBlock, spans["native"][0].Type)
+	assert.Equal(t, automerge.SpanTypeBlock, spans["native"][1].Type)
+	assert.Equal(t, automerge.SpanTypeText, spans["native"][2].Type)
+	assert.Equal(t, "a", spans["native"][2].Text)
+}
+
 // TestRustRichText_ComplexBlockProperties reproduces
 // text_complex_block_properties.
 func TestRustRichText_ComplexBlockProperties(t *testing.T) {
