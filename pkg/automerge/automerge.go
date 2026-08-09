@@ -86,6 +86,7 @@ type (
 		GetScalar(context.Context, uint32, string) ([]byte, error)
 		GetScalarAtHeads(context.Context, uint32, string, [][32]byte) ([]byte, error)
 		GetAllScalars(context.Context, uint32, string) ([]byte, error)
+		GetAllScalarsAt(context.Context, uint32, uint64) ([]byte, error)
 		PutObject(context.Context, uint32, string, string) (uint32, error)
 		GetObject(context.Context, uint32, string) (uint32, string, error)
 		InsertObject(context.Context, uint32, uint64, string) (uint32, error)

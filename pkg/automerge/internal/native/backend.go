@@ -447,6 +447,53 @@ func (b *Backend) GetAllScalars(
 	return encoded, nil
 }
 
+func (b *Backend) GetAllScalarsAt(
+	ctx context.Context,
+	object uint32,
+	index uint64,
+) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	sequenceObject, err := b.sequenceObject(object)
+	if err != nil {
+		return nil, err
+	}
+
+	conflicts, ok := b.state.sequenceConflicts(sequenceObject.OpID, index)
+	if !ok {
+		return nil, fmt.Errorf("sequence value at index %d does not exist", index)
+	}
+
+	var values []json.RawMessage
+
+	for _, operation := range conflicts {
+		value, ok := b.state.scalarValue(operation)
+		if !ok {
+			continue
+		}
+
+		encoded, err := encodeScalarWire(value)
+		if err != nil {
+			return nil, err
+		}
+
+		values = append(values, json.RawMessage(encoded))
+	}
+
+	if len(values) == 0 {
+		return nil, fmt.Errorf("sequence value at index %d is not a scalar", index)
+	}
+
+	encoded, err := json.Marshal(values)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode sequence scalar conflicts: %w", err)
+	}
+
+	return encoded, nil
+}
+
 func (b *Backend) PutObject(
 	ctx context.Context,
 	object uint32,
@@ -556,7 +603,7 @@ func (b *Backend) PutScalarAt(
 		Key:          Key{Element: new(target.Element)},
 		Action:       ActionSet,
 		Value:        &value,
-		Predecessors: []OpID{target.Operation.ID},
+		Predecessors: b.sequenceElementPredecessors(target.Element),
 	})
 }
 
@@ -611,7 +658,7 @@ func (b *Backend) PutObjectAt(
 		Object:       objectID,
 		Key:          Key{Element: new(target.Element)},
 		Action:       action,
-		Predecessors: []OpID{target.Operation.ID},
+		Predecessors: b.sequenceElementPredecessors(target.Element),
 	}
 	if err := b.addPending(operation); err != nil {
 		return 0, err
@@ -709,7 +756,7 @@ func (b *Backend) DeleteSequence(
 		Object:       objectID,
 		Key:          Key{Element: new(target.Element)},
 		Action:       ActionDelete,
-		Predecessors: []OpID{target.Operation.ID},
+		Predecessors: b.sequenceElementPredecessors(target.Element),
 	})
 }
 
@@ -728,12 +775,28 @@ func (b *Backend) Increment(
 		return err
 	}
 
-	target, ok := b.state.visibleMapObjectValue(objectID, key)
-	if !ok || target.Value == nil || target.Value.Type != ScalarCounter {
+	visible := b.state.visibleMapObjectOperations(objectID, key)
+
+	hasCounter := false
+
+	for _, operation := range visible {
+		if isCounterOperation(operation) {
+			hasCounter = true
+
+			break
+		}
+	}
+
+	if !hasCounter {
 		return fmt.Errorf("map property %q is not a counter", key)
 	}
 
 	property := key
+
+	predecessors := make([]OpID, 0, len(visible))
+	for _, operation := range visible {
+		predecessors = append(predecessors, operation.ID)
+	}
 
 	return b.addPending(Operation{
 		ID:           b.nextOperationID(),
@@ -741,7 +804,7 @@ func (b *Backend) Increment(
 		Key:          Key{Property: &property},
 		Action:       ActionIncrement,
 		Value:        &Scalar{Type: ScalarInt, Int: delta},
-		Predecessors: []OpID{target.ID},
+		Predecessors: predecessors,
 	})
 }
 
@@ -756,8 +819,19 @@ func (b *Backend) IncrementAt(
 		return err
 	}
 
-	if target.Operation.Value == nil ||
-		target.Operation.Value.Type != ScalarCounter {
+	visible := b.state.visibleSequenceElementOperations(target.Element)
+
+	hasCounter := false
+
+	for _, operation := range visible {
+		if isCounterOperation(operation) {
+			hasCounter = true
+
+			break
+		}
+	}
+
+	if !hasCounter {
 		return fmt.Errorf("sequence value at index %d is not a counter", index)
 	}
 
@@ -766,13 +840,18 @@ func (b *Backend) IncrementAt(
 		return err
 	}
 
+	predecessors := make([]OpID, 0, len(visible))
+	for _, operation := range visible {
+		predecessors = append(predecessors, operation.ID)
+	}
+
 	return b.addPending(Operation{
 		ID:           b.nextOperationID(),
 		Object:       objectID,
 		Key:          Key{Element: new(target.Element)},
 		Action:       ActionIncrement,
 		Value:        &Scalar{Type: ScalarInt, Int: delta},
-		Predecessors: []OpID{target.Operation.ID},
+		Predecessors: predecessors,
 	})
 }
 
@@ -2310,6 +2389,21 @@ func (b *Backend) insertSequenceOperation(
 	}
 
 	return operation, nil
+}
+
+// sequenceElementPredecessors returns the IDs of every visible operation at the
+// list element, in ascending order. A put, delete, or increment must reference
+// all of them so that concurrent conflicting values are overwritten identically
+// to upstream Rust.
+func (b *Backend) sequenceElementPredecessors(element OpID) []OpID {
+	visible := b.state.visibleSequenceElementOperations(element)
+	predecessors := make([]OpID, 0, len(visible))
+
+	for _, operation := range visible {
+		predecessors = append(predecessors, operation.ID)
+	}
+
+	return predecessors
 }
 
 func (b *Backend) sequenceOperation(

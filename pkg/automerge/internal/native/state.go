@@ -90,15 +90,13 @@ func NewStateFromDocument(document *Document) (*State, error) {
 	}
 
 	for _, operation := range state.operations {
-		if operation.Action != ActionIncrement {
-			for _, predecessor := range operation.Predecessors {
-				state.superseded[predecessor] = struct{}{}
-			}
-		}
+		state.supersedePredecessors(operation)
 
 		for _, successor := range operation.Successors {
 			successorOperation, ok := state.operations[successor]
-			if !ok || successorOperation.Action != ActionIncrement {
+			if !ok ||
+				successorOperation.Action != ActionIncrement ||
+				!isCounterOperation(operation) {
 				state.superseded[operation.ID] = struct{}{}
 			}
 		}
@@ -147,11 +145,7 @@ func (s *State) ApplyChange(change *Change) error {
 			delete(s.sequenceCache, operation.Object.OpID)
 		}
 
-		if operation.Action != ActionIncrement {
-			for _, predecessor := range operation.Predecessors {
-				s.superseded[predecessor] = struct{}{}
-			}
-		}
+		s.supersedePredecessors(operation)
 	}
 
 	s.changes[*change.Hash] = change
@@ -256,6 +250,29 @@ func (s *State) visibleMapObjectValue(
 	return result, found
 }
 
+func isCounterOperation(operation Operation) bool {
+	return operation.Action == ActionSet &&
+		operation.Value != nil &&
+		operation.Value.Type == ScalarCounter
+}
+
+// supersedePredecessors marks the predecessors overwritten by operation. A
+// regular operation supersedes all of its predecessors. An increment supersedes
+// only its non-counter predecessors: incrementing a counter keeps it visible,
+// but an increment that also references a conflicting non-counter value deletes
+// that value, matching upstream Rust.
+func (s *State) supersedePredecessors(operation Operation) {
+	for _, predecessor := range operation.Predecessors {
+		if operation.Action == ActionIncrement {
+			if pred, ok := s.operations[predecessor]; ok && isCounterOperation(pred) {
+				continue
+			}
+		}
+
+		s.superseded[predecessor] = struct{}{}
+	}
+}
+
 func (s *State) scalarValue(operation Operation) (Scalar, bool) {
 	if operation.Action != ActionSet || operation.Value == nil {
 		return Scalar{}, false
@@ -315,6 +332,7 @@ func (s *State) visibleMapObjectOperations(
 			operation.Key.Property == nil ||
 			*operation.Key.Property != property ||
 			operation.Action == ActionDelete ||
+			operation.Action == ActionIncrement ||
 			s.isSuperseded(operation.ID) {
 			continue
 		}
@@ -491,6 +509,49 @@ func (s *State) sequenceValues(object OpID) []sequenceValue {
 	}
 
 	return values
+}
+
+// visibleSequenceElementOperations returns every visible value operation whose
+// list element is the given insertion, in ascending operation-ID order. This is
+// the conflict set that a subsequent put, delete, or increment must reference as
+// its predecessors, matching upstream Rust which references all visible ops.
+func (s *State) visibleSequenceElementOperations(element OpID) []Operation {
+	var result []Operation
+
+	if insertion, ok := s.operations[element]; ok && !s.isSuperseded(insertion.ID) {
+		result = append(result, insertion)
+	}
+
+	for _, operation := range s.operations {
+		if operation.Insert ||
+			operation.Action == ActionDelete ||
+			operation.Action == ActionIncrement ||
+			operation.Key.Element == nil ||
+			*operation.Key.Element != element ||
+			s.isSuperseded(operation.ID) {
+			continue
+		}
+
+		result = append(result, operation)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].ID.Compare(result[j].ID) < 0
+	})
+
+	return result
+}
+
+// sequenceConflicts returns every visible value operation at the given visible
+// list index, i.e. the conflict set that get_all(index) exposes. The boolean is
+// false when the index is out of range.
+func (s *State) sequenceConflicts(object OpID, index uint64) ([]Operation, bool) {
+	values := s.sequenceValues(object)
+	if index >= uint64(len(values)) {
+		return nil, false
+	}
+
+	return s.visibleSequenceElementOperations(values[index].Element), true
 }
 
 func (s *State) RichTextSpans(object OpID) ([]RichSpan, error) {
@@ -877,11 +938,7 @@ func (s *State) applyPending(operations []Operation) error {
 			delete(s.sequenceCache, operation.Object.OpID)
 		}
 
-		if operation.Action != ActionIncrement {
-			for _, predecessor := range operation.Predecessors {
-				s.superseded[predecessor] = struct{}{}
-			}
-		}
+		s.supersedePredecessors(operation)
 	}
 
 	return nil

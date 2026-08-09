@@ -213,6 +213,32 @@ func (o *Object) Scalars(ctx context.Context, key string) ([]Scalar, error) {
 	return values, nil
 }
 
+// ScalarsAt returns every concurrent scalar value at a list index.
+func (o *Object) ScalarsAt(ctx context.Context, index uint64) ([]Scalar, error) {
+	o.document.mu.Lock()
+	defer o.document.mu.Unlock()
+
+	if o.document.closed {
+		return nil, ErrClosed
+	}
+
+	encoded, err := o.document.backend.GetAllScalarsAt(
+		ctx,
+		o.handle,
+		index,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get Automerge sequence scalar conflicts: %w", err)
+	}
+
+	values, err := decodeScalarWires(encoded)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode Automerge sequence scalar conflicts: %w", err)
+	}
+
+	return values, nil
+}
+
 // InsertScalar inserts a typed scalar at a list index.
 func (o *Object) InsertScalar(
 	ctx context.Context,

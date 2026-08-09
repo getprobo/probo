@@ -421,6 +421,28 @@ func (b *Backend) GetAllScalars(
 	return output, nil
 }
 
+func (b *Backend) GetAllScalarsAt(
+	ctx context.Context,
+	object Object,
+	index uint64,
+) ([]byte, error) {
+	if err := b.run(
+		ctx,
+		"am_get_all_scalars_at",
+		uint64(object),
+		index,
+	); err != nil {
+		return nil, fmt.Errorf("cannot get reference sequence scalar conflicts: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference sequence scalar conflicts: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) PutObject(
 	ctx context.Context,
 	object Object,

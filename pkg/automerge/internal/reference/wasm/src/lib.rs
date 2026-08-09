@@ -585,6 +585,46 @@ pub extern "C" fn am_get_all_scalars(object_handle: u32, key_pointer: u32, key_l
 }
 
 #[no_mangle]
+pub extern "C" fn am_get_all_scalars_at(object_handle: u32, index: u64) -> i32 {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let object = match state.object(object_handle) {
+            Ok(object) => object,
+            Err(error) => return state.fail(error),
+        };
+        let index = match usize::try_from(index) {
+            Ok(index) => index,
+            Err(_) => return state.fail("sequence index exceeds platform capacity"),
+        };
+        match state.doc.get_all(&object, index) {
+            Ok(values) => {
+                if values.is_empty() {
+                    return state.fail("sequence value does not exist");
+                }
+                let encoded = values
+                    .iter()
+                    .filter_map(|(value, _)| match value {
+                        Value::Scalar(value) => Some(scalar_json(value.as_ref())),
+                        Value::Object(_) => None,
+                    })
+                    .collect::<Result<Vec<_>, _>>();
+                match encoded.and_then(|values| {
+                    serde_json::to_vec(&values).map_err(|error| error.to_string())
+                }) {
+                    Ok(encoded) => {
+                        state.output = encoded;
+                        state.error.clear();
+                        0
+                    }
+                    Err(error) => state.fail(error),
+                }
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn am_put_object(
     object_handle: u32,
     key_pointer: u32,
