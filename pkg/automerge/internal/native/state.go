@@ -478,7 +478,7 @@ func (s *State) sequenceElements(object OpID) []Operation {
 			continue
 		}
 
-		if operation, ok := s.operations[id]; ok {
+		if operation, ok := s.operations[id]; ok && operation.Action != ActionMark {
 			operations = append(operations, operation)
 		}
 	}
@@ -494,7 +494,7 @@ func (s *State) sequenceAll(object OpID) []Operation {
 	operations := make([]Operation, 0, len(order))
 
 	for _, id := range order {
-		if operation, ok := s.operations[id]; ok {
+		if operation, ok := s.operations[id]; ok && operation.Action != ActionMark {
 			operations = append(operations, operation)
 		}
 	}
@@ -515,10 +515,11 @@ func (s *State) insertOrder(object OpID) []OpID {
 	var head []Operation
 
 	for _, operation := range s.operations {
+		// Mark begin and end operations occupy positions in the sequence so
+		// insertions can anchor relative to them; element views filter them out.
 		if operation.Object.IsRoot ||
 			operation.Object.OpID != object ||
-			!operation.Insert ||
-			operation.Action == ActionMark {
+			!operation.Insert {
 			continue
 		}
 
@@ -558,9 +559,7 @@ func (s *State) insertOrder(object OpID) []OpID {
 // anchor. If the object's order has not been cached yet the splice is skipped
 // and the order is rebuilt on the next read.
 func (s *State) spliceInsertOrder(operation Operation) {
-	if !operation.Insert ||
-		operation.Action == ActionMark ||
-		operation.Object.IsRoot {
+	if !operation.Insert || operation.Object.IsRoot {
 		return
 	}
 
@@ -823,6 +822,9 @@ type richTextMark struct {
 	name   string
 	value  any
 	scalar *Scalar
+	// id is the mark's begin operation, which orders precedence: a later mark
+	// (an unmark, or a new value) overrides an earlier one where they overlap.
+	id OpID
 }
 
 // MarkRange is one active mark over a UTF-16 range of a text object.
@@ -833,95 +835,163 @@ type MarkRange struct {
 	Value *Scalar
 }
 
-func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark {
-	positions := make(map[OpID]int, len(elements))
-	for i, element := range elements {
-		positions[element.ID] = i
-	}
+// insertAnchorKey adjusts an insertion anchor so a new element lands on the
+// correct side of the mark boundaries that follow it, mirroring the reference's
+// insert query. Scanning forward from the anchor, an expanding mark begin and a
+// non-expanding mark end each offer a position after themselves, so the new
+// element joins the expanding range. Reaching the end of a mark whose begin
+// offered a position withdraws that offer, because a begin/end pair with no
+// visible content between them must not capture the insertion. The scan stops at
+// the first visible element; tombstones are stepped over.
+func (s *State) insertAnchorKey(object OpID, base Key) Key {
+	order := s.insertOrder(object)
 
-	markOperations := make([]Operation, 0)
+	start := 0
 
-	for _, operation := range s.operations {
-		if !operation.Object.IsRoot &&
-			operation.Object.OpID == object &&
-			operation.Action == ActionMark &&
-			!s.isSuperseded(operation.ID) {
-			markOperations = append(markOperations, operation)
+	if !base.IsHead {
+		if base.Element == nil {
+			return base
+		}
+
+		found := false
+
+		for i, id := range order {
+			if id == *base.Element {
+				start = i + 1
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			return base
 		}
 	}
 
-	sort.Slice(markOperations, func(i, j int) bool {
-		return markOperations[i].ID.Compare(markOperations[j].ID) < 0
+	type candidate struct {
+		key Key
+		id  *OpID
+	}
+
+	candidates := []candidate{{key: base}}
+
+	for i := start; i < len(order); i++ {
+		operation, ok := s.operations[order[i]]
+		if !ok {
+			continue
+		}
+
+		if operation.Action == ActionMark {
+			expand := operation.MarkExpand != nil && *operation.MarkExpand
+			isEnd := operation.MarkName == nil
+			withdrawn := false
+
+			if isEnd {
+				begin := OpID{Actor: operation.ID.Actor, Counter: operation.ID.Counter - 1}
+
+				for index := range candidates {
+					if candidates[index].id != nil && *candidates[index].id == begin {
+						candidates = candidates[:index]
+						withdrawn = true
+
+						break
+					}
+				}
+			}
+
+			if !withdrawn && ((!isEnd && expand) || (isEnd && !expand)) {
+				candidates = append(candidates, candidate{
+					key: Key{Element: new(operation.ID)},
+					id:  new(operation.ID),
+				})
+			}
+
+			continue
+		}
+
+		if !s.isSuperseded(operation.ID) && len(candidates) > 0 {
+			break
+		}
+	}
+
+	if len(candidates) == 0 {
+		return base
+	}
+
+	return candidates[len(candidates)-1].key
+}
+
+// richTextMarks computes the active mark ranges of a text object by walking the
+// sequence order and running a mark state machine, mirroring the reference. A
+// mark begin opens a range at the current visible index and its matching end
+// closes it. Because mark operations hold positions in the sequence, text
+// inserted at an expanding boundary sits inside the range and keeps the mark
+// even after the originally marked content is deleted.
+func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark {
+	order := s.insertOrder(object)
+
+	type openMark struct {
+		start     int
+		operation Operation
+	}
+
+	open := make(map[OpID]openMark)
+	marks := make([]richTextMark, 0)
+	index := 0
+
+	closeMark := func(begin openMark, end int) {
+		if end <= begin.start || begin.operation.MarkName == nil {
+			return
+		}
+
+		marks = append(marks, richTextMark{
+			start:  begin.start,
+			end:    end,
+			name:   *begin.operation.MarkName,
+			value:  scalarMaterializedValue(begin.operation.Value),
+			scalar: begin.operation.Value,
+			id:     begin.operation.ID,
+		})
+	}
+
+	for _, id := range order {
+		operation, ok := s.operations[id]
+		if !ok || s.isSuperseded(id) {
+			continue
+		}
+
+		if operation.Action != ActionMark {
+			index++
+
+			continue
+		}
+
+		if operation.MarkName != nil {
+			open[operation.ID] = openMark{start: index, operation: operation}
+
+			continue
+		}
+
+		begin := OpID{Actor: operation.ID.Actor, Counter: operation.ID.Counter - 1}
+		if opened, ok := open[begin]; ok {
+			delete(open, begin)
+			closeMark(opened, index)
+		}
+	}
+
+	// A mark left open covers nothing. This is how a zero-length mark presents
+	// itself: its begin and end operations share an anchor, and because sibling
+	// insertions are ordered by descending operation ID the end is visited
+	// first, so the begin never pairs with it.
+
+	// Precedence follows creation order, so a later unmark or replacement value
+	// wins over an earlier mark where the two overlap.
+	sort.SliceStable(marks, func(i, j int) bool {
+		return marks[i].id.Compare(marks[j].id) < 0
 	})
 
-	byID := make(map[OpID]Operation, len(markOperations))
-	for _, operation := range markOperations {
-		byID[operation.ID] = operation
-	}
-
-	marks := make([]richTextMark, 0, len(markOperations)/2)
-	for _, begin := range markOperations {
-		if begin.MarkName == nil {
-			continue
-		}
-
-		end, ok := byID[OpID{
-			Actor:   begin.ID.Actor,
-			Counter: begin.ID.Counter + 1,
-		}]
-		if !ok || end.MarkName != nil {
-			continue
-		}
-
-		startPosition, startOK := s.markAnchorPosition(
-			object,
-			begin.Key,
-			begin.ID,
-			true,
-			begin.MarkExpand != nil && *begin.MarkExpand,
-			positions,
-			elements,
-			true,
-			make(map[OpID]struct{}),
-		)
-
-		endPosition, endOK := s.markAnchorPosition(
-			object,
-			end.Key,
-			end.ID,
-			false,
-			end.MarkExpand != nil && *end.MarkExpand,
-			positions,
-			elements,
-			true,
-			make(map[OpID]struct{}),
-		)
-		if !startOK || !endOK || startPosition >= endPosition {
-			continue
-		}
-
-		// If a mark started at the document head and every element that
-		// existed in its original range has since been deleted, replacement
-		// text inserted at the head must not inherit the mark. A visible
-		// left-hand anchor (or any surviving original marked element) keeps
-		// boundary expansion active; this distinction matches Rust's splice
-		// behavior when replacing some marked text versus all of it.
-		if begin.Key.IsHead &&
-			!s.markRangeHasSurvivingElement(object, begin, end) {
-			continue
-		}
-
-		marks = append(
-			marks,
-			richTextMark{
-				start:  startPosition,
-				end:    endPosition,
-				name:   *begin.MarkName,
-				value:  scalarMaterializedValue(begin.Value),
-				scalar: begin.Value,
-			},
-		)
-	}
+	_ = elements
 
 	return marks
 }

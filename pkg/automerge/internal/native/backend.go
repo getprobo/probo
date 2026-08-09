@@ -1202,23 +1202,23 @@ func (b *Backend) SpliceText(
 		return err
 	}
 
-	for _, target := range sequence[start:end] {
-		operation := Operation{
-			ID:           b.nextOperationID(),
-			Object:       object,
-			Key:          Key{Element: new(target.ID)},
-			Action:       ActionDelete,
-			Predecessors: []OpID{target.ID},
-		}
-		if err := b.addPending(operation); err != nil {
-			return err
-		}
-	}
+	// The reference resolves the insertion anchor and inserts before deleting,
+	// so replacement text is positioned against the pre-deletion sequence. That
+	// ordering decides whether text replacing a marked run sits inside or
+	// outside an expanding mark, so it must be preserved here.
+	targets := make([]Operation, end-start)
+	copy(targets, sequence[start:end])
 
-	for _, character := range value {
+	for offset, character := range []rune(value) {
 		key := Key{IsHead: previous == nil}
 		if previous != nil {
 			key.Element = new(*previous)
+		}
+
+		// Only the first character resolves its anchor against neighbouring
+		// mark boundaries; the rest chain onto the character before them.
+		if offset == 0 {
+			key = b.state.insertAnchorKey(object.OpID, key)
 		}
 
 		operation := Operation{
@@ -1234,6 +1234,19 @@ func (b *Backend) SpliceText(
 		}
 
 		previous = new(operation.ID)
+	}
+
+	for _, target := range targets {
+		operation := Operation{
+			ID:           b.nextOperationID(),
+			Object:       object,
+			Key:          Key{Element: new(target.ID)},
+			Action:       ActionDelete,
+			Predecessors: []OpID{target.ID},
+		}
+		if err := b.addPending(operation); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -1823,17 +1836,16 @@ func (b *Backend) MarkText(
 		return err
 	}
 
-	startKey, err := b.textMarkKey(object, start)
-	if err != nil {
-		return err
-	}
-
-	endKey, err := b.textMarkKey(object, end)
-	if err != nil {
-		return err
-	}
-
 	expandBefore, expandAfter, err := markExpansion(expand)
+	if err != nil {
+		return err
+	}
+
+	// Mark boundaries are inserted like any other element, so they resolve their
+	// anchors through the same query. The end anchor is resolved after the begin
+	// operation exists, matching the reference, because the begin can itself
+	// offer a position that the end must take into account.
+	startKey, err := b.textMarkKey(object, start)
 	if err != nil {
 		return err
 	}
@@ -1841,7 +1853,7 @@ func (b *Backend) MarkText(
 	begin := Operation{
 		ID:         b.nextOperationID(),
 		Object:     object,
-		Key:        startKey,
+		Key:        b.state.insertAnchorKey(object.OpID, startKey),
 		Insert:     true,
 		Action:     ActionMark,
 		Value:      &value,
@@ -1852,10 +1864,15 @@ func (b *Backend) MarkText(
 		return err
 	}
 
+	endKey, err := b.textMarkKey(object, end)
+	if err != nil {
+		return err
+	}
+
 	endOperation := Operation{
 		ID:         b.nextOperationID(),
 		Object:     object,
-		Key:        endKey,
+		Key:        b.state.insertAnchorKey(object.OpID, endKey),
 		Insert:     true,
 		Action:     ActionMark,
 		Value:      &Scalar{Type: ScalarNull},
@@ -4439,6 +4456,8 @@ func (b *Backend) insertSequenceOperation(
 	if element > 0 {
 		key.Element = new(sequence[element-1].Element)
 	}
+
+	key = b.state.insertAnchorKey(object.OpID, key)
 
 	operation := Operation{
 		ID:     b.nextOperationID(),

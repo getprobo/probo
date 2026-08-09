@@ -103,61 +103,34 @@ language-specific rather than interop-required.
 
 ## Known native defects (found by parity reproduction, fix pending)
 
-**Mark boundary after emptying an anchored range (insert-time anchoring).**
-Reproduced by the randomized `TestRustText_MarksAreOkay` generator while
-cross-checking mark *values* against the reference (an assertion stronger than
-upstream `marks_are_okay`, which only checks span consolidation and text). Two
-minimal cases diverge because native chooses list-insertion keys without
-consulting mark begin/end ops and their `expand` flag, whereas Rust's insert
-query (`op_set2/op_set/insert.rs`) positions a new element relative to
-surrounding `MarkBegin(expand.before())`/`MarkEnd(expand.after())` ops:
+**Mark boundaries: fixed for the reported case, deeper cases still diverge.**
+The originally reported defect is fixed. Mark begin and end operations now hold
+positions in the sequence order, insertions (including the mark boundaries
+themselves) resolve their anchors through a port of the reference's insert
+query, and spans are produced by a mark state machine walking that order. Text
+inserted at an expanding boundary now keeps its mark after the originally marked
+content is deleted, and text inserted after the whole marked range was deleted
+still does not gain the mark.
 
-- Text inserted at a mark's head boundary *while marked content is still
-  visible* must inherit the expanding mark even after that content is later
-  deleted (native currently drops the mark).
-- Text inserted at the head *after the entire marked range has been deleted*
-  must not inherit the mark (native currently applies it).
+Two behaviours were essential to get right and are easy to regress:
 
-Both cases still satisfy the upstream `marks_are_okay` invariants (spans stay
-consolidated and reproduce the text), so `rust/tests/text.rs::marks_are_okay`
-is covered; the value-level divergence is tracked here.
+- a splice resolves its insertion anchor and inserts *before* deleting, matching
+  the reference, so replacement text is positioned against the pre-deletion
+  sequence and lands inside an expanding mark;
+- mark precedence follows creation order, so a later unmark overrides an earlier
+  mark where they overlap, and a mark left open covers nothing (a zero-length
+  mark presents this way because its begin and end share an anchor and sibling
+  insertions are ordered by descending operation ID, so the end is visited
+  first).
 
-Minimal reproduction of the first case:
-
-1. splice `"B"` into an empty text object;
-2. mark `[0,1)` with `ExpandMark::Both`;
-3. splice `"a"` at index 0, giving `"aB"` — both engines correctly report the
-   whole span as marked, so boundary expansion at insertion time already works;
-4. delete `"B"`. The reference still reports `"a"` as marked; native drops the
-   mark.
-
-Native cannot distinguish this from the case that must *not* keep the mark
-(delete all marked content first, then insert at the head) because both
-insertions are anchored at the head with identical keys. The discriminating
-information is which side of the mark's begin operation the insertion lands on,
-which the reference records in the insertion's key and native does not.
-
-A fix therefore needs three coordinated changes:
-
-1. mark begin and end operations must occupy positions in the RGA order (they
-   are already `insert` operations with keys, so they slot into the tree once
-   the order stops filtering them out) while element views keep filtering them;
-2. insertions must anchor relative to those operations using the reference's
-   expand-aware insert query (`op_set2/op_set/insert.rs`), where an expanding
-   begin and a non-expanding end each offer a position after themselves and
-   reaching the end of a begin that offered a position cancels that offer;
-3. spans must be computed by running a mark state machine over that order
-   rather than by resolving anchor positions.
-
-An attempt at all three is recorded here because the failure mode is
-instructive: getting step 2 wrong loses marks entirely rather than degrading
-gracefully. In particular the cancellation rule interacts with a splice that
-replaces marked content — the deleted element sits between the begin and end
-operations, so a naive implementation cancels the candidate and anchors the
-replacement outside the mark, which regressed roughly two dozen mark and span
-tests. The next attempt should port the reference's insert query and span
-iterator faithfully rather than approximating them, and can use the randomized
-differential stress tests and `FuzzDifferentialOperations` as guardrails.
+Randomized differential testing that compares mark *values* against the
+reference (a stronger assertion than upstream `marks_are_okay`, which only
+checks span consolidation and text) now survives roughly five times as many
+generated scenarios as before the fix, but still finds divergences in deeper
+combinations of overlapping marks, blocks, and deletions. Those remain to be
+characterized; `TestRustText_MarksAreOkay` asserts the upstream invariants on
+both engines, and the value-level differential can be re-enabled there to
+reproduce the remaining cases.
 
 **Independent re-encoding of concurrent edits (determinism, not interop).**
 The randomized `TestDifferentialStress_ConcurrentMerge` harness applies the same
