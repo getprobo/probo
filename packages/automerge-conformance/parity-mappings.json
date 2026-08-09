@@ -2012,5 +2012,15 @@
       "TestConformance_NativePreservesJavaScriptDataModel"
     ],
     "rationale": "A JavaScript Date stored in a list round-trips through the native Go engine and is re-read identically by JavaScript."
+  },
+  {
+    "source": "javascript",
+    "file": "cursors.ts",
+    "name": "should allow dates from an existing document to be used in another document",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_DatesFlowBetweenDocuments"
+    ],
+    "rationale": "A JavaScript Date read from one document as a timestamp scalar is written into another document through the native engine and re-read as a Date by JavaScript, in both a map and a list."
   }
 ]

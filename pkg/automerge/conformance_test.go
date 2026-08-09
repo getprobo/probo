@@ -29,6 +29,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -83,6 +84,73 @@ func runOracle(t *testing.T, request oracleRequest) oracleResponse {
 	require.NoError(t, json.Unmarshal(output, &response))
 
 	return response
+}
+
+func TestConformance_DatesFlowBetweenDocuments(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	sourceActor := actor(20)
+	created := runOracle(
+		t,
+		oracleRequest{
+			Action:    "createTimestamps",
+			Actor:     hex.EncodeToString(sourceActor[:]),
+			Message:   "dates",
+			Timestamp: commitTime.Unix(),
+		},
+	)
+
+	createdData, ok := created.Data.(map[string]any)
+	require.True(t, ok)
+	iso, ok := createdData["iso"].(string)
+	require.True(t, ok)
+
+	source, err := base64.StdEncoding.DecodeString(created.Document)
+	require.NoError(t, err)
+	sourceDocument, err := automerge.Load(ctx, source, actor(21))
+	require.NoError(t, err)
+	closeDocument(t, sourceDocument)
+
+	when, err := sourceDocument.Root().Scalar(ctx, "when")
+	require.NoError(t, err)
+	require.Equal(t, automerge.ScalarTypeTimestamp, when.Type)
+
+	list, err := sourceDocument.Root().Object(ctx, "list")
+	require.NoError(t, err)
+	listWhen, err := list.ScalarAt(ctx, 0)
+	require.NoError(t, err)
+	require.Equal(t, automerge.ScalarTypeTimestamp, listWhen.Type)
+	require.Equal(t, when.Int, listWhen.Int)
+
+	// Reuse the timestamps read from the source document in a new document.
+	target, err := automerge.New(ctx, actor(22))
+	require.NoError(t, err)
+	closeDocument(t, target)
+	require.NoError(t, target.Root().PutScalar(ctx, "when", when))
+	targetList, err := target.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+	require.NoError(t, err)
+	require.NoError(t, targetList.InsertScalar(ctx, 0, listWhen))
+	_, err = target.Commit(ctx, "reuse dates", commitTime.Add(time.Second))
+	require.NoError(t, err)
+	saved, err := target.Save(ctx)
+	require.NoError(t, err)
+
+	read := runOracle(
+		t,
+		oracleRequest{
+			Action:   "readTimestamps",
+			Document: base64.StdEncoding.EncodeToString(saved),
+		},
+	)
+
+	readData, ok := read.Data.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, true, readData["whenIsDate"])
+	assert.Equal(t, iso, readData["whenISO"])
+	assert.Equal(t, true, readData["listIsDate"])
+	assert.Equal(t, iso, readData["listISO"])
 }
 
 func TestConformance_JavaScriptLoadsGoDocument(t *testing.T) {

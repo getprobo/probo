@@ -415,6 +415,45 @@ switch (request.action) {
     );
     break;
   }
+  case "createTimestamps": {
+    let document = Automerge.init({ actor: request.actor });
+    const when = new Date("2026-08-08T12:34:56.000Z");
+    document = Automerge.change(
+      document,
+      { message: request.message, time: request.timestamp },
+      draft => {
+        draft.when = when;
+        draft.list = [when];
+      },
+    );
+    process.stdout.write(
+      JSON.stringify({
+        data: { iso: when.toISOString() },
+        document: Buffer.from(Automerge.save(document)).toString("base64"),
+        heads: Automerge.getHeads(document),
+      }),
+    );
+    break;
+  }
+  case "readTimestamps": {
+    const document = Automerge.load(Buffer.from(request.document, "base64"));
+    process.stdout.write(
+      JSON.stringify({
+        data: {
+          whenIsDate: document.when instanceof Date,
+          whenISO:
+            document.when instanceof Date ? document.when.toISOString() : null,
+          listIsDate: document.list[0] instanceof Date,
+          listISO:
+            document.list[0] instanceof Date
+              ? document.list[0].toISOString()
+              : null,
+        },
+        heads: Automerge.getHeads(document),
+      }),
+    );
+    break;
+  }
   default:
     throw new Error(`unsupported action: ${request.action}`);
 }

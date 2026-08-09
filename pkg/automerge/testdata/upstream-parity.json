@@ -1118,10 +1118,12 @@
       "file": "cursors.ts",
       "line": 122,
       "name": "should allow dates from an existing document to be used in another document",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": ""
+      "localTests": [
+        "TestConformance_DatesFlowBetweenDocuments"
+      ],
+      "rationale": "A JavaScript Date read from one document as a timestamp scalar is written into another document through the native engine and re-read as a Date by JavaScript, in both a map and a list."
     },
     {
       "id": "javascript:cursors.ts:135:getCursorPosition should work",
