@@ -57,6 +57,7 @@ type nativeSyncState struct {
 	Requested         [][32]byte `json:"requested"`
 	NeedsAck          bool       `json:"needsAck"`
 	InFlight          bool       `json:"inFlight"`
+	Sent              bool       `json:"sent"`
 	ReadOnly          bool       `json:"readOnly"`
 	PeerReadOnly      bool       `json:"peerReadOnly"`
 	PeerModeChanged   bool       `json:"peerModeChanged"`
@@ -1968,7 +1969,21 @@ func (b *Backend) GenerateSyncMessage(
 		return nil, false, err
 	}
 
-	if state.InFlight && !state.ModeChanged && !state.NeedsReset {
+	heads, err := b.Heads(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// A message is only truly in flight while we have nothing new to say. New
+	// local changes (heads advanced past the last sent frontier) must be sent
+	// even while a previous message awaits acknowledgement, matching upstream
+	// Rust, which never withholds local changes during synchronization.
+	if state.InFlight &&
+		!state.ModeChanged &&
+		!state.NeedsReset &&
+		len(state.Requested) == 0 &&
+		len(state.Need) == 0 &&
+		equalHashes(heads, state.LastSentHeads) {
 		return nil, false, nil
 	}
 
@@ -1976,32 +1991,39 @@ func (b *Backend) GenerateSyncMessage(
 		state.InFlight = false
 	}
 
-	heads, err := b.Heads(ctx)
-	if err != nil {
-		return nil, false, err
-	}
+	// The first message for a sync state is always sent so the peer learns our
+	// heads and capabilities, matching upstream Rust's first_response_is_some
+	// behavior. Subsequent messages may be suppressed when nothing is pending.
+	if state.Sent {
+		if state.PeerReadOnly &&
+			!state.PeerModeChanged &&
+			!state.ModeChanged &&
+			!state.NeedsReset &&
+			!state.NeedsAck &&
+			len(state.Requested) == 0 &&
+			len(state.Need) == 0 &&
+			equalHashes(heads, state.LastSentHeads) {
+			return nil, false, nil
+		}
 
-	if state.PeerReadOnly &&
-		!state.PeerModeChanged &&
-		!state.ModeChanged &&
-		!state.NeedsReset &&
-		!state.NeedsAck {
-		return nil, false, nil
-	}
+		if state.ReadOnly &&
+			!state.ModeChanged &&
+			!state.NeedsReset &&
+			!state.NeedsAck &&
+			len(state.Requested) == 0 &&
+			len(state.Need) == 0 &&
+			equalHashes(heads, state.LastSentHeads) {
+			return nil, false, nil
+		}
 
-	if state.ReadOnly &&
-		!state.ModeChanged &&
-		!state.NeedsReset &&
-		!state.NeedsAck &&
-		equalHashes(heads, state.LastSentHeads) {
-		return nil, false, nil
-	}
-
-	if !state.NeedsAck &&
-		!state.ModeChanged &&
-		!state.NeedsReset &&
-		equalHashes(heads, state.RemoteHeads) {
-		return nil, false, nil
+		if !state.NeedsAck &&
+			!state.ModeChanged &&
+			!state.NeedsReset &&
+			len(state.Requested) == 0 &&
+			len(state.Need) == 0 &&
+			equalHashes(heads, state.RemoteHeads) {
+			return nil, false, nil
+		}
 	}
 
 	flags := byte(syncFlagSupportsReset)
@@ -2071,6 +2093,7 @@ func (b *Backend) GenerateSyncMessage(
 	}
 
 	state.NeedsAck = false
+	state.Sent = true
 	state.LastSentHeads = append(state.LastSentHeads[:0], heads...)
 	state.PeerModeChanged = false
 	state.ModeChanged = false
