@@ -80,6 +80,7 @@ type (
 		Save(context.Context) ([]byte, error)
 		Stats(context.Context) ([]byte, error)
 		CurrentState(context.Context) ([]byte, error)
+		Diff(context.Context, [][32]byte, [][32]byte) ([]byte, error)
 		SaveIncremental(context.Context) ([]byte, error)
 		LoadIncremental(context.Context, []byte) (uint64, error)
 		SetActor(context.Context, []byte) error

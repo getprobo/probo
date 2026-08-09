@@ -1301,6 +1301,42 @@ func (b *Backend) CurrentState(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
+func (b *Backend) Diff(
+	ctx context.Context,
+	before [][32]byte,
+	after [][32]byte,
+) ([]byte, error) {
+	beforePointer, beforeLength, err := b.write(ctx, flattenHashes(before))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write diff before heads: %w", err)
+	}
+	defer b.free(ctx, beforePointer, beforeLength)
+
+	afterPointer, afterLength, err := b.write(ctx, flattenHashes(after))
+	if err != nil {
+		return nil, fmt.Errorf("cannot write diff after heads: %w", err)
+	}
+	defer b.free(ctx, afterPointer, afterLength)
+
+	if err := b.run(
+		ctx,
+		"am_diff",
+		uint64(beforePointer),
+		uint64(beforeLength),
+		uint64(afterPointer),
+		uint64(afterLength),
+	); err != nil {
+		return nil, fmt.Errorf("cannot read reference diff: %w", err)
+	}
+
+	output, err := b.output(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot copy reference diff: %w", err)
+	}
+
+	return output, nil
+}
+
 func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	if err := b.run(ctx, "am_heads"); err != nil {
 		return nil, fmt.Errorf("cannot read reference heads: %w", err)

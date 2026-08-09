@@ -1795,6 +1795,36 @@ fn patches_to_output(patches: &[Patch]) -> Result<Vec<u8>, String> {
 }
 
 #[no_mangle]
+pub extern "C" fn am_diff(
+    before_pointer: u32,
+    before_length: u32,
+    after_pointer: u32,
+    after_length: u32,
+) -> i32 {
+    let before = match input_heads(before_pointer, before_length) {
+        Ok(heads) => heads,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+    let after = match input_heads(after_pointer, after_length) {
+        Ok(heads) => heads,
+        Err(error) => return STATE.with(|state| state.borrow_mut().fail(error)),
+    };
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        let patches = state.doc.diff(&before, &after);
+        match patches_to_output(&patches) {
+            Ok(output) => {
+                state.output = output;
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
+}
+
+#[no_mangle]
 pub extern "C" fn am_current_state() -> i32 {
     STATE.with(|state| {
         let mut state = state.borrow_mut();

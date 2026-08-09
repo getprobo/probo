@@ -128,6 +128,28 @@ func (d *Document) CurrentState(ctx context.Context) ([]Patch, error) {
 	return decodePatches(data)
 }
 
+// Diff returns the patches that transform the document state at the before
+// heads into the state at the after heads.
+func (d *Document) Diff(
+	ctx context.Context,
+	before []Hash,
+	after []Hash,
+) ([]Patch, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return nil, ErrClosed
+	}
+
+	data, err := d.backend.Diff(ctx, backendHashes(before), backendHashes(after))
+	if err != nil {
+		return nil, fmt.Errorf("cannot diff Automerge document: %w", err)
+	}
+
+	return decodePatches(data)
+}
+
 func decodePatches(data []byte) ([]Patch, error) {
 	var encoded []encodedPatch
 	if err := json.Unmarshal(data, &encoded); err != nil {
