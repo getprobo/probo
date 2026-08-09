@@ -152,6 +152,51 @@ func putInt(
 	require.NoError(t, err)
 }
 
+// TestRustSync_FirstMessageNoHeadsSendsWholeDoc reproduces
+// if_first_message_has_no_heads_and_supports_v2_message_send_whole_doc: when a
+// peer starts empty, the other peer's first response carries the entire document
+// so the empty peer converges after a single response.
+func TestRustSync_FirstMessageNoHeadsSendsWholeDoc(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			empty, err := engine.open(ctx, actor(1))
+			require.NoError(t, err)
+			closeDocument(t, empty)
+
+			populated, err := engine.open(ctx, actor(2))
+			require.NoError(t, err)
+			closeDocument(t, populated)
+			putRoot(t, ctx, populated, "foo", "bar", "seed", commitTime)
+
+			emptyState := readWriteSyncState(t, ctx, empty)
+			populatedState := readWriteSyncState(t, ctx, populated)
+
+			request, ok, err := emptyState.GenerateMessage(ctx)
+			require.NoError(t, err)
+			require.True(t, ok)
+			require.NoError(t, populatedState.ReceiveMessage(ctx, request))
+
+			response, ok, err := populatedState.GenerateMessage(ctx)
+			require.NoError(t, err)
+			require.True(t, ok)
+			require.NoError(t, emptyState.ReceiveMessage(ctx, response))
+
+			assert.True(t, rootHasKey(t, ctx, empty, "foo"),
+				"empty peer should receive the whole document in the first response")
+
+			value, err := empty.Root().Scalar(ctx, "foo")
+			require.NoError(t, err)
+			assert.Equal(t, "bar", value.String)
+		})
+	}
+}
+
 // TestRustSync_BranchingAndMerging reproduces
 // should_handle_lots_of_branching_and_merging: two peers exchange many
 // concurrent changes, a third peer's change is merged into one of them, and a

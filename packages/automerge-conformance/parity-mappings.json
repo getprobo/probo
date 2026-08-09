@@ -1,6 +1,16 @@
 [
   {
     "source": "rust",
+    "file": "src/sync.rs",
+    "name": "if_first_message_has_no_heads_and_supports_v2_message_send_whole_doc",
+    "classification": "covered",
+    "localTests": [
+      "TestRustSync_FirstMessageNoHeadsSendsWholeDoc"
+    ],
+    "rationale": "An empty peer receives the entire document in the first sync response and converges after a single exchange."
+  },
+  {
+    "source": "rust",
     "file": "tests/test.rs",
     "name": "reproduce_clock_cache_bug",
     "classification": "covered",

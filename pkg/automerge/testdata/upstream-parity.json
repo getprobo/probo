@@ -7951,10 +7951,12 @@
       "file": "src/sync.rs",
       "line": 1371,
       "name": "if_first_message_has_no_heads_and_supports_v2_message_send_whole_doc",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustSync_FirstMessageNoHeadsSendsWholeDoc"
+      ],
+      "rationale": "An empty peer receives the entire document in the first sync response and converges after a single exchange.",
       "runtimeName": "sync::tests::if_first_message_has_no_heads_and_supports_v2_message_send_whole_doc"
     },
     {
