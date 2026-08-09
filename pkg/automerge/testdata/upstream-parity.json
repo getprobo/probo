@@ -6906,10 +6906,12 @@
       "file": "tests/test.rs",
       "line": 1629,
       "name": "regression_insert_opid",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_RegressionInsertOpid"
+      ],
+      "rationale": "Interleaved insert-then-overwrite operations round-trip through a cross-engine save/load with every list value preserved and identical heads.",
       "runtimeName": "regression_insert_opid"
     },
     {
@@ -6918,10 +6920,12 @@
       "file": "tests/test.rs",
       "line": 1574,
       "name": "regression_nth_miscount",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_RegressionNthMiscount"
+      ],
+      "rationale": "A 30-element list of nested maps is indexed after insert-then-replace at every position; both engines resolve each element to the expected map and value with identical heads.",
       "runtimeName": "regression_nth_miscount"
     },
     {
@@ -6930,10 +6934,12 @@
       "file": "tests/test.rs",
       "line": 1603,
       "name": "regression_nth_miscount_smaller",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_RegressionNthMiscountSmaller"
+      ],
+      "rationale": "A list spanning several op-tree nodes (B*4 elements) is inserted then overwritten at each index; both engines read back every scalar with identical heads.",
       "runtimeName": "regression_nth_miscount_smaller"
     },
     {
@@ -7020,10 +7026,12 @@
       "file": "tests/test.rs",
       "line": 2040,
       "name": "rollback_with_several_actors",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_RollbackWithSeveralActors"
+      ],
+      "rationale": "Uncommitted edits by a third forked actor are rolled back, leaving the document byte-identical to the forked-from state on both engines.",
       "runtimeName": "rollback_with_several_actors"
     },
     {
@@ -7129,10 +7137,12 @@
       "file": "tests/test.rs",
       "line": 2069,
       "name": "save_with_ops_which_reference_actors_only_via_delete",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRust_SaveWithOpsReferencingActorsOnlyViaDelete"
+      ],
+      "rationale": "A merged delete op references a fork's actor only through successors; the document still saves and reloads cleanly across both engines.",
       "runtimeName": "save_with_ops_which_reference_actors_only_via_delete"
     },
     {

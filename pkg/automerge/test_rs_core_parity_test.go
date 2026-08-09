@@ -1130,6 +1130,323 @@ func TestRust_LoadIncrementalWithCommonHead(t *testing.T) {
 	}
 }
 
+// TestRust_RegressionNthMiscount reproduces regression_nth_miscount.
+func TestRust_RegressionNthMiscount(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	const count = 30
+
+	heads := make(map[string][]string)
+
+	for _, engine := range rustParityEngines() {
+		doc, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, doc)
+		list, err := doc.Root().CreateObject(ctx, "listval", automerge.ObjectTypeList)
+		require.NoError(t, err)
+
+		for index := range count {
+			require.NoError(t, list.InsertScalar(
+				ctx,
+				uint64(index),
+				automerge.Scalar{Type: automerge.ScalarTypeNull},
+			))
+			element, err := list.PutObjectAt(ctx, uint64(index), automerge.ObjectTypeMap)
+			require.NoError(t, err)
+			require.NoError(t, element.PutScalar(
+				ctx,
+				"test",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(index)},
+			))
+		}
+
+		_, err = doc.Commit(ctx, "populate", commitTime)
+		require.NoError(t, err)
+
+		for index := range count {
+			element, err := list.ObjectAt(ctx, uint64(index))
+			require.NoError(t, err)
+			assert.Equal(t, automerge.ObjectTypeMap, element.Type)
+			value, err := element.Scalar(ctx, "test")
+			require.NoError(t, err)
+			assert.Equal(t, int64(index), value.Int)
+		}
+
+		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+	}
+
+	assert.Equal(t, heads["reference"], heads["native"])
+}
+
+// TestRust_RegressionNthMiscountSmaller reproduces
+// regression_nth_miscount_smaller. B is the op-tree node size (16 upstream).
+func TestRust_RegressionNthMiscountSmaller(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	const count = 16 * 4
+
+	heads := make(map[string][]string)
+
+	for _, engine := range rustParityEngines() {
+		doc, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, doc)
+		list, err := doc.Root().CreateObject(ctx, "listval", automerge.ObjectTypeList)
+		require.NoError(t, err)
+
+		for index := range count {
+			require.NoError(t, list.InsertScalar(
+				ctx,
+				uint64(index),
+				automerge.Scalar{Type: automerge.ScalarTypeNull},
+			))
+			require.NoError(t, list.PutScalarAt(
+				ctx,
+				uint64(index),
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(index)},
+			))
+		}
+
+		_, err = doc.Commit(ctx, "populate", commitTime)
+		require.NoError(t, err)
+
+		for index := range count {
+			value, err := list.ScalarAt(ctx, uint64(index))
+			require.NoError(t, err)
+			assert.Equal(t, int64(index), value.Int)
+		}
+
+		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+	}
+
+	assert.Equal(t, heads["reference"], heads["native"])
+}
+
+// TestRust_RegressionInsertOpid reproduces regression_insert_opid: interleaved
+// insert-then-overwrite operations round-trip through a cross-engine reload
+// with every list value preserved.
+func TestRust_RegressionInsertOpid(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	const count = 30
+
+	heads := make(map[string][]string)
+
+	for _, engine := range rustParityEngines() {
+		doc, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, doc)
+		list, err := doc.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		_, err = doc.Commit(ctx, "create list", commitTime)
+		require.NoError(t, err)
+
+		for index := range count + 1 {
+			require.NoError(t, list.InsertScalar(
+				ctx,
+				uint64(index),
+				automerge.Scalar{Type: automerge.ScalarTypeNull},
+			))
+			require.NoError(t, list.PutScalarAt(
+				ctx,
+				uint64(index),
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(index)},
+			))
+		}
+
+		_, err = doc.Commit(ctx, "populate", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		saved, err := doc.Save(ctx)
+		require.NoError(t, err)
+		reloaded, err := engine.load(ctx, saved, actor(2))
+		require.NoError(t, err)
+		closeDocument(t, reloaded)
+		reloadedList, err := reloaded.Root().Object(ctx, "list")
+		require.NoError(t, err)
+
+		for index := range count + 1 {
+			original, err := list.ScalarAt(ctx, uint64(index))
+			require.NoError(t, err)
+			roundTripped, err := reloadedList.ScalarAt(ctx, uint64(index))
+			require.NoError(t, err)
+			assert.Equal(t, int64(index), original.Int)
+			assert.Equal(t, original.Int, roundTripped.Int)
+		}
+
+		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+	}
+
+	assert.Equal(t, heads["reference"], heads["native"])
+}
+
+// TestRust_RollbackWithSeveralActors reproduces rollback_with_several_actors:
+// uncommitted edits by a third actor are discarded, leaving the document
+// byte-identical to the state it was forked from.
+func TestRust_RollbackWithSeveralActors(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc1, err := engine.open(ctx, actor(0xaa))
+			require.NoError(t, err)
+			closeDocument(t, doc1)
+			text1, err := doc1.CreateText(ctx, "text")
+			require.NoError(t, err)
+			require.NoError(t, text1.Splice(
+				ctx,
+				0,
+				0,
+				"the sly fox jumped over the lazy dog",
+			))
+			mapA1, err := doc1.Root().CreateObject(ctx, "map_a", automerge.ObjectTypeMap)
+			require.NoError(t, err)
+			require.NoError(t, mapA1.PutScalar(
+				ctx,
+				"key1",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value1a"},
+			))
+			require.NoError(t, mapA1.PutScalar(
+				ctx,
+				"key2",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value2a"},
+			))
+			_, err = doc1.Commit(ctx, "doc1", commitTime)
+			require.NoError(t, err)
+
+			doc2, err := doc1.Fork(ctx, actor(0xcc))
+			require.NoError(t, err)
+			closeDocument(t, doc2)
+			text2, err := doc2.Text(ctx, "text")
+			require.NoError(t, err)
+			require.NoError(t, text2.Splice(ctx, 8, 3, "monkey"))
+			require.NoError(t, text2.Splice(ctx, 36, 3, "pig"))
+			mapC2, err := doc2.Root().CreateObject(ctx, "map_c", automerge.ObjectTypeMap)
+			require.NoError(t, err)
+			mapA2, err := doc2.Root().Object(ctx, "map_a")
+			require.NoError(t, err)
+			require.NoError(t, mapA2.PutScalar(
+				ctx,
+				"key2",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value2c"},
+			))
+			require.NoError(t, mapA2.PutScalar(
+				ctx,
+				"key3",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value3c"},
+			))
+			require.NoError(t, mapC2.PutScalar(
+				ctx,
+				"key1",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+			))
+			_, err = doc2.Commit(ctx, "doc2", commitTime.Add(time.Second))
+			require.NoError(t, err)
+
+			doc3, err := doc2.Fork(ctx, actor(0xbb))
+			require.NoError(t, err)
+			closeDocument(t, doc3)
+			text3, err := doc3.Text(ctx, "text")
+			require.NoError(t, err)
+			require.NoError(t, text3.Splice(ctx, 8, 5, "zebra"))
+			mapB3, err := doc3.Root().CreateObject(ctx, "map_b", automerge.ObjectTypeMap)
+			require.NoError(t, err)
+			mapA3, err := doc3.Root().Object(ctx, "map_a")
+			require.NoError(t, err)
+			require.NoError(t, mapA3.PutScalar(
+				ctx,
+				"key1",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value3b"},
+			))
+			require.NoError(t, mapA3.PutScalar(
+				ctx,
+				"key3",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value3b"},
+			))
+			require.NoError(t, mapB3.PutScalar(
+				ctx,
+				"key1",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+			))
+
+			_, err = doc3.Rollback(ctx)
+			require.NoError(t, err)
+
+			assert.Equal(t, sortedHeadHex(t, ctx, doc2), sortedHeadHex(t, ctx, doc3))
+
+			doc2Save, err := doc2.Save(ctx)
+			require.NoError(t, err)
+			doc3Save, err := doc3.Save(ctx)
+			require.NoError(t, err)
+			assert.Equal(t, doc2Save, doc3Save)
+		})
+	}
+}
+
+// TestRust_SaveWithOpsReferencingActorsOnlyViaDelete reproduces
+// save_with_ops_which_reference_actors_only_via_delete: a merged delete op
+// references a fork's actor only through successors, and the document must still
+// save and reload.
+func TestRust_SaveWithOpsReferencingActorsOnlyViaDelete(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(engine.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc, err := engine.open(ctx, actor(1))
+			require.NoError(t, err)
+			closeDocument(t, doc)
+			require.NoError(t, doc.Root().PutScalar(
+				ctx,
+				"a",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+			))
+			_, err = doc.Commit(ctx, "put a", commitTime)
+			require.NoError(t, err)
+
+			forked, err := doc.Fork(ctx, actor(2))
+			require.NoError(t, err)
+			closeDocument(t, forked)
+			require.NoError(t, forked.Root().DeleteKey(ctx, "a"))
+			_, err = forked.Commit(ctx, "delete a", commitTime.Add(time.Second))
+			require.NoError(t, err)
+
+			_, err = doc.Merge(ctx, forked)
+			require.NoError(t, err)
+
+			saved, err := doc.Save(ctx)
+			require.NoError(t, err)
+
+			nativeReload, err := automerge.Load(ctx, saved, actor(3))
+			require.NoError(t, err)
+			closeDocument(t, nativeReload)
+
+			referenceReload, err := automerge.LoadReference(ctx, saved, actor(4))
+			require.NoError(t, err)
+			closeDocument(t, referenceReload)
+
+			for _, reloaded := range []*automerge.Document{nativeReload, referenceReload} {
+				length, err := reloaded.Root().Len(ctx)
+				require.NoError(t, err)
+				assert.Zero(t, length)
+			}
+		})
+	}
+}
+
 func syncBothDirections(
 	t *testing.T,
 	ctx context.Context,
