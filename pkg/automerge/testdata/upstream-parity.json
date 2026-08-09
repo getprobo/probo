@@ -6922,10 +6922,12 @@
       "file": "tests/text_encoding.rs",
       "line": 593,
       "name": "patch_mark",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustTextEncoding_PatchMark"
+      ],
+      "rationale": "A mark produces a Mark patch whose start and end are UTF-16 code units, and the diff carries added, removed (null-valued), and changed marks.",
       "runtimeName": "patch_mark"
     },
     {

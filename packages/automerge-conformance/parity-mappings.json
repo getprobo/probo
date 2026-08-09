@@ -2,6 +2,16 @@
   {
     "source": "rust",
     "file": "tests/text_encoding.rs",
+    "name": "patch_mark",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTextEncoding_PatchMark"
+    ],
+    "rationale": "A mark produces a Mark patch whose start and end are UTF-16 code units, and the diff carries added, removed (null-valued), and changed marks."
+  },
+  {
+    "source": "rust",
+    "file": "tests/text_encoding.rs",
     "name": "patch_insert",
     "classification": "covered",
     "localTests": [

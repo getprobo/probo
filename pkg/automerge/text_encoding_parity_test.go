@@ -311,6 +311,121 @@ func TestRustTextEncoding_PatchDelete(t *testing.T) {
 	assert.Equal(t, patches["reference"], patches["native"])
 }
 
+// TestRustTextEncoding_PatchMark reproduces the utf16 case of patch_mark: a
+// mark produces a Mark patch whose start and end are UTF-16 code units.
+func TestRustTextEncoding_PatchMark(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	patches := diffTextPatches(
+		t,
+		ctx,
+		"he"+familyEmoji+"llo",
+		func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
+			return text.Mark(
+				ctx,
+				1,
+				13,
+				"bold",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				automerge.MarkExpandBoth,
+			)
+		},
+	)
+
+	require.Len(t, patches["reference"], 1)
+	assert.Equal(t, automerge.PatchMark, patches["reference"][0].Action)
+	require.Len(t, patches["reference"][0].Marks, 1)
+	assert.Equal(t, uint32(1), patches["reference"][0].Marks[0].Start)
+	assert.Equal(t, uint32(13), patches["reference"][0].Marks[0].End)
+	assert.Equal(t, "bold", patches["reference"][0].Marks[0].Name)
+	assert.Equal(t, patches["reference"], patches["native"])
+}
+
+// TestTextDiff_MarkRemovalMatchesReference verifies that removing a mark emits a
+// mark patch carrying a null value on both engines.
+func TestTextDiff_MarkRemovalMatchesReference(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, _, text := seedText(t, ctx, engine, "hello world")
+		require.NoError(t, text.Mark(
+			ctx,
+			0,
+			5,
+			"bold",
+			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+			automerge.MarkExpandBoth,
+		))
+		_, err := document.Commit(ctx, "mark", commitTime)
+		require.NoError(t, err)
+
+		before, err := document.Heads(ctx)
+		require.NoError(t, err)
+		require.NoError(t, text.Unmark(ctx, 0, 5, "bold", automerge.MarkExpandBoth))
+		after, err := document.Commit(ctx, "unmark", commitTime)
+		require.NoError(t, err)
+
+		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	require.Len(t, result["reference"], 1)
+	assert.Equal(t, automerge.PatchMark, result["reference"][0].Action)
+	require.Len(t, result["reference"][0].Marks, 1)
+	assert.Equal(t, automerge.ScalarTypeNull, result["reference"][0].Marks[0].Value.Type)
+	assert.Equal(t, result["reference"], result["native"])
+}
+
+// TestTextDiff_MarkValueChangeMatchesReference verifies that changing a mark
+// value emits a mark patch with the new value on both engines.
+func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, _, text := seedText(t, ctx, engine, "hello world")
+		require.NoError(t, text.Mark(
+			ctx,
+			0,
+			5,
+			"color",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "red"},
+			automerge.MarkExpandBoth,
+		))
+		_, err := document.Commit(ctx, "red", commitTime)
+		require.NoError(t, err)
+
+		before, err := document.Heads(ctx)
+		require.NoError(t, err)
+		require.NoError(t, text.Mark(
+			ctx,
+			0,
+			5,
+			"color",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "blue"},
+			automerge.MarkExpandBoth,
+		))
+		after, err := document.Commit(ctx, "blue", commitTime)
+		require.NoError(t, err)
+
+		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		require.NoError(t, err)
+		result[engine.name] = patches
+	}
+
+	require.Len(t, result["reference"], 1)
+	require.Len(t, result["reference"][0].Marks, 1)
+	assert.Equal(t, "blue", result["reference"][0].Marks[0].Value.String)
+	assert.Equal(t, result["reference"], result["native"])
+}
+
 // TestRustTextEncoding_SplitBlock reproduces the utf16 case of split_block.
 func TestRustTextEncoding_SplitBlock(t *testing.T) {
 	t.Parallel()

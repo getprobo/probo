@@ -1670,6 +1670,14 @@ type (
 		Values   []patchInsertOut `json:"values,omitempty"`
 		Text     string           `json:"text,omitempty"`
 		Conflict bool             `json:"conflict"`
+		Marks    []markPatchOut   `json:"marks,omitempty"`
+	}
+
+	markPatchOut struct {
+		Start uint32          `json:"start"`
+		End   uint32          `json:"end"`
+		Name  string          `json:"name"`
+		Value json.RawMessage `json:"value"`
 	}
 
 	patchInsertOut struct {
@@ -1946,11 +1954,153 @@ func diffObjectPatches(source, target *State, object ObjectID) ([]patchOut, erro
 	switch objectType {
 	case "map", "table":
 		return diffMapPatches(source, target, object, identifier)
-	case "list", "text":
+	case "list":
 		return diffSequencePatches(source, target, object, objectType, identifier)
+	case "text":
+		patches, err := diffSequencePatches(source, target, object, objectType, identifier)
+		if err != nil {
+			return nil, err
+		}
+
+		return mergeTextMarkPatches(source, target, object, identifier, patches)
 	default:
 		return nil, fmt.Errorf("unknown object type %q", objectType)
 	}
+}
+
+// mergeTextMarkPatches folds the mark differences between the source and target
+// states into the ordered sequence patches for a text object. Added or changed
+// marks carry their new value; removed marks carry a null value. The reference
+// emits a single mark patch positioned by the smallest affected index, so the
+// combined patch is inserted before the first sequence patch beyond that index.
+func mergeTextMarkPatches(
+	source, target *State,
+	object ObjectID,
+	identifier string,
+	patches []patchOut,
+) ([]patchOut, error) {
+	marks, err := diffMarkPatches(source, target, object)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(marks) == 0 {
+		return patches, nil
+	}
+
+	anchor := marks[0].Start
+	for _, mark := range marks[1:] {
+		if mark.Start < anchor {
+			anchor = mark.Start
+		}
+	}
+
+	markPatch := patchOut{
+		Obj:    identifier,
+		Action: patchActionOut{Type: "mark", Marks: marks},
+	}
+
+	insertAt := len(patches)
+
+	for index, patch := range patches {
+		if patch.Action.Index > uint64(anchor) {
+			insertAt = index
+
+			break
+		}
+	}
+
+	merged := make([]patchOut, 0, len(patches)+1)
+	merged = append(merged, patches[:insertAt]...)
+	merged = append(merged, markPatch)
+	merged = append(merged, patches[insertAt:]...)
+
+	return merged, nil
+}
+
+// diffMarkPatches computes the mark changes transforming the source text state
+// into the target text state, in target order followed by removals.
+func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, error) {
+	sourceMarks := source.Marks(object.OpID)
+	targetMarks := target.Marks(object.OpID)
+
+	presentInSource := func(mark MarkRange) bool {
+		for _, candidate := range sourceMarks {
+			if candidate.Start == mark.Start &&
+				candidate.End == mark.End &&
+				candidate.Name == mark.Name &&
+				markValuesEqual(candidate.Value, mark.Value) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	rangeInTarget := func(mark MarkRange) bool {
+		for _, candidate := range targetMarks {
+			if candidate.Start == mark.Start &&
+				candidate.End == mark.End &&
+				candidate.Name == mark.Name {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	out := make([]markPatchOut, 0)
+
+	for _, mark := range targetMarks {
+		if presentInSource(mark) {
+			continue
+		}
+
+		value := Scalar{Type: ScalarNull}
+		if mark.Value != nil {
+			value = *mark.Value
+		}
+
+		encoded, err := encodeScalarWire(value)
+		if err != nil {
+			return nil, err
+		}
+
+		out = append(out, markPatchOut{
+			Start: mark.Start,
+			End:   mark.End,
+			Name:  mark.Name,
+			Value: json.RawMessage(encoded),
+		})
+	}
+
+	for _, mark := range sourceMarks {
+		if rangeInTarget(mark) {
+			continue
+		}
+
+		encoded, err := encodeScalarWire(Scalar{Type: ScalarNull})
+		if err != nil {
+			return nil, err
+		}
+
+		out = append(out, markPatchOut{
+			Start: mark.Start,
+			End:   mark.End,
+			Name:  mark.Name,
+			Value: json.RawMessage(encoded),
+		})
+	}
+
+	return out, nil
+}
+
+func markValuesEqual(left, right *Scalar) bool {
+	if left == nil || right == nil {
+		return left == right
+	}
+
+	return scalarValuesEqual(*left, *right)
 }
 
 func diffMapPatches(
