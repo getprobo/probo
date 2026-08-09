@@ -2052,5 +2052,65 @@
       "TestRustCurrentState_DeletedOpsOmitted"
     ],
     "rationale": "Deleted scalars, map keys, and list elements are omitted from the materialization patches identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_text_spliced",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_TextSpliced"
+    ],
+    "rationale": "Sequential text splices materialize as a single consolidated splice_text patch identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_counters",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_Counters"
+    ],
+    "rationale": "A counter with merged increments conflicting with a concurrent value materializes as a conflicted put of the summed counter on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_multiple_list_insertions",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_MultipleListInsertions"
+    ],
+    "rationale": "Multiple list insertions materialize as the same grouped insert patch on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_concurrent_insertions_at_same_index",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_ConcurrentInsertions"
+    ],
+    "rationale": "Concurrent insertions at the same index materialize in the same converged order on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_insert_objects",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_InsertObjects"
+    ],
+    "rationale": "Inserting an object into a list materializes the insert and the nested object's properties identically on both engines."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/current_state.rs",
+    "name": "test_insert_and_update",
+    "classification": "covered",
+    "localTests": [
+      "TestRustCurrentState_InsertAndUpdate"
+    ],
+    "rationale": "Inserting then overwriting list elements materializes the updated values identically on both engines."
   }
 ]

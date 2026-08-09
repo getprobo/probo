@@ -28,6 +28,7 @@ package automerge_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -75,6 +76,198 @@ func basicStateDocument(
 	require.NoError(t, err)
 
 	return document
+}
+
+func currentStateParity(
+	t *testing.T,
+	build func(t *testing.T, ctx context.Context, document *automerge.Document),
+) map[string][]automerge.Patch {
+	t.Helper()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(1))
+		require.NoError(t, err)
+		closeDocument(t, document)
+
+		build(t, ctx, document)
+
+		_, err = document.CommitNow(ctx, "state")
+		require.NoError(t, err)
+
+		patches, err := document.CurrentState(ctx)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	return result
+}
+
+// TestRustCurrentState_TextSpliced reproduces current_state test_text_spliced.
+func TestRustCurrentState_TextSpliced(t *testing.T) {
+	t.Parallel()
+
+	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
+		text, err := document.CreateText(ctx, "text")
+		require.NoError(t, err)
+		require.NoError(t, text.Splice(ctx, 0, 0, "a"))
+		require.NoError(t, text.Splice(ctx, 1, 0, "bcdef"))
+		require.NoError(t, text.Splice(ctx, 2, 2, "g"))
+	})
+
+	assert.Equal(t, patches["reference"], patches["native"])
+	require.Len(t, patches["native"], 2)
+	assert.Equal(t, automerge.PatchSpliceText, patches["native"][1].Action)
+	assert.Equal(t, "abgef", patches["native"][1].Text)
+}
+
+// TestRustCurrentState_MultipleListInsertions reproduces
+// test_multiple_list_insertions.
+func TestRustCurrentState_MultipleListInsertions(t *testing.T) {
+	t.Parallel()
+
+	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
+		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1}))
+		require.NoError(t, list.InsertScalar(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2}))
+	})
+
+	assert.Equal(t, patches["reference"], patches["native"])
+}
+
+// TestRustCurrentState_ConcurrentInsertions reproduces
+// test_concurrent_insertions_at_same_index.
+func TestRustCurrentState_ConcurrentInsertions(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, document)
+		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		_, err = document.Commit(ctx, "list", commitTime)
+		require.NoError(t, err)
+
+		other, err := document.Fork(ctx, actor(0xbb))
+		require.NoError(t, err)
+		closeDocument(t, other)
+
+		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1}))
+		_, err = document.Commit(ctx, "one", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		otherList, err := other.Root().Object(ctx, "list")
+		require.NoError(t, err)
+		require.NoError(t, otherList.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2}))
+		_, err = other.Commit(ctx, "two", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		_, err = document.Merge(ctx, other)
+		require.NoError(t, err)
+
+		patches, err := document.CurrentState(ctx)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+}
+
+// TestRustCurrentState_InsertObjects reproduces test_insert_objects.
+func TestRustCurrentState_InsertObjects(t *testing.T) {
+	t.Parallel()
+
+	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
+		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		mapObject, err := list.InsertObject(ctx, 0, automerge.ObjectTypeMap)
+		require.NoError(t, err)
+		require.NoError(t, mapObject.PutScalar(
+			ctx,
+			"key",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+		))
+	})
+
+	assert.Equal(t, patches["reference"], patches["native"])
+}
+
+// TestRustCurrentState_InsertAndUpdate reproduces test_insert_and_update.
+func TestRustCurrentState_InsertAndUpdate(t *testing.T) {
+	t.Parallel()
+
+	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
+		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		require.NoError(t, err)
+		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "one"}))
+		require.NoError(t, list.InsertScalar(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeString, String: "two"}))
+		require.NoError(t, list.PutScalarAt(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "three"}))
+		require.NoError(t, list.PutScalarAt(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeString, String: "four"}))
+	})
+
+	assert.Equal(t, patches["reference"], patches["native"])
+}
+
+// TestRustCurrentState_Counters reproduces test_counters.
+func TestRustCurrentState_Counters(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	result := make(map[string][]automerge.Patch)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.open(ctx, actor(0xbb))
+		require.NoError(t, err)
+		closeDocument(t, document)
+		require.NoError(t, document.Root().PutScalar(
+			ctx,
+			"key",
+			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
+		))
+		require.NoError(t, document.Root().Increment(ctx, "key", 2))
+		require.NoError(t, document.Root().Increment(ctx, "key", 3))
+		_, err = document.Commit(ctx, "counter", commitTime)
+		require.NoError(t, err)
+
+		other, err := document.Fork(ctx, actor(0xaa))
+		require.NoError(t, err)
+		closeDocument(t, other)
+		// Fork copies history; give the conflicting value its own change.
+		require.NoError(t, other.Root().PutScalar(
+			ctx,
+			"other",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "someval"},
+		))
+		_, err = other.Commit(ctx, "someval", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		_, err = document.Merge(ctx, other)
+		require.NoError(t, err)
+
+		patches, err := document.CurrentState(ctx)
+		require.NoError(t, err)
+
+		result[engine.name] = patches
+	}
+
+	assert.Equal(t, result["reference"], result["native"])
+
+	for _, patch := range result["native"] {
+		if patch.Key == "key" {
+			require.NotNil(t, patch.Value.Scalar)
+			assert.Equal(t, automerge.ScalarTypeCounter, patch.Value.Scalar.Type)
+			assert.Equal(t, int64(6), patch.Value.Scalar.Int)
+		}
+	}
 }
 
 // TestRustCurrentState_Basic reproduces the current_state basic_test.

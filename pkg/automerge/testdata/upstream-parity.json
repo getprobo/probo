@@ -4168,10 +4168,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 404,
       "name": "test_concurrent_insertions_at_same_index",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_ConcurrentInsertions"
+      ],
+      "rationale": "Concurrent insertions at the same index materialize in the same converged order on both engines.",
       "runtimeName": "automerge::current_state::tests::test_concurrent_insertions_at_same_index"
     },
     {
@@ -4180,10 +4182,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 340,
       "name": "test_counters",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_Counters"
+      ],
+      "rationale": "A counter with merged increments conflicting with a concurrent value materializes as a conflicted put of the summed counter on both engines.",
       "runtimeName": "automerge::current_state::tests::test_counters"
     },
     {
@@ -4206,10 +4210,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 484,
       "name": "test_insert_and_update",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_InsertAndUpdate"
+      ],
+      "rationale": "Inserting then overwriting list elements materializes the updated values identically on both engines.",
       "runtimeName": "automerge::current_state::tests::test_insert_and_update"
     },
     {
@@ -4218,10 +4224,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 449,
       "name": "test_insert_objects",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_InsertObjects"
+      ],
+      "rationale": "Inserting an object into a list materializes the insert and the nested object's properties identically on both engines.",
       "runtimeName": "automerge::current_state::tests::test_insert_objects"
     },
     {
@@ -4242,10 +4250,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 371,
       "name": "test_multiple_list_insertions",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_MultipleListInsertions"
+      ],
+      "rationale": "Multiple list insertions materialize as the same grouped insert patch on both engines.",
       "runtimeName": "automerge::current_state::tests::test_multiple_list_insertions"
     },
     {
@@ -4254,10 +4264,12 @@
       "file": "src/automerge/current_state.rs",
       "line": 312,
       "name": "test_text_spliced",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "interop-required",
-      "localTests": [],
-      "rationale": "",
+      "localTests": [
+        "TestRustCurrentState_TextSpliced"
+      ],
+      "rationale": "Sequential text splices materialize as a single consolidated splice_text patch identically on both engines.",
       "runtimeName": "automerge::current_state::tests::test_text_spliced"
     },
     {
