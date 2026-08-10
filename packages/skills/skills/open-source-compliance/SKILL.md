@@ -11,10 +11,13 @@ first.
 
 ## Before you start
 
-1. Confirm the Probo MCP server is connected. If not, ask the user to run
-   `/mcp` or `claude mcp login probo` to complete the OAuth 2.0 sign-in.
+1. Confirm a Probo MCP server is connected. The plugin ships two hosted
+   servers, `probo-us` and `probo-eu`; self-hosted instances are configured in
+   the agent. If none is connected, ask the user to run `/mcp` or
+   `claude mcp login probo-us` to complete the OAuth 2.0 sign-in.
 2. Identify the target organization. List organizations if the user did not
-   provide one.
+   provide one, and when several servers are connected use the one that returns
+   the target organization.
 3. Prefer MCP tools over manual API calls. The Probo MCP API mirrors the
    platform's GraphQL surface.
 
