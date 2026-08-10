@@ -52,13 +52,13 @@ Go struct (pkg/probod/)
 8. **Optional features** (custom domains, SAML, connectors, tracing) are gated by `{{- if }}` blocks in the Helm templates; follow the same pattern for new optional fields.
 9. **Bootstrap tests** (`pkg/bootstrap/builder_test.go`) must cover the new env var mapping.
 
-## SPA Vite CSP origins (not `PROBOD_`)
+## SPA Vite CSP origins
 
-Console and compliance-portal CSPs are rendered in Go from `PROBOD_BASE_URL` and `PROBOD_AWS_*` (see `pkg/awsconfig.CSPFileStorageOrigin`). Each app’s `vite.config.ts` mirrors that for local serve via Node-only env vars in the app `.env`:
+Console and compliance-portal CSPs are rendered in Go from `PROBOD_BASE_URL` and `PROBOD_AWS_*` (see `pkg/awsconfig.CSPFileStorageOrigin`). Each app’s `vite.config.ts` mirrors that for local serve:
 
 | Env | Role |
 |-----|------|
-| `CONSOLE_APP_ORIGIN` / `COMPLIANCE_PORTAL_APP_ORIGIN` | App / `downloadUrl` origin (`img-src` / `connect-src`). Defaults to origin of `VITE_API_URL`. |
-| `CONSOLE_FILE_STORAGE_ORIGIN` / `COMPLIANCE_PORTAL_FILE_STORAGE_ORIGIN` | Object-storage origin after file 307s. When unset, derived from `PROBOD_AWS_ENDPOINT` / `REGION` / `BUCKET` / `USE_PATH_STYLE` the same way as `pkg/awsconfig.CSPFileStorageOrigin` (virtual-hosted `https://{bucket}.{endpoint}` when applicable). |
+| `CONSOLE_APP_ORIGIN` / `COMPLIANCE_PORTAL_APP_ORIGIN` | Optional override for app / `downloadUrl` origin (`img-src` / `connect-src`). Defaults to origin of `VITE_API_URL`. |
+| `PROBOD_AWS_ENDPOINT` / `REGION` / `BUCKET` / `USE_PATH_STYLE` | Object-storage origin after file 307s — same derivation as `pkg/awsconfig.CSPFileStorageOrigin` (set in the app `.env` for Vite). |
 
-These are not bootstrap/`probod` config fields — keep `apps/console/.env.example` and `apps/compliance-portal/.env.example` in sync when they change.
+Keep `apps/console/.env.example` and `apps/compliance-portal/.env.example` in sync when these change.
