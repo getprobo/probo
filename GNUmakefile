@@ -249,6 +249,13 @@ benchmark-automerge: ## Benchmark native and Rust/WASM Automerge engines
 benchmark-automerge-native: ## Compare optimized native Go and native Rust
 	$(NPM) -w @probo/automerge-benchmark run compare
 
+.PHONY: benchmark-prosemirror
+benchmark-prosemirror: ## Benchmark Go rendering and the frontend ProseMirror bridge
+	$(GO_BASE) test -run '^$$' -bench '^BenchmarkRender$$' -benchmem \
+		./pkg/automerge/prosemirror
+	$(NPX) vitest bench --run --root packages/ui \
+		src/RichEditor/prosemirrorBridge.bench.ts
+
 .PHONY: fuzz-automerge
 fuzz-automerge: ## Fuzz Automerge public, wire, sync, and projection surfaces
 	$(GO_BASE) test -run '^$$' -fuzz '^FuzzLoad$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
