@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.218.0] - 2026-08-10
+
+### Changed
+
+- Risk Analysis `Scope` parameters are now called `Diagram` across all operations.
+
 ## [0.217.0] - 2026-08-07
 
 ### Changed
