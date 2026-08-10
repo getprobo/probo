@@ -207,6 +207,7 @@ func (c *syncChaos) duplicate(t *testing.T, ctx context.Context, random *rand.Ra
 	t.Helper()
 
 	source, target := randomPair(random)
+
 	message := c.last[source][target]
 	if len(message) == 0 {
 		return
@@ -320,6 +321,7 @@ func (c *syncChaos) converge(t *testing.T, ctx context.Context) {
 				}
 
 				sent = true
+
 				require.NoError(t, c.states[target][source].ReceiveMessage(ctx, message))
 			}
 		}
@@ -350,6 +352,7 @@ func (c *syncChaos) close(ctx context.Context) {
 
 func randomPair(random *rand.Rand) (int, int) {
 	source := random.Intn(chaosPeers)
+
 	target := random.Intn(chaosPeers - 1)
 	if target >= source {
 		target++

@@ -150,6 +150,7 @@ func TestSyncState_QuiescesWhenReadOnlyPeerRequestsChanges(t *testing.T) {
 	require.NoError(t, err)
 
 	var requested [32]byte
+
 	requested[0] = 1
 
 	// Model the message found by the chaos test: a peer advertises read-only and
