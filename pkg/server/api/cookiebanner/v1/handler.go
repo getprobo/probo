@@ -341,6 +341,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 				log.Int("identifier_length", len(name)),
 				log.String("sdk_version", sdkVersionFromContext(r.Context())),
 			)
+
 			continue
 		}
 
@@ -457,6 +458,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				log.Int("identifier_length", len(name)),
 				log.String("sdk_version", sdkVersionFromContext(r.Context())),
 			)
+
 			continue
 		}
 
@@ -499,6 +501,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				log.Int("identifier_length", len(key)),
 				log.String("sdk_version", sdkVersionFromContext(r.Context())),
 			)
+
 			continue
 		}
 
