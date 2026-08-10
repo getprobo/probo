@@ -26,6 +26,7 @@ import (
 
 	"go.probo.inc/probo/pkg/automerge"
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
+	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 func FuzzRender(f *testing.F) {
@@ -53,6 +54,15 @@ func FuzzRender(f *testing.F) {
 		{"Type":"block","Block":{"type":"paragraph","parents":[]}},
 		{"Type":"text","Text":"Marked","Marks":{"highlight":true,"strong":true}}
 	]`))
+	f.Add([]byte(`[
+		{"Type":"block","Block":{"type":"table-cell","parents":[]}},
+		{"Type":"text","Text":"Stray cell"}
+	]`))
+	f.Add([]byte(`[
+		{"Type":"block","Block":{"type":"table-row","parents":[]}},
+		{"Type":"block","Block":{"type":"table-cell","parents":["table-row"]}},
+		{"Type":"text","Text":"Stray row"}
+	]`))
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		if len(data) > 1024*1024 {
@@ -68,8 +78,25 @@ func FuzzRender(f *testing.F) {
 			t.Skip()
 		}
 
-		if _, err := automergeprosemirror.Render(spans); err != nil {
+		content, err := automergeprosemirror.Render(spans)
+		if err != nil {
 			t.Fatalf("Render returned an error for JSON-decoded spans: %v", err)
+		}
+
+		// Rendering must never emit a document the canonical consumers reject:
+		// those renderers error on unknown or misplaced nodes, so a document that
+		// fails here would break publishing and export for the whole document.
+		node, err := prosemirror.Parse(content)
+		if err != nil {
+			t.Fatalf("cannot parse rendered document %q: %v", content, err)
+		}
+
+		if _, err := prosemirror.RenderMarkdown(node); err != nil {
+			t.Fatalf("rendered document is not valid Markdown %q: %v", content, err)
+		}
+
+		if _, err := prosemirror.RenderHTML(node); err != nil {
+			t.Fatalf("rendered document is not valid HTML %q: %v", content, err)
 		}
 	})
 }

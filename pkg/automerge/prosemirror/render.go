@@ -246,6 +246,46 @@ func appendNormalizedBlock(blocks []block, next block) []block {
 	return append(blocks, next)
 }
 
+// hoistNodes prepares already-rendered children for a context that is not the one
+// they were rendered under. Table parts only mean anything inside a table, so they
+// are unwrapped into their own content rather than lifted verbatim.
+func hoistNodes(values []node) []node {
+	result := make([]node, 0, len(values))
+
+	for _, value := range values {
+		switch value.Type {
+		case blockNodeNames[blockTypeTableRow],
+			blockNodeNames[blockTypeTableCell],
+			blockNodeNames[blockTypeTableHeader]:
+			result = append(result, hoistNodes(value.Content)...)
+		default:
+			result = append(result, value)
+		}
+	}
+
+	return result
+}
+
+// blockAllowedUnder reports whether a block type may appear directly beneath the
+// given ancestor path. Table parts only mean anything inside their container, and
+// the Markdown and HTML renderers reject them anywhere else, so a stray cell or row
+// degrades to its inline content instead of poisoning the whole document.
+func blockAllowedUnder(blockType string, parents []string) bool {
+	var parent string
+	if len(parents) > 0 {
+		parent = parents[len(parents)-1]
+	}
+
+	switch blockType {
+	case blockTypeTableCell, blockTypeTableHeader:
+		return parent == blockTypeTableRow
+	case blockTypeTableRow:
+		return parent == blockTypeTable
+	default:
+		return true
+	}
+}
+
 func acceptsInlineContent(blockType string) bool {
 	switch blockType {
 	case blockTypeHorizontalRule, blockTypeTable, blockTypeTableRow:
@@ -294,6 +334,20 @@ func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
 
 		if childConsumed != childEnd-consumed-1 {
 			children = append(children, flattenBlocks(blocks[consumed+1+childConsumed:childEnd])...)
+		}
+
+		if !blockAllowedUnder(current.Type, parents) {
+			if len(current.Content) > 0 {
+				content = append(
+					content,
+					node{Type: blockNodeNames[blockTypeParagraph], Content: current.Content},
+				)
+			}
+
+			content = append(content, hoistNodes(children)...)
+			consumed = childEnd
+
+			continue
 		}
 
 		rendered, listType := renderBlock(current, children)
@@ -418,7 +472,7 @@ func renderBlock(source block, children []node) ([]node, string) {
 			)
 		}
 
-		return append(rendered, spills...), ""
+		return append(rendered, hoistNodes(spills)...), ""
 	case blockTypeTableRow:
 		cells, spills := partitionNodes(
 			children,
@@ -441,7 +495,7 @@ func renderBlock(source block, children []node) ([]node, string) {
 			)
 		}
 
-		return append(rendered, spills...), ""
+		return append(rendered, hoistNodes(spills)...), ""
 	case blockTypeTableCell, blockTypeTableHeader:
 		content := children
 		if len(source.Content) > 0 || len(children) == 0 {
@@ -474,7 +528,7 @@ func renderBlock(source block, children []node) ([]node, string) {
 			)
 		}
 
-		return append(rendered, children...), ""
+		return append(rendered, hoistNodes(children)...), ""
 	}
 }
 

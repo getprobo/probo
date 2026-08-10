@@ -326,6 +326,40 @@ func TestRender_MalformedStructureNeverAborts(t *testing.T) {
 			text: "Hoisted",
 		},
 		{
+			name: "stray table cell at root",
+			spans: []automerge.Span{
+				testBlock("table-cell", nil),
+				{Type: automerge.SpanTypeText, Text: "Stray"},
+			},
+			text: "Stray",
+		},
+		{
+			name: "stray table header at root",
+			spans: []automerge.Span{
+				testBlock("table-header", nil),
+				{Type: automerge.SpanTypeText, Text: "Header"},
+			},
+			text: "Header",
+		},
+		{
+			name: "stray table row with cells at root",
+			spans: []automerge.Span{
+				testBlock("table-row", nil),
+				testBlock("table-cell", []any{"table-row"}),
+				{Type: automerge.SpanTypeText, Text: "Cell"},
+			},
+			text: "Cell",
+		},
+		{
+			name: "table cell skipping its row",
+			spans: []automerge.Span{
+				testBlock("table", nil),
+				testBlock("table-cell", []any{"table"}),
+				{Type: automerge.SpanTypeText, Text: "Skipped"},
+			},
+			text: "Skipped",
+		},
+		{
 			name: "impossible parent chain",
 			spans: []automerge.Span{
 				testBlock("paragraph", nil),
