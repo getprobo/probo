@@ -53,6 +53,7 @@ import (
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/slackbot"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -73,6 +74,8 @@ type Config struct {
 	AccessReview      *accessreview.Service
 	AgentRun          *agentrun.Service
 	Slack             *slack.Service
+	SlackbotEvents    http.Handler
+	SlackbotBindings  *slackbot.BindingService
 	Mailman           *mailman.Service
 	CookieBanner      *cookiebanner.Service
 	Geoloc            *geoloc.Service
@@ -117,6 +120,8 @@ func NewServer(cfg Config) (*Server, error) {
 		AccessReview:      cfg.AccessReview,
 		AgentRun:          cfg.AgentRun,
 		Slack:             cfg.Slack,
+		SlackbotEvents:    cfg.SlackbotEvents,
+		SlackbotBindings:  cfg.SlackbotBindings,
 		Mailman:           cfg.Mailman,
 		CookieBanner:      cfg.CookieBanner,
 		Geoloc:            cfg.Geoloc,

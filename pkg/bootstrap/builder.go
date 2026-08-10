@@ -295,6 +295,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_TEMPERATURE"),
 						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS", 8192)),
 					},
+					Slackbot: probodconfig.LLMAgentConfig{
+						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_SLACKBOT_PROVIDER", ""),
+						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_SLACKBOT_MODEL_NAME", ""),
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_SLACKBOT_TEMPERATURE"),
+						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_SLACKBOT_MAX_TOKENS"),
+					},
 					Tools: probodconfig.AgentToolsConfig{
 						FirecrawlAPIKey: b.resolver.getEnv("PROBOD_FIRECRAWL_API_KEY"),
 					},
@@ -356,6 +362,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				MaxAttempts:         b.resolver.getEnvIntOrDefault("PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS", 3),
 			},
 			Branding: b.resolver.getEnvBoolOrDefault("PROBOD_BRANDING", true),
+			Slackbot: probodconfig.SlackbotConfig{
+				Enabled:       b.resolver.getEnvBoolOrDefault("PROBOD_SLACKBOT_ENABLED", false),
+				SigningSecret: b.resolver.getEnv("PROBOD_SLACKBOT_SIGNING_SECRET"),
+				BotToken:      b.resolver.getEnv("PROBOD_SLACKBOT_BOT_TOKEN"),
+			},
 		},
 	}
 

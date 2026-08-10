@@ -117,6 +117,7 @@ type (
 		TrackerMapping             LLMAgentConfig               `json:"tracker-mapping,omitzero"`
 		TrackerEnrichment          LLMAgentConfig               `json:"tracker-enrichment,omitzero"`
 		CommonThirdPartyEnrichment LLMAgentConfig               `json:"common-third-party-enrichment,omitzero"`
+		Slackbot                   LLMAgentConfig               `json:"slackbot,omitzero"`
 		Tools                      AgentToolsConfig             `json:"tools,omitzero"`
 	}
 )

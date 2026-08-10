@@ -82,6 +82,7 @@ type (
 		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
 		ESign         ESignConfig         `json:"esign,omitzero"`
 		Branding      bool                `json:"branding"`
+		Slackbot      SlackbotConfig      `json:"slackbot,omitzero"`
 	}
 
 	// CompliancePortalConfig contains compliance portal server configuration.

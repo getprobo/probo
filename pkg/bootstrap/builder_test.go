@@ -458,6 +458,13 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_ESIGN_TSA_URL"] = "http://custom.tsa.example.com"
 	// Branding
 	env["PROBOD_BRANDING"] = "false"
+	// Slackbot
+	env["PROBOD_SLACKBOT_ENABLED"] = "true"
+	env["PROBOD_SLACKBOT_SIGNING_SECRET"] = "slackbot-signing-secret"
+	env["PROBOD_SLACKBOT_BOT_TOKEN"] = "xoxb-test-token"
+	env["PROBOD_AGENT_SLACKBOT_PROVIDER"] = "openai"
+	env["PROBOD_AGENT_SLACKBOT_MODEL_NAME"] = "gpt-4o-mini"
+	env["PROBOD_AGENT_SLACKBOT_MAX_TOKENS"] = "2048"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
@@ -601,6 +608,14 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "http://custom.tsa.example.com", cfg.Probod.ESign.TSAURL)
 	// Branding
 	assert.False(t, cfg.Probod.Branding)
+	// Slackbot
+	assert.True(t, cfg.Probod.Slackbot.Enabled)
+	assert.Equal(t, "slackbot-signing-secret", cfg.Probod.Slackbot.SigningSecret)
+	assert.Equal(t, "xoxb-test-token", cfg.Probod.Slackbot.BotToken)
+	assert.Equal(t, "openai", cfg.Probod.Agents.Slackbot.Provider)
+	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.Slackbot.ModelName)
+	require.NotNil(t, cfg.Probod.Agents.Slackbot.MaxTokens)
+	assert.Equal(t, 2048, *cfg.Probod.Agents.Slackbot.MaxTokens)
 }
 
 func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
