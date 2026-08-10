@@ -220,6 +220,11 @@ test-automerge-conformance: ## Test Go binary compatibility with official Autome
 	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
 		$(GO_BASE) test -count=1 ./pkg/automerge
 
+.PHONY: generate-prosemirror-parity
+generate-prosemirror-parity: ## Regenerate the ProseMirror render parity fixture from @automerge/prosemirror
+	GEN_PROSEMIRROR_PARITY=1 $(NPX) vitest run \
+		--root packages/ui src/RichEditor/prosemirrorRenderParity.test.ts
+
 .PHONY: audit-automerge-parity
 audit-automerge-parity: test-automerge-conformance
 audit-automerge-parity: ## Require every pinned upstream Automerge test to be mapped

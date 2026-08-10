@@ -43,6 +43,16 @@ func FuzzRender(f *testing.F) {
 		{"Type":"block","Block":{"type":"table-cell","parents":["table","table-row"]}},
 		{"Type":"text","Text":"Cell"}
 	]`))
+	f.Add([]byte(`[
+		{"Type":"block","Block":{"type":"callout","parents":[]}},
+		{"Type":"text","Text":"Unknown block"},
+		{"Type":"block","Block":{"type":"paragraph","parents":["callout"]}},
+		{"Type":"text","Text":"Hoisted child"}
+	]`))
+	f.Add([]byte(`[
+		{"Type":"block","Block":{"type":"paragraph","parents":[]}},
+		{"Type":"text","Text":"Marked","Marks":{"highlight":true,"strong":true}}
+	]`))
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		if len(data) > 1024*1024 {
