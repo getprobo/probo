@@ -267,7 +267,10 @@ LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"id": id}
+	args := pgx.StrictNamedArgs{
+		"mailing_list_id": mailingListID,
+		"id":              id,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
