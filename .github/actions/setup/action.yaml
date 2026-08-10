@@ -27,7 +27,7 @@ runs:
         cache: "npm"
     - if: inputs.node == 'true'
       shell: bash
-      run: npm install -g npm@^11.8.0
+      run: npm install -g npm@^12.0.2
     - if: inputs.node == 'true'
       shell: bash
       run: npm ci
