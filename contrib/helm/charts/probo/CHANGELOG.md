@@ -4,6 +4,12 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.15.0] - 2026-08-10
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.254.0`, which restricts console access to users with an active organization membership.
+
 ## [0.14.0] - 2026-08-07
 
 ### Added
