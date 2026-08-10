@@ -1785,6 +1785,10 @@ func (s *Service) GetActiveBannerConfig(
 		applyCanadianPrivacyBannerTexts(config)
 	}
 
+	if PresentationForRegulation(regulation) == PresentationOptOut && !IsUSStatePrivacyRegulation(regulation) {
+		applyGenericOptOutBannerTexts(config)
+	}
+
 	applyBannerTextCompat(config, sdkVersion)
 
 	return config, nil

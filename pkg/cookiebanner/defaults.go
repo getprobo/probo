@@ -202,6 +202,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Kami menggunakan cookie dan teknologi serupa. Berdasarkan undang-undang privasi Kanada yang berlaku, Anda dapat menolak cookie yang tidak penting kapan saja. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Jangan Jual atau Bagikan Informasi Pribadi Saya",
+		"button_opt_out_generic":        "Tolak cookie yang tidak penting",
 
 		"privacy_choices_title":            "Pilihan Privasi Anda",
 		"privacy_choices_intro":            "Hukum California memberi Anda hak untuk mengontrol bagaimana kami menggunakan dan membagikan informasi pribadi Anda. Gunakan opsi di bawah untuk menggunakan hak tersebut. {{privacy_policy_link}}",
@@ -238,6 +239,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Utilizziamo cookie e tecnologie simili. Ai sensi delle leggi canadesi sulla privacy applicabili, puoi rinunciare ai cookie non essenziali in qualsiasi momento. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Non vendere né condividere le mie informazioni personali",
+		"button_opt_out_generic":        "Rifiuta i cookie non essenziali",
 
 		"privacy_choices_title":            "Le tue scelte sulla privacy",
 		"privacy_choices_intro":            "La legge della California ti dà il diritto di controllare come utilizziamo e condividiamo le tue informazioni personali. Usa le opzioni qui sotto per esercitare tali diritti. {{privacy_policy_link}}",
@@ -274,6 +276,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "当社はクッキーおよび類似技術を使用しています。適用されるカナダのプライバシー法に基づき、不要なクッキーをいつでもオプトアウトできます。{{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "個人情報の販売・共有を拒否する",
+		"button_opt_out_generic":        "不要なクッキーを拒否する",
 
 		"privacy_choices_title":            "プライバシーに関する選択",
 		"privacy_choices_intro":            "カリフォルニア州法により、お客様は個人情報の利用および共有方法を管理する権利があります。以下のオプションを使用してこれらの権利を行使してください。{{privacy_policy_link}}",
@@ -310,6 +313,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "저희는 쿠키 및 유사 기술을 사용합니다. 적용되는 캐나다 개인정보 보호법에 따라 언제든지 필수적이지 않은 쿠키를 거부할 수 있습니다. {{cookie_policy_link}}",
 		"button_acknowledge":            "확인",
 		"button_opt_out":                "내 개인정보 판매 또는 공유 금지",
+		"button_opt_out_generic":        "비필수 쿠키 거부",
 
 		"privacy_choices_title":            "개인정보 선택 사항",
 		"privacy_choices_intro":            "캘리포니아 법은 저희가 개인정보를 사용하고 공유하는 방식을 통제할 권리를 부여합니다. 아래 옵션을 사용하여 해당 권리를 행사하세요. {{privacy_policy_link}}",
@@ -346,6 +350,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Wij gebruiken cookies en vergelijkbare technologieën. Op grond van toepasselijke Canadese privacywetgeving kunt u zich op elk moment afmelden voor niet-essentiële cookies. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Verkoop of deel mijn persoonlijke gegevens niet",
+		"button_opt_out_generic":        "Niet-essentiële cookies weigeren",
 
 		"privacy_choices_title":            "Uw privacykeuzes",
 		"privacy_choices_intro":            "De Californische wet geeft je het recht om te bepalen hoe wij je persoonlijke gegevens gebruiken en delen. Gebruik de onderstaande opties om die rechten uit te oefenen. {{privacy_policy_link}}",
@@ -382,6 +387,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Używamy plików cookie i podobnych technologii. Zgodnie z obowiązującymi kanadyjskimi przepisami o prywatności możesz w każdej chwili zrezygnować z nieistotnych plików cookie. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Nie sprzedawaj ani nie udostępniaj moich danych osobowych",
+		"button_opt_out_generic":        "Odrzuć nieistotne pliki cookie",
 
 		"privacy_choices_title":            "Twoje wybory dotyczące prywatności",
 		"privacy_choices_intro":            "Prawo Kalifornii daje Ci prawo do kontrolowania, w jaki sposób wykorzystujemy i udostępniamy Twoje dane osobowe. Skorzystaj z poniższych opcji, aby skorzystać z tych praw. {{privacy_policy_link}}",
@@ -418,6 +424,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Utilizamos cookies e tecnologias similares. De acordo com as leis canadenses de privacidade aplicáveis, você pode recusar cookies não essenciais a qualquer momento. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Não vender nem compartilhar minhas informações pessoais",
+		"button_opt_out_generic":        "Recusar cookies não essenciais",
 
 		"privacy_choices_title":            "Suas escolhas de privacidade",
 		"privacy_choices_intro":            "A lei da Califórnia dá a você o direito de controlar como usamos e compartilhamos suas informações pessoais. Use as opções abaixo para exercer esses direitos. {{privacy_policy_link}}",
@@ -454,6 +461,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Çerezler ve benzer teknolojiler kullanıyoruz. Geçerli Kanada gizlilik yasaları kapsamında gerekli olmayan çerezlerden istediğiniz zaman vazgeçebilirsiniz. {{cookie_policy_link}}",
 		"button_acknowledge":            "Tamam",
 		"button_opt_out":                "Kişisel Bilgilerimi Satma veya Paylaşma",
+		"button_opt_out_generic":        "Zorunlu olmayan çerezleri reddet",
 
 		"privacy_choices_title":            "Gizlilik tercihleriniz",
 		"privacy_choices_intro":            "Kaliforniya yasası, kişisel bilgilerinizi nasıl kullandığımızı ve paylaştığımızı kontrol etme hakkı tanır. Bu hakları kullanmak için aşağıdaki seçenekleri kullanın. {{privacy_policy_link}}",
@@ -490,6 +498,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Ми використовуємо файли cookie та подібні технології. Відповідно до чинного канадського законодавства про конфіденційність ви можете відмовитися від неосновних файлів cookie у будь-який час. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Не продавати та не ділитися моїми персональними даними",
+		"button_opt_out_generic":        "Відхилити неістотні файли cookie",
 
 		"privacy_choices_title":            "Ваш вибір щодо конфіденційності",
 		"privacy_choices_intro":            "Закон Каліфорнії дає вам право контролювати, як ми використовуємо та поширюємо ваші персональні дані. Скористайтеся наведеними нижче параметрами, щоб реалізувати ці права. {{privacy_policy_link}}",
@@ -526,6 +535,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "我们使用 Cookie 和类似技术。根据适用的加拿大隐私法，您可以随时选择退出非必要 Cookie。{{cookie_policy_link}}",
 		"button_acknowledge":            "确定",
 		"button_opt_out":                "不要出售或共享我的个人信息",
+		"button_opt_out_generic":        "拒绝非必要 Cookie",
 
 		"privacy_choices_title":            "您的隐私选择",
 		"privacy_choices_intro":            "加州法律赋予您控制我们如何使用和共享您的个人信息的权利。请使用以下选项行使这些权利。{{privacy_policy_link}}",
@@ -562,6 +572,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "We use cookies and similar technologies. Under applicable Canadian privacy law, you may opt out of non-essential cookies at any time. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Do Not Sell or Share My Personal Information",
+		"button_opt_out_generic":        "Reject non-essential cookies",
 
 		"privacy_choices_title":            "Your Privacy Choices",
 		"privacy_choices_intro":            "California law gives you the right to control how we use and share your personal information. Use the options below to exercise those rights. {{privacy_policy_link}}",
@@ -598,6 +609,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Nous utilisons des cookies et technologies similaires. En vertu des lois canadiennes sur la confidentialité applicables, vous pouvez refuser les cookies non essentiels à tout moment. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Ne pas vendre ni partager mes informations personnelles",
+		"button_opt_out_generic":        "Refuser les cookies non essentiels",
 
 		"privacy_choices_title":            "Vos choix en matière de confidentialité",
 		"privacy_choices_intro":            "La loi californienne vous donne le droit de contrôler la façon dont nous utilisons et partageons vos informations personnelles. Utilisez les options ci-dessous pour exercer ces droits. {{privacy_policy_link}}",
@@ -634,6 +646,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Wir verwenden Cookies und ähnliche Technologien. Nach den geltenden kanadischen Datenschutzgesetzen können Sie nicht wesentliche Cookies jederzeit ablehnen. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "Meine persönlichen Daten nicht verkaufen oder weitergeben",
+		"button_opt_out_generic":        "Nicht wesentliche Cookies ablehnen",
 
 		"privacy_choices_title":            "Ihre Datenschutzoptionen",
 		"privacy_choices_intro":            "Das kalifornische Recht gibt Ihnen das Recht zu kontrollieren, wie wir Ihre personenbezogenen Daten verwenden und weitergeben. Nutzen Sie die folgenden Optionen, um diese Rechte auszuüben. {{privacy_policy_link}}",
@@ -670,6 +683,7 @@ var defaultUIStringsByLanguage = map[string]map[string]string{
 		"banner_description_ca_opt_out": "Utilizamos cookies y tecnologías similares. Según las leyes canadenses de privacidad aplicables, puede optar por no usar cookies no esenciales en cualquier momento. {{cookie_policy_link}}",
 		"button_acknowledge":            "OK",
 		"button_opt_out":                "No vender ni compartir mi información personal",
+		"button_opt_out_generic":        "Rechazar cookies no esenciales",
 
 		"privacy_choices_title":            "Sus opciones de privacidad",
 		"privacy_choices_intro":            "La ley de California le otorga el derecho a controlar cómo usamos y compartimos su información personal. Use las opciones a continuación para ejercer esos derechos. {{privacy_policy_link}}",

@@ -82,9 +82,9 @@ func TestResolveRegulation(t *testing.T) {
 			wantSource:     RegulationSourceDetected,
 		},
 		{
-			name:           "US without subdivision resolves to none as detected",
+			name:           "US without subdivision falls back to CCPA as detected",
 			location:       &coredata.IPLocationBlock{CountryCode: coredata.CountryCodeUS},
-			wantRegulation: RegulationNone,
+			wantRegulation: RegulationCCPA,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
@@ -125,10 +125,10 @@ func TestPresentationForRegulation(t *testing.T) {
 		{RegulationPIPABC, PresentationOptOut},
 		{RegulationPIPACA, PresentationOptOut},
 		{RegulationLaw25, PresentationOptIn},
-		{RegulationLGPD, PresentationOptOut},
-		{RegulationAPPI, PresentationNotice},
+		{RegulationLGPD, PresentationOptIn},
+		{RegulationAPPI, PresentationOptOut},
+		{RegulationNone, PresentationOptOut},
 		{RegulationLFPDPPP, PresentationNotice},
-		{RegulationNone, PresentationNotice},
 	}
 
 	for _, tt := range tests {
@@ -177,18 +177,51 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
 
-	t.Run("other opt-out regulation keeps the default settings link", func(t *testing.T) {
+	t.Run("Canadian opt-out regulation keeps the default settings link", func(t *testing.T) {
 		t.Parallel()
 
-		layout := LayoutForRegulation(RegulationLGPD)
+		layout := LayoutForRegulation(RegulationPIPEDA)
 		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
 
-	t.Run("notice regulation", func(t *testing.T) {
+	t.Run("LGPD opts Brazil into the consent flow", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationLGPD)
+		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StatePanel, layout.ReopenState)
+		require.False(t, layout.DefaultNonNecessaryGranted)
+	})
+
+	t.Run("Japan stays hidden behind the settings link", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationAPPI)
+		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
+		require.Equal(t, StateBanner, layout.ReopenState)
+		require.True(t, layout.DefaultNonNecessaryGranted)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
+	t.Run("no cookie-consent law shows nothing on first load", func(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationNone)
+		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
+		require.Equal(t, StateBanner, layout.ReopenState)
+		require.True(t, layout.DefaultNonNecessaryGranted)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
+	t.Run("Mexico is the only notice regulation", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationLFPDPPP)
 		require.Equal(t, PresentationNotice, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StateBanner, layout.ReopenState)
@@ -199,6 +232,54 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.False(t, layout.Buttons.Save)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
+}
+
+// TestLayoutOpensOnlyWhereRequired pins the compliance invariant the mapping
+// exists to enforce: the banner may only open on first load where a
+// jurisdiction demands a proactive disclosure. Everywhere else the settings
+// link the integrator places in the footer is the entire visible surface.
+func TestLayoutOpensOnlyWhereRequired(t *testing.T) {
+	t.Parallel()
+
+	for _, regulation := range coredata.Regulations() {
+		t.Run(string(regulation), func(t *testing.T) {
+			t.Parallel()
+
+			layout := LayoutForRegulation(regulation)
+
+			switch layout.Presentation {
+			case PresentationOptIn, PresentationNotice:
+				require.Equal(t, StateBanner, layout.InitialState)
+			default:
+				require.Equal(t, StateHidden, layout.InitialState)
+			}
+		})
+	}
+}
+
+// TestConsentModeMatchesPresentation guards against the two halves of the
+// policy drifting apart: a banner that asks for consent while the server
+// records an opt-out mode would fire trackers the visitor never allowed.
+func TestConsentModeMatchesPresentation(t *testing.T) {
+	t.Parallel()
+
+	for _, regulation := range coredata.Regulations() {
+		t.Run(string(regulation), func(t *testing.T) {
+			t.Parallel()
+
+			want := ConsentModeOptOut
+			if PresentationForRegulation(regulation) == PresentationOptIn {
+				want = ConsentModeOptIn
+			}
+
+			require.Equal(t, want, ConsentModeForRegulation(regulation))
+			require.Equal(
+				t,
+				want == ConsentModeOptOut,
+				LayoutForRegulation(regulation).DefaultNonNecessaryGranted,
+			)
+		})
+	}
 }
 
 func TestRegulationForLocationUSPrivacyStates(t *testing.T) {
@@ -400,4 +481,64 @@ func TestApplyCanadianPrivacyBannerTexts(t *testing.T) {
 		applyCanadianPrivacyBannerTexts(config)
 		require.Equal(t, "generic", config.Texts["banner_description_opt_out"])
 	})
+}
+
+func TestApplyGenericOptOutBannerTexts(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Japan drops the California opt-out wording", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationAPPI,
+			Texts: map[string]string{
+				"button_opt_out":         "Do Not Sell or Share My Personal Information",
+				"button_opt_out_generic": "Reject non-essential cookies",
+			},
+		}
+		applyGenericOptOutBannerTexts(config)
+		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
+	})
+
+	t.Run("US state privacy law keeps the statutory wording", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationTDPSA,
+			Texts: map[string]string{
+				"button_opt_out":         "Do Not Sell or Share My Personal Information",
+				"button_opt_out_generic": "Reject non-essential cookies",
+			},
+		}
+		applyGenericOptOutBannerTexts(config)
+		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
+	})
+
+	t.Run("missing neutral label leaves the texts untouched", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationNone,
+			Texts: map[string]string{
+				"button_opt_out": "Do Not Sell or Share My Personal Information",
+			},
+		}
+		applyGenericOptOutBannerTexts(config)
+		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
+	})
+}
+
+// TestDefaultUIStringsHaveGenericOptOutLabel keeps the neutral label in step
+// with the supported languages: without it a visitor outside the US sees the
+// California "Do Not Sell or Share" phrase.
+func TestDefaultUIStringsHaveGenericOptOutLabel(t *testing.T) {
+	t.Parallel()
+
+	for language, strings := range defaultUIStringsByLanguage {
+		t.Run(language, func(t *testing.T) {
+			t.Parallel()
+
+			require.NotEmpty(t, strings["button_opt_out_generic"])
+		})
+	}
 }
