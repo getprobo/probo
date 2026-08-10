@@ -20,22 +20,28 @@ Before executing, read these files **relative to this skill directory**:
 
 1. A Probo MCP server must be connected. The plugin ships two hosted servers,
    `probo-us` and `probo-eu`; self-hosted instances are configured in the agent.
-   Use the server for the user's region, and when the region is unknown call
-   `listOrganizations` on each connected server. If the organization identified
-   by the user matches exactly one server/organization pair, use that pair. If
-   no organization was identified and there is exactly one pair across all
-   results, use it. Otherwise show the server names and organizations returned
-   by each, then ask the user which pair to use. Do not infer the region from a
-   merely non-empty result. If tools fail with auth errors, stop and tell the
-   user to complete OAuth sign-in for that server (Claude Code: `/mcp` or
-   `claude mcp login probo-us`; Codex: `codex mcp login probo-us`;
-   OpenCode/Cursor: configure MCP in settings then authenticate).
-2. Resolve the organization, then the campaign from `$ARGUMENTS` (name match or
-   GID). `listAccessReviewCampaigns` requires `organization_id`, so the
-   organization must be known first — reuse the server and organization
-   resolved in step 1. If the campaign is ambiguous, list
-   `listAccessReviewCampaigns` results and ask the user to pick one.
-3. Campaign `status` must be `IN_PROGRESS` or `PENDING_ACTIONS`. Stop with a
+   If tools fail with auth errors, stop and tell the user to complete OAuth
+   sign-in for that server (Claude Code: `/mcp` or `claude mcp login probo-us`;
+   Codex: `codex mcp login probo-us`; OpenCode/Cursor: configure MCP in settings
+   then authenticate).
+2. Resolve **the server**, then **the organization**. These are separate
+   choices: one server can hold several organizations, and the caller can have
+   organizations on more than one server. Settle both before any campaign call,
+   because `listAccessReviewCampaigns` requires `organization_id`.
+   - **Server.** Use the server for the region the user names, or the only
+     connected server when there is one. Otherwise call `listOrganizations` on
+     each connected server and take the server whose organizations uniquely
+     match the one the user named. Never infer the region from a merely
+     non-empty result — when the match is not unique, show each server with the
+     organizations it returned and ask which to use.
+   - **Organization.** Once the server is settled, call `listOrganizations` on
+     it unless an earlier probe already returned its organizations. Take the
+     unique name match, or the only organization when the server returns one.
+     Otherwise list them and ask the user to pick.
+3. Resolve the campaign from `$ARGUMENTS` (name match or GID) within that
+   organization. If the campaign is ambiguous, list `listAccessReviewCampaigns`
+   results and ask the user to pick one.
+4. Campaign `status` must be `IN_PROGRESS` or `PENDING_ACTIONS`. Stop with a
    clear message for `DRAFT`, `COMPLETED`, or `CANCELLED`.
 
 ## Working notes file
