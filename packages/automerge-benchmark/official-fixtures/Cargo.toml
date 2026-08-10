@@ -1,0 +1,11 @@
+[package]
+name = "probo-automerge-official-fixtures"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+benchmark-battery = { git = "https://github.com/automerge/automerge.git", rev = "e4f9420a63b5ebfd079de7f22a852c2abb6e2774" }
+
+[workspace]

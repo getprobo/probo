@@ -1,2 +1,3 @@
 /rust/target/
+/official-fixtures/target/
 /go/probo-automerge-go-benchmark

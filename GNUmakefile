@@ -13,6 +13,8 @@ MKDIR ?=	mkdir -p
 NPM ?=	npm
 NPX ?=	npx
 OPENSSL ?=	openssl
+AUTOMERGE_BATTERY_OUTPUT ?=	$(CURDIR)/.cache/automerge-battery.json
+AUTOMERGE_BATTERY_FIXTURES ?=	$(CURDIR)/.cache/automerge-battery-fixtures
 SED ?= sed
 SHA256SUM ?= sha256sum
 SYFT ?=	syft
@@ -41,6 +43,7 @@ SHELL_SCRIPTS := \
 	cmd/probo-agent/installer/macos/reinstall.sh \
 	cmd/probo-agent/installer/macos/uninstall.sh \
 	compose/postgres/01_probod.sh \
+	contrib/benchmarks/automerge-battery.sh \
 	contrib/lima/provision.sh \
 	contrib/lima/sandbox.sh \
 	contrib/merge-graphql-schema.sh \
@@ -248,6 +251,27 @@ benchmark-automerge: ## Benchmark native and Rust/WASM Automerge engines
 .PHONY: benchmark-automerge-native
 benchmark-automerge-native: ## Compare optimized native Go and native Rust
 	$(NPM) -w @probo/automerge-benchmark run compare
+
+.PHONY: benchmark-automerge-official
+benchmark-automerge-official: ## Run the pinned official Automerge fast benchmark battery
+	@mkdir -p $(dir $(AUTOMERGE_BATTERY_OUTPUT))
+	contrib/benchmarks/automerge-battery.sh run \
+		--tier fast \
+		--output $(AUTOMERGE_BATTERY_OUTPUT)
+
+.PHONY: list-automerge-official-benchmarks
+list-automerge-official-benchmarks: ## List the pinned official Automerge benchmark battery
+	contrib/benchmarks/automerge-battery.sh list --tier all
+
+.PHONY: test-automerge-official-fixtures
+test-automerge-official-fixtures: ## Replay official benchmark-battery documents through Rust and Go
+	rm -rf $(AUTOMERGE_BATTERY_FIXTURES)
+	cargo +1.90.0 run --release --locked \
+		--manifest-path packages/automerge-benchmark/official-fixtures/Cargo.toml \
+		-- $(AUTOMERGE_BATTERY_FIXTURES)
+	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
+		$(GO_BASE) test -count=1 -run '^TestOfficialBenchmarkBatteryFixtures$$' \
+		./pkg/automerge
 
 .PHONY: benchmark-prosemirror
 benchmark-prosemirror: ## Benchmark Go rendering and the frontend ProseMirror bridge
