@@ -70,6 +70,7 @@ type Backend struct {
 type nativeSyncState struct {
 	RemoteHeads       [][32]byte `json:"remoteHeads"`
 	LastSentHeads     [][32]byte `json:"lastSentHeads"`
+	LastSentNeed      [][32]byte `json:"lastSentNeed"`
 	Need              [][32]byte `json:"need"`
 	Requested         [][32]byte `json:"requested"`
 	NeedsAck          bool       `json:"needsAck"`
@@ -4055,12 +4056,16 @@ func (b *Backend) GenerateSyncMessage(
 	// A message is only truly in flight while we have nothing new to say. New
 	// local changes (heads advanced past the last sent frontier) must be sent
 	// even while a previous message awaits acknowledgement, matching upstream
-	// Rust, which never withholds local changes during synchronization.
+	// Rust, which never withholds local changes during synchronization. A Need
+	// that is unchanged since the last message we sent is not new information:
+	// re-requesting the same missing dependencies (for example an orphan change
+	// whose base never arrives) would otherwise regenerate an identical message
+	// forever and never quiesce.
 	if state.InFlight &&
 		!state.ModeChanged &&
 		!state.NeedsReset &&
 		len(state.Requested) == 0 &&
-		len(state.Need) == 0 &&
+		equalHashes(state.Need, state.LastSentNeed) &&
 		equalHashes(heads, state.LastSentHeads) {
 		return nil, false, nil
 	}
@@ -4079,7 +4084,7 @@ func (b *Backend) GenerateSyncMessage(
 			!state.NeedsReset &&
 			!state.NeedsAck &&
 			len(state.Requested) == 0 &&
-			len(state.Need) == 0 &&
+			equalHashes(state.Need, state.LastSentNeed) &&
 			equalHashes(heads, state.LastSentHeads) {
 			return nil, false, nil
 		}
@@ -4089,7 +4094,7 @@ func (b *Backend) GenerateSyncMessage(
 			!state.NeedsReset &&
 			!state.NeedsAck &&
 			len(state.Requested) == 0 &&
-			len(state.Need) == 0 &&
+			equalHashes(state.Need, state.LastSentNeed) &&
 			equalHashes(heads, state.LastSentHeads) {
 			return nil, false, nil
 		}
@@ -4098,7 +4103,7 @@ func (b *Backend) GenerateSyncMessage(
 			!state.ModeChanged &&
 			!state.NeedsReset &&
 			len(state.Requested) == 0 &&
-			len(state.Need) == 0 &&
+			equalHashes(state.Need, state.LastSentNeed) &&
 			equalHashes(heads, state.RemoteHeads) {
 			return nil, false, nil
 		}
@@ -4173,6 +4178,7 @@ func (b *Backend) GenerateSyncMessage(
 	state.NeedsAck = false
 	state.Sent = true
 	state.LastSentHeads = append(state.LastSentHeads[:0], heads...)
+	state.LastSentNeed = append(state.LastSentNeed[:0], state.Need...)
 	state.PeerModeChanged = false
 	state.ModeChanged = false
 	state.NeedsReset = false
