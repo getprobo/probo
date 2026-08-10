@@ -1019,6 +1019,7 @@ func (s *Service) LogEvent(
 	requestBody *string,
 	responseBody *string,
 ) {
+	ctx = context.WithoutCancel(ctx)
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	event := s.createEvent(
