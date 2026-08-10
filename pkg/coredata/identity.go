@@ -314,6 +314,25 @@ WHERE
 	return nil
 }
 
+func (i *Identity) Delete(ctx context.Context, conn pg.Querier) error {
+	q := `
+DELETE FROM identities
+WHERE
+    id = @identity_id
+`
+
+	args := pgx.StrictNamedArgs{
+		"identity_id": i.ID,
+	}
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete identity: %w", err)
+	}
+
+	return nil
+}
+
 // LoadBySAMLSubject loads an identity by their SAML subject (NameID)
 func (i *Identity) LoadBySAMLSubject(
 	ctx context.Context,
