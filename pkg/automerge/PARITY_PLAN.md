@@ -138,25 +138,37 @@ checks span consolidation and text) drove a series of fixes this pass:
   operation following the begin is really a mark end, so a later unrelated
   operation reusing that counter is not mistaken for it.
 
-These closed the common cases. What remains are esoteric consequences of the
-reference applying a mark with an out-of-range boundary and then failing: the
-resulting dangling begin covers text according to its expand direction (an
-expand-left begin captures content to its left even when later insertions sort
-ahead of it), which native does not fully reproduce. These arise only from
-out-of-range mark boundaries — an error condition — and the `TestRustText_MarksAreOkay`
-value-level differential reproduces them.
+These closed the common cases. What remains is the dangling begin the reference
+leaves behind when a mark is applied with an out-of-range end boundary: the mark
+call fails, but the begin was already recorded, and it then covers text according
+to its expand direction. An expand-before begin captures content inserted to its
+left even though that insertion sorts ahead of it in the RGA order, which native
+does not reproduce — native drops the mark for that text.
 
-**Independent re-encoding of concurrent edits (determinism, not interop).**
-The randomized `TestDifferentialStress_ConcurrentMerge` harness applies the same
-concurrent edits to a native and a reference peer and merges them. The two
-engines always converge to identical materialized values, but in rare cases a
-single change ends up with different bytes (and therefore a different hash)
-between the engines. This does not affect real interoperability: in a live
-session each change is created once by one engine and shipped as bytes to the
-other, which the interop suite verifies. It only means the two engines are not
-guaranteed to pick byte-identical encodings when independently re-encoding the
-same logical edit. The convergence test therefore compares materialized values;
-head-hash equality is asserted only for the single-actor determinism test.
+`TestRustText_DanglingMarkBoundaries` holds four delta-debugged reproducers, the
+smallest being: mark `(0,3)` with expand-before on empty text, split at 0, then
+insert `"w"` at 0, where the reference reports `"w"` bold and native reports it
+unmarked. The test is skipped by default because it is an error path (no valid
+caller marks past the end of the text); run it with
+`AUTOMERGE_REQUIRE_DANGLING_MARKS=1` while working on the fix. A randomized
+value-level sweep that includes out-of-range boundaries and all four expand modes
+diverges on roughly 7% of scenarios; the same sweep restricted to in-range marks
+diverges on none. The fix belongs in `insertAnchorKey`, which resolves insertion
+anchors against mark boundaries but does not currently treat a dangling begin as
+an expanding boundary.
+
+**Concurrent re-encoding is now byte-identical.** Assigning the value a key
+already resolves to used to skip writing an operation. That is correct for an
+ordinary key, but a key holding concurrent values has to collapse: the reference
+deletes the losing siblings and keeps the winner. Native left the conflict
+standing, so the engines then disagreed about which values were visible at that
+key, emitted different predecessors on later deletes, and produced different
+change bytes and hashes. Both the map and list paths now emit that delete.
+`TestConcurrentEncodingIsByteIdentical` asserts that two peers per engine encode
+every concurrent change to identical bytes and agree on heads; it holds across
+three thousand seeds where it previously failed within a few hundred, and
+`TestDifferentialStress_ConcurrentMerge` now compares whole documents including
+heads rather than materialized values alone.
 
 ## Optional JavaScript convenience backlog
 
