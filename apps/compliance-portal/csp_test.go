@@ -29,29 +29,60 @@ import (
 	complianceportalstatics "go.probo.inc/probo/apps/compliance-portal"
 )
 
-func TestContentSecurityPolicy_SubstitutesAppOrigin(t *testing.T) {
+func TestContentSecurityPolicy_SubstitutesOrigins(t *testing.T) {
 	t.Parallel()
 
-	policy, err := complianceportalstatics.ContentSecurityPolicy("https://app.example.com")
+	policy, err := complianceportalstatics.ContentSecurityPolicy(
+		"https://app.example.com",
+		"https://probod.s3.eu-west-1.amazonaws.com",
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, policy)
 
 	assert.NotContains(t, policy, "{{")
 	assert.NotContains(t, policy, "AppOrigin")
+	assert.NotContains(t, policy, "FileStorageOrigin")
 	assert.Contains(t, policy, "default-src 'self'")
 	assert.Contains(t, policy, "frame-ancestors 'none'")
-	assert.Contains(t, policy, "img-src 'self' data: https://app.example.com https://www.google.com")
-	assert.Contains(t, policy, "connect-src 'self' https://app.example.com")
+	assert.Contains(
+		t,
+		policy,
+		"img-src 'self' data: https://app.example.com https://probod.s3.eu-west-1.amazonaws.com https://www.google.com",
+	)
+	assert.Contains(
+		t,
+		policy,
+		"connect-src 'self' https://app.example.com https://probod.s3.eu-west-1.amazonaws.com",
+	)
+
+	for part := range strings.FieldsSeq(policy) {
+		assert.NotEqual(t, "https:", strings.TrimSuffix(part, ";"))
+	}
+
 	assert.NotContains(t, policy, "\n")
 	assert.NotContains(t, policy, "\r")
 	assert.False(t, strings.HasPrefix(policy, " "))
 	assert.False(t, strings.HasSuffix(policy, " "))
 }
 
-func TestContentSecurityPolicy_RejectsDirectiveInjection(t *testing.T) {
+func TestContentSecurityPolicy_RejectsAppOriginInjection(t *testing.T) {
 	t.Parallel()
 
-	_, err := complianceportalstatics.ContentSecurityPolicy("https://evil.com;frame-ancestors")
+	_, err := complianceportalstatics.ContentSecurityPolicy(
+		"https://evil.com;frame-ancestors",
+		"https://probod.s3.eu-west-1.amazonaws.com",
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid CSP app origin")
+}
+
+func TestContentSecurityPolicy_RejectsFileStorageOriginInjection(t *testing.T) {
+	t.Parallel()
+
+	_, err := complianceportalstatics.ContentSecurityPolicy(
+		"https://app.example.com",
+		"https://evil.com;frame-ancestors",
+	)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CSP file storage origin")
 }

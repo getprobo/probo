@@ -20,6 +20,7 @@
 
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
 import babel from "@rolldown/plugin-babel";
@@ -39,12 +40,14 @@ const viteDevCspNonce = randomBytes(16).toString("base64");
 // nonce for Fast Refresh and ws:/wss: on connect-src for Vite HMR.
 function compliancePortalContentSecurityPolicy(
   appOrigin: string,
+  fileStorageOrigin: string,
   scriptNonce: string,
 ): string {
   const template = readFileSync(cspTemplatePath, "utf8");
   // Collapse newlines: Node rejects CR/LF in header values (Vite setHeader).
   return template
     .replaceAll("{{.AppOrigin}}", appOrigin)
+    .replaceAll("{{.FileStorageOrigin}}", fileStorageOrigin)
     .trim()
     .replace(
       /script-src 'self';/,
@@ -74,6 +77,105 @@ function appOriginFromEnv(env: Record<string, string>): string {
       : `https://${apiURL}`;
 
   return new URL(formatted).origin;
+}
+
+const defaultAWSRegion = "us-east-2";
+
+function envBool(value: string | undefined, fallback: boolean): boolean {
+  if (value == null || value.trim() === "") {
+    return fallback;
+  }
+
+  switch (value.trim().toLowerCase()) {
+    case "1":
+    case "true":
+    case "yes":
+    case "on":
+      return true;
+    case "0":
+    case "false":
+    case "no":
+    case "off":
+      return false;
+    default:
+      return fallback;
+  }
+}
+
+function validHostLabel(label: string): boolean {
+  if (label.length === 0 || label.length > 63) {
+    return false;
+  }
+
+  return /^[0-9A-Za-z-]+$/.test(label);
+}
+
+// Mirrors pkg/awsconfig.bucketIsVirtualHostable / aws-sdk-go-v2 rules.
+function bucketIsVirtualHostable(bucket: string, https: boolean): boolean {
+  if (isIP(bucket) !== 0) {
+    return false;
+  }
+
+  const labels = https ? [bucket] : bucket.split(".");
+  for (const label of labels) {
+    if (label.length < 3 || label.length > 63) {
+      return false;
+    }
+
+    if (/[A-Z]/.test(label)) {
+      return false;
+    }
+
+    if (!validHostLabel(label)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Origin after /api/files/v1/{id} 307s. Prefer
+// COMPLIANCE_PORTAL_FILE_STORAGE_ORIGIN; else mirror
+// pkg/awsconfig.CSPFileStorageOrigin from PROBOD_AWS_*.
+function fileStorageOriginFromEnv(env: Record<string, string>): string {
+  const explicit = env.COMPLIANCE_PORTAL_FILE_STORAGE_ORIGIN?.trim();
+  if (explicit) {
+    return explicit.replace(/\/$/, "");
+  }
+
+  const endpoint = env.PROBOD_AWS_ENDPOINT?.trim() ?? "";
+  const region = env.PROBOD_AWS_REGION?.trim() || defaultAWSRegion;
+  const bucket = env.PROBOD_AWS_BUCKET?.trim() ?? "";
+  const usePathStyle = envBool(env.PROBOD_AWS_USE_PATH_STYLE, false);
+
+  if (!bucket) {
+    return "";
+  }
+
+  if (!endpoint) {
+    if (usePathStyle || !bucketIsVirtualHostable(bucket, true)) {
+      return `https://s3.${region}.amazonaws.com`;
+    }
+
+    return `https://${bucket}.s3.${region}.amazonaws.com`;
+  }
+
+  const formatted
+    = endpoint.startsWith("http://") || endpoint.startsWith("https://")
+      ? endpoint
+      : `https://${endpoint}`;
+  const parsed = new URL(formatted);
+  const https = parsed.protocol === "https:";
+
+  if (
+    usePathStyle
+    || isIP(parsed.hostname) !== 0
+    || !bucketIsVirtualHostable(bucket, https)
+  ) {
+    return parsed.origin;
+  }
+
+  return `${parsed.protocol}//${bucket}.${parsed.host}`;
 }
 
 // index.html is also a Go html/template for the production SPA shell. Vite's
@@ -122,6 +224,8 @@ export default defineConfig(({ mode, command }) => {
   // Empty prefix: load non-VITE_ vars too (proxy target is Node-only).
   const env = loadEnv(mode, envDir, "");
   const proxyTarget = env.COMPLIANCE_PORTAL_PROXY_TARGET;
+  const appOrigin = appOriginFromEnv(env);
+  const fileStorageOrigin = fileStorageOriginFromEnv(env);
 
   if (command === "serve" && !proxyTarget) {
     throw new Error(
@@ -171,7 +275,8 @@ export default defineConfig(({ mode, command }) => {
       port: 5174,
       headers: {
         "Content-Security-Policy": compliancePortalContentSecurityPolicy(
-          appOriginFromEnv(env),
+          appOrigin,
+          fileStorageOrigin,
           viteDevCspNonce,
         ),
         "X-Frame-Options": "DENY",

@@ -1,9 +1,9 @@
 default-src 'self';
 script-src 'self';
 style-src 'self' 'unsafe-inline';
-img-src 'self' data: {{.AppOrigin}} https://www.google.com;
+img-src 'self' data: {{.AppOrigin}} {{.FileStorageOrigin}} https://www.google.com;
 font-src 'self';
-connect-src 'self' {{.AppOrigin}};
+connect-src 'self' {{.AppOrigin}} {{.FileStorageOrigin}};
 worker-src 'self' blob:;
 object-src 'none';
 base-uri 'self';

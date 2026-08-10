@@ -794,7 +794,7 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.UsePathStyle,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot build console file storage CSP origin: %w", err)
+		return fmt.Errorf("cannot build file storage CSP origin: %w", err)
 	}
 
 	serverHandler, err := server.NewServer(
@@ -841,6 +841,7 @@ func (impl *Implm) Run(
 	compliancePortalHandler, err := complianceportal_v1.NewMux(
 		complianceportal_v1.MuxConfig{
 			BaseURL:           baseURL,
+			FileStorageOrigin: fileStorageOrigin,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			Logger:            l.Named("compliance-portal"),

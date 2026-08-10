@@ -38,6 +38,7 @@ import (
 
 type MuxConfig struct {
 	BaseURL           *baseurl.BaseURL
+	FileStorageOrigin string
 	ExtraHeaderFields map[string]string
 	AllowedOrigins    []string
 	Logger            *log.Logger
@@ -71,7 +72,10 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 		}
 	}
 
-	csp, err := complianceportalstatics.ContentSecurityPolicy(appOrigin)
+	csp, err := complianceportalstatics.ContentSecurityPolicy(
+		appOrigin,
+		cfg.FileStorageOrigin,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build content security policy: %w", err)
 	}
