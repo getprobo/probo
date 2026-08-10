@@ -23,6 +23,7 @@ package coredata
 import (
 	"encoding"
 	"fmt"
+	"slices"
 )
 
 type MalaysiaPDPATransferBasis string
@@ -65,13 +66,7 @@ func (v MalaysiaPDPATransferBasis) RequiresTIA() bool {
 }
 
 func (v MalaysiaPDPATransferBasis) IsValid() bool {
-	for _, value := range MalaysiaPDPATransferBases() {
-		if v == value {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(MalaysiaPDPATransferBases(), v)
 }
 
 func (v MalaysiaPDPATransferBasis) String() string { return string(v) }

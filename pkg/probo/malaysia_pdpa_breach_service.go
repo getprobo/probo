@@ -355,7 +355,7 @@ func (s *MalaysiaPDPABreachService) Create(
 			IncidentID:         incident.ID,
 			ToStatus:           incident.Status,
 			ChangedByProfileID: req.ActorProfileID,
-			Reason:             stringPointer("Incident created"),
+			Reason:             new("Incident created"),
 			CreatedAt:          now,
 		}
 		if err := initialHistory.Insert(ctx, tx, scope); err != nil {
@@ -844,4 +844,5 @@ func isBlank(value *string) bool {
 	return value == nil || strings.TrimSpace(*value) == ""
 }
 
-func stringPointer(value string) *string { return &value }
+//go:fix inline
+func stringPointer(value string) *string { return new(value) }
