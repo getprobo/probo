@@ -55,6 +55,7 @@ func TestRustCurrentState_LoadChanges(t *testing.T) {
 
 		patches, err := document.CurrentState(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 

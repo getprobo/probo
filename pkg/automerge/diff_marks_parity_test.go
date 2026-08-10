@@ -392,6 +392,7 @@ func TestRustDiffMarks(t *testing.T) {
 
 				spans, err := text.Spans(ctx)
 				require.NoError(t, err)
+
 				result[engine.name] = spans
 			}
 
@@ -479,6 +480,7 @@ func TestRustDiffMarks_Alternating(t *testing.T) {
 
 		spans, err := text.Spans(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = spans
 	}
 

@@ -32,6 +32,7 @@ package automerge_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -91,9 +92,7 @@ func sortedCounterValues(
 		result[index] = value.Int
 	}
 
-	sort.Slice(result, func(left, right int) bool {
-		return result[left] < result[right]
-	})
+	slices.Sort(result)
 
 	return result
 }

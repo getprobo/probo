@@ -160,7 +160,6 @@ func TestDecode_OfficialStorageCorpus(t *testing.T) {
 		"two_change_chunks_out_of_order.automerge",
 	}
 	for _, name := range valid {
-		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -178,7 +177,6 @@ func TestDecode_OfficialStorageCorpus(t *testing.T) {
 		"counter_value_is_overlong.automerge",
 	}
 	for _, name := range invalid {
-		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -221,7 +219,6 @@ func TestDecode_Official64BitObjectIDs(t *testing.T) {
 		"64bit_obj_id_change.automerge",
 		"64bit_obj_id_doc.automerge",
 	} {
-		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

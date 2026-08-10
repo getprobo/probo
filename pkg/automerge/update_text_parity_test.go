@@ -75,6 +75,7 @@ func TestRustText_SimpleUpdateText(t *testing.T) {
 
 		result, err := text.String(ctx)
 		require.NoError(t, err)
+
 		merged[engine.name] = result
 		heads[engine.name] = sortedHeadHex(t, ctx, document)
 	}
@@ -126,6 +127,7 @@ func TestRustText_UpdateTextBigOleGraphemes(t *testing.T) {
 
 		result, err := text.String(ctx)
 		require.NoError(t, err)
+
 		merged[engine.name] = result
 		heads[engine.name] = sortedHeadHex(t, ctx, document)
 	}

@@ -48,7 +48,7 @@ func TestRust_ReproduceClockCacheBug(t *testing.T) {
 	require.NoError(t, err)
 	closeDocument(t, base)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		require.NoError(t, base.Root().PutScalar(
 			ctx,
 			"initial_commit",
@@ -60,12 +60,12 @@ func TestRust_ReproduceClockCacheBug(t *testing.T) {
 
 	const branches = 20
 
-	for branch := 0; branch < branches; branch++ {
+	for branch := range branches {
 		fork, err := base.Fork(ctx, actor(byte(30+branch)))
 		require.NoError(t, err)
 		closeDocument(t, fork)
 
-		for commit := 0; commit < 2; commit++ {
+		for commit := range 2 {
 			require.NoError(t, fork.Root().PutScalar(
 				ctx,
 				"branch_value",
@@ -118,9 +118,10 @@ func TestRustListRange_Bounds(t *testing.T) {
 		require.NoError(t, err)
 
 		values := make([]int64, 0, length)
-		for index := uint64(0); index < length; index++ {
+		for index := range length {
 			scalar, err := list.ScalarAt(ctx, index)
 			require.NoError(t, err)
+
 			values = append(values, scalar.Int)
 		}
 
@@ -182,13 +183,15 @@ func TestRustListRange_Conflict(t *testing.T) {
 		rowValues := make([]int64, 0, length)
 		rowConflicts := make([]bool, 0, length)
 
-		for index := uint64(0); index < length; index++ {
+		for index := range length {
 			scalar, err := otherList.ScalarAt(ctx, index)
 			require.NoError(t, err)
+
 			rowValues = append(rowValues, scalar.Int)
 
 			all, err := otherList.ScalarsAt(ctx, index)
 			require.NoError(t, err)
+
 			rowConflicts = append(rowConflicts, len(all) > 1)
 		}
 

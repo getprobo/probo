@@ -345,6 +345,7 @@ func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 		require.NoError(t, err)
 		endPatches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		patches = append(patches, endPatches...)
 
 		require.NoError(t, text.Splice(ctx, 3, 0, ">"))
@@ -352,6 +353,7 @@ func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 		require.NoError(t, err)
 		startPatches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		patches = append(patches, startPatches...)
 
 		result[engine.name] = patches
@@ -527,7 +529,7 @@ func TestRustText_CrossPageMarksNotDoubleCounted(t *testing.T) {
 			_, err = document.Commit(ctx, "seed", commitTime)
 			require.NoError(t, err)
 
-			for iteration := 0; iteration < 100; iteration++ {
+			for iteration := range 100 {
 				length, err := textObject.Len(ctx)
 				require.NoError(t, err)
 				_, err = text.SplitBlock(ctx, uint32(length))

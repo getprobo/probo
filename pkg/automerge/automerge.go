@@ -371,7 +371,7 @@ func convertListStrings(ctx context.Context, object *Object) (bool, error) {
 
 	changed := false
 
-	for index := uint64(0); index < length; index++ {
+	for index := range length {
 		if scalar, err := object.ScalarAt(ctx, index); err == nil {
 			if scalar.Type != ScalarTypeString {
 				continue

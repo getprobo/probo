@@ -55,6 +55,7 @@ func TestJSMarks_MarksSeenInPatches(t *testing.T) {
 		require.NoError(t, err)
 		marked, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		markPatches[engine.name] = marked
 
 		require.NoError(t, document.UpdateDiffCursor(ctx))
@@ -63,6 +64,7 @@ func TestJSMarks_MarksSeenInPatches(t *testing.T) {
 		require.NoError(t, err)
 		unmarked, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		unmarkPatches[engine.name] = unmarked
 	}
 

@@ -75,6 +75,7 @@ func TestRustMarkPatches_AtEndOfText(t *testing.T) {
 
 		patches, err := follower.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -110,10 +111,12 @@ func TestRustTransaction_RollbackDiscardsOps(t *testing.T) {
 
 		count, err := document.Rollback(ctx)
 		require.NoError(t, err)
+
 		cancelled[engine.name] = count
 
 		value, err := document.Root().Scalar(ctx, "keep")
 		require.NoError(t, err)
+
 		values[engine.name] = value.String
 	}
 
@@ -145,6 +148,7 @@ func TestRustTransaction_RollbackUndoesWrites(t *testing.T) {
 
 		count, err := document.Rollback(ctx)
 		require.NoError(t, err)
+
 		cancelled[engine.name] = count
 
 		_, err = document.Root().Scalar(ctx, "gone")

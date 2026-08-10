@@ -155,6 +155,7 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 
 				spans, err := text.Spans(ctx)
 				require.NoError(t, err)
+
 				result[engine.name] = spans
 			}
 
@@ -198,6 +199,7 @@ func TestJSBlock_OmittingConfigParts(t *testing.T) {
 
 		got, err := text.Spans(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = got
 	}
 
@@ -224,6 +226,7 @@ func TestJSBlock_ShowHistoricalMarks(t *testing.T) {
 
 		spans, err := text.SpansAt(ctx, []automerge.Hash{heads})
 		require.NoError(t, err)
+
 		result[engine.name] = spans
 	}
 

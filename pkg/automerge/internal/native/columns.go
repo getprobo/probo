@@ -97,7 +97,7 @@ func (r *reader) uleb() (uint64, error) {
 
 	var value uint64
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		current, err := r.byte()
 		if err != nil {
 			return 0, fmt.Errorf("cannot decode uLEB at offset %d: %w", start, err)
@@ -130,7 +130,7 @@ func (r *reader) leb() (int64, error) {
 		shift   uint
 	)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		var err error
 
 		current, err = r.byte()
@@ -413,7 +413,7 @@ func parseColumnMetadata(r *reader, allowCompressed bool) ([]columnMeta, error) 
 
 	var previous uint32
 
-	for i := uint64(0); i < count; i++ {
+	for i := range count {
 		rawSpec, err := r.uleb()
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode column %d specification: %w", i, err)

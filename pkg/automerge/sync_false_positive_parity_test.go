@@ -106,7 +106,7 @@ func TestRustSync_ShouldHandleFalsePositiveHead(t *testing.T) {
 			require.NoError(t, err)
 			closeDocument(t, doc2)
 
-			for i := int64(0); i < 10; i++ {
+			for i := range int64(10) {
 				putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
 			}
 
@@ -180,7 +180,7 @@ func TestRustSync_ShouldHandleChainsOfFalsePositives(t *testing.T) {
 			require.NoError(t, err)
 			closeDocument(t, doc2)
 
-			for i := int64(0); i < 10; i++ {
+			for i := range int64(10) {
 				putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
 			}
 

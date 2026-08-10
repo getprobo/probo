@@ -84,6 +84,7 @@ func TestRustAutomerge_ObserveCounterChangeApplication(t *testing.T) {
 
 		patches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 

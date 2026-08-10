@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -993,15 +994,7 @@ func (b *Backend) Increment(
 
 	visible := b.state.visibleMapObjectOperations(objectID, key)
 
-	hasCounter := false
-
-	for _, operation := range visible {
-		if isCounterOperation(operation) {
-			hasCounter = true
-
-			break
-		}
-	}
+	hasCounter := slices.ContainsFunc(visible, isCounterOperation)
 
 	if !hasCounter {
 		return fmt.Errorf("map property %q is not a counter", key)
@@ -1037,15 +1030,7 @@ func (b *Backend) IncrementAt(
 
 	visible := b.state.visibleSequenceElementOperations(target.Element)
 
-	hasCounter := false
-
-	for _, operation := range visible {
-		if isCounterOperation(operation) {
-			hasCounter = true
-
-			break
-		}
-	}
+	hasCounter := slices.ContainsFunc(visible, isCounterOperation)
 
 	if !hasCounter {
 		return fmt.Errorf("sequence value at index %d is not a counter", index)
@@ -1456,7 +1441,7 @@ func (h *blockDiffHook) failed() bool {
 }
 
 func (h *blockDiffHook) equal(oldIndex, _ int, length int) {
-	for i := 0; i < length; i++ {
+	for i := range length {
 		h.idx += h.old[oldIndex+i].width()
 	}
 }
@@ -1490,6 +1475,7 @@ func (h *blockDiffHook) insert(_ int, newIndex, newLen int) {
 		}
 
 		h.idx += utf16Width(chars)
+
 		run.Reset()
 	}
 
@@ -2359,13 +2345,7 @@ func (b *Backend) changeDependencies(sequence uint64) []ChangeHash {
 }
 
 func containsHash(hashes []ChangeHash, target ChangeHash) bool {
-	for _, hash := range hashes {
-		if hash == target {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(hashes, target)
 }
 
 // Isolate pins the document to the given heads: subsequent reads reflect that
@@ -3316,6 +3296,7 @@ func textRunsWithMarks(
 		} else if key != runKey {
 			runs = append(runs, textRun{index: runStart, text: builder.String(), marks: runMarks})
 			builder.Reset()
+
 			runStart = position
 			runMarks = marks
 			runKey = key
@@ -3537,6 +3518,7 @@ func diffSequencePatches(
 				}
 
 				text.WriteString(operation.Value.String)
+
 				position += width(targetValues[j])
 				j++
 			}

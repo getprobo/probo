@@ -321,21 +321,11 @@ func (s *State) scalarValue(operation Operation) (Scalar, bool) {
 			continue
 		}
 
-		matches := false
-
-		for _, predecessor := range increment.Predecessors {
-			if predecessor == operation.ID {
-				matches = true
-				break
-			}
-		}
+		matches := slices.Contains(increment.Predecessors, operation.ID)
 
 		if !matches {
-			for _, successor := range operation.Successors {
-				if successor == increment.ID {
-					matches = true
-					break
-				}
+			if slices.Contains(operation.Successors, increment.ID) {
+				matches = true
 			}
 		}
 

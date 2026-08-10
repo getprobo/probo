@@ -25,6 +25,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math"
+	"slices"
 	"unicode/utf8"
 )
 
@@ -500,10 +501,8 @@ func decodeChangeChunk(
 		return Change{}, nil, nil, fmt.Errorf("cannot decode other actors: %w", err)
 	}
 
-	for _, other := range otherActors {
-		if other == actor {
-			return Change{}, nil, nil, fmt.Errorf("other actors contains the change actor")
-		}
+	if slices.Contains(otherActors, actor) {
+		return Change{}, nil, nil, fmt.Errorf("other actors contains the change actor")
 	}
 
 	metadata, err := parseColumnMetadata(r, false)

@@ -113,7 +113,7 @@ func (h *textDiffHook) failed() bool {
 }
 
 func (h *textDiffHook) equal(oldIndex, _ int, length int) {
-	for i := 0; i < length; i++ {
+	for i := range length {
 		h.idx += utf16Width(h.old[oldIndex+i])
 	}
 }
@@ -125,7 +125,7 @@ func (h *textDiffHook) delete(oldIndex, oldLen, _ int) {
 
 	deleted := 0
 
-	for i := 0; i < oldLen; i++ {
+	for i := range oldLen {
 		deleted += utf16Width(h.old[oldIndex+i])
 	}
 
@@ -141,7 +141,7 @@ func (h *textDiffHook) insert(_ int, newIndex, newLen int) {
 
 	var builder strings.Builder
 
-	for i := 0; i < newLen; i++ {
+	for i := range newLen {
 		builder.WriteString(h.new[newIndex+i])
 	}
 
@@ -236,7 +236,7 @@ func findMiddleSnake(
 
 	dMax := maxD(n, m)
 
-	for d := 0; d < dMax; d++ {
+	for d := range dMax {
 		for k := d; k >= -d; k -= 2 {
 			var x int
 			if k == -d || (k != d && vf.get(k-1) < vf.get(k+1)) {

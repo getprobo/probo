@@ -75,6 +75,7 @@ func TestRustBatchInsert_GeneratesPatches(t *testing.T) {
 
 		patches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -82,6 +83,7 @@ func TestRustBatchInsert_GeneratesPatches(t *testing.T) {
 	assert.NotEmpty(t, reference)
 
 	hasData := false
+
 	for _, patch := range reference {
 		if patch.Action == automerge.PatchPutMap && patch.Key == "data" {
 			hasData = true
@@ -119,10 +121,12 @@ func TestRustBatchInsert_TextGeneratesSplicePatch(t *testing.T) {
 
 		patches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
 	hasSplice := false
+
 	for _, patch := range result["reference"] {
 		if patch.Action == automerge.PatchSpliceText {
 			hasSplice = true
@@ -159,10 +163,12 @@ func TestRustBatchInit_MapGeneratesPatches(t *testing.T) {
 
 		patches, err := document.Diff(ctx, nil, heads)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
 	hasName := false
+
 	for _, patch := range result["reference"] {
 		if patch.Action == automerge.PatchPutMap && patch.Key == "name" {
 			hasName = true

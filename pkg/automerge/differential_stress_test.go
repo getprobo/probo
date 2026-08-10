@@ -91,7 +91,7 @@ func canonicalValues(t *testing.T, ctx context.Context, document *automerge.Docu
 
 	builder.WriteString("list:")
 
-	for index := uint64(0); index < length; index++ {
+	for index := range length {
 		value, err := list.ScalarAt(ctx, index)
 		require.NoError(t, err)
 		builder.WriteString(canonicalScalar(value))
@@ -279,7 +279,7 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 		steps     = 60
 	)
 
-	for scenario := 0; scenario < scenarios; scenario++ {
+	for scenario := range scenarios {
 		native := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
 		reference := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
 
@@ -293,7 +293,7 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 
 		present := make(map[string]bool)
 
-		for step := 0; step < steps; step++ {
+		for step := range steps {
 			op := nextStressOperation(random, listLen, textLen, present)
 
 			applyStressOperation(t, ctx, native, op)
@@ -371,7 +371,7 @@ func TestDifferentialStress_ConcurrentMerge(t *testing.T) {
 		rounds     = 3
 	)
 
-	for scenario := 0; scenario < scenarios; scenario++ {
+	for scenario := range scenarios {
 		nativeLeft := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
 		referenceLeft := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
 
@@ -387,7 +387,7 @@ func TestDifferentialStress_ConcurrentMerge(t *testing.T) {
 
 		referenceRight := forkStressActor(t, ctx, rustParityEngines()[1], referenceSeed, 0x02)
 
-		for round := 0; round < rounds; round++ {
+		for round := range rounds {
 			editStressActor(t, ctx, random, nativeLeft, referenceLeft, roundEdits)
 			editStressActor(t, ctx, random, nativeRight, referenceRight, roundEdits)
 
@@ -438,7 +438,7 @@ func editStressActor(
 
 	present := make(map[string]bool)
 
-	for edit := 0; edit < edits; edit++ {
+	for range edits {
 		op := nextStressOperation(
 			random,
 			mustLen(t, ctx, native.list),

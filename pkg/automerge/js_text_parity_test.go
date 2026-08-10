@@ -68,6 +68,7 @@ func TestJSText_ImplicitAndExplicitDeletion(t *testing.T) {
 
 		value, err := text.String(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = value
 	}
 
@@ -97,10 +98,12 @@ func TestJSText_TextAndOtherOpsSameChange(t *testing.T) {
 
 		foo, err := document.Root().Scalar(ctx, "foo")
 		require.NoError(t, err)
+
 		foos[engine.name] = foo.String
 
 		value, err := text.String(ctx)
 		require.NoError(t, err)
+
 		texts[engine.name] = value
 	}
 
@@ -138,6 +141,7 @@ func TestJSText_InitializeTextInFrom(t *testing.T) {
 
 		stats, err := document.Stats(ctx)
 		require.NoError(t, err)
+
 		changes[engine.name] = stats.NumChanges
 
 		saved, err := document.Save(ctx)
@@ -202,6 +206,7 @@ func TestJSText_SplicingIntoArrays(t *testing.T) {
 
 		value, err := text.String(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = value
 	}
 

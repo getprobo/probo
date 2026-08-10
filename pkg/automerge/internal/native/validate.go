@@ -38,7 +38,7 @@ func decodeActorArray(r *reader, sorted bool) ([]ActorID, error) {
 	}
 
 	actors := make([]ActorID, 0, count)
-	for i := uint64(0); i < count; i++ {
+	for i := range count {
 		value, err := decodeLengthPrefixed(r)
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode actor %d: %w", i, err)
@@ -79,7 +79,7 @@ func decodeHashArray(r *reader, sorted bool) ([]ChangeHash, error) {
 	}
 
 	hashes := make([]ChangeHash, 0, count)
-	for i := uint64(0); i < count; i++ {
+	for i := range count {
 		value, err := r.bytes(32)
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode hash %d: %w", i, err)

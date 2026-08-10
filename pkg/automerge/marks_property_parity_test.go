@@ -88,7 +88,7 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 
 	markNames := []string{"bold", "italic", "underline"}
 
-	for scenario := 0; scenario < scenarios; scenario++ {
+	for scenario := range scenarios {
 		engineSpans := make(map[string][]automerge.Span)
 
 		var expected []rune
@@ -98,7 +98,7 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 
 		length := 0
 
-		for step := 0; step < steps; step++ {
+		for range steps {
 			switch random.Intn(4) {
 			case 0: // insert
 				index := random.Intn(length + 1)
@@ -174,6 +174,7 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 
 			spans, err := text.Spans(ctx)
 			require.NoError(t, err)
+
 			engineSpans[engine.name] = spans
 		}
 
@@ -188,6 +189,7 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 			)
 
 			var builder strings.Builder
+
 			for _, span := range spans {
 				if span.Type == automerge.SpanTypeBlock {
 					builder.WriteRune('\n')
@@ -214,7 +216,7 @@ func randomLetters(random *rand.Rand, count int) string {
 
 	var builder strings.Builder
 
-	for i := 0; i < count; i++ {
+	for range count {
 		builder.WriteByte(alphabet[random.Intn(len(alphabet))])
 	}
 

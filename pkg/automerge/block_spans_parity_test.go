@@ -272,6 +272,7 @@ func TestRustBlockSpans(t *testing.T) {
 
 				spans, err := text.Spans(ctx)
 				require.NoError(t, err)
+
 				result[engine.name] = spans
 			}
 
@@ -314,6 +315,7 @@ func TestRustText_InsertionsAfterNoexpandSpans(t *testing.T) {
 
 		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -350,6 +352,7 @@ func TestRustBlock_MarksOnSpansRespectHeads(t *testing.T) {
 
 		spans, err := text.SpansAt(ctx, []automerge.Hash{heads})
 		require.NoError(t, err)
+
 		result[engine.name] = spans
 	}
 
@@ -389,6 +392,7 @@ func TestRustBlock_DiffEmitsBlockUpdates(t *testing.T) {
 
 		patches, err := document.Diff(ctx, nil, heads)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -452,6 +456,7 @@ func TestRustBlock_MergeProducesBlockInsertionDiffs(t *testing.T) {
 
 		patches, err := other.Diff(ctx, before, after)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 

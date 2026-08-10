@@ -77,6 +77,7 @@ func TestRustTextEncoding_Length(t *testing.T) {
 
 		length, err := object.Len(ctx)
 		require.NoError(t, err)
+
 		lengths[engine.name] = length
 	}
 
@@ -100,6 +101,7 @@ func TestRustTextEncoding_SpliceText(t *testing.T) {
 
 		result, err := text.String(ctx)
 		require.NoError(t, err)
+
 		results[engine.name] = result
 		heads[engine.name] = sortedHeadHex(t, ctx, document)
 	}
@@ -149,6 +151,7 @@ func TestRustTextEncoding_Put(t *testing.T) {
 
 		result, err := text.String(ctx)
 		require.NoError(t, err)
+
 		results[engine.name] = result
 		heads[engine.name] = sortedHeadHex(t, ctx, document)
 	}
@@ -178,6 +181,7 @@ func TestRustTextEncoding_Insert(t *testing.T) {
 
 		result, err := text.String(ctx)
 		require.NoError(t, err)
+
 		results[engine.name] = result
 		heads[engine.name] = sortedHeadHex(t, ctx, document)
 	}
@@ -203,6 +207,7 @@ func TestRustTextEncoding_Delete(t *testing.T) {
 
 		result, err := text.String(ctx)
 		require.NoError(t, err)
+
 		results[engine.name] = result
 		heads[engine.name] = sortedHeadHex(t, ctx, document)
 	}
@@ -235,6 +240,7 @@ func diffTextPatches(
 
 		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -339,6 +345,7 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 		require.NoError(t, err)
 		first, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		patches = append(patches, first...)
 
 		require.NoError(t, text.Splice(ctx, 2, 0, "-"))
@@ -346,6 +353,7 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 		require.NoError(t, err)
 		second, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		patches = append(patches, second...)
 
 		result[engine.name] = patches
@@ -391,6 +399,7 @@ func TestRustText_NoexpandMarksAtEndOfText(t *testing.T) {
 
 		patches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -437,6 +446,7 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 
 		patches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -496,6 +506,7 @@ func TestRustTextEncoding_PatchPutSeq(t *testing.T) {
 
 		patches, err := document.DiffIncremental(ctx)
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -559,6 +570,7 @@ func TestDocument_IncrementalDiffMatchesReference(t *testing.T) {
 
 				patches, err := document.DiffIncremental(ctx)
 				require.NoError(t, err)
+
 				result[engine.name] = patches
 			}
 
@@ -628,6 +640,7 @@ func TestTextDiff_MarkRemovalMatchesReference(t *testing.T) {
 
 		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 
@@ -674,6 +687,7 @@ func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 
 		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
 		require.NoError(t, err)
+
 		result[engine.name] = patches
 	}
 

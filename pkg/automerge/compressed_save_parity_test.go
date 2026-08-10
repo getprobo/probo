@@ -85,7 +85,7 @@ func TestRustTest_CompressedDocCols(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, uint64(items), length)
 
-			for i := 0; i < items; i++ {
+			for i := range items {
 				value, err := list.ScalarAt(ctx, uint64(i))
 				require.NoError(t, err)
 				assert.Equal(t, uint64(i), value.Uint)
