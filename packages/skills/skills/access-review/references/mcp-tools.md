@@ -9,6 +9,11 @@ server configured in the agent). Read each tool schema before calling.
 
 List organizations the caller can access. No required input, so this is also the
 tool to probe each connected server with when the user's region is unknown.
+Each call returns every organization accessible on that server; a non-empty
+result does not uniquely identify the region. Select automatically only when
+the organization identified by the user matches exactly one
+server/organization pair, or when there is exactly one pair across all results.
+Otherwise show the pairs and ask the user to choose.
 
 ## Read
 
