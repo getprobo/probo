@@ -77,20 +77,9 @@ export function PublishProcessingActivityListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishProcessingActivityListDialog.title"),
-        description: t("publishProcessingActivityListDialog.description"),
-        approvers: t("publishProcessingActivityListDialog.fields.approvers"),
-        approversPlaceholder: t("publishProcessingActivityListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishProcessingActivityListDialog.actions.publishMinor"),
-        publish: t("publishProcessingActivityListDialog.actions.publish"),
-        requestApproval: t("publishProcessingActivityListDialog.actions.requestApproval"),
-        successTitle: t("publishProcessingActivityListDialog.messages.success"),
-        published: t("publishProcessingActivityListDialog.messages.published"),
-        approvalRequested: t("publishProcessingActivityListDialog.messages.approvalRequested"),
-        errorTitle: t("publishProcessingActivityListDialog.messages.error"),
-        publishError: t("publishProcessingActivityListDialog.errors.publish"),
-      }}
+      title={t("publishProcessingActivityListDialog.title")}
+      publishedMessage={t("publishProcessingActivityListDialog.messages.published")}
+      publishError={t("publishProcessingActivityListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

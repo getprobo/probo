@@ -366,6 +366,34 @@ type (
 		ThirdParties    string
 	}
 
+	AiSystemListData struct {
+		Title            string
+		OrganizationName string
+		CreatedAt        time.Time
+		TotalAiSystems   int
+		Rows             []AiSystemListRow
+	}
+
+	AiSystemListRow struct {
+		Name                    string
+		Version                 string
+		CompanyRoles            string
+		Status                  string
+		Owner                   string
+		Source                  string
+		Purpose                 string
+		IntendedUseCases        string
+		AutonomyLevel           string
+		HumanOversightMechanism string
+		RiskClassification      string
+		KeyStakeholders         string
+		DataSourcesAndType      string
+		DeploymentDate          string
+		LastReviewDate          string
+		NextReviewDate          string
+		Notes                   string
+	}
+
 	ProcessingActivityListData struct {
 		Title                     string
 		OrganizationName          string

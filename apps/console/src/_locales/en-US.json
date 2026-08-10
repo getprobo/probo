@@ -90,18 +90,11 @@
   },
   "publishDataListDialog": {
     "title": "Publish data list",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "messages": {
-      "successTitle": "Success",
-      "approvalRequested": "Approval requested successfully.",
-      "published": "Data list published successfully."
+    "errors": {
+      "publish": "Failed to publish data list"
     },
-    "errors": { "title": "Error", "publish": "Failed to publish data list" },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": {
-      "publishMinor": "Publish as minor",
-      "requestApproval": "Request approval",
-      "publish": "Publish"
+    "messages": {
+      "published": "Data list published successfully."
     }
   },
   "documentLayout": {
@@ -384,11 +377,12 @@
   },
   "publishFindingListDialog": {
     "title": "Publish finding list",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "messages": { "successTitle": "Success", "approvalRequested": "Approval requested successfully.", "published": "Finding list published successfully." },
-    "errors": { "title": "Error", "publish": "Failed to publish finding list" },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish finding list"
+    },
+    "messages": {
+      "published": "Finding list published successfully."
+    }
   },
   "tasks": {
     "title": "Tasks",
@@ -1342,7 +1336,7 @@
   "membershipsDropdown": { "searchPlaceholder": "Search organizations...", "loading": "Loading organizations...", "addOrganization": "Add organization" },
   "membershipsDropdownInvitingItem": { "title": "Check your email to accept the invitation" },
   "membershipsDropdownMenu": { "pendingInvitations": "Pending invitations" },
-  "sidebar": { "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "businessFunctions": "Business Functions", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "accessReviews": "Access Reviews", "compliancePortals": "Compliance Portals", "cookieBanners": "Cookie Banners", "settings": "Settings" },
+  "sidebar": { "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "businessFunctions": "Business Functions", "aiSystems": "AI Systems", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "accessReviews": "Access Reviews", "compliancePortals": "Compliance Portals", "cookieBanners": "Cookie Banners", "settings": "Settings" },
   "viewerMembershipDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "apiKeys": "API Keys", "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "help": "Help", "logout": "Logout" }
@@ -1736,11 +1730,142 @@
   },
   "publishBusinessFunctionListDialog": {
     "title": "Publish Business Function List",
+    "errors": {
+      "publish": "Failed to publish business function list"
+    },
+    "messages": {
+      "published": "Business Function list published successfully."
+    }
+  },
+  "aiSystemsPage": {
+    "pageTitle": "AI Systems",
+    "title": "AI Systems",
+    "description": "Track AI systems used across your organization, including roles, risk classification, and review schedule.",
+    "actions": { "document": "Document", "publish": "Publish", "add": "Add AI System", "loadMore": "Load more", "loading": "Loading..." },
+    "filters": { "allStatuses": "All statuses", "allRiskClassifications": "All risk classifications" },
+    "status": { "active": "Active", "inDevelopment": "In development", "decommissioned": "Decommissioned" },
+    "riskClassification": { "highRisk": "High-risk", "limited": "Limited", "minimal": "Minimal", "gpai": "GPAI" },
+    "companyRoles": { "provider": "Provider", "deployer": "Deployer", "user": "User", "developer": "Developer" },
+    "columns": { "name": "Name", "version": "Version", "status": "Status", "riskClassification": "Risk classification", "owner": "System owner", "nextReviewDate": "Next review date", "actions": "Actions" },
+    "empty": {
+      "title": "No AI systems yet",
+      "description": "Create your first AI system to get started.",
+      "filteredTitle": "No matching AI systems",
+      "filteredDescription": "No AI systems match the selected filters."
+    }
+  },
+  "aiSystemListItem": {
+    "actions": { "delete": "Delete" },
+    "messages": { "success": "Success", "deleted": "AI system deleted successfully" },
+    "errors": { "delete": "Failed to delete AI system" },
+    "deleteConfirmation": "This will permanently delete the AI system \"{{name}}\". This action cannot be undone."
+  },
+  "aiSystemDetailsPage": {
+    "breadcrumb": { "aiSystems": "AI Systems", "unknown": "Unknown AI system" },
+    "validation": { "nameRequired": "Name is required" },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "Enter system name",
+      "version": "Version",
+      "versionPlaceholder": "e.g. 1.0",
+      "companyRoles": "Company roles",
+      "status": "Status",
+      "owner": "System owner",
+      "source": "Source",
+      "sourcePlaceholder": "Who developed or provides the system",
+      "purpose": "Purpose / business goals",
+      "purposePlaceholder": "Why this system exists and what it aims to achieve",
+      "intendedUseCases": "Intended use cases",
+      "intendedUseCasesPlaceholder": "Specific ways the system is meant to be used",
+      "autonomyLevel": "Autonomy level",
+      "autonomyLevelPlaceholder": "Describe the level of autonomy",
+      "humanOversightMechanism": "Human oversight mechanism",
+      "humanOversightMechanismPlaceholder": "How humans oversee this system",
+      "riskClassification": "Risk classification",
+      "keyStakeholders": "Key stakeholders affected",
+      "keyStakeholdersPlaceholder": "Who might be impacted by this system",
+      "dataSourcesAndType": "Data sources and type",
+      "dataSourcesAndTypePlaceholder": "What data the system processes and its type",
+      "deploymentDate": "Deployment date",
+      "lastReviewDate": "Last review date",
+      "nextReviewDate": "Next review date",
+      "notes": "Notes / observations",
+      "notesPlaceholder": "Additional notes or observations",
+      "notSet": "Not set"
+    },
+    "status": { "active": "Active", "inDevelopment": "In development", "decommissioned": "Decommissioned" },
+    "riskClassification": { "highRisk": "High-risk", "limited": "Limited", "minimal": "Minimal", "gpai": "GPAI" },
+    "companyRoles": { "provider": "Provider", "deployer": "Deployer", "user": "User", "developer": "Developer" },
+    "actions": { "delete": "Delete", "update": "Update", "updating": "Updating..." },
+    "messages": { "success": "Success", "updated": "AI system updated successfully", "deleted": "AI system deleted successfully" },
+    "errors": { "update": "Failed to update AI system", "delete": "Failed to delete AI system" },
+    "deleteConfirmation": "This will permanently delete the AI system \"{{name}}\". This action cannot be undone."
+  },
+  "createAiSystemDialog": {
+    "breadcrumb": { "aiSystems": "AI Systems", "create": "Create" },
+    "validation": { "nameRequired": "Name is required" },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "Enter system name",
+      "version": "Version",
+      "versionPlaceholder": "e.g. 1.0",
+      "companyRoles": "Company roles",
+      "status": "Status",
+      "owner": "System owner",
+      "source": "Source",
+      "sourcePlaceholder": "Who developed or provides the system",
+      "purpose": "Purpose / business goals",
+      "purposePlaceholder": "Why this system exists and what it aims to achieve",
+      "intendedUseCases": "Intended use cases",
+      "intendedUseCasesPlaceholder": "Specific ways the system is meant to be used",
+      "autonomyLevel": "Autonomy level",
+      "autonomyLevelPlaceholder": "Describe the level of autonomy",
+      "humanOversightMechanism": "Human oversight mechanism",
+      "humanOversightMechanismPlaceholder": "How humans oversee this system",
+      "riskClassification": "Risk classification",
+      "keyStakeholders": "Key stakeholders affected",
+      "keyStakeholdersPlaceholder": "Who might be impacted by this system",
+      "dataSourcesAndType": "Data sources and type",
+      "dataSourcesAndTypePlaceholder": "What data the system processes and its type",
+      "deploymentDate": "Deployment date",
+      "lastReviewDate": "Last review date",
+      "nextReviewDate": "Next review date",
+      "notes": "Notes / observations",
+      "notesPlaceholder": "Additional notes or observations",
+      "notSet": "Not set"
+    },
+    "status": { "active": "Active", "inDevelopment": "In development", "decommissioned": "Decommissioned" },
+    "riskClassification": { "highRisk": "High-risk", "limited": "Limited", "minimal": "Minimal", "gpai": "GPAI" },
+    "companyRoles": { "provider": "Provider", "deployer": "Deployer", "user": "User", "developer": "Developer" },
+    "actions": { "create": "Create AI System", "creating": "Creating..." },
+    "messages": { "success": "Success", "created": "AI system created successfully" },
+    "errors": { "create": "Failed to create AI system" }
+  },
+  "publishListDialog": {
     "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "errors": { "publish": "Failed to publish business function list" },
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Business Function list published successfully." },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "fields": {
+      "approvers": "Approvers",
+      "approversPlaceholder": "Add approvers..."
+    },
+    "actions": {
+      "publishMinor": "Publish as minor",
+      "requestApproval": "Request approval",
+      "publish": "Publish"
+    },
+    "messages": {
+      "success": "Success",
+      "error": "Error",
+      "approvalRequested": "Approval requested successfully."
+    }
+  },
+  "publishAiSystemListDialog": {
+    "title": "Publish AI Systems",
+    "errors": {
+      "publish": "Failed to publish AI systems list"
+    },
+    "messages": {
+      "published": "AI systems list published successfully."
+    }
   },
   "createAssetDialog": {
     "breadcrumb": { "assets": "Assets", "newAsset": "New Asset" },
@@ -1751,11 +1876,12 @@
   },
   "publishAssetListDialog": {
     "title": "Publish Asset List",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "errors": { "publish": "Failed to publish asset list" },
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Asset list published successfully." },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish asset list"
+    },
+    "messages": {
+      "published": "Asset list published successfully."
+    }
   },
   "auditDetailsPage": {
     "breadcrumb": { "audits": "Audits" },
@@ -1947,11 +2073,12 @@
   },
   "publishObligationListDialog": {
     "title": "Publish Obligation List",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Obligation list published successfully." },
-    "errors": { "publish": "Failed to publish obligation list" },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish obligation list"
+    },
+    "messages": {
+      "published": "Obligation list published successfully."
+    }
   },
   "processingActivitiesPage": {
     "title": "Processing Activities",
@@ -1984,27 +2111,30 @@
   },
   "publishDpiaListDialog": {
     "title": "Publish Data Protection Impact Assessments",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Data Protection Impact Assessments published successfully." },
-    "errors": { "publish": "Failed to publish Data Protection Impact Assessments" },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish Data Protection Impact Assessments"
+    },
+    "messages": {
+      "published": "Data Protection Impact Assessments published successfully."
+    }
   },
   "publishProcessingActivityListDialog": {
     "title": "Publish Processing Activities",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Processing activities published successfully." },
-    "errors": { "publish": "Failed to publish processing activities" },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish processing activities"
+    },
+    "messages": {
+      "published": "Processing activities published successfully."
+    }
   },
   "publishTiaListDialog": {
     "title": "Publish Transfer Impact Assessments",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Transfer Impact Assessments published successfully." },
-    "errors": { "publish": "Failed to publish Transfer Impact Assessments" },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish Transfer Impact Assessments"
+    },
+    "messages": {
+      "published": "Transfer Impact Assessments published successfully."
+    }
   },
   "rightsRequestDetailsPage": {
     "breadcrumb": { "requests": "Rights Requests" },
@@ -2073,11 +2203,12 @@
   },
   "publishRiskListDialog": {
     "title": "Publish Risks",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Risks published successfully." },
-    "errors": { "publish": "Failed to publish risks" },
-    "fields": { "approvers": "Approvers", "approversPlaceholder": "Add approvers..." },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish risks"
+    },
+    "messages": {
+      "published": "Risks published successfully."
+    }
   },
   "riskRow": {
     "messages": { "error": "Error" },
@@ -2406,12 +2537,12 @@
   },
   "publishThirdPartyListDialog": {
     "title": "Publish third parties",
-    "description": "Select approvers to request approval before publishing, or publish directly without approvers.",
-    "fields": { "approvers": "Approvers" },
-    "placeholders": { "approvers": "Add approvers..." },
-    "messages": { "success": "Success", "error": "Error", "approvalRequested": "Approval requested successfully.", "published": "Third parties published successfully." },
-    "errors": { "publish": "Failed to publish third parties" },
-    "actions": { "publishMinor": "Publish as minor", "requestApproval": "Request approval", "publish": "Publish" }
+    "errors": {
+      "publish": "Failed to publish third parties"
+    },
+    "messages": {
+      "published": "Third parties published successfully."
+    }
   },
   "thirdPartyRow": {
     "messages": { "error": "Error" },

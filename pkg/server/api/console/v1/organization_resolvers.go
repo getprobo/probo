@@ -963,6 +963,79 @@ func (r *organizationResolver) BusinessFunctions(ctx context.Context, obj *types
 	return types.NewBusinessFunctionConnection(pageResult, r, obj.ID, filter), nil
 }
 
+// AiSystemsDocument is the resolver for the aiSystemsDocument field.
+func (r *organizationResolver) AiSystemsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	aiSystemDocumentID, err := r.probo.GeneratedDocuments.GetAiSystemsDocumentID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get ai system list document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if aiSystemDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := r.probo.Documents.Get(ctx, scope, *aiSystemDocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load ai system list document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
+// AiSystems is the resolver for the aiSystems field.
+func (r *organizationResolver) AiSystems(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AiSystemOrderBy, filter *types.AiSystemFilter) (*types.AiSystemConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAiSystemList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AiSystemOrderField]{
+		Field:     coredata.AiSystemOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AiSystemOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var (
+		status             *coredata.AiSystemStatus
+		riskClassification *coredata.AiSystemRiskClassification
+	)
+
+	if filter != nil {
+		status = filter.Status
+		riskClassification = filter.RiskClassification
+	}
+
+	aiSystemFilter := coredata.NewAiSystemFilter(status, riskClassification)
+
+	pageResult, err := r.probo.AiSystems.ListForOrganizationID(ctx, scope, obj.ID, cursor, aiSystemFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization ai systems", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAiSystemConnection(pageResult, r, obj.ID, filter), nil
+}
+
 // ProcessingActivities is the resolver for the processingActivities field.
 func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy) (*types.ProcessingActivityConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList)

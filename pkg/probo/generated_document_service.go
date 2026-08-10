@@ -1177,6 +1177,51 @@ func formatFindingPriority(p coredata.FindingPriority) string {
 	}
 }
 
+func formatAiSystemStatus(status coredata.AiSystemStatus) string {
+	switch status {
+	case coredata.AiSystemStatusActive:
+		return "Active"
+	case coredata.AiSystemStatusInDevelopment:
+		return "In development"
+	case coredata.AiSystemStatusDecommissioned:
+		return "Decommissioned"
+	default:
+		return stringOrNotSpecified(string(status))
+	}
+}
+
+func formatAiSystemRiskClassification(
+	classification coredata.AiSystemRiskClassification,
+) string {
+	switch classification {
+	case coredata.AiSystemRiskClassificationHighRisk:
+		return "High-risk"
+	case coredata.AiSystemRiskClassificationLimited:
+		return "Limited"
+	case coredata.AiSystemRiskClassificationMinimal:
+		return "Minimal"
+	case coredata.AiSystemRiskClassificationGPAI:
+		return "GPAI"
+	default:
+		return stringOrNotSpecified(string(classification))
+	}
+}
+
+func formatAiSystemCompanyRole(role coredata.AiSystemCompanyRole) string {
+	switch role {
+	case coredata.AiSystemCompanyRoleProvider:
+		return "Provider"
+	case coredata.AiSystemCompanyRoleDeployer:
+		return "Deployer"
+	case coredata.AiSystemCompanyRoleUser:
+		return "User"
+	case coredata.AiSystemCompanyRoleDeveloper:
+		return "Developer"
+	default:
+		return stringOrNotSpecified(string(role))
+	}
+}
+
 var findingListTemplate = template.Must(
 	template.New("finding_list.json.tmpl").
 		Funcs(template.FuncMap{
@@ -1602,6 +1647,306 @@ func BuildBusinessFunctionListDocument(data docgen.BusinessFunctionListData) (st
 	}
 
 	return string(out), nil
+}
+
+func (s *GeneratedDocumentService) PublishAiSystemList(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	approverIDs []gid.GID,
+	minor bool,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document        *coredata.Document
+		documentVersion *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			documentData, err := s.buildAiSystemListDocumentData(ctx, scope, tx, organization)
+			if err != nil {
+				return fmt.Errorf("cannot build document data: %w", err)
+			}
+
+			prosemirrorJSON, err := BuildAiSystemListDocument(documentData)
+			if err != nil {
+				return fmt.Errorf("cannot build prosemirror document: %w", err)
+			}
+
+			now := time.Now()
+
+			aiSystem := coredata.AiSystem{}
+
+			aiSystemDocumentID, err := aiSystem.GetGeneratedDocumentID(ctx, tx, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot query generated documents: %w", err)
+			}
+
+			var existingDoc *coredata.Document
+
+			if aiSystemDocumentID != nil {
+				doc := &coredata.Document{}
+
+				err = doc.LoadByID(ctx, tx, scope, *aiSystemDocumentID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load ai system list document: %w", err)
+				}
+
+				if err == nil && doc.ArchivedAt == nil {
+					existingDoc = doc
+				} else {
+					if err := aiSystem.ClearGeneratedDocumentID(ctx, tx, []gid.GID{*aiSystemDocumentID}); err != nil {
+						return fmt.Errorf("cannot clear document reference: %w", err)
+					}
+				}
+			}
+
+			if existingDoc == nil {
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
+
+				document = &coredata.Document{
+					ID:             documentID,
+					OrganizationID: organizationID,
+					WriteMode:      coredata.DocumentWriteModeGenerated,
+					Status:         coredata.DocumentStatusActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := document.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert document: %w", err)
+				}
+
+				if err := aiSystem.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
+					return fmt.Errorf("cannot upsert generated documents: %w", err)
+				}
+			} else {
+				document = existingDoc
+			}
+
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersion = &coredata.DocumentVersion{
+				ID:             documentVersionID,
+				OrganizationID: organizationID,
+				DocumentID:     document.ID,
+				Title:          "AI Systems",
+				Content:        prosemirrorJSON,
+				Classification: coredata.DocumentClassificationConfidential,
+				DocumentType:   coredata.DocumentTypeRegister,
+				Orientation:    coredata.DocumentVersionOrientationPortrait,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, documentVersion, nil
+}
+
+func (s *GeneratedDocumentService) GetAiSystemsDocumentID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) (*gid.GID, error) {
+	var aiSystemDocumentID *gid.GID
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			aiSystem := coredata.AiSystem{}
+
+			var err error
+
+			aiSystemDocumentID, err = aiSystem.GetGeneratedDocumentID(ctx, conn, organizationID)
+
+			return err
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get ai system list document ID: %w", err)
+	}
+
+	return aiSystemDocumentID, nil
+}
+
+func (s *GeneratedDocumentService) buildAiSystemListDocumentData(
+	ctx context.Context,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	organization *coredata.Organization,
+) (docgen.AiSystemListData, error) {
+	var aiSystems []*coredata.AiSystem
+
+	err := page.WalkAll(
+		ctx,
+		page.OrderBy[coredata.AiSystemOrderField]{
+			Field:     coredata.AiSystemOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.AiSystemOrderField]) ([]*coredata.AiSystem, error) {
+			var batch coredata.AiSystems
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewAiSystemFilter(nil, nil)); err != nil {
+				return nil, fmt.Errorf("cannot load ai systems: %w", err)
+			}
+
+			return batch, nil
+		},
+		func(rows []*coredata.AiSystem) error {
+			aiSystems = append(aiSystems, rows...)
+			return nil
+		},
+	)
+	if err != nil {
+		return docgen.AiSystemListData{}, err
+	}
+
+	if len(aiSystems) == 0 {
+		return docgen.AiSystemListData{
+			Title:            "AI Systems",
+			OrganizationName: organization.Name,
+			CreatedAt:        time.Now(),
+			TotalAiSystems:   0,
+		}, nil
+	}
+
+	ownerIDs := make([]gid.GID, 0, len(aiSystems))
+	ownerIDSet := make(map[gid.GID]struct{})
+
+	for _, system := range aiSystems {
+		if system.OwnerID != nil {
+			if _, ok := ownerIDSet[*system.OwnerID]; !ok {
+				ownerIDs = append(ownerIDs, *system.OwnerID)
+				ownerIDSet[*system.OwnerID] = struct{}{}
+			}
+		}
+	}
+
+	profileMap := make(map[gid.GID]*coredata.MembershipProfile)
+
+	if len(ownerIDs) > 0 {
+		var profiles coredata.MembershipProfiles
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return docgen.AiSystemListData{}, fmt.Errorf("cannot load profiles: %w", err)
+		}
+
+		for _, p := range profiles {
+			profileMap[p.ID] = p
+		}
+	}
+
+	rows := make([]docgen.AiSystemListRow, 0, len(aiSystems))
+	for _, system := range aiSystems {
+		ownerName := "-"
+
+		if system.OwnerID != nil {
+			if p, ok := profileMap[*system.OwnerID]; ok && p.FullName != "" {
+				ownerName = p.FullName
+			}
+		}
+
+		companyRoles := "-"
+
+		if len(system.CompanyRoles) > 0 {
+			parts := make([]string, len(system.CompanyRoles))
+			for i, role := range system.CompanyRoles {
+				parts[i] = formatAiSystemCompanyRole(role)
+			}
+
+			companyRoles = strings.Join(parts, ", ")
+		}
+
+		riskClassification := "-"
+		if system.RiskClassification != nil {
+			riskClassification = formatAiSystemRiskClassification(*system.RiskClassification)
+		}
+
+		rows = append(
+			rows,
+			docgen.AiSystemListRow{
+				Name:                    sanitizeTrackerCell(system.Name),
+				Version:                 sanitizeTrackerCell(optionalStringOrDash(system.Version)),
+				CompanyRoles:            sanitizeTrackerCell(companyRoles),
+				Status:                  sanitizeTrackerCell(formatAiSystemStatus(system.Status)),
+				Owner:                   sanitizeTrackerCell(ownerName),
+				Source:                  sanitizeTrackerCell(optionalStringOrDash(system.Source)),
+				Purpose:                 sanitizeTrackerCell(optionalStringOrDash(system.Purpose)),
+				IntendedUseCases:        sanitizeTrackerCell(optionalStringOrDash(system.IntendedUseCases)),
+				AutonomyLevel:           sanitizeTrackerCell(optionalStringOrDash(system.AutonomyLevel)),
+				HumanOversightMechanism: sanitizeTrackerCell(optionalStringOrDash(system.HumanOversightMechanism)),
+				RiskClassification:      sanitizeTrackerCell(riskClassification),
+				KeyStakeholders:         sanitizeTrackerCell(optionalStringOrDash(system.KeyStakeholders)),
+				DataSourcesAndType:      sanitizeTrackerCell(optionalStringOrDash(system.DataSourcesAndType)),
+				DeploymentDate:          sanitizeTrackerCell(optionalDateOrDash(system.DeploymentDate)),
+				LastReviewDate:          sanitizeTrackerCell(optionalDateOrDash(system.LastReviewDate)),
+				NextReviewDate:          sanitizeTrackerCell(optionalDateOrDash(system.NextReviewDate)),
+				Notes:                   sanitizeTrackerCell(optionalStringOrDash(system.Notes)),
+			},
+		)
+	}
+
+	return docgen.AiSystemListData{
+		Title:            "AI Systems",
+		OrganizationName: sanitizeTrackerCell(organization.Name),
+		CreatedAt:        time.Now(),
+		TotalAiSystems:   len(aiSystems),
+		Rows:             rows,
+	}, nil
+}
+
+var aiSystemListTemplate = template.Must(
+	template.New("ai_system_list.md.tmpl").
+		Funcs(template.FuncMap{
+			"add": func(a, b int) int {
+				return a + b
+			},
+		}).
+		ParseFS(Templates, "templates/ai_system_list.md.tmpl"),
+)
+
+func BuildAiSystemListDocument(data docgen.AiSystemListData) (string, error) {
+	var buf bytes.Buffer
+	if err := aiSystemListTemplate.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute ai system list template: %w", err)
+	}
+
+	node, err := prosemirror.ParseMarkdown(buf.String())
+	if err != nil {
+		return "", fmt.Errorf("cannot convert ai system list markdown: %w", err)
+	}
+
+	out, err := json.Marshal(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal ai system list prosemirror node: %w", err)
+	}
+
+	return string(out), nil
+}
+
+func optionalStringOrDash(value *string) string {
+	if value != nil && *value != "" {
+		return *value
+	}
+
+	return "-"
+}
+
+func optionalDateOrDash(value *time.Time) string {
+	if value != nil {
+		return value.Format("2006-01-02")
+	}
+
+	return "-"
 }
 
 func (s *GeneratedDocumentService) PublishObligationList(

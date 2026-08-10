@@ -77,20 +77,9 @@ export function PublishRiskListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishRiskListDialog.title"),
-        description: t("publishRiskListDialog.description"),
-        approvers: t("publishRiskListDialog.fields.approvers"),
-        approversPlaceholder: t("publishRiskListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishRiskListDialog.actions.publishMinor"),
-        publish: t("publishRiskListDialog.actions.publish"),
-        requestApproval: t("publishRiskListDialog.actions.requestApproval"),
-        successTitle: t("publishRiskListDialog.messages.success"),
-        published: t("publishRiskListDialog.messages.published"),
-        approvalRequested: t("publishRiskListDialog.messages.approvalRequested"),
-        errorTitle: t("publishRiskListDialog.messages.error"),
-        publishError: t("publishRiskListDialog.errors.publish"),
-      }}
+      title={t("publishRiskListDialog.title")}
+      publishedMessage={t("publishRiskListDialog.messages.published")}
+      publishError={t("publishRiskListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

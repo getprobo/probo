@@ -77,20 +77,9 @@ export function PublishObligationListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishObligationListDialog.title"),
-        description: t("publishObligationListDialog.description"),
-        approvers: t("publishObligationListDialog.fields.approvers"),
-        approversPlaceholder: t("publishObligationListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishObligationListDialog.actions.publishMinor"),
-        publish: t("publishObligationListDialog.actions.publish"),
-        requestApproval: t("publishObligationListDialog.actions.requestApproval"),
-        successTitle: t("publishObligationListDialog.messages.success"),
-        published: t("publishObligationListDialog.messages.published"),
-        approvalRequested: t("publishObligationListDialog.messages.approvalRequested"),
-        errorTitle: t("publishObligationListDialog.messages.error"),
-        publishError: t("publishObligationListDialog.errors.publish"),
-      }}
+      title={t("publishObligationListDialog.title")}
+      publishedMessage={t("publishObligationListDialog.messages.published")}
+      publishError={t("publishObligationListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

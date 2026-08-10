@@ -25,6 +25,9 @@ import (
 )
 
 const (
+	ScopeV1AiSystemRead coredata.OAuth2Scope = "v1:ai-system:read"
+	ScopeV1AiSystem     coredata.OAuth2Scope = "v1:ai-system"
+
 	ScopeV1AssetRead coredata.OAuth2Scope = "v1:asset:read"
 	ScopeV1Asset     coredata.OAuth2Scope = "v1:asset"
 
@@ -74,6 +77,18 @@ const (
 // OAuth2ScopeMappings maps OAuth2 scopes to core probo actions.
 var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 
+	ScopeV1AiSystemRead: {
+		ActionAiSystemGet,
+		ActionAiSystemList,
+	},
+	ScopeV1AiSystem: {
+		ActionAiSystemGet,
+		ActionAiSystemList,
+		ActionAiSystemCreate,
+		ActionAiSystemUpdate,
+		ActionAiSystemDelete,
+		ActionAiSystemPublish,
+	},
 	ScopeV1AssetRead: {
 		ActionAssetGet,
 		ActionAssetList,

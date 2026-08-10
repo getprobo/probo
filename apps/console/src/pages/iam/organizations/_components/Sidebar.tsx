@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CookieIcon, LaptopIcon, TreeStructureIcon } from "@phosphor-icons/react";
+import { CookieIcon, CpuIcon, LaptopIcon, TreeStructureIcon } from "@phosphor-icons/react";
 import {
   IconBank,
   IconBook,
@@ -65,6 +65,7 @@ const fragment = graphql`
         canListAudits: permission(action: "core:audit:list")
         canListFindings: permission(action: "core:finding:list")
         canListBusinessFunctions: permission(action: "core:business-function:list")
+        canListAiSystems: permission(action: "core:ai-system:list")
         canListObligations: permission(action: "core:obligation:list")
         canListProcessingActivities: permission(
             action: "core:processing-activity:list"
@@ -191,6 +192,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={t("sidebar.businessFunctions")}
           icon={TreeStructureIcon}
           to={`${prefix}/business-functions`}
+        />
+      )}
+      {organization.canListAiSystems && (
+        <SidebarItem
+          label={t("sidebar.aiSystems")}
+          icon={CpuIcon}
+          to={`${prefix}/ai-systems`}
         />
       )}
       {organization.canListObligations && (

@@ -98,20 +98,9 @@ export function PublishBusinessFunctionListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishBusinessFunctionListDialog.title"),
-        description: t("publishBusinessFunctionListDialog.description"),
-        approvers: t("publishBusinessFunctionListDialog.fields.approvers"),
-        approversPlaceholder: t("publishBusinessFunctionListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishBusinessFunctionListDialog.actions.publishMinor"),
-        publish: t("publishBusinessFunctionListDialog.actions.publish"),
-        requestApproval: t("publishBusinessFunctionListDialog.actions.requestApproval"),
-        successTitle: t("publishBusinessFunctionListDialog.messages.success"),
-        published: t("publishBusinessFunctionListDialog.messages.published"),
-        approvalRequested: t("publishBusinessFunctionListDialog.messages.approvalRequested"),
-        errorTitle: t("publishBusinessFunctionListDialog.messages.error"),
-        publishError: t("publishBusinessFunctionListDialog.errors.publish"),
-      }}
+      title={t("publishBusinessFunctionListDialog.title")}
+      publishedMessage={t("publishBusinessFunctionListDialog.messages.published")}
+      publishError={t("publishBusinessFunctionListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

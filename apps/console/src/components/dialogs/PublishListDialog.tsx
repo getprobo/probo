@@ -31,25 +31,11 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
-
-export type PublishListDialogLabels = {
-  title: string;
-  description: string;
-  approvers: string;
-  approversPlaceholder: string;
-  publishMinor: string;
-  publish: string;
-  requestApproval: string;
-  successTitle: string;
-  published: string;
-  approvalRequested: string;
-  errorTitle: string;
-  publishError: string;
-};
 
 export type PublishListDialogInput = {
   organizationId: string;
@@ -61,7 +47,9 @@ type Props = {
   children: ReactNode;
   organizationId: string;
   defaultApproverIds?: string[];
-  labels: PublishListDialogLabels;
+  title: string;
+  publishedMessage: string;
+  publishError: string;
   isPublishing: boolean;
   onPublish: (input: PublishListDialogInput) => Promise<string | null | undefined>;
   onPublished?: (documentId: string) => void;
@@ -71,11 +59,14 @@ export function PublishListDialog({
   children,
   organizationId,
   defaultApproverIds,
-  labels,
+  title,
+  publishedMessage,
+  publishError,
   isPublishing,
   onPublish,
   onPublished,
 }: Props) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
@@ -114,10 +105,10 @@ export function PublishListDialog({
       }
 
       toast({
-        title: labels.successTitle,
+        title: t("publishListDialog.messages.success"),
         description: requestedApproval
-          ? labels.approvalRequested
-          : labels.published,
+          ? t("publishListDialog.messages.approvalRequested")
+          : publishedMessage,
         variant: "success",
       });
       dialogRef.current?.close();
@@ -125,9 +116,9 @@ export function PublishListDialog({
       onPublished?.(documentId);
     } catch (error) {
       toast({
-        title: labels.errorTitle,
+        title: t("publishListDialog.messages.error"),
         description: formatError(
-          labels.publishError,
+          publishError,
           error as Parameters<typeof formatError>[1],
         ),
         variant: "error",
@@ -140,20 +131,20 @@ export function PublishListDialog({
       className="max-w-xl"
       ref={dialogRef}
       trigger={children}
-      title={labels.title}
+      title={title}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <div className="space-y-4">
             <p className="text-sm text-txt-secondary">
-              {labels.description}
+              {t("publishListDialog.description")}
             </p>
             <PeopleMultiSelectField
               name="approverIds"
-              label={labels.approvers}
+              label={t("publishListDialog.fields.approvers")}
               control={control}
               organizationId={organizationId}
-              placeholder={labels.approversPlaceholder}
+              placeholder={t("publishListDialog.fields.approversPlaceholder")}
             />
           </div>
         </DialogContent>
@@ -165,7 +156,7 @@ export function PublishListDialog({
             onClick={() => { minorRef.current = true; }}
             disabled={isPublishing}
           >
-            {labels.publishMinor}
+            {t("publishListDialog.actions.publishMinor")}
           </Button>
           <Button
             type="submit"
@@ -174,8 +165,8 @@ export function PublishListDialog({
             disabled={isPublishing}
           >
             {hasApprovers
-              ? labels.requestApproval
-              : labels.publish}
+              ? t("publishListDialog.actions.requestApproval")
+              : t("publishListDialog.actions.publish")}
           </Button>
         </DialogFooter>
       </form>

@@ -77,20 +77,9 @@ export function PublishDataProtectionImpactAssessmentListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishDpiaListDialog.title"),
-        description: t("publishDpiaListDialog.description"),
-        approvers: t("publishDpiaListDialog.fields.approvers"),
-        approversPlaceholder: t("publishDpiaListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishDpiaListDialog.actions.publishMinor"),
-        publish: t("publishDpiaListDialog.actions.publish"),
-        requestApproval: t("publishDpiaListDialog.actions.requestApproval"),
-        successTitle: t("publishDpiaListDialog.messages.success"),
-        published: t("publishDpiaListDialog.messages.published"),
-        approvalRequested: t("publishDpiaListDialog.messages.approvalRequested"),
-        errorTitle: t("publishDpiaListDialog.messages.error"),
-        publishError: t("publishDpiaListDialog.errors.publish"),
-      }}
+      title={t("publishDpiaListDialog.title")}
+      publishedMessage={t("publishDpiaListDialog.messages.published")}
+      publishError={t("publishDpiaListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

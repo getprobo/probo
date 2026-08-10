@@ -77,20 +77,9 @@ export function PublishDataListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishDataListDialog.title"),
-        description: t("publishDataListDialog.description"),
-        approvers: t("publishDataListDialog.fields.approvers"),
-        approversPlaceholder: t("publishDataListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishDataListDialog.actions.publishMinor"),
-        publish: t("publishDataListDialog.actions.publish"),
-        requestApproval: t("publishDataListDialog.actions.requestApproval"),
-        successTitle: t("publishDataListDialog.messages.successTitle"),
-        published: t("publishDataListDialog.messages.published"),
-        approvalRequested: t("publishDataListDialog.messages.approvalRequested"),
-        errorTitle: t("publishDataListDialog.errors.title"),
-        publishError: t("publishDataListDialog.errors.publish"),
-      }}
+      title={t("publishDataListDialog.title")}
+      publishedMessage={t("publishDataListDialog.messages.published")}
+      publishError={t("publishDataListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

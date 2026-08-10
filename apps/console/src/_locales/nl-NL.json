@@ -103,24 +103,11 @@
   },
   "publishDataListDialog": {
     "title": "Gegevenslijst publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "messages": {
-      "successTitle": "Succes",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Gegevenslijst succesvol gepubliceerd."
-    },
     "errors": {
-      "title": "Fout",
       "publish": "Publiceren van gegevenslijst mislukt"
     },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Gegevenslijst succesvol gepubliceerd."
     }
   },
   "documentLayout": {
@@ -901,24 +888,11 @@
   },
   "publishFindingListDialog": {
     "title": "Bevindingenlijst publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "messages": {
-      "successTitle": "Succes",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Bevindingenlijst succesvol gepubliceerd."
-    },
     "errors": {
-      "title": "Fout",
       "publish": "Publiceren van bevindingenlijst mislukt"
     },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Bevindingenlijst succesvol gepubliceerd."
     }
   },
   "tasks": {
@@ -2396,6 +2370,7 @@
     "audits": "Audits",
     "findings": "Bevindingen",
     "businessFunctions": "Bedrijfsfuncties",
+    "aiSystems": "AI-systemen",
     "obligations": "Verplichtingen",
     "processingActivities": "Verwerkingsactiviteiten",
     "statementsOfApplicability": "Verklaringen van toepasselijkheid",
@@ -3471,11 +3446,138 @@
   },
   "publishBusinessFunctionListDialog": {
     "title": "Bedrijfsfunctielijst publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen vóór publicatie, of publiceer direct zonder goedkeurders.",
     "errors": { "publish": "Publiceren van bedrijfsfunctielijst mislukt" },
-    "messages": { "success": "Geslaagd", "error": "Fout", "approvalRequested": "Goedkeuring succesvol aangevraagd.", "published": "Bedrijfsfunctielijst succesvol gepubliceerd." },
-    "fields": { "approvers": "Goedkeurders", "approversPlaceholder": "Goedkeurders toevoegen..." },
-    "actions": { "publishMinor": "Publiceren als minor", "requestApproval": "Goedkeuring aanvragen", "publish": "Publiceren" }
+    "messages": { "published": "Bedrijfsfunctielijst succesvol gepubliceerd." }
+  },
+  "aiSystemsPage": {
+    "pageTitle": "AI-systemen",
+    "title": "AI-systemen",
+    "description": "Volg AI-systemen die binnen uw organisatie worden gebruikt, inclusief rollen, risicoclassificatie en reviewplanning.",
+    "actions": { "document": "Document", "publish": "Publiceren", "add": "AI-systeem toevoegen", "loadMore": "Meer laden", "loading": "Laden…" },
+    "filters": { "allStatuses": "Alle statussen", "allRiskClassifications": "Alle risicoclassificaties" },
+    "status": { "active": "Actief", "inDevelopment": "In ontwikkeling", "decommissioned": "Buiten gebruik" },
+    "riskClassification": { "highRisk": "Hoog risico", "limited": "Beperkt", "minimal": "Minimaal", "gpai": "GPAI" },
+    "companyRoles": { "provider": "Aanbieder", "deployer": "Implementeerder", "user": "Gebruiker", "developer": "Ontwikkelaar" },
+    "columns": { "name": "Naam", "version": "Versie", "status": "Status", "riskClassification": "Risicoclassificatie", "owner": "Systeemeigenaar", "nextReviewDate": "Volgende review", "actions": "Acties" },
+    "empty": {
+      "title": "Nog geen AI-systemen",
+      "description": "Maak uw eerste AI-systeem aan om te beginnen.",
+      "filteredTitle": "Geen overeenkomende AI-systemen",
+      "filteredDescription": "Geen AI-systemen komen overeen met de geselecteerde filters."
+    }
+  },
+  "aiSystemListItem": {
+    "actions": { "delete": "Verwijderen" },
+    "messages": { "success": "Gelukt", "deleted": "AI-systeem succesvol verwijderd" },
+    "errors": { "delete": "Verwijderen van AI-systeem mislukt" },
+    "deleteConfirmation": "Dit verwijdert het AI-systeem \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt."
+  },
+  "aiSystemDetailsPage": {
+    "breadcrumb": { "aiSystems": "AI-systemen", "unknown": "Onbekend AI-systeem" },
+    "validation": { "nameRequired": "Naam is verplicht" },
+    "fields": {
+      "name": "Naam",
+      "namePlaceholder": "Voer systeemnaam in",
+      "version": "Versie",
+      "versionPlaceholder": "bijv. 1.0",
+      "companyRoles": "Bedrijfsrollen",
+      "status": "Status",
+      "owner": "Systeemeigenaar",
+      "source": "Bron",
+      "sourcePlaceholder": "Wie het systeem heeft ontwikkeld of levert",
+      "purpose": "Doel / bedrijfsdoelen",
+      "purposePlaceholder": "Waarom dit systeem bestaat en wat het wil bereiken",
+      "intendedUseCases": "Beoogde use cases",
+      "intendedUseCasesPlaceholder": "Specifieke manieren waarop het systeem bedoeld is te worden gebruikt",
+      "autonomyLevel": "Autonomieniveau",
+      "autonomyLevelPlaceholder": "Beschrijf het autonomieniveau",
+      "humanOversightMechanism": "Mechanisme voor menselijk toezicht",
+      "humanOversightMechanismPlaceholder": "Hoe mensen dit systeem bewaken",
+      "riskClassification": "Risicoclassificatie",
+      "keyStakeholders": "Belangrijke betrokken stakeholders",
+      "keyStakeholdersPlaceholder": "Wie mogelijk wordt beïnvloed door dit systeem",
+      "dataSourcesAndType": "Gegevensbronnen en type",
+      "dataSourcesAndTypePlaceholder": "Welke gegevens het systeem verwerkt en het type",
+      "deploymentDate": "Implementatiedatum",
+      "lastReviewDate": "Laatste review",
+      "nextReviewDate": "Volgende review",
+      "notes": "Notities / observaties",
+      "notesPlaceholder": "Aanvullende notities of observaties",
+      "notSet": "Niet ingesteld"
+    },
+    "status": { "active": "Actief", "inDevelopment": "In ontwikkeling", "decommissioned": "Buiten gebruik" },
+    "riskClassification": { "highRisk": "Hoog risico", "limited": "Beperkt", "minimal": "Minimaal", "gpai": "GPAI" },
+    "companyRoles": { "provider": "Aanbieder", "deployer": "Implementeerder", "user": "Gebruiker", "developer": "Ontwikkelaar" },
+    "actions": { "delete": "Verwijderen", "update": "Bijwerken", "updating": "Bezig met bijwerken…" },
+    "messages": { "success": "Gelukt", "updated": "AI-systeem succesvol bijgewerkt", "deleted": "AI-systeem succesvol verwijderd" },
+    "errors": { "update": "Bijwerken van AI-systeem mislukt", "delete": "Verwijderen van AI-systeem mislukt" },
+    "deleteConfirmation": "Dit verwijdert het AI-systeem \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt."
+  },
+  "createAiSystemDialog": {
+    "breadcrumb": { "aiSystems": "AI-systemen", "create": "Aanmaken" },
+    "validation": { "nameRequired": "Naam is verplicht" },
+    "fields": {
+      "name": "Naam",
+      "namePlaceholder": "Voer systeemnaam in",
+      "version": "Versie",
+      "versionPlaceholder": "bijv. 1.0",
+      "companyRoles": "Bedrijfsrollen",
+      "status": "Status",
+      "owner": "Systeemeigenaar",
+      "source": "Bron",
+      "sourcePlaceholder": "Wie het systeem heeft ontwikkeld of levert",
+      "purpose": "Doel / bedrijfsdoelen",
+      "purposePlaceholder": "Waarom dit systeem bestaat en wat het wil bereiken",
+      "intendedUseCases": "Beoogde use cases",
+      "intendedUseCasesPlaceholder": "Specifieke manieren waarop het systeem bedoeld is te worden gebruikt",
+      "autonomyLevel": "Autonomieniveau",
+      "autonomyLevelPlaceholder": "Beschrijf het autonomieniveau",
+      "humanOversightMechanism": "Mechanisme voor menselijk toezicht",
+      "humanOversightMechanismPlaceholder": "Hoe mensen dit systeem bewaken",
+      "riskClassification": "Risicoclassificatie",
+      "keyStakeholders": "Belangrijke betrokken stakeholders",
+      "keyStakeholdersPlaceholder": "Wie mogelijk wordt beïnvloed door dit systeem",
+      "dataSourcesAndType": "Gegevensbronnen en type",
+      "dataSourcesAndTypePlaceholder": "Welke gegevens het systeem verwerkt en het type",
+      "deploymentDate": "Implementatiedatum",
+      "lastReviewDate": "Laatste review",
+      "nextReviewDate": "Volgende review",
+      "notes": "Notities / observaties",
+      "notesPlaceholder": "Aanvullende notities of observaties",
+      "notSet": "Niet ingesteld"
+    },
+    "status": { "active": "Actief", "inDevelopment": "In ontwikkeling", "decommissioned": "Buiten gebruik" },
+    "riskClassification": { "highRisk": "Hoog risico", "limited": "Beperkt", "minimal": "Minimaal", "gpai": "GPAI" },
+    "companyRoles": { "provider": "Aanbieder", "deployer": "Implementeerder", "user": "Gebruiker", "developer": "Ontwikkelaar" },
+    "actions": { "create": "AI-systeem aanmaken", "creating": "Bezig met aanmaken…" },
+    "messages": { "success": "Gelukt", "created": "AI-systeem succesvol aangemaakt" },
+    "errors": { "create": "Aanmaken van AI-systeem mislukt" }
+  },
+  "publishListDialog": {
+    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
+    "fields": {
+      "approvers": "Goedkeurders",
+      "approversPlaceholder": "Goedkeurders toevoegen..."
+    },
+    "actions": {
+      "publishMinor": "Publiceren als subversie",
+      "requestApproval": "Goedkeuring aanvragen",
+      "publish": "Publiceren"
+    },
+    "messages": {
+      "success": "Succes",
+      "error": "Fout",
+      "approvalRequested": "Goedkeuring succesvol aangevraagd."
+    }
+  },
+  "publishAiSystemListDialog": {
+    "title": "AI-systemen publiceren",
+    "errors": {
+      "publish": "Publiceren van AI-systemenlijst mislukt"
+    },
+    "messages": {
+      "published": "AI-systemenlijst succesvol gepubliceerd."
+    }
   },
   "createAssetDialog": {
     "breadcrumb": {
@@ -3506,24 +3608,11 @@
   },
   "publishAssetListDialog": {
     "title": "Assetlijst publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
     "errors": {
       "publish": "Publiceren van assetlijst mislukt"
     },
     "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
       "published": "Assetlijst succesvol gepubliceerd."
-    },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
     }
   },
   "auditDetailsPage": {
@@ -4151,24 +4240,11 @@
   },
   "publishObligationListDialog": {
     "title": "Verplichtingenlijst publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Verplichtingenlijst succesvol gepubliceerd."
-    },
     "errors": {
       "publish": "Publiceren van verplichtingenlijst mislukt"
     },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Verplichtingenlijst succesvol gepubliceerd."
     }
   },
   "processingActivitiesPage": {
@@ -4346,68 +4422,29 @@
   },
   "publishDpiaListDialog": {
     "title": "Gegevensbeschermingseffectbeoordelingen publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Gegevensbeschermingseffectbeoordelingen succesvol gepubliceerd."
-    },
     "errors": {
       "publish": "Publiceren van gegevensbeschermingseffectbeoordelingen mislukt"
     },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Gegevensbeschermingseffectbeoordelingen succesvol gepubliceerd."
     }
   },
   "publishProcessingActivityListDialog": {
     "title": "Verwerkingsactiviteiten publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Verwerkingsactiviteiten succesvol gepubliceerd."
-    },
     "errors": {
       "publish": "Publiceren van verwerkingsactiviteiten mislukt"
     },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Verwerkingsactiviteiten succesvol gepubliceerd."
     }
   },
   "publishTiaListDialog": {
     "title": "Transferimpactbeoordelingen publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Transferimpactbeoordelingen succesvol gepubliceerd."
-    },
     "errors": {
       "publish": "Publiceren van transferimpactbeoordelingen mislukt"
     },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Transferimpactbeoordelingen succesvol gepubliceerd."
     }
   },
   "rightsRequestDetailsPage": {
@@ -4646,24 +4683,11 @@
   },
   "publishRiskListDialog": {
     "title": "Risico's publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Risico's succesvol gepubliceerd."
-    },
     "errors": {
       "publish": "Publiceren van risico's mislukt"
     },
-    "fields": {
-      "approvers": "Goedkeurders",
-      "approversPlaceholder": "Goedkeurders toevoegen..."
-    },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Risico's succesvol gepubliceerd."
     }
   },
   "riskRow": {
@@ -5540,26 +5564,11 @@
   },
   "publishThirdPartyListDialog": {
     "title": "Derde partijen publiceren",
-    "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",
-    "fields": {
-      "approvers": "Goedkeurders"
-    },
-    "placeholders": {
-      "approvers": "Goedkeurders toevoegen..."
-    },
-    "messages": {
-      "success": "Succes",
-      "error": "Fout",
-      "approvalRequested": "Goedkeuring succesvol aangevraagd.",
-      "published": "Derde partijen succesvol gepubliceerd."
-    },
     "errors": {
       "publish": "Publiceren van derde partijen mislukt"
     },
-    "actions": {
-      "publishMinor": "Publiceren als subversie",
-      "requestApproval": "Goedkeuring aanvragen",
-      "publish": "Publiceren"
+    "messages": {
+      "published": "Derde partijen succesvol gepubliceerd."
     }
   },
   "thirdPartyRow": {

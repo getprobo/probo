@@ -77,20 +77,9 @@ export function PublishTransferImpactAssessmentListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishTiaListDialog.title"),
-        description: t("publishTiaListDialog.description"),
-        approvers: t("publishTiaListDialog.fields.approvers"),
-        approversPlaceholder: t("publishTiaListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishTiaListDialog.actions.publishMinor"),
-        publish: t("publishTiaListDialog.actions.publish"),
-        requestApproval: t("publishTiaListDialog.actions.requestApproval"),
-        successTitle: t("publishTiaListDialog.messages.success"),
-        published: t("publishTiaListDialog.messages.published"),
-        approvalRequested: t("publishTiaListDialog.messages.approvalRequested"),
-        errorTitle: t("publishTiaListDialog.messages.error"),
-        publishError: t("publishTiaListDialog.errors.publish"),
-      }}
+      title={t("publishTiaListDialog.title")}
+      publishedMessage={t("publishTiaListDialog.messages.published")}
+      publishError={t("publishTiaListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

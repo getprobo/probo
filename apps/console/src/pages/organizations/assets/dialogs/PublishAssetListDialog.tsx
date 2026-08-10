@@ -77,20 +77,9 @@ export function PublishAssetListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishAssetListDialog.title"),
-        description: t("publishAssetListDialog.description"),
-        approvers: t("publishAssetListDialog.fields.approvers"),
-        approversPlaceholder: t("publishAssetListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishAssetListDialog.actions.publishMinor"),
-        publish: t("publishAssetListDialog.actions.publish"),
-        requestApproval: t("publishAssetListDialog.actions.requestApproval"),
-        successTitle: t("publishAssetListDialog.messages.success"),
-        published: t("publishAssetListDialog.messages.published"),
-        approvalRequested: t("publishAssetListDialog.messages.approvalRequested"),
-        errorTitle: t("publishAssetListDialog.messages.error"),
-        publishError: t("publishAssetListDialog.errors.publish"),
-      }}
+      title={t("publishAssetListDialog.title")}
+      publishedMessage={t("publishAssetListDialog.messages.published")}
+      publishError={t("publishAssetListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

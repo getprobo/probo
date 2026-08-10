@@ -77,20 +77,9 @@ export function PublishFindingListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishFindingListDialog.title"),
-        description: t("publishFindingListDialog.description"),
-        approvers: t("publishFindingListDialog.fields.approvers"),
-        approversPlaceholder: t("publishFindingListDialog.fields.approversPlaceholder"),
-        publishMinor: t("publishFindingListDialog.actions.publishMinor"),
-        publish: t("publishFindingListDialog.actions.publish"),
-        requestApproval: t("publishFindingListDialog.actions.requestApproval"),
-        successTitle: t("publishFindingListDialog.messages.successTitle"),
-        published: t("publishFindingListDialog.messages.published"),
-        approvalRequested: t("publishFindingListDialog.messages.approvalRequested"),
-        errorTitle: t("publishFindingListDialog.errors.title"),
-        publishError: t("publishFindingListDialog.errors.publish"),
-      }}
+      title={t("publishFindingListDialog.title")}
+      publishedMessage={t("publishFindingListDialog.messages.published")}
+      publishError={t("publishFindingListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>

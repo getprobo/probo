@@ -77,20 +77,9 @@ export function PublishThirdPartyListDialog({
       isPublishing={isPublishing}
       onPublish={onPublish}
       onPublished={onPublished}
-      labels={{
-        title: t("publishThirdPartyListDialog.title"),
-        description: t("publishThirdPartyListDialog.description"),
-        approvers: t("publishThirdPartyListDialog.fields.approvers"),
-        approversPlaceholder: t("publishThirdPartyListDialog.placeholders.approvers"),
-        publishMinor: t("publishThirdPartyListDialog.actions.publishMinor"),
-        publish: t("publishThirdPartyListDialog.actions.publish"),
-        requestApproval: t("publishThirdPartyListDialog.actions.requestApproval"),
-        successTitle: t("publishThirdPartyListDialog.messages.success"),
-        published: t("publishThirdPartyListDialog.messages.published"),
-        approvalRequested: t("publishThirdPartyListDialog.messages.approvalRequested"),
-        errorTitle: t("publishThirdPartyListDialog.messages.error"),
-        publishError: t("publishThirdPartyListDialog.errors.publish"),
-      }}
+      title={t("publishThirdPartyListDialog.title")}
+      publishedMessage={t("publishThirdPartyListDialog.messages.published")}
+      publishError={t("publishThirdPartyListDialog.errors.publish")}
     >
       {children}
     </PublishListDialog>
