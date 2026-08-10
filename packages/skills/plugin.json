@@ -1,10 +1,12 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "probo",
   "version": "0.2.2",
-  "description": "Open-source compliance workflows powered by Probo MCP (Codex, OpenCode, Claude Code)",
+  "description": "Open-source compliance workflows powered by the Probo MCP API",
   "author": {
     "name": "Probo Inc",
-    "email": "hello@probo.com"
+    "email": "hello@probo.com",
+    "url": "https://www.probo.com"
   },
   "homepage": "https://github.com/getprobo/probo/tree/main/packages/skills",
   "repository": "https://github.com/getprobo/probo",
@@ -14,8 +16,7 @@
     "compliance",
     "grc",
     "mcp",
+    "agent-skills",
     "open-source"
-  ],
-  "skills": "./skills/",
-  "mcpServers": "./.mcp.json"
+  ]
 }

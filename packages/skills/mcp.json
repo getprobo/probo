@@ -1,11 +1,12 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "probo-us": {
-      "type": "http",
+      "type": "streamable-http",
       "url": "https://us.probo.com/api/mcp/v1"
     },
     "probo-eu": {
-      "type": "http",
+      "type": "streamable-http",
       "url": "https://eu.probo.com/api/mcp/v1"
     }
   }

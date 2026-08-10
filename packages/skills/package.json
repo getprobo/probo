@@ -18,6 +18,8 @@
     ".agents",
     "skills",
     "commands",
+    "plugin.json",
+    "mcp.json",
     ".mcp.json",
     "README.md",
     "COMPATIBILITY.md"
@@ -25,6 +27,7 @@
   "keywords": [
     "claude-code",
     "agent-skills",
+    "agent-plugins",
     "codex",
     "opencode",
     "probo",
