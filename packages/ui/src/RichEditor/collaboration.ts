@@ -106,7 +106,7 @@ export function createRichEditorAutomergeDocument(
   const documentJSON: Record<string, unknown> = content
     ? parseJSONObject(content)
     : { type: "doc", content: [{ type: "paragraph" }] };
-  markTableStructure(documentJSON);
+  markAutomergeStructuralBlocks(documentJSON);
   const pmDocument = adapter.schema.nodeFromJSON(documentJSON);
   const spans = pmNodeToSpans(adapter, pmDocument);
   const document = Automerge.from<RichEditorAutomergeDocument>({ body: "" });
@@ -375,7 +375,9 @@ function isJSONObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function markTableStructure(node: Record<string, unknown>): void {
+export function markAutomergeStructuralBlocks(
+  node: Record<string, unknown>,
+): void {
   const type = node.type;
   if (
     type === "horizontalRule"
@@ -391,7 +393,7 @@ function markTableStructure(node: Record<string, unknown>): void {
 
   if (!Array.isArray(node.content)) return;
   for (const child of node.content) {
-    if (isJSONObject(child)) markTableStructure(child);
+    if (isJSONObject(child)) markAutomergeStructuralBlocks(child);
   }
 }
 

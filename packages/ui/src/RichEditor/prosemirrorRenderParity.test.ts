@@ -24,9 +24,16 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import * as Automerge from "@automerge/automerge";
-import { type DocHandle, pmDocFromSpans } from "@automerge/prosemirror";
+import {
+  type DocHandle,
+  pmDocFromSpans,
+  pmNodeToSpans,
+} from "@automerge/prosemirror";
 import { getSchema } from "@tiptap/core";
-import { Fragment, type Schema } from "@tiptap/pm/model";
+import {
+  Fragment,
+  type Schema,
+} from "@tiptap/pm/model";
 import { EditorState } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
@@ -35,6 +42,7 @@ import {
   createRichEditorAutomergeDocument,
   createSchemaAdapter,
   explicitBlockIdentityPlugin,
+  markAutomergeStructuralBlocks,
   type RichEditorAutomergeDocument,
 } from "./collaboration";
 import { richEditorCollaborationExtensions } from "./RichEditor";
@@ -54,7 +62,12 @@ type EditScenario = {
   build: () => Automerge.Doc<RichEditorAutomergeDocument>;
 };
 
-type FixtureEntry = { name: string; document: string; expected: unknown };
+type FixtureEntry = {
+  name: string;
+  document: string;
+  expected: unknown;
+  spans: unknown;
+};
 
 const fixturePath = fileURLToPath(
   new URL(
@@ -538,31 +551,80 @@ function canonical(node: {
   return out;
 }
 
+function normalizeAutomerge(value: unknown): unknown {
+  if (Automerge.isImmutableString(value)) return value.val;
+  if (Array.isArray(value)) return value.map(normalizeAutomerge);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, item]) => [key, normalizeAutomerge(item)]),
+    );
+  }
+
+  return value;
+}
+
+function normalizeSpans(spans: unknown[]): unknown[] {
+  return spans.map((span) => {
+    const normalized = normalizeAutomerge(span) as Record<string, unknown>;
+    const marks = normalized.marks;
+    if (
+      marks !== null
+      && typeof marks === "object"
+      && !Array.isArray(marks)
+      && Object.keys(marks).length === 0
+    ) {
+      delete normalized.marks;
+    }
+
+    return normalized;
+  });
+}
+
 function entryFromDocument(
   name: string,
   document: Automerge.Doc<RichEditorAutomergeDocument>,
+  sourceJSON?: unknown,
 ): FixtureEntry {
   const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
   const spans = Automerge.spans(document, ["body"]);
-  const rendered: unknown = pmDocFromSpans(adapter, spans).toJSON();
+  const renderedDocument = pmDocFromSpans(adapter, spans);
+  const rendered: unknown = renderedDocument.toJSON();
+  const reverseSpans = pmNodeToSpans(
+    adapter,
+    sourceJSON === undefined
+      ? renderedDocument
+      : adapter.schema.nodeFromJSON(sourceJSON),
+  );
+
+  // The direct pmNodeToSpans result and the spans materialized after
+  // updateSpans must describe the same rich text. This is the frontend half of
+  // the reverse-direction oracle; the Go test loads the saved document and
+  // independently compares its native spans with this committed result.
+  expect(normalizeSpans(reverseSpans), name).toEqual(
+    normalizeSpans(spans),
+  );
 
   return {
     name,
     document: Buffer.from(Automerge.save(document)).toString("base64"),
     expected: canonical(rendered as never),
+    spans: normalizeSpans(reverseSpans),
   };
 }
 
 function build(): FixtureEntry[] {
-  const fromDocuments = corpus.map(({ name, doc }) =>
-    entryFromDocument(
-      name,
-      createRichEditorAutomergeDocument(
-        JSON.stringify(doc),
-        richEditorCollaborationExtensions,
-      ),
-    ),
-  );
+  const fromDocuments = corpus.map(({ name, doc }) => {
+    const document = createRichEditorAutomergeDocument(
+      JSON.stringify(doc),
+      richEditorCollaborationExtensions,
+    );
+    const sourceJSON = structuredClone(doc) as Record<string, unknown>;
+    markAutomergeStructuralBlocks(sourceJSON);
+
+    return entryFromDocument(name, document, sourceJSON);
+  });
 
   const fromEdits = editScenarios.map(({ name, build: buildDocument }) =>
     entryFromDocument(name, buildDocument()),
@@ -590,6 +652,7 @@ describe("ProseMirror render parity fixture", () => {
       const match = committed.find(candidate => candidate.name === entry.name);
       expect(match, entry.name).toBeDefined();
       expect(entry.expected, entry.name).toEqual(match!.expected);
+      expect(entry.spans, entry.name).toEqual(match!.spans);
     }
   });
 });

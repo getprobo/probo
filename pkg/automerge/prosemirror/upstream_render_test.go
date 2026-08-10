@@ -33,14 +33,14 @@ import (
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 )
 
-// TestRender_MatchesUpstream is the differential parity gate for the Go span ->
-// ProseMirror renderer. The fixture is produced by the official
+// TestBridge_MatchesUpstreamInBothDirections is the differential parity gate for
+// both halves of the ProseMirror bridge. The fixture is produced by the official
 // @automerge/prosemirror library through the real frontend schema adapter (see
-// packages/ui/src/RichEditor/prosemirrorRenderParity.test.ts). For each Automerge
-// document the Go renderer must produce the same canonical ProseMirror JSON the
-// upstream library does; any divergence means the persisted server-side document
-// differs from what collaborators see in the browser.
-func TestRender_MatchesUpstream(t *testing.T) {
+// packages/ui/src/RichEditor/prosemirrorRenderParity.test.ts). For each document,
+// native Go must materialize the exact spans produced by pmNodeToSpans, and the Go
+// renderer must turn those spans back into the canonical ProseMirror JSON produced
+// by pmDocFromSpans.
+func TestBridge_MatchesUpstreamInBothDirections(t *testing.T) {
 	t.Parallel()
 
 	raw, err := os.ReadFile("testdata/upstream-render.json")
@@ -50,6 +50,7 @@ func TestRender_MatchesUpstream(t *testing.T) {
 		Name     string          `json:"name"`
 		Document string          `json:"document"`
 		Expected json.RawMessage `json:"expected"`
+		Spans    json.RawMessage `json:"spans"`
 	}
 	require.NoError(t, json.Unmarshal(raw, &fixtures))
 	require.NotEmpty(t, fixtures)
@@ -74,6 +75,40 @@ func TestRender_MatchesUpstream(t *testing.T) {
 
 			spans, err := text.Spans(context.Background())
 			require.NoError(t, err)
+
+			actualSpans := make([]map[string]any, 0, len(spans))
+			for _, span := range spans {
+				switch span.Type {
+				case automerge.SpanTypeBlock:
+					actualSpans = append(
+						actualSpans,
+						map[string]any{
+							"type":  string(span.Type),
+							"value": span.Block,
+						},
+					)
+				case automerge.SpanTypeText:
+					actual := map[string]any{
+						"type":  string(span.Type),
+						"value": span.Text,
+					}
+					if len(span.Marks) > 0 {
+						actual["marks"] = span.Marks
+					}
+
+					actualSpans = append(actualSpans, actual)
+				}
+			}
+
+			encodedSpans, err := json.Marshal(actualSpans)
+			require.NoError(t, err)
+			assert.JSONEq(
+				t,
+				string(fixture.Spans),
+				string(encodedSpans),
+				"native spans must match pmNodeToSpans for %s",
+				fixture.Name,
+			)
 
 			rendered, err := automergeprosemirror.Render(spans)
 			require.NoError(t, err)
