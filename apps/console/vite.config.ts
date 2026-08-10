@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath, URL } from "node:url";
@@ -33,15 +34,28 @@ const cspTemplatePath = fileURLToPath(
   new URL("./content-security-policy.txt.tmpl", import.meta.url),
 );
 
-// Same policy as production (apps/console/csp.go), with ws:/wss: appended to
-// connect-src for Vite HMR.
-function consoleContentSecurityPolicy(appOrigin: string): string {
+// Process-lifetime nonce for Vite serve: pairs with html.cspNonce so the
+// React Fast Refresh inline preamble is allowed without unsafe-inline.
+const viteDevCspNonce = randomBytes(16).toString("base64");
+
+// Same policy as production (apps/console/csp.go), with a script nonce for
+// Fast Refresh and ws:/wss: on connect-src for Vite HMR.
+function consoleContentSecurityPolicy(
+  appOrigin: string,
+  scriptNonce: string,
+): string {
   const template = readFileSync(cspTemplatePath, "utf8");
-  const policy = template.replaceAll("{{.AppOrigin}}", appOrigin).trim();
-  return policy.replace(
-    /connect-src 'self' ([^;]+);/,
-    "connect-src 'self' $1 ws: wss:;",
-  );
+  return template
+    .replaceAll("{{.AppOrigin}}", appOrigin)
+    .trim()
+    .replace(
+      /script-src 'self';/,
+      `script-src 'self' 'nonce-${scriptNonce}';`,
+    )
+    .replace(
+      /connect-src 'self' ([^;]+);/,
+      "connect-src 'self' $1 ws: wss:;",
+    );
 }
 
 function appOriginFromEnv(env: Record<string, string>): string {
@@ -65,7 +79,7 @@ function appOriginFromEnv(env: Record<string, string>): string {
 const iamFiles = /src[/\\]pages[/\\]iam[/\\]/;
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const envDir = fileURLToPath(new URL(".", import.meta.url));
   // Empty prefix: load non-VITE_ vars too (CSP app origin is Node-only).
   const env = loadEnv(mode, envDir, "");
@@ -99,10 +113,14 @@ export default defineConfig(({ mode }) => {
       }),
       tailwindcss(),
     ],
+    // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
+    // this nonce; production Go CSP does not use nonces.
+    html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
     server: {
       headers: {
         "Content-Security-Policy": consoleContentSecurityPolicy(
           appOriginFromEnv(env),
+          viteDevCspNonce,
         ),
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath, URL } from "node:url";
 
@@ -30,15 +31,28 @@ const cspTemplatePath = fileURLToPath(
   new URL("./content-security-policy.txt.tmpl", import.meta.url),
 );
 
-// Same policy as production (apps/compliance-portal/csp.go), with ws:/wss:
-// appended to connect-src for Vite HMR.
-function compliancePortalContentSecurityPolicy(appOrigin: string): string {
+// Process-lifetime nonce for Vite serve: pairs with html.cspNonce so the
+// React Fast Refresh inline preamble is allowed without unsafe-inline.
+const viteDevCspNonce = randomBytes(16).toString("base64");
+
+// Same policy as production (apps/compliance-portal/csp.go), with a script
+// nonce for Fast Refresh and ws:/wss: on connect-src for Vite HMR.
+function compliancePortalContentSecurityPolicy(
+  appOrigin: string,
+  scriptNonce: string,
+): string {
   const template = readFileSync(cspTemplatePath, "utf8");
-  const policy = template.replaceAll("{{.AppOrigin}}", appOrigin).trim();
-  return policy.replace(
-    /connect-src 'self' ([^;]+);/,
-    "connect-src 'self' $1 ws: wss:;",
-  );
+  return template
+    .replaceAll("{{.AppOrigin}}", appOrigin)
+    .trim()
+    .replace(
+      /script-src 'self';/,
+      `script-src 'self' 'nonce-${scriptNonce}';`,
+    )
+    .replace(
+      /connect-src 'self' ([^;]+);/,
+      "connect-src 'self' $1 ws: wss:;",
+    );
 }
 
 function appOriginFromEnv(env: Record<string, string>): string {
@@ -120,6 +134,9 @@ export default defineConfig(({ mode, command }) => {
       babel({ plugins: ["relay"] }),
       tailwindcss(),
     ],
+    // Dev-only: Vite stamps scripts (incl. React Fast Refresh preamble) with
+    // this nonce; production Go CSP does not use nonces.
+    html: command === "serve" ? { cspNonce: viteDevCspNonce } : undefined,
     build: {
       assetsDir: "assets",
       rolldownOptions: {
@@ -153,6 +170,7 @@ export default defineConfig(({ mode, command }) => {
       headers: {
         "Content-Security-Policy": compliancePortalContentSecurityPolicy(
           appOriginFromEnv(env),
+          viteDevCspNonce,
         ),
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",
