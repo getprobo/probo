@@ -207,6 +207,10 @@ test: CGO_ENABLED=1
 test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
 	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list ./... | grep -v /e2e/))
 
+.PHONY: test-js
+test-js: ## Run frontend unit tests (vitest) across workspaces
+	$(NPM) run test
+
 .PHONY: test-verbose
 test-verbose: TEST_FLAGS+=-v
 test-verbose: test ## Run tests with verbose output

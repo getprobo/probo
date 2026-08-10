@@ -14,8 +14,9 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "eslint . --concurrency auto && npm -w @probo/n8n-nodes-probo run lint",
-    "check": "turbo run check",
-    "relay": "relay-compiler"
+  "check": "turbo run check",
+  "test": "turbo run test",
+  "relay": "relay-compiler"
   },
   "devDependencies": {
     "@probo/eslint-config": "1.0.0",

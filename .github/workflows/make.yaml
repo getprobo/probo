@@ -374,6 +374,24 @@ jobs:
               reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -name="eslint ($dir)" || true
           done
 
+  test-js:
+    name: "test-js"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          go: "false"
+      - name: "Generate Relay artifacts"
+        run: make relay
+      - name: "Run vitest"
+        run: make test-js
+
   lint-swift:
     name: "lint-swift"
     runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"

@@ -14,7 +14,7 @@
   "keywords": [],
   "license": "MIT",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@probo/helpers": "1.0.0"
