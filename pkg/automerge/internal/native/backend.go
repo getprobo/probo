@@ -526,14 +526,36 @@ func (b *Backend) PutScalar(
 		return err
 	}
 
+	property := key
+
 	if existing, ok := b.state.visibleMapObjectValue(objectID, key); ok {
 		existingValue, scalar := b.state.scalarValue(existing)
 		if scalar && scalarValuesEqual(existingValue, value) {
-			return nil
+			// Assigning the value the winning operation already holds changes
+			// nothing, so an unconflicted key records no operation. A conflicted
+			// key still has to collapse: the reference deletes the losing
+			// siblings and keeps the winner rather than writing the value again.
+			losing := make([]OpID, 0)
+
+			for _, operation := range b.state.visibleMapObjectOperations(objectID, key) {
+				if operation.ID != existing.ID {
+					losing = append(losing, operation.ID)
+				}
+			}
+
+			if len(losing) == 0 {
+				return nil
+			}
+
+			return b.addPending(Operation{
+				ID:           b.nextOperationID(),
+				Object:       objectID,
+				Key:          Key{Property: &property},
+				Action:       ActionDelete,
+				Predecessors: losing,
+			})
 		}
 	}
-
-	property := key
 
 	operation := Operation{
 		ID:     b.nextOperationID(),
@@ -805,13 +827,31 @@ func (b *Backend) PutScalarAt(
 		return err
 	}
 
-	// Assigning the identical value to a list element with a single visible
-	// value is a no-op, matching the reference and native's map put. A
-	// conflicted element still records the assignment so the conflict resolves.
+	// Assigning the value the winning operation already holds changes nothing,
+	// so an unconflicted element records no operation. A conflicted element
+	// still has to collapse: the reference deletes the losing siblings and keeps
+	// the winner rather than writing the same value again.
 	if existingValue, scalar := b.state.scalarValue(target.Operation); scalar &&
-		scalarValuesEqual(existingValue, value) &&
-		len(b.state.visibleSequenceElementOperations(target.Element)) == 1 {
-		return nil
+		scalarValuesEqual(existingValue, value) {
+		losing := make([]OpID, 0)
+
+		for _, operation := range b.state.visibleSequenceElementOperations(target.Element) {
+			if operation.ID != target.Operation.ID {
+				losing = append(losing, operation.ID)
+			}
+		}
+
+		if len(losing) == 0 {
+			return nil
+		}
+
+		return b.addPending(Operation{
+			ID:           b.nextOperationID(),
+			Object:       objectID,
+			Key:          Key{Element: new(target.Element)},
+			Action:       ActionDelete,
+			Predecessors: losing,
+		})
 	}
 
 	return b.addPending(Operation{

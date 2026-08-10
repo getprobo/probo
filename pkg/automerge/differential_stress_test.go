@@ -59,11 +59,8 @@ func canonicalDocument(t *testing.T, ctx context.Context, document *automerge.Do
 		canonicalValues(t, ctx, document)
 }
 
-// canonicalValues renders the materialized state without heads. Two engines that
-// independently re-encode the same concurrent edits can pick different change
-// bytes (and therefore hashes) while still converging to identical values, so
-// convergence tests compare values while single-actor determinism tests also
-// compare heads.
+// canonicalValues renders the materialized state without heads, for the few
+// assertions that deliberately compare only observable values.
 func canonicalValues(t *testing.T, ctx context.Context, document *automerge.Document) string {
 	t.Helper()
 
@@ -395,8 +392,8 @@ func TestDifferentialStress_ConcurrentMerge(t *testing.T) {
 			mergeDocuments(t, ctx, referenceLeft.document, referenceRight.document)
 
 			require.Equal(t,
-				canonicalValues(t, ctx, referenceLeft.document),
-				canonicalValues(t, ctx, nativeLeft.document),
+				canonicalDocument(t, ctx, referenceLeft.document),
+				canonicalDocument(t, ctx, nativeLeft.document),
 				"scenario %d round %d merged state diverged", scenario, round,
 			)
 		}
