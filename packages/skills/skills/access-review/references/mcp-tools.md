@@ -7,13 +7,20 @@ server configured in the agent). Read each tool schema before calling.
 
 ### `listOrganizations`
 
-List organizations the caller can access. No required input, so this is also the
-tool to probe each connected server with when the user's region is unknown.
-Each call returns every organization accessible on that server; a non-empty
-result does not uniquely identify the region. Select automatically only when
-the organization identified by the user matches exactly one
-server/organization pair, or when there is exactly one pair across all results.
-Otherwise show the pairs and ask the user to choose.
+List organizations the caller can access on the server it is called on. No
+required input, so it serves two distinct purposes:
+
+1. **Choosing a server** when the region is unknown — call it on each connected
+   server. A non-empty result does not identify the region, since the caller can
+   have organizations on both. Only a unique match for the organization the user
+   named settles it; otherwise show each server with its organizations and ask.
+2. **Choosing an organization** on a server that is already settled — including
+   a single self-hosted instance serving several organizations. Take the unique
+   name match, or the only organization when the server returns one, and
+   otherwise list them and ask.
+
+Either way the organization must be resolved before `listAccessReviewCampaigns`,
+which requires `organization_id`.
 
 ## Read
 

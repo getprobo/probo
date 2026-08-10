@@ -30,13 +30,15 @@ this file.
 - MCP endpoint path: the Probo MCP API is served at `<instance-root>/api/mcp/v1`.
   The previous `/mcp/v1` path returned the console HTML page instead of the MCP
   endpoint, so no bundled server could connect
-- `access-review` skill: region discovery uses `listOrganizations`, which takes
-  no required input. It previously called `listAccessReviewCampaigns`, which
-  requires the `organization_id` that discovery is meant to establish, so the
-  step could not be executed as written. If several servers return accessible
-  organizations, the skill now selects only a unique server/organization pair
-  and otherwise asks the user to choose. Resolving the organization before the
-  campaign is explicit, and the reference documents `listOrganizations`
+- `access-review` skill: server and organization selection are now separate
+  preconditions, so both are resolved whichever one is ambiguous — a single
+  self-hosted server serving several organizations included. Discovery uses
+  `listOrganizations`, which takes no required input; it previously called
+  `listAccessReviewCampaigns`, which requires the `organization_id` that
+  discovery is meant to establish, so the step could not be executed as written.
+  A merely non-empty result never settles the region, and anything short of a
+  unique match asks the user. The reference documents both uses of
+  `listOrganizations`
 
 ### Changed
 
