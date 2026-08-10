@@ -142,8 +142,10 @@ func NewServer(cfg Config) (*Server, error) {
 	}
 
 	appOrigin := ""
+
 	if cfg.BaseURL != nil {
 		var originErr error
+
 		appOrigin, originErr = cfg.BaseURL.CSPOrigin()
 		if originErr != nil {
 			return nil, fmt.Errorf("cannot build console content security policy: %w", originErr)

@@ -61,8 +61,10 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 	r := chi.NewRouter()
 
 	appOrigin := ""
+
 	if cfg.BaseURL != nil {
 		var originErr error
+
 		appOrigin, originErr = cfg.BaseURL.CSPOrigin()
 		if originErr != nil {
 			return nil, fmt.Errorf("cannot build content security policy: %w", originErr)
