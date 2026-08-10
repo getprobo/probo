@@ -45,3 +45,10 @@ func TestContentSecurityPolicy_SubstitutesAppOrigin(t *testing.T) {
 	assert.False(t, strings.HasPrefix(policy, "\n"))
 	assert.False(t, strings.HasSuffix(policy, "\n"))
 }
+
+func TestContentSecurityPolicy_RejectsDirectiveInjection(t *testing.T) {
+	t.Parallel()
+
+	_, err := complianceportalstatics.ContentSecurityPolicy("https://evil.com;frame-ancestors")
+	require.Error(t, err)
+}

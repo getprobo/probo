@@ -42,6 +42,10 @@ func NewSecurityHeadersMiddleware(opts SecurityHeadersOptions) func(next http.Ha
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
+				// Extras first so generated security headers cannot be
+				// weakened or removed by a colliding extra-header-fields key.
+				ApplyExtraHeaders(w, opts.ExtraHeaderFields)
+
 				w.Header().Set("Strict-Transport-Security", strictTransportSecurityValue)
 
 				if opts.ContentSecurityPolicy != "" {
@@ -51,8 +55,6 @@ func NewSecurityHeadersMiddleware(opts SecurityHeadersOptions) func(next http.Ha
 					w.Header().Set("Referrer-Policy", "no-referrer")
 					w.Header().Set("Permissions-Policy", permissionsPolicyValue)
 				}
-
-				ApplyExtraHeaders(w, opts.ExtraHeaderFields)
 
 				next.ServeHTTP(w, r)
 			},

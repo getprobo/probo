@@ -90,3 +90,49 @@ func TestNewSecurityHeadersMiddleware_WithoutCSP_SkipsCompanions(t *testing.T) {
 	assert.Empty(t, rec.Header().Get("X-Frame-Options"))
 	assert.Contains(t, rec.Header().Get("Strict-Transport-Security"), "max-age=")
 }
+
+func TestNewSecurityHeadersMiddleware_GeneratedHeadersWinOverExtras(t *testing.T) {
+	t.Parallel()
+
+	const policy = "default-src 'self'; frame-ancestors 'none'"
+
+	handler := server.NewSecurityHeadersMiddleware(
+		server.SecurityHeadersOptions{
+			ContentSecurityPolicy: policy,
+			ExtraHeaderFields: map[string]string{
+				"Content-Security-Policy":   "default-src *",
+				"X-Frame-Options":           "ALLOWALL",
+				"X-Content-Type-Options":    "none",
+				"Referrer-Policy":           "unsafe-url",
+				"Permissions-Policy":        "microphone=*",
+				"Strict-Transport-Security": "max-age=0",
+				"X-Custom":                  "1",
+			},
+		},
+	)(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusNoContent, rec.Code)
+	assert.Equal(t, policy, rec.Header().Get("Content-Security-Policy"))
+	assert.Equal(t, "DENY", rec.Header().Get("X-Frame-Options"))
+	assert.Equal(t, "nosniff", rec.Header().Get("X-Content-Type-Options"))
+	assert.Equal(t, "no-referrer", rec.Header().Get("Referrer-Policy"))
+	assert.Equal(
+		t,
+		"microphone=(), camera=(), geolocation=()",
+		rec.Header().Get("Permissions-Policy"),
+	)
+	assert.Equal(
+		t,
+		"max-age=31536000; includeSubDomains; preload",
+		rec.Header().Get("Strict-Transport-Security"),
+	)
+	assert.Equal(t, "1", rec.Header().Get("X-Custom"))
+}

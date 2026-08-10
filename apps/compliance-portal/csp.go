@@ -26,6 +26,8 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+
+	"go.probo.inc/probo/pkg/baseurl"
 )
 
 //go:embed content-security-policy.txt.tmpl
@@ -42,11 +44,16 @@ type contentSecurityPolicyData struct {
 // ContentSecurityPolicy returns the compliance-portal CSP with AppOrigin
 // substituted (scheme://host of PROBOD_BASE_URL / file download origin).
 func ContentSecurityPolicy(appOrigin string) (string, error) {
+	origin, err := baseurl.CSPOrigin(appOrigin)
+	if err != nil {
+		return "", fmt.Errorf("cannot render content security policy: %w", err)
+	}
+
 	var buf bytes.Buffer
 
-	err := contentSecurityPolicyTmpl.Execute(
+	err = contentSecurityPolicyTmpl.Execute(
 		&buf,
-		contentSecurityPolicyData{AppOrigin: appOrigin},
+		contentSecurityPolicyData{AppOrigin: origin},
 	)
 	if err != nil {
 		return "", fmt.Errorf("cannot render content security policy: %w", err)
