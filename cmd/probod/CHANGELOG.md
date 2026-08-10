@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.255.0] - 2026-08-10
+
+### Added
+
+- SCIM audit events now store the request and response bodies exchanged with the provisioning client, with password fields and credential attributes redacted regardless of the schema URN used to reference them.
+
+### Fixed
+
+- The compliance portal's unsigned-NDA banner no longer appears before a visitor has requested access to a private document, and an admin-granted access no longer triggers it as if the visitor had requested access themselves.
+- Locked document viewer CTA now names the NDA instead of reusing the banner's generic "Review and sign" label.
+- Compliance portal mailing list update detail pages no longer 404.
+
 ## [0.254.0] - 2026-08-10
 
 ### Changed
