@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.254.0] - 2026-08-10
+
+### Changed
+
+- Organization creation is now restricted to owners when signup is disabled.
+- Console access is now restricted when the user has no organization membership.
+- Risk analysis scopes are now referred to as diagrams across the API and console UI.
+
+### Fixed
+
+- Resolved npm audit vulnerabilities in `dompurify`, `js-yaml`, and `mermaid` dependencies.
+
 ## [0.253.0] - 2026-08-07
 
 ### Fixed
