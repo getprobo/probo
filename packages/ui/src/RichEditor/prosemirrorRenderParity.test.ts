@@ -24,12 +24,18 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import * as Automerge from "@automerge/automerge";
-import { pmDocFromSpans } from "@automerge/prosemirror";
+import { type DocHandle, pmDocFromSpans } from "@automerge/prosemirror";
+import { getSchema } from "@tiptap/core";
+import { Fragment, type Schema } from "@tiptap/pm/model";
+import { EditorState } from "@tiptap/pm/state";
 import { describe, expect, it } from "vitest";
 
+import { createAutomergeSyncPlugin } from "./AutomergeSyncPlugin";
 import {
   createRichEditorAutomergeDocument,
   createSchemaAdapter,
+  explicitBlockIdentityPlugin,
+  type RichEditorAutomergeDocument,
 } from "./collaboration";
 import { richEditorCollaborationExtensions } from "./RichEditor";
 
@@ -42,6 +48,11 @@ import { richEditorCollaborationExtensions } from "./RichEditor";
 // fixture; otherwise the test guards the committed fixture against frontend drift.
 
 type CorpusEntry = { name: string; doc: unknown };
+
+type EditScenario = {
+  name: string;
+  build: () => Automerge.Doc<RichEditorAutomergeDocument>;
+};
 
 type FixtureEntry = { name: string; document: string; expected: unknown };
 
@@ -336,6 +347,139 @@ const corpus: CorpusEntry[] = [
   },
 ];
 
+// runEditor drives an Automerge document through the real collaboration sync
+// plugin, exactly as the editor does, so the resulting spans reflect arrangements
+// that only arise from editing rather than from loading a clean document.
+function runEditor(
+  initialDoc: unknown,
+  edit: (context: { state: EditorState; schema: Schema }) => EditorState,
+): Automerge.Doc<RichEditorAutomergeDocument> {
+  let document = createRichEditorAutomergeDocument(
+    JSON.stringify(initialDoc),
+    richEditorCollaborationExtensions,
+  );
+  const handle: DocHandle<RichEditorAutomergeDocument> = {
+    doc: () => document,
+    change: (change) => {
+      document = Automerge.change(document, change);
+    },
+    on: () => {},
+    off: () => {},
+  };
+  const schema = getSchema(richEditorCollaborationExtensions);
+  const adapter = createSchemaAdapter(richEditorCollaborationExtensions, schema);
+  const initialAdapter = createSchemaAdapter(richEditorCollaborationExtensions);
+  const pmDocument = schema.nodeFromJSON(
+    pmDocFromSpans(initialAdapter, Automerge.spans(document, ["body"])).toJSON(),
+  );
+  const state = EditorState.create({
+    schema,
+    doc: pmDocument,
+    plugins: [
+      explicitBlockIdentityPlugin(),
+      createAutomergeSyncPlugin(adapter, handle, ["body"]),
+    ],
+  });
+
+  edit({ state, schema });
+
+  return document;
+}
+
+function findTextPosition(state: EditorState, text: string): number {
+  let position: number | undefined;
+  state.doc.descendants((node, at) => {
+    if (node.isText && node.text === text) {
+      position = at;
+      return false;
+    }
+
+    return true;
+  });
+  if (position === undefined) throw new Error(`missing text ${text}`);
+
+  return position;
+}
+
+const editScenarios: EditScenario[] = [
+  {
+    name: "edit-divider-inserted-then-typed",
+    build: () =>
+      runEditor(
+        {
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "Before" }] }],
+        },
+        ({ state, schema }) => {
+          const divider = schema.nodes.horizontalRule.create();
+          const paragraph = schema.nodes.paragraph.create();
+          let next = state.applyTransaction(
+            state.tr.insert(
+              state.doc.content.size,
+              Fragment.fromArray([divider, paragraph]),
+            ),
+          ).state;
+          const lastParagraphPosition = next.doc.content.size - paragraph.nodeSize;
+          next = next.applyTransaction(
+            next.tr.insertText("After", lastParagraphPosition + 1),
+          ).state;
+
+          return next;
+        },
+      ),
+  },
+  {
+    name: "edit-two-dividers-then-typed",
+    build: () =>
+      runEditor(
+        {
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "Top" }] }],
+        },
+        ({ state, schema }) => {
+          const divider = schema.nodes.horizontalRule.create();
+          const paragraph = schema.nodes.paragraph.create();
+          let next = state.applyTransaction(
+            state.tr.insert(
+              state.doc.content.size,
+              Fragment.fromArray([divider, paragraph, divider.copy(), paragraph.copy()]),
+            ),
+          ).state;
+          const lastParagraphPosition = next.doc.content.size - paragraph.nodeSize;
+          next = next.applyTransaction(
+            next.tr.insertText("Bottom", lastParagraphPosition + 1),
+          ).state;
+
+          return next;
+        },
+      ),
+  },
+  {
+    name: "edit-table-cell-typed",
+    build: () =>
+      runEditor(tableDocument(), ({ state }) =>
+        state.applyTransaction(
+          state.tr.insertText("X", findTextPosition(state, "A") + 1),
+        ).state,
+      ),
+  },
+];
+
+function tableDocument(): unknown {
+  return {
+    type: "doc",
+    content: [
+      {
+        type: "table",
+        content: [
+          { type: "tableRow", content: [tableCell("A"), tableCell("B")] },
+          { type: "tableRow", content: [tableCell("C"), tableCell("D")] },
+        ],
+      },
+    ],
+  };
+}
+
 function canonicalAttrs(
   type: string,
   attrs: Record<string, unknown> | undefined,
@@ -394,21 +538,37 @@ function canonical(node: {
   return out;
 }
 
-function build(): FixtureEntry[] {
+function entryFromDocument(
+  name: string,
+  document: Automerge.Doc<RichEditorAutomergeDocument>,
+): FixtureEntry {
   const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
-  return corpus.map(({ name, doc }) => {
-    const document = createRichEditorAutomergeDocument(
-      JSON.stringify(doc),
-      richEditorCollaborationExtensions,
-    );
-    const spans = Automerge.spans(document, ["body"]);
-    const rendered: unknown = pmDocFromSpans(adapter, spans).toJSON();
-    return {
+  const spans = Automerge.spans(document, ["body"]);
+  const rendered: unknown = pmDocFromSpans(adapter, spans).toJSON();
+
+  return {
+    name,
+    document: Buffer.from(Automerge.save(document)).toString("base64"),
+    expected: canonical(rendered as never),
+  };
+}
+
+function build(): FixtureEntry[] {
+  const fromDocuments = corpus.map(({ name, doc }) =>
+    entryFromDocument(
       name,
-      document: Buffer.from(Automerge.save(document)).toString("base64"),
-      expected: canonical(rendered as never),
-    };
-  });
+      createRichEditorAutomergeDocument(
+        JSON.stringify(doc),
+        richEditorCollaborationExtensions,
+      ),
+    ),
+  );
+
+  const fromEdits = editScenarios.map(({ name, build: buildDocument }) =>
+    entryFromDocument(name, buildDocument()),
+  );
+
+  return [...fromDocuments, ...fromEdits];
 }
 
 describe("ProseMirror render parity fixture", () => {
