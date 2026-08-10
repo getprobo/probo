@@ -5,6 +5,8 @@ this file.
 
 ## Unreleased
 
+## [0.3.0] - 2026-08-10
+
 ### Added
 
 - Agent Plugins 1.0.0 portable package: `plugin.json` and `mcp.json` at the
