@@ -107,3 +107,15 @@ SET translations = translations || '{"button_opt_out_generic": "拒绝非必要 
     updated_at = NOW()
 WHERE language = 'zh'
   AND NOT translations ? 'button_opt_out_generic';
+
+-- Languages Probo does not ship are added by integrators, so there is no
+-- localized neutral label to seed. Reuse their own reject-all wording rather
+-- than injecting English, which would read worse than the phrase it replaces.
+
+UPDATE cookie_banner_translations
+SET translations = translations || jsonb_build_object(
+        'button_opt_out_generic', translations ->> 'button_reject_all'
+    ),
+    updated_at = NOW()
+WHERE NOT translations ? 'button_opt_out_generic'
+  AND COALESCE(translations ->> 'button_reject_all', '') <> '';

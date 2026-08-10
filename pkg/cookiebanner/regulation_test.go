@@ -514,7 +514,35 @@ func TestApplyGenericOptOutBannerTexts(t *testing.T) {
 		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
 	})
 
-	t.Run("missing neutral label leaves the texts untouched", func(t *testing.T) {
+	t.Run("Mexico drops the wording its legacy chrome would show", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationLFPDPPP,
+			Texts: map[string]string{
+				"button_opt_out":         "Do Not Sell or Share My Personal Information",
+				"button_opt_out_generic": "Reject non-essential cookies",
+			},
+		}
+		applyGenericOptOutBannerTexts(config)
+		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
+	})
+
+	t.Run("banner predating the neutral label falls back to reject all", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationNone,
+			Texts: map[string]string{
+				"button_opt_out":    "Do Not Sell or Share My Personal Information",
+				"button_reject_all": "Reject all",
+			},
+		}
+		applyGenericOptOutBannerTexts(config)
+		require.Equal(t, "Reject all", config.Texts["button_opt_out"])
+	})
+
+	t.Run("no replacement available leaves the texts untouched", func(t *testing.T) {
 		t.Parallel()
 
 		config := &BannerConfig{
@@ -526,19 +554,57 @@ func TestApplyGenericOptOutBannerTexts(t *testing.T) {
 		applyGenericOptOutBannerTexts(config)
 		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
 	})
+
+	t.Run("integrator copy survives", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationPIPEDA,
+			Texts: map[string]string{
+				"button_opt_out":         "Withdraw my consent",
+				"button_opt_out_generic": "Reject non-essential cookies",
+			},
+		}
+		applyGenericOptOutBannerTexts(config)
+		require.Equal(t, "Withdraw my consent", config.Texts["button_opt_out"])
+	})
+
+	t.Run("localized default is recognized as shipped copy", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationAPPI,
+			Texts: map[string]string{
+				"button_opt_out":         defaultUIStringsByLanguage["ja"]["button_opt_out"],
+				"button_opt_out_generic": defaultUIStringsByLanguage["ja"]["button_opt_out_generic"],
+			},
+		}
+		applyGenericOptOutBannerTexts(config)
+		require.Equal(
+			t,
+			defaultUIStringsByLanguage["ja"]["button_opt_out_generic"],
+			config.Texts["button_opt_out"],
+		)
+	})
 }
 
 // TestDefaultUIStringsHaveGenericOptOutLabel keeps the neutral label in step
-// with the supported languages: without it a visitor outside the US sees the
-// California "Do Not Sell or Share" phrase.
+// with the supported languages: without it, or with it copied from the
+// California wording, a visitor outside the US sees "Do Not Sell or Share".
 func TestDefaultUIStringsHaveGenericOptOutLabel(t *testing.T) {
 	t.Parallel()
 
-	for language, strings := range defaultUIStringsByLanguage {
+	for language, uiStrings := range defaultUIStringsByLanguage {
 		t.Run(language, func(t *testing.T) {
 			t.Parallel()
 
-			require.NotEmpty(t, strings["button_opt_out_generic"])
+			require.NotEmpty(t, uiStrings["button_opt_out_generic"])
+			require.NotEqual(
+				t,
+				uiStrings["button_opt_out"],
+				uiStrings["button_opt_out_generic"],
+				"the neutral label must differ from the California wording it replaces",
+			)
 		})
 	}
 }
