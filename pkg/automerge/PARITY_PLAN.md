@@ -79,11 +79,32 @@ remains, because it asserts the exact incremental patch stream produced by Rust'
 patch log across isolate/integrate, which native's state-comparison diff does not
 reproduce.
 
-Orphan retention across save/load is now covered without a full document-chunk
-encoder: the native save appends retained orphan changes and the native load
-falls back to a dependency-tolerant path that applies every change whose
-dependencies are satisfiable and queues the rest (still failing a load that can
-apply nothing, so a bare orphan without a base is rejected as before).
+Orphan retention across save/load is covered: the native save appends retained
+orphan changes and the native load falls back to a dependency-tolerant path that
+applies every change whose dependencies are satisfiable and queues the rest
+(still failing a load that can apply nothing, so a bare orphan without a base is
+rejected as before).
+
+Snapshot writing is now implemented. `SaveDocument` compacts the whole history
+into one document chunk and is gated on byte identity with the reference for the
+same history across linear text, map puts and deletes, counters, marks and
+unmarks, and text deletion; re-encoding a reference-written snapshot reproduces
+that file exactly for the official fixture and for reference histories covering
+nested objects, lists and a merged multi-actor graph. Compaction matters for
+size as well as parity: a 200-commit typing history is 21816 bytes as a change
+stream and 400 bytes compacted.
+
+`Save` still writes the change stream, so nothing that depends on preserving the
+loaded bytes changes. Switching the default is a separate decision because
+`SaveIncremental` tracks its cursor against the appended change list.
+
+Two storage differences remain. The reference `am_save_no_orphans` shim sets
+`deflate: false`, while Rust's own `SaveOptions::default()` compresses, so
+`SaveWithOptions(false)` diverges from the shim rather than from Rust; correcting
+it means rebuilding the WASM oracle. Unknown columns survive a normal load
+because the loaded bytes are kept verbatim, and `EncodeDocument` writes them back
+to the table they came from, but the dependency-tolerant load path rebuilds its
+base from applied change bytes and cannot preserve a wrapper it did not retain.
 
 The V2 sync internals are now covered: the empty-message codec round-trips to
 the reference wire bytes, and Bloom false-positive recovery is verified on both
@@ -191,6 +212,7 @@ These do not block Go/Rust engine parity but remain tracked:
 Implement and verify:
 
 - complete document, change, compressed-change, and bundle parsing;
+- canonical document-chunk encoding, byte-identical to the reference (done);
 - canonical encoding for every operation and scalar column;
 - expanded/compressed change byte and hash stability;
 - 64-bit object IDs and actor tables referenced only by deletes;
