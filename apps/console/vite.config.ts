@@ -109,6 +109,16 @@ function validHostLabel(label: string): boolean {
   return /^[0-9A-Za-z-]+$/.test(label);
 }
 
+// Node's URL.hostname keeps IPv6 brackets ([::1]); isIP requires the bare form.
+function hostnameIsIP(hostname: string): boolean {
+  const bare
+    = hostname.startsWith("[") && hostname.endsWith("]")
+      ? hostname.slice(1, -1)
+      : hostname;
+
+  return isIP(bare) !== 0;
+}
+
 // Mirrors pkg/awsconfig.bucketIsVirtualHostable / aws-sdk-go-v2 rules.
 function bucketIsVirtualHostable(bucket: string, https: boolean): boolean {
   if (isIP(bucket) !== 0) {
@@ -162,7 +172,7 @@ function fileStorageOriginFromEnv(env: Record<string, string>): string {
 
   if (
     usePathStyle
-    || isIP(parsed.hostname) !== 0
+    || hostnameIsIP(parsed.hostname)
     || !bucketIsVirtualHostable(bucket, https)
   ) {
     return parsed.origin;
