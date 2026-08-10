@@ -45,7 +45,6 @@ function LockedAction({
   ndaHref,
 }: DocumentLockedProps) {
   const { t } = useTranslation("documents");
-  const { t: tRoot } = useTranslation();
 
   if (ndaHref != null) {
     return (
@@ -55,7 +54,7 @@ function LockedAction({
         highContrast
         iconStart={<FileTextIcon />}
       >
-        {tRoot("nda.unsignedBanner.sign")}
+        {t("viewer.locked.signNda")}
       </ButtonLink>
     );
   }

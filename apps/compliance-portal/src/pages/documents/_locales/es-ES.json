@@ -47,7 +47,8 @@
     "downloadToView": "Este tipo de archivo no se puede previsualizar aquí. Descárguelo para verlo.",
     "locked": {
       "title": "Acceso necesario",
-      "description": "Todavía no tiene acceso a este documento."
+      "description": "Todavía no tiene acceso a este documento.",
+      "signNda": "Revisar y firmar el NDA"
     }
   }
 }
