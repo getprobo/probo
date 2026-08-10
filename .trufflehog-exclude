@@ -1,3 +1,4 @@
 pkg/agent/guardrail/sensitive_data_test\.go
 pkg/validator/validator_format_test\.go
 pkg/baseurl/csp_origin_test\.go
+pkg/awsconfig/csp_file_storage_origin_test\.go
