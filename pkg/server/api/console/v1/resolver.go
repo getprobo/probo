@@ -58,6 +58,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/slackbot"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -85,6 +86,7 @@ type (
 		baseURL           *baseurl.BaseURL
 		customDomainCname string
 		tokenSecret       string
+		slackbotBindings  *slackbot.BindingService
 	}
 )
 
@@ -109,6 +111,7 @@ func NewMux(
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
+	slackbotBindings *slackbot.BindingService,
 	graphqlLimits gqlutils.Limits,
 	itamSvc *itam.Service,
 ) *chi.Mux {
@@ -138,6 +141,7 @@ func NewMux(
 		baseURL,
 		graphqlLimits,
 		itamSvc,
+		slackbotBindings,
 	)
 
 	r.Group(func(r chi.Router) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,38 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package slack_v1
+package types
 
 import (
-	"net/http"
+	"time"
 
-	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/complianceportal/visitor"
-	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
-func NewMux(
-	logger *log.Logger,
-	slackSvc *slack.Service,
-	visitorSvc *visitor.Service,
-	eventsHandler http.Handler,
-) *chi.Mux {
-	r := chi.NewMux()
-
-	logger.Info("Registering Slack interactive endpoint")
-
-	r.Post("/interactive", SlackHandler(
-		slackSvc,
-		slackSvc.GetSlackSigningSecret(),
-		logger,
-		visitorSvc,
-	))
-
-	if eventsHandler != nil {
-		logger.Info("Registering Slack events endpoint")
-		r.Post("/events", eventsHandler.ServeHTTP)
+type (
+	SlackIdentityBinding struct {
+		ID          gid.GID   `json:"id"`
+		TeamID      string    `json:"teamId"`
+		SlackUserID string    `json:"slackUserId"`
+		CreatedAt   time.Time `json:"createdAt"`
+		UpdatedAt   time.Time `json:"updatedAt"`
 	}
 
-	return r
+	SlackIdentityBindPreview struct {
+		TeamID      string `json:"teamId"`
+		SlackUserID string `json:"slackUserId"`
+	}
+)
+
+func NewSlackIdentityBinding(binding *coredata.SlackIdentityBinding) *SlackIdentityBinding {
+	return &SlackIdentityBinding{
+		ID:          binding.ID,
+		TeamID:      binding.TeamID,
+		SlackUserID: binding.SlackUserID,
+		CreatedAt:   binding.CreatedAt,
+		UpdatedAt:   binding.UpdatedAt,
+	}
+}
+
+func (SlackIdentityBinding) IsNode() {}
+
+func (b SlackIdentityBinding) GetID() gid.GID {
+	return b.ID
+}
+
+func NewSlackIdentityBindPreview(teamID, slackUserID string) *SlackIdentityBindPreview {
+	return &SlackIdentityBindPreview{
+		TeamID:      teamID,
+		SlackUserID: slackUserID,
+	}
 }

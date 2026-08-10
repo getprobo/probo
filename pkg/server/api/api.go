@@ -59,6 +59,7 @@ import (
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/slackbot"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -77,6 +78,8 @@ type (
 		AccessReview      *accessreview.Service
 		AgentRun          *agentrun.Service
 		Slack             *slack.Service
+		SlackbotEvents    http.Handler
+		SlackbotBindings  *slackbot.BindingService
 		Mailman           *mailman.Service
 		CookieBanner      *cookiebanner.Service
 		Geoloc            *geoloc.Service
@@ -222,6 +225,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,
+			cfg.SlackbotBindings,
 			cfg.GraphQLLimits,
 			cfg.ITAM,
 		),
@@ -260,6 +264,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("slack.v1"),
 			cfg.Slack,
 			cfg.Visitor,
+			cfg.SlackbotEvents,
 		),
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),

@@ -44,6 +44,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/slackbot"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -69,6 +70,7 @@ func NewGraphQLHandler(
 	baseURL *baseurl.BaseURL,
 	limits gqlutils.Limits,
 	itamSvc *itam.Service,
+	slackbotBindings *slackbot.BindingService,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -94,6 +96,7 @@ func NewGraphQLHandler(
 			baseURL:           baseURL,
 			itam:              itamSvc,
 			logger:            logger,
+			slackbotBindings:  slackbotBindings,
 		},
 	}
 
