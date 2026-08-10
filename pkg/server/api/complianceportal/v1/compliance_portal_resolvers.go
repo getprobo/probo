@@ -282,16 +282,13 @@ func (r *compliancePortalResolver) NonDisclosureAgreement(ctx context.Context, o
 // ViewerSubscription is the resolver for the viewerSubscription field.
 func (r *compliancePortalResolver) ViewerSubscription(ctx context.Context, obj *types.CompliancePortal) (*types.MailingListSubscriber, error) {
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-	if compliancePortal.MailingListID == nil {
-		return nil, nil
-	}
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, nil
 	}
 
-	subscriber, err := r.mailman.GetSubscriber(ctx, *compliancePortal.MailingListID, identity.EmailAddress)
+	subscriber, err := r.mailman.GetSubscriber(ctx, compliancePortal.MailingListID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -540,17 +537,13 @@ func (r *compliancePortalResolver) Updates(ctx context.Context, obj *types.Compl
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if tc.MailingListID == nil {
-		return &types.MailingListUpdateConnection{Edges: []*types.MailingListUpdateEdge{}, PageInfo: &types.PageInfo{}}, nil
-	}
-
 	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
 		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.mailman.ListSentMailingListUpdates(ctx, *tc.MailingListID, cursor)
+	result, err := r.mailman.ListSentMailingListUpdates(ctx, tc.MailingListID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

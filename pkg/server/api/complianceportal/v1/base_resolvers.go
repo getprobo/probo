@@ -176,11 +176,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return types.NewCompliancePortalFile(portalFile), nil
 
 	case coredata.MailingListUpdateEntityType:
-		if compliancePortal.MailingListID == nil {
-			return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
-		}
-
-		update, err := r.mailman.GetSentMailingListUpdate(ctx, *compliancePortal.MailingListID, id)
+		update, err := r.mailman.GetSentMailingListUpdate(ctx, compliancePortal.MailingListID, id)
 		if err != nil {
 			if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)

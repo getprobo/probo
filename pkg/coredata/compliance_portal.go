@@ -44,7 +44,7 @@ type (
 		Slug                         string                       `db:"slug"`
 		SearchEngineIndexing         SearchEngineIndexing         `db:"search_engine_indexing"`
 		Capabilities                 CompliancePortalCapabilities `db:"capabilities"`
-		MailingListID                *gid.GID                     `db:"mailing_list_id"`
+		MailingListID                gid.GID                      `db:"mailing_list_id"`
 		LogoFileID                   *gid.GID                     `db:"logo_file_id"`
 		DarkLogoFileID               *gid.GID                     `db:"dark_logo_file_id"`
 		NonDisclosureAgreementFileID *gid.GID                     `db:"non_disclosure_agreement_file_id"`
