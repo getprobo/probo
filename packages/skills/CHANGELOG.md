@@ -21,9 +21,9 @@ this file.
   plugin name constraints, transport variants, literal HTTPS URLs, no
   credential headers under any capitalization), of Agent Skills frontmatter
   (parsed as YAML, `name` matching the skill directory, `description`,
-  `compatibility`, and `metadata` types and length limits), and of `.mcp.json`
-  parity with `mcp.json`. Optional fields must be absent rather than `null`,
-  which the portable schemas reject
+  `compatibility`, and `metadata` types, plus length limits for `description`
+  and `compatibility`), and of `.mcp.json` parity with `mcp.json`. Optional
+  fields must be absent rather than `null`, which the portable schemas reject
 
 ### Fixed
 
@@ -33,8 +33,10 @@ this file.
 - `access-review` skill: region discovery uses `listOrganizations`, which takes
   no required input. It previously called `listAccessReviewCampaigns`, which
   requires the `organization_id` that discovery is meant to establish, so the
-  step could not be executed as written. Resolving the organization before the
-  campaign is now explicit, and the reference documents `listOrganizations`
+  step could not be executed as written. If several servers return accessible
+  organizations, the skill now selects only a unique server/organization pair
+  and otherwise asks the user to choose. Resolving the organization before the
+  campaign is explicit, and the reference documents `listOrganizations`
 
 ### Changed
 
