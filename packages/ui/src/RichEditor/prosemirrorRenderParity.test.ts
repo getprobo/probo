@@ -22,7 +22,7 @@ import { Buffer } from "node:buffer";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { gzipSync, gunzipSync } from "node:zlib";
+import { gunzipSync, gzipSync } from "node:zlib";
 
 import * as Automerge from "@automerge/automerge";
 import {
@@ -374,10 +374,19 @@ function runEditor(
   initialDoc: unknown,
   edit: (context: { state: EditorState; schema: Schema }) => EditorState,
 ): Automerge.Doc<RichEditorAutomergeDocument> {
-  let document = createRichEditorAutomergeDocument(
+  const document = createRichEditorAutomergeDocument(
     JSON.stringify(initialDoc),
     richEditorCollaborationExtensions,
   );
+
+  return editDocument(document, edit);
+}
+
+function editDocument(
+  initialDocument: Automerge.Doc<RichEditorAutomergeDocument>,
+  edit: (context: { state: EditorState; schema: Schema }) => EditorState,
+): Automerge.Doc<RichEditorAutomergeDocument> {
+  let document = initialDocument;
   const handle: DocHandle<RichEditorAutomergeDocument> = {
     doc: () => document,
     change: (change) => {
@@ -401,9 +410,37 @@ function runEditor(
     ],
   });
 
-  edit({ state, schema });
+  const finalState = edit({ state, schema });
+  const syncedDocument = pmDocFromSpans(
+    adapter,
+    Automerge.spans(document, ["body"]),
+  );
+  expect(canonical(syncedDocument.toJSON() as never)).toEqual(
+    canonical(finalState.doc.toJSON() as never),
+  );
 
   return document;
+}
+
+function concurrentEdit(
+  initialDoc: unknown,
+  leftEdit: (context: { state: EditorState; schema: Schema }) => EditorState,
+  rightEdit: (context: { state: EditorState; schema: Schema }) => EditorState,
+): Automerge.Doc<RichEditorAutomergeDocument> {
+  const base = createRichEditorAutomergeDocument(
+    JSON.stringify(initialDoc),
+    richEditorCollaborationExtensions,
+  );
+  const left = editDocument(
+    Automerge.clone(base, { actor: "10000000000000000000000000000000" }),
+    leftEdit,
+  );
+  const right = editDocument(
+    Automerge.clone(base, { actor: "20000000000000000000000000000000" }),
+    rightEdit,
+  );
+
+  return Automerge.merge(left, right);
 }
 
 function findTextPosition(state: EditorState, text: string): number {
@@ -483,7 +520,199 @@ const editScenarios: EditScenario[] = [
         ).state,
       ),
   },
+  {
+    name: "edit-bold-toggle-with-unmarked-middle",
+    build: () =>
+      runEditor(
+        {
+          type: "doc",
+          content: [{
+            type: "paragraph",
+            content: [{ type: "text", text: "Alpha Beta" }],
+          }],
+        },
+        ({ state, schema }) => {
+          const position = findTextPosition(state, "Alpha Beta");
+          const bold = schema.marks.bold.create();
+          let next = state.applyTransaction(
+            state.tr.addMark(position, position + 10, bold),
+          ).state;
+          next = next.applyTransaction(
+            next.tr.removeMark(position + 2, position + 7, schema.marks.bold),
+          ).state;
+          next = next.applyTransaction(
+            next.tr.insertText("X", position + 7),
+          ).state;
+
+          return next;
+        },
+      ),
+  },
+  {
+    name: "edit-overlapping-link-and-italic",
+    build: () =>
+      runEditor(
+        {
+          type: "doc",
+          content: [{
+            type: "paragraph",
+            content: [{ type: "text", text: "Link target" }],
+          }],
+        },
+        ({ state, schema }) => {
+          const position = findTextPosition(state, "Link target");
+          const link = schema.marks.link.create({
+            href: "https://example.com/target",
+            title: "Target",
+          });
+          const italic = schema.marks.italic.create();
+          let next = state.applyTransaction(
+            state.tr.addMark(position, position + 11, link),
+          ).state;
+          next = next.applyTransaction(
+            next.tr.addMark(position + 5, position + 11, italic),
+          ).state;
+          next = next.applyTransaction(
+            next.tr.removeMark(position + 8, position + 11, schema.marks.link),
+          ).state;
+
+          return next;
+        },
+      ),
+  },
+  {
+    name: "edit-mark-over-emoji",
+    build: () =>
+      runEditor(
+        {
+          type: "doc",
+          content: [{
+            type: "paragraph",
+            content: [{ type: "text", text: "A😀BC" }],
+          }],
+        },
+        ({ state, schema }) => {
+          const position = findTextPosition(state, "A😀BC");
+          const underline = schema.marks.underline.create();
+          let next = state.applyTransaction(
+            state.tr.addMark(position + 1, position + 3, underline),
+          ).state;
+          next = next.applyTransaction(
+            next.tr.insertText("🙂", position + 3),
+          ).state;
+
+          return next;
+        },
+      ),
+  },
+  {
+    name: "concurrent-overlapping-marks",
+    build: () =>
+      concurrentEdit(
+        {
+          type: "doc",
+          content: [{
+            type: "paragraph",
+            content: [{ type: "text", text: "Concurrent" }],
+          }],
+        },
+        ({ state, schema }) => {
+          const position = findTextPosition(state, "Concurrent");
+
+          return state.applyTransaction(
+            state.tr.addMark(
+              position,
+              position + 6,
+              schema.marks.bold.create(),
+            ),
+          ).state;
+        },
+        ({ state, schema }) => {
+          const position = findTextPosition(state, "Concurrent");
+
+          return state.applyTransaction(
+            state.tr.addMark(
+              position + 3,
+              position + 10,
+              schema.marks.italic.create(),
+            ),
+          ).state;
+        },
+      ),
+  },
+  {
+    name: "concurrent-divider-and-marked-text",
+    build: () =>
+      concurrentEdit(
+        {
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "Above" }] },
+            { type: "paragraph", content: [{ type: "text", text: "Below" }] },
+          ],
+        },
+        ({ state, schema }) => {
+          const divider = schema.nodes.horizontalRule.create();
+
+          return state.applyTransaction(
+            state.tr.insert(state.doc.child(0).nodeSize, divider),
+          ).state;
+        },
+        ({ state, schema }) => {
+          const position = findTextPosition(state, "Below");
+
+          return state.applyTransaction(
+            state.tr.addMark(
+              position,
+              position + 5,
+              schema.marks.underline.create(),
+            ),
+          ).state;
+        },
+      ),
+  },
+  {
+    name: "concurrent-table-row-insertions",
+    build: () =>
+      concurrentEdit(
+        tableDocument(),
+        ({ state, schema }) =>
+          insertTableRow(state, schema, "Left"),
+        ({ state, schema }) =>
+          insertTableRow(state, schema, "Right"),
+      ),
+  },
 ];
+
+function insertTableRow(
+  state: EditorState,
+  schema: Schema,
+  text: string,
+): EditorState {
+  const paragraph = schema.nodes.paragraph.create(
+    null,
+    schema.text(text),
+  );
+  const cell = schema.nodes.tableCell.create(
+    {
+      isAmgBlock: true,
+      colspan: 1,
+      rowspan: 1,
+      colwidth: null,
+    },
+    paragraph,
+  );
+  const row = schema.nodes.tableRow.create(
+    { isAmgBlock: true },
+    [cell],
+  );
+  const table = state.doc.firstChild;
+  if (!table) throw new Error("expected table");
+
+  return state.applyTransaction(
+    state.tr.insert(table.nodeSize - 1, row),
+  ).state;
+}
 
 function tableDocument(): unknown {
   return {

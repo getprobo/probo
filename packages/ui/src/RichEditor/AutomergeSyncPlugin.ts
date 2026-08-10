@@ -129,7 +129,10 @@ export function createAutomergeSyncPlugin(
 
       ignoreTransaction = true;
       handle.change((document) => {
-        if (hasHorizontalRule(state.doc)) {
+        if (
+          hasHorizontalRule(state.doc)
+          || hasMarkStep(changedTransactions)
+        ) {
           Automerge.updateSpans(
             document,
             path,
@@ -201,6 +204,15 @@ function hasHorizontalRule(document: {
     return true;
   });
   return found;
+}
+
+function hasMarkStep(transactions: Transaction[]): boolean {
+  return transactions.some(transaction =>
+    transaction.steps.some((step) => {
+      const stepType = step.constructor.name;
+      return stepType === "AddMarkStep" || stepType === "RemoveMarkStep";
+    }),
+  );
 }
 
 function findDocumentDiff(

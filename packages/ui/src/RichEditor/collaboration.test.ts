@@ -178,6 +178,67 @@ describe("RichEditor collaboration", () => {
     ).toContain("AX");
   });
 
+  it("maps live mark steps to Automerge mark names", () => {
+    let document = createRichEditorAutomergeDocument(
+      JSON.stringify({
+        type: "doc",
+        content: [{
+          type: "paragraph",
+          content: [{ type: "text", text: "Alpha Beta" }],
+        }],
+      }),
+    );
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: (change) => {
+        document = Automerge.change(document, change);
+      },
+      on: () => {},
+      off: () => {},
+    };
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    let state = EditorState.create({
+      schema: adapter.schema,
+      doc: pmDocFromSpans(adapter, Automerge.spans(document, ["body"])),
+      plugins: [createAutomergeSyncPlugin(adapter, handle, ["body"])],
+    });
+    const position = findProseMirrorTextPosition(state, "Alpha Beta");
+
+    state = state.applyTransaction(
+      state.tr.addMark(
+        position,
+        position + 10,
+        adapter.schema.marks.bold.create(),
+      ),
+    ).state;
+    state = state.applyTransaction(
+      state.tr.addMark(
+        position + 6,
+        position + 10,
+        adapter.schema.marks.italic.create(),
+      ),
+    ).state;
+    state = state.applyTransaction(
+      state.tr.removeMark(
+        position + 2,
+        position + 7,
+        adapter.schema.marks.bold,
+      ),
+    ).state;
+
+    const spans = Automerge.spans(document, ["body"]);
+    const markNames = new Set(
+      spans.flatMap(span =>
+        span.type === "text" ? Object.keys(span.marks ?? {}) : [],
+      ),
+    );
+    expect(markNames).toContain("strong");
+    expect(markNames).toContain("em");
+    expect(markNames).not.toContain("bold");
+    expect(markNames).not.toContain("italic");
+    expect(pmDocFromSpans(adapter, spans).eq(state.doc)).toBe(true);
+  });
+
   it("preserves rows inserted through ProseMirror transactions", () => {
     let document = createRichEditorAutomergeDocument(tableDocumentJSON());
     const handle: DocHandle<RichEditorAutomergeDocument> = {
@@ -635,6 +696,24 @@ describe("RichEditor collaboration", () => {
     });
   });
 });
+
+function findProseMirrorTextPosition(
+  state: EditorState,
+  text: string,
+): number {
+  let position: number | undefined;
+  state.doc.descendants((node, at) => {
+    if (node.isText && node.text === text) {
+      position = at;
+      return false;
+    }
+
+    return true;
+  });
+  if (position === undefined) throw new Error(`expected text ${text}`);
+
+  return position;
+}
 
 function tableDocumentJSON(): string {
   return JSON.stringify({
