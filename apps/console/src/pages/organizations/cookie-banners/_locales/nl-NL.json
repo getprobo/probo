@@ -84,7 +84,7 @@
     "actions": { "edit": "Bewerken", "importThirdParties": "Importeren naar derde partijen", "include": "Opnemen", "exclude": "Uitsluiten", "delete": "Verwijderen" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
-    "duration": { "session": "Sessie", "persistent": "Permanent", "second_one": "{{count}} seconde", "second_other": "{{count}} seconden", "minute_one": "{{count}} minuut", "minute_other": "{{count}} minuten", "hour_one": "{{count}} uur", "hour_other": "{{count}} uur", "day_one": "{{count}} dag", "day_other": "{{count}} dagen", "week_one": "{{count}} week", "week_other": "{{count}} weken", "month_one": "{{count}} maand", "month_other": "{{count}} maanden", "year_one": "{{count}} jaar", "year_other": "{{count}} jaar" },
+    "duration": { "session": "Sessie", "persistent": "Permanent" },
     "commonCatalog": "Gemeenschappelijke catalogus"
   },
   "trackerProperties": {
@@ -94,7 +94,6 @@
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
-    "duration": { "session": "Sessie", "persistent": "Permanent", "second_one": "{{count}} seconde", "second_other": "{{count}} seconden", "minute_one": "{{count}} minuut", "minute_other": "{{count}} minuten", "hour_one": "{{count}} uur", "hour_other": "{{count}} uur", "day_one": "{{count}} dag", "day_other": "{{count}} dagen", "week_one": "{{count}} week", "week_other": "{{count}} weken", "month_one": "{{count}} maand", "month_other": "{{count}} maanden", "year_one": "{{count}} jaar", "year_other": "{{count}} jaar" },
     "commonCatalog": "Gemeenschappelijke catalogus", "manual": "Handmatig", "boolean": { "yes": "Ja", "no": "Nee" }
   },
   "detectedTrackersSection": {
@@ -198,7 +197,7 @@
   },
   "consentRecordsPage": {
     "filters": { "allActions": "Alle acties", "visitorId": "Bezoekers-ID", "bannerVersion": "Bannerversie" },
-    "actions": { "acceptAll": "Alles accepteren", "rejectAll": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC" },
+    "actions": { "acceptAll": "Alles accepteren", "rejectAll": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },
     "columns": { "visitorId": "Bezoekers-ID", "action": "Actie", "bannerVersion": "Bannerversie", "ipAddress": "IP-adres", "sdkVersion": "SDK-versie", "regulation": "Regelgeving", "source": "Bron", "country": "Land", "subdivision": "Subdivisie", "date": "Datum" },
     "empty": { "title": "Geen toestemmingsregistraties", "description": "Toestemmingsregistraties verschijnen hier zodra bezoekers interactie hebben met uw cookiebanner." }
   },
@@ -206,12 +205,11 @@
     "breadcrumbs": { "index": "Cookiebanners", "records": "Toestemmingsregistraties" },
     "title": "Toestemmingsregistratie",
     "properties": { "visitorId": "Bezoekers-ID", "action": "Actie", "bannerVersion": "Bannerversie", "ipAddress": "IP-adres", "userAgent": "User agent", "sdkVersion": "SDK-versie", "regulation": "Regelgeving", "regulationSource": "Bron van regelgeving", "country": "Land", "subdivision": "Subdivisie", "date": "Datum" },
-    "actions": { "accept_all": "Alles accepteren", "reject_all": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC" },
+    "actions": { "accept_all": "Alles accepteren", "reject_all": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },
     "consentData": "Toestemmingsgegevens",
     "required": "(Verplicht)",
     "consent": { "accepted": "Geaccepteerd", "rejected": "Geweigerd" },
-    "cookies": { "columns": { "cookie": "Cookie", "duration": "Duur", "description": "Beschrijving" } },
-    "duration": { "session": "Sessie", "persistent": "Permanent", "year_one": "{{count}} jaar", "year_other": "{{count}} jaar", "month_one": "{{count}} maand", "month_other": "{{count}} maanden", "week_one": "{{count}} week", "week_other": "{{count}} weken", "day_one": "{{count}} dag", "day_other": "{{count}} dagen", "hour_one": "{{count}} uur", "hour_other": "{{count}} uur", "minute_one": "{{count}} minuut", "minute_other": "{{count}} minuten", "second_one": "{{count}} seconde", "second_other": "{{count}} seconden" }
+    "cookies": { "columns": { "cookie": "Cookie", "duration": "Duur", "description": "Beschrijving" } }
   },
   "configLayout": {
     "breadcrumbs": { "index": "Cookiebanners" },

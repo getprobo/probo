@@ -728,6 +728,7 @@
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Fermé",
+      "risk_accepted": "Risque accepté",
       "mitigated": "Atténué",
       "false_positive": "Faux positif"
     },
@@ -753,6 +754,7 @@
       "owner": "Propriétaire",
       "status": "Statut",
       "priority": "Priorité",
+      "acceptedRisk": "Risque accepté",
       "dateIdentified": "Date d’identification",
       "dueDate": "Date d’échéance",
       "rootCause": "Cause racine",
@@ -852,6 +854,7 @@
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Fermé",
+      "risk_accepted": "Risque accepté",
       "mitigated": "Atténué",
       "false_positive": "Faux positif"
     },
@@ -875,6 +878,7 @@
       "owner": "Propriétaire",
       "status": "Statut",
       "priority": "Priorité",
+      "acceptedRisk": "Risque accepté",
       "dateIdentified": "Date d’identification",
       "dueDate": "Date d’échéance",
       "rootCause": "Cause racine",
@@ -1138,6 +1142,10 @@
     "placeholder": "Sélectionner un propriétaire",
     "none": "Aucun"
   },
+  "riskSelectField": {
+    "placeholder": "Sélectionner un risque",
+    "none": "Aucun"
+  },
   "processingActivityEnumOptions": {
     "specialOrCriminalData": {
       "yes": "Oui",
@@ -1398,16 +1406,6 @@
     "dragInstructions": {
       "all": "Glissez-déposez pour réorganiser les tâches ou les déplacer entre les états",
       "state": "Glissez-déposez pour réorganiser les tâches"
-    },
-    "duration": {
-      "minutes_one": "{{count}} minute",
-      "minutes_other": "{{count}} minutes",
-      "hours_one": "{{count}} heure",
-      "hours_other": "{{count}} heures",
-      "weeks_one": "{{count}} semaine",
-      "weeks_other": "{{count}} semaines",
-      "days_one": "{{count}} jour",
-      "days_other": "{{count}} jours"
     },
     "deleteConfirmation": "Voulez-vous vraiment supprimer cette tâche ?",
     "actions": {
@@ -1840,19 +1838,10 @@
         "critical": "Critique"
       },
       "impact": {
-        "label": "Impact",
-        "negligible": "Négligeable",
-        "moderate": "Modéré",
-        "significant": "Important",
-        "catastrophic": "Catastrophique"
+        "label": "Impact"
       },
       "likelihood": {
-        "label": "Probabilité",
-        "improbable": "Improbable",
-        "remote": "Rare",
-        "occasional": "Occasionnelle",
-        "probable": "Probable",
-        "frequent": "Fréquente"
+        "label": "Probabilité"
       }
     }
   },
@@ -2424,7 +2413,6 @@
     "actions": {
       "apiKeys": "Clés API",
       "oauthTokens": "Jetons OAuth",
-      "mySignatures": "Mes signatures",
       "employeePortal": "Portail employé",
       "help": "Aide",
       "logout": "Déconnexion"
@@ -2983,12 +2971,6 @@
       "organizationUpdated": "Organisation mise à jour."
     },
     "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
-    "status": {
-      "connected": "Connecté",
-      "disconnected": "Déconnecté",
-      "invalidCredentials": "Identifiants invalides",
-      "reconnectRequired": "Reconnexion requise"
-    },
     "actions": {
       "reconnect": "Reconnecter",
       "delete": "Supprimer"
@@ -3018,15 +3000,7 @@
     "messages": {
       "error": "Erreur"
     },
-    "decisions": {
-      "pending": "En attente",
-      "approved": "Approuvé",
-      "revoke": "Révoqué",
-      "defer": "Modifié",
-      "escalate": "Escaladé"
-    },
     "actions": {
-      "change": "Modifier la décision",
       "approve": "Approuver",
       "revoke": "Révoquer",
       "modify": "Modifier",
@@ -3178,11 +3152,6 @@
       "new": "Nouveau",
       "none": "Aucun"
     },
-    "flagGroups": {
-      "account": "Compte",
-      "privileges": "Privilèges",
-      "anomaly": "Anomalie"
-    },
     "actions": {
       "delete": "Supprimer",
       "complete": "Finaliser",
@@ -3192,7 +3161,6 @@
       "addSource": "Ajouter une source",
       "starting": "Démarrage...",
       "startCampaign": "Démarrer la campagne",
-      "clear": "Effacer",
       "clearSelection": "Effacer",
       "selectAll": "Tout sélectionner",
       "selectAllLoaded": "Tout sélectionner ({{loaded}} chargés)",
@@ -3206,8 +3174,6 @@
     },
     "emptySources": "Aucune source configurée pour cette campagne.",
     "emptyFiltered": "Aucune entrée ne correspond aux filtres actuels.",
-    "accounts_one": "{{count}} compte",
-    "accounts_other": "{{count}} comptes",
     "fetchFailed": "Échec de la récupération",
     "emptyEntries": "Aucune entrée trouvée pour cette source.",
     "filters": {
@@ -3219,17 +3185,11 @@
       "allAccountStatuses": "Tous les statuts"
     },
     "columns": {
-      "name": "Nom",
-      "email": "E-mail",
-      "role": "Rôle",
       "admin": "Administrateur",
-      "status": "Statut",
       "mfa": "MFA",
       "authMethod": "Auth",
-      "lastLogin": "Dernière connexion",
-      "flag": "Indicateur",
-      "decision": "Décision"
-    },
+      "lastLogin": "Dernière connexion"
+      },
     "values": {
       "yes": "Oui",
       "no": "Non",
@@ -3240,8 +3200,6 @@
     "selectionLoadedOnly": "Seules les entrées déjà chargées peuvent être sélectionnées. Faites défiler pour en charger davantage.",
     "decisionPlaceholder": "Définir une décision...",
     "selectEntry": "Sélectionner {{name}}",
-    "flagsSelected_one": "{{count}} indicateur",
-    "flagsSelected_other": "{{count}} indicateurs",
     "flagsPlaceholder": "Définir des indicateurs...",
     "note": {
       "title": "Note de décision",
@@ -3251,7 +3209,6 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": {
-      "connect": "Connecter",
       "connectWithOAuth": "OAuth",
       "connectWithApiKey": "Clé API",
       "connectWithClientCredentials": "Identifiants client",
@@ -3484,17 +3441,17 @@
   },
   "businessFunctionListItem": {
     "actions": { "delete": "Supprimer" },
-    "messages": { "success": "Succès", "error": "Erreur", "deleted": "Fonction métier supprimée avec succès" },
+    "messages": { "success": "Succès", "deleted": "Fonction métier supprimée avec succès" },
     "errors": { "delete": "Échec de la suppression de la fonction métier" },
     "deleteConfirmation": "Cela supprimera définitivement la fonction métier {{referenceId}}. Cette action est irréversible."
   },
   "businessFunctionDetailsPage": {
     "breadcrumb": { "businessFunctions": "Fonctions métier", "unknown": "Fonction métier inconnue" },
-    "validation": { "referenceIdRequired": "L'ID de référence est requis", "nameRequired": "Le nom est requis" },
-    "fields": { "referenceId": "ID de référence", "referenceIdPlaceholder": "ex. F-10", "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire l'impact acceptable en cas de perturbation", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
+    "validation": { "nameRequired": "Le nom est requis" },
+    "fields": { "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire l'impact acceptable en cas de perturbation", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
     "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
     "actions": { "delete": "Supprimer", "update": "Mettre à jour", "updating": "Mise à jour…" },
-    "messages": { "success": "Succès", "error": "Erreur", "updated": "Fonction métier mise à jour avec succès", "deleted": "Fonction métier supprimée avec succès" },
+    "messages": { "success": "Succès", "updated": "Fonction métier mise à jour avec succès", "deleted": "Fonction métier supprimée avec succès" },
     "errors": { "update": "Échec de la mise à jour de la fonction métier", "delete": "Échec de la suppression de la fonction métier" },
     "dependenciesTruncated": "Cette fonction métier a plus de 100 actifs ou tiers liés. L'édition des dépendances est désactivée afin qu'une sauvegarde ne puisse pas supprimer silencieusement des relations non chargées.",
     "deleteConfirmation": "Cela supprimera définitivement la fonction métier {{referenceId}}. Cette action est irréversible."
@@ -3502,10 +3459,10 @@
   "createBusinessFunctionDialog": {
     "breadcrumb": { "businessFunctions": "Fonctions métier", "create": "Créer" },
     "validation": { "nameRequired": "Le nom est requis" },
-    "fields": { "referenceId": "ID de référence", "referenceIdPlaceholder": "ex. F-10", "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire la tolérance d'impact", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
+    "fields": { "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire la tolérance d'impact", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
     "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
     "actions": { "create": "Créer la fonction métier", "creating": "Création…" },
-    "messages": { "success": "Succès", "error": "Erreur", "created": "Fonction métier créée avec succès" },
+    "messages": { "success": "Succès", "created": "Fonction métier créée avec succès" },
     "errors": { "create": "Échec de la création de la fonction métier" }
   },
   "publishBusinessFunctionListDialog": {
@@ -5996,14 +5953,6 @@
       "delete": "Supprimer"
     }
   },
-  "magicLinkAlreadyUsed": {
-    "title": "Lien déjà utilisé",
-    "description": "Ce lien magique a déjà été utilisé. Veuillez en demander un nouveau."
-  },
-  "magicLinkExpired": {
-    "title": "Lien expiré",
-    "description": "Ce lien magique a expiré. Les liens magiques sont valables 15 minutes seulement. Veuillez en demander un nouveau."
-  },
   "magicLinkForm": {
     "errors": {
       "send": "Impossible d’envoyer le lien magique"
@@ -6164,7 +6113,6 @@
         "description": "Vérifier les données collectées"
       },
       "organization": {
-        "title": "Organisation",
         "description": "Choisir l’espace de travail de destination"
       },
       "enroll": {

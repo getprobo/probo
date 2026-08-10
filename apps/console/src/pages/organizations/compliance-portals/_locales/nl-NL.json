@@ -3,7 +3,7 @@
     "title": "compliancepagina's",
     "description": "Beheer openbare compliancepagina's voor uw organisatie. Configureer huisstijl, documenten en toegangsbeheer.",
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "create": "Compliancepagina aanmaken", "createFirst": "Maak uw eerste compliancepagina aan", "showMore": "Meer weergeven" }
+    "actions": { "create": "Compliancepagina aanmaken", "createFirst": "Maak uw eerste compliancepagina aan" }
   },
   "newPortalPage": {
     "pageTitle": "Nieuwe compliancepagina",

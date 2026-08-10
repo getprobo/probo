@@ -797,16 +797,6 @@
       "all": "Drag and drop to reorder tasks or move them between states",
       "state": "Drag and drop to reorder tasks"
     },
-    "duration": {
-      "minutes_one": "{{count}} Minute",
-      "minutes_other": "{{count}} Minutes",
-      "hours_one": "{{count}} Hour",
-      "hours_other": "{{count}} Hours",
-      "weeks_one": "{{count}} Week",
-      "weeks_other": "{{count}} Weeks",
-      "days_one": "{{count}} Day",
-      "days_other": "{{count}} Days"
-    },
     "deleteConfirmation": "Are you sure you want to delete this task?",
     "actions": { "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" }
   },
@@ -1167,19 +1157,10 @@
         "critical": "Critical"
       },
       "impact": {
-        "label": "Impact",
-        "negligible": "Negligible",
-        "moderate": "Moderate",
-        "significant": "Significant",
-        "catastrophic": "Catastrophic"
+        "label": "Impact"
       },
       "likelihood": {
-        "label": "Likelihood",
-        "improbable": "Improbable",
-        "remote": "Remote",
-        "occasional": "Occasional",
-        "probable": "Probable",
-        "frequent": "Frequent"
+        "label": "Likelihood"
       }
     }
   },
@@ -1364,7 +1345,7 @@
   "sidebar": { "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "businessFunctions": "Business Functions", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "accessReviews": "Access Reviews", "compliancePortals": "Compliance Portals", "cookieBanners": "Cookie Banners", "settings": "Settings" },
   "viewerMembershipDropdown": {
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
-    "actions": { "apiKeys": "API Keys", "oauthTokens": "OAuth tokens", "mySignatures": "My Signatures", "employeePortal": "Employee Portal", "help": "Help", "logout": "Logout" }
+    "actions": { "apiKeys": "API Keys", "oauthTokens": "OAuth tokens", "employeePortal": "Employee Portal", "help": "Help", "logout": "Logout" }
   },
   "peoplePage": { "title": "People", "actions": { "add": "Add Person" } },
   "personPage": {
@@ -1542,7 +1523,6 @@
     "errors": { "delete": "Failed to delete access source", "configure": "Failed to configure source" },
     "messages": { "error": "Error", "success": "Success", "organizationUpdated": "Organization updated." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
-    "status": { "connected": "Connected", "disconnected": "Disconnected", "invalidCredentials": "Invalid credentials", "reconnectRequired": "Reconnect required" },
     "actions": { "reconnect": "Reconnect", "delete": "Delete" },
     "loading": "Loading...",
     "selectOrganization": "Select organization",
@@ -1565,8 +1545,7 @@
   "entryDecisionActions": {
     "errors": { "record": "Failed to record decision" },
     "messages": { "error": "Error" },
-    "decisions": { "pending": "Pending", "approved": "Approved", "revoke": "Revoked", "defer": "Modified", "escalate": "Escalated" },
-    "actions": { "change": "Change decision", "approve": "Approve", "revoke": "Revoke", "modify": "Modify", "escalate": "Escalate", "confirm": "Confirm" },
+    "actions": { "approve": "Approve", "revoke": "Revoke", "modify": "Modify", "escalate": "Escalate", "confirm": "Confirm" },
     "placeholder": "Decide...",
     "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
@@ -1603,12 +1582,9 @@
     "authMethod": { "sso": "SSO", "password": "Password", "api_key": "API key", "service_account": "Service account", "unknown": "Unknown" },
     "decisions": { "pending": "Pending", "approved": "Approved", "revoke": "Revoked", "defer": "Modified", "escalate": "Escalated" },
     "flags": { "orphaned": "Orphan account", "dormant": "Dormant", "terminated_user": "Terminated user", "contractor_expired": "Contractor expired", "excessive": "Excessive privileges", "sod_conflict": "SoD conflict", "privileged_access": "Privileged access", "role_creep": "Role creep", "no_business_justification": "No justification", "out_of_department": "Out of department", "shared_account": "Shared account", "inactive": "Inactive", "role_mismatch": "Role mismatch", "new": "New", "none": "None" },
-    "flagGroups": { "account": "Account", "privileges": "Privileges", "anomaly": "Anomaly" },
-    "actions": { "delete": "Delete", "complete": "Complete", "completing": "Completing...", "completeCampaign": "Complete campaign", "deleting": "Deleting...", "addSource": "Add source", "starting": "Starting...", "startCampaign": "Start campaign", "clear": "Clear", "clearSelection": "Clear", "selectAll": "Select all", "selectAllLoaded": "Select all loaded ({{loaded}})", "approve": "Approve", "revoke": "Revoke", "modify": "Modify", "escalate": "Escalate", "noDecision": "No decision", "confirm": "Confirm", "submit": "Submit" },
+    "actions": { "delete": "Delete", "complete": "Complete", "completing": "Completing...", "completeCampaign": "Complete campaign", "deleting": "Deleting...", "addSource": "Add source", "starting": "Starting...", "startCampaign": "Start campaign", "clearSelection": "Clear", "selectAll": "Select all", "selectAllLoaded": "Select all loaded ({{loaded}})", "approve": "Approve", "revoke": "Revoke", "modify": "Modify", "escalate": "Escalate", "noDecision": "No decision", "confirm": "Confirm", "submit": "Submit" },
     "emptySources": "No sources configured for this campaign.",
     "emptyFiltered": "No entries match the current filters.",
-    "accounts_one": "{{count}} account",
-    "accounts_other": "{{count}} accounts",
     "fetchFailed": "Fetch failed",
     "emptyEntries": "No entries found for this source.",
     "filters": {
@@ -1619,20 +1595,18 @@
       "allAdmin": "All admins",
       "allAccountStatuses": "All statuses"
     },
-    "columns": { "name": "Name", "email": "Email", "role": "Role", "admin": "Admin", "status": "Status", "mfa": "MFA", "authMethod": "Auth", "lastLogin": "Last login", "flag": "Flag", "decision": "Decision" },
+    "columns": { "admin": "Admin", "mfa": "MFA", "authMethod": "Auth", "lastLogin": "Last login" },
     "values": { "yes": "Yes", "no": "No", "unknown": "Unknown" },
     "selected_one": "{{count}} selected",
     "selected_other": "{{count}} selected",
     "selectionLoadedOnly": "Only the entries loaded so far can be selected. Scroll to load more.",
     "decisionPlaceholder": "Set decision...",
     "selectEntry": "Select {{name}}",
-    "flagsSelected_one": "{{count}} flag",
-    "flagsSelected_other": "{{count}} flags",
     "flagsPlaceholder": "Set flags...",
     "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
   "addAccessReviewSourceDialog": {
-    "actions": { "connect": "Connect", "connectWithOAuth": "OAuth", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "open": "Open" },
+    "actions": { "connectWithOAuth": "OAuth", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "open": "Open" },
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {
@@ -1732,17 +1706,17 @@
   },
   "businessFunctionListItem": {
     "actions": { "delete": "Delete" },
-    "messages": { "success": "Success", "error": "Error", "deleted": "Business Function deleted successfully" },
+    "messages": { "success": "Success", "deleted": "Business Function deleted successfully" },
     "errors": { "delete": "Failed to delete business function" },
     "deleteConfirmation": "This will permanently delete the business function {{referenceId}}. This action cannot be undone."
   },
   "businessFunctionDetailsPage": {
     "breadcrumb": { "businessFunctions": "Business Functions", "unknown": "Unknown Business Function" },
-    "validation": { "referenceIdRequired": "Reference ID is required", "nameRequired": "Name is required" },
-    "fields": { "referenceId": "Reference ID", "referenceIdPlaceholder": "e.g. F-10", "name": "Name", "namePlaceholder": "Enter name", "classification": "Classification", "classificationPlaceholder": "Select classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Common values: 1h = 60, 12h = 720, 24h = 1440, 3d = 4320 minutes", "impactTolerance": "Impact tolerance", "impactTolerancePlaceholder": "Describe acceptable impact during disruption", "notes": "Notes", "notesPlaceholder": "Dependencies and other notes", "owner": "Owner", "assets": "Assets", "thirdParties": "Third parties" },
+    "validation": { "nameRequired": "Name is required" },
+    "fields": { "name": "Name", "namePlaceholder": "Enter name", "classification": "Classification", "classificationPlaceholder": "Select classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Common values: 1h = 60, 12h = 720, 24h = 1440, 3d = 4320 minutes", "impactTolerance": "Impact tolerance", "impactTolerancePlaceholder": "Describe acceptable impact during disruption", "notes": "Notes", "notesPlaceholder": "Dependencies and other notes", "owner": "Owner", "assets": "Assets", "thirdParties": "Third parties" },
     "classifications": { "critical": "Critical", "important": "Important", "secondary": "Secondary", "standard": "Standard" },
     "actions": { "delete": "Delete", "update": "Update", "updating": "Updating..." },
-    "messages": { "success": "Success", "error": "Error", "updated": "Business Function updated successfully", "deleted": "Business Function deleted successfully" },
+    "messages": { "success": "Success", "updated": "Business Function updated successfully", "deleted": "Business Function deleted successfully" },
     "errors": { "update": "Failed to update business function", "delete": "Failed to delete business function" },
     "dependenciesTruncated": "This Business Function has more than 100 linked assets or third parties. Dependency editing is disabled so saving cannot silently remove relationships that were not loaded.",
     "deleteConfirmation": "This will permanently delete the business function {{referenceId}}. This action cannot be undone."
@@ -1750,10 +1724,10 @@
   "createBusinessFunctionDialog": {
     "breadcrumb": { "businessFunctions": "Business Functions", "create": "Create" },
     "validation": { "nameRequired": "Name is required" },
-    "fields": { "referenceId": "Reference ID", "referenceIdPlaceholder": "e.g. F-10", "name": "Name", "namePlaceholder": "Enter name", "classification": "Classification", "classificationPlaceholder": "Select classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Common values: 1h = 60, 12h = 720, 24h = 1440, 3d = 4320 minutes", "impactTolerance": "Impact tolerance", "impactTolerancePlaceholder": "Describe the impact tolerance", "notes": "Notes", "notesPlaceholder": "Dependencies and other notes", "owner": "Owner", "assets": "Assets", "thirdParties": "Third parties" },
+    "fields": { "name": "Name", "namePlaceholder": "Enter name", "classification": "Classification", "classificationPlaceholder": "Select classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Common values: 1h = 60, 12h = 720, 24h = 1440, 3d = 4320 minutes", "impactTolerance": "Impact tolerance", "impactTolerancePlaceholder": "Describe the impact tolerance", "notes": "Notes", "notesPlaceholder": "Dependencies and other notes", "owner": "Owner", "assets": "Assets", "thirdParties": "Third parties" },
     "classifications": { "critical": "Critical", "important": "Important", "secondary": "Secondary", "standard": "Standard" },
     "actions": { "create": "Create Business Function", "creating": "Creating..." },
-    "messages": { "success": "Success", "error": "Error", "created": "Business Function created successfully" },
+    "messages": { "success": "Success", "created": "Business Function created successfully" },
     "errors": { "create": "Failed to create business function" }
   },
   "publishBusinessFunctionListDialog": {
@@ -2594,15 +2568,13 @@
     "emptyValue": "—",
     "actions": { "edit": "Edit", "delete": "Delete" }
   },
-  "magicLinkAlreadyUsed": { "title": "Link Already Used", "description": "This magic link has already been used. Please request a new one." },
-  "magicLinkExpired": { "title": "Link Expired", "description": "This magic link has expired. Magic links are only valid for 15 minutes. Please request a new one." },
   "magicLinkForm": { "errors": { "send": "Cannot send magic link" }, "messages": { "sent": "Magic link sent!" }, "fields": { "email": "Email" }, "sentDescription": "Magic link sent! Check your email and use the link to continue.", "actions": { "resend": "Resend Link", "resendIn": "Resend Link in {{count}}s", "send": "Send Magic Link" } },
   "auth": { "actions": { "signIn": "Sign in" } },
   "authError": { "enterpriseAccountRequired": { "title": "Enterprise account required", "description": "Personal Google and Microsoft accounts cannot be used to sign in. Please use your work or school account instead." }, "emailNotVerified": { "title": "Email not verified", "description": "Your email address is not verified with the identity provider. Please verify it, then try signing in again." }, "signInSessionExpired": { "title": "Sign-in session expired", "description": "This sign-in attempt is no longer valid. Please start again from the sign-in page." }, "magicLinkExpired": { "title": "Link Expired", "description": "This magic link has expired. Magic links are only valid for 15 minutes. Please request a new one." }, "magicLinkAlreadyUsed": { "title": "Link Already Used", "description": "This magic link has already been used. Please request a new one." }, "invalidLink": { "title": "Invalid link", "description": "This magic link is invalid. Please request a new one." }, "default": { "title": "Authentication failed", "description": "We could not complete your sign-in. Please try again." } },
   "accessReviewSource": { "documentation": "Documentation", "regions": { "label": "Region", "placeholder": "Select a region", "unitedStates": "United States", "europe": "Europe" } },
   "devices": { "title": "Devices", "description": "Manage computers enrolled with the Probo posture agent.", "empty": "No devices enrolled yet", "actions": { "add": "Add device", "new": "New device", "reassign": "Re-assign", "revoke": "Revoke", "delete": "Delete" }, "fields": { "organization": "Organization", "hostname": "Hostname", "owner": "Owner", "state": "State", "platform": "Platform", "osVersion": "OS version", "hardwareUuid": "Hardware UUID", "serialNumber": "Serial number", "agentVersion": "Agent version", "enrolledAt": "Enrolled at", "lastSeen": "Last seen" }, "values": { "pending": "(pending)", "never": "Never", "unassigned": "Unassigned" }, "messages": { "ownerUpdated": "Device owner updated", "revoked": "Device revoked", "deleted": "Device deleted" }, "errors": { "create": "Failed to create device", "reassign": "Failed to re-assign device", "revoke": "Failed to revoke device", "delete": "Failed to delete device" }, "confirmations": { "revoke": "Revoke device \"{{hostname}}\"? The agent on the device will stop reporting and must be re-enrolled.", "delete": "Delete device \"{{hostname}}\"? This removes it from the inventory." }, "postures": { "currentTitle": "Current postures", "empty": "No posture checks recorded", "values": { "on": "On", "off": "Off", "immediate": "Immediate", "seconds": "{{seconds}}s", "minPasswordLength": "Min length {{length}}", "configured": "Configured", "none": "None", "unknown": "Unknown" }, "checks": { "diskEncryption": "Disk encryption", "screenLock": "Screen lock", "firewallEnabled": "Firewall enabled", "timeSync": "Time sync", "osVersion": "OS version", "autoUpdate": "Auto update", "passwordPolicy": "Password policy", "remoteLogin": "Remote login", "malwareProtection": "Malware protection" } }, "history": { "title": "Report history", "empty": "No posture reports yet", "checkCount_one": "{{count}} check reported", "checkCount_other": "{{count}} checks reported", "columns": { "time": "Time", "checks": "Checks", "correlationId": "Correlation ID" }, "actions": { "copyCorrelationId": "Copy correlation ID", "correlationIdCopied": "Correlation ID copied" } } },
   "employeeDevices": { "title": "Your devices" },
-  "deviceEnrollment": { "pageTitle": "Enroll device", "title": "Device enrollment", "setup": "Setup", "stepProgress": "Step {{current}} of {{total}}", "steps": { "privacy": { "title": "Privacy", "description": "Review collected data" }, "organization": { "title": "Organization", "description": "Choose destination workspace" }, "enroll": { "title": "Open and wait", "description": "Finish setup in the desktop agent" } }, "unavailable": { "title": "Enrollment unavailable", "description": "You do not have permission to enroll devices in any organization." }, "intro": { "title": "Before you start", "description": "Probo collects the following device metadata for inventory and posture reporting:" }, "privacy": { "identity": "Device identity: hardware UUID, hostname, and serial number (when available).", "systemDetails": "System details: platform, OS version, and Probo agent version.", "activitySignals": "Activity signals: enrollment time, heartbeats, and posture check results." }, "organization": { "title": "Choose organization", "description": "Pick which organization will own and manage this device." }, "openAgent": { "title": "Open the Probo agent", "description": "Open the desktop agent to finish setup, then keep this page open until enrollment is confirmed." }, "actions": { "backToOrganizations": "Back to organizations", "enrollNew": "Enroll new device", "openAgent": "Open Probo agent", "preparing": "Preparing…" }, "status": { "enrolledWithHostname": "{{hostname}} is enrolled.", "enrolled": "This device is enrolled.", "closeWindow": "You can close this window.", "waitingForCheckIn": "Waiting for the agent's first check-in…", "timedOut": "We haven't heard from the agent yet. Make sure the desktop agent is installed and running, then try again." }, "manual": { "cannotEnroll": "Can't enroll new device?", "tryCreating": "Try creating it manually", "title": "Manual enrollment", "creating": "Creating device…" }, "token": { "title": "Enrollment token generated", "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.", "manualInstall": "Manual install (CLI / MDM)", "releaseListHint": "Browse <link>probo-agent releases on GitHub</link> (tags probo-agent/v*), then pick the archive for your OS and architecture (for example probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz, or probo-agent_Windows_x86_64.zip). Replace vX.Y.Z, OS, and ARCH in the download command with the values from the asset you chose.", "installUnix": "Install on macOS or Linux (run from a shell with sudo access)", "installWindows": "Install on Windows (run from an elevated PowerShell session)", "downloadStep": "Download and place the binary", "enrollStep": "Configure the device and start the agent", "securityNotice": "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification." }, "messages": { "created": "Device created. Copy the enrollment token now — it will not be shown again." }, "errors": { "copyToClipboard": "Failed to copy to clipboard" } },
+  "deviceEnrollment": { "pageTitle": "Enroll device", "title": "Device enrollment", "setup": "Setup", "stepProgress": "Step {{current}} of {{total}}", "steps": { "privacy": { "title": "Privacy", "description": "Review collected data" }, "organization": { "description": "Choose destination workspace" }, "enroll": { "title": "Open and wait", "description": "Finish setup in the desktop agent" } }, "unavailable": { "title": "Enrollment unavailable", "description": "You do not have permission to enroll devices in any organization." }, "intro": { "title": "Before you start", "description": "Probo collects the following device metadata for inventory and posture reporting:" }, "privacy": { "identity": "Device identity: hardware UUID, hostname, and serial number (when available).", "systemDetails": "System details: platform, OS version, and Probo agent version.", "activitySignals": "Activity signals: enrollment time, heartbeats, and posture check results." }, "organization": { "title": "Choose organization", "description": "Pick which organization will own and manage this device." }, "openAgent": { "title": "Open the Probo agent", "description": "Open the desktop agent to finish setup, then keep this page open until enrollment is confirmed." }, "actions": { "backToOrganizations": "Back to organizations", "enrollNew": "Enroll new device", "openAgent": "Open Probo agent", "preparing": "Preparing…" }, "status": { "enrolledWithHostname": "{{hostname}} is enrolled.", "enrolled": "This device is enrolled.", "closeWindow": "You can close this window.", "waitingForCheckIn": "Waiting for the agent's first check-in…", "timedOut": "We haven't heard from the agent yet. Make sure the desktop agent is installed and running, then try again." }, "manual": { "cannotEnroll": "Can't enroll new device?", "tryCreating": "Try creating it manually", "title": "Manual enrollment", "creating": "Creating device…" }, "token": { "title": "Enrollment token generated", "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.", "manualInstall": "Manual install (CLI / MDM)", "releaseListHint": "Browse <link>probo-agent releases on GitHub</link> (tags probo-agent/v*), then pick the archive for your OS and architecture (for example probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz, or probo-agent_Windows_x86_64.zip). Replace vX.Y.Z, OS, and ARCH in the download command with the values from the asset you chose.", "installUnix": "Install on macOS or Linux (run from a shell with sudo access)", "installWindows": "Install on Windows (run from an elevated PowerShell session)", "downloadStep": "Download and place the binary", "enrollStep": "Configure the device and start the agent", "securityNotice": "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification." }, "messages": { "created": "Device created. Copy the enrollment token now — it will not be shown again." }, "errors": { "copyToClipboard": "Failed to copy to clipboard" } },
   "thirdPartyRiskAssessmentRow": {
     "expired": "Expired",
     "notes": "Notes"

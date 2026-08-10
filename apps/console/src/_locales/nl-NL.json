@@ -1135,7 +1135,8 @@
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Personen toevoegen...",
-    "empty": "Geen personen beschikbaar"
+    "empty": "Geen personen beschikbaar",
+    "remove": "{{name}} verwijderen"
   },
   "peopleSelectField": {
     "placeholder": "Selecteer een eigenaar",
@@ -1188,7 +1189,8 @@
   },
   "thirdPartiesMultiSelectField": {
     "addPlaceholder": "Derde partijen toevoegen...",
-    "empty": "Geen derde partijen beschikbaar"
+    "empty": "Geen derde partijen beschikbaar",
+    "remove": "{{name}} verwijderen"
   },
   "linkedMeasuresCard": {
     "title": "Maatregelen",
@@ -1404,16 +1406,6 @@
     "dragInstructions": {
       "all": "Sleep om taken opnieuw te ordenen of te verplaatsen tussen statussen",
       "state": "Sleep om taken opnieuw te ordenen"
-    },
-    "duration": {
-      "minutes_one": "{{count}} Minuut",
-      "minutes_other": "{{count}} Minuten",
-      "hours_one": "{{count}} Uur",
-      "hours_other": "{{count}} Uur",
-      "weeks_one": "{{count}} Week",
-      "weeks_other": "{{count}} Weken",
-      "days_one": "{{count}} Dag",
-      "days_other": "{{count}} Dagen"
     },
     "deleteConfirmation": "Weet u zeker dat u deze taak wilt verwijderen?",
     "actions": {
@@ -1846,19 +1838,10 @@
         "critical": "Kritiek"
       },
       "impact": {
-        "label": "Impact",
-        "negligible": "Verwaarloosbaar",
-        "moderate": "Matig",
-        "significant": "Aanzienlijk",
-        "catastrophic": "Catastrofaal"
+        "label": "Impact"
       },
       "likelihood": {
-        "label": "Waarschijnlijkheid",
-        "improbable": "Onwaarschijnlijk",
-        "remote": "Gering",
-        "occasional": "Incidenteel",
-        "probable": "Waarschijnlijk",
-        "frequent": "Frequent"
+        "label": "Waarschijnlijkheid"
       }
     }
   },
@@ -2412,6 +2395,7 @@
     "data": "Gegevens",
     "audits": "Audits",
     "findings": "Bevindingen",
+    "businessFunctions": "Bedrijfsfuncties",
     "obligations": "Verplichtingen",
     "processingActivities": "Verwerkingsactiviteiten",
     "statementsOfApplicability": "Verklaringen van toepasselijkheid",
@@ -2429,7 +2413,6 @@
     "actions": {
       "apiKeys": "API-sleutels",
       "oauthTokens": "OAuth-tokens",
-      "mySignatures": "Mijn handtekeningen",
       "employeePortal": "Medewerkersportaal",
       "help": "Help",
       "logout": "Uitloggen"
@@ -2988,12 +2971,6 @@
       "organizationUpdated": "Organisatie bijgewerkt."
     },
     "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
-    "status": {
-      "connected": "Verbonden",
-      "disconnected": "Niet verbonden",
-      "invalidCredentials": "Ongeldige gegevens",
-      "reconnectRequired": "Opnieuw verbinden vereist"
-    },
     "actions": {
       "reconnect": "Opnieuw verbinden",
       "delete": "Verwijderen"
@@ -3023,15 +3000,7 @@
     "messages": {
       "error": "Fout"
     },
-    "decisions": {
-      "pending": "In behandeling",
-      "approved": "Goedgekeurd",
-      "revoke": "Ingetrokken",
-      "defer": "Aangepast",
-      "escalate": "Geëscaleerd"
-    },
     "actions": {
-      "change": "Beslissing wijzigen",
       "approve": "Goedkeuren",
       "revoke": "Intrekken",
       "modify": "Aanpassen",
@@ -3183,11 +3152,6 @@
       "new": "Nieuw",
       "none": "Geen"
     },
-    "flagGroups": {
-      "account": "Account",
-      "privileges": "Rechten",
-      "anomaly": "Anomalie"
-    },
     "actions": {
       "delete": "Verwijderen",
       "complete": "Voltooien",
@@ -3197,7 +3161,6 @@
       "addSource": "Bron toevoegen",
       "starting": "Starten...",
       "startCampaign": "Campagne starten",
-      "clear": "Wissen",
       "clearSelection": "Wissen",
       "selectAll": "Alles selecteren",
       "selectAllLoaded": "Alle geladen selecteren ({{loaded}})",
@@ -3211,8 +3174,6 @@
     },
     "emptySources": "Geen bronnen geconfigureerd voor deze campagne.",
     "emptyFiltered": "Geen items komen overeen met de huidige filters.",
-    "accounts_one": "{{count}} account",
-    "accounts_other": "{{count}} accounts",
     "fetchFailed": "Ophalen mislukt",
     "emptyEntries": "Geen items gevonden voor deze bron.",
     "filters": {
@@ -3224,16 +3185,10 @@
       "allAccountStatuses": "Alle statussen"
     },
     "columns": {
-      "name": "Naam",
-      "email": "E-mail",
-      "role": "Rol",
       "admin": "Beheerder",
-      "status": "Status",
       "mfa": "MFA",
       "authMethod": "Auth",
-      "lastLogin": "Laatste keer ingelogd",
-      "flag": "Markering",
-      "decision": "Beslissing"
+      "lastLogin": "Laatste keer ingelogd"
     },
     "values": {
       "yes": "Ja",
@@ -3245,8 +3200,6 @@
     "selectionLoadedOnly": "Alleen de tot nu toe geladen items kunnen worden geselecteerd. Scroll om er meer te laden.",
     "decisionPlaceholder": "Beslissing instellen...",
     "selectEntry": "Selecteer {{name}}",
-    "flagsSelected_one": "{{count}} markering",
-    "flagsSelected_other": "{{count}} markeringen",
     "flagsPlaceholder": "Markeringen instellen...",
     "note": {
       "title": "Opmerking bij beslissing",
@@ -3256,7 +3209,6 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": {
-      "connect": "Verbinden",
       "connectWithOAuth": "OAuth",
       "connectWithApiKey": "API-sleutel",
       "connectWithClientCredentials": "Clientreferenties",
@@ -3466,6 +3418,60 @@
       "publish": "Publiceren",
       "addAsset": "Asset toevoegen"
     }
+  },
+  "assetsMultiSelectField": {
+    "addPlaceholder": "Assets toevoegen...",
+    "empty": "Geen assets beschikbaar",
+    "remove": "{{name}} verwijderen"
+  },
+  "businessFunctionsPage": {
+    "title": "Bedrijfsfuncties",
+    "description": "Beheer het register van bedrijfsfuncties van uw organisatie.",
+    "actions": { "document": "Document", "publish": "Publiceren", "add": "Bedrijfsfunctie toevoegen", "loadMore": "Meer laden", "loading": "Laden..." },
+    "filters": { "allClassifications": "Alle classificaties" },
+    "classifications": { "critical": "Kritiek", "important": "Belangrijk", "secondary": "Secundair", "standard": "Standaard" },
+    "columns": { "referenceId": "Referentie-ID", "name": "Naam", "classification": "Classificatie", "mtd": "MTD", "rto": "RTO", "rpo": "RPO", "owner": "Eigenaar", "assets": "Assets", "thirdParties": "Derde partijen", "actions": "Acties" },
+    "none": "Geen",
+    "empty": {
+      "title": "Nog geen bedrijfsfuncties",
+      "description": "Maak uw eerste bedrijfsfunctie aan om te beginnen.",
+      "filteredTitle": "Geen overeenkomende bedrijfsfuncties",
+      "filteredDescription": "Geen bedrijfsfuncties komen overeen met de geselecteerde classificatie."
+    }
+  },
+  "businessFunctionListItem": {
+    "actions": { "delete": "Verwijderen" },
+    "messages": { "success": "Geslaagd", "deleted": "Bedrijfsfunctie succesvol verwijderd" },
+    "errors": { "delete": "Verwijderen van bedrijfsfunctie mislukt" },
+    "deleteConfirmation": "Dit verwijdert de bedrijfsfunctie {{referenceId}} permanent. Deze actie kan niet ongedaan worden gemaakt."
+  },
+  "businessFunctionDetailsPage": {
+    "breadcrumb": { "businessFunctions": "Bedrijfsfuncties", "unknown": "Onbekende bedrijfsfunctie" },
+    "validation": { "nameRequired": "Naam is verplicht" },
+    "fields": { "name": "Naam", "namePlaceholder": "Voer een naam in", "classification": "Classificatie", "classificationPlaceholder": "Selecteer classificatie", "mtd": "MTD (minuten)", "rto": "RTO (minuten)", "rpo": "RPO (minuten)", "durationHelper": "Veelgebruikte waarden: 1u = 60, 12u = 720, 24u = 1440, 3d = 4320 minuten", "impactTolerance": "Impacttolerantie", "impactTolerancePlaceholder": "Beschrijf acceptabele impact tijdens verstoring", "notes": "Notities", "notesPlaceholder": "Afhankelijkheden en andere notities", "owner": "Eigenaar", "assets": "Assets", "thirdParties": "Derde partijen" },
+    "classifications": { "critical": "Kritiek", "important": "Belangrijk", "secondary": "Secundair", "standard": "Standaard" },
+    "actions": { "delete": "Verwijderen", "update": "Bijwerken", "updating": "Bijwerken..." },
+    "messages": { "success": "Geslaagd", "updated": "Bedrijfsfunctie succesvol bijgewerkt", "deleted": "Bedrijfsfunctie succesvol verwijderd" },
+    "errors": { "update": "Bijwerken van bedrijfsfunctie mislukt", "delete": "Verwijderen van bedrijfsfunctie mislukt" },
+    "dependenciesTruncated": "Deze bedrijfsfunctie heeft meer dan 100 gekoppelde assets of derde partijen. Bewerken van afhankelijkheden is uitgeschakeld zodat opslaan niet stilzwijgend relaties kan verwijderen die niet zijn geladen.",
+    "deleteConfirmation": "Dit verwijdert de bedrijfsfunctie {{referenceId}} permanent. Deze actie kan niet ongedaan worden gemaakt."
+  },
+  "createBusinessFunctionDialog": {
+    "breadcrumb": { "businessFunctions": "Bedrijfsfuncties", "create": "Aanmaken" },
+    "validation": { "nameRequired": "Naam is verplicht" },
+    "fields": { "name": "Naam", "namePlaceholder": "Voer een naam in", "classification": "Classificatie", "classificationPlaceholder": "Selecteer classificatie", "mtd": "MTD (minuten)", "rto": "RTO (minuten)", "rpo": "RPO (minuten)", "durationHelper": "Veelgebruikte waarden: 1u = 60, 12u = 720, 24u = 1440, 3d = 4320 minuten", "impactTolerance": "Impacttolerantie", "impactTolerancePlaceholder": "Beschrijf de impacttolerantie", "notes": "Notities", "notesPlaceholder": "Afhankelijkheden en andere notities", "owner": "Eigenaar", "assets": "Assets", "thirdParties": "Derde partijen" },
+    "classifications": { "critical": "Kritiek", "important": "Belangrijk", "secondary": "Secundair", "standard": "Standaard" },
+    "actions": { "create": "Bedrijfsfunctie aanmaken", "creating": "Aanmaken..." },
+    "messages": { "success": "Geslaagd", "created": "Bedrijfsfunctie succesvol aangemaakt" },
+    "errors": { "create": "Aanmaken van bedrijfsfunctie mislukt" }
+  },
+  "publishBusinessFunctionListDialog": {
+    "title": "Bedrijfsfunctielijst publiceren",
+    "description": "Selecteer goedkeurders om goedkeuring aan te vragen vóór publicatie, of publiceer direct zonder goedkeurders.",
+    "errors": { "publish": "Publiceren van bedrijfsfunctielijst mislukt" },
+    "messages": { "success": "Geslaagd", "error": "Fout", "approvalRequested": "Goedkeuring succesvol aangevraagd.", "published": "Bedrijfsfunctielijst succesvol gepubliceerd." },
+    "fields": { "approvers": "Goedkeurders", "approversPlaceholder": "Goedkeurders toevoegen..." },
+    "actions": { "publishMinor": "Publiceren als minor", "requestApproval": "Goedkeuring aanvragen", "publish": "Publiceren" }
   },
   "createAssetDialog": {
     "breadcrumb": {
@@ -5947,14 +5953,6 @@
       "delete": "Verwijderen"
     }
   },
-  "magicLinkAlreadyUsed": {
-    "title": "Link al gebruikt",
-    "description": "Deze magic link is al gebruikt. Vraag een nieuwe aan."
-  },
-  "magicLinkExpired": {
-    "title": "Link verlopen",
-    "description": "Deze magic link is verlopen. Magic links zijn slechts 15 minuten geldig. Vraag een nieuwe aan."
-  },
   "magicLinkForm": {
     "errors": {
       "send": "Kan magic link niet verzenden"
@@ -6115,7 +6113,6 @@
         "description": "Verzamelde gegevens bekijken"
       },
       "organization": {
-        "title": "Organisatie",
         "description": "Kies bestemmingswerkruimte"
       },
       "enroll": {

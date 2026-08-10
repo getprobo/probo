@@ -8,9 +8,8 @@
     },
     "actions": {
       "create": "Create compliance portal",
-      "createFirst": "Create your first compliance portal",
-      "showMore": "Show more"
-    }
+      "createFirst": "Create your first compliance portal"
+      }
   },
   "newPortalPage": {
     "pageTitle": "New compliance portal",
