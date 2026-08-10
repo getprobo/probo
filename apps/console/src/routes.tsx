@@ -172,6 +172,12 @@ const routes = [
             ),
           },
           {
+            path: "me/slack/bind",
+            Component: lazy(
+              () => import("./pages/me/slack/bind/SlackBindPageLoader"),
+            ),
+          },
+          {
             Component: CenteredLayout,
             children: [
               {
