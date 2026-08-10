@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/automerge/internal/native"
 )
 
 // drainSyncMessages mirrors the server's sendAvailableSyncMessages: it generates
@@ -129,4 +130,38 @@ func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 			require.NoError(t, peerState.ReceiveMessage(ctx, hostMessage))
 		}
 	}
+}
+
+// TestSyncState_QuiescesWhenReadOnlyPeerRequestsChanges pins a second
+// non-quiescing state found by the model-based chaos test: a peer requests a
+// missing change and marks itself read-only in the same message. The sender
+// cannot service that request, so retaining it must not make generation loop.
+// Once the peer becomes writable it advertises its missing heads again.
+func TestSyncState_QuiescesWhenReadOnlyPeerRequestsChanges(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	source, err := automerge.New(ctx, actor(4))
+	require.NoError(t, err)
+	closeDocument(t, source)
+
+	sourceState, err := source.NewSyncState(ctx)
+	require.NoError(t, err)
+
+	var requested [32]byte
+	requested[0] = 1
+
+	// Model the message found by the chaos test: a peer advertises read-only and
+	// still carries a stale Need from its previous writable mode.
+	message, err := (native.SyncMessage{
+		Version: native.SyncMessageVersion2,
+		Need:    [][32]byte{requested},
+		Flags:   []byte{2, 0x80 | 0x02 | 0x04},
+	}).Encode()
+	require.NoError(t, err)
+	require.NoError(t, sourceState.ReceiveMessage(ctx, message))
+
+	sent := drainSyncMessages(t, ctx, sourceState)
+	require.LessOrEqual(t, sent, 1)
 }

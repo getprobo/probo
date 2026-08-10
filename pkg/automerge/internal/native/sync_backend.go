@@ -301,7 +301,15 @@ func (b *Backend) ReceiveSyncMessage(
 	}
 
 	state.RemoteHeads = append([][32]byte(nil), message.Heads...)
-	state.Requested = append(state.Requested[:0], message.Need...)
+	if state.PeerReadOnly {
+		// A read-only peer cannot receive changes. Retaining a Need it sent
+		// before (or together with) the mode transition makes every generation
+		// attempt to service an impossible request and prevents quiescence. When
+		// the peer becomes writable it will advertise the missing heads again.
+		state.Requested = nil
+	} else {
+		state.Requested = append(state.Requested[:0], message.Need...)
+	}
 
 	needed := make(map[[32]byte]struct{})
 
