@@ -77,15 +77,19 @@ const updatePersonMutation = graphql`
   }
 `;
 
+const emptyToNull = (value: unknown) => (value === "" || value == null ? null : value);
+
 const sharedPersonFields = {
   fullName: z.string().min(1),
-  position: z.string().min(1).optional().nullable(),
+  // SCIM often syncs title/userType as ""; treat blanks as unset so the form
+  // stays valid and contract dates remain savable for SCIM-managed people.
+  position: z.preprocess(emptyToNull, z.string().min(1).nullable().optional()),
   additionalEmailAddresses: z.preprocess(
     // Empty additional emails are skipped
     v => (v as string[]).filter(v => !!v),
     z.array(z.string().email()),
   ),
-  kind: z.string().min(1).optional().nullable(),
+  kind: z.preprocess(emptyToNull, z.string().min(1).nullable().optional()),
   contractStartDate: z.string().optional().nullable(),
   contractEndDate: z.string().optional().nullable(),
 };
@@ -298,11 +302,11 @@ export function PersonFormLoader(props: { fragmentRef: PersonFormFragment$key })
       scimManaged={person.source === "SCIM"}
       defaultValues={
         {
-          kind: person.kind,
+          kind: person.kind || null,
           fullName: person.fullName,
           emailAddress: person.emailAddress,
           role: person.membership.role,
-          position: person.position,
+          position: person.position || null,
           additionalEmailAddresses: [...person.additionalEmailAddresses],
           contractStartDate: person.contractStartDate?.split("T")[0] || "",
           contractEndDate: person.contractEndDate?.split("T")[0] || "",

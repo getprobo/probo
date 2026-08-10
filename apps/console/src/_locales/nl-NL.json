@@ -2471,7 +2471,8 @@
       "status": "Status",
       "email": "E-mail",
       "role": "Rol",
-      "createdOn": "Aangemaakt op"
+      "createdOn": "Aangemaakt op",
+      "contractEndDate": "Einddatum contract"
     },
     "empty": "Geen personen",
     "searchPlaceholder": "Personen zoeken...",

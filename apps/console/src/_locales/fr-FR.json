@@ -2466,7 +2466,8 @@
       "status": "Statut",
       "email": "E-mail",
       "role": "Rôle",
-      "createdOn": "Créé le"
+      "createdOn": "Créé le",
+      "contractEndDate": "Date de fin de contrat"
     },
     "empty": "Aucune personne",
     "searchPlaceholder": "Rechercher des personnes...",

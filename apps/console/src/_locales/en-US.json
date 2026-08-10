@@ -1376,7 +1376,7 @@
   },
   "addPersonDialog": { "title": "Add Person" },
   "peopleList": {
-    "columns": { "name": "Name", "status": "Status", "email": "Email", "role": "Role", "createdOn": "Created on" },
+    "columns": { "name": "Name", "status": "Status", "email": "Email", "role": "Role", "createdOn": "Created on", "contractEndDate": "Contract end date" },
     "empty": "No people",
     "searchPlaceholder": "Search people...",
     "filters": { "allStatuses": "All statuses", "status": "Status", "pending": "Pending", "active": "Active", "deactivated": "Deactivated", "allRoles": "All roles", "allTypes": "All types" }
