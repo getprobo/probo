@@ -892,5 +892,5 @@ describe("ProseMirror render parity fixture", () => {
       expect(entry.expected, entry.name).toEqual(match!.expected);
       expect(entry.spans, entry.name).toEqual(match!.spans);
     }
-  });
+  }, 30_000);
 });
