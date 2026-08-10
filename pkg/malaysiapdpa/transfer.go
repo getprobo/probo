@@ -47,10 +47,7 @@ func TransferNextReviewAt(basis coredata.MalaysiaPDPATransferBasis, reviewedAt t
 		reviewedAt.Nanosecond(),
 		reviewedAt.Location(),
 	).Day()
-	targetDay := reviewedAt.Day()
-	if targetDay > lastDayOfMonth {
-		targetDay = lastDayOfMonth
-	}
+	targetDay := min(reviewedAt.Day(), lastDayOfMonth)
 	nextReviewAt := time.Date(
 		targetYear,
 		reviewedAt.Month(),
