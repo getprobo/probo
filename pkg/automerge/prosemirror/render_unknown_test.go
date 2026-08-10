@@ -232,3 +232,154 @@ func TestRender_UnknownMarkOnlyLeavesPlainText(t *testing.T) {
 	)
 	assertCanonicalRenderable(t, content)
 }
+
+func TestRender_MalformedStructureNeverAborts(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		spans []automerge.Span
+		text  string
+	}{
+		{
+			name: "root hard break",
+			spans: []automerge.Span{
+				{
+					Type: automerge.SpanTypeBlock,
+					Block: map[string]any{
+						"type":    "hard-break",
+						"parents": []any{},
+						"isEmbed": true,
+					},
+				},
+			},
+		},
+		{
+			name: "missing block type",
+			spans: []automerge.Span{
+				{Type: automerge.SpanTypeBlock, Block: map[string]any{"parents": []any{}}},
+				{Type: automerge.SpanTypeText, Text: "Preserved"},
+			},
+			text: "Preserved",
+		},
+		{
+			name: "invalid parent value",
+			spans: []automerge.Span{
+				{
+					Type: automerge.SpanTypeBlock,
+					Block: map[string]any{
+						"type":    "paragraph",
+						"parents": []any{"paragraph", 42, nil},
+					},
+				},
+				{Type: automerge.SpanTypeText, Text: "Rooted"},
+			},
+			text: "Rooted",
+		},
+		{
+			name: "paragraph with child block",
+			spans: []automerge.Span{
+				testBlock("paragraph", nil),
+				{Type: automerge.SpanTypeText, Text: "Parent"},
+				testBlock("heading", []any{"paragraph"}),
+				{Type: automerge.SpanTypeText, Text: "Child"},
+			},
+			text: "ParentChild",
+		},
+		{
+			name: "heading with child block",
+			spans: []automerge.Span{
+				testBlock("heading", nil),
+				{Type: automerge.SpanTypeText, Text: "Heading"},
+				testBlock("paragraph", []any{"heading"}),
+				{Type: automerge.SpanTypeText, Text: "Child"},
+			},
+			text: "HeadingChild",
+		},
+		{
+			name: "code block with child block",
+			spans: []automerge.Span{
+				testBlock("code-block", nil),
+				{Type: automerge.SpanTypeText, Text: "Code"},
+				testBlock("paragraph", []any{"code-block"}),
+				{Type: automerge.SpanTypeText, Text: "Child"},
+			},
+			text: "CodeChild",
+		},
+		{
+			name: "table with non-row child",
+			spans: []automerge.Span{
+				testBlock("table", nil),
+				testBlock("paragraph", []any{"table"}),
+				{Type: automerge.SpanTypeText, Text: "Hoisted"},
+			},
+			text: "Hoisted",
+		},
+		{
+			name: "table row with non-cell child",
+			spans: []automerge.Span{
+				testBlock("table", nil),
+				testBlock("table-row", []any{"table"}),
+				testBlock("paragraph", []any{"table", "table-row"}),
+				{Type: automerge.SpanTypeText, Text: "Hoisted"},
+			},
+			text: "Hoisted",
+		},
+		{
+			name: "impossible parent chain",
+			spans: []automerge.Span{
+				testBlock("paragraph", nil),
+				{Type: automerge.SpanTypeText, Text: "First"},
+				testBlock("paragraph", []any{"table", "table-row", "table-cell"}),
+				{Type: automerge.SpanTypeText, Text: "Second"},
+			},
+			text: "FirstSecond",
+		},
+		{
+			name: "unknown span type",
+			spans: []automerge.Span{
+				{Type: automerge.SpanType("future")},
+				testBlock("paragraph", nil),
+				{Type: automerge.SpanTypeText, Text: "Known"},
+			},
+			text: "Known",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			content, err := automergeprosemirror.Render(tt.spans)
+			require.NoError(t, err)
+			assertCanonicalRenderable(t, content)
+
+			node, err := prosemirror.Parse(content)
+			require.NoError(t, err)
+			assert.Equal(t, tt.text, nodeText(node))
+		})
+	}
+}
+
+func testBlock(blockType string, parents []any) automerge.Span {
+	return automerge.Span{
+		Type: automerge.SpanTypeBlock,
+		Block: map[string]any{
+			"type":    blockType,
+			"parents": parents,
+		},
+	}
+}
+
+func nodeText(node prosemirror.Node) string {
+	var text string
+	if node.Text != nil {
+		text = *node.Text
+	}
+
+	for _, child := range node.Content {
+		text += nodeText(child)
+	}
+
+	return text
+}

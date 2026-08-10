@@ -22,19 +22,12 @@ package prosemirror
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"slices"
 	"sort"
 
 	"go.probo.inc/probo/pkg/automerge"
 )
-
-// errUnknownBlock signals that a block span carries a type the renderer does not
-// recognize. It is handled gracefully rather than aborting the whole render so a
-// single unfamiliar block (for example from a newer client) can never block
-// persistence of an entire document.
-var errUnknownBlock = errors.New("unknown Automerge block type")
 
 type schemaMapping struct {
 	Automerge   string
@@ -137,7 +130,7 @@ func Render(spans []automerge.Span) (string, error) {
 	}
 
 	if consumed != len(blocks) {
-		return "", fmt.Errorf("cannot render Automerge blocks: consumed %d of %d", consumed, len(blocks))
+		content = append(content, flattenBlocks(blocks[consumed:])...)
 	}
 
 	if len(content) == 0 {
@@ -155,17 +148,24 @@ func Render(spans []automerge.Span) (string, error) {
 func collectBlocks(spans []automerge.Span) ([]block, error) {
 	blocks := make([]block, 0)
 
-	for i, span := range spans {
+	for _, span := range spans {
 		switch span.Type {
 		case automerge.SpanTypeBlock:
 			blockType, ok := span.Block["type"].(string)
 			if !ok || blockType == "" {
-				return nil, fmt.Errorf("cannot collect Automerge block span %d: missing type", i)
+				blockType = "__unknown__"
 			}
 
 			if blockType == blockTypeHardBreak {
-				if len(blocks) == 0 {
-					return nil, fmt.Errorf("cannot collect Automerge hard break span %d without a parent block", i)
+				if len(blocks) == 0 || !acceptsInlineContent(blocks[len(blocks)-1].Type) {
+					parents := tolerantStringSlice(span.Block["parents"])
+					blocks = append(
+						blocks,
+						block{
+							Type:    blockTypeParagraph,
+							Parents: inlineFallbackParents(parents),
+						},
+					)
 				}
 
 				blocks[len(blocks)-1].Content = append(
@@ -176,28 +176,23 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 				continue
 			}
 
-			parents, err := stringSlice(span.Block["parents"])
-			if err != nil {
-				return nil, fmt.Errorf("cannot collect Automerge block span %d parents: %w", i, err)
-			}
-
 			attrs, _ := span.Block["attrs"].(map[string]any)
-			blocks = append(
+			blocks = appendNormalizedBlock(
 				blocks,
 				block{
 					Type:    blockType,
-					Parents: parents,
+					Parents: tolerantStringSlice(span.Block["parents"]),
 					Attrs:   attrs,
 				},
 			)
 		case automerge.SpanTypeText:
-			if len(blocks) == 0 || blocks[len(blocks)-1].Type == blockTypeHorizontalRule {
+			if len(blocks) == 0 || !acceptsInlineContent(blocks[len(blocks)-1].Type) {
 				var parents []string
 				if len(blocks) > 0 {
-					parents = slices.Clone(blocks[len(blocks)-1].Parents)
+					parents = inlineFallbackParents(blocks[len(blocks)-1].Parents)
 				}
 
-				blocks = append(
+				blocks = appendNormalizedBlock(
 					blocks,
 					block{
 						Type:    blockTypeParagraph,
@@ -208,7 +203,7 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 
 			marks, err := renderMarks(span.Marks)
 			if err != nil {
-				return nil, fmt.Errorf("cannot collect Automerge text span %d marks: %w", i, err)
+				marks = nil
 			}
 
 			if span.Text != "" {
@@ -222,11 +217,57 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 				)
 			}
 		default:
-			return nil, fmt.Errorf("cannot collect Automerge span %d: unknown type %q", i, span.Type)
+			continue
 		}
 	}
 
 	return blocks, nil
+}
+
+func appendNormalizedBlock(blocks []block, next block) []block {
+	if len(blocks) == 0 {
+		next.Parents = nil
+
+		return append(blocks, next)
+	}
+
+	previous := blocks[len(blocks)-1]
+	previousPath := append(slices.Clone(previous.Parents), previous.Type)
+	prefixLength := 0
+
+	for prefixLength < len(next.Parents) &&
+		prefixLength < len(previousPath) &&
+		next.Parents[prefixLength] == previousPath[prefixLength] {
+		prefixLength++
+	}
+
+	next.Parents = slices.Clone(next.Parents[:prefixLength])
+
+	return append(blocks, next)
+}
+
+func acceptsInlineContent(blockType string) bool {
+	switch blockType {
+	case blockTypeHorizontalRule, blockTypeTable, blockTypeTableRow:
+		return false
+	default:
+		return true
+	}
+}
+
+func inlineFallbackParents(parents []string) []string {
+	parents = slices.Clone(parents)
+
+	for len(parents) > 0 {
+		last := parents[len(parents)-1]
+		if last != blockTypeTable && last != blockTypeTableRow {
+			break
+		}
+
+		parents = parents[:len(parents)-1]
+	}
+
+	return parents
 }
 
 func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
@@ -252,39 +293,27 @@ func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
 		}
 
 		if childConsumed != childEnd-consumed-1 {
-			return nil, 0, fmt.Errorf("cannot render children of Automerge block %q", current.Type)
+			children = append(children, flattenBlocks(blocks[consumed+1+childConsumed:childEnd])...)
 		}
 
-		rendered, listType, err := renderBlock(current, children)
-		if err != nil {
-			if errors.Is(err, errUnknownBlock) {
-				if len(current.Content) > 0 {
-					content = append(content, node{Type: "paragraph", Content: current.Content})
-				}
-
-				content = append(content, children...)
-				consumed = childEnd
-
-				continue
-			}
-
-			return nil, 0, err
-		}
+		rendered, listType := renderBlock(current, children)
 
 		if listType != "" {
 			if len(content) > 0 && content[len(content)-1].Type == listType {
-				content[len(content)-1].Content = append(content[len(content)-1].Content, rendered)
+				content[len(content)-1].Content = append(content[len(content)-1].Content, rendered[0])
 			} else {
 				content = append(
 					content,
 					node{
 						Type:    listType,
-						Content: []node{rendered},
+						Content: []node{rendered[0]},
 					},
 				)
 			}
+
+			content = append(content, rendered[1:]...)
 		} else {
-			content = append(content, rendered)
+			content = append(content, rendered...)
 		}
 
 		consumed = childEnd
@@ -293,79 +322,126 @@ func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
 	return content, consumed, nil
 }
 
-func renderBlock(source block, children []node) (node, string, error) {
+func flattenBlocks(blocks []block) []node {
+	content := make([]node, 0, len(blocks))
+
+	for _, source := range blocks {
+		if len(source.Content) > 0 {
+			content = append(
+				content,
+				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
+			)
+		}
+	}
+
+	return content
+}
+
+func renderBlock(source block, children []node) ([]node, string) {
 	switch source.Type {
 	case blockTypeParagraph:
-		if len(children) > 0 {
-			return node{}, "", fmt.Errorf("paragraph Automerge block cannot contain child blocks")
-		}
+		rendered := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 
-		return node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}, "", nil
+		return append([]node{rendered}, children...), ""
 	case blockTypeHeading:
-		if len(children) > 0 {
-			return node{}, "", fmt.Errorf("heading Automerge block cannot contain child blocks")
-		}
-
 		level := intAttribute(source.Attrs, "level", 1)
 		if level < 1 || level > 6 {
 			level = 1
 		}
 
-		return node{
+		rendered := node{
 			Type:    blockNodeNames[blockTypeHeading],
 			Attrs:   map[string]any{"level": level},
 			Content: source.Content,
-		}, "", nil
-	case blockTypeCode:
-		if len(children) > 0 {
-			return node{}, "", fmt.Errorf("code Automerge block cannot contain child blocks")
 		}
 
+		return append([]node{rendered}, children...), ""
+	case blockTypeCode:
 		attrs := map[string]any{"language": nil}
 		if language, ok := source.Attrs["language"].(string); ok {
 			attrs["language"] = language
 		}
 
-		return node{Type: blockNodeNames[blockTypeCode], Attrs: attrs, Content: source.Content}, "", nil
-	case blockTypeHorizontalRule:
-		if len(source.Content) > 0 || len(children) > 0 {
-			return node{}, "", fmt.Errorf("horizontal rule Automerge block cannot contain content")
+		rendered := node{
+			Type:    blockNodeNames[blockTypeCode],
+			Attrs:   attrs,
+			Content: source.Content,
 		}
 
-		return node{Type: blockNodeNames[blockTypeHorizontalRule]}, "", nil
+		return append([]node{rendered}, children...), ""
+	case blockTypeHorizontalRule:
+		rendered := []node{{Type: blockNodeNames[blockTypeHorizontalRule]}}
+		if len(source.Content) > 0 {
+			rendered = append(
+				rendered,
+				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
+			)
+		}
+
+		return append(rendered, children...), ""
 	case blockTypeBlockquote:
 		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 
-		return node{
+		return []node{{
 			Type:    blockNodeNames[blockTypeBlockquote],
 			Content: append([]node{paragraph}, children...),
-		}, "", nil
+		}}, ""
 	case blockTypeOrderedListItem:
 		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 
-		return node{
+		return []node{{
 			Type:    blockNodeNames[blockTypeOrderedListItem],
 			Content: append([]node{paragraph}, children...),
-		}, "orderedList", nil
+		}}, "orderedList"
 	case blockTypeUnorderedListItem:
 		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 
-		return node{
+		return []node{{
 			Type:    blockNodeNames[blockTypeUnorderedListItem],
 			Content: append([]node{paragraph}, children...),
-		}, "bulletList", nil
+		}}, "bulletList"
 	case blockTypeTable:
-		if len(source.Content) > 0 {
-			return node{}, "", fmt.Errorf("table Automerge block cannot contain inline content")
+		rows, spills := partitionNodes(children, blockNodeNames[blockTypeTableRow])
+		rendered := make([]node, 0, 2+len(spills))
+
+		if len(rows) > 0 {
+			rendered = append(
+				rendered,
+				node{Type: blockNodeNames[blockTypeTable], Content: rows},
+			)
 		}
 
-		return node{Type: blockNodeNames[blockTypeTable], Content: children}, "", nil
+		if len(source.Content) > 0 {
+			rendered = append(
+				rendered,
+				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
+			)
+		}
+
+		return append(rendered, spills...), ""
 	case blockTypeTableRow:
-		if len(source.Content) > 0 {
-			return node{}, "", fmt.Errorf("table row Automerge block cannot contain inline content")
+		cells, spills := partitionNodes(
+			children,
+			blockNodeNames[blockTypeTableCell],
+			blockNodeNames[blockTypeTableHeader],
+		)
+		rendered := make([]node, 0, 2+len(spills))
+
+		if len(cells) > 0 {
+			rendered = append(
+				rendered,
+				node{Type: blockNodeNames[blockTypeTableRow], Content: cells},
+			)
 		}
 
-		return node{Type: blockNodeNames[blockTypeTableRow], Content: children}, "", nil
+		if len(source.Content) > 0 {
+			rendered = append(
+				rendered,
+				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
+			)
+		}
+
+		return append(rendered, spills...), ""
 	case blockTypeTableCell, blockTypeTableHeader:
 		content := children
 		if len(source.Content) > 0 || len(children) == 0 {
@@ -384,14 +460,37 @@ func renderBlock(source block, children []node) (node, string, error) {
 			nodeType = blockNodeNames[blockTypeTableHeader]
 		}
 
-		return node{
+		return []node{{
 			Type:    nodeType,
 			Attrs:   attrs,
 			Content: content,
-		}, "", nil
+		}}, ""
 	default:
-		return node{}, "", errUnknownBlock
+		rendered := make([]node, 0, 1+len(children))
+		if len(source.Content) > 0 {
+			rendered = append(
+				rendered,
+				node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content},
+			)
+		}
+
+		return append(rendered, children...), ""
 	}
+}
+
+func partitionNodes(values []node, allowed ...string) ([]node, []node) {
+	matches := make([]node, 0, len(values))
+	spills := make([]node, 0)
+
+	for _, value := range values {
+		if slices.Contains(allowed, value.Type) {
+			matches = append(matches, value)
+		} else {
+			spills = append(spills, value)
+		}
+	}
+
+	return matches, spills
 }
 
 func renderMarks(values map[string]any) ([]mark, error) {
@@ -445,25 +544,21 @@ func renderMarks(values map[string]any) ([]mark, error) {
 	return marks, nil
 }
 
-func stringSlice(value any) ([]string, error) {
-	if value == nil {
-		return nil, nil
-	}
-
+func tolerantStringSlice(value any) []string {
 	values, ok := value.([]any)
 	if !ok {
-		return nil, fmt.Errorf("expected an array")
+		return nil
 	}
 
-	result := make([]string, len(values))
-	for i, value := range values {
-		result[i], ok = value.(string)
-		if !ok {
-			return nil, fmt.Errorf("value %d is not a string", i)
+	result := make([]string, 0, len(values))
+
+	for _, value := range values {
+		if item, ok := value.(string); ok && item != "" {
+			result = append(result, item)
 		}
 	}
 
-	return result, nil
+	return result
 }
 
 func intAttribute(attrs map[string]any, name string, fallback int) int {

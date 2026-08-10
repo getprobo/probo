@@ -68,6 +68,8 @@ func FuzzRender(f *testing.F) {
 			t.Skip()
 		}
 
-		_, _ = automergeprosemirror.Render(spans)
+		if _, err := automergeprosemirror.Render(spans); err != nil {
+			t.Fatalf("Render returned an error for JSON-decoded spans: %v", err)
+		}
 	})
 }
