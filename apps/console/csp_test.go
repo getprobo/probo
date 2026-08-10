@@ -56,9 +56,11 @@ func TestContentSecurityPolicy_SubstitutesOrigins(t *testing.T) {
 		policy,
 		"connect-src 'self' https://app.example.com https://probod.s3.eu-west-1.amazonaws.com",
 	)
-	for _, part := range strings.Fields(policy) {
+
+	for part := range strings.FieldsSeq(policy) {
 		assert.NotEqual(t, "https:", strings.TrimSuffix(part, ";"))
 	}
+
 	assert.NotContains(t, policy, "\n")
 	assert.NotContains(t, policy, "\r")
 	assert.False(t, strings.HasPrefix(policy, " "))
