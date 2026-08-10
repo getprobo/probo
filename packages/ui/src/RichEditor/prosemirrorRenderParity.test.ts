@@ -22,6 +22,7 @@ import { Buffer } from "node:buffer";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { gzipSync, gunzipSync } from "node:zlib";
 
 import * as Automerge from "@automerge/automerge";
 import {
@@ -45,6 +46,7 @@ import {
   markAutomergeStructuralBlocks,
   type RichEditorAutomergeDocument,
 } from "./collaboration";
+import { generatedPropertyCorpus } from "./prosemirrorPropertyCorpus";
 import { richEditorCollaborationExtensions } from "./RichEditor";
 
 // The Go renderer in pkg/automerge/prosemirror is a second implementation of the
@@ -71,7 +73,7 @@ type FixtureEntry = {
 
 const fixturePath = fileURLToPath(
   new URL(
-    "../../../../pkg/automerge/prosemirror/testdata/upstream-render.json",
+    "../../../../pkg/automerge/prosemirror/testdata/upstream-render.json.gz",
     import.meta.url,
   ),
 );
@@ -92,7 +94,7 @@ function tableHeader(text: string): unknown {
   };
 }
 
-const corpus: CorpusEntry[] = [
+const curatedCorpus: CorpusEntry[] = [
   {
     name: "empty-document",
     doc: { type: "doc", content: [{ type: "paragraph" }] },
@@ -358,6 +360,11 @@ const corpus: CorpusEntry[] = [
       ],
     },
   },
+];
+
+const corpus: CorpusEntry[] = [
+  ...curatedCorpus,
+  ...generatedPropertyCorpus(),
 ];
 
 // runEditor drives an Automerge document through the real collaboration sync
@@ -638,12 +645,14 @@ describe("ProseMirror render parity fixture", () => {
     const entries = build();
 
     if (process.env.GEN_PROSEMIRROR_PARITY) {
-      writeFileSync(fixturePath, JSON.stringify(entries, null, 2) + "\n");
+      writeFileSync(fixturePath, gzipSync(JSON.stringify(entries)));
       return;
     }
 
     expect(existsSync(fixturePath)).toBe(true);
-    const committed = JSON.parse(readFileSync(fixturePath, "utf8")) as FixtureEntry[];
+    const committed = JSON.parse(
+      gunzipSync(readFileSync(fixturePath)).toString("utf8"),
+    ) as FixtureEntry[];
 
     expect(entries.map(entry => entry.name)).toEqual(
       committed.map(entry => entry.name),

@@ -409,6 +409,46 @@ func TestRender_CodeBlockLanguage(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestRender_BlockquoteWithExplicitParagraph(t *testing.T) {
+	t.Parallel()
+
+	content, err := automergeprosemirror.Render(
+		[]automerge.Span{
+			{
+				Type: automerge.SpanTypeBlock,
+				Block: map[string]any{
+					"type":    "blockquote",
+					"parents": []any{},
+				},
+			},
+			{
+				Type: automerge.SpanTypeBlock,
+				Block: map[string]any{
+					"type":    "paragraph",
+					"parents": []any{"blockquote"},
+				},
+			},
+			{Type: automerge.SpanTypeText, Text: "Only child"},
+		},
+	)
+
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{
+			"type": "doc",
+			"content": [{
+				"type": "blockquote",
+				"content": [{
+					"type": "paragraph",
+					"content": [{"type": "text", "text": "Only child"}]
+				}]
+			}]
+		}`,
+		content,
+	)
+}
+
 func tableBlock(
 	blockType string,
 	parents []any,

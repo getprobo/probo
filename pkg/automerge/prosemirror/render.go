@@ -434,11 +434,15 @@ func renderBlock(source block, children []node) ([]node, string) {
 
 		return append(rendered, children...), ""
 	case blockTypeBlockquote:
-		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
+		content := children
+		if len(source.Content) > 0 || len(children) == 0 {
+			paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
+			content = append([]node{paragraph}, children...)
+		}
 
 		return []node{{
 			Type:    blockNodeNames[blockTypeBlockquote],
-			Content: append([]node{paragraph}, children...),
+			Content: content,
 		}}, ""
 	case blockTypeOrderedListItem:
 		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}

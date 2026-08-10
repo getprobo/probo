@@ -21,6 +21,7 @@
 package prosemirror_test
 
 import (
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -43,8 +44,13 @@ import (
 func TestBridge_MatchesUpstreamInBothDirections(t *testing.T) {
 	t.Parallel()
 
-	raw, err := os.ReadFile("testdata/upstream-render.json")
+	file, err := os.Open("testdata/upstream-render.json.gz")
 	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, file.Close()) })
+
+	reader, err := gzip.NewReader(file)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, reader.Close()) })
 
 	var fixtures []struct {
 		Name     string          `json:"name"`
@@ -52,7 +58,7 @@ func TestBridge_MatchesUpstreamInBothDirections(t *testing.T) {
 		Expected json.RawMessage `json:"expected"`
 		Spans    json.RawMessage `json:"spans"`
 	}
-	require.NoError(t, json.Unmarshal(raw, &fixtures))
+	require.NoError(t, json.NewDecoder(reader).Decode(&fixtures))
 	require.NotEmpty(t, fixtures)
 
 	for _, fixture := range fixtures {
