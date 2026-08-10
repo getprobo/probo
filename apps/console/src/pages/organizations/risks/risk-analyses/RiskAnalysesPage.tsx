@@ -86,6 +86,10 @@ const riskAnalysesFragment = graphql`
           id
           name
           description
+          period {
+            start
+            end
+          }
           createdAt
         }
       }
@@ -148,6 +152,7 @@ export default function RiskAnalysesPage({ queryRef }: RiskAnalysesPageProps) {
           <Tr>
             <SortableTh field="NAME">{t("riskAnalysesPage.columns.name")}</SortableTh>
             <Th>{t("riskAnalysesPage.columns.description")}</Th>
+            <Th>{t("riskAnalysesPage.columns.period")}</Th>
             <SortableTh field="CREATED_AT">{t("riskAnalysesPage.columns.created")}</SortableTh>
           </Tr>
         </Thead>
@@ -160,6 +165,11 @@ export default function RiskAnalysesPage({ queryRef }: RiskAnalysesPageProps) {
               <Td className="font-medium">{ra.name}</Td>
               <Td className="text-txt-secondary truncate max-w-xs">
                 {ra.description || "—"}
+              </Td>
+              <Td className="text-txt-secondary">
+                {ra.period
+                  ? `${ra.period.start ? dateFormat(i18n.language, ra.period.start) : "—"} – ${ra.period.end ? dateFormat(i18n.language, ra.period.end) : "—"}`
+                  : "—"}
               </Td>
               <Td className="text-txt-secondary">
                 {dateFormat(i18n.language, ra.createdAt)}

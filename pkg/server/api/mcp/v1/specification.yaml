@@ -638,6 +638,22 @@ components:
       format: string
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/page.CursorKey
 
+    Period:
+      type: object
+      properties:
+        start:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Start of the period
+        end:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: End of the period
+
     ListOrganizationsInput:
       type: object
       properties:
@@ -13183,6 +13199,9 @@ components:
           type:
             - string
             - "null"
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period
         created_at:
           type: string
           format: date-time
@@ -13428,6 +13447,9 @@ components:
         description:
           type: string
           description: Risk analysis description
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period
 
     AddRiskAnalysisOutput:
       type: object
@@ -13452,6 +13474,9 @@ components:
           type: ["string", "null"]
           description: Risk analysis description
           go.probo.inc/mcpgen/omittable: true
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period
 
     UpdateRiskAnalysisOutput:
       type: object

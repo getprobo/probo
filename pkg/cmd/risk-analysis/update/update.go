@@ -36,6 +36,10 @@ mutation($input: UpdateRiskAnalysisInput!) {
       id
       name
       description
+      period {
+        start
+        end
+      }
       createdAt
       updatedAt
     }
@@ -49,8 +53,12 @@ type updateResponse struct {
 			ID          string  `json:"id"`
 			Name        string  `json:"name"`
 			Description *string `json:"description"`
-			CreatedAt   string  `json:"createdAt"`
-			UpdatedAt   string  `json:"updatedAt"`
+			Period      *struct {
+				Start *string `json:"start"`
+				End   *string `json:"end"`
+			} `json:"period"`
+			CreatedAt string `json:"createdAt"`
+			UpdatedAt string `json:"updatedAt"`
 		} `json:"riskAnalysis"`
 	} `json:"updateRiskAnalysis"`
 }
@@ -59,6 +67,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagName        string
 		flagDescription string
+		flagPeriodStart string
+		flagPeriodEnd   string
 	)
 
 	cmd := &cobra.Command{
@@ -96,6 +106,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["description"] = flagDescription
 			}
 
+			if cmd.Flags().Changed("period-start") || cmd.Flags().Changed("period-end") {
+				period := map[string]any{}
+				if cmd.Flags().Changed("period-start") {
+					period["start"] = flagPeriodStart
+				}
+
+				if cmd.Flags().Changed("period-end") {
+					period["end"] = flagPeriodEnd
+				}
+
+				input["period"] = period
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -127,6 +150,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Risk analysis name")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description")
+	cmd.Flags().StringVar(&flagPeriodStart, "period-start", "", "Period start date (e.g. 2026-01-01)")
+	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
 
 	return cmd
 }

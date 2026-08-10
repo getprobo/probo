@@ -47,6 +47,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateDiagramDialog } from "./_components/CreateDiagramDialog";
 import { DiagramCard } from "./_components/DiagramCard";
+import { UpdateRiskAnalysisDialog } from "./_components/UpdateRiskAnalysisDialog";
 
 export const riskAnalysisDetailPageQuery = graphql`
   query RiskAnalysisDetailPageQuery($riskAnalysisId: ID!) {
@@ -55,8 +56,13 @@ export const riskAnalysisDetailPageQuery = graphql`
         id
         name
         description
+        period {
+          start
+          end
+        }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:risk-analysis:update")
         canDelete: permission(action: "core:risk-analysis:delete")
         diagrams(first: 50)
           @connection(key: "RiskAnalysisDetailPage_diagrams", filters: []) {
@@ -114,6 +120,9 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
     RiskAnalysesConnectionKey,
   );
   const listUrl = `/organizations/${organizationId}/risk-analyses`;
+  const periodLabel = ra.period
+    ? `${ra.period.start ? dateFormat(i18n.language, ra.period.start) : "—"} – ${ra.period.end ? dateFormat(i18n.language, ra.period.end) : "—"}`
+    : "—";
 
   const handleDelete = () => {
     confirm(
@@ -163,17 +172,32 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
       <PageHeader
         title={ra.name}
       >
-        {ra.canDelete && (
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={handleDelete}
-            >
-              {t("riskAnalysisDetailPage.actions.delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        )}
+        {ra.canUpdate
+          ? (
+              <UpdateRiskAnalysisDialog
+                riskAnalysis={{
+                  id: raId,
+                  name: ra.name ?? "",
+                  description: ra.description,
+                  period: ra.period,
+                }}
+                canDelete={ra.canDelete}
+                onDelete={handleDelete}
+              />
+            )
+          : ra.canDelete
+            ? (
+                <ActionDropdown variant="secondary">
+                  <DropdownItem
+                    variant="danger"
+                    icon={IconTrashCan}
+                    onClick={handleDelete}
+                  >
+                    {t("riskAnalysisDetailPage.actions.delete")}
+                  </DropdownItem>
+                </ActionDropdown>
+              )
+            : null}
       </PageHeader>
 
       <div className="space-y-4">
@@ -183,6 +207,14 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
             <div className="text-sm text-txt-secondary">{ra.description}</div>
           )}
           <div className="grid grid-cols-3 gap-4">
+            <div>
+              <div className="text-xs text-txt-tertiary font-semibold mb-1">
+                {t("riskAnalysisDetailPage.fields.period")}
+              </div>
+              <div className="text-sm text-txt-primary">
+                {periodLabel}
+              </div>
+            </div>
             <div>
               <div className="text-xs text-txt-tertiary font-semibold mb-1">
                 {t("riskAnalysisDetailPage.fields.createdAt")}

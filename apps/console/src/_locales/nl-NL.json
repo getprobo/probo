@@ -4731,10 +4731,12 @@
     },
     "deleteConfirmation": "Hiermee worden deze risicobeoordeling en alle bijbehorende diagrammen, nodes, processen en dreigingen permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
+      "edit": "Bewerken",
       "delete": "Verwijderen"
     },
     "details": "Details",
     "fields": {
+      "period": "Periode",
       "createdAt": "Aangemaakt op",
       "updatedAt": "Bijgewerkt op"
     },
@@ -4747,6 +4749,7 @@
     "columns": {
       "name": "Naam",
       "description": "Beschrijving",
+      "period": "Periode",
       "created": "Aangemaakt"
     }
   },
@@ -4838,10 +4841,15 @@
     },
     "fields": {
       "name": "Naam",
-      "description": "Beschrijving"
+      "description": "Beschrijving",
+      "periodStart": "Periode start",
+      "periodEnd": "Periode eind"
     },
     "validation": {
-      "nameRequired": "Dit veld is verplicht"
+      "nameRequired": "Dit veld is verplicht",
+      "periodStartRequired": "Dit veld is verplicht",
+      "periodEndRequired": "Dit veld is verplicht",
+      "periodEndBeforeStart": "Periode eind moet op of na periode start liggen"
     },
     "placeholders": {
       "name": "bijv. Platform Dreigingsmodel 2026",
@@ -4849,6 +4857,29 @@
     },
     "actions": {
       "create": "Aanmaken"
+    }
+  },
+  "updateRiskAnalysisDialog": {
+    "title": "Risicobeoordeling bewerken",
+    "breadcrumb": {
+      "riskAnalyses": "Risicobeoordelingen"
+    },
+    "fields": {
+      "name": "Naam",
+      "description": "Beschrijving",
+      "periodStart": "Periode start",
+      "periodEnd": "Periode eind"
+    },
+    "validation": {
+      "nameRequired": "Dit veld is verplicht",
+      "periodEndBeforeStart": "Periode eind moet op of na periode start liggen"
+    },
+    "placeholders": {
+      "name": "bijv. Platform Dreigingsmodel 2026",
+      "description": "Beschrijf de reikwijdte en het doel van deze beoordeling..."
+    },
+    "actions": {
+      "save": "Opslaan"
     }
   },
   "createScenarioInDiagramDialog": {

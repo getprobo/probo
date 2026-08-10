@@ -200,6 +200,7 @@ type RiskAnalysis implements Node {
     id: ID!
     name: String!
     description: String
+    period: Period
     organization: Organization @goField(forceResolver: true)
 
     diagrams(
@@ -526,12 +527,14 @@ input CreateRiskAnalysisInput {
     organizationId: ID!
     name: String!
     description: String
+    period: PeriodInput
 }
 
 input UpdateRiskAnalysisInput {
     id: ID!
     name: String
     description: String @goField(omittable: true)
+    period: PeriodInput
 }
 
 input DeleteRiskAnalysisInput {

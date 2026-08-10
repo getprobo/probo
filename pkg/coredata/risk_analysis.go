@@ -36,12 +36,14 @@ import (
 
 type (
 	RiskAnalysis struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		Name           string    `db:"name"`
-		Description    *string   `db:"description"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID             gid.GID    `db:"id"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		Name           string     `db:"name"`
+		Description    *string    `db:"description"`
+		PeriodStart    *time.Time `db:"period_start"`
+		PeriodEnd      *time.Time `db:"period_end"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
 	}
 
 	RiskAnalyses []*RiskAnalysis
@@ -130,7 +132,15 @@ func (ra *RiskAnalyses) LoadByOrganizationID(
 	cursor *page.Cursor[RiskAnalysisOrderField],
 ) error {
 	q := `
-SELECT id, organization_id, name, description, created_at, updated_at
+SELECT
+	id,
+	organization_id,
+	name,
+	description,
+	period_start,
+	period_end,
+	created_at,
+	updated_at
 FROM risk_analyses
 WHERE %s
 	AND organization_id = @organization_id
@@ -169,6 +179,8 @@ SELECT
 	organization_id,
 	name,
 	description,
+	period_start,
+	period_end,
 	created_at,
 	updated_at
 FROM risk_analyses
@@ -206,8 +218,28 @@ func (ra *RiskAnalysis) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO risk_analyses (id, tenant_id, organization_id, name, description, created_at, updated_at)
-VALUES (@id, @tenant_id, @organization_id, @name, @description, @created_at, @updated_at)
+INSERT INTO risk_analyses (
+	id,
+	tenant_id,
+	organization_id,
+	name,
+	description,
+	period_start,
+	period_end,
+	created_at,
+	updated_at
+)
+VALUES (
+	@id,
+	@tenant_id,
+	@organization_id,
+	@name,
+	@description,
+	@period_start,
+	@period_end,
+	@created_at,
+	@updated_at
+)
 `
 
 	args := pgx.StrictNamedArgs{
@@ -216,6 +248,8 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @created_at, @up
 		"organization_id": ra.OrganizationID,
 		"name":            ra.Name,
 		"description":     ra.Description,
+		"period_start":    ra.PeriodStart,
+		"period_end":      ra.PeriodEnd,
 		"created_at":      ra.CreatedAt,
 		"updated_at":      ra.UpdatedAt,
 	}
@@ -238,6 +272,8 @@ UPDATE risk_analyses
 SET
 	name = @name,
 	description = @description,
+	period_start = @period_start,
+	period_end = @period_end,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @id
@@ -245,10 +281,12 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":          ra.ID,
-		"name":        ra.Name,
-		"description": ra.Description,
-		"updated_at":  ra.UpdatedAt,
+		"id":           ra.ID,
+		"name":         ra.Name,
+		"description":  ra.Description,
+		"period_start": ra.PeriodStart,
+		"period_end":   ra.PeriodEnd,
+		"updated_at":   ra.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

@@ -18,58 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+package types
 
-export const description: INodeProperties[] = [
-	{
-		displayName: 'Risk Analysis ID',
-		name: 'riskAnalysisId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['riskAnalysis'],
-				operation: ['get'],
-			},
-		},
-		default: '',
-		description: 'The ID of the risk analysis',
-		required: true,
-	},
-];
+import "time"
 
-export async function execute(
-	this: IExecuteFunctions,
-	itemIndex: number,
-): Promise<INodeExecutionData> {
-	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex) as string;
+func NewPeriod(start, end *time.Time) *Period {
+	if start == nil && end == nil {
+		return nil
+	}
 
-	const query = `
-		query GetRiskAnalysis($id: ID!) {
-			node(id: $id) {
-				... on RiskAnalysis {
-					id
-					name
-					description
-					period {
-						start
-						end
-					}
-					createdAt
-					updatedAt
-				}
-			}
-		}
-	`;
-
-	const variables = {
-		id: riskAnalysisId,
-	};
-
-	const responseData = await proboApiRequest.call(this, query, variables);
-
-	return {
-		json: responseData,
-		pairedItem: { item: itemIndex },
-	};
+	return &Period{
+		Start: start,
+		End:   end,
+	}
 }

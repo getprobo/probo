@@ -29,6 +29,14 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 		return nil, err
 	}
 
+	var period *riskmanagement.Period
+	if input.Period != nil {
+		period = &riskmanagement.Period{
+			Start: input.Period.Start,
+			End:   input.Period.End,
+		}
+	}
+
 	ra, err := r.riskManagement.Create(
 		ctx,
 		scope,
@@ -36,6 +44,7 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
 			Description:    input.Description,
+			Period:         period,
 		},
 	)
 	if err != nil {
@@ -64,6 +73,14 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 		return nil, err
 	}
 
+	var period *riskmanagement.Period
+	if input.Period != nil {
+		period = &riskmanagement.Period{
+			Start: input.Period.Start,
+			End:   input.Period.End,
+		}
+	}
+
 	ra, err := r.riskManagement.Update(
 		ctx,
 		scope,
@@ -71,6 +88,7 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 			ID:          input.ID,
 			Name:        input.Name,
 			Description: gqlutils.UnwrapOmittable(input.Description),
+			Period:      period,
 		},
 	)
 	if err != nil {

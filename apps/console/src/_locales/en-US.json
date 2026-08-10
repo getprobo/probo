@@ -2228,16 +2228,16 @@
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk assessment" },
     "deleteConfirmation": "This will permanently delete this risk assessment and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
-    "actions": { "delete": "Delete" },
+    "actions": { "edit": "Edit", "delete": "Delete" },
     "details": "Details",
-    "fields": { "createdAt": "Created at", "updatedAt": "Updated at" },
+    "fields": { "period": "Period", "createdAt": "Created at", "updatedAt": "Updated at" },
     "diagrams": "Diagrams",
     "emptyDiagrams": "No diagrams yet. Create a diagram to start defining nodes, processes, and threats."
   },
   "riskAnalysesPage": {
     "title": "Risk Analyses",
     "description": "Manage risk analyses with diagrams, nodes, processes, threats, and scenarios.",
-    "columns": { "name": "Name", "description": "Description", "created": "Created" }
+    "columns": { "name": "Name", "description": "Description", "period": "Period", "created": "Created" }
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": { "boundaries": "Boundaries" },
@@ -2272,10 +2272,26 @@
   "createRiskAnalysisDialog": {
     "title": "New Risk Analysis",
     "breadcrumb": { "riskAnalyses": "Risk Analyses" },
-    "fields": { "name": "Name", "description": "Description" },
-    "validation": { "nameRequired": "This field is required" },
+    "fields": { "name": "Name", "description": "Description", "periodStart": "Period start", "periodEnd": "Period end" },
+    "validation": {
+      "nameRequired": "This field is required",
+      "periodStartRequired": "This field is required",
+      "periodEndRequired": "This field is required",
+      "periodEndBeforeStart": "Period end must be on or after period start"
+    },
     "placeholders": { "name": "e.g. Platform Threat Model 2026", "description": "Describe the scope and purpose of this assessment..." },
     "actions": { "create": "Create" }
+  },
+  "updateRiskAnalysisDialog": {
+    "title": "Edit Risk Analysis",
+    "breadcrumb": { "riskAnalyses": "Risk Analyses" },
+    "fields": { "name": "Name", "description": "Description", "periodStart": "Period start", "periodEnd": "Period end" },
+    "validation": {
+      "nameRequired": "This field is required",
+      "periodEndBeforeStart": "Period end must be on or after period start"
+    },
+    "placeholders": { "name": "e.g. Platform Threat Model 2026", "description": "Describe the scope and purpose of this assessment..." },
+    "actions": { "save": "Save" }
   },
   "createScenarioInDiagramDialog": {
     "breadcrumb": { "scenarios": "Scenarios", "addScenario": "Add Scenario" },

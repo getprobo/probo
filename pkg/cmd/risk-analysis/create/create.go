@@ -38,6 +38,10 @@ mutation($input: CreateRiskAnalysisInput!) {
         id
         name
         description
+        period {
+          start
+          end
+        }
         createdAt
         updatedAt
       }
@@ -53,8 +57,12 @@ type createResponse struct {
 				ID          string  `json:"id"`
 				Name        string  `json:"name"`
 				Description *string `json:"description"`
-				CreatedAt   string  `json:"createdAt"`
-				UpdatedAt   string  `json:"updatedAt"`
+				Period      *struct {
+					Start *string `json:"start"`
+					End   *string `json:"end"`
+				} `json:"period"`
+				CreatedAt string `json:"createdAt"`
+				UpdatedAt string `json:"updatedAt"`
 			} `json:"node"`
 		} `json:"riskAnalysisEdge"`
 	} `json:"createRiskAnalysis"`
@@ -65,6 +73,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagOrg         string
 		flagName        string
 		flagDescription string
+		flagPeriodStart string
+		flagPeriodEnd   string
 	)
 
 	cmd := &cobra.Command{
@@ -74,7 +84,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb risk-analysis create
 
   # Create a risk analysis non-interactively
-  prb risk-analysis create --name "Annual Risk Analysis" --description "2026 annual review"`,
+  prb risk-analysis create --name "Annual Risk Analysis" --period-start 2026-01-01 --period-end 2026-12-31`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -127,6 +137,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["description"] = flagDescription
 			}
 
+			if flagPeriodStart != "" || flagPeriodEnd != "" {
+				period := map[string]any{}
+				if flagPeriodStart != "" {
+					period["start"] = flagPeriodStart
+				}
+
+				if flagPeriodEnd != "" {
+					period["end"] = flagPeriodEnd
+				}
+
+				input["period"] = period
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -155,6 +178,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Risk analysis name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description")
+	cmd.Flags().StringVar(&flagPeriodStart, "period-start", "", "Period start date (e.g. 2026-01-01)")
+	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
 
 	return cmd
 }

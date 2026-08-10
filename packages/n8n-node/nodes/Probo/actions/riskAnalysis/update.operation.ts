@@ -63,6 +63,20 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The name of the risk analysis',
 			},
+			{
+				displayName: 'Period Start',
+				name: 'periodStart',
+				type: 'dateTime',
+				default: '',
+				description: 'Start of the analysis period',
+			},
+			{
+				displayName: 'Period End',
+				name: 'periodEnd',
+				type: 'dateTime',
+				default: '',
+				description: 'End of the analysis period',
+			},
 		],
 	},
 ];
@@ -75,6 +89,8 @@ export async function execute(
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
 		description?: string;
+		periodStart?: string;
+		periodEnd?: string;
 	};
 
 	const query = `
@@ -84,6 +100,10 @@ export async function execute(
 					id
 					name
 					description
+					period {
+						start
+						end
+					}
 					createdAt
 					updatedAt
 				}
@@ -94,6 +114,12 @@ export async function execute(
 	const input: Record<string, unknown> = { id: riskAnalysisId };
 	if (additionalFields.name) input.name = additionalFields.name;
 	if (additionalFields.description !== undefined) input.description = additionalFields.description === '' ? null : additionalFields.description;
+	if (additionalFields.periodStart || additionalFields.periodEnd) {
+		input.period = {
+			...(additionalFields.periodStart ? { start: additionalFields.periodStart } : {}),
+			...(additionalFields.periodEnd ? { end: additionalFields.periodEnd } : {}),
+		};
+	}
 
 	if (Object.keys(input).length === 1) {
 		throw new Error('At least one field must be provided to update');

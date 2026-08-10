@@ -4735,10 +4735,12 @@
     },
     "deleteConfirmation": "Cette action supprimera définitivement cette analyse des risques ainsi que tous ses diagrammes, nœuds, processus et menaces. Cette action est irréversible.",
     "actions": {
+      "edit": "Modifier",
       "delete": "Supprimer"
     },
     "details": "Détails",
     "fields": {
+      "period": "Période",
       "createdAt": "Créé le",
       "updatedAt": "Mis à jour le"
     },
@@ -4751,6 +4753,7 @@
     "columns": {
       "name": "Nom",
       "description": "Description",
+      "period": "Période",
       "created": "Créé le"
     }
   },
@@ -4842,10 +4845,15 @@
     },
     "fields": {
       "name": "Nom",
-      "description": "Description"
+      "description": "Description",
+      "periodStart": "Début de période",
+      "periodEnd": "Fin de période"
     },
     "validation": {
-      "nameRequired": "Ce champ est requis"
+      "nameRequired": "Ce champ est requis",
+      "periodStartRequired": "Ce champ est requis",
+      "periodEndRequired": "Ce champ est requis",
+      "periodEndBeforeStart": "La fin de période doit être égale ou postérieure au début"
     },
     "placeholders": {
       "name": "ex. Modèle de menace de la plateforme 2026",
@@ -4853,6 +4861,29 @@
     },
     "actions": {
       "create": "Créer"
+    }
+  },
+  "updateRiskAnalysisDialog": {
+    "title": "Modifier l’analyse des risques",
+    "breadcrumb": {
+      "riskAnalyses": "Analyses des risques"
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "periodStart": "Début de période",
+      "periodEnd": "Fin de période"
+    },
+    "validation": {
+      "nameRequired": "Ce champ est requis",
+      "periodEndBeforeStart": "La fin de période doit être égale ou postérieure au début"
+    },
+    "placeholders": {
+      "name": "ex. Modèle de menace de la plateforme 2026",
+      "description": "Décrivez la portée et l’objectif de cette analyse..."
+    },
+    "actions": {
+      "save": "Enregistrer"
     }
   },
   "createScenarioInDiagramDialog": {
