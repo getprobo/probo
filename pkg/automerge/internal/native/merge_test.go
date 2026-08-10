@@ -33,7 +33,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	base, err := NewBackend(ctx)
+	base, err := NewEngine(ctx)
 	require.NoError(t, err)
 	require.NoError(t, base.SetActor(ctx, []byte{1}))
 	text, err := base.PutText(ctx, 0, "body")
@@ -44,7 +44,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	baseData, err := base.Save(ctx)
 	require.NoError(t, err)
 
-	source, err := LoadBackend(ctx, baseData)
+	source, err := LoadEngine(ctx, baseData)
 	require.NoError(t, err)
 	require.NoError(t, source.SetActor(ctx, []byte{2}))
 	sourceText, err := source.GetText(ctx, 0, "body")
@@ -61,7 +61,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 
 	child := append([]byte(nil), source.appended[len(source.appended)-1]...)
 
-	target, err := LoadBackend(ctx, baseData)
+	target, err := LoadEngine(ctx, baseData)
 	require.NoError(t, err)
 	_, err = target.Merge(ctx, append(child, parent...))
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "ABC", value)
 
-	separate, err := LoadBackend(ctx, baseData)
+	separate, err := LoadEngine(ctx, baseData)
 	require.NoError(t, err)
 	_, err = separate.Merge(ctx, child)
 	require.NoError(t, err)

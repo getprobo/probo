@@ -34,7 +34,7 @@ import (
 // current heads plus, matching upstream Rust, the actor's own previous change
 // hash when it is not already a head (so that direct causal succession from the
 // author's prior change is always recorded explicitly).
-func (b *Backend) changeDependencies(sequence uint64) []ChangeHash {
+func (b *Engine) changeDependencies(sequence uint64) []ChangeHash {
 	dependencies := b.state.Heads()
 
 	if sequence > 1 {
@@ -58,7 +58,7 @@ func containsHash(hashes []ChangeHash, target ChangeHash) bool {
 // frontier plus isolated writes, and new changes branch from it using a derived
 // isolation actor so they never collide with the base actor's later history. It
 // mirrors Rust's AutoCommit::isolate. Repeated calls re-pin to fresh heads.
-func (b *Backend) Isolate(ctx context.Context, heads [][32]byte) error {
+func (b *Engine) Isolate(ctx context.Context, heads [][32]byte) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func nativeToArrayHeads(heads []ChangeHash) [][32]byte {
 
 // Integrate ends isolation, returning reads and writes to the full history that
 // accumulated every isolated and merged change. It mirrors AutoCommit::integrate.
-func (b *Backend) Integrate(ctx context.Context) error {
+func (b *Engine) Integrate(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func isolationActor(full, pinned *State, base ActorID) ActorID {
 	}
 }
 
-func (b *Backend) Commit(
+func (b *Engine) Commit(
 	ctx context.Context,
 	message string,
 	timestamp time.Time,
@@ -219,7 +219,7 @@ func (b *Backend) Commit(
 	return [32]byte(*change.Hash), nil
 }
 
-func (b *Backend) EmptyCommit(
+func (b *Engine) EmptyCommit(
 	ctx context.Context,
 	message string,
 	timestamp time.Time,
@@ -261,7 +261,7 @@ func (b *Backend) EmptyCommit(
 	return [32]byte(*change.Hash), nil
 }
 
-func (b *Backend) Rollback(ctx context.Context) (uint64, error) {
+func (b *Engine) Rollback(ctx context.Context) (uint64, error) {
 	if err := ctx.Err(); err != nil {
 		return 0, err
 	}

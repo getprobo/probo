@@ -29,7 +29,7 @@ import (
 	"strings"
 )
 
-func (b *Backend) PutText(
+func (b *Engine) PutText(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -57,7 +57,7 @@ func (b *Backend) PutText(
 	return b.pushObject(ObjectID{OpID: operation.ID}), nil
 }
 
-func (b *Backend) GetText(
+func (b *Engine) GetText(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -74,7 +74,7 @@ func (b *Backend) GetText(
 	return b.pushObject(ObjectID{OpID: operation.ID}), nil
 }
 
-func (b *Backend) SpliceText(
+func (b *Engine) SpliceText(
 	ctx context.Context,
 	handle uint32,
 	index uint32,
@@ -180,7 +180,7 @@ type (
 // reconciled with a minimal grapheme diff and the marks are then set to exactly
 // the marks named on the spans, honoring the per-mark and default expand config.
 // Block spans are not yet supported.
-func (b *Backend) UpdateSpans(
+func (b *Engine) UpdateSpans(
 	ctx context.Context,
 	handle uint32,
 	spans []byte,
@@ -213,11 +213,11 @@ func (b *Backend) UpdateSpans(
 	current := b.currentBlockGraphemes(object)
 
 	hook := &blockDiffHook{
-		ctx:     ctx,
-		backend: b,
-		handle:  handle,
-		old:     current,
-		new:     target,
+		ctx:    ctx,
+		engine: b,
+		handle: handle,
+		old:    current,
+		new:    target,
 	}
 	myersDiff(hook, blockTokens(current), blockTokens(target))
 
@@ -271,7 +271,7 @@ func blockTokens(items []blockOrGrapheme) []string {
 // currentBlockGraphemes materializes the text object as the block/grapheme units
 // the diff operates on: block markers become blocks and text runs are split into
 // grapheme clusters.
-func (b *Backend) currentBlockGraphemes(object ObjectID) []blockOrGrapheme {
+func (b *Engine) currentBlockGraphemes(object ObjectID) []blockOrGrapheme {
 	items := make([]blockOrGrapheme, 0)
 
 	var run strings.Builder
@@ -344,13 +344,13 @@ func targetBlockGraphemes(spans []updateSpanInput) ([]blockOrGrapheme, error) {
 // blockDiffHook applies the block-aware Myers edit script, splicing text and
 // splitting, joining, or rewriting block markers as required.
 type blockDiffHook struct {
-	ctx     context.Context
-	backend *Backend
-	handle  uint32
-	old     []blockOrGrapheme
-	new     []blockOrGrapheme
-	idx     int
-	err     error
+	ctx    context.Context
+	engine *Engine
+	handle uint32
+	old    []blockOrGrapheme
+	new    []blockOrGrapheme
+	idx    int
+	err    error
 }
 
 func (h *blockDiffHook) failed() bool {
@@ -367,12 +367,12 @@ func (h *blockDiffHook) delete(oldIndex, oldLen, _ int) {
 	for i := 0; i < oldLen && h.err == nil; i++ {
 		item := h.old[oldIndex+i]
 		if item.isBlock {
-			h.err = h.backend.JoinBlock(h.ctx, h.handle, uint32(h.idx))
+			h.err = h.engine.JoinBlock(h.ctx, h.handle, uint32(h.idx))
 
 			continue
 		}
 
-		h.err = h.backend.SpliceText(h.ctx, h.handle, uint32(h.idx), int32(item.width()), "")
+		h.err = h.engine.SpliceText(h.ctx, h.handle, uint32(h.idx), int32(item.width()), "")
 	}
 }
 
@@ -385,7 +385,7 @@ func (h *blockDiffHook) insert(_ int, newIndex, newLen int) {
 		}
 
 		chars := run.String()
-		if err := h.backend.SpliceText(h.ctx, h.handle, uint32(h.idx), 0, chars); err != nil {
+		if err := h.engine.SpliceText(h.ctx, h.handle, uint32(h.idx), 0, chars); err != nil {
 			h.err = err
 
 			return
@@ -410,14 +410,14 @@ func (h *blockDiffHook) insert(_ int, newIndex, newLen int) {
 			return
 		}
 
-		blockHandle, err := h.backend.SplitBlock(h.ctx, h.handle, uint32(h.idx))
+		blockHandle, err := h.engine.SplitBlock(h.ctx, h.handle, uint32(h.idx))
 		if err != nil {
 			h.err = err
 
 			return
 		}
 
-		if err := h.backend.setBlockAttributes(h.ctx, blockHandle, item.block); err != nil {
+		if err := h.engine.setBlockAttributes(h.ctx, blockHandle, item.block); err != nil {
 			h.err = err
 
 			return
@@ -473,7 +473,7 @@ func desiredMarks(spans []updateSpanInput) ([]desiredMark, error) {
 
 // reconcileMarks removes marks that are not desired and adds the ones that are
 // missing, matching the two-phase reconciliation upstream performs.
-func (b *Backend) reconcileMarks(
+func (b *Engine) reconcileMarks(
 	ctx context.Context,
 	handle uint32,
 	object ObjectID,
@@ -549,7 +549,7 @@ func (b *Backend) reconcileMarks(
 
 // setBlockAttributes writes the attribute map onto a freshly created block
 // object, recursing into nested maps and lists.
-func (b *Backend) setBlockAttributes(
+func (b *Engine) setBlockAttributes(
 	ctx context.Context,
 	handle uint32,
 	attributes map[string]any,
@@ -570,7 +570,7 @@ func (b *Backend) setBlockAttributes(
 	return nil
 }
 
-func (b *Backend) setMapValue(
+func (b *Engine) setMapValue(
 	ctx context.Context,
 	handle uint32,
 	key string,
@@ -612,7 +612,7 @@ func (b *Backend) setMapValue(
 	}
 }
 
-func (b *Backend) insertListValue(
+func (b *Engine) insertListValue(
 	ctx context.Context,
 	handle uint32,
 	index uint64,
@@ -679,7 +679,7 @@ func hydrateScalar(value any) (Scalar, error) {
 	}
 }
 
-func (b *Backend) markRange(
+func (b *Engine) markRange(
 	ctx context.Context,
 	handle uint32,
 	start uint32,
@@ -708,7 +708,7 @@ func (c updateSpansConfigInput) expandFor(name string) string {
 	return "after"
 }
 
-func (b *Backend) MarkText(
+func (b *Engine) MarkText(
 	ctx context.Context,
 	handle uint32,
 	start uint32,
@@ -785,7 +785,7 @@ func (b *Backend) MarkText(
 	return b.addPending(endOperation)
 }
 
-func (b *Backend) SplitBlock(
+func (b *Engine) SplitBlock(
 	ctx context.Context,
 	handle uint32,
 	index uint32,
@@ -825,7 +825,7 @@ func (b *Backend) SplitBlock(
 	return b.pushObject(ObjectID{OpID: operation.ID}), nil
 }
 
-func (b *Backend) JoinBlock(
+func (b *Engine) JoinBlock(
 	ctx context.Context,
 	handle uint32,
 	index uint32,
@@ -859,7 +859,7 @@ func (b *Backend) JoinBlock(
 	})
 }
 
-func (b *Backend) ReplaceBlock(
+func (b *Engine) ReplaceBlock(
 	ctx context.Context,
 	handle uint32,
 	index uint32,
@@ -871,7 +871,7 @@ func (b *Backend) ReplaceBlock(
 	return b.SplitBlock(ctx, handle, index)
 }
 
-func (b *Backend) Text(ctx context.Context, handle uint32) (string, error) {
+func (b *Engine) Text(ctx context.Context, handle uint32) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
@@ -895,7 +895,7 @@ func (b *Backend) Text(ctx context.Context, handle uint32) (string, error) {
 	return output.String(), nil
 }
 
-func (b *Backend) TextAt(
+func (b *Engine) TextAt(
 	ctx context.Context,
 	handle uint32,
 	heads [][32]byte,
@@ -925,7 +925,7 @@ func (b *Backend) TextAt(
 	return output.String(), nil
 }
 
-func (b *Backend) TextSpans(
+func (b *Engine) TextSpans(
 	ctx context.Context,
 	handle uint32,
 ) ([]byte, error) {
@@ -951,7 +951,7 @@ func (b *Backend) TextSpans(
 	return data, nil
 }
 
-func (b *Backend) TextSpansAt(
+func (b *Engine) TextSpansAt(
 	ctx context.Context,
 	handle uint32,
 	heads [][32]byte,
@@ -1020,7 +1020,7 @@ func encodeMarks(marks []MarkRange) ([]byte, error) {
 	return data, nil
 }
 
-func (b *Backend) Marks(ctx context.Context, handle uint32) ([]byte, error) {
+func (b *Engine) Marks(ctx context.Context, handle uint32) ([]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -1033,7 +1033,7 @@ func (b *Backend) Marks(ctx context.Context, handle uint32) ([]byte, error) {
 	return encodeMarks(b.state.Marks(object.OpID))
 }
 
-func (b *Backend) MarksAt(
+func (b *Engine) MarksAt(
 	ctx context.Context,
 	handle uint32,
 	heads [][32]byte,
@@ -1055,7 +1055,7 @@ func (b *Backend) MarksAt(
 	return encodeMarks(historical.Marks(object.OpID))
 }
 
-func (b *Backend) TextCursor(
+func (b *Engine) TextCursor(
 	ctx context.Context,
 	handle uint32,
 	index uint32,
@@ -1063,7 +1063,7 @@ func (b *Backend) TextCursor(
 	return b.TextCursorMoving(ctx, handle, index, false)
 }
 
-func (b *Backend) TextCursorMoving(
+func (b *Engine) TextCursorMoving(
 	ctx context.Context,
 	handle uint32,
 	index uint32,
@@ -1104,7 +1104,7 @@ func (b *Backend) TextCursorMoving(
 	return nil, fmt.Errorf("text cursor index %d is out of bounds", index)
 }
 
-func (b *Backend) TextCursorMovingAt(
+func (b *Engine) TextCursorMovingAt(
 	ctx context.Context,
 	handle uint32,
 	index uint32,
@@ -1149,7 +1149,7 @@ func (b *Backend) TextCursorMovingAt(
 	return nil, fmt.Errorf("text cursor index %d is out of bounds", index)
 }
 
-func (b *Backend) TextCursorPosition(
+func (b *Engine) TextCursorPosition(
 	ctx context.Context,
 	handle uint32,
 	cursor []byte,
@@ -1200,7 +1200,7 @@ func (b *Backend) TextCursorPosition(
 	return 0, fmt.Errorf("text cursor target does not exist")
 }
 
-func (b *Backend) cursorMoveBeforePosition(
+func (b *Engine) cursorMoveBeforePosition(
 	object OpID,
 	target Operation,
 ) (uint32, error) {

@@ -81,7 +81,7 @@ func (t *Text) Mark(
 		return fmt.Errorf("cannot encode Automerge mark value: %w", err)
 	}
 
-	if err := t.document.backend.MarkText(
+	if err := t.document.engine.MarkText(
 		ctx,
 		t.handle,
 		start,
@@ -180,7 +180,7 @@ func (t *Text) UpdateSpans(
 		return fmt.Errorf("cannot encode Automerge spans config: %w", err)
 	}
 
-	if err := t.document.backend.UpdateSpans(ctx, t.handle, spansPayload, configPayload); err != nil {
+	if err := t.document.engine.UpdateSpans(ctx, t.handle, spansPayload, configPayload); err != nil {
 		return fmt.Errorf("cannot update Automerge spans: %w", err)
 	}
 
@@ -214,7 +214,7 @@ func (t *Text) SplitBlock(ctx context.Context, index uint32) (*Object, error) {
 		return nil, ErrClosed
 	}
 
-	handle, err := t.document.backend.SplitBlock(ctx, t.handle, index)
+	handle, err := t.document.engine.SplitBlock(ctx, t.handle, index)
 	if err != nil {
 		return nil, fmt.Errorf("cannot split Automerge block: %w", err)
 	}
@@ -235,7 +235,7 @@ func (t *Text) JoinBlock(ctx context.Context, index uint32) error {
 		return ErrClosed
 	}
 
-	if err := t.document.backend.JoinBlock(ctx, t.handle, index); err != nil {
+	if err := t.document.engine.JoinBlock(ctx, t.handle, index); err != nil {
 		return fmt.Errorf("cannot join Automerge block: %w", err)
 	}
 
@@ -251,7 +251,7 @@ func (t *Text) ReplaceBlock(ctx context.Context, index uint32) (*Object, error) 
 		return nil, ErrClosed
 	}
 
-	handle, err := t.document.backend.ReplaceBlock(ctx, t.handle, index)
+	handle, err := t.document.engine.ReplaceBlock(ctx, t.handle, index)
 	if err != nil {
 		return nil, fmt.Errorf("cannot replace Automerge block: %w", err)
 	}
@@ -289,7 +289,7 @@ func (t *Text) Marks(ctx context.Context) ([]Mark, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.backend.Marks(ctx, t.handle)
+	data, err := t.document.engine.Marks(ctx, t.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge marks: %w", err)
 	}
@@ -306,7 +306,7 @@ func (t *Text) MarksAt(ctx context.Context, heads []Hash) ([]Mark, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.backend.MarksAt(ctx, t.handle, backendHashes(heads))
+	data, err := t.document.engine.MarksAt(ctx, t.handle, engineHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read historical Automerge marks: %w", err)
 	}
@@ -346,7 +346,7 @@ func (t *Text) Spans(ctx context.Context) ([]Span, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.backend.TextSpans(ctx, t.handle)
+	data, err := t.document.engine.TextSpans(ctx, t.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge rich-text spans: %w", err)
 	}
@@ -363,7 +363,7 @@ func (t *Text) SpansAt(ctx context.Context, heads []Hash) ([]Span, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.backend.TextSpansAt(ctx, t.handle, backendHashes(heads))
+	data, err := t.document.engine.TextSpansAt(ctx, t.handle, engineHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read historical Automerge rich-text spans: %w", err)
 	}

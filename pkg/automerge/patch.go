@@ -120,7 +120,7 @@ func (d *Document) CurrentState(ctx context.Context) ([]Patch, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := d.backend.CurrentState(ctx)
+	data, err := d.engine.CurrentState(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge current state: %w", err)
 	}
@@ -138,7 +138,7 @@ func (d *Document) UpdateDiffCursor(ctx context.Context) error {
 		return ErrClosed
 	}
 
-	if err := d.backend.UpdateDiffCursor(ctx); err != nil {
+	if err := d.engine.UpdateDiffCursor(ctx); err != nil {
 		return fmt.Errorf("cannot update Automerge diff cursor: %w", err)
 	}
 
@@ -157,7 +157,7 @@ func (d *Document) DiffIncremental(ctx context.Context) ([]Patch, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := d.backend.DiffIncremental(ctx)
+	data, err := d.engine.DiffIncremental(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot compute Automerge incremental diff: %w", err)
 	}
@@ -179,7 +179,7 @@ func (d *Document) Diff(
 		return nil, ErrClosed
 	}
 
-	data, err := d.backend.Diff(ctx, backendHashes(before), backendHashes(after))
+	data, err := d.engine.Diff(ctx, engineHashes(before), engineHashes(after))
 	if err != nil {
 		return nil, fmt.Errorf("cannot diff Automerge document: %w", err)
 	}

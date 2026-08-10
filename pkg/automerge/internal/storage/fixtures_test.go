@@ -18,19 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package native
-
-import (
-	"encoding/base64"
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
-
-const (
-	officialChangeFixture   = "hW9Kg5nDjoUBzgEAEAECAwQFBgcICQoLDA0ODxABAYDiz6oGF29mZmljaWFsIHNjYWxhciBmaXh0dXJlAAoBBAIHEQYTBxU4NAJCCFYQVxtwAgALBAAACwILfgwNAAx/AAACAAt8AAx0AHUDbmlsAm5vA3llcwR1aW50A2ludAVmbG9hdAR0ZXh0BWJ5dGVzBHdoZW4FY291bnQEbGlzdAAECwQKAX8CAgQCAXYAAQITFIUBVjdpGAMAAhYqeQAAAAAAAPg/aGVsbG8A/wf70JX/vDEJYWIPAA=="
-	officialDocumentFixture = "hW9Kg3tNcOoAogIBEAECAwQFBgcICQoLDA0ODxABmcOOhfOq6K9fyRtQMpEkw5nRGiPrg0/hSLI3KA5LqKcHAQIDAhMCIwY1GUACVgIMAQQCBxEGEwcVOCECIw80AkIKVhJXG4ABAn8AfwF/D3+A4s+qBn8Xb2ZmaWNpYWwgc2NhbGFyIGZpeHR1cmV/AH8HAAsEAAALAgt+DA0ADH8AAAIAC3wADHQAdQVieXRlcwVjb3VudAVmbG9hdANpbnQEbGlzdANuaWwCbm8EdGV4dAR1aW50BHdoZW4DeWVzAAQPAHQIAnx/BnYBBX0FegkDAQsEBAF/AgYBAgQCAXw3GIUBFAIAewFWE2kCAgACFgD/BwkAAAAAAAD4P3loZWxsbyr70JX/vDFhYg8AAA=="
-)
+package storage
 
 var officialStorageFixtures = map[string]string{
 	"64bit_obj_id_change.automerge":              "hW9Kg2J1YNYBPwAQ2gpUVEJDSYSFAKXr4azZTQGAgICAgIABwb7Eg+EwCAFoYW5nZSAxAAUVAzQBQgJWAnACfwFhAX8AfwB/AA==",
@@ -49,68 +37,4 @@ var officialStorageFixtures = map[string]string{
 	"fuzz-overflow-length":                       "hW9Kgw1aCmMAqwEBAAAQAAAAAAAAAAEAAADj4+Pj4+PjhW9K4+PjhW9Kg+Pj4+Ph4+Nw1nBwcHBwg+MdGOPjL+HjSoPj4+Pj4ePWcHBwcHCD4x0Y4+Mv4+Pj//////8n////////////////////////AAAAAAAAAAAAAAD/////AAAAAAgAAAAAAAAAAAABAAAAAAQAAgEHXf/////////j4+PjBHBwcHBwAQABAAACAgddAQA=",
 	"fuzz-too-many-deps":                         "hW9Kg51nWyAAfAEQ77C8VImLQtKPhfeZcHIU6AGYGdAqe3fDi6Us1PDrRyH9xtoZAvksQgOWa10o81nHmwYBAgMCEwIjAkAKVgIIFQYhAiMCNAFCAlYCVwSAAQJ/AH8BfwF/AH/q6urq6urq6gB/B38EbwBwc38AfwEBuwF/Rm9vcHN/AAA=",
 	"fuzz-too-many-ops":                          "hW9Kg1XPQM0AfAEQ77C8VImbQtKPhfeZcHIU6AGYGdAqe3fDi6Us1PDrRyH9xtoZAvksQgOWa10o81nHmwYBAgMCEwIjAkACVgIIFQYhAiMCNAFCAlYCVwSAAQp/AH8BfwF/AH8Afwd/BG8AcHN/AH8BAX8Bf0Zvb3Bzf52dnZ2dnZ2dAAA=",
-}
-
-func FuzzDecode(f *testing.F) {
-	change, err := base64.StdEncoding.DecodeString(officialChangeFixture)
-	require.NoError(f, err)
-	document, err := base64.StdEncoding.DecodeString(officialDocumentFixture)
-	require.NoError(f, err)
-
-	f.Add(change)
-	f.Add(document)
-	f.Add([]byte{0x85, 0x6f, 0x4a, 0x83})
-
-	for _, encoded := range officialStorageFixtures {
-		data, err := base64.StdEncoding.DecodeString(encoded)
-		require.NoError(f, err)
-		f.Add(data)
-	}
-
-	f.Fuzz(func(t *testing.T, data []byte) {
-		if len(data) > 1024*1024 {
-			t.Skip()
-		}
-
-		_, _ = Decode(data)
-	})
-}
-
-func FuzzParseSyncMessage(f *testing.F) {
-	message, err := (SyncMessage{
-		Version: SyncMessageVersion2,
-		Heads:   [][32]byte{{1}},
-		Need:    [][32]byte{{2}},
-		Have: []SyncHave{
-			{
-				LastSync: [][32]byte{{3}},
-				Bloom:    []byte{4, 5, 6},
-			},
-		},
-		Changes: [][]byte{{7, 8, 9}},
-	}).Encode()
-	require.NoError(f, err)
-
-	f.Add(message)
-	f.Add([]byte{})
-	f.Add([]byte{byte(SyncMessageVersion1)})
-	f.Add([]byte{byte(SyncMessageVersion2)})
-
-	f.Fuzz(func(t *testing.T, data []byte) {
-		if len(data) > 1024*1024 {
-			t.Skip()
-		}
-
-		parsed, err := ParseSyncMessage(data)
-		if err != nil {
-			return
-		}
-
-		encoded, err := parsed.Encode()
-		if err != nil {
-			return
-		}
-
-		_, _ = ParseSyncMessage(encoded)
-	})
 }

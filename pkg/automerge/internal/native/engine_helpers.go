@@ -31,7 +31,7 @@ import (
 	"math"
 )
 
-func (b *Backend) addPending(operation Operation) error {
+func (b *Engine) addPending(operation Operation) error {
 	if err := b.state.applyPending([]Operation{operation}); err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (b *Backend) addPending(operation Operation) error {
 	return nil
 }
 
-func (b *Backend) nextOperationID() OpID {
+func (b *Engine) nextOperationID() OpID {
 	id := OpID{
 		Actor:   b.actor,
 		Counter: b.nextOp,
@@ -51,7 +51,7 @@ func (b *Backend) nextOperationID() OpID {
 	return id
 }
 
-func (b *Backend) requireRoot(ctx context.Context, handle uint32) error {
+func (b *Engine) requireRoot(ctx context.Context, handle uint32) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (b *Backend) requireRoot(ctx context.Context, handle uint32) error {
 	return nil
 }
 
-func (b *Backend) object(handle uint32) (ObjectID, error) {
+func (b *Engine) object(handle uint32) (ObjectID, error) {
 	object, ok := b.objects[handle]
 	if !ok {
 		return ObjectID{}, fmt.Errorf("invalid object handle %d", handle)
@@ -77,7 +77,7 @@ func (b *Backend) object(handle uint32) (ObjectID, error) {
 	return object, nil
 }
 
-func (b *Backend) mapObject(handle uint32) (ObjectID, error) {
+func (b *Engine) mapObject(handle uint32) (ObjectID, error) {
 	object, err := b.object(handle)
 	if err != nil {
 		return ObjectID{}, err
@@ -97,7 +97,7 @@ func (b *Backend) mapObject(handle uint32) (ObjectID, error) {
 	return object, nil
 }
 
-func (b *Backend) sequenceObject(handle uint32) (ObjectID, error) {
+func (b *Engine) sequenceObject(handle uint32) (ObjectID, error) {
 	object, err := b.object(handle)
 	if err != nil {
 		return ObjectID{}, err
@@ -117,7 +117,7 @@ func (b *Backend) sequenceObject(handle uint32) (ObjectID, error) {
 	return object, nil
 }
 
-func (b *Backend) textObject(handle uint32) (ObjectID, error) {
+func (b *Engine) textObject(handle uint32) (ObjectID, error) {
 	object, err := b.object(handle)
 	if err != nil {
 		return ObjectID{}, err
@@ -135,7 +135,7 @@ func (b *Backend) textObject(handle uint32) (ObjectID, error) {
 	return object, nil
 }
 
-func (b *Backend) pushObject(object ObjectID) uint32 {
+func (b *Engine) pushObject(object ObjectID) uint32 {
 	handle := b.nextHandle
 	b.nextHandle++
 	b.objects[handle] = object
@@ -143,7 +143,7 @@ func (b *Backend) pushObject(object ObjectID) uint32 {
 	return handle
 }
 
-func (b *Backend) syncState(handle uint32) (*nativeSyncState, error) {
+func (b *Engine) syncState(handle uint32) (*nativeSyncState, error) {
 	state, ok := b.syncStates[handle]
 	if !ok {
 		return nil, fmt.Errorf("invalid sync state %d", handle)
@@ -152,7 +152,7 @@ func (b *Backend) syncState(handle uint32) (*nativeSyncState, error) {
 	return state, nil
 }
 
-func (b *Backend) rootTextObjects() map[string]Operation {
+func (b *Engine) rootTextObjects() map[string]Operation {
 	objects := make(map[string]Operation)
 
 	for _, operation := range b.state.operations {
@@ -172,7 +172,7 @@ func (b *Backend) rootTextObjects() map[string]Operation {
 	return objects
 }
 
-func (b *Backend) insertSequenceOperation(
+func (b *Engine) insertSequenceOperation(
 	ctx context.Context,
 	handle uint32,
 	index uint64,
@@ -225,7 +225,7 @@ func (b *Backend) insertSequenceOperation(
 // list element, in ascending order. A put, delete, or increment must reference
 // all of them so that concurrent conflicting values are overwritten identically
 // to upstream Rust.
-func (b *Backend) sequenceElementPredecessors(element OpID) []OpID {
+func (b *Engine) sequenceElementPredecessors(element OpID) []OpID {
 	visible := b.state.visibleSequenceElementOperations(element)
 	predecessors := make([]OpID, 0, len(visible))
 
@@ -236,7 +236,7 @@ func (b *Backend) sequenceElementPredecessors(element OpID) []OpID {
 	return predecessors
 }
 
-func (b *Backend) sequenceOperation(
+func (b *Engine) sequenceOperation(
 	ctx context.Context,
 	handle uint32,
 	index uint64,
@@ -271,7 +271,7 @@ func (b *Backend) sequenceOperation(
 // advanced to the following boundary, as upstream Rust does); other sequences
 // use element indices directly. The boolean reports whether the index resolves
 // to a boundary at or before the end of the sequence.
-func (b *Backend) resolveSequenceIndex(
+func (b *Engine) resolveSequenceIndex(
 	object ObjectID,
 	sequence []sequenceValue,
 	index uint64,
@@ -300,7 +300,7 @@ func (b *Backend) resolveSequenceIndex(
 	return 0, false
 }
 
-func (b *Backend) isTextObject(object ObjectID) bool {
+func (b *Engine) isTextObject(object ObjectID) bool {
 	if object.IsRoot {
 		return false
 	}
@@ -349,7 +349,7 @@ func actionObjectType(action Action) (string, error) {
 	}
 }
 
-func (b *Backend) textMarkKey(
+func (b *Engine) textMarkKey(
 	object ObjectID,
 	index uint32,
 ) (Key, error) {
@@ -640,7 +640,7 @@ func encodeEmptyDocument() []byte {
 }
 
 func decodeCursor(data []byte) (OpID, byte, error) {
-	r := &reader{data: data}
+	r := newReader(data)
 
 	version, err := r.byte()
 	if err != nil || version != 1 {

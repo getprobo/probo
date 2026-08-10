@@ -29,7 +29,7 @@ import (
 	"strings"
 )
 
-func (b *Backend) Stats(ctx context.Context) ([]byte, error) {
+func (b *Engine) Stats(ctx context.Context) ([]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func patchValueForOperation(state *State, operation Operation) (patchValueOut, e
 // ordered to match upstream Rust: the root first, then other objects by
 // creation operation ID, with map keys in lexical order and sequence elements
 // in index order.
-func (b *Backend) CurrentState(ctx context.Context) ([]byte, error) {
+func (b *Engine) CurrentState(ctx context.Context) ([]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 
 // Diff returns the patches that transform the document state at the before heads
 // into the state at the after heads.
-func (b *Backend) Diff(
+func (b *Engine) Diff(
 	ctx context.Context,
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
@@ -388,7 +388,7 @@ func (b *Backend) Diff(
 
 // UpdateDiffCursor records the current heads as the incremental diff cursor so a
 // following DiffIncremental reports only the changes committed since this call.
-func (b *Backend) UpdateDiffCursor(ctx context.Context) error {
+func (b *Engine) UpdateDiffCursor(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -407,7 +407,7 @@ func (b *Backend) UpdateDiffCursor(ctx context.Context) error {
 // DiffIncremental returns the patches for the changes committed since the diff
 // cursor (or from an empty document when the cursor is unset) and advances the
 // cursor to the current heads, mirroring the reference diff_incremental helper.
-func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
+func (b *Engine) DiffIncremental(ctx context.Context) ([]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -438,7 +438,7 @@ func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
 // the diff is chained through each of them (cursor to each isolation frontier
 // and finally to the current heads) so the patch stream matches the reference's
 // patch-log output across isolate/integrate.
-func (b *Backend) incrementalDiffPatches(heads [][32]byte) ([]patchOut, error) {
+func (b *Engine) incrementalDiffPatches(heads [][32]byte) ([]patchOut, error) {
 	if len(b.isolationDiffTargets) == 0 {
 		return b.incrementalPatches(b.diffCursor, heads)
 	}
@@ -462,14 +462,14 @@ func (b *Backend) incrementalDiffPatches(heads [][32]byte) ([]patchOut, error) {
 	return patches, nil
 }
 
-func (b *Backend) incrementalPatches(
+func (b *Engine) incrementalPatches(
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
 ) ([]patchOut, error) {
 	return b.diffPatches(beforeHeads, afterHeads, true)
 }
 
-func (b *Backend) diffPatches(
+func (b *Engine) diffPatches(
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
 	incremental bool,

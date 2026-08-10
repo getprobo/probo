@@ -31,12 +31,12 @@ import (
 
 // committedTextBackend returns a backend with a text object edited `edits` times,
 // each edit its own committed change.
-func committedTextBackend(t *testing.T, id byte, edits int) *Backend {
+func committedTextBackend(t *testing.T, id byte, edits int) *Engine {
 	t.Helper()
 
 	ctx := context.Background()
 
-	backend, err := NewBackend(ctx)
+	backend, err := NewEngine(ctx)
 	require.NoError(t, err)
 	require.NoError(t, backend.SetActor(ctx, []byte{
 		id, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
@@ -54,7 +54,7 @@ func committedTextBackend(t *testing.T, id byte, edits int) *Backend {
 	return backend
 }
 
-func snapshotFromBackend(backend *Backend) *Document {
+func snapshotFromBackend(backend *Engine) *Document {
 	document := &Document{}
 
 	for hash, change := range backend.state.changes {

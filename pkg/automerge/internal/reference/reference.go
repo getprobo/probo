@@ -52,7 +52,7 @@ const (
 type (
 	Object = uint32
 
-	Backend struct {
+	Engine struct {
 		module api.Module
 	}
 )
@@ -65,7 +65,7 @@ var (
 	moduleSequence  atomic.Uint64
 )
 
-func New(ctx context.Context) (*Backend, error) {
+func New(ctx context.Context) (*Engine, error) {
 	backend, err := instantiate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot instantiate Automerge reference backend: %w", err)
@@ -79,7 +79,7 @@ func New(ctx context.Context) (*Backend, error) {
 	return backend, nil
 }
 
-func Load(ctx context.Context, document []byte) (*Backend, error) {
+func Load(ctx context.Context, document []byte) (*Engine, error) {
 	backend, err := instantiate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot instantiate Automerge reference backend: %w", err)
@@ -95,7 +95,7 @@ func Load(ctx context.Context, document []byte) (*Backend, error) {
 
 // LoadConvertingStrings loads a document, converting every string scalar in a
 // map or list into a text object, mirroring StringMigration::ConvertToText.
-func LoadConvertingStrings(ctx context.Context, document []byte) (*Backend, error) {
+func LoadConvertingStrings(ctx context.Context, document []byte) (*Engine, error) {
 	backend, err := instantiate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot instantiate Automerge reference backend: %w", err)
@@ -110,7 +110,7 @@ func LoadConvertingStrings(ctx context.Context, document []byte) (*Backend, erro
 	return backend, nil
 }
 
-func instantiate(ctx context.Context) (*Backend, error) {
+func instantiate(ctx context.Context) (*Engine, error) {
 	runtimeOnce.Do(
 		func() {
 			fields := strings.Fields(string(wasmChecksum))
@@ -165,7 +165,7 @@ func instantiate(ctx context.Context) (*Backend, error) {
 		return nil, fmt.Errorf("cannot instantiate reference module: %w", err)
 	}
 
-	backend := &Backend{module: module}
+	backend := &Engine{module: module}
 
 	version, err := backend.call(ctx, "am_abi_version")
 	if err != nil {
@@ -186,7 +186,7 @@ func instantiate(ctx context.Context) (*Backend, error) {
 	return backend, nil
 }
 
-func (b *Backend) Close(ctx context.Context) error {
+func (b *Engine) Close(ctx context.Context) error {
 	if err := b.module.Close(ctx); err != nil {
 		return fmt.Errorf("cannot close reference module: %w", err)
 	}
@@ -194,7 +194,7 @@ func (b *Backend) Close(ctx context.Context) error {
 	return nil
 }
 
-func (b *Backend) Save(ctx context.Context) ([]byte, error) {
+func (b *Engine) Save(ctx context.Context) ([]byte, error) {
 	if err := b.run(ctx, "am_save"); err != nil {
 		return nil, fmt.Errorf("cannot save reference document: %w", err)
 	}
@@ -209,7 +209,7 @@ func (b *Backend) Save(ctx context.Context) ([]byte, error) {
 
 // SaveNoCompress serializes the document without DEFLATE compression, mirroring
 // AutoCommit::save_nocompress.
-func (b *Backend) SaveNoCompress(ctx context.Context) ([]byte, error) {
+func (b *Engine) SaveNoCompress(ctx context.Context) ([]byte, error) {
 	if err := b.run(ctx, "am_save_nocompress"); err != nil {
 		return nil, fmt.Errorf("cannot save reference document: %w", err)
 	}
@@ -225,7 +225,7 @@ func (b *Backend) SaveNoCompress(ctx context.Context) ([]byte, error) {
 // SaveWithOptions serializes the document, optionally discarding orphan changes.
 // Retaining orphans uses the default am_save; discarding them uses
 // save_with_options(retain_orphans=false).
-func (b *Backend) SaveWithOptions(
+func (b *Engine) SaveWithOptions(
 	ctx context.Context,
 	retainOrphans bool,
 ) ([]byte, error) {
@@ -245,7 +245,7 @@ func (b *Backend) SaveWithOptions(
 	return output, nil
 }
 
-func (b *Backend) SaveIncremental(ctx context.Context) ([]byte, error) {
+func (b *Engine) SaveIncremental(ctx context.Context) ([]byte, error) {
 	if err := b.run(ctx, "am_save_incremental"); err != nil {
 		return nil, fmt.Errorf("cannot save incremental reference changes: %w", err)
 	}
@@ -258,7 +258,7 @@ func (b *Backend) SaveIncremental(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Backend) LoadIncremental(
+func (b *Engine) LoadIncremental(
 	ctx context.Context,
 	data []byte,
 ) (uint64, error) {
@@ -287,7 +287,7 @@ func (b *Backend) LoadIncremental(
 }
 
 // Isolate pins the document to the given heads, mirroring AutoCommit::isolate.
-func (b *Backend) Isolate(ctx context.Context, heads [][32]byte) error {
+func (b *Engine) Isolate(ctx context.Context, heads [][32]byte) error {
 	if err := b.runBytes(ctx, "am_isolate", flattenHashes(heads)); err != nil {
 		return fmt.Errorf("cannot isolate reference document: %w", err)
 	}
@@ -296,7 +296,7 @@ func (b *Backend) Isolate(ctx context.Context, heads [][32]byte) error {
 }
 
 // Integrate ends isolation, mirroring AutoCommit::integrate.
-func (b *Backend) Integrate(ctx context.Context) error {
+func (b *Engine) Integrate(ctx context.Context) error {
 	if err := b.run(ctx, "am_integrate"); err != nil {
 		return fmt.Errorf("cannot integrate reference document: %w", err)
 	}
@@ -304,7 +304,7 @@ func (b *Backend) Integrate(ctx context.Context) error {
 	return nil
 }
 
-func (b *Backend) SetActor(ctx context.Context, actor []byte) error {
+func (b *Engine) SetActor(ctx context.Context, actor []byte) error {
 	if err := b.runBytes(ctx, "am_set_actor", actor); err != nil {
 		return fmt.Errorf("cannot set reference actor: %w", err)
 	}
@@ -312,7 +312,7 @@ func (b *Backend) SetActor(ctx context.Context, actor []byte) error {
 	return nil
 }
 
-func (b *Backend) PutString(ctx context.Context, object Object, key, value string) error {
+func (b *Engine) PutString(ctx context.Context, object Object, key, value string) error {
 	keyPointer, keyLength, err := b.write(ctx, []byte(key))
 	if err != nil {
 		return fmt.Errorf("cannot write map key: %w", err)
@@ -340,7 +340,7 @@ func (b *Backend) PutString(ctx context.Context, object Object, key, value strin
 	return nil
 }
 
-func (b *Backend) GetString(ctx context.Context, object Object, key string) (string, error) {
+func (b *Engine) GetString(ctx context.Context, object Object, key string) (string, error) {
 	keyPointer, keyLength, err := b.write(ctx, []byte(key))
 	if err != nil {
 		return "", fmt.Errorf("cannot write map key: %w", err)
@@ -365,7 +365,7 @@ func (b *Backend) GetString(ctx context.Context, object Object, key string) (str
 	return string(output), nil
 }
 
-func (b *Backend) PutScalar(
+func (b *Engine) PutScalar(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -398,7 +398,7 @@ func (b *Backend) PutScalar(
 	return nil
 }
 
-func (b *Backend) GetScalar(
+func (b *Engine) GetScalar(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -427,7 +427,7 @@ func (b *Backend) GetScalar(
 	return output, nil
 }
 
-func (b *Backend) GetScalarAtHeads(
+func (b *Engine) GetScalarAtHeads(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -465,7 +465,7 @@ func (b *Backend) GetScalarAtHeads(
 	return output, nil
 }
 
-func (b *Backend) GetAllScalars(
+func (b *Engine) GetAllScalars(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -494,7 +494,7 @@ func (b *Backend) GetAllScalars(
 	return output, nil
 }
 
-func (b *Backend) GetAllScalarsAt(
+func (b *Engine) GetAllScalarsAt(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -516,7 +516,7 @@ func (b *Backend) GetAllScalarsAt(
 	return output, nil
 }
 
-func (b *Backend) PutObject(
+func (b *Engine) PutObject(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -555,7 +555,7 @@ func (b *Backend) PutObject(
 	return Object(handle), nil
 }
 
-func (b *Backend) GetObject(
+func (b *Engine) GetObject(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -590,7 +590,7 @@ func (b *Backend) GetObject(
 	return Object(handle), string(rawType), nil
 }
 
-func (b *Backend) InsertScalar(
+func (b *Engine) InsertScalar(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -616,7 +616,7 @@ func (b *Backend) InsertScalar(
 	return nil
 }
 
-func (b *Backend) PutScalarAt(
+func (b *Engine) PutScalarAt(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -642,7 +642,7 @@ func (b *Backend) PutScalarAt(
 	return nil
 }
 
-func (b *Backend) InsertObject(
+func (b *Engine) InsertObject(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -674,7 +674,7 @@ func (b *Backend) InsertObject(
 	return Object(handle), nil
 }
 
-func (b *Backend) PutObjectAt(
+func (b *Engine) PutObjectAt(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -706,7 +706,7 @@ func (b *Backend) PutObjectAt(
 	return Object(handle), nil
 }
 
-func (b *Backend) GetScalarAt(
+func (b *Engine) GetScalarAt(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -728,7 +728,7 @@ func (b *Backend) GetScalarAt(
 	return output, nil
 }
 
-func (b *Backend) GetObjectAt(
+func (b *Engine) GetObjectAt(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -759,7 +759,7 @@ func (b *Backend) GetObjectAt(
 	return Object(handle), string(rawType), nil
 }
 
-func (b *Backend) DeleteMap(
+func (b *Engine) DeleteMap(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -783,7 +783,7 @@ func (b *Backend) DeleteMap(
 	return nil
 }
 
-func (b *Backend) DeleteSequence(
+func (b *Engine) DeleteSequence(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -800,7 +800,7 @@ func (b *Backend) DeleteSequence(
 	return nil
 }
 
-func (b *Backend) Increment(
+func (b *Engine) Increment(
 	ctx context.Context,
 	object Object,
 	key string,
@@ -826,7 +826,7 @@ func (b *Backend) Increment(
 	return nil
 }
 
-func (b *Backend) IncrementAt(
+func (b *Engine) IncrementAt(
 	ctx context.Context,
 	object Object,
 	index uint64,
@@ -845,7 +845,7 @@ func (b *Backend) IncrementAt(
 	return nil
 }
 
-func (b *Backend) Keys(
+func (b *Engine) Keys(
 	ctx context.Context,
 	object Object,
 ) ([]string, error) {
@@ -866,7 +866,7 @@ func (b *Backend) Keys(
 	return keys, nil
 }
 
-func (b *Backend) Length(
+func (b *Engine) Length(
 	ctx context.Context,
 	object Object,
 ) (uint64, error) {
@@ -883,7 +883,7 @@ func (b *Backend) Length(
 	return uint64(length), nil
 }
 
-func (b *Backend) PutText(ctx context.Context, object Object, key string) (Object, error) {
+func (b *Engine) PutText(ctx context.Context, object Object, key string) (Object, error) {
 	keyPointer, keyLength, err := b.write(ctx, []byte(key))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write text key: %w", err)
@@ -909,7 +909,7 @@ func (b *Backend) PutText(ctx context.Context, object Object, key string) (Objec
 	return Object(handle), nil
 }
 
-func (b *Backend) GetText(ctx context.Context, object Object, key string) (Object, error) {
+func (b *Engine) GetText(ctx context.Context, object Object, key string) (Object, error) {
 	keyPointer, keyLength, err := b.write(ctx, []byte(key))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write text key: %w", err)
@@ -935,7 +935,7 @@ func (b *Backend) GetText(ctx context.Context, object Object, key string) (Objec
 	return Object(handle), nil
 }
 
-func (b *Backend) SpliceText(
+func (b *Engine) SpliceText(
 	ctx context.Context,
 	object Object,
 	index uint32,
@@ -963,7 +963,7 @@ func (b *Backend) SpliceText(
 	return nil
 }
 
-func (b *Backend) UpdateText(
+func (b *Engine) UpdateText(
 	ctx context.Context,
 	object Object,
 	value string,
@@ -987,7 +987,7 @@ func (b *Backend) UpdateText(
 	return nil
 }
 
-func (b *Backend) UpdateSpans(
+func (b *Engine) UpdateSpans(
 	ctx context.Context,
 	object Object,
 	spans []byte,
@@ -1020,7 +1020,7 @@ func (b *Backend) UpdateSpans(
 	return nil
 }
 
-func (b *Backend) MarkText(
+func (b *Engine) MarkText(
 	ctx context.Context,
 	object Object,
 	start uint32,
@@ -1066,7 +1066,7 @@ func (b *Backend) MarkText(
 	return nil
 }
 
-func (b *Backend) SplitBlock(
+func (b *Engine) SplitBlock(
 	ctx context.Context,
 	object Object,
 	index uint32,
@@ -1089,7 +1089,7 @@ func (b *Backend) SplitBlock(
 	return Object(handle), nil
 }
 
-func (b *Backend) JoinBlock(
+func (b *Engine) JoinBlock(
 	ctx context.Context,
 	object Object,
 	index uint32,
@@ -1106,7 +1106,7 @@ func (b *Backend) JoinBlock(
 	return nil
 }
 
-func (b *Backend) ReplaceBlock(
+func (b *Engine) ReplaceBlock(
 	ctx context.Context,
 	object Object,
 	index uint32,
@@ -1129,7 +1129,7 @@ func (b *Backend) ReplaceBlock(
 	return Object(handle), nil
 }
 
-func (b *Backend) Text(ctx context.Context, object Object) (string, error) {
+func (b *Engine) Text(ctx context.Context, object Object) (string, error) {
 	if err := b.run(ctx, "am_text", uint64(object)); err != nil {
 		return "", fmt.Errorf("cannot read reference text: %w", err)
 	}
@@ -1142,7 +1142,7 @@ func (b *Backend) Text(ctx context.Context, object Object) (string, error) {
 	return string(output), nil
 }
 
-func (b *Backend) TextAt(
+func (b *Engine) TextAt(
 	ctx context.Context,
 	object Object,
 	heads [][32]byte,
@@ -1171,7 +1171,7 @@ func (b *Backend) TextAt(
 	return string(output), nil
 }
 
-func (b *Backend) TextSpans(ctx context.Context, object Object) ([]byte, error) {
+func (b *Engine) TextSpans(ctx context.Context, object Object) ([]byte, error) {
 	if err := b.run(ctx, "am_text_spans", uint64(object)); err != nil {
 		return nil, fmt.Errorf("cannot read reference text spans: %w", err)
 	}
@@ -1184,7 +1184,7 @@ func (b *Backend) TextSpans(ctx context.Context, object Object) ([]byte, error) 
 	return output, nil
 }
 
-func (b *Backend) TextSpansAt(
+func (b *Engine) TextSpansAt(
 	ctx context.Context,
 	object Object,
 	heads [][32]byte,
@@ -1213,7 +1213,7 @@ func (b *Backend) TextSpansAt(
 	return output, nil
 }
 
-func (b *Backend) Marks(ctx context.Context, object Object) ([]byte, error) {
+func (b *Engine) Marks(ctx context.Context, object Object) ([]byte, error) {
 	if err := b.run(ctx, "am_marks", uint64(object)); err != nil {
 		return nil, fmt.Errorf("cannot read reference marks: %w", err)
 	}
@@ -1226,7 +1226,7 @@ func (b *Backend) Marks(ctx context.Context, object Object) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Backend) MarksAt(
+func (b *Engine) MarksAt(
 	ctx context.Context,
 	object Object,
 	heads [][32]byte,
@@ -1255,7 +1255,7 @@ func (b *Backend) MarksAt(
 	return output, nil
 }
 
-func (b *Backend) TextCursor(ctx context.Context, object Object, index uint32) ([]byte, error) {
+func (b *Engine) TextCursor(ctx context.Context, object Object, index uint32) ([]byte, error) {
 	if err := b.run(
 		ctx,
 		"am_text_cursor",
@@ -1273,7 +1273,7 @@ func (b *Backend) TextCursor(ctx context.Context, object Object, index uint32) (
 	return cursor, nil
 }
 
-func (b *Backend) TextCursorMoving(
+func (b *Engine) TextCursorMoving(
 	ctx context.Context,
 	object Object,
 	index uint32,
@@ -1302,7 +1302,7 @@ func (b *Backend) TextCursorMoving(
 	return cursor, nil
 }
 
-func (b *Backend) TextCursorMovingAt(
+func (b *Engine) TextCursorMovingAt(
 	ctx context.Context,
 	object Object,
 	index uint32,
@@ -1340,7 +1340,7 @@ func (b *Backend) TextCursorMovingAt(
 	return cursor, nil
 }
 
-func (b *Backend) TextCursorPosition(
+func (b *Engine) TextCursorPosition(
 	ctx context.Context,
 	object Object,
 	cursor []byte,
@@ -1374,7 +1374,7 @@ func (b *Backend) TextCursorPosition(
 	return uint32(position), nil
 }
 
-func (b *Backend) Commit(
+func (b *Engine) Commit(
 	ctx context.Context,
 	message string,
 	timestamp time.Time,
@@ -1416,7 +1416,7 @@ func (b *Backend) Commit(
 	return hash, nil
 }
 
-func (b *Backend) EmptyCommit(
+func (b *Engine) EmptyCommit(
 	ctx context.Context,
 	message string,
 	timestamp time.Time,
@@ -1458,7 +1458,7 @@ func (b *Backend) EmptyCommit(
 	return hash, nil
 }
 
-func (b *Backend) Rollback(ctx context.Context) (uint64, error) {
+func (b *Engine) Rollback(ctx context.Context) (uint64, error) {
 	result, err := b.call(ctx, "am_rollback")
 	if err != nil {
 		return 0, fmt.Errorf("cannot roll back reference document: %w", err)
@@ -1472,7 +1472,7 @@ func (b *Backend) Rollback(ctx context.Context) (uint64, error) {
 	return uint64(cancelled), nil
 }
 
-func (b *Backend) Stats(ctx context.Context) ([]byte, error) {
+func (b *Engine) Stats(ctx context.Context) ([]byte, error) {
 	if err := b.run(ctx, "am_stats"); err != nil {
 		return nil, fmt.Errorf("cannot read reference stats: %w", err)
 	}
@@ -1485,7 +1485,7 @@ func (b *Backend) Stats(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Backend) CurrentState(ctx context.Context) ([]byte, error) {
+func (b *Engine) CurrentState(ctx context.Context) ([]byte, error) {
 	if err := b.run(ctx, "am_current_state"); err != nil {
 		return nil, fmt.Errorf("cannot read reference current state: %w", err)
 	}
@@ -1498,7 +1498,7 @@ func (b *Backend) CurrentState(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Backend) UpdateDiffCursor(ctx context.Context) error {
+func (b *Engine) UpdateDiffCursor(ctx context.Context) error {
 	if err := b.run(ctx, "am_update_diff_cursor"); err != nil {
 		return fmt.Errorf("cannot update reference diff cursor: %w", err)
 	}
@@ -1506,7 +1506,7 @@ func (b *Backend) UpdateDiffCursor(ctx context.Context) error {
 	return nil
 }
 
-func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
+func (b *Engine) DiffIncremental(ctx context.Context) ([]byte, error) {
 	if err := b.run(ctx, "am_diff_incremental"); err != nil {
 		return nil, fmt.Errorf("cannot read reference incremental diff: %w", err)
 	}
@@ -1519,7 +1519,7 @@ func (b *Backend) DiffIncremental(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Backend) Diff(
+func (b *Engine) Diff(
 	ctx context.Context,
 	before [][32]byte,
 	after [][32]byte,
@@ -1555,7 +1555,7 @@ func (b *Backend) Diff(
 	return output, nil
 }
 
-func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
+func (b *Engine) Heads(ctx context.Context) ([][32]byte, error) {
 	if err := b.run(ctx, "am_heads"); err != nil {
 		return nil, fmt.Errorf("cannot read reference heads: %w", err)
 	}
@@ -1577,7 +1577,7 @@ func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	return heads, nil
 }
 
-func (b *Backend) HasHeads(
+func (b *Engine) HasHeads(
 	ctx context.Context,
 	heads [][32]byte,
 ) (bool, error) {
@@ -1609,7 +1609,7 @@ func (b *Backend) HasHeads(
 // reports whether it contains the target hash. Because Bloom filters admit
 // false positives, a true result does not guarantee membership; parity tests
 // use this to reproduce the upstream false-positive search deterministically.
-func (b *Backend) BloomContains(
+func (b *Engine) BloomContains(
 	ctx context.Context,
 	target [32]byte,
 	seeds [][32]byte,
@@ -1642,7 +1642,7 @@ func (b *Backend) BloomContains(
 	return value != 0, nil
 }
 
-func (b *Backend) MissingDependencies(
+func (b *Engine) MissingDependencies(
 	ctx context.Context,
 	heads [][32]byte,
 ) ([][32]byte, error) {
@@ -1681,7 +1681,7 @@ func (b *Backend) MissingDependencies(
 	return result, nil
 }
 
-func (b *Backend) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
+func (b *Engine) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
 	if err := b.runBytes(ctx, "am_merge", other); err != nil {
 		return nil, fmt.Errorf("cannot merge reference document: %w", err)
 	}
@@ -1703,7 +1703,7 @@ func (b *Backend) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
 	return heads, nil
 }
 
-func (b *Backend) NewSyncState(ctx context.Context) (uint32, error) {
+func (b *Engine) NewSyncState(ctx context.Context) (uint32, error) {
 	result, err := b.call(ctx, "am_sync_new")
 	if err != nil {
 		return 0, fmt.Errorf("cannot create reference sync state: %w", err)
@@ -1717,7 +1717,7 @@ func (b *Backend) NewSyncState(ctx context.Context) (uint32, error) {
 	return uint32(handle), nil
 }
 
-func (b *Backend) CloseSyncState(ctx context.Context, handle uint32) error {
+func (b *Engine) CloseSyncState(ctx context.Context, handle uint32) error {
 	if err := b.run(ctx, "am_sync_free", uint64(handle)); err != nil {
 		return fmt.Errorf("cannot close reference sync state: %w", err)
 	}
@@ -1725,7 +1725,7 @@ func (b *Backend) CloseSyncState(ctx context.Context, handle uint32) error {
 	return nil
 }
 
-func (b *Backend) SetSyncReadOnly(
+func (b *Engine) SetSyncReadOnly(
 	ctx context.Context,
 	handle uint32,
 	readOnly bool,
@@ -1747,7 +1747,7 @@ func (b *Backend) SetSyncReadOnly(
 	return nil
 }
 
-func (b *Backend) SyncPeerReadOnly(
+func (b *Engine) SyncPeerReadOnly(
 	ctx context.Context,
 	handle uint32,
 ) (bool, error) {
@@ -1771,7 +1771,7 @@ func (b *Backend) SyncPeerReadOnly(
 	return value != 0, nil
 }
 
-func (b *Backend) GenerateSyncMessage(
+func (b *Engine) GenerateSyncMessage(
 	ctx context.Context,
 	handle uint32,
 ) ([]byte, bool, error) {
@@ -1787,7 +1787,7 @@ func (b *Backend) GenerateSyncMessage(
 	return message, len(message) > 0, nil
 }
 
-func (b *Backend) ReceiveSyncMessage(ctx context.Context, handle uint32, message []byte) error {
+func (b *Engine) ReceiveSyncMessage(ctx context.Context, handle uint32, message []byte) error {
 	pointer, length, err := b.write(ctx, message)
 	if err != nil {
 		return fmt.Errorf("cannot write reference sync message: %w", err)
@@ -1807,7 +1807,7 @@ func (b *Backend) ReceiveSyncMessage(ctx context.Context, handle uint32, message
 	return nil
 }
 
-func (b *Backend) SaveSyncState(ctx context.Context, handle uint32) ([]byte, error) {
+func (b *Engine) SaveSyncState(ctx context.Context, handle uint32) ([]byte, error) {
 	if err := b.run(ctx, "am_sync_save", uint64(handle)); err != nil {
 		return nil, fmt.Errorf("cannot save reference sync state: %w", err)
 	}
@@ -1820,7 +1820,7 @@ func (b *Backend) SaveSyncState(ctx context.Context, handle uint32) ([]byte, err
 	return data, nil
 }
 
-func (b *Backend) LoadSyncState(ctx context.Context, data []byte) (uint32, error) {
+func (b *Engine) LoadSyncState(ctx context.Context, data []byte) (uint32, error) {
 	pointer, length, err := b.write(ctx, data)
 	if err != nil {
 		return 0, fmt.Errorf("cannot write reference sync state: %w", err)
@@ -1840,7 +1840,7 @@ func (b *Backend) LoadSyncState(ctx context.Context, data []byte) (uint32, error
 	return uint32(handle), nil
 }
 
-func (b *Backend) runBytes(ctx context.Context, function string, value []byte) error {
+func (b *Engine) runBytes(ctx context.Context, function string, value []byte) error {
 	pointer, length, err := b.write(ctx, value)
 	if err != nil {
 		return fmt.Errorf("cannot write operation input: %w", err)
@@ -1854,7 +1854,7 @@ func (b *Backend) runBytes(ctx context.Context, function string, value []byte) e
 	return nil
 }
 
-func (b *Backend) run(ctx context.Context, function string, parameters ...uint64) error {
+func (b *Engine) run(ctx context.Context, function string, parameters ...uint64) error {
 	result, err := b.call(ctx, function, parameters...)
 	if err != nil {
 		return fmt.Errorf("cannot call %s: %w", function, err)
@@ -1867,7 +1867,7 @@ func (b *Backend) run(ctx context.Context, function string, parameters ...uint64
 	return nil
 }
 
-func (b *Backend) operationError(ctx context.Context, fallback string) error {
+func (b *Engine) operationError(ctx context.Context, fallback string) error {
 	result, err := b.call(ctx, "am_error_len")
 	if err != nil {
 		return fmt.Errorf("%s: cannot read error length: %w", fallback, err)
@@ -1896,7 +1896,7 @@ func (b *Backend) operationError(ctx context.Context, fallback string) error {
 	return fmt.Errorf("%s: %s", fallback, message)
 }
 
-func (b *Backend) output(ctx context.Context) ([]byte, error) {
+func (b *Engine) output(ctx context.Context) ([]byte, error) {
 	result, err := b.call(ctx, "am_output_len")
 	if err != nil {
 		return nil, fmt.Errorf("cannot read output length: %w", err)
@@ -1925,7 +1925,7 @@ func (b *Backend) output(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Backend) call(ctx context.Context, function string, parameters ...uint64) ([]uint64, error) {
+func (b *Engine) call(ctx context.Context, function string, parameters ...uint64) ([]uint64, error) {
 	exported := b.module.ExportedFunction(function)
 	if exported == nil {
 		return nil, fmt.Errorf("reference module does not export %q", function)
@@ -1939,7 +1939,7 @@ func (b *Backend) call(ctx context.Context, function string, parameters ...uint6
 	return result, nil
 }
 
-func (b *Backend) alloc(ctx context.Context, length uint32) (uint32, error) {
+func (b *Engine) alloc(ctx context.Context, length uint32) (uint32, error) {
 	result, err := b.call(ctx, "am_alloc", uint64(length))
 	if err != nil {
 		return 0, fmt.Errorf("cannot allocate reference memory: %w", err)
@@ -1953,7 +1953,7 @@ func (b *Backend) alloc(ctx context.Context, length uint32) (uint32, error) {
 	return pointer, nil
 }
 
-func (b *Backend) free(ctx context.Context, pointer, length uint32) {
+func (b *Engine) free(ctx context.Context, pointer, length uint32) {
 	if pointer == 0 || length == 0 {
 		return
 	}
@@ -1961,7 +1961,7 @@ func (b *Backend) free(ctx context.Context, pointer, length uint32) {
 	_, _ = b.call(ctx, "am_free", uint64(pointer), uint64(length))
 }
 
-func (b *Backend) write(ctx context.Context, value []byte) (uint32, uint32, error) {
+func (b *Engine) write(ctx context.Context, value []byte) (uint32, uint32, error) {
 	length := uint32(len(value))
 	if length == 0 {
 		return 0, 0, nil
@@ -1980,7 +1980,7 @@ func (b *Backend) write(ctx context.Context, value []byte) (uint32, uint32, erro
 	return pointer, length, nil
 }
 
-func (b *Backend) read(pointer, length uint32) ([]byte, error) {
+func (b *Engine) read(pointer, length uint32) ([]byte, error) {
 	value, ok := b.module.Memory().Read(pointer, length)
 	if !ok {
 		return nil, fmt.Errorf("cannot read %d bytes at reference memory offset %d", length, pointer)

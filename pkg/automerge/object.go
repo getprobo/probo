@@ -70,7 +70,7 @@ func (o *Object) CreateObject(
 		return nil, fmt.Errorf("unknown Automerge object type %q", objectType)
 	}
 
-	handle, err := o.document.backend.PutObject(
+	handle, err := o.document.engine.PutObject(
 		ctx,
 		o.handle,
 		key,
@@ -96,7 +96,7 @@ func (o *Object) Object(ctx context.Context, key string) (*Object, error) {
 		return nil, ErrClosed
 	}
 
-	handle, rawType, err := o.document.backend.GetObject(ctx, o.handle, key)
+	handle, rawType, err := o.document.engine.GetObject(ctx, o.handle, key)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge object: %w", err)
 	}
@@ -127,7 +127,7 @@ func (o *Object) PutScalar(ctx context.Context, key string, value Scalar) error 
 		return fmt.Errorf("cannot encode Automerge scalar: %w", err)
 	}
 
-	if err := o.document.backend.PutScalar(ctx, o.handle, key, encoded); err != nil {
+	if err := o.document.engine.PutScalar(ctx, o.handle, key, encoded); err != nil {
 		return fmt.Errorf("cannot put Automerge scalar: %w", err)
 	}
 
@@ -143,7 +143,7 @@ func (o *Object) Scalar(ctx context.Context, key string) (Scalar, error) {
 		return Scalar{}, ErrClosed
 	}
 
-	encoded, err := o.document.backend.GetScalar(ctx, o.handle, key)
+	encoded, err := o.document.engine.GetScalar(ctx, o.handle, key)
 	if err != nil {
 		return Scalar{}, fmt.Errorf("cannot get Automerge scalar: %w", err)
 	}
@@ -169,11 +169,11 @@ func (o *Object) ScalarAtHeads(
 		return Scalar{}, ErrClosed
 	}
 
-	encoded, err := o.document.backend.GetScalarAtHeads(
+	encoded, err := o.document.engine.GetScalarAtHeads(
 		ctx,
 		o.handle,
 		key,
-		backendHashes(heads),
+		engineHashes(heads),
 	)
 	if err != nil {
 		return Scalar{}, fmt.Errorf("cannot get historical Automerge scalar: %w", err)
@@ -196,7 +196,7 @@ func (o *Object) Scalars(ctx context.Context, key string) ([]Scalar, error) {
 		return nil, ErrClosed
 	}
 
-	encoded, err := o.document.backend.GetAllScalars(
+	encoded, err := o.document.engine.GetAllScalars(
 		ctx,
 		o.handle,
 		key,
@@ -222,7 +222,7 @@ func (o *Object) ScalarsAt(ctx context.Context, index uint64) ([]Scalar, error) 
 		return nil, ErrClosed
 	}
 
-	encoded, err := o.document.backend.GetAllScalarsAt(
+	encoded, err := o.document.engine.GetAllScalarsAt(
 		ctx,
 		o.handle,
 		index,
@@ -257,7 +257,7 @@ func (o *Object) InsertScalar(
 		return fmt.Errorf("cannot encode Automerge scalar: %w", err)
 	}
 
-	if err := o.document.backend.InsertScalar(
+	if err := o.document.engine.InsertScalar(
 		ctx,
 		o.handle,
 		index,
@@ -287,7 +287,7 @@ func (o *Object) PutScalarAt(
 		return fmt.Errorf("cannot encode Automerge scalar: %w", err)
 	}
 
-	if err := o.document.backend.PutScalarAt(
+	if err := o.document.engine.PutScalarAt(
 		ctx,
 		o.handle,
 		index,
@@ -316,7 +316,7 @@ func (o *Object) InsertObject(
 		return nil, fmt.Errorf("unknown Automerge object type %q", objectType)
 	}
 
-	handle, err := o.document.backend.InsertObject(
+	handle, err := o.document.engine.InsertObject(
 		ctx,
 		o.handle,
 		index,
@@ -350,7 +350,7 @@ func (o *Object) PutObjectAt(
 		return nil, fmt.Errorf("unknown Automerge object type %q", objectType)
 	}
 
-	handle, err := o.document.backend.PutObjectAt(
+	handle, err := o.document.engine.PutObjectAt(
 		ctx,
 		o.handle,
 		index,
@@ -376,7 +376,7 @@ func (o *Object) ScalarAt(ctx context.Context, index uint64) (Scalar, error) {
 		return Scalar{}, ErrClosed
 	}
 
-	encoded, err := o.document.backend.GetScalarAt(ctx, o.handle, index)
+	encoded, err := o.document.engine.GetScalarAt(ctx, o.handle, index)
 	if err != nil {
 		return Scalar{}, fmt.Errorf("cannot get Automerge scalar: %w", err)
 	}
@@ -398,7 +398,7 @@ func (o *Object) ObjectAt(ctx context.Context, index uint64) (*Object, error) {
 		return nil, ErrClosed
 	}
 
-	handle, rawType, err := o.document.backend.GetObjectAt(
+	handle, rawType, err := o.document.engine.GetObjectAt(
 		ctx,
 		o.handle,
 		index,
@@ -428,7 +428,7 @@ func (o *Object) DeleteKey(ctx context.Context, key string) error {
 		return ErrClosed
 	}
 
-	if err := o.document.backend.DeleteMap(ctx, o.handle, key); err != nil {
+	if err := o.document.engine.DeleteMap(ctx, o.handle, key); err != nil {
 		return fmt.Errorf("cannot delete Automerge map property: %w", err)
 	}
 
@@ -444,7 +444,7 @@ func (o *Object) DeleteIndex(ctx context.Context, index uint64) error {
 		return ErrClosed
 	}
 
-	if err := o.document.backend.DeleteSequence(ctx, o.handle, index); err != nil {
+	if err := o.document.engine.DeleteSequence(ctx, o.handle, index); err != nil {
 		return fmt.Errorf("cannot delete Automerge sequence element: %w", err)
 	}
 
@@ -460,7 +460,7 @@ func (o *Object) Increment(ctx context.Context, key string, delta int64) error {
 		return ErrClosed
 	}
 
-	if err := o.document.backend.Increment(
+	if err := o.document.engine.Increment(
 		ctx,
 		o.handle,
 		key,
@@ -485,7 +485,7 @@ func (o *Object) IncrementAt(
 		return ErrClosed
 	}
 
-	if err := o.document.backend.IncrementAt(
+	if err := o.document.engine.IncrementAt(
 		ctx,
 		o.handle,
 		index,
@@ -506,7 +506,7 @@ func (o *Object) Len(ctx context.Context) (uint64, error) {
 		return 0, ErrClosed
 	}
 
-	length, err := o.document.backend.Length(ctx, o.handle)
+	length, err := o.document.engine.Length(ctx, o.handle)
 	if err != nil {
 		return 0, fmt.Errorf("cannot get Automerge object length: %w", err)
 	}
@@ -523,7 +523,7 @@ func (o *Object) Keys(ctx context.Context) ([]string, error) {
 		return nil, ErrClosed
 	}
 
-	keys, err := o.document.backend.Keys(ctx, o.handle)
+	keys, err := o.document.engine.Keys(ctx, o.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge map keys: %w", err)
 	}
@@ -549,7 +549,7 @@ func validObjectType(value ObjectType) bool {
 	}
 }
 
-func backendHashes(heads []Hash) [][32]byte {
+func engineHashes(heads []Hash) [][32]byte {
 	result := make([][32]byte, len(heads))
 	for i, head := range heads {
 		result[i] = [32]byte(head)

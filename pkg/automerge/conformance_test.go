@@ -497,7 +497,7 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	)
 	assert.Equal(t, leftHeads, rightHeads)
 
-	backend, err := native.LoadBackend(context.Background(), rawChanges[0])
+	backend, err := native.LoadEngine(context.Background(), rawChanges[0])
 	require.NoError(t, err)
 	_, err = backend.Merge(context.Background(), rawChanges[1])
 	require.NoError(t, err)

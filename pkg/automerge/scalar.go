@@ -80,7 +80,7 @@ func (d *Document) PutScalar(ctx context.Context, key string, value Scalar) erro
 		return fmt.Errorf("cannot encode Automerge scalar: %w", err)
 	}
 
-	if err := d.backend.PutScalar(ctx, rootObject, key, encoded); err != nil {
+	if err := d.engine.PutScalar(ctx, rootObject, key, encoded); err != nil {
 		return fmt.Errorf("cannot put Automerge scalar: %w", err)
 	}
 
@@ -96,7 +96,7 @@ func (d *Document) Scalar(ctx context.Context, key string) (Scalar, error) {
 		return Scalar{}, ErrClosed
 	}
 
-	encoded, err := d.backend.GetScalar(ctx, rootObject, key)
+	encoded, err := d.engine.GetScalar(ctx, rootObject, key)
 	if err != nil {
 		return Scalar{}, fmt.Errorf("cannot get Automerge scalar: %w", err)
 	}
@@ -118,7 +118,7 @@ func (d *Document) Scalars(ctx context.Context, key string) ([]Scalar, error) {
 		return nil, ErrClosed
 	}
 
-	encoded, err := d.backend.GetAllScalars(ctx, rootObject, key)
+	encoded, err := d.engine.GetAllScalars(ctx, rootObject, key)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge scalar conflicts: %w", err)
 	}

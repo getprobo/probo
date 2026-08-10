@@ -27,7 +27,7 @@ import (
 	"sort"
 )
 
-func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
+func (b *Engine) Heads(ctx context.Context) ([][32]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (b *Backend) Heads(ctx context.Context) ([][32]byte, error) {
 	return result, nil
 }
 
-func (b *Backend) HasHeads(
+func (b *Engine) HasHeads(
 	ctx context.Context,
 	heads [][32]byte,
 ) (bool, error) {
@@ -59,7 +59,7 @@ func (b *Backend) HasHeads(
 	return true, nil
 }
 
-func (b *Backend) MissingDependencies(
+func (b *Engine) MissingDependencies(
 	ctx context.Context,
 	heads [][32]byte,
 ) ([][32]byte, error) {
@@ -96,7 +96,7 @@ func (b *Backend) MissingDependencies(
 	return result, nil
 }
 
-func (b *Backend) ChangesSince(
+func (b *Engine) ChangesSince(
 	ctx context.Context,
 	heads [][32]byte,
 ) ([][]byte, [][32]byte, error) {
@@ -129,7 +129,7 @@ func (b *Backend) ChangesSince(
 	return raw, hashes, nil
 }
 
-func (b *Backend) ApplyChanges(
+func (b *Engine) ApplyChanges(
 	ctx context.Context,
 	changes [][]byte,
 ) error {
@@ -142,7 +142,7 @@ func (b *Backend) ApplyChanges(
 	return nil
 }
 
-func (b *Backend) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
+func (b *Engine) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (b *Backend) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 	return b.Heads(ctx)
 }
 
-func (b *Backend) requiresSnapshotMerge(document *Document) bool {
+func (b *Engine) requiresSnapshotMerge(document *Document) bool {
 	if len(document.ChunkTypes) == 0 ||
 		document.ChunkTypes[0] != ChunkDocument {
 		return false
@@ -220,7 +220,7 @@ func (b *Backend) requiresSnapshotMerge(document *Document) bool {
 	return false
 }
 
-func (b *Backend) mergeDocumentSnapshot(
+func (b *Engine) mergeDocumentSnapshot(
 	data []byte,
 	document *Document,
 ) error {
@@ -303,7 +303,7 @@ func documentChangeByActorSequence(
 	return nil
 }
 
-func (b *Backend) applyMergedChanges(changes []Change) error {
+func (b *Engine) applyMergedChanges(changes []Change) error {
 	for i := range changes {
 		change := &changes[i]
 		if change.Hash == nil || b.state.hasChange(*change.Hash) {

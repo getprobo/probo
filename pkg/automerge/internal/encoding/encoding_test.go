@@ -18,40 +18,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package native
+package encoding
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TestSyncMessageEncodeDecodeEmptyV2 reproduces the upstream
-// encode_decode_empty_message test (rust/automerge/src/sync.rs): an empty V2
-// sync message must encode and parse back without error. It additionally
-// asserts the exact wire bytes so the native V2 codec stays byte-compatible
-// with the reference, whose Message::encode writes the type byte followed by
-// four zero ULEB collection counts (heads, need, have, changes) and no flags.
-func TestSyncMessageEncodeDecodeEmptyV2(t *testing.T) {
+func TestULEBRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	message := SyncMessage{Version: SyncMessageVersion2}
+	for _, value := range []uint64{0, 1, 0x7f, 0x80, 0x3fff, 0x4000, math.MaxUint64} {
+		encoded := AppendULEB(nil, value)
+		decoded, err := NewReader(encoded).ULEB()
+		require.NoError(t, err)
+		assert.Equal(t, value, decoded)
+	}
+}
 
-	encoded, err := message.Encode()
-	require.NoError(t, err)
-	assert.Equal(t, []byte{byte(SyncMessageVersion2), 0x00, 0x00, 0x00, 0x00}, encoded)
+func TestReaderBounds(t *testing.T) {
+	t.Parallel()
 
-	parsed, err := ParseSyncMessage(encoded)
-	require.NoError(t, err)
-	assert.Equal(t, SyncMessageVersion2, parsed.Version)
-	assert.Empty(t, parsed.Heads)
-	assert.Empty(t, parsed.Need)
-	assert.Empty(t, parsed.Have)
-	assert.Empty(t, parsed.Changes)
-	assert.Nil(t, parsed.Flags)
+	reader := NewReader([]byte{1, 2})
+	_, err := reader.Bytes(3)
+	require.Error(t, err)
+	assert.Equal(t, 0, reader.Offset())
+}
 
-	reencoded, err := parsed.Encode()
+func TestLengthPrefixedRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	encoded := AppendLengthPrefixed(nil, []byte("value"))
+	decoded, err := DecodeLengthPrefixed(NewReader(encoded))
 	require.NoError(t, err)
-	assert.Equal(t, encoded, reencoded)
+	assert.Equal(t, []byte("value"), decoded)
+}
+
+func FuzzReader(f *testing.F) {
+	f.Add([]byte{0})
+	f.Add([]byte{0x80, 0x01})
+	f.Add([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01})
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		reader := NewReader(data)
+
+		length, err := reader.ULEB()
+		if err != nil {
+			return
+		}
+
+		_, _ = reader.Bytes(length)
+	})
 }

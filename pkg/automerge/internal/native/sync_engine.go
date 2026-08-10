@@ -28,7 +28,7 @@ import (
 	"sort"
 )
 
-func (b *Backend) NewSyncState(ctx context.Context) (uint32, error) {
+func (b *Engine) NewSyncState(ctx context.Context) (uint32, error) {
 	if err := ctx.Err(); err != nil {
 		return 0, err
 	}
@@ -40,7 +40,7 @@ func (b *Backend) NewSyncState(ctx context.Context) (uint32, error) {
 	return handle, nil
 }
 
-func (b *Backend) CloseSyncState(ctx context.Context, handle uint32) error {
+func (b *Engine) CloseSyncState(ctx context.Context, handle uint32) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (b *Backend) CloseSyncState(ctx context.Context, handle uint32) error {
 	return nil
 }
 
-func (b *Backend) SetSyncReadOnly(
+func (b *Engine) SetSyncReadOnly(
 	ctx context.Context,
 	handle uint32,
 	readOnly bool,
@@ -88,7 +88,7 @@ func (b *Backend) SetSyncReadOnly(
 	return nil
 }
 
-func (b *Backend) SyncPeerReadOnly(
+func (b *Engine) SyncPeerReadOnly(
 	ctx context.Context,
 	handle uint32,
 ) (bool, error) {
@@ -104,7 +104,7 @@ func (b *Backend) SyncPeerReadOnly(
 	return state.PeerReadOnly, nil
 }
 
-func (b *Backend) GenerateSyncMessage(
+func (b *Engine) GenerateSyncMessage(
 	ctx context.Context,
 	handle uint32,
 ) ([]byte, bool, error) {
@@ -260,7 +260,7 @@ func (b *Backend) GenerateSyncMessage(
 	return data, true, nil
 }
 
-func (b *Backend) ReceiveSyncMessage(
+func (b *Engine) ReceiveSyncMessage(
 	ctx context.Context,
 	handle uint32,
 	data []byte,
@@ -343,7 +343,7 @@ func (b *Backend) ReceiveSyncMessage(
 	return nil
 }
 
-func (b *Backend) SaveSyncState(
+func (b *Engine) SaveSyncState(
 	ctx context.Context,
 	handle uint32,
 ) ([]byte, error) {
@@ -364,7 +364,7 @@ func (b *Backend) SaveSyncState(
 	return data, nil
 }
 
-func (b *Backend) LoadSyncState(
+func (b *Engine) LoadSyncState(
 	ctx context.Context,
 	data []byte,
 ) (uint32, error) {

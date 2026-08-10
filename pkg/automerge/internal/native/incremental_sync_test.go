@@ -33,7 +33,7 @@ func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	backend, err := NewBackend(ctx)
+	backend, err := NewEngine(ctx)
 	require.NoError(t, err)
 	require.NoError(t, backend.SetActor(ctx, []byte{1}))
 	text, err := backend.PutText(ctx, 0, "body")

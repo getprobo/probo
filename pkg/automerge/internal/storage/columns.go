@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package native
+package storage
 
 import (
 	"bytes"
@@ -656,3 +656,6 @@ func copyHash(data []byte) ChangeHash {
 
 	return hash
 }
+
+// Deflate compresses an Automerge change body using the wire-format codec.
+func Deflate(data []byte) ([]byte, error) { return deflate(data) }

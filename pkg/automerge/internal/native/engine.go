@@ -29,7 +29,7 @@ import (
 	"time"
 )
 
-type Backend struct {
+type Engine struct {
 	state         *State
 	actor         ActorID
 	nextOp        uint64
@@ -98,7 +98,7 @@ const (
 	syncFlagMarker        = 0x80
 )
 
-func NewBackend(ctx context.Context) (*Backend, error) {
+func NewEngine(ctx context.Context) (*Engine, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func NewBackend(ctx context.Context) (*Backend, error) {
 		return nil, fmt.Errorf("cannot initialize native empty state: %w", err)
 	}
 
-	return &Backend{
+	return &Engine{
 		state:         state,
 		actor:         actor,
 		nextOp:        state.maxOpGlobal() + 1,
@@ -133,7 +133,7 @@ func NewBackend(ctx context.Context) (*Backend, error) {
 	}, nil
 }
 
-func LoadBackend(ctx context.Context, data []byte) (*Backend, error) {
+func LoadEngine(ctx context.Context, data []byte) (*Engine, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -145,8 +145,8 @@ func LoadBackend(ctx context.Context, data []byte) (*Backend, error) {
 		// rejects them, so fall back to a tolerant load that applies every
 		// change whose dependencies are satisfiable and queues the rest. A load
 		// that cannot apply a single change (a bare orphan) still fails.
-		if backend, ok, tolerantErr := loadBackendRetainingOrphans(data, err); ok {
-			return backend, tolerantErr
+		if engine, ok, tolerantErr := loadEngineRetainingOrphans(data, err); ok {
+			return engine, tolerantErr
 		}
 
 		return nil, fmt.Errorf("cannot decode native document: %w", err)
@@ -162,7 +162,7 @@ func LoadBackend(ctx context.Context, data []byte) (*Backend, error) {
 		return nil, err
 	}
 
-	return &Backend{
+	return &Engine{
 		state:         state,
 		actor:         actor,
 		nextOp:        state.maxOpGlobal() + 1,
@@ -175,15 +175,15 @@ func LoadBackend(ctx context.Context, data []byte) (*Backend, error) {
 	}, nil
 }
 
-// loadBackendRetainingOrphans attempts a tolerant load for documents that carry
+// loadEngineRetainingOrphans attempts a tolerant load for documents that carry
 // orphan changes. It returns ok=false when the tolerant path does not apply (the
 // data is corrupt beyond missing dependencies, or nothing can be applied), so
 // the caller reports the original strict error. On success the applied history
 // forms the base and the orphan changes are queued for later resolution.
-func loadBackendRetainingOrphans(
+func loadEngineRetainingOrphans(
 	data []byte,
 	strictErr error,
-) (*Backend, bool, error) {
+) (*Engine, bool, error) {
 	if !strings.Contains(strictErr.Error(), "missing dependency") {
 		return nil, false, nil
 	}
@@ -254,7 +254,7 @@ func loadBackendRetainingOrphans(
 		queuedBytes += len(clone.Raw)
 	}
 
-	return &Backend{
+	return &Engine{
 		state:         state,
 		actor:         actor,
 		nextOp:        state.maxOpGlobal() + 1,
@@ -283,17 +283,17 @@ func orderedQueuedChanges(queued map[ChangeHash]*Change) []*Change {
 	return changes
 }
 
-func (b *Backend) Close(context.Context) error {
+func (b *Engine) Close(context.Context) error {
 	return nil
 }
 
-func (b *Backend) Save(ctx context.Context) ([]byte, error) {
+func (b *Engine) Save(ctx context.Context) ([]byte, error) {
 	return b.save(ctx, true, true)
 }
 
 // SaveNoCompress serializes the document without DEFLATE-compressing any change
 // chunks, mirroring Rust's AutoCommit::save_nocompress.
-func (b *Backend) SaveNoCompress(ctx context.Context) ([]byte, error) {
+func (b *Engine) SaveNoCompress(ctx context.Context) ([]byte, error) {
 	return b.save(ctx, true, false)
 }
 
@@ -301,14 +301,14 @@ func (b *Backend) SaveNoCompress(ctx context.Context) ([]byte, error) {
 // changes (queued changes whose dependencies are still missing) so they survive
 // a save/load round trip. It mirrors the Rust SaveOptions.retain_orphans flag;
 // the reference retains orphans by default.
-func (b *Backend) SaveWithOptions(
+func (b *Engine) SaveWithOptions(
 	ctx context.Context,
 	retainOrphans bool,
 ) ([]byte, error) {
 	return b.save(ctx, retainOrphans, true)
 }
 
-func (b *Backend) save(
+func (b *Engine) save(
 	ctx context.Context,
 	retainOrphans bool,
 	deflate bool,
@@ -358,14 +358,14 @@ func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
 		return raw
 	}
 
-	reader := &reader{data: raw, offset: headerSize}
+	reader := newReaderAt(raw, headerSize)
 
 	bodyLength, err := reader.uleb()
-	if err != nil || reader.offset+int(bodyLength) > len(raw) {
+	if err != nil || reader.offset()+int(bodyLength) > len(raw) {
 		return raw
 	}
 
-	body := raw[reader.offset : reader.offset+int(bodyLength)]
+	body := raw[reader.offset() : reader.offset()+int(bodyLength)]
 	if len(body) < deflateMinSize {
 		return raw
 	}
@@ -384,7 +384,7 @@ func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
 	return out
 }
 
-func (b *Backend) SaveIncremental(ctx context.Context) ([]byte, error) {
+func (b *Engine) SaveIncremental(ctx context.Context) ([]byte, error) {
 	if len(b.pending) > 0 {
 		if _, err := b.Commit(ctx, "", time.Time{}); err != nil {
 			return nil, err
@@ -410,7 +410,7 @@ func (b *Backend) SaveIncremental(ctx context.Context) ([]byte, error) {
 	return data, nil
 }
 
-func (b *Backend) LoadIncremental(
+func (b *Engine) LoadIncremental(
 	ctx context.Context,
 	data []byte,
 ) (uint64, error) {
@@ -432,7 +432,7 @@ func (b *Backend) LoadIncremental(
 	return uint64(after - before), nil
 }
 
-func (b *Backend) SetActor(ctx context.Context, value []byte) error {
+func (b *Engine) SetActor(ctx context.Context, value []byte) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}

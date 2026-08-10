@@ -63,7 +63,7 @@ func (t *Text) CursorFor(
 		return StartCursor(), nil
 	}
 
-	value, err := t.document.backend.Text(ctx, t.handle)
+	value, err := t.document.engine.Text(ctx, t.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge text for cursor: %w", err)
 	}
@@ -73,7 +73,7 @@ func (t *Text) CursorFor(
 		return EndCursor(), nil
 	}
 
-	cursor, err := t.document.backend.TextCursorMoving(
+	cursor, err := t.document.engine.TextCursorMoving(
 		ctx,
 		t.handle,
 		uint32(index),
@@ -109,7 +109,7 @@ func (t *Text) CursorForAt(
 		return StartCursor(), nil
 	}
 
-	value, err := t.document.backend.TextAt(ctx, t.handle, backendHashes(heads))
+	value, err := t.document.engine.TextAt(ctx, t.handle, engineHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read historical Automerge text for cursor: %w", err)
 	}
@@ -119,12 +119,12 @@ func (t *Text) CursorForAt(
 		return EndCursor(), nil
 	}
 
-	cursor, err := t.document.backend.TextCursorMovingAt(
+	cursor, err := t.document.engine.TextCursorMovingAt(
 		ctx,
 		t.handle,
 		uint32(index),
 		move == CursorMoveBefore,
-		backendHashes(heads),
+		engineHashes(heads),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create historical Automerge text cursor: %w", err)
@@ -147,7 +147,7 @@ func (t *Text) SpliceCursor(
 		return ErrClosed
 	}
 
-	position, err := t.document.backend.TextCursorPosition(
+	position, err := t.document.engine.TextCursorPosition(
 		ctx,
 		t.handle,
 		cursor,
@@ -156,7 +156,7 @@ func (t *Text) SpliceCursor(
 		return fmt.Errorf("cannot resolve Automerge text cursor: %w", err)
 	}
 
-	if err := t.document.backend.SpliceText(
+	if err := t.document.engine.SpliceText(
 		ctx,
 		t.handle,
 		position,

@@ -275,7 +275,7 @@ func (o *Object) putObjectAt(
 		return nil, fmt.Errorf("unknown Automerge object type %q", objectType)
 	}
 
-	handle, err := o.document.backend.PutObjectAt(
+	handle, err := o.document.engine.PutObjectAt(
 		ctx,
 		o.handle,
 		index,

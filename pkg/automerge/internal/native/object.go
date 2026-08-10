@@ -27,7 +27,7 @@ import (
 	"slices"
 )
 
-func (b *Backend) PutString(
+func (b *Engine) PutString(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -60,7 +60,7 @@ func (b *Backend) PutString(
 	return b.addPending(operation)
 }
 
-func (b *Backend) GetString(
+func (b *Engine) GetString(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -77,7 +77,7 @@ func (b *Backend) GetString(
 	return operation.Value.String, nil
 }
 
-func (b *Backend) PutScalar(
+func (b *Engine) PutScalar(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -142,7 +142,7 @@ func (b *Backend) PutScalar(
 	return b.addPending(operation)
 }
 
-func (b *Backend) GetScalar(
+func (b *Engine) GetScalar(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -169,7 +169,7 @@ func (b *Backend) GetScalar(
 	return encodeScalarWire(value)
 }
 
-func (b *Backend) GetScalarAtHeads(
+func (b *Engine) GetScalarAtHeads(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -202,7 +202,7 @@ func (b *Backend) GetScalarAtHeads(
 	return encodeScalarWire(value)
 }
 
-func (b *Backend) GetAllScalars(
+func (b *Engine) GetAllScalars(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -248,7 +248,7 @@ func (b *Backend) GetAllScalars(
 	return encoded, nil
 }
 
-func (b *Backend) GetAllScalarsAt(
+func (b *Engine) GetAllScalarsAt(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -295,7 +295,7 @@ func (b *Backend) GetAllScalarsAt(
 	return encoded, nil
 }
 
-func (b *Backend) PutObject(
+func (b *Engine) PutObject(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -334,7 +334,7 @@ func (b *Backend) PutObject(
 	return b.pushObject(ObjectID{OpID: operation.ID}), nil
 }
 
-func (b *Backend) GetObject(
+func (b *Engine) GetObject(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -361,7 +361,7 @@ func (b *Backend) GetObject(
 	return b.pushObject(ObjectID{OpID: operation.ID}), rawType, nil
 }
 
-func (b *Backend) InsertScalar(
+func (b *Engine) InsertScalar(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -377,7 +377,7 @@ func (b *Backend) InsertScalar(
 	return err
 }
 
-func (b *Backend) PutScalarAt(
+func (b *Engine) PutScalarAt(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -435,7 +435,7 @@ func (b *Backend) PutScalarAt(
 	})
 }
 
-func (b *Backend) InsertObject(
+func (b *Engine) InsertObject(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -460,7 +460,7 @@ func (b *Backend) InsertObject(
 	return b.pushObject(ObjectID{OpID: operation.ID}), nil
 }
 
-func (b *Backend) PutObjectAt(
+func (b *Engine) PutObjectAt(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -495,7 +495,7 @@ func (b *Backend) PutObjectAt(
 	return b.pushObject(ObjectID{OpID: operation.ID}), nil
 }
 
-func (b *Backend) GetScalarAt(
+func (b *Engine) GetScalarAt(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -513,7 +513,7 @@ func (b *Backend) GetScalarAt(
 	return encodeScalarWire(value)
 }
 
-func (b *Backend) GetObjectAt(
+func (b *Engine) GetObjectAt(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -531,7 +531,7 @@ func (b *Backend) GetObjectAt(
 	return b.pushObject(ObjectID{OpID: operation.Operation.ID}), rawType, nil
 }
 
-func (b *Backend) DeleteMap(
+func (b *Engine) DeleteMap(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -564,7 +564,7 @@ func (b *Backend) DeleteMap(
 	return b.addPending(operation)
 }
 
-func (b *Backend) DeleteSequence(
+func (b *Engine) DeleteSequence(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -588,7 +588,7 @@ func (b *Backend) DeleteSequence(
 	})
 }
 
-func (b *Backend) Increment(
+func (b *Engine) Increment(
 	ctx context.Context,
 	object uint32,
 	key string,
@@ -628,7 +628,7 @@ func (b *Backend) Increment(
 	})
 }
 
-func (b *Backend) IncrementAt(
+func (b *Engine) IncrementAt(
 	ctx context.Context,
 	object uint32,
 	index uint64,
@@ -667,7 +667,7 @@ func (b *Backend) IncrementAt(
 	})
 }
 
-func (b *Backend) Keys(ctx context.Context, object uint32) ([]string, error) {
+func (b *Engine) Keys(ctx context.Context, object uint32) ([]string, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -680,7 +680,7 @@ func (b *Backend) Keys(ctx context.Context, object uint32) ([]string, error) {
 	return b.state.mapKeys(objectID), nil
 }
 
-func (b *Backend) Length(ctx context.Context, object uint32) (uint64, error) {
+func (b *Engine) Length(ctx context.Context, object uint32) (uint64, error) {
 	if err := ctx.Err(); err != nil {
 		return 0, err
 	}
