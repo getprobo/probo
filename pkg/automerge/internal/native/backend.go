@@ -4611,18 +4611,10 @@ func (b *Backend) textMarkKey(
 	// a character. Walk the full element sequence, not the text-only view.
 	sequence := b.state.sequenceElements(object.OpID)
 
-	// A mark boundary past the end of the text is clamped to the end, matching
-	// the reference, whose insert query positions such an anchor at the tail
-	// rather than rejecting it.
-	var length uint32
-	for i := range sequence {
-		length += elementLength(sequence[i])
-	}
-
-	if index > length {
-		index = length
-	}
-
+	// A mark boundary past the end of the text is rejected, matching the
+	// reference. The reference applies the begin boundary before failing on the
+	// out-of-range end, leaving a begin operation with no matching end; span
+	// computation extends such an unmatched begin to the end of the text.
 	_, previous, err := richTextPosition(sequence, index)
 	if err != nil {
 		return Key{}, err

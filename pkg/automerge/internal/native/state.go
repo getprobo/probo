@@ -980,10 +980,36 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 		}
 	}
 
-	// A mark left open covers nothing. This is how a zero-length mark presents
-	// itself: its begin and end operations share an anchor, and because sibling
-	// insertions are ordered by descending operation ID the end is visited
-	// first, so the begin never pairs with it.
+	// A begin whose matching end operation was never created extends to the end
+	// of the text. This happens when a mark was applied with an out-of-range end
+	// boundary: the reference records the begin and then fails on the end, so the
+	// begin dangles. A begin whose end operation exists but was simply visited
+	// first (a zero-length mark, where begin and end share an anchor and sibling
+	// insertions are ordered by descending operation ID) covers nothing.
+	remaining := make([]openMark, 0, len(open))
+
+	for _, opened := range open {
+		endID := OpID{Actor: opened.operation.ID.Actor, Counter: opened.operation.ID.Counter + 1}
+
+		// The end operation exists only when the following operation is actually
+		// a mark end. A begin whose end insert failed leaves that counter free
+		// for a later operation (a delete, say), so checking the action avoids
+		// mistaking such an operation for the missing end.
+		if end, ok := s.operations[endID]; ok &&
+			end.Action == ActionMark && end.MarkName == nil {
+			continue
+		}
+
+		remaining = append(remaining, opened)
+	}
+
+	sort.Slice(remaining, func(i, j int) bool {
+		return remaining[i].operation.ID.Compare(remaining[j].operation.ID) < 0
+	})
+
+	for _, opened := range remaining {
+		closeMark(opened, index)
+	}
 
 	// Precedence follows creation order, so a later unmark or replacement value
 	// wins over an earlier mark where the two overlap.

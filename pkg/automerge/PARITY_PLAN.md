@@ -125,19 +125,26 @@ Two behaviours were essential to get right and are easy to regress:
 
 Randomized differential testing that compares mark *values* against the
 reference (a stronger assertion than upstream `marks_are_okay`, which only
-checks span consolidation and text) drove several fixes this pass: an over-long
-splice deletion and an over-long mark range are now clamped to the end of the
-text rather than rejected, matching the reference. One characterized case
-remains: marking an *empty* text with a range whose end is past the end (for
-example `mark(0, 2)`) and the `ExpandMark::Both` flag, then inserting at the
-head, should capture the inserted text — the reference reports it as marked and
-treats it differently from a true zero-length `mark(0, 0)`, which captures
-nothing. Native cannot reproduce this because on empty text both the start and
-the clamped end anchor resolve to the head with no predecessor element, so the
-two marks are structurally identical to it; distinguishing them needs a richer
-anchor representation for a boundary positioned beyond the end. The case is
-narrow (a mark past the end of an empty text followed by an insertion) and the
-`TestRustText_MarksAreOkay` value-level differential reproduces it.
+checks span consolidation and text) drove a series of fixes this pass:
+
+- an over-long splice deletion is clamped to the remaining elements rather than
+  rejected, matching the reference;
+- a mark whose end boundary is past the end of the text is rejected as the
+  reference does, and — matching the reference — the begin boundary that was
+  already applied is left in place, so span computation extends that unmatched
+  begin over the text that follows it;
+- an unmatched begin is distinguished from a zero-length mark (whose end
+  operation exists but is ordered before the begin) by checking that the
+  operation following the begin is really a mark end, so a later unrelated
+  operation reusing that counter is not mistaken for it.
+
+These closed the common cases. What remains are esoteric consequences of the
+reference applying a mark with an out-of-range boundary and then failing: the
+resulting dangling begin covers text according to its expand direction (an
+expand-left begin captures content to its left even when later insertions sort
+ahead of it), which native does not fully reproduce. These arise only from
+out-of-range mark boundaries — an error condition — and the `TestRustText_MarksAreOkay`
+value-level differential reproduces them.
 
 **Independent re-encoding of concurrent edits (determinism, not interop).**
 The randomized `TestDifferentialStress_ConcurrentMerge` harness applies the same
