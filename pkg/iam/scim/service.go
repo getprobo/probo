@@ -49,6 +49,8 @@ import (
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
+const scimEventLogTimeout = 5 * time.Second
+
 type (
 	Service struct {
 		pg           *pg.Client
@@ -1019,7 +1021,9 @@ func (s *Service) LogEvent(
 	requestBody *string,
 	responseBody *string,
 ) {
-	ctx = context.WithoutCancel(ctx)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), scimEventLogTimeout)
+	defer cancel()
+
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	event := s.createEvent(
