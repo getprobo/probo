@@ -709,17 +709,16 @@ func (s *Service) ListSentMailingListUpdates(
 
 func (s *Service) GetSentMailingListUpdate(
 	ctx context.Context,
+	scope coredata.Scoper,
 	mailingListID gid.GID,
 	id gid.GID,
 ) (*coredata.MailingListUpdate, error) {
-	scope := coredata.NewScopeFromObjectID(mailingListID)
-
 	var mlu coredata.MailingListUpdate
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := mlu.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := mlu.LoadSentByMailingListIDAndID(ctx, conn, scope, mailingListID, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrMailingListUpdateNotFound
 				}
@@ -732,10 +731,6 @@ func (s *Service) GetSentMailingListUpdate(
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	if mlu.MailingListID != mailingListID || mlu.Status != coredata.MailingListUpdateStatusSent {
-		return nil, ErrMailingListUpdateNotFound
 	}
 
 	return &mlu, nil

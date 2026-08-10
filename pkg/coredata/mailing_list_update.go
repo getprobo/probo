@@ -240,6 +240,55 @@ LIMIT 1;
 	return nil
 }
 
+func (mlu *MailingListUpdate) LoadSentByMailingListIDAndID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	mailingListID gid.GID,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	mailing_list_id,
+	title,
+	body,
+	status,
+	created_at,
+	updated_at
+FROM mailing_list_updates
+WHERE
+	%s
+	AND mailing_list_id = @mailing_list_id
+	AND status = 'SENT'
+	AND id = @id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query mailing list update: %w", err)
+	}
+
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MailingListUpdate])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect mailing list update: %w", err)
+	}
+
+	*mlu = result
+
+	return nil
+}
+
 func (mlul *MailingListUpdateItems) LoadSentByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
