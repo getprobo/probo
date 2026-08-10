@@ -22,12 +22,31 @@ package prosemirror
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
 
 	"go.probo.inc/probo/pkg/automerge"
 )
+
+// errUnknownBlock signals that a block span carries a type the renderer does not
+// recognize. It is handled gracefully rather than aborting the whole render so a
+// single unfamiliar block (for example from a newer client) can never block
+// persistence of an entire document.
+var errUnknownBlock = errors.New("unknown Automerge block type")
+
+// markRenderOrder ranks Automerge mark names by the ProseMirror schema order the
+// frontend uses. ProseMirror stores marks in schema-rank order, so the Go renderer
+// must emit them in the same order to produce byte-identical documents.
+var markRenderOrder = map[string]int{
+	"link":      0,
+	"strong":    1,
+	"em":        2,
+	"strike":    3,
+	"underline": 4,
+	"code":      5,
+}
 
 type (
 	node struct {
@@ -198,6 +217,17 @@ func renderBlocks(blocks []block, parents []string) ([]node, int, error) {
 
 		rendered, listType, err := renderBlock(current, children)
 		if err != nil {
+			if errors.Is(err, errUnknownBlock) {
+				if len(current.Content) > 0 {
+					content = append(content, node{Type: "paragraph", Content: current.Content})
+				}
+
+				content = append(content, children...)
+				consumed = childEnd
+
+				continue
+			}
+
 			return nil, 0, err
 		}
 
@@ -320,7 +350,7 @@ func renderBlock(source block, children []node) (node, string, error) {
 			Content: content,
 		}, "", nil
 	default:
-		return node{}, "", fmt.Errorf("unsupported Automerge block type %q", source.Type)
+		return node{}, "", errUnknownBlock
 	}
 }
 
@@ -330,13 +360,24 @@ func renderMarks(values map[string]any) ([]mark, error) {
 	}
 
 	names := make([]string, 0, len(values))
+
 	for name := range values {
+		if _, known := markRenderOrder[name]; !known {
+			// Unknown marks are dropped rather than aborting the render, mirroring
+			// the frontend's tolerance for schema drift: the formatting is lost but
+			// the text survives and downstream renderers only see known marks.
+			continue
+		}
+
 		names = append(names, name)
 	}
 
-	sort.Strings(names)
+	sort.SliceStable(names, func(i, j int) bool {
+		return markRenderOrder[names[i]] < markRenderOrder[names[j]]
+	})
 
 	marks := make([]mark, 0, len(names))
+
 	for _, name := range names {
 		switch name {
 		case "strong":
@@ -348,18 +389,20 @@ func renderMarks(values map[string]any) ([]mark, error) {
 		case "link":
 			raw, ok := values[name].(string)
 			if !ok {
-				return nil, fmt.Errorf("link mark value must be a string")
+				continue
 			}
 
 			var attrs map[string]any
 			if err := json.Unmarshal([]byte(raw), &attrs); err != nil {
-				return nil, fmt.Errorf("cannot decode link mark: %w", err)
+				continue
 			}
 
 			marks = append(marks, mark{Type: "link", Attrs: attrs})
-		default:
-			return nil, fmt.Errorf("unsupported Automerge mark %q", name)
 		}
+	}
+
+	if len(marks) == 0 {
+		return nil, nil
 	}
 
 	return marks, nil
