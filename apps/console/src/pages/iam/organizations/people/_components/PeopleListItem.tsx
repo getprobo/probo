@@ -327,7 +327,7 @@ export function PeopleListItem(props: {
               <span className="text-txt-tertiary">—</span>
             )}
       </Td>
-      <Td noLink width={160} className="text-end">
+      <Td noLink width={50} className="text-end">
         {(canSendActivationMail || canDeactivate || canRemove) && (
           <ActionDropdown>
             {canSendActivationMail && (

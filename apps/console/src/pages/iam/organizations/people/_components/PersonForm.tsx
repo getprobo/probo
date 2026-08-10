@@ -72,6 +72,8 @@ const updatePersonMutation = graphql`
     updateUser(input: $input) {
       profile {
         id
+        ...PersonFormFragment
+        ...PeopleListItemFragment
       }
     }
   }
