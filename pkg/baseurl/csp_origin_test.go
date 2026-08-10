@@ -63,6 +63,16 @@ func TestCSPOrigin(t *testing.T) {
 			want:  "https://app.example.com",
 		},
 		{
+			name:  "strips path prefix",
+			input: "https://app.example.com/api",
+			want:  "https://app.example.com",
+		},
+		{
+			name:  "strips nested path prefix",
+			input: "https://app.example.com/probo/console",
+			want:  "https://app.example.com",
+		},
+		{
 			name:    "rejects semicolon host injection",
 			input:   "https://evil.com;frame-ancestors",
 			wantErr: true,
@@ -73,8 +83,8 @@ func TestCSPOrigin(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "rejects path",
-			input:   "https://app.example.com/api",
+			name:    "rejects query",
+			input:   "https://app.example.com?x=1",
 			wantErr: true,
 		},
 		{
@@ -122,4 +132,15 @@ func TestBaseURL_CSPOrigin_RejectsSemicolonHost(t *testing.T) {
 
 	_, err = b.CSPOrigin()
 	require.Error(t, err)
+}
+
+func TestBaseURL_CSPOrigin_DiscardsPath(t *testing.T) {
+	t.Parallel()
+
+	b, err := baseurl.Parse("https://app.example.com/probo")
+	require.NoError(t, err)
+
+	got, err := b.CSPOrigin()
+	require.NoError(t, err)
+	assert.Equal(t, "https://app.example.com", got)
 }

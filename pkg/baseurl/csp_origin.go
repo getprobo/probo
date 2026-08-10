@@ -27,10 +27,11 @@ import (
 )
 
 // CSPOrigin returns a canonical http(s)://host[:port] origin safe to embed as
-// a single Content-Security-Policy source. Go's url.Parse (and Parse) accept
-// hosts containing ';' which would terminate a CSP directive and inject
-// another (e.g. a weaker frame-ancestors). Empty raw is allowed and returned
-// unchanged for callers that omit the origin.
+// a single Content-Security-Policy source. Any path on the input is discarded:
+// BaseURL values may include a path prefix, and CSP sources only need scheme
+// and host. Go's url.Parse (and Parse) accept hosts containing ';' which would
+// terminate a CSP directive and inject another (e.g. a weaker frame-ancestors).
+// Empty raw is allowed and returned unchanged for callers that omit the origin.
 func CSPOrigin(raw string) (string, error) {
 	if raw == "" {
 		return "", nil
@@ -45,6 +46,7 @@ func CSPOrigin(raw string) (string, error) {
 }
 
 // CSPOrigin returns the BaseURL's scheme://host origin in a form safe for CSP.
+// A path on the BaseURL is discarded; only scheme and host are used.
 func (b *BaseURL) CSPOrigin() (string, error) {
 	if b == nil || b.parsed == nil {
 		return "", fmt.Errorf("base URL is nil")
@@ -64,10 +66,6 @@ func cspOriginFromURL(u *url.URL) (string, error) {
 
 	if u.Opaque != "" {
 		return "", fmt.Errorf("CSP origin must not be opaque")
-	}
-
-	if u.Path != "" && u.Path != "/" {
-		return "", fmt.Errorf("CSP origin must not include a path")
 	}
 
 	if u.RawQuery != "" || u.Fragment != "" {

@@ -46,7 +46,7 @@ type contentSecurityPolicyData struct {
 func ContentSecurityPolicy(appOrigin string) (string, error) {
 	origin, err := baseurl.CSPOrigin(appOrigin)
 	if err != nil {
-		return "", fmt.Errorf("cannot render content security policy: %w", err)
+		return "", fmt.Errorf("invalid CSP app origin: %w", err)
 	}
 
 	var buf bytes.Buffer

@@ -57,4 +57,5 @@ func TestContentSecurityPolicy_RejectsDirectiveInjection(t *testing.T) {
 
 	_, err := console.ContentSecurityPolicy("https://evil.com;frame-ancestors")
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid CSP app origin")
 }
