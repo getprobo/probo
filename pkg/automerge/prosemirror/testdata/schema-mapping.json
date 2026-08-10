@@ -1,0 +1,25 @@
+{
+  "_comment": "Shared ProseMirror <-> Automerge schema ledger. Single source of truth for the block-type strings, mark names, and mark order that must agree across the Go renderer (pkg/automerge/prosemirror/render.go), the frontend adapter (packages/ui/src/RichEditor/collaboration.ts), and the render parity oracle. The `marks` array order is the ProseMirror schema rank; the Go renderer must emit marks in this order. Drift-guarded by TestSchemaMappingLedger (Go) and schemaMappingParity.test.ts (frontend). Regenerate the render fixture with `make generate-prosemirror-parity` after any change here.",
+  "blocks": [
+    { "automerge": "paragraph", "prosemirror": "paragraph", "isEmbed": false },
+    { "automerge": "heading", "prosemirror": "heading", "isEmbed": false },
+    { "automerge": "code-block", "prosemirror": "codeBlock", "isEmbed": false },
+    { "automerge": "blockquote", "prosemirror": "blockquote", "isEmbed": false },
+    { "automerge": "ordered-list-item", "prosemirror": "listItem", "outer": "orderedList", "isEmbed": false },
+    { "automerge": "unordered-list-item", "prosemirror": "listItem", "outer": "bulletList", "isEmbed": false },
+    { "automerge": "horizontal-rule", "prosemirror": "horizontalRule", "isEmbed": false },
+    { "automerge": "hard-break", "prosemirror": "hardBreak", "isEmbed": true },
+    { "automerge": "table", "prosemirror": "table", "isEmbed": false },
+    { "automerge": "table-cell", "prosemirror": "tableCell", "isEmbed": false },
+    { "automerge": "table-header", "prosemirror": "tableHeader", "isEmbed": false },
+    { "automerge": "table-row", "prosemirror": "tableRow", "isEmbed": false }
+  ],
+  "marks": [
+    { "automerge": "link", "prosemirror": "link" },
+    { "automerge": "strong", "prosemirror": "bold" },
+    { "automerge": "em", "prosemirror": "italic" },
+    { "automerge": "strike", "prosemirror": "strike" },
+    { "automerge": "underline", "prosemirror": "underline" },
+    { "automerge": "code", "prosemirror": "code" }
+  ]
+}

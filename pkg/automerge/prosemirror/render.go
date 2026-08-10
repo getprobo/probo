@@ -36,16 +36,56 @@ import (
 // persistence of an entire document.
 var errUnknownBlock = errors.New("unknown Automerge block type")
 
-// markRenderOrder ranks Automerge mark names by the ProseMirror schema order the
-// frontend uses. ProseMirror stores marks in schema-rank order, so the Go renderer
-// must emit them in the same order to produce byte-identical documents.
-var markRenderOrder = map[string]int{
-	"link":      0,
-	"strong":    1,
-	"em":        2,
-	"strike":    3,
-	"underline": 4,
-	"code":      5,
+type schemaMapping struct {
+	Automerge   string
+	ProseMirror string
+}
+
+// blockMappings and markMappings are the Go half of the shared ProseMirror <->
+// Automerge schema ledger (testdata/schema-mapping.json). Keeping them as data
+// lets a drift test assert that this renderer, the frontend adapter, and the
+// ledger all agree on block-type strings, mark names, and mark order. markMappings
+// is ordered by ProseMirror schema rank because ProseMirror stores marks in that
+// order, so the renderer must emit them the same way for byte-identical documents.
+var (
+	blockMappings = []schemaMapping{
+		{Automerge: blockTypeParagraph, ProseMirror: "paragraph"},
+		{Automerge: blockTypeHeading, ProseMirror: "heading"},
+		{Automerge: blockTypeCode, ProseMirror: "codeBlock"},
+		{Automerge: blockTypeBlockquote, ProseMirror: "blockquote"},
+		{Automerge: blockTypeOrderedListItem, ProseMirror: "listItem"},
+		{Automerge: blockTypeUnorderedListItem, ProseMirror: "listItem"},
+		{Automerge: blockTypeHorizontalRule, ProseMirror: "horizontalRule"},
+		{Automerge: blockTypeHardBreak, ProseMirror: "hardBreak"},
+		{Automerge: blockTypeTable, ProseMirror: "table"},
+		{Automerge: blockTypeTableCell, ProseMirror: "tableCell"},
+		{Automerge: blockTypeTableHeader, ProseMirror: "tableHeader"},
+		{Automerge: blockTypeTableRow, ProseMirror: "tableRow"},
+	}
+
+	markMappings = []schemaMapping{
+		{Automerge: "link", ProseMirror: "link"},
+		{Automerge: "strong", ProseMirror: "bold"},
+		{Automerge: "em", ProseMirror: "italic"},
+		{Automerge: "strike", ProseMirror: "strike"},
+		{Automerge: "underline", ProseMirror: "underline"},
+		{Automerge: "code", ProseMirror: "code"},
+	}
+
+	blockNodeNames  = map[string]string{}
+	markNodeNames   = map[string]string{}
+	markRenderOrder = map[string]int{}
+)
+
+func init() {
+	for _, mapping := range blockMappings {
+		blockNodeNames[mapping.Automerge] = mapping.ProseMirror
+	}
+
+	for index, mapping := range markMappings {
+		markNodeNames[mapping.Automerge] = mapping.ProseMirror
+		markRenderOrder[mapping.Automerge] = index
+	}
 }
 
 type (
@@ -130,7 +170,7 @@ func collectBlocks(spans []automerge.Span) ([]block, error) {
 
 				blocks[len(blocks)-1].Content = append(
 					blocks[len(blocks)-1].Content,
-					node{Type: "hardBreak"},
+					node{Type: blockNodeNames[blockTypeHardBreak]},
 				)
 
 				continue
@@ -260,7 +300,7 @@ func renderBlock(source block, children []node) (node, string, error) {
 			return node{}, "", fmt.Errorf("paragraph Automerge block cannot contain child blocks")
 		}
 
-		return node{Type: "paragraph", Content: source.Content}, "", nil
+		return node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}, "", nil
 	case blockTypeHeading:
 		if len(children) > 0 {
 			return node{}, "", fmt.Errorf("heading Automerge block cannot contain child blocks")
@@ -272,7 +312,7 @@ func renderBlock(source block, children []node) (node, string, error) {
 		}
 
 		return node{
-			Type:    "heading",
+			Type:    blockNodeNames[blockTypeHeading],
 			Attrs:   map[string]any{"level": level},
 			Content: source.Content,
 		}, "", nil
@@ -286,32 +326,32 @@ func renderBlock(source block, children []node) (node, string, error) {
 			attrs["language"] = language
 		}
 
-		return node{Type: "codeBlock", Attrs: attrs, Content: source.Content}, "", nil
+		return node{Type: blockNodeNames[blockTypeCode], Attrs: attrs, Content: source.Content}, "", nil
 	case blockTypeHorizontalRule:
 		if len(source.Content) > 0 || len(children) > 0 {
 			return node{}, "", fmt.Errorf("horizontal rule Automerge block cannot contain content")
 		}
 
-		return node{Type: "horizontalRule"}, "", nil
+		return node{Type: blockNodeNames[blockTypeHorizontalRule]}, "", nil
 	case blockTypeBlockquote:
-		paragraph := node{Type: "paragraph", Content: source.Content}
+		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 
 		return node{
-			Type:    "blockquote",
+			Type:    blockNodeNames[blockTypeBlockquote],
 			Content: append([]node{paragraph}, children...),
 		}, "", nil
 	case blockTypeOrderedListItem:
-		paragraph := node{Type: "paragraph", Content: source.Content}
+		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 
 		return node{
-			Type:    "listItem",
+			Type:    blockNodeNames[blockTypeOrderedListItem],
 			Content: append([]node{paragraph}, children...),
 		}, "orderedList", nil
 	case blockTypeUnorderedListItem:
-		paragraph := node{Type: "paragraph", Content: source.Content}
+		paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 
 		return node{
-			Type:    "listItem",
+			Type:    blockNodeNames[blockTypeUnorderedListItem],
 			Content: append([]node{paragraph}, children...),
 		}, "bulletList", nil
 	case blockTypeTable:
@@ -319,17 +359,17 @@ func renderBlock(source block, children []node) (node, string, error) {
 			return node{}, "", fmt.Errorf("table Automerge block cannot contain inline content")
 		}
 
-		return node{Type: "table", Content: children}, "", nil
+		return node{Type: blockNodeNames[blockTypeTable], Content: children}, "", nil
 	case blockTypeTableRow:
 		if len(source.Content) > 0 {
 			return node{}, "", fmt.Errorf("table row Automerge block cannot contain inline content")
 		}
 
-		return node{Type: "tableRow", Content: children}, "", nil
+		return node{Type: blockNodeNames[blockTypeTableRow], Content: children}, "", nil
 	case blockTypeTableCell, blockTypeTableHeader:
 		content := children
 		if len(source.Content) > 0 || len(children) == 0 {
-			paragraph := node{Type: "paragraph", Content: source.Content}
+			paragraph := node{Type: blockNodeNames[blockTypeParagraph], Content: source.Content}
 			content = append([]node{paragraph}, children...)
 		}
 
@@ -339,9 +379,9 @@ func renderBlock(source block, children []node) (node, string, error) {
 			"colwidth": intSliceAttribute(source.Attrs, "colwidth"),
 		}
 
-		nodeType := "tableCell"
+		nodeType := blockNodeNames[blockTypeTableCell]
 		if source.Type == blockTypeTableHeader {
-			nodeType = "tableHeader"
+			nodeType = blockNodeNames[blockTypeTableHeader]
 		}
 
 		return node{
@@ -379,14 +419,7 @@ func renderMarks(values map[string]any) ([]mark, error) {
 	marks := make([]mark, 0, len(names))
 
 	for _, name := range names {
-		switch name {
-		case "strong":
-			marks = append(marks, mark{Type: "bold"})
-		case "em":
-			marks = append(marks, mark{Type: "italic"})
-		case "strike", "underline", "code":
-			marks = append(marks, mark{Type: name})
-		case "link":
+		if name == "link" {
 			raw, ok := values[name].(string)
 			if !ok {
 				continue
@@ -397,8 +430,12 @@ func renderMarks(values map[string]any) ([]mark, error) {
 				continue
 			}
 
-			marks = append(marks, mark{Type: "link", Attrs: attrs})
+			marks = append(marks, mark{Type: markNodeNames[name], Attrs: attrs})
+
+			continue
 		}
+
+		marks = append(marks, mark{Type: markNodeNames[name]})
 	}
 
 	if len(marks) == 0 {
