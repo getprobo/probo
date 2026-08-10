@@ -18,10 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Package types defines the shared Automerge CRDT and storage model.
-// It is dependency-free so storage, sync, and native execution packages can
-// exchange changes without importing one another.
-package types
+// Package opset defines the shared Automerge operation-set model: actors,
+// operation IDs, operations, changes, scalars, objects and the validated
+// document history. It is dependency-free so the storage, sync, and native
+// execution packages can exchange changes without importing one another.
+package opset
 
 import (
 	"bytes"

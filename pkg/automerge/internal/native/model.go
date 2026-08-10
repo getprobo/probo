@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Package storage implements Automerge chunk and column encoding, decoding, and
-// graph validation independently from the native execution engine.
-package storage
+package native
 
 import "go.probo.inc/probo/pkg/automerge/internal/opset"
 

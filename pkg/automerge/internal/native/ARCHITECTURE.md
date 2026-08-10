@@ -21,13 +21,13 @@ types or storage details.
 | Rich-text state | `rich_text_state.go` | Span/mark state machines, mark anchors and UTF-16 ranges |
 | Hydration | `hydrate_state.go` | Recursive map/list materialization |
 | Storage facade | `storage.go` | Delegation to the independent storage and encoding packages |
-| Shared model facade | `types.go` | Aliases to the independent shared types package |
+| Shared model facade | `model.go` | Aliases to the independent operation-set model package |
 
 ## Internal package boundaries
 
 | Package | Responsibility |
 |---|---|
-| `internal/types` | Dependency-free actor, operation, change, object, scalar and chunk model |
+| `internal/opset` | Dependency-free actor, operation, change, object, scalar and chunk model |
 | `internal/encoding` | Bounded binary reader, ULEB128 and length-prefixed primitives |
 | `internal/storage` | Automerge chunk/column encoding, decoding and graph validation |
 | `internal/sync` | V1/V2 sync message wire codec and resource limits |
@@ -45,7 +45,7 @@ native Engine methods
         ↓
 State / sequence / rich-text state
         ↓
-internal/types ← internal/encoding ← internal/storage
+internal/opset ← internal/encoding ← internal/storage
         ↑
  internal/sync
 ```
