@@ -534,6 +534,24 @@ func assignOperations(changes []Change, operations []Operation) error {
 		})
 	}
 
+	// The per-actor bounds above are a permissive lower bound that only has to
+	// locate operations. A change's operations carry consecutive counters ending
+	// at maxOp, so the real start operation follows from the operation count, and
+	// re-encoding the change depends on it being exact.
+	for i := range changes {
+		count := uint64(len(changes[i].Operations))
+		if count > changes[i].MaxOp {
+			return fmt.Errorf(
+				"change %d holds %d operations but ends at operation %d",
+				i,
+				count,
+				changes[i].MaxOp,
+			)
+		}
+
+		changes[i].StartOp = changes[i].MaxOp - count + 1
+	}
+
 	return nil
 }
 
@@ -739,21 +757,15 @@ func validateChangeChunksAfterSnapshot(document *Document) error {
 	known := make(map[ChangeHash]struct{})
 	dependedOn := make(map[ChangeHash]struct{})
 
+	// A change may legitimately appear both inside the snapshot and as a trailing
+	// change chunk, so repeats identify the same change rather than a conflict.
 	for _, change := range document.Changes {
 		if change.Hash != nil {
-			if _, exists := known[*change.Hash]; exists {
-				return fmt.Errorf("duplicate known change hash %s", change.Hash)
-			}
-
 			known[*change.Hash] = struct{}{}
 		}
 	}
 
 	for _, change := range document.Changes {
-		if len(change.DependencyIndexes) > 0 {
-			continue
-		}
-
 		for _, dependency := range change.Dependencies {
 			if _, ok := known[dependency]; !ok {
 				return fmt.Errorf("change %s has missing dependency %s", change.Hash, dependency)

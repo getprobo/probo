@@ -274,6 +274,11 @@ func decodeDocumentChunk(document *Document, data []byte) error {
 		return fmt.Errorf("cannot decode operations: %w", err)
 	}
 
+	operations, err = restoreChangeOperations(operations)
+	if err != nil {
+		return fmt.Errorf("cannot restore change operations: %w", err)
+	}
+
 	if err := assignOperations(changes, operations); err != nil {
 		return fmt.Errorf("cannot assign operations: %w", err)
 	}
@@ -307,6 +312,10 @@ func decodeDocumentChunk(document *Document, data []byte) error {
 		return err
 	}
 
+	if err := reconstructSnapshotChanges(changes); err != nil {
+		return err
+	}
+
 	document.Actors = actors
 	document.Heads = heads
 	document.Changes = changes
@@ -314,6 +323,168 @@ func decodeDocumentChunk(document *Document, data []byte) error {
 	document.UnknownColumns = append(unknownChanges, unknownOperations...)
 
 	return nil
+}
+
+// restoreChangeOperations turns a snapshot's operation view back into the one a
+// change carries. A snapshot records, for every surviving operation, the
+// operations that superseded it, and it drops delete operations entirely because
+// they survive only as those successor entries. A change instead names each
+// operation's predecessors and spells its deletes out, so rebuilding a change
+// means inverting the successor lists and recreating the deletes they imply.
+//
+// Successors are left in place: the engine materializes a loaded snapshot from
+// them, and re-encoding a change only ever reads predecessors.
+func restoreChangeOperations(operations []Operation) ([]Operation, error) {
+	stored := make(map[OpID]struct{}, len(operations))
+	for _, operation := range operations {
+		stored[operation.ID] = struct{}{}
+	}
+
+	predecessors := make(map[OpID][]OpID)
+	for _, operation := range operations {
+		for _, successor := range operation.Successors {
+			predecessors[successor] = append(predecessors[successor], operation.ID)
+		}
+	}
+
+	for identifier := range predecessors {
+		slices.SortFunc(predecessors[identifier], func(left, right OpID) int {
+			return left.Compare(right)
+		})
+	}
+
+	for i := range operations {
+		operations[i].Predecessors = predecessors[operations[i].ID]
+	}
+
+	deletes := make([]Operation, 0)
+
+	for identifier, superseded := range predecessors {
+		if _, ok := stored[identifier]; ok {
+			continue
+		}
+
+		// Only a delete leaves no operation of its own behind, and every operation
+		// it removed shares the object and key it targeted.
+		source := operationByID(operations, superseded[0])
+		if source == nil {
+			return nil, fmt.Errorf(
+				"operation %s@%d supersedes nothing that the snapshot retains",
+				identifier.Actor,
+				identifier.Counter,
+			)
+		}
+
+		deletes = append(deletes, Operation{
+			ID:           identifier,
+			Object:       source.Object,
+			Key:          supersededKey(source),
+			Action:       ActionDelete,
+			Predecessors: superseded,
+		})
+	}
+
+	slices.SortFunc(deletes, func(left, right Operation) int {
+		return left.ID.Compare(right.ID)
+	})
+
+	return append(operations, deletes...), nil
+}
+
+// supersededKey names the location an operation occupies, which is what an
+// operation superseding it addresses. A map operation is addressed by its
+// property, while a sequence operation is addressed by the element identifier:
+// an insertion creates the element it is named by, and any later operation on
+// that element already carries it.
+func supersededKey(operation *Operation) Key {
+	if operation.Key.Property != nil || !operation.Insert {
+		return operation.Key
+	}
+
+	element := operation.ID
+
+	return Key{Element: &element}
+}
+
+func operationByID(operations []Operation, identifier OpID) *Operation {
+	for i := range operations {
+		if operations[i].ID == identifier {
+			return &operations[i]
+		}
+	}
+
+	return nil
+}
+
+// reconstructSnapshotChanges restores the change-chunk identity of every change
+// in a document chunk. Snapshots store the frontier hashes only and reference
+// ancestry by column index, so every non-head change decodes without a hash and
+// without its original bytes. Re-encoding each change once its dependencies are
+// known recovers both, which keeps the change graph whole: without it only the
+// heads are addressable and any walk of their ancestry hits a missing change.
+//
+// Dependencies are rebuilt in the stored index order because the encoder writes
+// dependency hashes in slice order, so that order is what the original hash was
+// computed over.
+func reconstructSnapshotChanges(changes []Change) error {
+	resolved := make([]bool, len(changes))
+	remaining := len(changes)
+
+	for remaining > 0 {
+		progressed := false
+
+		for i := range changes {
+			change := &changes[i]
+
+			if resolved[i] || !dependenciesResolved(change, resolved) {
+				continue
+			}
+
+			change.Dependencies = make([]ChangeHash, 0, len(change.DependencyIndexes))
+			for _, index := range change.DependencyIndexes {
+				change.Dependencies = append(change.Dependencies, *changes[index].Hash)
+			}
+
+			recorded := change.Hash
+			change.Hash = nil
+
+			if _, err := EncodeChange(change); err != nil {
+				return fmt.Errorf("cannot rebuild snapshot change %d: %w", i, err)
+			}
+
+			// A recorded hash only exists for frontier changes. Disagreeing with it
+			// means the rebuilt bytes are not the ones the writer hashed, so the
+			// whole graph would be keyed by identifiers no peer shares.
+			if recorded != nil && *recorded != *change.Hash {
+				return fmt.Errorf(
+					"snapshot change %d rebuilds to hash %s but the document records %s",
+					i,
+					change.Hash,
+					recorded,
+				)
+			}
+
+			resolved[i] = true
+			remaining--
+			progressed = true
+		}
+
+		if !progressed {
+			return fmt.Errorf("snapshot dependency graph cannot be ordered")
+		}
+	}
+
+	return nil
+}
+
+func dependenciesResolved(change *Change, resolved []bool) bool {
+	for _, index := range change.DependencyIndexes {
+		if !resolved[index] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func decodeDocumentChanges(
@@ -745,7 +916,11 @@ func decodeOperations(
 			}
 		}
 
-		if markExpand[i].valid {
+		// Expand is a property of a mark, and its column is dense because booleans
+		// cannot be null. A document chunk shares one column across every change,
+		// so keeping the flag on ordinary operations would make a change that never
+		// carried an expand column re-encode with one and hash differently.
+		if markExpand[i].valid && operations[i].Action == ActionMark {
 			value := markExpand[i].value
 			operations[i].MarkExpand = &value
 		}

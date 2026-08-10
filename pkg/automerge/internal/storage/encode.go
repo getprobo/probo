@@ -214,8 +214,10 @@ func encodeOperationColumns(
 			predCounters = append(predCounters, some(int64(predecessor.Counter)))
 		}
 
-		if operation.MarkExpand != nil {
-			markExpands[i] = *operation.MarkExpand
+		// An all-false expand column carries no information and is left out, so a
+		// mark that expands in neither direction encodes without one.
+		if operation.MarkExpand != nil && *operation.MarkExpand {
+			markExpands[i] = true
 			hasMarkExpand = true
 		}
 

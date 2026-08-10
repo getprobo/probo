@@ -578,6 +578,13 @@ func (s *State) changesSince(heads []ChangeHash) ([]*Change, bool) {
 
 		visited[hash] = struct{}{}
 
+		// The baseline closure is transitively closed, so everything below a change
+		// the peer already holds is also held. Descending would add nothing and
+		// would fail the whole read if any ancestor were ever unavailable.
+		if _, ok := known[hash]; ok {
+			return true
+		}
+
 		change, ok := s.changes[hash]
 		if !ok {
 			return false
@@ -587,10 +594,6 @@ func (s *State) changesSince(heads []ChangeHash) ([]*Change, bool) {
 			if !visit(dependency) {
 				return false
 			}
-		}
-
-		if _, ok := known[hash]; ok {
-			return true
 		}
 
 		if len(change.Raw) == 0 {
