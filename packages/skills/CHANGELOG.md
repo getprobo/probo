@@ -19,15 +19,22 @@ this file.
   (`https://eu.probo.com/api/mcp/v1`)
 - Validation of the Agent Plugins manifest and MCP schemas (closed field sets,
   plugin name constraints, transport variants, literal HTTPS URLs, no
-  credential headers), of Agent Skills frontmatter (`name` matching the skill
-  directory, `description` and `compatibility` length limits), and of
-  `.mcp.json` parity with `mcp.json`
+  credential headers under any capitalization), of Agent Skills frontmatter
+  (parsed as YAML, `name` matching the skill directory, `description`,
+  `compatibility`, and `metadata` types and length limits), and of `.mcp.json`
+  parity with `mcp.json`. Optional fields must be absent rather than `null`,
+  which the portable schemas reject
 
 ### Fixed
 
 - MCP endpoint path: the Probo MCP API is served at `<instance-root>/api/mcp/v1`.
   The previous `/mcp/v1` path returned the console HTML page instead of the MCP
   endpoint, so no bundled server could connect
+- `access-review` skill: region discovery uses `listOrganizations`, which takes
+  no required input. It previously called `listAccessReviewCampaigns`, which
+  requires the `organization_id` that discovery is meant to establish, so the
+  step could not be executed as written. Resolving the organization before the
+  campaign is now explicit, and the reference documents `listOrganizations`
 
 ### Changed
 
