@@ -21,13 +21,17 @@ Before executing, read these files **relative to this skill directory**:
 1. A Probo MCP server must be connected. The plugin ships two hosted servers,
    `probo-us` and `probo-eu`; self-hosted instances are configured in the agent.
    Use the server for the user's region, and when the region is unknown call
-   `listAccessReviewCampaigns` on each connected server and keep the one that
-   returns the campaign. If tools fail with auth errors, stop and tell the user
-   to complete OAuth sign-in for that server (Claude Code: `/mcp` or
+   `listOrganizations` on each connected server and keep the one that returns
+   the user's organization. If tools fail with auth errors, stop and tell the
+   user to complete OAuth sign-in for that server (Claude Code: `/mcp` or
    `claude mcp login probo-us`; Codex: `codex mcp login probo-us`;
    OpenCode/Cursor: configure MCP in settings then authenticate).
-2. Resolve the campaign from `$ARGUMENTS` (name match or GID). If ambiguous,
-   list `listAccessReviewCampaigns` results and ask the user to pick one.
+2. Resolve the organization, then the campaign from `$ARGUMENTS` (name match or
+   GID). `listAccessReviewCampaigns` requires `organization_id`, so the
+   organization must be known first — reuse the one resolved in step 1, or call
+   `listOrganizations` and ask the user to pick when several are available. If
+   the campaign is ambiguous, list `listAccessReviewCampaigns` results and ask
+   the user to pick one.
 3. Campaign `status` must be `IN_PROGRESS` or `PENDING_ACTIONS`. Stop with a
    clear message for `DRAFT`, `COMPLETED`, or `CANCELLED`.
 

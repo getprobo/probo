@@ -3,6 +3,13 @@
 All tools are on a Probo MCP server (`probo-us`, `probo-eu`, or a self-hosted
 server configured in the agent). Read each tool schema before calling.
 
+## Organization scope
+
+### `listOrganizations`
+
+List organizations the caller can access. No required input, so this is also the
+tool to probe each connected server with when the user's region is unknown.
+
 ## Read
 
 ### `listAccessReviewCampaigns`
@@ -10,7 +17,7 @@ server configured in the agent). Read each tool schema before calling.
 List campaigns for an organization. Use to resolve `$ARGUMENTS` to a campaign
 when the user provides a name instead of a GID.
 
-Required: `organization_id`
+Required: `organization_id` — resolve the organization before calling this.
 
 ### `listAccessEntries`
 
