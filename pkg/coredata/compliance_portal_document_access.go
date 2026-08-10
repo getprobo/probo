@@ -712,8 +712,9 @@ WHERE
 }
 
 // RerequestByDocumentIDs reactivates REJECTED/REVOKED document access rows for
-// a visitor retry: status back to REQUESTED, and requested_at stamped when
-// missing so viewerHasRequestedAccess stays consistent with the mutation.
+// a visitor retry (status back to REQUESTED) and stamps requested_at when
+// missing on those rows or on pre-existing REQUESTED rows so
+// viewerHasRequestedAccess stays consistent with the mutation.
 func RerequestByDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -736,7 +737,13 @@ WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
     AND document_id = ANY(@document_ids)
-    AND status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+    AND (
+        status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+        OR (
+            status = @requested_status::compliance_portal_document_access_status
+            AND requested_at IS NULL
+        )
+    )
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -835,7 +842,7 @@ WHERE
 }
 
 // RerequestByReportFileIDs reactivates REJECTED/REVOKED report access rows for
-// a visitor retry. See RerequestByDocumentIDs.
+// a visitor retry and stamps unstamped REQUESTED rows. See RerequestByDocumentIDs.
 func RerequestByReportFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -858,7 +865,13 @@ WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
     AND report_file_id = ANY(@report_file_ids)
-    AND status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+    AND (
+        status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+        OR (
+            status = @requested_status::compliance_portal_document_access_status
+            AND requested_at IS NULL
+        )
+    )
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -1291,7 +1304,8 @@ LIMIT 1;
 }
 
 // RerequestByCompliancePortalFileIDs reactivates REJECTED/REVOKED file access
-// rows for a visitor retry. See RerequestByDocumentIDs.
+// rows for a visitor retry and stamps unstamped REQUESTED rows. See
+// RerequestByDocumentIDs.
 func RerequestByCompliancePortalFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -1314,7 +1328,13 @@ WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
     AND compliance_portal_file_id = ANY(@compliance_portal_file_ids)
-    AND status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+    AND (
+        status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+        OR (
+            status = @requested_status::compliance_portal_document_access_status
+            AND requested_at IS NULL
+        )
+    )
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

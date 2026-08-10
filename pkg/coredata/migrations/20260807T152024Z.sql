@@ -23,13 +23,12 @@
 ALTER TABLE cp_document_accesses
     ADD COLUMN requested_at TIMESTAMP WITH TIME ZONE;
 
--- Historical provenance (no requested_at yet):
--- - Visitor BulkInsert creates REQUESTED with created_at = updated_at.
--- - Later grant/reject/revoke only bumps updated_at, so created_at < updated_at.
--- - Console Merge inserts GRANTED/etc. with created_at = updated_at (same @now).
--- Stamp pending requests and any row whose lifecycle advanced after insert so
--- prior visitor requests that are no longer REQUESTED still flip the flag.
+-- Only pending REQUESTED rows are unambiguous visitor BulkInsert provenance.
+-- created_at < updated_at is not a source signal: console Merge inserts with
+-- equal timestamps, but later admin status updates (e.g. grant → revoke) also
+-- advance updated_at and would falsely prompt admin-only viewers. Leave
+-- GRANTED/REJECTED/REVOKED historical rows unset; new requests and REJECTED/
+-- REVOKED retries stamp requested_at going forward.
 UPDATE cp_document_accesses
 SET requested_at = created_at
-WHERE status = 'REQUESTED'::compliance_portal_document_access_status
-   OR created_at < updated_at;
+WHERE status = 'REQUESTED'::compliance_portal_document_access_status;
