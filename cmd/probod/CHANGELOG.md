@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.256.0] - 2026-08-10
+
+### Added
+
+- People list now shows each person's contract end date, making it easier to see why someone with an ended contract is excluded from document signatures despite still appearing active.
+
+### Fixed
+
+- Blank SCIM position/kind values are now treated as unset instead of failing person-form validation, and the people table's empty-state row spans the correct number of columns.
+- Cookie banner tracker detection no longer aborts the whole batch when an SDK-reported cookie or storage key exceeds PostgreSQL's index size limit; oversized identifiers are capped at 255 bytes and dropped instead.
+- The third-party compliance document agent now downloads PDFs directly instead of navigating to them, so PDF documents are read and verified correctly.
+
+### Changed
+
+- SCIM audit event writes no longer block the provisioning request, and are now bounded to a fixed duration.
+
 ## [0.255.0] - 2026-08-10
 
 ### Added
