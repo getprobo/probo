@@ -131,11 +131,16 @@ func TestDocument_InvalidChangesDoNotMutateState(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, headsBefore, headsAfter)
 
+	// An unknown baseline head excludes nothing, matching Rust's get_changes,
+	// which takes have_deps by value and never errors: the whole history is
+	// returned rather than failing. This is what keeps collaboration persistence
+	// working when a frontier references a change that is no longer retrievable.
 	var unknown automerge.Hash
 
 	unknown[0] = 1
-	_, err = document.ChangesSince(ctx, []automerge.Hash{unknown})
-	require.Error(t, err)
+	changes, err := document.ChangesSince(ctx, []automerge.Hash{unknown})
+	require.NoError(t, err)
+	require.Len(t, changes, 1)
 }
 
 func TestDocument_IncrementalSaveLoadParity(t *testing.T) {

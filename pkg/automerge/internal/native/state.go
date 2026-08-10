@@ -126,8 +126,40 @@ func NewStateFromDocument(document *Document) (*State, error) {
 		}
 	}
 
+	consistent := true
+
 	for _, head := range document.Heads {
-		state.heads[head] = struct{}{}
+		if _, ok := state.changes[head]; !ok {
+			consistent = false
+
+			break
+		}
+	}
+
+	if consistent {
+		for _, head := range document.Heads {
+			state.heads[head] = struct{}{}
+		}
+
+		return state, nil
+	}
+
+	// The recorded frontier references a change the document does not carry, so
+	// it cannot be trusted. Rebuild the frontier from the change graph instead:
+	// a present change is a head when no other present change depends on it. This
+	// keeps Heads() consistent with changes so incremental reads never break.
+	dependedOn := make(map[ChangeHash]struct{}, len(state.changes))
+
+	for _, change := range state.changes {
+		for _, dependency := range change.Dependencies {
+			dependedOn[dependency] = struct{}{}
+		}
+	}
+
+	for hash := range state.changes {
+		if _, ok := dependedOn[hash]; !ok {
+			state.heads[hash] = struct{}{}
+		}
 	}
 
 	return state, nil
@@ -532,10 +564,7 @@ func (s *State) hasDependencies(change *Change) bool {
 }
 
 func (s *State) changesSince(heads []ChangeHash) ([]*Change, bool) {
-	known, ok := s.changeClosure(heads)
-	if !ok {
-		return nil, false
-	}
+	known := s.changeClosure(heads)
 
 	ordered := make([]*Change, 0)
 	visited := make(map[ChangeHash]struct{})
@@ -574,6 +603,12 @@ func (s *State) changesSince(heads []ChangeHash) ([]*Change, bool) {
 	}
 
 	for _, head := range s.Heads() {
+		// A frontier head whose change is not retrievable contributes nothing and
+		// must not abort the incremental computation for the whole document.
+		if _, ok := s.changes[head]; !ok {
+			continue
+		}
+
 		if !visit(head) {
 			return nil, false
 		}
@@ -612,6 +647,10 @@ func (s *State) allChanges() ([]*Change, bool) {
 	}
 
 	for _, head := range s.Heads() {
+		if _, ok := s.changes[head]; !ok {
+			continue
+		}
+
 		if !visit(head) {
 			return nil, false
 		}
@@ -663,7 +702,14 @@ func (s *State) at(heads []ChangeHash) (*State, bool) {
 	return target, true
 }
 
-func (s *State) changeClosure(heads []ChangeHash) (map[ChangeHash]struct{}, bool) {
+// changeClosure returns every change reachable from the given baseline heads.
+// A head whose change is not present is skipped rather than failing: it excludes
+// nothing from the result, so an incremental computation over-approximates (it
+// may resend changes the peer already has, which is safe) instead of aborting.
+// This keeps sync and persistence working even when a frontier references a
+// change that is no longer retrievable, for example after a merge that rebuilt
+// the change graph.
+func (s *State) changeClosure(heads []ChangeHash) map[ChangeHash]struct{} {
 	closure := make(map[ChangeHash]struct{})
 
 	pending := append([]ChangeHash(nil), heads...)
@@ -679,7 +725,7 @@ func (s *State) changeClosure(heads []ChangeHash) (map[ChangeHash]struct{}, bool
 
 		change, ok := s.changes[hash]
 		if !ok {
-			return nil, false
+			continue
 		}
 
 		closure[hash] = struct{}{}
@@ -687,5 +733,5 @@ func (s *State) changeClosure(heads []ChangeHash) (map[ChangeHash]struct{}, bool
 		pending = append(pending, change.Dependencies...)
 	}
 
-	return closure, true
+	return closure
 }
