@@ -42,6 +42,7 @@ function compliancePortalContentSecurityPolicy(
   scriptNonce: string,
 ): string {
   const template = readFileSync(cspTemplatePath, "utf8");
+  // Collapse newlines: Node rejects CR/LF in header values (Vite setHeader).
   return template
     .replaceAll("{{.AppOrigin}}", appOrigin)
     .trim()
@@ -52,7 +53,8 @@ function compliancePortalContentSecurityPolicy(
     .replace(
       /connect-src 'self' ([^;]+);/,
       "connect-src 'self' $1 ws: wss:;",
-    );
+    )
+    .replace(/\s+/g, " ");
 }
 
 function appOriginFromEnv(env: Record<string, string>): string {

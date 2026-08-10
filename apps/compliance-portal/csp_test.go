@@ -42,8 +42,10 @@ func TestContentSecurityPolicy_SubstitutesAppOrigin(t *testing.T) {
 	assert.Contains(t, policy, "frame-ancestors 'none'")
 	assert.Contains(t, policy, "img-src 'self' data: https://app.example.com https://www.google.com")
 	assert.Contains(t, policy, "connect-src 'self' https://app.example.com")
-	assert.False(t, strings.HasPrefix(policy, "\n"))
-	assert.False(t, strings.HasSuffix(policy, "\n"))
+	assert.NotContains(t, policy, "\n")
+	assert.NotContains(t, policy, "\r")
+	assert.False(t, strings.HasPrefix(policy, " "))
+	assert.False(t, strings.HasSuffix(policy, " "))
 }
 
 func TestContentSecurityPolicy_RejectsDirectiveInjection(t *testing.T) {

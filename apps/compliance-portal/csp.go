@@ -59,5 +59,6 @@ func ContentSecurityPolicy(appOrigin string) (string, error) {
 		return "", fmt.Errorf("cannot render content security policy: %w", err)
 	}
 
-	return strings.TrimSpace(buf.String()), nil
+	// Single-line header value: HTTP forbids CR/LF in field content.
+	return strings.Join(strings.Fields(buf.String()), " "), nil
 }
