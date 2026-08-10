@@ -39,6 +39,8 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+const MaxTrackerIdentifierLength = 255
+
 type Service struct {
 	pg           *pg.Client
 	showBranding bool
@@ -373,7 +375,7 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 			return s
 		}(),
 	))
-	v.Check(r.Pattern, "pattern", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(r.Pattern, "pattern", validator.Required(), validator.SafeTextNoNewLine(MaxTrackerIdentifierLength))
 	v.Check(string(r.MatchType), "match_type", validator.Required(), validator.OneOfSlice(
 		func() []string {
 			types := coredata.TrackerPatternMatchTypes()
@@ -408,7 +410,7 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 
 		return nil
 	})
-	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(MaxTrackerIdentifierLength))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -2270,6 +2272,10 @@ func (s *Service) reportDetectedTracker(
 	inserted *int,
 	matchedPatternIDs *[]gid.GID,
 ) error {
+	if len(info.Identifier) > MaxTrackerIdentifierLength {
+		return nil
+	}
+
 	var matchedPattern coredata.TrackerPattern
 
 	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)
