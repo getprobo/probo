@@ -59,6 +59,6 @@ The console SPA CSP is rendered in Go from `PROBOD_BASE_URL` and `PROBOD_AWS_*` 
 | Env | Role |
 |-----|------|
 | `CONSOLE_APP_ORIGIN` | App / `downloadUrl` origin (`img-src` / `connect-src`). Defaults to origin of `VITE_API_URL`. |
-| `CONSOLE_FILE_STORAGE_ORIGIN` | Object-storage origin after private-file 307s. Defaults to origin of `PROBOD_AWS_ENDPOINT` when set in the same env file. |
+| `CONSOLE_FILE_STORAGE_ORIGIN` | Object-storage origin after private-file 307s. When unset, derived from `PROBOD_AWS_ENDPOINT` / `REGION` / `BUCKET` / `USE_PATH_STYLE` the same way as `pkg/awsconfig.CSPFileStorageOrigin` (virtual-hosted `https://{bucket}.{endpoint}` when applicable). |
 
 These are not bootstrap/`probod` config fields — keep `apps/console/.env.example` in sync when they change.

@@ -27,9 +27,55 @@ import { MermaidDiagram } from "./MermaidDiagram";
 
 type Props = {
   content: string;
+  /**
+   * Absolute http(s) image origins allowed in addition to data: URIs, path-
+   * relative srcs, and the page origin ('self'). Align with CSP img-src peers
+   * (e.g. AppOrigin, file-storage origin, https://www.google.com).
+   */
+  allowedImageOrigins?: readonly string[];
 };
 
-export function Markdown({ content }: Props) {
+const ABSOLUTE_SCHEME_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+
+export function isAllowedMarkdownImageSrc(
+  src: string,
+  allowedImageOrigins: readonly string[] = [],
+): boolean {
+  if (src.startsWith("data:")) {
+    return true;
+  }
+
+  // Path-relative / root-relative — not protocol-relative ("//host/...").
+  if (!src.startsWith("//") && !ABSOLUTE_SCHEME_RE.test(src)) {
+    return true;
+  }
+
+  let url: URL;
+  try {
+    const base
+      = typeof globalThis.location?.href === "string"
+        ? globalThis.location.href
+        : "http://localhost/";
+    url = new URL(src, base);
+  } catch {
+    return false;
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return false;
+  }
+
+  const allowed = new Set(
+    allowedImageOrigins.map(origin => origin.replace(/\/$/, "")),
+  );
+  if (typeof globalThis.location?.origin === "string") {
+    allowed.add(globalThis.location.origin);
+  }
+
+  return allowed.has(url.origin);
+}
+
+export function Markdown({ content, allowedImageOrigins = [] }: Props) {
   return (
     <div className="prose prose-neutral">
       <ReactMarkdown
@@ -46,14 +92,12 @@ export function Markdown({ content }: Props) {
               {children}
             </a>
           ),
-          // Remote http(s) images are blocked for now (console CSP no longer
-          // allows arbitrary https:). data: and relative/same-origin src stay.
           img: ({ src, alt, ...props }) => {
             if (typeof src !== "string" || src === "") {
               return null;
             }
 
-            if (/^https?:\/\//i.test(src)) {
+            if (!isAllowedMarkdownImageSrc(src, allowedImageOrigins)) {
               return null;
             }
 

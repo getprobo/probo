@@ -26,16 +26,16 @@ import (
 	"net/url"
 	"strings"
 
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"go.probo.inc/probo/pkg/baseurl"
 )
 
 // CSPFileStorageOrigin returns the http(s) origin the browser follows after a
 // private file 307 to object storage, safe to embed as a CSP source.
 //
-// Custom endpoint + path-style (or IP host): endpoint origin.
-// Custom endpoint + virtual-hosted hostname: scheme://{bucket}.{endpoint-host}.
-// Empty endpoint + virtual-hosted: https://{bucket}.s3.{region}.amazonaws.com.
-// Empty endpoint + path-style: https://s3.{region}.amazonaws.com.
+// Matches aws-sdk-go-v2 S3 addressing: path-style (or a non-virtual-hostable
+// bucket) uses the endpoint / regional S3 host; otherwise the bucket is
+// prefixed as a subdomain.
 func CSPFileStorageOrigin(
 	endpoint string,
 	region string,
@@ -78,7 +78,9 @@ func fileStorageURL(
 	usePathStyle bool,
 ) (string, error) {
 	if endpoint == "" {
-		if usePathStyle {
+		// Native AWS endpoints are always HTTPS, so dotted buckets are not
+		// virtual-hostable and the SDK falls back to the regional host.
+		if usePathStyle || !bucketIsVirtualHostable(bucket, true) {
 			return "https://s3." + region + ".amazonaws.com", nil
 		}
 
@@ -98,9 +100,11 @@ func fileStorageURL(
 		return "", fmt.Errorf("CSP file storage endpoint must not include userinfo")
 	}
 
-	// The AWS SDK forces path-style addressing for IP endpoints, so the
-	// browser follows the endpoint origin even when UsePathStyle is false.
-	if usePathStyle || hostIsIP(parsed.Hostname()) {
+	// IP hosts, explicit path-style, and non-virtual-hostable buckets all keep
+	// the bucket in the path — the browser follows the endpoint origin.
+	if usePathStyle ||
+		hostIsIP(parsed.Hostname()) ||
+		!bucketIsVirtualHostable(bucket, parsed.Scheme == "https") {
 		return parsed.Scheme + "://" + parsed.Host, nil
 	}
 
@@ -109,6 +113,40 @@ func fileStorageURL(
 
 func hostIsIP(hostname string) bool {
 	return net.ParseIP(hostname) != nil
+}
+
+// bucketIsVirtualHostable mirrors aws-sdk-go-v2's IsVirtualHostableS3Bucket:
+// HTTPS forbids dots (TLS wildcard/cert issues); HTTP may use dotted labels
+// when each label is a valid 3–63 char host label.
+func bucketIsVirtualHostable(bucket string, https bool) bool {
+	if net.ParseIP(bucket) != nil {
+		return false
+	}
+
+	var labels []string
+	if https {
+		labels = []string{bucket}
+	} else {
+		labels = strings.Split(bucket, ".")
+	}
+
+	for _, label := range labels {
+		if l := len(label); l < 3 || l > 63 {
+			return false
+		}
+
+		for _, r := range label {
+			if r >= 'A' && r <= 'Z' {
+				return false
+			}
+		}
+
+		if !smithyhttp.ValidHostLabel(label) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func validateBucketForCSP(bucket string) error {

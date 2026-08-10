@@ -21,6 +21,7 @@
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { isIP } from "node:net";
 import { fileURLToPath, URL } from "node:url";
 
 import babel from "@rolldown/plugin-babel";
@@ -77,25 +78,102 @@ function appOriginFromEnv(env: Record<string, string>): string {
   return new URL(formatted).origin;
 }
 
-// Origin the browser hits after private /api/files/v1/{id} 307s (SeaweedFS /
-// S3). Prefer CONSOLE_FILE_STORAGE_ORIGIN; else the origin of PROBOD_AWS_ENDPOINT.
+const defaultAWSRegion = "us-east-2";
+
+function envBool(value: string | undefined, fallback: boolean): boolean {
+  if (value == null || value.trim() === "") {
+    return fallback;
+  }
+
+  switch (value.trim().toLowerCase()) {
+    case "1":
+    case "true":
+    case "yes":
+    case "on":
+      return true;
+    case "0":
+    case "false":
+    case "no":
+    case "off":
+      return false;
+    default:
+      return fallback;
+  }
+}
+
+function validHostLabel(label: string): boolean {
+  if (label.length === 0 || label.length > 63) {
+    return false;
+  }
+
+  return /^[0-9A-Za-z-]+$/.test(label);
+}
+
+// Mirrors pkg/awsconfig.bucketIsVirtualHostable / aws-sdk-go-v2 rules.
+function bucketIsVirtualHostable(bucket: string, https: boolean): boolean {
+  if (isIP(bucket) !== 0) {
+    return false;
+  }
+
+  const labels = https ? [bucket] : bucket.split(".");
+  for (const label of labels) {
+    if (label.length < 3 || label.length > 63) {
+      return false;
+    }
+
+    if (/[A-Z]/.test(label)) {
+      return false;
+    }
+
+    if (!validHostLabel(label)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Origin after private /api/files/v1/{id} 307s. Prefer CONSOLE_FILE_STORAGE_ORIGIN;
+// else mirror pkg/awsconfig.CSPFileStorageOrigin from PROBOD_AWS_*.
 function fileStorageOriginFromEnv(env: Record<string, string>): string {
   const explicit = env.CONSOLE_FILE_STORAGE_ORIGIN?.trim();
   if (explicit) {
     return explicit.replace(/\/$/, "");
   }
 
-  const endpoint = env.PROBOD_AWS_ENDPOINT?.trim();
-  if (!endpoint) {
+  const endpoint = env.PROBOD_AWS_ENDPOINT?.trim() ?? "";
+  const region = env.PROBOD_AWS_REGION?.trim() || defaultAWSRegion;
+  const bucket = env.PROBOD_AWS_BUCKET?.trim() ?? "";
+  const usePathStyle = envBool(env.PROBOD_AWS_USE_PATH_STYLE, false);
+
+  if (!bucket) {
     return "";
+  }
+
+  if (!endpoint) {
+    if (usePathStyle || !bucketIsVirtualHostable(bucket, true)) {
+      return `https://s3.${region}.amazonaws.com`;
+    }
+
+    return `https://${bucket}.s3.${region}.amazonaws.com`;
   }
 
   const formatted
     = endpoint.startsWith("http://") || endpoint.startsWith("https://")
       ? endpoint
       : `https://${endpoint}`;
+  const parsed = new URL(formatted);
+  const https = parsed.protocol === "https:";
 
-  return new URL(formatted).origin;
+  if (
+    usePathStyle
+    || isIP(parsed.hostname) !== 0
+    || !bucketIsVirtualHostable(bucket, https)
+  ) {
+    return parsed.origin;
+  }
+
+  return `${parsed.protocol}//${bucket}.${parsed.host}`;
 }
 
 // @vitejs/plugin-react@6 (Vite 8) no longer runs Babel, so the Relay tagged
@@ -108,8 +186,17 @@ export default defineConfig(({ mode, command }) => {
   const envDir = fileURLToPath(new URL(".", import.meta.url));
   // Empty prefix: load non-VITE_ vars too (CSP app origin is Node-only).
   const env = loadEnv(mode, envDir, "");
+  const appOrigin = appOriginFromEnv(env);
+  const fileStorageOrigin = fileStorageOriginFromEnv(env);
 
   return {
+    // Expose CSP peer origins to the client for Markdown img allowlisting.
+    define: {
+      "import.meta.env.VITE_APP_ORIGIN": JSON.stringify(appOrigin),
+      "import.meta.env.VITE_FILE_STORAGE_ORIGIN": JSON.stringify(
+        fileStorageOrigin,
+      ),
+    },
     plugins: [
       react(),
       babel({
@@ -144,8 +231,8 @@ export default defineConfig(({ mode, command }) => {
     server: {
       headers: {
         "Content-Security-Policy": consoleContentSecurityPolicy(
-          appOriginFromEnv(env),
-          fileStorageOriginFromEnv(env),
+          appOrigin,
+          fileStorageOrigin,
           viteDevCspNonce,
         ),
         "X-Frame-Options": "DENY",

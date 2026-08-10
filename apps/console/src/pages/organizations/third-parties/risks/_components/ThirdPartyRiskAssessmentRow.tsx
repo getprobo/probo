@@ -31,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ThirdPartyRiskAssessmentRow_assessment$key } from "#/__generated__/core/ThirdPartyRiskAssessmentRow_assessment.graphql";
+import { consoleMarkdownImageOrigins } from "#/lib/markdownImageOrigins";
 
 const riskAssessmentRowFragment = graphql`
   fragment ThirdPartyRiskAssessmentRow_assessment on ThirdPartyRiskAssessment {
@@ -96,7 +97,10 @@ export function ThirdPartyRiskAssessmentRow(props: ThirdPartyRiskAssessmentRowPr
                 ? (
                     <div className="overflow-x-auto">
                       <div className="prose prose-sm max-w-none [&_.prose]:max-w-none">
-                        <Markdown content={assessment.notes} />
+                        <Markdown
+                          content={assessment.notes}
+                          allowedImageOrigins={consoleMarkdownImageOrigins()}
+                        />
                       </div>
                     </div>
                   )
