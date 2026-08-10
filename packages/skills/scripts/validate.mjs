@@ -21,6 +21,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { load as parseYaml } from "js-yaml";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -117,8 +118,11 @@ function requireNonEmptyString(label, field, value) {
   return true;
 }
 
+// An absent field is allowed; an explicit null is not. The portable schemas are
+// typed, so `"description": null` is a violation a client would reject even
+// though the key is optional.
 function requireOptionalString(label, field, value) {
-  if (value != null && typeof value !== "string") {
+  if (value !== undefined && typeof value !== "string") {
     fail(`${label}: ${field} must be a string`);
   }
 }
@@ -171,8 +175,12 @@ function validateAgentPluginsManifest(label, path) {
     requireOptionalString(label, field, manifest[field]);
   }
 
-  if (manifest.author != null) {
-    if (typeof manifest.author !== "object" || Array.isArray(manifest.author)) {
+  if (manifest.author !== undefined) {
+    if (
+      manifest.author === null ||
+      typeof manifest.author !== "object" ||
+      Array.isArray(manifest.author)
+    ) {
       fail(`${label}: author must be an object`);
     } else {
       for (const field of Object.keys(manifest.author)) {
@@ -185,7 +193,7 @@ function validateAgentPluginsManifest(label, path) {
     }
   }
 
-  if (manifest.keywords != null) {
+  if (manifest.keywords !== undefined) {
     if (
       !Array.isArray(manifest.keywords) ||
       manifest.keywords.some((keyword) => typeof keyword !== "string")
@@ -194,8 +202,12 @@ function validateAgentPluginsManifest(label, path) {
     }
   }
 
-  if (manifest.extensions != null) {
-    if (typeof manifest.extensions !== "object" || Array.isArray(manifest.extensions)) {
+  if (manifest.extensions !== undefined) {
+    if (
+      manifest.extensions === null ||
+      typeof manifest.extensions !== "object" ||
+      Array.isArray(manifest.extensions)
+    ) {
       fail(`${label}: extensions must be an object keyed by reverse-domain namespace`);
     }
   }
@@ -244,7 +256,7 @@ function validateRemoteURL(label, rawURL) {
 }
 
 function validateHeaders(label, headers) {
-  if (typeof headers !== "object" || Array.isArray(headers)) {
+  if (headers === null || typeof headers !== "object" || Array.isArray(headers)) {
     fail(`${label}: headers must be an object of strings`);
     return;
   }
@@ -315,7 +327,7 @@ function validateAgentPluginsMcp(label, path) {
       if (requireNonEmptyString(serverLabel, "url", server.url)) {
         validateRemoteURL(serverLabel, server.url);
       }
-      if (server.headers != null) {
+      if (server.headers !== undefined) {
         validateHeaders(serverLabel, server.headers);
       }
       continue;
@@ -339,33 +351,6 @@ function validateAgentPluginsMcp(label, path) {
 
 // --- Agent Skills ---------------------------------------------------------
 
-// Reads one scalar from SKILL.md frontmatter. Supports plain scalars and the
-// block forms (`|`, `>`) the skills use, which is all the Agent Skills
-// frontmatter fields need — a full YAML parser would add a dependency to a
-// package that otherwise ships no code.
-function readFrontmatterScalar(frontmatter, key) {
-  const lines = frontmatter.split("\n");
-  const index = lines.findIndex((line) => line.startsWith(`${key}:`));
-  if (index === -1) {
-    return undefined;
-  }
-
-  const inline = lines[index].slice(`${key}:`.length).trim();
-  if (inline !== "" && !inline.startsWith("|") && !inline.startsWith(">")) {
-    return inline.replace(/^["'](.*)["']$/, "$1");
-  }
-
-  const block = [];
-  for (const line of lines.slice(index + 1)) {
-    if (line.trim() !== "" && !/^\s/.test(line)) {
-      break;
-    }
-    block.push(line.trim());
-  }
-
-  return block.join(" ").trim();
-}
-
 function validateSkill(name, skillDirectory) {
   const label = `skills/${name}/SKILL.md`;
   const skillPath = join(skillDirectory, "SKILL.md");
@@ -376,18 +361,31 @@ function validateSkill(name, skillDirectory) {
   }
 
   const content = readFileSync(skillPath, "utf8");
-  const match = /^---\n([\s\S]*?)\n---\n/.exec(content);
+  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(content);
   if (match === null) {
     fail(`${label}: must start with YAML frontmatter delimited by "---"`);
     return;
   }
 
-  const frontmatter = match[1];
-  const skillName = readFrontmatterScalar(frontmatter, "name");
-  const description = readFrontmatterScalar(frontmatter, "description");
-  const compatibility = readFrontmatterScalar(frontmatter, "compatibility");
+  // Parse the frontmatter the way a client does. Reading the fields with
+  // string matching would accept documents that fail to load at all, which is
+  // the failure this check exists to catch.
+  let frontmatter;
+  try {
+    frontmatter = parseYaml(match[1]);
+  } catch (error) {
+    fail(`${label}: frontmatter is not valid YAML: ${error.message}`);
+    return;
+  }
 
-  if (skillName === undefined || skillName === "") {
+  if (frontmatter === null || typeof frontmatter !== "object" || Array.isArray(frontmatter)) {
+    fail(`${label}: frontmatter must be a YAML mapping`);
+    return;
+  }
+
+  const { name: skillName, description, compatibility, metadata } = frontmatter;
+
+  if (typeof skillName !== "string" || skillName.length === 0) {
     fail(`${label}: frontmatter must declare a non-empty name`);
   } else {
     if (skillName !== name) {
@@ -400,15 +398,36 @@ function validateSkill(name, skillDirectory) {
     }
   }
 
-  if (description === undefined || description === "") {
+  if (typeof description !== "string" || description.length === 0) {
     fail(`${label}: frontmatter must declare a non-empty description`);
   } else if (description.length > 1024) {
     fail(`${label}: description must be at most 1024 characters (found ${description.length})`);
   }
 
-  if (compatibility !== undefined && compatibility.length > 500) {
-    fail(`${label}: compatibility must be at most 500 characters (found ${compatibility.length})`);
+  if (compatibility !== undefined) {
+    if (typeof compatibility !== "string" || compatibility.length === 0) {
+      fail(`${label}: compatibility must be a non-empty string`);
+    } else if (compatibility.length > 500) {
+      fail(
+        `${label}: compatibility must be at most 500 characters (found ${compatibility.length})`,
+      );
+    }
   }
+
+  if (metadata !== undefined) {
+    if (metadata === null || typeof metadata !== "object" || Array.isArray(metadata)) {
+      fail(`${label}: metadata must be a mapping of string keys to string values`);
+    } else {
+      for (const [key, value] of Object.entries(metadata)) {
+        if (typeof value !== "string") {
+          fail(`${label}: metadata.${key} must be a string`);
+        }
+      }
+    }
+  }
+
+  requireOptionalString(label, "license", frontmatter.license);
+  requireOptionalString(label, "allowed-tools", frontmatter["allowed-tools"]);
 }
 
 function validateSkills(skillsDirectory) {
@@ -575,7 +594,7 @@ function validateClientMcpParity(label, path, portableServers) {
   }
 
   const servers = config.mcpServers;
-  if (servers == null || typeof servers !== "object" || Array.isArray(servers)) {
+  if (servers === null || typeof servers !== "object" || Array.isArray(servers)) {
     fail(`${label}: mcpServers must be an object`);
     return;
   }
@@ -591,8 +610,11 @@ function validateClientMcpParity(label, path, portableServers) {
     const serverLabel = `${label} mcpServers.${name}`;
     const portable = portableServers[name];
 
-    if (server?.headers?.Authorization != null) {
-      fail(`${serverLabel}: must use OAuth 2.0, not headers.Authorization`);
+    // HTTP header names are case-insensitive, so this file gets the same
+    // credential screening as the portable one rather than a check on one
+    // spelling of `Authorization`.
+    if (server?.headers !== undefined) {
+      validateHeaders(serverLabel, server.headers);
     }
 
     if (portable?.type === "streamable-http" && server?.type !== "http") {
