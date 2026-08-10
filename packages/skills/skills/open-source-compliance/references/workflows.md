@@ -1,23 +1,28 @@
 # Open-source compliance workflows
 
-This plugin wraps Probo's MCP API for Claude Code. Probo is a self-hostable
-GRC platform; its MCP server exposes tools for third parties, controls,
-obligations, risks, documents, audits, access reviews, and more.
+This plugin wraps Probo's MCP API. Probo is a self-hostable GRC platform; its
+MCP server exposes tools for third parties, controls, obligations, risks,
+documents, audits, access reviews, and more.
+
+## Servers
+
+The plugin ships the two hosted Probo instances. A self-hosted instance is
+added in the agent's own MCP configuration.
+
+| Server | Endpoint |
+| --- | --- |
+| `probo-us` | `https://us.probo.com/api/mcp/v1` |
+| `probo-eu` | `https://eu.probo.com/api/mcp/v1` |
+| self-hosted | `<instance-root>/api/mcp/v1` |
 
 ## Authentication
 
-Probo MCP uses OAuth 2.0. Users sign in once via `/mcp` or
-`claude mcp login probo`; Claude Code stores and refreshes tokens
+Probo MCP uses OAuth 2.0. Users sign in once per server via `/mcp` or
+`claude mcp login probo-us`; the agent stores and refreshes tokens
 automatically. Do not ask the user for API keys or bearer tokens for MCP
 access.
 
-| Variable | Purpose |
-| --- | --- |
-| `PROBO_BASE_URL` | Probo instance root URL (no trailing slash) |
-
-MCP endpoint: `${PROBO_BASE_URL}/mcp/v1`
-
-OAuth discovery:
+OAuth discovery (on the instance root, not the MCP path):
 
 - Protected resource metadata: `/.well-known/oauth-protected-resource`
 - Authorization server metadata: `/.well-known/oauth-authorization-server`

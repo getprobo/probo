@@ -1,7 +1,7 @@
 # Missing signatures MCP tools
 
-All tools are on the Probo MCP server (`probo`). Read each tool schema before
-calling.
+All tools are on a Probo MCP server (`probo-us`, `probo-eu`, or a self-hosted
+server configured in the agent). Read each tool schema before calling.
 
 ## Organization scope
 

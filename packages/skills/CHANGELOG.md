@@ -5,6 +5,41 @@ this file.
 
 ## Unreleased
 
+### Added
+
+- Agent Plugins 1.0.0 portable package: `plugin.json` and `mcp.json` at the
+  package root, both declaring the canonical
+  `https://agent-plugins.org/schemas/1.0.0/…` schema identifiers, so any
+  conformant client can load the skills and Probo MCP servers without
+  client-specific wiring
+- Both hosted Probo instances ship as Streamable HTTP servers: `probo-us`
+  (`https://us.probo.com/api/mcp/v1`) and `probo-eu`
+  (`https://eu.probo.com/api/mcp/v1`)
+- Validation of the Agent Plugins manifest and MCP schemas (closed field sets,
+  plugin name constraints, transport variants, literal HTTPS URLs, no
+  credential headers), of Agent Skills frontmatter (`name` matching the skill
+  directory, `description` and `compatibility` length limits), and of
+  `.mcp.json` parity with `mcp.json`
+
+### Fixed
+
+- MCP endpoint path: the Probo MCP API is served at `<instance-root>/api/mcp/v1`.
+  The previous `/mcp/v1` path returned the console HTML page instead of the MCP
+  endpoint, so no bundled server could connect
+
+### Changed
+
+- **Breaking:** MCP configuration no longer reads `PROBO_BASE_URL`. Agent
+  Plugins performs no placeholder expansion in remote MCP URLs, so the hosted
+  regional endpoints are declared literally. Self-hosted users add their
+  instance in the agent, e.g.
+  `claude mcp add --transport http probo https://probo.example.com/api/mcp/v1`
+- Skills select a region instead of assuming a single `probo` server, and
+  discover it by calling a list tool on each connected server when the region
+  is unknown
+- Client manifest versions (`.claude-plugin/`, `.codex-plugin/`) track
+  `package.json`, which validation now enforces
+
 ## [0.2.2] - 2026-08-04
 
 ### Fixed
