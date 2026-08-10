@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.214.0] - 2026-08-10
+
+### Changed
+
+- Risk analysis scopes are now referred to as diagrams across the CLI
+
 ## [0.213.0] - 2026-08-07
 
 ### Changed
