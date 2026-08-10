@@ -30,6 +30,7 @@ var (
 	DecodePartial     = internalstorage.DecodePartial
 	DecodeIncremental = internalstorage.DecodeIncremental
 	EncodeChange      = internalstorage.EncodeChange
+	EncodeDocument    = internalstorage.EncodeDocument
 )
 
 func deflate(data []byte) ([]byte, error) { return internalstorage.Deflate(data) }

@@ -409,7 +409,13 @@ func changeExtra(change *Change) *Scalar {
 		return &Scalar{Type: ScalarBytes, Bytes: change.ExtraBytes}
 	}
 
-	return change.Extra
+	if change.Extra != nil {
+		return change.Extra
+	}
+
+	// The payload is a byte string even when a change carries none, so an absent
+	// one is empty rather than null.
+	return &Scalar{Type: ScalarBytes}
 }
 
 func encodeDocumentOperationColumns(
