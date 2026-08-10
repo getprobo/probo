@@ -138,24 +138,25 @@ checks span consolidation and text) drove a series of fixes this pass:
   operation following the begin is really a mark end, so a later unrelated
   operation reusing that counter is not mistaken for it.
 
-These closed the common cases. What remains is the dangling begin the reference
-leaves behind when a mark is applied with an out-of-range end boundary: the mark
-call fails, but the begin was already recorded, and it then covers text according
-to its expand direction. An expand-before begin captures content inserted to its
-left even though that insertion sorts ahead of it in the RGA order, which native
-does not reproduce — native drops the mark for that text.
+These closed the common cases. The dangling begin the reference leaves behind
+when a mark is applied with an out-of-range end boundary is now largely handled:
+the mark call fails, but the begin was already recorded, and it then covers text
+according to its expand direction. A leftward-expanding begin (expand "before" or
+"both") sorts after same-anchor insertions by descending operation ID, so its
+walk index lands past text it should cover; `richTextMarks` now starts such a
+dangling begin at the position just after the begin's own anchor element (or the
+document start for a head anchor) rather than at its walk index. This is the exact
+range the reference produces: for `mark(0,3,before)` on empty text, split at 0,
+insert `"w"` at 0, both engines now report `"w"` bold (`bold 0..2`).
 
-`TestRustText_DanglingMarkBoundaries` holds four delta-debugged reproducers, the
-smallest being: mark `(0,3)` with expand-before on empty text, split at 0, then
-insert `"w"` at 0, where the reference reports `"w"` bold and native reports it
-unmarked. The test is skipped by default because it is an error path (no valid
-caller marks past the end of the text); run it with
-`AUTOMERGE_REQUIRE_DANGLING_MARKS=1` while working on the fix. A randomized
-value-level sweep that includes out-of-range boundaries and all four expand modes
-diverges on roughly 7% of scenarios; the same sweep restricted to in-range marks
-diverges on none. The fix belongs in `insertAnchorKey`, which resolves insertion
-anchors against mark boundaries but does not currently treat a dangling begin as
-an expanding boundary.
+`TestRustText_DanglingMarkBoundaries` gates four delta-debugged reproducers that
+previously diverged. A randomized value-level sweep including out-of-range
+boundaries and all four expand modes dropped from roughly 7% divergence to about
+3%; the same sweep restricted to in-range marks diverges on none. What remains are
+deeper interactions — several overlapping dangling begins whose anchor elements
+have since been deleted — where native over-extends one of the marks. These are
+strictly an error path (no valid caller marks past the end of the text) and never
+arise from the frontend, which clamps mark ranges to the text length.
 
 **Concurrent re-encoding is now byte-identical.** Assigning the value a key
 already resolves to used to skip writing an operation. That is correct for an

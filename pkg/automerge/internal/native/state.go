@@ -928,6 +928,7 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 
 	open := make(map[OpID]openMark)
 	marks := make([]richTextMark, 0)
+	elementIndex := make(map[OpID]int)
 	index := 0
 
 	closeMark := func(begin openMark, end int) {
@@ -952,6 +953,7 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 		}
 
 		if operation.Action != ActionMark {
+			elementIndex[id] = index
 			index++
 
 			continue
@@ -998,6 +1000,16 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 	})
 
 	for _, opened := range remaining {
+		// A dangling begin that expands leftward (expand "before" or "both")
+		// covers text back to its own anchor rather than only from where it sorts
+		// in the RGA order. The begin sorts after same-anchor insertions by
+		// descending operation ID, so its walk index lands past text it should
+		// cover; the reference instead starts the mark at the position just after
+		// the begin's anchor element (or at the document start for a head anchor).
+		if opened.operation.MarkExpand != nil && *opened.operation.MarkExpand {
+			opened.start = danglingBeginStart(opened.operation.Key, elementIndex, opened.start)
+		}
+
 		closeMark(opened, index)
 	}
 
@@ -1010,6 +1022,24 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 	_ = elements
 
 	return marks
+}
+
+// danglingBeginStart returns the visible index a leftward-expanding dangling
+// begin should start from: the document start for a head anchor, the position
+// immediately after the anchor element otherwise, and the walk index as a
+// fallback when the anchor is no longer visible.
+func danglingBeginStart(anchor Key, elementIndex map[OpID]int, fallback int) int {
+	if anchor.IsHead {
+		return 0
+	}
+
+	if anchor.Element != nil {
+		if position, ok := elementIndex[*anchor.Element]; ok {
+			return position + 1
+		}
+	}
+
+	return fallback
 }
 
 // Marks returns the active marks over a text object as UTF-16 ranges, matching

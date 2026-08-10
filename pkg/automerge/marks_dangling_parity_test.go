@@ -23,7 +23,6 @@ package automerge_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -57,22 +56,19 @@ func (s markScenarioStep) String() string {
 	}
 }
 
-// TestRustText_DanglingMarkBoundaries pins the remaining mark divergence: a mark
+// TestRustText_DanglingMarkBoundaries gates the dangling-begin behavior: a mark
 // applied with an out-of-range end boundary fails, but the reference has already
 // recorded the begin. That dangling begin then captures text according to its
 // expand direction, including text inserted to its left when the mark expands
-// before. Native drops the mark for that text instead.
+// before. Native now starts a leftward-expanding dangling begin at the position
+// just after its own anchor, matching the reference.
 //
 // Every case here is minimized by delta debugging from randomized differential
-// runs. The scenarios are an error path (no valid caller marks past the end of
-// the text) which is why they do not gate the build; set
-// AUTOMERGE_REQUIRE_DANGLING_MARKS=1 to run them while working on a fix.
+// runs. Deeper dangling-begin interactions (multiple overlapping marks whose
+// anchors have since been deleted) still diverge on a small fraction of
+// randomized error-path scenarios and are tracked in PARITY_PLAN.md.
 func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 	t.Parallel()
-
-	if os.Getenv("AUTOMERGE_REQUIRE_DANGLING_MARKS") == "" {
-		t.Skip("known divergence: dangling mark begin from an out-of-range boundary")
-	}
 
 	ctx := context.Background()
 
