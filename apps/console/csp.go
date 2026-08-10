@@ -38,22 +38,32 @@ var contentSecurityPolicyTmpl = template.Must(
 )
 
 type contentSecurityPolicyData struct {
-	AppOrigin string
+	AppOrigin         string
+	FileStorageOrigin string
 }
 
-// ContentSecurityPolicy returns the console CSP with AppOrigin substituted
-// (scheme://host of PROBOD_BASE_URL / file download origin).
-func ContentSecurityPolicy(appOrigin string) (string, error) {
+// ContentSecurityPolicy returns the console CSP with AppOrigin and
+// FileStorageOrigin substituted (PROBOD_BASE_URL origin and the object-storage
+// origin used after private-file redirects).
+func ContentSecurityPolicy(appOrigin string, fileStorageOrigin string) (string, error) {
 	origin, err := baseurl.CSPOrigin(appOrigin)
 	if err != nil {
 		return "", fmt.Errorf("invalid CSP app origin: %w", err)
+	}
+
+	storageOrigin, err := baseurl.CSPOrigin(fileStorageOrigin)
+	if err != nil {
+		return "", fmt.Errorf("invalid CSP file storage origin: %w", err)
 	}
 
 	var buf bytes.Buffer
 
 	err = contentSecurityPolicyTmpl.Execute(
 		&buf,
-		contentSecurityPolicyData{AppOrigin: origin},
+		contentSecurityPolicyData{
+			AppOrigin:         origin,
+			FileStorageOrigin: storageOrigin,
+		},
 	)
 	if err != nil {
 		return "", fmt.Errorf("cannot render content security policy: %w", err)

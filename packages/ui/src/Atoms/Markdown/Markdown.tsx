@@ -46,6 +46,19 @@ export function Markdown({ content }: Props) {
               {children}
             </a>
           ),
+          // Remote http(s) images are blocked for now (console CSP no longer
+          // allows arbitrary https:). data: and relative/same-origin src stay.
+          img: ({ src, alt, ...props }) => {
+            if (typeof src !== "string" || src === "") {
+              return null;
+            }
+
+            if (/^https?:\/\//i.test(src)) {
+              return null;
+            }
+
+            return <img src={src} alt={alt ?? ""} {...props} />;
+          },
           pre: ({ children, ...props }) => {
             const child = isValidElement<{
               className?: string;

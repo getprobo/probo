@@ -787,6 +787,16 @@ func (impl *Implm) Run(
 		l.Named("itam"),
 	)
 
+	fileStorageOrigin, err := awsconfig.CSPFileStorageOrigin(
+		impl.cfg.AWS.Endpoint,
+		impl.cfg.AWS.Region,
+		impl.cfg.AWS.Bucket,
+		impl.cfg.AWS.UsePathStyle,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot build console file storage CSP origin: %w", err)
+	}
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
@@ -811,6 +821,7 @@ func (impl *Implm) Run(
 			ConnectorRegistry: defaultConnectorRegistry,
 			ProviderRegistry:  providerRegistry,
 			BaseURL:           baseURL,
+			FileStorageOrigin: fileStorageOrigin,
 			GraphQLLimits: gqlutils.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,

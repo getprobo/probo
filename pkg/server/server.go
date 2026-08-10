@@ -59,6 +59,7 @@ import (
 
 type Config struct {
 	BaseURL           *baseurl.BaseURL
+	FileStorageOrigin string
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
@@ -152,7 +153,7 @@ func NewServer(cfg Config) (*Server, error) {
 		}
 	}
 
-	consoleCSP, err := console.ContentSecurityPolicy(appOrigin)
+	consoleCSP, err := console.ContentSecurityPolicy(appOrigin, cfg.FileStorageOrigin)
 	if err != nil {
 		return nil, fmt.Errorf("cannot build console content security policy: %w", err)
 	}

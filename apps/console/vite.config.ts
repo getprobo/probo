@@ -42,12 +42,14 @@ const viteDevCspNonce = randomBytes(16).toString("base64");
 // Fast Refresh and ws:/wss: on connect-src for Vite HMR.
 function consoleContentSecurityPolicy(
   appOrigin: string,
+  fileStorageOrigin: string,
   scriptNonce: string,
 ): string {
   const template = readFileSync(cspTemplatePath, "utf8");
   // Collapse newlines: Node rejects CR/LF in header values (Vite setHeader).
   return template
     .replaceAll("{{.AppOrigin}}", appOrigin)
+    .replaceAll("{{.FileStorageOrigin}}", fileStorageOrigin)
     .trim()
     .replace(
       /script-src 'self';/,
@@ -71,6 +73,27 @@ function appOriginFromEnv(env: Record<string, string>): string {
     = apiURL.startsWith("http://") || apiURL.startsWith("https://")
       ? apiURL
       : `https://${apiURL}`;
+
+  return new URL(formatted).origin;
+}
+
+// Origin the browser hits after private /api/files/v1/{id} 307s (SeaweedFS /
+// S3). Prefer CONSOLE_FILE_STORAGE_ORIGIN; else the origin of PROBOD_AWS_ENDPOINT.
+function fileStorageOriginFromEnv(env: Record<string, string>): string {
+  const explicit = env.CONSOLE_FILE_STORAGE_ORIGIN?.trim();
+  if (explicit) {
+    return explicit.replace(/\/$/, "");
+  }
+
+  const endpoint = env.PROBOD_AWS_ENDPOINT?.trim();
+  if (!endpoint) {
+    return "";
+  }
+
+  const formatted
+    = endpoint.startsWith("http://") || endpoint.startsWith("https://")
+      ? endpoint
+      : `https://${endpoint}`;
 
   return new URL(formatted).origin;
 }
@@ -122,6 +145,7 @@ export default defineConfig(({ mode, command }) => {
       headers: {
         "Content-Security-Policy": consoleContentSecurityPolicy(
           appOriginFromEnv(env),
+          fileStorageOriginFromEnv(env),
           viteDevCspNonce,
         ),
         "X-Frame-Options": "DENY",
