@@ -467,6 +467,41 @@ spec:
                   key: acme-account-key
             {{- end }}
             {{- end }}
+            # Slackbot assistant
+            {{- if .Values.probo.slackbot.enabled }}
+            - name: PROBOD_SLACKBOT_ENABLED
+              value: "true"
+            {{- if .Values.probo.slackbot.signingSecret }}
+            - name: PROBOD_SLACKBOT_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-signing-secret
+            {{- end }}
+            {{- if .Values.probo.slackbot.botToken }}
+            - name: PROBOD_SLACKBOT_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-bot-token
+            {{- end }}
+            {{- if .Values.probo.slackbot.provider }}
+            - name: PROBOD_AGENT_SLACKBOT_PROVIDER
+              value: {{ .Values.probo.slackbot.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.slackbot.modelName }}
+            - name: PROBOD_AGENT_SLACKBOT_MODEL_NAME
+              value: {{ .Values.probo.slackbot.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.slackbot.temperature }}
+            - name: PROBOD_AGENT_SLACKBOT_TEMPERATURE
+              value: {{ .Values.probo.slackbot.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.slackbot.maxTokens }}
+            - name: PROBOD_AGENT_SLACKBOT_MAX_TOKENS
+              value: {{ .Values.probo.slackbot.maxTokens | quote }}
+            {{- end }}
+            {{- end }}
             # Connectors (Slack OAuth2)
             {{- range .Values.probo.connectors }}
             {{- if eq .name "slack" }}

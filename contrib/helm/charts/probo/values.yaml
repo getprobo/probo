@@ -395,6 +395,18 @@ probo:
     confidenceThreshold: 0.7
     maxAttempts: 3
 
+  # Slackbot assistant (optional). Requires bot token, signing secret, and
+  # an LLM provider key. Events API URL:
+  # https://<baseUrl>/slack/v1/events
+  slackbot:
+    enabled: false
+    signingSecret: ""
+    botToken: ""
+    provider: ""
+    modelName: ""
+    temperature: ""
+    maxTokens: ""
+
   # Custom domains configuration (optional, direct TLS mode only)
   customDomains:
     enabled: false

@@ -271,6 +271,17 @@ probo:
   #   confidenceThreshold: 0.7
   #   maxAttempts: 3
 
+  # Slackbot assistant (optional). Events API URL:
+  # https://<baseUrl>/slack/v1/events
+  # slackbot:
+  #   enabled: true
+  #   signingSecret: ""
+  #   botToken: ""
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.1"
+  #   maxTokens: "4096"
+
   # OpenTelemetry tracing (optional)
   tracing:
     enabled: true
