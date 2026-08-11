@@ -103,7 +103,7 @@ func (g *CertificateGenerator) Generate(
 		return nil, fmt.Errorf("cannot generate certificate: signature %s has no signed_at timestamp", signature.ID)
 	}
 
-	data.SignedAt = signature.SignedAt.UTC().Format(time.RFC3339)
+	data.SignedAt = formatSealSignedAt(*signature.SignedAt)
 
 	if len(signature.TSAToken) == 0 {
 		return nil, fmt.Errorf("cannot generate certificate: signature %s has no TSA token", signature.ID)
@@ -154,6 +154,10 @@ func (g *CertificateGenerator) Generate(
 	}
 
 	return pdfReader, nil
+}
+
+func formatSealSignedAt(signedAt time.Time) string {
+	return signedAt.UTC().Truncate(time.Microsecond).Format(time.RFC3339Nano)
 }
 
 func tsaAuthorityName(ts *timestamp.Timestamp) string {
