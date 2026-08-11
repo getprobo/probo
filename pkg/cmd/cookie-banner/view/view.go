@@ -43,7 +43,9 @@ query($id: ID!) {
       privacyPolicyUrl
       consentExpiryDays
       showBranding
-      resourceReportingEnabled
+      capabilities {
+        resourceReporting
+      }
       defaultLanguage
       createdAt
       updatedAt
@@ -54,19 +56,21 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename                 string  `json:"__typename"`
-		ID                       string  `json:"id"`
-		Name                     string  `json:"name"`
-		Origin                   string  `json:"origin"`
-		State                    string  `json:"state"`
-		CookiePolicyUrl          string  `json:"cookiePolicyUrl"`
-		PrivacyPolicyUrl         *string `json:"privacyPolicyUrl"`
-		ConsentExpiryDays        int     `json:"consentExpiryDays"`
-		ShowBranding             bool    `json:"showBranding"`
-		ResourceReportingEnabled bool    `json:"resourceReportingEnabled"`
-		DefaultLanguage          string  `json:"defaultLanguage"`
-		CreatedAt                string  `json:"createdAt"`
-		UpdatedAt                string  `json:"updatedAt"`
+		Typename          string  `json:"__typename"`
+		ID                string  `json:"id"`
+		Name              string  `json:"name"`
+		Origin            string  `json:"origin"`
+		State             string  `json:"state"`
+		CookiePolicyUrl   string  `json:"cookiePolicyUrl"`
+		PrivacyPolicyUrl  *string `json:"privacyPolicyUrl"`
+		ConsentExpiryDays int     `json:"consentExpiryDays"`
+		ShowBranding      bool    `json:"showBranding"`
+		Capabilities      struct {
+			ResourceReporting bool `json:"resourceReporting"`
+		} `json:"capabilities"`
+		DefaultLanguage string `json:"defaultLanguage"`
+		CreatedAt       string `json:"createdAt"`
+		UpdatedAt       string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -130,7 +134,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), v.State)
 			_, _ = fmt.Fprintf(out, "%s%d days\n", label.Render("Consent Expiry:"), v.ConsentExpiryDays)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Default Language:"), v.DefaultLanguage)
-			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Resource Reporting:"), v.ResourceReportingEnabled)
+			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Resource Reporting:"), v.Capabilities.ResourceReporting)
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Cookie Policy:"), v.CookiePolicyUrl)
 			if v.PrivacyPolicyUrl != nil && *v.PrivacyPolicyUrl != "" {

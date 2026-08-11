@@ -192,7 +192,7 @@ export async function execute(
 					id
 					active
 					searchEngineIndexing
-					rightsRequestsEnabled
+					capabilities { rightsRequests }
 					entityName
 					description
 					websiteUrl
@@ -215,8 +215,8 @@ export async function execute(
 	};
 	if (active !== undefined) input.active = active;
 	if (searchEngineIndexing) input.searchEngineIndexing = searchEngineIndexing;
-	if (rightsRequestsEnabled === 'true') input.rightsRequestsEnabled = true;
-	if (rightsRequestsEnabled === 'false') input.rightsRequestsEnabled = false;
+	if (rightsRequestsEnabled === 'true') input.capabilities = { rightsRequests: true };
+	if (rightsRequestsEnabled === 'false') input.capabilities = { rightsRequests: false };
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

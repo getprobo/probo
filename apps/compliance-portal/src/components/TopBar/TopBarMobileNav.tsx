@@ -66,7 +66,9 @@ const topBarMobileNavFragment = graphql`
 
 const topBarMobileNavCompliancePortalFragment = graphql`
   fragment TopBarMobileNav_compliancePortal on CompliancePortal {
-    rightsRequestsEnabled
+    capabilities {
+      rightsRequests
+    }
   }
 `;
 
@@ -106,7 +108,7 @@ export function TopBarMobileNav({ identityKey, compliancePortalKey }: TopBarMobi
     : null;
 
   const navItems = TOP_BAR_NAV_ITEMS.filter(
-    item => item.to !== "/requests" || compliancePortal.rightsRequestsEnabled,
+    item => item.to !== "/requests" || compliancePortal.capabilities.rightsRequests,
   );
 
   const close = () => setOpen(false);

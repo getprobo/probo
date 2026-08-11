@@ -44,17 +44,17 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 		Organization: &Organization{
 			ID: tc.OrganizationID,
 		},
-		Active:                tc.Active,
-		SearchEngineIndexing:  tc.SearchEngineIndexing,
-		RightsRequestsEnabled: tc.Capabilities.RightsRequests,
-		Description:           tc.Description,
-		WebsiteURL:            tc.WebsiteURL,
-		Email:                 tc.Email,
-		HeadquarterAddress:    tc.HeadquarterAddress,
-		EntityName:            tc.EntityName,
-		Slug:                  tc.Slug,
-		CreatedAt:             tc.CreatedAt,
-		UpdatedAt:             tc.UpdatedAt,
+		Active:               tc.Active,
+		SearchEngineIndexing: tc.SearchEngineIndexing,
+		Capabilities:         &tc.Capabilities,
+		Description:          tc.Description,
+		WebsiteURL:           tc.WebsiteURL,
+		Email:                tc.Email,
+		HeadquarterAddress:   tc.HeadquarterAddress,
+		EntityName:           tc.EntityName,
+		Slug:                 tc.Slug,
+		CreatedAt:            tc.CreatedAt,
+		UpdatedAt:            tc.UpdatedAt,
 	}
 
 	if tc.LogoFileID != nil {

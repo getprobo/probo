@@ -360,11 +360,18 @@ input CompliancePortalOrder
     field: CompliancePortalOrderField!
 }
 
+type CompliancePortalCapabilities
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalCapabilities"
+    ) {
+    rightsRequests: Boolean!
+}
+
 type CompliancePortal implements Node {
     id: ID!
     active: Boolean!
     searchEngineIndexing: SearchEngineIndexing!
-    rightsRequestsEnabled: Boolean!
+    capabilities: CompliancePortalCapabilities!
     logo: File @goField(forceResolver: true)
     darkLogo: File @goField(forceResolver: true)
     nda: File @goField(forceResolver: true)
@@ -828,11 +835,15 @@ input DeleteCompliancePortalInput {
     compliancePortalId: ID!
 }
 
+input CompliancePortalCapabilitiesInput {
+    rightsRequests: Boolean!
+}
+
 input UpdateCompliancePortalInput {
     compliancePortalId: ID!
     active: Boolean
     searchEngineIndexing: SearchEngineIndexing
-    rightsRequestsEnabled: Boolean
+    capabilities: CompliancePortalCapabilitiesInput
     entityName: String
     description: String @goField(omittable: true)
     websiteUrl: String @goField(omittable: true)

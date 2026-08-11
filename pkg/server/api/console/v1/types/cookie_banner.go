@@ -72,17 +72,17 @@ func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 		Organization: &Organization{
 			ID: b.OrganizationID,
 		},
-		Name:                     b.Name,
-		Origin:                   b.Origin,
-		State:                    b.State,
-		PrivacyPolicyURL:         b.PrivacyPolicyURL,
-		CookiePolicyURL:          b.CookiePolicyURL,
-		ConsentExpiryDays:        b.ConsentExpiryDays,
-		ShowBranding:             b.ShowBranding,
-		ResourceReportingEnabled: b.ResourceReportingEnabled,
-		DefaultLanguage:          b.DefaultLanguage,
-		CreatedAt:                b.CreatedAt,
-		UpdatedAt:                b.UpdatedAt,
+		Name:              b.Name,
+		Origin:            b.Origin,
+		State:             b.State,
+		PrivacyPolicyURL:  b.PrivacyPolicyURL,
+		CookiePolicyURL:   b.CookiePolicyURL,
+		ConsentExpiryDays: b.ConsentExpiryDays,
+		ShowBranding:      b.ShowBranding,
+		Capabilities:      &b.Capabilities,
+		DefaultLanguage:   b.DefaultLanguage,
+		CreatedAt:         b.CreatedAt,
+		UpdatedAt:         b.UpdatedAt,
 	}
 
 	if b.PolicyDocumentID != nil {

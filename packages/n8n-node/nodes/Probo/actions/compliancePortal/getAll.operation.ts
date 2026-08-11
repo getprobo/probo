@@ -87,7 +87,7 @@ export async function execute(
 								slug
 								active
 								searchEngineIndexing
-								rightsRequestsEnabled
+								capabilities { rightsRequests }
 								entityName
 								description
 								websiteUrl

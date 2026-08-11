@@ -25,20 +25,26 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func NewCompliancePortalCapabilities(c coredata.CompliancePortalCapabilities) *CompliancePortalCapabilities {
+	return &CompliancePortalCapabilities{
+		RightsRequests: c.RightsRequests,
+	}
+}
+
 func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	return &CompliancePortal{
-		ID:                    tc.ID,
-		OrganizationID:        tc.OrganizationID,
-		Active:                tc.Active,
-		SearchEngineIndexing:  tc.SearchEngineIndexing,
-		RightsRequestsEnabled: tc.Capabilities.RightsRequests,
-		EntityName:            tc.EntityName,
-		Description:           tc.Description,
-		WebsiteURL:            tc.WebsiteURL,
-		Email:                 tc.Email,
-		HeadquarterAddress:    tc.HeadquarterAddress,
-		CreatedAt:             tc.CreatedAt,
-		UpdatedAt:             tc.UpdatedAt,
+		ID:                   tc.ID,
+		OrganizationID:       tc.OrganizationID,
+		Active:               tc.Active,
+		SearchEngineIndexing: tc.SearchEngineIndexing,
+		Capabilities:         NewCompliancePortalCapabilities(tc.Capabilities),
+		EntityName:           tc.EntityName,
+		Description:          tc.Description,
+		WebsiteURL:           tc.WebsiteURL,
+		Email:                tc.Email,
+		HeadquarterAddress:   tc.HeadquarterAddress,
+		CreatedAt:            tc.CreatedAt,
+		UpdatedAt:            tc.UpdatedAt,
 	}
 }
 

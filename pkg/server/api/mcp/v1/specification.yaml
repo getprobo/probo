@@ -10273,6 +10273,15 @@ components:
           type: string
           format: date-time
 
+    CompliancePortalCapabilities:
+      type: object
+      required:
+        - rights_requests
+      properties:
+        rights_requests:
+          type: boolean
+          description: Whether visitors can submit rights requests on the compliance portal
+
     CompliancePortal:
       type: object
       required:
@@ -10280,7 +10289,7 @@ components:
         - organization_id
         - active
         - search_engine_indexing
-        - rights_requests_enabled
+        - capabilities
         - entity_name
         - created_at
         - updated_at
@@ -10293,9 +10302,9 @@ components:
           type: boolean
         search_engine_indexing:
           $ref: "#/components/schemas/SearchEngineIndexing"
-        rights_requests_enabled:
-          type: boolean
-          description: Whether visitors can submit rights requests on the compliance portal
+        capabilities:
+          $ref: "#/components/schemas/CompliancePortalCapabilities"
+          description: Capabilities enabled on the compliance portal
         logo:
           $ref: "#/components/schemas/File"
         dark_logo:
@@ -10576,11 +10585,11 @@ components:
             - type: "null"
           description: Search engine indexing setting
           go.probo.inc/mcpgen/omittable: true
-        rights_requests_enabled:
-          type:
-            - boolean
-            - "null"
-          description: Whether visitors can submit rights requests on the compliance portal
+        capabilities:
+          anyOf:
+            - $ref: "#/components/schemas/CompliancePortalCapabilities"
+            - type: "null"
+          description: Capabilities enabled on the compliance portal
           go.probo.inc/mcpgen/omittable: true
         description:
           type:
@@ -11589,6 +11598,15 @@ components:
         deleted_custom_domain:
           $ref: "#/components/schemas/CustomDomain"
 
+    CookieBannerCapabilities:
+      type: object
+      required:
+        - resource_reporting
+      properties:
+        resource_reporting:
+          type: boolean
+          description: Whether the SDK reports detected resources
+
     CookieBanner:
       type: object
       required:
@@ -11600,7 +11618,7 @@ components:
         - cookie_policy_url
         - consent_expiry_days
         - show_branding
-        - resource_reporting_enabled
+        - capabilities
         - default_language
         - created_at
         - updated_at
@@ -11635,9 +11653,9 @@ components:
         show_branding:
           type: boolean
           description: Whether to show Probo branding
-        resource_reporting_enabled:
-          type: boolean
-          description: Whether the SDK reports detected resources
+        capabilities:
+          $ref: "#/components/schemas/CookieBannerCapabilities"
+          description: Capabilities enabled on the cookie banner
         default_language:
           type: string
           description: Default language code
@@ -12088,10 +12106,11 @@ components:
             - string
             - "null"
           go.probo.inc/mcpgen/omittable: true
-        resource_reporting_enabled:
-          type:
-            - boolean
-            - "null"
+        capabilities:
+          anyOf:
+            - $ref: "#/components/schemas/CookieBannerCapabilities"
+            - type: "null"
+          description: Capabilities enabled on the cookie banner
           go.probo.inc/mcpgen/omittable: true
 
     UpdateCookieBannerOutput:

@@ -69,13 +69,13 @@ type (
 	}
 
 	UpdateCookieBannerRequest struct {
-		CookieBannerID           gid.GID
-		Name                     *string
-		PrivacyPolicyURL         *string
-		CookiePolicyURL          *string
-		ConsentExpiryDays        *int
-		DefaultLanguage          *string
-		ResourceReportingEnabled *bool
+		CookieBannerID    gid.GID
+		Name              *string
+		PrivacyPolicyURL  *string
+		CookiePolicyURL   *string
+		ConsentExpiryDays *int
+		DefaultLanguage   *string
+		Capabilities      *coredata.CookieBannerCapabilities
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -622,19 +622,19 @@ func (s *Service) CreateCookieBanner(
 			now := time.Now()
 
 			banner = &coredata.CookieBanner{
-				ID:                       gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
-				OrganizationID:           req.OrganizationID,
-				Name:                     req.Name,
-				Origin:                   CanonicalizeOrigin(req.Origin),
-				State:                    coredata.CookieBannerStateActive,
-				PrivacyPolicyURL:         req.PrivacyPolicyURL,
-				CookiePolicyURL:          req.CookiePolicyURL,
-				ConsentExpiryDays:        req.ConsentExpiryDays,
-				ShowBranding:             s.showBranding,
-				ResourceReportingEnabled: true,
-				DefaultLanguage:          "en",
-				CreatedAt:                now,
-				UpdatedAt:                now,
+				ID:                gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
+				OrganizationID:    req.OrganizationID,
+				Name:              req.Name,
+				Origin:            CanonicalizeOrigin(req.Origin),
+				State:             coredata.CookieBannerStateActive,
+				PrivacyPolicyURL:  req.PrivacyPolicyURL,
+				CookiePolicyURL:   req.CookiePolicyURL,
+				ConsentExpiryDays: req.ConsentExpiryDays,
+				ShowBranding:      s.showBranding,
+				Capabilities:      coredata.DefaultCookieBannerCapabilities(),
+				DefaultLanguage:   "en",
+				CreatedAt:         now,
+				UpdatedAt:         now,
 			}
 
 			if err := banner.Insert(ctx, tx, scope); err != nil {
@@ -916,12 +916,12 @@ func (s *Service) UpdateCookieBanner(
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
-			resourceReportingChanged := req.ResourceReportingEnabled != nil &&
-				*req.ResourceReportingEnabled != banner.ResourceReportingEnabled
+			capabilitiesChanged := req.Capabilities != nil &&
+				*req.Capabilities != banner.Capabilities
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
-			if !nameChanged && !snapshotChanged && !resourceReportingChanged {
+			if !nameChanged && !snapshotChanged && !capabilitiesChanged {
 				return nil
 			}
 
@@ -945,8 +945,8 @@ func (s *Service) UpdateCookieBanner(
 				banner.DefaultLanguage = *req.DefaultLanguage
 			}
 
-			if req.ResourceReportingEnabled != nil {
-				banner.ResourceReportingEnabled = *req.ResourceReportingEnabled
+			if req.Capabilities != nil {
+				banner.Capabilities = *req.Capabilities
 			}
 
 			banner.UpdatedAt = time.Now()
@@ -1867,7 +1867,7 @@ func buildBannerConfig(
 		CookiePolicyURL:          snapshot.CookiePolicyURL,
 		ConsentExpiryDays:        snapshot.ConsentExpiryDays,
 		ShowBranding:             banner.ShowBranding,
-		ResourceReportingEnabled: banner.ResourceReportingEnabled,
+		ResourceReportingEnabled: banner.Capabilities.ResourceReporting,
 		Categories:               categories,
 		Texts:                    texts,
 	}
@@ -2175,7 +2175,7 @@ func (s *Service) ReportDetectedTrackers(
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
-			if !banner.ResourceReportingEnabled {
+			if !banner.Capabilities.ResourceReporting {
 				req.Resources = nil
 			}
 

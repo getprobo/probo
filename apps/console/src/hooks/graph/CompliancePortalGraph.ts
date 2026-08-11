@@ -32,7 +32,9 @@ const updateCompliancePortalMutation = graphql`
         id
         active
         searchEngineIndexing
-        rightsRequestsEnabled
+        capabilities {
+          rightsRequests
+        }
         entityName
         description
         websiteUrl

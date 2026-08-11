@@ -105,7 +105,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("resource-reporting-enabled") {
-				input["resourceReportingEnabled"] = flagResourceReportingEnabled
+				input["capabilities"] = map[string]any{
+					"resourceReporting": flagResourceReportingEnabled,
+				}
 			}
 
 			if len(input) == 1 {

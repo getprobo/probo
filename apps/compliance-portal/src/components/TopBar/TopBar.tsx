@@ -46,7 +46,9 @@ const topBarFragment = graphql`
     currentCompliancePortal @required(action: THROW) {
       themedLogoUrl
       entityName
-      rightsRequestsEnabled
+      capabilities {
+        rightsRequests
+      }
       ...TopBarMobileNav_compliancePortal
     }
   }
@@ -71,7 +73,7 @@ export function TopBar({ queryKey }: TopBarProps) {
   const entityName = currentCompliancePortal.entityName;
   const logoUrl = currentCompliancePortal.themedLogoUrl ?? undefined;
   const navItems = TOP_BAR_NAV_ITEMS.filter(
-    item => item.to !== "/requests" || currentCompliancePortal.rightsRequestsEnabled,
+    item => item.to !== "/requests" || currentCompliancePortal.capabilities.rightsRequests,
   );
 
   const slots = topBar();

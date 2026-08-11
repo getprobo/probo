@@ -31,7 +31,9 @@ const fragment = graphql`
     id
     active
     searchEngineIndexing
-    rightsRequestsEnabled
+    capabilities {
+      rightsRequests
+    }
     canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
@@ -72,12 +74,12 @@ export function CompliancePortalStatusSection(props: {
     });
   };
 
-  const handleToggleRightsRequests = async (rightsRequestsEnabled: boolean) => {
+  const handleToggleRightsRequests = async (rightsRequests: boolean) => {
     await updateCompliancePortal({
       variables: {
         input: {
           compliancePortalId: compliancePortal.id,
-          rightsRequestsEnabled,
+          capabilities: { rightsRequests },
         },
       },
     });
@@ -140,7 +142,7 @@ export function CompliancePortalStatusSection(props: {
             </p>
           </div>
           <Toggle
-            checked={compliancePortal.rightsRequestsEnabled}
+            checked={compliancePortal.capabilities.rightsRequests}
             onChange={checked => void handleToggleRightsRequests(checked)}
             disabled={!compliancePortal.canUpdate}
             aria-label={t("statusSection.rightsRequests.title")}

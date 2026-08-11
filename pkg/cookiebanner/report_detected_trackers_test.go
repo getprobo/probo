@@ -213,8 +213,8 @@ func TestReportDetectedTrackers_ResourceReportingDisabled(t *testing.T) {
 		ctx,
 		fx.scope,
 		UpdateCookieBannerRequest{
-			CookieBannerID:           fx.banner.ID,
-			ResourceReportingEnabled: new(false),
+			CookieBannerID: fx.banner.ID,
+			Capabilities:   &coredata.CookieBannerCapabilities{ResourceReporting: false},
 		},
 	)
 	require.NoError(t, err)

@@ -50,7 +50,9 @@ import { requestsLayout } from "./variants";
 export const requestsPageQuery = graphql`
   query RequestsPageQuery {
     currentCompliancePortal @required(action: THROW) {
-      rightsRequestsEnabled
+      capabilities {
+        rightsRequests
+      }
     }
     viewer {
       email
@@ -95,7 +97,7 @@ export function RequestsPage({ queryRef }: RequestsPageProps) {
   // Disabled capability → explicit 404 before the list fragment is read (the
   // API returns NOT_FOUND for myRightsRequests, which would otherwise surface
   // as Relay's opaque field-error message).
-  if (!currentCompliancePortal.rightsRequestsEnabled) {
+  if (!currentCompliancePortal.capabilities.rightsRequests) {
     throw new NotFoundError();
   }
 

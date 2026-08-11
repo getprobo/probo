@@ -5028,8 +5028,10 @@ func (r *Resolver) UpdateCompliancePortalTool(ctx context.Context, req *mcp.Call
 		updateReq.SearchEngineIndexing = *sei
 	}
 
-	if rightsRequestsEnabled := UnwrapOmittable(input.RightsRequestsEnabled); rightsRequestsEnabled != nil {
-		updateReq.RightsRequestsEnabled = *rightsRequestsEnabled
+	if capabilities := UnwrapOmittable(input.Capabilities); capabilities != nil && *capabilities != nil {
+		updateReq.Capabilities = &coredata.CompliancePortalCapabilities{
+			RightsRequests: (*capabilities).RightsRequests,
+		}
 	}
 
 	updateReq.Description = UnwrapOmittable(input.Description)
@@ -5663,8 +5665,10 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		updateReq.DefaultLanguage = *v
 	}
 
-	if v := UnwrapOmittable(input.ResourceReportingEnabled); v != nil && *v != nil {
-		updateReq.ResourceReportingEnabled = *v
+	if v := UnwrapOmittable(input.Capabilities); v != nil && *v != nil {
+		updateReq.Capabilities = &coredata.CookieBannerCapabilities{
+			ResourceReporting: (*v).ResourceReporting,
+		}
 	}
 
 	banner, err := r.cookieBanner.UpdateCookieBanner(ctx, scope, updateReq)

@@ -37,7 +37,9 @@ const bannerSettingsFormFragment = graphql`
     privacyPolicyUrl
     consentExpiryDays
     defaultLanguage
-    resourceReportingEnabled
+    capabilities {
+      resourceReporting
+    }
   }
 `;
 
@@ -51,7 +53,9 @@ const updateBannerMutation = graphql`
         privacyPolicyUrl
         consentExpiryDays
         defaultLanguage
-        resourceReportingEnabled
+        capabilities {
+          resourceReporting
+        }
         latestVersion {
           id
           version
@@ -90,7 +94,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
       privacyPolicyUrl: banner.privacyPolicyUrl ?? "",
       consentExpiryDays: String(banner.consentExpiryDays),
       defaultLanguage: banner.defaultLanguage,
-      resourceReportingEnabled: banner.resourceReportingEnabled,
+      resourceReportingEnabled: banner.capabilities.resourceReporting,
     },
   });
 
@@ -104,7 +108,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           privacyPolicyUrl: data.privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(data.consentExpiryDays, 10),
           defaultLanguage: data.defaultLanguage,
-          resourceReportingEnabled: data.resourceReportingEnabled,
+          capabilities: { resourceReporting: data.resourceReportingEnabled },
         },
       },
       onCompleted() {

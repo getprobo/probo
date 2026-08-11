@@ -1,7 +1,12 @@
+type CompliancePortalCapabilities
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.CompliancePortalCapabilities") {
+  rightsRequests: Boolean!
+}
+
 type CompliancePortal implements Node {
   id: ID!
   active: Boolean!
-  rightsRequestsEnabled: Boolean!
+  capabilities: CompliancePortalCapabilities!
   slug: String!
   logo: File @goField(forceResolver: true)
   darkLogo: File @goField(forceResolver: true)

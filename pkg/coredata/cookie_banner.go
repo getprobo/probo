@@ -37,22 +37,22 @@ import (
 
 type (
 	CookieBanner struct {
-		ID                          gid.GID           `db:"id"`
-		OrganizationID              gid.GID           `db:"organization_id"`
-		Name                        string            `db:"name"`
-		Origin                      string            `db:"origin"`
-		State                       CookieBannerState `db:"state"`
-		PrivacyPolicyURL            *string           `db:"privacy_policy_url"`
-		CookiePolicyURL             string            `db:"cookie_policy_url"`
-		ConsentExpiryDays           int               `db:"consent_expiry_days"`
-		ShowBranding                bool              `db:"show_branding"`
-		ResourceReportingEnabled    bool              `db:"resource_reporting_enabled"`
-		DefaultLanguage             string            `db:"default_language"`
-		PatternAnalysisRequestedAt  *time.Time        `db:"pattern_analysis_requested_at"`
-		PolicyDocumentID            *gid.GID          `db:"policy_document_id"`
-		PolicyGenerationRequestedAt *time.Time        `db:"policy_generation_requested_at"`
-		CreatedAt                   time.Time         `db:"created_at"`
-		UpdatedAt                   time.Time         `db:"updated_at"`
+		ID                          gid.GID                  `db:"id"`
+		OrganizationID              gid.GID                  `db:"organization_id"`
+		Name                        string                   `db:"name"`
+		Origin                      string                   `db:"origin"`
+		State                       CookieBannerState        `db:"state"`
+		PrivacyPolicyURL            *string                  `db:"privacy_policy_url"`
+		CookiePolicyURL             string                   `db:"cookie_policy_url"`
+		ConsentExpiryDays           int                      `db:"consent_expiry_days"`
+		ShowBranding                bool                     `db:"show_branding"`
+		Capabilities                CookieBannerCapabilities `db:"capabilities"`
+		DefaultLanguage             string                   `db:"default_language"`
+		PatternAnalysisRequestedAt  *time.Time               `db:"pattern_analysis_requested_at"`
+		PolicyDocumentID            *gid.GID                 `db:"policy_document_id"`
+		PolicyGenerationRequestedAt *time.Time               `db:"policy_generation_requested_at"`
+		CreatedAt                   time.Time                `db:"created_at"`
+		UpdatedAt                   time.Time                `db:"updated_at"`
 	}
 
 	CookieBanners []*CookieBanner
@@ -123,7 +123,7 @@ SELECT
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,
@@ -178,7 +178,7 @@ SELECT
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,
@@ -234,7 +234,7 @@ SELECT
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,
@@ -294,7 +294,7 @@ SELECT
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,
@@ -351,7 +351,7 @@ SELECT
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,
@@ -440,7 +440,7 @@ INSERT INTO cookie_banners (
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,
@@ -458,7 +458,7 @@ INSERT INTO cookie_banners (
 	@cookie_policy_url,
 	@consent_expiry_days,
 	@show_branding,
-	@resource_reporting_enabled,
+	@capabilities,
 	@default_language,
 	@pattern_analysis_requested_at,
 	@policy_document_id,
@@ -479,7 +479,7 @@ INSERT INTO cookie_banners (
 		"cookie_policy_url":              b.CookiePolicyURL,
 		"consent_expiry_days":            b.ConsentExpiryDays,
 		"show_branding":                  b.ShowBranding,
-		"resource_reporting_enabled":     b.ResourceReportingEnabled,
+		"capabilities":                   b.Capabilities,
 		"default_language":               b.DefaultLanguage,
 		"pattern_analysis_requested_at":  b.PatternAnalysisRequestedAt,
 		"policy_document_id":             b.PolicyDocumentID,
@@ -516,7 +516,7 @@ SET
 	cookie_policy_url = @cookie_policy_url,
 	consent_expiry_days = @consent_expiry_days,
 	show_branding = @show_branding,
-	resource_reporting_enabled = @resource_reporting_enabled,
+	capabilities = @capabilities,
 	default_language = @default_language,
 	policy_document_id = @policy_document_id,
 	updated_at = @updated_at
@@ -528,17 +528,17 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                         b.ID,
-		"name":                       b.Name,
-		"state":                      b.State,
-		"privacy_policy_url":         b.PrivacyPolicyURL,
-		"cookie_policy_url":          b.CookiePolicyURL,
-		"consent_expiry_days":        b.ConsentExpiryDays,
-		"show_branding":              b.ShowBranding,
-		"resource_reporting_enabled": b.ResourceReportingEnabled,
-		"default_language":           b.DefaultLanguage,
-		"policy_document_id":         b.PolicyDocumentID,
-		"updated_at":                 b.UpdatedAt,
+		"id":                  b.ID,
+		"name":                b.Name,
+		"state":               b.State,
+		"privacy_policy_url":  b.PrivacyPolicyURL,
+		"cookie_policy_url":   b.CookiePolicyURL,
+		"consent_expiry_days": b.ConsentExpiryDays,
+		"show_branding":       b.ShowBranding,
+		"capabilities":        b.Capabilities,
+		"default_language":    b.DefaultLanguage,
+		"policy_document_id":  b.PolicyDocumentID,
+		"updated_at":          b.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -639,7 +639,7 @@ SELECT
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,
@@ -733,7 +733,7 @@ SELECT
 	cookie_policy_url,
 	consent_expiry_days,
 	show_branding,
-	resource_reporting_enabled,
+	capabilities,
 	default_language,
 	pattern_analysis_requested_at,
 	policy_document_id,

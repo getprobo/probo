@@ -146,7 +146,7 @@ export async function execute(
 					cookiePolicyUrl
 					consentExpiryDays
 					showBranding
-					resourceReportingEnabled
+					capabilities { resourceReporting }
 					defaultLanguage
 					createdAt
 					updatedAt
@@ -164,7 +164,7 @@ export async function execute(
 		input.privacyPolicyUrl = additionalFields.privacyPolicyUrl === '' ? null : additionalFields.privacyPolicyUrl;
 	}
 	if (additionalFields.resourceReportingEnabled !== undefined) {
-		input.resourceReportingEnabled = additionalFields.resourceReportingEnabled;
+		input.capabilities = { resourceReporting: additionalFields.resourceReportingEnabled };
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

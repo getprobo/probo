@@ -36,7 +36,9 @@ mutation($input: UpdateCompliancePortalInput!) {
       id
       active
       searchEngineIndexing
-      rightsRequestsEnabled
+      capabilities {
+        rightsRequests
+      }
       entityName
       description
       websiteUrl
@@ -50,15 +52,17 @@ mutation($input: UpdateCompliancePortalInput!) {
 type updateResponse struct {
 	UpdateCompliancePortal struct {
 		CompliancePortal struct {
-			ID                    string  `json:"id"`
-			Active                bool    `json:"active"`
-			SearchEngineIndexing  string  `json:"searchEngineIndexing"`
-			RightsRequestsEnabled bool    `json:"rightsRequestsEnabled"`
-			EntityName            string  `json:"entityName"`
-			Description           *string `json:"description"`
-			WebsiteURL            *string `json:"websiteUrl"`
-			Email                 *string `json:"email"`
-			HeadquarterAddress    *string `json:"headquarterAddress"`
+			ID                   string `json:"id"`
+			Active               bool   `json:"active"`
+			SearchEngineIndexing string `json:"searchEngineIndexing"`
+			Capabilities         struct {
+				RightsRequests bool `json:"rightsRequests"`
+			} `json:"capabilities"`
+			EntityName         string  `json:"entityName"`
+			Description        *string `json:"description"`
+			WebsiteURL         *string `json:"websiteUrl"`
+			Email              *string `json:"email"`
+			HeadquarterAddress *string `json:"headquarterAddress"`
 		} `json:"compliancePortal"`
 	} `json:"updateCompliancePortal"`
 }
@@ -124,7 +128,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("rights-requests-enabled") {
-				input["rightsRequestsEnabled"] = flagRightsRequestsEnabled
+				input["capabilities"] = map[string]any{
+					"rightsRequests": flagRightsRequestsEnabled,
+				}
 			}
 
 			if cmd.Flags().Changed("description") {
