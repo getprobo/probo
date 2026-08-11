@@ -194,46 +194,26 @@ func (b *Engine) Close(ctx context.Context) error {
 	return nil
 }
 
-func (b *Engine) Save(ctx context.Context) ([]byte, error) {
-	if err := b.run(ctx, "am_save"); err != nil {
-		return nil, fmt.Errorf("cannot save reference document: %w", err)
-	}
-
-	output, err := b.output(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read saved reference document: %w", err)
-	}
-
-	return output, nil
-}
-
-// SaveNoCompress serializes the document without DEFLATE compression, mirroring
-// AutoCommit::save_nocompress.
-func (b *Engine) SaveNoCompress(ctx context.Context) ([]byte, error) {
-	if err := b.run(ctx, "am_save_nocompress"); err != nil {
-		return nil, fmt.Errorf("cannot save reference document: %w", err)
-	}
-
-	output, err := b.output(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read saved reference document: %w", err)
-	}
-
-	return output, nil
-}
-
-// SaveWithOptions serializes the document, optionally discarding orphan changes.
-// Retaining orphans uses the default am_save; discarding them uses
-// save_with_options(retain_orphans=false).
-func (b *Engine) SaveWithOptions(
+// Save serializes the document. retainOrphans keeps changes whose dependencies
+// are missing; compress DEFLATEs the output. The reference exposes three save
+// entry points, so the flag combination maps onto the closest one: the default
+// am_save (retain, compress), am_save_nocompress (retain, no compress), and
+// am_save_no_orphans (discard orphans, which also does not compress).
+func (b *Engine) Save(
 	ctx context.Context,
 	retainOrphans bool,
+	compress bool,
 ) ([]byte, error) {
-	if retainOrphans {
-		return b.Save(ctx)
+	function := "am_save"
+
+	switch {
+	case !retainOrphans:
+		function = "am_save_no_orphans"
+	case !compress:
+		function = "am_save_nocompress"
 	}
 
-	if err := b.run(ctx, "am_save_no_orphans"); err != nil {
+	if err := b.run(ctx, function); err != nil {
 		return nil, fmt.Errorf("cannot save reference document: %w", err)
 	}
 

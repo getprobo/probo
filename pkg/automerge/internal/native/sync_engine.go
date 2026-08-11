@@ -230,7 +230,7 @@ func (b *Engine) GenerateSyncMessage(
 					)
 				}
 			} else {
-				document, err := b.Save(ctx)
+				document, err := b.Save(ctx, true, true)
 				if err != nil {
 					return nil, false, err
 				}

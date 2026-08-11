@@ -65,7 +65,7 @@ func TestRustTest_CompressedDocCols(t *testing.T) {
 			_, err = document.Commit(ctx, "list", commitTime)
 			require.NoError(t, err)
 
-			uncompressed, err := document.SaveNoCompress(ctx)
+			uncompressed, err := document.Save(ctx, automerge.NoCompress())
 			require.NoError(t, err)
 
 			compressed, err := document.Save(ctx)

@@ -89,7 +89,7 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 					require.NoError(t, err)
 				}
 
-				saved, err := engine.Save(ctx)
+				saved, err := engine.Save(ctx, true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -112,7 +112,7 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 				_, err = engine.Commit(ctx, "unmark", time.Unix(3, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx)
+				saved, err := engine.Save(ctx, true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -134,7 +134,7 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 				_, err = engine.Commit(ctx, "three", time.Unix(3, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx)
+				saved, err := engine.Save(ctx, true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -157,7 +157,7 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 				_, err = engine.Commit(ctx, "trim", time.Unix(2, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx)
+				saved, err := engine.Save(ctx, true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -180,7 +180,7 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 				_, err = engine.Commit(ctx, "nest", time.Unix(1, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx)
+				saved, err := engine.Save(ctx, true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -213,7 +213,7 @@ func TestEncodeDocument_MatchesReferenceConcurrentSnapshot(t *testing.T) {
 	_, err = first.Commit(ctx, "first", time.Unix(1, 0))
 	require.NoError(t, err)
 
-	shared, err := first.Save(ctx)
+	shared, err := first.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	second, err := reference.Load(ctx, shared)
@@ -229,7 +229,7 @@ func TestEncodeDocument_MatchesReferenceConcurrentSnapshot(t *testing.T) {
 	_, err = second.Commit(ctx, "second", time.Unix(2, 0))
 	require.NoError(t, err)
 
-	secondSave, err := second.Save(ctx)
+	secondSave, err := second.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	_, err = first.Merge(ctx, secondSave)
@@ -239,7 +239,7 @@ func TestEncodeDocument_MatchesReferenceConcurrentSnapshot(t *testing.T) {
 	_, err = first.Commit(ctx, "third", time.Unix(3, 0))
 	require.NoError(t, err)
 
-	saved, err := first.Save(ctx)
+	saved, err := first.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	assertSnapshotReencodes(t, saved)

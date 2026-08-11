@@ -79,7 +79,7 @@ func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	require.Len(t, secondDocument.Changes, 1)
 	assert.Equal(t, "second", secondDocument.Changes[0].Message)
 
-	fullDocument, err := backend.Save(ctx)
+	fullDocument, err := backend.Save(ctx, true, true)
 	require.NoError(t, err)
 	assert.Less(t, len(secondMessage), len(fullDocument))
 }

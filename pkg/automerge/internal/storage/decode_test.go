@@ -263,7 +263,7 @@ func TestDecode_ReferenceBackendDocument(t *testing.T) {
 	require.NoError(t, backend.PutString(ctx, 0, "policy", "approved"))
 	_, err = backend.Commit(ctx, "reference fixture", time.Unix(1_700_000_000, 0))
 	require.NoError(t, err)
-	data, err := backend.Save(ctx)
+	data, err := backend.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	document, err := Decode(data)
@@ -286,7 +286,7 @@ func TestDecode_ReferenceBackendConcurrentGraph(t *testing.T) {
 	require.NoError(t, base.PutString(ctx, 0, "base", "value"))
 	_, err = base.Commit(ctx, "base", time.Unix(1, 0))
 	require.NoError(t, err)
-	baseData, err := base.Save(ctx)
+	baseData, err := base.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	left, err := reference.Load(ctx, baseData)
@@ -308,12 +308,12 @@ func TestDecode_ReferenceBackendConcurrentGraph(t *testing.T) {
 	require.NoError(t, right.PutString(ctx, 0, "right", "value"))
 	_, err = right.Commit(ctx, "right", time.Unix(3, 0))
 	require.NoError(t, err)
-	rightData, err := right.Save(ctx)
+	rightData, err := right.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	_, err = left.Merge(ctx, rightData)
 	require.NoError(t, err)
-	mergedData, err := left.Save(ctx)
+	mergedData, err := left.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	document, err := Decode(mergedData)

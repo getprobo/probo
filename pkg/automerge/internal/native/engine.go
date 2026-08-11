@@ -290,26 +290,15 @@ func (b *Engine) Close(context.Context) error {
 // Save serializes the whole history as one compacted document chunk, the form
 // save() produces in the Rust and JavaScript implementations. It replaces the
 // change-by-change stream Go used to write, which grew without bound as a
-// history accumulated commits.
-func (b *Engine) Save(ctx context.Context) ([]byte, error) {
-	return b.save(ctx, true, true)
-}
-
-// SaveNoCompress serializes the document without DEFLATE-compressing any trailing
-// change chunks, mirroring Rust's AutoCommit::save_nocompress.
-func (b *Engine) SaveNoCompress(ctx context.Context) ([]byte, error) {
-	return b.save(ctx, true, false)
-}
-
-// SaveWithOptions serializes the document, choosing whether to keep retained
-// orphan changes (queued changes whose dependencies are still missing) so they
-// survive a save/load round trip. It mirrors the Rust SaveOptions.retain_orphans
-// flag; the reference retains orphans by default.
-func (b *Engine) SaveWithOptions(
+// history accumulated commits. retainOrphans keeps queued changes whose
+// dependencies are still missing so they survive a save/load round trip, and
+// compress DEFLATEs the document columns and any trailing change chunks.
+func (b *Engine) Save(
 	ctx context.Context,
 	retainOrphans bool,
+	compress bool,
 ) ([]byte, error) {
-	return b.save(ctx, retainOrphans, true)
+	return b.save(ctx, retainOrphans, compress)
 }
 
 func (b *Engine) save(

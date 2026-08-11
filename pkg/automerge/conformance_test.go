@@ -505,7 +505,7 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	before, err := backend.Heads(context.Background())
 	require.NoError(t, err)
 
-	saved, err := backend.Save(context.Background())
+	saved, err := backend.Save(context.Background(), true, true)
 	require.NoError(t, err)
 
 	// Save now writes a compacted document rather than embedding change bytes, so

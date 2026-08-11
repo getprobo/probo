@@ -41,7 +41,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	require.NoError(t, base.SpliceText(ctx, text, 0, 0, "A"))
 	_, err = base.Commit(ctx, "base", time.Unix(1, 0))
 	require.NoError(t, err)
-	baseData, err := base.Save(ctx)
+	baseData, err := base.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	source, err := LoadEngine(ctx, baseData)

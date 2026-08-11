@@ -128,7 +128,7 @@ func TestRustOrphans_DiscardOrphans(t *testing.T) {
 			doc, missing := orphanScenario(t, ctx, engine)
 			closeDocument(t, doc)
 
-			saved, err := doc.SaveWithOptions(ctx, false)
+			saved, err := doc.Save(ctx, automerge.DiscardOrphans())
 			require.NoError(t, err)
 
 			loaded, err := engine.load(ctx, saved, actor(0x03))

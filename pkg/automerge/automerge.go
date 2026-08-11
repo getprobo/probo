@@ -77,9 +77,7 @@ type (
 
 	engine interface {
 		Close(context.Context) error
-		Save(context.Context) ([]byte, error)
-		SaveWithOptions(context.Context, bool) ([]byte, error)
-		SaveNoCompress(context.Context) ([]byte, error)
+		Save(context.Context, bool, bool) ([]byte, error)
 		Isolate(context.Context, [][32]byte) error
 		Integrate(context.Context) error
 		Stats(context.Context) ([]byte, error)
@@ -449,32 +447,33 @@ func (d *Document) Close(ctx context.Context) error {
 	return nil
 }
 
-// Save serializes the complete Automerge history.
-func (d *Document) Save(ctx context.Context) ([]byte, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+// SaveOption configures how Save serializes a document.
+type SaveOption func(*saveConfig)
 
-	if d.closed {
-		return nil, ErrClosed
-	}
-
-	data, err := d.engine.Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("cannot save Automerge document: %w", err)
-	}
-
-	return data, nil
+type saveConfig struct {
+	retainOrphans bool
+	compress      bool
 }
 
-// SaveWithOptions serializes the document, choosing whether to retain orphan
-// changes (changes whose dependencies are missing). Retaining them, the default
-// for Save, preserves them across a save/load round trip so they can be resolved
-// once their dependencies arrive; discarding them drops them permanently. It
-// mirrors the Rust SaveOptions.retain_orphans flag.
-func (d *Document) SaveWithOptions(
-	ctx context.Context,
-	retainOrphans bool,
-) ([]byte, error) {
+// NoCompress disables DEFLATE compression of the saved document. The default is
+// to compress, which the reference's save_nocompress also opts out of; the
+// uncompressed form is mainly useful for comparing sizes or debugging.
+func NoCompress() SaveOption {
+	return func(c *saveConfig) { c.compress = false }
+}
+
+// DiscardOrphans drops orphan changes (changes whose dependencies are missing)
+// instead of retaining them. Retaining them, the default, preserves them across
+// a save/load round trip so they resolve once their dependencies arrive;
+// discarding drops them permanently. It mirrors Rust's SaveOptions.retain_orphans.
+func DiscardOrphans() SaveOption {
+	return func(c *saveConfig) { c.retainOrphans = false }
+}
+
+// Save serializes the complete Automerge history as a compacted document. By
+// default it compresses and retains orphan changes; pass NoCompress or
+// DiscardOrphans to change that.
+func (d *Document) Save(ctx context.Context, options ...SaveOption) ([]byte, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -482,7 +481,12 @@ func (d *Document) SaveWithOptions(
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.SaveWithOptions(ctx, retainOrphans)
+	config := saveConfig{retainOrphans: true, compress: true}
+	for _, option := range options {
+		option(&config)
+	}
+
+	data, err := d.engine.Save(ctx, config.retainOrphans, config.compress)
 	if err != nil {
 		return nil, fmt.Errorf("cannot save Automerge document: %w", err)
 	}
@@ -526,26 +530,6 @@ func (d *Document) Integrate(ctx context.Context) error {
 	return nil
 }
 
-// SaveNoCompress serializes the document without DEFLATE-compressing its change
-// data. The default Save compresses large change chunks; this variant is useful
-// for comparing compressed and uncompressed sizes. It mirrors the Rust
-// AutoCommit::save_nocompress API.
-func (d *Document) SaveNoCompress(ctx context.Context) ([]byte, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if d.closed {
-		return nil, ErrClosed
-	}
-
-	data, err := d.engine.SaveNoCompress(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("cannot save Automerge document: %w", err)
-	}
-
-	return data, nil
-}
-
 // Stats reports aggregate document statistics.
 type Stats struct {
 	NumChanges uint64 `json:"numChanges"`
@@ -586,7 +570,7 @@ func (d *Document) Fork(
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.Save(ctx)
+	data, err := d.engine.Save(ctx, true, true)
 	if err != nil {
 		d.mu.Unlock()
 		return nil, fmt.Errorf("cannot save Automerge fork source: %w", err)

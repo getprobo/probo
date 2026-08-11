@@ -124,7 +124,7 @@ func TestChangesSince_DegradesToReachablePrefix(t *testing.T) {
 	_, err = base.Commit(ctx, "base", time.Unix(0, 0))
 	require.NoError(t, err)
 
-	shared, err := base.Save(ctx)
+	shared, err := base.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	// A branch two commits deep, authored by a second actor.
@@ -141,7 +141,7 @@ func TestChangesSince_DegradesToReachablePrefix(t *testing.T) {
 	_, err = deep.Commit(ctx, "deep-2", time.Unix(2, 0))
 	require.NoError(t, err)
 
-	deepSave, err := deep.Save(ctx)
+	deepSave, err := deep.Save(ctx, true, true)
 	require.NoError(t, err)
 
 	// The base adds its own branch commit, then merges the deep branch, so the
