@@ -109,10 +109,13 @@ func (b *Engine) ChangesSince(
 		knownHeads[i] = ChangeHash(head)
 	}
 
-	changes, ok := b.state.changesSince(knownHeads)
-	if !ok {
-		return nil, nil, fmt.Errorf("cannot compute changes from unknown heads")
-	}
+	// A change in the frontier's ancestry may occasionally be unreachable, for
+	// example after a merge that rebuilt the graph. changesSince then returns the
+	// consistent, replayable prefix it can produce rather than nothing: reporting
+	// every change that can be emitted keeps collaboration alive, where failing
+	// the whole read would wedge the document on every request. A change that is
+	// dropped has no bytes to return in any case.
+	changes, _ := b.state.changesSince(knownHeads)
 
 	raw := make([][]byte, len(changes))
 

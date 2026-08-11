@@ -563,61 +563,99 @@ func (s *State) hasDependencies(change *Change) bool {
 	return true
 }
 
+// changesSince returns the changes reachable from the current frontier that the
+// baseline heads do not already cover, in dependency order, ready to replay.
+//
+// The result is always a consistent prefix: a change is emitted only once every
+// one of its ancestors has been emitted or is already known to the baseline, so
+// a caller never receives a change whose dependency it was not also given. The
+// second return reports whether that prefix is complete. It is false when some
+// change in the frontier's ancestry could not be produced, either because it is
+// absent from the graph or because its original bytes are unavailable.
+//
+// Completeness is a signal, not a gate. Sync uses it to fall back to sending a
+// whole document, which reproduces changes even when the in-memory graph is
+// inconsistent. Incremental reads use the prefix regardless, because returning
+// every change that can be produced keeps a document usable where failing the
+// whole read would wedge it: a change that cannot be emitted has no bytes to
+// return anyway.
 func (s *State) changesSince(heads []ChangeHash) ([]*Change, bool) {
 	known := s.changeClosure(heads)
 
+	const (
+		visiting = iota
+		reachable
+		unreachable
+	)
+
 	ordered := make([]*Change, 0)
-	visited := make(map[ChangeHash]struct{})
+	status := make(map[ChangeHash]int)
 
 	var visit func(ChangeHash) bool
 
 	visit = func(hash ChangeHash) bool {
-		if _, ok := visited[hash]; ok {
-			return true
+		if state, ok := status[hash]; ok {
+			// A change still on the stack cannot be depended upon to be complete
+			// yet, but treating the cycle edge as reachable avoids excluding the
+			// whole branch over a graph that should never contain a cycle anyway.
+			return state != unreachable
 		}
-
-		visited[hash] = struct{}{}
 
 		// The baseline closure is transitively closed, so everything below a change
-		// the peer already holds is also held. Descending would add nothing and
-		// would fail the whole read if any ancestor were ever unavailable.
+		// the peer already holds is also held and need not be walked.
 		if _, ok := known[hash]; ok {
+			status[hash] = reachable
+
 			return true
 		}
+
+		status[hash] = visiting
 
 		change, ok := s.changes[hash]
 		if !ok {
+			status[hash] = unreachable
+
 			return false
 		}
 
+		complete := true
+
 		for _, dependency := range change.Dependencies {
 			if !visit(dependency) {
-				return false
+				complete = false
 			}
 		}
 
-		if len(change.Raw) == 0 {
+		// A change is emittable only when every ancestor is, so the result stays a
+		// replayable prefix, and only when its bytes exist to be returned.
+		if !complete || len(change.Raw) == 0 {
+			status[hash] = unreachable
+
 			return false
 		}
 
 		ordered = append(ordered, change)
+		status[hash] = reachable
 
 		return true
 	}
 
+	complete := true
+
 	for _, head := range s.Heads() {
-		// A frontier head whose change is not retrievable contributes nothing and
-		// must not abort the incremental computation for the whole document.
+		// A frontier head whose change is not retrievable contributes nothing.
 		if _, ok := s.changes[head]; !ok {
+			complete = false
+
 			continue
 		}
 
 		if !visit(head) {
-			return nil, false
+			complete = false
 		}
 	}
 
-	return ordered, true
+	return ordered, complete
 }
 
 func (s *State) allChanges() ([]*Change, bool) {
