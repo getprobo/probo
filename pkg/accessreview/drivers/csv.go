@@ -89,11 +89,12 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		}
 
 		if idx, ok := colIndex["role"]; ok && idx < len(row) {
-			role := strings.TrimSpace(row[idx])
-
 			roles := []string{}
-			if role != "" {
-				roles = []string{role}
+			for role := range strings.SplitSeq(row[idx], ";") {
+				role = strings.TrimSpace(role)
+				if role != "" {
+					roles = append(roles, role)
+				}
 			}
 
 			record.Roles = roles
