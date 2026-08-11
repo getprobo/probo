@@ -577,6 +577,7 @@ func TestDefaultUIStringsHaveCCPAOptOutLabel(t *testing.T) {
 			require.NotEmpty(t, uiStrings["privacy_choices_title_ccpa"])
 			_, hasLegacy := uiStrings["button_opt_out_generic"]
 			require.False(t, hasLegacy)
+
 			_, hasLegacyTitle := uiStrings["privacy_choices_title"]
 			require.False(t, hasLegacyTitle)
 		})
