@@ -516,7 +516,6 @@ SET
 	cookie_policy_url = @cookie_policy_url,
 	consent_expiry_days = @consent_expiry_days,
 	show_branding = @show_branding,
-	resource_reporting_enabled = @resource_reporting_enabled,
 	default_language = @default_language,
 	policy_document_id = @policy_document_id,
 	updated_at = @updated_at
@@ -528,17 +527,16 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                         b.ID,
-		"name":                       b.Name,
-		"state":                      b.State,
-		"privacy_policy_url":         b.PrivacyPolicyURL,
-		"cookie_policy_url":          b.CookiePolicyURL,
-		"consent_expiry_days":        b.ConsentExpiryDays,
-		"show_branding":              b.ShowBranding,
-		"resource_reporting_enabled": b.ResourceReportingEnabled,
-		"default_language":           b.DefaultLanguage,
-		"policy_document_id":         b.PolicyDocumentID,
-		"updated_at":                 b.UpdatedAt,
+		"id":                  b.ID,
+		"name":                b.Name,
+		"state":               b.State,
+		"privacy_policy_url":  b.PrivacyPolicyURL,
+		"cookie_policy_url":   b.CookiePolicyURL,
+		"consent_expiry_days": b.ConsentExpiryDays,
+		"show_branding":       b.ShowBranding,
+		"default_language":    b.DefaultLanguage,
+		"policy_document_id":  b.PolicyDocumentID,
+		"updated_at":          b.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -595,6 +593,45 @@ WHERE
 	}
 
 	b.ShowBranding = show
+
+	return nil
+}
+
+func (b *CookieBanner) UpdateResourceReportingEnabled(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	enabled bool,
+) error {
+	q := `
+UPDATE cookie_banners
+SET
+	resource_reporting_enabled = @resource_reporting_enabled,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":                         b.ID,
+		"resource_reporting_enabled": enabled,
+		"updated_at":                 time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update cookie banner resource_reporting_enabled: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	b.ResourceReportingEnabled = enabled
 
 	return nil
 }

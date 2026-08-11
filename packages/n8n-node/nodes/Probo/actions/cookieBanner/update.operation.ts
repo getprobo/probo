@@ -113,7 +113,8 @@ export const description: INodeProperties[] = [
 				name: 'resourceReportingEnabled',
 				type: 'boolean',
 				default: true,
-				description: 'Whether the SDK reports detected resources',
+				description:
+					'Whether the SDK reports detected resources. Only add this field when you intend to change the value; omit it to keep the banner\'s current setting.',
 			},
 		],
 	},

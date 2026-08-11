@@ -30,6 +30,7 @@ import {
   ReportQueue,
   ResourceDetector,
   resolveResourceReportingEnabled,
+  shouldStartResourceDetector,
   StorageDetector,
 } from "./detectors";
 import { NotFoundError } from "./errors";
@@ -391,7 +392,7 @@ export class CookieBannerClient {
       new StorageDetector(this.reportQueue, apiOrigin),
     ];
 
-    if (!config || config.resource_reporting_enabled) {
+    if (shouldStartResourceDetector(config)) {
       this.detectors.push(new ResourceDetector(this.reportQueue, apiOrigin));
     }
 

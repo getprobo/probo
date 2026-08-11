@@ -336,6 +336,44 @@ func TestCookieBanner_Update(t *testing.T) {
 		assert.Equal(t, 90, result.UpdateCookieBanner.CookieBanner.ConsentExpiryDays)
 		assert.Equal(t, "fr", result.UpdateCookieBanner.CookieBanner.DefaultLanguage)
 	})
+
+	t.Run("disable resource reporting", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+
+		const query = `
+			mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+				updateCookieBanner(input: $input) {
+					cookieBanner {
+						id
+						resourceReportingEnabled
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateCookieBanner struct {
+				CookieBanner struct {
+					ID                       string `json:"id"`
+					ResourceReportingEnabled bool   `json:"resourceReportingEnabled"`
+				} `json:"cookieBanner"`
+			} `json:"updateCookieBanner"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"cookieBannerId":           bannerID,
+				"resourceReportingEnabled": false,
+			},
+		}, &result)
+
+		require.NoError(t, err)
+		assert.Equal(t, bannerID, result.UpdateCookieBanner.CookieBanner.ID)
+		assert.False(t, result.UpdateCookieBanner.CookieBanner.ResourceReportingEnabled)
+	})
 }
 
 func TestCookieBanner_Delete(t *testing.T) {

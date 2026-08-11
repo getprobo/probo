@@ -945,18 +945,31 @@ func (s *Service) UpdateCookieBanner(
 				banner.DefaultLanguage = *req.DefaultLanguage
 			}
 
-			if req.ResourceReportingEnabled != nil {
-				banner.ResourceReportingEnabled = *req.ResourceReportingEnabled
-			}
-
 			banner.UpdatedAt = time.Now()
 
-			if err := banner.Update(ctx, tx, scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return ErrOriginAlreadyInUse
-				}
+			if nameChanged || snapshotChanged {
+				if err := banner.Update(ctx, tx, scope); err != nil {
+					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+						return ErrOriginAlreadyInUse
+					}
 
-				return fmt.Errorf("cannot update cookie banner: %w", err)
+					return fmt.Errorf("cannot update cookie banner: %w", err)
+				}
+			}
+
+			if resourceReportingChanged {
+				if err := banner.UpdateResourceReportingEnabled(
+					ctx,
+					tx,
+					scope,
+					*req.ResourceReportingEnabled,
+				); err != nil {
+					if errors.Is(err, coredata.ErrResourceNotFound) {
+						return ErrBannerNotFound
+					}
+
+					return fmt.Errorf("cannot update resource reporting: %w", err)
+				}
 			}
 
 			if snapshotChanged {

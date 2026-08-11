@@ -18,20 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export type { Detector } from "./detector";
-export { CookieDetector } from "./cookie-detector";
-export { StorageDetector } from "./storage-detector";
-export {
-  ResourceDetector,
-  resolveResourceReportingEnabled,
-  shouldStartResourceDetector,
-} from "./resource-detector";
-export { ReportQueue } from "./report-queue";
-export type {
-  CookieSource,
-  DetectedCookieEntry,
-  DetectedResourceEntry,
-  DetectedStorageEntry,
-  ResourceType,
-  StorageType,
-} from "./types";
+import { describe, expect, it } from "vitest";
+
+import { shouldStartResourceDetector } from "./resource-detector";
+
+describe("shouldStartResourceDetector", () => {
+  it("starts in discovery mode when config is absent", () => {
+    expect(shouldStartResourceDetector()).toBe(true);
+    expect(shouldStartResourceDetector(undefined)).toBe(true);
+  });
+
+  it("starts when resource reporting is enabled", () => {
+    expect(shouldStartResourceDetector({ resource_reporting_enabled: true })).toBe(true);
+  });
+
+  it("skips when resource reporting is disabled", () => {
+    expect(shouldStartResourceDetector({ resource_reporting_enabled: false })).toBe(false);
+  });
+});
