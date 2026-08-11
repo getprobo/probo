@@ -46,7 +46,7 @@ import (
 type rustParityEngine struct {
 	name string
 	open func(context.Context, automerge.ActorID) (*automerge.Document, error)
-	load func(context.Context, []byte, automerge.ActorID) (*automerge.Document, error)
+	load func(context.Context, []byte, automerge.ActorID, ...automerge.LoadOption) (*automerge.Document, error)
 }
 
 func rustParityEngines() []rustParityEngine {
@@ -1615,7 +1615,7 @@ func TestRust_SimpleBadSaveload(t *testing.T) {
 			saved, err := doc.Save(ctx)
 			require.NoError(t, err)
 
-			for _, load := range []func(context.Context, []byte, automerge.ActorID) (*automerge.Document, error){
+			for _, load := range []func(context.Context, []byte, automerge.ActorID, ...automerge.LoadOption) (*automerge.Document, error){
 				automerge.Load,
 				automerge.LoadReference,
 			} {

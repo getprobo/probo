@@ -46,7 +46,7 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 	for history := range histories {
 		random := rand.New(rand.NewSource(int64(history + 1)))
 		ctx := context.Background()
-		nativeDocument, err := automerge.NewPureGo(ctx, actor(byte(80+history)))
+		nativeDocument, err := automerge.New(ctx, actor(byte(80+history)))
 		require.NoError(t, err)
 		closeDocument(t, nativeDocument)
 		nativeText, err := nativeDocument.CreateText(ctx, "body")
@@ -127,7 +127,7 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 
 	for history := range histories {
 		random := rand.New(rand.NewSource(int64(10_000 + history)))
-		nativeDocument, err := automerge.NewPureGo(
+		nativeDocument, err := automerge.New(
 			ctx,
 			actor(byte(140+history)),
 		)

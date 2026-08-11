@@ -319,7 +319,7 @@ func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
 	assert.Equal(t, "Policy", spans[1].Text)
 	assert.Equal(t, true, spans[1].Marks["strong"])
 
-	nativeDocument, err := automerge.LoadPureGo(context.Background(), data, actor(14))
+	nativeDocument, err := automerge.Load(context.Background(), data, actor(14))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
 	nativeText, err := nativeDocument.Text(context.Background(), "body")

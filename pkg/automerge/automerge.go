@@ -177,11 +177,22 @@ func NewActorID() (ActorID, error) {
 
 // New creates an empty document using the native Go engine.
 func New(ctx context.Context, actorID ActorID) (*Document, error) {
-	return NewPureGo(ctx, actorID)
+	b, err := native.NewEngine(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create native Automerge engine: %w", err)
+	}
+
+	if err := b.SetActor(ctx, actorID[:]); err != nil {
+		_ = b.Close(ctx)
+		return nil, fmt.Errorf("cannot initialize native Automerge actor: %w", err)
+	}
+
+	return &Document{engine: b}, nil
 }
 
 // NewReference creates an empty document using the official WASM reference
-// engine. It is retained as a differential oracle for the native engine.
+// engine. It exists as a differential oracle for the native engine and is
+// intended for tests, not production use.
 func NewReference(ctx context.Context, actorID ActorID) (*Document, error) {
 	b, err := reference.New(ctx)
 	if err != nil {
@@ -196,85 +207,83 @@ func NewReference(ctx context.Context, actorID ActorID) (*Document, error) {
 	return &Document{engine: b}, nil
 }
 
-// NewPureGo creates an empty document using the experimental native Go engine.
-//
-// The native engine is intended for differential testing until its complete
-// feature surface reaches parity with the reference engine.
-func NewPureGo(ctx context.Context, actorID ActorID) (*Document, error) {
-	b, err := native.NewEngine(ctx)
+// LoadOption configures how Load interprets stored data.
+type LoadOption func(*loadConfig)
+
+type loadConfig struct {
+	convertStringsToText bool
+}
+
+// ConvertStringsToText converts every string scalar stored in a map or list
+// into a text object as the document loads, mirroring Rust's
+// StringMigration::ConvertToText load option.
+func ConvertStringsToText() LoadOption {
+	return func(c *loadConfig) { c.convertStringsToText = true }
+}
+
+// Load creates a document from stored data using the native Go engine and
+// assigns a new writer.
+func Load(
+	ctx context.Context,
+	data []byte,
+	actorID ActorID,
+	options ...LoadOption,
+) (*Document, error) {
+	config := loadConfig{}
+	for _, option := range options {
+		option(&config)
+	}
+
+	b, err := native.LoadEngine(ctx, data)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create native Automerge engine: %w", err)
+		return nil, fmt.Errorf("cannot load native Automerge engine: %w", err)
 	}
 
 	if err := b.SetActor(ctx, actorID[:]); err != nil {
 		_ = b.Close(ctx)
-		return nil, fmt.Errorf("cannot initialize native Automerge actor: %w", err)
+		return nil, fmt.Errorf("cannot assign native Automerge actor: %w", err)
 	}
 
-	return &Document{engine: b}, nil
-}
+	document := &Document{engine: b}
 
-// Load creates a document using the native Go engine and assigns a new writer.
-func Load(ctx context.Context, data []byte, actorID ActorID) (*Document, error) {
-	return LoadPureGo(ctx, data, actorID)
-}
+	if config.convertStringsToText {
+		if err := document.convertStringsToText(ctx); err != nil {
+			_ = document.Close(ctx)
 
-// LoadReference loads a document using the official WASM reference engine.
-func LoadReference(
-	ctx context.Context,
-	data []byte,
-	actorID ActorID,
-) (*Document, error) {
-	b, err := reference.Load(ctx, data)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load Automerge engine: %w", err)
-	}
-
-	if err := b.SetActor(ctx, actorID[:]); err != nil {
-		_ = b.Close(ctx)
-		return nil, fmt.Errorf("cannot assign loaded Automerge actor: %w", err)
-	}
-
-	return &Document{engine: b}, nil
-}
-
-// LoadConvertingStrings loads a document with the native engine, converting
-// every string scalar stored in a map or list into a text object. It mirrors
-// the Rust StringMigration::ConvertToText load option.
-func LoadConvertingStrings(
-	ctx context.Context,
-	data []byte,
-	actorID ActorID,
-) (*Document, error) {
-	document, err := LoadPureGo(ctx, data, actorID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := document.convertStringsToText(ctx); err != nil {
-		_ = document.Close(ctx)
-
-		return nil, err
+			return nil, err
+		}
 	}
 
 	return document, nil
 }
 
-// LoadReferenceConvertingStrings loads a document with the reference engine and
-// the string-to-text migration applied.
-func LoadReferenceConvertingStrings(
+// LoadReference loads a document using the official WASM reference engine. Like
+// NewReference it is intended for tests, not production use.
+func LoadReference(
 	ctx context.Context,
 	data []byte,
 	actorID ActorID,
+	options ...LoadOption,
 ) (*Document, error) {
-	b, err := reference.LoadConvertingStrings(ctx, data)
+	config := loadConfig{}
+	for _, option := range options {
+		option(&config)
+	}
+
+	load := reference.Load
+	if config.convertStringsToText {
+		// The reference applies the migration during load through its own WASM
+		// entry point rather than as a post-load pass.
+		load = reference.LoadConvertingStrings
+	}
+
+	b, err := load(ctx, data)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load Automerge engine: %w", err)
 	}
 
 	if err := b.SetActor(ctx, actorID[:]); err != nil {
 		_ = b.Close(ctx)
-
 		return nil, fmt.Errorf("cannot assign loaded Automerge actor: %w", err)
 	}
 
@@ -410,26 +419,7 @@ func convertListStrings(ctx context.Context, object *Object) (bool, error) {
 	return changed, nil
 }
 
-// LoadPureGo loads Automerge data using the experimental native Go engine.
-func LoadPureGo(
-	ctx context.Context,
-	data []byte,
-	actorID ActorID,
-) (*Document, error) {
-	b, err := native.LoadEngine(ctx, data)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load native Automerge engine: %w", err)
-	}
-
-	if err := b.SetActor(ctx, actorID[:]); err != nil {
-		_ = b.Close(ctx)
-		return nil, fmt.Errorf("cannot assign native Automerge actor: %w", err)
-	}
-
-	return &Document{engine: b}, nil
-}
-
-// Close releases the document's WASM module instance.
+// Close releases the engine resources held by the document.
 func (d *Document) Close(ctx context.Context) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

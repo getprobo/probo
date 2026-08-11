@@ -77,8 +77,18 @@ func loadConvertingEngines() []struct {
 		name string
 		load func(context.Context, []byte, automerge.ActorID) (*automerge.Document, error)
 	}{
-		{"native", automerge.LoadConvertingStrings},
-		{"reference", automerge.LoadReferenceConvertingStrings},
+		{
+			"native",
+			func(ctx context.Context, data []byte, actorID automerge.ActorID) (*automerge.Document, error) {
+				return automerge.Load(ctx, data, actorID, automerge.ConvertStringsToText())
+			},
+		},
+		{
+			"reference",
+			func(ctx context.Context, data []byte, actorID automerge.ActorID) (*automerge.Document, error) {
+				return automerge.LoadReference(ctx, data, actorID, automerge.ConvertStringsToText())
+			},
+		},
 	}
 }
 
