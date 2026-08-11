@@ -757,7 +757,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 			}
 		`
 
-		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 50_001))
+		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 200_001))
 
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
@@ -784,7 +784,7 @@ func TestDocument_MaxLength_Validation(t *testing.T) {
 			}
 		`
 
-		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 50_001))
+		longContent := testutil.ProseMirrorTextDoc(strings.Repeat("a", 200_001))
 
 		_, err := owner.Do(query, map[string]any{
 			"input": map[string]any{
