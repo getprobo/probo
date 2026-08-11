@@ -63,7 +63,15 @@ func assembleChunk(kind ChunkType, body []byte) []byte {
 // object the order a reader would see. The caller owns that sequence because it
 // requires the sequence state only the engine maintains. Operations named by
 // order must exist in the history, and deletes must be left out of it.
-func EncodeDocument(document *Document, order []OpID) ([]byte, error) {
+//
+// compress DEFLATEs individual columns above a size threshold, which is what
+// save() does and save_nocompress() does not. The compressed bytes are not
+// byte-identical to the reference because the DEFLATE implementations differ, so
+// byte identity only holds for histories small enough that no column crosses the
+// threshold; compression is a size optimization, and every column round-trips
+// because the decoder inflates any column whose specification carries the
+// compressed bit.
+func EncodeDocument(document *Document, order []OpID, compress bool) ([]byte, error) {
 	changes, err := documentChangeOrder(document)
 	if err != nil {
 		return nil, err
@@ -96,12 +104,12 @@ func EncodeDocument(document *Document, order []OpID) ([]byte, error) {
 		return nil, err
 	}
 
-	changeColumns = sortColumns(
+	changeColumns = compressColumns(sortColumns(
 		append(changeColumns, retainedColumns(document, changeColumnSpecifications)...),
-	)
-	operationColumns = sortColumns(
+	), compress)
+	operationColumns = compressColumns(sortColumns(
 		append(operationColumns, retainedColumns(document, operationColumnSpecifications)...),
-	)
+	), compress)
 
 	var body []byte
 
@@ -571,19 +579,61 @@ func retainedColumns(document *Document, known []uint32) []encodedColumn {
 	return retained
 }
 
-// sortColumns puts columns in the strictly ascending specification order a
-// reader requires, which both the metadata and the data must follow.
+// sortColumns puts columns in the strictly ascending order a reader requires,
+// which both the metadata and the data must follow. Ordering is by the
+// normalized specification so a column keeps its place whether or not it carries
+// the compressed bit.
 func sortColumns(columns []encodedColumn) []encodedColumn {
 	slices.SortFunc(columns, func(left, right encodedColumn) int {
+		leftSpec := left.specification &^ compressedColumnBit
+		rightSpec := right.specification &^ compressedColumnBit
+
 		switch {
-		case left.specification < right.specification:
+		case leftSpec < rightSpec:
 			return -1
-		case left.specification > right.specification:
+		case leftSpec > rightSpec:
 			return 1
 		default:
 			return 0
 		}
 	})
+
+	return columns
+}
+
+// compressedColumnBit marks a column whose data is DEFLATE-compressed. A reader
+// strips it to recover the logical specification and inflates the data.
+const compressedColumnBit = 8
+
+// columnDeflateMinSize is the smallest column worth compressing, matching the
+// change-chunk threshold. Below it, compression tends to grow the data.
+const columnDeflateMinSize = 250
+
+// compressColumns DEFLATEs each column whose data is large enough to benefit,
+// marking it with the compressed bit. A column that is already compressed (a
+// retained unknown column) or that does not shrink is left untouched, so the
+// result is never larger than the input.
+func compressColumns(columns []encodedColumn, compress bool) []encodedColumn {
+	if !compress {
+		return columns
+	}
+
+	for i := range columns {
+		column := &columns[i]
+
+		if column.specification&compressedColumnBit != 0 ||
+			len(column.data) < columnDeflateMinSize {
+			continue
+		}
+
+		deflated, err := deflate(column.data)
+		if err != nil || len(deflated) >= len(column.data) {
+			continue
+		}
+
+		column.specification |= compressedColumnBit
+		column.data = deflated
+	}
 
 	return columns
 }

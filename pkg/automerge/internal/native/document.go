@@ -20,40 +20,47 @@
 
 package native
 
-import (
-	"context"
-	"fmt"
-	"slices"
-	"time"
-)
+import "slices"
 
-// SaveDocument serializes the whole history as one compacted document chunk,
-// the form save() produces in the other implementations. It replaces the
-// change-by-change stream a plain save writes.
-func (b *Engine) SaveDocument(ctx context.Context) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
-	if len(b.pending) > 0 {
-		if _, err := b.Commit(ctx, "", time.Time{}); err != nil {
-			return nil, err
-		}
+// compact serializes the whole history as one document chunk, the form save()
+// produces in the other implementations, followed by any retained orphan changes
+// as trailing change chunks (which is how a snapshot carries changes it cannot
+// place in the operation set because their dependencies are missing).
+//
+// It reports ok=false, rather than an error, when the history cannot be
+// compacted: while isolated, where the pinned view is not the whole history, or
+// when the change graph is not internally consistent. The caller then falls back
+// to the faithful change stream, which preserves every byte that was loaded.
+func (b *Engine) compact(retainOrphans, deflate bool) ([]byte, bool, error) {
+	if b.isolationActive {
+		return nil, false, nil
 	}
 
 	changes, ok := b.state.allChanges()
 	if !ok {
-		return nil, fmt.Errorf("cannot enumerate changes for a document save")
+		return nil, false, nil
 	}
 
-	document := &Document{Changes: make([]Change, 0, len(changes))}
+	document := &Document{
+		Changes: make([]Change, 0, len(changes)),
+		Heads:   b.state.Heads(),
+	}
 	for _, change := range changes {
 		document.Changes = append(document.Changes, *change)
 	}
 
-	document.Heads = b.state.Heads()
+	data, err := EncodeDocument(document, b.state.documentOperationOrder(), deflate)
+	if err != nil {
+		return nil, false, err
+	}
 
-	return EncodeDocument(document, b.state.documentOperationOrder())
+	if retainOrphans {
+		for _, change := range orderedQueuedChanges(b.queuedChanges) {
+			data = append(data, maybeCompressChangeChunk(change.Raw, deflate)...)
+		}
+	}
+
+	return data, true, nil
 }
 
 // documentOperationOrder returns the operation-set order a document chunk is

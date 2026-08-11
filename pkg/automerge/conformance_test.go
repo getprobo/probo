@@ -501,9 +501,21 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	require.NoError(t, err)
 	_, err = backend.Merge(context.Background(), rawChanges[1])
 	require.NoError(t, err)
+
+	before, err := backend.Heads(context.Background())
+	require.NoError(t, err)
+
 	saved, err := backend.Save(context.Background())
 	require.NoError(t, err)
-	assert.True(t, bytes.Contains(saved, rawChanges[1]))
+
+	// Save now writes a compacted document rather than embedding change bytes, so
+	// the guarantee is that reloading it reproduces the same frontier.
+	reloaded, err := native.LoadEngine(context.Background(), saved)
+	require.NoError(t, err)
+
+	after, err := reloaded.Heads(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, before, after)
 }
 
 func TestConformance_NativeSyncMessageRoundTrip(t *testing.T) {

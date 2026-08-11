@@ -151,7 +151,7 @@ func TestDocumentSave_MatchesReferenceBytes(t *testing.T) {
 			expected, err := reference.Save(ctx)
 			require.NoError(t, err)
 
-			actual, err := native.SaveDocument(ctx)
+			actual, err := native.Save(ctx)
 			require.NoError(t, err)
 
 			assert.Equal(t, expected, actual)
@@ -183,7 +183,7 @@ func TestDocumentSave_ReloadsIntoTheSameHistory(t *testing.T) {
 			original, err := document.ChangesSince(ctx, nil)
 			require.NoError(t, err)
 
-			snapshot, err := document.SaveDocument(ctx)
+			snapshot, err := document.Save(ctx)
 			require.NoError(t, err)
 
 			reloaded, err := automerge.Load(ctx, snapshot, actor(43))

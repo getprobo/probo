@@ -154,10 +154,6 @@ type (
 	changeApplier interface {
 		ApplyChanges(context.Context, [][]byte) error
 	}
-
-	documentSaver interface {
-		SaveDocument(context.Context) ([]byte, error)
-	}
 )
 
 var (
@@ -465,32 +461,6 @@ func (d *Document) Save(ctx context.Context) ([]byte, error) {
 	data, err := d.engine.Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot save Automerge document: %w", err)
-	}
-
-	return data, nil
-}
-
-// SaveDocument serializes the history as a single compacted document chunk,
-// the form save() produces in the Rust and JavaScript implementations. Save
-// writes the history as a stream of changes instead, which stays byte-for-byte
-// faithful to what was loaded but grows with every commit.
-func (d *Document) SaveDocument(ctx context.Context) ([]byte, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if d.closed {
-		return nil, ErrClosed
-	}
-
-	compactor, ok := d.engine.(documentSaver)
-	if !ok {
-		// The reference engine only ever writes compacted documents.
-		return d.engine.Save(ctx)
-	}
-
-	data, err := compactor.SaveDocument(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("cannot save compacted Automerge document: %w", err)
 	}
 
 	return data, nil

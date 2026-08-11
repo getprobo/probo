@@ -81,7 +81,7 @@ func TestEncodeDocument_ReproducesOfficialSnapshotBytes(t *testing.T) {
 	document, err := Decode(data)
 	require.NoError(t, err)
 
-	encoded, err := EncodeDocument(document, storedOperationOrder(t, data))
+	encoded, err := EncodeDocument(document, storedOperationOrder(t, data), true)
 	require.NoError(t, err)
 
 	assert.Equal(t, data, encoded, "re-encoded snapshot must match the original bytes")
@@ -97,7 +97,7 @@ func TestEncodeDocument_RoundTripsThroughDecode(t *testing.T) {
 	document, err := Decode(data)
 	require.NoError(t, err)
 
-	encoded, err := EncodeDocument(document, storedOperationOrder(t, data))
+	encoded, err := EncodeDocument(document, storedOperationOrder(t, data), true)
 	require.NoError(t, err)
 
 	reloaded, err := Decode(encoded)

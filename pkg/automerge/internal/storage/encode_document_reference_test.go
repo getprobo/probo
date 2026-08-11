@@ -58,7 +58,7 @@ func assertSnapshotReencodes(t *testing.T, saved []byte) {
 	document, err := Decode(saved)
 	require.NoError(t, err)
 
-	encoded, err := EncodeDocument(document, storedOperationOrder(t, saved))
+	encoded, err := EncodeDocument(document, storedOperationOrder(t, saved), true)
 	require.NoError(t, err)
 
 	assert.Equal(t, saved, encoded)

@@ -85,26 +85,39 @@ applies every change whose dependencies are satisfiable and queues the rest
 (still failing a load that can apply nothing, so a bare orphan without a base is
 rejected as before).
 
-Snapshot writing is now implemented. `SaveDocument` compacts the whole history
-into one document chunk and is gated on byte identity with the reference for the
-same history across linear text, map puts and deletes, counters, marks and
-unmarks, and text deletion; re-encoding a reference-written snapshot reproduces
-that file exactly for the official fixture and for reference histories covering
-nested objects, lists and a merged multi-actor graph. Compaction matters for
-size as well as parity: a 200-commit typing history is 21816 bytes as a change
-stream and 400 bytes compacted.
+Snapshot writing is implemented and is now what `Save` produces, matching the
+Rust and JavaScript `save()` semantics. It compacts the whole history into one
+document chunk, followed by any retained orphan changes as trailing change
+chunks, and DEFLATEs individual columns above a size threshold. It is gated on
+byte identity with the reference for the same history across linear text, map
+puts and deletes, counters, marks and unmarks, and text deletion; re-encoding a
+reference-written snapshot reproduces that file exactly for the official fixture
+and for reference histories covering nested objects, lists and a merged
+multi-actor graph. Compaction matters for size as well as parity: a 200-commit
+typing history is 21816 bytes as the old change stream and 400 bytes compacted.
 
-`Save` still writes the change stream, so nothing that depends on preserving the
-loaded bytes changes. Switching the default is a separate decision because
-`SaveIncremental` tracks its cursor against the appended change list.
+`Save` falls back to the faithful change stream (the loaded base plus each change
+chunk since) when a history cannot be compacted: while isolated, or when the
+change graph is not internally consistent. That stream is also what preserves
+loaded bytes verbatim, so a document is never rewritten in a lossy way when it
+cannot be safely compacted. `SaveIncremental` is unaffected: `Save` leaves the
+incremental cursor at the end exactly as the stream save did.
 
-Two storage differences remain. The reference `am_save_no_orphans` shim sets
+Compressed columns are not byte-identical to the reference because the DEFLATE
+implementations differ, so the byte-identity gate holds only for histories small
+enough that no column crosses the threshold; above it both files are valid and
+load equally, and compression is a size optimization the decoder reverses on the
+way back in.
+
+Two smaller differences remain. The reference `am_save_no_orphans` shim sets
 `deflate: false`, while Rust's own `SaveOptions::default()` compresses, so
 `SaveWithOptions(false)` diverges from the shim rather than from Rust; correcting
 it means rebuilding the WASM oracle. Unknown columns survive a normal load
 because the loaded bytes are kept verbatim, and `EncodeDocument` writes them back
-to the table they came from, but the dependency-tolerant load path rebuilds its
-base from applied change bytes and cannot preserve a wrapper it did not retain.
+to the table they came from when a document is re-encoded unmodified, but they
+cannot be carried across a compaction of a mutated history because their rows no
+longer line up with the recomputed columns; this matches Rust, which also drops
+them across re-serialization.
 
 The V2 sync internals are now covered: the empty-message codec round-trips to
 the reference wire bytes, and Bloom false-positive recovery is verified on both
@@ -212,7 +225,7 @@ These do not block Go/Rust engine parity but remain tracked:
 Implement and verify:
 
 - complete document, change, compressed-change, and bundle parsing;
-- canonical document-chunk encoding, byte-identical to the reference (done);
+- canonical document-chunk encoding, what Save now writes (done);
 - canonical encoding for every operation and scalar column;
 - expanded/compressed change byte and hash stability;
 - 64-bit object IDs and actor tables referenced only by deletes;

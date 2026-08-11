@@ -287,20 +287,24 @@ func (b *Engine) Close(context.Context) error {
 	return nil
 }
 
+// Save serializes the whole history as one compacted document chunk, the form
+// save() produces in the Rust and JavaScript implementations. It replaces the
+// change-by-change stream Go used to write, which grew without bound as a
+// history accumulated commits.
 func (b *Engine) Save(ctx context.Context) ([]byte, error) {
 	return b.save(ctx, true, true)
 }
 
-// SaveNoCompress serializes the document without DEFLATE-compressing any change
-// chunks, mirroring Rust's AutoCommit::save_nocompress.
+// SaveNoCompress serializes the document without DEFLATE-compressing any trailing
+// change chunks, mirroring Rust's AutoCommit::save_nocompress.
 func (b *Engine) SaveNoCompress(ctx context.Context) ([]byte, error) {
 	return b.save(ctx, true, false)
 }
 
-// SaveWithOptions serializes the document, optionally appending retained orphan
-// changes (queued changes whose dependencies are still missing) so they survive
-// a save/load round trip. It mirrors the Rust SaveOptions.retain_orphans flag;
-// the reference retains orphans by default.
+// SaveWithOptions serializes the document, choosing whether to keep retained
+// orphan changes (queued changes whose dependencies are still missing) so they
+// survive a save/load round trip. It mirrors the Rust SaveOptions.retain_orphans
+// flag; the reference retains orphans by default.
 func (b *Engine) SaveWithOptions(
 	ctx context.Context,
 	retainOrphans bool,
@@ -319,6 +323,26 @@ func (b *Engine) save(
 		}
 	}
 
+	// A compacted document chunk is the form every other implementation writes
+	// and is dramatically smaller than the change stream for a long history. It
+	// leaves the incremental cursor at the end, exactly as the stream save did,
+	// so a following SaveIncremental still emits only later changes.
+	if data, ok, err := b.compact(retainOrphans, deflate); err != nil {
+		return nil, err
+	} else if ok {
+		b.saveCursor = len(b.appended)
+
+		return data, nil
+	}
+
+	return b.streamSave(retainOrphans, deflate)
+}
+
+// streamSave serializes the history as the loaded base followed by each change
+// chunk since. It preserves the loaded bytes verbatim, including columns this
+// version does not understand, and is the fallback when a history cannot be
+// compacted (while isolated, or when the change graph is inconsistent).
+func (b *Engine) streamSave(retainOrphans, deflate bool) ([]byte, error) {
 	total := len(b.base)
 	for _, change := range b.appended {
 		total += len(change)
