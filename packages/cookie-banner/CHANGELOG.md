@@ -4,6 +4,10 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+### Changed
+
+- Privacy Choices wording keys are regulation-scoped: `privacy_choices_*` → `privacy_choices_*_ccpa`. The compact opt-out CTA stays on `button_opt_out` (generic); California receives the statutory label from the server via `button_opt_out_ccpa`
+
 ## [0.13.0] - 2026-08-05
 
 ### Changed

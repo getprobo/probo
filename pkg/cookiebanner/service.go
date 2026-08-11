@@ -1785,7 +1785,9 @@ func (s *Service) GetActiveBannerConfig(
 		applyCanadianPrivacyBannerTexts(config)
 	}
 
-	applyGenericOptOutBannerTexts(config)
+	if IsCaliforniaPrivacyRegulation(regulation) {
+		applyCCPABannerTexts(config)
+	}
 
 	applyBannerTextCompat(config, sdkVersion)
 

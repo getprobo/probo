@@ -53,24 +53,24 @@ export function renderOptOut(position: string): string {
         `
         <div class="panel-header">
           <div class="panel-header-title">
-            <p class="title" id="probo-privacy-choices-title" style="margin:0" data-text="privacy_choices_title"></p>
+            <p class="title" id="probo-privacy-choices-title" style="margin:0" data-text="privacy_choices_title_ccpa"></p>
             <button class="panel-close" data-action="close-privacy-choices" data-aria-text="aria_close">
               ${CLOSE_ICON}
             </button>
           </div>
-          <p class="description" id="probo-privacy-choices-desc" data-text="privacy_choices_intro"></p>
+          <p class="description" id="probo-privacy-choices-desc" data-text="privacy_choices_intro_ccpa"></p>
         </div>
         <div class="privacy-choices-body">
           <section class="privacy-choices-section">
-            <p class="privacy-choices-section-title" data-text="privacy_choices_sale_title"></p>
-            <p class="description" data-text="privacy_choices_sale_description"></p>
+            <p class="privacy-choices-section-title" data-text="privacy_choices_sale_title_ccpa"></p>
+            <p class="description" data-text="privacy_choices_sale_description_ccpa"></p>
             <div class="buttons">
               <probo-reject-button><button class="btn" data-text="button_opt_out" data-text-fallback="button_reject_all"></button></probo-reject-button>
             </div>
           </section>
           <section class="privacy-choices-section privacy-choices-section-spi">
-            <p class="privacy-choices-section-title" data-text="privacy_choices_spi_title"></p>
-            <p class="description" data-text="privacy_choices_spi_description"></p>
+            <p class="privacy-choices-section-title" data-text="privacy_choices_spi_title_ccpa"></p>
+            <p class="description" data-text="privacy_choices_spi_description_ccpa"></p>
           </section>
         </div>
         <div class="footer">

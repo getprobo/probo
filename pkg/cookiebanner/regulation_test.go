@@ -483,128 +483,102 @@ func TestApplyCanadianPrivacyBannerTexts(t *testing.T) {
 	})
 }
 
-func TestApplyGenericOptOutBannerTexts(t *testing.T) {
+func TestApplyCCPABannerTexts(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Japan drops the California opt-out wording", func(t *testing.T) {
+	t.Run("California uses the CCPA statutory CTA", func(t *testing.T) {
 		t.Parallel()
 
 		config := &BannerConfig{
-			Regulation: RegulationAPPI,
+			Regulation: RegulationCCPA,
 			Texts: map[string]string{
-				"button_opt_out":         "Do Not Sell or Share My Personal Information",
-				"button_opt_out_generic": "Reject non-essential cookies",
+				"button_opt_out":      "Reject non-essential cookies",
+				"button_opt_out_ccpa": "Do Not Sell or Share My Personal Information",
 			},
 		}
-		applyGenericOptOutBannerTexts(config)
-		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
 	})
 
-	t.Run("US state privacy law keeps the statutory wording", func(t *testing.T) {
+	t.Run("non-California US state keeps the generic CTA", func(t *testing.T) {
 		t.Parallel()
 
 		config := &BannerConfig{
 			Regulation: RegulationTDPSA,
 			Texts: map[string]string{
-				"button_opt_out":         "Do Not Sell or Share My Personal Information",
-				"button_opt_out_generic": "Reject non-essential cookies",
+				"button_opt_out":      "Reject non-essential cookies",
+				"button_opt_out_ccpa": "Do Not Sell or Share My Personal Information",
 			},
 		}
-		applyGenericOptOutBannerTexts(config)
-		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
-	})
-
-	t.Run("Mexico drops the wording its legacy chrome would show", func(t *testing.T) {
-		t.Parallel()
-
-		config := &BannerConfig{
-			Regulation: RegulationLFPDPPP,
-			Texts: map[string]string{
-				"button_opt_out":         "Do Not Sell or Share My Personal Information",
-				"button_opt_out_generic": "Reject non-essential cookies",
-			},
-		}
-		applyGenericOptOutBannerTexts(config)
+		applyCCPABannerTexts(config)
 		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
 	})
 
-	t.Run("banner predating the neutral label falls back to reject all", func(t *testing.T) {
-		t.Parallel()
-
-		config := &BannerConfig{
-			Regulation: RegulationNone,
-			Texts: map[string]string{
-				"button_opt_out":    "Do Not Sell or Share My Personal Information",
-				"button_reject_all": "Reject all",
-			},
-		}
-		applyGenericOptOutBannerTexts(config)
-		require.Equal(t, "Reject all", config.Texts["button_opt_out"])
-	})
-
-	t.Run("no replacement available leaves the texts untouched", func(t *testing.T) {
-		t.Parallel()
-
-		config := &BannerConfig{
-			Regulation: RegulationNone,
-			Texts: map[string]string{
-				"button_opt_out": "Do Not Sell or Share My Personal Information",
-			},
-		}
-		applyGenericOptOutBannerTexts(config)
-		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
-	})
-
-	t.Run("integrator copy survives", func(t *testing.T) {
-		t.Parallel()
-
-		config := &BannerConfig{
-			Regulation: RegulationPIPEDA,
-			Texts: map[string]string{
-				"button_opt_out":         "Withdraw my consent",
-				"button_opt_out_generic": "Reject non-essential cookies",
-			},
-		}
-		applyGenericOptOutBannerTexts(config)
-		require.Equal(t, "Withdraw my consent", config.Texts["button_opt_out"])
-	})
-
-	t.Run("localized default is recognized as shipped copy", func(t *testing.T) {
+	t.Run("Japan keeps the generic CTA", func(t *testing.T) {
 		t.Parallel()
 
 		config := &BannerConfig{
 			Regulation: RegulationAPPI,
 			Texts: map[string]string{
-				"button_opt_out":         defaultUIStringsByLanguage["ja"]["button_opt_out"],
-				"button_opt_out_generic": defaultUIStringsByLanguage["ja"]["button_opt_out_generic"],
+				"button_opt_out":      "Reject non-essential cookies",
+				"button_opt_out_ccpa": "Do Not Sell or Share My Personal Information",
 			},
 		}
-		applyGenericOptOutBannerTexts(config)
-		require.Equal(
-			t,
-			defaultUIStringsByLanguage["ja"]["button_opt_out_generic"],
-			config.Texts["button_opt_out"],
-		)
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
+	})
+
+	t.Run("California aliases Privacy Choices keys for older SDKs", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationCCPA,
+			Texts: map[string]string{
+				"button_opt_out_ccpa":        "Do Not Sell or Share My Personal Information",
+				"privacy_choices_title_ccpa": "Your Privacy Choices",
+			},
+		}
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Your Privacy Choices", config.Texts["privacy_choices_title"])
+		require.Equal(t, "Your Privacy Choices", config.Texts["privacy_choices_title_ccpa"])
+	})
+
+	t.Run("missing CCPA CTA leaves the generic label untouched", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationCCPA,
+			Texts: map[string]string{
+				"button_opt_out": "Reject non-essential cookies",
+			},
+		}
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
 	})
 }
 
-// TestDefaultUIStringsHaveGenericOptOutLabel keeps the neutral label in step
-// with the supported languages: without it, or with it copied from the
-// California wording, a visitor outside the US sees "Do Not Sell or Share".
-func TestDefaultUIStringsHaveGenericOptOutLabel(t *testing.T) {
+// TestDefaultUIStringsHaveCCPAOptOutLabel keeps the statutory CCPA CTA distinct
+// from the generic opt-out label every language ships under button_opt_out.
+func TestDefaultUIStringsHaveCCPAOptOutLabel(t *testing.T) {
 	t.Parallel()
 
 	for language, uiStrings := range defaultUIStringsByLanguage {
 		t.Run(language, func(t *testing.T) {
 			t.Parallel()
 
-			require.NotEmpty(t, uiStrings["button_opt_out_generic"])
+			require.NotEmpty(t, uiStrings["button_opt_out"])
+			require.NotEmpty(t, uiStrings["button_opt_out_ccpa"])
 			require.NotEqual(
 				t,
 				uiStrings["button_opt_out"],
-				uiStrings["button_opt_out_generic"],
-				"the neutral label must differ from the California wording it replaces",
+				uiStrings["button_opt_out_ccpa"],
+				"the CCPA label must differ from the generic opt-out CTA",
 			)
+			require.NotEmpty(t, uiStrings["privacy_choices_title_ccpa"])
+			_, hasLegacy := uiStrings["button_opt_out_generic"]
+			require.False(t, hasLegacy)
+			_, hasLegacyTitle := uiStrings["privacy_choices_title"]
+			require.False(t, hasLegacyTitle)
 		})
 	}
 }

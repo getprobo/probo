@@ -404,53 +404,40 @@ func applyCanadianPrivacyBannerTexts(config *BannerConfig) {
 	}
 }
 
-// shippedOptOutLabels is the set of "Do Not Sell or Share My Personal
-// Information" translations Probo seeds into new banners. Membership is how
-// applyGenericOptOutBannerTexts tells its own default apart from copy an
-// integrator wrote: only the default may be replaced. The set spans every
-// language because a banner in a language we do not ship is usually seeded by
-// copying one we do.
-var shippedOptOutLabels = func() map[string]struct{} {
-	labels := make(map[string]struct{}, len(defaultUIStringsByLanguage))
-
-	for _, uiStrings := range defaultUIStringsByLanguage {
-		if label := uiStrings["button_opt_out"]; label != "" {
-			labels[label] = struct{}{}
-		}
-	}
-
-	return labels
-}()
-
-// applyGenericOptOutBannerTexts swaps the CCPA-specific opt-out button label
-// for a neutral one outside the US state privacy laws. "Do Not Sell or Share
-// My Personal Information" is statutory California wording (11 CCR § 7015)
-// that misdescribes the choice everywhere else — including Mexico, whose
-// notice banner degrades to the opt-out chrome on pre-0.11 SDKs.
-//
-// The swap is skipped when the stored label is not one Probo shipped, so
-// legally reviewed copy an integrator wrote for their own jurisdiction
-// survives. When a banner predates the neutral key it falls back to the
-// reject-all label, which every translation carries in its own language.
-func applyGenericOptOutBannerTexts(config *BannerConfig) {
+// applyCCPABannerTexts selects CCPA statutory opt-out copy for California.
+// button_opt_out holds the generic CTA; button_opt_out_ccpa holds the
+// 11 CCR § 7015 "Do Not Sell or Share…" wording and is folded into the
+// canonical key only for California. Privacy Choices keys are stored with a
+// _ccpa suffix; unsuffixed aliases are filled so older SDKs that still read
+// privacy_choices_* keep working.
+func applyCCPABannerTexts(config *BannerConfig) {
 	if config == nil || config.Texts == nil {
 		return
 	}
 
-	if IsUSStatePrivacyRegulation(config.Regulation) {
+	if !IsCaliforniaPrivacyRegulation(config.Regulation) {
 		return
 	}
 
-	if _, shipped := shippedOptOutLabels[config.Texts["button_opt_out"]]; !shipped {
-		return
-	}
-
-	label := config.Texts["button_opt_out_generic"]
-	if label == "" {
-		label = config.Texts["button_reject_all"]
-	}
-
-	if label != "" {
+	if label, ok := config.Texts["button_opt_out_ccpa"]; ok && label != "" {
 		config.Texts["button_opt_out"] = label
+	}
+
+	for _, key := range []string{
+		"privacy_choices_title",
+		"privacy_choices_intro",
+		"privacy_choices_sale_title",
+		"privacy_choices_sale_description",
+		"privacy_choices_spi_title",
+		"privacy_choices_spi_description",
+	} {
+		ccpaKey := key + "_ccpa"
+		if v := config.Texts[ccpaKey]; v != "" {
+			if config.Texts[key] == "" {
+				config.Texts[key] = v
+			}
+		} else if v := config.Texts[key]; v != "" {
+			config.Texts[ccpaKey] = v
+		}
 	}
 }
