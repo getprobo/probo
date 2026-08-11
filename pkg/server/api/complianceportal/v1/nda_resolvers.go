@@ -32,6 +32,10 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
 	}
 
+	if err := requireFullName(ctx, identity); err != nil {
+		return nil, err
+	}
+
 	signerIP := clientip.Extract(httpReq)
 
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
@@ -73,6 +77,10 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 	)
 	if identity == nil {
 		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+	}
+
+	if err := requireFullName(ctx, identity); err != nil {
+		return nil, err
 	}
 
 	actorIP := clientip.Extract(httpReq)

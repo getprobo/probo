@@ -30,6 +30,17 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
+// requireFullName returns FULL_NAME_REQUIRED when the signed-in identity has no
+// name. Call after authentication on NDA signing mutations, and from
+// requireCompletedNDA before NDA_SIGNATURE_REQUIRED so the full-name gate wins.
+func requireFullName(ctx context.Context, identity *coredata.Identity) error {
+	if identity.FullName == "" {
+		return gqlutils.FullNameRequiredf(ctx, "full name is required")
+	}
+
+	return nil
+}
+
 // requireCompletedNDA enforces portal NDA completion for the signed-in identity.
 // No-ops when there is no viewer or the portal membership has no NDA signature.
 // Call from protected (non-PUBLIC) export resolvers after authentication.
@@ -64,8 +75,8 @@ func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 		return gqlutils.Internal(ctx)
 	}
 
-	if identity.FullName == "" {
-		return gqlutils.FullNameRequiredf(ctx, "full name is required")
+	if err := requireFullName(ctx, identity); err != nil {
+		return err
 	}
 
 	if sig.Status != coredata.ElectronicSignatureStatusCompleted {
