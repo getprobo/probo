@@ -4,6 +4,81 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.257.0] - 2026-08-11
+
+### Added
+
+- Console and compliance portal now send a Content-Security-Policy header, with a matching policy applied to their local Vite dev servers, restricting scripts, styles, and connections to known origins (including object storage, Google Fonts, Google favicons, and Markdown image sources), and hardened against configuration and origin injection.
+
+### Fixed
+
+- Clearing a person's contract end date now updates the people list immediately instead of only on the server, and the people list's actions column no longer starves date columns of space.
+
+### Changed
+
+- Cookie banner presentation now matches each jurisdiction's actual disclosure duties: Japan and jurisdictions with no cookie-consent law move to the opt-out layout instead of interrupting every visitor on load, Brazil (LGPD) requires prior opt-in, and a US visitor whose state cannot be resolved falls back to CCPA rather than no regulation. Only Mexico keeps the notice-on-load presentation.
+- Opt-out button copy is split into a generic label and a California-specific statutory label, so the "Do Not Sell or Share" phrasing no longer appears outside US state privacy laws.
+
+## [0.256.0] - 2026-08-10
+
+### Added
+
+- People list now shows each person's contract end date, making it easier to see why someone with an ended contract is excluded from document signatures despite still appearing active.
+
+### Fixed
+
+- Blank SCIM position/kind values are now treated as unset instead of failing person-form validation, and the people table's empty-state row spans the correct number of columns.
+- Cookie banner tracker detection no longer aborts the whole batch when an SDK-reported cookie or storage key exceeds PostgreSQL's index size limit; oversized identifiers are capped at 255 bytes and dropped instead.
+- The third-party compliance document agent now downloads PDFs directly instead of navigating to them, so PDF documents are read and verified correctly.
+
+### Changed
+
+- SCIM audit event writes no longer block the provisioning request, and are now bounded to a fixed duration.
+
+## [0.255.0] - 2026-08-10
+
+### Added
+
+- SCIM audit events now store the request and response bodies exchanged with the provisioning client, with password fields and credential attributes redacted regardless of the schema URN used to reference them.
+
+### Fixed
+
+- The compliance portal's unsigned-NDA banner no longer appears before a visitor has requested access to a private document, and an admin-granted access no longer triggers it as if the visitor had requested access themselves.
+- Locked document viewer CTA now names the NDA instead of reusing the banner's generic "Review and sign" label.
+- Compliance portal mailing list update detail pages no longer 404.
+
+## [0.254.0] - 2026-08-10
+
+### Changed
+
+- Organization creation is now restricted to owners when signup is disabled.
+- Console access is now restricted when the user has no organization membership.
+- Risk analysis scopes are now referred to as diagrams across the API and console UI.
+
+### Fixed
+
+- Resolved npm audit vulnerabilities in `dompurify`, `js-yaml`, and `mermaid` dependencies.
+
+## [0.253.0] - 2026-08-07
+
+### Fixed
+
+- Evidence uploads now display in the PDF viewer instead of a degraded fallback when the display mode was changed or the browser navigated away and back
+
+## [0.252.0] - 2026-08-07
+
+### Changed
+
+- Organization risk assessments are now named risk analyses across the database, console API, MCP API, CLI, and console UI. Third-party assessments and Statement of Applicability control flags keep their existing naming.
+- Compliance portal document, audit, and subprocessor selection is reversed: the console now lists the organization's own documents, audits, and subprocessors with checkboxes for inline portal membership, replacing the portal-only rows plus separate add dialogs.
+- Compliance portal catalog document, audit, and third-party rows are now exposed as Relay Nodes in the console API.
+
+### Fixed
+
+- Unchecking a compliance portal document no longer reports a remove error after the deletion actually succeeded.
+- `probod` now persists its local ACME account key across restarts, so pending certificate orders no longer fail with 401 after a restart; unauthorized order polls now clear resumable state and retry provisioning instead of stalling.
+- Compliance portal document table now spaces the alias and visibility controls instead of rendering them flush against each other.
+
 ## [0.251.0] - 2026-08-06
 
 ### Added

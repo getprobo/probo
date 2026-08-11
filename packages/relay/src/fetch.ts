@@ -26,6 +26,7 @@ import {
   ForbiddenError,
   FullNameRequiredError,
   InternalServerError,
+  MembershipRequiredError,
   NDASignatureRequiredError,
   UnAuthenticatedError,
 } from "./errors";
@@ -41,6 +42,9 @@ const hasAssumptionRequiredError = (error: GraphQLError) =>
 
 const hasNDASignatureRequiredError = (error: GraphQLError) =>
   error.extensions?.code === "NDA_SIGNATURE_REQUIRED";
+
+const hasMembershipRequiredError = (error: GraphQLError) =>
+  error.extensions?.code === "MEMBERSHIP_REQUIRED";
 
 const hasForbiddenError = (error: GraphQLError) =>
   error.extensions?.code === "FORBIDDEN";
@@ -124,6 +128,11 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
       const ndaSignatureRequiredError = errors.find(hasNDASignatureRequiredError);
       if (ndaSignatureRequiredError) {
         throw new NDASignatureRequiredError(ndaSignatureRequiredError.message);
+      }
+
+      const membershipRequiredError = errors.find(hasMembershipRequiredError);
+      if (membershipRequiredError) {
+        throw new MembershipRequiredError(membershipRequiredError.message);
       }
 
       const forbiddenError = errors.find(hasForbiddenError);

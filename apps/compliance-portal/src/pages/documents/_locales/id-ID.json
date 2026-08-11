@@ -47,7 +47,8 @@
     "downloadToView": "Jenis file ini tidak dapat dipratinjau di sini. Unduh untuk melihatnya.",
     "locked": {
       "title": "Akses diperlukan",
-      "description": "Anda belum memiliki akses ke dokumen ini."
+      "description": "Anda belum memiliki akses ke dokumen ini.",
+      "signNda": "Tinjau dan tanda tangani NDA"
     }
   }
 }

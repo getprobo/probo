@@ -34,17 +34,17 @@ enum RiskAnalysisOrderField
         )
 }
 
-enum RiskAnalysisScopeOrderField
+enum RiskAnalysisDiagramOrderField
     @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisScopeOrderField"
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderField"
     ) {
     CREATED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisScopeOrderFieldCreatedAt"
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderFieldCreatedAt"
         )
     NAME
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisScopeOrderFieldName"
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderFieldName"
         )
 }
 
@@ -146,12 +146,12 @@ input RiskAnalysisOrder
     field: RiskAnalysisOrderField!
 }
 
-input RiskAnalysisScopeOrder
+input RiskAnalysisDiagramOrder
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisScopeOrderBy"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisDiagramOrderBy"
     ) {
     direction: OrderDirection!
-    field: RiskAnalysisScopeOrderField!
+    field: RiskAnalysisDiagramOrderField!
 }
 
 input RiskAnalysisNodeOrder
@@ -202,20 +202,20 @@ type RiskAnalysis implements Node {
     description: String
     organization: Organization @goField(forceResolver: true)
 
-    scopes(
+    diagrams(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: RiskAnalysisScopeOrder
-    ): RiskAnalysisScopeConnection @goField(forceResolver: true)
+        orderBy: RiskAnalysisDiagramOrder
+    ): RiskAnalysisDiagramConnection @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type RiskAnalysisScope implements Node {
+type RiskAnalysisDiagram implements Node {
     id: ID!
     riskAnalysisId: ID!
     name: String!
@@ -268,7 +268,7 @@ type RiskAnalysisScope implements Node {
 
 type RiskAnalysisNode implements Node {
     id: ID!
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     boundaryId: ID
     nodeType: RiskAnalysisNodeType!
     name: String!
@@ -278,7 +278,7 @@ type RiskAnalysisNode implements Node {
 
 type RiskAnalysisBoundary implements Node {
     id: ID!
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     parentBoundaryId: ID
     name: String!
     createdAt: Datetime!
@@ -287,7 +287,7 @@ type RiskAnalysisBoundary implements Node {
 
 type RiskAnalysisProcess implements Node {
     id: ID!
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     sourceNodeId: ID!
     targetNodeId: ID!
     name: String!
@@ -297,7 +297,7 @@ type RiskAnalysisProcess implements Node {
 
 type RiskAnalysisThreat implements Node {
     id: ID!
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     processId: ID!
     name: String!
     category: String!
@@ -307,8 +307,8 @@ type RiskAnalysisThreat implements Node {
 
 type RiskAnalysisScenario implements Node {
     id: ID!
-    riskAnalysisScopeId: ID!
-    scope: RiskAnalysisScope @goField(forceResolver: true)
+    riskAnalysisDiagramId: ID!
+    diagram: RiskAnalysisDiagram @goField(forceResolver: true)
     name: String!
     description: String
 
@@ -348,18 +348,18 @@ type RiskAnalysisConnectionEdge {
     node: RiskAnalysis!
 }
 
-type RiskAnalysisScopeConnection
+type RiskAnalysisDiagramConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisScopeConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisDiagramConnection"
     ) {
     totalCount: Int @goField(forceResolver: true)
-    edges: [RiskAnalysisScopeConnectionEdge!]!
+    edges: [RiskAnalysisDiagramConnectionEdge!]!
     pageInfo: PageInfo!
 }
 
-type RiskAnalysisScopeConnectionEdge {
+type RiskAnalysisDiagramConnectionEdge {
     cursor: CursorKey!
-    node: RiskAnalysisScope!
+    node: RiskAnalysisDiagram!
 }
 
 type RiskAnalysisNodeConnection
@@ -445,15 +445,15 @@ extend type Mutation {
         input: DeleteRiskAnalysisInput!
     ): DeleteRiskAnalysisPayload!
 
-    createRiskAnalysisScope(
-        input: CreateRiskAnalysisScopeInput!
-    ): CreateRiskAnalysisScopePayload!
-    updateRiskAnalysisScope(
-        input: UpdateRiskAnalysisScopeInput!
-    ): UpdateRiskAnalysisScopePayload!
-    deleteRiskAnalysisScope(
-        input: DeleteRiskAnalysisScopeInput!
-    ): DeleteRiskAnalysisScopePayload!
+    createRiskAnalysisDiagram(
+        input: CreateRiskAnalysisDiagramInput!
+    ): CreateRiskAnalysisDiagramPayload!
+    updateRiskAnalysisDiagram(
+        input: UpdateRiskAnalysisDiagramInput!
+    ): UpdateRiskAnalysisDiagramPayload!
+    deleteRiskAnalysisDiagram(
+        input: DeleteRiskAnalysisDiagramInput!
+    ): DeleteRiskAnalysisDiagramPayload!
 
     createRiskAnalysisNode(
         input: CreateRiskAnalysisNodeInput!
@@ -550,34 +550,34 @@ type DeleteRiskAnalysisPayload {
     deletedRiskAnalysisId: ID!
 }
 
-input CreateRiskAnalysisScopeInput {
+input CreateRiskAnalysisDiagramInput {
     riskAnalysisId: ID!
     name: String!
 }
 
-input UpdateRiskAnalysisScopeInput {
+input UpdateRiskAnalysisDiagramInput {
     id: ID!
     name: String
 }
 
-input DeleteRiskAnalysisScopeInput {
-    riskAnalysisScopeId: ID!
+input DeleteRiskAnalysisDiagramInput {
+    riskAnalysisDiagramId: ID!
 }
 
-type CreateRiskAnalysisScopePayload {
-    riskAnalysisScopeEdge: RiskAnalysisScopeConnectionEdge!
+type CreateRiskAnalysisDiagramPayload {
+    riskAnalysisDiagramEdge: RiskAnalysisDiagramConnectionEdge!
 }
 
-type UpdateRiskAnalysisScopePayload {
-    riskAnalysisScope: RiskAnalysisScope!
+type UpdateRiskAnalysisDiagramPayload {
+    riskAnalysisDiagram: RiskAnalysisDiagram!
 }
 
-type DeleteRiskAnalysisScopePayload {
-    deletedRiskAnalysisScopeId: ID!
+type DeleteRiskAnalysisDiagramPayload {
+    deletedRiskAnalysisDiagramId: ID!
 }
 
 input CreateRiskAnalysisNodeInput {
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     boundaryId: ID
     nodeType: RiskAnalysisNodeType!
     name: String!
@@ -607,7 +607,7 @@ type DeleteRiskAnalysisNodePayload {
 }
 
 input CreateRiskAnalysisBoundaryInput {
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     parentBoundaryId: ID
     name: String!
 }
@@ -635,7 +635,7 @@ type DeleteRiskAnalysisBoundaryPayload {
 }
 
 input CreateRiskAnalysisProcessInput {
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     sourceNodeId: ID!
     targetNodeId: ID!
     name: String!
@@ -665,7 +665,7 @@ type DeleteRiskAnalysisProcessPayload {
 }
 
 input CreateRiskAnalysisThreatInput {
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     processId: ID!
     name: String!
     category: String!
@@ -695,7 +695,7 @@ type DeleteRiskAnalysisThreatPayload {
 }
 
 input CreateRiskAnalysisScenarioInput {
-    riskAnalysisScopeId: ID!
+    riskAnalysisDiagramId: ID!
     name: String!
     description: String
 }

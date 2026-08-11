@@ -116,7 +116,7 @@ WITH linked_threats AS (
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	process_id,
 	name,
 	category,

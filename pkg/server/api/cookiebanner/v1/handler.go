@@ -332,6 +332,19 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			continue
 		}
 
+		if len(name) > cookiebanner.MaxTrackerIdentifierLength {
+			h.logger.InfoCtx(
+				r.Context(),
+				"skipping oversized detected cookie name",
+				log.String("banner_id", bannerID.String()),
+				log.String("tracker_type", string(coredata.TrackerTypeCookie)),
+				log.Int("identifier_length", len(name)),
+				log.String("sdk_version", sdkVersionFromContext(r.Context())),
+			)
+
+			continue
+		}
+
 		var source coredata.CookieSource
 
 		switch strings.TrimSpace(c.Source) {
@@ -436,6 +449,19 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			continue
 		}
 
+		if len(name) > cookiebanner.MaxTrackerIdentifierLength {
+			h.logger.InfoCtx(
+				r.Context(),
+				"skipping oversized detected cookie name",
+				log.String("banner_id", bannerID.String()),
+				log.String("tracker_type", string(coredata.TrackerTypeCookie)),
+				log.Int("identifier_length", len(name)),
+				log.String("sdk_version", sdkVersionFromContext(r.Context())),
+			)
+
+			continue
+		}
+
 		var source coredata.CookieSource
 
 		switch strings.TrimSpace(c.Source) {
@@ -463,6 +489,19 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	for _, s := range body.Storage {
 		key := strings.TrimSpace(s.Key)
 		if key == "" {
+			continue
+		}
+
+		if len(key) > cookiebanner.MaxTrackerIdentifierLength {
+			h.logger.InfoCtx(
+				r.Context(),
+				"skipping oversized detected storage key",
+				log.String("banner_id", bannerID.String()),
+				log.String("storage_type", strings.TrimSpace(s.StorageType)),
+				log.Int("identifier_length", len(key)),
+				log.String("sdk_version", sdkVersionFromContext(r.Context())),
+			)
+
 			continue
 		}
 

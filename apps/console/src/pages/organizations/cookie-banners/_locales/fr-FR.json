@@ -84,7 +84,7 @@
     "actions": { "edit": "Modifier", "importThirdParties": "Importer vers les tiers", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
-    "duration": { "session": "Session", "persistent": "Persistant", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "year_one": "{{count}} an", "year_other": "{{count}} ans" },
+    "duration": { "session": "Session", "persistent": "Persistant" },
     "commonCatalog": "Catalogue commun"
   },
   "trackerProperties": {
@@ -94,7 +94,6 @@
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
-    "duration": { "session": "Session", "persistent": "Persistant", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "year_one": "{{count}} an", "year_other": "{{count}} ans" },
     "commonCatalog": "Catalogue commun", "manual": "Manuel", "boolean": { "yes": "Oui", "no": "Non" }
   },
   "detectedTrackersSection": {
@@ -210,9 +209,8 @@
     "consentData": "Données de consentement",
     "required": "(Obligatoire)",
     "consent": { "accepted": "Accepté", "rejected": "Refusé" },
-    "cookies": { "columns": { "cookie": "Cookie", "duration": "Durée", "description": "Description" } },
-    "duration": { "session": "Session", "persistent": "Persistant", "year_one": "{{count}} an", "year_other": "{{count}} ans", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
-  },
+    "cookies": { "columns": { "cookie": "Cookie", "duration": "Durée", "description": "Description" } }
+    },
   "configLayout": {
     "breadcrumbs": { "index": "Bannières de cookies" },
     "version": "v{{version}}",

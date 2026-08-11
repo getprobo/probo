@@ -19,18 +19,18 @@
 // SOFTWARE.
 
 import { getCompliancePortalLinkedVisibilityOptions } from "@probo/helpers";
-import { Badge, Button, DocumentTypeBadge, Field, IconCrossLargeX, Option, Td, Tr } from "@probo/ui";
-import { useCallback } from "react";
+import { Badge, Checkbox, DocumentTypeBadge, Field, Option, Td, Tr } from "@probo/ui";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { type DataID, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
 import type {
-  CompliancePortalDocumentListItem_catalogDocumentFragment$key,
-} from "#/__generated__/core/CompliancePortalDocumentListItem_catalogDocumentFragment.graphql";
+  CompliancePortalDocumentListItem_compliancePortal$key,
+} from "#/__generated__/core/CompliancePortalDocumentListItem_compliancePortal.graphql";
 import type {
-  CompliancePortalDocumentListItem_compliancePortalFragment$key,
-} from "#/__generated__/core/CompliancePortalDocumentListItem_compliancePortalFragment.graphql";
+  CompliancePortalDocumentListItem_document$key,
+} from "#/__generated__/core/CompliancePortalDocumentListItem_document.graphql";
 import type {
   CompliancePortalDocumentListItem_removeMutation,
 } from "#/__generated__/core/CompliancePortalDocumentListItem_removeMutation.graphql";
@@ -43,33 +43,34 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { CompliancePortalAliasField } from "../../_components/CompliancePortalAliasField";
 
 const compliancePortalFragment = graphql`
-  fragment CompliancePortalDocumentListItem_compliancePortalFragment on CompliancePortal {
+  fragment CompliancePortalDocumentListItem_compliancePortal on CompliancePortal {
     id
     canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
 
-const catalogDocumentFragment = graphql`
-  fragment CompliancePortalDocumentListItem_catalogDocumentFragment on CompliancePortalDocument {
+const documentFragment = graphql`
+  fragment CompliancePortalDocumentListItem_document on Document
+  @argumentDefinitions(compliancePortalId: { type: "ID!" }) {
     id
-    visibility
-    document {
-      id
-      alias
-      canSetAlias: permission(action: "resourcealias:alias:set")
-      canRemoveAlias: permission(action: "resourcealias:alias:remove")
-      latestPublishedVersion: versions(
-        first: 1
-        orderBy: { field: CREATED_AT, direction: DESC }
-        filter: { statuses: [PUBLISHED] }
-      ) {
-        edges {
-          node {
-            title
-            documentType
-          }
+    alias
+    canSetAlias: permission(action: "resourcealias:alias:set")
+    canRemoveAlias: permission(action: "resourcealias:alias:remove")
+    latestPublishedVersion: versions(
+      first: 1
+      orderBy: { field: CREATED_AT, direction: DESC }
+      filter: { statuses: [PUBLISHED] }
+    ) {
+      edges {
+        node {
+          title
+          documentType
         }
       }
+    }
+    compliancePortalDocument(compliancePortalId: $compliancePortalId) {
+      id
+      visibility
     }
   }
 `;
@@ -77,11 +78,19 @@ const catalogDocumentFragment = graphql`
 const updateDocumentVisibilityMutation = graphql`
   mutation CompliancePortalDocumentListItem_updateVisibilityMutation(
     $input: UpdateCompliancePortalDocumentVisibilityInput!
+    $compliancePortalId: ID!
   ) {
     updateCompliancePortalDocumentVisibility(input: $input) {
       catalogDocument {
         id
         visibility
+      }
+      document {
+        id
+        compliancePortalDocument(compliancePortalId: $compliancePortalId) {
+          id
+          visibility
+        }
       }
     }
   }
@@ -90,34 +99,40 @@ const updateDocumentVisibilityMutation = graphql`
 const removeDocumentMutation = graphql`
   mutation CompliancePortalDocumentListItem_removeMutation(
     $input: DeleteCompliancePortalDocumentInput!
-    $connections: [ID!]!
+    $compliancePortalId: ID!
   ) {
     deleteCompliancePortalDocument(input: $input) {
-      deletedCompliancePortalDocumentId @deleteEdge(connections: $connections)
+      deletedCompliancePortalDocumentId @deleteRecord
+      document {
+        id
+        compliancePortalDocument(compliancePortalId: $compliancePortalId) {
+          id
+        }
+      }
     }
   }
 `;
 
 export function CompliancePortalDocumentListItem(props: {
-  compliancePortalFragmentRef: CompliancePortalDocumentListItem_compliancePortalFragment$key;
-  catalogDocumentFragmentRef: CompliancePortalDocumentListItem_catalogDocumentFragment$key;
-  documentsConnectionId: DataID;
+  compliancePortalKey: CompliancePortalDocumentListItem_compliancePortal$key;
+  documentKey: CompliancePortalDocumentListItem_document$key;
 }) {
-  const { compliancePortalFragmentRef, catalogDocumentFragmentRef, documentsConnectionId } = props;
-
   const organizationId = useOrganizationId();
   const { t } = useTranslation("organizations/compliance-portals");
   const visibilityOptions = getCompliancePortalLinkedVisibilityOptions(t);
 
-  const compliancePortal = useFragment<CompliancePortalDocumentListItem_compliancePortalFragment$key>(
+  const compliancePortal = useFragment<CompliancePortalDocumentListItem_compliancePortal$key>(
     compliancePortalFragment,
-    compliancePortalFragmentRef,
+    props.compliancePortalKey,
   );
-  const catalogDocument = useFragment<CompliancePortalDocumentListItem_catalogDocumentFragment$key>(
-    catalogDocumentFragment,
-    catalogDocumentFragmentRef,
+  const document = useFragment<CompliancePortalDocumentListItem_document$key>(
+    documentFragment,
+    props.documentKey,
   );
-  const document = catalogDocument.document;
+  const catalogDocument = document.compliancePortalDocument;
+  const serverLinked = catalogDocument !== null;
+  const [pendingLinked, setPendingLinked] = useState<boolean | null>(null);
+  const isLinked = pendingLinked ?? serverLinked;
 
   const [updateDocumentVisibility, isUpdatingDocumentVisibility]
     = useMutation<CompliancePortalDocumentListItem_updateVisibilityMutation>(
@@ -139,6 +154,10 @@ export function CompliancePortalDocumentListItem(props: {
 
   const handleVisibilityChange = useCallback(
     async (value: string) => {
+      if (!catalogDocument) {
+        return;
+      }
+
       const typedValue = value === "PUBLIC" ? "PUBLIC" : "RESTRICTED";
       await updateDocumentVisibility({
         variables: {
@@ -147,35 +166,90 @@ export function CompliancePortalDocumentListItem(props: {
             documentId: document.id,
             compliancePortalVisibility: typedValue,
           },
+          compliancePortalId: compliancePortal.id,
         },
       });
     },
-    [compliancePortal.id, document.id, updateDocumentVisibility],
+    [catalogDocument, compliancePortal.id, document.id, updateDocumentVisibility],
   );
 
-  const handleRemove = useCallback(async () => {
-    await removeDocument({
-      variables: {
-        connections: [documentsConnectionId],
-        input: {
-          id: catalogDocument.id,
-        },
-      },
-    });
-  }, [catalogDocument.id, documentsConnectionId, removeDocument]);
+  const handleLinkedChange = useCallback(
+    async (checked: boolean) => {
+      if (!compliancePortal.canUpdate || checked === isLinked) {
+        return;
+      }
+
+      setPendingLinked(checked);
+
+      try {
+        if (checked) {
+          await updateDocumentVisibility({
+            variables: {
+              input: {
+                compliancePortalId: compliancePortal.id,
+                documentId: document.id,
+                compliancePortalVisibility: "RESTRICTED",
+              },
+              compliancePortalId: compliancePortal.id,
+            },
+          });
+          setPendingLinked(null);
+          return;
+        }
+
+        if (!catalogDocument) {
+          setPendingLinked(null);
+          return;
+        }
+
+        await removeDocument({
+          variables: {
+            input: {
+              id: catalogDocument.id,
+            },
+            compliancePortalId: compliancePortal.id,
+          },
+        });
+        setPendingLinked(null);
+      } catch {
+        setPendingLinked(null);
+      }
+    },
+    [
+      catalogDocument,
+      compliancePortal.canUpdate,
+      compliancePortal.id,
+      document.id,
+      isLinked,
+      removeDocument,
+      updateDocumentVisibility,
+    ],
+  );
+
+  const isMutating = isUpdatingDocumentVisibility || isRemoving;
 
   const latestVersion = document.latestPublishedVersion.edges[0]?.node;
   const versionTitle = latestVersion?.title;
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
+      <Td noLink>
+        <Checkbox
+          checked={isLinked}
+          onChange={checked => void handleLinkedChange(checked)}
+          disabled={isMutating || !compliancePortal.canUpdate}
+          aria-label={t("documentListItem.actions.toggle", {
+            title: versionTitle,
+          })}
+        />
+      </Td>
       <Td>
         <div className="flex gap-4 items-center">{versionTitle}</div>
       </Td>
       <Td>
         {latestVersion && <DocumentTypeBadge type={latestVersion.documentType} />}
       </Td>
-      <Td noLink>
+      <Td noLink className="pr-4">
         <CompliancePortalAliasField
           resourceId={document.id}
           alias={document.alias}
@@ -183,13 +257,13 @@ export function CompliancePortalDocumentListItem(props: {
           canRemoveAlias={document.canRemoveAlias}
         />
       </Td>
-      <Td noLink width={130} className="pr-0">
+      <Td noLink width={130}>
         <Field
           type="select"
-          value={catalogDocument.visibility}
+          value={catalogDocument?.visibility ?? "RESTRICTED"}
           onValueChange={value => void handleVisibilityChange(value)}
-          disabled={isUpdatingDocumentVisibility || !compliancePortal.canUpdate}
-          className="w-[105px]"
+          disabled={!isLinked || isMutating || !compliancePortal.canUpdate}
+          className="w-26.25"
         >
           {visibilityOptions.map(option => (
             <Option key={option.value} value={option.value}>
@@ -199,17 +273,6 @@ export function CompliancePortalDocumentListItem(props: {
             </Option>
           ))}
         </Field>
-      </Td>
-      <Td noLink width={48}>
-        {compliancePortal.canUpdate && (
-          <Button
-            variant="tertiary"
-            icon={IconCrossLargeX}
-            aria-label={t("documentListItem.actions.remove")}
-            disabled={isRemoving}
-            onClick={() => void handleRemove()}
-          />
-        )}
       </Td>
     </Tr>
   );

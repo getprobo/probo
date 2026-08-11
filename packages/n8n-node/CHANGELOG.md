@@ -4,6 +4,22 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.218.0] - 2026-08-10
+
+### Changed
+
+- Risk Analysis `Scope` parameters are now called `Diagram` across all operations.
+
+## [0.217.0] - 2026-08-07
+
+### Changed
+
+- **Breaking**: the `Risk Assessment` resource is renamed to `Risk Analysis` (resource value `riskAssessment` -> `riskAnalysis`), along with its operations and parameters. Existing workflows using the Risk Assessment resource must reselect the Risk Analysis resource. Third-party assessments are unaffected.
+
+### Added
+
+- Document `Get Many`: `Published` filter option, to return only documents that have a published version
+
 ## [0.216.0] - 2026-08-06
 
 ### Added

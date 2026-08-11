@@ -37,14 +37,14 @@ import (
 
 type (
 	RiskAnalysisThreat struct {
-		ID                  gid.GID   `db:"id"`
-		OrganizationID      gid.GID   `db:"organization_id"`
-		RiskAnalysisScopeID gid.GID   `db:"risk_analysis_scope_id"`
-		ProcessID           gid.GID   `db:"process_id"`
-		Name                string    `db:"name"`
-		Category            string    `db:"category"`
-		CreatedAt           time.Time `db:"created_at"`
-		UpdatedAt           time.Time `db:"updated_at"`
+		ID                    gid.GID   `db:"id"`
+		OrganizationID        gid.GID   `db:"organization_id"`
+		RiskAnalysisDiagramID gid.GID   `db:"risk_analysis_diagram_id"`
+		ProcessID             gid.GID   `db:"process_id"`
+		Name                  string    `db:"name"`
+		Category              string    `db:"category"`
+		CreatedAt             time.Time `db:"created_at"`
+		UpdatedAt             time.Time `db:"updated_at"`
 	}
 
 	RiskAnalysisThreats []*RiskAnalysisThreat
@@ -100,18 +100,18 @@ func (t *RiskAnalysisThreat) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (ts *RiskAnalysisThreats) LoadByRiskAnalysisScopeID(
+func (ts *RiskAnalysisThreats) LoadByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 	cursor *page.Cursor[RiskAnalysisThreatOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	process_id,
 	name,
 	category,
@@ -121,11 +121,11 @@ FROM
 	risk_analysis_threats
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -144,11 +144,11 @@ WHERE
 	return nil
 }
 
-func (ts *RiskAnalysisThreats) CountByRiskAnalysisScopeID(
+func (ts *RiskAnalysisThreats) CountByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -157,11 +157,11 @@ FROM
 	risk_analysis_threats
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -177,7 +177,7 @@ func (t *RiskAnalysisThreat) LoadByID(ctx context.Context, conn pg.Querier, scop
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	process_id,
 	name,
 	category,
@@ -219,7 +219,7 @@ INSERT INTO risk_analysis_threats (
 	id,
 	tenant_id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	process_id,
 	name,
 	category,
@@ -229,7 +229,7 @@ INSERT INTO risk_analysis_threats (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@risk_analysis_scope_id,
+	@risk_analysis_diagram_id,
 	@process_id,
 	@name,
 	@category,
@@ -238,15 +238,15 @@ INSERT INTO risk_analysis_threats (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"id":                     t.ID,
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        t.OrganizationID,
-		"risk_analysis_scope_id": t.RiskAnalysisScopeID,
-		"process_id":             t.ProcessID,
-		"name":                   t.Name,
-		"category":               t.Category,
-		"created_at":             t.CreatedAt,
-		"updated_at":             t.UpdatedAt,
+		"id":                       t.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"organization_id":          t.OrganizationID,
+		"risk_analysis_diagram_id": t.RiskAnalysisDiagramID,
+		"process_id":               t.ProcessID,
+		"name":                     t.Name,
+		"category":                 t.Category,
+		"created_at":               t.CreatedAt,
+		"updated_at":               t.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

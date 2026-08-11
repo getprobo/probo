@@ -31,7 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (string, error) {
+func (s *Service) BuildDiagramMermaidChart(ctx context.Context, scope coredata.Scoper, diagramID gid.GID) (string, error) {
 	var (
 		nodes      coredata.RiskAnalysisNodes
 		boundaries coredata.RiskAnalysisBoundaries
@@ -48,7 +48,7 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisNodeOrderField]) ([]*coredata.RiskAnalysisNode, error) {
 				var batch coredata.RiskAnalysisNodes
-				if err := batch.LoadByRiskAnalysisScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load nodes: %w", err)
 				}
 
@@ -69,7 +69,7 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisBoundaryOrderField]) ([]*coredata.RiskAnalysisBoundary, error) {
 				var batch coredata.RiskAnalysisBoundaries
-				if err := batch.LoadByRiskAnalysisScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load boundaries: %w", err)
 				}
 
@@ -90,7 +90,7 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisProcessOrderField]) ([]*coredata.RiskAnalysisProcess, error) {
 				var batch coredata.RiskAnalysisProcesses
-				if err := batch.LoadByRiskAnalysisScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load processes: %w", err)
 				}
 
@@ -111,7 +111,7 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 			},
 			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisThreatOrderField]) ([]*coredata.RiskAnalysisThreat, error) {
 				var batch coredata.RiskAnalysisThreats
-				if err := batch.LoadByRiskAnalysisScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load threats: %w", err)
 				}
 
@@ -130,10 +130,10 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 		return "", err
 	}
 
-	return buildScopeMermaidChart(nodes, boundaries, processes, threats), nil
+	return buildDiagramMermaidChart(nodes, boundaries, processes, threats), nil
 }
 
-func buildScopeMermaidChart(
+func buildDiagramMermaidChart(
 	nodes coredata.RiskAnalysisNodes,
 	boundaries coredata.RiskAnalysisBoundaries,
 	processes coredata.RiskAnalysisProcesses,

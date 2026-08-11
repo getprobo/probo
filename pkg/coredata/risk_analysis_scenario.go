@@ -36,13 +36,13 @@ import (
 
 type (
 	RiskAnalysisScenario struct {
-		ID                  gid.GID   `db:"id"`
-		OrganizationID      gid.GID   `db:"organization_id"`
-		RiskAnalysisScopeID gid.GID   `db:"risk_analysis_scope_id"`
-		Name                string    `db:"name"`
-		Description         *string   `db:"description"`
-		CreatedAt           time.Time `db:"created_at"`
-		UpdatedAt           time.Time `db:"updated_at"`
+		ID                    gid.GID   `db:"id"`
+		OrganizationID        gid.GID   `db:"organization_id"`
+		RiskAnalysisDiagramID gid.GID   `db:"risk_analysis_diagram_id"`
+		Name                  string    `db:"name"`
+		Description           *string   `db:"description"`
+		CreatedAt             time.Time `db:"created_at"`
+		UpdatedAt             time.Time `db:"updated_at"`
 	}
 
 	RiskAnalysisScenarios []*RiskAnalysisScenario
@@ -109,7 +109,7 @@ func (ss *RiskAnalysisScenarios) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	name,
 	description,
 	created_at,
@@ -188,7 +188,7 @@ WITH linked_scenarios AS (
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	name,
 	description,
 	created_at,
@@ -256,18 +256,18 @@ WHERE
 	return count, nil
 }
 
-func (ss *RiskAnalysisScenarios) LoadByRiskAnalysisScopeID(
+func (ss *RiskAnalysisScenarios) LoadByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 	cursor *page.Cursor[RiskAnalysisScenarioOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	name,
 	description,
 	created_at,
@@ -276,11 +276,11 @@ FROM
 	risk_analysis_scenarios
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -299,11 +299,11 @@ WHERE
 	return nil
 }
 
-func (ss *RiskAnalysisScenarios) CountByRiskAnalysisScopeID(
+func (ss *RiskAnalysisScenarios) CountByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -312,10 +312,10 @@ FROM
 	risk_analysis_scenarios
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -331,7 +331,7 @@ func (s *RiskAnalysisScenario) LoadByID(ctx context.Context, conn pg.Querier, sc
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	name,
 	description,
 	created_at,
@@ -372,7 +372,7 @@ INSERT INTO risk_analysis_scenarios (
 	id,
 	tenant_id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	name,
 	description,
 	created_at,
@@ -381,7 +381,7 @@ INSERT INTO risk_analysis_scenarios (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@risk_analysis_scope_id,
+	@risk_analysis_diagram_id,
 	@name,
 	@description,
 	@created_at,
@@ -389,14 +389,14 @@ INSERT INTO risk_analysis_scenarios (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"id":                     s.ID,
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        s.OrganizationID,
-		"risk_analysis_scope_id": s.RiskAnalysisScopeID,
-		"name":                   s.Name,
-		"description":            s.Description,
-		"created_at":             s.CreatedAt,
-		"updated_at":             s.UpdatedAt,
+		"id":                       s.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"organization_id":          s.OrganizationID,
+		"risk_analysis_diagram_id": s.RiskAnalysisDiagramID,
+		"name":                     s.Name,
+		"description":              s.Description,
+		"created_at":               s.CreatedAt,
+		"updated_at":               s.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

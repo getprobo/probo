@@ -13,6 +13,7 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -59,6 +60,34 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// CompliancePortalDocument is the resolver for the compliancePortalDocument field.
+func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *types.Document, compliancePortalID gid.GID) (*types.CompliancePortalDocument, error) {
+	scope, err := r.authorize(ctx, compliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := dataloader.FromContext(ctx).CompliancePortalDocument.Load(
+		ctx,
+		dataloader.CompliancePortalDocumentKey{
+			TenantID:           scope.GetTenantID(),
+			CompliancePortalID: compliancePortalID,
+			DocumentID:         obj.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalDocument(link), nil
 }
 
 // Versions is the resolver for the versions field.

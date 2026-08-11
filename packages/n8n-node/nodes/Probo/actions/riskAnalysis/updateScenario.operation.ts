@@ -82,7 +82,7 @@ export async function execute(
 			updateRiskAnalysisScenario(input: $input) {
 				riskAnalysisScenario {
 					id
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 					name
 					description
 					createdAt

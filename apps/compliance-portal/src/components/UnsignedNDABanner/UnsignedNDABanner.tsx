@@ -32,6 +32,7 @@ import type { UnsignedNDABanner_compliancePortal$key } from "./__generated__/Uns
 
 const unsignedNDABannerFragment = graphql`
   fragment UnsignedNDABanner_compliancePortal on CompliancePortal {
+    viewerHasRequestedAccess
     nonDisclosureAgreement {
       viewerSignature {
         status
@@ -44,8 +45,6 @@ interface UnsignedNDABannerProps {
   compliancePortalKey: UnsignedNDABanner_compliancePortal$key;
 }
 
-// Full-bleed notice when a signed-in user still needs to complete the portal
-// NDA. Dismissed state is React-only (no localStorage/cookies).
 export function UnsignedNDABanner({ compliancePortalKey }: UnsignedNDABannerProps) {
   const { t } = useTranslation();
   const localizedPath = useLocalizedPath();
@@ -54,7 +53,7 @@ export function UnsignedNDABanner({ compliancePortalKey }: UnsignedNDABannerProp
 
   const signature = portal.nonDisclosureAgreement?.viewerSignature;
   const needsSignature = signature != null && signature.status !== "COMPLETED";
-  const visible = !dismissed && needsSignature;
+  const visible = !dismissed && portal.viewerHasRequestedAccess && needsSignature;
 
   if (!visible) {
     return null;

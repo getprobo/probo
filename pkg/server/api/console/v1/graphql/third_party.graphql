@@ -238,6 +238,9 @@ type ThirdParty implements Node {
     description: String
 
     organization: Organization! @goField(forceResolver: true)
+    compliancePortalThirdParty(
+        compliancePortalId: ID!
+    ): CompliancePortalThirdParty @goField(forceResolver: true)
 
     complianceReports(
         first: Int

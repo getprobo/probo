@@ -26,11 +26,11 @@ import (
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/boundary"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/create"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/delete"
+	"go.probo.inc/probo/pkg/cmd/risk-analysis/diagram"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/list"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/node"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/process"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/scenario"
-	"go.probo.inc/probo/pkg/cmd/risk-analysis/scope"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/threat"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/update"
 	"go.probo.inc/probo/pkg/cmd/risk-analysis/view"
@@ -47,7 +47,7 @@ func NewCmdRiskAnalysis(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(scope.NewCmdScope(f))
+	cmd.AddCommand(diagram.NewCmdDiagram(f))
 	cmd.AddCommand(node.NewCmdNode(f))
 	cmd.AddCommand(boundary.NewCmdBoundary(f))
 	cmd.AddCommand(process.NewCmdProcess(f))

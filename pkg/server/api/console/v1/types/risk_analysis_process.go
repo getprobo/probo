@@ -61,12 +61,12 @@ func NewRiskAnalysisProcessConnection(
 
 func NewRiskAnalysisProcess(pr *coredata.RiskAnalysisProcess) *RiskAnalysisProcess {
 	return &RiskAnalysisProcess{
-		ID:                  pr.ID,
-		RiskAnalysisScopeID: pr.RiskAnalysisScopeID,
-		SourceNodeID:        pr.SourceNodeID,
-		TargetNodeID:        pr.TargetNodeID,
-		Name:                pr.Name,
-		CreatedAt:           pr.CreatedAt,
-		UpdatedAt:           pr.UpdatedAt,
+		ID:                    pr.ID,
+		RiskAnalysisDiagramID: pr.RiskAnalysisDiagramID,
+		SourceNodeID:          pr.SourceNodeID,
+		TargetNodeID:          pr.TargetNodeID,
+		Name:                  pr.Name,
+		CreatedAt:             pr.CreatedAt,
+		UpdatedAt:             pr.UpdatedAt,
 	}
 }

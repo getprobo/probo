@@ -37,14 +37,14 @@ import (
 
 type (
 	RiskAnalysisProcess struct {
-		ID                  gid.GID   `db:"id"`
-		OrganizationID      gid.GID   `db:"organization_id"`
-		RiskAnalysisScopeID gid.GID   `db:"risk_analysis_scope_id"`
-		SourceNodeID        gid.GID   `db:"source_node_id"`
-		TargetNodeID        gid.GID   `db:"target_node_id"`
-		Name                string    `db:"name"`
-		CreatedAt           time.Time `db:"created_at"`
-		UpdatedAt           time.Time `db:"updated_at"`
+		ID                    gid.GID   `db:"id"`
+		OrganizationID        gid.GID   `db:"organization_id"`
+		RiskAnalysisDiagramID gid.GID   `db:"risk_analysis_diagram_id"`
+		SourceNodeID          gid.GID   `db:"source_node_id"`
+		TargetNodeID          gid.GID   `db:"target_node_id"`
+		Name                  string    `db:"name"`
+		CreatedAt             time.Time `db:"created_at"`
+		UpdatedAt             time.Time `db:"updated_at"`
 	}
 
 	RiskAnalysisProcesses []*RiskAnalysisProcess
@@ -100,18 +100,18 @@ func (p *RiskAnalysisProcess) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (ps *RiskAnalysisProcesses) LoadByRiskAnalysisScopeID(
+func (ps *RiskAnalysisProcesses) LoadByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 	cursor *page.Cursor[RiskAnalysisProcessOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	source_node_id,
 	target_node_id,
 	name,
@@ -121,11 +121,11 @@ FROM
 	risk_analysis_processes
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -144,11 +144,11 @@ WHERE
 	return nil
 }
 
-func (ps *RiskAnalysisProcesses) CountByRiskAnalysisScopeID(
+func (ps *RiskAnalysisProcesses) CountByRiskAnalysisDiagramID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	riskAnalysisScopeID gid.GID,
+	riskAnalysisDiagramID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -157,11 +157,11 @@ FROM
 	risk_analysis_processes
 WHERE
 	%s
-	AND risk_analysis_scope_id = @risk_analysis_scope_id
+	AND risk_analysis_diagram_id = @risk_analysis_diagram_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_analysis_scope_id": riskAnalysisScopeID}
+	args := pgx.NamedArgs{"risk_analysis_diagram_id": riskAnalysisDiagramID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
@@ -177,7 +177,7 @@ func (p *RiskAnalysisProcess) LoadByID(ctx context.Context, conn pg.Querier, sco
 SELECT
 	id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	source_node_id,
 	target_node_id,
 	name,
@@ -219,7 +219,7 @@ INSERT INTO risk_analysis_processes (
 	id,
 	tenant_id,
 	organization_id,
-	risk_analysis_scope_id,
+	risk_analysis_diagram_id,
 	source_node_id,
 	target_node_id,
 	name,
@@ -229,7 +229,7 @@ INSERT INTO risk_analysis_processes (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@risk_analysis_scope_id,
+	@risk_analysis_diagram_id,
 	@source_node_id,
 	@target_node_id,
 	@name,
@@ -238,15 +238,15 @@ INSERT INTO risk_analysis_processes (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"id":                     p.ID,
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        p.OrganizationID,
-		"risk_analysis_scope_id": p.RiskAnalysisScopeID,
-		"source_node_id":         p.SourceNodeID,
-		"target_node_id":         p.TargetNodeID,
-		"name":                   p.Name,
-		"created_at":             p.CreatedAt,
-		"updated_at":             p.UpdatedAt,
+		"id":                       p.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"organization_id":          p.OrganizationID,
+		"risk_analysis_diagram_id": p.RiskAnalysisDiagramID,
+		"source_node_id":           p.SourceNodeID,
+		"target_node_id":           p.TargetNodeID,
+		"name":                     p.Name,
+		"created_at":               p.CreatedAt,
+		"updated_at":               p.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

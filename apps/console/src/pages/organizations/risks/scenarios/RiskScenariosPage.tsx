@@ -55,7 +55,7 @@ export const riskScenariosPageQuery = graphql`
               id
               name
               description
-              scope { riskAnalysisId }
+              diagram { riskAnalysisId }
             }
           }
         }
@@ -75,7 +75,7 @@ const linkMutation = graphql`
           id
           name
           description
-          scope { riskAnalysisId }
+          diagram { riskAnalysisId }
         }
       }
     }
@@ -174,7 +174,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
           </Tr>
         )}
         {scenarios.map(scenario => (
-          <Tr key={scenario.id} to={`/organizations/${organizationId}/risk-analyses/${scenario.scope?.riskAnalysisId}`}>
+          <Tr key={scenario.id} to={`/organizations/${organizationId}/risk-analyses/${scenario.diagram?.riskAnalysisId}`}>
             <Td className="font-medium">{scenario.name}</Td>
             <Td className="text-txt-secondary">
               {scenario.description || "—"}

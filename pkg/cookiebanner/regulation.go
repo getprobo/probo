@@ -187,9 +187,10 @@ func IsUSStatePrivacyRegulation(r Regulation) bool {
 //
 // When the country is positively identified it returns that country's
 // regulation as detected, including RegulationNone for jurisdictions with no
-// cookie-consent law (which the presentation layer maps to an informational
-// notice). When geolocation is unresolved (cc is nil) it falls back to GDPR,
-// applying the strictest opt-in consent model by default.
+// cookie-consent law (which the presentation layer maps to a hidden opt-out
+// banner reachable only from the settings link). When geolocation is
+// unresolved (location is nil) it falls back to GDPR, applying the strictest
+// opt-in consent model by default.
 func ResolveRegulation(location *coredata.IPLocationBlock) (Regulation, RegulationSource) {
 	if location != nil {
 		return RegulationForLocation(*location), RegulationSourceDetected
@@ -200,10 +201,17 @@ func ResolveRegulation(location *coredata.IPLocationBlock) (Regulation, Regulati
 
 // RegulationForLocation maps a country and optional ISO 3166-2 subdivision to
 // the applicable privacy regulation.
+//
+// A US visitor whose subdivision cannot be resolved falls back to CCPA, the
+// strictest US state regime: we cannot rule out California, and the statutory
+// "Your Privacy Choices" link it adds is the safe answer for an unknown state.
+// A subdivision that resolves but is absent from the map is a different case —
+// that state genuinely has no comprehensive privacy law, so it maps to
+// RegulationNone.
 func RegulationForLocation(location coredata.IPLocationBlock) Regulation {
 	if location.CountryCode == coredata.CountryCodeUS {
 		if location.SubdivisionCode == nil {
-			return RegulationNone
+			return RegulationCCPA
 		}
 
 		if regulation, ok := usPrivacyRegulationBySubdivision[*location.SubdivisionCode]; ok {
@@ -327,7 +335,8 @@ func ConsentModeForRegulation(r Regulation) string {
 		RegulationPIPL,
 		RegulationPIPA,
 		RegulationDPDP,
-		RegulationPDPL:
+		RegulationPDPL,
+		RegulationLGPD:
 		return ConsentModeOptIn
 
 	case RegulationCCPA,
@@ -354,7 +363,6 @@ func ConsentModeForRegulation(r Regulation) string {
 		RegulationPIPAAB,
 		RegulationPIPABC,
 		RegulationPIPACA,
-		RegulationLGPD,
 		RegulationLFPDPPP,
 		RegulationAPPI:
 		return ConsentModeOptOut
@@ -393,5 +401,43 @@ func applyCanadianPrivacyBannerTexts(config *BannerConfig) {
 
 	if description, ok := config.Texts["banner_description_ca_opt_out"]; ok && description != "" {
 		config.Texts["banner_description_opt_out"] = description
+	}
+}
+
+// applyCCPABannerTexts selects CCPA statutory opt-out copy for California.
+// button_opt_out holds the generic CTA; button_opt_out_ccpa holds the
+// 11 CCR § 7015 "Do Not Sell or Share…" wording and is folded into the
+// canonical key only for California. Privacy Choices keys are stored with a
+// _ccpa suffix; unsuffixed aliases are filled so older SDKs that still read
+// privacy_choices_* keep working.
+func applyCCPABannerTexts(config *BannerConfig) {
+	if config == nil || config.Texts == nil {
+		return
+	}
+
+	if !IsCaliforniaPrivacyRegulation(config.Regulation) {
+		return
+	}
+
+	if label, ok := config.Texts["button_opt_out_ccpa"]; ok && label != "" {
+		config.Texts["button_opt_out"] = label
+	}
+
+	for _, key := range []string{
+		"privacy_choices_title",
+		"privacy_choices_intro",
+		"privacy_choices_sale_title",
+		"privacy_choices_sale_description",
+		"privacy_choices_spi_title",
+		"privacy_choices_spi_description",
+	} {
+		ccpaKey := key + "_ccpa"
+		if v := config.Texts[ccpaKey]; v != "" {
+			if config.Texts[key] == "" {
+				config.Texts[key] = v
+			}
+		} else if v := config.Texts[key]; v != "" {
+			config.Texts[ccpaKey] = v
+		}
 	}
 }

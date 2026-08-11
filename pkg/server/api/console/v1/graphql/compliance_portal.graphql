@@ -360,10 +360,7 @@ input CompliancePortalOrder
     field: CompliancePortalOrderField!
 }
 
-type CompliancePortal implements Node
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortal"
-    ) {
+type CompliancePortal implements Node {
     id: ID!
     active: Boolean!
     searchEngineIndexing: SearchEngineIndexing!
@@ -429,30 +426,6 @@ type CompliancePortal implements Node
         orderBy: CompliancePortalFileOrder
     ): CompliancePortalFileConnection! @goField(forceResolver: true)
 
-    documents(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: DocumentOrder
-    ): CompliancePortalDocumentConnection! @goField(forceResolver: true)
-
-    audits(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: AuditOrder
-    ): CompliancePortalAuditConnection! @goField(forceResolver: true)
-
-    thirdParties(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: ThirdPartyOrder
-    ): CompliancePortalThirdPartyConnection! @goField(forceResolver: true)
-
     mailingList: MailingList @goField(forceResolver: true)
 
     defaultDomain: CustomDomain @goField(forceResolver: true)
@@ -473,72 +446,21 @@ type CompliancePortalConnection
     pageInfo: PageInfo!
 }
 
-type CompliancePortalDocument
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocument"
-    ) {
+type CompliancePortalDocument implements Node {
     id: ID!
-    document: Document!
+    document: Document! @goField(forceResolver: true)
     visibility: CompliancePortalLinkedVisibility!
 }
 
-type CompliancePortalDocumentConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalDocumentEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalDocumentEdge {
-    cursor: CursorKey!
-    node: CompliancePortalDocument!
-}
-
-type CompliancePortalAudit
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAudit"
-    ) {
+type CompliancePortalAudit implements Node {
     id: ID!
-    audit: Audit!
+    audit: Audit! @goField(forceResolver: true)
     visibility: CompliancePortalLinkedVisibility!
 }
 
-type CompliancePortalAuditConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAuditConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalAuditEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalAuditEdge {
-    cursor: CursorKey!
-    node: CompliancePortalAudit!
-}
-
-type CompliancePortalThirdParty
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalThirdParty"
-    ) {
+type CompliancePortalThirdParty implements Node {
     id: ID!
-    thirdParty: ThirdParty!
-}
-
-type CompliancePortalThirdPartyConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalThirdPartyConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalThirdPartyEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalThirdPartyEdge {
-    cursor: CursorKey!
-    node: CompliancePortalThirdParty!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
 }
 
 type CompliancePortalEdge {
@@ -569,10 +491,7 @@ type CompliancePortalAccess implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type CompliancePortalDocumentAccess
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentAccess"
-    ) {
+type CompliancePortalDocumentAccess {
     id: ID!
     status: CompliancePortalDocumentAccessStatus!
     document: Document @goField(forceResolver: true)
@@ -692,10 +611,7 @@ type CompliancePortalCommitmentEdge {
     node: CompliancePortalCommitment!
 }
 
-type ComplianceFramework implements Node
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFramework"
-    ) {
+type ComplianceFramework implements Node {
     id: ID!
     framework: Framework! @goField(forceResolver: true)
     rank: Int!
@@ -1088,29 +1004,32 @@ input DeleteCompliancePortalThirdPartyInput {
 
 type UpdateCompliancePortalDocumentVisibilityPayload {
     catalogDocument: CompliancePortalDocument!
-    catalogDocumentEdge: CompliancePortalDocumentEdge!
+    document: Document!
 }
 
 type DeleteCompliancePortalDocumentPayload {
     deletedCompliancePortalDocumentId: ID!
+    document: Document!
 }
 
 type UpdateCompliancePortalAuditVisibilityPayload {
     catalogAudit: CompliancePortalAudit!
-    catalogAuditEdge: CompliancePortalAuditEdge!
+    audit: Audit!
 }
 
 type DeleteCompliancePortalAuditPayload {
     deletedCompliancePortalAuditId: ID!
+    audit: Audit!
 }
 
 type UpdateCompliancePortalThirdPartyPublishedPayload {
     catalogThirdParty: CompliancePortalThirdParty!
-    catalogThirdPartyEdge: CompliancePortalThirdPartyEdge!
+    thirdParty: ThirdParty!
 }
 
 type DeleteCompliancePortalThirdPartyPayload {
     deletedCompliancePortalThirdPartyId: ID!
+    thirdParty: ThirdParty!
 }
 
 input UpdateCompliancePortalFileInput {

@@ -82,9 +82,9 @@ func TestResolveRegulation(t *testing.T) {
 			wantSource:     RegulationSourceDetected,
 		},
 		{
-			name:           "US without subdivision resolves to none as detected",
+			name:           "US without subdivision falls back to CCPA as detected",
 			location:       &coredata.IPLocationBlock{CountryCode: coredata.CountryCodeUS},
-			wantRegulation: RegulationNone,
+			wantRegulation: RegulationCCPA,
 			wantSource:     RegulationSourceDetected,
 		},
 		{
@@ -125,10 +125,10 @@ func TestPresentationForRegulation(t *testing.T) {
 		{RegulationPIPABC, PresentationOptOut},
 		{RegulationPIPACA, PresentationOptOut},
 		{RegulationLaw25, PresentationOptIn},
-		{RegulationLGPD, PresentationOptOut},
-		{RegulationAPPI, PresentationNotice},
+		{RegulationLGPD, PresentationOptIn},
+		{RegulationAPPI, PresentationOptOut},
+		{RegulationNone, PresentationOptOut},
 		{RegulationLFPDPPP, PresentationNotice},
-		{RegulationNone, PresentationNotice},
 	}
 
 	for _, tt := range tests {
@@ -177,18 +177,51 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
 
-	t.Run("other opt-out regulation keeps the default settings link", func(t *testing.T) {
+	t.Run("Canadian opt-out regulation keeps the default settings link", func(t *testing.T) {
 		t.Parallel()
 
-		layout := LayoutForRegulation(RegulationLGPD)
+		layout := LayoutForRegulation(RegulationPIPEDA)
 		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
 
-	t.Run("notice regulation", func(t *testing.T) {
+	t.Run("LGPD opts Brazil into the consent flow", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationLGPD)
+		require.Equal(t, PresentationOptIn, layout.Presentation)
+		require.Equal(t, StateBanner, layout.InitialState)
+		require.Equal(t, StatePanel, layout.ReopenState)
+		require.False(t, layout.DefaultNonNecessaryGranted)
+	})
+
+	t.Run("Japan stays hidden behind the settings link", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationAPPI)
+		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
+		require.Equal(t, StateBanner, layout.ReopenState)
+		require.True(t, layout.DefaultNonNecessaryGranted)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
+	t.Run("no cookie-consent law shows nothing on first load", func(t *testing.T) {
 		t.Parallel()
 
 		layout := LayoutForRegulation(RegulationNone)
+		require.Equal(t, PresentationOptOut, layout.Presentation)
+		require.Equal(t, StateHidden, layout.InitialState)
+		require.Equal(t, StateBanner, layout.ReopenState)
+		require.True(t, layout.DefaultNonNecessaryGranted)
+		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
+	})
+
+	t.Run("Mexico is the only notice regulation", func(t *testing.T) {
+		t.Parallel()
+
+		layout := LayoutForRegulation(RegulationLFPDPPP)
 		require.Equal(t, PresentationNotice, layout.Presentation)
 		require.Equal(t, StateBanner, layout.InitialState)
 		require.Equal(t, StateBanner, layout.ReopenState)
@@ -199,6 +232,54 @@ func TestLayoutForRegulation(t *testing.T) {
 		require.False(t, layout.Buttons.Save)
 		require.Equal(t, SettingsLinkDefault, layout.SettingsLink)
 	})
+}
+
+// TestLayoutOpensOnlyWhereRequired pins the compliance invariant the mapping
+// exists to enforce: the banner may only open on first load where a
+// jurisdiction demands a proactive disclosure. Everywhere else the settings
+// link the integrator places in the footer is the entire visible surface.
+func TestLayoutOpensOnlyWhereRequired(t *testing.T) {
+	t.Parallel()
+
+	for _, regulation := range coredata.Regulations() {
+		t.Run(string(regulation), func(t *testing.T) {
+			t.Parallel()
+
+			layout := LayoutForRegulation(regulation)
+
+			switch layout.Presentation {
+			case PresentationOptIn, PresentationNotice:
+				require.Equal(t, StateBanner, layout.InitialState)
+			default:
+				require.Equal(t, StateHidden, layout.InitialState)
+			}
+		})
+	}
+}
+
+// TestConsentModeMatchesPresentation guards against the two halves of the
+// policy drifting apart: a banner that asks for consent while the server
+// records an opt-out mode would fire trackers the visitor never allowed.
+func TestConsentModeMatchesPresentation(t *testing.T) {
+	t.Parallel()
+
+	for _, regulation := range coredata.Regulations() {
+		t.Run(string(regulation), func(t *testing.T) {
+			t.Parallel()
+
+			want := ConsentModeOptOut
+			if PresentationForRegulation(regulation) == PresentationOptIn {
+				want = ConsentModeOptIn
+			}
+
+			require.Equal(t, want, ConsentModeForRegulation(regulation))
+			require.Equal(
+				t,
+				want == ConsentModeOptOut,
+				LayoutForRegulation(regulation).DefaultNonNecessaryGranted,
+			)
+		})
+	}
 }
 
 func TestRegulationForLocationUSPrivacyStates(t *testing.T) {
@@ -400,4 +481,105 @@ func TestApplyCanadianPrivacyBannerTexts(t *testing.T) {
 		applyCanadianPrivacyBannerTexts(config)
 		require.Equal(t, "generic", config.Texts["banner_description_opt_out"])
 	})
+}
+
+func TestApplyCCPABannerTexts(t *testing.T) {
+	t.Parallel()
+
+	t.Run("California uses the CCPA statutory CTA", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationCCPA,
+			Texts: map[string]string{
+				"button_opt_out":      "Reject non-essential cookies",
+				"button_opt_out_ccpa": "Do Not Sell or Share My Personal Information",
+			},
+		}
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Do Not Sell or Share My Personal Information", config.Texts["button_opt_out"])
+	})
+
+	t.Run("non-California US state keeps the generic CTA", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationTDPSA,
+			Texts: map[string]string{
+				"button_opt_out":      "Reject non-essential cookies",
+				"button_opt_out_ccpa": "Do Not Sell or Share My Personal Information",
+			},
+		}
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
+	})
+
+	t.Run("Japan keeps the generic CTA", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationAPPI,
+			Texts: map[string]string{
+				"button_opt_out":      "Reject non-essential cookies",
+				"button_opt_out_ccpa": "Do Not Sell or Share My Personal Information",
+			},
+		}
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
+	})
+
+	t.Run("California aliases Privacy Choices keys for older SDKs", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationCCPA,
+			Texts: map[string]string{
+				"button_opt_out_ccpa":        "Do Not Sell or Share My Personal Information",
+				"privacy_choices_title_ccpa": "Your Privacy Choices",
+			},
+		}
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Your Privacy Choices", config.Texts["privacy_choices_title"])
+		require.Equal(t, "Your Privacy Choices", config.Texts["privacy_choices_title_ccpa"])
+	})
+
+	t.Run("missing CCPA CTA leaves the generic label untouched", func(t *testing.T) {
+		t.Parallel()
+
+		config := &BannerConfig{
+			Regulation: RegulationCCPA,
+			Texts: map[string]string{
+				"button_opt_out": "Reject non-essential cookies",
+			},
+		}
+		applyCCPABannerTexts(config)
+		require.Equal(t, "Reject non-essential cookies", config.Texts["button_opt_out"])
+	})
+}
+
+// TestDefaultUIStringsHaveCCPAOptOutLabel keeps the statutory CCPA CTA distinct
+// from the generic opt-out label every language ships under button_opt_out.
+func TestDefaultUIStringsHaveCCPAOptOutLabel(t *testing.T) {
+	t.Parallel()
+
+	for language, uiStrings := range defaultUIStringsByLanguage {
+		t.Run(language, func(t *testing.T) {
+			t.Parallel()
+
+			require.NotEmpty(t, uiStrings["button_opt_out"])
+			require.NotEmpty(t, uiStrings["button_opt_out_ccpa"])
+			require.NotEqual(
+				t,
+				uiStrings["button_opt_out"],
+				uiStrings["button_opt_out_ccpa"],
+				"the CCPA label must differ from the generic opt-out CTA",
+			)
+			require.NotEmpty(t, uiStrings["privacy_choices_title_ccpa"])
+			_, hasLegacy := uiStrings["button_opt_out_generic"]
+			require.False(t, hasLegacy)
+
+			_, hasLegacyTitle := uiStrings["privacy_choices_title"]
+			require.False(t, hasLegacyTitle)
+		})
+	}
 }

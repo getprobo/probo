@@ -23,8 +23,8 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Scope ID',
-		name: 'riskAnalysisScopeId',
+		displayName: 'Diagram ID',
+		name: 'riskAnalysisDiagramId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the scope',
+		description: 'The ID of the diagram',
 		required: true,
 	},
 	{
@@ -84,7 +84,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const riskAnalysisScopeId = this.getNodeParameter('riskAnalysisScopeId', itemIndex) as string;
+	const riskAnalysisDiagramId = this.getNodeParameter('riskAnalysisDiagramId', itemIndex) as string;
 	const processId = this.getNodeParameter('processId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const category = this.getNodeParameter('category', itemIndex) as string;
@@ -95,7 +95,7 @@ export async function execute(
 				riskAnalysisThreatEdge {
 					node {
 						id
-						riskAnalysisScopeId
+						riskAnalysisDiagramId
 						processId
 						name
 						category
@@ -108,7 +108,7 @@ export async function execute(
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, {
-		input: { riskAnalysisScopeId, processId, name, category },
+		input: { riskAnalysisDiagramId, processId, name, category },
 	});
 
 	return {

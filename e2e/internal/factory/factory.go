@@ -1654,7 +1654,7 @@ func CreateRiskAnalysis(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateRiskAnalysis.RiskAnalysisEdge.Node.ID
 }
 
-func CreateRiskAnalysisScope(c *testutil.Client, riskAnalysisID string, attrs ...Attrs) string {
+func CreateRiskAnalysisDiagram(c *testutil.Client, riskAnalysisID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -1663,9 +1663,9 @@ func CreateRiskAnalysisScope(c *testutil.Client, riskAnalysisID string, attrs ..
 	}
 
 	const query = `
-		mutation($input: CreateRiskAnalysisScopeInput!) {
-			createRiskAnalysisScope(input: $input) {
-				riskAnalysisScopeEdge { node { id } }
+		mutation($input: CreateRiskAnalysisDiagramInput!) {
+			createRiskAnalysisDiagram(input: $input) {
+				riskAnalysisDiagramEdge { node { id } }
 			}
 		}
 	`
@@ -1676,19 +1676,19 @@ func CreateRiskAnalysisScope(c *testutil.Client, riskAnalysisID string, attrs ..
 	}
 
 	var result struct {
-		CreateRiskAnalysisScope struct {
-			RiskAnalysisScopeEdge struct {
+		CreateRiskAnalysisDiagram struct {
+			RiskAnalysisDiagramEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"riskAnalysisScopeEdge"`
-		} `json:"createRiskAnalysisScope"`
+			} `json:"riskAnalysisDiagramEdge"`
+		} `json:"createRiskAnalysisDiagram"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createRiskAnalysisScope mutation failed")
+	require.NoError(c.T, err, "createRiskAnalysisDiagram mutation failed")
 
-	return result.CreateRiskAnalysisScope.RiskAnalysisScopeEdge.Node.ID
+	return result.CreateRiskAnalysisDiagram.RiskAnalysisDiagramEdge.Node.ID
 }
 
 func CreateRiskAnalysisNode(c *testutil.Client, scopeID string, attrs ...Attrs) string {
@@ -1708,9 +1708,9 @@ func CreateRiskAnalysisNode(c *testutil.Client, scopeID string, attrs ...Attrs) 
 	`
 
 	input := map[string]any{
-		"riskAnalysisScopeId": scopeID,
-		"nodeType":            a.getString("nodeType", "ASSET"),
-		"name":                a.getString("name", SafeName("Node")),
+		"riskAnalysisDiagramId": scopeID,
+		"nodeType":              a.getString("nodeType", "ASSET"),
+		"name":                  a.getString("name", SafeName("Node")),
 	}
 
 	if boundaryID := a.getString("boundaryId", ""); boundaryID != "" {
@@ -1750,8 +1750,8 @@ func CreateRiskAnalysisBoundary(c *testutil.Client, scopeID string, attrs ...Att
 	`
 
 	input := map[string]any{
-		"riskAnalysisScopeId": scopeID,
-		"name":                a.getString("name", SafeName("Boundary")),
+		"riskAnalysisDiagramId": scopeID,
+		"name":                  a.getString("name", SafeName("Boundary")),
 	}
 
 	if parentID := a.getString("parentBoundaryId", ""); parentID != "" {
@@ -1791,10 +1791,10 @@ func CreateRiskAnalysisProcess(c *testutil.Client, scopeID, sourceNodeID, target
 	`
 
 	input := map[string]any{
-		"riskAnalysisScopeId": scopeID,
-		"sourceNodeId":        sourceNodeID,
-		"targetNodeId":        targetNodeID,
-		"name":                a.getString("name", SafeName("Process")),
+		"riskAnalysisDiagramId": scopeID,
+		"sourceNodeId":          sourceNodeID,
+		"targetNodeId":          targetNodeID,
+		"name":                  a.getString("name", SafeName("Process")),
 	}
 
 	var result struct {
@@ -1830,10 +1830,10 @@ func CreateRiskAnalysisThreat(c *testutil.Client, scopeID, processID string, att
 	`
 
 	input := map[string]any{
-		"riskAnalysisScopeId": scopeID,
-		"processId":           processID,
-		"name":                a.getString("name", SafeName("Threat")),
-		"category":            a.getString("category", "Confidentiality"),
+		"riskAnalysisDiagramId": scopeID,
+		"processId":             processID,
+		"name":                  a.getString("name", SafeName("Threat")),
+		"category":              a.getString("category", "Confidentiality"),
 	}
 
 	var result struct {
@@ -1869,8 +1869,8 @@ func CreateRiskAnalysisScenario(c *testutil.Client, scopeID string, attrs ...Att
 	`
 
 	input := map[string]any{
-		"riskAnalysisScopeId": scopeID,
-		"name":                a.getString("name", SafeName("Scenario")),
+		"riskAnalysisDiagramId": scopeID,
+		"name":                  a.getString("name", SafeName("Scenario")),
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc

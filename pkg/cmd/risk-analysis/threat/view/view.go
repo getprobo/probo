@@ -36,7 +36,7 @@ query($id: ID!) {
     __typename
     ... on RiskAnalysisThreat {
       id
-      riskAnalysisScopeId
+      riskAnalysisDiagramId
       processId
       name
       category
@@ -49,14 +49,14 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename            string `json:"__typename"`
-		ID                  string `json:"id"`
-		RiskAnalysisScopeId string `json:"riskAnalysisScopeId"`
-		ProcessId           string `json:"processId"`
-		Name                string `json:"name"`
-		Category            string `json:"category"`
-		CreatedAt           string `json:"createdAt"`
-		UpdatedAt           string `json:"updatedAt"`
+		Typename              string `json:"__typename"`
+		ID                    string `json:"id"`
+		RiskAnalysisDiagramId string `json:"riskAnalysisDiagramId"`
+		ProcessId             string `json:"processId"`
+		Name                  string `json:"name"`
+		Category              string `json:"category"`
+		CreatedAt             string `json:"createdAt"`
+		UpdatedAt             string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -124,7 +124,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Scope:"), r.RiskAnalysisScopeId)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Diagram:"), r.RiskAnalysisDiagramId)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Process:"), r.ProcessId)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), r.Category)
 

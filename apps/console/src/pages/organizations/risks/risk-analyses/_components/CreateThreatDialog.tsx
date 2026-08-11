@@ -50,7 +50,7 @@ const createThreatMutation = graphql`
 `;
 
 export function CreateThreatDialog(props: {
-  scopeId: string;
+  diagramId: string;
   processes: { id: string; name: string }[];
   connectionId: string;
 }) {
@@ -64,7 +64,7 @@ export function CreateThreatDialog(props: {
     createThreat({
       variables: {
         input: {
-          riskAnalysisScopeId: props.scopeId,
+          riskAnalysisDiagramId: props.diagramId,
           processId: data.processId,
           name: data.name,
           category: data.category,

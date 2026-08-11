@@ -21,140 +21,28 @@
 package types
 
 import (
-	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 )
 
-type (
-	CompliancePortalDocument struct {
-		ID         gid.GID
-		Document   *Document
-		Visibility coredata.CompliancePortalVisibility
-	}
-
-	CompliancePortalDocumentConnection struct {
-		TotalCount int
-		Edges      []*CompliancePortalDocumentEdge
-		PageInfo   *PageInfo
-		ParentID   gid.GID
-	}
-
-	CompliancePortalAudit struct {
-		ID         gid.GID
-		Audit      *Audit
-		Visibility coredata.CompliancePortalVisibility
-	}
-
-	CompliancePortalAuditConnection struct {
-		TotalCount int
-		Edges      []*CompliancePortalAuditEdge
-		PageInfo   *PageInfo
-		ParentID   gid.GID
-	}
-
-	CompliancePortalThirdParty struct {
-		ID         gid.GID
-		ThirdParty *ThirdParty
-	}
-
-	CompliancePortalThirdPartyConnection struct {
-		TotalCount int
-		Edges      []*CompliancePortalThirdPartyEdge
-		PageInfo   *PageInfo
-		ParentID   gid.GID
-	}
-)
-
-func NewCompliancePortalDocument(entry *management.PortalDocument) *CompliancePortalDocument {
+func NewCompliancePortalDocument(link *coredata.CompliancePortalDocument) *CompliancePortalDocument {
 	return &CompliancePortalDocument{
-		ID:         entry.ID,
-		Document:   NewDocument(entry.Document),
-		Visibility: entry.Visibility,
+		ID:         link.ID,
+		Document:   &Document{ID: link.DocumentID},
+		Visibility: link.Visibility,
 	}
 }
 
-func NewCompliancePortalDocumentEdge(entry *management.PortalDocument, orderBy coredata.DocumentOrderField) *CompliancePortalDocumentEdge {
-	return &CompliancePortalDocumentEdge{
-		Cursor: entry.Document.CursorKey(orderBy),
-		Node:   NewCompliancePortalDocument(entry),
-	}
-}
-
-func NewCompliancePortalDocumentConnection(
-	p *page.Page[*management.PortalDocument, coredata.DocumentOrderField],
-	parentID gid.GID,
-) *CompliancePortalDocumentConnection {
-	edges := make([]*CompliancePortalDocumentEdge, len(p.Data))
-	for i, entry := range p.Data {
-		edges[i] = NewCompliancePortalDocumentEdge(entry, p.Cursor.OrderBy.Field)
-	}
-
-	return &CompliancePortalDocumentConnection{
-		Edges:    edges,
-		PageInfo: NewPageInfo(p),
-		ParentID: parentID,
-	}
-}
-
-func NewCompliancePortalAudit(entry *management.PortalAudit) *CompliancePortalAudit {
+func NewCompliancePortalAudit(link *coredata.CompliancePortalAudit) *CompliancePortalAudit {
 	return &CompliancePortalAudit{
-		ID:         entry.ID,
-		Audit:      NewAudit(entry.Audit),
-		Visibility: entry.Visibility,
+		ID:         link.ID,
+		Audit:      &Audit{ID: link.AuditID},
+		Visibility: link.Visibility,
 	}
 }
 
-func NewCompliancePortalAuditEdge(entry *management.PortalAudit, orderBy coredata.AuditOrderField) *CompliancePortalAuditEdge {
-	return &CompliancePortalAuditEdge{
-		Cursor: entry.Audit.CursorKey(orderBy),
-		Node:   NewCompliancePortalAudit(entry),
-	}
-}
-
-func NewCompliancePortalAuditConnection(
-	p *page.Page[*management.PortalAudit, coredata.AuditOrderField],
-	parentID gid.GID,
-) *CompliancePortalAuditConnection {
-	edges := make([]*CompliancePortalAuditEdge, len(p.Data))
-	for i, entry := range p.Data {
-		edges[i] = NewCompliancePortalAuditEdge(entry, p.Cursor.OrderBy.Field)
-	}
-
-	return &CompliancePortalAuditConnection{
-		Edges:    edges,
-		PageInfo: NewPageInfo(p),
-		ParentID: parentID,
-	}
-}
-
-func NewCompliancePortalThirdParty(entry *management.PortalThirdParty) *CompliancePortalThirdParty {
+func NewCompliancePortalThirdParty(link *coredata.CompliancePortalThirdParty) *CompliancePortalThirdParty {
 	return &CompliancePortalThirdParty{
-		ID:         entry.ID,
-		ThirdParty: NewThirdParty(entry.ThirdParty),
-	}
-}
-
-func NewCompliancePortalThirdPartyEdge(entry *management.PortalThirdParty, orderBy coredata.ThirdPartyOrderField) *CompliancePortalThirdPartyEdge {
-	return &CompliancePortalThirdPartyEdge{
-		Cursor: entry.ThirdParty.CursorKey(orderBy),
-		Node:   NewCompliancePortalThirdParty(entry),
-	}
-}
-
-func NewCompliancePortalThirdPartyConnection(
-	p *page.Page[*management.PortalThirdParty, coredata.ThirdPartyOrderField],
-	parentID gid.GID,
-) *CompliancePortalThirdPartyConnection {
-	edges := make([]*CompliancePortalThirdPartyEdge, len(p.Data))
-	for i, entry := range p.Data {
-		edges[i] = NewCompliancePortalThirdPartyEdge(entry, p.Cursor.OrderBy.Field)
-	}
-
-	return &CompliancePortalThirdPartyConnection{
-		Edges:    edges,
-		PageInfo: NewPageInfo(p),
-		ParentID: parentID,
+		ID:         link.ID,
+		ThirdParty: &ThirdParty{ID: link.ThirdPartyID},
 	}
 }

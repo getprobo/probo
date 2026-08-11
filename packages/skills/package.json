@@ -1,6 +1,6 @@
 {
   "name": "@probo/skills",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Multi-agent compliance skills for open-source GRC (Claude Code, Codex, OpenCode) powered by Probo MCP",
   "private": false,
   "scripts": {
@@ -18,6 +18,8 @@
     ".agents",
     "skills",
     "commands",
+    "plugin.json",
+    "mcp.json",
     ".mcp.json",
     "README.md",
     "COMPATIBILITY.md"
@@ -25,6 +27,7 @@
   "keywords": [
     "claude-code",
     "agent-skills",
+    "agent-plugins",
     "codex",
     "opencode",
     "probo",
@@ -34,6 +37,9 @@
     "open-source"
   ],
   "license": "MIT",
+  "devDependencies": {
+    "js-yaml": "^4.3.1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/getprobo/probo.git",

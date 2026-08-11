@@ -184,6 +184,52 @@ WHERE
 	return nil
 }
 
+func (cptp *CompliancePortalThirdParty) LoadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyLinkID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	compliance_portal_id,
+	third_party_id,
+	created_at,
+	updated_at
+FROM
+	cp_third_parties
+WHERE
+	%s
+	AND id = @third_party_link_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_link_id": thirdPartyLinkID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal third party: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalThirdParty])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal third party: %w", err)
+	}
+
+	*cptp = row
+
+	return nil
+}
+
 func (cptp *CompliancePortalThirdParty) LoadByCompliancePortalIDAndThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,

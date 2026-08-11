@@ -56,7 +56,7 @@ func populateRiskAnalysisRelationGraph(
 		owner,
 		factory.Attrs{"name": factory.SafeName("Relations assessment")},
 	)
-	g.scopeID = factory.CreateRiskAnalysisScope(
+	g.scopeID = factory.CreateRiskAnalysisDiagram(
 		owner,
 		g.assessmentID,
 		factory.Attrs{"name": factory.SafeName("Relations scope")},
@@ -167,7 +167,7 @@ func riskRelationsAssessmentOrganizationScopesPermission(
 					HasNextPage     bool `json:"hasNextPage"`
 					HasPreviousPage bool `json:"hasPreviousPage"`
 				} `json:"pageInfo"`
-			} `json:"scopes"`
+			} `json:"diagrams"`
 			CanUpdate bool `json:"canUpdate"`
 			CanDelete bool `json:"canDelete"`
 		} `json:"node"`
@@ -179,7 +179,7 @@ func riskRelationsAssessmentOrganizationScopesPermission(
 				... on RiskAnalysis {
 					id
 					organization { id }
-					scopes(first: 10) {
+					diagrams(first: 10) {
 						totalCount
 						edges {
 							cursor
@@ -267,7 +267,7 @@ func riskRelationsScopeChildren(
 	err := owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
-				... on RiskAnalysisScope {
+				... on RiskAnalysisDiagram {
 					nodes(first: 10) {
 						totalCount
 						edges { node { id } }
@@ -332,10 +332,10 @@ func riskRelationsScenarioLinks(
 ) {
 	var result struct {
 		Node struct {
-			RiskAnalysisScopeID string `json:"riskAnalysisScopeId"`
-			Scope               struct {
+			RiskAnalysisDiagramID string `json:"riskAnalysisDiagramId"`
+			Diagram               struct {
 				ID string `json:"id"`
-			} `json:"scope"`
+			} `json:"diagram"`
 			Threats struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
@@ -363,8 +363,8 @@ func riskRelationsScenarioLinks(
 		query($id: ID!) {
 			node(id: $id) {
 				... on RiskAnalysisScenario {
-					riskAnalysisScopeId
-					scope { id }
+					riskAnalysisDiagramId
+					diagram { id }
 					threats(first: 10) {
 						totalCount
 						edges { node { id processId } }
@@ -380,8 +380,8 @@ func riskRelationsScenarioLinks(
 	`, map[string]any{"id": g.scenarioID}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, g.scopeID, result.Node.RiskAnalysisScopeID)
-	assert.Equal(t, g.scopeID, result.Node.Scope.ID)
+	assert.Equal(t, g.scopeID, result.Node.RiskAnalysisDiagramID)
+	assert.Equal(t, g.scopeID, result.Node.Diagram.ID)
 	assert.Equal(t, 1, result.Node.Threats.TotalCount)
 	require.Len(t, result.Node.Threats.Edges, 1)
 	assert.Equal(t, g.threatID, result.Node.Threats.Edges[0].Node.ID)
@@ -399,8 +399,8 @@ func riskRelationsNodeAndProcessFields(
 ) {
 	var boundedResult struct {
 		Node struct {
-			RiskAnalysisScopeID string  `json:"riskAnalysisScopeId"`
-			BoundaryID          *string `json:"boundaryId"`
+			RiskAnalysisDiagramID string  `json:"riskAnalysisDiagramId"`
+			BoundaryID            *string `json:"boundaryId"`
 		} `json:"node"`
 	}
 
@@ -408,22 +408,22 @@ func riskRelationsNodeAndProcessFields(
 		query($id: ID!) {
 			node(id: $id) {
 				... on RiskAnalysisNode {
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 					boundaryId
 				}
 			}
 		}
 	`, map[string]any{"id": g.boundedNodeID}, &boundedResult)
 	require.NoError(t, err)
-	assert.Equal(t, g.scopeID, boundedResult.Node.RiskAnalysisScopeID)
+	assert.Equal(t, g.scopeID, boundedResult.Node.RiskAnalysisDiagramID)
 	require.NotNil(t, boundedResult.Node.BoundaryID)
 	assert.Equal(t, g.boundaryID, *boundedResult.Node.BoundaryID)
 
 	var processResult struct {
 		Node struct {
-			RiskAnalysisScopeID string `json:"riskAnalysisScopeId"`
-			SourceNodeID        string `json:"sourceNodeId"`
-			TargetNodeID        string `json:"targetNodeId"`
+			RiskAnalysisDiagramID string `json:"riskAnalysisDiagramId"`
+			SourceNodeID          string `json:"sourceNodeId"`
+			TargetNodeID          string `json:"targetNodeId"`
 		} `json:"node"`
 	}
 
@@ -431,7 +431,7 @@ func riskRelationsNodeAndProcessFields(
 		query($id: ID!) {
 			node(id: $id) {
 				... on RiskAnalysisProcess {
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 					sourceNodeId
 					targetNodeId
 				}
@@ -439,14 +439,14 @@ func riskRelationsNodeAndProcessFields(
 		}
 	`, map[string]any{"id": g.processID}, &processResult)
 	require.NoError(t, err)
-	assert.Equal(t, g.scopeID, processResult.Node.RiskAnalysisScopeID)
+	assert.Equal(t, g.scopeID, processResult.Node.RiskAnalysisDiagramID)
 	assert.Equal(t, g.sourceNodeID, processResult.Node.SourceNodeID)
 	assert.Equal(t, g.targetNodeID, processResult.Node.TargetNodeID)
 
 	var threatResult struct {
 		Node struct {
-			RiskAnalysisScopeID string `json:"riskAnalysisScopeId"`
-			ProcessID           string `json:"processId"`
+			RiskAnalysisDiagramID string `json:"riskAnalysisDiagramId"`
+			ProcessID             string `json:"processId"`
 		} `json:"node"`
 	}
 
@@ -454,19 +454,19 @@ func riskRelationsNodeAndProcessFields(
 		query($id: ID!) {
 			node(id: $id) {
 				... on RiskAnalysisThreat {
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 					processId
 				}
 			}
 		}
 	`, map[string]any{"id": g.threatID}, &threatResult)
 	require.NoError(t, err)
-	assert.Equal(t, g.scopeID, threatResult.Node.RiskAnalysisScopeID)
+	assert.Equal(t, g.scopeID, threatResult.Node.RiskAnalysisDiagramID)
 	assert.Equal(t, g.processID, threatResult.Node.ProcessID)
 
 	var boundaryResult struct {
 		Node struct {
-			RiskAnalysisScopeID string `json:"riskAnalysisScopeId"`
+			RiskAnalysisDiagramID string `json:"riskAnalysisDiagramId"`
 		} `json:"node"`
 	}
 
@@ -474,13 +474,13 @@ func riskRelationsNodeAndProcessFields(
 		query($id: ID!) {
 			node(id: $id) {
 				... on RiskAnalysisBoundary {
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 				}
 			}
 		}
 	`, map[string]any{"id": g.boundaryID}, &boundaryResult)
 	require.NoError(t, err)
-	assert.Equal(t, g.scopeID, boundaryResult.Node.RiskAnalysisScopeID)
+	assert.Equal(t, g.scopeID, boundaryResult.Node.RiskAnalysisDiagramID)
 }
 
 func riskRelationsOrganizationReverse(
@@ -505,8 +505,8 @@ func riskRelationsOrganizationReverse(
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
-						ID                  string `json:"id"`
-						RiskAnalysisScopeID string `json:"riskAnalysisScopeId"`
+						ID                    string `json:"id"`
+						RiskAnalysisDiagramID string `json:"riskAnalysisDiagramId"`
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"riskAnalysisScenarios"`
@@ -527,7 +527,7 @@ func riskRelationsOrganizationReverse(
 						edges {
 							node {
 								id
-								riskAnalysisScopeId
+								riskAnalysisDiagramId
 							}
 						}
 					}
@@ -550,7 +550,7 @@ func riskRelationsOrganizationReverse(
 			continue
 		}
 
-		scenarioScopeID = edge.Node.RiskAnalysisScopeID
+		scenarioScopeID = edge.Node.RiskAnalysisDiagramID
 
 		break
 	}
@@ -570,8 +570,8 @@ func riskRelationsRiskScenariosReverse(
 				Edges      []struct {
 					Cursor string `json:"cursor"`
 					Node   struct {
-						ID                  string `json:"id"`
-						RiskAnalysisScopeID string `json:"riskAnalysisScopeId"`
+						ID                    string `json:"id"`
+						RiskAnalysisDiagramID string `json:"riskAnalysisDiagramId"`
 					} `json:"node"`
 				} `json:"edges"`
 				PageInfo struct {
@@ -591,7 +591,7 @@ func riskRelationsRiskScenariosReverse(
 							cursor
 							node {
 								id
-								riskAnalysisScopeId
+								riskAnalysisDiagramId
 							}
 						}
 						pageInfo { hasNextPage }
@@ -605,7 +605,7 @@ func riskRelationsRiskScenariosReverse(
 	assert.Equal(t, 1, result.Node.Scenarios.TotalCount)
 	require.Len(t, result.Node.Scenarios.Edges, 1)
 	assert.Equal(t, g.scenarioID, result.Node.Scenarios.Edges[0].Node.ID)
-	assert.Equal(t, g.scopeID, result.Node.Scenarios.Edges[0].Node.RiskAnalysisScopeID)
+	assert.Equal(t, g.scopeID, result.Node.Scenarios.Edges[0].Node.RiskAnalysisDiagramID)
 	assert.NotEmpty(t, result.Node.Scenarios.Edges[0].Cursor)
 	assert.False(t, result.Node.Scenarios.PageInfo.HasNextPage)
 }

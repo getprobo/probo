@@ -13,6 +13,7 @@ import (
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -660,6 +661,34 @@ func (r *thirdPartyResolver) Organization(ctx context.Context, obj *types.ThirdP
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// CompliancePortalThirdParty is the resolver for the compliancePortalThirdParty field.
+func (r *thirdPartyResolver) CompliancePortalThirdParty(ctx context.Context, obj *types.ThirdParty, compliancePortalID gid.GID) (*types.CompliancePortalThirdParty, error) {
+	scope, err := r.authorize(ctx, compliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := dataloader.FromContext(ctx).CompliancePortalThirdParty.Load(
+		ctx,
+		dataloader.CompliancePortalThirdPartyKey{
+			TenantID:           scope.GetTenantID(),
+			CompliancePortalID: compliancePortalID,
+			ThirdPartyID:       obj.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalThirdParty(link), nil
 }
 
 // ComplianceReports is the resolver for the complianceReports field.

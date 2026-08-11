@@ -45,6 +45,10 @@ const requestDocumentMutation = graphql`
           status
         }
       }
+      compliancePortal {
+        id
+        viewerHasRequestedAccess
+      }
     }
   }
 `;
@@ -62,6 +66,10 @@ const requestReportMutation = graphql`
           }
         }
       }
+      compliancePortal {
+        id
+        viewerHasRequestedAccess
+      }
     }
   }
 `;
@@ -75,6 +83,10 @@ const requestFileMutation = graphql`
           id
           status
         }
+      }
+      compliancePortal {
+        id
+        viewerHasRequestedAccess
       }
     }
   }

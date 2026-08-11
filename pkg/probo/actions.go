@@ -334,12 +334,12 @@ const (
 	ActionRiskAnalysisUpdate = "core:risk-analysis:update"
 	ActionRiskAnalysisDelete = "core:risk-analysis:delete"
 
-	// RiskAnalysisScope actions
-	ActionRiskAnalysisScopeGet    = "core:risk-analysis-scope:get"
-	ActionRiskAnalysisScopeList   = "core:risk-analysis-scope:list"
-	ActionRiskAnalysisScopeCreate = "core:risk-analysis-scope:create"
-	ActionRiskAnalysisScopeUpdate = "core:risk-analysis-scope:update"
-	ActionRiskAnalysisScopeDelete = "core:risk-analysis-scope:delete"
+	// RiskAnalysisDiagram actions
+	ActionRiskAnalysisDiagramGet    = "core:risk-analysis-diagram:get"
+	ActionRiskAnalysisDiagramList   = "core:risk-analysis-diagram:list"
+	ActionRiskAnalysisDiagramCreate = "core:risk-analysis-diagram:create"
+	ActionRiskAnalysisDiagramUpdate = "core:risk-analysis-diagram:update"
+	ActionRiskAnalysisDiagramDelete = "core:risk-analysis-diagram:delete"
 
 	// RiskAnalysisNode actions
 	ActionRiskAnalysisNodeGet    = "core:risk-analysis-node:get"

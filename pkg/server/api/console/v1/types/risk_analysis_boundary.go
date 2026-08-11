@@ -61,11 +61,11 @@ func NewRiskAnalysisBoundaryConnection(
 
 func NewRiskAnalysisBoundary(b *coredata.RiskAnalysisBoundary) *RiskAnalysisBoundary {
 	return &RiskAnalysisBoundary{
-		ID:                  b.ID,
-		RiskAnalysisScopeID: b.RiskAnalysisScopeID,
-		ParentBoundaryID:    b.ParentBoundaryID,
-		Name:                b.Name,
-		CreatedAt:           b.CreatedAt,
-		UpdatedAt:           b.UpdatedAt,
+		ID:                    b.ID,
+		RiskAnalysisDiagramID: b.RiskAnalysisDiagramID,
+		ParentBoundaryID:      b.ParentBoundaryID,
+		Name:                  b.Name,
+		CreatedAt:             b.CreatedAt,
+		UpdatedAt:             b.UpdatedAt,
 	}
 }

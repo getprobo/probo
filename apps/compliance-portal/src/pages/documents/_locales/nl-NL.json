@@ -47,7 +47,8 @@
     "downloadToView": "Dit bestandstype kan hier niet worden weergegeven. Download het om te bekijken.",
     "locked": {
       "title": "Toegang vereist",
-      "description": "U heeft nog geen toegang tot dit document."
+      "description": "U heeft nog geen toegang tot dit document.",
+      "signNda": "NDA bekijken en ondertekenen"
     }
   }
 }

@@ -15,6 +15,8 @@ export default defineConfig([
   globalIgnores([
     "examples/**",
     "pkg/**",
+    // Vite public/ assets are copied as-is; not part of any tsconfig project.
+    "apps/*/public/**",
     "packages/coredata/**",
     "packages/cookie-banner/**",
     "packages/skills/**",

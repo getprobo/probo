@@ -82,7 +82,7 @@ export async function execute(
 			updateRiskAnalysisBoundary(input: $input) {
 				riskAnalysisBoundary {
 					id
-					riskAnalysisScopeId
+					riskAnalysisDiagramId
 					parentBoundaryId
 					name
 					createdAt

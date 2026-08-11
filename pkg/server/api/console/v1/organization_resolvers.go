@@ -763,7 +763,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 			WithWriteModes(filter.WriteModes).
 			WithDocumentTypes(filter.DocumentTypes).
 			WithClassifications(filter.Classifications).
-			WithStatus(filter.Status)
+			WithStatus(filter.Status).
+			WithPublished(filter.Published)
 	}
 
 	page, err := r.probo.Documents.ListByOrganizationID(ctx, scope, obj.ID, cursor, documentFilter)

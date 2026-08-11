@@ -47,7 +47,8 @@
     "downloadToView": "This file type can't be previewed here. Download it to view.",
     "locked": {
       "title": "Access required",
-      "description": "You don't have access to this document yet."
+      "description": "You don't have access to this document yet.",
+      "signNda": "Review and sign NDA"
     }
   }
 }

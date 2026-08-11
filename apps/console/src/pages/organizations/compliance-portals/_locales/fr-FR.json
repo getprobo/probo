@@ -9,7 +9,7 @@
     "actions": {
       "create": "Créer une portail de conformité",
       "createFirst": "Créer votre première portail de conformité"
-    }
+      }
   },
   "newPortalPage": {
     "pageTitle": "Nouvelle portail de conformité",
@@ -30,17 +30,11 @@
       "creating": "Création..."
     },
     "messages": {
-      "created": {
-        "title": "Succès",
-        "description": "Portail de conformité créée avec succès"
-      },
+      "created": "Portail de conformité créé avec succès",
       "successTitle": "Succès"
     },
     "errors": {
-      "create": {
-        "title": "Erreur",
-        "description": "Échec de la création de la portail de conformité"
-      },
+      "create": "Échec de la création du portail de conformité",
       "title": "Erreur"
     }
   },
@@ -146,29 +140,19 @@
     "description": "Gérez les rapports d’audit et les certifications de conformité"
   },
   "auditList": {
-    "addAudit": "Ajouter un audit",
     "columns": {
+      "displayed": "Affiché",
       "framework": "Référentiel",
       "name": "Nom",
       "validUntil": "Valide jusqu’au",
       "state": "État",
       "visibility": "Visibilité"
     },
-    "empty": "Aucun audit sur ce portail pour le moment",
-    "addDialog": {
-      "title": "Ajouter un audit au portail",
-      "auditLabel": "Audit",
-      "visibilityLabel": "Visibilité",
-      "submit": "Ajouter",
-      "cancel": "Annuler",
-      "loading": "Chargement des audits…",
-      "success": "Audit ajouté au portail.",
-      "error": "Échec de l’ajout de l’audit au portail"
-    }
+    "empty": "Aucun audit disponible"
   },
   "auditListItem": {
     "messages": {
-      "visibilityUpdated": "Visibilité de l’audit mise à jour avec succès.",
+      "visibilityUpdated": "Paramètres du portail pour l’audit mis à jour avec succès.",
       "removed": "Audit retiré du portail."
     },
     "errors": {
@@ -176,7 +160,7 @@
       "remove": "Échec du retrait de l’audit du portail"
     },
     "actions": {
-      "remove": "Retirer du portail"
+      "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
     },
     "noExpiry": "Aucune expiration",
     "untitled": "Sans titre",
@@ -385,28 +369,18 @@
     "description": "Gérez les politiques, procédures et documents de conformité"
   },
   "documentList": {
-    "addDocument": "Ajouter un document",
     "columns": {
+      "displayed": "Affiché",
       "name": "Nom",
       "type": "Type",
       "alias": "Alias",
       "visibility": "Visibilité"
     },
-    "empty": "Aucun document sur ce portail pour le moment",
-    "addDialog": {
-      "title": "Ajouter un document au portail",
-      "documentLabel": "Document",
-      "visibilityLabel": "Visibilité",
-      "submit": "Ajouter",
-      "cancel": "Annuler",
-      "loading": "Chargement des documents…",
-      "success": "Document ajouté au portail.",
-      "error": "Échec de l’ajout du document au portail"
-    }
+    "empty": "Aucun document actif et publié disponible"
   },
   "documentListItem": {
     "messages": {
-      "visibilityUpdated": "Visibilité du document mise à jour avec succès.",
+      "visibilityUpdated": "Paramètres du document sur le portail mis à jour avec succès.",
       "removed": "Document retiré du portail."
     },
     "errors": {
@@ -414,7 +388,7 @@
       "remove": "Échec du retrait du document du portail"
     },
     "actions": {
-      "remove": "Retirer du portail"
+      "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
     }
   },
   "domainPage": {
@@ -425,31 +399,24 @@
   },
   "thirdPartyListItem": {
     "messages": {
+      "linked": "Sous-traitant ajouté au portail.",
       "removed": "Sous-traitant retiré du portail."
     },
     "errors": {
+      "link": "Échec de l’ajout du sous-traitant au portail",
       "remove": "Échec du retrait du sous-traitant du portail"
     },
     "actions": {
-      "remove": "Retirer du portail"
+      "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
     }
   },
   "thirdPartyList": {
-    "addThirdParty": "Ajouter un sous-traitant",
     "columns": {
+      "displayed": "Affiché",
       "name": "Nom",
       "category": "Catégorie"
     },
-    "empty": "Aucun sous-traitant sur ce portail pour le moment",
-    "addDialog": {
-      "title": "Ajouter un sous-traitant au portail",
-      "thirdPartyLabel": "Sous-traitant",
-      "submit": "Ajouter",
-      "cancel": "Annuler",
-      "loading": "Chargement des sous-traitants…",
-      "success": "Sous-traitant ajouté au portail.",
-      "error": "Échec de l’ajout du sous-traitant au portail"
-    }
+    "empty": "Aucun sous-traitant disponible"
   },
   "thirdPartiesPage": {
     "title": "Sous-traitants",

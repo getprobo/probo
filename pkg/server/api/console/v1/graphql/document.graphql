@@ -233,6 +233,7 @@ input DocumentFilter {
     documentTypes: [DocumentType!]
     classifications: [DocumentClassification!]
     status: [DocumentStatus!]
+    published: Boolean
 }
 
 input DocumentVersionFilter {
@@ -270,6 +271,9 @@ type Document implements Node {
     currentPublishedMinor: Int
     alias: String @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
+    compliancePortalDocument(
+        compliancePortalId: ID!
+    ): CompliancePortalDocument @goField(forceResolver: true)
 
     versions(
         first: Int

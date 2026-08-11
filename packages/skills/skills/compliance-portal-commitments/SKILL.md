@@ -48,9 +48,9 @@ Commitments must trace to controls the company genuinely has. The source of trut
 **published policies** in Probo, not general knowledge about SOC 2 or ISO 27001.
 
 1. **Find the Probo MCP and the organization.** This environment may expose more than one Probo MCP
-   server (for example a US and an EU instance). Call `listOrganizations` on each until you find the one
-   that returns the target company, and use that server for every later call. Match the organization the
-   user named and capture its `id`.
+   server (the plugin ships hosted `probo-us` and `probo-eu`, and self-hosted instances add their own).
+   Call `listOrganizations` on each until you find the one that returns the target company, and use that
+   server for every later call. Match the organization the user named and capture its `id`.
 2. **List the published policies.** Call `listDocuments` with `document_types: ["POLICY"]`. Policies with
    a `current_published_major` are published.
 3. **Read the actual content.** `getDocument` returns metadata only. To get the text, call

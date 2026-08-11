@@ -6884,6 +6884,9 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentStatus"
               description: Document statuses
+            published:
+              type: boolean
+              description: Filter by whether a document has a published version
 
     ListDocumentsOutput:
       type: object
@@ -12612,21 +12615,21 @@ components:
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAnalysisScopeOrderField:
+    RiskAnalysisDiagramOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisScopeOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderField
 
-    RiskAnalysisScopeOrderBy:
+    RiskAnalysisDiagramOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAnalysisScopeOrderField"
+          $ref: "#/components/schemas/RiskAnalysisDiagramOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
@@ -12746,7 +12749,7 @@ components:
           type: string
           format: date-time
 
-    RiskAnalysisScope:
+    RiskAnalysisDiagram:
       type: object
       required:
         - id
@@ -12776,7 +12779,7 @@ components:
       required:
         - id
         - organization_id
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - node_type
         - name
         - created_at
@@ -12786,7 +12789,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         boundary_id:
           $ref: "#/components/schemas/GID"
@@ -12807,7 +12810,7 @@ components:
       required:
         - id
         - organization_id
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - name
         - created_at
         - updated_at
@@ -12816,7 +12819,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         parent_boundary_id:
           $ref: "#/components/schemas/GID"
@@ -12835,7 +12838,7 @@ components:
       required:
         - id
         - organization_id
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - source_node_id
         - target_node_id
         - name
@@ -12846,7 +12849,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         source_node_id:
           $ref: "#/components/schemas/GID"
@@ -12866,7 +12869,7 @@ components:
       required:
         - id
         - organization_id
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - process_id
         - name
         - category
@@ -12877,7 +12880,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         process_id:
           $ref: "#/components/schemas/GID"
@@ -12897,7 +12900,7 @@ components:
       required:
         - id
         - organization_id
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - name
         - created_at
         - updated_at
@@ -12906,7 +12909,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         name:
           type: string
@@ -13035,7 +13038,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment ID
 
-    ListRiskAnalysisScopesInput:
+    ListRiskAnalysisDiagramsInput:
       type: object
       required:
         - risk_analysis_id
@@ -13044,7 +13047,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Risk analysis ID
         order_by:
-          $ref: "#/components/schemas/RiskAnalysisScopeOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisDiagramOrderBy"
           description: Order by
         size:
           type: integer
@@ -13053,55 +13056,55 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAnalysisScopesOutput:
+    ListRiskAnalysisDiagramsOutput:
       type: object
       required:
-        - risk_analysis_scopes
+        - risk_analysis_diagrams
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_analysis_scopes:
+        risk_analysis_diagrams:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAnalysisScope"
+            $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    GetRiskAnalysisScopeInput:
+    GetRiskAnalysisDiagramInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
 
-    GetRiskAnalysisScopeOutput:
+    GetRiskAnalysisDiagramOutput:
       type: object
       required:
-        - risk_analysis_scope
+        - risk_analysis_diagram
       properties:
-        risk_analysis_scope:
-          $ref: "#/components/schemas/RiskAnalysisScope"
+        risk_analysis_diagram:
+          $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    GetRiskAnalysisScopeMermaidChartInput:
+    GetRiskAnalysisDiagramMermaidChartInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
 
-    GetRiskAnalysisScopeMermaidChartOutput:
+    GetRiskAnalysisDiagramMermaidChartOutput:
       type: object
       required:
         - mermaid_chart
       properties:
         mermaid_chart:
           type: string
-          description: Mermaid chart of the scope
+          description: Mermaid chart of the diagram
 
-    AddRiskAnalysisScopeInput:
+    AddRiskAnalysisDiagramInput:
       type: object
       required:
         - risk_analysis_id
@@ -13112,62 +13115,62 @@ components:
           description: Risk analysis ID
         name:
           type: string
-          description: Risk analysis scope name
+          description: Risk analysis diagram name
 
-    AddRiskAnalysisScopeOutput:
+    AddRiskAnalysisDiagramOutput:
       type: object
       required:
-        - risk_analysis_scope
+        - risk_analysis_diagram
       properties:
-        risk_analysis_scope:
-          $ref: "#/components/schemas/RiskAnalysisScope"
+        risk_analysis_diagram:
+          $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    UpdateRiskAnalysisScopeInput:
+    UpdateRiskAnalysisDiagramInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         name:
           type: string
-          description: Risk analysis scope name
+          description: Risk analysis diagram name
 
-    UpdateRiskAnalysisScopeOutput:
+    UpdateRiskAnalysisDiagramOutput:
       type: object
       required:
-        - risk_analysis_scope
+        - risk_analysis_diagram
       properties:
-        risk_analysis_scope:
-          $ref: "#/components/schemas/RiskAnalysisScope"
+        risk_analysis_diagram:
+          $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    DeleteRiskAnalysisScopeInput:
+    DeleteRiskAnalysisDiagramInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
 
-    DeleteRiskAnalysisScopeOutput:
+    DeleteRiskAnalysisDiagramOutput:
       type: object
       required:
-        - deleted_risk_analysis_scope_id
+        - deleted_risk_analysis_diagram_id
       properties:
-        deleted_risk_analysis_scope_id:
+        deleted_risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted risk assessment scope ID
+          description: Deleted risk analysis diagram ID
 
     ListRiskAnalysisNodesInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         order_by:
           $ref: "#/components/schemas/RiskAnalysisNodeOrderBy"
           description: Order by
@@ -13211,13 +13214,13 @@ components:
     AddRiskAnalysisNodeInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - node_type
         - name
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         boundary_id:
           $ref: "#/components/schemas/GID"
           description: ID of the boundary that contains this node (optional)
@@ -13283,11 +13286,11 @@ components:
     ListRiskAnalysisBoundariesInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         order_by:
           $ref: "#/components/schemas/RiskAnalysisBoundaryOrderBy"
           description: Order by
@@ -13331,12 +13334,12 @@ components:
     AddRiskAnalysisBoundaryInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - name
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         parent_boundary_id:
           $ref: "#/components/schemas/GID"
           description: ID of the parent boundary (optional, for nested boundaries)
@@ -13396,11 +13399,11 @@ components:
     ListRiskAnalysisProcessesInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         order_by:
           $ref: "#/components/schemas/RiskAnalysisProcessOrderBy"
           description: Order by
@@ -13444,14 +13447,14 @@ components:
     AddRiskAnalysisProcessInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - source_node_id
         - target_node_id
         - name
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         source_node_id:
           $ref: "#/components/schemas/GID"
           description: Source node ID
@@ -13517,11 +13520,11 @@ components:
     ListRiskAnalysisThreatsInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         order_by:
           $ref: "#/components/schemas/RiskAnalysisThreatOrderBy"
           description: Order by
@@ -13565,14 +13568,14 @@ components:
     AddRiskAnalysisThreatInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - process_id
         - name
         - category
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         process_id:
           $ref: "#/components/schemas/GID"
           description: Process ID
@@ -13638,11 +13641,11 @@ components:
     ListRiskAnalysisScenariosInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         order_by:
           $ref: "#/components/schemas/RiskAnalysisScenarioOrderBy"
           description: Order by
@@ -13686,12 +13689,12 @@ components:
     AddRiskAnalysisScenarioInput:
       type: object
       required:
-        - risk_analysis_scope_id
+        - risk_analysis_diagram_id
         - name
       properties:
-        risk_analysis_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk analysis scope ID
+          description: Risk analysis diagram ID
         name:
           type: string
           description: Risk analysis scenario name
@@ -17683,81 +17686,81 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAnalysisInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAnalysisOutput"
-  - name: listRiskAnalysisScopes
-    title: List Risk Analysis Scopes
-    description: List all scopes for a risk assessment
+  - name: listRiskAnalysisDiagrams
+    title: List Risk Analysis Diagrams
+    description: List all diagrams for a risk analysis
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAnalysisScopesInput"
+      $ref: "#/components/schemas/ListRiskAnalysisDiagramsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAnalysisScopesOutput"
-  - name: getRiskAnalysisScope
-    title: Get Risk Analysis Scope
-    description: Get a risk assessment scope by ID
+      $ref: "#/components/schemas/ListRiskAnalysisDiagramsOutput"
+  - name: getRiskAnalysisDiagram
+    title: Get Risk Analysis Diagram
+    description: Get a risk analysis diagram by ID
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAnalysisScopeInput"
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAnalysisScopeOutput"
-  - name: getRiskAnalysisScopeMermaidChart
-    title: Get Risk Analysis Scope Mermaid Chart
-    description: Get the Mermaid chart for a risk assessment scope
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramOutput"
+  - name: getRiskAnalysisDiagramMermaidChart
+    title: Get Risk Analysis Diagram Mermaid Chart
+    description: Get the Mermaid chart for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAnalysisScopeMermaidChartInput"
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramMermaidChartInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAnalysisScopeMermaidChartOutput"
-  - name: addRiskAnalysisScope
-    title: Add Risk Analysis Scope
-    description: Create a new risk assessment scope
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramMermaidChartOutput"
+  - name: addRiskAnalysisDiagram
+    title: Add Risk Analysis Diagram
+    description: Create a new risk analysis diagram
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAnalysisScopeInput"
+      $ref: "#/components/schemas/AddRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAnalysisScopeOutput"
-  - name: updateRiskAnalysisScope
-    title: Update Risk Analysis Scope
-    description: Update an existing risk assessment scope
+      $ref: "#/components/schemas/AddRiskAnalysisDiagramOutput"
+  - name: updateRiskAnalysisDiagram
+    title: Update Risk Analysis Diagram
+    description: Update an existing risk analysis diagram
     hints:
       readonly: false
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAnalysisScopeInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAnalysisScopeOutput"
-  - name: deleteRiskAnalysisScope
-    title: Delete Risk Analysis Scope
-    description: Delete a risk assessment scope
+      $ref: "#/components/schemas/UpdateRiskAnalysisDiagramOutput"
+  - name: deleteRiskAnalysisDiagram
+    title: Delete Risk Analysis Diagram
+    description: Delete a risk analysis diagram
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAnalysisScopeInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAnalysisScopeOutput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisDiagramOutput"
   - name: listRiskAnalysisNodes
     title: List Risk Analysis Nodes
-    description: List all nodes for a risk assessment scope
+    description: List all nodes for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
@@ -17817,7 +17820,7 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAnalysisNodeOutput"
   - name: listRiskAnalysisBoundaries
     title: List Risk Analysis Boundaries
-    description: List all boundaries for a risk assessment scope
+    description: List all boundaries for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
@@ -17877,7 +17880,7 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAnalysisBoundaryOutput"
   - name: listRiskAnalysisProcesses
     title: List Risk Analysis Processes
-    description: List all processes for a risk assessment scope
+    description: List all processes for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
@@ -17937,7 +17940,7 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAnalysisProcessOutput"
   - name: listRiskAnalysisThreats
     title: List Risk Analysis Threats
-    description: List all threats for a risk assessment scope
+    description: List all threats for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
@@ -17997,7 +18000,7 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAnalysisThreatOutput"
   - name: listRiskAnalysisScenarios
     title: List Risk Analysis Scenarios
-    description: List all scenarios for a risk assessment scope
+    description: List all scenarios for a risk analysis diagram
     hints:
       readonly: true
       destructive: false

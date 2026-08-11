@@ -4,6 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.214.0] - 2026-08-10
+
+### Changed
+
+- Risk analysis scopes are now referred to as diagrams across the CLI
+
+## [0.213.0] - 2026-08-07
+
+### Changed
+
+- Compliance portal document, audit, and subprocessor selection is reversed: the console now lists the organization's own documents, audits, and subprocessors with checkboxes for inline portal membership, replacing the portal-only rows plus separate add dialogs
+- Risk assessments are now named risk analyses across the CLI and MCP API
+
 ## [0.212.0] - 2026-08-06
 
 ### Added

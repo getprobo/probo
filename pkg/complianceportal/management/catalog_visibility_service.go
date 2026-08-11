@@ -22,7 +22,6 @@ package management
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/pg"
@@ -30,84 +29,103 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// GetDocumentVisibility reports how a document is published on one compliance
-// portal. Publication lives on the portal/document join row, so a document with
-// no row for that portal is simply not published there.
-func (s *Service) GetDocumentVisibility(
+func (s *Service) GetDocumentLinks(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
-	documentID gid.GID,
-) (coredata.CompliancePortalVisibility, error) {
-	row := &coredata.CompliancePortalDocument{}
+	documentIDs []gid.GID,
+) (coredata.CompliancePortalDocuments, error) {
+	var rows coredata.CompliancePortalDocuments
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return row.LoadByCompliancePortalIDAndDocumentID(ctx, conn, scope, compliancePortalID, documentID)
+			return rows.LoadByCompliancePortalIDAndDocumentIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				documentIDs,
+			)
 		},
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return coredata.CompliancePortalVisibilityNone, nil
-		}
-
-		return "", fmt.Errorf("cannot load portal document: %w", err)
+		return nil, fmt.Errorf("cannot load portal document links: %w", err)
 	}
 
-	return row.Visibility, nil
+	return rows, nil
 }
 
-// GetAuditVisibility reports how an audit is published on one compliance
-// portal.
-func (s *Service) GetAuditVisibility(
+func (s *Service) GetAuditLinks(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
-	auditID gid.GID,
-) (coredata.CompliancePortalVisibility, error) {
-	row := &coredata.CompliancePortalAudit{}
+	auditIDs []gid.GID,
+) (coredata.CompliancePortalAudits, error) {
+	var rows coredata.CompliancePortalAudits
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return row.LoadByCompliancePortalIDAndAuditID(ctx, conn, scope, compliancePortalID, auditID)
+			byAuditID, err := coredata.LoadCompliancePortalAuditsByCompliancePortalIDAndAuditIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				auditIDs,
+			)
+			if err != nil {
+				return err
+			}
+
+			rows = make(coredata.CompliancePortalAudits, 0, len(byAuditID))
+			for _, link := range byAuditID {
+				rows = append(rows, link)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return coredata.CompliancePortalVisibilityNone, nil
-		}
-
-		return "", fmt.Errorf("cannot load portal audit: %w", err)
+		return nil, fmt.Errorf("cannot load portal audit links: %w", err)
 	}
 
-	return row.Visibility, nil
+	return rows, nil
 }
 
-// IsThirdPartyPublished reports whether a third party is listed as a
-// subprocessor on one compliance portal.
-func (s *Service) IsThirdPartyPublished(
+func (s *Service) GetThirdPartyLinks(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
-	thirdPartyID gid.GID,
-) (bool, error) {
-	row := &coredata.CompliancePortalThirdParty{}
+	thirdPartyIDs []gid.GID,
+) (coredata.CompliancePortalThirdParties, error) {
+	var rows coredata.CompliancePortalThirdParties
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return row.LoadByCompliancePortalIDAndThirdPartyID(ctx, conn, scope, compliancePortalID, thirdPartyID)
+			byThirdPartyID, err := coredata.LoadCompliancePortalThirdPartiesByCompliancePortalIDAndThirdPartyIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				thirdPartyIDs,
+			)
+			if err != nil {
+				return err
+			}
+
+			rows = make(coredata.CompliancePortalThirdParties, 0, len(byThirdPartyID))
+			for _, link := range byThirdPartyID {
+				rows = append(rows, link)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("cannot load portal third party: %w", err)
+		return nil, fmt.Errorf("cannot load portal third party links: %w", err)
 	}
 
-	return true, nil
+	return rows, nil
 }

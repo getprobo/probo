@@ -35,11 +35,17 @@ const (
 	PresentationOptIn Presentation = "OPT_IN"
 
 	// PresentationOptOut lets trackers fire immediately but must offer the
-	// visitor a way to opt out (e.g. CCPA "Do Not Sell or Share").
+	// visitor a way to opt out (e.g. CCPA "Do Not Sell or Share"). Nothing
+	// opens on first load: the settings link the integrator places in the
+	// footer is the only surface the visitor ever sees unaided.
 	PresentationOptOut Presentation = "OPT_OUT"
 
-	// PresentationNotice is a purely informational banner (implied consent):
-	// trackers fire immediately and the visitor only acknowledges the notice.
+	// PresentationNotice is a purely informational banner used where the law
+	// mandates a *visible* cookie notice without requiring consent: trackers
+	// fire immediately and the visitor only acknowledges the notice. It is the
+	// only non-opt-in presentation that opens on first load, so a regulation
+	// belongs here only when a statute demands the disclosure be displayed
+	// rather than merely published in a privacy policy.
 	PresentationNotice Presentation = "NOTICE"
 )
 
@@ -89,11 +95,15 @@ type Layout struct {
 
 // PresentationForRegulation maps a regulation to its banner presentation.
 //
-// Opt-out regimes with a statutory notice model (Japan's APPI, Mexico's
-// LFPDPPP) and jurisdictions with no cookie-consent law (RegulationNone) use
-// the informational notice presentation; the remaining opt-out regimes (US
-// state privacy laws, PIPEDA, Canadian PIPA, LGPD) use the opt-out
-// presentation; everything else defaults to the strict opt-in presentation.
+// The presentation decides what a visitor sees on first load, so it is chosen
+// to display the least a jurisdiction allows. Opt-out regimes (US state
+// privacy laws, PIPEDA and provincial PIPA, Japan's APPI) and jurisdictions
+// with no cookie-consent law at all (RegulationNone) use the opt-out
+// presentation, which stays hidden until the visitor follows the settings
+// link. Mexico's LFPDPPP is the sole notice regime: art. 76 of its regulations
+// requires the cookie disclosure to be displayed in a visible location, which
+// a privacy-policy link alone does not satisfy. Everything else defaults to
+// the strict opt-in presentation.
 func PresentationForRegulation(r Regulation) Presentation {
 	switch r {
 	case RegulationCCPA,
@@ -120,12 +130,11 @@ func PresentationForRegulation(r Regulation) Presentation {
 		RegulationPIPAAB,
 		RegulationPIPABC,
 		RegulationPIPACA,
-		RegulationLGPD:
+		RegulationAPPI,
+		RegulationNone:
 		return PresentationOptOut
 
-	case RegulationAPPI,
-		RegulationLFPDPPP,
-		RegulationNone:
+	case RegulationLFPDPPP:
 		return PresentationNotice
 
 	default:

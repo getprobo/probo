@@ -197,46 +197,6 @@ WHERE
 	return count, nil
 }
 
-func (a *Audits) CountByCompliancePortalID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	compliancePortalID gid.GID,
-	organizationID gid.GID,
-) (int, error) {
-	filter := NewAuditCompliancePortalFilter().WithCompliancePortalID(compliancePortalID)
-
-	q := `
-SELECT
-	COUNT(id)
-FROM
-	audits
-WHERE
-	%s
-	AND organization_id = @organization_id
-	AND %s
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-
-	err := row.Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot count portal audits: %w", err)
-	}
-
-	return count, nil
-}
-
 func (a *Audits) LoadByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,

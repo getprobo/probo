@@ -81,7 +81,16 @@ func (w *World) NewMemberActor(
 func (w *World) NewUnauthenticatedActor(name string) *Actor {
 	w.t.Helper()
 
-	client := testutil.NewUnauthenticatedClient(w.t)
+	return w.NewUnauthenticatedActorFor(name, testutil.GetBaseURL())
+}
+
+// NewUnauthenticatedActorFor creates a cookie-backed client pointed at
+// baseURL without signing in. Use it with an IsolatedEnv when the journey
+// depends on process-level configuration that differs from the shared suite.
+func (w *World) NewUnauthenticatedActorFor(name string, baseURL string) *Actor {
+	w.t.Helper()
+
+	client := testutil.NewUnauthenticatedClientFor(w.t, baseURL)
 
 	return w.registerClient(name, client)
 }

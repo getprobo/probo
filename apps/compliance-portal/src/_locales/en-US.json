@@ -31,7 +31,6 @@
     }
   },
   "common": {
-    "cancel": "Cancel",
     "error": "Something went wrong",
     "previousPage": "Previous page",
     "nextPage": "Next page",

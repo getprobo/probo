@@ -23,8 +23,8 @@ import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Scope ID',
-		name: 'scopeId',
+		displayName: 'Diagram ID',
+		name: 'diagramId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the scope',
+		description: 'The ID of the diagram',
 		required: true,
 	},
 	{
@@ -72,19 +72,19 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const scopeId = this.getNodeParameter('scopeId', itemIndex) as string;
+	const diagramId = this.getNodeParameter('diagramId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetThreats($scopeId: ID!, $first: Int, $after: CursorKey) {
-			node(id: $scopeId) {
-				... on RiskAnalysisScope {
+		query GetThreats($diagramId: ID!, $first: Int, $after: CursorKey) {
+			node(id: $diagramId) {
+				... on RiskAnalysisDiagram {
 					threats(first: $first, after: $after) {
 						edges {
 							node {
 								id
-								riskAnalysisScopeId
+								riskAnalysisDiagramId
 								processId
 								name
 								category
@@ -105,7 +105,7 @@ export async function execute(
 	const threats = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ scopeId },
+		{ diagramId },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
