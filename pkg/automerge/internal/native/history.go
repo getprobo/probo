@@ -170,6 +170,11 @@ func (b *Engine) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 		return nil, err
 	}
 
+	// A merge may apply nothing when every change is already present, but bumping
+	// unconditionally only risks an extra rebuild on the next save, never a stale
+	// one, and it keeps every apply path covered by a single line.
+	b.revision++
+
 	if len(b.state.Heads()) == 0 && len(b.pending) == 0 {
 		state, err := NewStateFromDocument(document)
 		if err != nil {

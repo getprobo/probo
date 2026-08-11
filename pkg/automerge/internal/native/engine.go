@@ -59,6 +59,23 @@ type Engine struct {
 	// the current heads, matching the reference's patch-log output across
 	// isolate/integrate rather than a direct state comparison.
 	isolationDiffTargets [][][32]byte
+
+	// revision increases on every change to the committed history or the
+	// retained orphan set. The compacted save is cached against it so repeated
+	// saves of an unchanged document skip rebuilding the whole columnar
+	// document, which the collaboration snapshot path does on every request.
+	revision  uint64
+	saveCache saveCacheEntry
+}
+
+// saveCacheEntry memoizes one compacted save. It is valid only for the exact
+// revision and option combination it was built from.
+type saveCacheEntry struct {
+	revision      uint64
+	retainOrphans bool
+	compress      bool
+	valid         bool
+	data          []byte
 }
 
 type nativeSyncState struct {
@@ -312,6 +329,16 @@ func (b *Engine) save(
 		}
 	}
 
+	// Rebuilding the columnar document is by far the costliest part of a save, so
+	// an unchanged document returns the bytes built last time. The cache is keyed
+	// by the mutation revision and the option combination, and it is invalidated
+	// implicitly because every committed change advances the revision.
+	if cached, ok := b.cachedSave(retainOrphans, deflate); ok {
+		b.saveCursor = len(b.appended)
+
+		return cached, nil
+	}
+
 	// A compacted document chunk is the form every other implementation writes
 	// and is dramatically smaller than the change stream for a long history. It
 	// leaves the incremental cursor at the end, exactly as the stream save did,
@@ -320,11 +347,46 @@ func (b *Engine) save(
 		return nil, err
 	} else if ok {
 		b.saveCursor = len(b.appended)
+		b.storeSave(retainOrphans, deflate, data)
 
 		return data, nil
 	}
 
-	return b.streamSave(retainOrphans, deflate)
+	data, err := b.streamSave(retainOrphans, deflate)
+	if err != nil {
+		return nil, err
+	}
+
+	b.storeSave(retainOrphans, deflate, data)
+
+	return data, nil
+}
+
+// cachedSave returns a copy of the previously built save when it is still valid
+// for this revision and option combination. A copy is returned because callers
+// own the bytes and may retain or mutate them.
+func (b *Engine) cachedSave(retainOrphans, compress bool) ([]byte, bool) {
+	if !b.saveCache.valid ||
+		b.saveCache.revision != b.revision ||
+		b.saveCache.retainOrphans != retainOrphans ||
+		b.saveCache.compress != compress {
+		return nil, false
+	}
+
+	return append([]byte(nil), b.saveCache.data...), true
+}
+
+// storeSave records a freshly built save so an unchanged document can return it
+// without rebuilding. The stored bytes are copied so a caller mutating the
+// returned slice cannot corrupt the cache.
+func (b *Engine) storeSave(retainOrphans, compress bool, data []byte) {
+	b.saveCache = saveCacheEntry{
+		revision:      b.revision,
+		retainOrphans: retainOrphans,
+		compress:      compress,
+		valid:         true,
+		data:          append([]byte(nil), data...),
+	}
 }
 
 // streamSave serializes the history as the loaded base followed by each change

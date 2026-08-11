@@ -92,6 +92,7 @@ func (b *Engine) Isolate(ctx context.Context, heads [][32]byte) error {
 	b.state = pinned
 	b.actor = isolationActor(full, pinned, baseActor)
 	b.nextOp = full.maxOpGlobal() + 1
+	b.revision++
 
 	b.isolationDiffTargets = append(
 		b.isolationDiffTargets,
@@ -134,6 +135,7 @@ func (b *Engine) Integrate(ctx context.Context) error {
 	b.fullState = nil
 	b.isolationActive = false
 	b.nextOp = b.state.maxOpGlobal() + 1
+	b.revision++
 
 	return nil
 }
@@ -215,6 +217,7 @@ func (b *Engine) Commit(
 
 	b.appended = append(b.appended, raw)
 	b.pending = nil
+	b.revision++
 
 	return [32]byte(*change.Hash), nil
 }
@@ -257,6 +260,7 @@ func (b *Engine) EmptyCommit(
 	}
 
 	b.appended = append(b.appended, raw)
+	b.revision++
 
 	return [32]byte(*change.Hash), nil
 }
@@ -291,6 +295,7 @@ func (b *Engine) Rollback(ctx context.Context) (uint64, error) {
 	b.pending = nil
 	b.objects = map[uint32]ObjectID{0: RootObject()}
 	b.nextHandle = 1
+	b.revision++
 
 	return cancelled, nil
 }
