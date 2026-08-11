@@ -235,7 +235,7 @@ func (s *DocumentService) PersistCollaboration(
 	}
 
 	var (
-		canonicalChangesForLocal [][]byte
+		canonicalChangesForLocal []automerge.Change
 		revision                 int64
 	)
 
@@ -311,10 +311,7 @@ func (s *DocumentService) PersistCollaboration(
 				return fmt.Errorf("cannot read canonical changes for local document: %w", err)
 			}
 
-			canonicalChangesForLocal = make([][]byte, len(localChanges))
-			for i, change := range localChanges {
-				canonicalChangesForLocal[i] = change.Bytes
-			}
+			canonicalChangesForLocal = localChanges
 
 			seeded := state.Seeded || len(after) > 0
 			if !slices.Equal(before, after) || seeded != state.Seeded {
@@ -717,7 +714,7 @@ func (s *DocumentService) loadCollaborationChanges(
 			)
 		}
 
-		changes := make([][]byte, len(batch))
+		changes := make([]automerge.Change, len(batch))
 		for i, change := range batch {
 			if change.Revision != currentRevision+1 {
 				return fmt.Errorf(
@@ -727,7 +724,7 @@ func (s *DocumentService) loadCollaborationChanges(
 				)
 			}
 
-			changes[i] = change.ChangeBytes
+			changes[i] = automerge.Change{Bytes: change.ChangeBytes}
 			currentRevision = change.Revision
 		}
 

@@ -127,12 +127,7 @@ func TestLoadedSnapshotExposesEveryChange(t *testing.T) {
 	require.NoError(t, err)
 	closeDocument(t, replayed)
 
-	raw := make([][]byte, len(changes))
-	for i, change := range changes {
-		raw[i] = change.Bytes
-	}
-
-	require.NoError(t, replayed.ApplyChanges(ctx, raw))
+	require.NoError(t, replayed.ApplyChanges(ctx, changes))
 
 	replayedHeads, err := replayed.Heads(ctx)
 	require.NoError(t, err)

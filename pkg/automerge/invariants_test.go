@@ -71,23 +71,23 @@ func TestDocument_AppliesDependentChangesInAnyOrder(t *testing.T) {
 	target, err := automerge.Load(ctx, baseData, actor(102))
 	require.NoError(t, err)
 	closeDocument(t, target)
-	require.NoError(t, target.ApplyChanges(ctx, [][]byte{changes[1].Bytes}))
+	require.NoError(t, target.ApplyChanges(ctx, []automerge.Change{changes[1]}))
 	missing, err := target.MissingDependencies(
 		ctx,
 		[]automerge.Hash{childHash},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, []automerge.Hash{parentHash}, missing)
-	require.NoError(t, target.ApplyChanges(ctx, [][]byte{changes[0].Bytes}))
+	require.NoError(t, target.ApplyChanges(ctx, []automerge.Change{changes[0]}))
 	missing, err = target.MissingDependencies(
 		ctx,
 		[]automerge.Hash{childHash},
 	)
 	require.NoError(t, err)
 	assert.Empty(t, missing)
-	require.NoError(t, target.ApplyChanges(ctx, [][]byte{
-		changes[0].Bytes,
-		changes[1].Bytes,
+	require.NoError(t, target.ApplyChanges(ctx, []automerge.Change{
+		changes[0],
+		changes[1],
 	}))
 
 	targetText, err := target.Text(ctx, "body")
@@ -118,8 +118,8 @@ func TestDocument_InvalidChangesDoNotMutateState(t *testing.T) {
 	headsBefore, err := document.Heads(ctx)
 	require.NoError(t, err)
 
-	err = document.ApplyChanges(ctx, [][]byte{
-		[]byte("invalid"),
+	err = document.ApplyChanges(ctx, []automerge.Change{
+		{Bytes: []byte("invalid")},
 	})
 	require.Error(t, err)
 

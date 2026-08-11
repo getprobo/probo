@@ -94,7 +94,7 @@ func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 
 	// The child change depends on the base the host never received, so it is
 	// retained as an orphan rather than applied.
-	require.NoError(t, orphanHost.ApplyChanges(ctx, [][]byte{childChanges[0].Bytes}))
+	require.NoError(t, orphanHost.ApplyChanges(ctx, []automerge.Change{childChanges[0]}))
 
 	// A fresh peer with an empty document handshakes with the orphan host.
 	peer, err := automerge.New(ctx, actor(3))

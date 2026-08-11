@@ -896,7 +896,7 @@ func (d *Document) ChangesSince(
 // the document.
 func (d *Document) ApplyChanges(
 	ctx context.Context,
-	changes [][]byte,
+	changes []Change,
 ) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -910,7 +910,12 @@ func (d *Document) ApplyChanges(
 		return fmt.Errorf("automerge engine does not accept incremental changes")
 	}
 
-	if err := applier.ApplyChanges(ctx, changes); err != nil {
+	raw := make([][]byte, len(changes))
+	for i, change := range changes {
+		raw[i] = change.Bytes
+	}
+
+	if err := applier.ApplyChanges(ctx, raw); err != nil {
 		return fmt.Errorf("cannot apply incremental Automerge changes: %w", err)
 	}
 
