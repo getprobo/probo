@@ -517,7 +517,7 @@ func (s *Service) HandleCallback(
 				identity = &coredata.Identity{
 					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         email,
-					FullName:             claims.Name,
+					FullName:             strings.TrimSpace(claims.Name),
 					EmailAddressVerified: true,
 					CreatedAt:            now,
 					UpdatedAt:            now,

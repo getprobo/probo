@@ -76,8 +76,11 @@ func extractUserAttributes(assertion *saml.Assertion, config *coredata.SAMLConfi
 		lastname = ""
 	}
 
+	firstname = strings.TrimSpace(firstname)
+	lastname = strings.TrimSpace(lastname)
+
 	if firstname != "" && lastname != "" {
-		fullname = strings.TrimSpace(firstname + " " + lastname)
+		fullname = firstname + " " + lastname
 	} else if firstname != "" {
 		fullname = firstname
 	} else if lastname != "" {
@@ -95,7 +98,7 @@ func extractUserAttributes(assertion *saml.Assertion, config *coredata.SAMLConfi
 		role = mapSAMLRoleToSystemRole(roleString)
 	}
 
-	return email, fullname, role, nil
+	return email, strings.TrimSpace(fullname), role, nil
 }
 
 func extractAttributeValue(assertion *saml.Assertion, attributeName string) (string, error) {

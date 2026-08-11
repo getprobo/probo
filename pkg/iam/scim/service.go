@@ -1162,13 +1162,13 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 		}
 	}
 
-	attrs.FullName = displayName
+	attrs.FullName = strings.TrimSpace(displayName)
 	if attrs.FullName == "" {
 		attrs.FullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
 	if attrs.FullName == "" {
-		attrs.FullName = attrs.UserName
+		attrs.FullName = strings.TrimSpace(attrs.UserName)
 	}
 
 	attrs.Title, _ = attributes["title"].(string)
@@ -1250,7 +1250,7 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 	attrs.GivenName = &givenName
 	attrs.FamilyName = &familyName
 
-	attrs.FullName = displayName
+	attrs.FullName = strings.TrimSpace(displayName)
 	if attrs.FullName == "" {
 		attrs.FullName = strings.TrimSpace(givenName + " " + familyName)
 	}
@@ -1417,7 +1417,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 					}
 
 					if name, ok := valueMap["displayName"].(string); ok {
-						attrs.FullName = name
+						attrs.FullName = strings.TrimSpace(name)
 					}
 
 					if nameMap, ok := valueMap["name"].(map[string]any); ok {
@@ -1576,7 +1576,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 				}
 			case "displayname":
 				if name, ok := op.Value.(string); ok {
-					attrs.FullName = name
+					attrs.FullName = strings.TrimSpace(name)
 				}
 			case "name":
 				if nameMap, ok := op.Value.(map[string]any); ok {
@@ -1735,6 +1735,8 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 	if attrs.FullName == "" && (givenName != "" || familyName != "") {
 		attrs.FullName = strings.TrimSpace(givenName + " " + familyName)
 	}
+
+	attrs.FullName = strings.TrimSpace(attrs.FullName)
 
 	if givenName != "" && attrs.GivenName == nil {
 		attrs.GivenName = &givenName

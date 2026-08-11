@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -90,7 +91,9 @@ func (req ChangeEmailRequest) Validate() error {
 	return v.Error()
 }
 
-func (req UpdateIdentityRequest) Validate() error {
+func (req *UpdateIdentityRequest) Validate() error {
+	req.FullName = strings.TrimSpace(req.FullName)
+
 	v := validator.New()
 
 	v.Check(req.FullName, "full_name", validator.NotEmpty(), validator.MinLen(2), validator.MaxLen(255))
