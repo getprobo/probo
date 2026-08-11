@@ -490,6 +490,15 @@ func assignOperations(changes []Change, operations []Operation) error {
 		byActor[actor] = indexes
 	}
 
+	// Each change holds exactly the operations whose counter falls in its
+	// [StartOp, MaxOp] range, so its operation slice can be sized once here.
+	// Growing it by append instead reallocated repeatedly and dominated the cost
+	// of loading a large single-change document.
+	for i := range changes {
+		size := changes[i].MaxOp - changes[i].StartOp + 1
+		changes[i].Operations = make([]Operation, 0, size)
+	}
+
 	for _, operation := range operations {
 		indexes := byActor[operation.ID.Actor]
 

@@ -103,6 +103,16 @@ func NewState() *State {
 func NewStateFromDocument(document *Document) (*State, error) {
 	state := NewState()
 
+	// Presize the operation and change maps so loading a large document does not
+	// rehash them repeatedly as it inserts every operation.
+	operationCount := 0
+	for i := range document.Changes {
+		operationCount += len(document.Changes[i].Operations)
+	}
+
+	state.operations = make(map[OpID]Operation, operationCount)
+	state.changes = make(map[ChangeHash]*Change, len(document.Changes))
+
 	for i := range document.Changes {
 		change := &document.Changes[i]
 		if change.Sequence > state.actorSequence[change.Actor] {

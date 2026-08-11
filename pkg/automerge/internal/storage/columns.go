@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"slices"
 	"unicode/utf8"
 )
 
@@ -222,6 +223,8 @@ func decodeRLE[T any](data []byte, decodeValue func(*reader) (T, error)) ([]opti
 				return nil, err
 			}
 
+			values = slices.Grow(values, int(count))
+
 			for range count {
 				value, err := decodeValue(r)
 				if err != nil {
@@ -241,9 +244,15 @@ func appendRepeated[T any](values *[]optional[T], value optional[T], count uint6
 		return err
 	}
 
+	// Grow once for the whole run. A long run (an entire column of the same
+	// value, common for text where every operation shares an object and action)
+	// otherwise reallocated the slice repeatedly as it doubled.
+	grown := slices.Grow(*values, int(count))
 	for range count {
-		*values = append(*values, value)
+		grown = append(grown, value)
 	}
+
+	*values = grown
 
 	return nil
 }
