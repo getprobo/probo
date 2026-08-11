@@ -67,7 +67,8 @@ patches, and native reproduces that reference behavior exactly.
 
 DEFLATE compression on save is now covered: the native save compresses change
 chunks whose body reaches the reference DEFLATE_MIN_SIZE threshold (small changes
-stay byte-identical), and SaveNoCompress mirrors AutoCommit::save_nocompress.
+stay byte-identical), and `Save(ctx, NoCompress())` mirrors
+AutoCommit::save_nocompress.
 
 Transaction isolation is now covered: `isolate` pins reads and writes to a
 historical frontier using derived concurrency actors (matching Rust's
@@ -111,8 +112,9 @@ way back in.
 
 Two smaller differences remain. The reference `am_save_no_orphans` shim sets
 `deflate: false`, while Rust's own `SaveOptions::default()` compresses, so
-`SaveWithOptions(false)` diverges from the shim rather than from Rust; correcting
-it means rebuilding the WASM oracle. Unknown columns survive a normal load
+`Save(ctx, DiscardOrphans())` diverges from the shim rather than from Rust;
+correcting it means rebuilding the WASM oracle. Unknown columns survive a normal
+load
 because the loaded bytes are kept verbatim, and `EncodeDocument` writes them back
 to the table they came from when a document is re-encoded unmodified, but they
 cannot be carried across a compaction of a mutated history because their rows no
