@@ -48,6 +48,7 @@ func TestCookieBanner_Create(t *testing.T) {
 							cookiePolicyUrl
 							consentExpiryDays
 							showBranding
+							resourceReportingEnabled
 							defaultLanguage
 							createdAt
 							updatedAt
@@ -64,16 +65,17 @@ func TestCookieBanner_Create(t *testing.T) {
 			CreateCookieBanner struct {
 				CookieBannerEdge struct {
 					Node struct {
-						ID                string `json:"id"`
-						Name              string `json:"name"`
-						Origin            string `json:"origin"`
-						State             string `json:"state"`
-						CookiePolicyUrl   string `json:"cookiePolicyUrl"`
-						ConsentExpiryDays int    `json:"consentExpiryDays"`
-						ShowBranding      bool   `json:"showBranding"`
-						DefaultLanguage   string `json:"defaultLanguage"`
-						CreatedAt         string `json:"createdAt"`
-						UpdatedAt         string `json:"updatedAt"`
+						ID                       string `json:"id"`
+						Name                     string `json:"name"`
+						Origin                   string `json:"origin"`
+						State                    string `json:"state"`
+						CookiePolicyUrl          string `json:"cookiePolicyUrl"`
+						ConsentExpiryDays        int    `json:"consentExpiryDays"`
+						ShowBranding             bool   `json:"showBranding"`
+						ResourceReportingEnabled bool   `json:"resourceReportingEnabled"`
+						DefaultLanguage          string `json:"defaultLanguage"`
+						CreatedAt                string `json:"createdAt"`
+						UpdatedAt                string `json:"updatedAt"`
 					} `json:"node"`
 				} `json:"cookieBannerEdge"`
 			} `json:"createCookieBanner"`
@@ -97,6 +99,7 @@ func TestCookieBanner_Create(t *testing.T) {
 		assert.Equal(t, "ACTIVE", node.State)
 		assert.Equal(t, "https://example.com/cookies", node.CookiePolicyUrl)
 		assert.Equal(t, 365, node.ConsentExpiryDays)
+		assert.True(t, node.ResourceReportingEnabled)
 		assert.Equal(t, "en", node.DefaultLanguage)
 		assert.NotEmpty(t, node.CreatedAt)
 		assert.NotEmpty(t, node.UpdatedAt)

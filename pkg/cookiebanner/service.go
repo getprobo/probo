@@ -69,12 +69,13 @@ type (
 	}
 
 	UpdateCookieBannerRequest struct {
-		CookieBannerID    gid.GID
-		Name              *string
-		PrivacyPolicyURL  *string
-		CookiePolicyURL   *string
-		ConsentExpiryDays *int
-		DefaultLanguage   *string
+		CookieBannerID           gid.GID
+		Name                     *string
+		PrivacyPolicyURL         *string
+		CookiePolicyURL          *string
+		ConsentExpiryDays        *int
+		DefaultLanguage          *string
+		ResourceReportingEnabled *bool
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -202,19 +203,20 @@ type (
 	}
 
 	BannerConfig struct {
-		BannerID          gid.GID                                        `json:"banner_id"`
-		Version           int                                            `json:"version"`
-		Language          string                                         `json:"language"`
-		DefaultLanguage   string                                         `json:"default_language"`
-		PrivacyPolicyURL  string                                         `json:"privacy_policy_url,omitempty"`
-		CookiePolicyURL   string                                         `json:"cookie_policy_url"`
-		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
-		ConsentMode       string                                         `json:"consent_mode"`
-		Regulation        Regulation                                     `json:"regulation"`
-		Layout            Layout                                         `json:"layout"`
-		ShowBranding      bool                                           `json:"show_branding"`
-		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
-		Texts             map[string]string                              `json:"texts"`
+		BannerID                 gid.GID                                        `json:"banner_id"`
+		Version                  int                                            `json:"version"`
+		Language                 string                                         `json:"language"`
+		DefaultLanguage          string                                         `json:"default_language"`
+		PrivacyPolicyURL         string                                         `json:"privacy_policy_url,omitempty"`
+		CookiePolicyURL          string                                         `json:"cookie_policy_url"`
+		ConsentExpiryDays        int                                            `json:"consent_expiry_days"`
+		ConsentMode              string                                         `json:"consent_mode"`
+		Regulation               Regulation                                     `json:"regulation"`
+		Layout                   Layout                                         `json:"layout"`
+		ShowBranding             bool                                           `json:"show_branding"`
+		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
+		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
+		Texts                    map[string]string                              `json:"texts"`
 	}
 
 	UpsertCookieBannerTranslationRequest struct {
@@ -620,18 +622,19 @@ func (s *Service) CreateCookieBanner(
 			now := time.Now()
 
 			banner = &coredata.CookieBanner{
-				ID:                gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
-				OrganizationID:    req.OrganizationID,
-				Name:              req.Name,
-				Origin:            CanonicalizeOrigin(req.Origin),
-				State:             coredata.CookieBannerStateActive,
-				PrivacyPolicyURL:  req.PrivacyPolicyURL,
-				CookiePolicyURL:   req.CookiePolicyURL,
-				ConsentExpiryDays: req.ConsentExpiryDays,
-				ShowBranding:      s.showBranding,
-				DefaultLanguage:   "en",
-				CreatedAt:         now,
-				UpdatedAt:         now,
+				ID:                       gid.New(scope.GetTenantID(), coredata.CookieBannerEntityType),
+				OrganizationID:           req.OrganizationID,
+				Name:                     req.Name,
+				Origin:                   CanonicalizeOrigin(req.Origin),
+				State:                    coredata.CookieBannerStateActive,
+				PrivacyPolicyURL:         req.PrivacyPolicyURL,
+				CookiePolicyURL:          req.CookiePolicyURL,
+				ConsentExpiryDays:        req.ConsentExpiryDays,
+				ShowBranding:             s.showBranding,
+				ResourceReportingEnabled: true,
+				DefaultLanguage:          "en",
+				CreatedAt:                now,
+				UpdatedAt:                now,
 			}
 
 			if err := banner.Insert(ctx, tx, scope); err != nil {
@@ -913,10 +916,12 @@ func (s *Service) UpdateCookieBanner(
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
+			resourceReportingChanged := req.ResourceReportingEnabled != nil &&
+				*req.ResourceReportingEnabled != banner.ResourceReportingEnabled
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
-			if !nameChanged && !snapshotChanged {
+			if !nameChanged && !snapshotChanged && !resourceReportingChanged {
 				return nil
 			}
 
@@ -938,6 +943,10 @@ func (s *Service) UpdateCookieBanner(
 
 			if req.DefaultLanguage != nil {
 				banner.DefaultLanguage = *req.DefaultLanguage
+			}
+
+			if req.ResourceReportingEnabled != nil {
+				banner.ResourceReportingEnabled = *req.ResourceReportingEnabled
 			}
 
 			banner.UpdatedAt = time.Now()
@@ -1850,16 +1859,17 @@ func buildBannerConfig(
 	}
 
 	return &BannerConfig{
-		BannerID:          banner.ID,
-		Version:           version.Version,
-		Language:          resolvedLang,
-		DefaultLanguage:   defaultLang,
-		PrivacyPolicyURL:  privacyPolicyURL,
-		CookiePolicyURL:   snapshot.CookiePolicyURL,
-		ConsentExpiryDays: snapshot.ConsentExpiryDays,
-		ShowBranding:      banner.ShowBranding,
-		Categories:        categories,
-		Texts:             texts,
+		BannerID:                 banner.ID,
+		Version:                  version.Version,
+		Language:                 resolvedLang,
+		DefaultLanguage:          defaultLang,
+		PrivacyPolicyURL:         privacyPolicyURL,
+		CookiePolicyURL:          snapshot.CookiePolicyURL,
+		ConsentExpiryDays:        snapshot.ConsentExpiryDays,
+		ShowBranding:             banner.ShowBranding,
+		ResourceReportingEnabled: banner.ResourceReportingEnabled,
+		Categories:               categories,
+		Texts:                    texts,
 	}
 }
 
@@ -2163,6 +2173,10 @@ func (s *Service) ReportDetectedTrackers(
 				}
 
 				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			if !banner.ResourceReportingEnabled {
+				req.Resources = nil
 			}
 
 			var uncategorised coredata.CookieCategory

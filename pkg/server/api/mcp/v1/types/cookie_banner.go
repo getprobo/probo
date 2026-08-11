@@ -27,18 +27,19 @@ import (
 
 func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 	return &CookieBanner{
-		ID:                b.ID,
-		OrganizationID:    b.OrganizationID,
-		Name:              b.Name,
-		Origin:            b.Origin,
-		State:             CookieBannerState(b.State),
-		PrivacyPolicyURL:  b.PrivacyPolicyURL,
-		CookiePolicyURL:   b.CookiePolicyURL,
-		ConsentExpiryDays: b.ConsentExpiryDays,
-		ShowBranding:      b.ShowBranding,
-		DefaultLanguage:   b.DefaultLanguage,
-		CreatedAt:         b.CreatedAt,
-		UpdatedAt:         b.UpdatedAt,
+		ID:                       b.ID,
+		OrganizationID:           b.OrganizationID,
+		Name:                     b.Name,
+		Origin:                   b.Origin,
+		State:                    CookieBannerState(b.State),
+		PrivacyPolicyURL:         b.PrivacyPolicyURL,
+		CookiePolicyURL:          b.CookiePolicyURL,
+		ConsentExpiryDays:        b.ConsentExpiryDays,
+		ShowBranding:             b.ShowBranding,
+		ResourceReportingEnabled: b.ResourceReportingEnabled,
+		DefaultLanguage:          b.DefaultLanguage,
+		CreatedAt:                b.CreatedAt,
+		UpdatedAt:                b.UpdatedAt,
 	}
 }
 

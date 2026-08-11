@@ -59,16 +59,17 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 	assert.Contains(t, configResp.Header.Get("Vary"), "Origin")
 
 	var config struct {
-		BannerID          string `json:"banner_id"`
-		Version           int    `json:"version"`
-		Language          string `json:"language"`
-		DefaultLanguage   string `json:"default_language"`
-		CookiePolicyURL   string `json:"cookie_policy_url"`
-		ConsentExpiryDays int    `json:"consent_expiry_days"`
-		ConsentMode       string `json:"consent_mode"`
-		Regulation        string `json:"regulation"`
-		ShowBranding      bool   `json:"show_branding"`
-		Layout            struct {
+		BannerID                 string `json:"banner_id"`
+		Version                  int    `json:"version"`
+		Language                 string `json:"language"`
+		DefaultLanguage          string `json:"default_language"`
+		CookiePolicyURL          string `json:"cookie_policy_url"`
+		ConsentExpiryDays        int    `json:"consent_expiry_days"`
+		ConsentMode              string `json:"consent_mode"`
+		Regulation               string `json:"regulation"`
+		ShowBranding             bool   `json:"show_branding"`
+		ResourceReportingEnabled bool   `json:"resource_reporting_enabled"`
+		Layout                   struct {
 			Presentation string `json:"presentation"`
 			InitialState string `json:"initial_state"`
 		} `json:"layout"`
@@ -88,6 +89,7 @@ func TestCookieConsent_PublicAPIAndConsole(t *testing.T) {
 	assert.Equal(t, 365, config.ConsentExpiryDays)
 	assert.NotEmpty(t, config.ConsentMode)
 	assert.NotEmpty(t, config.Regulation)
+	assert.True(t, config.ResourceReportingEnabled)
 	assert.NotEmpty(t, config.Layout.Presentation)
 	assert.NotEmpty(t, config.Layout.InitialState)
 	assert.NotEmpty(t, config.Categories)

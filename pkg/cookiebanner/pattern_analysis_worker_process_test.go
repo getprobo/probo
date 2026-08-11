@@ -61,17 +61,18 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
 	banner := coredata.CookieBanner{
-		ID:                bannerID,
-		OrganizationID:    organizationID,
-		Name:              "Worker Test Banner",
-		Origin:            "https://worker-test-" + bannerID.String() + ".example.com",
-		State:             coredata.CookieBannerStateActive,
-		CookiePolicyURL:   "https://worker-test.example.com/cookies",
-		ConsentExpiryDays: 180,
-		ShowBranding:      false,
-		DefaultLanguage:   "en",
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:                       bannerID,
+		OrganizationID:           organizationID,
+		Name:                     "Worker Test Banner",
+		Origin:                   "https://worker-test-" + bannerID.String() + ".example.com",
+		State:                    coredata.CookieBannerStateActive,
+		CookiePolicyURL:          "https://worker-test.example.com/cookies",
+		ConsentExpiryDays:        180,
+		ShowBranding:             false,
+		ResourceReportingEnabled: true,
+		DefaultLanguage:          "en",
+		CreatedAt:                now,
+		UpdatedAt:                now,
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {

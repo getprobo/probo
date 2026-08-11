@@ -18,11 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { BannerConfig } from "../types";
 import type { Detector } from "./detector";
 import { isExtensionContext } from "./extension-context";
 import type { ReportQueue } from "./report-queue";
 import { getSelfResourceUrls } from "./self-origin";
 import type { ResourceType } from "./types";
+
+let warnedResourceReporting = false;
+
+// resolveResourceReportingEnabled returns whether the SDK should run the
+// resource detector. The SDK and backend are released together, so
+// `resource_reporting_enabled` is always present in practice; the only way it
+// can be missing is a self-hosted Probo backend older than the first release
+// that sends it.
+export function resolveResourceReportingEnabled(config: BannerConfig): boolean {
+  if (typeof config.resource_reporting_enabled === "boolean") {
+    return config.resource_reporting_enabled;
+  }
+
+  if (!warnedResourceReporting) {
+    warnedResourceReporting = true;
+    console.error(
+      "[probo] banner config has no `resource_reporting_enabled`: your self-hosted Probo backend (probod) is older than this SDK. Update probod to match this SDK. Falling back to resource reporting enabled.",
+    );
+  }
+
+  return true;
+}
 
 // Map browser-reported PerformanceResourceTiming.initiatorType to the
 // server-side tracker_resource_type. Anything we cannot classify is

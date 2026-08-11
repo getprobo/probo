@@ -25,13 +25,19 @@ import {
 import { getConsent } from "./consent";
 import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
 import type { Detector } from "./detectors";
-import { CookieDetector, ReportQueue, ResourceDetector, StorageDetector } from "./detectors";
+import {
+  CookieDetector,
+  ReportQueue,
+  ResourceDetector,
+  resolveResourceReportingEnabled,
+  StorageDetector,
+} from "./detectors";
 import { NotFoundError } from "./errors";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
-import { resolveLayout } from "./layout";
 import type { ConsentIntegration } from "./integrations";
 import { createDefaultIntegrations } from "./integrations";
+import { resolveLayout } from "./layout";
 import { enqueue, flush } from "./queue";
 import type {
   BannerConfig,
@@ -53,6 +59,16 @@ export type {
   Regulation,
   VisitorConsent,
 } from "./types";
+
+// Normalize fields that older self-hosted backends may omit so the rest of the
+// client can read `layout` and `resource_reporting_enabled` without re-checking.
+function resolveConfig(config: BannerConfig): BannerConfig {
+  return {
+    ...config,
+    layout: resolveLayout(config),
+    resource_reporting_enabled: resolveResourceReportingEnabled(config),
+  };
+}
 
 export class CookieBannerClient {
   private readonly baseUrl: URL;
@@ -97,7 +113,7 @@ export class CookieBannerClient {
 
     let config: BannerConfig;
     try {
-      config = await fetchJSON<BannerConfig>(configUrl);
+      config = resolveConfig(await fetchJSON<BannerConfig>(configUrl));
     } catch {
       // Discovery mode: no published banner config, but detectors still run
       // so admins can inventory trackers. Grant GCM so GTM-managed tags can
@@ -325,7 +341,7 @@ export class CookieBannerClient {
 
   private buildDefaultConsentData(): Record<string, boolean> {
     const cfg = this.config;
-    const defaultGranted = resolveLayout(cfg).default_non_necessary_granted;
+    const defaultGranted = cfg.layout.default_non_necessary_granted;
     const consentData: Record<string, boolean> = {};
     for (const cat of cfg.categories) {
       consentData[cat.slug] = defaultGranted || cat.kind === "NECESSARY";
@@ -373,8 +389,11 @@ export class CookieBannerClient {
     this.detectors = [
       new CookieDetector(this.reportQueue, apiOrigin, knownNames),
       new StorageDetector(this.reportQueue, apiOrigin),
-      new ResourceDetector(this.reportQueue, apiOrigin),
     ];
+
+    if (!config || config.resource_reporting_enabled) {
+      this.detectors.push(new ResourceDetector(this.reportQueue, apiOrigin));
+    }
 
     for (const d of this.detectors) {
       d.start();

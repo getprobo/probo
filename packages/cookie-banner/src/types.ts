@@ -90,6 +90,7 @@ export interface BannerConfig {
   regulation: Regulation | null;
   layout: BannerLayout;
   show_branding: boolean;
+  resource_reporting_enabled: boolean;
   categories: Category[];
   texts: BannerTexts;
 }

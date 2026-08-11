@@ -136,6 +136,7 @@ type CookieBanner implements Node {
     cookiePolicyUrl: String!
     consentExpiryDays: Int!
     showBranding: Boolean!
+    resourceReportingEnabled: Boolean!
     defaultLanguage: String!
 
     organization: Organization @goField(forceResolver: true)
@@ -667,6 +668,7 @@ input UpdateCookieBannerInput {
     cookiePolicyUrl: String
     consentExpiryDays: Int
     defaultLanguage: String
+    resourceReportingEnabled: Boolean
 }
 
 input DeleteCookieBannerInput {

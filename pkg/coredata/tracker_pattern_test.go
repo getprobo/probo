@@ -66,17 +66,18 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 		}
 
 		banner := &coredata.CookieBanner{
-			ID:                cookieBannerID,
-			OrganizationID:    organizationID,
-			Name:              "TrackerPattern Test Banner",
-			Origin:            "https://tracker-pattern-test.example.com",
-			State:             coredata.CookieBannerStateActive,
-			CookiePolicyURL:   "https://tracker-pattern-test.example.com/cookies",
-			ConsentExpiryDays: 180,
-			ShowBranding:      false,
-			DefaultLanguage:   "en",
-			CreatedAt:         now,
-			UpdatedAt:         now,
+			ID:                       cookieBannerID,
+			OrganizationID:           organizationID,
+			Name:                     "TrackerPattern Test Banner",
+			Origin:                   "https://tracker-pattern-test.example.com",
+			State:                    coredata.CookieBannerStateActive,
+			CookiePolicyURL:          "https://tracker-pattern-test.example.com/cookies",
+			ConsentExpiryDays:        180,
+			ShowBranding:             false,
+			ResourceReportingEnabled: true,
+			DefaultLanguage:          "en",
+			CreatedAt:                now,
+			UpdatedAt:                now,
 		}
 		if err := banner.Insert(ctx, tx, scope); err != nil {
 			return err

@@ -51,11 +51,12 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName             string
-		flagCookiePolicyUrl  string
-		flagPrivacyPolicyUrl string
-		flagConsentExpiry    int
-		flagDefaultLanguage  string
+		flagName                     string
+		flagCookiePolicyUrl          string
+		flagPrivacyPolicyUrl         string
+		flagConsentExpiry            int
+		flagDefaultLanguage          string
+		flagResourceReportingEnabled bool
 	)
 
 	cmd := &cobra.Command{
@@ -103,6 +104,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["defaultLanguage"] = flagDefaultLanguage
 			}
 
+			if cmd.Flags().Changed("resource-reporting-enabled") {
+				input["resourceReportingEnabled"] = flagResourceReportingEnabled
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -129,6 +134,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagPrivacyPolicyUrl, "privacy-policy-url", "", "Privacy policy URL")
 	cmd.Flags().IntVar(&flagConsentExpiry, "consent-expiry-days", 0, "Days until consent expires")
 	cmd.Flags().StringVar(&flagDefaultLanguage, "default-language", "", "Default language code")
+	cmd.Flags().BoolVar(&flagResourceReportingEnabled, "resource-reporting-enabled", true, "Whether the SDK reports detected resources")
 
 	return cmd
 }

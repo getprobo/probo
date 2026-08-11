@@ -33,7 +33,7 @@ const STRICT_LAYOUT: BannerLayout = {
   settings_link: "default",
 };
 
-let warned = false;
+let warnedLayout = false;
 
 // resolveLayout returns the presentation policy the server sends. The SDK and
 // backend are released together, so `layout` is always present in practice; the
@@ -44,8 +44,8 @@ export function resolveLayout(config: BannerConfig): BannerLayout {
     return config.layout;
   }
 
-  if (!warned) {
-    warned = true;
+  if (!warnedLayout) {
+    warnedLayout = true;
     console.error(
       "[probo] banner config has no `layout`: your self-hosted Probo backend (probod) is older than this SDK. Update probod to v0.246.0 or later. Falling back to strict opt-in.",
     );

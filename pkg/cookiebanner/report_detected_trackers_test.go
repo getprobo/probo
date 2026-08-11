@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 // TestReportDetectedTrackers_SkipsOversizedIdentifier asserts that a
@@ -198,4 +199,131 @@ func TestReportDetectedTrackers_AcceptsMaxLengthIdentifier(t *testing.T) {
 		),
 	)
 	assert.Equal(t, maxLenKey, pattern.Pattern)
+}
+
+func TestReportDetectedTrackers_ResourceReportingDisabled(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false)
+
+	_, err := svc.UpdateCookieBanner(
+		ctx,
+		fx.scope,
+		UpdateCookieBannerRequest{
+			CookieBannerID:           fx.banner.ID,
+			ResourceReportingEnabled: new(false),
+		},
+	)
+	require.NoError(t, err)
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:   "_ga",
+						Source: coredata.CookieSourceScript,
+					},
+				},
+				Resources: []DetectedResourceItem{
+					{
+						URL:          uri.URI("https://cdn.example.com/tracker.js"),
+						ResourceType: coredata.TrackerResourceTypeScript,
+					},
+				},
+			},
+		),
+	)
+
+	var resource coredata.TrackerResource
+
+	err = client.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return resource.LoadByBannerTypeOriginPath(
+				ctx,
+				conn,
+				fx.scope,
+				fx.banner.ID,
+				coredata.TrackerResourceTypeScript,
+				"https://cdn.example.com",
+				"/tracker.js",
+			)
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+	var cookiePattern coredata.TrackerPattern
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return cookiePattern.LoadByBannerIDTypeAndPattern(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					"_ga",
+					nil,
+				)
+			},
+		),
+	)
+	assert.Equal(t, "_ga", cookiePattern.Pattern)
+}
+
+func TestReportDetectedTrackers_ResourceReportingEnabled(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false)
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Resources: []DetectedResourceItem{
+					{
+						URL:          uri.URI("https://cdn.example.com/pixel.js"),
+						ResourceType: coredata.TrackerResourceTypeScript,
+					},
+				},
+			},
+		),
+	)
+
+	var resource coredata.TrackerResource
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return resource.LoadByBannerTypeOriginPath(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerResourceTypeScript,
+					"https://cdn.example.com",
+					"/pixel.js",
+				)
+			},
+		),
+	)
+	assert.Equal(t, "https://cdn.example.com", resource.Origin)
+	assert.Equal(t, "/pixel.js", resource.Path)
 }

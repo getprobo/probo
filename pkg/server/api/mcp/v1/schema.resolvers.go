@@ -5663,6 +5663,10 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 		updateReq.DefaultLanguage = *v
 	}
 
+	if v := UnwrapOmittable(input.ResourceReportingEnabled); v != nil && *v != nil {
+		updateReq.ResourceReportingEnabled = *v
+	}
+
 	banner, err := r.cookieBanner.UpdateCookieBanner(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateCookieBannerOutput{}, fmt.Errorf("cannot update cookie banner: %w", err)

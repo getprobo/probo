@@ -634,12 +634,13 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 		ctx,
 		scope,
 		cookiebanner.UpdateCookieBannerRequest{
-			CookieBannerID:    input.CookieBannerID,
-			Name:              input.Name,
-			PrivacyPolicyURL:  input.PrivacyPolicyURL,
-			CookiePolicyURL:   input.CookiePolicyURL,
-			ConsentExpiryDays: input.ConsentExpiryDays,
-			DefaultLanguage:   input.DefaultLanguage,
+			CookieBannerID:           input.CookieBannerID,
+			Name:                     input.Name,
+			PrivacyPolicyURL:         input.PrivacyPolicyURL,
+			CookiePolicyURL:          input.CookiePolicyURL,
+			ConsentExpiryDays:        input.ConsentExpiryDays,
+			DefaultLanguage:          input.DefaultLanguage,
+			ResourceReportingEnabled: input.ResourceReportingEnabled,
 		},
 	)
 	if err != nil {

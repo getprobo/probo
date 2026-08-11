@@ -128,7 +128,16 @@
     "title": "Settings",
     "messages": { "successTitle": "Success", "updated": "Banner settings updated" },
     "errors": { "title": "Error", "update": "Failed to update" },
-    "fields": { "name": "Name", "origin": "Origin URL", "cookiePolicyUrl": "Cookie policy URL", "privacyPolicyUrl": "Privacy policy URL", "consentExpiryDays": "Consent expiry (days)", "defaultLanguage": "Default language" },
+    "fields": {
+      "name": "Name",
+      "origin": "Origin URL",
+      "cookiePolicyUrl": "Cookie policy URL",
+      "privacyPolicyUrl": "Privacy policy URL",
+      "consentExpiryDays": "Consent expiry (days)",
+      "defaultLanguage": "Default language",
+      "resourceReportingEnabled": "Resource reporting",
+      "resourceReportingEnabledHelp": "When enabled, the banner SDK detects and reports third-party scripts, iframes, and other resources."
+    },
     "languages": { "english": "English", "french": "French", "german": "German", "spanish": "Spanish", "dutch": "Dutch" },
     "actions": { "saving": "Saving...", "save": "Save" }
   },
