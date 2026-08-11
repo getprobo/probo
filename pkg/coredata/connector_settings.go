@@ -213,6 +213,20 @@ type (
 	GoogleAnalyticsConnectorSettings struct {
 		AccountID string `json:"account_id"`
 	}
+
+	// UniFiConnectorSettings stores the UniFi console the access source
+	// reviews. ConsoleID is the identifier Ubiquiti's Site Manager uses as the
+	// {consoleId} path segment when proxying to a console's Network
+	// Integration API (e.g. "942A6FF6…873F:9999999999"); a Ubiquiti account can
+	// hold several consoles, and the API key names none of them, so the
+	// reviewed console is captured up front.
+	//
+	// The console proxy on api.ui.com is the only supported route. A console's
+	// own LAN address is not: it resolves to a private IP, which the
+	// SSRF-protected connector client refuses to dial by design.
+	UniFiConnectorSettings struct {
+		ConsoleID string `json:"console_id"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

@@ -392,6 +392,19 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 	return u.JoinPath("api", "v1", "user").String(), nil
 }
 
+// buildUniFiProbeURL points the connection check at the configured console's
+// site listing — the same call the driver opens with, so a check that passes
+// proves the key reaches the console the review will read, not merely that
+// api.ui.com accepted it.
+func buildUniFiProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
+	baseURL, err := unifiConsoleBaseURL(conn, ep)
+	if err != nil {
+		return "", err
+	}
+
+	return drivers.UniFiSitesURL(baseURL)
+}
+
 func buildPostHogProbeURL(conn *coredata.Connector) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
 	if err != nil {

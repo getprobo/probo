@@ -110,6 +110,7 @@ enum ConnectorProvider
         )
     UPCLOUD
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUpCloud")
+    UNIFI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderUniFi")
 }
 
 type ConnectorProviderInfo {
@@ -227,6 +228,7 @@ input CreateAPIKeyConnectorInput {
     scalewayOrganizationId: String
     crispWebsiteId: String
     segmentRegion: String
+    unifiConsoleId: String
 }
 
 type CreateAPIKeyConnectorPayload {

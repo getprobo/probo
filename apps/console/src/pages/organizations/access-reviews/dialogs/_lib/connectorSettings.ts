@@ -92,6 +92,9 @@ export function mapAPIKeyExtraSettingToField(
     case "CRISP":
       if (settingKey === "websiteId") return "crispWebsiteId";
       break;
+    case "UNIFI":
+      if (settingKey === "consoleId") return "unifiConsoleId";
+      break;
   }
   return null;
 }

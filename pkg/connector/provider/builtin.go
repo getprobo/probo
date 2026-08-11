@@ -112,6 +112,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		supabaseRegistration(),
 		tailscaleRegistration(),
 		tallyRegistration(),
+		unifiRegistration(),
 		upcloudRegistration(),
 		vercelRegistration(),
 		yousignRegistration(),

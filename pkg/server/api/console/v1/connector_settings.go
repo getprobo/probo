@@ -364,6 +364,26 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		// verified, and displayed website are identical (a padded value would
 		// verify then break the driver's URL).
 		return json.Marshal(&coredata.CrispConnectorSettings{WebsiteID: websiteID})
+	case coredata.ConnectorProviderUniFi:
+		consoleID := ""
+		if input.UnifiConsoleID != nil {
+			consoleID = strings.TrimSpace(*input.UnifiConsoleID)
+		}
+
+		if consoleID == "" {
+			return nil, fmt.Errorf("cannot create unifi connector: unifiConsoleId is required")
+		}
+
+		// The console ID becomes a path segment on api.ui.com, so a value
+		// carrying its own separators or query would silently retarget every
+		// request. Reject rather than sanitize: the ID is copied out of the
+		// Site Manager UI, so anything decorated is a paste error the operator
+		// should see. The message names only the field — never the value.
+		if strings.ContainsAny(consoleID, "/\\?#% \t") {
+			return nil, fmt.Errorf("cannot create unifi connector: unifiConsoleId must be a bare console identifier")
+		}
+
+		return json.Marshal(&coredata.UniFiConnectorSettings{ConsoleID: consoleID})
 	}
 
 	return nil, nil

@@ -452,6 +452,16 @@ func TestBuildProbeURLFromAPIBase(t *testing.T) {
 			settings: &coredata.QoveryConnectorSettings{OrganizationID: "c4f2de4d-3e50-4f98-bf00-065778f7f5b5"},
 			wantURL:  "https://api.qovery.com/organization/c4f2de4d-3e50-4f98-bf00-065778f7f5b5/member",
 		},
+		{
+			// The probe lands on the console's own site listing — the call the
+			// driver opens with — so a passing check proves the key reaches the
+			// configured console, not merely that api.ui.com accepted it.
+			name:     "unifi",
+			reg:      unifiRegistration(),
+			settings: &coredata.UniFiConnectorSettings{ConsoleID: "ABCDEF0123456789:1234567890"},
+			wantURL: "https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890" +
+				"/proxy/network/integration/v1/sites",
+		},
 	}
 
 	for _, tc := range cases {

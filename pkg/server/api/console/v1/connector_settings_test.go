@@ -22,6 +22,7 @@ package console_v1
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,6 +62,75 @@ func TestApiKeyConnectorSettings_LangfuseBaseURL(t *testing.T) {
 
 	_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
 		Provider: coredata.ConnectorProviderLangfuse,
+	})
+	require.Error(t, err)
+}
+
+// TestApiKeyConnectorSettings_UniFiConsoleID walks the same chain for UniFi and
+// pins the extra rule its setting carries: the console ID becomes a path
+// segment on api.ui.com, so a value bringing its own separators would retarget
+// every request the driver makes and must be refused rather than sanitized.
+func TestApiKeyConnectorSettings_UniFiConsoleID(t *testing.T) {
+	t.Parallel()
+
+	reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderUniFi)
+	require.True(t, ok)
+	require.Len(t, reg.APIKeyExtraSettings, 1)
+	require.Equal(t, "consoleId", reg.APIKeyExtraSettings[0].Key)
+
+	consoleID := "ABCDEF0123456789:1234567890"
+
+	raw, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider:       coredata.ConnectorProviderUniFi,
+		UnifiConsoleID: &consoleID,
+	})
+	require.NoError(t, err)
+
+	var settings coredata.UniFiConnectorSettings
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, consoleID, settings.ConsoleID)
+
+	// Padding is a paste artifact, not a different console.
+	padded := "  " + consoleID + "  "
+
+	raw, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider:       coredata.ConnectorProviderUniFi,
+		UnifiConsoleID: &padded,
+	})
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, consoleID, settings.ConsoleID)
+
+	for _, invalid := range []string{
+		"",
+		"   ",
+		// A pasted URL rather than the bare identifier.
+		"https://api.ui.com/v1/connector/consoles/ABCDEF:1",
+		"ABCDEF:1/proxy/network/integration",
+		"../../v1/hosts",
+		"ABCDEF:1?x=1",
+		"ABCDEF:1#frag",
+		"ABC DEF:1",
+	} {
+		t.Run("rejects "+invalid, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+				Provider:       coredata.ConnectorProviderUniFi,
+				UnifiConsoleID: &invalid,
+			})
+			require.Error(t, err)
+
+			// The message is surfaced verbatim to the client, so it must name
+			// the field and never echo the value.
+			if strings.TrimSpace(invalid) != "" {
+				assert.NotContains(t, err.Error(), invalid)
+			}
+		})
+	}
+
+	_, err = apiKeyConnectorSettings(types.CreateAPIKeyConnectorInput{
+		Provider: coredata.ConnectorProviderUniFi,
 	})
 	require.Error(t, err)
 }

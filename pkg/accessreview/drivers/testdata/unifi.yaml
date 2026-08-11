@@ -1,0 +1,284 @@
+---
+# Hand-authored cassette for one UniFi console, reached through the Site Manager
+# console proxy on api.ui.com (X-API-KEY stripped by the recorder). It covers
+# BOTH APIs the driver reads, walked in driver order: the documented Integration
+# API collections under /proxy/network/integration, then each WiFi broadcast's
+# detail representation, then the LEGACY application API RADIUS user list under
+# /proxy/network/api/s/default/list/account.
+#
+# The driver emits a record only for an identifiable holder of access, so the
+# SSIDs, the RADIUS profile and the VPN servers in this fixture are here as
+# CONTEXT for the rows it does emit, not as rows themselves. Expect 8 records:
+# three filtered MACs, three RADIUS users, two vouchers.
+#
+#   - Office: WPA2/WPA3-Enterprise on RADIUS profile P1, plus an ALLOW filter
+#     with a colon- and a dash-separated MAC, so ExternalID normalization is
+#     exercised alongside the RADIUS linkage. Two records.
+#   - Corp-WiFi: a second Enterprise SSID on the SAME profile and with no
+#     filter of its own. It contributes no record; its purpose is to make the
+#     profile resolve to two (sorted) WiFi roles on every RADIUS user.
+#   - Guest: open SSID, no client filtering (clientFilteringPolicy null), and so
+#     no record at all — nothing in the API says who joins it.
+#   - IoT Legacy: DISABLED SSID with a BLOCK filter. Its one MAC must report
+#     Active=false on both counts, which is what pins that the SSID's on-air
+#     state still reaches the device rows now that the SSID has no row.
+#   - One RADIUS profile, so the sole-profile attribution on user records fires.
+#   - Four RADIUS users: vlan as a string, vlan as a NUMBER (older firmware
+#     spelled it either way), no vlan, and a blank entry that must be skipped.
+#     Each carries an x_password placeholder the driver must never decode.
+#   - Two Hotspot vouchers: live and expired, the latter never activated.
+#
+# There is no /vpn/servers interaction because the driver no longer requests
+# one: the API exposes no VPN membership, so it would answer nobody.
+#
+# Integration shapes mirror the documented schemas (Site overview, Wifi
+# broadcast overview/details, Radius Profile Overview, Hotspot voucher
+# details). The legacy envelope is {meta:{rc},data:[...]} and is UNVERIFIED
+# against a live console — re-record with UNIFI_API_KEY to confirm.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        form:
+            limit:
+                - "200"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites?limit=200&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"count":1,"data":[{"id":"11111111-1111-4111-8111-111111111111","internalReference":"default","name":"HQ"}],"limit":200,"offset":0,"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        form:
+            limit:
+                - "200"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites/11111111-1111-4111-8111-111111111111/wifi/broadcasts?limit=200&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"count":4,"data":[{"id":"22222222-2222-4222-8222-222222222001","name":"Office","type":"STANDARD","enabled":true,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"WPA2_WPA3_ENTERPRISE"}},{"id":"22222222-2222-4222-8222-222222222002","name":"Guest","type":"STANDARD","enabled":true,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"OPEN"},"hotspotConfiguration":{"type":"CAPTIVE_PORTAL"}},{"id":"22222222-2222-4222-8222-222222222003","name":"IoT Legacy","type":"IOT_OPTIMIZED","enabled":false,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"WPA2_PERSONAL"}},{"id":"22222222-2222-4222-8222-222222222004","name":"Corp-WiFi","type":"STANDARD","enabled":true,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"WPA3_ENTERPRISE"}}],"limit":200,"offset":0,"totalCount":4}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        form:
+            limit:
+                - "200"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites/11111111-1111-4111-8111-111111111111/radius/profiles?limit=200&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"count":1,"data":[{"id":"77777777-7777-4777-8777-777777777001","name":"Built-in RADIUS","metadata":{"origin":"SYSTEM_DEFINED"}}],"limit":200,"offset":0,"totalCount":1}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        form:
+            limit:
+                - "1000"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites/11111111-1111-4111-8111-111111111111/hotspot/vouchers?limit=1000&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"count":2,"data":[{"id":"44444444-4444-4444-8444-444444444001","name":"hotel-guest","code":"4861409510","createdAt":"2026-07-01T09:00:00Z","activatedAt":"2026-07-02T14:20:00Z","expiresAt":"2026-07-03T14:20:00Z","expired":false,"authorizedGuestCount":1,"authorizedGuestLimit":1,"timeLimitMinutes":1440},{"id":"44444444-4444-4444-8444-444444444002","name":"conference","code":"1029384756","createdAt":"2026-05-14T08:00:00Z","expired":true,"authorizedGuestCount":0,"timeLimitMinutes":480}],"limit":1000,"offset":0,"totalCount":2}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites/11111111-1111-4111-8111-111111111111/wifi/broadcasts/22222222-2222-4222-8222-222222222001
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"id":"22222222-2222-4222-8222-222222222001","name":"Office","type":"STANDARD","enabled":true,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"WPA2_WPA3_ENTERPRISE","coaEnabled":false,"wpa3FastRoamingEnabled":false,"pmfMode":"OPTIONAL","radiusConfiguration":{"profileId":"77777777-7777-4777-8777-777777777001","nasId":{"type":"DERIVED","source":"DEVICE_NAME"}}},"clientFilteringPolicy":{"action":"ALLOW","macAddressFilter":["94:2a:6f:26:c6:ca","AA-BB-CC-DD-EE-FF"]}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites/11111111-1111-4111-8111-111111111111/wifi/broadcasts/22222222-2222-4222-8222-222222222002
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"id":"22222222-2222-4222-8222-222222222002","name":"Guest","type":"STANDARD","enabled":true,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"OPEN"},"clientFilteringPolicy":null}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites/11111111-1111-4111-8111-111111111111/wifi/broadcasts/22222222-2222-4222-8222-222222222003
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"id":"22222222-2222-4222-8222-222222222003","name":"IoT Legacy","type":"IOT_OPTIMIZED","enabled":false,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"WPA2_PERSONAL","passphrase":"REDACTED"},"clientFilteringPolicy":{"action":"BLOCK","macAddressFilter":["00:11:22:33:44:55"]}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/integration/v1/sites/11111111-1111-4111-8111-111111111111/wifi/broadcasts/22222222-2222-4222-8222-222222222004
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"id":"22222222-2222-4222-8222-222222222004","name":"Corp-WiFi","type":"STANDARD","enabled":true,"metadata":{"origin":"USER_DEFINED"},"securityConfiguration":{"type":"WPA3_ENTERPRISE","coaEnabled":true,"securityMode":"DEFAULT","radiusConfiguration":{"profileId":"77777777-7777-4777-8777-777777777001","nasId":{"type":"USER_DEFINED","value":"corp"}}}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.ui.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.ui.com/v1/connector/consoles/ABCDEF0123456789:1234567890/proxy/network/api/s/default/list/account
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"meta":{"rc":"ok"},"data":[{"_id":"ra1","name":"alice","x_password":"REDACTED","vlan":"20","site_id":"5f0c1b2a3d4e5f60718293a4"},{"_id":"ra2","name":"bob","x_password":"REDACTED","vlan":30,"tunnel_type":13,"tunnel_medium_type":6,"site_id":"5f0c1b2a3d4e5f60718293a4"},{"_id":"ra3","name":"carol","x_password":"REDACTED","site_id":"5f0c1b2a3d4e5f60718293a4"},{"_id":"","name":"  "}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
