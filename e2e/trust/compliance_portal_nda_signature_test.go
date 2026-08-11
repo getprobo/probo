@@ -49,6 +49,22 @@ const minimalPDFBase64 = "JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9QYWdlcyAyIDAgUi9UeX
 	"ES//AhpppZNeBhllklmyLLLKJrsclh/4AgAA//9tzQSTZW5kc3RyZWFtCmVuZG9iagoKc3RhcnR4" +
 	"cmVmCjUxMgolJUVPRg=="
 
+const acceptElectronicSignatureMutation = `
+	mutation($input: AcceptElectronicSignatureInput!) {
+		acceptElectronicSignature(input: $input) {
+			signature { id status }
+		}
+	}
+`
+
+const recordSigningEventMutation = `
+	mutation($input: RecordSigningEventInput!) {
+		recordSigningEvent(input: $input) {
+			success
+		}
+	}
+`
+
 // TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature is a
 // regression test for GHSA-22xj-f767-ppw6: any self-provisioned trust
 // center visitor could accept another visitor's NDA signature, or inject
@@ -74,29 +90,13 @@ func TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature(t *t
 	require.NotEmpty(t, victimSignatureID)
 	require.Equal(t, "PENDING", victimSignatureStatus)
 
-	const acceptMutation = `
-		mutation($input: AcceptElectronicSignatureInput!) {
-			acceptElectronicSignature(input: $input) {
-				signature { id status }
-			}
-		}
-	`
-
-	err := attacker.ExecuteTrust(trustHost, acceptMutation, map[string]any{
+	err := attacker.ExecuteTrust(trustHost, acceptElectronicSignatureMutation, map[string]any{
 		"input": map[string]any{"signatureId": victimSignatureID},
 	}, nil)
 	require.Error(t, err, "attacker must not be able to accept another visitor's signature")
 	assertForbidden(t, err)
 
-	const recordEventMutation = `
-		mutation($input: RecordSigningEventInput!) {
-			recordSigningEvent(input: $input) {
-				success
-			}
-		}
-	`
-
-	err = attacker.ExecuteTrust(trustHost, recordEventMutation, map[string]any{
+	err = attacker.ExecuteTrust(trustHost, recordSigningEventMutation, map[string]any{
 		"input": map[string]any{
 			"signatureId": victimSignatureID,
 			"eventType":   "DOCUMENT_VIEWED",
@@ -117,7 +117,7 @@ func TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature(t *t
 		} `json:"acceptElectronicSignature"`
 	}
 
-	err = victim.ExecuteTrust(trustHost, acceptMutation, map[string]any{
+	err = victim.ExecuteTrust(trustHost, acceptElectronicSignatureMutation, map[string]any{
 		"input": map[string]any{"signatureId": victimSignatureID},
 	}, &acceptResult)
 	require.NoError(t, err, "the legitimate signer must still be able to accept their own signature")
@@ -143,29 +143,13 @@ func TestCompliancePortal_NDASigning_RequiresFullName(t *testing.T) {
 	require.NotEmpty(t, signatureID)
 	require.Equal(t, "PENDING", signatureStatus)
 
-	const acceptMutation = `
-		mutation($input: AcceptElectronicSignatureInput!) {
-			acceptElectronicSignature(input: $input) {
-				signature { id status }
-			}
-		}
-	`
-
-	err := visitor.ExecuteTrust(trustHost, acceptMutation, map[string]any{
+	err := visitor.ExecuteTrust(trustHost, acceptElectronicSignatureMutation, map[string]any{
 		"input": map[string]any{"signatureId": signatureID},
 	}, nil)
 	require.Error(t, err, "accept must require a full name")
 	assertFullNameRequired(t, err)
 
-	const recordEventMutation = `
-		mutation($input: RecordSigningEventInput!) {
-			recordSigningEvent(input: $input) {
-				success
-			}
-		}
-	`
-
-	err = visitor.ExecuteTrust(trustHost, recordEventMutation, map[string]any{
+	err = visitor.ExecuteTrust(trustHost, recordSigningEventMutation, map[string]any{
 		"input": map[string]any{
 			"signatureId": signatureID,
 			"eventType":   "DOCUMENT_VIEWED",

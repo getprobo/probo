@@ -137,7 +137,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
 
   const nda = compliancePortal.nonDisclosureAgreement;
   const signature = fragment.nonDisclosureAgreement.viewerSignature;
-  const hasFullName = Boolean(data.viewer?.fullName.trim());
+  const hasFullName = data.viewer != null && data.viewer.fullName !== "";
 
   const safeContinueUrl = getSafeContinueUrl(searchParams.get("continue"));
 
