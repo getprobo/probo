@@ -122,7 +122,7 @@ func TestRustConvert_StringsInMapsAreConvertedToText(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeText, object.Type)
 
-		text, err := object.Text()
+		text, err := object.Text(ctx)
 		require.NoError(t, err)
 		value, err := text.String(ctx)
 		require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestRustConvert_StringsInListsAreConvertedToText(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeText, element.Type)
 
-		text, err := element.Text()
+		text, err := element.Text(ctx)
 		require.NoError(t, err)
 		value, err := text.String(ctx)
 		require.NoError(t, err)

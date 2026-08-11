@@ -197,7 +197,7 @@ func TestJSText_SplicingIntoArrays(t *testing.T) {
 		require.NoError(t, err)
 		textObject, err := inner.ObjectAt(ctx, 0)
 		require.NoError(t, err)
-		text, err := textObject.Text()
+		text, err := textObject.Text(ctx)
 		require.NoError(t, err)
 
 		require.NoError(t, text.Splice(ctx, 0, 0, "Hello "))

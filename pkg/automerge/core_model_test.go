@@ -904,7 +904,7 @@ func TestDocument_WrongObjectOperationsMatchReference(t *testing.T) {
 			require.NoError(t, err)
 			assert.Zero(t, length)
 
-			_, err = listObject.Text()
+			_, err = listObject.Text(ctx)
 			require.Error(t, err)
 		})
 	}

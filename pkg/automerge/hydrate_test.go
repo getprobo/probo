@@ -249,7 +249,7 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 
 			textObject, err := list.ObjectAt(ctx, 2)
 			require.NoError(t, err)
-			text, err := textObject.Text()
+			text, err := textObject.Text(ctx)
 			require.NoError(t, err)
 			textValue, err := text.String(ctx)
 			require.NoError(t, err)
@@ -305,7 +305,7 @@ func assertHydratedDocument(
 	require.NoError(t, err)
 	nestedTextObject, err := nestedMap.Object(ctx, "nested")
 	require.NoError(t, err)
-	nestedText, err := nestedTextObject.Text()
+	nestedText, err := nestedTextObject.Text(ctx)
 	require.NoError(t, err)
 	nestedValue, err := nestedText.String(ctx)
 	require.NoError(t, err)

@@ -60,7 +60,7 @@ func TestRustText_SimpleUpdateText(t *testing.T) {
 
 		otherObject, err := other.Root().Object(ctx, "text")
 		require.NoError(t, err)
-		otherText, err := otherObject.Text()
+		otherText, err := otherObject.Text(ctx)
 		require.NoError(t, err)
 		require.NoError(t, otherText.Update(ctx, "Goodbye, world!"))
 		_, err = other.Commit(ctx, "goodbye", commitTime)
@@ -112,7 +112,7 @@ func TestRustText_UpdateTextBigOleGraphemes(t *testing.T) {
 
 		otherObject, err := other.Root().Object(ctx, "text")
 		require.NoError(t, err)
-		otherText, err := otherObject.Text()
+		otherText, err := otherObject.Text(ctx)
 		require.NoError(t, err)
 		require.NoError(t, otherText.Update(ctx, "left👨‍👩‍👧right"))
 		_, err = other.Commit(ctx, "girl", commitTime)

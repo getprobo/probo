@@ -532,7 +532,11 @@ func (o *Object) Keys(ctx context.Context) ([]string, error) {
 }
 
 // Text returns a collaborative text wrapper for a text object.
-func (o *Object) Text() (*Text, error) {
+func (o *Object) Text(ctx context.Context) (*Text, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	if o.Type != ObjectTypeText {
 		return nil, fmt.Errorf("automerge object is %q, not text", o.Type)
 	}

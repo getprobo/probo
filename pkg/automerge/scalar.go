@@ -66,6 +66,39 @@ const (
 	ScalarTypeTimestamp ScalarType = "timestamp"
 )
 
+// The constructors below build a Scalar with its type and matching field set
+// together, so a caller cannot pair a type with the wrong field.
+
+// NullScalar returns the null scalar.
+func NullScalar() Scalar { return Scalar{Type: ScalarTypeNull} }
+
+// BoolScalar returns a boolean scalar.
+func BoolScalar(value bool) Scalar { return Scalar{Type: ScalarTypeBoolean, Bool: value} }
+
+// UintScalar returns an unsigned integer scalar.
+func UintScalar(value uint64) Scalar { return Scalar{Type: ScalarTypeUint, Uint: value} }
+
+// IntScalar returns a signed integer scalar.
+func IntScalar(value int64) Scalar { return Scalar{Type: ScalarTypeInt, Int: value} }
+
+// FloatScalar returns a 64-bit floating point scalar.
+func FloatScalar(value float64) Scalar { return Scalar{Type: ScalarTypeFloat64, Float: value} }
+
+// StringScalar returns a string scalar. This stores an immutable string value;
+// use a text object for collaboratively editable text.
+func StringScalar(value string) Scalar { return Scalar{Type: ScalarTypeString, String: value} }
+
+// BytesScalar returns a byte string scalar.
+func BytesScalar(value []byte) Scalar { return Scalar{Type: ScalarTypeBytes, Bytes: value} }
+
+// CounterScalar returns a counter scalar, whose value is the sum of every
+// increment applied across the history.
+func CounterScalar(value int64) Scalar { return Scalar{Type: ScalarTypeCounter, Int: value} }
+
+// TimestampScalar returns a timestamp scalar carrying milliseconds since the
+// Unix epoch.
+func TimestampScalar(millis int64) Scalar { return Scalar{Type: ScalarTypeTimestamp, Int: millis} }
+
 // PutScalar assigns a typed scalar at a key in the root map.
 func (d *Document) PutScalar(ctx context.Context, key string, value Scalar) error {
 	d.mu.Lock()

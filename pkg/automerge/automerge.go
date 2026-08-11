@@ -340,7 +340,7 @@ func convertMapStrings(ctx context.Context, object *Object) (bool, error) {
 				return false, err
 			}
 
-			handle, err := text.Text()
+			handle, err := text.Text(ctx)
 			if err != nil {
 				return false, err
 			}
@@ -389,7 +389,7 @@ func convertListStrings(ctx context.Context, object *Object) (bool, error) {
 				return false, err
 			}
 
-			handle, err := text.Text()
+			handle, err := text.Text(ctx)
 			if err != nil {
 				return false, err
 			}
@@ -1225,4 +1225,9 @@ func (s *SyncState) Save(ctx context.Context) ([]byte, error) {
 // String returns the lowercase hexadecimal change hash.
 func (h Hash) String() string {
 	return hex.EncodeToString(h[:])
+}
+
+// String returns the lowercase hexadecimal actor ID.
+func (a ActorID) String() string {
+	return hex.EncodeToString(a[:])
 }
