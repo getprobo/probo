@@ -57,6 +57,7 @@ const profileFragment = graphql`
     dpoProfileId
     dpoAppointedAt
     commissionerNotificationDueAt
+    commissionerNotificationOverdue
     commissionerNotifiedAt
     commissionerNotificationReference
   }
@@ -408,12 +409,19 @@ export function MalaysiaPDPAProfileForm({
             <span className="text-sm text-txt-secondary">
               {t("malaysiaPDPA.notification.dueAt.label")}
             </span>
-            <span className="text-sm font-medium">
-              {dateTimeFormat(
-                i18n.language,
-                profile.commissionerNotificationDueAt,
+            <div className="flex items-center gap-2">
+              {profile.commissionerNotificationOverdue && (
+                <Badge variant="danger">
+                  {t("malaysiaPDPA.notification.overdue")}
+                </Badge>
               )}
-            </span>
+              <span className="text-sm font-medium">
+                {dateTimeFormat(
+                  i18n.language,
+                  profile.commissionerNotificationDueAt,
+                )}
+              </span>
+            </div>
           </div>
         )}
 
