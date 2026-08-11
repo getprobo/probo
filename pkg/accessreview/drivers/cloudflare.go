@@ -141,7 +141,7 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 				FullName:    m.User.FirstName + " " + m.User.LastName,
 				Roles:       roles,
 				Active:      new(m.Status == "accepted"),
-				IsAdmin:     isAdmin,
+				IsAdmin:     new(isAdmin),
 				ExternalID:  m.ID,
 				MFAStatus:   mfaStatus,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

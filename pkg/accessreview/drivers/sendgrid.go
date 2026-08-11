@@ -113,7 +113,7 @@ func (d *SendGridDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				Email:    teammate.Email,
 				FullName: sendGridFullName(teammate.FirstName, teammate.LastName),
 				Roles:    sendGridRoles(teammate.UserType, teammate.IsAdmin),
-				IsAdmin:  teammate.IsAdmin,
+				IsAdmin:  new(teammate.IsAdmin),
 				// SendGrid exposes no UUID for teammates; the username is the
 				// only stable handle. For unified accounts it equals the email.
 				ExternalID:  strings.TrimSpace(teammate.Username),

@@ -123,7 +123,7 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 					ExternalID:  m.User.GID,
 					Roles:       asanaRoles(m.IsAdmin, m.IsGuest, m.IsViewOnly),
 					Active:      new(m.IsActive),
-					IsAdmin:     m.IsAdmin,
+					IsAdmin:     new(m.IsAdmin),
 					MFAStatus:   coredata.MFAStatusUnknown,
 					AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 					AccountType: coredata.AccessReviewEntryAccountTypeUser,

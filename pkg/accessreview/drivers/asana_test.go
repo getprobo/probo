@@ -56,7 +56,7 @@ func TestAsanaDriver(t *testing.T) {
 	assert.Equal(t, "Ada Admin", admin.FullName)
 	assert.Equal(t, "1000000000000001", admin.ExternalID)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusUnknown, admin.MFAStatus)
 	require.NotNil(t, admin.Active)
 	assert.True(t, *admin.Active)
@@ -65,15 +65,15 @@ func TestAsanaDriver(t *testing.T) {
 
 	member := byEmail["member@example.com"]
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 
 	guest := byEmail["guest@example.com"]
 	assert.Equal(t, []string{"Guest"}, guest.Roles)
-	assert.False(t, guest.IsAdmin)
+	assert.Equal(t, new(false), guest.IsAdmin)
 
 	viewer := byEmail["viewer@example.com"]
 	assert.Equal(t, []string{"View only"}, viewer.Roles)
-	assert.False(t, viewer.IsAdmin)
+	assert.Equal(t, new(false), viewer.IsAdmin)
 
 	inactive := byEmail["inactive@example.com"]
 	require.NotNil(t, inactive.Active)

@@ -54,9 +54,9 @@ func TestDocuSignDriver(t *testing.T) {
 	assert.Equal(t, "11111111-1111-4111-8111-111111111111", r.ExternalID)
 	assert.Equal(t, []string{"Account Administrator"}, r.Roles)
 	assert.Equal(t, "CTO", r.JobTitle)
-	assert.True(t, r.IsAdmin)
+	assert.Equal(t, new(true), r.IsAdmin)
 	require.NotNil(t, r.Active)
 	assert.True(t, *r.Active)
 
-	assert.False(t, records[1].IsAdmin)
+	assert.Equal(t, new(false), records[1].IsAdmin)
 }

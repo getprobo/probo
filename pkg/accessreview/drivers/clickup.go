@@ -126,7 +126,7 @@ func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			Email:       m.User.Email,
 			FullName:    m.User.Username,
 			Roles:       roles,
-			IsAdmin:     isAdmin,
+			IsAdmin:     new(isAdmin),
 			ExternalID:  m.User.ID.String(),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

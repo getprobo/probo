@@ -44,4 +44,5 @@ func TestIntercomDriver(t *testing.T) {
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
+	assert.Nil(t, r.IsAdmin)
 }

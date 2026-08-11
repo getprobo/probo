@@ -49,7 +49,7 @@ func TestIncidentIODriver(t *testing.T) {
 	assert.Equal(t, "lisa@example.com", owner.Email)
 	assert.Equal(t, "Lisa Curtis", owner.FullName)
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
 	// /v2/users carries no account-status field, so Active stays nil.
 	assert.Nil(t, owner.Active)
@@ -57,14 +57,14 @@ func TestIncidentIODriver(t *testing.T) {
 	// Live base_role + custom_roles are unioned; a responder is not an admin.
 	responder := records[1]
 	assert.Equal(t, []string{"Responder", "On-call Lead"}, responder.Roles)
-	assert.False(t, responder.IsAdmin)
+	assert.Equal(t, new(false), responder.IsAdmin)
 
 	// base_role null → falls back to the deprecated role enum; empty name →
 	// the display name falls back to the email.
 	legacy := records[2]
 	assert.Equal(t, "legacy-admin@example.com", legacy.FullName)
 	assert.Equal(t, []string{"Administrator"}, legacy.Roles)
-	assert.True(t, legacy.IsAdmin)
+	assert.Equal(t, new(true), legacy.IsAdmin)
 }
 
 func TestIncidentIORoles(t *testing.T) {

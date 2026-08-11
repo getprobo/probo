@@ -96,7 +96,7 @@ func (d *ApolloDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Email:       email,
 				FullName:    apolloFullName(u, email),
 				Roles:       apolloRoles(role),
-				IsAdmin:     apolloIsAdmin(role),
+				IsAdmin:     new(apolloIsAdmin(role)),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

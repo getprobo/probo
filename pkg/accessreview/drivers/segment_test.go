@@ -45,7 +45,7 @@ func TestSegmentDriver(t *testing.T) {
 	assert.Equal(t, "sgJDWk3K21k6LE3tLU9nRK", owner.ExternalID)
 	assert.Equal(t, "papi@example.com", owner.Email)
 	assert.Equal(t, "papi@example.com", owner.FullName)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, []string{"Workspace Owner"}, owner.Roles)
 	// Segment exposes no active/suspended status, so confirmed members carry
 	// no Active signal (nil), unlike pending invites below.
@@ -55,7 +55,7 @@ func TestSegmentDriver(t *testing.T) {
 	member := records[1]
 	assert.Equal(t, "i2VTJURQprNfqdwjLFPWYx", member.ExternalID)
 	assert.Equal(t, "Sloth", member.FullName)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	assert.Equal(t, []string{"Source Read-only"}, member.Roles)
 	assert.Nil(t, member.Active)
 
@@ -63,7 +63,7 @@ func TestSegmentDriver(t *testing.T) {
 	invite := records[2]
 	assert.Equal(t, "foo@example.com", invite.Email)
 	assert.Equal(t, "foo@example.com", invite.ExternalID)
-	assert.False(t, invite.IsAdmin)
+	assert.Nil(t, invite.IsAdmin)
 	assert.Empty(t, invite.Roles)
 	require.NotNil(t, invite.Active)
 	assert.False(t, *invite.Active)

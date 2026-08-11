@@ -46,15 +46,15 @@ func TestAnthropicDriver(t *testing.T) {
 	assert.NotEmpty(t, first.FullName)
 	assert.NotEmpty(t, first.ExternalID)
 	assert.Equal(t, []string{"User"}, first.Roles)
-	assert.False(t, first.IsAdmin)
+	assert.Equal(t, new(false), first.IsAdmin)
 	assert.NotNil(t, first.CreatedAt)
 
 	assert.Equal(t, []string{"Developer"}, records[1].Roles)
-	assert.False(t, records[1].IsAdmin)
+	assert.Equal(t, new(false), records[1].IsAdmin)
 
 	admin := records[2]
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 }
 
 func TestAnthropicRoles(t *testing.T) {

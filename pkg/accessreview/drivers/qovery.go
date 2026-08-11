@@ -115,7 +115,7 @@ func (d *QoveryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			Email:       member.Email,
 			FullName:    qoveryFullName(member),
 			Roles:       qoveryRoles(member.Role),
-			IsAdmin:     qoveryIsAdmin(member.Role),
+			IsAdmin:     new(qoveryIsAdmin(member.Role)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

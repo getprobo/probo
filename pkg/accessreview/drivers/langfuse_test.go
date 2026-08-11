@@ -48,20 +48,20 @@ func TestLangfuseDriver(t *testing.T) {
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Equal(t, "Olivia Owner", owner.FullName)
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
 
 	admin := records[1]
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 
 	member := records[2]
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 
 	viewer := records[3]
 	assert.Equal(t, []string{"Viewer"}, viewer.Roles)
-	assert.False(t, viewer.IsAdmin)
+	assert.Equal(t, new(false), viewer.IsAdmin)
 	// name is empty in the payload, so the email is used as the display name.
 	assert.Equal(t, "viewer@example.com", viewer.FullName)
 }

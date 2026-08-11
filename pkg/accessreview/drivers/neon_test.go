@@ -58,7 +58,7 @@ func TestNeonDriverListAccounts(t *testing.T) {
 	assert.Equal(t, "jane.doe@example.com", records[0].Email)
 	assert.Equal(t, "jane.doe@example.com", records[0].FullName)
 	assert.Equal(t, []string{"Admin"}, records[0].Roles)
-	assert.True(t, records[0].IsAdmin)
+	assert.Equal(t, new(true), records[0].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, records[0].MFAStatus)
 	assert.Equal(t, "bbbbbbbb-1111-2222-3333-000000000001", records[0].ExternalID)
 	require.NotNil(t, records[0].Active)
@@ -69,7 +69,7 @@ func TestNeonDriverListAccounts(t *testing.T) {
 	// Deactivated member with MFA disabled.
 	assert.Equal(t, "john.smith@example.com", records[1].Email)
 	assert.Equal(t, []string{"Member"}, records[1].Roles)
-	assert.False(t, records[1].IsAdmin)
+	assert.Equal(t, new(false), records[1].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, records[1].MFAStatus)
 	assert.Equal(t, "bbbbbbbb-1111-2222-3333-000000000002", records[1].ExternalID)
 	require.NotNil(t, records[1].Active)
@@ -79,7 +79,7 @@ func TestNeonDriverListAccounts(t *testing.T) {
 	// user_id falling back to the membership ID.
 	assert.Equal(t, "erin.lee@example.com", records[2].Email)
 	assert.Equal(t, []string{"Editor"}, records[2].Roles)
-	assert.False(t, records[2].IsAdmin)
+	assert.Equal(t, new(false), records[2].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusUnknown, records[2].MFAStatus)
 	assert.Equal(t, "aaaaaaaa-1111-2222-3333-000000000003", records[2].ExternalID)
 	require.NotNil(t, records[2].Active)

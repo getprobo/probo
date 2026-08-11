@@ -86,7 +86,7 @@ func (d *AnthropicDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 				Email:       u.Email,
 				FullName:    u.Name,
 				Roles:       anthropicRoles(u.Role),
-				IsAdmin:     u.Role == "admin",
+				IsAdmin:     new(u.Role == "admin"),
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

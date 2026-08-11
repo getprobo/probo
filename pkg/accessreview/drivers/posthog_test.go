@@ -48,7 +48,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Equal(t, "Olivia Owner", owner.FullName)
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, owner.MFAStatus)
 	assert.Equal(t, "user-1", owner.ExternalID)
 	require.NotNil(t, owner.CreatedAt)
@@ -57,7 +57,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	member := records[1]
 	assert.Equal(t, "member@example.com", member.Email)
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, member.MFAStatus)
 	require.NotNil(t, member.CreatedAt)
 	assert.Nil(t, member.LastLogin)
@@ -65,7 +65,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	admin := records[2]
 	assert.Equal(t, "admin@example.com", admin.Email)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusUnknown, admin.MFAStatus)
 	assert.Equal(t, "membership-3", admin.ExternalID)
 	require.NotNil(t, admin.CreatedAt)

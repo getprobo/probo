@@ -105,7 +105,12 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		}
 
 		if idx, ok := colIndex["is_admin"]; ok && idx < len(row) {
-			record.IsAdmin = strings.TrimSpace(strings.ToLower(row[idx])) == "true"
+			switch strings.TrimSpace(strings.ToLower(row[idx])) {
+			case "true":
+				record.IsAdmin = new(true)
+			case "false":
+				record.IsAdmin = new(false)
+			}
 		}
 
 		if idx, ok := colIndex["active"]; ok && idx < len(row) {

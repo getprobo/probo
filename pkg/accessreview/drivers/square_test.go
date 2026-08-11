@@ -46,7 +46,7 @@ func TestSquareDriver(t *testing.T) {
 	assert.Equal(t, "-3oZQKPKVk6gUXU_V5Qa", member.ExternalID)
 	assert.Equal(t, "sherlock.holmes@example.com", member.Email)
 	assert.Equal(t, "Sherlock Holmes", member.FullName)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	assert.Equal(t, []string{"Member"}, member.Roles)
 	require.NotNil(t, member.Active)
 	assert.True(t, *member.Active)
@@ -59,7 +59,7 @@ func TestSquareDriver(t *testing.T) {
 	owner := records[1]
 	assert.Equal(t, "Pw67AzUomYUdF04AN17i", owner.ExternalID)
 	assert.Equal(t, "john.watson@example.com", owner.Email)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
 	require.NotNil(t, owner.Active)
 	assert.True(t, *owner.Active)
@@ -67,7 +67,7 @@ func TestSquareDriver(t *testing.T) {
 	// INACTIVE member → active=false.
 	inactive := records[2]
 	assert.Equal(t, "martha.hudson@example.com", inactive.Email)
-	assert.False(t, inactive.IsAdmin)
+	assert.Equal(t, new(false), inactive.IsAdmin)
 	require.NotNil(t, inactive.Active)
 	assert.False(t, *inactive.Active)
 }

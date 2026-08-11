@@ -85,7 +85,7 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 				Email:       u.PrimaryEmail,
 				FullName:    u.Name.FullName,
 				Active:      new(!u.Suspended && !u.Archived),
-				IsAdmin:     u.IsAdmin,
+				IsAdmin:     new(u.IsAdmin),
 				ExternalID:  u.Id,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodSSO,

@@ -106,7 +106,7 @@ func (d *DotfileDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				FullName:    dotfileFullName(u, email),
 				Roles:       dotfileRoles(u.Role),
 				Active:      &active,
-				IsAdmin:     dotfileIsAdmin(u.Role),
+				IsAdmin:     new(dotfileIsAdmin(u.Role)),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

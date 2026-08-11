@@ -93,7 +93,7 @@ func (d *OpenRouterDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 				Email:       email,
 				FullName:    openRouterFullName(m, email),
 				Roles:       openRouterRoles(m.Role),
-				IsAdmin:     m.Role == "org:admin",
+				IsAdmin:     new(m.Role == "org:admin"),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

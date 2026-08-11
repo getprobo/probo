@@ -114,7 +114,7 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				JobTitle:    m.Profile.Title,
 				Roles:       slackRoles(m),
 				Active:      new(!m.Deleted),
-				IsAdmin:     m.IsAdmin || m.IsOwner || m.IsPrimaryOwner,
+				IsAdmin:     new(m.IsAdmin || m.IsOwner || m.IsPrimaryOwner),
 				ExternalID:  m.ID,
 				MFAStatus:   slackMFAStatus(m.Has2FA),
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

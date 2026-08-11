@@ -110,7 +110,7 @@ func (d *SquareDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				FullName:    squareFullName(m, email),
 				Roles:       ownerMemberRoles(role),
 				Active:      activeFromStatus(m.Status),
-				IsAdmin:     m.IsOwner,
+				IsAdmin:     new(m.IsOwner),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

@@ -54,7 +54,7 @@ func TestHerokuDriver(t *testing.T) {
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.Roles)
 	assert.Equal(t, coredata.MFAStatusEnabled, r.MFAStatus)
-	assert.True(t, r.IsAdmin)
+	assert.Equal(t, new(true), r.IsAdmin)
 	require.NotNil(t, r.CreatedAt)
 }
 
@@ -111,9 +111,9 @@ func TestHerokuDriverPersonalAccount(t *testing.T) {
 	assert.Contains(t, byEmail, "bob@example.com")
 	assert.Contains(t, byEmail, "carol@example.com")
 
-	assert.True(t, byEmail["alice@example.com"].IsAdmin)
+	assert.Equal(t, new(true), byEmail["alice@example.com"].IsAdmin)
 	assert.Equal(t, []string{"owner"}, byEmail["alice@example.com"].Roles)
-	assert.False(t, byEmail["bob@example.com"].IsAdmin)
+	assert.Equal(t, new(false), byEmail["bob@example.com"].IsAdmin)
 }
 
 // TestHerokuDriverPersonalAccountSlug verifies the reserved personal-account

@@ -1033,13 +1033,13 @@ func TestSegmentDriverUsesInlinePermissions(t *testing.T) {
 	assert.Zero(t, perUserCalls, "inline permissions must not trigger the per-user fetch")
 
 	assert.Equal(t, "ada@example.com", records[0].Email)
-	assert.True(t, records[0].IsAdmin)
+	assert.Equal(t, new(true), records[0].IsAdmin)
 	assert.Equal(t, []string{"Workspace Owner"}, records[0].Roles)
 
 	// An empty (but present) permissions array is authoritative: the user
 	// genuinely has no roles, so it must not be mistaken for "not populated".
 	assert.Equal(t, "bob@example.com", records[1].Email)
-	assert.False(t, records[1].IsAdmin)
+	assert.Equal(t, new(false), records[1].IsAdmin)
 	assert.Empty(t, records[1].Roles)
 }
 

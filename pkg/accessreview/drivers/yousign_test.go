@@ -46,7 +46,7 @@ func TestYousignDriver(t *testing.T) {
 	assert.Equal(t, "john.doe@example.com", admin.Email)
 	assert.Equal(t, "John Doe", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	require.NotNil(t, admin.Active)
 	assert.True(t, *admin.Active)
 	assert.Equal(t, "Legal Counsel", admin.JobTitle)
@@ -59,7 +59,7 @@ func TestYousignDriver(t *testing.T) {
 	member := records[1]
 	assert.Equal(t, "b2f4e1c8-6d3a-4e2b-8f1a-9d5c7e8a0b3f", member.ExternalID)
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	require.NotNil(t, member.Active)
 	assert.False(t, *member.Active)
 	assert.Equal(t, "Sales Manager", member.JobTitle)

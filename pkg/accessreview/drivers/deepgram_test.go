@@ -58,13 +58,13 @@ func TestDeepgramDriver(t *testing.T) {
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Equal(t, "Olivia Owner", owner.FullName)
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
 
 	member := records[1]
 	assert.Equal(t, "member@example.com", member.Email)
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 
 	dev := records[2]
 	assert.Equal(t, "dev@example.com", dev.Email)

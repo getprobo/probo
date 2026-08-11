@@ -47,16 +47,16 @@ func TestApolloDriver(t *testing.T) {
 	assert.Equal(t, "alice@example.com", admin.Email)
 	assert.Equal(t, "Alice Admin", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
 
 	rep := records[1]
 	assert.Equal(t, []string{"Sales Rep"}, rep.Roles)
-	assert.False(t, rep.IsAdmin)
+	assert.Equal(t, new(false), rep.IsAdmin)
 
 	manager := records[2]
 	assert.Equal(t, []string{"Billing and Seat Manager"}, manager.Roles)
-	assert.False(t, manager.IsAdmin)
+	assert.Equal(t, new(false), manager.IsAdmin)
 
 	// No name and no first/last: the display name falls back to the email.
 	noName := records[3]

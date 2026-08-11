@@ -47,14 +47,14 @@ func TestPylonDriver(t *testing.T) {
 	assert.Equal(t, "Alice Admin", admin.FullName)
 	// role_id "role_admin" resolved through GET /user-roles.
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	require.NotNil(t, admin.Active)
 	assert.True(t, *admin.Active)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
 
 	member := records[1]
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 
 	// No name → display name falls back to the email; "deactivated" status →
 	// Active false.

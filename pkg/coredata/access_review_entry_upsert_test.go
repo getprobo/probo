@@ -174,7 +174,7 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 		FullName:                     originalFullName,
 		Roles:                        originalRoles,
 		JobTitle:                     "",
-		IsAdmin:                      false,
+		IsAdmin:                      new(false),
 		MFAStatus:                    coredata.MFAStatusUnknown,
 		AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
 		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
@@ -231,7 +231,7 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 		FullName:                     secondFullName,
 		Roles:                        secondRoles,
 		JobTitle:                     "",
-		IsAdmin:                      true,
+		IsAdmin:                      new(true),
 		MFAStatus:                    coredata.MFAStatusEnabled,
 		AuthMethod:                   coredata.AccessReviewEntryAuthMethodSSO,
 		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
@@ -279,7 +279,8 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	assert.Equal(t, secondEmail, loaded.Email)
 	assert.Equal(t, secondFullName, loaded.FullName)
 	assert.Equal(t, secondRoles, loaded.Roles)
-	assert.True(t, loaded.IsAdmin)
+	require.NotNil(t, loaded.IsAdmin)
+	assert.True(t, *loaded.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, loaded.MFAStatus)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, loaded.AuthMethod)
 	assert.WithinDuration(t, t2, loaded.UpdatedAt, time.Second)

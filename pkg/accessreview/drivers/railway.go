@@ -175,7 +175,7 @@ func railwayRecords(me *railwayMe) []AccountRecord {
 		sort.Strings(roles)
 
 		agg.record.Roles = roles
-		agg.record.IsAdmin = agg.isAdmin
+		agg.record.IsAdmin = new(agg.isAdmin)
 		agg.record.MFAStatus = railwayMFAStatus(agg.mfaSignal, agg.mfaEnabled)
 
 		records = append(records, agg.record)

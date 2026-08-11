@@ -53,5 +53,5 @@ func TestGitLabDriver(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusUnknown, r.MFAStatus)
 	require.NotNil(t, r.Active)
 	assert.True(t, *r.Active)
-	assert.True(t, r.IsAdmin) // first record is access_level=50 (Owner)
+	assert.Equal(t, new(true), r.IsAdmin) // first record is access_level=50 (Owner)
 }

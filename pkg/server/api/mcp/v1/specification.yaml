@@ -8565,7 +8565,6 @@ components:
         - full_name
         - roles
         - job_title
-        - is_admin
         - mfa_status
         - auth_method
         - account_type
@@ -8608,8 +8607,10 @@ components:
           type: string
           description: User job title
         is_admin:
-          type: boolean
-          description: Whether the user has admin privileges
+          type:
+            - boolean
+            - "null"
+          description: Whether the user has admin privileges (null when unknown)
         active:
           type:
             - boolean

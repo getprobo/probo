@@ -146,7 +146,7 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Roles:     roles,
 				JobTitle:  u.Attributes.Title,
 				Active:    &active,
-				IsAdmin:   isAdmin,
+				IsAdmin:   new(isAdmin),
 				MFAStatus: mfaStatus,
 				// Datadog's /api/v2/users does not expose the login method
 				// used (no allowed_login_methods in the schema), so the

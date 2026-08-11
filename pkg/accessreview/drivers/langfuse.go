@@ -107,7 +107,7 @@ func (d *LangfuseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			Email:       email,
 			FullName:    langfuseFullName(m, email),
 			Roles:       langfuseRoles(m.Role),
-			IsAdmin:     langfuseIsAdmin(m.Role),
+			IsAdmin:     new(langfuseIsAdmin(m.Role)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

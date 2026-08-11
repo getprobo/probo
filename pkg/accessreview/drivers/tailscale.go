@@ -103,7 +103,7 @@ func (d *TailscaleDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 			FullName:   u.DisplayName,
 			Roles:      roles,
 			Active:     tailscaleUserActive(u.Status),
-			IsAdmin:    tailscaleUserIsAdmin(u.Role),
+			IsAdmin:    new(tailscaleUserIsAdmin(u.Role)),
 			ExternalID: u.ID,
 			MFAStatus:  coredata.MFAStatusUnknown,
 			// Tailscale has no local credentials; it always delegates

@@ -171,7 +171,7 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				FullName:    fullName,
 				Roles:       roles,
 				Active:      new(active),
-				IsAdmin:     isAdmin,
+				IsAdmin:     new(isAdmin),
 				ExternalID:  m.ID,
 				MFAStatus:   mfaStatus,
 				AuthMethod:  authMethod,

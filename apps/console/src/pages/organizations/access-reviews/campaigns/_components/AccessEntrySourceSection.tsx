@@ -119,7 +119,11 @@ function entryMatchesFilters(
   }
 
   if (filters.admin.length > 0) {
-    const adminValue = entry.isAdmin ? "YES" : "NO";
+    const adminValue = entry.isAdmin == null
+      ? "UNKNOWN"
+      : entry.isAdmin
+        ? "YES"
+        : "NO";
     if (!filters.admin.includes(adminValue)) {
       return false;
     }

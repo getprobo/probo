@@ -151,7 +151,7 @@ func (d *SegmentDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			FullName:    segmentFullName(u.Name, email),
 			Roles:       roles,
 			Active:      nil,
-			IsAdmin:     isAdmin,
+			IsAdmin:     new(isAdmin),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

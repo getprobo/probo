@@ -48,7 +48,7 @@ func TestAddGoogleAnalyticsBinding(t *testing.T) {
 		require.Len(t, records, 1)
 		assert.Equal(t, "ada@example.com", records[0].Email)
 		assert.Equal(t, []string{"analyst", "viewer"}, records[0].Roles)
-		assert.False(t, records[0].IsAdmin)
+		assert.Equal(t, new(false), records[0].IsAdmin)
 	})
 
 	t.Run("an admin role anywhere wins", func(t *testing.T) {
@@ -61,7 +61,7 @@ func TestAddGoogleAnalyticsBinding(t *testing.T) {
 
 		records := googleAnalyticsRecords(members)
 		require.Len(t, records, 1)
-		assert.True(t, records[0].IsAdmin)
+		assert.Equal(t, new(true), records[0].IsAdmin)
 	})
 
 	t.Run("skips empty emails and blank roles", func(t *testing.T) {

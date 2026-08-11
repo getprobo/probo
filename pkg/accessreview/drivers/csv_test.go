@@ -61,6 +61,39 @@ func TestCSVDriverParsesRequiredAndOptionalColumns(t *testing.T) {
 	if records[0].ExternalID != "42" {
 		t.Fatalf("unexpected external id: %s", records[0].ExternalID)
 	}
+
+	if records[0].IsAdmin != nil {
+		t.Fatal("expected admin status to be unknown when is_admin is omitted")
+	}
+}
+
+func TestCSVDriverParsesAdminStatus(t *testing.T) {
+	t.Parallel()
+
+	driver := NewCSVDriver(strings.NewReader(
+		"email,is_admin\nadmin@example.com,true\nmember@example.com,false\nunknown@example.com,\n",
+	))
+
+	records, err := driver.ListAccounts(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(records) != 3 {
+		t.Fatalf("expected 3 records, got %d", len(records))
+	}
+
+	if records[0].IsAdmin == nil || !*records[0].IsAdmin {
+		t.Fatal("expected true admin status")
+	}
+
+	if records[1].IsAdmin == nil || *records[1].IsAdmin {
+		t.Fatal("expected false admin status")
+	}
+
+	if records[2].IsAdmin != nil {
+		t.Fatal("expected blank admin status to be unknown")
+	}
 }
 
 func TestCSVDriverSplitsRoles(t *testing.T) {

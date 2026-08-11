@@ -103,6 +103,7 @@ export function AccessEntriesToolbar({
           options={[
             { value: "YES", label: t("campaignDetailPage.values.yes") },
             { value: "NO", label: t("campaignDetailPage.values.no") },
+            { value: "UNKNOWN", label: t("campaignDetailPage.values.unknown") },
           ]}
           value={adminFilter}
           onChange={onAdminFilterChange}

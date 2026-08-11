@@ -47,20 +47,20 @@ func TestGoogleAnalyticsDriver(t *testing.T) {
 	assert.Equal(t, "alice@example.com", alice.Email)
 	assert.Equal(t, "alice@example.com", alice.ExternalID)
 	assert.Equal(t, "alice@example.com", alice.FullName)
-	assert.True(t, alice.IsAdmin)
+	assert.Equal(t, new(true), alice.IsAdmin)
 	assert.Equal(t, []string{"admin", "viewer"}, alice.Roles)
 	assert.Nil(t, alice.Active)
 
 	// bob: account-level analyst only.
 	bob := records[1]
 	assert.Equal(t, "bob@example.com", bob.Email)
-	assert.False(t, bob.IsAdmin)
+	assert.Equal(t, new(false), bob.IsAdmin)
 	assert.Equal(t, []string{"analyst"}, bob.Roles)
 
 	// carol: property-level analyst only (never appears at account level).
 	carol := records[2]
 	assert.Equal(t, "carol@example.com", carol.Email)
-	assert.False(t, carol.IsAdmin)
+	assert.Equal(t, new(false), carol.IsAdmin)
 	assert.Equal(t, []string{"analyst"}, carol.Roles)
 
 	// dave holds a binding only on properties/99999, a subproperty parented to
@@ -70,6 +70,6 @@ func TestGoogleAnalyticsDriver(t *testing.T) {
 	// failing the whole account — otherwise these four records would be zero.
 	dave := records[3]
 	assert.Equal(t, "dave@example.com", dave.Email)
-	assert.False(t, dave.IsAdmin)
+	assert.Equal(t, new(false), dave.IsAdmin)
 	assert.Equal(t, []string{"analyst"}, dave.Roles)
 }

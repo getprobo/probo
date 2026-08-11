@@ -48,7 +48,7 @@ func TestOpenRouterDriver(t *testing.T) {
 	assert.Equal(t, "ada.admin@example.com", admin.Email)
 	assert.Equal(t, "Ada Admin", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
 	// The members endpoint carries no account-status field, so Active stays nil.
 	assert.Nil(t, admin.Active)

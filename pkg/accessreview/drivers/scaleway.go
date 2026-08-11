@@ -105,7 +105,7 @@ func (d *ScalewayDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				FullName:    scalewayFullName(u, email),
 				Roles:       ownerMemberRoles(u.Type),
 				Active:      scalewayActive(u.Status, u.Locked),
-				IsAdmin:     isOwnerRole(u.Type),
+				IsAdmin:     new(isOwnerRole(u.Type)),
 				MFAStatus:   scalewayMFAStatus(u),
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

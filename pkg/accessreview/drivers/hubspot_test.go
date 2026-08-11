@@ -47,7 +47,7 @@ func TestHubSpotDriver(t *testing.T) {
 	assert.Equal(t, "john.smith@example.com", active.Email)
 	assert.Equal(t, "John Smith", active.FullName)
 	assert.Equal(t, []string{"Sales Admin", "Super Admin"}, active.Roles)
-	assert.True(t, active.IsAdmin)
+	assert.Equal(t, new(true), active.IsAdmin)
 	require.NotNil(t, active.Active)
 	assert.True(t, *active.Active)
 	require.NotNil(t, active.LastLogin)
@@ -58,7 +58,7 @@ func TestHubSpotDriver(t *testing.T) {
 	assert.Equal(t, "10000002", listedInactive.ExternalID)
 	assert.Equal(t, "jane.doe@example.com", listedInactive.Email)
 	assert.Equal(t, "Jane Doe", listedInactive.FullName)
-	assert.False(t, listedInactive.IsAdmin)
+	assert.Equal(t, new(false), listedInactive.IsAdmin)
 	require.NotNil(t, listedInactive.Active)
 	assert.False(t, *listedInactive.Active)
 	// Failed login is ignored; successful older login wins.
