@@ -23,7 +23,9 @@ import EmailLayout, {
 export const MagicLink = () => {
   return (
     <EmailLayout subject="Govrly Magic Link">
-      <Text style={bodyText}>{"Please use this link to connect to {{.OrganizationName}}'s Compliance Page:"}</Text>
+      {/* OrganizationName is empty for console sign-in, where no organization is
+          chosen until after authentication. */}
+      <Text style={bodyText}>{"{{if .OrganizationName}}Please use this link to connect to {{.OrganizationName}}'s Compliance Page:{{else}}Please use this link to sign in to Govrly:{{end}}"}</Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={"{{.MagicLinkURL}}"}>

@@ -104,6 +104,7 @@ const (
 	subjectTrustCenterAccess                 = "Compliance Page Access Invitation - %s"
 	subjectTrustCenterDocumentAccessRejected = "Compliance Page Document Access Rejected - %s"
 	subjectMagicLink                         = "Connect to %s"
+	subjectMagicLinkSignIn                   = "Sign in to Govrly"
 	subjectMailingListSubscription           = "%s – Confirm Your Compliance Updates Subscription"
 	subjectMailingListUnsubscription         = "%s – You've been unsubscribed"
 	subjectMailingListUpdates                = "%s – %s"
@@ -391,6 +392,12 @@ func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string
 	}
 
 	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
+
+	// Console sign-in has no organization context, so fall back to a generic
+	// subject rather than rendering "Connect to ".
+	if organizationName == "" {
+		return subjectMagicLinkSignIn, textBody, htmlBody, err
+	}
 
 	return fmt.Sprintf(subjectMagicLink, organizationName), textBody, htmlBody, err
 }

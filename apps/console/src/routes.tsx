@@ -72,8 +72,28 @@ const routes = [
         Component: lazy(() => import("./pages/iam/auth/sign-in/SSOSignInPage")),
       },
       {
+        path: "magic-link-login",
+        Component: lazy(
+          () => import("./pages/iam/auth/sign-in/MagicLinkSignInPage"),
+        ),
+      },
+      {
         path: "verify-email",
         Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
+      },
+      {
+        path: "verify-magic-link",
+        Component: lazy(() => import("./pages/iam/auth/VerifyMagicLinkPage")),
+      },
+      {
+        path: "magic-link-expired",
+        Component: lazy(() => import("./pages/iam/auth/MagicLinkExpiredPage")),
+      },
+      {
+        path: "magic-link-already-used",
+        Component: lazy(
+          () => import("./pages/iam/auth/MagicLinkAlreadyUsedPage"),
+        ),
       },
       {
         path: "activate-account",

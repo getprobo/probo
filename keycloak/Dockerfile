@@ -10,9 +10,14 @@ FROM quay.io/keycloak/keycloak:26.6.1@sha256:26ae26445475f7fac5f90ee138b1bdb6432
 
 WORKDIR /opt/keycloak
 
+# --cache=local: single Render instance, so there is no cluster to join. The
+# default (ispn) makes JGroups retry peer discovery every 5s and log a WARN pair
+# each time, which buries everything else. `cache` is a build-time option, so it
+# has to be set here rather than as an env var on the service.
 RUN /opt/keycloak/bin/kc.sh build \
       --db=postgres \
-      --health-enabled=true
+      --health-enabled=true \
+      --cache=local
 
 # ---------------------------------------------------------------------------
 # Stage 2 — runtime

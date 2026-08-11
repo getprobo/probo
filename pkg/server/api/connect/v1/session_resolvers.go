@@ -12,6 +12,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
@@ -129,6 +130,89 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 	return &types.SignUpPayload{
 		Identity: types.NewIdentity(identity),
 	}, nil
+}
+
+// SendMagicLink is the resolver for the sendMagicLink field.
+func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMagicLinkInput) (*types.SendMagicLinkPayload, error) {
+	safeRedirect := saferedirect.New(saferedirect.StaticHosts(r.baseURL.Host()))
+
+	if input.Continue != nil {
+		if _, ok := safeRedirect.Validate(ctx, *input.Continue); !ok {
+			return nil, gqlutils.Invalidf(ctx, "invalid continue URL")
+		}
+	}
+
+	req := &iam.SendMagicLinkRequest{
+		Email:          input.Email,
+		OrganizationID: input.OrganizationID,
+		URLPath:        "auth/verify-magic-link",
+		Continue:       input.Continue,
+	}
+
+	if err := r.iam.AuthService.SendMagicLink(ctx, req); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot send magic link", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	// Always reports success so the response cannot be used to enumerate which
+	// email addresses have accounts.
+	return &types.SendMagicLinkPayload{Success: true}, nil
+}
+
+// VerifyMagicLink is the resolver for the verifyMagicLink field.
+func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.VerifyMagicLinkInput) (*types.VerifyMagicLinkPayload, error) {
+	session := authn.SessionFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
+
+	email, err := r.iam.AuthService.GetMagicLinkEmail(ctx, input.Token)
+	if err != nil {
+		return nil, r.magicLinkError(ctx, err, "cannot get magic link email")
+	}
+
+	// Already signed in as the link's owner: nothing to do, and leaving the
+	// token unconsumed means a stray click does not burn a still-valid link.
+	if session != nil && identity != nil && identity.EmailAddress == email {
+		return &types.VerifyMagicLinkPayload{}, nil
+	}
+
+	// A link belonging to someone else replaces the current session rather than
+	// silently leaving the browser authenticated as the previous identity.
+	if session != nil {
+		if err := r.iam.SessionService.CloseSession(ctx, session.ID); err != nil {
+			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	_, session, continueURL, err := r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
+	if err != nil {
+		return nil, r.magicLinkError(ctx, err, "cannot open session with magic link")
+	}
+
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
+	r.sessionCookie.Set(w, session)
+
+	return &types.VerifyMagicLinkPayload{Continue: continueURL}, nil
+}
+
+// magicLinkError maps token failures onto the GraphQL error codes the console
+// uses to route to the expired and already-used pages.
+func (r *mutationResolver) magicLinkError(ctx context.Context, err error, logMsg string) error {
+	if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
+		return gqlutils.TokenExpired(ctx, err)
+	}
+
+	if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
+		return gqlutils.TokenAlreadyUsed(ctx, err)
+	}
+
+	if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
+		return gqlutils.Invalid(ctx, err)
+	}
+
+	r.logger.ErrorCtx(ctx, logMsg, log.Error(err))
+
+	return gqlutils.Internal(ctx)
 }
 
 // SignOut is the resolver for the signOut field.

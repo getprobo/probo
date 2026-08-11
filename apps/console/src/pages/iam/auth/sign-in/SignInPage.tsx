@@ -66,6 +66,14 @@ export default function SignInPage(props: Props) {
         <Button
           variant="secondary"
           className="w-full h-10"
+          to={{ pathname: "/auth/magic-link-login", search: location.search }}
+        >
+          {__("Email me a sign-in link")}
+        </Button>
+
+        <Button
+          variant="secondary"
+          className="w-full h-10"
           to={{ pathname: "/auth/password-login", search: location.search }}
         >
           {__("Sign in with email")}

@@ -7,6 +7,10 @@ enum ReauthenticationReason {
 extend type Mutation {
   signIn(input: SignInInput!): SignInPayload @authentication(required: OPTIONAL)
   signUp(input: SignUpInput!): SignUpPayload @authentication(required: NONE)
+  sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
+    @authentication(required: OPTIONAL)
+  verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
+    @authentication(required: OPTIONAL)
   signOut: SignOutPayload @authentication(required: PRESENT) @sessionOnly
   activateAccount(
     input: ActivateAccountInput!
@@ -85,6 +89,17 @@ input SignUpInput {
   fullName: String!
 }
 
+input SendMagicLinkInput {
+  email: EmailAddr!
+  "Brands the email with an organization name when sign-in was org-scoped."
+  organizationId: ID
+  continue: String
+}
+
+input VerifyMagicLinkInput {
+  token: String!
+}
+
 input ActivateAccountInput {
   token: String!
 }
@@ -132,6 +147,14 @@ type SignUpPayload {
 
 type SignOutPayload {
   success: Boolean!
+}
+
+type SendMagicLinkPayload {
+  success: Boolean!
+}
+
+type VerifyMagicLinkPayload {
+  continue: String
 }
 
 type ActivateAccountPayload {

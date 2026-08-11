@@ -2,7 +2,7 @@ Govrly
 
 Hi {{.RecipientFullName}},
 
-Please use this link to connect to {{.OrganizationName}}'s Compliance Page:
+{{if .OrganizationName}}Please use this link to connect to {{.OrganizationName}}'s Compliance Page:{{else}}Please use this link to sign in to Govrly:{{end}}
 
 {{.MagicLinkURL}}
 

@@ -56,9 +56,11 @@ type (
 	}
 
 	SendMagicLinkRequest struct {
-		Email          mail.Addr
-		URLPath        string
-		OrganizationID gid.GID
+		Email   mail.Addr
+		URLPath string
+		// Console sign-in happens before an organization is chosen, so this is
+		// optional. When nil the email copy omits the organization entirely.
+		OrganizationID *gid.GID
 		Continue       *string
 		// If users tries to connect to compliance page, we must brand the emails accordingly
 		CompliancePageID *gid.GID
@@ -578,7 +580,6 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 
 			fullName := req.Email.Username()
 			identity := &coredata.Identity{}
-			organization := &coredata.Organization{}
 
 			if err := identity.LoadByEmail(ctx, tx, req.Email); err == nil {
 				if identity.FullName != "" {
@@ -590,8 +591,16 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				}
 			}
 
-			if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), req.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			organizationName := ""
+
+			if req.OrganizationID != nil {
+				organization := &coredata.Organization{}
+
+				if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), *req.OrganizationID); err != nil {
+					return fmt.Errorf("cannot load organization: %w", err)
+				}
+
+				organizationName = organization.Name
 			}
 
 			emailPresenterCfg := emails.DefaultPresenterConfig(s.baseURL)
@@ -612,7 +621,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				req.URLPath,
 				tokenString,
 				s.magicLinkTokenValidity,
-				organization.Name,
+				organizationName,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render magic link email: %w", err)
@@ -621,7 +630,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 			var emailOpts *coredata.EmailOptions
 			if req.CompliancePageID != nil {
 				emailOpts = &coredata.EmailOptions{
-					SenderName: new(organization.Name),
+					SenderName: new(organizationName),
 				}
 			}
 

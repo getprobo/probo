@@ -38,7 +38,7 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 	req := &iam.SendMagicLinkRequest{
 		Email:            input.Email,
 		CompliancePageID: &trustCenter.ID,
-		OrganizationID:   trustCenter.OrganizationID,
+		OrganizationID:   &trustCenter.OrganizationID,
 		URLPath:          "verify-magic-link",
 		Continue:         input.Continue,
 	}
