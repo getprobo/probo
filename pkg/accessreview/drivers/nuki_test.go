@@ -54,7 +54,7 @@ func TestNukiDriver(t *testing.T) {
 	assert.Equal(t, "Alice Martin", person.FullName)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, person.AccountType)
 	assert.Equal(t, []string{"Office front door", "Remote access", "Server room"}, person.Roles)
-	assert.False(t, person.IsAdmin)
+	assert.Equal(t, new(false), person.IsAdmin)
 	require.NotNil(t, person.Active)
 	assert.True(t, *person.Active)
 	assert.Equal(t, coredata.MFAStatusUnknown, person.MFAStatus)

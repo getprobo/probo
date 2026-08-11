@@ -350,7 +350,7 @@ func nukiAccountRecord(
 		Email:       email,
 		FullName:    nukiFullName(u, email, externalID),
 		Roles:       nukiRoles(auths, lockNames),
-		IsAdmin:     false,
+		IsAdmin:     new(false),
 		AccountType: nukiAccountType(u.Type),
 		Active:      nukiActiveFromAuths(auths, time.Now()),
 		MFAStatus:   coredata.MFAStatusUnknown,
@@ -385,7 +385,7 @@ func nukiServiceAccountRecord(
 	return AccountRecord{
 		FullName:    fullName,
 		Roles:       nukiRoles([]nukiSmartlockAuth{auth}, lockNames),
-		IsAdmin:     false,
+		IsAdmin:     new(false),
 		AccountType: coredata.AccessReviewEntryAccountTypeServiceAccount,
 		Active:      nukiAuthActive(auth, time.Now()),
 		MFAStatus:   coredata.MFAStatusUnknown,
