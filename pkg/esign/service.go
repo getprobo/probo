@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/validator"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -91,6 +92,22 @@ type (
 		ActorUA     string
 	}
 )
+
+func (req AcceptSignatureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.SignerFullName, "signer_full_name", validator.NotEmpty())
+
+	return v.Error()
+}
+
+func (req CreateAndAcceptSignatureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.SignerFullName, "signer_full_name", validator.NotEmpty())
+
+	return v.Error()
+}
 
 func NewService(
 	pgClient *pg.Client,
@@ -209,6 +226,10 @@ func (s *Service) CreateAndAcceptSignature(
 	conn pg.Tx,
 	req *CreateAndAcceptSignatureRequest,
 ) (*coredata.ElectronicSignature, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	sig, err := s.CreateSignature(
 		ctx,
 		conn,
@@ -318,6 +339,10 @@ func (s *Service) createStampedDocument(
 }
 
 func (s *Service) AcceptSignature(ctx context.Context, scope coredata.Scoper, req *AcceptSignatureRequest) (*coredata.ElectronicSignature, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	var (
 		now       = time.Now()
 		signature = coredata.ElectronicSignature{}
