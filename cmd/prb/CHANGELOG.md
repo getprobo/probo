@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.215.0] - 2026-08-11
+
+### Changed
+
+- `prb access-review entry list` prints the admin column as `yes`, `no`, or `unknown`, so an account the source does not report on is no longer indistinguishable from a confirmed non-admin
+
 ## [0.214.0] - 2026-08-10
 
 ### Changed
