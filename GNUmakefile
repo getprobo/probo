@@ -73,9 +73,13 @@ GO_VET=	$(GO_BASE) vet
 GO_TOOL=	$(GO_BASE) tool
 
 TEST_FLAGS?=	-race -cover -coverprofile=coverage.out
+E2E_TEST_FLAGS?=
 
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
+E2E_BINARY ?=
+E2E_COVERAGE_BINARY ?= $(CURDIR)/bin/probod-coverage
+E2E_CORE_COVER_PKGS ?= go.probo.inc/probo/pkg/coredata,go.probo.inc/probo/pkg/probo,go.probo.inc/probo/pkg/server/api/console/v1,go.probo.inc/probo/pkg/server/api/connect/v1,go.probo.inc/probo/pkg/server/api/complianceportal/v1,go.probo.inc/probo/pkg/server/api/mcp/v1,go.probo.inc/probo/pkg/accessreview,go.probo.inc/probo/pkg/agentrun,go.probo.inc/probo/pkg/complianceportal/management,go.probo.inc/probo/pkg/complianceportal/visitor,go.probo.inc/probo/pkg/cookiebanner,go.probo.inc/probo/pkg/riskmanagement,go.probo.inc/probo/pkg/thirdparty,go.probo.inc/probo/pkg/webhook
 
 DOCKER_REGISTRY=	artifact.probo.inc
 DOCKER_PROXY=		$(DOCKER_REGISTRY)/dockerhub
@@ -214,24 +218,42 @@ test-bench: TEST_FLAGS+=-bench=.
 test-bench: test ## Run benchmark tests
 
 .PHONY: test-e2e
-test-e2e: CGO_ENABLED=1
 test-e2e: $(PROBOD_BIN) ## Run console e2e tests
-	PROBO_E2E_BINARY=$(CURDIR)/$(PROBOD_BIN) \
-	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
-	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
+	$(MAKE) test-e2e-run E2E_BINARY=$(E2E_BINARY)
 
-bin/probod-coverage:
-	CGO_ENABLED=0 $(GO_BUILD) $(PROBOD_LDFLAGS) -cover -o $@ $(PROBOD_SRC)
+.PHONY: test-e2e-run
+test-e2e-run: CGO_ENABLED=1
+test-e2e-run:
+	PROBO_E2E_BINARY=$(or $(E2E_BINARY),$(CURDIR)/$(PROBOD_BIN)) \
+	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
+	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -count=1 ./e2e/internal/... ./e2e/console/...
+
+.PHONY: bin/probod-coverage
+bin/probod-coverage: CGO_ENABLED=0
+bin/probod-coverage: generate embed
+	$(GO_BUILD) $(PROBOD_LDFLAGS) -cover -covermode=atomic -o $@ $(PROBOD_SRC)
 
 .PHONY: test-e2e-coverage
 test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
+	$(MAKE) test-e2e-coverage-run E2E_BINARY=$(E2E_BINARY)
+
+.PHONY: test-e2e-coverage-run
+test-e2e-coverage-run: CGO_ENABLED=1
+test-e2e-coverage-run:
 	@$(RM) -rf $(E2E_COVER_DIR) && $(MKDIR) -p $(E2E_COVER_DIR)
-	PROBO_E2E_BINARY=$(CURDIR)/bin/probod-coverage \
+	PROBO_E2E_BINARY=$(or $(E2E_BINARY),$(E2E_COVERAGE_BINARY)) \
 	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
-	CGO_ENABLED=1 $(GO) test -count=1 -v ./e2e/console/...
+	GOTESTSUM_FORMAT=testname $(GO_BASE) tool gotestsum -- $(E2E_TEST_FLAGS) -p=1 -count=1 ./e2e/internal/... ./e2e/console/... ./e2e/mcp/...
 	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -o=coverage-e2e.out
+	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -pkg=$(E2E_CORE_COVER_PKGS) -o=coverage-e2e-core.out
+	$(GO) tool covdata percent -i=$(E2E_COVER_DIR) > coverage-e2e-packages.txt
+	$(GO) tool cover -func=coverage-e2e.out > coverage-e2e.txt
+	$(GO) tool cover -func=coverage-e2e-core.out > coverage-e2e-core.txt
 	$(GO) tool cover -html=coverage-e2e.out -o=coverage-e2e.html
+	$(GO) tool cover -html=coverage-e2e-core.out -o=coverage-e2e-core.html
+	$(CAT) coverage-e2e.txt
+	$(CAT) coverage-e2e-core.txt
 
 .PHONY: coverage-combined
 coverage-combined: coverage-report test-e2e-coverage ## Generate combined coverage report (unit + e2e)
@@ -242,8 +264,9 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 .PHONY: build
 build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap bin/proboctl $(PROBO_AGENT_BIN)
 
-CFG_DEV_OAUTH2_KEY = cfg/.dev-oauth2-signing-key.pem
-DEV_ENV            = .env
+CFG_DEV_OAUTH2_KEY       = cfg/.dev-oauth2-signing-key.pem
+CFG_DEV_ACME_ACCOUNT_KEY = cfg/.dev-acme-account-key.pem
+DEV_ENV                  = .env
 
 .PHONY: dev-config
 dev-config: cfg/dev.yaml ## Generate cfg/dev.yaml via probod-bootstrap (picks up edits to .env)
@@ -252,7 +275,13 @@ $(CFG_DEV_OAUTH2_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) genrsa -out $@ 2048
 
-cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
+# Stable ACME account key for local step-ca. Without this, each probod restart
+# registers a new account and orphaned in-flight orders return 401 unauthorized.
+$(CFG_DEV_ACME_ACCOUNT_KEY):
+	@$(MKDIR) $(@D)
+	$(OPENSSL) ecparam -name prime256v1 -genkey -noout -out $@
+
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_ACME_ACCOUNT_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
 	PROBOD_BASE_URL=http://localhost:8080; \
@@ -286,6 +315,8 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/step-ca/certs/r
 	PROBOD_CHROME_DP_ADDR=localhost:9222; \
 	PROBOD_ACME_DIRECTORY=https://localhost:9000/acme/acme/directory; \
 	PROBOD_ACME_EMAIL=admin@probo.com; \
+	PROBOD_ACME_KEY_TYPE=EC256; \
+	PROBOD_ACME_ACCOUNT_KEY="$$($(CAT) $(CFG_DEV_ACME_ACCOUNT_KEY))"; \
 	PROBOD_ACME_ROOT_CA="$$($(CAT) compose/step-ca/certs/root_ca.crt)"; \
 	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \
 	set +a; \
@@ -460,7 +491,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf apps/{console,compliance-portal}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
-	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
+	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.txt coverage-e2e.html coverage-e2e-core.out coverage-e2e-core.txt coverage-e2e-core.html coverage-e2e-packages.txt coverage-combined.out coverage-combined.html
 	$(RM) -rf coverage/
 	$(RM) -rf compose/keycloak/certs/cert.pem compose/keycloak/certs/private-key.pem compose/keycloak/probo-realm.json
 	$(RM) -f pkg/server/api/connect/v1/schema/schema.go pkg/server/api/connect/v1/types/types.go

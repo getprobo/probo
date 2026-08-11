@@ -4,6 +4,44 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.214.0] - 2026-08-10
+
+### Changed
+
+- Risk analysis scopes are now referred to as diagrams across the CLI
+
+## [0.213.0] - 2026-08-07
+
+### Changed
+
+- Compliance portal document, audit, and subprocessor selection is reversed: the console now lists the organization's own documents, audits, and subprocessors with checkboxes for inline portal membership, replacing the portal-only rows plus separate add dialogs
+- Risk assessments are now named risk analyses across the CLI and MCP API
+
+## [0.212.0] - 2026-08-06
+
+### Added
+
+- `--rights-requests-enabled` flag on `prb compliance-portal update`, to enable or disable the public Requests surface on the compliance portal
+
+## [0.211.0] - 2026-08-05
+
+### Added
+
+- `SUBDIVISION` column on `prb consent-record list` and the subdivision code on `prb consent-record view`, showing the ISO 3166-2 state or province detected for each consent record
+
+## [0.210.0] - 2026-08-05
+
+### Added
+
+- `prb businessfunction` commands: `create`, `update`, `delete`, `list`, `view`, and `publish`, for tracking DORA Critical ICT Functions
+
+## [0.209.0] - 2026-08-03
+
+### Added
+
+- `prb compliance-portal` commands: `create`, `update`, `delete`, `list`, and `view`, plus `audit`, `document`, and `third-party` `update`/`delete` subcommands, and portal-scoped `file list` / `reference create`/`list`
+- `--administrator-id` flag on `prb thirdparty create`/`update`, and administrators shown on `prb thirdparty view`
+
 ## [0.208.0] - 2026-07-31
 
 ### Added

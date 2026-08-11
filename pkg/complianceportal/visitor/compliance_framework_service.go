@@ -55,6 +55,42 @@ func (s *Service) GetComplianceFramework(
 	return cf, nil
 }
 
+func (s *Service) GetComplianceFrameworkForCompliancePortalID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	complianceFrameworkID gid.GID,
+) (*coredata.ComplianceFramework, error) {
+	complianceFramework := &coredata.ComplianceFramework{}
+	compliancePortal := &coredata.CompliancePortal{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			if err := complianceFramework.LoadByCompliancePortalIDAndID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				complianceFrameworkID,
+			); err != nil {
+				return fmt.Errorf("cannot load compliance framework: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return complianceFramework, nil
+}
+
 func (s *Service) ListComplianceFrameworksByPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,

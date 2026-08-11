@@ -31,8 +31,9 @@ import (
 
 func hubspotRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderHubSpot,
-		DisplayName: "HubSpot",
+		Provider:         coredata.ConnectorProviderHubSpot,
+		DisplayName:      "HubSpot",
+		DocumentationURL: accessReviewDocsURL("hubspot"),
 		Endpoints: Endpoints{
 			Auth:  "https://app.hubspot.com/oauth/authorize",
 			Token: "https://api.hubapi.com/oauth/v1/token",
@@ -42,7 +43,11 @@ func hubspotRegistration() *Registration {
 			// the host.
 			APIBase: "https://api.hubapi.com",
 		},
-		OAuth2Scopes:   []string{"settings.users.read"},
+		OAuth2Scopes: []string{
+			"settings.users.read",
+			"crm.objects.owners.read",
+			"account-info.security.read",
+		},
 		SupportsAPIKey: true,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewHubSpotDriver(c, ep.APIBase), nil

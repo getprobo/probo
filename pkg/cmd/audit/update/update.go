@@ -61,13 +61,12 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName                       string
-		flagState                      string
-		flagValidFrom                  string
-		flagValidUntil                 string
-		flagAuditStartDate             string
-		flagAuditEndDate               string
-		flagCompliancePortalVisibility string
+		flagName           string
+		flagState          string
+		flagValidFrom      string
+		flagValidUntil     string
+		flagAuditStartDate string
+		flagAuditEndDate   string
 	)
 
 	cmd := &cobra.Command{
@@ -121,10 +120,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["auditEndDate"] = flagAuditEndDate
 			}
 
-			if cmd.Flags().Changed("compliance-portal-visibility") {
-				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
-			}
-
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -160,7 +155,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagValidUntil, "valid-until", "", "Valid until date (e.g. 2026-12-31)")
 	cmd.Flags().StringVar(&flagAuditStartDate, "audit-start-date", "", "Audit start date (e.g. 2026-03-01)")
 	cmd.Flags().StringVar(&flagAuditEndDate, "audit-end-date", "", "Audit end date (e.g. 2026-03-15)")
-	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd
 }

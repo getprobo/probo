@@ -71,7 +71,7 @@ type (
 // SupportedIdentityLocales are short URL locale tags accepted for
 // Identity.locale. Keep in sync with the compliance-portal URL_LOCALES list.
 var SupportedIdentityLocales = []string{
-	"en", "fr", "de", "es", "id", "it", "ja", "ko", "pl", "pt", "tr", "uk", "zh",
+	"en", "fr", "de", "es", "id", "it", "ja", "ko", "nl", "pl", "pt", "tr", "uk", "zh",
 }
 
 const (

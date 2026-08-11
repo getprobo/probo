@@ -1,7 +1,7 @@
 {
   "topBar": {
     "tagline": "Portal Zgodności",
-    "getAccess": "Uzyskaj dostęp",
+    "getAccess": "Poproś o dostęp",
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
     "menuTitle": "Menu",
@@ -21,7 +21,6 @@
     "switchToLightMode": "Przełącz na tryb jasny"
   },
   "common": {
-    "cancel": "Anuluj",
     "error": "Coś poszło nie tak",
     "previousPage": "Poprzednia strona",
     "nextPage": "Następna strona",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Powrót do Portalu Zgodności",
-      "tryAgain": "Spróbuj ponownie"
+      "tryAgain": "Spróbuj ponownie",
+      "contactSupport": "Skontaktuj się z pomocą",
+      "requestAccess": "Poproś o dostęp"
     },
     "inline": {
       "message": "Nie można wczytać treści",

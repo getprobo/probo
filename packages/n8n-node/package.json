@@ -1,6 +1,6 @@
 {
   "name": "@probo/n8n-nodes-probo",
-  "version": "0.210.0",
+  "version": "0.218.0",
   "main": "index.js",
   "scripts": {
     "build": "n8n-node build",
@@ -56,7 +56,7 @@
     "n8n-workflow": "*"
   },
   "devDependencies": {
-    "@n8n/node-cli": "0.37.2",
+    "@n8n/node-cli": "0.42.0",
     "eslint": "9.29.0"
   }
 }

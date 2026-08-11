@@ -110,7 +110,15 @@ export const THEMED_STYLES = `
     flex-direction: column;
   }
 
-  probo-preference-panel probo-category-list {
+  probo-privacy-choices .card {
+    max-width: 540px;
+    max-height: 75vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  probo-preference-panel probo-category-list,
+  probo-privacy-choices .privacy-choices-body {
     overflow-y: auto;
     overscroll-behavior: contain;
     flex: 1;
@@ -208,13 +216,41 @@ export const THEMED_STYLES = `
     flex-direction: column;
   }
 
-  probo-preference-panel .footer {
+  probo-preference-panel .footer,
+  probo-privacy-choices .footer {
     border-top: 1px solid var(--_border);
     padding: 10px 24px;
   }
 
   probo-preference-panel .buttons {
     padding: 10px 0;
+  }
+
+  .privacy-choices-body {
+    padding: 8px 24px 16px;
+  }
+
+  .privacy-choices-section {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--_border);
+  }
+
+  .privacy-choices-section:last-child {
+    border-bottom: none;
+  }
+
+  .privacy-choices-section-title {
+    font-size: var(--_font-size);
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  .privacy-choices-section .description {
+    margin: 0 0 16px;
+  }
+
+  .privacy-choices-section-spi .description {
+    margin-bottom: 0;
   }
 
   probo-category {

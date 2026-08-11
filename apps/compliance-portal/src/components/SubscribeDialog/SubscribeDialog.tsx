@@ -38,7 +38,7 @@ interface SubscribeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Relay store id of the current trust center (for the subscribe updater).
-  trustCenterId: string;
+  compliancePortalId: string;
   // Verified viewer email, shown read-only (server attributes the subscription).
   viewerEmail: string;
   organizationName: string;
@@ -50,7 +50,7 @@ interface SubscribeDialogProps {
 export function SubscribeDialog({
   open,
   onOpenChange,
-  trustCenterId,
+  compliancePortalId,
   viewerEmail,
   organizationName,
 }: SubscribeDialogProps) {
@@ -71,7 +71,7 @@ export function SubscribeDialog({
           <SubscribeForm
             onClose={() => onOpenChange(false)}
             onSubmittingChange={setIsSubmitting}
-            trustCenterId={trustCenterId}
+            compliancePortalId={compliancePortalId}
             viewerEmail={viewerEmail}
             organizationName={organizationName}
           />
@@ -84,7 +84,7 @@ export function SubscribeDialog({
 interface SubscribeFormProps {
   onClose: () => void;
   onSubmittingChange: (submitting: boolean) => void;
-  trustCenterId: string;
+  compliancePortalId: string;
   viewerEmail: string;
   organizationName: string;
 }
@@ -92,12 +92,12 @@ interface SubscribeFormProps {
 function SubscribeForm({
   onClose,
   onSubmittingChange,
-  trustCenterId,
+  compliancePortalId,
   viewerEmail,
   organizationName,
 }: SubscribeFormProps) {
   const { t } = useTranslation("updates");
-  const [subscribe, isSubscribing] = useSubscribeToMailingList(trustCenterId);
+  const [subscribe, isSubscribing] = useSubscribeToMailingList(compliancePortalId);
   const aliveRef = useRef(true);
 
   useEffect(() => {

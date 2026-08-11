@@ -39,7 +39,7 @@ type (
 	CompliancePortalReference struct {
 		ID                 gid.GID   `db:"id"`
 		OrganizationID     gid.GID   `db:"organization_id"`
-		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		CompliancePortalID gid.GID   `db:"compliance_portal_id"`
 		Name               string    `db:"name"`
 		Description        *string   `db:"description"`
 		WebsiteURL         string    `db:"website_url"`
@@ -72,7 +72,7 @@ func (t *CompliancePortalReference) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_references WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_references WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -116,7 +116,7 @@ func (t *CompliancePortalReference) LoadByID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     description,
     website_url,
@@ -125,24 +125,78 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
-    AND id = @trust_center_reference_id
+    AND id = @compliance_portal_reference_id
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_reference_id": compliancePortalReferenceID}
+	args := pgx.StrictNamedArgs{"compliance_portal_reference_id": compliancePortalReferenceID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_references: %w", err)
+		return fmt.Errorf("cannot query cp_references: %w", err)
 	}
 
 	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalReference])
 	if err != nil {
+		return fmt.Errorf("cannot collect compliance portal reference: %w", err)
+	}
+
+	*t = reference
+
+	return nil
+}
+
+func (t *CompliancePortalReference) LoadByCompliancePortalIDAndID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	compliancePortalReferenceID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    compliance_portal_id,
+    name,
+    description,
+    website_url,
+    logo_file_id,
+    rank,
+    created_at,
+    updated_at
+FROM
+    cp_references
+WHERE
+    %s
+    AND compliance_portal_id = @compliance_portal_id
+    AND id = @compliance_portal_reference_id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_id":           compliancePortalID,
+		"compliance_portal_reference_id": compliancePortalReferenceID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query cp_references: %w", err)
+	}
+
+	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalReference])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect compliance portal reference: %w", err)
 	}
 
@@ -158,11 +212,11 @@ func (t *CompliancePortalReference) Insert(
 ) error {
 	q := `
 INSERT INTO
-    trust_center_references (
+    cp_references (
         tenant_id,
         id,
         organization_id,
-        trust_center_id,
+        compliance_portal_id,
         name,
         description,
         website_url,
@@ -175,12 +229,12 @@ VALUES (
     @tenant_id,
     @id,
     @organization_id,
-    @trust_center_id,
+    @compliance_portal_id,
     @name,
     @description,
     @website_url,
     @logo_file_id,
-    (SELECT COALESCE(MAX(rank), 0) + 1 FROM trust_center_references WHERE trust_center_id = @trust_center_id),
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM cp_references WHERE compliance_portal_id = @compliance_portal_id),
     @created_at,
     @updated_at
 )
@@ -188,22 +242,22 @@ RETURNING rank;
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"id":              t.ID,
-		"organization_id": t.OrganizationID,
-		"trust_center_id": t.CompliancePortalID,
-		"name":            t.Name,
-		"description":     t.Description,
-		"website_url":     t.WebsiteURL,
-		"logo_file_id":    t.LogoFileID,
-		"created_at":      t.CreatedAt,
-		"updated_at":      t.UpdatedAt,
+		"tenant_id":            scope.GetTenantID(),
+		"id":                   t.ID,
+		"organization_id":      t.OrganizationID,
+		"compliance_portal_id": t.CompliancePortalID,
+		"name":                 t.Name,
+		"description":          t.Description,
+		"website_url":          t.WebsiteURL,
+		"logo_file_id":         t.LogoFileID,
+		"created_at":           t.CreatedAt,
+		"updated_at":           t.UpdatedAt,
 	}
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_references_trust_center_id_rank_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "cp_references_compliance_portal_id_rank_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -220,7 +274,7 @@ func (t *CompliancePortalReference) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_references
+UPDATE cp_references
 SET
     name = @name,
     description = @description,
@@ -265,11 +319,11 @@ func (t *CompliancePortalReference) UpdateRank(
 WITH old AS (
   SELECT
 	rank AS old_rank
-  FROM trust_center_references
-  WHERE %s AND id = @id AND trust_center_id = @trust_center_id
+  FROM cp_references
+  WHERE %s AND id = @id AND compliance_portal_id = @compliance_portal_id
 )
 
-UPDATE trust_center_references
+UPDATE cp_references
 SET
     rank = CASE
         WHEN id = @id THEN @new_rank
@@ -291,10 +345,10 @@ WHERE %s
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
-		"id":              t.ID,
-		"new_rank":        t.Rank,
-		"trust_center_id": t.CompliancePortalID,
-		"updated_at":      t.UpdatedAt,
+		"id":                   t.ID,
+		"new_rank":             t.Rank,
+		"compliance_portal_id": t.CompliancePortalID,
+		"updated_at":           t.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -313,7 +367,7 @@ func (t *CompliancePortalReference) Delete(
 ) error {
 	q := `
 DELETE FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
     AND id = @id
@@ -343,7 +397,7 @@ func (t *CompliancePortalReferences) LoadByCompliancePortalID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     description,
     website_url,
@@ -352,22 +406,22 @@ SELECT
     created_at,
     updated_at
 FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
     AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust_center_references: %w", err)
+		return fmt.Errorf("cannot query cp_references: %w", err)
 	}
 
 	references, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalReference])
@@ -390,15 +444,15 @@ func (t *CompliancePortalReferences) CountByCompliancePortalID(
 SELECT
     COUNT(*)
 FROM
-    trust_center_references
+    cp_references
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int

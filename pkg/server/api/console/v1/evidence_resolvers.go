@@ -49,8 +49,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 // Task is the resolver for the task field.
 func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*types.Task, error) {
 	if obj.Task == nil {
-		r.logger.ErrorCtx(ctx, "evidence is not associated with a task")
-		return nil, gqlutils.Internal(ctx)
+		return nil, nil
 	}
 
 	if _, err := r.authorize(ctx, obj.Task.ID, probo.ActionTaskGet); err != nil {

@@ -18,10 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { AssumptionRequiredError, UnAuthenticatedError } from "@probo/relay";
+import {
+  AssumptionRequiredError,
+  MembershipRequiredError,
+  UnAuthenticatedError,
+} from "@probo/relay";
 import { Navigate, useLocation, useRouteError } from "react-router";
 
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { NoOrganizationAccess } from "#/pages/iam/_components/NoOrganizationAccess";
 
 import { PageError } from "./PageError";
 
@@ -51,6 +56,10 @@ export function OrganizationErrorBoundary() {
         }}
       />
     );
+  }
+
+  if (error instanceof MembershipRequiredError) {
+    return <NoOrganizationAccess />;
   }
 
   return <PageError error={error instanceof Error ? error : new Error("unknown error")} />;

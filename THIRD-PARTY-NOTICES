@@ -22,18 +22,6 @@ limitations under the License.
 
 ================================================================================
 
-country-ip-blocks
-https://github.com/ipverse/country-ip-blocks
-
-Country-level IPv4 and IPv6 prefix lists sourced from the five regional
-internet registries (RIR). Data files are vendored under
-pkg/geoloc/data/country-ip-blocks/ and used for IP geolocation.
-
-Released under CC0 1.0 Universal (public domain).
-https://creativecommons.org/publicdomain/zero/1.0/
-
-================================================================================
-
 disposable-email-domains
 https://github.com/disposable-email-domains/disposable-email-domains
 

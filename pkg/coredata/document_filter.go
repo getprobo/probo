@@ -29,6 +29,7 @@ type (
 	DocumentFilter struct {
 		query                        *string
 		compliancePortalVisibilities []CompliancePortalVisibility
+		compliancePortalID           *gid.GID
 		published                    *bool
 		employeeIdentityID           *gid.GID
 		employeeFilterModes          []EmployeeFilterMode
@@ -50,7 +51,7 @@ func NewDocumentCompliancePortalFilter() *DocumentFilter {
 
 	return &DocumentFilter{
 		compliancePortalVisibilities: []CompliancePortalVisibility{
-			CompliancePortalVisibilityPrivate,
+			CompliancePortalVisibilityRestricted,
 			CompliancePortalVisibilityPublic,
 		},
 		published: &published,
@@ -61,6 +62,13 @@ func NewDocumentCompliancePortalFilter() *DocumentFilter {
 func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
 	f.published = published
 	return f
+}
+
+func (f *DocumentFilter) WithCompliancePortalID(compliancePortalID gid.GID) *DocumentFilter {
+	clone := *f
+	clone.compliancePortalID = &compliancePortalID
+
+	return &clone
 }
 
 func (f *DocumentFilter) WithCompliancePortalVisibilities(visibilities ...CompliancePortalVisibility) *DocumentFilter {
@@ -141,16 +149,22 @@ func (f *DocumentFilter) SQLArguments() pgx.NamedArgs {
 		employeeFilterModes = append(employeeFilterModes, string(m))
 	}
 
+	var compliancePortalID any
+	if f.compliancePortalID != nil {
+		compliancePortalID = f.compliancePortalID.String()
+	}
+
 	return pgx.NamedArgs{
-		"query":                     f.query,
-		"trust_center_visibilities": visibilities,
-		"published":                 f.published,
-		"employee_identity_id":      f.employeeIdentityID,
-		"employee_filter_modes":     employeeFilterModes,
-		"document_types":            documentTypes,
-		"classifications":           classifications,
-		"write_modes":               writeModes,
-		"document_status":           status,
+		"query":                          f.query,
+		"compliance_portal_id":           compliancePortalID,
+		"compliance_portal_visibilities": visibilities,
+		"published":                      f.published,
+		"employee_identity_id":           f.employeeIdentityID,
+		"employee_filter_modes":          employeeFilterModes,
+		"document_types":                 documentTypes,
+		"classifications":                classifications,
+		"write_modes":                    writeModes,
+		"document_status":                status,
 	}
 }
 
@@ -173,8 +187,19 @@ func (f *DocumentFilter) SQLFragment() string {
 	END
 	AND
 	CASE
-		WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
-			trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])
+		WHEN @compliance_portal_id::text IS NOT NULL
+			AND @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
+			EXISTS (
+				SELECT 1
+				FROM cp_documents
+				WHERE cp_documents.document_id = documents.id
+					AND cp_documents.compliance_portal_id = @compliance_portal_id
+					AND cp_documents.visibility = ANY(
+						@compliance_portal_visibilities::compliance_portal_visibility[]
+					)
+			)
+		WHEN @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
+			FALSE
 		ELSE TRUE
 	END
 	AND

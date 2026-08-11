@@ -27,6 +27,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: "it", label: "Italiano" },
   { code: "ja", label: "日本語" },
   { code: "ko", label: "한국어" },
+  { code: "nl", label: "Nederlands" },
   { code: "pl", label: "Polski" },
   { code: "pt", label: "Português" },
   { code: "tr", label: "Türkçe" },

@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Tous",
     "public": "Public",
-    "private": "Privé"
+    "restricted": "Restreints"
   },
   "sections": {
     "reports": "Rapports de conformité"
@@ -22,7 +22,7 @@
   },
   "actions": {
     "view": "Consulter",
-    "getAccess": "Obtenir l'accès",
+    "getAccess": "Demander l'accès",
     "requested": "Accès demandé"
   },
   "selection": {
@@ -47,7 +47,8 @@
     "downloadToView": "Ce type de fichier ne peut pas être prévisualisé ici. Téléchargez-le pour le consulter.",
     "locked": {
       "title": "Accès requis",
-      "description": "Vous n'avez pas encore accès à ce document."
+      "description": "Vous n'avez pas encore accès à ce document.",
+      "signNda": "Lire et signer le NDA"
     }
   }
 }

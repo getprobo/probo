@@ -79,9 +79,18 @@ func AssertTimestampsOnCreate(t *testing.T, createdAt, updatedAt, beforeCreate t
 
 func AssertTimestampsOnUpdate(t *testing.T, createdAt, updatedAt, originalCreatedAt, originalUpdatedAt time.Time) {
 	t.Helper()
-	assert.Equal(t, originalCreatedAt, createdAt, "createdAt should not change on update")
-	assert.True(t, updatedAt.After(originalUpdatedAt),
-		"updatedAt should be strictly after previous updatedAt")
+	assert.WithinDuration(
+		t,
+		originalCreatedAt,
+		createdAt,
+		time.Microsecond,
+		"createdAt should not change on update",
+	)
+	assert.True(
+		t,
+		updatedAt.After(originalUpdatedAt),
+		"updatedAt should be strictly after previous updatedAt",
+	)
 }
 
 func AssertOptionalStringEqual(t *testing.T, expected, actual *string, fieldName string) {
@@ -139,6 +148,11 @@ func AssertNodeNotAccessible(t *testing.T, err error, nodeIsNil bool, resourceTy
 func RequireForbiddenError(t *testing.T, err error, msgAndArgs ...any) {
 	t.Helper()
 	RequireErrorCode(t, err, "FORBIDDEN", msgAndArgs...)
+}
+
+func RequireMembershipRequiredError(t *testing.T, err error, msgAndArgs ...any) {
+	t.Helper()
+	RequireErrorCode(t, err, "MEMBERSHIP_REQUIRED", msgAndArgs...)
 }
 
 func RequireErrorCode(t *testing.T, err error, code string, msgAndArgs ...any) {

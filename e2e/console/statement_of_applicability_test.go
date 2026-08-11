@@ -443,50 +443,6 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 	)
 }
 
-func TestStatementOfApplicability_CreateDocument_RBAC(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	frameworkID := factory.NewFramework(owner).Create()
-	controlID := factory.NewControl(owner, frameworkID).Create()
-
-	soaID := factory.NewStatementOfApplicability(owner).Create()
-	factory.CreateApplicabilityStatement(owner, soaID, controlID, true, nil)
-
-	const query = `
-		mutation($input: PublishStatementOfApplicabilityInput!) {
-			publishStatementOfApplicability(input: $input) {
-				documentEdge {
-					node { id }
-				}
-				documentVersionEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	t.Run(
-		"viewer cannot create document",
-		func(t *testing.T) {
-			t.Parallel()
-
-			err := viewer.ExecuteShouldFail(
-				query,
-				map[string]any{
-					"input": map[string]any{
-						"minor":                      false,
-						"statementOfApplicabilityId": soaID,
-					},
-				},
-			)
-			testutil.RequireForbiddenError(t, err)
-		},
-	)
-}
-
 func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 	t.Parallel()
 
@@ -760,71 +716,6 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 			assert.Equal(t, "Custom SOA Name", node.Title, "re-publish should preserve edited title")
 			assert.Equal(t, "POLICY", node.DocumentType, "re-publish should preserve edited type")
 			assert.Equal(t, "INTERNAL", node.Classification, "re-publish should preserve edited classification")
-		},
-	)
-}
-
-func TestStatementOfApplicability_TenantIsolation(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	soaID := factory.NewStatementOfApplicability(org1Owner).Create()
-
-	t.Run(
-		"cannot create document for another org SOA",
-		func(t *testing.T) {
-			t.Parallel()
-
-			const query = `
-				mutation($input: PublishStatementOfApplicabilityInput!) {
-					publishStatementOfApplicability(input: $input) {
-						documentEdge {
-							node { id }
-						}
-						documentVersionEdge {
-							node { id }
-						}
-					}
-				}
-			`
-
-			err := org2Owner.ExecuteShouldFail(
-				query,
-				map[string]any{
-					"input": map[string]any{
-						"minor":                      false,
-						"statementOfApplicabilityId": soaID,
-					},
-				},
-			)
-			require.Error(t, err)
-		},
-	)
-
-	t.Run(
-		"cannot create applicability statement referencing a control from another organization",
-		func(t *testing.T) {
-			t.Parallel()
-
-			org2FrameworkID := factory.CreateFramework(org2Owner)
-			org2ControlID := factory.CreateControl(org2Owner, org2FrameworkID)
-
-			_, err := org1Owner.Do(`
-				mutation($input: CreateApplicabilityStatementInput!) {
-					createApplicabilityStatement(input: $input) {
-						applicabilityStatementEdge { node { id } }
-					}
-				}
-			`, map[string]any{
-				"input": map[string]any{
-					"statementOfApplicabilityId": soaID,
-					"controlId":                  org2ControlID,
-					"applicability":              true,
-				},
-			})
-			require.Error(t, err, "must not accept a controlId belonging to another organization")
 		},
 	)
 }

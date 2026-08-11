@@ -4,9 +4,21 @@ enum CompliancePortalVisibility
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityNone"
         )
-    PRIVATE
+    RESTRICTED
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityPrivate"
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityRestricted"
+        )
+    PUBLIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityPublic"
+        )
+}
+
+enum CompliancePortalLinkedVisibility
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibility") {
+    RESTRICTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityRestricted"
         )
     PUBLIC
         @goEnum(
@@ -330,13 +342,29 @@ input ComplianceFrameworkOrder
     field: ComplianceFrameworkOrderField!
 }
 
-type CompliancePortal implements Node
+enum CompliancePortalOrderField
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortal"
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalOrderField"
     ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalOrderFieldCreatedAt"
+        )
+}
+
+input CompliancePortalOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CompliancePortalOrderField!
+}
+
+type CompliancePortal implements Node {
     id: ID!
     active: Boolean!
     searchEngineIndexing: SearchEngineIndexing!
+    rightsRequestsEnabled: Boolean!
     logo: File @goField(forceResolver: true)
     darkLogo: File @goField(forceResolver: true)
     nda: File @goField(forceResolver: true)
@@ -345,6 +373,7 @@ type CompliancePortal implements Node
     email: String
     headquarterAddress: String
     entityName: String!
+    slug: String!
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
@@ -389,6 +418,14 @@ type CompliancePortal implements Node
         orderBy: ComplianceCustomLinkOrder
     ): ComplianceCustomLinkConnection! @goField(forceResolver: true)
 
+    compliancePortalFiles(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CompliancePortalFileOrder
+    ): CompliancePortalFileConnection! @goField(forceResolver: true)
+
     mailingList: MailingList @goField(forceResolver: true)
 
     defaultDomain: CustomDomain @goField(forceResolver: true)
@@ -400,9 +437,30 @@ type CompliancePortal implements Node
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type CompliancePortalConnection {
+type CompliancePortalConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
     edges: [CompliancePortalEdge!]!
     pageInfo: PageInfo!
+}
+
+type CompliancePortalDocument implements Node {
+    id: ID!
+    document: Document! @goField(forceResolver: true)
+    visibility: CompliancePortalLinkedVisibility!
+}
+
+type CompliancePortalAudit implements Node {
+    id: ID!
+    audit: Audit! @goField(forceResolver: true)
+    visibility: CompliancePortalLinkedVisibility!
+}
+
+type CompliancePortalThirdParty implements Node {
+    id: ID!
+    thirdParty: ThirdParty! @goField(forceResolver: true)
 }
 
 type CompliancePortalEdge {
@@ -433,10 +491,7 @@ type CompliancePortalAccess implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type CompliancePortalDocumentAccess
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentAccess"
-    ) {
+type CompliancePortalDocumentAccess {
     id: ID!
     status: CompliancePortalDocumentAccessStatus!
     document: Document @goField(forceResolver: true)
@@ -556,10 +611,7 @@ type CompliancePortalCommitmentEdge {
     node: CompliancePortalCommitment!
 }
 
-type ComplianceFramework implements Node
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ComplianceFramework"
-    ) {
+type ComplianceFramework implements Node {
     id: ID!
     framework: Framework! @goField(forceResolver: true)
     rank: Int!
@@ -662,6 +714,30 @@ type DNSRecordInstruction {
 }
 
 extend type Mutation {
+    createCompliancePortal(
+        input: CreateCompliancePortalInput!
+    ): CreateCompliancePortalPayload!
+    deleteCompliancePortal(
+        input: DeleteCompliancePortalInput!
+    ): DeleteCompliancePortalPayload!
+    updateCompliancePortalDocumentVisibility(
+        input: UpdateCompliancePortalDocumentVisibilityInput!
+    ): UpdateCompliancePortalDocumentVisibilityPayload!
+    deleteCompliancePortalDocument(
+        input: DeleteCompliancePortalDocumentInput!
+    ): DeleteCompliancePortalDocumentPayload!
+    updateCompliancePortalAuditVisibility(
+        input: UpdateCompliancePortalAuditVisibilityInput!
+    ): UpdateCompliancePortalAuditVisibilityPayload!
+    deleteCompliancePortalAudit(
+        input: DeleteCompliancePortalAuditInput!
+    ): DeleteCompliancePortalAuditPayload!
+    updateCompliancePortalThirdPartyPublished(
+        input: UpdateCompliancePortalThirdPartyPublishedInput!
+    ): UpdateCompliancePortalThirdPartyPublishedPayload!
+    deleteCompliancePortalThirdParty(
+        input: DeleteCompliancePortalThirdPartyInput!
+    ): DeleteCompliancePortalThirdPartyPayload!
     updateCompliancePortal(input: UpdateCompliancePortalInput!): UpdateCompliancePortalPayload!
     uploadCompliancePortalNDA(
         input: UploadCompliancePortalNDAInput!
@@ -743,10 +819,20 @@ extend type Mutation {
     ): DeleteCustomDomainPayload!
 }
 
+input CreateCompliancePortalInput {
+    organizationId: ID!
+    entityName: String!
+}
+
+input DeleteCompliancePortalInput {
+    compliancePortalId: ID!
+}
+
 input UpdateCompliancePortalInput {
     compliancePortalId: ID!
     active: Boolean
     searchEngineIndexing: SearchEngineIndexing
+    rightsRequestsEnabled: Boolean
     entityName: String
     description: String @goField(omittable: true)
     websiteUrl: String @goField(omittable: true)
@@ -879,11 +965,71 @@ input DeleteComplianceCustomLinkInput {
 }
 
 input CreateCompliancePortalFileInput {
-    organizationId: ID!
+    compliancePortalId: ID!
     name: String!
     category: String!
     file: Upload!
     compliancePortalVisibility: CompliancePortalVisibility!
+}
+
+input UpdateCompliancePortalDocumentVisibilityInput {
+    compliancePortalId: ID!
+    documentId: ID!
+    compliancePortalVisibility: CompliancePortalLinkedVisibility!
+}
+
+input DeleteCompliancePortalDocumentInput {
+    id: ID!
+}
+
+input UpdateCompliancePortalAuditVisibilityInput {
+    compliancePortalId: ID!
+    auditId: ID!
+    compliancePortalVisibility: CompliancePortalLinkedVisibility!
+}
+
+input DeleteCompliancePortalAuditInput {
+    id: ID!
+}
+
+input UpdateCompliancePortalThirdPartyPublishedInput {
+    compliancePortalId: ID!
+    thirdPartyId: ID!
+    published: Boolean!
+}
+
+input DeleteCompliancePortalThirdPartyInput {
+    id: ID!
+}
+
+type UpdateCompliancePortalDocumentVisibilityPayload {
+    catalogDocument: CompliancePortalDocument!
+    document: Document!
+}
+
+type DeleteCompliancePortalDocumentPayload {
+    deletedCompliancePortalDocumentId: ID!
+    document: Document!
+}
+
+type UpdateCompliancePortalAuditVisibilityPayload {
+    catalogAudit: CompliancePortalAudit!
+    audit: Audit!
+}
+
+type DeleteCompliancePortalAuditPayload {
+    deletedCompliancePortalAuditId: ID!
+    audit: Audit!
+}
+
+type UpdateCompliancePortalThirdPartyPublishedPayload {
+    catalogThirdParty: CompliancePortalThirdParty!
+    thirdParty: ThirdParty!
+}
+
+type DeleteCompliancePortalThirdPartyPayload {
+    deletedCompliancePortalThirdPartyId: ID!
+    thirdParty: ThirdParty!
 }
 
 input UpdateCompliancePortalFileInput {
@@ -908,6 +1054,14 @@ input CreateCustomDomainInput {
 
 input DeleteCustomDomainInput {
     customDomainId: ID!
+}
+
+type CreateCompliancePortalPayload {
+    compliancePortalEdge: CompliancePortalEdge!
+}
+
+type DeleteCompliancePortalPayload {
+    deletedCompliancePortalId: ID!
 }
 
 type UpdateCompliancePortalPayload {

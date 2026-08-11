@@ -39,15 +39,15 @@ func TestMCP_User_CRUD(t *testing.T) {
 	var createResult struct {
 		User struct {
 			ID       string `json:"id"`
-			FullName string `json:"fullName"`
+			FullName string `json:"full_name"`
 		} `json:"user"`
 	}
 	mc.CallToolInto("createUser", map[string]any{
-		"organizationId": orgID,
-		"fullName":       "Test User",
-		"emailAddress":   factory.SafeEmail(),
-		"role":           "EMPLOYEE",
-		"kind":           "EMPLOYEE",
+		"organization_id": orgID,
+		"full_name":       "Test User",
+		"email_address":   factory.SafeEmail(),
+		"role":            "EMPLOYEE",
+		"kind":            "EMPLOYEE",
 	}, &createResult)
 	require.NotEmpty(t, createResult.User.ID)
 
@@ -69,7 +69,7 @@ func TestMCP_User_CRUD(t *testing.T) {
 		} `json:"users"`
 	}
 	mc.CallToolInto("listUsers", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Users)
 }

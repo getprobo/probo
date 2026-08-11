@@ -175,5 +175,8 @@ func TestOAuth2AccessToken_CreateListUseRevoke(t *testing.T) {
 		map[string]any{"id": organizationID},
 	)
 	require.Error(t, err)
-	require.Nil(t, deniedResp)
+	require.NotNil(t, deniedResp)
+	require.NotEmpty(t, deniedResp.Errors)
+	require.Equal(t, "UNAUTHENTICATED", deniedResp.Errors[0].Code())
+	assert.Empty(t, deniedResp.DataString())
 }

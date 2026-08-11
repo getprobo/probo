@@ -233,6 +233,7 @@ input DocumentFilter {
     documentTypes: [DocumentType!]
     classifications: [DocumentClassification!]
     status: [DocumentStatus!]
+    published: Boolean
 }
 
 input DocumentVersionFilter {
@@ -268,9 +269,11 @@ type Document implements Node {
     id: ID!
     currentPublishedMajor: Int
     currentPublishedMinor: Int
-    compliancePortalVisibility: CompliancePortalVisibility!
     alias: String @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
+    compliancePortalDocument(
+        compliancePortalId: ID!
+    ): CompliancePortalDocument @goField(forceResolver: true)
 
     versions(
         first: Int
@@ -592,7 +595,6 @@ input CreateDocumentInput {
     content: String
     documentType: DocumentType!
     classification: DocumentClassification!
-    compliancePortalVisibility: CompliancePortalVisibility
     defaultApproverIds: [ID!]
 }
 
@@ -602,7 +604,6 @@ input UpdateDocumentInput {
     content: String
     classification: DocumentClassification
     documentType: DocumentType
-    compliancePortalVisibility: CompliancePortalVisibility
     defaultApproverIds: [ID!]
 }
 
@@ -625,7 +626,8 @@ input DeleteDocumentInput {
 input ExportDocumentVersionPDFInput {
     documentVersionId: ID!
     withWatermark: Boolean!
-    watermarkEmail: EmailAddr
+    watermarkText: String
+    watermarkEmail: EmailAddr @deprecated(reason: "Use watermarkText.")
     withSignatures: Boolean!
 }
 
@@ -665,7 +667,8 @@ input BulkUnarchiveDocumentsInput {
 input BulkExportDocumentsInput {
     documentIds: [ID!]!
     withWatermark: Boolean!
-    watermarkEmail: EmailAddr
+    watermarkText: String
+    watermarkEmail: EmailAddr @deprecated(reason: "Use watermarkText.")
     withSignatures: Boolean!
 }
 

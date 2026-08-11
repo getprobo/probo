@@ -38,15 +38,15 @@ func TestCompliancePortal_SubprocessorsFilter(t *testing.T) {
 
 	awsName := factory.SafeName("AWS")
 	awsID := factory.NewThirdParty(owner).WithName(awsName).WithCategory("CLOUD_PROVIDER").Create()
-	publishSubprocessor(t, owner, awsID, []string{"US"})
+	publishSubprocessor(t, owner, compliancePortalID, awsID, []string{"US"})
 
 	stripeName := factory.SafeName("Stripe")
 	stripeID := factory.NewThirdParty(owner).WithName(stripeName).WithCategory("FINANCE").Create()
-	publishSubprocessor(t, owner, stripeID, []string{"US", "IE"})
+	publishSubprocessor(t, owner, compliancePortalID, stripeID, []string{"US", "IE"})
 
 	slackName := factory.SafeName("Slack")
 	slackID := factory.NewThirdParty(owner).WithName(slackName).WithCategory("COLLABORATION").Create()
-	publishSubprocessor(t, owner, slackID, []string{"US"})
+	publishSubprocessor(t, owner, compliancePortalID, slackID, []string{"US"})
 
 	t.Run("no filter returns every published subprocessor", func(t *testing.T) {
 		t.Parallel()
@@ -162,22 +162,44 @@ func querySubprocessors(
 	return result
 }
 
-func publishSubprocessor(t *testing.T, owner *testutil.Client, thirdPartyID string, countries []string) {
+func publishSubprocessor(
+	t *testing.T,
+	owner *testutil.Client,
+	compliancePortalID string,
+	thirdPartyID string,
+	countries []string,
+) {
 	t.Helper()
 
-	const mutation = `
+	const countriesMutation = `
 		mutation($input: UpdateThirdPartyInput!) {
 			updateThirdParty(input: $input) {
-				thirdParty { id showOnCompliancePortal countries }
+				thirdParty { id countries }
 			}
 		}
 	`
 
-	err := owner.Execute(mutation, map[string]any{
+	err := owner.Execute(countriesMutation, map[string]any{
 		"input": map[string]any{
-			"id":                     thirdPartyID,
-			"showOnCompliancePortal": true,
-			"countries":              countries,
+			"id":        thirdPartyID,
+			"countries": countries,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	const publishMutation = `
+		mutation($input: UpdateCompliancePortalThirdPartyPublishedInput!) {
+			updateCompliancePortalThirdPartyPublished(input: $input) {
+				catalogThirdParty { thirdParty { id } }
+			}
+		}
+	`
+
+	err = owner.Execute(publishMutation, map[string]any{
+		"input": map[string]any{
+			"compliancePortalId": compliancePortalID,
+			"thirdPartyId":       thirdPartyID,
+			"published":          true,
 		},
 	}, nil)
 	require.NoError(t, err)

@@ -22,11 +22,13 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	AuditFilter struct {
 		compliancePortalVisibilities []CompliancePortalVisibility
+		compliancePortalID           *gid.GID
 	}
 )
 
@@ -37,10 +39,17 @@ func NewAuditFilter() *AuditFilter {
 func NewAuditCompliancePortalFilter() *AuditFilter {
 	return &AuditFilter{
 		compliancePortalVisibilities: []CompliancePortalVisibility{
-			CompliancePortalVisibilityPrivate,
+			CompliancePortalVisibilityRestricted,
 			CompliancePortalVisibilityPublic,
 		},
 	}
+}
+
+func (f *AuditFilter) WithCompliancePortalID(compliancePortalID gid.GID) *AuditFilter {
+	clone := *f
+	clone.compliancePortalID = &compliancePortalID
+
+	return &clone
 }
 
 func (f *AuditFilter) WithCompliancePortalVisibilities(visibilities ...CompliancePortalVisibility) *AuditFilter {
@@ -49,24 +58,45 @@ func (f *AuditFilter) WithCompliancePortalVisibilities(visibilities ...Complianc
 }
 
 func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
-	args := pgx.NamedArgs{}
+	args := pgx.NamedArgs{
+		"compliance_portal_id":           nil,
+		"compliance_portal_visibilities": nil,
+	}
+
+	if f.compliancePortalID != nil {
+		args["compliance_portal_id"] = *f.compliancePortalID
+	}
 
 	if f.compliancePortalVisibilities != nil {
 		visibilities := make([]string, len(f.compliancePortalVisibilities))
-		for i, v := range f.compliancePortalVisibilities {
-			visibilities[i] = v.String()
+		for i, visibility := range f.compliancePortalVisibilities {
+			visibilities[i] = visibility.String()
 		}
 
-		args["trust_center_visibilities"] = visibilities
+		args["compliance_portal_visibilities"] = visibilities
 	}
 
 	return args
 }
 
 func (f *AuditFilter) SQLFragment() string {
-	if f.compliancePortalVisibilities != nil {
-		return "trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])"
-	}
-
-	return "TRUE"
+	return `
+(
+	CASE
+		WHEN @compliance_portal_id::text IS NOT NULL
+			AND @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
+			EXISTS (
+				SELECT 1
+				FROM cp_audits
+				WHERE cp_audits.audit_id = audits.id
+					AND cp_audits.compliance_portal_id = @compliance_portal_id
+					AND cp_audits.visibility = ANY(
+						@compliance_portal_visibilities::compliance_portal_visibility[]
+					)
+			)
+		WHEN @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
+			FALSE
+		ELSE TRUE
+	END
+)`
 }

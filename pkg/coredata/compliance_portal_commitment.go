@@ -39,7 +39,7 @@ type (
 	CompliancePortalCommitment struct {
 		ID                 gid.GID                        `db:"id"`
 		OrganizationID     gid.GID                        `db:"organization_id"`
-		CompliancePortalID gid.GID                        `db:"trust_center_id"`
+		CompliancePortalID gid.GID                        `db:"compliance_portal_id"`
 		GroupID            gid.GID                        `db:"group_id"`
 		Icon               CompliancePortalCommitmentIcon `db:"icon"`
 		Eyebrow            string                         `db:"eyebrow"`
@@ -115,7 +115,7 @@ func (t *CompliancePortalCommitment) LoadByID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     group_id,
     icon,
     eyebrow,
@@ -162,7 +162,7 @@ INSERT INTO
         tenant_id,
         id,
         organization_id,
-        trust_center_id,
+        compliance_portal_id,
         group_id,
         icon,
         eyebrow,
@@ -176,7 +176,7 @@ VALUES (
     @tenant_id,
     @id,
     @organization_id,
-    @trust_center_id,
+    @compliance_portal_id,
     @group_id,
     @icon,
     @eyebrow,
@@ -190,17 +190,17 @@ RETURNING rank;
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"id":              t.ID,
-		"organization_id": t.OrganizationID,
-		"trust_center_id": t.CompliancePortalID,
-		"group_id":        t.GroupID,
-		"icon":            t.Icon,
-		"eyebrow":         t.Eyebrow,
-		"title":           t.Title,
-		"description":     t.Description,
-		"created_at":      t.CreatedAt,
-		"updated_at":      t.UpdatedAt,
+		"tenant_id":            scope.GetTenantID(),
+		"id":                   t.ID,
+		"organization_id":      t.OrganizationID,
+		"compliance_portal_id": t.CompliancePortalID,
+		"group_id":             t.GroupID,
+		"icon":                 t.Icon,
+		"eyebrow":              t.Eyebrow,
+		"title":                t.Title,
+		"description":          t.Description,
+		"created_at":           t.CreatedAt,
+		"updated_at":           t.UpdatedAt,
 	}
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank)
@@ -346,7 +346,7 @@ func (t *CompliancePortalCommitments) LoadByGroupID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     group_id,
     icon,
     eyebrow,

@@ -38,6 +38,7 @@ var ViewerPolicy = policy.NewPolicy(
 	policy.Allow(
 		ActionCustomDomainGet,
 		ActionCompliancePortalGet,
+		ActionCompliancePortalList,
 		ActionCompliancePortalAccessGet, ActionCompliancePortalAccessList,
 		ActionCompliancePortalDocumentAccessList,
 		ActionCompliancePortalFileGet, ActionCompliancePortalFileList, ActionCompliancePortalFileGetFileUrl,

@@ -253,7 +253,7 @@ Always first parameter. Private struct keys for context values:
 
 ```go
 type ctxKey struct{ name string }
-var trustCenterIDKey = &ctxKey{name: "trust_center_id"}
+var compliancePortalIDKey = &ctxKey{name: "compliance_portal_id"}
 ```
 
 ## URL and query parameter construction

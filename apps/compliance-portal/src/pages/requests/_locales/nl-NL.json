@@ -1,0 +1,71 @@
+{
+  "title": "Gegevensverzoeken",
+  "newRequest": "Nieuw verzoek",
+  "loadMore": "Meer laden",
+  "empty": {
+    "title": "Nog geen verzoeken",
+    "description": "Verzoeken die u indient verschijnen hier, zodat u de voortgang kunt volgen."
+  },
+  "types": {
+    "ACCESS": "Inzage in gegevens",
+    "DELETION": "Verwijdering van gegevens",
+    "RECTIFICATION": "Rectificatie van gegevens",
+    "PORTABILITY": "Overdraagbaarheid van gegevens",
+    "OBJECTION": "Bezwaar tegen verwerking",
+    "COMPLAINT": "Misbruikmelding"
+  },
+  "status": {
+    "TODO": "In afwachting",
+    "IN_PROGRESS": "In behandeling",
+    "DONE": "Afgerond",
+    "REJECTED": "Afgewezen"
+  },
+  "typeOption": {
+    "ACCESS": "Inzage in mijn gegevens",
+    "DELETION": "Mijn gegevens verwijderen",
+    "RECTIFICATION": "Mijn gegevens corrigeren",
+    "OBJECTION": "Bezwaar maken tegen verwerking",
+    "COMPLAINT": "Misbruik melden"
+  },
+  "dialog": {
+    "title": "Nieuw verzoek",
+    "description": "Kies een type verzoek en vul hieronder de details in.",
+    "typeLabel": "Type verzoek",
+    "cancel": "Annuleren",
+    "submit": "Verzoek indienen",
+    "success": {
+      "title": "Verzoek ingediend",
+      "description": "Wij behandelen uw verzoek en reageren binnen de termijn die de toepasselijke wetgeving voorschrijft.",
+      "close": "Sluiten"
+    }
+  },
+  "form": {
+    "name": "Volledige naam",
+    "nameOptional": "Uw naam (optioneel)",
+    "namePlaceholder": "Jan Jansen",
+    "email": "E-mailadres",
+    "deletionWarning": "Verwijdering van gegevens is permanent en kan niet ongedaan worden gemaakt. Sommige gegevens kunnen worden bewaard vanwege wettelijke verplichtingen.",
+    "details": {
+      "ACCESS": {
+        "label": "Details van uw verzoek",
+        "placeholder": "Ik wil graag een kopie van alle persoonsgegevens die aan mijn account zijn gekoppeld…"
+      },
+      "DELETION": {
+        "label": "Omvang van het verwijderingsverzoek",
+        "placeholder": "Verwijder alle persoonsgegevens, waaronder…"
+      },
+      "RECTIFICATION": {
+        "label": "Wat moet er worden gecorrigeerd?",
+        "placeholder": "De volgende informatie is onjuist…"
+      },
+      "OBJECTION": {
+        "label": "Waartegen maakt u bezwaar?",
+        "placeholder": "Ik maak bezwaar tegen de verwerking van mijn gegevens voor…"
+      },
+      "COMPLAINT": {
+        "label": "Beschrijving van het probleem",
+        "placeholder": "Ik heb gemerkt dat…"
+      }
+    }
+  }
+}

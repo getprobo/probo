@@ -344,6 +344,28 @@ type (
 		DueDate                string
 	}
 
+	BusinessFunctionListData struct {
+		Title                  string
+		OrganizationName       string
+		CreatedAt              time.Time
+		TotalBusinessFunctions int
+		Rows                   []BusinessFunctionListRow
+	}
+
+	BusinessFunctionListRow struct {
+		ReferenceID     string
+		Name            string
+		Classification  string
+		MTD             string
+		RTO             string
+		RPO             string
+		ImpactTolerance string
+		Notes           string
+		Owner           string
+		Assets          string
+		ThirdParties    string
+	}
+
 	ProcessingActivityListData struct {
 		Title                     string
 		OrganizationName          string
@@ -459,7 +481,7 @@ type (
 		Administrators                string
 		Services                      []ThirdPartyListService
 		Contacts                      []ThirdPartyListContact
-		RiskAssessments               []ThirdPartyListRiskAssessment
+		RiskAnalyses                  []ThirdPartyListRiskAssessment
 		ComplianceReports             []ThirdPartyListComplianceReport
 		BusinessAssociateAgreement    *ThirdPartyListAgreement
 		DataPrivacyAgreement          *ThirdPartyListAgreement
@@ -483,6 +505,11 @@ type (
 		DataSensitivity string
 		BusinessImpact  string
 		Notes           string
+		// NotesBlocks is a comma-separated sequence of ProseMirror block
+		// nodes (no surrounding array brackets), ready to splice into the
+		// third-party register JSON template after the "Notes:" label.
+		// Populated by BuildThirdPartyListDocument from Notes markdown.
+		NotesBlocks string
 	}
 
 	ThirdPartyListComplianceReport struct {
@@ -499,7 +526,6 @@ type (
 	TrackerPolicyData struct {
 		OrganizationName  string
 		WebsiteOrigin     string
-		GeneratedAt       time.Time
 		PrivacyPolicyURL  string
 		ConsentExpiryDays int
 		Categories        []TrackerPolicyCategory

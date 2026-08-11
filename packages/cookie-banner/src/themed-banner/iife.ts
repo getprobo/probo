@@ -46,11 +46,6 @@ if (script) {
         el.setAttribute("position", position);
       }
 
-      const reopenWidget = script.getAttribute("data-reopen-widget");
-      if (reopenWidget) {
-        el.setAttribute("reopen-widget", reopenWidget);
-      }
-
       const lang = script.getAttribute("data-lang");
       if (lang) {
         el.setAttribute("lang", lang.split("-")[0].toLowerCase());

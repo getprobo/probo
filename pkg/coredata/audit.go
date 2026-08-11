@@ -36,19 +36,18 @@ import (
 
 type (
 	Audit struct {
-		ID                         gid.GID                    `db:"id"`
-		Name                       *string                    `db:"name"`
-		OrganizationID             gid.GID                    `db:"organization_id"`
-		FrameworkID                gid.GID                    `db:"framework_id"`
-		ReportFileID               *gid.GID                   `db:"report_file_id"`
-		ValidFrom                  *time.Time                 `db:"valid_from"`
-		ValidUntil                 *time.Time                 `db:"valid_until"`
-		AuditStartDate             *time.Time                 `db:"audit_start_date"`
-		AuditEndDate               *time.Time                 `db:"audit_end_date"`
-		State                      AuditState                 `db:"state"`
-		CompliancePortalVisibility CompliancePortalVisibility `db:"trust_center_visibility"`
-		CreatedAt                  time.Time                  `db:"created_at"`
-		UpdatedAt                  time.Time                  `db:"updated_at"`
+		ID             gid.GID    `db:"id"`
+		Name           *string    `db:"name"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		FrameworkID    gid.GID    `db:"framework_id"`
+		ReportFileID   *gid.GID   `db:"report_file_id"`
+		ValidFrom      *time.Time `db:"valid_from"`
+		ValidUntil     *time.Time `db:"valid_until"`
+		AuditStartDate *time.Time `db:"audit_start_date"`
+		AuditEndDate   *time.Time `db:"audit_end_date"`
+		State          AuditState `db:"state"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
 	}
 
 	Audits []*Audit
@@ -131,7 +130,6 @@ SELECT
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 FROM
@@ -199,6 +197,68 @@ WHERE
 	return count, nil
 }
 
+func (a *Audits) LoadByCompliancePortalID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	organizationID gid.GID,
+	cursor *page.Cursor[AuditOrderField],
+	filter *AuditFilter,
+) error {
+	if filter == nil {
+		filter = NewAuditCompliancePortalFilter()
+	}
+
+	filter = filter.WithCompliancePortalID(compliancePortalID)
+
+	q := `
+SELECT
+	audits.id,
+	audits.name,
+	audits.organization_id,
+	audits.framework_id,
+	audits.report_file_id,
+	audits.valid_from,
+	audits.valid_until,
+	audits.audit_start_date,
+	audits.audit_end_date,
+	audits.state,
+	audits.created_at,
+	audits.updated_at
+FROM
+	audits
+WHERE
+	%s
+	AND audits.organization_id = @organization_id
+	AND %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits: %w", err)
+	}
+
+	*a = audits
+
+	return nil
+}
+
 func (a *Audits) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -219,7 +279,6 @@ SELECT
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 FROM
@@ -271,7 +330,6 @@ INSERT INTO audits (
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 ) VALUES (
@@ -286,27 +344,25 @@ INSERT INTO audits (
 	@audit_start_date,
 	@audit_end_date,
 	@state,
-	@trust_center_visibility,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                      a.ID,
-		"name":                    a.Name,
-		"tenant_id":               scope.GetTenantID(),
-		"organization_id":         a.OrganizationID,
-		"framework_id":            a.FrameworkID,
-		"report_file_id":          a.ReportFileID,
-		"valid_from":              a.ValidFrom,
-		"valid_until":             a.ValidUntil,
-		"audit_start_date":        a.AuditStartDate,
-		"audit_end_date":          a.AuditEndDate,
-		"state":                   a.State,
-		"trust_center_visibility": a.CompliancePortalVisibility,
-		"created_at":              a.CreatedAt,
-		"updated_at":              a.UpdatedAt,
+		"id":               a.ID,
+		"name":             a.Name,
+		"tenant_id":        scope.GetTenantID(),
+		"organization_id":  a.OrganizationID,
+		"framework_id":     a.FrameworkID,
+		"report_file_id":   a.ReportFileID,
+		"valid_from":       a.ValidFrom,
+		"valid_until":      a.ValidUntil,
+		"audit_start_date": a.AuditStartDate,
+		"audit_end_date":   a.AuditEndDate,
+		"state":            a.State,
+		"created_at":       a.CreatedAt,
+		"updated_at":       a.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -332,7 +388,6 @@ SET
 	audit_start_date = @audit_start_date,
 	audit_end_date = @audit_end_date,
 	state = @state,
-	trust_center_visibility = @trust_center_visibility,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -342,16 +397,15 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                      a.ID,
-		"name":                    a.Name,
-		"report_file_id":          a.ReportFileID,
-		"valid_from":              a.ValidFrom,
-		"valid_until":             a.ValidUntil,
-		"audit_start_date":        a.AuditStartDate,
-		"audit_end_date":          a.AuditEndDate,
-		"state":                   a.State,
-		"trust_center_visibility": a.CompliancePortalVisibility,
-		"updated_at":              a.UpdatedAt,
+		"id":               a.ID,
+		"name":             a.Name,
+		"report_file_id":   a.ReportFileID,
+		"valid_from":       a.ValidFrom,
+		"valid_until":      a.ValidUntil,
+		"audit_start_date": a.AuditStartDate,
+		"audit_end_date":   a.AuditEndDate,
+		"state":            a.State,
+		"updated_at":       a.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -409,7 +463,6 @@ WITH audits_by_control AS (
 		a.audit_start_date,
 		a.audit_end_date,
 		a.state,
-		a.trust_center_visibility,
 		a.created_at,
 		a.updated_at
 	FROM
@@ -430,7 +483,6 @@ SELECT
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 FROM
@@ -480,7 +532,6 @@ WITH audits_by_finding AS (
 		a.audit_start_date,
 		a.audit_end_date,
 		a.state,
-		a.trust_center_visibility,
 		a.created_at,
 		a.updated_at
 	FROM
@@ -501,7 +552,6 @@ SELECT
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 FROM
@@ -634,7 +684,6 @@ SELECT
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 FROM
@@ -646,6 +695,72 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"report_file_id": fileID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audit: %w", err)
+	}
+
+	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect audit: %w", err)
+	}
+
+	*a = audit
+
+	return nil
+}
+
+// LoadByCompliancePortalIDAndFrameworkID loads any audit for the given
+// framework that the portal publishes with a visibility other than NONE. The
+// portal association only narrows the WHERE clause, so it stays a subquery
+// rather than a join.
+func (a *Audit) LoadByCompliancePortalIDAndFrameworkID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	frameworkID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_file_id,
+	valid_from,
+	valid_until,
+	audit_start_date,
+	audit_end_date,
+	state,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE %s
+	AND framework_id = @framework_id
+	AND id IN (
+		SELECT
+			audit_id
+		FROM
+			cp_audits
+		WHERE %s
+			AND compliance_portal_id = @compliance_portal_id
+	)
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"framework_id":         frameworkID,
+		"compliance_portal_id": compliancePortalID,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -685,7 +800,6 @@ SELECT
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 FROM
@@ -733,7 +847,6 @@ SELECT
 	audit_start_date,
 	audit_end_date,
 	state,
-	trust_center_visibility,
 	created_at,
 	updated_at
 FROM

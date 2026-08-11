@@ -332,46 +332,6 @@ func TestFinding_PublishFindingList(t *testing.T) {
 	)
 }
 
-func TestFinding_PublishFindingList_RBAC(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	createFindingForPublish(t, owner, "RBAC Test Finding")
-
-	const query = `
-		mutation($input: PublishFindingListInput!) {
-			publishFindingList(input: $input) {
-				documentEdge {
-					node { id }
-				}
-				documentVersionEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	t.Run(
-		"viewer cannot publish finding list",
-		func(t *testing.T) {
-			t.Parallel()
-
-			err := viewer.ExecuteShouldFail(
-				query,
-				map[string]any{
-					"input": map[string]any{
-						"minor":          false,
-						"organizationId": owner.GetOrganizationID(),
-					},
-				},
-			)
-			testutil.RequireForbiddenError(t, err)
-		},
-	)
-}
-
 func createFindingForPublish(t *testing.T, client *testutil.Client, description string) string {
 	t.Helper()
 

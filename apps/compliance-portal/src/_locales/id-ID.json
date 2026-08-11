@@ -1,7 +1,7 @@
 {
   "topBar": {
     "tagline": "Portal Kepatuhan",
-    "getAccess": "Dapatkan Akses",
+    "getAccess": "Minta akses",
     "openMenu": "Buka menu",
     "closeMenu": "Tutup menu",
     "menuTitle": "Menu",
@@ -21,7 +21,6 @@
     "switchToLightMode": "Beralih ke mode terang"
   },
   "common": {
-    "cancel": "Batal",
     "error": "Terjadi kesalahan",
     "previousPage": "Halaman sebelumnya",
     "nextPage": "Halaman berikutnya",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Kembali ke portal kepatuhan",
-      "tryAgain": "Coba lagi"
+      "tryAgain": "Coba lagi",
+      "contactSupport": "Hubungi dukungan",
+      "requestAccess": "Minta akses"
     },
     "inline": {
       "message": "Konten tidak dapat dimuat",

@@ -84,7 +84,7 @@
     "actions": { "edit": "Modifier", "importThirdParties": "Importer vers les tiers", "include": "Inclure", "exclude": "Exclure", "delete": "Supprimer" },
     "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
-    "duration": { "session": "Session", "persistent": "Persistant", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "year_one": "{{count}} an", "year_other": "{{count}} ans" },
+    "duration": { "session": "Session", "persistent": "Persistant" },
     "commonCatalog": "Catalogue commun"
   },
   "trackerProperties": {
@@ -94,7 +94,6 @@
     "matchTypes": { "exact": "Exact", "glob": "Glob" },
     "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
-    "duration": { "session": "Session", "persistent": "Persistant", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "year_one": "{{count}} an", "year_other": "{{count}} ans" },
     "commonCatalog": "Catalogue commun", "manual": "Manuel", "boolean": { "yes": "Oui", "no": "Non" }
   },
   "detectedTrackersSection": {
@@ -130,7 +129,7 @@
     "messages": { "successTitle": "Succès", "updated": "Paramètres de la bannière mis à jour" },
     "errors": { "title": "Erreur", "update": "Échec de la mise à jour" },
     "fields": { "name": "Nom", "origin": "URL d’origine", "cookiePolicyUrl": "URL de la politique de cookies", "privacyPolicyUrl": "URL de la politique de confidentialité", "consentExpiryDays": "Expiration du consentement (jours)", "defaultLanguage": "Langue par défaut" },
-    "languages": { "english": "Anglais", "french": "Français", "german": "Allemand", "spanish": "Espagnol" },
+    "languages": { "english": "Anglais", "french": "Français", "german": "Allemand", "spanish": "Espagnol", "dutch": "Néerlandais" },
     "actions": { "saving": "Enregistrement...", "save": "Enregistrer" }
   },
   "trackerResourceRowEdit": {
@@ -198,21 +197,20 @@
   },
   "consentRecordsPage": {
     "filters": { "allActions": "Toutes les actions", "visitorId": "ID du visiteur", "bannerVersion": "Version de la bannière" },
-    "actions": { "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC" },
-    "columns": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "source": "Source", "country": "Pays", "date": "Date" },
+    "actions": { "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },
+    "columns": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "source": "Source", "country": "Pays", "subdivision": "Subdivision", "date": "Date" },
     "empty": { "title": "Aucun enregistrement de consentement", "description": "Les enregistrements de consentement apparaîtront ici dès que des visiteurs interagiront avec votre bannière de cookies." }
   },
   "consentRecordPage": {
     "breadcrumbs": { "index": "Bannières de cookies", "records": "Enregistrements de consentement" },
     "title": "Enregistrement de consentement",
-    "properties": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "userAgent": "Agent utilisateur", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "regulationSource": "Source réglementaire", "country": "Pays", "date": "Date" },
-    "actions": { "accept_all": "Tout accepter", "reject_all": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC" },
+    "properties": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "userAgent": "Agent utilisateur", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "regulationSource": "Source réglementaire", "country": "Pays", "subdivision": "Subdivision", "date": "Date" },
+    "actions": { "accept_all": "Tout accepter", "reject_all": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },
     "consentData": "Données de consentement",
     "required": "(Obligatoire)",
     "consent": { "accepted": "Accepté", "rejected": "Refusé" },
-    "cookies": { "columns": { "cookie": "Cookie", "duration": "Durée", "description": "Description" } },
-    "duration": { "session": "Session", "persistent": "Persistant", "year_one": "{{count}} an", "year_other": "{{count}} ans", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
-  },
+    "cookies": { "columns": { "cookie": "Cookie", "duration": "Durée", "description": "Description" } }
+    },
   "configLayout": {
     "breadcrumbs": { "index": "Bannières de cookies" },
     "version": "v{{version}}",

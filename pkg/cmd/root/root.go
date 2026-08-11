@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
+	"go.probo.inc/probo/pkg/cmd/businessfunction"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/completion"
 	complianceportal "go.probo.inc/probo/pkg/cmd/compliance-portal"
@@ -53,7 +54,7 @@ import (
 	resourcealias "go.probo.inc/probo/pkg/cmd/resource-alias"
 	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
-	riskassessment "go.probo.inc/probo/pkg/cmd/risk-assessment"
+	riskanalysis "go.probo.inc/probo/pkg/cmd/risk-analysis"
 	"go.probo.inc/probo/pkg/cmd/scim"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/task"
@@ -105,6 +106,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))
+	cmd.AddCommand(businessfunction.NewCmdBusinessFunction(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f))
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	cmd.AddCommand(consentrecord.NewCmdConsentRecord(f))
@@ -128,7 +130,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))
 	cmd.AddCommand(rightsrequest.NewCmdRightsRequest(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
-	cmd.AddCommand(riskassessment.NewCmdRiskAssessment(f))
+	cmd.AddCommand(riskanalysis.NewCmdRiskAnalysis(f))
 	cmd.AddCommand(resourcealias.NewCmdResourceAlias(f))
 	cmd.AddCommand(scim.NewCmdScim(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))

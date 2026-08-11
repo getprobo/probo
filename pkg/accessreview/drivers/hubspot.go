@@ -26,13 +26,28 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 // HubSpotDriver fetches account users from HubSpot via OAuth2-authenticated
 // REST requests.
+//
+// The Settings Users API (`/settings/v3/users`) exposes roles and super-admin
+// flags but has no active/archived signal. Deactivated HubSpot users are
+// owners with `archived=true` on `/crm/v3/owners`; this driver merges both
+// APIs so inactive accounts are returned with Active=false instead of being
+// misclassified as active.
+//
+// MFA status, auth method, and account-level SSO/2FA enforcement are not
+// exposed by HubSpot's APIs (only historical security-activity events exist),
+// so those fields stay Unknown. Last login is derived from successful events
+// on `/account-info/v3/activity/login` (past 90 days); missing
+// `account-info.security.read` leaves LastLogin nil rather than failing the
+// fetch.
 type HubSpotDriver struct {
 	httpClient *http.Client
 	baseURL    string
@@ -57,11 +72,6 @@ type (
 		RoleIDs       []string `json:"roleIds"`
 		PrimaryTeamID string   `json:"primaryTeamId"`
 		SuperAdmin    bool     `json:"superAdmin"`
-		Archived      *bool    `json:"archived"`
-		Deactivated   *bool    `json:"deactivated"`
-		IsActive      *bool    `json:"isActive"`
-		Active        *bool    `json:"active"`
-		HSDeactivated *bool    `json:"hs_deactivated"`
 	}
 
 	hubspotUsersResponse struct {
@@ -72,12 +82,56 @@ type (
 			} `json:"next"`
 		} `json:"paging"`
 	}
+
+	hubspotOwner struct {
+		ID                      string `json:"id"`
+		Email                   string `json:"email"`
+		FirstName               string `json:"firstName"`
+		LastName                string `json:"lastName"`
+		Type                    string `json:"type"`
+		Archived                bool   `json:"archived"`
+		UserID                  *int64 `json:"userId"`
+		UserIDIncludingInactive *int64 `json:"userIdIncludingInactive"`
+	}
+
+	hubspotOwnersResponse struct {
+		Results []hubspotOwner `json:"results"`
+		Paging  *struct {
+			Next *struct {
+				After string `json:"after"`
+			} `json:"next"`
+		} `json:"paging"`
+	}
+
+	hubspotLoginEvent struct {
+		ID             string `json:"id"`
+		LoginAt        string `json:"loginAt"`
+		UserID         int64  `json:"userId"`
+		Email          string `json:"email"`
+		LoginSucceeded bool   `json:"loginSucceeded"`
+	}
+
+	hubspotLoginsResponse struct {
+		Results []hubspotLoginEvent `json:"results"`
+		Paging  *struct {
+			Next *struct {
+				After string `json:"after"`
+			} `json:"next"`
+		} `json:"paging"`
+	}
+
+	hubspotSeenKeys struct {
+		userIDs map[string]struct{}
+		emails  map[string]struct{}
+	}
 )
 
 const (
 	hubspotUsersPath       = "/settings/v3/users"
 	hubspotRolesPath       = "/settings/v3/users/roles"
 	hubspotAccountInfoPath = "/account-info/v3/details"
+	hubspotOwnersPath      = "/crm/v3/owners"
+	hubspotLoginsPath      = "/account-info/v3/activity/login"
 )
 
 func NewHubSpotDriver(httpClient *http.Client, baseURL string) *HubSpotDriver {
@@ -90,9 +144,108 @@ func NewHubSpotDriver(httpClient *http.Client, baseURL string) *HubSpotDriver {
 func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	roleMap, _ := d.fetchRoles(ctx)
 
+	users, err := d.fetchAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Owners archived=true is HubSpot's authoritative deactivated-user list.
+	// Settings Users has no status field; without this call every account
+	// would be stored as active via COALESCE(@active, TRUE) on upsert.
+	archivedOwners, err := d.fetchAllOwners(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	archivedByUserID, archivedByEmail := hubspotIndexArchivedOwners(archivedOwners)
+
+	records := make([]AccountRecord, 0, len(users)+len(archivedOwners))
+	seen := newHubspotSeenKeys(len(users) + len(archivedOwners))
+
+	for _, u := range users {
+		owner, inactive := hubspotLookupArchived(u.ID, u.Email, archivedByUserID, archivedByEmail)
+
+		fullName := hubspotDisplayName(u.FirstName, u.LastName, u.Email)
+
+		record := AccountRecord{
+			Email:       u.Email,
+			FullName:    fullName,
+			Roles:       hubspotRoles(u, roleMap),
+			Active:      new(!inactive),
+			IsAdmin:     u.SuperAdmin,
+			ExternalID:  u.ID,
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
+		}
+
+		if record.Email == "" && record.ExternalID == "" {
+			continue
+		}
+
+		records = append(records, record)
+
+		seen.mark(u.ID, u.Email)
+
+		// If we matched an archived owner by email only, also mark its
+		// settings user ID so the archived-only pass cannot emit a duplicate.
+		if inactive {
+			seen.mark(hubspotOwnerUserID(owner), owner.Email)
+		}
+	}
+
+	// Settings Users does not always list deactivated accounts. Surface
+	// archived owners that never appeared above so reviews still see them.
+	for _, owner := range archivedOwners {
+		if !hubspotOwnerIsPerson(owner) {
+			continue
+		}
+
+		userID := hubspotOwnerUserID(owner)
+		if seen.has(userID, owner.Email) {
+			continue
+		}
+
+		fullName := hubspotDisplayName(owner.FirstName, owner.LastName, owner.Email)
+		externalID := userID
+
+		if externalID == "" {
+			externalID = owner.ID
+		}
+
+		record := AccountRecord{
+			Email:       owner.Email,
+			FullName:    fullName,
+			Roles:       []string{"User"},
+			Active:      new(false),
+			IsAdmin:     false,
+			ExternalID:  externalID,
+			MFAStatus:   coredata.MFAStatusUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
+		}
+
+		if record.Email == "" && record.ExternalID == "" {
+			continue
+		}
+
+		records = append(records, record)
+
+		seen.mark(userID, owner.Email)
+	}
+
+	// Last login is best-effort: missing account-info.security.read (or a
+	// private app without that scope) must not abort the users/owners merge.
+	lastByUserID, lastByEmail, _ := d.fetchLastLogins(ctx)
+	hubspotApplyLastLogins(records, lastByUserID, lastByEmail)
+
+	return records, nil
+}
+
+func (d *HubSpotDriver) fetchAllUsers(ctx context.Context) ([]hubspotUser, error) {
 	var (
-		records []AccountRecord
-		after   string
+		users []hubspotUser
+		after string
 	)
 
 	for range maxPaginationPages {
@@ -101,34 +254,40 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			return nil, err
 		}
 
-		for _, u := range resp.Results {
-			fullName := strings.TrimSpace(u.FirstName + " " + u.LastName)
-
-			record := AccountRecord{
-				Email:       u.Email,
-				FullName:    fullName,
-				Roles:       hubspotRoles(u, roleMap),
-				Active:      hubspotUserActive(u),
-				IsAdmin:     u.SuperAdmin,
-				ExternalID:  u.ID,
-				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
-				AccountType: coredata.AccessReviewEntryAccountTypeUser,
-			}
-
-			if record.Email != "" || record.ExternalID != "" {
-				records = append(records, record)
-			}
-		}
+		users = append(users, resp.Results...)
 
 		if resp.Paging == nil || resp.Paging.Next == nil || resp.Paging.Next.After == "" {
-			return records, nil
+			return users, nil
 		}
 
 		after = resp.Paging.Next.After
 	}
 
-	return nil, fmt.Errorf("cannot list all hubspot accounts: %w", ErrPaginationLimitReached)
+	return nil, fmt.Errorf("cannot list all hubspot users: %w", ErrPaginationLimitReached)
+}
+
+func (d *HubSpotDriver) fetchAllOwners(ctx context.Context, archived bool) ([]hubspotOwner, error) {
+	var (
+		owners []hubspotOwner
+		after  string
+	)
+
+	for range maxPaginationPages {
+		resp, err := d.fetchOwners(ctx, archived, after)
+		if err != nil {
+			return nil, err
+		}
+
+		owners = append(owners, resp.Results...)
+
+		if resp.Paging == nil || resp.Paging.Next == nil || resp.Paging.Next.After == "" {
+			return owners, nil
+		}
+
+		after = resp.Paging.Next.After
+	}
+
+	return nil, fmt.Errorf("cannot list all hubspot owners: %w", ErrPaginationLimitReached)
 }
 
 func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotUsersResponse, error) {
@@ -174,6 +333,54 @@ func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotU
 	return &resp, nil
 }
 
+func (d *HubSpotDriver) fetchOwners(
+	ctx context.Context,
+	archived bool,
+	after string,
+) (*hubspotOwnersResponse, error) {
+	endpoint, err := url.JoinPath(d.baseURL, hubspotOwnersPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build hubspot owners URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create hubspot owners request: %w", err)
+	}
+
+	q := req.URL.Query()
+	q.Set("limit", "100")
+	q.Set("archived", strconv.FormatBool(archived))
+
+	if after != "" {
+		q.Set("after", after)
+	}
+
+	req.URL.RawQuery = q.Encode()
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute hubspot owners request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot fetch hubspot owners: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp hubspotOwnersResponse
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("cannot decode hubspot owners response: %w", err)
+	}
+
+	return &resp, nil
+}
+
 func (d *HubSpotDriver) fetchRoles(ctx context.Context) (map[string]string, error) {
 	endpoint, err := url.JoinPath(d.baseURL, hubspotRolesPath)
 	if err != nil {
@@ -211,6 +418,138 @@ func (d *HubSpotDriver) fetchRoles(ctx context.Context) (map[string]string, erro
 	}
 
 	return roleMap, nil
+}
+
+// fetchLastLogins walks HubSpot login activity (past 90 days) and returns the
+// latest successful loginAt keyed by settings user ID and by email.
+func (d *HubSpotDriver) fetchLastLogins(
+	ctx context.Context,
+) (byUserID map[string]time.Time, byEmail map[string]time.Time, err error) {
+	byUserID = make(map[string]time.Time)
+	byEmail = make(map[string]time.Time)
+
+	var after string
+
+	for range maxPaginationPages {
+		resp, fetchErr := d.fetchLogins(ctx, after)
+		if fetchErr != nil {
+			return byUserID, byEmail, fetchErr
+		}
+
+		for _, event := range resp.Results {
+			if !event.LoginSucceeded {
+				continue
+			}
+
+			t, ok := hubspotParseTime(event.LoginAt)
+			if !ok {
+				continue
+			}
+
+			if event.UserID != 0 {
+				id := strconv.FormatInt(event.UserID, 10)
+				if prev, exists := byUserID[id]; !exists || t.After(prev) {
+					byUserID[id] = t
+				}
+			}
+
+			if email := hubspotNormalizeEmail(event.Email); email != "" {
+				if prev, exists := byEmail[email]; !exists || t.After(prev) {
+					byEmail[email] = t
+				}
+			}
+		}
+
+		if resp.Paging == nil || resp.Paging.Next == nil || resp.Paging.Next.After == "" {
+			return byUserID, byEmail, nil
+		}
+
+		after = resp.Paging.Next.After
+	}
+
+	return byUserID, byEmail, fmt.Errorf("cannot list all hubspot logins: %w", ErrPaginationLimitReached)
+}
+
+func (d *HubSpotDriver) fetchLogins(ctx context.Context, after string) (*hubspotLoginsResponse, error) {
+	endpoint, err := url.JoinPath(d.baseURL, hubspotLoginsPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build hubspot logins URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create hubspot logins request: %w", err)
+	}
+
+	q := req.URL.Query()
+	q.Set("limit", "200")
+
+	if after != "" {
+		q.Set("after", after)
+	}
+
+	req.URL.RawQuery = q.Encode()
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute hubspot logins request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot fetch hubspot logins: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp hubspotLoginsResponse
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("cannot decode hubspot logins response: %w", err)
+	}
+
+	return &resp, nil
+}
+
+func hubspotApplyLastLogins(
+	records []AccountRecord,
+	byUserID map[string]time.Time,
+	byEmail map[string]time.Time,
+) {
+	for i := range records {
+		if records[i].ExternalID != "" {
+			if t, ok := byUserID[records[i].ExternalID]; ok {
+				last := t
+				records[i].LastLogin = &last
+
+				continue
+			}
+		}
+
+		if email := hubspotNormalizeEmail(records[i].Email); email != "" {
+			if t, ok := byEmail[email]; ok {
+				last := t
+				records[i].LastLogin = &last
+			}
+		}
+	}
+}
+
+func hubspotParseTime(value string) (time.Time, bool) {
+	if value == "" {
+		return time.Time{}, false
+	}
+
+	// HubSpot emits fractional seconds (e.g. 2025-02-07T14:12:13.544Z).
+	for _, layout := range []string{time.RFC3339Nano, time.RFC3339} {
+		if t, err := time.Parse(layout, value); err == nil {
+			return t, true
+		}
+	}
+
+	return time.Time{}, false
 }
 
 func hubspotRoles(user hubspotUser, roleMap map[string]string) []string {
@@ -274,28 +613,112 @@ func hubspotRoleIDs(user hubspotUser) []string {
 	return ids
 }
 
-func hubspotUserActive(user hubspotUser) *bool {
-	if user.IsActive != nil {
-		return new(*user.IsActive)
+func hubspotIndexArchivedOwners(
+	owners []hubspotOwner,
+) (byUserID map[string]hubspotOwner, byEmail map[string]hubspotOwner) {
+	byUserID = make(map[string]hubspotOwner, len(owners))
+	byEmail = make(map[string]hubspotOwner, len(owners))
+
+	for _, owner := range owners {
+		if !hubspotOwnerIsPerson(owner) {
+			continue
+		}
+
+		if id := hubspotOwnerUserID(owner); id != "" {
+			byUserID[id] = owner
+		}
+
+		if email := hubspotNormalizeEmail(owner.Email); email != "" {
+			byEmail[email] = owner
+		}
 	}
 
-	if user.Active != nil {
-		return new(*user.Active)
+	return byUserID, byEmail
+}
+
+func hubspotLookupArchived(
+	userID string,
+	email string,
+	byUserID map[string]hubspotOwner,
+	byEmail map[string]hubspotOwner,
+) (hubspotOwner, bool) {
+	if userID != "" {
+		if owner, ok := byUserID[userID]; ok {
+			return owner, true
+		}
 	}
 
-	if user.Deactivated != nil {
-		return new(!*user.Deactivated)
+	if normalized := hubspotNormalizeEmail(email); normalized != "" {
+		if owner, ok := byEmail[normalized]; ok {
+			return owner, true
+		}
 	}
 
-	if user.HSDeactivated != nil {
-		return new(!*user.HSDeactivated)
+	return hubspotOwner{}, false
+}
+
+func hubspotOwnerIsPerson(owner hubspotOwner) bool {
+	return owner.Type == "" || strings.EqualFold(owner.Type, "PERSON")
+}
+
+// hubspotOwnerUserID returns the Settings Users ID for an owner. Archived
+// owners leave userId null and expose the ID only on userIdIncludingInactive.
+func hubspotOwnerUserID(owner hubspotOwner) string {
+	if owner.UserIDIncludingInactive != nil && *owner.UserIDIncludingInactive != 0 {
+		return strconv.FormatInt(*owner.UserIDIncludingInactive, 10)
 	}
 
-	if user.Archived != nil {
-		return new(!*user.Archived)
+	if owner.UserID != nil && *owner.UserID != 0 {
+		return strconv.FormatInt(*owner.UserID, 10)
 	}
 
-	return nil
+	return ""
+}
+
+func hubspotDisplayName(firstName, lastName, email string) string {
+	fullName := strings.TrimSpace(firstName + " " + lastName)
+	if fullName != "" {
+		return fullName
+	}
+
+	return strings.TrimSpace(email)
+}
+
+func hubspotNormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
+func newHubspotSeenKeys(capacity int) *hubspotSeenKeys {
+	return &hubspotSeenKeys{
+		userIDs: make(map[string]struct{}, capacity),
+		emails:  make(map[string]struct{}, capacity),
+	}
+}
+
+func (s *hubspotSeenKeys) mark(userID, email string) {
+	if userID != "" {
+		s.userIDs[userID] = struct{}{}
+	}
+
+	if normalized := hubspotNormalizeEmail(email); normalized != "" {
+		s.emails[normalized] = struct{}{}
+	}
+}
+
+func (s *hubspotSeenKeys) has(userID, email string) bool {
+	if userID != "" {
+		if _, ok := s.userIDs[userID]; ok {
+			return true
+		}
+	}
+
+	if normalized := hubspotNormalizeEmail(email); normalized != "" {
+		if _, ok := s.emails[normalized]; ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // hubspotNameResolver resolves the HubSpot account name.

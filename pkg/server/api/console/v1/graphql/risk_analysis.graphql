@@ -1,0 +1,761 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Enums
+
+enum RiskAnalysisOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisOrderFieldName"
+        )
+}
+
+enum RiskAnalysisDiagramOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderFieldName"
+        )
+}
+
+enum RiskAnalysisNodeType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeType"
+    ) {
+    ENTITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeTypeEntity"
+        )
+    ASSET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeTypeAsset"
+        )
+    DATA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeTypeData"
+        )
+}
+
+enum RiskAnalysisNodeOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeOrderFieldName"
+        )
+}
+
+enum RiskAnalysisBoundaryOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisBoundaryOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisBoundaryOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisBoundaryOrderFieldName"
+        )
+}
+
+enum RiskAnalysisProcessOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisProcessOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisProcessOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisProcessOrderFieldName"
+        )
+}
+
+enum RiskAnalysisThreatOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisThreatOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisThreatOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisThreatOrderFieldName"
+        )
+}
+
+enum RiskAnalysisScenarioOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisScenarioOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisScenarioOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAnalysisScenarioOrderFieldName"
+        )
+}
+
+# Input types
+
+input RiskAnalysisOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAnalysisOrderField!
+}
+
+input RiskAnalysisDiagramOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisDiagramOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAnalysisDiagramOrderField!
+}
+
+input RiskAnalysisNodeOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisNodeOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAnalysisNodeOrderField!
+}
+
+input RiskAnalysisBoundaryOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisBoundaryOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAnalysisBoundaryOrderField!
+}
+
+input RiskAnalysisProcessOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisProcessOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAnalysisProcessOrderField!
+}
+
+input RiskAnalysisThreatOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisThreatOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAnalysisThreatOrderField!
+}
+
+input RiskAnalysisScenarioOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisScenarioOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAnalysisScenarioOrderField!
+}
+
+# Types
+
+type RiskAnalysis implements Node {
+    id: ID!
+    name: String!
+    description: String
+    organization: Organization @goField(forceResolver: true)
+
+    diagrams(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAnalysisDiagramOrder
+    ): RiskAnalysisDiagramConnection @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type RiskAnalysisDiagram implements Node {
+    id: ID!
+    riskAnalysisId: ID!
+    name: String!
+
+    nodes(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAnalysisNodeOrder
+    ): RiskAnalysisNodeConnection @goField(forceResolver: true)
+
+    boundaries(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAnalysisBoundaryOrder
+    ): RiskAnalysisBoundaryConnection @goField(forceResolver: true)
+
+    processes(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAnalysisProcessOrder
+    ): RiskAnalysisProcessConnection @goField(forceResolver: true)
+
+    threats(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAnalysisThreatOrder
+    ): RiskAnalysisThreatConnection @goField(forceResolver: true)
+
+    scenarios(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAnalysisScenarioOrder
+    ): RiskAnalysisScenarioConnection @goField(forceResolver: true)
+
+    mermaidChart: String! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAnalysisNode implements Node {
+    id: ID!
+    riskAnalysisDiagramId: ID!
+    boundaryId: ID
+    nodeType: RiskAnalysisNodeType!
+    name: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAnalysisBoundary implements Node {
+    id: ID!
+    riskAnalysisDiagramId: ID!
+    parentBoundaryId: ID
+    name: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAnalysisProcess implements Node {
+    id: ID!
+    riskAnalysisDiagramId: ID!
+    sourceNodeId: ID!
+    targetNodeId: ID!
+    name: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAnalysisThreat implements Node {
+    id: ID!
+    riskAnalysisDiagramId: ID!
+    processId: ID!
+    name: String!
+    category: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAnalysisScenario implements Node {
+    id: ID!
+    riskAnalysisDiagramId: ID!
+    diagram: RiskAnalysisDiagram @goField(forceResolver: true)
+    name: String!
+    description: String
+
+    threats(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAnalysisThreatOrder
+    ): RiskAnalysisThreatConnection @goField(forceResolver: true)
+
+    risks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+    ): RiskConnection @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+# Connections
+
+type RiskAnalysisConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAnalysisConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAnalysisConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAnalysis!
+}
+
+type RiskAnalysisDiagramConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisDiagramConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAnalysisDiagramConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAnalysisDiagramConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAnalysisDiagram!
+}
+
+type RiskAnalysisNodeConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisNodeConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAnalysisNodeConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAnalysisNodeConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAnalysisNode!
+}
+
+type RiskAnalysisBoundaryConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisBoundaryConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAnalysisBoundaryConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAnalysisBoundaryConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAnalysisBoundary!
+}
+
+type RiskAnalysisProcessConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisProcessConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAnalysisProcessConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAnalysisProcessConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAnalysisProcess!
+}
+
+type RiskAnalysisThreatConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisThreatConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAnalysisThreatConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAnalysisThreatConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAnalysisThreat!
+}
+
+type RiskAnalysisScenarioConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAnalysisScenarioConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAnalysisScenarioConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAnalysisScenarioConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAnalysisScenario!
+}
+
+# Mutations
+
+extend type Mutation {
+    createRiskAnalysis(
+        input: CreateRiskAnalysisInput!
+    ): CreateRiskAnalysisPayload!
+    updateRiskAnalysis(
+        input: UpdateRiskAnalysisInput!
+    ): UpdateRiskAnalysisPayload!
+    deleteRiskAnalysis(
+        input: DeleteRiskAnalysisInput!
+    ): DeleteRiskAnalysisPayload!
+
+    createRiskAnalysisDiagram(
+        input: CreateRiskAnalysisDiagramInput!
+    ): CreateRiskAnalysisDiagramPayload!
+    updateRiskAnalysisDiagram(
+        input: UpdateRiskAnalysisDiagramInput!
+    ): UpdateRiskAnalysisDiagramPayload!
+    deleteRiskAnalysisDiagram(
+        input: DeleteRiskAnalysisDiagramInput!
+    ): DeleteRiskAnalysisDiagramPayload!
+
+    createRiskAnalysisNode(
+        input: CreateRiskAnalysisNodeInput!
+    ): CreateRiskAnalysisNodePayload!
+    updateRiskAnalysisNode(
+        input: UpdateRiskAnalysisNodeInput!
+    ): UpdateRiskAnalysisNodePayload!
+    deleteRiskAnalysisNode(
+        input: DeleteRiskAnalysisNodeInput!
+    ): DeleteRiskAnalysisNodePayload!
+
+    createRiskAnalysisBoundary(
+        input: CreateRiskAnalysisBoundaryInput!
+    ): CreateRiskAnalysisBoundaryPayload!
+    updateRiskAnalysisBoundary(
+        input: UpdateRiskAnalysisBoundaryInput!
+    ): UpdateRiskAnalysisBoundaryPayload!
+    deleteRiskAnalysisBoundary(
+        input: DeleteRiskAnalysisBoundaryInput!
+    ): DeleteRiskAnalysisBoundaryPayload!
+
+    createRiskAnalysisProcess(
+        input: CreateRiskAnalysisProcessInput!
+    ): CreateRiskAnalysisProcessPayload!
+    updateRiskAnalysisProcess(
+        input: UpdateRiskAnalysisProcessInput!
+    ): UpdateRiskAnalysisProcessPayload!
+    deleteRiskAnalysisProcess(
+        input: DeleteRiskAnalysisProcessInput!
+    ): DeleteRiskAnalysisProcessPayload!
+
+    createRiskAnalysisThreat(
+        input: CreateRiskAnalysisThreatInput!
+    ): CreateRiskAnalysisThreatPayload!
+    updateRiskAnalysisThreat(
+        input: UpdateRiskAnalysisThreatInput!
+    ): UpdateRiskAnalysisThreatPayload!
+    deleteRiskAnalysisThreat(
+        input: DeleteRiskAnalysisThreatInput!
+    ): DeleteRiskAnalysisThreatPayload!
+
+    createRiskAnalysisScenario(
+        input: CreateRiskAnalysisScenarioInput!
+    ): CreateRiskAnalysisScenarioPayload!
+    updateRiskAnalysisScenario(
+        input: UpdateRiskAnalysisScenarioInput!
+    ): UpdateRiskAnalysisScenarioPayload!
+    deleteRiskAnalysisScenario(
+        input: DeleteRiskAnalysisScenarioInput!
+    ): DeleteRiskAnalysisScenarioPayload!
+
+    linkRiskAnalysisScenarioThreat(
+        input: LinkRiskAnalysisScenarioThreatInput!
+    ): LinkRiskAnalysisScenarioThreatPayload!
+    unlinkRiskAnalysisScenarioThreat(
+        input: UnlinkRiskAnalysisScenarioThreatInput!
+    ): UnlinkRiskAnalysisScenarioThreatPayload!
+
+    linkRiskAnalysisScenarioRisk(
+        input: LinkRiskAnalysisScenarioRiskInput!
+    ): LinkRiskAnalysisScenarioRiskPayload!
+    unlinkRiskAnalysisScenarioRisk(
+        input: UnlinkRiskAnalysisScenarioRiskInput!
+    ): UnlinkRiskAnalysisScenarioRiskPayload!
+}
+
+# Mutation inputs & payloads
+
+input CreateRiskAnalysisInput {
+    organizationId: ID!
+    name: String!
+    description: String
+}
+
+input UpdateRiskAnalysisInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+}
+
+input DeleteRiskAnalysisInput {
+    riskAnalysisId: ID!
+}
+
+type CreateRiskAnalysisPayload {
+    riskAnalysisEdge: RiskAnalysisConnectionEdge!
+}
+
+type UpdateRiskAnalysisPayload {
+    riskAnalysis: RiskAnalysis!
+}
+
+type DeleteRiskAnalysisPayload {
+    deletedRiskAnalysisId: ID!
+}
+
+input CreateRiskAnalysisDiagramInput {
+    riskAnalysisId: ID!
+    name: String!
+}
+
+input UpdateRiskAnalysisDiagramInput {
+    id: ID!
+    name: String
+}
+
+input DeleteRiskAnalysisDiagramInput {
+    riskAnalysisDiagramId: ID!
+}
+
+type CreateRiskAnalysisDiagramPayload {
+    riskAnalysisDiagramEdge: RiskAnalysisDiagramConnectionEdge!
+}
+
+type UpdateRiskAnalysisDiagramPayload {
+    riskAnalysisDiagram: RiskAnalysisDiagram!
+}
+
+type DeleteRiskAnalysisDiagramPayload {
+    deletedRiskAnalysisDiagramId: ID!
+}
+
+input CreateRiskAnalysisNodeInput {
+    riskAnalysisDiagramId: ID!
+    boundaryId: ID
+    nodeType: RiskAnalysisNodeType!
+    name: String!
+}
+
+input UpdateRiskAnalysisNodeInput {
+    id: ID!
+    boundaryId: ID @goField(omittable: true)
+    nodeType: RiskAnalysisNodeType
+    name: String
+}
+
+input DeleteRiskAnalysisNodeInput {
+    riskAnalysisNodeId: ID!
+}
+
+type CreateRiskAnalysisNodePayload {
+    riskAnalysisNodeEdge: RiskAnalysisNodeConnectionEdge!
+}
+
+type UpdateRiskAnalysisNodePayload {
+    riskAnalysisNode: RiskAnalysisNode!
+}
+
+type DeleteRiskAnalysisNodePayload {
+    deletedRiskAnalysisNodeId: ID!
+}
+
+input CreateRiskAnalysisBoundaryInput {
+    riskAnalysisDiagramId: ID!
+    parentBoundaryId: ID
+    name: String!
+}
+
+input UpdateRiskAnalysisBoundaryInput {
+    id: ID!
+    parentBoundaryId: ID @goField(omittable: true)
+    name: String
+}
+
+input DeleteRiskAnalysisBoundaryInput {
+    riskAnalysisBoundaryId: ID!
+}
+
+type CreateRiskAnalysisBoundaryPayload {
+    riskAnalysisBoundaryEdge: RiskAnalysisBoundaryConnectionEdge!
+}
+
+type UpdateRiskAnalysisBoundaryPayload {
+    riskAnalysisBoundary: RiskAnalysisBoundary!
+}
+
+type DeleteRiskAnalysisBoundaryPayload {
+    deletedRiskAnalysisBoundaryId: ID!
+}
+
+input CreateRiskAnalysisProcessInput {
+    riskAnalysisDiagramId: ID!
+    sourceNodeId: ID!
+    targetNodeId: ID!
+    name: String!
+}
+
+input UpdateRiskAnalysisProcessInput {
+    id: ID!
+    sourceNodeId: ID
+    targetNodeId: ID
+    name: String
+}
+
+input DeleteRiskAnalysisProcessInput {
+    riskAnalysisProcessId: ID!
+}
+
+type CreateRiskAnalysisProcessPayload {
+    riskAnalysisProcessEdge: RiskAnalysisProcessConnectionEdge!
+}
+
+type UpdateRiskAnalysisProcessPayload {
+    riskAnalysisProcess: RiskAnalysisProcess!
+}
+
+type DeleteRiskAnalysisProcessPayload {
+    deletedRiskAnalysisProcessId: ID!
+}
+
+input CreateRiskAnalysisThreatInput {
+    riskAnalysisDiagramId: ID!
+    processId: ID!
+    name: String!
+    category: String!
+}
+
+input UpdateRiskAnalysisThreatInput {
+    id: ID!
+    processId: ID
+    name: String
+    category: String
+}
+
+input DeleteRiskAnalysisThreatInput {
+    riskAnalysisThreatId: ID!
+}
+
+type CreateRiskAnalysisThreatPayload {
+    riskAnalysisThreatEdge: RiskAnalysisThreatConnectionEdge!
+}
+
+type UpdateRiskAnalysisThreatPayload {
+    riskAnalysisThreat: RiskAnalysisThreat!
+}
+
+type DeleteRiskAnalysisThreatPayload {
+    deletedRiskAnalysisThreatId: ID!
+}
+
+input CreateRiskAnalysisScenarioInput {
+    riskAnalysisDiagramId: ID!
+    name: String!
+    description: String
+}
+
+input UpdateRiskAnalysisScenarioInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+}
+
+input DeleteRiskAnalysisScenarioInput {
+    riskAnalysisScenarioId: ID!
+}
+
+type CreateRiskAnalysisScenarioPayload {
+    riskAnalysisScenarioEdge: RiskAnalysisScenarioConnectionEdge!
+}
+
+type UpdateRiskAnalysisScenarioPayload {
+    riskAnalysisScenario: RiskAnalysisScenario!
+}
+
+type DeleteRiskAnalysisScenarioPayload {
+    deletedRiskAnalysisScenarioId: ID!
+}
+
+input LinkRiskAnalysisScenarioThreatInput {
+    riskAnalysisScenarioId: ID!
+    threatId: ID!
+}
+
+type LinkRiskAnalysisScenarioThreatPayload {
+    riskAnalysisScenario: RiskAnalysisScenario!
+}
+
+input UnlinkRiskAnalysisScenarioThreatInput {
+    riskAnalysisScenarioId: ID!
+    threatId: ID!
+}
+
+type UnlinkRiskAnalysisScenarioThreatPayload {
+    riskAnalysisScenario: RiskAnalysisScenario!
+}
+
+input LinkRiskAnalysisScenarioRiskInput {
+    riskAnalysisScenarioId: ID!
+    riskId: ID!
+}
+
+type LinkRiskAnalysisScenarioRiskPayload {
+    riskAnalysisScenario: RiskAnalysisScenario!
+    riskAnalysisScenarioEdge: RiskAnalysisScenarioConnectionEdge!
+}
+
+input UnlinkRiskAnalysisScenarioRiskInput {
+    riskAnalysisScenarioId: ID!
+    riskId: ID!
+}
+
+type UnlinkRiskAnalysisScenarioRiskPayload {
+    riskAnalysisScenario: RiskAnalysisScenario!
+    deletedRiskAnalysisScenarioId: ID!
+}

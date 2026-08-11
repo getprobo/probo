@@ -20,13 +20,11 @@
 
 import { formatError } from "@probo/helpers";
 import {
-  Badge,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
   Field,
-  IconPencil,
   Option,
   Select,
   useDialogRef,
@@ -34,12 +32,18 @@ import {
 } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { EntryDecisionActions_entry$key } from "#/__generated__/core/EntryDecisionActions_entry.graphql";
 import type { AccessReviewEntryDecision, EntryDecisionActionsMutation } from "#/__generated__/core/EntryDecisionActionsMutation.graphql";
 
-import { decisionBadgeVariant } from "./accessReviewHelpers";
+const entryDecisionActionsFragment = graphql`
+  fragment EntryDecisionActions_entry on AccessReviewEntry {
+    id
+    decision
+  }
+`;
 
 const mutation = graphql`
   mutation EntryDecisionActionsMutation(
@@ -56,15 +60,14 @@ const mutation = graphql`
 `;
 
 type Props = {
-  entryId: string;
-  decision: string;
+  entryKey: EntryDecisionActions_entry$key;
 };
 
-export function EntryDecisionActions({ entryId, decision }: Props) {
+export function EntryDecisionActions({ entryKey }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const ref = useDialogRef();
-  const [editing, setEditing] = useState(false);
+  const entry = useFragment(entryDecisionActionsFragment, entryKey);
   const [pendingDecision, setPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
   const [note, setNote] = useState("");
   const [recordDecision, isRecording]
@@ -74,7 +77,7 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     recordDecision({
       variables: {
         input: {
-          accessReviewEntryId: entryId,
+          accessReviewEntryId: entry.id,
           decision: decisionValue,
           decisionNote: decisionNote || null,
         },
@@ -93,7 +96,6 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
         }
         setPendingDecision(null);
         setNote("");
-        setEditing(false);
         ref.current?.close();
       },
       onError(error) {
@@ -109,44 +111,26 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     });
   };
 
-  const openNoteDialog = (decisionValue: AccessReviewEntryDecision) => {
-    setPendingDecision(decisionValue);
+  const handleDecision = (value: string) => {
+    const nextDecision = value as AccessReviewEntryDecision;
+    if (nextDecision === entry.decision) {
+      return;
+    }
+    if (nextDecision === "APPROVED") {
+      submitDecision(nextDecision);
+      return;
+    }
+    setPendingDecision(nextDecision);
     setNote("");
     ref.current?.open();
   };
-
-  const handleDecision = (value: string) => {
-    const decision = value as AccessReviewEntryDecision;
-    if (decision === "APPROVED") {
-      submitDecision(decision);
-    } else {
-      openNoteDialog(decision);
-    }
-  };
-
-  // Already decided -- show badge with edit button
-  if (decision !== "PENDING" && !editing) {
-    return (
-      <div className="flex items-center gap-1">
-        <Badge variant={decisionBadgeVariant(decision)}>
-          {t(`entryDecisionActions.decisions.${decision.toLowerCase()}`)}
-        </Badge>
-        <button
-          type="button"
-          className="text-txt-tertiary hover:text-txt-primary cursor-pointer"
-          onClick={() => setEditing(true)}
-          title={t("entryDecisionActions.actions.change")}
-        >
-          <IconPencil size={14} />
-        </button>
-      </div>
-    );
-  }
 
   return (
     <>
       <Select
         variant="editor"
+        className="w-36 shrink-0"
+        value={entry.decision === "PENDING" ? undefined : entry.decision}
         placeholder={t("entryDecisionActions.placeholder")}
         onValueChange={handleDecision}
         disabled={isRecording}

@@ -58,17 +58,32 @@ func (s *Service) ListPortalReferencesForPortalID(
 	return page.NewPage(references, cursor), nil
 }
 
-func (s *Service) GetPortalReference(
+// GetPortalReferenceForCompliancePortalID loads a reference displayed by the
+// given compliance portal. A reference belonging to another portal is reported
+// as not found.
+func (s *Service) GetPortalReferenceForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
+	compliancePortalID gid.GID,
 	referenceID gid.GID,
 ) (*coredata.CompliancePortalReference, error) {
 	reference := &coredata.CompliancePortalReference{}
+	compliancePortal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := reference.LoadByID(ctx, conn, scope, referenceID)
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := reference.LoadByCompliancePortalIDAndID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				referenceID,
+			)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance page reference: %w", err)
 			}

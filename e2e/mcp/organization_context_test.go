@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -36,23 +37,26 @@ func TestMCP_OrganizationContext(t *testing.T) {
 	// Get
 	var getResult struct {
 		OrganizationContext struct {
-			ID string `json:"id"`
-		} `json:"organizationContext"`
+			OrganizationID string `json:"organization_id"`
+		} `json:"organization_context"`
 	}
 	mc.CallToolInto("getOrganizationContext", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &getResult)
-	assert.NotEmpty(t, getResult.OrganizationContext.ID)
+	assert.Equal(t, orgID, getResult.OrganizationContext.OrganizationID)
 
 	// Update
 	var updateResult struct {
 		OrganizationContext struct {
-			ID string `json:"id"`
-		} `json:"organizationContext"`
+			OrganizationID string  `json:"organization_id"`
+			Product        *string `json:"product"`
+		} `json:"organization_context"`
 	}
 	mc.CallToolInto("updateOrganizationContext", map[string]any{
-		"id":               getResult.OrganizationContext.ID,
-		"companyLegalName": "Test Company LLC",
+		"organization_id": orgID,
+		"product":         "Test product overview",
 	}, &updateResult)
-	assert.Equal(t, getResult.OrganizationContext.ID, updateResult.OrganizationContext.ID)
+	assert.Equal(t, orgID, updateResult.OrganizationContext.OrganizationID)
+	require.NotNil(t, updateResult.OrganizationContext.Product)
+	assert.Equal(t, "Test product overview", *updateResult.OrganizationContext.Product)
 }

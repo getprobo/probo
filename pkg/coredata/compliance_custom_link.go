@@ -38,7 +38,7 @@ type (
 	ComplianceCustomLink struct {
 		ID                 gid.GID   `db:"id"`
 		OrganizationID     gid.GID   `db:"organization_id"`
-		CompliancePortalID gid.GID   `db:"trust_center_id"`
+		CompliancePortalID gid.GID   `db:"compliance_portal_id"`
 		Name               string    `db:"name"`
 		URL                string    `db:"url"`
 		Rank               int       `db:"rank"`
@@ -109,7 +109,7 @@ func (c *ComplianceCustomLink) LoadByID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     url,
     rank,
@@ -157,7 +157,7 @@ INSERT INTO
         id,
         tenant_id,
         organization_id,
-        trust_center_id,
+        compliance_portal_id,
         name,
         url,
         rank,
@@ -168,10 +168,10 @@ VALUES (
     @id,
     @tenant_id,
     @organization_id,
-    @trust_center_id,
+    @compliance_portal_id,
     @name,
     @url,
-    (SELECT COALESCE(MAX(rank), 0) + 1 FROM compliance_custom_links WHERE trust_center_id = @trust_center_id),
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM compliance_custom_links WHERE compliance_portal_id = @compliance_portal_id),
     @created_at,
     @updated_at
 )
@@ -179,14 +179,14 @@ RETURNING rank;
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              c.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": c.OrganizationID,
-		"trust_center_id": c.CompliancePortalID,
-		"name":            c.Name,
-		"url":             c.URL,
-		"created_at":      c.CreatedAt,
-		"updated_at":      c.UpdatedAt,
+		"id":                   c.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      c.OrganizationID,
+		"compliance_portal_id": c.CompliancePortalID,
+		"name":                 c.Name,
+		"url":                  c.URL,
+		"created_at":           c.CreatedAt,
+		"updated_at":           c.UpdatedAt,
 	}
 
 	if err := conn.QueryRow(ctx, q, args).Scan(&c.Rank); err != nil {
@@ -239,7 +239,7 @@ WITH old AS (
   SELECT
     rank AS old_rank
   FROM compliance_custom_links
-  WHERE %s AND id = @id AND trust_center_id = @trust_center_id
+  WHERE %s AND id = @id AND compliance_portal_id = @compliance_portal_id
 )
 
 UPDATE compliance_custom_links
@@ -254,7 +254,7 @@ SET
     updated_at = @updated_at
 FROM old
 WHERE %s
-  AND trust_center_id = @trust_center_id
+  AND compliance_portal_id = @compliance_portal_id
   AND (
     id = @id
     OR (rank BETWEEN LEAST(old.old_rank, @new_rank) AND GREATEST(old.old_rank, @new_rank))
@@ -265,10 +265,10 @@ WHERE %s
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
-		"id":              c.ID,
-		"new_rank":        c.Rank,
-		"trust_center_id": c.CompliancePortalID,
-		"updated_at":      c.UpdatedAt,
+		"id":                   c.ID,
+		"new_rank":             c.Rank,
+		"compliance_portal_id": c.CompliancePortalID,
+		"updated_at":           c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -316,7 +316,7 @@ func (c *ComplianceCustomLinks) LoadByCompliancePortalID(
 SELECT
     id,
     organization_id,
-    trust_center_id,
+    compliance_portal_id,
     name,
     url,
     rank,
@@ -326,12 +326,12 @@ FROM
     compliance_custom_links
 WHERE
     %s
-    AND trust_center_id = @trust_center_id
+    AND compliance_portal_id = @compliance_portal_id
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.NamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 

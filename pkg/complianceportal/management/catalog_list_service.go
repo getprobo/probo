@@ -1,0 +1,496 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package management
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
+)
+
+type (
+	PortalAudit struct {
+		ID         gid.GID
+		Audit      *coredata.Audit
+		Visibility coredata.CompliancePortalVisibility
+	}
+
+	PortalThirdParty struct {
+		ID         gid.GID
+		ThirdParty *coredata.ThirdParty
+	}
+)
+
+func (c *PortalAudit) CursorKey(field coredata.AuditOrderField) page.CursorKey {
+	return c.Audit.CursorKey(field)
+}
+
+func (c *PortalThirdParty) CursorKey(field coredata.ThirdPartyOrderField) page.CursorKey {
+	return c.ThirdParty.CursorKey(field)
+}
+
+func (s *Service) loadPortalOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+) (gid.GID, error) {
+	portal := &coredata.CompliancePortal{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return portal.LoadByID(ctx, conn, scope, compliancePortalID)
+		},
+	)
+	if err != nil {
+		return gid.GID{}, fmt.Errorf("cannot load compliance portal: %w", err)
+	}
+
+	return portal.OrganizationID, nil
+}
+
+func (s *Service) ListDocuments(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	cursor *page.Cursor[coredata.DocumentOrderField],
+) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
+	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
+	if err != nil {
+		return nil, err
+	}
+
+	var documents coredata.Documents
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := documents.LoadPublishedByCompliancePortalID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				organizationID,
+				cursor,
+				coredata.NewDocumentCompliancePortalFilter(),
+			); err != nil {
+				return fmt.Errorf("cannot load portal documents: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(documents, cursor), nil
+}
+
+func (s *Service) ListAudits(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	cursor *page.Cursor[coredata.AuditOrderField],
+) (*page.Page[*PortalAudit, coredata.AuditOrderField], error) {
+	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
+	if err != nil {
+		return nil, err
+	}
+
+	var entries []*PortalAudit
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var audits coredata.Audits
+
+			if err := audits.LoadByCompliancePortalID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				organizationID,
+				cursor,
+				coredata.NewAuditCompliancePortalFilter(),
+			); err != nil {
+				return fmt.Errorf("cannot load portal audits: %w", err)
+			}
+
+			auditIDs := make([]gid.GID, len(audits))
+			for i, audit := range audits {
+				auditIDs[i] = audit.ID
+			}
+
+			linksByAuditID := map[gid.GID]*coredata.CompliancePortalAudit{}
+
+			if len(auditIDs) > 0 {
+				var loadErr error
+
+				linksByAuditID, loadErr = coredata.LoadCompliancePortalAuditsByCompliancePortalIDAndAuditIDs(
+					ctx,
+					conn,
+					scope,
+					compliancePortalID,
+					auditIDs,
+				)
+				if loadErr != nil {
+					return fmt.Errorf("cannot load portal audit links: %w", loadErr)
+				}
+			}
+
+			entries = make([]*PortalAudit, 0, len(audits))
+			for _, audit := range audits {
+				link := linksByAuditID[audit.ID]
+				if link == nil {
+					continue
+				}
+
+				if link.Visibility == coredata.CompliancePortalVisibilityNone {
+					continue
+				}
+
+				entries = append(entries, &PortalAudit{
+					ID:         link.ID,
+					Audit:      audit,
+					Visibility: link.Visibility,
+				})
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(entries, cursor), nil
+}
+
+func (s *Service) ListThirdParties(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	cursor *page.Cursor[coredata.ThirdPartyOrderField],
+) (*page.Page[*PortalThirdParty, coredata.ThirdPartyOrderField], error) {
+	organizationID, err := s.loadPortalOrganizationID(ctx, scope, compliancePortalID)
+	if err != nil {
+		return nil, err
+	}
+
+	var entries []*PortalThirdParty
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var thirdParties coredata.ThirdParties
+
+			if err := thirdParties.LoadByCompliancePortalID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				organizationID,
+				cursor,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot load portal third parties: %w", err)
+			}
+
+			thirdPartyIDs := make([]gid.GID, len(thirdParties))
+			for i, thirdParty := range thirdParties {
+				thirdPartyIDs[i] = thirdParty.ID
+			}
+
+			linksByThirdPartyID := map[gid.GID]*coredata.CompliancePortalThirdParty{}
+
+			if len(thirdPartyIDs) > 0 {
+				var loadErr error
+
+				linksByThirdPartyID, loadErr = coredata.LoadCompliancePortalThirdPartiesByCompliancePortalIDAndThirdPartyIDs(
+					ctx,
+					conn,
+					scope,
+					compliancePortalID,
+					thirdPartyIDs,
+				)
+				if loadErr != nil {
+					return fmt.Errorf("cannot load portal third party links: %w", loadErr)
+				}
+			}
+
+			entries = make([]*PortalThirdParty, 0, len(thirdParties))
+			for _, thirdParty := range thirdParties {
+				link := linksByThirdPartyID[thirdParty.ID]
+				if link == nil {
+					continue
+				}
+
+				entries = append(entries, &PortalThirdParty{
+					ID:         link.ID,
+					ThirdParty: thirdParty,
+				})
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(entries, cursor), nil
+}
+
+func (s *Service) GetDocumentLinkByID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentLinkID gid.GID,
+) (*coredata.CompliancePortalDocument, error) {
+	link := &coredata.CompliancePortalDocument{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByID(ctx, conn, scope, documentLinkID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal document catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetDocumentLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	documentID gid.GID,
+) (*coredata.CompliancePortalDocument, error) {
+	link := &coredata.CompliancePortalDocument{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := link.LoadByCompliancePortalIDAndDocumentID(ctx, conn, scope, compliancePortalID, documentID); err != nil {
+				return err
+			}
+
+			if link.Visibility == coredata.CompliancePortalVisibilityNone {
+				return coredata.ErrResourceNotFound
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal document catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetAuditLinkByID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditLinkID gid.GID,
+) (*coredata.CompliancePortalAudit, error) {
+	link := &coredata.CompliancePortalAudit{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByID(ctx, conn, scope, auditLinkID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal audit catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetAuditLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	auditID gid.GID,
+) (*coredata.CompliancePortalAudit, error) {
+	link := &coredata.CompliancePortalAudit{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := link.LoadByCompliancePortalIDAndAuditID(ctx, conn, scope, compliancePortalID, auditID); err != nil {
+				return err
+			}
+
+			if link.Visibility == coredata.CompliancePortalVisibilityNone {
+				return coredata.ErrResourceNotFound
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal audit catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetAudit(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	auditID gid.GID,
+) (*PortalAudit, error) {
+	link, err := s.GetAuditLink(ctx, scope, compliancePortalID, auditID)
+	if err != nil {
+		return nil, err
+	}
+
+	audit := &coredata.Audit{}
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return audit.LoadByID(ctx, conn, scope, auditID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal audit catalog entry: %w", err)
+	}
+
+	return &PortalAudit{
+		ID:         link.ID,
+		Audit:      audit,
+		Visibility: link.Visibility,
+	}, nil
+}
+
+func (s *Service) GetThirdPartyLinkByID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	thirdPartyLinkID gid.GID,
+) (*coredata.CompliancePortalThirdParty, error) {
+	link := &coredata.CompliancePortalThirdParty{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByID(ctx, conn, scope, thirdPartyLinkID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal third party catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetThirdPartyLink(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	thirdPartyID gid.GID,
+) (*coredata.CompliancePortalThirdParty, error) {
+	link := &coredata.CompliancePortalThirdParty{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return link.LoadByCompliancePortalIDAndThirdPartyID(ctx, conn, scope, compliancePortalID, thirdPartyID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal third party catalog entry: %w", err)
+	}
+
+	return link, nil
+}
+
+func (s *Service) GetThirdParty(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	thirdPartyID gid.GID,
+) (*PortalThirdParty, error) {
+	link, err := s.GetThirdPartyLink(ctx, scope, compliancePortalID, thirdPartyID)
+	if err != nil {
+		return nil, err
+	}
+
+	thirdParty := &coredata.ThirdParty{}
+
+	err = s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return thirdParty.LoadByID(ctx, conn, scope, thirdPartyID)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot load portal third party catalog entry: %w", err)
+	}
+
+	return &PortalThirdParty{
+		ID:         link.ID,
+		ThirdParty: thirdParty,
+	}, nil
+}

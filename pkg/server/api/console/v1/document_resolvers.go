@@ -13,10 +13,12 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -58,6 +60,34 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// CompliancePortalDocument is the resolver for the compliancePortalDocument field.
+func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *types.Document, compliancePortalID gid.GID) (*types.CompliancePortalDocument, error) {
+	scope, err := r.authorize(ctx, compliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := dataloader.FromContext(ctx).CompliancePortalDocument.Load(
+		ctx,
+		dataloader.CompliancePortalDocumentKey{
+			TenantID:           scope.GetTenantID(),
+			CompliancePortalID: compliancePortalID,
+			DocumentID:         obj.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalDocument(link), nil
 }
 
 // Versions is the resolver for the versions field.
@@ -847,13 +877,12 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	document, documentVersion, err := r.probo.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
-			OrganizationID:             input.OrganizationID,
-			Title:                      input.Title,
-			Content:                    content,
-			Classification:             input.Classification,
-			DocumentType:               input.DocumentType,
-			CompliancePortalVisibility: input.CompliancePortalVisibility,
-			DefaultApproverIDs:         input.DefaultApproverIds,
+			OrganizationID:     input.OrganizationID,
+			Title:              input.Title,
+			Content:            content,
+			Classification:     input.Classification,
+			DocumentType:       input.DocumentType,
+			DefaultApproverIDs: input.DefaultApproverIds,
 		},
 	)
 	if err != nil {
@@ -891,13 +920,12 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	document, documentVersion, draftCreated, err := r.probo.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
-			DocumentID:                 input.ID,
-			Title:                      input.Title,
-			Content:                    input.Content,
-			Classification:             input.Classification,
-			DocumentType:               input.DocumentType,
-			CompliancePortalVisibility: input.CompliancePortalVisibility,
-			DefaultApproverIDs:         defaultApproverIDs,
+			DocumentID:         input.ID,
+			Title:              input.Title,
+			Content:            input.Content,
+			Classification:     input.Classification,
+			DocumentType:       input.DocumentType,
+			DefaultApproverIDs: defaultApproverIDs,
 		},
 	)
 	if err != nil {
@@ -1265,10 +1293,25 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
 	identity := authn.IdentityFromContext(ctx)
 
+	watermarkText := input.WatermarkText
+	if watermarkText == nil && input.WatermarkEmail != nil {
+		watermarkText = new(pdfutils.TruncateWatermarkText(input.WatermarkEmail.String()))
+	}
+
+	if input.WithWatermark && watermarkText == nil {
+		watermarkText = new(pdfutils.TruncateWatermarkText(identity.EmailAddress.String()))
+	}
+
+	if input.WithWatermark {
+		if err := pdfutils.ValidateWatermarkText(*watermarkText); err != nil {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+	}
+
 	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
 		WithSignatures: input.WithSignatures,
-		WatermarkEmail: input.WatermarkEmail,
+		WatermarkText:  watermarkText,
 	}
 
 	documentExport, exportErr := r.probo.Documents.RequestExport(ctx, scope, input.DocumentIds, identity.EmailAddress, identity.FullName, options)
@@ -1565,16 +1608,26 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 		return nil, err
 	}
 
-	watermarkEmail := input.WatermarkEmail
-	if input.WithWatermark && watermarkEmail == nil {
+	watermarkText := input.WatermarkText
+	if watermarkText == nil && input.WatermarkEmail != nil {
+		watermarkText = new(pdfutils.TruncateWatermarkText(input.WatermarkEmail.String()))
+	}
+
+	if input.WithWatermark && watermarkText == nil {
 		identity := authn.IdentityFromContext(ctx)
-		watermarkEmail = &identity.EmailAddress
+		watermarkText = new(pdfutils.TruncateWatermarkText(identity.EmailAddress.String()))
+	}
+
+	if input.WithWatermark {
+		if err := pdfutils.ValidateWatermarkText(*watermarkText); err != nil {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 	}
 
 	options := probo.ExportPDFOptions{
 		WithSignatures: input.WithSignatures,
 		WithWatermark:  input.WithWatermark,
-		WatermarkEmail: watermarkEmail,
+		WatermarkText:  watermarkText,
 	}
 
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)
@@ -1622,7 +1675,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	options := probo.ExportPDFOptions{
 		WithSignatures: false,
 		WithWatermark:  true,
-		WatermarkEmail: &identity.EmailAddress,
+		WatermarkText:  new(pdfutils.TruncateWatermarkText(identity.EmailAddress.String())),
 	}
 
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)

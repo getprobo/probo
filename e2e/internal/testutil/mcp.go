@@ -110,7 +110,7 @@ func NewMCPClient(t require.TestingT, owner *Client) *MCPClient {
 func NewMCPClientWithAccessToken(t require.TestingT, owner *Client, accessToken string) *MCPClient {
 	mc := &MCPClient{
 		t:        t,
-		baseURL:  owner.BaseURL() + "/mcp/v1",
+		baseURL:  owner.BaseURL() + "/api/mcp/v1",
 		apiToken: accessToken,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
@@ -194,9 +194,14 @@ func (mc *MCPClient) doRequest(method string, params any) (json.RawMessage, erro
 		mc.sessionID = sid
 	}
 
+	responseBody, err := decodeMCPResponseBody(resp.Header.Get("Content-Type"), respBody, reqBody.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode response body: %w", err)
+	}
+
 	var rpcResp jsonrpcResponse
-	if err := json.Unmarshal(respBody, &rpcResp); err != nil {
-		return nil, fmt.Errorf("cannot decode response: %w (body: %s)", err, string(respBody))
+	if err := json.Unmarshal(responseBody, &rpcResp); err != nil {
+		return nil, fmt.Errorf("cannot decode response: %w (body: %s)", err, string(responseBody))
 	}
 
 	if rpcResp.Error != nil {

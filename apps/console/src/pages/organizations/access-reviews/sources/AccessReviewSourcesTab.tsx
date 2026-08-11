@@ -19,33 +19,26 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Card,
-  IconPlusLarge,
-  Table,
-  Tbody,
-  Th,
-  Thead,
-  Tr,
-  useToast,
-} from "@probo/ui";
-import { useEffect, useMemo, useRef } from "react";
+import { Button, Input, useToast } from "@probo/ui";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
-import { graphql, useFragment, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
-import { useSearchParams } from "react-router";
+import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { Link, useSearchParams } from "react-router";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { AccessReviewSourcesTabFragment$key } from "#/__generated__/core/AccessReviewSourcesTabFragment.graphql";
 import type { AccessReviewSourcesTabPaginationQuery } from "#/__generated__/core/AccessReviewSourcesTabPaginationQuery.graphql";
 import type { AccessReviewSourcesTabQuery } from "#/__generated__/core/AccessReviewSourcesTabQuery.graphql";
-import type { AddAccessReviewSourceDialogConnectorProviderInfoFragment$key } from "#/__generated__/core/AddAccessReviewSourceDialogConnectorProviderInfoFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { AccessReviewSourceRow } from "../_components/AccessReviewSourceRow";
+import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
 import { createAccessReviewSourceMutation } from "../dialogs/accessReviewSourceMutations";
-import { AddAccessReviewSourceDialog, addAccessReviewSourceDialogConnectorProviderInfoFragment } from "../dialogs/AddAccessReviewSourceDialog";
+
+import {
+  AccessReviewSourceProviderListItem,
+} from "./_components/AccessReviewSourceProviderListItem";
+import { accessReviewSourceSection } from "./_components/variants";
 
 function clearOAuthCallbackParams(params: URLSearchParams) {
   params.delete("connector_id");
@@ -57,7 +50,9 @@ function clearOAuthCallbackParams(params: URLSearchParams) {
 export const accessReviewSourcesTabQuery = graphql`
   query AccessReviewSourcesTabQuery($organizationId: ID!) {
     accessReviewDrivers {
-      ...AddAccessReviewSourceDialogConnectorProviderInfoFragment
+      provider
+      displayName
+      ...AccessReviewSourceProviderListItem_provider
     }
     organization: node(id: $organizationId) {
       __typename
@@ -93,11 +88,12 @@ const sourcesFragment = graphql`
       edges {
         node {
           id
+          name
           connectorId
           connector {
             provider
           }
-          ...AccessReviewSourceRowFragment
+          ...AccessReviewSourceListItem_source
         }
       }
     }
@@ -113,6 +109,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
   const processedConnectorIdRef = useRef<string | null>(null);
 
   const { organization, accessReviewDrivers } = usePreloadedQuery<AccessReviewSourcesTabQuery>(
@@ -122,11 +119,6 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
-
-  const connectorProviderInfos = useFragment<AddAccessReviewSourceDialogConnectorProviderInfoFragment$key>(
-    addAccessReviewSourceDialogConnectorProviderInfoFragment,
-    accessReviewDrivers,
-  );
 
   const {
     data: { accessReviewSources },
@@ -145,6 +137,62 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
         .filter((p): p is NonNullable<typeof p> => p != null),
     [accessReviewSources.edges],
   );
+  const connectedProviderSet = useMemo(
+    () => new Set(existingSourceProviders),
+    [existingSourceProviders],
+  );
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const isSearching = normalizedSearch !== "";
+  // accessReviewSources has no server-side filter, so the search matches only
+  // the pages already in the store. Pull the remaining ones while a search is
+  // active, otherwise a source past the first page is reported as absent.
+  // hasNext stays true when a page fails to load, so the failing term is
+  // latched to stop the effect from retrying in a loop; the load-more button
+  // stays available on that term to retry, and success clears the latch.
+  const [failedSearch, setFailedSearch] = useState<string | null>(null);
+  const loadMoreSources = useCallback(() => {
+    loadNext(50, {
+      onComplete: error => setFailedSearch(error ? normalizedSearch : null),
+    });
+  }, [loadNext, normalizedSearch]);
+  const hasFailedSearchLoad
+    = isSearching && hasNext && failedSearch === normalizedSearch;
+  const isLoadingRemainingSources
+    = isSearching && hasNext && !hasFailedSearchLoad;
+  useEffect(() => {
+    if (!isLoadingRemainingSources || isLoadingNext) return;
+    loadMoreSources();
+  }, [isLoadingRemainingSources, isLoadingNext, loadMoreSources]);
+  const filteredSources = useMemo(
+    () => accessReviewSources.edges.filter(({ node }) => {
+      if (!normalizedSearch) return true;
+      return node.name.toLowerCase().includes(normalizedSearch)
+        || (node.connector?.provider
+          ?.replaceAll("_", " ")
+          .toLowerCase()
+          .includes(normalizedSearch) ?? false);
+    }),
+    [accessReviewSources.edges, normalizedSearch],
+  );
+  const availableProviders = useMemo(
+    () => accessReviewDrivers
+      .filter(provider =>
+        !connectedProviderSet.has(provider.provider)
+        && (!normalizedSearch
+          || provider.displayName.toLowerCase().includes(normalizedSearch)
+          || provider.provider
+            .replaceAll("_", " ")
+            .toLowerCase()
+            .includes(normalizedSearch)),
+      )
+      .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    [accessReviewDrivers, connectedProviderSet, normalizedSearch],
+  );
+  const showCSV = !normalizedSearch
+    || "csv".includes(normalizedSearch)
+    || t("addAccessReviewSourceDialog.csv.title")
+      .toLowerCase()
+      .includes(normalizedSearch);
 
   const [createAccessReviewSource, isCreatingSource]
     = useMutation<accessReviewSourceMutationsCreateMutation>(
@@ -189,7 +237,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     processedConnectorIdRef.current = callbackConnectorId;
 
     const providerInfo = callbackProvider
-      ? connectorProviderInfos.find(p => p.provider === callbackProvider)
+      ? accessReviewDrivers.find(p => p.provider === callbackProvider)
       : null;
     const sourceName = providerInfo?.displayName ?? callbackProvider ?? "Source";
 
@@ -250,7 +298,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     callbackConnectorId,
     callbackProvider,
     callbackError,
-    connectorProviderInfos,
+    accessReviewDrivers,
     createAccessReviewSource,
     hasSourceForCallback,
     isCreatingSource,
@@ -262,72 +310,129 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   ]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        {organization.canCreateSource && (
-          <AddAccessReviewSourceDialog
-            organizationId={organizationId}
+    <div className="flex flex-col gap-8">
+      <Input
+        value={searchQuery}
+        onChange={event => setSearchQuery(event.target.value)}
+        placeholder={t("accessReviewSourcesTab.searchPlaceholder")}
+        className="max-w-sm"
+      />
+
+      <SourceSection
+        title={t("accessReviewSourcesTab.sections.connected")}
+        count={filteredSources.length}
+        empty={isLoadingRemainingSources
+          ? t("accessReviewSourcesTab.actions.loading")
+          : hasFailedSearchLoad
+            ? t("accessReviewSourcesTab.searchLoadFailed")
+            : isSearching
+              ? t("accessReviewSourcesTab.emptyConnectedSearch")
+              : t("accessReviewSourcesTab.emptyConnected")}
+      >
+        {filteredSources.map(({ node }) => (
+          <AccessReviewSourceListItem
+            key={node.id}
+            sourceKey={node}
             connectionId={accessReviewSources.__id}
-            providerInfos={connectorProviderInfos}
-            existingSourceProviders={existingSourceProviders}
-          >
-            <Button icon={IconPlusLarge}>
-              {t("accessReviewSourcesTab.actions.addSource")}
-            </Button>
-          </AddAccessReviewSourceDialog>
-        )}
-      </div>
+            organizationId={organizationId}
+          />
+        ))}
+      </SourceSection>
 
-      {accessReviewSources && accessReviewSources.edges.length > 0
-        ? (
-            <Card>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t("accessReviewSourcesTab.columns.name")}</Th>
-                    <Th>{t("accessReviewSourcesTab.columns.source")}</Th>
-                    <Th>{t("accessReviewSourcesTab.columns.status")}</Th>
-                    <Th>{t("accessReviewSourcesTab.columns.organization")}</Th>
-                    <Th>{t("accessReviewSourcesTab.columns.createdAt")}</Th>
-                    <Th className="w-12"></Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {accessReviewSources.edges.map(edge => (
-                    <AccessReviewSourceRow
-                      key={edge.node.id}
-                      fKey={edge.node}
-                      connectionId={accessReviewSources.__id}
-                      organizationId={organizationId}
-                    />
-                  ))}
-                </Tbody>
-              </Table>
+      {hasNext && (!isSearching || hasFailedSearchLoad) && (
+        <Button
+          variant="secondary"
+          onClick={loadMoreSources}
+          disabled={isLoadingNext}
+          className="self-start"
+        >
+          {isLoadingNext
+            ? t("accessReviewSourcesTab.actions.loading")
+            : hasFailedSearchLoad
+              ? t("accessReviewSourcesTab.actions.retry")
+              : t("accessReviewSourcesTab.actions.loadMore")}
+        </Button>
+      )}
 
-              {hasNext && (
-                <div className="p-4 border-t">
-                  <Button
-                    variant="secondary"
-                    onClick={() => loadNext(50)}
-                    disabled={isLoadingNext}
-                  >
-                    {isLoadingNext
-                      ? t("accessReviewSourcesTab.actions.loading")
-                      : t("accessReviewSourcesTab.actions.loadMore")}
-                  </Button>
-                </div>
-              )}
-            </Card>
-          )
-        : (
-            <Card padded>
-              <div className="text-center py-8">
-                <p className="text-txt-tertiary">
-                  {t("accessReviewSourcesTab.empty")}
-                </p>
-              </div>
-            </Card>
+      {organization.canCreateSource && (
+        <SourceSection
+          title={t("accessReviewSourcesTab.sections.notConnected")}
+          count={availableProviders.length + (showCSV ? 1 : 0)}
+          empty={t("accessReviewSourcesTab.emptyAvailableSearch")}
+        >
+          {availableProviders.map(provider => (
+            <AccessReviewSourceProviderListItem
+              key={provider.provider}
+              providerKey={provider}
+              organizationId={organizationId}
+              connectionId={accessReviewSources.__id}
+            />
+          ))}
+          {showCSV && (
+            <CSVSourceListItem organizationId={organizationId} />
           )}
+        </SourceSection>
+      )}
     </div>
+  );
+}
+
+function SourceSection({
+  title,
+  count,
+  empty,
+  children,
+}: {
+  title: string;
+  count: number;
+  empty: string;
+  children: ReactNode;
+}) {
+  const { root, header, title: titleClass, count: countClass, list, item }
+    = accessReviewSourceSection();
+
+  return (
+    <section className={root()}>
+      <div className={header()}>
+        <h2 className={titleClass()}>{title}</h2>
+        <span className={countClass()}>{count}</span>
+      </div>
+      <ul className={list()}>
+        {count > 0
+          ? children
+          : (
+              <li className={item()}>
+                <span className="text-sm text-txt-tertiary">{empty}</span>
+              </li>
+            )}
+      </ul>
+    </section>
+  );
+}
+
+function CSVSourceListItem({ organizationId }: { organizationId: string }) {
+  const { t } = useTranslation();
+  const { item, content, trailing } = accessReviewSourceSection();
+
+  return (
+    <li className={item()}>
+      <div className={content()}>
+        <span className="text-sm font-medium text-txt-primary">
+          {t("addAccessReviewSourceDialog.csv.title")}
+        </span>
+        <span className="text-xs text-txt-tertiary">
+          {t("addAccessReviewSourceDialog.csv.description")}
+        </span>
+      </div>
+      <div className={trailing()}>
+        <Button variant="primary" asChild>
+          <Link
+            to={`/organizations/${organizationId}/access-reviews/sources/new/csv`}
+          >
+            {t("addAccessReviewSourceDialog.actions.open")}
+          </Link>
+        </Button>
+      </div>
+    </li>
   );
 }

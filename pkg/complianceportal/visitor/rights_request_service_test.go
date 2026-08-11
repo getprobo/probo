@@ -23,6 +23,7 @@ package visitor
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -42,6 +43,13 @@ func TestRightsRequestService_CreateEnqueuesWebhook(t *testing.T) {
 	organizationID := insertPortalRequestWebhookOrganization(t, client)
 	scope := coredata.NewScope(organizationID.TenantID())
 	insertPortalRequestWebhookSubscription(t, client, scope, organizationID)
+	compliancePortalID := insertPortalRequestWebhookPortal(
+		t,
+		client,
+		scope,
+		organizationID,
+		coredata.DefaultCompliancePortalCapabilities(),
+	)
 
 	service := Service{pg: client}
 	dataSubject := "Jane Doe"
@@ -50,13 +58,14 @@ func TestRightsRequestService_CreateEnqueuesWebhook(t *testing.T) {
 		t.Context(),
 		scope,
 		&CreateRightsRequest{
-			OrganizationID: organizationID,
-			RequestType:    coredata.RightsRequestTypeAccess,
-			DataSubject:    &dataSubject,
-			Contact:        contact,
+			CompliancePortalID: compliancePortalID,
+			RequestType:        coredata.RightsRequestTypeAccess,
+			DataSubject:        &dataSubject,
+			Contact:            contact,
 		},
 	)
 	require.NoError(t, err)
+	assert.Equal(t, organizationID, rightsRequest.OrganizationID)
 
 	var data []byte
 
@@ -80,6 +89,67 @@ func TestRightsRequestService_CreateEnqueuesWebhook(t *testing.T) {
 	assert.Equal(t, dataSubject, *payload.DataSubject)
 	assert.Equal(t, contact, *payload.Contact)
 	assert.NotNil(t, payload.Deadline)
+}
+
+func TestRightsRequestService_CreateDisabledReturnsErr(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	organizationID := insertPortalRequestWebhookOrganization(t, client)
+	scope := coredata.NewScope(organizationID.TenantID())
+	insertPortalRequestWebhookSubscription(t, client, scope, organizationID)
+	compliancePortalID := insertPortalRequestWebhookPortal(
+		t,
+		client,
+		scope,
+		organizationID,
+		coredata.CompliancePortalCapabilities{RightsRequests: false},
+	)
+
+	service := Service{pg: client}
+	dataSubject := "Jane Doe"
+	_, err := service.CreateRightsRequest(
+		t.Context(),
+		scope,
+		&CreateRightsRequest{
+			CompliancePortalID: compliancePortalID,
+			RequestType:        coredata.RightsRequestTypeAccess,
+			DataSubject:        &dataSubject,
+			Contact:            "jane@example.com",
+		},
+	)
+	require.ErrorIs(t, err, ErrRightsRequestsDisabled)
+
+	var requestCount int
+
+	err = client.WithConn(
+		t.Context(),
+		func(ctx context.Context, conn pg.Querier) error {
+			return conn.QueryRow(
+				ctx,
+				`SELECT COUNT(*) FROM rights_requests WHERE organization_id = $1`,
+				organizationID.String(),
+			).Scan(&requestCount)
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 0, requestCount)
+
+	var webhookCount int
+
+	err = client.WithConn(
+		t.Context(),
+		func(ctx context.Context, conn pg.Querier) error {
+			return conn.QueryRow(
+				ctx,
+				`SELECT COUNT(*) FROM webhook_data WHERE organization_id = $1 AND event_type = $2`,
+				organizationID.String(),
+				coredata.WebhookEventTypeRightRequestCreated.String(),
+			).Scan(&webhookCount)
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 0, webhookCount)
 }
 
 func insertPortalRequestWebhookOrganization(t *testing.T, client *pg.Client) gid.GID {
@@ -121,6 +191,42 @@ func insertPortalRequestWebhookOrganization(t *testing.T, client *pg.Client) gid
 	})
 
 	return organizationID
+}
+
+func insertPortalRequestWebhookPortal(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	capabilities coredata.CompliancePortalCapabilities,
+) gid.GID {
+	t.Helper()
+
+	now := time.Now()
+	portalID := gid.New(organizationID.TenantID(), coredata.CompliancePortalEntityType)
+	portal := coredata.CompliancePortal{
+		ID:             portalID,
+		OrganizationID: organizationID,
+		TenantID:       organizationID.TenantID(),
+		Active:         true,
+		// Slugs are constrained to ^[a-z0-9_-]+$, so lowercase the base64url GID.
+		Slug:                 strings.ToLower(portalID.String()),
+		SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
+		Capabilities:         capabilities,
+		EntityName:           "Portal Request Webhook",
+		CreatedAt:            now,
+		UpdatedAt:            now,
+	}
+
+	err := client.WithTx(
+		t.Context(),
+		func(ctx context.Context, tx pg.Tx) error {
+			return portal.Insert(ctx, tx, scope)
+		},
+	)
+	require.NoError(t, err)
+
+	return portal.ID
 }
 
 func insertPortalRequestWebhookSubscription(

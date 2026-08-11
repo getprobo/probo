@@ -41,16 +41,16 @@ func TestMCP_Asset_CRUD(t *testing.T) {
 		Asset struct {
 			ID        string `json:"id"`
 			Name      string `json:"name"`
-			AssetType string `json:"assetType"`
+			AssetType string `json:"asset_type"`
 		} `json:"asset"`
 	}
 	mc.CallToolInto("addAsset", map[string]any{
-		"organizationId":  orgID,
-		"name":            factory.SafeName("Asset"),
-		"amount":          5,
-		"ownerId":         profileID,
-		"assetType":       "VIRTUAL",
-		"dataTypesStored": "PII",
+		"organization_id":   orgID,
+		"name":              factory.SafeName("Asset"),
+		"amount":            5,
+		"owner_id":          profileID,
+		"asset_type":        "VIRTUAL",
+		"data_types_stored": "PII",
 	}, &addResult)
 	require.NotEmpty(t, addResult.Asset.ID)
 	assert.Equal(t, "VIRTUAL", addResult.Asset.AssetType)
@@ -86,13 +86,13 @@ func TestMCP_Asset_CRUD(t *testing.T) {
 		} `json:"assets"`
 	}
 	mc.CallToolInto("listAssets", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Assets)
 
 	// Delete
 	var deleteResult struct {
-		DeletedAssetID string `json:"deletedAssetId"`
+		DeletedAssetID string `json:"deleted_asset_id"`
 	}
 	mc.CallToolInto("deleteAsset", map[string]any{
 		"id": addResult.Asset.ID,
@@ -114,11 +114,12 @@ func TestMCP_Asset_PermissionDenied(t *testing.T) {
 	viewerMC := testutil.NewMCPClient(t, viewer)
 
 	msg := viewerMC.CallToolExpectToolError("addAsset", map[string]any{
-		"organizationId":  orgID,
-		"name":            factory.SafeName("Asset"),
-		"amount":          1,
-		"assetType":       "VIRTUAL",
-		"dataTypesStored": "PII",
+		"organization_id":   orgID,
+		"name":              factory.SafeName("Asset"),
+		"amount":            1,
+		"owner_id":          factory.CreateUser(owner),
+		"asset_type":        "VIRTUAL",
+		"data_types_stored": "PII",
 	})
 	assert.Contains(t, msg, "permission denied")
 }

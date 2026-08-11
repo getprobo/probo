@@ -69,8 +69,8 @@ const scenariosFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    riskAssessmentScenarios(first: $first, after: $after, last: $last, before: $before)
-      @connection(key: "LinkScenarioDialogQuery_riskAssessmentScenarios") {
+    riskAnalysisScenarios(first: $first, after: $after, last: $last, before: $before)
+      @connection(key: "LinkScenarioDialogQuery_riskAnalysisScenarios") {
       edges {
         node {
           id
@@ -138,8 +138,8 @@ function LinkScenarioDialogContent(props: ContentProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const scenarios = useMemo(
-    () => data.riskAssessmentScenarios?.edges?.map(edge => edge.node) ?? [],
-    [data.riskAssessmentScenarios],
+    () => data.riskAnalysisScenarios?.edges?.map(edge => edge.node) ?? [],
+    [data.riskAnalysisScenarios],
   );
   const linkedIds = useMemo(() => {
     return new Set(props.linkedScenarios?.map(s => s.id) ?? []);
@@ -184,7 +184,7 @@ function LinkScenarioDialogContent(props: ContentProps) {
   );
 }
 
-type Scenario = NodeOf<LinkScenarioDialogFragment$data["riskAssessmentScenarios"]>;
+type Scenario = NodeOf<LinkScenarioDialogFragment$data["riskAnalysisScenarios"]>;
 
 function ScenarioRow(props: {
   scenario: Scenario;

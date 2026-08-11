@@ -45,6 +45,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $filter: CookieConsentRecordFilt
             regulation
             regulationSource
             countryCode
+            subdivisionCode
             createdAt
           }
         }
@@ -66,6 +67,7 @@ type consentRecord struct {
 	Regulation       *string `json:"regulation"`
 	RegulationSource *string `json:"regulationSource"`
 	CountryCode      *string `json:"countryCode"`
+	SubdivisionCode  *string `json:"subdivisionCode"`
 	CreatedAt        string  `json:"createdAt"`
 }
 
@@ -183,10 +185,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					countryCode = *r.CountryCode
 				}
 
-				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, regulation, regulationSource, countryCode, r.CreatedAt})
+				subdivisionCode := "-"
+				if r.SubdivisionCode != nil {
+					subdivisionCode = *r.SubdivisionCode
+				}
+
+				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, regulation, regulationSource, countryCode, subdivisionCode, r.CreatedAt})
 			}
 
-			t := cmdutil.NewTable("ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "SOURCE", "COUNTRY", "CREATED AT").Rows(rows...)
+			t := cmdutil.NewTable("ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "SOURCE", "COUNTRY", "SUBDIVISION", "CREATED AT").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(records) {

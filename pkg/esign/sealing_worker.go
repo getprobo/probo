@@ -226,6 +226,9 @@ func (h *sealingHandler) sealAndCommit(
 			}
 
 			signature.Status = coredata.ElectronicSignatureStatusCompleted
+			signature.AttemptCount = 0
+			signature.LastAttemptedAt = nil
+			signature.LastError = nil
 
 			signature.UpdatedAt = time.Now()
 			if err := signature.Update(ctx, tx, scope); err != nil {

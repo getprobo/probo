@@ -39,13 +39,16 @@ type (
 	CompliancePortalDocumentAccess struct {
 		ID                       gid.GID                              `db:"id"`
 		OrganizationID           gid.GID                              `db:"organization_id"`
-		CompliancePortalAccessID gid.GID                              `db:"trust_center_access_id"`
+		CompliancePortalAccessID gid.GID                              `db:"compliance_portal_access_id"`
 		DocumentID               *gid.GID                             `db:"document_id"`
 		ReportFileID             *gid.GID                             `db:"report_file_id"`
-		CompliancePortalFileID   *gid.GID                             `db:"trust_center_file_id"`
+		CompliancePortalFileID   *gid.GID                             `db:"compliance_portal_file_id"`
 		Status                   CompliancePortalDocumentAccessStatus `db:"status"`
-		CreatedAt                time.Time                            `db:"created_at"`
-		UpdatedAt                time.Time                            `db:"updated_at"`
+		// RequestedAt is set when the visitor request flow creates the row and
+		// preserved across later status changes. Nil for admin-created grants.
+		RequestedAt *time.Time `db:"requested_at"`
+		CreatedAt   time.Time  `db:"created_at"`
+		UpdatedAt   time.Time  `db:"updated_at"`
 	}
 
 	CompliancePortalDocumentAccesses []*CompliancePortalDocumentAccess
@@ -65,7 +68,7 @@ func (tcda *CompliancePortalDocumentAccess) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_center_document_accesses WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM cp_document_accesses WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -109,15 +112,16 @@ func (tcda *CompliancePortalDocumentAccess) LoadByID(
 SELECT
     id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
     AND id = @access_id
@@ -159,18 +163,19 @@ func (tcda *CompliancePortalDocumentAccess) LoadByCompliancePortalAccessIDAndDoc
 SELECT
     id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
     AND document_id = @document_id
 LIMIT 1;
 `
@@ -178,8 +183,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"document_id":            documentID,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"document_id":                 documentID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -213,18 +218,19 @@ func (tcda *CompliancePortalDocumentAccess) LoadByCompliancePortalAccessIDAndRep
 SELECT
     id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
     AND report_file_id = @report_file_id
 LIMIT 1;
 `
@@ -232,8 +238,8 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"report_file_id":         reportFileID,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"report_file_id":              reportFileID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -262,42 +268,45 @@ func (tcda *CompliancePortalDocumentAccess) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 ) VALUES (
     @id,
     @tenant_id,
     @organization_id,
-    @trust_center_access_id,
+    @compliance_portal_access_id,
     @document_id,
     @report_file_id,
-    @trust_center_file_id,
-    @status::trust_center_document_access_status,
+    @compliance_portal_file_id,
+    @status::compliance_portal_document_access_status,
+    @requested_at,
     @created_at,
     @updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                     tcda.ID,
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        tcda.OrganizationID,
-		"trust_center_access_id": tcda.CompliancePortalAccessID,
-		"document_id":            tcda.DocumentID,
-		"report_file_id":         tcda.ReportFileID,
-		"trust_center_file_id":   tcda.CompliancePortalFileID,
-		"status":                 tcda.Status,
-		"created_at":             tcda.CreatedAt,
-		"updated_at":             tcda.UpdatedAt,
+		"id":                          tcda.ID,
+		"tenant_id":                   scope.GetTenantID(),
+		"organization_id":             tcda.OrganizationID,
+		"compliance_portal_access_id": tcda.CompliancePortalAccessID,
+		"document_id":                 tcda.DocumentID,
+		"report_file_id":              tcda.ReportFileID,
+		"compliance_portal_file_id":   tcda.CompliancePortalFileID,
+		"status":                      tcda.Status,
+		"requested_at":                tcda.RequestedAt,
+		"created_at":                  tcda.CreatedAt,
+		"updated_at":                  tcda.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -305,9 +314,9 @@ INSERT INTO trust_center_document_accesses (
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
 				switch pgErr.ConstraintName {
-				case "trust_center_document_accesse_trust_center_access_id_docume_key",
-					"trust_center_document_accesses_trust_center_access_id_report_file_key",
-					"trust_center_document_accesses_trust_center_file_id_key":
+				case "cp_document_accesses_compliance_portal_access_id_document_id_ke",
+					"cp_document_accesses_compliance_portal_access_id_report_file_id",
+					"cp_document_accesses_compliance_portal_file_id_key":
 					return ErrResourceAlreadyExists
 				}
 			}
@@ -325,8 +334,8 @@ func (tcda *CompliancePortalDocumentAccess) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses SET
-    status = @status::trust_center_document_access_status,
+UPDATE cp_document_accesses SET
+    status = @status::compliance_portal_document_access_status,
     updated_at = @updated_at
 WHERE
     %s
@@ -356,7 +365,7 @@ func (tcda *CompliancePortalDocumentAccess) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM trust_center_document_accesses
+DELETE FROM cp_document_accesses
 WHERE
     %s
     AND id = @id
@@ -387,16 +396,53 @@ func (tcdas *CompliancePortalDocumentAccesses) CountByCompliancePortalAccessID(
 SELECT
     COUNT(id)
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
+		"compliance_portal_access_id": compliancePortalAccessID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+// CountVisitorRequestedByCompliancePortalAccessID counts access rows stamped by
+// the visitor request flow (requested_at IS NOT NULL), regardless of later
+// status changes. Admin-created grants leave requested_at NULL.
+func (tcdas *CompliancePortalDocumentAccesses) CountVisitorRequestedByCompliancePortalAccessID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(id)
+FROM
+    cp_document_accesses
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND requested_at IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -420,17 +466,17 @@ func (tcdas *CompliancePortalDocumentAccesses) CountPendingRequestByCompliancePo
 SELECT
     COUNT(id)
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
-    AND status = 'REQUESTED'::trust_center_document_access_status
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND status = 'REQUESTED'::compliance_portal_document_access_status
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
+		"compliance_portal_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -454,17 +500,17 @@ func (tcdas *CompliancePortalDocumentAccesses) CountActiveByCompliancePortalAcce
 SELECT
     COUNT(id)
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
-    AND status = 'GRANTED'::trust_center_document_access_status
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND status = 'GRANTED'::compliance_portal_document_access_status
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
+		"compliance_portal_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -487,11 +533,11 @@ func (tcdas *CompliancePortalDocumentAccesses) LoadAvailableByCompliancePortalAc
 ) error {
 	q := `
 WITH organization AS (
-    SELECT tc.organization_id
-    FROM trust_center_accesses tca
-    INNER JOIN trust_centers tc ON tca.trust_center_id = tc.id
+    SELECT tc.organization_id, tc.id AS compliance_portal_id
+    FROM cp_accesses tca
+    INNER JOIN compliance_portals tc ON tca.compliance_portal_id = tc.id
     WHERE tca.tenant_id = @tenant_id
-        AND tca.id = @trust_center_access_id
+        AND tca.id = @compliance_portal_access_id
 ),
 tenant_organization AS (
     SELECT o.id AS organization_id
@@ -503,14 +549,20 @@ all_items AS (
         d.id AS item_id,
         d.id AS document_id,
         NULL::text AS report_file_id,
-        NULL::text AS trust_center_file_id,
+        NULL::text AS compliance_portal_file_id,
         d.created_at AS item_created_at,
         d.updated_at AS item_updated_at
     FROM documents d, tenant_organization o
     WHERE d.organization_id = o.organization_id
         AND d.deleted_at IS NULL
-        AND d.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+        AND d.status = 'ACTIVE'::document_status
         AND d.current_published_major IS NOT NULL
+        AND d.id IN (
+            SELECT tcd.document_id
+            FROM cp_documents tcd
+            WHERE tcd.compliance_portal_id = (SELECT compliance_portal_id FROM organization)
+                AND tcd.visibility = 'RESTRICTED'::compliance_portal_visibility
+        )
 
     UNION ALL
 
@@ -518,13 +570,18 @@ all_items AS (
         r.report_file_id AS item_id,
         NULL::text AS document_id,
         r.report_file_id AS report_file_id,
-        NULL::text AS trust_center_file_id,
+        NULL::text AS compliance_portal_file_id,
         r.created_at AS item_created_at,
         r.updated_at AS item_updated_at
     FROM audits r, tenant_organization o
     WHERE r.organization_id = o.organization_id
-        AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
         AND r.report_file_id IS NOT NULL
+        AND r.id IN (
+            SELECT tca.audit_id
+            FROM cp_audits tca
+            WHERE tca.compliance_portal_id = (SELECT compliance_portal_id FROM organization)
+                AND tca.visibility = 'RESTRICTED'::compliance_portal_visibility
+        )
 
     UNION ALL
 
@@ -532,14 +589,15 @@ all_items AS (
         tcf.id AS item_id,
         NULL::text AS document_id,
         NULL::text AS report_file_id,
-        tcf.id AS trust_center_file_id,
+        tcf.id AS compliance_portal_file_id,
         tcf.created_at AS item_created_at,
         tcf.updated_at AS item_updated_at
-    FROM trust_center_files tcf, tenant_organization o
+    FROM cp_files tcf, tenant_organization o
     WHERE tcf.organization_id = o.organization_id
+        AND tcf.compliance_portal_id = (SELECT compliance_portal_id FROM organization)
         AND (
-            tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
-            OR tcf.trust_center_visibility = 'NONE'::trust_center_visibility
+            tcf.compliance_portal_visibility = 'RESTRICTED'::compliance_portal_visibility
+            OR tcf.compliance_portal_visibility = 'NONE'::compliance_portal_visibility
         )
 ),
 final_items AS (
@@ -547,31 +605,33 @@ final_items AS (
       COALESCE(tcda.id, ai.item_id) AS id,
       tcda.tenant_id,
       (SELECT organization_id FROM organization) AS organization_id,
-      @trust_center_access_id AS trust_center_access_id,
+      @compliance_portal_access_id AS compliance_portal_access_id,
       ai.document_id,
       ai.report_file_id,
-      ai.trust_center_file_id,
-      COALESCE(tcda.status, 'REQUESTED'::trust_center_document_access_status) AS status,
+      ai.compliance_portal_file_id,
+      COALESCE(tcda.status, 'REQUESTED'::compliance_portal_document_access_status) AS status,
+      tcda.requested_at AS requested_at,
       COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
       COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
   FROM all_items ai
-  LEFT JOIN trust_center_document_accesses tcda ON (
-      tcda.trust_center_access_id = @trust_center_access_id
+  LEFT JOIN cp_document_accesses tcda ON (
+      tcda.compliance_portal_access_id = @compliance_portal_access_id
       AND (
           (tcda.document_id = ai.document_id AND ai.document_id IS NOT NULL)
           OR (tcda.report_file_id = ai.report_file_id AND ai.report_file_id IS NOT NULL)
-          OR (tcda.trust_center_file_id = ai.trust_center_file_id AND ai.trust_center_file_id IS NOT NULL)
+          OR (tcda.compliance_portal_file_id = ai.compliance_portal_file_id AND ai.compliance_portal_file_id IS NOT NULL)
       )
   )
 )
 SELECT
     id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM final_items
@@ -581,7 +641,7 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
+		"compliance_portal_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -612,25 +672,26 @@ func (tcdas *CompliancePortalDocumentAccesses) LoadByCompliancePortalAccessID(
 SELECT
     id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
     AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
+		"compliance_portal_access_id": compliancePortalAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -650,6 +711,63 @@ WHERE
 	return nil
 }
 
+// RerequestByDocumentIDs reactivates REJECTED/REVOKED document access rows for
+// a visitor retry (status back to REQUESTED) and stamps requested_at when
+// missing on those rows or on pre-existing REQUESTED rows so
+// viewerHasRequestedAccess stays consistent with the mutation.
+func RerequestByDocumentIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+	documentIDs []gid.GID,
+	requestedAt time.Time,
+) error {
+	if len(documentIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE cp_document_accesses
+SET
+    status = @requested_status::compliance_portal_document_access_status,
+    requested_at = COALESCE(requested_at, @requested_at),
+    updated_at = @requested_at
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND document_id = ANY(@document_ids)
+    AND (
+        status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+        OR (
+            status = @requested_status::compliance_portal_document_access_status
+            AND requested_at IS NULL
+        )
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"document_ids":                documentIDs,
+		"requested_at":                requestedAt,
+		"requested_status":            CompliancePortalDocumentAccessStatusRequested,
+		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
+			CompliancePortalDocumentAccessStatusRejected,
+			CompliancePortalDocumentAccessStatusRevoked,
+		},
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot rerequest compliance portal document accesses: %w", err)
+	}
+
+	return nil
+}
+
 func GrantByDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -659,20 +777,20 @@ func GrantByDocumentIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
-SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
+UPDATE cp_document_accesses
+SET status = 'GRANTED'::compliance_portal_document_access_status, updated_at = @updated_at
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
     AND document_id = ANY(@document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"document_ids":           documentIDs,
-		"updated_at":             updatedAt,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"document_ids":                documentIDs,
+		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -693,31 +811,86 @@ func RejectOrRevokeByDocumentIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET
     status = CASE
-        WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
-        ELSE 'REJECTED'::trust_center_document_access_status
+        WHEN status = 'GRANTED'::compliance_portal_document_access_status THEN 'REVOKED'::compliance_portal_document_access_status
+        ELSE 'REJECTED'::compliance_portal_document_access_status
     END,
     updated_at = @updated_at
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
     AND document_id = ANY(@document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"document_ids":           documentIDs,
-		"updated_at":             updatedAt,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"document_ids":                documentIDs,
+		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot reject compliance portal document accesses by document IDs: %w", err)
+	}
+
+	return nil
+}
+
+// RerequestByReportFileIDs reactivates REJECTED/REVOKED report access rows for
+// a visitor retry and stamps unstamped REQUESTED rows. See RerequestByDocumentIDs.
+func RerequestByReportFileIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+	reportFileIDs []gid.GID,
+	requestedAt time.Time,
+) error {
+	if len(reportFileIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE cp_document_accesses
+SET
+    status = @requested_status::compliance_portal_document_access_status,
+    requested_at = COALESCE(requested_at, @requested_at),
+    updated_at = @requested_at
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND report_file_id = ANY(@report_file_ids)
+    AND (
+        status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+        OR (
+            status = @requested_status::compliance_portal_document_access_status
+            AND requested_at IS NULL
+        )
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"report_file_ids":             reportFileIDs,
+		"requested_at":                requestedAt,
+		"requested_status":            CompliancePortalDocumentAccessStatusRequested,
+		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
+			CompliancePortalDocumentAccessStatusRejected,
+			CompliancePortalDocumentAccessStatusRevoked,
+		},
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot rerequest compliance portal report accesses: %w", err)
 	}
 
 	return nil
@@ -732,20 +905,20 @@ func GrantByReportFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
-SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
+UPDATE cp_document_accesses
+SET status = 'GRANTED'::compliance_portal_document_access_status, updated_at = @updated_at
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
     AND report_file_id = ANY(@report_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"report_file_ids":        reportFileIDs,
-		"updated_at":             updatedAt,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"report_file_ids":             reportFileIDs,
+		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -766,25 +939,25 @@ func RejectOrRevokeByReportFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET
     status = CASE
-        WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
-        ELSE 'REJECTED'::trust_center_document_access_status
+        WHEN status = 'GRANTED'::compliance_portal_document_access_status THEN 'REVOKED'::compliance_portal_document_access_status
+        ELSE 'REJECTED'::compliance_portal_document_access_status
     END,
     updated_at = @updated_at
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
     AND report_file_id = ANY(@report_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"report_file_ids":        reportFileIDs,
-		"updated_at":             updatedAt,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"report_file_ids":             reportFileIDs,
+		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -816,19 +989,19 @@ WITH data AS (
     FROM json_to_recordset(@data)
         AS t(
             id text,
-            status trust_center_document_access_status
+            status compliance_portal_document_access_status
         )
 )
-MERGE INTO trust_center_document_accesses AS tcda
+MERGE INTO cp_document_accesses AS tcda
 USING data
     ON data.id = tcda.document_id
     AND tcda.tenant_id = @tenant_id
-    AND tcda.trust_center_access_id = @trust_center_access_id
+    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
 WHEN MATCHED
     THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
 WHEN NOT MATCHED BY SOURCE
     AND tcda.tenant_id = @tenant_id
-    AND tcda.trust_center_access_id = @trust_center_access_id
+    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
     AND tcda.document_id IS NOT NULL
     THEN DELETE
 WHEN NOT MATCHED
@@ -836,19 +1009,19 @@ WHEN NOT MATCHED
         id,
         tenant_id,
         organization_id,
-        trust_center_access_id,
+        compliance_portal_access_id,
         document_id,
         report_file_id,
-        trust_center_file_id,
+        compliance_portal_file_id,
         status,
         created_at,
         updated_at
     )
     VALUES (
-        generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type),
+        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
         @tenant_id,
         @organization_id,
-        @trust_center_access_id,
+        @compliance_portal_access_id,
         data.id,
         NULL,
         NULL,
@@ -859,12 +1032,12 @@ WHEN NOT MATCHED
 `
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": compliancePortalAccessID,
-		"organization_id":        organizationID,
-		"now":                    time.Now(),
-		"data":                   data,
+		"compliance_portal_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"tenant_id":                   scope.GetTenantID(),
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"organization_id":             organizationID,
+		"now":                         time.Now(),
+		"data":                        data,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -891,26 +1064,28 @@ func (tcdas CompliancePortalDocumentAccesses) BulkInsertDocumentAccesses(
 	q := `
 WITH document_access_data AS (
     SELECT
-        generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type) AS id,
         @tenant_id AS tenant_id,
         @organization_id AS organization_id,
-        @trust_center_access_id AS trust_center_access_id,
+        @compliance_portal_access_id AS compliance_portal_access_id,
         unnest(@document_ids::text[]) AS document_id,
         null::text AS report_file_id,
-        null::text AS trust_center_file_id,
-        @status::trust_center_document_access_status AS status,
+        null::text AS compliance_portal_file_id,
+        @status::compliance_portal_document_access_status AS status,
+        @created_at::timestamptz AS requested_at,
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 )
@@ -919,11 +1094,11 @@ ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
-		"organization_id":        organizationID,
-		"trust_center_access_id": compliancePortalAccessID,
-		"document_ids":           documentIDs,
-		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"tenant_id":                   scope.GetTenantID(),
+		"organization_id":             organizationID,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"document_ids":                documentIDs,
+		"compliance_portal_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
 		"status":     status,
 		"created_at": createdAt,
 		"updated_at": createdAt,
@@ -951,19 +1126,19 @@ WITH data AS (
     FROM json_to_recordset(@data)
         AS t(
             id text,
-            status trust_center_document_access_status
+            status compliance_portal_document_access_status
         )
 )
-MERGE INTO trust_center_document_accesses AS tcda
+MERGE INTO cp_document_accesses AS tcda
 USING data
     ON data.id = tcda.report_file_id
     AND tcda.tenant_id = @tenant_id
-    AND tcda.trust_center_access_id = @trust_center_access_id
+    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
 WHEN MATCHED
     THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
 WHEN NOT MATCHED BY SOURCE
     AND tcda.tenant_id = @tenant_id
-    AND tcda.trust_center_access_id = @trust_center_access_id
+    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
     AND tcda.report_file_id IS NOT NULL
     THEN DELETE
 WHEN NOT MATCHED
@@ -971,19 +1146,19 @@ WHEN NOT MATCHED
         id,
         tenant_id,
         organization_id,
-        trust_center_access_id,
+        compliance_portal_access_id,
         document_id,
         report_file_id,
-        trust_center_file_id,
+        compliance_portal_file_id,
         status,
         created_at,
         updated_at
     )
     VALUES (
-        generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type),
+        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
         @tenant_id,
         @organization_id,
-        @trust_center_access_id,
+        @compliance_portal_access_id,
         NULL,
         data.id,
         NULL,
@@ -994,12 +1169,12 @@ WHEN NOT MATCHED
 `
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": compliancePortalAccessID,
-		"organization_id":        organizationID,
-		"now":                    time.Now(),
-		"data":                   data,
+		"compliance_portal_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"tenant_id":                   scope.GetTenantID(),
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"organization_id":             organizationID,
+		"now":                         time.Now(),
+		"data":                        data,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -1026,26 +1201,28 @@ func (tcdas CompliancePortalDocumentAccesses) BulkInsertReportFileAccesses(
 	q := `
 WITH report_file_access_data AS (
     SELECT
-        generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type) AS id,
         @tenant_id AS tenant_id,
         @organization_id AS organization_id,
-        @trust_center_access_id AS trust_center_access_id,
+        @compliance_portal_access_id AS compliance_portal_access_id,
         null::text AS document_id,
         unnest(@report_file_ids::text[]) AS report_file_id,
-        null::text AS trust_center_file_id,
-        @status::trust_center_document_access_status AS status,
+        null::text AS compliance_portal_file_id,
+        @status::compliance_portal_document_access_status AS status,
+        @created_at::timestamptz AS requested_at,
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 )
@@ -1056,12 +1233,12 @@ ON CONFLICT DO NOTHING
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": organizationID,
-		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
-		"trust_center_access_id":                   compliancePortalAccessID,
-		"report_file_ids":                          reportFileIDs,
-		"status":                                   status,
-		"created_at":                               createdAt,
-		"updated_at":                               createdAt,
+		"compliance_portal_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"compliance_portal_access_id":                   compliancePortalAccessID,
+		"report_file_ids":                               reportFileIDs,
+		"status":                                        status,
+		"created_at":                                    createdAt,
+		"updated_at":                                    createdAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -1082,27 +1259,28 @@ func (tcda *CompliancePortalDocumentAccess) LoadByCompliancePortalAccessIDAndCom
 SELECT
     id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 FROM
-    trust_center_document_accesses
+    cp_document_accesses
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
-    AND trust_center_file_id = @trust_center_file_id
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND compliance_portal_file_id = @compliance_portal_file_id
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"trust_center_file_id":   compliancePortalFileID,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"compliance_portal_file_id":   compliancePortalFileID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1125,6 +1303,62 @@ LIMIT 1;
 	return nil
 }
 
+// RerequestByCompliancePortalFileIDs reactivates REJECTED/REVOKED file access
+// rows for a visitor retry and stamps unstamped REQUESTED rows. See
+// RerequestByDocumentIDs.
+func RerequestByCompliancePortalFileIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalAccessID gid.GID,
+	compliancePortalFileIDs []gid.GID,
+	requestedAt time.Time,
+) error {
+	if len(compliancePortalFileIDs) == 0 {
+		return nil
+	}
+
+	q := `
+UPDATE cp_document_accesses
+SET
+    status = @requested_status::compliance_portal_document_access_status,
+    requested_at = COALESCE(requested_at, @requested_at),
+    updated_at = @requested_at
+WHERE
+    %s
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND compliance_portal_file_id = ANY(@compliance_portal_file_ids)
+    AND (
+        status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
+        OR (
+            status = @requested_status::compliance_portal_document_access_status
+            AND requested_at IS NULL
+        )
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"compliance_portal_file_ids":  compliancePortalFileIDs,
+		"requested_at":                requestedAt,
+		"requested_status":            CompliancePortalDocumentAccessStatusRequested,
+		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
+			CompliancePortalDocumentAccessStatusRejected,
+			CompliancePortalDocumentAccessStatusRevoked,
+		},
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot rerequest compliance portal file accesses: %w", err)
+	}
+
+	return nil
+}
+
 func GrantByCompliancePortalFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -1134,20 +1368,20 @@ func GrantByCompliancePortalFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
-SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
+UPDATE cp_document_accesses
+SET status = 'GRANTED'::compliance_portal_document_access_status, updated_at = @updated_at
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
-    AND trust_center_file_id = ANY(@trust_center_file_ids)
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND compliance_portal_file_id = ANY(@compliance_portal_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"trust_center_file_ids":  compliancePortalFileIDs,
-		"updated_at":             updatedAt,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"compliance_portal_file_ids":  compliancePortalFileIDs,
+		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1168,25 +1402,25 @@ func RejectOrRevokeByCompliancePortalFileIDs(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
+UPDATE cp_document_accesses
 SET
     status = CASE
-        WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
-        ELSE 'REJECTED'::trust_center_document_access_status
+        WHEN status = 'GRANTED'::compliance_portal_document_access_status THEN 'REVOKED'::compliance_portal_document_access_status
+        ELSE 'REJECTED'::compliance_portal_document_access_status
     END,
     updated_at = @updated_at
 WHERE
     %s
-    AND trust_center_access_id = @trust_center_access_id
-    AND trust_center_file_id = ANY(@trust_center_file_ids)
+    AND compliance_portal_access_id = @compliance_portal_access_id
+    AND compliance_portal_file_id = ANY(@compliance_portal_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": compliancePortalAccessID,
-		"trust_center_file_ids":  compliancePortalFileIDs,
-		"updated_at":             updatedAt,
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"compliance_portal_file_ids":  compliancePortalFileIDs,
+		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1213,39 +1447,39 @@ WITH data AS (
     FROM json_to_recordset(@data)
         AS t(
             id text,
-            status trust_center_document_access_status
+            status compliance_portal_document_access_status
         )
 )
-MERGE INTO trust_center_document_accesses AS tcda
+MERGE INTO cp_document_accesses AS tcda
 USING data
-    ON data.id = tcda.trust_center_file_id
+    ON data.id = tcda.compliance_portal_file_id
     AND tcda.tenant_id = @tenant_id
-    AND tcda.trust_center_access_id = @trust_center_access_id
+    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
 WHEN MATCHED
     THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
 WHEN NOT MATCHED BY SOURCE
     AND tcda.tenant_id = @tenant_id
-    AND tcda.trust_center_access_id = @trust_center_access_id
-    AND tcda.trust_center_file_id IS NOT NULL
+    AND tcda.compliance_portal_access_id = @compliance_portal_access_id
+    AND tcda.compliance_portal_file_id IS NOT NULL
     THEN DELETE
 WHEN NOT MATCHED
     THEN INSERT (
         id,
         tenant_id,
         organization_id,
-        trust_center_access_id,
+        compliance_portal_access_id,
         document_id,
         report_file_id,
-        trust_center_file_id,
+        compliance_portal_file_id,
         status,
         created_at,
         updated_at
     )
     VALUES (
-        generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type),
+        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type),
         @tenant_id,
         @organization_id,
-        @trust_center_access_id,
+        @compliance_portal_access_id,
         NULL,
         NULL,
         data.id,
@@ -1256,12 +1490,12 @@ WHEN NOT MATCHED
 `
 
 	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": compliancePortalAccessID,
-		"organization_id":        organizationID,
-		"now":                    time.Now(),
-		"data":                   data,
+		"compliance_portal_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"tenant_id":                   scope.GetTenantID(),
+		"compliance_portal_access_id": compliancePortalAccessID,
+		"organization_id":             organizationID,
+		"now":                         time.Now(),
+		"data":                        data,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -1282,44 +1516,46 @@ func (tcdas CompliancePortalDocumentAccesses) BulkInsertCompliancePortalFileAcce
 	createdAt time.Time,
 ) error {
 	q := `
-WITH trust_center_file_access_data AS (
+WITH compliance_portal_file_access_data AS (
     SELECT
-        generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+        generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type) AS id,
         @tenant_id AS tenant_id,
         @organization_id AS organization_id,
-        @trust_center_access_id AS trust_center_access_id,
+        @compliance_portal_access_id AS compliance_portal_access_id,
         null::text AS document_id,
         null::text AS report_file_id,
-        unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
-        @status::trust_center_document_access_status AS status,
+        unnest(@compliance_portal_file_ids::text[]) AS compliance_portal_file_id,
+        @status::compliance_portal_document_access_status AS status,
+        @created_at::timestamptz AS requested_at,
         @created_at::timestamptz AS created_at,
         @updated_at::timestamptz AS updated_at
 )
-INSERT INTO trust_center_document_accesses (
+INSERT INTO cp_document_accesses (
     id,
     tenant_id,
     organization_id,
-    trust_center_access_id,
+    compliance_portal_access_id,
     document_id,
     report_file_id,
-    trust_center_file_id,
+    compliance_portal_file_id,
     status,
+    requested_at,
     created_at,
     updated_at
 )
-SELECT * FROM trust_center_file_access_data
+SELECT * FROM compliance_portal_file_access_data
 ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
 		"organization_id": organizationID,
-		"trust_center_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
-		"trust_center_access_id":                   compliancePortalAccessID,
-		"trust_center_file_ids":                    compliancePortalFileIDs,
-		"status":                                   status,
-		"created_at":                               createdAt,
-		"updated_at":                               createdAt,
+		"compliance_portal_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
+		"compliance_portal_access_id":                   compliancePortalAccessID,
+		"compliance_portal_file_ids":                    compliancePortalFileIDs,
+		"status":                                        status,
+		"created_at":                                    createdAt,
+		"updated_at":                                    createdAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {

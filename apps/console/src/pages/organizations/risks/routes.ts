@@ -38,12 +38,20 @@ export const riskRoutes = [
         Component: lazy(() => import("./RisksPageLoader")),
       },
       {
-        path: "risk-assessments",
+        path: "risk-analyses",
         Fallback: PageSkeleton,
         Component: lazy(
           () =>
-            import("./risk-assessments/RiskAssessmentsPageLoader"),
+            import("./risk-analyses/RiskAnalysesPageLoader"),
         ),
+      },
+      {
+        path: "risk-assessments",
+        loader: () => {
+          // eslint-disable-next-line
+          throw redirect("../risk-analyses");
+        },
+        Component: Fragment,
       },
     ],
   },
@@ -93,11 +101,19 @@ export const riskRoutes = [
     ],
   },
   {
-    path: "risk-assessments/:riskAssessmentId",
+    path: "risk-analyses/:riskAnalysisId",
     Fallback: PageSkeleton,
     Component: lazy(
       () =>
-        import("./risk-assessments/RiskAssessmentDetailPageLoader"),
+        import("./risk-analyses/RiskAnalysisDetailPageLoader"),
     ),
+  },
+  {
+    path: "risk-assessments/:riskAssessmentId",
+    loader: ({ params }) => {
+      // eslint-disable-next-line
+      throw redirect(`../risk-analyses/${params.riskAssessmentId}`);
+    },
+    Component: Fragment,
   },
 ] satisfies AppRoute[];

@@ -21,6 +21,7 @@
 import { ProboBanner } from "./banner";
 import {
   ProboAcceptButton,
+  ProboAcknowledgeButton,
   ProboCustomizeButton,
   ProboRejectButton,
 } from "./buttons";
@@ -30,23 +31,24 @@ import { ProboCategoryToggle } from "./category-toggle";
 import { ProboCookieBannerRoot } from "./cookie-banner-root";
 import { ProboCookie, ProboCookieList } from "./cookie-list";
 import { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
-import { ProboSettingsButton } from "./settings-button";
+import { ProboPrivacyChoices } from "./privacy-choices";
 import { ProboSettingsLink } from "./settings-link";
 
 const elements: [string, CustomElementConstructor][] = [
   ["probo-cookie-banner-root", ProboCookieBannerRoot],
   ["probo-banner", ProboBanner],
   ["probo-accept-button", ProboAcceptButton],
+  ["probo-acknowledge-button", ProboAcknowledgeButton],
   ["probo-reject-button", ProboRejectButton],
   ["probo-customize-button", ProboCustomizeButton],
   ["probo-preference-panel", ProboPreferencePanel],
+  ["probo-privacy-choices", ProboPrivacyChoices],
   ["probo-category-list", ProboCategoryList],
   ["probo-category", ProboCategory],
   ["probo-category-toggle", ProboCategoryToggle],
   ["probo-cookie-list", ProboCookieList],
   ["probo-cookie", ProboCookie],
   ["probo-save-button", ProboSaveButton],
-  ["probo-settings-button", ProboSettingsButton],
   ["probo-settings-link", ProboSettingsLink],
 ];
 

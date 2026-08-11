@@ -131,7 +131,15 @@ func NewMux(
 
 	// SCIM 2.0 endpoints - these use their own bearer token authentication
 	scimServer := NewSCIMServer(scimHandler)
-	r.Mount("/scim/2.0", http.StripPrefix("/scim/2.0", scimHandler.BearerTokenMiddleware(scimServer)))
+	r.Mount(
+		"/scim/2.0",
+		http.StripPrefix(
+			"/scim/2.0",
+			scimHandler.BearerTokenMiddleware(
+				scimHandler.EventLoggingMiddleware(scimServer),
+			),
+		),
+	)
 
 	// OAuth2 / OpenID Connect server endpoints.
 

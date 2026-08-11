@@ -8,13 +8,12 @@ varies by environment (there may be more than one Probo server, e.g. US and EU).
 
 1. **Resolve the organization** — `listOrganizations`, match by name, keep the `id`.
 2. **Resolve the compliance portal** — `getCompliancePortal` with `organization_id`. Keep
-   `compliance_portal.id`; every group call still takes it as the `trust_center_id` argument (the resource
-   was renamed from "trust center" to "compliance portal" but the ID parameter kept its old name).
-3. **Read what already exists** — `listCommitmentGroups` with the `trust_center_id`, and
+   `compliance_portal.id`; every group call takes it as the `compliance_portal_id` argument.
+3. **Read what already exists** — `listCommitmentGroups` with the `compliance_portal_id`, and
    `listCommitments` with a `group_id`. Do this so you reuse the existing group instead of duplicating it.
    Order by `{field: "RANK", direction: "ASC"}`.
 4. **Create the single group** — all commitments live under one group titled "Security at <company name>".
-   If it does not exist yet, `addCommitmentGroup` with `trust_center_id`, `title`, `description`; if it (or
+   If it does not exist yet, `addCommitmentGroup` with `compliance_portal_id`, `title`, `description`; if it (or
    any other group) already exists, reuse it. Capture the returned `commitment_group.id`. You need it to
    attach commitments.
 5. **Add commitments** — `addCommitment` with `group_id`, `icon`, `eyebrow`, `title`, `description`. These

@@ -7,6 +7,7 @@ package complianceportal_v1
 
 import (
 	"context"
+	"errors"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
@@ -33,15 +34,20 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		ctx,
 		scope,
 		&visitor.CreateRightsRequest{
-			OrganizationID: compliancePage.OrganizationID,
-			RequestType:    input.RequestType,
-			DataSubject:    input.DataSubject,
-			Contact:        identity.EmailAddress.String(),
-			Details:        input.Details,
+			CompliancePortalID: compliancePage.ID,
+			RequestType:        input.RequestType,
+			DataSubject:        input.DataSubject,
+			Contact:            identity.EmailAddress.String(),
+			Details:            input.Details,
 		},
 	)
 	if err != nil {
+		if errors.Is(err, visitor.ErrRightsRequestsDisabled) {
+			return nil, gqlutils.NotFoundf(ctx, "rights requests are not available on this compliance portal")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create rights request", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

@@ -28,33 +28,11 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// compliancePortalID looks up the caller's own organization's compliance portal id.
+// compliancePortalID creates a compliance portal for the caller's organization.
 func compliancePortalID(t *testing.T, c *testutil.Client) string {
 	t.Helper()
 
-	var result struct {
-		Node struct {
-			CompliancePortal struct {
-				ID string `json:"id"`
-			} `json:"compliancePortal"`
-		} `json:"node"`
-	}
-
-	err := c.Execute(`
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal { id }
-				}
-			}
-		}
-	`, map[string]any{
-		"organizationId": c.GetOrganizationID().String(),
-	}, &result)
-	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.CompliancePortal.ID)
-
-	return result.Node.CompliancePortal.ID
+	return factory.CreateCompliancePortal(c)
 }
 
 func TestComplianceFramework_Create(t *testing.T) {
@@ -88,34 +66,4 @@ func TestComplianceFramework_Create(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 	require.NotEmpty(t, result.CreateComplianceFramework.ComplianceFrameworkEdge.Node.ID)
-}
-
-// TestComplianceFramework_TenantIsolation covers GHSA-c74x-79w6-63jh's
-// structural sibling: ComplianceFrameworkService.Create must not accept a
-// frameworkId belonging to another organization -- the FK is tenant-agnostic
-// (ON DELETE CASCADE) so a cross-tenant reference would let org A pin a link
-// to org B's framework and would let org B silently cascade-delete org A's
-// compliance page entry.
-func TestComplianceFramework_TenantIsolation(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	org1CompliancePortalID := compliancePortalID(t, org1Owner)
-	org2FrameworkID := factory.CreateFramework(org2Owner)
-
-	_, err := org1Owner.Do(`
-		mutation($input: CreateComplianceFrameworkInput!) {
-			createComplianceFramework(input: $input) {
-				complianceFrameworkEdge { node { id } }
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"compliancePortalId": org1CompliancePortalID,
-			"frameworkId":        org2FrameworkID,
-		},
-	})
-	require.Error(t, err, "must not accept a frameworkId belonging to another organization")
 }

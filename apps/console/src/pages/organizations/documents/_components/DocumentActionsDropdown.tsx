@@ -228,14 +228,14 @@ export function DocumentActionsDropdown(props: {
   const handleExportDocumentVersion = (options: {
     withWatermark: boolean;
     withSignatures: boolean;
-    watermarkEmail?: string;
+    watermarkText?: string;
   }) => {
     const input = {
       documentVersionId: version.id,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
       ...(options.withWatermark
-        && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+        && options.watermarkText && { watermarkText: options.watermarkText }),
     };
 
     exportDocumentVersion({

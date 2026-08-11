@@ -33,24 +33,22 @@ const listQuery = `
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: CompliancePortalReferenceOrder) {
   node(id: $id) {
     __typename
-    ... on Organization {
-      compliancePortal {
-        references(first: $first, after: $after, orderBy: $orderBy) {
-          totalCount
-          edges {
-            node {
-              id
-              name
-              description
-              websiteUrl
-              rank
-              createdAt
-            }
+    ... on CompliancePortal {
+      references(first: $first, after: $after, orderBy: $orderBy) {
+        totalCount
+        edges {
+          node {
+            id
+            name
+            description
+            websiteUrl
+            rank
+            createdAt
           }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
         }
       }
     }
@@ -69,7 +67,7 @@ type compliancePortalReference struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
+		flagPortal   string
 		flagLimit    int
 		flagOrderBy  string
 		flagOrderDir string
@@ -109,16 +107,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
 			variables := map[string]any{
-				"id": flagOrg,
+				"id": flagPortal,
 			}
 
 			if flagOrderBy != "" {
@@ -140,10 +130,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				func(data json.RawMessage) (*api.Connection[compliancePortalReference], error) {
 					var resp struct {
 						Node *struct {
-							Typename         string `json:"__typename"`
-							CompliancePortal *struct {
-								References api.Connection[compliancePortalReference] `json:"references"`
-							} `json:"compliancePortal"`
+							Typename   string                                    `json:"__typename"`
+							References api.Connection[compliancePortalReference] `json:"references"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -151,18 +139,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					}
 
 					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
+						return nil, fmt.Errorf("compliance portal %s not found", flagPortal)
 					}
 
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
+					if resp.Node.Typename != "CompliancePortal" {
+						return nil, fmt.Errorf("expected CompliancePortal node, got %s", resp.Node.Typename)
 					}
 
-					if resp.Node.CompliancePortal == nil {
-						return nil, fmt.Errorf("compliance portal not found for organization %s", flagOrg)
-					}
-
-					return &resp.Node.CompliancePortal.References, nil
+					return &resp.Node.References, nil
 				},
 			)
 			if err != nil {
@@ -210,7 +194,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID")
+	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of references to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (RANK, NAME, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")

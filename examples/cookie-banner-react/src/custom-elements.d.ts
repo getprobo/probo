@@ -21,13 +21,14 @@ declare module "react" {
       "probo-accept-button": CE;
       "probo-reject-button": CE;
       "probo-customize-button": CE;
+      "probo-acknowledge-button": CE;
       "probo-save-button": CE;
-      "probo-settings-button": CE<{ position?: string }>;
+      "probo-privacy-choices": CE;
+      "probo-settings-link": CE;
       "probo-cookie-banner": CE<{
         "banner-id"?: string;
         "base-url"?: string;
         position?: string;
-        "reopen-widget"?: string;
         lang?: string;
       }>;
     }

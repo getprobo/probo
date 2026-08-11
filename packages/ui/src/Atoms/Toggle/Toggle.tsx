@@ -24,14 +24,22 @@ const sizes = {
 } as const;
 
 type Props = {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-  size?: keyof typeof sizes;
-  title?: string;
+  "checked": boolean;
+  "onChange": (checked: boolean) => void;
+  "disabled"?: boolean;
+  "size"?: keyof typeof sizes;
+  "title"?: string;
+  "aria-label"?: string;
 };
 
-export function Toggle({ checked, onChange, disabled = false, size = "default", title }: Props) {
+export function Toggle({
+  checked,
+  onChange,
+  disabled = false,
+  size = "default",
+  title,
+  "aria-label": ariaLabel,
+}: Props) {
   const { track, thumb } = sizes[size];
   const travel = track.width - thumb - track.padding * 2;
 
@@ -40,6 +48,7 @@ export function Toggle({ checked, onChange, disabled = false, size = "default", 
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       disabled={disabled}
       title={title}
       onClick={() => !disabled && onChange(!checked)}

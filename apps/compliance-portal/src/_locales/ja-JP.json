@@ -21,7 +21,6 @@
     "switchToLightMode": "ライトモードに切り替え"
   },
   "common": {
-    "cancel": "キャンセル",
     "error": "問題が発生しました",
     "previousPage": "前のページ",
     "nextPage": "次のページ",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "コンプライアンスポータルに戻る",
-      "tryAgain": "もう一度試す"
+      "tryAgain": "もう一度試す",
+      "contactSupport": "サポートに連絡",
+      "requestAccess": "アクセスをリクエスト"
     },
     "inline": {
       "message": "コンテンツを読み込めません",

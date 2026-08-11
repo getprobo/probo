@@ -22,6 +22,7 @@ package management
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -31,11 +32,14 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -45,6 +49,7 @@ type (
 		Active                       *bool
 		Slug                         *string
 		SearchEngineIndexing         *coredata.SearchEngineIndexing
+		RightsRequestsEnabled        *bool
 		NonDisclosureAgreementFileID *gid.GID
 		EntityName                   *string
 		Description                  **string
@@ -101,7 +106,7 @@ func (utcr *UpdateRequest) Validate() error {
 func (utcndar *UploadNDARequest) Validate() error {
 	v := validator.New()
 
-	v.Check(utcndar.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
+	v.Check(utcndar.CompliancePortalID, "compliance_portal_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(utcndar.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
@@ -155,19 +160,93 @@ func (s *Service) Get(
 	return portal, nil
 }
 
-func (s *Service) GetByOrganizationID(
+type CreateCompliancePortalRequest struct {
+	OrganizationID gid.GID
+	EntityName     string
+}
+
+func (r *CreateCompliancePortalRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(r.EntityName, "entity_name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
+
+	return v.Error()
+}
+
+func (s *Service) Create(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	req *CreateCompliancePortalRequest,
 ) (*coredata.CompliancePortal, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	var portal *coredata.CompliancePortal
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			portal = &coredata.CompliancePortal{}
-			if err := portal.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load compliance portal: %w", err)
+		func(ctx context.Context, tx pg.Tx) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			now := time.Now()
+			tenantID := organization.TenantID
+
+			mailingList := &coredata.MailingList{
+				ID:             gid.New(tenantID, coredata.MailingListEntityType),
+				OrganizationID: organization.ID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := mailingList.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert mailing list: %w", err)
+			}
+
+			portal = &coredata.CompliancePortal{
+				ID:                   gid.New(tenantID, coredata.CompliancePortalEntityType),
+				OrganizationID:       organization.ID,
+				TenantID:             tenantID,
+				Active:               false,
+				EntityName:           req.EntityName,
+				SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
+				Capabilities:         coredata.DefaultCompliancePortalCapabilities(),
+				MailingListID:        mailingList.ID,
+				CreatedAt:            now,
+				UpdatedAt:            now,
+			}
+
+			const maxSlugAttempts = 5
+
+			var insertErr error
+
+			// Each attempt runs in its own savepoint: a slug collision
+			// aborts only the failed INSERT and leaves the surrounding
+			// transaction usable for the next attempt.
+			for range maxSlugAttempts {
+				portal.Slug = slug.MakeWithEntropy(req.EntityName)
+
+				insertErr = tx.Savepoint(
+					ctx,
+					func(ctx context.Context, sp pg.Tx) error {
+						return portal.Insert(ctx, sp, scope)
+					},
+				)
+				if insertErr == nil {
+					break
+				}
+
+				if !errors.Is(insertErr, coredata.ErrResourceAlreadyExists) {
+					return fmt.Errorf("cannot insert compliance portal: %w", insertErr)
+				}
+			}
+
+			if insertErr != nil {
+				return ErrSlugAlreadyInUse
 			}
 
 			return nil
@@ -177,7 +256,118 @@ func (s *Service) GetByOrganizationID(
 		return nil, err
 	}
 
+	s.ensureDefaultManagedDomain(ctx, scope, portal)
+
 	return portal, nil
+}
+
+func (s *Service) ensureDefaultManagedDomain(
+	ctx context.Context,
+	scope coredata.Scoper,
+	portal *coredata.CompliancePortal,
+) {
+	if s.baseDomain == "" {
+		return
+	}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			defaultDomainHostname := portal.Slug + "." + s.baseDomain
+
+			defaultDomain := coredata.NewCustomDomain(
+				portal.TenantID,
+				portal.OrganizationID,
+				defaultDomainHostname,
+				true,
+			)
+
+			certificate, err := s.certManager.EnsureCertificate(ctx, tx, scope, defaultDomainHostname)
+			if err != nil {
+				return fmt.Errorf("cannot ensure certificate for default custom domain: %w", err)
+			}
+
+			defaultDomain.CertificateID = &certificate.ID
+
+			if err := defaultDomain.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert default custom domain: %w", err)
+			}
+
+			portal.DefaultDomainID = &defaultDomain.ID
+			portal.UpdatedAt = time.Now()
+
+			if err := portal.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update compliance portal: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		s.logger.ErrorCtx(
+			ctx,
+			"cannot provision default managed domain for compliance portal",
+			log.Error(err),
+			log.String("compliance_portal_id", portal.ID.String()),
+		)
+	}
+}
+
+func (s *Service) ListForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.CompliancePortalOrderField],
+) (*page.Page[*coredata.CompliancePortal, coredata.CompliancePortalOrderField], error) {
+	var portals coredata.CompliancePortals
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := portals.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor); err != nil {
+				return fmt.Errorf("cannot list compliance portals: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(portals, cursor), nil
+}
+
+func (s *Service) CountForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			count, err = (&coredata.CompliancePortals{}).CountByOrganizationID(
+				ctx,
+				conn,
+				scope,
+				organizationID,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot count compliance portals: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s *Service) Update(
@@ -212,6 +402,10 @@ func (s *Service) Update(
 
 			if req.SearchEngineIndexing != nil {
 				portal.SearchEngineIndexing = *req.SearchEngineIndexing
+			}
+
+			if req.RightsRequestsEnabled != nil {
+				portal.Capabilities.RightsRequests = *req.RightsRequestsEnabled
 			}
 
 			if req.EntityName != nil {
@@ -741,12 +935,8 @@ func (s *Service) GetMailingList(
 				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if portal.MailingListID == nil {
-				return nil
-			}
-
 			mailingList = &coredata.MailingList{}
-			if err := mailingList.LoadByID(ctx, conn, scope, *portal.MailingListID); err != nil {
+			if err := mailingList.LoadByID(ctx, conn, scope, portal.MailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 
@@ -758,4 +948,101 @@ func (s *Service) GetMailingList(
 	}
 
 	return mailingList, nil
+}
+
+func (s *Service) Delete(
+	ctx context.Context,
+	scope coredata.Scoper,
+	portalID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			portal := &coredata.CompliancePortal{}
+			if err := portal.LoadByID(ctx, tx, scope, portalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
+			}
+
+			var files coredata.CompliancePortalFiles
+
+			var err error
+
+			files, err = page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CompliancePortalFileOrderField]{
+					Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CompliancePortalFileOrderField]) ([]*coredata.CompliancePortalFile, error) {
+					var batch coredata.CompliancePortalFiles
+					if err := batch.LoadByCompliancePortalID(ctx, tx, scope, portalID, cursor, coredata.NewCompliancePortalFileFilter()); err != nil {
+						return nil, err
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot list portal files: %w", err)
+			}
+
+			for _, file := range files {
+				if err := file.Delete(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot delete portal file: %w", err)
+				}
+			}
+
+			if portal.DefaultDomainID != nil {
+				if err := s.removeDomain(ctx, tx, scope, *portal.DefaultDomainID); err != nil {
+					return err
+				}
+			}
+
+			if portal.CustomDomainID != nil {
+				if err := s.removeDomain(ctx, tx, scope, *portal.CustomDomainID); err != nil {
+					return err
+				}
+			}
+
+			mailingList := &coredata.MailingList{ID: portal.MailingListID}
+
+			if err := portal.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete compliance portal: %w", err)
+			}
+
+			if err := mailingList.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete mailing list: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) removeDomain(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	domainID gid.GID,
+) error {
+	domain := &coredata.CustomDomain{}
+	if err := domain.LoadByID(ctx, tx, scope, domainID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot load custom domain: %w", err)
+	}
+
+	if err := domain.Delete(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot delete custom domain: %w", err)
+	}
+
+	if domain.CertificateID != nil {
+		if err := s.certManager.Delete(ctx, tx, scope, *domain.CertificateID); err != nil {
+			return fmt.Errorf("cannot delete certificate: %w", err)
+		}
+	}
+
+	return nil
 }

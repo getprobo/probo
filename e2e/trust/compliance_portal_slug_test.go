@@ -26,22 +26,27 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestCompliancePortal_SlugHasEntropySuffix(t *testing.T) {
+func TestCompliancePortal_CreateAssignsSlugAutomatically(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	organizationID := owner.GetOrganizationID().String()
+
+	const entityName = "Acme Trust"
+
+	portalID := factory.CreateCompliancePortal(owner, factory.Attrs{
+		"entityName": entityName,
+	})
 
 	const query = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal {
-						slug
-					}
+		query($compliancePortalId: ID!) {
+			node(id: $compliancePortalId) {
+				... on CompliancePortal {
+					slug
+					entityName
 				}
 			}
 		}
@@ -49,18 +54,15 @@ func TestCompliancePortal_SlugHasEntropySuffix(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			CompliancePortal struct {
-				Slug string `json:"slug"`
-			} `json:"compliancePortal"`
+			Slug       string `json:"slug"`
+			EntityName string `json:"entityName"`
 		} `json:"node"`
 	}
 
 	err := owner.Execute(query, map[string]any{
-		"organizationId": organizationID,
+		"compliancePortalId": portalID,
 	}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.CompliancePortal.Slug)
-
-	slugWithEntropy := regexp.MustCompile(`^[a-z0-9-]+-[0-9a-f]{8}$`)
-	assert.Regexp(t, slugWithEntropy, result.Node.CompliancePortal.Slug)
+	assert.Equal(t, entityName, result.Node.EntityName)
+	assert.Regexp(t, regexp.MustCompile(`^acme-trust-[0-9a-f]{8}$`), result.Node.Slug)
 }

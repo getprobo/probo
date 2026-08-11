@@ -68,12 +68,11 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg                        string
-		flagTitle                      string
-		flagContent                    string
-		flagDocumentType               string
-		flagClassification             string
-		flagCompliancePortalVisibility string
+		flagOrg            string
+		flagTitle          string
+		flagContent        string
+		flagDocumentType   string
+		flagClassification string
 	)
 
 	cmd := &cobra.Command{
@@ -199,18 +198,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["content"] = flagContent
 			}
 
-			if flagCompliancePortalVisibility != "" {
-				if err := cmdutil.ValidateEnum(
-					"compliance-portal-visibility",
-					flagCompliancePortalVisibility,
-					[]string{"NONE", "PRIVATE", "PUBLIC"},
-				); err != nil {
-					return err
-				}
-
-				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
-			}
-
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -242,7 +229,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Document content")
 	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Document type: OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET")
-	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd
 }

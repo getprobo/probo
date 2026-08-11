@@ -22,6 +22,7 @@ package visitor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -37,16 +38,31 @@ import (
 func (s *Service) GetPortalFile(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	compliancePortalFileID gid.GID,
 ) (*coredata.CompliancePortalFile, error) {
 	compliancePortalFile := &coredata.CompliancePortalFile{}
+	compliancePortal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := compliancePortalFile.LoadByID(ctx, conn, scope, compliancePortalFileID)
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := compliancePortalFile.LoadByCompliancePortalIDAndID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				compliancePortalFileID,
+			)
 			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrPortalFileNotFound
+				}
+
 				return fmt.Errorf("cannot load compliance page file: %w", err)
 			}
 
@@ -57,10 +73,6 @@ func (s *Service) GetPortalFile(
 		return nil, err
 	}
 
-	if compliancePortalFile.OrganizationID != organizationID {
-		return nil, ErrPortalFileNotFound
-	}
-
 	if compliancePortalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
 		return nil, ErrPortalFileNotVisible
 	}
@@ -68,10 +80,10 @@ func (s *Service) GetPortalFile(
 	return compliancePortalFile, nil
 }
 
-func (s *Service) ListPortalFilesForOrganizationID(
+func (s *Service) ListPortalFilesForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.CompliancePortalFileOrderField],
 	filter *coredata.CompliancePortalFileFilter,
 ) (*page.Page[*coredata.CompliancePortalFile, coredata.CompliancePortalFileOrderField], error) {
@@ -80,7 +92,7 @@ func (s *Service) ListPortalFilesForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := compliancePortalFiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			err := compliancePortalFiles.LoadByCompliancePortalID(ctx, conn, scope, compliancePortalID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance page files: %w", err)
 			}
@@ -107,7 +119,9 @@ func (s *Service) ExportPortalFile(
 	}
 
 	if mimeType == "application/pdf" {
-		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(fileData, email)
+		watermarkText := pdfutils.TruncateWatermarkText(email.String())
+
+		watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(fileData, watermarkText)
 		if err != nil {
 			return nil, "", fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}

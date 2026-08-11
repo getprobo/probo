@@ -1,0 +1,182 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package create
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/charmbracelet/huh"
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+)
+
+const createMutation = `
+mutation($input: CreateRiskAnalysisNodeInput!) {
+  createRiskAnalysisNode(input: $input) {
+    riskAnalysisNodeEdge {
+      node {
+        id
+        riskAnalysisDiagramId
+        nodeType
+        name
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}
+`
+
+type createResponse struct {
+	CreateRiskAnalysisNode struct {
+		RiskAnalysisNodeEdge struct {
+			Node struct {
+				ID                    string `json:"id"`
+				RiskAnalysisDiagramId string `json:"riskAnalysisDiagramId"`
+				NodeType              string `json:"nodeType"`
+				Name                  string `json:"name"`
+				CreatedAt             string `json:"createdAt"`
+				UpdatedAt             string `json:"updatedAt"`
+			} `json:"node"`
+		} `json:"riskAnalysisNodeEdge"`
+	} `json:"createRiskAnalysisNode"`
+}
+
+func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagDiagramId  string
+		flagBoundaryId string
+		flagNodeType   string
+		flagName       string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a new risk analysis node",
+		Example: `  # Create a node interactively
+  prb risk-analysis node create --diagram-id <id>
+
+  # Create a node non-interactively
+  prb risk-analysis node create --diagram-id <id> --node-type ASSET --name "Database server"`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
+
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				"/api/console/v1/graphql",
+				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
+			)
+
+			if f.IOStreams.IsInteractive() {
+				if flagName == "" {
+					err := huh.NewInput().
+						Title("Node name").
+						Value(&flagName).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
+
+				if flagNodeType == "" {
+					err := huh.NewSelect[string]().
+						Title("Node type").
+						Options(
+							huh.NewOption("Entity", "ENTITY"),
+							huh.NewOption("Asset", "ASSET"),
+							huh.NewOption("Data", "DATA"),
+						).
+						Value(&flagNodeType).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			if flagName == "" {
+				return fmt.Errorf("name is required; pass --name or run interactively")
+			}
+
+			if flagNodeType == "" {
+				return fmt.Errorf("node type is required; pass --node-type or run interactively")
+			}
+
+			if err := cmdutil.ValidateEnum("node-type", flagNodeType, []string{"ENTITY", "ASSET", "DATA"}); err != nil {
+				return err
+			}
+
+			input := map[string]any{
+				"riskAnalysisDiagramId": flagDiagramId,
+				"nodeType":              flagNodeType,
+				"name":                  flagName,
+			}
+
+			if flagBoundaryId != "" {
+				input["boundaryId"] = flagBoundaryId
+			}
+
+			data, err := client.Do(
+				createMutation,
+				map[string]any{"input": input},
+			)
+			if err != nil {
+				return err
+			}
+
+			var resp createResponse
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			r := resp.CreateRiskAnalysisNode.RiskAnalysisNodeEdge.Node
+			_, _ = fmt.Fprintf(
+				f.IOStreams.Out,
+				"Created risk analysis node %s (%s)\n",
+				r.ID,
+				r.Name,
+			)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&flagDiagramId, "diagram-id", "", "Risk analysis diagram ID (required)")
+	cmd.Flags().StringVar(&flagBoundaryId, "boundary-id", "", "Boundary ID that contains this node (optional)")
+	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, ASSET, DATA (required)")
+	cmd.Flags().StringVar(&flagName, "name", "", "Node name (required)")
+
+	_ = cmd.MarkFlagRequired("diagram-id")
+
+	return cmd
+}

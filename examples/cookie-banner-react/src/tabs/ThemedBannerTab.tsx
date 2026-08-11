@@ -94,12 +94,34 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
         onSendPing={sendPing}
       />
 
+      {posthogStatus.featureFlagEnabled && (
+        <div
+          style={{
+            border: "2px solid #2563eb",
+            padding: 12,
+            marginBottom: 16,
+            background: "#eff6ff",
+          }}
+        >
+          <h3 style={{ marginTop: 0, marginBottom: 4 }}>Beta panel</h3>
+          <p style={{ margin: 0, color: "#334155", fontSize: 14 }}>
+            Visible only when PostHog consent is granted, the demo user is
+            identified, and feature flag{" "}
+            <code>{posthogStatus.featureFlagKey}</code> is on.
+          </p>
+        </div>
+      )}
+
       <probo-cookie-banner
         ref={attachListeners}
         banner-id={config.bannerId}
         base-url={config.baseUrl}
         position="bottom-right"
       />
+
+      <p style={{ marginTop: 16 }}>
+        <probo-settings-link>Cookie settings</probo-settings-link>
+      </p>
 
       <h3>Events ({events.length})</h3>
       {events.length === 0 ? (

@@ -31,9 +31,10 @@ import {
 } from "@probo/ui";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, useRelayEnvironment } from "react-relay";
+import { useFragment, useMutation, useRelayEnvironment } from "react-relay";
 import { fetchQuery, graphql } from "relay-runtime";
 
+import type { APIKeyConnectorDialog_provider$key } from "#/__generated__/core/APIKeyConnectorDialog_provider.graphql";
 import type { APIKeyConnectorDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/APIKeyConnectorDialogCreateAPIKeyConnectorMutation.graphql";
 import type { APIKeyConnectorDialogCrispVerificationCodeQuery } from "#/__generated__/core/APIKeyConnectorDialogCrispVerificationCodeQuery.graphql";
 
@@ -43,13 +44,26 @@ import {
   hasRequiredExtraSettings,
   mapAPIKeyExtraSettingToField,
 } from "../_lib/connectorSettings";
-import type { ProviderInfo } from "../AddAccessReviewSourceDialog";
 import {
   isPostHogDeploymentSelected,
   PostHogDeploymentField,
 } from "../PostHogDeploymentField";
 
 import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
+
+const apiKeyConnectorDialogFragment = graphql`
+  fragment APIKeyConnectorDialog_provider on ConnectorProviderInfo {
+    provider
+    displayName
+    documentationUrl
+    apiKeyManaged
+    apiKeyExtraSettings {
+      key
+      label
+      required
+    }
+  }
+`;
 
 const createAPIKeyConnectorMutation = graphql`
   mutation APIKeyConnectorDialogCreateAPIKeyConnectorMutation(
@@ -84,7 +98,7 @@ type CrispCodeState = {
 };
 
 type Props = {
-  provider: ProviderInfo | null;
+  providerKey: APIKeyConnectorDialog_provider$key | null;
   organizationId: string;
   connectionId: string;
   onClose: () => void;
@@ -92,7 +106,7 @@ type Props = {
 };
 
 export function APIKeyConnectorDialog({
-  provider,
+  providerKey,
   organizationId,
   connectionId,
   onClose,
@@ -100,6 +114,7 @@ export function APIKeyConnectorDialog({
 }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const provider = useFragment(apiKeyConnectorDialogFragment, providerKey);
   const dialogRef = useDialogRef();
   const environment = useRelayEnvironment();
 
@@ -127,7 +142,7 @@ export function APIKeyConnectorDialog({
     if (provider) {
       dialogRef.current?.open();
     }
-  }, [provider]);
+  }, [dialogRef, provider]);
 
   const isCrispManaged
     = provider?.provider === "CRISP" && !!provider.apiKeyManaged;

@@ -23,14 +23,14 @@ import type { DocumentsPageQuery$variables } from "../__generated__/DocumentsPag
 import type { DocumentTab } from "./useDocumentTab";
 
 // Maps the active tab to the typed GraphQL visibility variable. "All" omits the
-// filter (both public and private); the other tabs pin a single visibility so
+// filter (both public and restricted); the other tabs pin a single visibility so
 // the server returns just that slice.
 export function toQueryVariables(tab: DocumentTab): DocumentsPageQuery$variables {
   switch (tab) {
     case "public":
       return { visibility: "PUBLIC" };
-    case "private":
-      return { visibility: "PRIVATE" };
+    case "restricted":
+      return { visibility: "RESTRICTED" };
     default:
       return { visibility: null };
   }

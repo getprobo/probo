@@ -30,6 +30,7 @@ import { UnsignedNDABanner } from "#/components/UnsignedNDABanner/UnsignedNDABan
 import { useResumeAccessRequest } from "#/lib/auth/useResumeAccessRequest";
 import { useEnsureViewerLocale } from "#/lib/i18n/useEnsureViewerLocale";
 import { SubscribeDialogProvider } from "#/lib/mailingList/SubscribeDialogProvider";
+import { PortalContactEmailProvider } from "#/lib/portal/portalContactContext";
 
 import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
 
@@ -41,6 +42,7 @@ export const mainLayoutQuery = graphql`
       ...useEnsureViewerLocale_identity
     }
     currentCompliancePortal {
+      email
       ...UnsignedNDABanner_compliancePortal
     }
     ...TopBar_query
@@ -66,30 +68,32 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
   // stage; every other page uses normal document flow so the footer sits after
   // content (and at the bottom of short pages via flex-1 main).
   return (
-    <SubscribeDialogProvider queryKey={data}>
-      <div
-        className={
-          isDocumentViewer
-            ? "flex h-dvh flex-col bg-sand-2"
-            : "flex min-h-dvh flex-col bg-sand-2"
-        }
-      >
-        <TopBar queryKey={data} />
-        <LocaleMismatchBanner identityKey={data.viewer ?? null} />
-        {data.viewer != null && data.currentCompliancePortal != null
-          ? <UnsignedNDABanner compliancePortalKey={data.currentCompliancePortal} />
-          : null}
+    <PortalContactEmailProvider value={data.currentCompliancePortal?.email ?? null}>
+      <SubscribeDialogProvider queryKey={data}>
         <div
           className={
             isDocumentViewer
-              ? "flex min-h-0 flex-1 flex-col overflow-hidden"
-              : "flex flex-1 flex-col"
+              ? "flex h-dvh flex-col bg-sand-2"
+              : "flex min-h-dvh flex-col bg-sand-2"
           }
         >
-          <Outlet />
+          <TopBar queryKey={data} />
+          <LocaleMismatchBanner identityKey={data.viewer ?? null} />
+          {data.viewer != null && data.currentCompliancePortal != null
+            ? <UnsignedNDABanner compliancePortalKey={data.currentCompliancePortal} />
+            : null}
+          <div
+            className={
+              isDocumentViewer
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+                : "flex flex-1 flex-col"
+            }
+          >
+            <Outlet />
+          </div>
+          {isDocumentViewer ? null : <PoweredBy label={t("footer.poweredBy")} />}
         </div>
-        {isDocumentViewer ? null : <PoweredBy label={t("footer.poweredBy")} />}
-      </div>
-    </SubscribeDialogProvider>
+      </SubscribeDialogProvider>
+    </PortalContactEmailProvider>
   );
 }

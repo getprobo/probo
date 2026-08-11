@@ -41,10 +41,10 @@ func TestMCP_DPIA_CRUD(t *testing.T) {
 	var addResult struct {
 		DataProtectionImpactAssessment struct {
 			ID string `json:"id"`
-		} `json:"dataProtectionImpactAssessment"`
+		} `json:"data_protection_impact_assessment"`
 	}
 	mc.CallToolInto("addDataProtectionImpactAssessment", map[string]any{
-		"processingActivityId": paID,
+		"processing_activity_id": paID,
 	}, &addResult)
 	require.NotEmpty(t, addResult.DataProtectionImpactAssessment.ID)
 
@@ -52,7 +52,7 @@ func TestMCP_DPIA_CRUD(t *testing.T) {
 	var getResult struct {
 		DataProtectionImpactAssessment struct {
 			ID string `json:"id"`
-		} `json:"dataProtectionImpactAssessment"`
+		} `json:"data_protection_impact_assessment"`
 	}
 	mc.CallToolInto("getDataProtectionImpactAssessment", map[string]any{
 		"id": addResult.DataProtectionImpactAssessment.ID,
@@ -64,7 +64,7 @@ func TestMCP_DPIA_CRUD(t *testing.T) {
 		DataProtectionImpactAssessment struct {
 			ID          string `json:"id"`
 			Description string `json:"description"`
-		} `json:"dataProtectionImpactAssessment"`
+		} `json:"data_protection_impact_assessment"`
 	}
 	mc.CallToolInto("updateDataProtectionImpactAssessment", map[string]any{
 		"id":          addResult.DataProtectionImpactAssessment.ID,
@@ -76,16 +76,16 @@ func TestMCP_DPIA_CRUD(t *testing.T) {
 	var listResult struct {
 		DataProtectionImpactAssessments []struct {
 			ID string `json:"id"`
-		} `json:"dataProtectionImpactAssessments"`
+		} `json:"data_protection_impact_assessments"`
 	}
 	mc.CallToolInto("listDataProtectionImpactAssessments", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.DataProtectionImpactAssessments)
 
 	// Delete
 	var deleteResult struct {
-		DeletedDataProtectionImpactAssessmentID string `json:"deletedDataProtectionImpactAssessmentId"`
+		DeletedDataProtectionImpactAssessmentID string `json:"deleted_data_protection_impact_assessment_id"`
 	}
 	mc.CallToolInto("deleteDataProtectionImpactAssessment", map[string]any{
 		"id": addResult.DataProtectionImpactAssessment.ID,
@@ -105,10 +105,10 @@ func TestMCP_TIA_CRUD(t *testing.T) {
 	var addResult struct {
 		TransferImpactAssessment struct {
 			ID string `json:"id"`
-		} `json:"transferImpactAssessment"`
+		} `json:"transfer_impact_assessment"`
 	}
 	mc.CallToolInto("addTransferImpactAssessment", map[string]any{
-		"processingActivityId": paID,
+		"processing_activity_id": paID,
 	}, &addResult)
 	require.NotEmpty(t, addResult.TransferImpactAssessment.ID)
 
@@ -116,7 +116,7 @@ func TestMCP_TIA_CRUD(t *testing.T) {
 	var getResult struct {
 		TransferImpactAssessment struct {
 			ID string `json:"id"`
-		} `json:"transferImpactAssessment"`
+		} `json:"transfer_impact_assessment"`
 	}
 	mc.CallToolInto("getTransferImpactAssessment", map[string]any{
 		"id": addResult.TransferImpactAssessment.ID,
@@ -127,12 +127,12 @@ func TestMCP_TIA_CRUD(t *testing.T) {
 	var updateResult struct {
 		TransferImpactAssessment struct {
 			ID           string `json:"id"`
-			DataSubjects string `json:"dataSubjects"`
-		} `json:"transferImpactAssessment"`
+			DataSubjects string `json:"data_subjects"`
+		} `json:"transfer_impact_assessment"`
 	}
 	mc.CallToolInto("updateTransferImpactAssessment", map[string]any{
-		"id":           addResult.TransferImpactAssessment.ID,
-		"dataSubjects": "EU Residents",
+		"id":            addResult.TransferImpactAssessment.ID,
+		"data_subjects": "EU Residents",
 	}, &updateResult)
 	assert.Equal(t, "EU Residents", updateResult.TransferImpactAssessment.DataSubjects)
 
@@ -140,16 +140,16 @@ func TestMCP_TIA_CRUD(t *testing.T) {
 	var listResult struct {
 		TransferImpactAssessments []struct {
 			ID string `json:"id"`
-		} `json:"transferImpactAssessments"`
+		} `json:"transfer_impact_assessments"`
 	}
 	mc.CallToolInto("listTransferImpactAssessments", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.TransferImpactAssessments)
 
 	// Delete
 	var deleteResult struct {
-		DeletedTransferImpactAssessmentID string `json:"deletedTransferImpactAssessmentId"`
+		DeletedTransferImpactAssessmentID string `json:"deleted_transfer_impact_assessment_id"`
 	}
 	mc.CallToolInto("deleteTransferImpactAssessment", map[string]any{
 		"id": addResult.TransferImpactAssessment.ID,

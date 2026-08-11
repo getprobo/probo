@@ -21,7 +21,6 @@
     "switchToLightMode": "Aydınlık moda geç"
   },
   "common": {
-    "cancel": "İptal",
     "error": "Bir şeyler ters gitti",
     "previousPage": "Önceki sayfa",
     "nextPage": "Sonraki sayfa",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Uyumluluk Portalına geri dön",
-      "tryAgain": "Tekrar dene"
+      "tryAgain": "Tekrar dene",
+      "contactSupport": "Destek ile iletişime geç",
+      "requestAccess": "Erişim iste"
     },
     "inline": {
       "message": "İçerik yüklenemedi",

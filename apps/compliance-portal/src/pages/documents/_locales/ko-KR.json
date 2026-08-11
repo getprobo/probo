@@ -3,7 +3,7 @@
   "tabs": {
     "all": "전체",
     "public": "공개",
-    "private": "비공개"
+    "restricted": "제한됨"
   },
   "sections": {
     "reports": "컴플라이언스 보고서"
@@ -47,7 +47,8 @@
     "downloadToView": "이 파일 형식은 여기서 미리 볼 수 없습니다. 확인하려면 다운로드하세요.",
     "locked": {
       "title": "액세스 필요",
-      "description": "아직 이 문서에 대한 액세스 권한이 없습니다."
+      "description": "아직 이 문서에 대한 액세스 권한이 없습니다.",
+      "signNda": "NDA 검토 후 서명"
     }
   }
 }

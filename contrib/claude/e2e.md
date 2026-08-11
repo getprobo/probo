@@ -2,6 +2,9 @@
 
 E2E tests live in `e2e/console/` (package `console_test`) and run against a live `bin/probod` instance. The test infrastructure handles server lifecycle, authentication, and test data creation.
 
+See [`e2e-refactor.md`](e2e-refactor.md) for the suite migration plan,
+fixture-isolation rules, and per-batch acceptance criteria.
+
 ## Prerequisites
 
 E2e uses the local [step-ca](https://github.com/smallstep/certificates) ACME server over HTTPS. The CA is persistent across restarts; install its root once per machine so probod and browsers trust issued custom-domain certificates:
@@ -27,6 +30,28 @@ E2e config is built at test startup in `e2e/internal/testutil/testutil.go` (`gen
 ```bash
 make test-e2e # Run all e2e tests
 ```
+
+The regular target avoids instrumenting the test driver with race and coverage
+flags because probod runs as a separate process. Use
+`make test-e2e E2E_TEST_FLAGS=-race` when changing concurrent harness code, and
+use `make test-e2e-coverage` to run an instrumented probod and collect
+application coverage. The coverage target writes:
+
+- `coverage-e2e.out` — Go coverage profile
+- `coverage-e2e.txt` — per-function and total statement coverage
+- `coverage-e2e.html` — browsable source report
+- `coverage-e2e-core.*` — profile, text, and HTML for core product packages
+- `coverage-e2e-packages.txt` — package-level statement coverage
+
+CI runs the normal and instrumented suites in parallel. The required
+`test-e2e` check provides fast feedback, while `test-e2e-coverage` publishes the
+full-binary and core-product totals in its job summary and uploads all reports
+with its JUnit and journey artifacts. Coverage is collected from the probod
+process, not from the E2E test driver. Override `E2E_CORE_COVER_PKGS` when
+auditing a different product-package boundary. The coverage job runs Console
+and MCP packages sequentially because each package starts probod on the same
+fixed ports. Trust remains separate until its managed-domain certificate
+harness can be coverage-gated reliably.
 
 ## Client setup
 
@@ -55,6 +80,70 @@ Each call creates a unique identity with a fresh email. Available roles: `RoleOw
 | `c.ExecuteWithFile(query, vars, path, file, &result)` | Console | Single file upload                |
 | `c.GetOrganizationID()`                               | —       | Current org GID                   |
 | `c.GetUserID()`                                       | —       | Current user GID                  |
+
+## Journey tests
+
+Use `e2e/internal/journey` for multi-step workflows and tests involving more
+than one person. A journey remains fully end-to-end: actors use the existing
+clients and exercise real HTTP, authentication, email delivery, workers, and
+persistence.
+
+Create one world per top-level test. The test runs in parallel with other
+journeys, while its steps remain sequential because later actions depend on
+earlier state:
+
+```go
+func TestDocumentApprovalJourney(t *testing.T) {
+	t.Parallel()
+
+	world := journey.New(t)
+	alice := world.NewActor("Alice", testutil.RoleOwner)
+	bob := world.NewMemberActor("Bob", testutil.RoleAdmin, alice)
+
+	var documentID string
+	alice.Step("creates the security policy", func() error {
+		// Exercise the Console API and assign documentID.
+		return nil
+	})
+
+	bob.Step("approves the security policy", func() error {
+		// Exercise the Console API as Bob.
+		return nil
+	})
+}
+```
+
+Step names must describe user-visible behavior rather than implementation
+details. Prefer `approves the security policy` over `calls approve mutation`.
+Return wrapped errors from steps so failures identify both the journey action
+and its technical cause. Assertions that call `FailNow` are supported: the
+active step is still recorded by its deferred diagnostic hook.
+
+Actors created by `NewActor` and `NewMemberActor` go through the complete
+signup or invitation flow. Reuse those actors for the duration of the scenario
+instead of onboarding a new user for each assertion.
+
+Failed journeys write a redacted `manifest.json` and human-readable
+`failure.txt`. By default they are placed under
+`${TMPDIR}/probo-e2e-artifacts`; set `PROBO_E2E_ARTIFACT_DIR` to control the
+location. CI uploads this directory with the JUnit results. Artifact metadata
+must never contain passwords, tokens, cookies, authorization headers, or other
+secrets.
+
+## Resource cleanup
+
+Helpers that create durable resources (webhook subscriptions, uploaded
+files, and similar worker-backed rows) should register `t.Cleanup` to remove
+them when the test ends. Cleanup is **best-effort**: it must tolerate
+resources the test already deleted (`NOT_FOUND` on read or delete) and must
+not fail the test or mask assertion failures from the test body. When a test
+explicitly deletes a resource, cleanup still helps if the test fails before
+reaching that delete.
+
+Register cleanup in the helper that creates the resource (for example
+`createWebhookSubscription` deletes by subscription id and ignores
+`NOT_FOUND`). Keep explicit delete assertions in lifecycle tests; cleanup
+complements them rather than replacing list or connection checks.
 
 ## Test data factories
 
@@ -86,7 +175,28 @@ Use `factory.SafeName("prefix")` for unique names and `factory.SafeEmail()` for 
 
 ## Test structure
 
-Every test and subtest **must** call `t.Parallel()`. One test file per entity in `e2e/console/`. Function naming: `TestEntity_Operation`.
+Every test and subtest **must** call `t.Parallel()`. Journey steps are ordered
+function calls rather than subtests and must not run in parallel. Function
+naming follows `TestEntity_Operation`.
+
+Keep all console tests in the shared `console_test` package. Splitting domains
+into Go subdirectories would create independent packages and `TestMain`
+processes that contend for the same probod ports and database migrations.
+
+Organize large resources by concern:
+
+| File | Contents |
+| --- | --- |
+| `<resource>_test.go` | Primary CRUD and resolver behavior |
+| `<resource>_contract_test.go` | Validation, enums, ordering, and pagination |
+| `<resource>_rbac_test.go` | Role permission matrices |
+| `<resource>_tenant_test.go` | Cross-organization isolation |
+| `<resource>_journey_test.go` | Ordered user-visible workflows |
+| `<resource>_helpers_test.go` | Resource-specific setup and typed responses |
+
+Small resources may remain in one `<resource>_test.go` file. Split a file when
+the concern has its own fixture strategy or the combined source becomes hard to
+review. Do not create generic `helpers_test.go` dumping grounds.
 
 ```go
 func TestThirdParty_Create(t *testing.T) {

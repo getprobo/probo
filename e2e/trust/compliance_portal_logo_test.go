@@ -37,35 +37,8 @@ func TestCompliancePortal_LogoFileDownloadURL(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	organizationID := owner.GetOrganizationID().String()
 
-	const compliancePortalQuery = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal {
-						id
-					}
-				}
-			}
-		}
-	`
-
-	var compliancePortalLookup struct {
-		Node struct {
-			CompliancePortal struct {
-				ID string `json:"id"`
-			} `json:"compliancePortal"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(compliancePortalQuery, map[string]any{
-		"organizationId": organizationID,
-	}, &compliancePortalLookup)
-	require.NoError(t, err)
-	require.NotEmpty(t, compliancePortalLookup.Node.CompliancePortal.ID)
-
-	compliancePortalID := compliancePortalLookup.Node.CompliancePortal.ID
+	compliancePortalID := lookupCompliancePortalID(t, owner)
 
 	const activateMutation = `
 		mutation($input: UpdateCompliancePortalInput!) {
@@ -89,7 +62,7 @@ func TestCompliancePortal_LogoFileDownloadURL(t *testing.T) {
 		} `json:"updateCompliancePortal"`
 	}
 
-	err = owner.Execute(activateMutation, map[string]any{
+	err := owner.Execute(activateMutation, map[string]any{
 		"input": map[string]any{
 			"compliancePortalId": compliancePortalID,
 			"active":             true,

@@ -19,18 +19,12 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { dateFormat } from "@probo/i18n";
 import {
-  ActionDropdown,
-  Badge,
   Button,
   Card,
-  DropdownItem,
   IconPlusLarge,
-  IconTrashCan,
   Table,
   Tbody,
-  Td,
   Th,
   Thead,
   Tr,
@@ -47,8 +41,10 @@ import type { AccessReviewCampaignsTabPaginationQuery } from "#/__generated__/co
 import type { AccessReviewCampaignsTabQuery } from "#/__generated__/core/AccessReviewCampaignsTabQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { statusBadgeVariant } from "../_components/accessReviewHelpers";
+import { isCampaignDeletableStatus } from "../_components/accessReviewHelpers";
 import { CreateAccessReviewCampaignDialog } from "../dialogs/CreateAccessReviewCampaignDialog";
+
+import { AccessReviewCampaignListItem } from "./_components/AccessReviewCampaignListItem";
 
 export const accessReviewCampaignsTabQuery = graphql`
   query AccessReviewCampaignsTabQuery($organizationId: ID!) {
@@ -82,10 +78,9 @@ const campaignsFragment = graphql`
       edges {
         node {
           id
-          name
           status
-          createdAt
           canDelete: permission(action: "access-review:campaign:delete")
+          ...AccessReviewCampaignListItem_campaign
         }
       }
     }
@@ -108,7 +103,7 @@ type Props = {
 };
 
 export default function AccessReviewCampaignsTab({ queryRef }: Props) {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const { toast } = useToast();
@@ -131,8 +126,6 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
   const [deleteCampaign] = useMutation<AccessReviewCampaignsTabDeleteMutation>(
     deleteCampaignMutation,
   );
-
-  const isDeletableStatus = (status: string) => status !== "IN_PROGRESS";
 
   const handleDelete = (campaignId: string, campaignName: string) => {
     confirm(
@@ -181,7 +174,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
   };
 
   const hasActions = accessReviewCampaigns.edges.some(
-    edge => edge.node.canDelete && isDeletableStatus(edge.node.status),
+    edge => edge.node.canDelete && isCampaignDeletableStatus(edge.node.status),
   );
 
   return (
@@ -212,47 +205,15 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {accessReviewCampaigns.edges.map((edge) => {
-                    const canDeleteRow
-                      = edge.node.canDelete && isDeletableStatus(edge.node.status);
-                    return (
-                      <Tr
-                        key={edge.node.id}
-                        to={`/organizations/${organizationId}/access-reviews/campaigns/${edge.node.id}`}
-                      >
-                        <Td>{edge.node.name}</Td>
-                        <Td>
-                          <Badge variant={statusBadgeVariant(edge.node.status)}>
-                            {t(
-                              `accessReviewCampaignsTab.status.${edge.node.status.toLowerCase()}`,
-                            )}
-                          </Badge>
-                        </Td>
-                        <Td>
-                          {dateFormat(i18n.language, edge.node.createdAt)}
-                        </Td>
-                        {hasActions && (
-                          <Td noLink width={50} className="text-end">
-                            {canDeleteRow && (
-                              <ActionDropdown>
-                                <DropdownItem
-                                  icon={IconTrashCan}
-                                  variant="danger"
-                                  onSelect={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleDelete(edge.node.id, edge.node.name);
-                                  }}
-                                >
-                                  {t("accessReviewCampaignsTab.actions.delete")}
-                                </DropdownItem>
-                              </ActionDropdown>
-                            )}
-                          </Td>
-                        )}
-                      </Tr>
-                    );
-                  })}
+                  {accessReviewCampaigns.edges.map(edge => (
+                    <AccessReviewCampaignListItem
+                      key={edge.node.id}
+                      campaignKey={edge.node}
+                      organizationId={organizationId}
+                      hasActions={hasActions}
+                      onDelete={handleDelete}
+                    />
+                  ))}
                 </Tbody>
               </Table>
 

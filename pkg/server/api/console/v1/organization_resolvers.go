@@ -863,7 +863,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 			WithWriteModes(filter.WriteModes).
 			WithDocumentTypes(filter.DocumentTypes).
 			WithClassifications(filter.Classifications).
-			WithStatus(filter.Status)
+			WithStatus(filter.Status).
+			WithPublished(filter.Published)
 	}
 
 	page, err := r.probo.Documents.ListByOrganizationID(ctx, scope, obj.ID, cursor, documentFilter)
@@ -992,6 +993,74 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID), nil
+}
+
+// BusinessFunctionsDocument is the resolver for the businessFunctionsDocument field.
+func (r *organizationResolver) BusinessFunctionsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	businessFunctionDocumentID, err := r.probo.GeneratedDocuments.GetBusinessFunctionsDocumentID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get business function list document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if businessFunctionDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := r.probo.Documents.Get(ctx, scope, *businessFunctionDocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load business function list document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
+// BusinessFunctions is the resolver for the businessFunctions field.
+func (r *organizationResolver) BusinessFunctions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.BusinessFunctionOrderBy, filter *types.BusinessFunctionFilter) (*types.BusinessFunctionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionBusinessFunctionList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.BusinessFunctionOrderField]{
+		Field:     coredata.BusinessFunctionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.BusinessFunctionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var classification *coredata.BusinessFunctionClassification
+	if filter != nil {
+		classification = filter.Classification
+	}
+
+	businessFunctionFilter := coredata.NewBusinessFunctionFilter(classification)
+
+	pageResult, err := r.probo.BusinessFunctions.ListForOrganizationID(ctx, scope, obj.ID, cursor, businessFunctionFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization business functions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewBusinessFunctionConnection(pageResult, r, obj.ID, filter), nil
 }
 
 // ProcessingActivities is the resolver for the processingActivities field.
@@ -1151,20 +1220,20 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 	return types.NewDocument(document), nil
 }
 
-// RiskAssessments is the resolver for the riskAssessments field.
-func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentOrderBy) (*types.RiskAssessmentConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentList)
+// RiskAnalyses is the resolver for the riskAnalyses field.
+func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisOrderBy) (*types.RiskAnalysisConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAssessmentOrderField]{
-		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisOrderField]{
+		Field:     coredata.RiskAnalysisOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAssessmentOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1178,23 +1247,23 @@ func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.O
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAssessmentConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisConnection(p, r, obj.ID), nil
 }
 
-// RiskAssessmentScenarios is the resolver for the riskAssessmentScenarios field.
-func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+// RiskAnalysisScenarios is the resolver for the riskAnalysisScenarios field.
+func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
-		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
+		Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1208,7 +1277,7 @@ func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
 }
 
 // Tasks is the resolver for the tasks field.
@@ -1271,36 +1340,20 @@ func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organiz
 	return types.NewAgentRunConnection(page, r, obj.ID), nil
 }
 
-// CompliancePortal is the resolver for the compliancePortal field.
-func (r *organizationResolver) CompliancePortal(ctx context.Context, obj *types.Organization) (*types.CompliancePortal, error) {
-	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalGet)
+// CompliancePortals is the resolver for the compliancePortals field.
+func (r *organizationResolver) CompliancePortals(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CompliancePortalOrderBy) (*types.CompliancePortalConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalList)
 	if err != nil {
 		return nil, err
 	}
 
-	compliancePortal, err := r.management.GetByOrganizationID(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewCompliancePortal(compliancePortal), nil
-}
-
-// CompliancePortalFiles is the resolver for the compliancePortalFiles field.
-func (r *organizationResolver) CompliancePortalFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalFileOrderField]) (*types.CompliancePortalFileConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalFileList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.CompliancePortalFileOrderField]{
-		Field:     coredata.CompliancePortalFileOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalOrderField]{
+		Field:     coredata.CompliancePortalOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.CompliancePortalFileOrderField]{
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1308,13 +1361,13 @@ func (r *organizationResolver) CompliancePortalFiles(ctx context.Context, obj *t
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := r.management.ListFilesForOrganizationID(ctx, scope, obj.ID, cursor, &coredata.CompliancePortalFileFilter{})
+	p, err := r.management.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization compliance portal files", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list compliance portals", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewCompliancePortalFileConnection(pageResult, obj.ID), nil
+	return types.NewCompliancePortalConnection(p, obj.ID), nil
 }
 
 // CookieBanners is the resolver for the cookieBanners field.
@@ -1379,7 +1432,7 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 		query = filter.Query
 	}
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, level, query, nil, nil)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(level, query, nil, nil)
 
 	page, err := r.probo.ThirdParties.ListForOrganizationID(ctx, scope, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {

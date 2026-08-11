@@ -19,3 +19,19 @@
 // SOFTWARE.
 
 export { registerHeadlessComponents } from "../components";
+export { resolveBannerText, resolveLayout } from "../layout";
+export type {
+  BannerConfig,
+  BannerLayout,
+  BannerState,
+  BannerText,
+  Category,
+  ConsentAction,
+  ConsentRecord,
+  CookieItem,
+  LayoutButtons,
+  Presentation,
+  Regulation,
+  SettingsLinkStyle,
+  VisitorConsent,
+} from "../types";

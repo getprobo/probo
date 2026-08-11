@@ -44,10 +44,10 @@ func TestMCP_Datum_CRUD(t *testing.T) {
 		} `json:"datum"`
 	}
 	mc.CallToolInto("addDatum", map[string]any{
-		"organizationId":     orgID,
-		"name":               factory.SafeName("Datum"),
-		"ownerId":            profileID,
-		"dataClassification": "PUBLIC",
+		"organization_id":     orgID,
+		"name":                factory.SafeName("Datum"),
+		"owner_id":            profileID,
+		"data_classification": "PUBLIC",
 	}, &addResult)
 	require.NotEmpty(t, addResult.Datum.ID)
 
@@ -82,13 +82,13 @@ func TestMCP_Datum_CRUD(t *testing.T) {
 		} `json:"data"`
 	}
 	mc.CallToolInto("listData", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Data)
 
 	// Delete
 	var deleteResult struct {
-		DeletedDatumID string `json:"deletedDatumId"`
+		DeletedDatumID string `json:"deleted_datum_id"`
 	}
 	mc.CallToolInto("deleteDatum", map[string]any{
 		"id": addResult.Datum.ID,

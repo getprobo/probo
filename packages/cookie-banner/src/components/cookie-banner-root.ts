@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { CookieBannerClient } from "../client";
-import type { BannerConfig, Regulation } from "../types";
+import { resolveLayout } from "../layout";
+import type { BannerConfig, BannerLayout, Regulation } from "../types";
 import { ProboElement } from "./base";
 import type { ProboState, ProboRootElement, ConsentDraft } from "./base";
 
@@ -30,7 +31,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   private _draft: ConsentDraft = {};
 
   static get observedAttributes(): string[] {
-    return ["banner-id", "base-url", "reopen-widget", "lang"];
+    return ["banner-id", "base-url", "lang"];
   }
 
   get client(): CookieBannerClient {
@@ -45,10 +46,6 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       throw new Error("<probo-cookie-banner-root> not loaded yet");
     }
     return this._config;
-  }
-
-  get reopenWidget(): string {
-    return this.getAttribute("reopen-widget") ?? "floating";
   }
 
   get state(): ProboState {
@@ -73,20 +70,12 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     return null;
   }
 
-  get reopenState(): ProboState {
-    return this.consentMode === "OPT_OUT" ? "banner" : "panel";
+  get layout(): BannerLayout | null {
+    return this._config ? resolveLayout(this._config) : null;
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
-    if (name === "reopen-widget" && oldValue !== newValue) {
-      this.dispatchEvent(
-        new CustomEvent("probo-reopen-widget", {
-          bubbles: true,
-          composed: true,
-          detail: { value: newValue ?? "floating" },
-        }),
-      );
-    }
+  get reopenState(): ProboState {
+    return this.layout?.reopen_state ?? "panel";
   }
 
   connectedCallback(): void {
@@ -130,6 +119,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
   private buildDraft(config: BannerConfig): ConsentDraft {
     const draft: ConsentDraft = {};
     const existing = this._client?.visitorConsent?.consent_data;
+    const defaultGranted = resolveLayout(config).default_non_necessary_granted;
 
     for (const cat of config.categories) {
       if (cat.kind === "NECESSARY") {
@@ -137,7 +127,7 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       } else if (existing && (cat.slug in existing || cat.name in existing)) {
         draft[cat.slug] = existing[cat.slug] ?? existing[cat.name];
       } else {
-        draft[cat.slug] = config.consent_mode === "OPT_OUT";
+        draft[cat.slug] = defaultGranted;
       }
     }
 
@@ -180,10 +170,21 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
       }),
     );
 
+    this.scheduleValidation(() => this.validateSettingsLink());
+
     if (this._client.hasConsent) {
       this.setState("hidden");
     } else {
-      this.setState("banner");
+      this.setState(resolveLayout(this._config).initial_state);
+    }
+  }
+
+  private validateSettingsLink(): void {
+    if (!document.querySelector("probo-settings-link")) {
+      this.warn(
+        "<probo-settings-link> is required in the header or footer to reopen cookie preferences",
+      );
+      this.emitValidation(["probo-settings-link"]);
     }
   }
 }

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CookieIcon, LaptopIcon } from "@phosphor-icons/react";
+import { CookieIcon, LaptopIcon, TreeStructureIcon } from "@phosphor-icons/react";
 import {
   IconBank,
   IconBook,
@@ -68,12 +68,13 @@ const fragment = graphql`
         canListData: permission(action: "core:datum:list")
         canListAudits: permission(action: "core:audit:list")
         canListFindings: permission(action: "core:finding:list")
+        canListBusinessFunctions: permission(action: "core:business-function:list")
         canListObligations: permission(action: "core:obligation:list")
         canListProcessingActivities: permission(
             action: "core:processing-activity:list"
         )
         canListRightsRequests: permission(action: "core:rights-request:list")
-        canGetCompliancePage: permission(action: "compliance-portal:portal:get")
+        canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
         canListCookieBanners: permission(action: "core:cookie-banner:list")
         canUpdateOrganization: permission(action: "iam:organization:update")
         canListStatementsOfApplicability: permission(
@@ -196,6 +197,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/findings`}
         />
       )}
+      {organization.canListBusinessFunctions && (
+        <SidebarItem
+          label={t("sidebar.businessFunctions")}
+          icon={TreeStructureIcon}
+          to={`${prefix}/business-functions`}
+        />
+      )}
       {organization.canListObligations && (
         <SidebarItem
           label={t("sidebar.obligations")}
@@ -231,11 +239,11 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/access-reviews`}
         />
       )}
-      {organization.canGetCompliancePage && (
+      {organization.canGetCompliancePortal && (
         <SidebarItem
-          label={t("sidebar.compliancePage")}
+          label={t("sidebar.compliancePortals")}
           icon={IconShield}
-          to={`${prefix}/compliance-page`}
+          to={`${prefix}/compliance-portals`}
         />
       )}
       {organization.canListCookieBanners && (

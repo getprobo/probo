@@ -4,8 +4,8 @@
   "author": "",
   "main": "./index.ts",
   "devDependencies": {
-    "@types/react": "^19.2.17",
-    "vitest": "^4.1.8"
+    "@types/react": "^19.2.18",
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "react": "^19.0"

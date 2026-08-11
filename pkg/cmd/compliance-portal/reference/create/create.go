@@ -30,19 +30,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const compliancePortalQuery = `
-query($id: ID!) {
-  node(id: $id) {
-    __typename
-    ... on Organization {
-      compliancePortal {
-        id
-      }
-    }
-  }
-}
-`
-
 const createMutation = `
 mutation($input: CreateCompliancePortalReferenceInput!) {
   createCompliancePortalReference(input: $input) {
@@ -58,15 +45,6 @@ mutation($input: CreateCompliancePortalReferenceInput!) {
   }
 }
 `
-
-type compliancePortalQueryResponse struct {
-	Node *struct {
-		Typename         string `json:"__typename"`
-		CompliancePortal *struct {
-			ID string `json:"id"`
-		} `json:"compliancePortal"`
-	} `json:"node"`
-}
 
 type createResponse struct {
 	CreateCompliancePortalReference struct {
@@ -84,7 +62,7 @@ type createResponse struct {
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg         string
+		flagPortal      string
 		flagName        string
 		flagDescription string
 		flagWebsite     string
@@ -116,40 +94,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				cfg.HTTPTimeoutDuration(),
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
-
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
-			// Fetch compliance portal ID from organization.
-			data, err := client.Do(
-				compliancePortalQuery,
-				map[string]any{"id": flagOrg},
-			)
-			if err != nil {
-				return err
-			}
-
-			var tcResp compliancePortalQueryResponse
-			if err := json.Unmarshal(data, &tcResp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if tcResp.Node == nil {
-				return fmt.Errorf("organization %s not found", flagOrg)
-			}
-
-			if tcResp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", tcResp.Node.Typename)
-			}
-
-			if tcResp.Node.CompliancePortal == nil {
-				return fmt.Errorf("compliance portal not found for organization %s", flagOrg)
-			}
 
 			if f.IOStreams.IsInteractive() {
 				if flagName == "" {
@@ -188,7 +132,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			input := map[string]any{
-				"compliancePortalId": tcResp.Node.CompliancePortal.ID,
+				"compliancePortalId": flagPortal,
 				"name":               flagName,
 			}
 
@@ -200,7 +144,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["websiteUrl"] = flagWebsite
 			}
 
-			data, err = client.Do(
+			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
 			)
@@ -225,7 +169,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID")
+	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().StringVar(&flagName, "name", "", "Reference name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Reference description")
 	cmd.Flags().StringVar(&flagWebsite, "website", "", "Website URL")
