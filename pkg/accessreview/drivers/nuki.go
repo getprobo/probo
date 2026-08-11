@@ -129,6 +129,7 @@ func (d *NukiDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 	}
 
 	authsByUser := make(map[int][]nukiSmartlockAuth)
+
 	var orphanAuths []nukiSmartlockAuth
 
 	for _, auth := range auths {
