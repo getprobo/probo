@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,43 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback, useMemo, useState } from "react";
+import { z } from "zod";
 
-import { z, ZodError } from "#/lib/zod";
+// Zod's default JIT schema compilation uses eval/new Function, which CSP
+// blocks (script-src 'self'). Disable it for the console bundle.
+z.config({ jitless: true });
 
-export function useStateWithSchema<T extends z.ZodType<Record<string, unknown>>>(
-  schema: T,
-  initialValue: z.infer<T>,
-) {
-  const [state, setState] = useState(initialValue);
-  const [value, errors] = useMemo((): [z.infer<T>, Record<string, string>] => {
-    try {
-      return [schema.parse(state), {}];
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return [
-          state,
-          Object.fromEntries(
-            error.issues.map(issue => [
-              issue.path.join("."),
-              issue.message,
-            ]) ?? [],
-          ),
-        ];
-      }
-      return [state, {}];
-    }
-  }, [state, schema]);
-
-  return {
-    rawValue: state,
-    value,
-    errors,
-    update: useCallback(
-      <TKey extends keyof z.infer<T>>(key: TKey, value: z.infer<T>[TKey]) => {
-        setState(prevState => ({ ...prevState, [key]: value }));
-      },
-      [],
-    ),
-  };
-}
+export * from "zod";

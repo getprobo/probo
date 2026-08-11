@@ -22,9 +22,9 @@ import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { useThirdPartyFormFragment$key } from "#/__generated__/core/useThirdPartyFormFragment.graphql";
+import { z } from "#/lib/zod";
 
 import { useFormWithSchema } from "../useFormWithSchema";
 import { useMutationWithToasts } from "../useMutationWithToasts";

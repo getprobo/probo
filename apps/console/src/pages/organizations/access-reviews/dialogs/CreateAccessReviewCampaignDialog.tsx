@@ -33,11 +33,11 @@ import {
 import { type ReactNode, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
-import { z } from "zod";
 
 import type { CreateAccessReviewCampaignDialogMutation } from "#/__generated__/core/CreateAccessReviewCampaignDialogMutation.graphql";
 import type { CreateAccessReviewCampaignDialogSourcesQuery } from "#/__generated__/core/CreateAccessReviewCampaignDialogSourcesQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const createCampaignMutation = graphql`
   mutation CreateAccessReviewCampaignDialogMutation(

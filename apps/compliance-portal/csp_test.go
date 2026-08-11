@@ -47,7 +47,7 @@ func TestContentSecurityPolicy_SubstitutesOrigins(t *testing.T) {
 	assert.Contains(
 		t,
 		policy,
-		"img-src 'self' data: https://app.example.com https://probod.s3.eu-west-1.amazonaws.com https://www.google.com",
+		"img-src 'self' data: https://app.example.com https://probod.s3.eu-west-1.amazonaws.com https://www.google.com https://*.gstatic.com",
 	)
 	assert.Contains(
 		t,

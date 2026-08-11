@@ -37,7 +37,6 @@ import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { z } from "zod";
 
 import type { CreateBusinessFunctionDialogMutation } from "#/__generated__/core/CreateBusinessFunctionDialogMutation.graphql";
 import { AssetsMultiSelectField } from "#/components/form/AssetsMultiSelectField";
@@ -46,6 +45,7 @@ import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMult
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { z } from "#/lib/zod";
 
 import {
   businessFunctionClassificationOptions,

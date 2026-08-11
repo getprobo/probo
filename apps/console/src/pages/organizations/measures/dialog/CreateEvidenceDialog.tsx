@@ -42,11 +42,11 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRelayEnvironment } from "react-relay";
-import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { z } from "#/lib/zod";
 
 const uploadEvidenceMutation = graphql`
   mutation CreateEvidenceDialogUploadMutation(

@@ -32,10 +32,10 @@ import {
 } from "@probo/ui";
 import { forwardRef, type ReactNode, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 import type { CompliancePortalReferenceListItemFragment$data } from "#/__generated__/core/CompliancePortalReferenceListItemFragment.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 import {
   useCreateCompliancePortalReferenceMutation,
   useUpdateCompliancePortalReferenceMutation,

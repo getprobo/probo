@@ -20,7 +20,8 @@
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { type FieldValues, useForm, type UseFormReturn } from "react-hook-form";
-import type { z } from "zod";
+
+import type { z } from "#/lib/zod";
 
 export function useFormWithSchema<T extends z.ZodType<FieldValues, FieldValues>>(
   schema: T,

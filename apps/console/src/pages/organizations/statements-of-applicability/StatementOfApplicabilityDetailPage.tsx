@@ -48,7 +48,6 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 import { Link, useNavigate, useParams } from "react-router";
-import { z } from "zod";
 
 import type { StatementOfApplicabilityDetailPageDeleteMutation } from "#/__generated__/core/StatementOfApplicabilityDetailPageDeleteMutation.graphql";
 import type { StatementOfApplicabilityDetailPageQuery } from "#/__generated__/core/StatementOfApplicabilityDetailPageQuery.graphql";
@@ -57,6 +56,7 @@ import type { StatementOfApplicabilityDetailPageUpdateMutation } from "#/__gener
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 import { PublishStatementOfApplicabilityDialog } from "./dialogs/PublishStatementOfApplicabilityDialog";
 import StatementOfApplicabilityControlsTab from "./tabs/StatementOfApplicabilityControlsTab";

@@ -45,12 +45,12 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { z } from "zod";
 
 import type { ObligationGraphNodeQuery } from "#/__generated__/core/ObligationGraphNodeQuery.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 import {
   obligationNodeQuery,

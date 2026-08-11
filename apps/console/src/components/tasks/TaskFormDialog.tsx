@@ -42,7 +42,6 @@ import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFragment, useRelayEnvironment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { TaskFormDialogFragment$key } from "#/__generated__/core/TaskFormDialogFragment.graphql";
 import { MeasureSelectField } from "#/components/form/MeasureSelectField";
@@ -51,6 +50,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 const taskFragment = graphql`
   fragment TaskFormDialogFragment on Task {

@@ -43,7 +43,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery, useRelayEnvironment } from "react-relay";
 import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { WebhooksSettingsPage_createMutation } from "#/__generated__/core/WebhooksSettingsPage_createMutation.graphql";
 import type { WebhooksSettingsPage_deleteMutation } from "#/__generated__/core/WebhooksSettingsPage_deleteMutation.graphql";
@@ -53,6 +52,7 @@ import type { WebhooksSettingsPage_updateMutation } from "#/__generated__/core/W
 import type { WebhooksSettingsPageQuery } from "#/__generated__/core/WebhooksSettingsPageQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { z } from "#/lib/zod";
 
 export const webhooksSettingsPageQuery = graphql`
   query WebhooksSettingsPageQuery($organizationId: ID!) {

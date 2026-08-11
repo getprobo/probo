@@ -34,7 +34,6 @@ import { type ReactNode } from "react";
 import type { KeyType, KeyTypeData } from "react-relay/ReactRelayTypes";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
-import { z } from "zod";
 
 import { defaultPageSize,
   SortableCellHead,
@@ -43,6 +42,7 @@ import { defaultPageSize,
 import { useMutateField } from "#/hooks/useMutateField";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useStateWithSchema } from "#/hooks/useStateWithSchema";
+import { z } from "#/lib/zod";
 
 type ColumnDefinition = { label: string; field: string } | string;
 

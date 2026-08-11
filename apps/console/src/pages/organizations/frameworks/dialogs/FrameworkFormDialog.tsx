@@ -31,10 +31,10 @@ import {
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { z } from "#/lib/zod";
 
 const createFrameworkMutation = graphql`
   mutation FrameworkFormDialogMutation(

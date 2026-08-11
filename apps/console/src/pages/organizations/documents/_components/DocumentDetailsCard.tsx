@@ -25,7 +25,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { DocumentDetailsCard_documentFragment$key } from "#/__generated__/core/DocumentDetailsCard_documentFragment.graphql";
 import type { DocumentDetailsCard_updateApproversMutation } from "#/__generated__/core/DocumentDetailsCard_updateApproversMutation.graphql";
@@ -38,6 +37,7 @@ import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 const documentFragment = graphql`
   fragment DocumentDetailsCard_documentFragment on Document {

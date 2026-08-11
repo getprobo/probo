@@ -37,11 +37,11 @@ import {
 import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 import {
   DataProtectionImpactAssessmentOptions,

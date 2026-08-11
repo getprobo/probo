@@ -36,7 +36,6 @@ import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { CreateDocumentDialogMutation } from "#/__generated__/core/CreateDocumentDialogMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
@@ -45,6 +44,7 @@ import { DocumentTypeOptions } from "#/components/form/DocumentTypeOptions";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 type CreateDocumentDialogProps = {
   trigger?: ReactNode;

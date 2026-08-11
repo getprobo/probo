@@ -44,12 +44,12 @@ import { type Control, Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useCreateAudit } from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const frameworksQuery = graphql`
   query CreateAuditDialogFrameworksQuery($organizationId: ID!) {

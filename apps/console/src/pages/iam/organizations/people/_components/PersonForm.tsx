@@ -25,7 +25,6 @@ import { useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { type DataID, graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { PersonForm_createMutation } from "#/__generated__/iam/PersonForm_createMutation.graphql";
 import type { PersonForm_updateMutation } from "#/__generated__/iam/PersonForm_updateMutation.graphql";
@@ -35,6 +34,7 @@ import { EmailsField } from "#/components/form/EmailsField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 import { CurrentUser } from "#/providers/CurrentUser";
 
 const fragment = graphql`

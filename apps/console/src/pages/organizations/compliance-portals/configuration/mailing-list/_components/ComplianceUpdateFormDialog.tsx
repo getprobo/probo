@@ -22,12 +22,12 @@ import { Button, Dialog, DialogContent, DialogFooter, type DialogRef, Field, Ico
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { ComplianceUpdateFormDialogCreateMutation } from "#/__generated__/core/ComplianceUpdateFormDialogCreateMutation.graphql";
 import type { ComplianceUpdateFormDialogUpdateMutation } from "#/__generated__/core/ComplianceUpdateFormDialogUpdateMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutation } from "#/lib/relay/useMutation";
+import { z } from "#/lib/zod";
 
 import type { UpdateNode } from "./CompliancePortalUpdatesList";
 

@@ -41,12 +41,12 @@ import { type ReactNode, useEffect } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
-import { z } from "zod";
 
 import type { CreateFindingDialogMutation } from "#/__generated__/core/CreateFindingDialogMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { RiskSelectField } from "#/components/form/RiskSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const createFindingMutation = graphql`
   mutation CreateFindingDialogMutation(

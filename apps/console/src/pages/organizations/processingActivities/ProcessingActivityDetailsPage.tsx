@@ -48,13 +48,13 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
-import { z } from "zod";
 
 import type { ProcessingActivityGraphNodeQuery } from "#/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 import {
   DataProtectionImpactAssessmentOptions,

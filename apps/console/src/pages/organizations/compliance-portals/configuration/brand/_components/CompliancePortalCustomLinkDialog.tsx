@@ -25,13 +25,13 @@ import {
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, readInlineData } from "relay-runtime";
-import { z } from "zod";
 
 import type { CompliancePortalCustomLinkDialog_createMutation } from "#/__generated__/core/CompliancePortalCustomLinkDialog_createMutation.graphql";
 import type { CompliancePortalCustomLinkDialog_customLink$key } from "#/__generated__/core/CompliancePortalCustomLinkDialog_customLink.graphql";
 import type { CompliancePortalCustomLinkDialog_updateMutation } from "#/__generated__/core/CompliancePortalCustomLinkDialog_updateMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutation } from "#/lib/relay/useMutation";
+import { z } from "#/lib/zod";
 
 const customLinkFragment = graphql`
   fragment CompliancePortalCustomLinkDialog_customLink on ComplianceCustomLink @inline {

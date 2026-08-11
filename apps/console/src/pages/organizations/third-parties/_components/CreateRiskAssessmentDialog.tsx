@@ -35,11 +35,11 @@ import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { CreateRiskAssessmentDialogMutation } from "#/__generated__/core/CreateRiskAssessmentDialogMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 type Props = {
   children: ReactNode;

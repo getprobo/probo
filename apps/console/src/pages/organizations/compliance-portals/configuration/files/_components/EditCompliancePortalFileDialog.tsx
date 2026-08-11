@@ -21,12 +21,12 @@
 import { Button, Dialog, DialogContent, DialogFooter, Field, Spinner } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { CompliancePortalFileListItem_fileFragment$data } from "#/__generated__/core/CompliancePortalFileListItem_fileFragment.graphql";
 import type { EditCompliancePortalFileDialogMutation } from "#/__generated__/core/EditCompliancePortalFileDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutation } from "#/lib/relay/useMutation";
+import { z } from "#/lib/zod";
 
 const updateCompliancePortalFileMutation = graphql`
   mutation EditCompliancePortalFileDialogMutation($input: UpdateCompliancePortalFileInput!) {

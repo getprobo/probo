@@ -78,6 +78,26 @@ export default defineConfig([
     },
   },
   {
+    // Zod JIT uses eval/new Function; console CSP forbids unsafe-eval. All
+    // zod usage must go through #/lib/zod which sets jitless: true.
+    files: ["apps/console/**"],
+    ignores: ["apps/console/src/lib/zod.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "zod",
+              message:
+                "Import from #/lib/zod (jitless config for CSP), not zod directly.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // The v2 kit styles with tailwind-variants/lite (no tailwind-merge): the
     // numbered scales (text-1…9, rounded-1…6, shadow-1…6) collide with the
     // color/utility namespaces and tailwind-merge would drop the scale class.

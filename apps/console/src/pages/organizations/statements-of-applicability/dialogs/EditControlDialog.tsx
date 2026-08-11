@@ -34,10 +34,10 @@ import {
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { z } from "#/lib/zod";
 
 const updateApplicabilityStatementMutation = graphql`
     mutation EditControlDialogUpdateMutation($input: UpdateApplicabilityStatementInput!) {

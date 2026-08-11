@@ -36,11 +36,11 @@ import { type ChangeEventHandler, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { OrganizationFormFragment$key } from "#/__generated__/iam/OrganizationFormFragment.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { z } from "#/lib/zod";
 
 const fragment = graphql`
   fragment OrganizationFormFragment on Organization {

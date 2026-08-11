@@ -21,10 +21,10 @@
 import { Button, Field, useToast } from "@probo/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { usePostAuthRedirectUrl } from "#/hooks/usePostAuthRedirectUrl";
+import { z } from "#/lib/zod";
 
 const schema = z.object({
   email: z.string().email(),

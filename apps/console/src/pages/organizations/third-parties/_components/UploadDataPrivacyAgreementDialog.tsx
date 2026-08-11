@@ -34,10 +34,10 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
-import { z } from "zod";
 
 import type { UploadDataPrivacyAgreementDialogMutation } from "#/__generated__/core/UploadDataPrivacyAgreementDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const uploadDataPrivacyAgreementMutation = graphql`
   mutation UploadDataPrivacyAgreementDialogMutation(

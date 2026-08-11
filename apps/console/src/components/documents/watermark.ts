@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { z } from "zod";
+import { z } from "#/lib/zod";
 
 const goWhitespacePattern = /^\p{White_Space}*$/u;
 

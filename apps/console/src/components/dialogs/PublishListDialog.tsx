@@ -31,10 +31,10 @@ import {
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
-import { z } from "zod";
 
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 export type PublishListDialogLabels = {
   title: string;
