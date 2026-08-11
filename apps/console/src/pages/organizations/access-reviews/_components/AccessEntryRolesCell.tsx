@@ -19,11 +19,11 @@
 // SOFTWARE.
 
 import { Badge, Td } from "@probo/ui";
-import * as Popover from "@radix-ui/react-popover";
 import { graphql, useFragment } from "react-relay";
 
 import type { AccessEntryRolesCell_accessEntry$key } from "#/__generated__/core/AccessEntryRolesCell_accessEntry.graphql";
 
+import { AccessEntryExtraRolesPopover } from "./AccessEntryExtraRolesPopover";
 import { NotAvailable } from "./accessReviewHelpers";
 
 const VISIBLE_ROLE_COUNT = 2;
@@ -72,31 +72,16 @@ export function AccessEntryRolesCell({ accessEntryKey }: Props) {
           </Badge>
         ))}
         {hiddenRoles.length > 0 && (
-          <Popover.Root>
-            <Popover.Trigger asChild>
-              <button type="button" className="inline-flex shrink-0">
-                <Badge variant="neutral" className="cursor-pointer text-xs">
-                  +
-                  {hiddenRoles.length}
-                </Badge>
-              </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content
-                className="z-50 max-w-sm rounded-md border bg-level-0 p-3 shadow-md"
-                sideOffset={4}
-                align="start"
-              >
-                <div className="flex flex-wrap gap-1">
-                  {hiddenRoles.map((role, index) => (
-                    <Badge key={`${index}-${role}`} variant="neutral" className="text-xs">
-                      {role}
-                    </Badge>
-                  ))}
-                </div>
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
+          <AccessEntryExtraRolesPopover
+            roles={hiddenRoles}
+            className="inline-flex shrink-0"
+            trigger={(
+              <Badge variant="neutral" className="cursor-pointer text-xs">
+                +
+                {hiddenRoles.length}
+              </Badge>
+            )}
+          />
         )}
       </div>
     </Td>

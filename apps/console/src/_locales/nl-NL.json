@@ -3200,6 +3200,10 @@
     "selectionLoadedOnly": "Alleen de tot nu toe geladen items kunnen worden geselecteerd. Scroll om er meer te laden.",
     "decisionPlaceholder": "Beslissing instellen...",
     "selectEntry": "Selecteer {{name}}",
+    "showAdditionalRoles_one": "Toon {{count}} extra rol",
+    "showAdditionalRoles_other": "Toon {{count}} extra rollen",
+    "additionalRoles_one": "{{count}} extra rol",
+    "additionalRoles_other": "{{count}} extra rollen",
     "flagsPlaceholder": "Markeringen instellen...",
     "note": {
       "title": "Opmerking bij beslissing",

@@ -96,7 +96,7 @@ func (d *ApolloDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Email:       email,
 				FullName:    apolloFullName(u, email),
 				Roles:       apolloRoles(role),
-				IsAdmin:     new(apolloIsAdmin(role)),
+				IsAdmin:     apolloIsAdmin(role),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -198,12 +198,15 @@ func apolloRoles(role string) []string {
 	return []string{role}
 }
 
-// apolloIsAdmin reports whether a permission-profile name is Apollo's
-// built-in super-admin profile ("Admin"). Apollo exposes no boolean admin
-// flag and lets customers name custom profiles freely, so the match is exact
-// (case-insensitive), not a substring: a profile merely containing "admin"
-// (e.g. "Billing Admin") is not auto-classified — its Role is still surfaced
-// for the reviewer to judge.
-func apolloIsAdmin(role string) bool {
-	return strings.EqualFold(strings.TrimSpace(role), "Admin")
+// apolloIsAdmin maps a permission-profile name to Apollo's built-in
+// super-admin profile ("Admin"). An absent or unreadable role remains
+// unclassified. Apollo lets customers name custom profiles freely, so a known
+// non-empty profile is false unless it exactly matches Admin case-insensitively.
+func apolloIsAdmin(role string) *bool {
+	role = strings.TrimSpace(role)
+	if role == "" {
+		return nil
+	}
+
+	return new(strings.EqualFold(role, "Admin"))
 }

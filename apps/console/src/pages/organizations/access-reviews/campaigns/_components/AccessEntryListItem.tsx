@@ -20,12 +20,12 @@
 
 import { dateFormat } from "@probo/i18n";
 import { Badge, Checkbox, IconRobot } from "@probo/ui";
-import * as Popover from "@radix-ui/react-popover";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { AccessEntryListItem_entry$key } from "#/__generated__/core/AccessEntryListItem_entry.graphql";
 
+import { AccessEntryExtraRolesPopover } from "../../_components/AccessEntryExtraRolesPopover";
 import {
   AdminStatus,
   AuthMethodStatus,
@@ -133,36 +133,11 @@ export function AccessEntryListItem({
               )
             : null}
           {extraRoles.length > 0 && (
-            <Popover.Root>
-              <Popover.Trigger asChild>
-                <button
-                  type="button"
-                  className="shrink-0 cursor-pointer hover:text-txt-primary"
-                  title={extraRoles.join(", ")}
-                >
-                  {`+${extraRoles.length}`}
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content
-                  className="z-50 max-w-sm rounded-md border bg-level-0 p-3 shadow-md"
-                  sideOffset={4}
-                  align="start"
-                >
-                  <div className="flex flex-wrap gap-1">
-                    {extraRoles.map((extraRole, index) => (
-                      <Badge
-                        key={`${index}-${extraRole}`}
-                        variant="neutral"
-                        className="text-xs"
-                      >
-                        {extraRole}
-                      </Badge>
-                    ))}
-                  </div>
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
+            <AccessEntryExtraRolesPopover
+              roles={extraRoles}
+              className="shrink-0 cursor-pointer hover:text-txt-primary"
+              trigger={`+${extraRoles.length}`}
+            />
           )}
         </div>
       </div>

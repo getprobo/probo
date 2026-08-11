@@ -3200,6 +3200,10 @@
     "selectionLoadedOnly": "Seules les entrées déjà chargées peuvent être sélectionnées. Faites défiler pour en charger davantage.",
     "decisionPlaceholder": "Définir une décision...",
     "selectEntry": "Sélectionner {{name}}",
+    "showAdditionalRoles_one": "Afficher {{count}} rôle supplémentaire",
+    "showAdditionalRoles_other": "Afficher {{count}} rôles supplémentaires",
+    "additionalRoles_one": "{{count}} rôle supplémentaire",
+    "additionalRoles_other": "{{count}} rôles supplémentaires",
     "flagsPlaceholder": "Définir des indicateurs...",
     "note": {
       "title": "Note de décision",

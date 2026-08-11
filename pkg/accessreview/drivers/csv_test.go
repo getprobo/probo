@@ -25,6 +25,9 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCSVDriverRequiresEmailHeader(t *testing.T) {
@@ -94,6 +97,22 @@ func TestCSVDriverParsesAdminStatus(t *testing.T) {
 	if records[2].IsAdmin != nil {
 		t.Fatal("expected blank admin status to be unknown")
 	}
+}
+
+func TestCSVDriverParsesActiveStatus(t *testing.T) {
+	t.Parallel()
+
+	driver := NewCSVDriver(strings.NewReader(
+		"email,active\nactive@example.com,true\ninactive@example.com,false\nblank@example.com,\ninvalid@example.com,yes\n",
+	))
+
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 4)
+	assert.Equal(t, new(true), records[0].Active)
+	assert.Equal(t, new(false), records[1].Active)
+	assert.Nil(t, records[2].Active)
+	assert.Nil(t, records[3].Active)
 }
 
 func TestCSVDriverSplitsRoles(t *testing.T) {

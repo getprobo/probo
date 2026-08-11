@@ -106,16 +106,11 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		}
 
 		if idx, ok := colIndex["is_admin"]; ok && idx < len(row) {
-			switch strings.TrimSpace(strings.ToLower(row[idx])) {
-			case "true":
-				record.IsAdmin = new(true)
-			case "false":
-				record.IsAdmin = new(false)
-			}
+			record.IsAdmin = csvOptionalBool(row[idx])
 		}
 
 		if idx, ok := colIndex["active"]; ok && idx < len(row) {
-			record.Active = new(strings.TrimSpace(strings.ToLower(row[idx])) == "true")
+			record.Active = csvOptionalBool(row[idx])
 		}
 
 		if idx, ok := colIndex["external_id"]; ok && idx < len(row) {
@@ -134,4 +129,15 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 	}
 
 	return records, nil
+}
+
+func csvOptionalBool(value string) *bool {
+	switch strings.TrimSpace(strings.ToLower(value)) {
+	case "true":
+		return new(true)
+	case "false":
+		return new(false)
+	default:
+		return nil
+	}
 }

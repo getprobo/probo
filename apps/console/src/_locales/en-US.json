@@ -1602,6 +1602,10 @@
     "selectionLoadedOnly": "Only the entries loaded so far can be selected. Scroll to load more.",
     "decisionPlaceholder": "Set decision...",
     "selectEntry": "Select {{name}}",
+    "showAdditionalRoles_one": "Show {{count}} additional role",
+    "showAdditionalRoles_other": "Show {{count}} additional roles",
+    "additionalRoles_one": "{{count}} additional role",
+    "additionalRoles_other": "{{count}} additional roles",
     "flagsPlaceholder": "Set flags...",
     "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
