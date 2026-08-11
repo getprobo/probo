@@ -53,7 +53,7 @@ type (
 
 func (r *CreateCustomLinkRequest) Validate() error {
 	v := validator.New()
-	v.Check(r.CompliancePortalID, "trust_center_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
+	v.Check(r.CompliancePortalID, "compliance_portal_id", validator.Required(), validator.GID(coredata.CompliancePortalEntityType))
 	v.Check(r.URL, "url", validator.Required(), validator.URL())
 
 	return v.Error()

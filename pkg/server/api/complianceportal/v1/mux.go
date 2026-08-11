@@ -15,10 +15,12 @@
 package complianceportal_v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
+	complianceportalstatics "go.probo.inc/probo/apps/compliance-portal"
 	"go.probo.inc/probo/pkg/baseurl"
 	visitor "go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/esign"
@@ -36,6 +38,7 @@ import (
 
 type MuxConfig struct {
 	BaseURL           *baseurl.BaseURL
+	FileStorageOrigin string
 	ExtraHeaderFields map[string]string
 	AllowedOrigins    []string
 	Logger            *log.Logger
@@ -58,8 +61,34 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 
 	r := chi.NewRouter()
 
+	appOrigin := ""
+
+	if cfg.BaseURL != nil {
+		var originErr error
+
+		appOrigin, originErr = cfg.BaseURL.CSPOrigin()
+		if originErr != nil {
+			return nil, fmt.Errorf("cannot build content security policy: %w", originErr)
+		}
+	}
+
+	csp, err := complianceportalstatics.ContentSecurityPolicy(
+		appOrigin,
+		cfg.FileStorageOrigin,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build content security policy: %w", err)
+	}
+
 	r.Use(complianceportal.NewSNIMiddleware(cfg.Visitor))
-	r.Use(server.NewSecurityHeadersMiddleware(cfg.ExtraHeaderFields))
+	r.Use(
+		server.NewSecurityHeadersMiddleware(
+			server.SecurityHeadersOptions{
+				ExtraHeaderFields:     cfg.ExtraHeaderFields,
+				ContentSecurityPolicy: csp,
+			},
+		),
+	)
 
 	markdownHandler := complianceportal.NewHandler(cfg.Visitor)
 

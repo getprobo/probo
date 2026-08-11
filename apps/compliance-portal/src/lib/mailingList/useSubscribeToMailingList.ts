@@ -38,7 +38,7 @@ const subscribeToMailingListMutation = graphql`
 
 // Subscribes the authenticated viewer to the compliance portal mailing list and
 // links the new subscriber onto currentCompliancePortal.viewerSubscription.
-export function useSubscribeToMailingList(trustCenterId: string) {
+export function useSubscribeToMailingList(compliancePortalId: string) {
   const { t } = useTranslation("updates");
   const [commit, isSubscribing] = useMutation<useSubscribeToMailingListMutation>(
     subscribeToMailingListMutation,
@@ -53,7 +53,7 @@ export function useSubscribeToMailingList(trustCenterId: string) {
         if (!subscription?.id) {
           return;
         }
-        const trustCenterRecord = store.get(trustCenterId);
+        const trustCenterRecord = store.get(compliancePortalId);
         const subscriptionRecord = store.get(subscription.id);
         if (trustCenterRecord == null || subscriptionRecord == null) {
           return;
@@ -61,7 +61,7 @@ export function useSubscribeToMailingList(trustCenterId: string) {
         trustCenterRecord.setLinkedRecord(subscriptionRecord, "viewerSubscription");
       },
     });
-  }, [commit, trustCenterId]);
+  }, [commit, compliancePortalId]);
 
   return [subscribe, isSubscribing] as const;
 }

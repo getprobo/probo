@@ -124,13 +124,13 @@ const (
 	CommonThirdPartyEntityType                       uint16 = 92
 	CommonThirdPartyDomainEntityType                 uint16 = 93
 	CommonTrackerPatternEntityType                   uint16 = 94
-	RiskAssessmentEntityType                         uint16 = 95
-	RiskAssessmentNodeEntityType                     uint16 = 96
-	RiskAssessmentProcessEntityType                  uint16 = 97
-	RiskAssessmentThreatEntityType                   uint16 = 98
-	RiskAssessmentScopeEntityType                    uint16 = 99
-	RiskAssessmentScenarioEntityType                 uint16 = 100
-	RiskAssessmentBoundaryEntityType                 uint16 = 101
+	RiskAnalysisEntityType                           uint16 = 95
+	RiskAnalysisNodeEntityType                       uint16 = 96
+	RiskAnalysisProcessEntityType                    uint16 = 97
+	RiskAnalysisThreatEntityType                     uint16 = 98
+	RiskAnalysisDiagramEntityType                    uint16 = 99
+	RiskAnalysisScenarioEntityType                   uint16 = 100
+	RiskAnalysisBoundaryEntityType                   uint16 = 101
 	AccessReviewCampaignSourceEntityType             uint16 = 102
 	AccessReviewCampaignSourceFetchAttemptEntityType uint16 = 103
 	CompliancePortalCommitmentGroupEntityType        uint16 = 104
@@ -140,8 +140,12 @@ const (
 	DevicePostureEntityType                          uint16 = 108
 	DeviceEnrollmentTokenEntityType                  uint16 = 109
 	DevicePostureReportEntityType                    uint16 = 110
-	MalaysiaPDPABreachIncidentEntityType             uint16 = 111
-	MalaysiaPDPABreachStatusHistoryEntityType        uint16 = 112
+	CompliancePortalAuditEntityType                  uint16 = 111
+	CompliancePortalThirdPartyEntityType             uint16 = 112
+	CompliancePortalDocumentEntityType               uint16 = 113
+	BusinessFunctionEntityType                       uint16 = 114
+	MalaysiaPDPABreachIncidentEntityType             uint16 = 115
+	MalaysiaPDPABreachStatusHistoryEntityType        uint16 = 116
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -318,20 +322,20 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CommonThirdPartyDomain{ID: id}, true
 	case CommonTrackerPatternEntityType:
 		return &CommonTrackerPattern{ID: id}, true
-	case RiskAssessmentEntityType:
-		return &RiskAssessment{ID: id}, true
-	case RiskAssessmentNodeEntityType:
-		return &RiskAssessmentNode{ID: id}, true
-	case RiskAssessmentProcessEntityType:
-		return &RiskAssessmentProcess{ID: id}, true
-	case RiskAssessmentThreatEntityType:
-		return &RiskAssessmentThreat{ID: id}, true
-	case RiskAssessmentScopeEntityType:
-		return &RiskAssessmentScope{ID: id}, true
-	case RiskAssessmentScenarioEntityType:
-		return &RiskAssessmentScenario{ID: id}, true
-	case RiskAssessmentBoundaryEntityType:
-		return &RiskAssessmentBoundary{ID: id}, true
+	case RiskAnalysisEntityType:
+		return &RiskAnalysis{ID: id}, true
+	case RiskAnalysisNodeEntityType:
+		return &RiskAnalysisNode{ID: id}, true
+	case RiskAnalysisProcessEntityType:
+		return &RiskAnalysisProcess{ID: id}, true
+	case RiskAnalysisThreatEntityType:
+		return &RiskAnalysisThreat{ID: id}, true
+	case RiskAnalysisDiagramEntityType:
+		return &RiskAnalysisDiagram{ID: id}, true
+	case RiskAnalysisScenarioEntityType:
+		return &RiskAnalysisScenario{ID: id}, true
+	case RiskAnalysisBoundaryEntityType:
+		return &RiskAnalysisBoundary{ID: id}, true
 	case AccessReviewCampaignSourceEntityType:
 		return &AccessReviewCampaignSource{ID: id}, true
 	case AccessReviewCampaignSourceFetchAttemptEntityType:
@@ -340,6 +344,12 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CompliancePortalCommitmentGroup{ID: id}, true
 	case CompliancePortalCommitmentEntityType:
 		return &CompliancePortalCommitment{ID: id}, true
+	case CompliancePortalDocumentEntityType:
+		return &CompliancePortalDocument{ID: id}, true
+	case CompliancePortalAuditEntityType:
+		return &CompliancePortalAudit{ID: id}, true
+	case CompliancePortalThirdPartyEntityType:
+		return &CompliancePortalThirdParty{ID: id}, true
 	case CertificateEntityType:
 		return &Certificate{ID: id}, true
 	case DeviceEntityType:
@@ -350,6 +360,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DeviceEnrollmentToken{ID: id}, true
 	case DevicePostureReportEntityType:
 		return &DevicePostureReport{ID: id}, true
+	case BusinessFunctionEntityType:
+		return &BusinessFunction{ID: id}, true
 	case MalaysiaPDPABreachIncidentEntityType:
 		return &MalaysiaPDPABreachIncident{ID: id}, true
 	case MalaysiaPDPABreachStatusHistoryEntityType:

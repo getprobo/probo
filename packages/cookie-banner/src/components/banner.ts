@@ -21,7 +21,6 @@
 import { ProboElement } from "./base";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
-import type { BannerConfig } from "../types";
 
 export class ProboBanner extends ProboElement {
   private root: ProboRootElement | null = null;
@@ -33,9 +32,8 @@ export class ProboBanner extends ProboElement {
     }
   };
 
-  private onReady = (e: Event): void => {
-    const config = (e as CustomEvent).detail.config as BannerConfig;
-    this.validate(config);
+  private onReady = (): void => {
+    this.validate();
   };
 
   connectedCallback(): void {
@@ -44,9 +42,9 @@ export class ProboBanner extends ProboElement {
 
     if (this.root) {
       this.root.addEventListener("probo-state", this.onStateChange);
-      try {
-        this.validate(this.root.bannerConfig);
-      } catch {
+      if (this.root.layout) {
+        this.validate();
+      } else {
         this.root.addEventListener("probo-ready", this.onReady, { once: true });
       }
       if (this.root.state === "banner") {
@@ -62,18 +60,31 @@ export class ProboBanner extends ProboElement {
     }
   }
 
-  private validate(config: BannerConfig): void {
-    const texts = config.texts ?? {};
-    const required: string[] = ["probo-accept-button"];
-    if (texts.button_reject_all) required.push("probo-reject-button");
-    if (texts.button_customize) required.push("probo-customize-button");
+  private validate(): void {
+    const layout = this.root?.layout;
+    if (!layout) return;
 
     const missing: string[] = [];
-    for (const tag of required) {
-      if (!this.querySelector(tag)) {
-        missing.push(tag);
-      }
+
+    // The primary action is presentation-specific: notice banners acknowledge,
+    // every other presentation accepts. Requiring the exact tag stops, e.g., an
+    // opt-in banner from silently recording ACKNOWLEDGE, and gives the correct
+    // missing-child diagnostic.
+    const primaryTag =
+      layout.presentation === "NOTICE"
+        ? "probo-acknowledge-button"
+        : "probo-accept-button";
+    if (!this.querySelector(primaryTag)) {
+      missing.push(primaryTag);
     }
+
+    if (layout.buttons.reject_all && !this.querySelector("probo-reject-button")) {
+      missing.push("probo-reject-button");
+    }
+    if (layout.buttons.customize && !this.querySelector("probo-customize-button")) {
+      missing.push("probo-customize-button");
+    }
+
     if (missing.length > 0) {
       this.warn(`<probo-banner> is missing required children: ${missing.join(", ")}`);
       this.emitValidation(missing);

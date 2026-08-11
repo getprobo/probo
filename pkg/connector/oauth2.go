@@ -32,6 +32,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -475,6 +476,18 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		// requested scope. Fall back to what we asked for so
 		// subsequent reconnect diffs have a meaningful base.
 		grantedScope = FormatScopeString(payload.Data.RequestedScopes)
+	}
+
+	// Microsoft's identity platform v2 token endpoint never echoes
+	// offline_access in the scope field even when a refresh token was
+	// issued (see https://learn.microsoft.com/en-us/answers/questions/806413).
+	// Only backfill when the client actually requested that OIDC scope —
+	// Google uses access_type=offline instead and rejects offline_access
+	// on authorize (invalid_scope).
+	if rawToken.RefreshToken != "" && slices.Contains(payload.Data.RequestedScopes, "offline_access") {
+		grantedScope = FormatScopeString(
+			UnionScopes(ParseScopeString(grantedScope), []string{"offline_access"}),
+		)
 	}
 
 	oauth2Conn := OAuth2Connection{

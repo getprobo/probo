@@ -37,27 +37,31 @@ import (
 func (s *Service) GetReport(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	fileID gid.GID,
 ) (*coredata.File, error) {
-	file, err := s.loadReportByID(ctx, scope, fileID)
-	if err != nil {
+	file := &coredata.File{}
+
+	if err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			_, _, err := loadAuditByReportFileID(ctx, conn, scope, compliancePortalID, fileID)
+			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, ErrReportNotFound) {
+					return ErrReportNotFound
+				}
+
+				return fmt.Errorf("cannot verify report file: %w", err)
+			}
+
+			if err := file.LoadActiveByID(ctx, conn, scope, fileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
 		return nil, err
-	}
-
-	if file.OrganizationID != organizationID {
-		return nil, ErrReportNotFound
-	}
-
-	// check the given report file ID is linked to an audit in order to avoid
-	// being able to get any file from the report request.
-	_, err = s.GetAuditByReportFileID(ctx, scope, fileID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, ErrReportNotFound
-		}
-
-		return nil, fmt.Errorf("cannot verify report file: %w", err)
 	}
 
 	return file, nil
@@ -98,7 +102,9 @@ func (s *Service) ExportReportPDF(
 		return nil, fmt.Errorf("cannot export report PDF: %w", err)
 	}
 
-	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, email)
+	watermarkText := pdfutils.TruncateWatermarkText(email.String())
+
+	watermarkedPDF, err := pdfutils.AddConfidentialWithTimestamp(pdfData, watermarkText)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}
@@ -128,7 +134,7 @@ func (s *Service) exportReportPDFData(
 		ctx,
 		&s3.GetObjectInput{
 			Bucket: new(s.bucket),
-			Key:    new(file.FileKey),
+			Key:    &file.FileKey,
 		},
 	)
 	if err != nil {

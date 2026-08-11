@@ -46,6 +46,8 @@ const topBarFragment = graphql`
     currentCompliancePortal @required(action: THROW) {
       themedLogoUrl
       entityName
+      rightsRequestsEnabled
+      ...TopBarMobileNav_compliancePortal
     }
   }
 `;
@@ -68,6 +70,9 @@ export function TopBar({ queryKey }: TopBarProps) {
   const { currentCompliancePortal } = data;
   const entityName = currentCompliancePortal.entityName;
   const logoUrl = currentCompliancePortal.themedLogoUrl ?? undefined;
+  const navItems = TOP_BAR_NAV_ITEMS.filter(
+    item => item.to !== "/requests" || currentCompliancePortal.rightsRequestsEnabled,
+  );
 
   const slots = topBar();
   const homePath = localizedPath("/");
@@ -100,7 +105,7 @@ export function TopBar({ queryKey }: TopBarProps) {
         </RouterLink>
 
         <nav className={slots.nav()}>
-          {TOP_BAR_NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const to = localizedPath(item.to);
             return (
               <ButtonLink
@@ -135,7 +140,10 @@ export function TopBar({ queryKey }: TopBarProps) {
             : <TopBarUserMenu identityKey={data.viewer} />}
         </nav>
 
-        <TopBarMobileNav identityKey={data.viewer ?? null} />
+        <TopBarMobileNav
+          identityKey={data.viewer ?? null}
+          compliancePortalKey={currentCompliancePortal}
+        />
       </div>
     </header>
   );

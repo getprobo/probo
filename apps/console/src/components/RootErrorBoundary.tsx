@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { UnAuthenticatedError } from "@probo/relay";
+import { MembershipRequiredError, UnAuthenticatedError } from "@probo/relay";
 import { Navigate, useLocation, useRouteError } from "react-router";
+
+import { NoOrganizationAccess } from "#/pages/iam/_components/NoOrganizationAccess";
 
 import { PageError } from "./PageError";
 
@@ -43,6 +45,10 @@ export function RootErrorBoundary() {
       }}
       />
     );
+  }
+
+  if (error instanceof MembershipRequiredError) {
+    return <NoOrganizationAccess />;
   }
 
   return <PageError error={error instanceof Error ? error : new Error("unknown error")} />;

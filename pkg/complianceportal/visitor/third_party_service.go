@@ -22,6 +22,7 @@ package visitor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/pg"
@@ -30,18 +31,36 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func (s *Service) GetThirdParty(
+// GetThirdPartyForCompliancePortalID loads a third party as published on the
+// given compliance portal. A third party that is not published on this portal
+// is reported as not found.
+func (s *Service) GetThirdPartyForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
+	compliancePortalID gid.GID,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdParty, error) {
 	thirdParty := &coredata.ThirdParty{}
+	portalThirdParty := &coredata.CompliancePortalThirdParty{}
+	compliancePortal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID)
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := portalThirdParty.LoadByCompliancePortalIDAndThirdPartyID(ctx, conn, scope, compliancePortalID, thirdPartyID)
 			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrThirdPartyNotFound
+				}
+
+				return fmt.Errorf("cannot load compliance portal thirdParty: %w", err)
+			}
+
+			if err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
@@ -55,24 +74,24 @@ func (s *Service) GetThirdParty(
 	return thirdParty, nil
 }
 
-func (s *Service) ListThirdPartiesForOrganizationID(
+func (s *Service) ListThirdPartiesForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 	filter *coredata.ThirdPartyFilter,
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
-	if filter == nil {
-		showOnCompliancePortal := true
-		filter = coredata.NewThirdPartyFilter(&showOnCompliancePortal, nil, nil, nil, nil)
-	}
-
 	var thirdParties coredata.ThirdParties
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdParties.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			compliancePortal := &coredata.CompliancePortal{}
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := thirdParties.LoadByCompliancePortalID(ctx, conn, scope, compliancePortalID, compliancePortal.OrganizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParties: %w", err)
 			}
@@ -87,10 +106,10 @@ func (s *Service) ListThirdPartiesForOrganizationID(
 	return page.NewPage(thirdParties, cursor), nil
 }
 
-func (s *Service) ListDistinctPortalCategoriesForOrganizationID(
+func (s *Service) ListDistinctPortalCategoriesForPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 ) ([]coredata.ThirdPartyCategory, error) {
 	var categories []coredata.ThirdPartyCategory
 
@@ -99,7 +118,7 @@ func (s *Service) ListDistinctPortalCategoriesForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdParties := &coredata.ThirdParties{}
 
-			result, err := thirdParties.LoadDistinctCompliancePortalCategoriesByOrganizationID(ctx, conn, scope, organizationID)
+			result, err := thirdParties.LoadDistinctCompliancePortalCategoriesByCompliancePortalID(ctx, conn, scope, compliancePortalID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty categories: %w", err)
 			}
@@ -116,10 +135,10 @@ func (s *Service) ListDistinctPortalCategoriesForOrganizationID(
 	return categories, nil
 }
 
-func (s *Service) ListDistinctPortalCountriesForOrganizationID(
+func (s *Service) ListDistinctPortalCountriesForPortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 ) ([]coredata.CountryCode, error) {
 	var countries []coredata.CountryCode
 
@@ -128,7 +147,7 @@ func (s *Service) ListDistinctPortalCountriesForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdParties := &coredata.ThirdParties{}
 
-			result, err := thirdParties.LoadDistinctCompliancePortalCountriesByOrganizationID(ctx, conn, scope, organizationID)
+			result, err := thirdParties.LoadDistinctCompliancePortalCountriesByCompliancePortalID(ctx, conn, scope, compliancePortalID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty countries: %w", err)
 			}
@@ -145,30 +164,32 @@ func (s *Service) ListDistinctPortalCountriesForOrganizationID(
 	return countries, nil
 }
 
-func (s *Service) CountThirdPartiesForPortalID(
+func (s *Service) CountThirdPartiesForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	compliancePageID gid.GID,
+	compliancePortalID gid.GID,
 	filter *coredata.ThirdPartyFilter,
 ) (int, error) {
-	if filter == nil {
-		showOnCompliancePortal := true
-		filter = coredata.NewThirdPartyFilter(&showOnCompliancePortal, nil, nil, nil, nil)
-	}
-
 	var count int
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
-			compliancePage, err := s.GetPortal(ctx, scope, compliancePageID)
-			if err != nil {
-				return fmt.Errorf("cannot load compliance page: %w", err)
+			compliancePortal := &coredata.CompliancePortal{}
+			if err := compliancePortal.LoadByID(ctx, conn, scope, compliancePortalID); err != nil {
+				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
 			thirdParties := &coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, compliancePage.OrganizationID, filter)
+			count, err = thirdParties.CountByCompliancePortalID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				compliancePortal.OrganizationID,
+				filter,
+			)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}

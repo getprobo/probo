@@ -23,12 +23,20 @@ import { Badge, Checkbox, useToast } from "@probo/ui";
 import * as Popover from "@radix-ui/react-popover";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { EntryFlagSelect_entry$key } from "#/__generated__/core/EntryFlagSelect_entry.graphql";
 import type { AccessReviewEntryFlag, EntryFlagSelectMutation } from "#/__generated__/core/EntryFlagSelectMutation.graphql";
 
 import { flagBadgeVariant, flagGroups } from "./accessReviewHelpers";
+
+const entryFlagSelectFragment = graphql`
+  fragment EntryFlagSelect_entry on AccessReviewEntry {
+    id
+    flags
+  }
+`;
 
 const mutation = graphql`
   mutation EntryFlagSelectMutation($input: FlagAccessReviewEntryInput!) {
@@ -43,13 +51,14 @@ const mutation = graphql`
 `;
 
 type Props = {
-  entryId: string;
-  currentFlags: readonly AccessReviewEntryFlag[];
+  entryKey: EntryFlagSelect_entry$key;
 };
 
-export function EntryFlagSelect({ entryId, currentFlags }: Props) {
+export function EntryFlagSelect({ entryKey }: Props) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const entry = useFragment(entryFlagSelectFragment, entryKey);
+  const currentFlags = entry.flags;
   const [open, setOpen] = useState(false);
   const [localFlags, setLocalFlags] = useState<AccessReviewEntryFlag[]>([...currentFlags]);
   const openedWithRef = useRef<readonly AccessReviewEntryFlag[]>(currentFlags);
@@ -79,7 +88,7 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
         flagEntry({
           variables: {
             input: {
-              accessReviewEntryId: entryId,
+              accessReviewEntryId: entry.id,
               flags: localFlags,
             },
           },

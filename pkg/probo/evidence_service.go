@@ -53,6 +53,7 @@ func (umer *UploadMeasureEvidenceRequest) Validate() error {
 	v.Check(umer.MeasureID, "measure_id", validator.Required(), validator.GID(coredata.MeasureEntityType))
 	v.Check(umer.URL, "url", validator.URL())
 	v.Check(umer.File, "file", validator.Required())
+	v.Check(umer.File.Size, "file.size", validator.Min(1))
 
 	return v.Error()
 }

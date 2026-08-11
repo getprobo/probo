@@ -30,11 +30,21 @@ import (
 )
 
 type thirdPartyContact struct {
-	ID    string  `json:"id"`
-	Name  string  `json:"name"`
-	Email *string `json:"email"`
-	Phone *string `json:"phone"`
-	Role  *string `json:"role"`
+	ID       string  `json:"id"`
+	FullName string  `json:"full_name"`
+	Email    *string `json:"email"`
+	Phone    *string `json:"phone"`
+	Role     *string `json:"role"`
+}
+
+func mcpThirdPartyContactInput(thirdPartyID, fullName, email string) map[string]any {
+	return map[string]any{
+		"third_party_id": thirdPartyID,
+		"full_name":      fullName,
+		"email":          email,
+		"phone":          "+1-555-0100",
+		"role":           "Account Manager",
+	}
 }
 
 func TestMCP_AddThirdPartyContact(t *testing.T) {
@@ -44,18 +54,16 @@ func TestMCP_AddThirdPartyContact(t *testing.T) {
 	thirdPartyID := factory.CreateThirdParty(owner)
 
 	var result struct {
-		ThirdPartyContact thirdPartyContact `json:"thirdPartyContact"`
+		ThirdPartyContact thirdPartyContact `json:"third_party_contact"`
 	}
-	mc.CallToolInto("addThirdPartyContact", map[string]any{
-		"thirdPartyId": thirdPartyID,
-		"name":         "Alice Smith",
-		"email":        "alice@example.com",
-		"phone":        "+1-555-0100",
-		"role":         "Account Manager",
-	}, &result)
+	mc.CallToolInto("addThirdPartyContact", mcpThirdPartyContactInput(
+		thirdPartyID,
+		"Alice Smith",
+		"alice@example.com",
+	), &result)
 
 	assert.NotEmpty(t, result.ThirdPartyContact.ID)
-	assert.Equal(t, "Alice Smith", result.ThirdPartyContact.Name)
+	assert.Equal(t, "Alice Smith", result.ThirdPartyContact.FullName)
 }
 
 func TestMCP_UpdateThirdPartyContact(t *testing.T) {
@@ -66,27 +74,27 @@ func TestMCP_UpdateThirdPartyContact(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		ThirdPartyContact thirdPartyContact `json:"thirdPartyContact"`
+		ThirdPartyContact thirdPartyContact `json:"third_party_contact"`
 	}
-	mc.CallToolInto("addThirdPartyContact", map[string]any{
-		"thirdPartyId": thirdPartyID,
-		"name":         "Bob Jones",
-		"email":        "bob@example.com",
-	}, &addResult)
+	mc.CallToolInto("addThirdPartyContact", mcpThirdPartyContactInput(
+		thirdPartyID,
+		"Bob Jones",
+		"bob@example.com",
+	), &addResult)
 	require.NotEmpty(t, addResult.ThirdPartyContact.ID)
 
 	// Update
 	var updateResult struct {
-		ThirdPartyContact thirdPartyContact `json:"thirdPartyContact"`
+		ThirdPartyContact thirdPartyContact `json:"third_party_contact"`
 	}
 	mc.CallToolInto("updateThirdPartyContact", map[string]any{
-		"id":   addResult.ThirdPartyContact.ID,
-		"name": "Robert Jones",
-		"role": "CTO",
+		"id":        addResult.ThirdPartyContact.ID,
+		"full_name": "Robert Jones",
+		"role":      "CTO",
 	}, &updateResult)
 
 	assert.Equal(t, addResult.ThirdPartyContact.ID, updateResult.ThirdPartyContact.ID)
-	assert.Equal(t, "Robert Jones", updateResult.ThirdPartyContact.Name)
+	assert.Equal(t, "Robert Jones", updateResult.ThirdPartyContact.FullName)
 }
 
 func TestMCP_DeleteThirdPartyContact(t *testing.T) {
@@ -97,17 +105,18 @@ func TestMCP_DeleteThirdPartyContact(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		ThirdPartyContact thirdPartyContact `json:"thirdPartyContact"`
+		ThirdPartyContact thirdPartyContact `json:"third_party_contact"`
 	}
-	mc.CallToolInto("addThirdPartyContact", map[string]any{
-		"thirdPartyId": thirdPartyID,
-		"name":         "Contact to delete",
-	}, &addResult)
+	mc.CallToolInto("addThirdPartyContact", mcpThirdPartyContactInput(
+		thirdPartyID,
+		"Contact to delete",
+		factory.SafeEmail(),
+	), &addResult)
 	require.NotEmpty(t, addResult.ThirdPartyContact.ID)
 
 	// Delete
 	var deleteResult struct {
-		DeletedThirdPartyContactID string `json:"deletedThirdPartyContactId"`
+		DeletedThirdPartyContactID string `json:"deleted_third_party_contact_id"`
 	}
 	mc.CallToolInto("deleteThirdPartyContact", map[string]any{
 		"id": addResult.ThirdPartyContact.ID,
@@ -125,13 +134,13 @@ func TestMCP_ListThirdPartyContacts(t *testing.T) {
 	// Create contacts
 	for i := range 3 {
 		var result struct {
-			ThirdPartyContact thirdPartyContact `json:"thirdPartyContact"`
+			ThirdPartyContact thirdPartyContact `json:"third_party_contact"`
 		}
-		mc.CallToolInto("addThirdPartyContact", map[string]any{
-			"thirdPartyId": thirdPartyID,
-			"name":         factory.SafeName("Contact"),
-			"email":        factory.SafeEmail(),
-		}, &result)
+		mc.CallToolInto("addThirdPartyContact", mcpThirdPartyContactInput(
+			thirdPartyID,
+			factory.SafeName("Contact"),
+			factory.SafeEmail(),
+		), &result)
 		require.NotEmpty(t, result.ThirdPartyContact.ID)
 
 		_ = i
@@ -139,10 +148,10 @@ func TestMCP_ListThirdPartyContacts(t *testing.T) {
 
 	// List
 	var listResult struct {
-		ThirdPartyContacts []thirdPartyContact `json:"thirdPartyContacts"`
+		ThirdPartyContacts []thirdPartyContact `json:"third_party_contacts"`
 	}
 	mc.CallToolInto("listThirdPartyContacts", map[string]any{
-		"thirdPartyId": thirdPartyID,
+		"third_party_id": thirdPartyID,
 	}, &listResult)
 
 	assert.GreaterOrEqual(t, len(listResult.ThirdPartyContacts), 3)

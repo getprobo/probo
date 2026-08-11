@@ -36,17 +36,18 @@ import (
 
 type (
 	RightsRequest struct {
-		ID             gid.GID            `db:"id"`
-		OrganizationID gid.GID            `db:"organization_id"`
-		RequestType    RightsRequestType  `db:"request_type"`
-		RequestState   RightsRequestState `db:"request_state"`
-		DataSubject    *string            `db:"data_subject"`
-		Contact        *string            `db:"contact"`
-		Details        *string            `db:"details"`
-		Deadline       *time.Time         `db:"deadline"`
-		ActionTaken    *string            `db:"action_taken"`
-		CreatedAt      time.Time          `db:"created_at"`
-		UpdatedAt      time.Time          `db:"updated_at"`
+		ID                 gid.GID            `db:"id"`
+		OrganizationID     gid.GID            `db:"organization_id"`
+		CompliancePortalID *gid.GID           `db:"compliance_portal_id"`
+		RequestType        RightsRequestType  `db:"request_type"`
+		RequestState       RightsRequestState `db:"request_state"`
+		DataSubject        *string            `db:"data_subject"`
+		Contact            *string            `db:"contact"`
+		Details            *string            `db:"details"`
+		Deadline           *time.Time         `db:"deadline"`
+		ActionTaken        *string            `db:"action_taken"`
+		CreatedAt          time.Time          `db:"created_at"`
+		UpdatedAt          time.Time          `db:"updated_at"`
 	}
 
 	RightsRequests []*RightsRequest
@@ -117,6 +118,7 @@ func (rr *RightsRequest) LoadByID(
 SELECT
 	id,
 	organization_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -202,6 +204,7 @@ func (rrs *RightsRequests) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -240,11 +243,11 @@ WHERE
 	return nil
 }
 
-func (rrs *RightsRequests) LoadByOrganizationIDAndContact(
+func (rrs *RightsRequests) LoadByCompliancePortalIDAndContact(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	contact string,
 	cursor *page.Cursor[RightsRequestOrderField],
 ) error {
@@ -252,6 +255,7 @@ func (rrs *RightsRequests) LoadByOrganizationIDAndContact(
 SELECT
 	id,
 	organization_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -265,7 +269,7 @@ FROM
 	rights_requests
 WHERE
 	%s
-	AND organization_id = @organization_id
+	AND compliance_portal_id = @compliance_portal_id
 	AND contact = @contact
 	AND %s
 `
@@ -273,8 +277,8 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-		"contact":         contact,
+		"compliance_portal_id": compliancePortalID,
+		"contact":              contact,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -304,6 +308,7 @@ INSERT INTO rights_requests (
 	id,
 	tenant_id,
 	organization_id,
+	compliance_portal_id,
 	request_type,
 	request_state,
 	data_subject,
@@ -317,6 +322,7 @@ INSERT INTO rights_requests (
 	@id,
 	@tenant_id,
 	@organization_id,
+	@compliance_portal_id,
 	@request_type,
 	@request_state,
 	@data_subject,
@@ -330,18 +336,19 @@ INSERT INTO rights_requests (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              rr.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": rr.OrganizationID,
-		"request_type":    rr.RequestType,
-		"request_state":   rr.RequestState,
-		"data_subject":    rr.DataSubject,
-		"contact":         rr.Contact,
-		"details":         rr.Details,
-		"deadline":        rr.Deadline,
-		"action_taken":    rr.ActionTaken,
-		"created_at":      rr.CreatedAt,
-		"updated_at":      rr.UpdatedAt,
+		"id":                   rr.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      rr.OrganizationID,
+		"compliance_portal_id": rr.CompliancePortalID,
+		"request_type":         rr.RequestType,
+		"request_state":        rr.RequestState,
+		"data_subject":         rr.DataSubject,
+		"contact":              rr.Contact,
+		"details":              rr.Details,
+		"deadline":             rr.Deadline,
+		"action_taken":         rr.ActionTaken,
+		"created_at":           rr.CreatedAt,
+		"updated_at":           rr.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

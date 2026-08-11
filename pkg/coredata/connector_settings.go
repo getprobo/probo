@@ -213,6 +213,15 @@ type (
 	GoogleAnalyticsConnectorSettings struct {
 		AccountID string `json:"account_id"`
 	}
+
+	// CloudflareConnectorSettings stores the Cloudflare account the user
+	// picked after connecting. An API token can reach many accounts, so the
+	// post-connect picker scopes the access source to one; AccountID is the
+	// selected account's UUID used as the {account_id} path segment on
+	// /accounts/{account_id}/members.
+	CloudflareConnectorSettings struct {
+		AccountID string `json:"account_id"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

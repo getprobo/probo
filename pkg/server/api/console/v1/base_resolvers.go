@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -143,75 +144,75 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewMalaysiaPDPABreachIncident(incident), nil
 		}
-	case coredata.RiskAssessmentEntityType:
-		action = probo.ActionRiskAssessmentGet
+	case coredata.RiskAnalysisEntityType:
+		action = probo.ActionRiskAnalysisGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			ra, err := r.riskManagement.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAssessment(ra), nil
+			return types.NewRiskAnalysis(ra), nil
 		}
-	case coredata.RiskAssessmentNodeEntityType:
-		action = probo.ActionRiskAssessmentNodeGet
+	case coredata.RiskAnalysisNodeEntityType:
+		action = probo.ActionRiskAnalysisNodeGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			n, err := r.riskManagement.GetNode(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAssessmentNode(n), nil
+			return types.NewRiskAnalysisNode(n), nil
 		}
-	case coredata.RiskAssessmentProcessEntityType:
-		action = probo.ActionRiskAssessmentProcessGet
+	case coredata.RiskAnalysisProcessEntityType:
+		action = probo.ActionRiskAnalysisProcessGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			p, err := r.riskManagement.GetProcess(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAssessmentProcess(p), nil
+			return types.NewRiskAnalysisProcess(p), nil
 		}
-	case coredata.RiskAssessmentThreatEntityType:
-		action = probo.ActionRiskAssessmentThreatGet
+	case coredata.RiskAnalysisThreatEntityType:
+		action = probo.ActionRiskAnalysisThreatGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			t, err := r.riskManagement.GetThreat(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAssessmentThreat(t), nil
+			return types.NewRiskAnalysisThreat(t), nil
 		}
-	case coredata.RiskAssessmentScopeEntityType:
-		action = probo.ActionRiskAssessmentScopeGet
+	case coredata.RiskAnalysisDiagramEntityType:
+		action = probo.ActionRiskAnalysisDiagramGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			s, err := r.riskManagement.GetScope(ctx, scope, id)
+			s, err := r.riskManagement.GetDiagram(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAssessmentScope(s), nil
+			return types.NewRiskAnalysisDiagram(s), nil
 		}
-	case coredata.RiskAssessmentBoundaryEntityType:
-		action = probo.ActionRiskAssessmentBoundaryGet
+	case coredata.RiskAnalysisBoundaryEntityType:
+		action = probo.ActionRiskAnalysisBoundaryGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			b, err := r.riskManagement.GetBoundary(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAssessmentBoundary(b), nil
+			return types.NewRiskAnalysisBoundary(b), nil
 		}
-	case coredata.RiskAssessmentScenarioEntityType:
-		action = probo.ActionRiskAssessmentScenarioGet
+	case coredata.RiskAnalysisScenarioEntityType:
+		action = probo.ActionRiskAnalysisScenarioGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			s, err := r.riskManagement.GetScenario(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewRiskAssessmentScenario(s), nil
+			return types.NewRiskAnalysisScenario(s), nil
 		}
 	case coredata.ThirdPartyComplianceReportEntityType:
 		action = probo.ActionThirdPartyComplianceReportGet
@@ -313,6 +314,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewObligation(obligation), nil
 		}
+	case coredata.BusinessFunctionEntityType:
+		action = probo.ActionBusinessFunctionList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			businessFunction, err := r.probo.BusinessFunctions.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewBusinessFunction(businessFunction), nil
+		}
 	case coredata.ProcessingActivityEntityType:
 		action = probo.ActionProcessingActivityList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
@@ -364,6 +375,60 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewCompliancePortalAccess(compliancePortalAccess), nil
+		}
+	case coredata.CompliancePortalDocumentEntityType:
+		action = management.ActionCompliancePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			link, err := r.management.GetDocumentLinkByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCompliancePortalDocument(link), nil
+		}
+	case coredata.CompliancePortalAuditEntityType:
+		action = management.ActionCompliancePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			link, err := r.management.GetAuditLinkByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCompliancePortalAudit(link), nil
+		}
+	case coredata.CompliancePortalThirdPartyEntityType:
+		action = management.ActionCompliancePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			link, err := r.management.GetThirdPartyLinkByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCompliancePortalThirdParty(link), nil
+		}
+	case coredata.MailingListSubscriberEntityType:
+		action = management.ActionMailingListSubscriberList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			subscriber, err := r.mailman.GetSubscriberByID(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewMailingListSubscriber(subscriber), nil
+		}
+	case coredata.MailingListUpdateEntityType:
+		action = management.ActionMailingListUpdateList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			update, err := r.mailman.GetMailingListUpdate(ctx, scope, id)
+			if err != nil {
+				if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
+				return nil, err
+			}
+
+			return types.NewMailingListUpdate(update), nil
 		}
 	case coredata.RightsRequestEntityType:
 		action = probo.ActionRightsRequestGet

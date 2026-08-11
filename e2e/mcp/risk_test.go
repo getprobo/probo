@@ -43,8 +43,12 @@ func TestMCP_Risk_CRUD(t *testing.T) {
 		} `json:"risk"`
 	}
 	mc.CallToolInto("addRisk", map[string]any{
-		"organizationId": orgID,
-		"name":           factory.SafeName("Risk"),
+		"organization_id":     orgID,
+		"name":                factory.SafeName("Risk"),
+		"category":            "SECURITY",
+		"treatment":           "MITIGATED",
+		"inherent_likelihood": 2,
+		"inherent_impact":     2,
 	}, &addResult)
 	require.NotEmpty(t, addResult.Risk.ID)
 
@@ -80,13 +84,13 @@ func TestMCP_Risk_CRUD(t *testing.T) {
 		} `json:"risks"`
 	}
 	mc.CallToolInto("listRisks", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Risks)
 
 	// Delete
 	var deleteResult struct {
-		DeletedRiskID string `json:"deletedRiskId"`
+		DeletedRiskID string `json:"deleted_risk_id"`
 	}
 	mc.CallToolInto("deleteRisk", map[string]any{
 		"id": addResult.Risk.ID,
@@ -108,8 +112,12 @@ func TestMCP_Risk_PermissionDenied(t *testing.T) {
 	viewerMC := testutil.NewMCPClient(t, viewer)
 
 	msg := viewerMC.CallToolExpectToolError("addRisk", map[string]any{
-		"organizationId": orgID,
-		"name":           factory.SafeName("Risk"),
+		"organization_id":     orgID,
+		"name":                factory.SafeName("Risk"),
+		"category":            "SECURITY",
+		"treatment":           "MITIGATED",
+		"inherent_likelihood": 2,
+		"inherent_impact":     2,
 	})
 	assert.Contains(t, msg, "permission denied")
 }

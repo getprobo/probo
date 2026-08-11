@@ -30,25 +30,17 @@ import {
 } from "@probo/ui";
 import { forwardRef, type ReactNode, useImperativeHandle } from "react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 
-const pdfDownloadSchema = z.object({
-  withWatermark: z.boolean(),
-  watermarkEmail: z
-    .string()
-    .email("Please enter a valid email address")
-    .optional()
-    .or(z.literal("")),
-  withSignatures: z.boolean(),
-});
-
-type PdfDownloadFormData = z.infer<typeof pdfDownloadSchema>;
+import {
+  type ExportFormData,
+  exportSchema,
+} from "./watermark";
 
 type Props = {
   children?: ReactNode;
-  onDownload: (options: PdfDownloadFormData) => void;
+  onDownload: (options: ExportFormData) => void;
   isLoading?: boolean;
   defaultEmail: string;
 };
@@ -64,10 +56,10 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     const dialogRef = useDialogRef();
 
     const { register, handleSubmit, formState, watch, setValue }
-      = useFormWithSchema(pdfDownloadSchema, {
+      = useFormWithSchema(exportSchema, {
         defaultValues: {
           withWatermark: false,
-          watermarkEmail: defaultEmail,
+          watermarkText: defaultEmail,
           withSignatures: true,
         },
       });
@@ -80,10 +72,12 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
       close: () => dialogRef.current?.close(),
     }));
 
-    const onSubmit = (data: PdfDownloadFormData) => {
+    const onSubmit = (data: ExportFormData) => {
       const options = {
         ...data,
-        watermarkEmail: data.withWatermark ? data.watermarkEmail : undefined,
+        watermarkText: data.withWatermark && data.watermarkText !== defaultEmail
+          ? data.watermarkText
+          : undefined,
       };
       onDownload(options);
       dialogRef.current?.close();
@@ -133,11 +127,11 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                 {watchWatermark && (
                   <div className="ml-6">
                     <Field
-                      label={t("pdfDownloadDialog.watermark.emailLabel")}
-                      {...register("watermarkEmail")}
-                      type="email"
-                      placeholder={t("pdfDownloadDialog.watermark.emailPlaceholder")}
-                      error={formState.errors.watermarkEmail?.message}
+                      label={t("pdfDownloadDialog.watermark.textLabel")}
+                      {...register("watermarkText")}
+                      type="text"
+                      placeholder={t("pdfDownloadDialog.watermark.textPlaceholder")}
+                      error={formState.errors.watermarkText?.message}
                       autoComplete="off"
                       required
                     />

@@ -22,6 +22,7 @@ package visitor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/pg"
@@ -55,17 +56,33 @@ func (s *Service) GetAudit(
 	return audit, nil
 }
 
-func (s *Service) GetAuditByReportFileID(
+func (s *Service) GetAuditForCompliancePortalID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	fileID gid.GID,
+	compliancePortalID gid.GID,
+	auditID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
+	portalAudit := &coredata.CompliancePortalAudit{}
+	compliancePortal := &coredata.CompliancePortal{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := audit.LoadByReportFileID(ctx, conn, scope, fileID); err != nil {
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := portalAudit.LoadByCompliancePortalIDAndAuditID(ctx, conn, scope, compliancePortalID, auditID)
+			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrAuditNotFound
+				}
+
+				return fmt.Errorf("cannot load compliance portal audit: %w", err)
+			}
+
+			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -79,10 +96,68 @@ func (s *Service) GetAuditByReportFileID(
 	return audit, nil
 }
 
-func (s *Service) ListAuditsForOrganizationID(
+func (s *Service) GetAuditByReportFileID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
+	fileID gid.GID,
+) (*coredata.Audit, *coredata.CompliancePortalAudit, error) {
+	var (
+		audit       *coredata.Audit
+		portalAudit *coredata.CompliancePortalAudit
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			audit, portalAudit, err = loadAuditByReportFileID(ctx, conn, scope, compliancePortalID, fileID)
+
+			return err
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return audit, portalAudit, nil
+}
+
+func loadAuditByReportFileID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	fileID gid.GID,
+) (*coredata.Audit, *coredata.CompliancePortalAudit, error) {
+	audit := &coredata.Audit{}
+	portalAudit := &coredata.CompliancePortalAudit{}
+	compliancePortal := &coredata.CompliancePortal{}
+
+	if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+		return nil, nil, err
+	}
+
+	if err := portalAudit.LoadByCompliancePortalIDAndReportFileID(ctx, conn, scope, compliancePortalID, fileID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil, ErrReportNotFound
+		}
+
+		return nil, nil, fmt.Errorf("cannot load compliance portal audit: %w", err)
+	}
+
+	if err := audit.LoadByID(ctx, conn, scope, portalAudit.AuditID); err != nil {
+		return nil, nil, fmt.Errorf("cannot load audit: %w", err)
+	}
+
+	return audit, portalAudit, nil
+}
+
+func (s *Service) ListAuditsForCompliancePortalID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 	filter *coredata.AuditFilter,
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -95,7 +170,12 @@ func (s *Service) ListAuditsForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := audits.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			compliancePortal := &coredata.CompliancePortal{}
+			if err := loadPortalByID(ctx, conn, scope, compliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			err := audits.LoadByCompliancePortalID(ctx, conn, scope, compliancePortalID, compliancePortal.OrganizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}

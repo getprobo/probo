@@ -37,16 +37,15 @@ import (
 
 type (
 	Document struct {
-		ID                         gid.GID                    `db:"id"`
-		OrganizationID             gid.GID                    `db:"organization_id"`
-		CurrentPublishedMajor      *int                       `db:"current_published_major"`
-		CurrentPublishedMinor      *int                       `db:"current_published_minor"`
-		CompliancePortalVisibility CompliancePortalVisibility `db:"trust_center_visibility"`
-		WriteMode                  DocumentWriteMode          `db:"write_mode"`
-		Status                     DocumentStatus             `db:"status"`
-		ArchivedAt                 *time.Time                 `db:"archived_at"`
-		CreatedAt                  time.Time                  `db:"created_at"`
-		UpdatedAt                  time.Time                  `db:"updated_at"`
+		ID                    gid.GID           `db:"id"`
+		OrganizationID        gid.GID           `db:"organization_id"`
+		CurrentPublishedMajor *int              `db:"current_published_major"`
+		CurrentPublishedMinor *int              `db:"current_published_minor"`
+		WriteMode             DocumentWriteMode `db:"write_mode"`
+		Status                DocumentStatus    `db:"status"`
+		ArchivedAt            *time.Time        `db:"archived_at"`
+		CreatedAt             time.Time         `db:"created_at"`
+		UpdatedAt             time.Time         `db:"updated_at"`
 
 		// ordering only
 		Title        string       `db:"title"`
@@ -129,7 +128,6 @@ SELECT
     documents.current_published_major,
     documents.current_published_minor,
     documents.write_mode,
-    documents.trust_center_visibility,
     documents.status,
     documents.archived_at,
     documents.created_at,
@@ -189,7 +187,6 @@ SELECT
     documents.current_published_major,
     documents.current_published_minor,
     documents.write_mode,
-    documents.trust_center_visibility,
     documents.status,
     documents.archived_at,
     documents.created_at,
@@ -250,7 +247,6 @@ SELECT
     documents.current_published_major,
     documents.current_published_minor,
     documents.write_mode,
-    documents.trust_center_visibility,
     documents.status,
     documents.archived_at,
     documents.created_at,
@@ -346,7 +342,6 @@ base AS (
         documents.current_published_major,
         documents.current_published_minor,
         documents.write_mode,
-        documents.trust_center_visibility,
         documents.status,
         documents.archived_at,
         documents.created_at,
@@ -387,10 +382,29 @@ SELECT * FROM base WHERE %s
 	return nil
 }
 
-func (p *Documents) LoadPublishedByOrganizationID(
+func (p *Documents) LoadPublishedByCompliancePortalID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
+	compliancePortalID gid.GID,
+	organizationID gid.GID,
+	cursor *page.Cursor[DocumentOrderField],
+	filter *DocumentFilter,
+) error {
+	if filter == nil {
+		filter = NewDocumentCompliancePortalFilter()
+	}
+
+	filter = filter.WithCompliancePortalID(compliancePortalID)
+
+	return p.loadPublished(ctx, conn, scope, compliancePortalID, organizationID, cursor, filter)
+}
+
+func (p *Documents) loadPublished(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
 	organizationID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
 	filter *DocumentFilter,
@@ -422,7 +436,6 @@ base AS (
 		documents.current_published_major,
 		documents.current_published_minor,
 		documents.write_mode,
-		documents.trust_center_visibility,
 		documents.status,
 		documents.archived_at,
 		documents.created_at,
@@ -443,7 +456,9 @@ SELECT * FROM base WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"organization_id": organizationID}
+	args := pgx.NamedArgs{
+		"organization_id": organizationID,
+	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -477,7 +492,6 @@ INSERT INTO
 		current_published_major,
 		current_published_minor,
 		write_mode,
-		trust_center_visibility,
 		status,
 		archived_at,
 		created_at,
@@ -490,7 +504,6 @@ VALUES (
     @current_published_major,
     @current_published_minor,
     @write_mode,
-    @trust_center_visibility,
     @status,
     @archived_at,
     @created_at,
@@ -505,7 +518,6 @@ VALUES (
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
 		"write_mode":              p.WriteMode,
-		"trust_center_visibility": p.CompliancePortalVisibility,
 		"status":                  p.Status,
 		"archived_at":             p.ArchivedAt,
 		"created_at":              p.CreatedAt,
@@ -535,26 +547,6 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = @document_id
 	return err
 }
 
-func (p Document) DeleteByOrganizationID(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-DELETE FROM documents WHERE %s AND organization_id = @organization_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, q, args)
-
-	return err
-}
-
 func (p *Document) Update(
 	ctx context.Context,
 	conn pg.Tx,
@@ -566,7 +558,6 @@ UPDATE
 SET
 	current_published_major = @current_published_major,
 	current_published_minor = @current_published_minor,
-	trust_center_visibility = @trust_center_visibility,
 	status = @status,
 	archived_at = @archived_at,
 	updated_at = @updated_at
@@ -582,7 +573,6 @@ WHERE
 		"updated_at":              time.Now(),
 		"current_published_major": p.CurrentPublishedMajor,
 		"current_published_minor": p.CurrentPublishedMinor,
-		"trust_center_visibility": p.CompliancePortalVisibility,
 		"status":                  p.Status,
 		"archived_at":             p.ArchivedAt,
 	}
@@ -660,7 +650,6 @@ base AS (
 		sd.organization_id,
 		sd.current_published_major,
 		sd.current_published_minor,
-		sd.trust_center_visibility,
 		sd.write_mode,
 		sd.status,
 		sd.archived_at,
@@ -761,7 +750,6 @@ base AS (
 		sd.organization_id,
 		sd.current_published_major,
 		sd.current_published_minor,
-		sd.trust_center_visibility,
 		sd.write_mode,
 		sd.status,
 		sd.archived_at,
@@ -862,7 +850,6 @@ base AS (
 		sd.organization_id,
 		sd.current_published_major,
 		sd.current_published_minor,
-		sd.trust_center_visibility,
 		sd.write_mode,
 		sd.status,
 		sd.archived_at,
@@ -931,7 +918,7 @@ func (p *Documents) BulkArchive(
 ) error {
 	q := `
 UPDATE documents
-SET status = 'ARCHIVED', archived_at = @archived_at, trust_center_visibility = 'NONE', updated_at = @updated_at
+SET status = 'ARCHIVED', archived_at = @archived_at, updated_at = @updated_at
 WHERE %s AND id = ANY(@document_ids)
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())

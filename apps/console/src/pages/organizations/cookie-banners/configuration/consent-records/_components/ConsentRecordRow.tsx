@@ -43,6 +43,7 @@ const consentRecordFragment = graphql`
     regulation
     regulationSource
     countryCode
+    subdivisionCode
     createdAt
   }
 `;
@@ -95,6 +96,11 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
       <Td>
         <span className="font-mono text-sm">
           {record.countryCode || "-"}
+        </span>
+      </Td>
+      <Td>
+        <span className="font-mono text-sm">
+          {record.subdivisionCode || "-"}
         </span>
       </Td>
       <Td>

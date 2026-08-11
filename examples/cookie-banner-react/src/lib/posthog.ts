@@ -23,6 +23,7 @@ import type { BannerConfig } from "@probo/cookie-banner";
 import { getConsent, type ConsentData } from "@probo/cookie-banner/consent";
 
 export type ConsentMode = BannerConfig["consent_mode"];
+export type ExplicitConsentStatus = "granted" | "denied" | "pending";
 
 /**
  * Fallback category slug to gate PostHog when the banner config does not flag
@@ -31,9 +32,14 @@ export type ConsentMode = BannerConfig["consent_mode"];
  */
 const FALLBACK_CATEGORY_SLUG = "analytics";
 
+const DEFAULT_FEATURE_FLAG = "example-beta-panel";
+const DEFAULT_DEMO_DISTINCT_ID = "cookie-banner-example-demo";
+
 let subscribed = false;
 let initialized = false;
+let identified = false;
 let unsubscribeConsent: (() => void) | null = null;
+let unsubscribeFeatureFlags: (() => void) | null = null;
 let categorySlug: string = FALLBACK_CATEGORY_SLUG;
 let consentMode: ConsentMode | null = null;
 const statusListeners = new Set<() => void>();
@@ -41,9 +47,13 @@ const statusListeners = new Set<() => void>();
 export interface PosthogStatus {
   initialized: boolean;
   consentMode: ConsentMode | null;
+  consentStatus: ExplicitConsentStatus | null;
   optedIn: boolean;
   optedOut: boolean;
+  identified: boolean;
   distinctId: string | null;
+  featureFlagKey: string;
+  featureFlagEnabled: boolean;
 }
 
 // Cached snapshot. `useSyncExternalStore` compares references with `Object.is`,
@@ -52,19 +62,23 @@ export interface PosthogStatus {
 let cachedStatus: PosthogStatus = {
   initialized: false,
   consentMode: null,
+  consentStatus: null,
   optedIn: false,
   optedOut: false,
+  identified: false,
   distinctId: null,
+  featureFlagKey: featureFlagKey(),
+  featureFlagEnabled: false,
 };
 
 /**
  * Wire up the consent subscription so that any future opt-in / opt-out
  * decisions are mirrored to PostHog.
  *
- * Note: this does NOT call `posthog.init()`. We can't choose `cookieless_mode`
- * until the banner config tells us the regulation's `consent_mode`, so the
- * actual SDK init is deferred to {@link configurePosthogFromBanner}, which
- * the `probo-ready` event handler should invoke with the banner config.
+ * Note: this does NOT call `posthog.init()`. Init is deferred to
+ * {@link configurePosthogFromBanner}, which the `probo-ready` event handler
+ * should invoke with the banner config (so opt-out-by-default can be derived
+ * from the consent snapshot before the first capture).
  *
  * Safe to call multiple times; only the first call wires the subscription.
  */
@@ -93,20 +107,11 @@ export function initPosthog(): void {
  * through the category flagged with `posthog_consent: true` in the banner
  * config. Call this from the `probo-ready` event handler.
  *
- * The init options are derived from the current consent snapshot, which the
- * banner client has already populated with either the persisted answer (cookie
- * or API) or the per-regulation default (`true` for non-necessary categories
- * under `OPT_OUT`, `false` under `OPT_IN`):
- * - Analytics allowed → cookies and capture on from the start; the
- *   subscription downgrades to cookieless if the visitor later rejects.
- * - Analytics denied → fully cookieless and opted-out; the subscription opts
- *   in (still cookieless for the rest of the session) if the visitor later
- *   accepts.
- *
- * Driving the init off the snapshot rather than `consent_mode` plugs the race
- * where `posthog.init()` fires a `$pageview` (and sets the posthog cookie)
- * before we can call `opt_out_capturing()` for an `OPT_OUT` visitor who
- * already rejected on a prior visit.
+ * Always uses `cookieless_mode: "on_reject"` so a later analytics accept can
+ * leave cookieless mode, call `identify()`, and evaluate feature flags.
+ * `opt_out_capturing_by_default` is derived from the current consent snapshot
+ * (persisted answer or regulation default) so an `OPT_OUT` visitor who already
+ * rejected does not get a cookied `$pageview` before `opt_out_capturing()`.
  *
  * Subsequent calls leave PostHog initialized and just refresh the category
  * slug / consent mode in the cached status snapshot.
@@ -124,11 +129,14 @@ export function configurePosthogFromBanner(config: BannerConfig): void {
     posthog.init(apiKey, {
       api_host: "https://t.probo.com",
       ui_host: "https://us.posthog.com",
-      cookieless_mode: analyticsAllowed ? "on_reject" : "always",
+      cookieless_mode: "on_reject",
       opt_out_capturing_by_default: !analyticsAllowed,
       person_profiles: "identified_only",
       respect_dnt: true,
       debug: import.meta.env.DEV,
+    });
+    unsubscribeFeatureFlags = posthog.onFeatureFlags(() => {
+      refreshStatus();
     });
     initialized = true;
   }
@@ -146,10 +154,14 @@ export function teardownPosthog(): void {
     unsubscribeConsent();
     unsubscribeConsent = null;
   }
+  if (unsubscribeFeatureFlags) {
+    unsubscribeFeatureFlags();
+    unsubscribeFeatureFlags = null;
+  }
   subscribed = false;
 }
 
-/** Subscribe to PostHog status changes (init / opt-in / opt-out / category). */
+/** Subscribe to PostHog status changes (init / opt-in / opt-out / flags). */
 export function subscribePosthogStatus(cb: () => void): () => void {
   statusListeners.add(cb);
   return () => statusListeners.delete(cb);
@@ -163,9 +175,39 @@ function syncCapturing(data: ConsentData): void {
   if (!initialized) return;
   if (data[categorySlug]) {
     posthog.opt_in_capturing();
+    posthog.identify(demoDistinctId());
+    identified = true;
   } else {
+    // reset() clears stored consent back to the init default — call it
+    // before opt_out so a boot with analytics already allowed does not
+    // leave capturing on after revoke.
+    posthog.reset();
     posthog.opt_out_capturing();
+    identified = false;
   }
+}
+
+function isFlagEligible(): boolean {
+  return (
+    initialized &&
+    posthog.get_explicit_consent_status() === "granted" &&
+    identified
+  );
+}
+
+function readDemoFlag(): boolean {
+  if (!isFlagEligible()) return false;
+  return posthog.isFeatureEnabled(featureFlagKey()) === true;
+}
+
+function featureFlagKey(): string {
+  return import.meta.env.PUBLIC_POSTHOG_FEATURE_FLAG || DEFAULT_FEATURE_FLAG;
+}
+
+function demoDistinctId(): string {
+  return (
+    import.meta.env.PUBLIC_POSTHOG_DEMO_DISTINCT_ID || DEFAULT_DEMO_DISTINCT_ID
+  );
 }
 
 function refreshStatus(): void {
@@ -173,16 +215,24 @@ function refreshStatus(): void {
     ? {
         initialized: true,
         consentMode,
+        consentStatus: posthog.get_explicit_consent_status(),
         optedIn: posthog.has_opted_in_capturing(),
         optedOut: posthog.has_opted_out_capturing(),
+        identified,
         distinctId: posthog.get_distinct_id?.() ?? null,
+        featureFlagKey: featureFlagKey(),
+        featureFlagEnabled: readDemoFlag(),
       }
     : {
         initialized: false,
         consentMode,
+        consentStatus: null,
         optedIn: false,
         optedOut: false,
+        identified: false,
         distinctId: null,
+        featureFlagKey: featureFlagKey(),
+        featureFlagEnabled: false,
       };
 
   if (statusEqual(cachedStatus, next)) return;
@@ -194,8 +244,12 @@ function statusEqual(a: PosthogStatus, b: PosthogStatus): boolean {
   return (
     a.initialized === b.initialized &&
     a.consentMode === b.consentMode &&
+    a.consentStatus === b.consentStatus &&
     a.optedIn === b.optedIn &&
     a.optedOut === b.optedOut &&
-    a.distinctId === b.distinctId
+    a.identified === b.identified &&
+    a.distinctId === b.distinctId &&
+    a.featureFlagKey === b.featureFlagKey &&
+    a.featureFlagEnabled === b.featureFlagEnabled
   );
 }

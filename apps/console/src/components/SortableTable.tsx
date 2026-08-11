@@ -67,6 +67,7 @@ export function SortableTable({
   loadNext,
   isLoadingNext,
   pageSize = defaultPageSize,
+  initialOrder = defaultOrder,
   ...props
 }: ComponentProps<typeof Table> & {
   refetch: (o: { order: Order }) => void;
@@ -74,9 +75,11 @@ export function SortableTable({
   loadNext?: LoadMoreFn<OperationType>;
   isLoadingNext?: boolean;
   pageSize?: number;
+  // Must match the order the table's connection was first fetched with.
+  initialOrder?: Order;
 }) {
   const { t } = useTranslation();
-  const [order, setOrder] = useState(defaultOrder);
+  const [order, setOrder] = useState(initialOrder);
   const changeOrder = (o: Order) => {
     startTransition(() => {
       setOrder(o);

@@ -223,6 +223,10 @@ probo:
 
   # Authentication configuration
   auth:
+    # When true, only identities that belong to an organization can use the
+    # console: password signup is rejected, and a magic-link or OIDC identity
+    # with no membership is refused by the console API (compliance-portal
+    # access is unaffected). Invited people keep normal access.
     disableSignup: false
     invitationTokenValidity: 3600
     # Email confirmation token validity in seconds (default: 3600 = 1 hour)

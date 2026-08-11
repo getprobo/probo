@@ -7,6 +7,7 @@ package complianceportal_v1
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -27,14 +28,19 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		httpReq          = gqlutils.HTTPRequestFromContext(ctx)
 		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+	}
 
 	signerIP := clientip.Extract(httpReq)
 
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
-	signature, err := r.esign.AcceptSignature(
+	signature, err := r.visitor.AcceptPortalNDASignature(
 		ctx,
 		scope,
+		compliancePortal.ID,
+		identity.ID,
 		&esign.AcceptSignatureRequest{
 			SignatureID:    input.SignatureID,
 			SignerFullName: identity.FullName,
@@ -44,7 +50,12 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		},
 	)
 	if err != nil {
+		if errors.Is(err, esign.ErrSignatureAccessDenied) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -60,14 +71,19 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		httpReq          = gqlutils.HTTPRequestFromContext(ctx)
 		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+	}
 
 	actorIP := clientip.Extract(httpReq)
 
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
 
-	if err := r.esign.RecordEvent(
+	if err := r.visitor.RecordPortalNDASigningEvent(
 		ctx,
 		scope,
+		compliancePortal.ID,
+		identity.ID,
 		&esign.RecordEventRequest{
 			SignatureID: input.SignatureID,
 			EventType:   input.EventType,
@@ -77,7 +93,12 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 			ActorUA:     httpReq.UserAgent(),
 		},
 	); err != nil {
+		if errors.Is(err, esign.ErrSignatureAccessDenied) {
+			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

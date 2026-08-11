@@ -51,3 +51,14 @@ Go struct (pkg/probod/)
 7. **Helm `values.yaml`** exposes the field under the appropriate `probo.*` key with a sensible default. `values-production.yaml.example` includes it only when the production value differs or the user must set it.
 8. **Optional features** (custom domains, SAML, connectors, tracing) are gated by `{{- if }}` blocks in the Helm templates; follow the same pattern for new optional fields.
 9. **Bootstrap tests** (`pkg/bootstrap/builder_test.go`) must cover the new env var mapping.
+
+## SPA Vite CSP origins
+
+Console and compliance-portal CSPs are rendered in Go from `PROBOD_BASE_URL` and `PROBOD_AWS_*` (see `pkg/awsconfig.CSPFileStorageOrigin`). Each app’s `vite.config.ts` mirrors that for local serve:
+
+| Env | Role |
+|-----|------|
+| `CONSOLE_APP_ORIGIN` / `COMPLIANCE_PORTAL_APP_ORIGIN` | Optional override for app / `downloadUrl` origin (`img-src` / `connect-src`). Defaults to origin of `VITE_API_URL`. |
+| `PROBOD_AWS_ENDPOINT` / `REGION` / `BUCKET` / `USE_PATH_STYLE` | Object-storage origin after file 307s — same derivation as `pkg/awsconfig.CSPFileStorageOrigin` (set in the app `.env` for Vite). |
+
+Keep `apps/console/.env.example` and `apps/compliance-portal/.env.example` in sync when these change.

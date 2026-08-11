@@ -73,6 +73,13 @@ func NewCookieConsentRecordEdge(
 }
 
 func NewCookieConsentRecord(r *coredata.CookieConsentRecord) *CookieConsentRecord {
+	var subdivisionCode *string
+
+	if r.SubdivisionCode != nil {
+		value := r.SubdivisionCode.String()
+		subdivisionCode = &value
+	}
+
 	return &CookieConsentRecord{
 		ID: r.ID,
 		CookieBanner: &CookieBanner{
@@ -90,6 +97,7 @@ func NewCookieConsentRecord(r *coredata.CookieConsentRecord) *CookieConsentRecor
 		Regulation:       r.Regulation,
 		RegulationSource: r.RegulationSource,
 		CountryCode:      r.CountryCode,
+		SubdivisionCode:  subdivisionCode,
 		CreatedAt:        r.CreatedAt,
 	}
 }

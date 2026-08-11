@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Alle",
     "public": "Öffentlich",
-    "private": "Privat"
+    "restricted": "Eingeschränkt"
   },
   "sections": {
     "reports": "Compliance-Berichte"
@@ -47,7 +47,8 @@
     "downloadToView": "Dieser Dateityp kann hier nicht angezeigt werden. Laden Sie ihn herunter, um ihn anzuzeigen.",
     "locked": {
       "title": "Zugang erforderlich",
-      "description": "Sie haben noch keinen Zugang zu diesem Dokument."
+      "description": "Sie haben noch keinen Zugang zu diesem Dokument.",
+      "signNda": "NDA prüfen und unterschreiben"
     }
   }
 }

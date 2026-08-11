@@ -129,6 +129,14 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
+	coredata.ConnectorProviderCloudflare: {
+		ListOrgs: drivers.ListCloudflareOrganizations,
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](c)
+			return s.AccountID
+		},
+		NeedsPicker: true,
+	},
 	// DocuSign declares no APIBase, but its Identity host is exactly what
 	// ListDocuSignOrganizations calls, so ListOrgs takes the baseURL
 	// providerListBaseURL resolves directly — an Identity override must

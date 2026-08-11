@@ -46,35 +46,19 @@ type commitment struct {
 	Rank        int    `json:"rank"`
 }
 
-func mcpTrustCenterID(t *testing.T, mc *testutil.MCPClient, orgID string) string {
-	t.Helper()
-
-	var getResult struct {
-		TrustCenter struct {
-			ID string `json:"id"`
-		} `json:"trust_center"`
-	}
-	mc.CallToolInto("getTrustCenter", map[string]any{
-		"organization_id": orgID,
-	}, &getResult)
-	require.NotEmpty(t, getResult.TrustCenter.ID)
-
-	return getResult.TrustCenter.ID
-}
-
 func TestMCP_AddCommitmentGroup(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	var result struct {
 		CommitmentGroup commitmentGroup `json:"commitment_group"`
 	}
 	mc.CallToolInto("addCommitmentGroup", map[string]any{
-		"trust_center_id": tcID,
-		"title":           "Security Practices",
-		"description":     "How we protect customer data",
+		"compliance_portal_id": compliancePortalID,
+		"title":                "Security Practices",
+		"description":          "How we protect customer data",
 	}, &result)
 
 	assert.NotEmpty(t, result.CommitmentGroup.ID)
@@ -86,15 +70,15 @@ func TestMCP_UpdateCommitmentGroup(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	var addResult struct {
 		CommitmentGroup commitmentGroup `json:"commitment_group"`
 	}
 	mc.CallToolInto("addCommitmentGroup", map[string]any{
-		"trust_center_id": tcID,
-		"title":           "Original Group",
-		"description":     "Original description",
+		"compliance_portal_id": compliancePortalID,
+		"title":                "Original Group",
+		"description":          "Original description",
 	}, &addResult)
 	require.NotEmpty(t, addResult.CommitmentGroup.ID)
 
@@ -114,15 +98,15 @@ func TestMCP_DeleteCommitmentGroup(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	var addResult struct {
 		CommitmentGroup commitmentGroup `json:"commitment_group"`
 	}
 	mc.CallToolInto("addCommitmentGroup", map[string]any{
-		"trust_center_id": tcID,
-		"title":           "Group to delete",
-		"description":     "Temporary",
+		"compliance_portal_id": compliancePortalID,
+		"title":                "Group to delete",
+		"description":          "Temporary",
 	}, &addResult)
 	require.NotEmpty(t, addResult.CommitmentGroup.ID)
 
@@ -140,16 +124,16 @@ func TestMCP_ListCommitmentGroups(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	for range 2 {
 		var result struct {
 			CommitmentGroup commitmentGroup `json:"commitment_group"`
 		}
 		mc.CallToolInto("addCommitmentGroup", map[string]any{
-			"trust_center_id": tcID,
-			"title":           factory.SafeName("Group"),
-			"description":     factory.SafeName("Desc"),
+			"compliance_portal_id": compliancePortalID,
+			"title":                factory.SafeName("Group"),
+			"description":          factory.SafeName("Desc"),
 		}, &result)
 		require.NotEmpty(t, result.CommitmentGroup.ID)
 	}
@@ -158,7 +142,7 @@ func TestMCP_ListCommitmentGroups(t *testing.T) {
 		CommitmentGroups []commitmentGroup `json:"commitment_groups"`
 	}
 	mc.CallToolInto("listCommitmentGroups", map[string]any{
-		"trust_center_id": tcID,
+		"compliance_portal_id": compliancePortalID,
 	}, &listResult)
 
 	assert.GreaterOrEqual(t, len(listResult.CommitmentGroups), 2)
@@ -168,15 +152,15 @@ func TestMCP_AddCommitment(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	var groupResult struct {
 		CommitmentGroup commitmentGroup `json:"commitment_group"`
 	}
 	mc.CallToolInto("addCommitmentGroup", map[string]any{
-		"trust_center_id": tcID,
-		"title":           "Encryption",
-		"description":     "Encryption commitments",
+		"compliance_portal_id": compliancePortalID,
+		"title":                "Encryption",
+		"description":          "Encryption commitments",
 	}, &groupResult)
 	require.NotEmpty(t, groupResult.CommitmentGroup.ID)
 
@@ -201,15 +185,15 @@ func TestMCP_UpdateCommitment(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	var groupResult struct {
 		CommitmentGroup commitmentGroup `json:"commitment_group"`
 	}
 	mc.CallToolInto("addCommitmentGroup", map[string]any{
-		"trust_center_id": tcID,
-		"title":           "Access control",
-		"description":     "Access commitments",
+		"compliance_portal_id": compliancePortalID,
+		"title":                "Access control",
+		"description":          "Access commitments",
 	}, &groupResult)
 	require.NotEmpty(t, groupResult.CommitmentGroup.ID)
 
@@ -243,15 +227,15 @@ func TestMCP_DeleteCommitment(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	var groupResult struct {
 		CommitmentGroup commitmentGroup `json:"commitment_group"`
 	}
 	mc.CallToolInto("addCommitmentGroup", map[string]any{
-		"trust_center_id": tcID,
-		"title":           "Temporary group",
-		"description":     "For delete test",
+		"compliance_portal_id": compliancePortalID,
+		"title":                "Temporary group",
+		"description":          "For delete test",
 	}, &groupResult)
 	require.NotEmpty(t, groupResult.CommitmentGroup.ID)
 
@@ -281,15 +265,15 @@ func TestMCP_ListCommitments(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	tcID := mcpTrustCenterID(t, mc, owner.GetOrganizationID().String())
+	compliancePortalID := mcpCompliancePortalID(t, owner)
 
 	var groupResult struct {
 		CommitmentGroup commitmentGroup `json:"commitment_group"`
 	}
 	mc.CallToolInto("addCommitmentGroup", map[string]any{
-		"trust_center_id": tcID,
-		"title":           "List group",
-		"description":     "For list test",
+		"compliance_portal_id": compliancePortalID,
+		"title":                "List group",
+		"description":          "For list test",
 	}, &groupResult)
 	require.NotEmpty(t, groupResult.CommitmentGroup.ID)
 

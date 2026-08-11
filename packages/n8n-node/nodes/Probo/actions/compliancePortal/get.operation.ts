@@ -23,8 +23,8 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Organization ID',
-		name: 'organizationId',
+		displayName: 'Compliance Portal ID',
+		name: 'compliancePortalId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the organization',
+		description: 'The ID of the compliance portal',
 		required: true,
 	},
 ];
@@ -42,45 +42,45 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const compliancePortalId = this.getNodeParameter('compliancePortalId', itemIndex) as string;
 
 	const query = `
-		query GetCompliancePortal($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal {
+		query GetCompliancePortal($compliancePortalId: ID!) {
+			node(id: $compliancePortalId) {
+				... on CompliancePortal {
+					id
+					slug
+					active
+					searchEngineIndexing
+					rightsRequestsEnabled
+					entityName
+					description
+					websiteUrl
+					email
+					headquarterAddress
+					logo {
 						id
-						active
-						searchEngineIndexing
-						entityName
-						description
-						websiteUrl
-						email
-						headquarterAddress
-						logo {
-							id
-							fileName
-							downloadUrl
-						}
-						darkLogo {
-							id
-							fileName
-							downloadUrl
-						}
-						nda {
-							id
-							fileName
-							downloadUrl
-						}
-						createdAt
-						updatedAt
+						fileName
+						downloadUrl
 					}
+					darkLogo {
+						id
+						fileName
+						downloadUrl
+					}
+					nda {
+						id
+						fileName
+						downloadUrl
+					}
+					createdAt
+					updatedAt
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { organizationId });
+	const responseData = await proboApiRequest.call(this, query, { compliancePortalId });
 
 	return {
 		json: responseData,

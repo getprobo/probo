@@ -1,0 +1,395 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import type { INodeProperties } from 'n8n-workflow';
+import * as createOp from './create.operation';
+import * as getOp from './get.operation';
+import * as getAllOp from './getAll.operation';
+import * as updateOp from './update.operation';
+import * as deleteOp from './delete.operation';
+import * as createDiagramOp from './createDiagram.operation';
+import * as getDiagramOp from './getDiagram.operation';
+import * as getAllDiagramsOp from './getAllDiagrams.operation';
+import * as updateDiagramOp from './updateDiagram.operation';
+import * as deleteDiagramOp from './deleteDiagram.operation';
+import * as getDiagramMermaidChartOp from './getDiagramMermaidChart.operation';
+import * as createNodeOp from './createNode.operation';
+import * as getNodeOp from './getNode.operation';
+import * as getAllNodesOp from './getAllNodes.operation';
+import * as updateNodeOp from './updateNode.operation';
+import * as deleteNodeOp from './deleteNode.operation';
+import * as createBoundaryOp from './createBoundary.operation';
+import * as getBoundaryOp from './getBoundary.operation';
+import * as getAllBoundariesOp from './getAllBoundaries.operation';
+import * as updateBoundaryOp from './updateBoundary.operation';
+import * as deleteBoundaryOp from './deleteBoundary.operation';
+import * as createProcessOp from './createProcess.operation';
+import * as getProcessOp from './getProcess.operation';
+import * as getAllProcessesOp from './getAllProcesses.operation';
+import * as updateProcessOp from './updateProcess.operation';
+import * as deleteProcessOp from './deleteProcess.operation';
+import * as createThreatOp from './createThreat.operation';
+import * as getThreatOp from './getThreat.operation';
+import * as getAllThreatsOp from './getAllThreats.operation';
+import * as updateThreatOp from './updateThreat.operation';
+import * as deleteThreatOp from './deleteThreat.operation';
+import * as createScenarioOp from './createScenario.operation';
+import * as getScenarioOp from './getScenario.operation';
+import * as getAllScenariosOp from './getAllScenarios.operation';
+import * as updateScenarioOp from './updateScenario.operation';
+import * as deleteScenarioOp from './deleteScenario.operation';
+import * as linkScenarioThreatOp from './linkScenarioThreat.operation';
+import * as unlinkScenarioThreatOp from './unlinkScenarioThreat.operation';
+import * as linkScenarioRiskOp from './linkScenarioRisk.operation';
+import * as unlinkScenarioRiskOp from './unlinkScenarioRisk.operation';
+
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['riskAnalysis'],
+			},
+		},
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create a risk analysis',
+				action: 'Create a risk analysis',
+			},
+			{
+				name: 'Create Boundary',
+				value: 'createBoundary',
+				description: 'Create a boundary in a diagram',
+				action: 'Create a boundary',
+			},
+			{
+				name: 'Create Diagram',
+				value: 'createDiagram',
+				description: 'Create a diagram in a risk analysis',
+				action: 'Create a diagram',
+			},
+			{
+				name: 'Create Node',
+				value: 'createNode',
+				description: 'Create a node in a diagram',
+				action: 'Create a node',
+			},
+			{
+				name: 'Create Process',
+				value: 'createProcess',
+				description: 'Create a process in a diagram',
+				action: 'Create a process',
+			},
+			{
+				name: 'Create Scenario',
+				value: 'createScenario',
+				description: 'Create a scenario in a diagram',
+				action: 'Create a scenario',
+			},
+			{
+				name: 'Create Threat',
+				value: 'createThreat',
+				description: 'Create a threat in a diagram',
+				action: 'Create a threat',
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete a risk analysis',
+				action: 'Delete a risk analysis',
+			},
+			{
+				name: 'Delete Boundary',
+				value: 'deleteBoundary',
+				description: 'Delete a boundary',
+				action: 'Delete a boundary',
+			},
+			{
+				name: 'Delete Diagram',
+				value: 'deleteDiagram',
+				description: 'Delete a diagram',
+				action: 'Delete a diagram',
+			},
+			{
+				name: 'Delete Node',
+				value: 'deleteNode',
+				description: 'Delete a node',
+				action: 'Delete a node',
+			},
+			{
+				name: 'Delete Process',
+				value: 'deleteProcess',
+				description: 'Delete a process',
+				action: 'Delete a process',
+			},
+			{
+				name: 'Delete Scenario',
+				value: 'deleteScenario',
+				description: 'Delete a scenario',
+				action: 'Delete a scenario',
+			},
+			{
+				name: 'Delete Threat',
+				value: 'deleteThreat',
+				description: 'Delete a threat',
+				action: 'Delete a threat',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get a risk analysis',
+				action: 'Get a risk analysis',
+			},
+			{
+				name: 'Get Boundary',
+				value: 'getBoundary',
+				description: 'Get a boundary',
+				action: 'Get a boundary',
+			},
+			{
+				name: 'Get Diagram',
+				value: 'getDiagram',
+				description: 'Get a diagram',
+				action: 'Get a diagram',
+			},
+			{
+				name: 'Get Diagram Mermaid Chart',
+				value: 'getDiagramMermaidChart',
+				description: 'Get the Mermaid chart for a diagram',
+				action: 'Get a diagram mermaid chart',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Get many risk analyses',
+				action: 'Get many risk analyses',
+			},
+			{
+				name: 'Get Many Boundaries',
+				value: 'getAllBoundaries',
+				action: 'Get many boundaries',
+			},
+			{
+				name: 'Get Many Diagrams',
+				value: 'getAllDiagrams',
+				action: 'Get many diagrams',
+			},
+			{
+				name: 'Get Many Nodes',
+				value: 'getAllNodes',
+				action: 'Get many nodes',
+			},
+			{
+				name: 'Get Many Processes',
+				value: 'getAllProcesses',
+				action: 'Get many processes',
+			},
+			{
+				name: 'Get Many Scenarios',
+				value: 'getAllScenarios',
+				action: 'Get many scenarios',
+			},
+			{
+				name: 'Get Many Threats',
+				value: 'getAllThreats',
+				action: 'Get many threats',
+			},
+			{
+				name: 'Get Node',
+				value: 'getNode',
+				description: 'Get a node',
+				action: 'Get a node',
+			},
+			{
+				name: 'Get Process',
+				value: 'getProcess',
+				description: 'Get a process',
+				action: 'Get a process',
+			},
+			{
+				name: 'Get Scenario',
+				value: 'getScenario',
+				description: 'Get a scenario',
+				action: 'Get a scenario',
+			},
+			{
+				name: 'Get Threat',
+				value: 'getThreat',
+				description: 'Get a threat',
+				action: 'Get a threat',
+			},
+			{
+				name: 'Link Scenario Risk',
+				value: 'linkScenarioRisk',
+				description: 'Link a scenario to a risk',
+				action: 'Link a scenario to a risk',
+			},
+			{
+				name: 'Link Scenario Threat',
+				value: 'linkScenarioThreat',
+				description: 'Link a scenario to a threat',
+				action: 'Link a scenario to a threat',
+			},
+			{
+				name: 'Unlink Scenario Risk',
+				value: 'unlinkScenarioRisk',
+				description: 'Unlink a scenario from a risk',
+				action: 'Unlink a scenario from a risk',
+			},
+			{
+				name: 'Unlink Scenario Threat',
+				value: 'unlinkScenarioThreat',
+				description: 'Unlink a scenario from a threat',
+				action: 'Unlink a scenario from a threat',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update a risk analysis',
+				action: 'Update a risk analysis',
+			},
+			{
+				name: 'Update Boundary',
+				value: 'updateBoundary',
+				description: 'Update a boundary',
+				action: 'Update a boundary',
+			},
+			{
+				name: 'Update Diagram',
+				value: 'updateDiagram',
+				description: 'Update a diagram',
+				action: 'Update a diagram',
+			},
+			{
+				name: 'Update Node',
+				value: 'updateNode',
+				description: 'Update a node',
+				action: 'Update a node',
+			},
+			{
+				name: 'Update Process',
+				value: 'updateProcess',
+				description: 'Update a process',
+				action: 'Update a process',
+			},
+			{
+				name: 'Update Scenario',
+				value: 'updateScenario',
+				description: 'Update a scenario',
+				action: 'Update a scenario',
+			},
+			{
+				name: 'Update Threat',
+				value: 'updateThreat',
+				description: 'Update a threat',
+				action: 'Update a threat',
+			},
+		],
+		default: 'create',
+	},
+	...createOp.description,
+	...getOp.description,
+	...getAllOp.description,
+	...updateOp.description,
+	...deleteOp.description,
+	...createDiagramOp.description,
+	...getDiagramOp.description,
+	...getAllDiagramsOp.description,
+	...updateDiagramOp.description,
+	...deleteDiagramOp.description,
+	...getDiagramMermaidChartOp.description,
+	...createNodeOp.description,
+	...getNodeOp.description,
+	...getAllNodesOp.description,
+	...updateNodeOp.description,
+	...deleteNodeOp.description,
+	...createBoundaryOp.description,
+	...getBoundaryOp.description,
+	...getAllBoundariesOp.description,
+	...updateBoundaryOp.description,
+	...deleteBoundaryOp.description,
+	...createProcessOp.description,
+	...getProcessOp.description,
+	...getAllProcessesOp.description,
+	...updateProcessOp.description,
+	...deleteProcessOp.description,
+	...createThreatOp.description,
+	...getThreatOp.description,
+	...getAllThreatsOp.description,
+	...updateThreatOp.description,
+	...deleteThreatOp.description,
+	...createScenarioOp.description,
+	...getScenarioOp.description,
+	...getAllScenariosOp.description,
+	...updateScenarioOp.description,
+	...deleteScenarioOp.description,
+	...linkScenarioThreatOp.description,
+	...unlinkScenarioThreatOp.description,
+	...linkScenarioRiskOp.description,
+	...unlinkScenarioRiskOp.description,
+];
+
+export {
+	createOp as create,
+	getOp as get,
+	getAllOp as getAll,
+	updateOp as update,
+	deleteOp as delete,
+	createDiagramOp as createDiagram,
+	getDiagramOp as getDiagram,
+	getAllDiagramsOp as getAllDiagrams,
+	updateDiagramOp as updateDiagram,
+	deleteDiagramOp as deleteDiagram,
+	getDiagramMermaidChartOp as getDiagramMermaidChart,
+	createNodeOp as createNode,
+	getNodeOp as getNode,
+	getAllNodesOp as getAllNodes,
+	updateNodeOp as updateNode,
+	deleteNodeOp as deleteNode,
+	createBoundaryOp as createBoundary,
+	getBoundaryOp as getBoundary,
+	getAllBoundariesOp as getAllBoundaries,
+	updateBoundaryOp as updateBoundary,
+	deleteBoundaryOp as deleteBoundary,
+	createProcessOp as createProcess,
+	getProcessOp as getProcess,
+	getAllProcessesOp as getAllProcesses,
+	updateProcessOp as updateProcess,
+	deleteProcessOp as deleteProcess,
+	createThreatOp as createThreat,
+	getThreatOp as getThreat,
+	getAllThreatsOp as getAllThreats,
+	updateThreatOp as updateThreat,
+	deleteThreatOp as deleteThreat,
+	createScenarioOp as createScenario,
+	getScenarioOp as getScenario,
+	getAllScenariosOp as getAllScenarios,
+	updateScenarioOp as updateScenario,
+	deleteScenarioOp as deleteScenario,
+	linkScenarioThreatOp as linkScenarioThreat,
+	unlinkScenarioThreatOp as unlinkScenarioThreat,
+	linkScenarioRiskOp as linkScenarioRisk,
+	unlinkScenarioRiskOp as unlinkScenarioRisk,
+};

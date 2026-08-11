@@ -45,11 +45,11 @@ const RightsRequestDeadlineDays = 30
 // portal. The organization comes from the current compliance page and the
 // contact from the verified viewer's identity, so neither is client-supplied.
 type CreateRightsRequest struct {
-	OrganizationID gid.GID
-	RequestType    coredata.RightsRequestType
-	DataSubject    *string
-	Contact        string
-	Details        *string
+	CompliancePortalID gid.GID
+	RequestType        coredata.RightsRequestType
+	DataSubject        *string
+	Contact            string
+	Details            *string
 }
 
 // Validate bounds the free-text fields with the same rules the console applies,
@@ -57,6 +57,12 @@ type CreateRightsRequest struct {
 func (r *CreateRightsRequest) Validate() error {
 	v := validator.New()
 
+	v.Check(
+		r.CompliancePortalID,
+		"compliance_portal_id",
+		validator.Required(),
+		validator.GID(coredata.CompliancePortalEntityType),
+	)
 	v.Check(r.DataSubject, "data_subject", validator.SafeText(probo.ContentMaxLength))
 	v.Check(r.Details, "details", validator.SafeText(probo.ContentMaxLength))
 
@@ -75,25 +81,37 @@ func (s *Service) CreateRightsRequest(
 	now := time.Now()
 	deadline := now.AddDate(0, 0, RightsRequestDeadlineDays)
 
-	request := &coredata.RightsRequest{
-		ID:             gid.New(scope.GetTenantID(), coredata.RightsRequestEntityType),
-		OrganizationID: req.OrganizationID,
-		RequestType:    req.RequestType,
-		RequestState:   coredata.RightsRequestStateTodo,
-		DataSubject:    req.DataSubject,
-		Contact:        &req.Contact,
-		Details:        req.Details,
-		Deadline:       &deadline,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
+	var request *coredata.RightsRequest
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			compliancePortal := &coredata.CompliancePortal{}
+			if err := loadPortalByID(ctx, tx, scope, req.CompliancePortalID, compliancePortal); err != nil {
+				return err
+			}
+
+			if !compliancePortal.Capabilities.RightsRequests {
+				return ErrRightsRequestsDisabled
+			}
+
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, compliancePortal.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			request = &coredata.RightsRequest{
+				ID:                 gid.New(scope.GetTenantID(), coredata.RightsRequestEntityType),
+				OrganizationID:     compliancePortal.OrganizationID,
+				CompliancePortalID: &req.CompliancePortalID,
+				RequestType:        req.RequestType,
+				RequestState:       coredata.RightsRequestStateTodo,
+				DataSubject:        req.DataSubject,
+				Contact:            &req.Contact,
+				Details:            req.Details,
+				Deadline:           &deadline,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
 
 			if err := request.Insert(ctx, tx, scope); err != nil {
@@ -121,10 +139,10 @@ func (s *Service) CreateRightsRequest(
 	return request, nil
 }
 
-func (s *Service) ListRightsRequestsForOrganizationIDAndContact(
+func (s *Service) ListRightsRequestsForCompliancePortalIDAndContact(
 	ctx context.Context,
 	scope coredata.Scoper,
-	organizationID gid.GID,
+	compliancePortalID gid.GID,
 	contact string,
 	cursor *page.Cursor[coredata.RightsRequestOrderField],
 ) (*page.Page[*coredata.RightsRequest, coredata.RightsRequestOrderField], error) {
@@ -133,7 +151,7 @@ func (s *Service) ListRightsRequestsForOrganizationIDAndContact(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := requests.LoadByOrganizationIDAndContact(ctx, conn, scope, organizationID, contact, cursor)
+			err := requests.LoadByCompliancePortalIDAndContact(ctx, conn, scope, compliancePortalID, contact, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load rights requests: %w", err)
 			}

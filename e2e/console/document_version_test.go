@@ -279,9 +279,81 @@ func requestDocumentSignature(t *testing.T, owner *testutil.Client, versionID, s
 	require.NoError(t, err)
 }
 
-func TestDocumentVersion_PublishVersion(t *testing.T) {
+type (
+	documentVersionActors struct {
+		owner  *testutil.Client
+		viewer *testutil.Client
+	}
+)
+
+func TestDocumentVersion(t *testing.T) {
 	t.Parallel()
+
+	// Shared owner/viewer clients are intentional: each parallel subtest creates
+	// its own documents and mutable resources in this organization. net/http
+	// Client and cookiejar.Jar are safe for concurrent use; the full suite runs
+	// without race instrumentation for speed while ./e2e/internal/... is
+	// race-gated in CI.
 	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	actors := documentVersionActors{owner: owner, viewer: viewer}
+
+	cases := []struct {
+		name string
+		run  func(*testing.T, documentVersionActors)
+	}{
+		{name: "PublishVersion", run: documentVersionPublishVersion},
+		{name: "PublishInitialMinorVersion", run: documentVersionPublishInitialMinorVersion},
+		{name: "AutoCreateDraft", run: documentVersionAutoCreateDraft},
+		{name: "AutoDeleteDraft", run: documentVersionAutoDeleteDraft},
+		{name: "RequestSignature", run: documentVersionRequestSignature},
+		{name: "BulkPublish", run: documentVersionBulkPublish},
+		{name: "BulkPublishRequestsApproval", run: documentVersionBulkPublishRequestsApproval},
+		{name: "BulkPublishSkipsPendingApproval", run: documentVersionBulkPublishSkipsPendingApproval},
+		{name: "BulkPublishMinorSkipsPendingApproval", run: documentVersionBulkPublishMinorSkipsPendingApproval},
+		{name: "BulkRequestSignatures", run: documentVersionBulkRequestSignatures},
+		{name: "AutoCreateDraftOnClassificationOrTypeUpdate", run: documentVersionAutoCreateDraftOnClassificationOrTypeUpdate},
+		{name: "ViewerCannotUpdateDocument", run: documentVersionViewerCannotUpdateDocument},
+		{name: "BulkDelete", run: documentVersionBulkDelete},
+		{name: "VoidApproval", run: documentVersionVoidApproval},
+		{name: "RejectApproval", run: documentVersionRejectApproval},
+		{name: "PublishBlockedWhenPendingApproval", run: documentVersionPublishBlockedWhenPendingApproval},
+		{name: "PublishApproverIDsContract", run: documentVersionPublishApproverIDsContract},
+		{name: "DefaultApprovers", run: documentDefaultApprovers},
+		{name: "DeleteDraft", run: documentVersionDeleteDraft},
+		{name: "ExportPDFSignatures", run: documentVersionExportPDFSignatures},
+		{name: "MajorPublishCancelsSignatureRequests", run: documentVersionMajorPublishCancelsSignatureRequests},
+		{name: "MinorPublishKeepsSignatureRequests", run: documentVersionMinorPublishKeepsSignatureRequests},
+		{name: "MajorApprovalPublishCancelsSignatureRequests", run: documentVersionMajorApprovalPublishCancelsSignatureRequests},
+		{name: "RequestSignatureIsIdempotentWithinVersion", run: documentVersionRequestSignatureIsIdempotentWithinVersion},
+		{name: "RequestSignatureDeduplicatesAcrossMinors", run: documentVersionRequestSignatureDeduplicatesAcrossMinors},
+		{name: "MinorPublishMovesSignatureRequestsToNewVersion", run: documentVersionMinorPublishMovesSignatureRequestsToNewVersion},
+		{name: "SignDocument", run: documentVersionSignDocument},
+		{name: "SignDocumentWithoutRequestFails", run: documentVersionSignDocumentWithoutRequestFails},
+		{name: "SignDocumentTwiceFails", run: documentVersionSignDocumentTwiceFails},
+		{name: "ArchiveVoidsPendingQuorum", run: documentVersionArchiveVoidsPendingQuorum},
+		{name: "ArchiveCancelsPendingSignatures", run: documentVersionArchiveCancelsPendingSignatures},
+		{name: "UnarchiveRestoresEditableDraft", run: documentVersionUnarchiveRestoresEditableDraft},
+		{name: "SignArchivedDocumentFails", run: documentVersionSignArchivedDocumentFails},
+	}
+
+	for _, tc := range cases {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				tc.run(
+					t,
+					actors,
+				)
+			},
+		)
+	}
+}
+
+func documentVersionPublishVersion(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
@@ -331,9 +403,8 @@ func TestDocumentVersion_PublishVersion(t *testing.T) {
 	assert.Equal(t, 0, result.Node.Versions.Edges[0].Node.Minor)
 }
 
-func TestDocumentVersion_PublishInitialMinorVersion(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionPublishInitialMinorVersion(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 
@@ -434,9 +505,8 @@ func TestDocumentVersion_PublishInitialMinorVersion(t *testing.T) {
 	assert.Equal(t, 2, publishResult.PublishDocument.DocumentVersion.Minor)
 }
 
-func TestDocumentVersion_AutoCreateDraft(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
@@ -483,9 +553,8 @@ func TestDocumentVersion_AutoCreateDraft(t *testing.T) {
 	assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
 }
 
-func TestDocumentVersion_AutoDeleteDraft(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionAutoDeleteDraft(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
@@ -550,9 +619,8 @@ func TestDocumentVersion_AutoDeleteDraft(t *testing.T) {
 	assert.Nil(t, revertResult.UpdateDocument.DocumentVersion)
 }
 
-func TestDocumentVersion_RequestSignature(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionRequestSignature(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
@@ -677,9 +745,8 @@ func createTestDocumentWithApprovers(t *testing.T, owner *testutil.Client, appro
 	return result.CreateDocument.DocumentEdge.Node.ID
 }
 
-func TestDocumentVersion_BulkPublish(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionBulkPublish(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	// Create multiple draft documents (no default approvers — should publish directly)
 	docID1, _ := createTestDocument(t, owner)
@@ -721,9 +788,8 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	}
 }
 
-func TestDocumentVersion_BulkPublishRequestsApproval(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionBulkPublishRequestsApproval(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	approverID := getOwnerProfileID(t, owner)
 
@@ -770,9 +836,8 @@ func TestDocumentVersion_BulkPublishRequestsApproval(t *testing.T) {
 	assert.Equal(t, 0, dv.Minor)
 }
 
-func TestDocumentVersion_BulkPublishSkipsPendingApproval(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionBulkPublishSkipsPendingApproval(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	approverID := getOwnerProfileID(t, owner)
 
@@ -821,9 +886,8 @@ func TestDocumentVersion_BulkPublishSkipsPendingApproval(t *testing.T) {
 	assert.Empty(t, result.BulkPublishDocuments.DocumentVersions)
 }
 
-func TestDocumentVersion_BulkPublishMinorSkipsPendingApproval(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionBulkPublishMinorSkipsPendingApproval(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	// Create and publish a document first (need a published version for minor publish)
 	docID, _ := createTestDocument(t, owner)
@@ -889,9 +953,8 @@ func TestDocumentVersion_BulkPublishMinorSkipsPendingApproval(t *testing.T) {
 	assert.Empty(t, result.BulkPublishDocuments.DocumentVersions)
 }
 
-func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionBulkRequestSignatures(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
@@ -940,12 +1003,11 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	}
 }
 
-func TestDocumentVersion_AutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
+func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, actors documentVersionActors) {
 	t.Run("documentType update creates draft", func(t *testing.T) {
 		t.Parallel()
+
+		owner := actors.owner.ForTest(t)
 
 		// Create and approve a document (auto-publishes on approval)
 		docID, _ := createTestDocument(t, owner)
@@ -993,6 +1055,8 @@ func TestDocumentVersion_AutoCreateDraftOnClassificationOrTypeUpdate(t *testing.
 	t.Run("classification update creates draft", func(t *testing.T) {
 		t.Parallel()
 
+		owner := actors.owner.ForTest(t)
+
 		// Create and approve a document (auto-publishes on approval)
 		docID, _ := createTestDocument(t, owner)
 		approveTestDocument(t, owner, docID)
@@ -1037,10 +1101,9 @@ func TestDocumentVersion_AutoCreateDraftOnClassificationOrTypeUpdate(t *testing.
 	})
 }
 
-func TestDocumentVersion_ViewerCannotUpdateDocument(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+func documentVersionViewerCannotUpdateDocument(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	viewer := actors.viewer.ForTest(t)
 
 	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
@@ -1062,9 +1125,8 @@ func TestDocumentVersion_ViewerCannotUpdateDocument(t *testing.T) {
 	testutil.RequireForbiddenError(t, err, "viewer should not be able to update document")
 }
 
-func TestDocumentVersion_BulkDelete(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionBulkDelete(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	// Create multiple documents to delete
 	docID1, _ := createTestDocument(t, owner)
@@ -1096,9 +1158,8 @@ func TestDocumentVersion_BulkDelete(t *testing.T) {
 	assert.Contains(t, result.BulkDeleteDocuments.DeletedDocumentIds, docID2)
 }
 
-func TestDocumentVersion_VoidApproval(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionVoidApproval(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approverID := getOwnerProfileID(t, owner)
@@ -1249,9 +1310,8 @@ func TestDocumentVersion_VoidApproval(t *testing.T) {
 	}
 }
 
-func TestDocumentVersion_RejectApproval(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionRejectApproval(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approverID := getOwnerProfileID(t, owner)
@@ -1397,9 +1457,8 @@ func TestDocumentVersion_RejectApproval(t *testing.T) {
 	assert.Equal(t, "REJECTED", decisions[0].Node.State, "rejecting approver's decision should be REJECTED")
 }
 
-func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionPublishBlockedWhenPendingApproval(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approverID := getOwnerProfileID(t, owner)
@@ -1424,6 +1483,8 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 	t.Run("publish major blocked", func(t *testing.T) {
 		t.Parallel()
 
+		owner := actors.owner.ForTest(t)
+
 		_, err := owner.Do(`
 			mutation($input: PublishDocumentInput!) {
 				publishDocument(input: $input) {
@@ -1443,6 +1504,8 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 
 	t.Run("publish minor blocked", func(t *testing.T) {
 		t.Parallel()
+
+		owner := actors.owner.ForTest(t)
 
 		_, err := owner.Do(`
 			mutation($input: PublishDocumentInput!) {
@@ -1465,9 +1528,7 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 // be an explicit choice when publishing: required for a major version (empty
 // list publishes directly, non-empty requests approval) and rejected for a minor
 // version (which ignores approvers).
-func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
-	t.Parallel()
-
+func documentVersionPublishApproverIDsContract(t *testing.T, actors documentVersionActors) {
 	const publishMutation = `
 		mutation($input: PublishDocumentInput!) {
 			publishDocument(input: $input) {
@@ -1490,7 +1551,7 @@ func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
 
 	t.Run("major publish without approver_ids is rejected", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := actors.owner.ForTest(t)
 		docID, _ := createTestDocument(t, owner)
 
 		_, err := owner.Do(publishMutation, map[string]any{
@@ -1505,7 +1566,7 @@ func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
 
 	t.Run("major publish with empty approver_ids publishes directly", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := actors.owner.ForTest(t)
 		docID, _ := createTestDocument(t, owner)
 
 		var result publishResult
@@ -1525,7 +1586,7 @@ func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
 
 	t.Run("major publish with approver_ids requests approval", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := actors.owner.ForTest(t)
 		docID, _ := createTestDocument(t, owner)
 
 		var result publishResult
@@ -1545,7 +1606,7 @@ func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
 
 	t.Run("minor publish without approver_ids is allowed", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := actors.owner.ForTest(t)
 		docID, _ := createTestDocument(t, owner)
 		publishMajorDocumentVersion(t, owner, docID)
 		updateDocumentContent(t, owner, docID, "Updated content for minor")
@@ -1566,7 +1627,7 @@ func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
 
 	t.Run("minor publish with approver_ids is rejected", func(t *testing.T) {
 		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
+		owner := actors.owner.ForTest(t)
 		docID, _ := createTestDocument(t, owner)
 		publishMajorDocumentVersion(t, owner, docID)
 		updateDocumentContent(t, owner, docID, "Updated content for rejected minor")
@@ -1583,14 +1644,15 @@ func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
 	})
 }
 
-func TestDocument_DefaultApprovers(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentDefaultApprovers(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	approverID := getOwnerProfileID(t, owner)
 
 	t.Run("create document with default approvers", func(t *testing.T) {
 		t.Parallel()
+
+		owner := actors.owner.ForTest(t)
 
 		var result struct {
 			CreateDocument struct {
@@ -1634,6 +1696,8 @@ func TestDocument_DefaultApprovers(t *testing.T) {
 
 	t.Run("update document with default approvers", func(t *testing.T) {
 		t.Parallel()
+
+		owner := actors.owner.ForTest(t)
 
 		docID, _ := createTestDocument(t, owner)
 
@@ -1692,6 +1756,8 @@ func TestDocument_DefaultApprovers(t *testing.T) {
 	t.Run("major publish with explicit approvers updates default approvers, even when empty", func(t *testing.T) {
 		t.Parallel()
 
+		owner := actors.owner.ForTest(t)
+
 		docID := createTestDocumentWithApprovers(t, owner, []string{approverID})
 
 		var result struct {
@@ -1729,10 +1795,7 @@ func TestDocument_DefaultApprovers(t *testing.T) {
 	})
 }
 
-func TestDocumentVersion_DeleteDraft(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
+func documentVersionDeleteDraft(t *testing.T, actors documentVersionActors) {
 	const query = `
 		mutation DeleteDocumentDraft($input: DeleteDocumentDraftInput!) {
 			deleteDocumentDraft(input: $input) {
@@ -1747,6 +1810,8 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 		"delete draft after publishing",
 		func(t *testing.T) {
 			t.Parallel()
+
+			owner := actors.owner.ForTest(t)
 
 			docID, _ := createTestDocument(t, owner)
 			approveTestDocument(t, owner, docID)
@@ -1805,6 +1870,8 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
+			owner := actors.owner.ForTest(t)
+
 			docID, _ := createTestDocument(t, owner)
 
 			var result struct{}
@@ -1820,6 +1887,8 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 		"cannot delete when latest is published",
 		func(t *testing.T) {
 			t.Parallel()
+
+			owner := actors.owner.ForTest(t)
 
 			docID, _ := createTestDocument(t, owner)
 			approveTestDocument(t, owner, docID)
@@ -1838,7 +1907,8 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+			owner := actors.owner.ForTest(t)
+			viewer := actors.viewer.ForTest(t)
 
 			docID, _ := createTestDocument(t, owner)
 			approveTestDocument(t, owner, docID)
@@ -1882,15 +1952,13 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 	)
 }
 
-func TestDocumentVersion_ExportPDFSignatures(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
+func documentVersionExportPDFSignatures(t *testing.T, actors documentVersionActors) {
 	t.Run(
 		"can export draft with signatures",
 		func(t *testing.T) {
 			t.Parallel()
+
+			owner := actors.owner.ForTest(t)
 
 			_, docVersionID := createTestDocument(t, owner)
 
@@ -1922,6 +1990,8 @@ func TestDocumentVersion_ExportPDFSignatures(t *testing.T) {
 		"can export published with signatures",
 		func(t *testing.T) {
 			t.Parallel()
+
+			owner := actors.owner.ForTest(t)
 
 			docID, _ := createTestDocument(t, owner)
 			approveTestDocument(t, owner, docID)
@@ -1982,10 +2052,9 @@ func TestDocumentVersion_ExportPDFSignatures(t *testing.T) {
 // TestDocumentVersion_MajorPublishCancelsSignatureRequests verifies that
 // publishing a new major version directly (no approvers) cancels the still
 // pending signature requests attached to the previous major version.
-func TestDocumentVersion_MajorPublishCancelsSignatureRequests(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+func documentVersionMajorPublishCancelsSignatureRequests(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	signer := actors.viewer.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 
@@ -2004,10 +2073,9 @@ func TestDocumentVersion_MajorPublishCancelsSignatureRequests(t *testing.T) {
 // TestDocumentVersion_MinorPublishKeepsSignatureRequests verifies that
 // publishing a minor version stays within the same major and therefore keeps
 // pending signature requests intact.
-func TestDocumentVersion_MinorPublishKeepsSignatureRequests(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+func documentVersionMinorPublishKeepsSignatureRequests(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	signer := actors.viewer.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 
@@ -2026,10 +2094,9 @@ func TestDocumentVersion_MinorPublishKeepsSignatureRequests(t *testing.T) {
 // that on the approval path the pending signature requests from the previous
 // major are cancelled only once the quorum succeeds and the new major is
 // actually published, not while the approval is still pending.
-func TestDocumentVersion_MajorApprovalPublishCancelsSignatureRequests(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+func documentVersionMajorApprovalPublishCancelsSignatureRequests(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	signer := actors.viewer.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
@@ -2052,10 +2119,9 @@ func TestDocumentVersion_MajorApprovalPublishCancelsSignatureRequests(t *testing
 // TestDocumentVersion_RequestSignatureIsIdempotentWithinVersion verifies that
 // requesting a signature twice for the same signatory on the same version does
 // not create a duplicate signature row.
-func TestDocumentVersion_RequestSignatureIsIdempotentWithinVersion(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+func documentVersionRequestSignatureIsIdempotentWithinVersion(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	signer := actors.viewer.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	signerID := signer.GetProfileID().String()
@@ -2071,10 +2137,9 @@ func TestDocumentVersion_RequestSignatureIsIdempotentWithinVersion(t *testing.T)
 // re-requesting a signature on a newer minor of the same major reuses the
 // signatory's existing signature instead of creating a second one, so the
 // person is not listed twice in the major's export.
-func TestDocumentVersion_RequestSignatureDeduplicatesAcrossMinors(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+func documentVersionRequestSignatureDeduplicatesAcrossMinors(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	signer := actors.viewer.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	signerID := signer.GetProfileID().String()
@@ -2150,10 +2215,9 @@ func requestedSignatureVersions(
 // requests from the previous version onto the newly published version. The same
 // signature row is reused (its ID is preserved), so its notification schedule
 // (count and last-notified time) is kept intact rather than reset.
-func TestDocumentVersion_MinorPublishMovesSignatureRequestsToNewVersion(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+func documentVersionMinorPublishMovesSignatureRequestsToNewVersion(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
+	signer := actors.viewer.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 
@@ -2266,9 +2330,8 @@ const signDocumentVersionMutation = `
 // signed by the signatory, transitioning REQUESTED -> SIGNED and recording the
 // signing time. Signing exercises the electronic-signature integration end to
 // end: PDF export, upload, and esign create-and-accept.
-func TestDocumentVersion_SignDocument(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionSignDocument(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
@@ -2287,9 +2350,8 @@ func TestDocumentVersion_SignDocument(t *testing.T) {
 
 // TestDocumentVersion_SignDocumentWithoutRequestFails verifies that a version
 // cannot be signed unless a signature was first requested for the signatory.
-func TestDocumentVersion_SignDocumentWithoutRequestFails(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionSignDocumentWithoutRequestFails(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
@@ -2305,9 +2367,8 @@ func TestDocumentVersion_SignDocumentWithoutRequestFails(t *testing.T) {
 
 // TestDocumentVersion_SignDocumentTwiceFails verifies that an already-signed
 // signature cannot be signed again.
-func TestDocumentVersion_SignDocumentTwiceFails(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionSignDocumentTwiceFails(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
@@ -2325,9 +2386,8 @@ func TestDocumentVersion_SignDocumentTwiceFails(t *testing.T) {
 	})
 }
 
-func TestDocumentVersion_ArchiveVoidsPendingQuorum(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionArchiveVoidsPendingQuorum(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
@@ -2407,9 +2467,8 @@ func TestDocumentVersion_ArchiveVoidsPendingQuorum(t *testing.T) {
 	}
 }
 
-func TestDocumentVersion_ArchiveCancelsPendingSignatures(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionArchiveCancelsPendingSignatures(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
@@ -2446,9 +2505,8 @@ func TestDocumentVersion_ArchiveCancelsPendingSignatures(t *testing.T) {
 	assert.Empty(t, result.Node.Signatures.Edges)
 }
 
-func TestDocumentVersion_UnarchiveRestoresEditableDraft(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionUnarchiveRestoresEditableDraft(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
@@ -2494,9 +2552,8 @@ func TestDocumentVersion_UnarchiveRestoresEditableDraft(t *testing.T) {
 // archived after its signature was requested can no longer be signed. This
 // guards the archived/published preconditions that are re-validated inside the
 // signing transaction so a state change between request and sign is honored.
-func TestDocumentVersion_SignArchivedDocumentFails(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
+func documentVersionSignArchivedDocumentFails(t *testing.T, actors documentVersionActors) {
+	owner := actors.owner.ForTest(t)
 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
@@ -2538,36 +2595,5 @@ func TestDocumentVersion_SignArchivedDocumentFails(t *testing.T) {
 		"input": map[string]any{
 			"documentVersionId": publishedVersionID,
 		},
-	})
-}
-
-func TestDocumentVersion_TenantIsolation(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	docID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for Version Isolation").Create()
-	versionID := latestDocumentVersionID(t, org1Owner, docID)
-
-	t.Run("cannot read documentVersion from another organization", func(t *testing.T) {
-		query := `
-			query($id: ID!) {
-				node(id: $id) {
-					... on DocumentVersion {
-						id
-					}
-				}
-			}
-		`
-
-		var result struct {
-			Node *struct {
-				ID string `json:"id"`
-			} `json:"node"`
-		}
-
-		err := org2Owner.Execute(query, map[string]any{"id": versionID}, &result)
-		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "documentVersion")
 	})
 }

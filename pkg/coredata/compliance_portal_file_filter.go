@@ -58,14 +58,14 @@ func (f *CompliancePortalFileFilter) SQLArguments() pgx.NamedArgs {
 	}
 
 	return pgx.NamedArgs{
-		"trust_center_visibilities": visibilities,
+		"compliance_portal_visibilities": visibilities,
 	}
 }
 
 func (f *CompliancePortalFileFilter) SQLFragment() string {
 	return `CASE
-  WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
-    trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])
+  WHEN @compliance_portal_visibilities::compliance_portal_visibility[] IS NOT NULL THEN
+    compliance_portal_visibility = ANY(@compliance_portal_visibilities::compliance_portal_visibility[])
   ELSE TRUE
 END
 `

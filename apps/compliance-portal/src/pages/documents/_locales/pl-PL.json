@@ -3,7 +3,7 @@
   "tabs": {
     "all": "Wszystkie",
     "public": "Publiczne",
-    "private": "Prywatne"
+    "restricted": "Ograniczone"
   },
   "sections": {
     "reports": "Raporty zgodności"
@@ -22,7 +22,7 @@
   },
   "actions": {
     "view": "Wyświetl",
-    "getAccess": "Uzyskaj dostęp",
+    "getAccess": "Poproś o dostęp",
     "requested": "Poproszono o dostęp"
   },
   "selection": {
@@ -47,7 +47,8 @@
     "downloadToView": "Tego typu plików nie można wyświetlić w podglądzie. Pobierz plik, aby go zobaczyć.",
     "locked": {
       "title": "Wymagany dostęp",
-      "description": "Nie masz jeszcze dostępu do tego dokumentu."
+      "description": "Nie masz jeszcze dostępu do tego dokumentu.",
+      "signNda": "Przejrzyj i podpisz NDA"
     }
   }
 }

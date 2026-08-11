@@ -29,19 +29,6 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const compliancePortalQuery = `
-query($id: ID!) {
-  node(id: $id) {
-    __typename
-    ... on Organization {
-      compliancePortal {
-        id
-      }
-    }
-  }
-}
-`
-
 const updateMutation = `
 mutation($input: UpdateCompliancePortalInput!) {
   updateCompliancePortal(input: $input) {
@@ -49,6 +36,7 @@ mutation($input: UpdateCompliancePortalInput!) {
       id
       active
       searchEngineIndexing
+      rightsRequestsEnabled
       entityName
       description
       websiteUrl
@@ -59,40 +47,33 @@ mutation($input: UpdateCompliancePortalInput!) {
 }
 `
 
-type compliancePortalQueryResponse struct {
-	Node *struct {
-		Typename         string `json:"__typename"`
-		CompliancePortal *struct {
-			ID string `json:"id"`
-		} `json:"compliancePortal"`
-	} `json:"node"`
-}
-
 type updateResponse struct {
 	UpdateCompliancePortal struct {
 		CompliancePortal struct {
-			ID                   string  `json:"id"`
-			Active               bool    `json:"active"`
-			SearchEngineIndexing string  `json:"searchEngineIndexing"`
-			EntityName           string  `json:"entityName"`
-			Description          *string `json:"description"`
-			WebsiteURL           *string `json:"websiteUrl"`
-			Email                *string `json:"email"`
-			HeadquarterAddress   *string `json:"headquarterAddress"`
+			ID                    string  `json:"id"`
+			Active                bool    `json:"active"`
+			SearchEngineIndexing  string  `json:"searchEngineIndexing"`
+			RightsRequestsEnabled bool    `json:"rightsRequestsEnabled"`
+			EntityName            string  `json:"entityName"`
+			Description           *string `json:"description"`
+			WebsiteURL            *string `json:"websiteUrl"`
+			Email                 *string `json:"email"`
+			HeadquarterAddress    *string `json:"headquarterAddress"`
 		} `json:"compliancePortal"`
 	} `json:"updateCompliancePortal"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg                  string
-		flagActive               bool
-		flagSearchEngineIndexing string
-		flagDescription          string
-		flagWebsiteURL           string
-		flagEmail                string
-		flagHeadquarterAddress   string
-		flagEntityName           string
+		flagPortal                string
+		flagActive                bool
+		flagSearchEngineIndexing  string
+		flagRightsRequestsEnabled bool
+		flagDescription           string
+		flagWebsiteURL            string
+		flagEmail                 string
+		flagHeadquarterAddress    string
+		flagEntityName            string
 	)
 
 	cmd := &cobra.Command{
@@ -102,7 +83,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
   prb compliance-portal update --active
 
   # Disable search engine indexing
-  prb compliance-portal update --search-engine-indexing NOT_INDEXABLE`,
+  prb compliance-portal update --search-engine-indexing NOT_INDEXABLE
+
+  # Disable rights requests on the portal
+  prb compliance-portal update --rights-requests-enabled=false`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -123,42 +107,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
-			}
-
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
-			}
-
-			// Fetch compliance portal ID from organization.
-			data, err := client.Do(
-				compliancePortalQuery,
-				map[string]any{"id": flagOrg},
-			)
-			if err != nil {
-				return err
-			}
-
-			var tcResp compliancePortalQueryResponse
-			if err := json.Unmarshal(data, &tcResp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if tcResp.Node == nil {
-				return fmt.Errorf("organization %s not found", flagOrg)
-			}
-
-			if tcResp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", tcResp.Node.Typename)
-			}
-
-			if tcResp.Node.CompliancePortal == nil {
-				return fmt.Errorf("compliance portal not found for organization %s", flagOrg)
-			}
-
 			input := map[string]any{
-				"compliancePortalId": tcResp.Node.CompliancePortal.ID,
+				"compliancePortalId": flagPortal,
 			}
 
 			if cmd.Flags().Changed("active") {
@@ -171,6 +121,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				input["searchEngineIndexing"] = flagSearchEngineIndexing
+			}
+
+			if cmd.Flags().Changed("rights-requests-enabled") {
+				input["rightsRequestsEnabled"] = flagRightsRequestsEnabled
 			}
 
 			if cmd.Flags().Changed("description") {
@@ -201,7 +155,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
 
-			data, err = client.Do(
+			data, err := client.Do(
 				updateMutation,
 				map[string]any{"input": input},
 			)
@@ -225,9 +179,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagPortal, "portal", "", "Compliance portal ID")
+	_ = cmd.MarkFlagRequired("portal")
+	_ = cmd.MarkFlagRequired("portal")
 	cmd.Flags().BoolVar(&flagActive, "active", false, "Enable or disable the compliance portal")
 	cmd.Flags().StringVar(&flagSearchEngineIndexing, "search-engine-indexing", "", "Search engine indexing: INDEXABLE, NOT_INDEXABLE")
+	cmd.Flags().BoolVar(&flagRightsRequestsEnabled, "rights-requests-enabled", false, "Enable or disable rights requests on the compliance portal")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Compliance page description")
 	cmd.Flags().StringVar(&flagWebsiteURL, "website-url", "", "Compliance page website URL")
 	cmd.Flags().StringVar(&flagEmail, "email", "", "Compliance page contact email")

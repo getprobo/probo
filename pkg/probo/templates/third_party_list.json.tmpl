@@ -191,7 +191,7 @@
       "type": "heading",
       "attrs": { "level": 3 },
       "content": [{ "type": "text", "text": {{json (printf "2.%d.6 Risk Assessments" (add $i 1))}} }]
-    }{{if $r.RiskAssessments}}{{range $r.RiskAssessments}},
+    }{{if $r.RiskAnalyses}}{{range $r.RiskAnalyses}},
     {
       "type": "paragraph",
       "content": [
@@ -208,10 +208,10 @@
     {
       "type": "paragraph",
       "content": [
-        { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json (default "—" .Notes)}} }
+        { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] }
       ]
-    }{{end}}{{else}},
+    },
+    {{.NotesBlocks}}{{end}}{{else}},
     {
       "type": "paragraph",
       "content": [{ "type": "text", "text": "No risk assessments recorded." }]

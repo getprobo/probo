@@ -4,6 +4,70 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.218.0] - 2026-08-10
+
+### Changed
+
+- Risk Analysis `Scope` parameters are now called `Diagram` across all operations.
+
+## [0.217.0] - 2026-08-07
+
+### Changed
+
+- **Breaking**: the `Risk Assessment` resource is renamed to `Risk Analysis` (resource value `riskAssessment` -> `riskAnalysis`), along with its operations and parameters. Existing workflows using the Risk Assessment resource must reselect the Risk Analysis resource. Third-party assessments are unaffected.
+
+### Added
+
+- Document `Get Many`: `Published` filter option, to return only documents that have a published version
+
+## [0.216.0] - 2026-08-06
+
+### Added
+
+- Access Review: `Read Campaign Access Entries` operation, to read the access entries for an access review campaign
+- Compliance Portal `Update`: `Rights Requests Enabled` option, to enable or disable rights requests on the compliance portal
+
+## [0.215.1] - 2026-08-06
+
+### Fixed
+
+- Organization Get Many: send `states: ['ACTIVE']` instead of the removed `state` field so the operation works again against servers that only accept the multi-value `ProfileFilter`
+
+## [0.215.0] - 2026-08-05
+
+### Added
+
+- `subdivisionCode` (ISO 3166-2) returned by the Cookie Consent Record `Get` and `Get Many` operations, so workflows can branch on the detected state or province rather than country alone
+
+## [0.214.0] - 2026-08-05
+
+### Added
+
+- Access Review Source `Get Many` operation to list organization access review sources
+
+## [0.213.0] - 2026-08-05
+
+### Added
+
+- Business Function `Create`, `Get`, `Get Many`, `Update`, `Delete`, and `Publish` operations, for tracking DORA Critical ICT Functions
+
+## [0.212.0] - 2026-08-04
+
+### Added
+
+- Cookie Consent Record `Get Many`: new `Acknowledge` action filter option, matching the new `ACKNOWLEDGE` consent action recorded for notice-only banners
+
+## [0.211.0] - 2026-08-03
+
+### Added
+
+- Compliance Portal `Create`, `Delete`, `Get Many`, `Delete Audit`, `Delete Document`, `Delete Third Party`, `Update Audit Visibility`, `Update Document Visibility`, and `Update Third Party Published` operations
+
+### Changed
+
+- Third Party `Create`/`Update`: `Business Owner ID` and `Security Owner ID` fields replaced with a single `Administrator IDs` field (comma-separated)
+- Compliance Portal `Create Commitment Group`: `Trust Center ID` field renamed to `Compliance Portal ID`
+
 ## [0.210.0] - 2026-07-31
 
 ### Added

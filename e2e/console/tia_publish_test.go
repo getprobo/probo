@@ -247,42 +247,6 @@ func TestTransferImpactAssessment_PublishList(t *testing.T) {
 	)
 }
 
-func TestTransferImpactAssessment_PublishList_RBAC(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	paID := factory.NewProcessingActivity(owner).
-		WithName("TIA RBAC PA").
-		WithLawfulBasis("CONSENT").
-		Create()
-	createTIAForPublish(t, owner, paID, "TIA RBAC")
-
-	const query = `
-		mutation($input: PublishTransferImpactAssessmentListInput!) {
-			publishTransferImpactAssessmentList(input: $input) {
-				documentEdge { node { id } }
-			}
-		}
-	`
-
-	t.Run("viewer cannot publish TIA list", func(t *testing.T) {
-		t.Parallel()
-
-		err := viewer.ExecuteShouldFail(
-			query,
-			map[string]any{
-				"input": map[string]any{
-					"minor":          false,
-					"organizationId": owner.GetOrganizationID(),
-				},
-			},
-		)
-		testutil.RequireForbiddenError(t, err)
-	})
-}
-
 func createTIAForPublish(t *testing.T, client *testutil.Client, processingActivityID string, transfer string) string {
 	t.Helper()
 

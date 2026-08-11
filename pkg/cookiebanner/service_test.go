@@ -22,12 +22,14 @@ package cookiebanner
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 func TestSnapshotsEqual(t *testing.T) {
@@ -289,65 +291,40 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 	})
 }
 
-func TestRemapTextsForConsentMode(t *testing.T) {
+func TestRecordConsentRequest_Validate(t *testing.T) {
 	t.Parallel()
 
-	baseTexts := func() map[string]string {
-		return map[string]string{
-			"banner_title":       "We use cookies",
-			"banner_description": "This site uses cookies.",
-			"button_accept_all":  "Accept All",
-			"button_reject_all":  "Reject All",
-			"button_customize":   "Customize",
-			"button_dismiss":     "Dismiss",
+	t.Run("rejects empty visitor id", func(t *testing.T) {
+		t.Parallel()
+
+		req := RecordConsentRequest{
+			Version:   1,
+			VisitorID: "",
+			Action:    coredata.CookieConsentActionAcceptAll,
 		}
-	}
 
-	t.Run("opt in mode keeps all buttons", func(t *testing.T) {
-		t.Parallel()
+		err := req.Validate()
+		require.Error(t, err)
 
-		texts := baseTexts()
-		remapTextsForConsentMode(texts, ConsentModeOptIn)
-
-		assert.Equal(t, "Accept All", texts["button_accept_all"])
-		assert.Equal(t, "Reject All", texts["button_reject_all"])
-		assert.Equal(t, "Customize", texts["button_customize"])
+		validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+		require.True(t, ok)
+		assert.NotEmpty(t, validationErrors.ByField("visitor_id"))
 	})
 
-	t.Run("opt out mode maps opt out to reject and clears customize", func(t *testing.T) {
+	t.Run("rejects invalid action", func(t *testing.T) {
 		t.Parallel()
 
-		texts := baseTexts()
-		texts["button_opt_out"] = "Do Not Sell"
-		remapTextsForConsentMode(texts, ConsentModeOptOut)
+		req := RecordConsentRequest{
+			Version:   1,
+			VisitorID: "visitor-1",
+			Action:    coredata.CookieConsentAction("NOT_A_REAL_ACTION"),
+		}
 
-		assert.Equal(t, "Do Not Sell", texts["button_reject_all"])
-		assert.Empty(t, texts["button_customize"])
+		err := req.Validate()
+		require.Error(t, err)
+
+		validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+		require.True(t, ok)
+		assert.NotEmpty(t, validationErrors.ByField("action"))
 	})
-}
-
-func TestIsLegacySDK(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		version string
-		want    bool
-	}{
-		{"0.1.0", true},
-		{"0.2.0", true},
-		{"0.2.5", true},
-		{"0.3.0", false},
-		{"1.0.0", false},
-		{"", false},
-		{"invalid", false},
-		{"v0.2.0", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.version, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, tt.want, isLegacySDK(tt.version))
-		})
-	}
 }

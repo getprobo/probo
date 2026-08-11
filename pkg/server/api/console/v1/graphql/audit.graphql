@@ -163,6 +163,9 @@ type Audit implements Node {
     auditEndDate: Datetime
     reportFile: File @goField(forceResolver: true)
     state: AuditState!
+    compliancePortalAudit(
+        compliancePortalId: ID!
+    ): CompliancePortalAudit @goField(forceResolver: true)
 
     controls(
         first: Int
@@ -182,7 +185,6 @@ type Audit implements Node {
         filter: FindingFilter
     ): FindingConnection @goField(forceResolver: true)
 
-    compliancePortalVisibility: CompliancePortalVisibility!
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -288,7 +290,6 @@ input CreateAuditInput {
     auditStartDate: Datetime
     auditEndDate: Datetime
     state: AuditState
-    compliancePortalVisibility: CompliancePortalVisibility
     file: Upload
 }
 
@@ -300,7 +301,6 @@ input UpdateAuditInput {
     auditStartDate: Datetime
     auditEndDate: Datetime
     state: AuditState
-    compliancePortalVisibility: CompliancePortalVisibility
 }
 
 input DeleteAuditInput {

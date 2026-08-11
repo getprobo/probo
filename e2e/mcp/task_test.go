@@ -33,6 +33,7 @@ func TestMCP_Task_CRUD(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
 	measureID := factory.CreateMeasure(owner)
 
 	// Create
@@ -43,8 +44,9 @@ func TestMCP_Task_CRUD(t *testing.T) {
 		} `json:"task"`
 	}
 	mc.CallToolInto("addTask", map[string]any{
-		"measureId": measureID,
-		"name":      factory.SafeName("Task"),
+		"organization_id": orgID,
+		"measure_id":      measureID,
+		"name":            factory.SafeName("Task"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Task.ID)
 
@@ -79,13 +81,14 @@ func TestMCP_Task_CRUD(t *testing.T) {
 		} `json:"tasks"`
 	}
 	mc.CallToolInto("listTasks", map[string]any{
-		"measureId": measureID,
+		"organization_id": orgID,
+		"measure_id":      measureID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Tasks)
 
 	// Delete
 	var deleteResult struct {
-		DeletedTaskID string `json:"deletedTaskId"`
+		DeletedTaskID string `json:"deleted_task_id"`
 	}
 	mc.CallToolInto("deleteTask", map[string]any{
 		"id": addResult.Task.ID,

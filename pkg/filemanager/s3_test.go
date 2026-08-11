@@ -25,6 +25,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -38,17 +40,34 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 )
 
-func newTestS3Service(t *testing.T, handler http.HandlerFunc) *filemanager.Service {
+// withRequestChecksumCalculation sets the S3 client's RequestChecksumCalculation
+// for a test built with newTestS3Service.
+func withRequestChecksumCalculation(v aws.RequestChecksumCalculation) func(*aws.Config) {
+	return func(cfg *aws.Config) {
+		cfg.RequestChecksumCalculation = v
+	}
+}
+
+func newTestS3Service(
+	t *testing.T,
+	handler http.HandlerFunc,
+	opts ...func(*aws.Config),
+) *filemanager.Service {
 	t.Helper()
 
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
 
+	cfg := aws.Config{
+		Region:      "us-east-1",
+		Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
+	}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	s3Client := awss3.NewFromConfig(
-		aws.Config{
-			Region:      "us-east-1",
-			Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
-		},
+		cfg,
 		func(o *awss3.Options) {
 			o.BaseEndpoint = aws.String(srv.URL)
 			o.UsePathStyle = true
@@ -346,4 +365,114 @@ func TestOpenFile_NotModifiedByModifiedSince(t *testing.T) {
 	require.NotNil(t, obj)
 	assert.True(t, obj.NotModified)
 	assert.Nil(t, obj.Body)
+}
+
+// unseekableReader hides io.Seeker so the SDK takes the streaming path, which is
+// what a real multipart form upload looks like.
+type unseekableReader struct{ r io.Reader }
+
+func (u unseekableReader) Read(p []byte) (int, error) { return u.r.Read(p) }
+
+// requestCarriesChecksum reports whether an upload request asks the server to
+// verify an AWS checksum, in any of the forms the SDK can use: a declared
+// algorithm, a precomputed header, or a chunked body with a trailing checksum.
+func requestCarriesChecksum(h http.Header) bool {
+	if h.Get("X-Amz-Sdk-Checksum-Algorithm") != "" || h.Get("X-Amz-Trailer") != "" {
+		return true
+	}
+
+	if strings.Contains(h.Get("Content-Encoding"), "aws-chunked") {
+		return true
+	}
+
+	for name := range h {
+		if strings.HasPrefix(strings.ToLower(name), "x-amz-checksum-") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// The transfer manager keeps its own RequestChecksumCalculation, which takes
+// precedence over the S3 client's. Before the accompanying fix it ignored the
+// client entirely and always applied CRC32, so S3-compatible endpoints that do
+// not implement AWS's checksum scheme (Google Cloud Storage's S3-interop
+// endpoint among them) rejected every upload with an opaque
+// `SignatureDoesNotMatch`. This asserts the client's setting is honoured in
+// both directions, so the regression cannot come back silently.
+func TestPutFile_HonoursRequestChecksumCalculation(t *testing.T) {
+	t.Parallel()
+
+	const content = "evidence payload"
+
+	for _, tc := range []struct {
+		name         string
+		checksum     aws.RequestChecksumCalculation
+		wantChecksum bool
+	}{
+		{
+			name:         "when required omits checksum",
+			checksum:     aws.RequestChecksumCalculationWhenRequired,
+			wantChecksum: false,
+		},
+		{
+			name:         "when supported adds checksum",
+			checksum:     aws.RequestChecksumCalculationWhenSupported,
+			wantChecksum: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var (
+				mu        sync.Mutex
+				putHeader http.Header
+			)
+
+			svc := newTestS3Service(
+				t,
+				func(w http.ResponseWriter, r *http.Request) {
+					if r.Method == http.MethodPut {
+						mu.Lock()
+						putHeader = r.Header.Clone()
+						mu.Unlock()
+
+						_, _ = io.Copy(io.Discard, r.Body)
+
+						w.Header().Set("ETag", `"abc123"`)
+						w.WriteHeader(http.StatusOK)
+
+						return
+					}
+
+					// HeadObject, which PutFile issues to learn the stored size.
+					w.Header().Set("Content-Length", "16")
+					w.WriteHeader(http.StatusOK)
+				},
+				withRequestChecksumCalculation(tc.checksum),
+			)
+
+			file := &coredata.File{
+				BucketName: "uploads",
+				FileKey:    "tenant/evidence",
+				MimeType:   "text/plain",
+				FileSize:   int64(len(content)),
+			}
+
+			_, err := svc.PutFile(
+				context.Background(),
+				file,
+				unseekableReader{r: strings.NewReader(content)},
+				map[string]string{},
+			)
+			require.NoError(t, err)
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			require.NotNil(t, putHeader, "expected an upload request to reach the server")
+			assert.Equal(t, tc.wantChecksum, requestCarriesChecksum(putHeader))
+		})
+	}
 }

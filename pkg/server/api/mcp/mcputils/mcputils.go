@@ -81,3 +81,29 @@ func LoggingMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHan
 		}
 	}
 }
+
+// ListToolsCacheMiddleware sets a TTL hint (SEP-2549) on tools/list
+// responses. The tool set is static for the lifetime of a server process, so
+// well-behaved clients can skip refetching it on every session.
+//
+// This must be registered with AddReceivingMiddleware, not
+// AddSendingMiddleware: tools/list is a request the server receives, and
+// only receiving middleware runs on the path that produces its result.
+func ListToolsCacheMiddleware(ttl time.Duration) func(mcp.MethodHandler) mcp.MethodHandler {
+	ttlMs := int(ttl.Milliseconds())
+
+	return func(next mcp.MethodHandler) mcp.MethodHandler {
+		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+			result, err := next(ctx, method, req)
+			if err != nil {
+				return result, err
+			}
+
+			if ltr, ok := result.(*mcp.ListToolsResult); ok {
+				ltr.TTLMs = ttlMs
+			}
+
+			return result, nil
+		}
+	}
+}

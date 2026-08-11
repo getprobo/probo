@@ -34,7 +34,6 @@ mutation($input: UpdateDocumentInput!) {
   updateDocument(input: $input) {
     document {
       id
-      compliancePortalVisibility
     }
     documentVersion {
       id
@@ -52,8 +51,7 @@ mutation($input: UpdateDocumentInput!) {
 type updateResponse struct {
 	UpdateDocument struct {
 		Document struct {
-			ID                         string `json:"id"`
-			CompliancePortalVisibility string `json:"compliancePortalVisibility"`
+			ID string `json:"id"`
 		} `json:"document"`
 		DocumentVersion *struct {
 			ID             string `json:"id"`
@@ -69,11 +67,10 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagTitle                      string
-		flagContent                    string
-		flagDocumentType               string
-		flagClassification             string
-		flagCompliancePortalVisibility string
+		flagTitle          string
+		flagContent        string
+		flagDocumentType   string
+		flagClassification string
 	)
 
 	cmd := &cobra.Command{
@@ -134,18 +131,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["classification"] = flagClassification
 			}
 
-			if cmd.Flags().Changed("compliance-portal-visibility") {
-				if err := cmdutil.ValidateEnum(
-					"compliance-portal-visibility",
-					flagCompliancePortalVisibility,
-					[]string{"NONE", "PRIVATE", "PUBLIC"},
-				); err != nil {
-					return err
-				}
-
-				input["compliancePortalVisibility"] = flagCompliancePortalVisibility
-			}
-
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -189,7 +174,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Document content")
 	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Document type: OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE, STATEMENT_OF_APPLICABILITY")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET")
-	cmd.Flags().StringVar(&flagCompliancePortalVisibility, "compliance-portal-visibility", "", "Compliance portal visibility: NONE, PRIVATE, PUBLIC")
 
 	return cmd
 }

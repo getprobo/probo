@@ -21,39 +21,22 @@
 package types
 
 import (
-	"time"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
-type CompliancePortal struct {
-	ID                   gid.GID                              `json:"id"`
-	Active               bool                                 `json:"active"`
-	SearchEngineIndexing coredata.SearchEngineIndexing        `json:"searchEngineIndexing"`
-	Logo                 *File                                `json:"logo,omitempty"`
-	DarkLogo             *File                                `json:"darkLogo,omitempty"`
-	Nda                  *File                                `json:"nda,omitempty"`
-	Description          *string                              `json:"description,omitempty"`
-	WebsiteURL           *string                              `json:"websiteUrl,omitempty"`
-	Email                *string                              `json:"email,omitempty"`
-	HeadquarterAddress   *string                              `json:"headquarterAddress,omitempty"`
-	EntityName           string                               `json:"entityName"`
-	CreatedAt            time.Time                            `json:"createdAt"`
-	UpdatedAt            time.Time                            `json:"updatedAt"`
-	Organization         *Organization                        `json:"organization"`
-	Accesses             *CompliancePortalAccessConnection    `json:"accesses"`
-	References           *CompliancePortalReferenceConnection `json:"references"`
-	ComplianceFrameworks *ComplianceFrameworkConnection       `json:"complianceFrameworks"`
-	CustomLinks          *ComplianceCustomLinkConnection      `json:"customLinks"`
-	MailingList          *MailingList                         `json:"mailingList,omitempty"`
-	DefaultDomain        *CustomDomain                        `json:"defaultDomain,omitempty"`
-	CustomDomain         *CustomDomain                        `json:"customDomain,omitempty"`
-	Permission           bool                                 `json:"permission"`
-}
+type (
+	CompliancePortalOrderBy OrderBy[coredata.CompliancePortalOrderField]
 
-func (CompliancePortal) IsNode()          {}
-func (t CompliancePortal) GetID() gid.GID { return t.ID }
+	CompliancePortalConnection struct {
+		TotalCount int
+		Edges      []*CompliancePortalEdge
+		PageInfo   *PageInfo
+
+		ParentID gid.GID
+	}
+)
 
 func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	compliancePortal := &CompliancePortal{
@@ -61,15 +44,17 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 		Organization: &Organization{
 			ID: tc.OrganizationID,
 		},
-		Active:               tc.Active,
-		SearchEngineIndexing: tc.SearchEngineIndexing,
-		Description:          tc.Description,
-		WebsiteURL:           tc.WebsiteURL,
-		Email:                tc.Email,
-		HeadquarterAddress:   tc.HeadquarterAddress,
-		EntityName:           tc.EntityName,
-		CreatedAt:            tc.CreatedAt,
-		UpdatedAt:            tc.UpdatedAt,
+		Active:                tc.Active,
+		SearchEngineIndexing:  tc.SearchEngineIndexing,
+		RightsRequestsEnabled: tc.Capabilities.RightsRequests,
+		Description:           tc.Description,
+		WebsiteURL:            tc.WebsiteURL,
+		Email:                 tc.Email,
+		HeadquarterAddress:    tc.HeadquarterAddress,
+		EntityName:            tc.EntityName,
+		Slug:                  tc.Slug,
+		CreatedAt:             tc.CreatedAt,
+		UpdatedAt:             tc.UpdatedAt,
 	}
 
 	if tc.LogoFileID != nil {
@@ -93,4 +78,31 @@ func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	}
 
 	return compliancePortal
+}
+
+func NewCompliancePortalConnection(
+	p *page.Page[*coredata.CompliancePortal, coredata.CompliancePortalOrderField],
+	parentID gid.GID,
+) *CompliancePortalConnection {
+	edges := make([]*CompliancePortalEdge, len(p.Data))
+
+	for i := range edges {
+		edges[i] = NewCompliancePortalEdge(p.Data[i], p.Cursor.OrderBy.Field)
+	}
+
+	return &CompliancePortalConnection{
+		Edges:    edges,
+		PageInfo: NewPageInfo(p),
+		ParentID: parentID,
+	}
+}
+
+func NewCompliancePortalEdge(
+	tc *coredata.CompliancePortal,
+	orderBy coredata.CompliancePortalOrderField,
+) *CompliancePortalEdge {
+	return &CompliancePortalEdge{
+		Cursor: tc.CursorKey(orderBy),
+		Node:   NewCompliancePortal(tc),
+	}
 }

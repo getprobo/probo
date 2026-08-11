@@ -1,7 +1,7 @@
 {
   "topBar": {
     "tagline": "Portail de conformité",
-    "getAccess": "Obtenir l'accès",
+    "getAccess": "Demander l'accès",
     "openMenu": "Ouvrir le menu",
     "closeMenu": "Fermer le menu",
     "menuTitle": "Menu",
@@ -21,7 +21,6 @@
     "switchToLightMode": "Passer en mode clair"
   },
   "common": {
-    "cancel": "Annuler",
     "error": "Une erreur est survenue",
     "previousPage": "Page précédente",
     "nextPage": "Page suivante",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Retour au portail de conformité",
-      "tryAgain": "Réessayer"
+      "tryAgain": "Réessayer",
+      "contactSupport": "Contacter le support",
+      "requestAccess": "Demander l'accès"
     },
     "inline": {
       "message": "Impossible de charger le contenu",

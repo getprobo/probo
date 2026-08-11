@@ -25,50 +25,27 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// lookupCompliancePortalID resolves the compliance portal ID of the owner's organization.
+// lookupCompliancePortalID creates a compliance portal for the owner's organization.
 func lookupCompliancePortalID(t *testing.T, owner *testutil.Client) string {
 	t.Helper()
 
-	const query = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal { id }
-				}
-			}
-		}
-	`
-
-	var result struct {
-		Node struct {
-			CompliancePortal struct {
-				ID string `json:"id"`
-			} `json:"compliancePortal"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(query, map[string]any{
-		"organizationId": owner.GetOrganizationID().String(),
-	}, &result)
-	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.CompliancePortal.ID)
-
-	return result.Node.CompliancePortal.ID
+	return factory.CreateCompliancePortal(owner)
 }
 
 func lookupTrustHost(t *testing.T, owner *testutil.Client, compliancePortalID string) string {
 	t.Helper()
 
-	activateCompliancePortal(t, owner, compliancePortalID)
+	testutil.ActivateCompliancePortal(t, owner, compliancePortalID)
 
 	const query = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal { publicUrl }
+		query($compliancePortalId: ID!) {
+			node(id: $compliancePortalId) {
+				... on CompliancePortal {
+					publicUrl
 				}
 			}
 		}
@@ -76,19 +53,17 @@ func lookupTrustHost(t *testing.T, owner *testutil.Client, compliancePortalID st
 
 	var result struct {
 		Node struct {
-			CompliancePortal struct {
-				PublicURL string `json:"publicUrl"`
-			} `json:"compliancePortal"`
+			PublicURL string `json:"publicUrl"`
 		} `json:"node"`
 	}
 
 	err := owner.Execute(query, map[string]any{
-		"organizationId": owner.GetOrganizationID().String(),
+		"compliancePortalId": compliancePortalID,
 	}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.Node.CompliancePortal.PublicURL)
+	require.NotEmpty(t, result.Node.PublicURL)
 
-	publicURL, err := url.Parse(result.Node.CompliancePortal.PublicURL)
+	publicURL, err := url.Parse(result.Node.PublicURL)
 	require.NoError(t, err)
 	require.NotEmpty(t, publicURL.Host)
 
@@ -100,19 +75,5 @@ func lookupTrustHost(t *testing.T, owner *testutil.Client, compliancePortalID st
 func activateCompliancePortal(t *testing.T, owner *testutil.Client, compliancePortalID string) {
 	t.Helper()
 
-	const query = `
-		mutation($input: UpdateCompliancePortalInput!) {
-			updateCompliancePortal(input: $input) {
-				compliancePortal { id active }
-			}
-		}
-	`
-
-	err := owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"compliancePortalId": compliancePortalID,
-			"active":             true,
-		},
-	}, nil)
-	require.NoError(t, err)
+	testutil.ActivateCompliancePortal(t, owner, compliancePortalID)
 }

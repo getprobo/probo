@@ -87,13 +87,11 @@ export {
     getCompliancePortalVisibilityVariant,
     getCompliancePortalVisibilityLabel,
     getCompliancePortalVisibilityOptions,
-    getCompliancePortalVisibilityVariant as getCompliancePageVisibilityVariant,
-    getCompliancePortalVisibilityLabel as getCompliancePageVisibilityLabel,
-    getCompliancePortalVisibilityOptions as getCompliancePageVisibilityOptions,
+    getCompliancePortalLinkedVisibilityOptions,
     compliancePortalVisibilities,
-    compliancePortalVisibilities as compliancePageVisibilities,
+    compliancePortalLinkedVisibilities,
     type CompliancePortalVisibility,
-    type CompliancePortalVisibility as CompliancePageVisibility,
+    type CompliancePortalLinkedVisibility,
 } from "./compliancePortalVisibility";
 export { promisifyMutation } from "./relay";
 export {
@@ -130,10 +128,7 @@ export {
 export {
   getCompliancePortalDocumentAccessStatusBadgeVariant,
   getCompliancePortalDocumentAccessStatusLabel,
-  getCompliancePortalDocumentAccessStatusBadgeVariant as getCompliancePageDocumentAccessStatusBadgeVariant,
-  getCompliancePortalDocumentAccessStatusLabel as getCompliancePageDocumentAccessStatusLabel,
   type CompliancePortalDocumentAccessInfo,
-  type CompliancePortalDocumentAccessInfo as CompliancePageDocumentAccessInfo,
 } from "./compliancePortalDocumentAccess";
 export {
   getRightsRequestTypeLabel,

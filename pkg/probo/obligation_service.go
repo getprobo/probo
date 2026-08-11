@@ -349,6 +349,33 @@ func (s ObligationService) ListForControlID(
 	return page.NewPage(obligations, cursor), nil
 }
 
+func (s ObligationService) CountForControlID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	controlID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			obligations := &coredata.Obligations{}
+
+			count, err = obligations.CountByControlID(ctx, conn, scope, controlID)
+			if err != nil {
+				return fmt.Errorf("cannot count control obligations: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s ObligationService) ListForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,

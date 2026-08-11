@@ -21,16 +21,13 @@ import (
 // SubscribeToMailingList is the resolver for the subscribeToMailingList field.
 func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.SubscribeToMailingListPayload, error) {
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-	if compliancePortal.MailingListID == nil {
-		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
-	}
 
 	identity := authn.IdentityFromContext(ctx)
 
 	subscriber, err := r.mailman.CreateSubscriber(
 		ctx,
 		&mailman.CreateSubscriberRequest{
-			MailingListID: *compliancePortal.MailingListID,
+			MailingListID: compliancePortal.MailingListID,
 			Email:         identity.EmailAddress,
 			FullName:      identity.FullName,
 		},
@@ -57,13 +54,10 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 // UnsubscribeFromMailingList is the resolver for the unsubscribeFromMailingList field.
 func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*types.UnsubscribeFromMailingListPayload, error) {
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-	if compliancePortal.MailingListID == nil {
-		return nil, gqlutils.NotFoundf(ctx, "mailing list not found")
-	}
 
 	identity := authn.IdentityFromContext(ctx)
 
-	subscriber, err := r.mailman.GetSubscriber(ctx, *compliancePortal.MailingListID, identity.EmailAddress)
+	subscriber, err := r.mailman.GetSubscriber(ctx, compliancePortal.MailingListID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

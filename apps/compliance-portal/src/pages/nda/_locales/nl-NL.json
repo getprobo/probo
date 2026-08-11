@@ -1,0 +1,9 @@
+{
+  "back": "Documenten",
+  "title": "Geheimhoudingsverklaring",
+  "subtitle": "{{name}} vereist dat u een NDA ondertekent voordat u toegang krijgt tot compliancedocumenten.",
+  "sign": "Ondertekenen",
+  "tryAgain": "Opnieuw proberen",
+  "sealing": "Uw ondertekening wordt vastgelegd…",
+  "failedDescription": "Er is een probleem opgetreden bij het verwerken van uw ondertekening. Probeer het opnieuw."
+}

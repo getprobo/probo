@@ -27,17 +27,35 @@ import (
 
 func NewCompliancePortal(tc *coredata.CompliancePortal) *CompliancePortal {
 	return &CompliancePortal{
-		ID:                   tc.ID,
-		OrganizationID:       tc.OrganizationID,
-		Active:               tc.Active,
-		SearchEngineIndexing: tc.SearchEngineIndexing,
-		EntityName:           tc.EntityName,
-		Description:          tc.Description,
-		WebsiteURL:           tc.WebsiteURL,
-		Email:                tc.Email,
-		HeadquarterAddress:   tc.HeadquarterAddress,
-		CreatedAt:            tc.CreatedAt,
-		UpdatedAt:            tc.UpdatedAt,
+		ID:                    tc.ID,
+		OrganizationID:        tc.OrganizationID,
+		Active:                tc.Active,
+		SearchEngineIndexing:  tc.SearchEngineIndexing,
+		RightsRequestsEnabled: tc.Capabilities.RightsRequests,
+		EntityName:            tc.EntityName,
+		Description:           tc.Description,
+		WebsiteURL:            tc.WebsiteURL,
+		Email:                 tc.Email,
+		HeadquarterAddress:    tc.HeadquarterAddress,
+		CreatedAt:             tc.CreatedAt,
+		UpdatedAt:             tc.UpdatedAt,
+	}
+}
+
+func NewListCompliancePortalsOutput(
+	portals []*CompliancePortal,
+	p *page.Page[*coredata.CompliancePortal, coredata.CompliancePortalOrderField],
+) ListCompliancePortalsOutput {
+	var nextCursor *page.CursorKey
+
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListCompliancePortalsOutput{
+		NextCursor:        nextCursor,
+		CompliancePortals: portals,
 	}
 }
 

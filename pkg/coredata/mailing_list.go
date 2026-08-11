@@ -201,3 +201,29 @@ VALUES (
 
 	return nil
 }
+
+func (ml *MailingList) Delete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM mailing_lists
+WHERE
+	%s
+	AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id": ml.ID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete mailing list: %w", err)
+	}
+
+	return nil
+}

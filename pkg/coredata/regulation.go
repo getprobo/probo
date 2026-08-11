@@ -33,7 +33,30 @@ const (
 	RegulationUKGDPR  Regulation = "UK_GDPR"
 	RegulationFADP    Regulation = "FADP"
 	RegulationCCPA    Regulation = "CCPA"
+	RegulationVCDPA   Regulation = "VCDPA"
+	RegulationCPA     Regulation = "CPA"
+	RegulationCTDPA   Regulation = "CTDPA"
+	RegulationUCPA    Regulation = "UCPA"
+	RegulationTDPSA   Regulation = "TDPSA"
+	RegulationOCPA    Regulation = "OCPA"
+	RegulationMTCDPA  Regulation = "MTCDPA"
+	RegulationFDBR    Regulation = "FDBR"
+	RegulationIAICDPA Regulation = "IA_ICDPA"
+	RegulationDEPDPA  Regulation = "DE_DPDPA"
+	RegulationNHPA    Regulation = "NHPA"
+	RegulationNENDPA  Regulation = "NE_NDPA"
+	RegulationNJDPA   Regulation = "NJDPA"
+	RegulationTIPA    Regulation = "TIPA"
+	RegulationMNDPA   Regulation = "MNDPA"
+	RegulationMODPA   Regulation = "MODPA"
+	RegulationINCDPA  Regulation = "IN_ICDPA"
+	RegulationKCDPA   Regulation = "KCDPA"
+	RegulationRIDTPPA Regulation = "RIDTPPA"
 	RegulationPIPEDA  Regulation = "PIPEDA"
+	RegulationPIPAAB  Regulation = "PIPA_AB"
+	RegulationPIPABC  Regulation = "PIPA_BC"
+	RegulationPIPACA  Regulation = "PIPA_CA" // Deprecated: use PIPA_AB or PIPA_BC; kept for legacy consent records.
+	RegulationLaw25   Regulation = "LAW_25"
 	RegulationLGPD    Regulation = "LGPD"
 	RegulationLFPDPPP Regulation = "LFPDPPP"
 	RegulationPOPIA   Regulation = "POPIA"
@@ -58,7 +81,30 @@ func Regulations() []Regulation {
 		RegulationUKGDPR,
 		RegulationFADP,
 		RegulationCCPA,
+		RegulationVCDPA,
+		RegulationCPA,
+		RegulationCTDPA,
+		RegulationUCPA,
+		RegulationTDPSA,
+		RegulationOCPA,
+		RegulationMTCDPA,
+		RegulationFDBR,
+		RegulationIAICDPA,
+		RegulationDEPDPA,
+		RegulationNHPA,
+		RegulationNENDPA,
+		RegulationNJDPA,
+		RegulationTIPA,
+		RegulationMNDPA,
+		RegulationMODPA,
+		RegulationINCDPA,
+		RegulationKCDPA,
+		RegulationRIDTPPA,
 		RegulationPIPEDA,
+		RegulationPIPAAB,
+		RegulationPIPABC,
+		RegulationPIPACA,
+		RegulationLaw25,
 		RegulationLGPD,
 		RegulationLFPDPPP,
 		RegulationPOPIA,
@@ -79,7 +125,30 @@ func (v Regulation) IsValid() bool {
 		RegulationUKGDPR,
 		RegulationFADP,
 		RegulationCCPA,
+		RegulationVCDPA,
+		RegulationCPA,
+		RegulationCTDPA,
+		RegulationUCPA,
+		RegulationTDPSA,
+		RegulationOCPA,
+		RegulationMTCDPA,
+		RegulationFDBR,
+		RegulationIAICDPA,
+		RegulationDEPDPA,
+		RegulationNHPA,
+		RegulationNENDPA,
+		RegulationNJDPA,
+		RegulationTIPA,
+		RegulationMNDPA,
+		RegulationMODPA,
+		RegulationINCDPA,
+		RegulationKCDPA,
+		RegulationRIDTPPA,
 		RegulationPIPEDA,
+		RegulationPIPAAB,
+		RegulationPIPABC,
+		RegulationPIPACA,
+		RegulationLaw25,
 		RegulationLGPD,
 		RegulationLFPDPPP,
 		RegulationPOPIA,
@@ -126,8 +195,54 @@ func ParseRegulation(s string) (Regulation, error) {
 		return RegulationFADP, nil
 	case RegulationCCPA:
 		return RegulationCCPA, nil
+	case RegulationVCDPA:
+		return RegulationVCDPA, nil
+	case RegulationCPA:
+		return RegulationCPA, nil
+	case RegulationCTDPA:
+		return RegulationCTDPA, nil
+	case RegulationUCPA:
+		return RegulationUCPA, nil
+	case RegulationTDPSA:
+		return RegulationTDPSA, nil
+	case RegulationOCPA:
+		return RegulationOCPA, nil
+	case RegulationMTCDPA:
+		return RegulationMTCDPA, nil
+	case RegulationFDBR:
+		return RegulationFDBR, nil
+	case RegulationIAICDPA:
+		return RegulationIAICDPA, nil
+	case RegulationDEPDPA:
+		return RegulationDEPDPA, nil
+	case RegulationNHPA:
+		return RegulationNHPA, nil
+	case RegulationNENDPA:
+		return RegulationNENDPA, nil
+	case RegulationNJDPA:
+		return RegulationNJDPA, nil
+	case RegulationTIPA:
+		return RegulationTIPA, nil
+	case RegulationMNDPA:
+		return RegulationMNDPA, nil
+	case RegulationMODPA:
+		return RegulationMODPA, nil
+	case RegulationINCDPA:
+		return RegulationINCDPA, nil
+	case RegulationKCDPA:
+		return RegulationKCDPA, nil
+	case RegulationRIDTPPA:
+		return RegulationRIDTPPA, nil
 	case RegulationPIPEDA:
 		return RegulationPIPEDA, nil
+	case RegulationPIPAAB:
+		return RegulationPIPAAB, nil
+	case RegulationPIPABC:
+		return RegulationPIPABC, nil
+	case RegulationPIPACA:
+		return RegulationPIPACA, nil
+	case RegulationLaw25:
+		return RegulationLaw25, nil
 	case RegulationLGPD:
 		return RegulationLGPD, nil
 	case RegulationLFPDPPP:

@@ -35,6 +35,7 @@ import { graphql } from "relay-runtime";
 import type { ContextPage_UpdateMutation } from "#/__generated__/core/ContextPage_UpdateMutation.graphql";
 import type { ContextPageFragment$key } from "#/__generated__/core/ContextPageFragment.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { consoleMarkdownImageOrigins } from "#/lib/markdownImageOrigins";
 
 const fragment = graphql`
   fragment ContextPageFragment on Organization {
@@ -265,7 +266,10 @@ function ContextSection({
                 {displayedValue
                   ? (
                       <div className="prose prose-sm max-w-none w-full [&_.prose]:max-w-none">
-                        <Markdown content={displayedValue} />
+                        <Markdown
+                          content={displayedValue}
+                          allowedImageOrigins={consoleMarkdownImageOrigins()}
+                        />
                       </div>
                     )
                   : (

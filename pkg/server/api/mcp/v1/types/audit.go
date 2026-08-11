@@ -27,19 +27,18 @@ import (
 
 func NewAudit(a *coredata.Audit, file *coredata.File) *Audit {
 	audit := &Audit{
-		ID:                         a.ID,
-		Name:                       a.Name,
-		OrganizationID:             a.OrganizationID,
-		FrameworkID:                a.FrameworkID,
-		State:                      a.State,
-		CompliancePortalVisibility: a.CompliancePortalVisibility,
-		HasReport:                  a.ReportFileID != nil,
-		ValidFrom:                  a.ValidFrom,
-		ValidUntil:                 a.ValidUntil,
-		AuditStartDate:             a.AuditStartDate,
-		AuditEndDate:               a.AuditEndDate,
-		CreatedAt:                  a.CreatedAt,
-		UpdatedAt:                  a.UpdatedAt,
+		ID:             a.ID,
+		Name:           a.Name,
+		OrganizationID: a.OrganizationID,
+		FrameworkID:    a.FrameworkID,
+		State:          a.State,
+		HasReport:      a.ReportFileID != nil,
+		ValidFrom:      a.ValidFrom,
+		ValidUntil:     a.ValidUntil,
+		AuditStartDate: a.AuditStartDate,
+		AuditEndDate:   a.AuditEndDate,
+		CreatedAt:      a.CreatedAt,
+		UpdatedAt:      a.UpdatedAt,
 	}
 
 	if file != nil {

@@ -26,35 +26,8 @@ func TestCompliancePortal_UpdateProfile(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	organizationID := owner.GetOrganizationID().String()
 
-	const compliancePortalQuery = `
-		query($organizationId: ID!) {
-			node(id: $organizationId) {
-				... on Organization {
-					compliancePortal {
-						id
-					}
-				}
-			}
-		}
-	`
-
-	var compliancePortalLookup struct {
-		Node struct {
-			CompliancePortal struct {
-				ID string `json:"id"`
-			} `json:"compliancePortal"`
-		} `json:"node"`
-	}
-
-	err := owner.Execute(compliancePortalQuery, map[string]any{
-		"organizationId": organizationID,
-	}, &compliancePortalLookup)
-	require.NoError(t, err)
-	require.NotEmpty(t, compliancePortalLookup.Node.CompliancePortal.ID)
-
-	compliancePortalID := compliancePortalLookup.Node.CompliancePortal.ID
+	compliancePortalID := compliancePortalID(t, owner)
 
 	const updateMutation = `
 		mutation UpdateCompliancePortal($input: UpdateCompliancePortalInput!) {
@@ -84,7 +57,7 @@ func TestCompliancePortal_UpdateProfile(t *testing.T) {
 		} `json:"updateCompliancePortal"`
 	}
 
-	err = owner.Execute(updateMutation, map[string]any{
+	err := owner.Execute(updateMutation, map[string]any{
 		"input": map[string]any{
 			"compliancePortalId": compliancePortalID,
 			"entityName":         "Acme Security",

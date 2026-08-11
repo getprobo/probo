@@ -209,6 +209,14 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 
 		return count, nil
+	case *controlResolver:
+		count, err := r.probo.Obligations.CountForControlID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count control obligations", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")

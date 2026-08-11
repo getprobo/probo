@@ -58,6 +58,7 @@ export async function execute(
 					regulation
 					regulationSource
 					countryCode
+					subdivisionCode
 					createdAt
 				}
 			}

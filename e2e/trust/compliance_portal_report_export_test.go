@@ -58,6 +58,8 @@ func TestCompliancePortal_ExportReportPDF_TenantIsolation(t *testing.T) {
 
 	victimCompliancePortalID, victimReportID := setupPublicAuditReport(t, victimOwner)
 	attackerCompliancePortalID, _ := setupPublicAuditReport(t, attackerOwner)
+	victimTrustHost := lookupTrustHost(t, victimOwner, victimCompliancePortalID)
+	attackerTrustHost := lookupTrustHost(t, attackerOwner, attackerCompliancePortalID)
 
 	t.Run("owning compliance portal can export its report", func(t *testing.T) {
 		var result struct {
@@ -66,9 +68,14 @@ func TestCompliancePortal_ExportReportPDF_TenantIsolation(t *testing.T) {
 			} `json:"exportReportPDF"`
 		}
 
-		err := victimOwner.ExecuteTrust(victimCompliancePortalID, exportReportPDFMutation, map[string]any{
-			"input": map[string]any{"reportId": victimReportID},
-		}, &result)
+		err := victimOwner.ExecuteTrust(
+			victimTrustHost,
+			exportReportPDFMutation,
+			map[string]any{
+				"input": map[string]any{"reportId": victimReportID},
+			},
+			&result,
+		)
 		require.NoError(t, err, "the owning compliance portal must serve its own public report")
 		assert.True(
 			t,
@@ -79,9 +86,14 @@ func TestCompliancePortal_ExportReportPDF_TenantIsolation(t *testing.T) {
 	})
 
 	t.Run("foreign compliance portal cannot export another org's report", func(t *testing.T) {
-		err := attackerOwner.ExecuteTrust(attackerCompliancePortalID, exportReportPDFMutation, map[string]any{
-			"input": map[string]any{"reportId": victimReportID},
-		}, nil)
+		err := attackerOwner.ExecuteTrust(
+			attackerTrustHost,
+			exportReportPDFMutation,
+			map[string]any{
+				"input": map[string]any{"reportId": victimReportID},
+			},
+			nil,
+		)
 		require.Error(t, err, "a foreign compliance portal must not export another org's report")
 		assert.Contains(
 			t,
@@ -103,6 +115,8 @@ func TestCompliancePortal_Node_TenantIsolation(t *testing.T) {
 
 	victimCompliancePortalID, _ := setupPublicAuditReport(t, victimOwner)
 	attackerCompliancePortalID, _ := setupPublicAuditReport(t, attackerOwner)
+	victimTrustHost := lookupTrustHost(t, victimOwner, victimCompliancePortalID)
+	attackerTrustHost := lookupTrustHost(t, attackerOwner, attackerCompliancePortalID)
 
 	t.Run("owning compliance portal resolves its own node", func(t *testing.T) {
 		var result struct {
@@ -111,17 +125,27 @@ func TestCompliancePortal_Node_TenantIsolation(t *testing.T) {
 			} `json:"node"`
 		}
 
-		err := victimOwner.ExecuteTrust(victimCompliancePortalID, nodeQuery, map[string]any{
-			"id": victimCompliancePortalID,
-		}, &result)
+		err := victimOwner.ExecuteTrust(
+			victimTrustHost,
+			nodeQuery,
+			map[string]any{
+				"id": victimCompliancePortalID,
+			},
+			&result,
+		)
 		require.NoError(t, err, "the owning compliance portal must resolve its own node")
 		assert.NotEmpty(t, result.Node.Typename, "expected the node to resolve to a concrete type")
 	})
 
 	t.Run("foreign compliance portal cannot resolve another org's node", func(t *testing.T) {
-		err := attackerOwner.ExecuteTrust(attackerCompliancePortalID, nodeQuery, map[string]any{
-			"id": victimCompliancePortalID,
-		}, nil)
+		err := attackerOwner.ExecuteTrust(
+			attackerTrustHost,
+			nodeQuery,
+			map[string]any{
+				"id": victimCompliancePortalID,
+			},
+			nil,
+		)
 		require.Error(t, err, "a foreign compliance portal must not resolve another org's node")
 		assert.Contains(
 			t,
@@ -178,23 +202,28 @@ func setupPublicAuditReport(t *testing.T, owner *testutil.Client) (compliancePor
 	reportID = uploadResult.UploadAuditReport.Audit.ReportFile.ID
 	require.NotEmpty(t, reportID)
 
+	compliancePortalID = lookupCompliancePortalID(t, owner)
+
 	const setVisibilityMutation = `
-		mutation UpdateAudit($input: UpdateAuditInput!) {
-			updateAudit(input: $input) {
-				audit { id }
+		mutation UpdateCompliancePortalAuditVisibility($input: UpdateCompliancePortalAuditVisibilityInput!) {
+			updateCompliancePortalAuditVisibility(input: $input) {
+				catalogAudit {
+					visibility
+					audit { id }
+				}
 			}
 		}
 	`
 
 	err = owner.Execute(setVisibilityMutation, map[string]any{
 		"input": map[string]any{
-			"id":                         auditID,
+			"compliancePortalId":         compliancePortalID,
+			"auditId":                    auditID,
 			"compliancePortalVisibility": "PUBLIC",
 		},
 	}, nil)
 	require.NoError(t, err)
 
-	compliancePortalID = lookupCompliancePortalID(t, owner)
 	activateCompliancePortal(t, owner, compliancePortalID)
 
 	return compliancePortalID, reportID

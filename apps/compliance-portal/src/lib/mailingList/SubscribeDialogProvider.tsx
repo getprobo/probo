@@ -71,7 +71,7 @@ export function SubscribeDialogProvider({
   const [unsubscribeFromMailingList, isUnsubscribing] = useUnsubscribeFromMailingList();
 
   const viewer = data.viewer;
-  const { id: trustCenterId, entityName, viewerSubscription } = data.currentCompliancePortal;
+  const { id: compliancePortalId, entityName, viewerSubscription } = data.currentCompliancePortal;
   const isSubscribed = viewerSubscription != null;
 
   const openSubscribe = useCallback(() => {
@@ -125,7 +125,7 @@ export function SubscribeDialogProvider({
         <SubscribeDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          trustCenterId={trustCenterId}
+          compliancePortalId={compliancePortalId}
           viewerEmail={viewer.email}
           organizationName={entityName}
         />

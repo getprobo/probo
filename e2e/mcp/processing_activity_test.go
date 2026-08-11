@@ -29,6 +29,19 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+func mcpAddProcessingActivityInput(orgID, name string) map[string]any {
+	return map[string]any{
+		"organization_id":          orgID,
+		"name":                     name,
+		"special_or_criminal_data": "NO",
+		"lawful_basis":             "CONSENT",
+		"international_transfers":  false,
+		"data_protection_impact_assessment_needed": "NOT_NEEDED",
+		"transfer_impact_assessment_needed":        "NOT_NEEDED",
+		"role":                                     "CONTROLLER",
+	}
+}
+
 func TestMCP_ProcessingActivity_CRUD(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -40,20 +53,20 @@ func TestMCP_ProcessingActivity_CRUD(t *testing.T) {
 		ProcessingActivity struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
-		} `json:"processingActivity"`
+		} `json:"processing_activity"`
 	}
-	mc.CallToolInto("addProcessingActivity", map[string]any{
-		"organizationId": orgID,
-		"name":           factory.SafeName("PA"),
-		"lawfulBasis":    "CONSENT",
-	}, &addResult)
+	mc.CallToolInto(
+		"addProcessingActivity",
+		mcpAddProcessingActivityInput(orgID, factory.SafeName("PA")),
+		&addResult,
+	)
 	require.NotEmpty(t, addResult.ProcessingActivity.ID)
 
 	// Get
 	var getResult struct {
 		ProcessingActivity struct {
 			ID string `json:"id"`
-		} `json:"processingActivity"`
+		} `json:"processing_activity"`
 	}
 	mc.CallToolInto("getProcessingActivity", map[string]any{
 		"id": addResult.ProcessingActivity.ID,
@@ -65,7 +78,7 @@ func TestMCP_ProcessingActivity_CRUD(t *testing.T) {
 		ProcessingActivity struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
-		} `json:"processingActivity"`
+		} `json:"processing_activity"`
 	}
 	mc.CallToolInto("updateProcessingActivity", map[string]any{
 		"id":   addResult.ProcessingActivity.ID,
@@ -77,16 +90,16 @@ func TestMCP_ProcessingActivity_CRUD(t *testing.T) {
 	var listResult struct {
 		ProcessingActivities []struct {
 			ID string `json:"id"`
-		} `json:"processingActivities"`
+		} `json:"processing_activities"`
 	}
 	mc.CallToolInto("listProcessingActivities", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.ProcessingActivities)
 
 	// Delete
 	var deleteResult struct {
-		DeletedProcessingActivityID string `json:"deletedProcessingActivityId"`
+		DeletedProcessingActivityID string `json:"deleted_processing_activity_id"`
 	}
 	mc.CallToolInto("deleteProcessingActivity", map[string]any{
 		"id": addResult.ProcessingActivity.ID,

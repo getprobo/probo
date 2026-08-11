@@ -274,7 +274,6 @@ export async function execute(
 						trustPageUrl
 						certifications
 						countries
-						showOnCompliancePortal
 						level
 						createdAt
 						updatedAt

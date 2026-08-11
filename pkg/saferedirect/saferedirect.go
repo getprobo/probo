@@ -134,6 +134,12 @@ func (sr *SafeRedirect) Redirect(w http.ResponseWriter, r *http.Request, redirec
 }
 
 func normalizeRelativePath(redirectURL string) (string, bool) {
+	for i := 0; i < len(redirectURL); i++ {
+		if redirectURL[i] < 0x20 {
+			return "", false
+		}
+	}
+
 	if strings.HasPrefix(redirectURL, "//") {
 		return "", false
 	}

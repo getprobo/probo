@@ -36,6 +36,10 @@ enum CookieConsentAction
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionGPC"
         )
+    ACKNOWLEDGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieConsentActionAcknowledge"
+        )
 }
 
 enum Regulation
@@ -60,9 +64,101 @@ enum Regulation
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RegulationCCPA"
         )
+    VCDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationVCDPA"
+        )
+    CPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationCPA"
+        )
+    CTDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationCTDPA"
+        )
+    UCPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationUCPA"
+        )
+    TDPSA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationTDPSA"
+        )
+    OCPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationOCPA"
+        )
+    MTCDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationMTCDPA"
+        )
+    FDBR
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationFDBR"
+        )
+    IA_ICDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationIAICDPA"
+        )
+    DE_DPDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationDEPDPA"
+        )
+    NHPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationNHPA"
+        )
+    NE_NDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationNENDPA"
+        )
+    NJDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationNJDPA"
+        )
+    TIPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationTIPA"
+        )
+    MNDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationMNDPA"
+        )
+    MODPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationMODPA"
+        )
+    IN_ICDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationINCDPA"
+        )
+    KCDPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationKCDPA"
+        )
+    RIDTPPA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationRIDTPPA"
+        )
     PIPEDA
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RegulationPIPEDA"
+        )
+    PIPA_AB
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPAAB"
+        )
+    PIPA_BC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPABC"
+        )
+    PIPA_CA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationPIPACA"
+        )
+    LAW_25
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationLaw25"
         )
     LGPD
         @goEnum(
@@ -151,6 +247,7 @@ type CookieConsentRecord implements Node {
     regulation: Regulation
     regulationSource: RegulationSource
     countryCode: CountryCode
+    subdivisionCode: String
     createdAt: Datetime!
 }
 

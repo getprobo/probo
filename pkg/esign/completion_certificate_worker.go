@@ -38,9 +38,14 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 )
 
-// EmailPresenterConfigFunc resolves the emails.PresenterConfig for the
-// organization that owns the given compliance portal.
-type EmailPresenterConfigFunc func(ctx context.Context, organizationID gid.GID) (emails.PresenterConfig, error)
+// EmailPresenterConfigFunc resolves the presentation used for a signature.
+// Callers can use the signature ID to recover source-specific branding without
+// coupling the electronic-signature domain to that source.
+type EmailPresenterConfigFunc func(
+	ctx context.Context,
+	signatureID gid.GID,
+	organizationID gid.GID,
+) (emails.PresenterConfig, error)
 
 type completionCertificateHandler struct {
 	pg                  *pg.Client
@@ -265,7 +270,7 @@ func (h *completionCertificateHandler) generateCertificate(
 		return nil, nil, err
 	}
 
-	presenterCfg, err := h.presenterConfigFunc(ctx, signature.OrganizationID)
+	presenterCfg, err := h.presenterConfigFunc(ctx, signature.ID, signature.OrganizationID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot resolve presenter config: %w", err)
 	}
@@ -336,11 +341,22 @@ func (h *completionCertificateHandler) handleCertFailure(
 			signature.UpdatedAt = time.Now()
 
 			if signature.AttemptCount >= signature.MaxAttempts {
-				signature.Status = coredata.ElectronicSignatureStatusFailed
+				terminal := "Certificate generation failed after maximum attempts."
+				signature.LastError = &terminal
 			}
 
 			if err := signature.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
+			}
+
+			if signature.AttemptCount >= signature.MaxAttempts {
+				event := signature.NewEvent(
+					coredata.ElectronicSignatureEventTypeProcessingError,
+					coredata.ElectronicSignatureEventSourceServer,
+				)
+				if err := event.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert certificate failure event: %w", err)
+				}
 			}
 
 			return nil

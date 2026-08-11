@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/proboctl/commonthirdparty"
 	"go.probo.inc/probo/pkg/proboctl/commontrackerpattern"
 	proboctlcookiebanner "go.probo.inc/probo/pkg/proboctl/cookiebanner"
+	"go.probo.inc/probo/pkg/proboctl/repair"
 	"go.probo.inc/probo/pkg/proboctl/seed"
 	"go.probo.inc/probo/pkg/proboctl/version"
 )
@@ -51,6 +52,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(commontrackerpattern.NewCmdCommonTrackerPattern(f))
 	cmd.AddCommand(commonthirdparty.NewCmdCommonThirdParty(f))
 	cmd.AddCommand(proboctlcookiebanner.NewCmdCookieBanner(f))
+	cmd.AddCommand(repair.NewCmdRepair(f))
 	cmd.AddCommand(version.NewCmdVersion(f))
 
 	return cmd

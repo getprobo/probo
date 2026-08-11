@@ -28,9 +28,9 @@ import (
 type CompliancePortalVisibility string
 
 const (
-	CompliancePortalVisibilityNone    CompliancePortalVisibility = "NONE"
-	CompliancePortalVisibilityPrivate CompliancePortalVisibility = "PRIVATE"
-	CompliancePortalVisibilityPublic  CompliancePortalVisibility = "PUBLIC"
+	CompliancePortalVisibilityNone       CompliancePortalVisibility = "NONE"
+	CompliancePortalVisibilityRestricted CompliancePortalVisibility = "RESTRICTED"
+	CompliancePortalVisibilityPublic     CompliancePortalVisibility = "PUBLIC"
 )
 
 var (
@@ -42,16 +42,32 @@ var (
 func CompliancePortalVisibilities() []CompliancePortalVisibility {
 	return []CompliancePortalVisibility{
 		CompliancePortalVisibilityNone,
-		CompliancePortalVisibilityPrivate,
+		CompliancePortalVisibilityRestricted,
 		CompliancePortalVisibilityPublic,
 	}
+}
+
+// compliancePortalVisibilityStrings renders visibilities for a
+// compliance_portal_visibility[] bind. It returns nil for an empty slice so queries
+// can treat NULL as "no visibility restriction".
+func compliancePortalVisibilityStrings(visibilities []CompliancePortalVisibility) []string {
+	if len(visibilities) == 0 {
+		return nil
+	}
+
+	out := make([]string, len(visibilities))
+	for i, v := range visibilities {
+		out[i] = v.String()
+	}
+
+	return out
 }
 
 func (v CompliancePortalVisibility) IsValid() bool {
 	switch v {
 	case
 		CompliancePortalVisibilityNone,
-		CompliancePortalVisibilityPrivate,
+		CompliancePortalVisibilityRestricted,
 		CompliancePortalVisibilityPublic:
 		return true
 	}

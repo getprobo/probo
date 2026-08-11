@@ -66,6 +66,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
         regulation
         regulationSource
         countryCode
+        subdivisionCode
         consentData
         createdAt
       }
@@ -188,6 +189,11 @@ export default function CookieBannerConsentRecordPage({
         <PropertyRow label={t("consentRecordPage.properties.country")}>
           <span className="font-mono text-sm">
             {record.countryCode || "-"}
+          </span>
+        </PropertyRow>
+        <PropertyRow label={t("consentRecordPage.properties.subdivision")}>
+          <span className="font-mono text-sm">
+            {record.subdivisionCode || "-"}
           </span>
         </PropertyRow>
         <PropertyRow label={t("consentRecordPage.properties.date")}>

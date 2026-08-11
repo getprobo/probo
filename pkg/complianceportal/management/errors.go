@@ -28,4 +28,7 @@ var (
 	// ErrCustomDomainNotFound is returned when no custom domain exists for the
 	// requested resource.
 	ErrCustomDomainNotFound = errors.New("custom domain not found")
+
+	// ErrSlugAlreadyInUse is returned when the requested compliance portal slug is taken.
+	ErrSlugAlreadyInUse = errors.New("slug already in use")
 )

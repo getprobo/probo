@@ -23,6 +23,7 @@ export type { ProboState, ProboRootElement, ConsentDraft } from "./base";
 export { ProboBanner } from "./banner";
 export {
   ProboAcceptButton,
+  ProboAcknowledgeButton,
   ProboCustomizeButton,
   ProboRejectButton,
 } from "./buttons";
@@ -32,6 +33,6 @@ export { ProboCategoryToggle } from "./category-toggle";
 export { ProboCookieBannerRoot } from "./cookie-banner-root";
 export { ProboCookie, ProboCookieList } from "./cookie-list";
 export { ProboPreferencePanel, ProboSaveButton } from "./preference-panel";
-export { ProboSettingsButton } from "./settings-button";
+export { ProboPrivacyChoices } from "./privacy-choices";
 export { ProboSettingsLink } from "./settings-link";
 export { registerHeadlessComponents } from "./register";

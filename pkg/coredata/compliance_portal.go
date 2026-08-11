@@ -37,25 +37,26 @@ import (
 
 type (
 	CompliancePortal struct {
-		ID                           gid.GID              `db:"id"`
-		OrganizationID               gid.GID              `db:"organization_id"`
-		TenantID                     gid.TenantID         `db:"tenant_id"`
-		Active                       bool                 `db:"active"`
-		Slug                         string               `db:"slug"`
-		SearchEngineIndexing         SearchEngineIndexing `db:"search_engine_indexing"`
-		MailingListID                *gid.GID             `db:"mailing_list_id"`
-		LogoFileID                   *gid.GID             `db:"logo_file_id"`
-		DarkLogoFileID               *gid.GID             `db:"dark_logo_file_id"`
-		NonDisclosureAgreementFileID *gid.GID             `db:"non_disclosure_agreement_file_id"`
-		DefaultDomainID              *gid.GID             `db:"default_domain_id"`
-		CustomDomainID               *gid.GID             `db:"custom_domain_id"`
-		EntityName                   string               `db:"entity_name"`
-		Description                  *string              `db:"description"`
-		WebsiteURL                   *string              `db:"website_url"`
-		Email                        *string              `db:"email"`
-		HeadquarterAddress           *string              `db:"headquarter_address"`
-		CreatedAt                    time.Time            `db:"created_at"`
-		UpdatedAt                    time.Time            `db:"updated_at"`
+		ID                           gid.GID                      `db:"id"`
+		OrganizationID               gid.GID                      `db:"organization_id"`
+		TenantID                     gid.TenantID                 `db:"tenant_id"`
+		Active                       bool                         `db:"active"`
+		Slug                         string                       `db:"slug"`
+		SearchEngineIndexing         SearchEngineIndexing         `db:"search_engine_indexing"`
+		Capabilities                 CompliancePortalCapabilities `db:"capabilities"`
+		MailingListID                gid.GID                      `db:"mailing_list_id"`
+		LogoFileID                   *gid.GID                     `db:"logo_file_id"`
+		DarkLogoFileID               *gid.GID                     `db:"dark_logo_file_id"`
+		NonDisclosureAgreementFileID *gid.GID                     `db:"non_disclosure_agreement_file_id"`
+		DefaultDomainID              *gid.GID                     `db:"default_domain_id"`
+		CustomDomainID               *gid.GID                     `db:"custom_domain_id"`
+		EntityName                   string                       `db:"entity_name"`
+		Description                  *string                      `db:"description"`
+		WebsiteURL                   *string                      `db:"website_url"`
+		Email                        *string                      `db:"email"`
+		HeadquarterAddress           *string                      `db:"headquarter_address"`
+		CreatedAt                    time.Time                    `db:"created_at"`
+		UpdatedAt                    time.Time                    `db:"updated_at"`
 	}
 
 	CompliancePortals []*CompliancePortal
@@ -75,7 +76,7 @@ func (tc *CompliancePortal) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM trust_centers WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id FROM compliance_portals WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -126,6 +127,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -137,16 +139,16 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	%s
-	AND id = @trust_center_id
+	AND id = @compliance_portal_id
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"trust_center_id": compliancePortalID}
+	args := pgx.StrictNamedArgs{"compliance_portal_id": compliancePortalID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -185,6 +187,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -196,7 +199,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	%s
 	AND mailing_list_id = @mailing_list_id
@@ -227,11 +230,12 @@ LIMIT 1;
 	return nil
 }
 
-func (tc *CompliancePortal) LoadByOrganizationID(
+func (tcs *CompliancePortals) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	cursor *page.Cursor[CompliancePortalOrderField],
 ) error {
 	q := `
 SELECT
@@ -244,6 +248,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -255,11 +260,48 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	%s
 	AND organization_id = @organization_id
-LIMIT 1;
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portals: %w", err)
+	}
+
+	portals, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortal])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portals: %w", err)
+	}
+
+	*tcs = portals
+
+	return nil
+}
+
+func (tcs *CompliancePortals) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	compliance_portals
+WHERE
+	%s
+	AND organization_id = @organization_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -267,23 +309,14 @@ LIMIT 1;
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
+	var count int
+
+	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
-		return fmt.Errorf("cannot query compliance portal: %w", err)
+		return 0, fmt.Errorf("cannot count compliance portals: %w", err)
 	}
 
-	compliancePortal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortal])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect compliance portal: %w", err)
-	}
-
-	*tc = compliancePortal
-
-	return nil
+	return count, nil
 }
 
 // Tenant id scope is not applied because we want to access compliance portals by slug across all tenants for public access.
@@ -303,6 +336,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -314,7 +348,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	slug = @slug
 LIMIT 1;
@@ -362,6 +396,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -373,7 +408,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	trust_centers
+	compliance_portals
 WHERE
 	default_domain_id = @domain_id
 	OR custom_domain_id = @domain_id
@@ -407,7 +442,7 @@ func (tc *CompliancePortal) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO trust_centers (
+INSERT INTO compliance_portals (
 	id,
 	organization_id,
 	tenant_id,
@@ -417,6 +452,7 @@ INSERT INTO trust_centers (
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -437,6 +473,7 @@ INSERT INTO trust_centers (
 	@active,
 	@slug,
 	@search_engine_indexing,
+	@capabilities,
 	@non_disclosure_agreement_file_id,
 	@default_domain_id,
 	@custom_domain_id,
@@ -460,6 +497,7 @@ INSERT INTO trust_centers (
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
+		"capabilities":                     tc.Capabilities,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,
@@ -475,7 +513,7 @@ INSERT INTO trust_centers (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_centers_slug_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "compliance_portals_slug_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -492,11 +530,12 @@ func (tc *CompliancePortal) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE trust_centers
+UPDATE compliance_portals
 SET
 	active = @active,
 	slug = @slug,
 	search_engine_indexing = @search_engine_indexing,
+	capabilities = @capabilities,
 	logo_file_id = @logo_file_id,
 	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
@@ -522,6 +561,7 @@ WHERE
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
+		"capabilities":                     tc.Capabilities,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,
@@ -537,6 +577,31 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update compliance portal: %w", err)
+	}
+
+	return nil
+}
+
+func (tc *CompliancePortal) Delete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM compliance_portals
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": tc.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete compliance portal: %w", err)
 	}
 
 	return nil

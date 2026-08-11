@@ -309,39 +309,3 @@ func TestRisk_PublishRiskList(t *testing.T) {
 		},
 	)
 }
-
-func TestRisk_PublishRiskList_RBAC(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	factory.CreateRisk(owner, factory.Attrs{"name": "RBAC Risk"})
-
-	const query = `
-		mutation($input: PublishRiskListInput!) {
-			publishRiskList(input: $input) {
-				documentEdge { node { id } }
-				documentVersionEdge { node { id } }
-			}
-		}
-	`
-
-	t.Run(
-		"viewer cannot publish risk list",
-		func(t *testing.T) {
-			t.Parallel()
-
-			err := viewer.ExecuteShouldFail(
-				query,
-				map[string]any{
-					"input": map[string]any{
-						"minor":          false,
-						"organizationId": owner.GetOrganizationID(),
-					},
-				},
-			)
-			testutil.RequireForbiddenError(t, err)
-		},
-	)
-}

@@ -412,6 +412,146 @@ WHERE
 	return nil
 }
 
+func (a *Assets) CountByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	assetIDs []gid.GID,
+) (int, error) {
+	if len(assetIDs) == 0 {
+		return 0, nil
+	}
+
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	assets
+WHERE
+	%s
+	AND id = ANY(@asset_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"asset_ids": assetIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (a *Assets) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	assetIDs []gid.GID,
+) error {
+	if len(assetIDs) == 0 {
+		*a = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	created_at,
+	updated_at
+FROM
+	assets
+WHERE
+	%s
+	AND id = ANY(@asset_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"asset_ids": assetIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query assets: %w", err)
+	}
+
+	assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+	if err != nil {
+		return fmt.Errorf("cannot collect assets: %w", err)
+	}
+
+	*a = assets
+
+	if len(assets) != len(gid.NewSet(assetIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+func (a *Assets) LoadByIDsWithCursor(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	assetIDs []gid.GID,
+	cursor *page.Cursor[AssetOrderField],
+) error {
+	if len(assetIDs) == 0 {
+		*a = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	owner_profile_id,
+	amount,
+	asset_type,
+	data_types_stored,
+	created_at,
+	updated_at
+FROM
+	assets
+WHERE
+	%s
+	AND id = ANY(@asset_ids)
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"asset_ids": assetIDs}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query assets: %w", err)
+	}
+
+	assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
+	if err != nil {
+		return fmt.Errorf("cannot collect assets: %w", err)
+	}
+
+	*a = assets
+
+	return nil
+}
+
 func (a Asset) GetGeneratedDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

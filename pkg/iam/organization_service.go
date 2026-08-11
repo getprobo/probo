@@ -37,7 +37,6 @@ import (
 	"go.probo.inc/probo/pkg/iam/scim"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/webhook"
@@ -610,26 +609,6 @@ func (s *OrganizationService) CreateOrganization(
 			UpdatedAt:      now,
 		}
 
-		mailingList = &coredata.MailingList{
-			ID:             gid.New(tenantID, coredata.MailingListEntityType),
-			OrganizationID: organization.ID,
-			CreatedAt:      now,
-			UpdatedAt:      now,
-		}
-
-		compliancePortal = &coredata.CompliancePortal{
-			ID:                   gid.New(tenantID, coredata.CompliancePortalEntityType),
-			OrganizationID:       organization.ID,
-			TenantID:             organization.TenantID,
-			Active:               false,
-			Slug:                 slug.MakeWithEntropy(organization.Name),
-			EntityName:           organization.Name,
-			SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
-			MailingListID:        &mailingList.ID,
-			CreatedAt:            now,
-			UpdatedAt:            now,
-		}
-
 		logoFile           *coredata.File
 		horizontalLogoFile *coredata.File
 		scope              = coredata.NewScope(tenantID)
@@ -735,7 +714,6 @@ func (s *OrganizationService) CreateOrganization(
 				}
 
 				organization.LogoFileID = &logoFile.ID
-				compliancePortal.LogoFileID = &logoFile.ID
 			}
 
 			if horizontalLogoFile != nil {
@@ -759,42 +737,6 @@ func (s *OrganizationService) CreateOrganization(
 
 			if err := organizationContext.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert organization context: %w", err)
-			}
-
-			if err := mailingList.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert mailing list: %w", err)
-			}
-
-			// Self-managed installs without a configured base domain don't get
-			// a default managed domain: there is no suffix to mint a
-			// "{slug}." hostname from, so the compliance page stays without
-			// a domain until the organization adds a custom one.
-			if s.compliancePortalBaseDomain != "" {
-				defaultDomainHostname := compliancePortal.Slug + "." + s.compliancePortalBaseDomain
-
-				defaultDomain := coredata.NewCustomDomain(
-					tenantID,
-					organization.ID,
-					defaultDomainHostname,
-					true,
-				)
-
-				certificate, err := s.certManager.EnsureCertificate(ctx, tx, scope, defaultDomainHostname)
-				if err != nil {
-					return fmt.Errorf("cannot ensure certificate for default custom domain: %w", err)
-				}
-
-				defaultDomain.CertificateID = &certificate.ID
-
-				if err := defaultDomain.Insert(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot insert default custom domain: %w", err)
-				}
-
-				compliancePortal.DefaultDomainID = &defaultDomain.ID
-			}
-
-			if err := compliancePortal.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert compliance portal: %w", err)
 			}
 
 			proboData := &coredata.ThirdParty{
@@ -841,7 +783,6 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		tenantID           = organizationID.TenantID()
 		scope              = coredata.NewScopeFromObjectID(organizationID)
 		organization       = &coredata.Organization{}
-		compliancePage     = &coredata.CompliancePortal{}
 	)
 
 	// TODO: s3 upload happen before we validate the tenantID
@@ -941,20 +882,6 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				}
 
 				organization.LogoFileID = &logoFile.ID
-
-				// Auto set the compliance page org logo in case it wasn't already specified
-				if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-					return fmt.Errorf("cannot load compliance page: %w", err)
-				}
-
-				if compliancePage.LogoFileID == nil {
-					compliancePage.LogoFileID = &logoFile.ID
-					compliancePage.UpdatedAt = now
-
-					if err := compliancePage.Update(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot update compliance page: %w", err)
-					}
-				}
 			}
 
 			if horizontalLogoFile != nil {

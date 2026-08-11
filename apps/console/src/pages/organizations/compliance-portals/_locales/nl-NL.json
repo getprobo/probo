@@ -1,0 +1,347 @@
+{
+  "overviewPage": {
+    "title": "compliancepagina's",
+    "description": "Beheer openbare compliancepagina's voor uw organisatie. Configureer huisstijl, documenten en toegangsbeheer.",
+    "status": { "active": "Actief", "inactive": "Inactief" },
+    "actions": { "create": "Compliancepagina aanmaken", "createFirst": "Maak uw eerste compliancepagina aan" }
+  },
+  "newPortalPage": {
+    "pageTitle": "Nieuwe compliancepagina",
+    "title": "Compliancepagina aanmaken",
+    "description": "Stel een nieuwe openbare compliancepagina in. De URL-slug wordt automatisch toegewezen zodra de pagina is aangemaakt.",
+    "breadcrumb": { "root": "compliancepagina's", "current": "Nieuw" },
+    "fields": { "entityName": { "label": "Naam van de organisatie", "placeholder": "Acme Corp" } },
+    "actions": { "create": "Compliancepagina aanmaken", "creating": "Bezig met aanmaken..." },
+    "messages": { "created": "Compliancepagina succesvol aangemaakt", "successTitle": "Succes" },
+    "errors": { "create": "Aanmaken van compliancepagina mislukt", "title": "Fout" }
+  },
+  "aliasField": {
+    "messages": { "updated": "Alias succesvol bijgewerkt.", "removed": "Alias succesvol verwijderd." },
+    "errors": { "update": "Bijwerken van alias mislukt", "remove": "Verwijderen van alias mislukt" },
+    "placeholder": "bijv. privacybeleid"
+  },
+  "accessPage": {
+    "title": "Externe toegang",
+    "description": "Beheer wie toegang heeft tot uw compliancepagina"
+  },
+  "accessEditDialog": {
+    "title": "Toegang bewerken voor {{email}}",
+    "types": { "document": "Document", "report": "Rapport", "file": "Bestand" },
+    "messages": { "updated": "Toegang succesvol bijgewerkt" },
+    "errors": { "update": "Bijwerken van toegang mislukt" },
+    "actions": { "update": "Toegang bijwerken" }
+  },
+  "accessList": {
+    "empty": "Nog geen externe toegang verleend",
+    "columns": { "name": "Naam", "email": "E-mail", "date": "Datum", "access": "Toegang", "requests": "Aanvragen", "nda": "NDA" },
+    "actions": { "showMore": "Meer weergeven" }
+  },
+  "accessListItem": {
+    "actions": { "edit": "Bewerken" }
+  },
+  "documentAccessList": {
+    "title": "Documenttoegangsrechten",
+    "columns": { "name": "Naam", "type": "Type", "category": "Categorie", "access": "Toegang" },
+    "actions": { "grantAll": "Alles toestaan", "rejectOrRevokeAll": "Alles weigeren/intrekken", "grant": "Toestaan", "reject": "Weigeren", "revoke": "Intrekken" },
+    "empty": "Geen documenten beschikbaar"
+  },
+  "electronicSignature": {
+    "title": "Elektronische handtekening",
+    "fields": { "status": "Status", "signedAt": "Ondertekend op", "certificate": "Certificaat" },
+    "actions": { "download": "Downloaden" },
+    "activity": "Activiteit"
+  },
+  "eventTypeLabel": {
+    "documentViewed": "Document bekeken", "consentGiven": "Toestemming gegeven", "fullNameTyped": "Volledige naam ingevoerd", "signatureAccepted": "Handtekening geaccepteerd", "signatureCompleted": "Handtekening voltooid", "sealComputed": "Zegel berekend", "timestampRequested": "Tijdstempel aangevraagd", "certificateGenerated": "Certificaat gegenereerd", "processingError": "Verwerkingsfout"
+  },
+  "ndaSignatureBadge": {
+    "signed": "Ondertekend", "processing": "In verwerking", "pending": "In afwachting", "failed": "Mislukt"
+  },
+  "auditsPage": {
+    "title": "Audits",
+    "description": "Beheer auditrapporten en compliancecertificeringen"
+  },
+  "auditList": {
+    "columns": { "displayed": "Weergegeven", "framework": "Framework", "name": "Naam", "validUntil": "Geldig tot", "state": "Status", "visibility": "Zichtbaarheid" },
+    "empty": "Geen audits beschikbaar"
+  },
+  "auditListItem": {
+    "messages": { "visibilityUpdated": "Portaalinstellingen van audit succesvol bijgewerkt.", "removed": "Audit verwijderd van de pagina." },
+    "errors": { "updateVisibility": "Bijwerken van auditzichtbaarheid mislukt", "remove": "Verwijderen van audit van de pagina mislukt" },
+    "actions": { "toggle": "{{title}} weergeven of verbergen op de compliancepagina" },
+    "noExpiry": "Geen vervaldatum",
+    "untitled": "Zonder titel",
+    "states": { "not_started": "Niet gestart", "in_progress": "In behandeling", "completed": "Voltooid", "rejected": "Afgewezen", "outdated": "Verouderd" }
+  },
+  "brandPage": {
+    "messages": { "updated": "Huisstijl van compliancepagina succesvol bijgewerkt" },
+    "errors": { "update": "Bijwerken van huisstijl van compliancepagina mislukt", "fileTooLarge": { "title": "Bestand te groot", "description": "Het bestand is te groot. Upload een bestand kleiner dan 5 MB." } },
+    "actions": { "uploading": "Uploaden...", "updating": "Bijwerken...", "noLogo": "Geen logo", "uploadLogo": "Logo uploaden", "uploadDarkLogo": "Donker logo uploaden", "changeLogo": "Logo wijzigen", "removeLogo": "Logo verwijderen", "changeDarkLogo": "Donker logo wijzigen", "removeDarkLogo": "Donker logo verwijderen" },
+    "logo": { "label": "Logo", "description": "Dit logo wordt weergegeven op uw publieke compliancepagina.", "alt": "Logo van compliancepagina", "uploadDescription": "Upload een logoafbeelding (PNG, JPG, SVG, WEBP tot 5 MB)" },
+    "darkLogo": { "label": "Logo voor donkere modus", "description": "Dit logo wordt gebruikt wanneer de donkere modus is ingeschakeld.", "alt": "Donker logo van compliancepagina", "uploadDescription": "Upload een donkere logoafbeelding (PNG, JPG, SVG, WEBP tot 5 MB)" },
+    "visualIdentity": { "title": "Visuele identiteit", "description": "Vierkante logo's die worden weergegeven op uw publieke compliancepagina." },
+    "domains": { "title": "Domeinen", "description": "Uw compliancepagina is altijd beschikbaar op het standaard probopage.com-subdomein. U kunt deze ook aanbieden op een eigen aangepast domein.", "actions": { "configure": "Configureren" } },
+    "profile": { "title": "Algemene informatie", "description": "Beschrijving en contactgegevens die aan bezoekers worden getoond.", "fields": { "entityName": "Naam van de organisatie", "entityNamePlaceholder": "Acme", "description": "Beschrijving", "descriptionPlaceholder": "Korte beschrijving voor bezoekers", "websiteUrl": "Website-URL", "email": "E-mail", "emailPlaceholder": "contact@example.com", "address": "Adres hoofdkantoor", "addressPlaceholder": "Hoofdstraat 123, Stad, Land" } }
+  },
+  "commitmentDialog": {
+    "title": { "create": "Toezegging toevoegen", "edit": "Toezegging bewerken" },
+    "validation": { "iconRequired": "Icoon is verplicht", "titleRequired": "Titel is verplicht", "descriptionRequired": "Beschrijving is verplicht" },
+    "messages": { "created": "Toezegging succesvol aangemaakt", "updated": "Toezegging succesvol bijgewerkt" },
+    "errors": { "create": "Aanmaken van toezegging mislukt", "update": "Bijwerken van toezegging mislukt" },
+    "fields": { "icon": "Icoon", "iconPlaceholder": "Selecteer een icoon", "eyebrow": "Boventitel", "eyebrowPlaceholder": "Klein accentlabel boven de titel", "title": "Titel", "titlePlaceholder": "Titel van de toezegging", "description": "Beschrijving", "descriptionPlaceholder": "Aanvullende omschrijving" },
+    "actions": { "add": "Toezegging toevoegen", "update": "Toezegging bijwerken" },
+    "icons": { "lock_key": "Slot en sleutel", "eye_slash": "Doorgestreept oog", "fingerprint": "Vingerafdruk", "shield_warning": "Schild met waarschuwing", "shield_check": "Schild met vinkje", "siren": "Sirene", "key": "Sleutel", "lock": "Slot", "cloud": "Cloud", "database": "Database", "globe": "Wereldbol", "eye": "Oog", "users": "Gebruikers", "certificate": "Certificaat", "gavel": "Hamer", "heartbeat": "Hartslag", "bell": "Bel", "bug": "Insect", "code": "Code", "server": "Server" }
+  },
+  "commitmentGroupDialog": {
+    "title": { "create": "Groep toevoegen", "edit": "Groep bewerken" },
+    "validation": { "titleRequired": "Titel is verplicht", "descriptionRequired": "Beschrijving is verplicht" },
+    "messages": { "created": "Groep succesvol aangemaakt", "updated": "Groep succesvol bijgewerkt" },
+    "errors": { "create": "Aanmaken van groep mislukt", "update": "Bijwerken van groep mislukt" },
+    "fields": { "title": "Titel", "titlePlaceholder": "bijv. Gegevensbescherming", "description": "Beschrijving", "descriptionPlaceholder": "Beschrijf wat deze groep toezeggingen omvat" },
+    "actions": { "add": "Groep toevoegen", "update": "Groep bijwerken" }
+  },
+  "commitmentGroupList": {
+    "title": "Beveiligingstoezeggingen",
+    "description": "Groepeer toezeggingskaarten in secties die op uw compliancepagina worden weergegeven",
+    "messages": { "orderUpdated": "Volgorde succesvol bijgewerkt" },
+    "errors": { "updateOrder": "Bijwerken van volgorde mislukt" },
+    "actions": { "addGroup": "Groep toevoegen" },
+    "empty": "Nog geen toezeggingsgroepen"
+  },
+  "commitmentGroupListItem": {
+    "messages": { "deleted": "Groep succesvol verwijderd", "orderUpdated": "Volgorde succesvol bijgewerkt" },
+    "errors": { "delete": "Verwijderen van groep mislukt", "updateOrder": "Bijwerken van volgorde mislukt" },
+    "delete": { "title": "Groep verwijderen", "description": "Weet u zeker dat u de groep \"{{title}}\" wilt verwijderen?", "warning": "Alle toezeggingskaarten in deze groep worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt." },
+    "columns": { "icon": "Icoon", "title": "Titel", "description": "Beschrijving" },
+    "actions": { "deleting": "Bezig met verwijderen...", "delete": "Verwijderen", "addCommitment": "Toezegging toevoegen" },
+    "empty": "Nog geen toezeggingskaarten"
+  },
+  "commitmentListItem": {
+    "messages": { "deleted": "Toezegging succesvol verwijderd" },
+    "errors": { "delete": "Verwijderen van toezegging mislukt" }
+  },
+  "documentsPage": {
+    "title": "Documenten",
+    "description": "Beheer beleid, procedures en compliancedocumenten"
+  },
+  "documentList": {
+    "columns": { "displayed": "Weergegeven", "name": "Naam", "type": "Type", "alias": "Alias", "visibility": "Zichtbaarheid" },
+    "empty": "Geen actieve gepubliceerde documenten beschikbaar"
+  },
+  "documentListItem": {
+    "messages": { "visibilityUpdated": "Portaalinstellingen van document succesvol bijgewerkt.", "removed": "Document verwijderd van de pagina." },
+    "errors": { "updateVisibility": "Bijwerken van documentzichtbaarheid mislukt", "remove": "Verwijderen van document van de pagina mislukt" },
+    "actions": { "toggle": "{{title}} weergeven of verbergen op de compliancepagina" }
+  },
+  "domainPage": {
+    "title": "Aangepast domein",
+    "empty": { "description": "Voeg uw eigen domein toe om uw compliancepagina professioneler te maken" }
+  },
+  "thirdPartyListItem": {
+    "messages": { "linked": "Subverwerker toegevoegd aan de pagina.", "removed": "Subverwerker verwijderd van de pagina." },
+    "errors": { "link": "Toevoegen van subverwerker aan de pagina mislukt", "remove": "Verwijderen van subverwerker van de pagina mislukt" },
+    "actions": { "toggle": "{{title}} weergeven of verbergen op de compliancepagina" }
+  },
+  "thirdPartyList": {
+    "columns": { "displayed": "Weergegeven", "name": "Naam", "category": "Categorie" },
+    "empty": "Geen subverwerkers beschikbaar"
+  },
+  "thirdPartiesPage": {
+    "title": "Subverwerkers",
+    "description": "Beheer beoordelingen van subverwerkers en informatie over risico's van derden"
+  },
+  "referenceList": {
+    "columns": { "name": "Naam", "description": "Beschrijving" },
+    "empty": "Geen referenties beschikbaar",
+    "dragHint": "Sleep referenties om hun weergavevolgorde te wijzigen"
+  },
+  "referencesPage": {
+    "title": "Referenties",
+    "description": "Laat uw klanten en partners zien op uw compliancepagina",
+    "actions": { "add": "Referentie toevoegen" }
+  },
+  "statusSection": {
+    "title": "Status van compliancepagina",
+    "activation": { "title": "Compliancepagina activeren", "description": "Maak uw compliancepagina openbaar toegankelijk om het vertrouwen van klanten te vergroten" },
+    "indexing": { "title": "Indexering door zoekmachines", "description": "Sta toe dat zoekmachines uw compliancepagina indexeren en vindbaar maken", "disabledHint": "Activeer eerst uw compliancepagina om indexering door zoekmachines mogelijk te maken" },
+    "rightsRequests": {
+      "title": "Rechtenverzoeken",
+      "description": "Laat bezoekers verzoeken om rechten van betrokkenen indienen op uw compliancepagina"
+    }
+  },
+  "slackSection": {
+    "title": "Integraties",
+    "disconnect": { "title": "Slack loskoppelen", "description": "Weet u zeker dat u dit Slack-kanaal wilt loskoppelen? Deze actie kan niet ongedaan worden gemaakt." },
+    "emptyDescription": "Beheer de toegang tot uw compliancepagina met Slack",
+    "actions": { "connect": "Verbinden", "disconnect": "Loskoppelen" }
+  },
+  "slackConnectionCard": {
+    "title": "Slack",
+    "connected": "Verbonden op {{date}}",
+    "connectedWithChannel": "Verbonden op {{date}} • Kanaal: {{channel}}",
+    "notConfiguredDescription": "Slack is verbonden, maar er is nog geen kanaal ingesteld voor de compliancepagina.",
+    "status": { "connected": "Verbonden", "notConfigured": "Kanaal niet geconfigureerd" },
+    "actions": { "changeChannel": "Kanaal wijzigen", "connect": "Verbinden", "disconnect": "Loskoppelen" }
+  },
+  "externalUrls": {
+    "title": "Aangepaste links",
+    "description": "Voeg externe URL's toe om op uw compliancepagina weer te geven",
+    "validation": { "nameRequired": "Naam is verplicht", "urlInvalid": "Voer een geldige URL in" },
+    "messages": { "created": "Link succesvol toegevoegd.", "updated": "Link succesvol bijgewerkt.", "deleted": "Link verwijderd.", "orderUpdated": "Volgorde bijgewerkt." },
+    "errors": { "create": "Toevoegen van link mislukt.", "update": "Bijwerken van link mislukt.", "delete": "Verwijderen van link mislukt.", "orderUpdate": "Bijwerken van volgorde mislukt." },
+    "dialog": { "titleCreate": "Link toevoegen", "titleEdit": "Link bewerken" },
+    "fields": { "url": "URL", "urlPlaceholder": "https://example.com", "name": "Naam", "namePlaceholder": "bijvoorbeeld Twitter of LinkedIn" },
+    "actions": { "add": "Link toevoegen", "save": "Wijzigingen opslaan", "open": "Link openen", "remove": "Link verwijderen" },
+    "dragHint": "Sleep om de weergavevolgorde te wijzigen"
+  },
+  "sendUpdateDialog": {
+    "title": "Update naar abonnees verzenden",
+    "description": "Deze update wordt verzonden naar alle huidige abonnees van deze mailinglijst. Deze actie kan niet ongedaan worden gemaakt.",
+    "messages": { "enqueued": "Update in wachtrij geplaatst voor verzending" },
+    "errors": { "enqueue": "In wachtrij plaatsen van update voor verzending mislukt" },
+    "actions": { "send": "Verzenden" }
+  },
+  "newSubscriberDialog": {
+    "title": "Abonnee toevoegen",
+    "description": "Voeg een persoon toe om beveiligings- en complianceupdates te ontvangen",
+    "validation": { "fullNameRequired": "Volledige naam is verplicht", "emailRequired": "E-mail is verplicht", "emailInvalid": "Voer een geldig e-mailadres in" },
+    "messages": { "created": "Abonnee succesvol toegevoegd" },
+    "errors": { "create": "Toevoegen van abonnee mislukt" },
+    "fields": { "fullName": "Volledige naam", "fullNamePlaceholder": "Jan Jansen", "email": "E-mailadres", "emailPlaceholder": "jan@example.com", "skipConfirmation": "Bevestigingsmail overslaan" },
+    "consentNotice": "Door dit selectievakje aan te vinken, verklaart u dat u voorafgaande, aantoonbare toestemming van deze persoon heeft verkregen om deze communicatie te ontvangen, in overeenstemming met de toepasselijke regelgeving inzake gegevensbescherming (bijvoorbeeld de AVG en CAN-SPAM). U aanvaardt de volledige verantwoordelijkheid om desgevraagd bewijs van toestemming te leveren.",
+    "actions": { "create": "Abonnee toevoegen" }
+  },
+  "updateFormDialog": {
+    "title": { "view": "Update bekijken", "edit": "Update bewerken", "create": "Update toevoegen" },
+    "validation": { "titleRequired": "Titel is verplicht", "bodyRequired": "Inhoud is verplicht" },
+    "messages": { "created": "Update succesvol aangemaakt", "updated": "Update succesvol opgeslagen" },
+    "errors": { "create": "Aanmaken van update mislukt", "update": "Opslaan van update mislukt" },
+    "confidentialityNotice": "Neem geen vertrouwelijke of gevoelige informatie op in deze update. Inhoud die bescherming vereist, dient u in plaats daarvan achter uw met NDA beveiligde documenten te plaatsen.",
+    "fields": { "title": "Titel", "body": "Inhoud" },
+    "sentNotice": "Deze update is verzonden en kan niet meer worden bewerkt.",
+    "actions": { "save": "Opslaan", "create": "Aanmaken" }
+  },
+  "updatesList": {
+    "messages": { "deleted": "Update succesvol verwijderd" },
+    "errors": { "delete": "Verwijderen van update mislukt" },
+    "empty": "Nog geen updates",
+    "columns": { "title": "Titel", "status": "Status", "created": "Aangemaakt op" },
+    "status": { "sent": "Verzonden", "enqueued": "In wachtrij", "processing": "Wordt verwerkt…", "draft": "Concept" },
+    "actions": { "send": "Verzenden", "edit": "Update bewerken", "view": "Update bekijken", "delete": "Update verwijderen", "showMore": "Meer weergeven" }
+  },
+  "mailingList": {
+    "messages": { "deleted": "Abonnee succesvol verwijderd" },
+    "errors": { "delete": "Verwijderen van abonnee mislukt" },
+    "empty": "Nog geen abonnees op de mailinglijst",
+    "columns": { "name": "Naam", "email": "E-mail", "status": "Status", "subscribedOn": "Aangemeld op" },
+    "status": { "confirmed": "Bevestigd", "pending": "In afwachting" },
+    "actions": { "delete": "Abonnee verwijderen", "showMore": "Meer weergeven" }
+  },
+  "mailingListPage": {
+    "messages": { "updated": "Mailinglijst succesvol bijgewerkt" },
+    "errors": { "update": "Bijwerken van mailinglijst mislukt" },
+    "settings": { "title": "Instellingen", "description": "Configureer het gedrag van uw mailinglijst", "replyTo": "Antwoord-e-mailadres", "replyToPlaceholder": "security@example.com" },
+    "tabs": { "updates": "Updates", "subscribers": "Abonnees" },
+    "actions": { "save": "Opslaan", "addUpdate": "Update toevoegen", "addSubscriber": "Abonnee toevoegen" }
+  },
+  "newFileDialog": {
+    "title": "Bestand toevoegen",
+    "uploadDescription": "Upload bestand (max. 10 MB)",
+    "selectedFile": "Geselecteerd bestand: {{name}}",
+    "validation": { "nameRequired": "Naam is verplicht", "categoryRequired": "Categorie is verplicht", "fileTypeNotAllowed": "Dit bestandstype is niet toegestaan" },
+    "messages": { "created": "Bestand succesvol geüpload" },
+    "errors": { "create": "Uploaden van bestand mislukt" },
+    "fields": { "name": "Naam", "category": "Categorie", "visibility": "Zichtbaarheid" },
+    "actions": { "add": "Bestand toevoegen" }
+  },
+  "editFileDialog": {
+    "title": "Bestand bewerken",
+    "validation": { "nameRequired": "Naam is verplicht", "categoryRequired": "Categorie is verplicht" },
+    "messages": { "updated": "Bestand succesvol bijgewerkt" },
+    "errors": { "update": "Bijwerken van bestand mislukt" },
+    "fields": { "name": "Naam", "category": "Categorie" },
+    "actions": { "save": "Opslaan" }
+  },
+  "deleteFileDialog": {
+    "title": "Bestand verwijderen",
+    "description": "Weet u zeker dat u dit bestand wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+    "messages": { "deleted": "Bestand succesvol verwijderd" },
+    "errors": { "delete": "Verwijderen van bestand mislukt" },
+    "actions": { "delete": "Verwijderen" }
+  },
+  "fileListItem": {
+    "messages": { "updated": "Bestand succesvol bijgewerkt" },
+    "errors": { "update": "Bijwerken van bestand mislukt" },
+    "actions": { "download": "Downloaden", "edit": "Bewerken", "delete": "Verwijderen" }
+  },
+  "fileList": {
+    "columns": { "name": "Naam", "category": "Categorie", "uploadDate": "Uploaddatum", "alias": "Alias", "visibility": "Zichtbaarheid" },
+    "empty": "Geen bestanden beschikbaar"
+  },
+  "filesPage": {
+    "title": "Bestanden",
+    "description": "Upload en beheer bestanden voor uw compliancepagina",
+    "actions": { "add": "Bestand toevoegen" }
+  },
+  "newDomainDialog": {
+    "title": "Domein toevoegen",
+    "description": "Voer uw domein in en wij genereren de DNS-records die u moet toevoegen.",
+    "messages": { "created": "Domein succesvol toegevoegd. Configureer de DNS-records om uw domein te verifiëren en te activeren." },
+    "errors": { "create": "Toevoegen van domein mislukt" },
+    "fields": { "domain": "Domein", "domainPlaceholder": "compliance.example.com" },
+    "examples": "Voorbeelden: compliance.example.com, trust.example.com",
+    "actions": { "adding": "Toevoegen...", "add": "Domein toevoegen" }
+  },
+  "deleteDomainDialog": {
+    "title": "Aangepast domein verwijderen",
+    "description": "Hiermee wordt het aangepaste domein {{domain}} en de bijbehorende configuratie permanent verwijderd.",
+    "warning": "Deze actie kan niet ongedaan worden gemaakt.",
+    "confirmationLabel": "Typ \"{{domain}}\" hieronder om verwijdering te bevestigen:",
+    "messages": { "deleted": "Domein succesvol verwijderd" },
+    "errors": { "delete": "Verwijderen van domein mislukt" },
+    "actions": { "deleting": "Bezig met verwijderen...", "delete": "Domein verwijderen" }
+  },
+  "domainDialog": {
+    "messages": { "copied": "Gekopieerd", "valueCopied": "Waarde gekopieerd naar klembord" },
+    "active": { "title": "Domein is actief", "description": "Uw aangepaste domein is geverifieerd en het SSL-certificaat is actief" },
+    "provisioningError": "Fout bij provisioning",
+    "sslExpires": "SSL verloopt op",
+    "dns": { "title": "DNS-configuratie", "description": "Voeg deze DNS-records toe aan uw domein om de verificatie te voltooien", "name": "Naam", "value": "Waarde", "ttl": "TTL: {{ttl}}" },
+    "actions": { "copy": "Kopiëren" },
+    "pendingDescription": "Na het toevoegen van de DNS-records vindt de verificatie automatisch plaats. Dit kan enkele minuten duren om door te dringen."
+  },
+  "frameworkList": {
+    "title": "Complianceframeworks",
+    "description": "Selecteer welke frameworks worden weergegeven op uw publieke compliancepagina.",
+    "empty": "Geen frameworks beschikbaar",
+    "messages": { "visibilityUpdated": "Zichtbaarheid van framework succesvol bijgewerkt." },
+    "errors": { "visibilityUpdate": "Bijwerken van framework-zichtbaarheid mislukt" }
+  },
+  "ndaSection": {
+    "title": "Geheimhoudingsovereenkomst",
+    "empty": "Geen NDA-bestand geüpload",
+    "emptyDescription": "Upload een PDF die bezoekers moeten accepteren voordat ze toegang krijgen tot uw compliancepagina.",
+    "uploadDescription": "Vereis dat bezoekers een geheimhoudingsovereenkomst accepteren voordat ze toegang krijgen tot uw compliancepagina.",
+    "acceptanceDescription": "Bezoekers moeten deze overeenkomst accepteren voordat ze toegang krijgen tot uw compliancepagina.",
+    "actions": { "download": "Downloaden", "upload": "NDA uploaden", "replace": "Vervangen" },
+    "delete": { "title": "NDA verwijderen", "description": "Weet u zeker dat u het NDA-bestand wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.", "actions": { "delete": "Verwijderen" } },
+    "errors": { "invalidFileType": { "title": "Bestandstype niet ondersteund", "description": "Upload een PDF-bestand." }, "fileTooLarge": { "title": "Bestand te groot", "description": "Upload een bestand kleiner dan 10 MB." } }
+  },
+  "domainCard": {
+    "managed": "Beheerd",
+    "status": { "active": "Actief", "pending": "In afwachting" },
+    "actions": { "viewDetails": "Details bekijken", "delete": "Verwijderen" }
+  },
+  "configLayout": {
+    "title": "compliancepagina",
+    "breadcrumb": "compliancepagina's",
+    "description": "Configureer uw publieke compliancepagina om uw beveiligings- en compliancepositie te presenteren.",
+    "status": { "active": "Actief", "inactive": "Inactief" },
+    "actions": { "open": "Openen" },
+    "tabs": { "overview": "Overzicht", "brand": "Huisstijl", "references": "Referenties", "commitments": "Toezeggingen", "audits": "Audits", "documents": "Documenten", "files": "Bestanden", "subprocessors": "Subverwerkers", "access": "Toegang", "mailingList": "Mailinglijst" }
+  },
+  "emptyState": {
+    "title": "Nog geen compliancepagina's",
+    "description": "Maak een openbare compliancepagina aan om uw beveiligingspositie, certificeringen en beleid te tonen aan klanten en partners."
+  }
+}

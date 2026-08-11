@@ -57,6 +57,7 @@ const COOKIE_DETAIL_LABELS: Record<string, Record<string, string>> = {
   it: { label_type: "Tipo: {{value}}", label_description: "Descrizione: {{value}}", label_duration: "Durata: {{value}}" },
   ja: { label_type: "タイプ：{{value}}", label_description: "説明：{{value}}", label_duration: "期間：{{value}}" },
   ko: { label_type: "유형: {{value}}", label_description: "설명: {{value}}", label_duration: "기간: {{value}}" },
+  nl: { label_type: "Type: {{value}}", label_description: "Beschrijving: {{value}}", label_duration: "Duur: {{value}}" },
   pl: { label_type: "Typ: {{value}}", label_description: "Opis: {{value}}", label_duration: "Czas trwania: {{value}}" },
   pt: { label_type: "Tipo: {{value}}", label_description: "Descrição: {{value}}", label_duration: "Duração: {{value}}" },
   tr: { label_type: "Tür: {{value}}", label_description: "Açıklama: {{value}}", label_duration: "Süre: {{value}}" },
@@ -91,6 +92,7 @@ const GPC_LABELS: Record<string, string> = {
   it: "Segnale di preferenza di rinuncia rispettato",
   ja: "オプトアウト設定シグナルが有効です",
   ko: "옵트아웃 기본 설정 신호가 적용되었습니다",
+  nl: "Opt-outvoorkeurssignaal gerespecteerd",
   pl: "Sygnał preferencji rezygnacji uhonorowany",
   pt: "Sinal de preferência de exclusão respeitado",
   tr: "Çıkış Tercihi Sinyali Onurlandırıldı",
@@ -100,4 +102,29 @@ const GPC_LABELS: Record<string, string> = {
 
 export function getGpcLabel(lang: string): string {
   return GPC_LABELS[lang] ?? GPC_LABELS.en;
+}
+
+// Acknowledgement label for the notice-only banner, used as the default when a
+// translation predates (or omits) the `button_dismiss` key. Kept in sync with
+// the server's default `button_dismiss` wording so it never falls back to an
+// "Accept all" label on a control that only records an acknowledgement.
+const DISMISS_LABELS: Record<string, string> = {
+  en: "Got it",
+  de: "Verstanden",
+  es: "Entendido",
+  fr: "Compris",
+  id: "Mengerti",
+  it: "Capito",
+  ja: "了解",
+  ko: "확인했습니다",
+  nl: "Begrepen",
+  pl: "Rozumiem",
+  pt: "Entendi",
+  tr: "Anladım",
+  uk: "Зрозуміло",
+  zh: "知道了",
+};
+
+export function getDismissLabel(lang: string): string {
+  return DISMISS_LABELS[lang] ?? DISMISS_LABELS.en;
 }

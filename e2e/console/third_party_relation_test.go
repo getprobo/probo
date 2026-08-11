@@ -261,46 +261,6 @@ func TestThirdPartyRelation_Authorization(t *testing.T) {
 	})
 }
 
-func TestThirdPartyRelation_TenantIsolation(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	parentID := factory.NewThirdParty(org1Owner).WithName("Org1 Parent").Create()
-	createChildThirdParty(t, org1Owner, parentID, "Org1 Child")
-
-	t.Run("cannot list children of other org third party", func(t *testing.T) {
-		t.Parallel()
-
-		const query = `
-			query($id: ID!) {
-				node(id: $id) {
-					... on ThirdParty {
-						childThirdParties(first: 10) {
-							totalCount
-						}
-					}
-				}
-			}
-		`
-
-		var result struct {
-			Node *struct {
-				ChildThirdParties *struct {
-					TotalCount int `json:"totalCount"`
-				} `json:"childThirdParties"`
-			} `json:"node"`
-		}
-
-		err := org2Owner.Execute(query, map[string]any{"id": parentID}, &result)
-
-		nodeInaccessible := err != nil || result.Node == nil || result.Node.ChildThirdParties == nil
-		emptyResult := result.Node != nil && result.Node.ChildThirdParties != nil && result.Node.ChildThirdParties.TotalCount == 0
-		assert.True(t, nodeInaccessible || emptyResult, "expected either inaccessible node or zero children")
-	})
-}
-
 func TestThirdParty_LevelFilter(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

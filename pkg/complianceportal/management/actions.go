@@ -22,6 +22,9 @@ const (
 
 	// Compliance portal actions.
 	ActionCompliancePortalGet                          = "compliance-portal:portal:get"
+	ActionCompliancePortalList                         = "compliance-portal:portal:list"
+	ActionCompliancePortalCreate                       = "compliance-portal:portal:create"
+	ActionCompliancePortalDelete                       = "compliance-portal:portal:delete"
 	ActionCompliancePortalUpdate                       = "compliance-portal:portal:update"
 	ActionCompliancePortalGetNda                       = "compliance-portal:portal:get-nda"
 	ActionCompliancePortalNonDisclosureAgreementUpload = "compliance-portal:portal:upload-nda"

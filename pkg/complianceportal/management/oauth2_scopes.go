@@ -32,6 +32,7 @@ const (
 var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1CompliancePortalRead: {
 		ActionCompliancePortalGet,
+		ActionCompliancePortalList,
 		ActionCompliancePortalGetNda,
 		ActionCompliancePortalAccessGet,
 		ActionCompliancePortalAccessList,
@@ -51,6 +52,9 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	},
 	ScopeV1CompliancePortal: {
 		ActionCompliancePortalGet,
+		ActionCompliancePortalList,
+		ActionCompliancePortalCreate,
+		ActionCompliancePortalDelete,
 		ActionCompliancePortalGetNda,
 		ActionCompliancePortalAccessGet,
 		ActionCompliancePortalAccessList,

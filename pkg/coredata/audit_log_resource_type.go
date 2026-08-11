@@ -119,6 +119,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "MalaysiaPDPABreachIncident"
 	case MalaysiaPDPABreachStatusHistoryEntityType:
 		return "MalaysiaPDPABreachStatusHistory"
+	case BusinessFunctionEntityType:
+		return "BusinessFunction"
 	default:
 		return "Unknown"
 	}

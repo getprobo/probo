@@ -444,19 +444,19 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 }
 
 // Scenarios is the resolver for the scenarios field.
-func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
-		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
+		Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
@@ -467,7 +467,7 @@ func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *in
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -499,7 +499,7 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 		}
 
 		return count, nil
-	case *riskAssessmentScenarioResolver:
+	case *riskAnalysisScenarioResolver:
 		count, err := r.riskManagement.CountRisksForScenarioID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count scenario risks", log.Error(err))

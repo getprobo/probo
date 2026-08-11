@@ -319,10 +319,11 @@ Check the Probo logs for S3 connection errors when uploading files.
 
 If startup logs show:
 
-`IP geolocation table is empty; run geoloc-import to populate it`
+`IP geolocation table is empty; populate it with an external location importer`
 
 the instance is running correctly, but geolocation data is missing. Populate
-it by running the `geoloc-import` command in your operational workflow.
+the provider-neutral location table with an external importer in your
+operational workflow.
 
 ## Examples
 

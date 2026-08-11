@@ -21,7 +21,6 @@
     "switchToLightMode": "라이트 모드로 전환"
   },
   "common": {
-    "cancel": "취소",
     "error": "문제가 발생했습니다",
     "previousPage": "이전 페이지",
     "nextPage": "다음 페이지",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "컴플라이언스 포털로 돌아가기",
-      "tryAgain": "다시 시도"
+      "tryAgain": "다시 시도",
+      "contactSupport": "지원팀에 문의",
+      "requestAccess": "액세스 요청"
     },
     "inline": {
       "message": "콘텐츠를 불러올 수 없습니다",

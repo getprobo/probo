@@ -181,9 +181,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				createMutation,
 				map[string]any{
 					"input": map[string]any{
-						"trustCenterId": tcResp.Node.TrustCenter.ID,
-						"title":         flagTitle,
-						"description":   flagDescription,
+						"compliancePortalId": tcResp.Node.TrustCenter.ID,
+						"title":              flagTitle,
+						"description":        flagDescription,
 					},
 				},
 			)

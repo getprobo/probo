@@ -40,7 +40,6 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter
           node {
             id
             status
-            compliancePortalVisibility
             versions(first: 1) {
               edges {
                 node {
@@ -63,10 +62,9 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentOrder, $filter
 `
 
 type document struct {
-	ID                         string `json:"id"`
-	Status                     string `json:"status"`
-	CompliancePortalVisibility string `json:"compliancePortalVisibility"`
-	Versions                   struct {
+	ID       string `json:"id"`
+	Status   string `json:"status"`
+	Versions struct {
 		Edges []struct {
 			Node struct {
 				Title          string `json:"title"`
@@ -88,6 +86,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagDocumentType   string
 		flagClassification string
 		flagStatus         string
+		flagPublished      bool
 		flagOutput         *string
 	)
 
@@ -206,6 +205,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				filter["status"] = []string{flagStatus}
 			}
 
+			if cmd.Flags().Changed("published") {
+				filter["published"] = flagPublished
+			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -298,6 +301,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Filter by document type (OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE, STATEMENT_OF_APPLICABILITY)")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Filter by classification (PUBLIC, INTERNAL, CONFIDENTIAL, SECRET)")
 	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (ACTIVE, ARCHIVED)")
+	cmd.Flags().BoolVar(&flagPublished, "published", false, "Filter by whether a document has a published version")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

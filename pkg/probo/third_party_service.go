@@ -83,7 +83,6 @@ type (
 		TrustPageURL                  **string
 		StatusPageURL                 **string
 		AdministratorIDs              *[]gid.GID
-		ShowOnCompliancePortal        *bool
 	}
 
 	CreateThirdPartyRiskAssessmentRequest struct {
@@ -187,7 +186,7 @@ func (s ThirdPartyService) CountForOrganizationID(
 	var count int
 
 	if filter == nil {
-		filter = coredata.NewThirdPartyFilter(nil, nil, nil, nil, nil)
+		filter = coredata.NewThirdPartyFilter(nil, nil, nil, nil)
 	}
 
 	err := s.svc.pg.WithConn(
@@ -426,10 +425,6 @@ func (s ThirdPartyService) Update(
 				thirdParty.SecurityPageURL = *req.SecurityPageURL
 			}
 
-			if req.ShowOnCompliancePortal != nil {
-				thirdParty.ShowOnCompliancePortal = *req.ShowOnCompliancePortal
-			}
-
 			if req.TrustPageURL != nil {
 				thirdParty.TrustPageURL = *req.TrustPageURL
 			}
@@ -622,7 +617,6 @@ func (s ThirdPartyService) Create(
 		TrustPageURL:                  req.TrustPageURL,
 		StatusPageURL:                 req.StatusPageURL,
 		TermsOfServiceURL:             req.TermsOfServiceURL,
-		ShowOnCompliancePortal:        false,
 		Level:                         1,
 	}
 
@@ -786,7 +780,6 @@ func (s ThirdPartyService) ImportFromCommon(
 					TermsOfServiceURL:             commonParty.TermsOfServiceURL,
 					SecurityPageURL:               commonParty.SecurityPageURL,
 					TrustPageURL:                  commonParty.TrustPageURL,
-					ShowOnCompliancePortal:        false,
 					Level:                         1,
 					CreatedAt:                     now,
 					UpdatedAt:                     now,

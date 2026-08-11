@@ -1,5 +1,10 @@
 import { useEffect, useRef } from "react";
-import { registerHeadlessComponents } from "@probo/cookie-banner/headless";
+import {
+  registerHeadlessComponents,
+  resolveBannerText,
+  resolveLayout,
+  type BannerConfig,
+} from "@probo/cookie-banner/headless";
 import { useConfig } from "../hooks/useConfig";
 import type { EventEntry } from "../App";
 
@@ -28,13 +33,14 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
     container.innerHTML = "";
 
     container.innerHTML = `
-      <style>probo-banner, probo-preference-panel { display: block !important; }</style>
+      <style>probo-banner, probo-preference-panel, probo-privacy-choices { display: block !important; }</style>
       <probo-cookie-banner-root banner-id="${config.bannerId}" base-url="${config.baseUrl}">
         <probo-banner>
           <div style="border:2px solid #333;padding:12px;margin-bottom:8px;">
             <strong>[probo-banner]</strong>
             <div style="margin-top:8px;">
-              <probo-accept-button><button>Accept All</button></probo-accept-button>
+              <probo-acknowledge-button><button>Acknowledge</button></probo-acknowledge-button>
+              <probo-accept-button><button style="margin-left:8px;">Accept All</button></probo-accept-button>
               <probo-reject-button><button style="margin-left:8px;">Reject All</button></probo-reject-button>
               <probo-customize-button><button style="margin-left:8px;">Customize</button></probo-customize-button>
             </div>
@@ -70,14 +76,38 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
             </div>
           </div>
         </probo-preference-panel>
+
+        <probo-privacy-choices>
+          <div style="border:2px solid #1d4ed8;padding:12px;margin-bottom:8px;">
+            <strong>[probo-privacy-choices]</strong>
+            <p style="margin:8px 0;font-size:14px;">
+              Right to opt out of sale/sharing and right to limit sensitive
+              personal information (CCPA).
+            </p>
+            <probo-reject-button>
+              <button>Do Not Sell or Share My Personal Information</button>
+            </probo-reject-button>
+          </div>
+        </probo-privacy-choices>
       </probo-cookie-banner-root>
+      <p style="margin-top:12px;">
+        <probo-settings-link>Cookie settings</probo-settings-link>
+      </p>
     `;
 
     const root = container.querySelector("probo-cookie-banner-root");
     if (root) {
-      root.addEventListener("probo-ready", (e: Event) =>
-        pushEvent("probo-ready", (e as CustomEvent).detail),
-      );
+      root.addEventListener("probo-ready", (e: Event) => {
+        const detail = (e as CustomEvent).detail as {
+          config?: BannerConfig;
+        };
+        const bannerConfig = detail?.config;
+        pushEvent("probo-ready", {
+          ...detail,
+          layout: bannerConfig ? resolveLayout(bannerConfig) : null,
+          bannerText: bannerConfig ? resolveBannerText(bannerConfig) : null,
+        });
+      });
       root.addEventListener("probo-consent", (e: Event) =>
         pushEvent("probo-consent", (e as CustomEvent).detail),
       );

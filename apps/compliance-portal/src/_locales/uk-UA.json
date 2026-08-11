@@ -1,7 +1,7 @@
 {
   "topBar": {
     "tagline": "Портал відповідності",
-    "getAccess": "Отримати доступ",
+    "getAccess": "Запитати доступ",
     "openMenu": "Відкрити меню",
     "closeMenu": "Закрити меню",
     "menuTitle": "Меню",
@@ -21,7 +21,6 @@
     "switchToLightMode": "Перейти у світлий режим"
   },
   "common": {
-    "cancel": "Скасувати",
     "error": "Щось пішло не так",
     "previousPage": "Попередня сторінка",
     "nextPage": "Наступна сторінка",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Назад до порталу відповідності",
-      "tryAgain": "Спробувати ще раз"
+      "tryAgain": "Спробувати ще раз",
+      "contactSupport": "Зв’язатися з підтримкою",
+      "requestAccess": "Запитати доступ"
     },
     "inline": {
       "message": "Не вдалося завантажити вміст",

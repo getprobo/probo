@@ -89,5 +89,10 @@ func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) (aws.C
 		cfg.BaseEndpoint = new(opts.Endpoint)
 	}
 
+	// Applies to every client built from this config. See accept_encoding.go:
+	// signing Accept-Encoding makes S3-compatible endpoints that rewrite it
+	// (Google Cloud Storage) reject every request with SignatureDoesNotMatch.
+	cfg.APIOptions = append(cfg.APIOptions, unsignedAcceptEncoding)
+
 	return cfg, nil
 }

@@ -18,27 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  IconSend,
-  IconUpload,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
 import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { PublishObligationListDialogMutation } from "#/__generated__/core/PublishObligationListDialogMutation.graphql";
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import {
+  PublishListDialog,
+  type PublishListDialogInput,
+} from "#/components/dialogs/PublishListDialog";
 
 const publishMutation = graphql`
   mutation PublishObligationListDialogMutation(
@@ -68,111 +57,42 @@ export function PublishObligationListDialog({
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const dialogRef = useDialogRef();
+  const [publish, isPublishing] = useMutation<PublishObligationListDialogMutation>(publishMutation);
 
-  const schema = useMemo(() => z.object({
-    approverIds: z.array(z.string()),
-  }), []);
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      approverIds: defaultApproverIds ?? [],
-    },
-  });
-
-  const [publish, isPublishing]
-    = useMutation<PublishObligationListDialogMutation>(publishMutation);
-
-  const minorRef = useRef(false);
-
-  const approverIds = watch("approverIds");
-  const hasApprovers = approverIds.length > 0;
-
-  const onSubmit = (data: z.infer<typeof schema>) => {
-    publish({
-      variables: {
-        input: {
-          minor: minorRef.current,
-          organizationId,
-          approverIds: !minorRef.current && data.approverIds.length > 0 ? data.approverIds : undefined,
+  const onPublish = (input: PublishListDialogInput) =>
+    new Promise<string | null | undefined>((resolve, reject) => {
+      publish({
+        variables: { input },
+        onCompleted: (response) => {
+          resolve(response.publishObligationList?.documentEdge?.node?.id);
         },
-      },
-      onCompleted(response) {
-        const documentId = response.publishObligationList?.documentEdge?.node?.id;
-        if (documentId) {
-          toast({
-            title: t("publishObligationListDialog.messages.success"),
-            description: hasApprovers
-              ? t("publishObligationListDialog.messages.approvalRequested")
-              : t("publishObligationListDialog.messages.published"),
-            variant: "success",
-          });
-          dialogRef.current?.close();
-          reset();
-          onPublished?.(documentId);
-        }
-      },
-      onError(error) {
-        toast({
-          title: t("publishObligationListDialog.messages.error"),
-          description: formatError(
-            t("publishObligationListDialog.errors.publish"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
+        onError: reject,
+      });
     });
-  };
 
   return (
-    <Dialog
-      className="max-w-xl"
-      ref={dialogRef}
-      trigger={children}
-      title={t("publishObligationListDialog.title")}
+    <PublishListDialog
+      organizationId={organizationId}
+      defaultApproverIds={defaultApproverIds}
+      isPublishing={isPublishing}
+      onPublish={onPublish}
+      onPublished={onPublished}
+      labels={{
+        title: t("publishObligationListDialog.title"),
+        description: t("publishObligationListDialog.description"),
+        approvers: t("publishObligationListDialog.fields.approvers"),
+        approversPlaceholder: t("publishObligationListDialog.fields.approversPlaceholder"),
+        publishMinor: t("publishObligationListDialog.actions.publishMinor"),
+        publish: t("publishObligationListDialog.actions.publish"),
+        requestApproval: t("publishObligationListDialog.actions.requestApproval"),
+        successTitle: t("publishObligationListDialog.messages.success"),
+        published: t("publishObligationListDialog.messages.published"),
+        approvalRequested: t("publishObligationListDialog.messages.approvalRequested"),
+        errorTitle: t("publishObligationListDialog.messages.error"),
+        publishError: t("publishObligationListDialog.errors.publish"),
+      }}
     >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
-          <div className="space-y-4">
-            <p className="text-sm text-txt-secondary">
-              {t("publishObligationListDialog.description")}
-            </p>
-            <PeopleMultiSelectField
-              name="approverIds"
-              label={t("publishObligationListDialog.fields.approvers")}
-              control={control}
-              organizationId={organizationId}
-              placeholder={t("publishObligationListDialog.fields.approversPlaceholder")}
-            />
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { minorRef.current = true; }}
-            disabled={isPublishing}
-          >
-            {t("publishObligationListDialog.actions.publishMinor")}
-          </Button>
-          <Button
-            type="submit"
-            icon={hasApprovers ? IconSend : IconUpload}
-            onClick={() => { minorRef.current = false; }}
-            disabled={isPublishing}
-          >
-            {hasApprovers ? t("publishObligationListDialog.actions.requestApproval") : t("publishObligationListDialog.actions.publish")}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+      {children}
+    </PublishListDialog>
   );
 }

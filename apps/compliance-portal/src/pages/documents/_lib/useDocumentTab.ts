@@ -24,7 +24,7 @@ import { useSearchParams } from "react-router";
 // Single source of truth for the tab set. The type, the rendered tab list, and
 // URL validation all derive from this so a new tab can't be shown/written but
 // read back as the default.
-export const DOCUMENT_TABS = ["all", "public", "private"] as const;
+export const DOCUMENT_TABS = ["all", "public", "restricted"] as const;
 
 export type DocumentTab = (typeof DOCUMENT_TABS)[number];
 
@@ -40,14 +40,14 @@ interface DocumentTabState {
   setTab: (value: DocumentTab) => void;
 }
 
-// Active documents tab (All / Public / Private), persisted in the URL so it is
+// Active documents tab (All / Public / Restricted), persisted in the URL so it is
 // shareable and survives reloads. Pure URL state — no local state or effects —
 // so the loader, page, and toolbar can all read it without racing.
 export function useDocumentTab(): DocumentTabState {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const raw = searchParams.get("tab");
-  const tab: DocumentTab = isDocumentTab(raw) ? raw : DEFAULT_DOCUMENT_TAB;
+  const tab = isDocumentTab(raw) ? raw : DEFAULT_DOCUMENT_TAB;
 
   const setTab = useCallback((value: DocumentTab) => {
     setSearchParams((previous) => {

@@ -46,6 +46,11 @@ interface DocumentViewerLocked {
   onGetAccess: () => void;
   // Whether the access request is in flight.
   isRequesting: boolean;
+  // Whether an access request is already pending for this document.
+  requested: boolean;
+  // Localized /nda?continue=… href when the visitor still needs to sign the
+  // portal NDA; null otherwise.
+  ndaHref: string | null;
 }
 
 interface DocumentViewerProps {
@@ -57,14 +62,15 @@ interface DocumentViewerProps {
   // File name used when downloading. Omitted when the viewer is locked.
   downloadName?: string;
   // When set, the header keeps the title (no toolbar) and the body shows the
-  // locked empty state with a Get Access CTA instead of the file preview.
+  // locked empty state (Access requested / Sign NDA / Get Access) instead of
+  // the file preview.
   locked?: DocumentViewerLocked;
 }
 
 // Full-page document viewer: a header band with the title and a toolbar
 // (page navigation + zoom for PDFs, copy link, download) above the scrollable
 // body. PDFs render with react-pdf, images inline, and anything else offers a
-// download. Locked visitors keep the title header and see a Get Access CTA in
+// download. Locked visitors keep the title header and see an access CTA in
 // place of the preview.
 export function DocumentViewer({ title, dataUri = null, downloadName = title, locked }: DocumentViewerProps) {
   const { t } = useTranslation("documents");
@@ -125,6 +131,8 @@ export function DocumentViewer({ title, dataUri = null, downloadName = title, lo
               <DocumentLocked
                 onGetAccess={locked.onGetAccess}
                 isRequesting={locked.isRequesting}
+                requested={locked.requested}
+                ndaHref={locked.ndaHref}
               />
             )
           : dataUri == null

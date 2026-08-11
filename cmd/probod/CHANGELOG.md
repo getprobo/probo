@@ -4,6 +4,224 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.257.0] - 2026-08-11
+
+### Added
+
+- Console and compliance portal now send a Content-Security-Policy header, with a matching policy applied to their local Vite dev servers, restricting scripts, styles, and connections to known origins (including object storage, Google Fonts, Google favicons, and Markdown image sources), and hardened against configuration and origin injection.
+
+### Fixed
+
+- Clearing a person's contract end date now updates the people list immediately instead of only on the server, and the people list's actions column no longer starves date columns of space.
+
+### Changed
+
+- Cookie banner presentation now matches each jurisdiction's actual disclosure duties: Japan and jurisdictions with no cookie-consent law move to the opt-out layout instead of interrupting every visitor on load, Brazil (LGPD) requires prior opt-in, and a US visitor whose state cannot be resolved falls back to CCPA rather than no regulation. Only Mexico keeps the notice-on-load presentation.
+- Opt-out button copy is split into a generic label and a California-specific statutory label, so the "Do Not Sell or Share" phrasing no longer appears outside US state privacy laws.
+
+## [0.256.0] - 2026-08-10
+
+### Added
+
+- People list now shows each person's contract end date, making it easier to see why someone with an ended contract is excluded from document signatures despite still appearing active.
+
+### Fixed
+
+- Blank SCIM position/kind values are now treated as unset instead of failing person-form validation, and the people table's empty-state row spans the correct number of columns.
+- Cookie banner tracker detection no longer aborts the whole batch when an SDK-reported cookie or storage key exceeds PostgreSQL's index size limit; oversized identifiers are capped at 255 bytes and dropped instead.
+- The third-party compliance document agent now downloads PDFs directly instead of navigating to them, so PDF documents are read and verified correctly.
+
+### Changed
+
+- SCIM audit event writes no longer block the provisioning request, and are now bounded to a fixed duration.
+
+## [0.255.0] - 2026-08-10
+
+### Added
+
+- SCIM audit events now store the request and response bodies exchanged with the provisioning client, with password fields and credential attributes redacted regardless of the schema URN used to reference them.
+
+### Fixed
+
+- The compliance portal's unsigned-NDA banner no longer appears before a visitor has requested access to a private document, and an admin-granted access no longer triggers it as if the visitor had requested access themselves.
+- Locked document viewer CTA now names the NDA instead of reusing the banner's generic "Review and sign" label.
+- Compliance portal mailing list update detail pages no longer 404.
+
+## [0.254.0] - 2026-08-10
+
+### Changed
+
+- Organization creation is now restricted to owners when signup is disabled.
+- Console access is now restricted when the user has no organization membership.
+- Risk analysis scopes are now referred to as diagrams across the API and console UI.
+
+### Fixed
+
+- Resolved npm audit vulnerabilities in `dompurify`, `js-yaml`, and `mermaid` dependencies.
+
+## [0.253.0] - 2026-08-07
+
+### Fixed
+
+- Evidence uploads now display in the PDF viewer instead of a degraded fallback when the display mode was changed or the browser navigated away and back
+
+## [0.252.0] - 2026-08-07
+
+### Changed
+
+- Organization risk assessments are now named risk analyses across the database, console API, MCP API, CLI, and console UI. Third-party assessments and Statement of Applicability control flags keep their existing naming.
+- Compliance portal document, audit, and subprocessor selection is reversed: the console now lists the organization's own documents, audits, and subprocessors with checkboxes for inline portal membership, replacing the portal-only rows plus separate add dialogs.
+- Compliance portal catalog document, audit, and third-party rows are now exposed as Relay Nodes in the console API.
+
+### Fixed
+
+- Unchecking a compliance portal document no longer reports a remove error after the deletion actually succeeded.
+- `probod` now persists its local ACME account key across restarts, so pending certificate orders no longer fail with 401 after a restart; unauthorized order polls now clear resumable state and retry provisioning instead of stalling.
+- Compliance portal document table now spaces the alias and visibility controls instead of rendering them flush against each other.
+
+## [0.251.0] - 2026-08-06
+
+### Added
+
+- Compliance portal Requests surface (rights requests) can now be enabled or disabled per organization from the console overview; when disabled, the portal hides the nav item and treats `/requests` as not found.
+- Document export watermarks now accept custom text instead of only an email address, with a 64-byte size limit and validation; existing `watermarkEmail` usage keeps working.
+- Access review campaign entries can now be filtered by account status (Active, Disabled, Unknown), mirroring the existing MFA filter.
+
+### Changed
+
+- Portal "Get Access" CTA is now labeled "Request Access" throughout the TopBar and document flows.
+- Access review campaign entries now show admin status as Yes/No text instead of a check/X icon, so admins stand out instead of non-admins looking flagged.
+
+### Fixed
+
+- Locked document viewer now shows the correct CTA — Sign NDA takes priority over Request Access when the portal NDA is incomplete — instead of always showing Get Access regardless of a pending request.
+- Compliance portal asset URLs on nested routes (e.g. `/en/documents/...`) no longer resolve under the route path and serve HTML instead of the expected chunk.
+
+## [0.250.0] - 2026-08-06
+
+### Added
+
+- HubSpot access-review connector now derives last login from successful events on the Account Activity login API (past 90 days). Existing HubSpot connectors must reconnect (or private apps must grant `account-info.security.read`) before last-login population works; missing scope leaves last login unset rather than failing the fetch.
+- Access review campaign entries now show each account's authentication method (e.g. SSO or password), with a matching filter in the campaign toolbar.
+- Obligations linked to a control now expose a total count in the console API.
+- Mailing list subscribers and updates are now resolvable as GraphQL nodes in the console API.
+
+### Fixed
+
+- HubSpot access-review connector now marks deactivated/archived users as inactive by consulting the Owners API (`archived=true`) instead of treating every Settings Users row as active. Existing HubSpot connectors must reconnect (or private apps must grant `crm.objects.owners.read`) before inactive detection works.
+- Closed an open-redirect bypass where a control byte (tab, newline, etc.) before a path segment could collapse to an off-origin protocol-relative URL, evading the fix for CVE-2026-49820.
+- Access review campaign entries no longer silently truncate for sources with more than 500 entries; entries are now paginated instead of clamped to the API's page limit.
+- Third-party business associate agreement, compliance report, and data privacy agreement resolvers now return the correct linked third party instead of erroring or resolving the wrong one.
+- Creating a compliance portal reference without a logo file no longer fails; a default placeholder logo is used instead.
+- The MCP `SendMailingListUpdateTool` now checks the send permission instead of the update permission.
+- Evidence uploads now reject empty files, and evidence without an associated task no longer returns an internal server error.
+- MCP-created tracker patterns now default to the script source instead of leaving it unset.
+
+## [0.249.1] - 2026-08-06
+
+### Fixed
+
+- Compliance portal PDF preview no longer fails to load when export/download still worked: the viewer worker is now bundled from the same pdf.js version as react-pdf
+
+## [0.249.0] - 2026-08-05
+
+### Added
+
+- Subdivision-aware geolocation: IP lookups now resolve an ISO 3166-2 subdivision alongside the country, and the resolved jurisdiction is persisted on consent records. Bundled country blocks are replaced by provider-neutral ranges so licensed importers can supply subdivision data
+- US visitors are mapped to their own state privacy law (VCDPA, TDPSA, CPA, and so on) instead of being labeled CCPA. California keeps the statutory Privacy Choices experience; other mapped states use a generic opt-out banner with US-specific copy
+- Canadian visitors are mapped per province: Quebec to Law 25, Alberta to PIPA_AB, and British Columbia to PIPA_BC, with PIPEDA retained elsewhere. Canadian opt-out banner copy applies to PIPEDA and provincial PIPA; `PIPA_CA` remains valid for legacy records
+- `subdivisionCode` on the consent record list and detail pages, so operators can verify the detected jurisdiction
+
+### Changed
+
+- Vetting agent notes in the third-party register are parsed into structured document blocks instead of being embedded as raw Markdown, so headings, tables, and bold markers render correctly in generated documents and PDFs
+
+### Fixed
+
+- MS365 OAuth reconnects no longer appear incomplete: a refresh token is treated as `offline_access` even though Microsoft's v2 token response omits that scope
+- A Markdown conversion failure in a single risk-assessment note no longer aborts the whole third-party register publish; the note falls back to a plain-text paragraph
+
+## [0.248.0] - 2026-08-05
+
+### Changed
+
+- Restructured the access review console list UI: dedicated list item components for campaigns, sources, and entry sections; replaced the add-source dialog with the provider list flow; consolidated fetch-status UI, shared the campaign deletable-status helper, and now load remaining sources while searching so matches beyond the first page aren't missed
+
+### Fixed
+
+- Presigned S3 requests (`PresignGetObject`) no longer fail with a misleading "not found" error
+- A failed page load during source search no longer hides "Load more", so later pages stay reachable
+
+## [0.247.0] - 2026-08-05
+
+### Added
+
+- Organizations can now track DORA Critical ICT Functions via a new Business Functions register — link assets, third parties, and people to a business function, with matching CLI, MCP, and n8n operations
+- Dutch (nl-NL) language support extended to the compliance portal's documents, NDA, requests, subprocessors, and updates pages
+
+### Changed
+
+- Revamped the access review campaign bulk-decision UI: selection now survives partial and stale failures (retaining failed entries so bulk actions can be resubmitted), and accessibility and narrow-layout behavior were hardened
+
+### Fixed
+
+- Cloudflare access reviews are now scoped to a single account instead of merging members across every account reachable by the API token, which produced duplicate emails
+- Asana access review roles and admin status are now populated from membership data instead of always showing empty
+- Fixed the OpenAI connector probe endpoint
+- Uploads to Google Cloud Storage's S3-interoperability endpoint no longer fail with `SignatureDoesNotMatch`; the SDK no longer signs the `Accept-Encoding` header, which GCS rewrites in transit
+- Device codes are now kept for 15 minutes past expiry before garbage collection, so a client polling right at expiry gets `expired_token` instead of `invalid_grant`
+
+## [0.246.0] - 2026-08-04
+
+### Added
+
+- Cookie banners can now present a dedicated CCPA "Your Privacy Choices" panel (right to opt out of sale/sharing, right to limit sensitive personal information) and a first-class notice-only presentation for jurisdictions with no cookie-consent law, driven by an additive `layout` field in the banner config
+- Consent records can now capture a distinct `ACKNOWLEDGE` action for notice-only banners instead of always recording an accept-all; exposed through GraphQL, MCP, the console consent-records view, and n8n
+- MCP access review entries now include the campaign source name and connector ID, so agents no longer have to infer the source tool from account metadata
+
+### Changed
+
+- Generated tracker policy documents no longer show a "Last updated" timestamp in the body, since it churned on every automatic regeneration
+
+### Fixed
+
+- Dutch (nl-NL) cookie banner translations were missing the Privacy Choices panel copy and the notice dismiss label added after the nl-NL backfill; both are now included
+
+## [0.245.0] - 2026-08-04
+
+### Added
+
+- Dutch (nl-NL) language support across the console, compliance portal, and cookie banner
+- MCP `tools/list` responses now include a cache TTL hint so well-behaved clients can skip refetching the static tool set every session
+
+### Fixed
+
+- The compliance portal subprocessor picker no longer lists non-top-level third parties; only level-one third parties can be selected as subprocessors
+- Uploads to S3-compatible endpoints that don't support AWS's checksum extensions (e.g. Google Cloud Storage's S3-interop endpoint) no longer fail with a misleading `SignatureDoesNotMatch: Access denied` error when checksum calculation is explicitly configured
+
+## [0.244.0] - 2026-08-03
+
+### Added
+
+- Organizations can now operate multiple compliance portals: portal-scoped catalogs, access, visitor experience, and console management (including portal selection and catalog publication controls) replace the single organization-wide portal, with matching CLI, MCP, and n8n operations for managing portals and their audit, document, third-party, file, and reference catalogs. The legacy "trust center" terminology and database tables are renamed to "compliance portal" throughout.
+- Deployments can now override compiled-in connector endpoints (e.g. to point a connector at a vendor's sandbox), validated at boot with SSRF-hardened checks — atomic per-provider overrides, host/scheme/credential validation, and pagination guarded against off-host or path-traversal redirection so a spoofed next-page link cannot exfiltrate a connection's bearer token
+- Expose mailing lists, detected trackers, compliance portal frameworks, and document/control/framework mutations via MCP that were previously console-only
+
+### Changed
+
+- Third-party business and security owners are now migrated into a single shared administrators list across GraphQL, MCP, CLI, n8n, and the console
+- Access review source rows now explain why a provider returned no organizations (app not approved, personal account, or provider without a picker) instead of always falling back to a free-text slug input
+- Providers whose organization is captured during the OAuth callback (PagerDuty, Vercel, Datadog, Zendesk) now show it read-only instead of an editable slug input that always failed to save
+
+### Fixed
+
+- Access review connector rows now show which OAuth scopes are missing after a reconnect, instead of leaving "Reconnect required" unexplained
+- Microsoft 365 access review no longer fails an entire source fetch when `AuditLog.Read.All` is unavailable on the tenant; affected accounts import with MFA left unknown instead
+- Linear connector errors no longer echo the provider's raw error message, which could leak tenant identifiers or query fragments
+- A source with a missing or deleted connector is no longer reported the same way as a provider that legitimately returned no organizations
+- Long process names on risk assessment Mermaid flowchart edges no longer get clipped to a single line
+- Compliance portal document filtering is now consistent across the catalog, access, and visitor services
+
 ## [0.243.0] - 2026-07-31
 
 ### Added

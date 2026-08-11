@@ -1,7 +1,7 @@
 {
   "topBar": {
     "tagline": "Compliance Portal",
-    "getAccess": "Get Access",
+    "getAccess": "Request Access",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "menuTitle": "Menu",
@@ -31,7 +31,6 @@
     }
   },
   "common": {
-    "cancel": "Cancel",
     "error": "Something went wrong",
     "previousPage": "Previous page",
     "nextPage": "Next page",
@@ -81,19 +80,21 @@
     },
     "forbidden": {
       "title": "Access denied",
-      "description": "You don't have permission to view this page."
+      "description": "You don't have permission to view this page. Request access or go back to the compliance portal."
     },
     "serverError": {
       "title": "Something went wrong",
-      "description": "We hit an unexpected error. Please try again in a moment."
+      "description": "Something went wrong on our side. Try again, or contact support if the issue continues."
     },
     "generic": {
-      "title": "Something went wrong",
-      "description": "We hit an unexpected error. Please try again in a moment."
+      "title": "Unable to load page",
+      "description": "We couldn't load this page. Try again, or contact support if the issue continues."
     },
     "actions": {
       "backToCompliancePortal": "Back to compliance portal",
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "contactSupport": "Contact support",
+      "requestAccess": "Request access"
     },
     "inline": {
       "message": "Unable to load content",

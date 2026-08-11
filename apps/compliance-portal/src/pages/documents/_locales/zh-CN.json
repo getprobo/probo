@@ -3,7 +3,7 @@
   "tabs": {
     "all": "全部",
     "public": "公开",
-    "private": "私密"
+    "restricted": "受限"
   },
   "sections": {
     "reports": "合规报告"
@@ -22,7 +22,7 @@
   },
   "actions": {
     "view": "查看",
-    "getAccess": "获取访问权限",
+    "getAccess": "申请访问权限",
     "requested": "已申请访问权限"
   },
   "selection": {
@@ -47,7 +47,8 @@
     "downloadToView": "此文件类型无法在此处预览，请下载后查看。",
     "locked": {
       "title": "需要访问权限",
-      "description": "您尚未获得此文档的访问权限。"
+      "description": "您尚未获得此文档的访问权限。",
+      "signNda": "查看并签署 NDA"
     }
   }
 }

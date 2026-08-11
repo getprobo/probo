@@ -170,7 +170,7 @@ func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input ty
 
 // SendMailingListUpdate is the resolver for the sendMailingListUpdate field.
 func (r *mutationResolver) SendMailingListUpdate(ctx context.Context, input types.SendMailingListUpdateInput) (*types.SendMailingListUpdatePayload, error) {
-	if _, err := r.authorize(ctx, input.ID, management.ActionMailingListUpdateUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ID, management.ActionMailingListUpdateSend); err != nil {
 		return nil, err
 	}
 

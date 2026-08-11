@@ -21,7 +21,7 @@
 import { ProboElement } from "./base";
 import type { ProboRootElement } from "./base";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
-import type { BannerConfig } from "../types";
+import type { LayoutButtons } from "../types";
 
 class ProboActionButton extends ProboElement {
   protected root: ProboRootElement | null = null;
@@ -39,19 +39,18 @@ class ProboActionButton extends ProboElement {
 }
 
 class ProboHideableButton extends ProboActionButton {
-  protected textKey: string = "";
+  protected layoutButton: keyof LayoutButtons = "accept_all";
 
-  private onReady = (e: Event): void => {
-    const config = (e as CustomEvent).detail.config as BannerConfig;
-    this.applyVisibility(config);
+  private onReady = (): void => {
+    this.applyVisibility();
   };
 
   connectedCallback(): void {
     super.connectedCallback();
     if (this.root) {
-      try {
-        this.applyVisibility(this.root.bannerConfig);
-      } catch {
+      if (this.root.layout) {
+        this.applyVisibility();
+      } else {
         this.root.addEventListener("probo-ready", this.onReady, { once: true });
       }
     }
@@ -64,9 +63,9 @@ class ProboHideableButton extends ProboActionButton {
     }
   }
 
-  private applyVisibility(config: BannerConfig): void {
-    const texts = config.texts ?? {};
-    if (!texts[this.textKey]) {
+  private applyVisibility(): void {
+    const layout = this.root?.layout;
+    if (layout && !layout.buttons[this.layoutButton]) {
       this.hidden = true;
     }
   }
@@ -87,8 +86,23 @@ export class ProboAcceptButton extends ProboActionButton {
   };
 }
 
+export class ProboAcknowledgeButton extends ProboActionButton {
+  protected handleClick = (): void => {
+    if (!this.root) return;
+    this.root.client.acknowledge();
+    this.root.setState("hidden");
+    this.root.dispatchEvent(
+      new CustomEvent("probo-consent", {
+        bubbles: true,
+        composed: true,
+        detail: { action: "ACKNOWLEDGE" },
+      }),
+    );
+  };
+}
+
 export class ProboRejectButton extends ProboHideableButton {
-  protected textKey = "button_reject_all";
+  protected layoutButton = "reject_all" as const;
 
   protected handleClick = (): void => {
     if (!this.root) return;
@@ -105,7 +119,7 @@ export class ProboRejectButton extends ProboHideableButton {
 }
 
 export class ProboCustomizeButton extends ProboHideableButton {
-  protected textKey = "button_customize";
+  protected layoutButton = "customize" as const;
 
   protected handleClick = (): void => {
     if (!this.root) return;

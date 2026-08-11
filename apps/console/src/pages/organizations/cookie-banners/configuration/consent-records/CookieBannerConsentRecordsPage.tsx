@@ -184,6 +184,7 @@ export default function CookieBannerConsentRecordsPage({
           <Option value="REJECT_ALL">{t("consentRecordsPage.actions.rejectAll")}</Option>
           <Option value="CUSTOMIZE">{t("consentRecordsPage.actions.customize")}</Option>
           <Option value="GPC">{t("consentRecordsPage.actions.gpc")}</Option>
+          <Option value="ACKNOWLEDGE">{t("consentRecordsPage.actions.acknowledge")}</Option>
         </Select>
         <Input
           placeholder={t("consentRecordsPage.filters.visitorId")}
@@ -225,6 +226,7 @@ export default function CookieBannerConsentRecordsPage({
                     <Th>{t("consentRecordsPage.columns.regulation")}</Th>
                     <Th>{t("consentRecordsPage.columns.source")}</Th>
                     <Th>{t("consentRecordsPage.columns.country")}</Th>
+                    <Th>{t("consentRecordsPage.columns.subdivision")}</Th>
                     <SortableTh field="CREATED_AT">{t("consentRecordsPage.columns.date")}</SortableTh>
                   </Tr>
                 </Thead>

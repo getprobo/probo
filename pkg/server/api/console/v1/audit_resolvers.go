@@ -11,6 +11,7 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -91,6 +92,34 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 	}
 
 	return types.NewFile(file, r.fileManager), nil
+}
+
+// CompliancePortalAudit is the resolver for the compliancePortalAudit field.
+func (r *auditResolver) CompliancePortalAudit(ctx context.Context, obj *types.Audit, compliancePortalID gid.GID) (*types.CompliancePortalAudit, error) {
+	scope, err := r.authorize(ctx, compliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := dataloader.FromContext(ctx).CompliancePortalAudit.Load(
+		ctx,
+		dataloader.CompliancePortalAuditKey{
+			TenantID:           scope.GetTenantID(),
+			CompliancePortalID: compliancePortalID,
+			AuditID:            obj.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalAudit(link), nil
 }
 
 // Controls is the resolver for the controls field.
@@ -379,15 +408,14 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 	}
 
 	req := probo.CreateAuditRequest{
-		OrganizationID:             input.OrganizationID,
-		FrameworkID:                input.FrameworkID,
-		Name:                       input.Name,
-		ValidFrom:                  input.ValidFrom,
-		ValidUntil:                 input.ValidUntil,
-		AuditStartDate:             input.AuditStartDate,
-		AuditEndDate:               input.AuditEndDate,
-		State:                      input.State,
-		CompliancePortalVisibility: input.CompliancePortalVisibility,
+		OrganizationID: input.OrganizationID,
+		FrameworkID:    input.FrameworkID,
+		Name:           input.Name,
+		ValidFrom:      input.ValidFrom,
+		ValidUntil:     input.ValidUntil,
+		AuditStartDate: input.AuditStartDate,
+		AuditEndDate:   input.AuditEndDate,
+		State:          input.State,
 	}
 
 	audit, err := r.probo.Audits.Create(ctx, scope, &req)
@@ -437,14 +465,13 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	}
 
 	req := probo.UpdateAuditRequest{
-		ID:                         input.ID,
-		Name:                       gqlutils.UnwrapOmittable(input.Name),
-		ValidFrom:                  input.ValidFrom,
-		ValidUntil:                 input.ValidUntil,
-		AuditStartDate:             input.AuditStartDate,
-		AuditEndDate:               input.AuditEndDate,
-		State:                      input.State,
-		CompliancePortalVisibility: input.CompliancePortalVisibility,
+		ID:             input.ID,
+		Name:           gqlutils.UnwrapOmittable(input.Name),
+		ValidFrom:      input.ValidFrom,
+		ValidUntil:     input.ValidUntil,
+		AuditStartDate: input.AuditStartDate,
+		AuditEndDate:   input.AuditEndDate,
+		State:          input.State,
 	}
 
 	audit, err := r.probo.Audits.Update(ctx, scope, &req)

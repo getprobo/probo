@@ -1,0 +1,54 @@
+{
+  "title": "Documenten",
+  "tabs": {
+    "all": "Alle",
+    "public": "Openbaar",
+    "restricted": "Beperkt"
+  },
+  "sections": {
+    "reports": "Compliancerapporten"
+  },
+  "types": {
+    "OTHER": "Overig",
+    "GOVERNANCE": "Governance",
+    "POLICY": "Beleid",
+    "PROCEDURE": "Procedures",
+    "PLAN": "Plannen",
+    "REGISTER": "Registers",
+    "RECORD": "Vastleggingen",
+    "REPORT": "Rapporten",
+    "TEMPLATE": "Sjablonen",
+    "STATEMENT_OF_APPLICABILITY": "Verklaring van toepasselijkheid"
+  },
+  "actions": {
+    "view": "Bekijken",
+    "getAccess": "Toegang aanvragen",
+    "requested": "Toegang aangevraagd"
+  },
+  "selection": {
+    "count": "{{count}} geselecteerd",
+    "clear": "Selectie wissen",
+    "selectAll": "Alles selecteren",
+    "requestAccess": "Toegang aanvragen ({{count}})",
+    "selectRow": "{{title}} selecteren"
+  },
+  "empty": {
+    "title": "Geen documenten beschikbaar",
+    "description": "Dit complianceportaal heeft nog geen documenten gepubliceerd.",
+    "filteredTitle": "Geen documenten passen bij dit filter",
+    "filteredDescription": "Probeer een ander tabblad om beschikbare documenten te zien."
+  },
+  "viewer": {
+    "back": "Documenten",
+    "copyLink": "Link kopiëren",
+    "linkCopied": "Link gekopieerd naar klembord",
+    "download": "Downloaden",
+    "previewUnavailable": "Voorbeeld niet beschikbaar",
+    "downloadToView": "Dit bestandstype kan hier niet worden weergegeven. Download het om te bekijken.",
+    "locked": {
+      "title": "Toegang vereist",
+      "description": "U heeft nog geen toegang tot dit document.",
+      "signNda": "NDA bekijken en ondertekenen"
+    }
+  }
+}

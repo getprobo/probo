@@ -27,6 +27,7 @@ import * as updateOp from './update.operation';
 import * as startOp from './start.operation';
 import * as closeOp from './close.operation';
 import * as cancelOp from './cancel.operation';
+import * as readEntriesOp from './readEntries.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -77,6 +78,12 @@ export const description: INodeProperties[] = [
 				action: 'Get many access review campaigns',
 			},
 			{
+				name: 'Read Campaign Access Entries',
+				value: 'readEntries',
+				description: 'Read the access entries for an access review campaign',
+				action: 'Read campaign access entries',
+			},
+			{
 				name: 'Start',
 				value: 'start',
 				description: 'Start an access review campaign',
@@ -99,6 +106,7 @@ export const description: INodeProperties[] = [
 	...startOp.description,
 	...closeOp.description,
 	...cancelOp.description,
+	...readEntriesOp.description,
 ];
 
 export {
@@ -110,4 +118,5 @@ export {
 	startOp as start,
 	closeOp as close,
 	cancelOp as cancel,
+	readEntriesOp as readEntries,
 };
