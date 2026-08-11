@@ -135,9 +135,9 @@ JavaScript binding-type helpers (ImmutableString/RawString, legacy Text-as-array
 proxy/change-callback) are likewise recorded as api-convenience or
 language-specific rather than interop-required.
 
-## Known native defects (found by parity reproduction, fix pending)
+## Native defects found by parity reproduction (resolved)
 
-**Mark boundaries: fixed for the reported case, deeper cases still diverge.**
+**Mark boundaries: matches the reference, including the error paths.**
 The originally reported defect is fixed. Mark begin and end operations now hold
 positions in the sequence order, insertions (including the mark boundaries
 themselves) resolve their anchors through a port of the reference's insert
@@ -173,24 +173,29 @@ checks span consolidation and text) drove a series of fixes this pass:
   operation reusing that counter is not mistaken for it.
 
 These closed the common cases. The dangling begin the reference leaves behind
-when a mark is applied with an out-of-range end boundary is now largely handled:
-the mark call fails, but the begin was already recorded, and it then covers text
+when a mark is applied with an out-of-range end boundary is now handled in full.
+The mark call fails, but the begin was already recorded, and it then covers text
 according to its expand direction. A leftward-expanding begin (expand "before" or
 "both") sorts after same-anchor insertions by descending operation ID, so its
-walk index lands past text it should cover; `richTextMarks` now starts such a
+walk index lands past text it should cover; `richTextMarks` starts such a
 dangling begin at the position just after the begin's own anchor element (or the
-document start for a head anchor) rather than at its walk index. This is the exact
-range the reference produces: for `mark(0,3,before)` on empty text, split at 0,
-insert `"w"` at 0, both engines now report `"w"` bold (`bold 0..2`).
+document start for a head anchor) rather than at its walk index.
 
-`TestRustText_DanglingMarkBoundaries` gates four delta-debugged reproducers that
-previously diverged. A randomized value-level sweep including out-of-range
-boundaries and all four expand modes dropped from roughly 7% divergence to about
-3%; the same sweep restricted to in-range marks diverges on none. What remains are
-deeper interactions — several overlapping dangling begins whose anchor elements
-have since been deleted — where native over-extends one of the marks. These are
-strictly an error path (no valid caller marks past the end of the text) and never
-arise from the frontend, which clamps mark ranges to the text length.
+The last remaining divergences were not in span computation but in authoring: a
+split block did not resolve its insertion anchor against neighbouring mark
+boundaries the way a text insertion does. A block inserted next to a dangling
+begin therefore landed on the wrong side of it, and every insertion anchored
+after that block inherited the mistake, so the marks the following text carried
+diverged from the reference in both directions (a mark dropped, or a mark leaking
+past a block). `SplitBlock` now resolves its anchor through the same insert query
+as `Splice`.
+
+`TestRustText_DanglingMarkBoundaries` gates eleven delta-debugged reproducers,
+and `TestRustText_MarkValuesMatchReferenceUnderErrors` compares marked spans run
+for run against the reference across two thousand randomized scenarios that
+include out-of-range boundaries and every expand mode. A wider sweep of
+twenty-four thousand scenarios across six seeds, up to seventeen steps each, found
+no divergence.
 
 **Concurrent re-encoding is now byte-identical.** Assigning the value a key
 already resolves to used to skip writing an operation. That is correct for an

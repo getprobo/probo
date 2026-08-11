@@ -23,6 +23,7 @@ package automerge_test
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
 	"testing"
@@ -63,10 +64,13 @@ func (s markScenarioStep) String() string {
 // before. Native now starts a leftward-expanding dangling begin at the position
 // just after its own anchor, matching the reference.
 //
-// Every case here is minimized by delta debugging from randomized differential
-// runs. Deeper dangling-begin interactions (multiple overlapping marks whose
-// anchors have since been deleted) still diverge on a small fraction of
-// randomized error-path scenarios and are tracked in PARITY_PLAN.md.
+// The block-boundary and multi-dangling cases below were minimized by delta
+// debugging from randomized differential runs. They all shared one cause: a
+// split block did not resolve its insertion anchor against neighbouring mark
+// boundaries the way a text insertion does, so a block, and every insertion
+// anchored after it, landed on the wrong side of a dangling begin. SplitBlock
+// now resolves its anchor identically to Splice, and a value-level randomized
+// sweep including out-of-range marks and every expand mode no longer diverges.
 func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 	t.Parallel()
 
@@ -112,6 +116,71 @@ func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 				{kind: "insert", index: 4, value: "J"},
 			},
 		},
+		{
+			name: "two dangling begins both survive",
+			steps: []markScenarioStep{
+				{kind: "mark", index: 0, end: 3, name: "italic", expand: automerge.MarkExpandBoth},
+				{kind: "mark", index: 0, end: 3, name: "bold", expand: automerge.MarkExpandBoth},
+				{kind: "split", index: 0},
+				{kind: "insert", index: 0, value: "u"},
+			},
+		},
+		{
+			name: "overlapping begins with mixed expand both survive",
+			steps: []markScenarioStep{
+				{kind: "mark", index: 0, end: 1, name: "italic", expand: automerge.MarkExpandBoth},
+				{kind: "mark", index: 0, end: 1, name: "underline", expand: automerge.MarkExpandBefore},
+				{kind: "split", index: 0},
+				{kind: "insert", index: 0, value: "vJ"},
+			},
+		},
+		{
+			name: "dangling begin after a full delete and resplit",
+			steps: []markScenarioStep{
+				{kind: "split", index: 0},
+				{kind: "mark", index: 1, end: 4, name: "bold", expand: automerge.MarkExpandBoth},
+				{kind: "delete", index: 0, count: 4},
+				{kind: "split", index: 0},
+				{kind: "insert", index: 0, value: "rG"},
+			},
+		},
+		{
+			name: "none expand mark does not leak past a block",
+			steps: []markScenarioStep{
+				{kind: "split", index: 0},
+				{kind: "mark", index: 0, end: 1, name: "bold", expand: automerge.MarkExpandNone},
+				{kind: "split", index: 1},
+				{kind: "insert", index: 1, value: "Plk"},
+			},
+		},
+		{
+			name: "before expand mark does not leak across a block",
+			steps: []markScenarioStep{
+				{kind: "split", index: 0},
+				{kind: "mark", index: 0, end: 1, name: "bold", expand: automerge.MarkExpandBefore},
+				{kind: "split", index: 1},
+				{kind: "insert", index: 1, value: "lMf"},
+			},
+		},
+		{
+			name: "before expand mark bounded by two blocks",
+			steps: []markScenarioStep{
+				{kind: "split", index: 0},
+				{kind: "mark", index: 0, end: 1, name: "bold", expand: automerge.MarkExpandBefore},
+				{kind: "split", index: 1},
+				{kind: "split", index: 1},
+				{kind: "insert", index: 2, value: "ed"},
+			},
+		},
+		{
+			name: "before expand mark across a block at head",
+			steps: []markScenarioStep{
+				{kind: "split", index: 0},
+				{kind: "mark", index: 0, end: 1, name: "italic", expand: automerge.MarkExpandBefore},
+				{kind: "split", index: 0},
+				{kind: "insert", index: 0, value: "C"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -125,6 +194,90 @@ func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 			)
 		})
 	}
+}
+
+// TestRustText_MarkValuesMatchReferenceUnderErrors is the standing gate for the
+// dangling-mark behavior: many randomized scenarios, deliberately including marks
+// whose end boundary runs past the text and every expand mode, must produce the
+// exact same marked spans on the native and reference engines. This is stronger
+// than the consolidation-and-text invariants of marks_are_okay because it
+// compares the mark values run for run, which is what caught the block-anchor
+// divergence this gate now protects against.
+func TestRustText_MarkValuesMatchReferenceUnderErrors(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	random := rand.New(rand.NewSource(0x1e3779b97f4a7c15))
+
+	const scenarios = 2000
+
+	for scenario := range scenarios {
+		steps := randomDanglingMarkSteps(random)
+
+		reference := runMarkScenario(t, ctx, rustParityEngines()[1], steps)
+		native := runMarkScenario(t, ctx, rustParityEngines()[0], steps)
+
+		require.Equalf(t, reference, native,
+			"scenario %d diverged; steps: %s", scenario, renderMarkScenario(steps))
+	}
+}
+
+// randomDanglingMarkSteps builds a random editing scenario over text, list and
+// mark operations. Marks may target an end boundary past the current length so
+// the error path that leaves a dangling begin is exercised, and every expand
+// mode appears.
+func randomDanglingMarkSteps(random *rand.Rand) []markScenarioStep {
+	names := []string{"bold", "italic", "underline"}
+	expands := []automerge.MarkExpand{
+		automerge.MarkExpandNone,
+		automerge.MarkExpandBefore,
+		automerge.MarkExpandAfter,
+		automerge.MarkExpandBoth,
+	}
+
+	steps := 3 + random.Intn(10)
+	out := make([]markScenarioStep, 0, steps)
+	length := 0
+
+	for range steps {
+		switch random.Intn(4) {
+		case 0:
+			index := random.Intn(length + 1)
+			value := randomLetters(random, 1+random.Intn(3))
+			out = append(out, markScenarioStep{kind: "insert", index: uint32(index), value: value})
+			length += len(value)
+		case 1:
+			if length == 0 {
+				continue
+			}
+
+			index := random.Intn(length)
+			count := 1 + random.Intn(length-index)
+			out = append(out, markScenarioStep{kind: "delete", index: uint32(index), count: int32(count)})
+			length -= count
+		case 2:
+			index := random.Intn(length + 1)
+			out = append(out, markScenarioStep{kind: "split", index: uint32(index)})
+			length++
+		case 3:
+			if length == 0 {
+				continue
+			}
+
+			index := random.Intn(length)
+			// end may exceed the length so the dangling-begin path is covered.
+			end := index + 1 + random.Intn(length+2-index)
+			out = append(out, markScenarioStep{
+				kind:   "mark",
+				index:  uint32(index),
+				end:    uint32(end),
+				name:   names[random.Intn(len(names))],
+				expand: expands[random.Intn(len(expands))],
+			})
+		}
+	}
+
+	return out
 }
 
 func runMarkScenario(

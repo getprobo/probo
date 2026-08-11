@@ -811,6 +811,13 @@ func (b *Engine) SplitBlock(
 		key.Element = new(*previous)
 	}
 
+	// A block marker shares the unified rich-text sequence with text, so it must
+	// resolve its anchor against neighbouring mark boundaries the same way a text
+	// insertion does. Without this, a block inserted next to a mark boundary lands
+	// on the wrong side of it, which then misplaces later insertions and makes the
+	// marks they should or should not carry diverge from the reference.
+	key = b.state.insertAnchorKey(object.OpID, key)
+
 	operation := Operation{
 		ID:     b.nextOperationID(),
 		Object: object,
