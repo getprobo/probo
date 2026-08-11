@@ -22,23 +22,32 @@ package complianceportal_v1
 
 import (
 	"context"
+	"errors"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
-// requireFullName returns FULL_NAME_REQUIRED when the signed-in identity has no
-// name. Call after authentication on NDA signing mutations, and from
-// requireCompletedNDA before NDA_SIGNATURE_REQUIRED so the full-name gate wins.
-func requireFullName(ctx context.Context, identity *coredata.Identity) error {
-	if identity.FullName == "" {
+// mapNDASigningValidationError maps esign full-name validation failures to
+// FULL_NAME_REQUIRED so the portal gate redirect keeps working. Other
+// validation errors become InvalidValidationErrors. Returns nil when err is
+// not a ValidationErrors value.
+func mapNDASigningValidationError(ctx context.Context, err error) error {
+	validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+	if !ok {
+		return nil
+	}
+
+	if len(validationErrors.ByField("signer_full_name")) > 0 ||
+		len(validationErrors.ByField("actor_full_name")) > 0 {
 		return gqlutils.FullNameRequiredf(ctx, "full name is required")
 	}
 
-	return nil
+	return gqlutils.InvalidValidationErrors(ctx, validationErrors)
 }
 
 // requireCompletedNDA enforces portal NDA completion for the signed-in identity.
@@ -75,8 +84,10 @@ func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 		return gqlutils.Internal(ctx)
 	}
 
-	if err := requireFullName(ctx, identity); err != nil {
-		return err
+	// Full name before NDA so export paths send users to /full-name first.
+	// Accept maps esign signer_full_name validation to the same gate code.
+	if identity.FullName == "" {
+		return gqlutils.FullNameRequiredf(ctx, "full name is required")
 	}
 
 	if sig.Status != coredata.ElectronicSignatureStatusCompleted {

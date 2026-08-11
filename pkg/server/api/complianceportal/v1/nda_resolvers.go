@@ -32,10 +32,6 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
 	}
 
-	if err := requireFullName(ctx, identity); err != nil {
-		return nil, err
-	}
-
 	signerIP := clientip.Extract(httpReq)
 
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
@@ -56,6 +52,10 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 	if err != nil {
 		if errors.Is(err, esign.ErrSignatureAccessDenied) {
 			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
+		if mapped := mapNDASigningValidationError(ctx, err); mapped != nil {
+			return nil, mapped
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
@@ -79,10 +79,6 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
 	}
 
-	if err := requireFullName(ctx, identity); err != nil {
-		return nil, err
-	}
-
 	actorIP := clientip.Extract(httpReq)
 
 	scope := coredata.NewScopeFromObjectID(compliancePortal.ID)
@@ -93,16 +89,21 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		compliancePortal.ID,
 		identity.ID,
 		&esign.RecordEventRequest{
-			SignatureID: input.SignatureID,
-			EventType:   input.EventType,
-			EventSource: coredata.ElectronicSignatureEventSourceClient,
-			ActorEmail:  identity.EmailAddress,
-			ActorIPAddr: actorIP,
-			ActorUA:     httpReq.UserAgent(),
+			SignatureID:   input.SignatureID,
+			EventType:     input.EventType,
+			EventSource:   coredata.ElectronicSignatureEventSourceClient,
+			ActorFullName: identity.FullName,
+			ActorEmail:    identity.EmailAddress,
+			ActorIPAddr:   actorIP,
+			ActorUA:       httpReq.UserAgent(),
 		},
 	); err != nil {
 		if errors.Is(err, esign.ErrSignatureAccessDenied) {
 			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
+		if mapped := mapNDASigningValidationError(ctx, err); mapped != nil {
+			return nil, mapped
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))

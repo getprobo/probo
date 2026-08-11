@@ -126,8 +126,8 @@ func TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature(t *t
 
 // TestCompliancePortal_NDASigning_RequiresFullName ensures visitors with an
 // empty identity name cannot accept or record NDA signing events. Soft paths
-// to /nda no longer hit requireCompletedNDA, so the signing mutations must
-// enforce FULL_NAME_REQUIRED themselves.
+// to /nda no longer hit requireCompletedNDA; both mutations map esign full-name
+// validation to FULL_NAME_REQUIRED.
 func TestCompliancePortal_NDASigning_RequiresFullName(t *testing.T) {
 	t.Parallel()
 

@@ -62,6 +62,22 @@ func TestCreateAndAcceptSignature_EmptySignerFullName(t *testing.T) {
 	assert.NotEmpty(t, validationErrors.ByField("signer_full_name"))
 }
 
+func TestRecordEvent_EmptyActorFullName(t *testing.T) {
+	t.Parallel()
+
+	s := &Service{}
+	err := s.RecordEvent(
+		context.Background(),
+		nil,
+		&RecordEventRequest{ActorFullName: " \t "},
+	)
+
+	require.Error(t, err)
+	validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+	require.True(t, ok)
+	assert.NotEmpty(t, validationErrors.ByField("actor_full_name"))
+}
+
 func TestSignatureRequestsValidate_SignerFullName(t *testing.T) {
 	t.Parallel()
 
@@ -79,6 +95,12 @@ func TestSignatureRequestsValidate_SignerFullName(t *testing.T) {
 			name: "create and accept signature",
 			validate: func() error {
 				return (CreateAndAcceptSignatureRequest{SignerFullName: "Ada Lovelace"}).Validate()
+			},
+		},
+		{
+			name: "record event",
+			validate: func() error {
+				return (RecordEventRequest{ActorFullName: "Ada Lovelace"}).Validate()
 			},
 		},
 	}
