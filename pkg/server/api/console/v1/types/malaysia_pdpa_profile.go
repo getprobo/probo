@@ -61,6 +61,7 @@ func NewMalaysiaPDPAProfile(p *coredata.MalaysiaPDPAProfile) *MalaysiaPDPAProfil
 		DPOProfileID:                      p.DPOProfileID,
 		DPOAppointedAt:                    p.DPOAppointedAt,
 		CommissionerNotificationDueAt:     commissionerNotificationDueAt,
+		CommissionerNotificationOverdue:   deadlineOverdue(commissionerNotificationDueAt, p.CommissionerNotifiedAt),
 		CommissionerNotifiedAt:            p.CommissionerNotifiedAt,
 		CommissionerNotificationReference: p.CommissionerNotificationReference,
 		CreatedAt:                         createdAt,

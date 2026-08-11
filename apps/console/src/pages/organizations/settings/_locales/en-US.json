@@ -57,6 +57,7 @@
     "notification": {
       "title": "Commissioner notification",
       "description": "Track the notification that is due within 21 days after the DPO appointment.",
+      "overdue": "Overdue",
       "dueAt": {
         "label": "Notification due"
       },

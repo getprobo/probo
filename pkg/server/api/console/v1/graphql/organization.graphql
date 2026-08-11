@@ -153,6 +153,7 @@ type MalaysiaPDPAProfile {
     dpoProfileId: ID @goField(name: "DPOProfileID")
     dpoAppointedAt: Datetime @goField(name: "DPOAppointedAt")
     commissionerNotificationDueAt: Datetime
+    commissionerNotificationOverdue: Boolean!
     commissionerNotifiedAt: Datetime
     commissionerNotificationReference: String
     createdAt: Datetime
