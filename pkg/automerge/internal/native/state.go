@@ -52,6 +52,18 @@ type (
 		sequenceValuesCache   map[OpID][]sequenceValue
 		sequenceElementsCache map[OpID][]Operation
 
+		// sequenceOffsetCache holds the cumulative UTF-16 width before each
+		// element of sequenceElementsCache (with a trailing total), so a text
+		// index resolves to an element by binary search instead of a linear
+		// walk. It is kept in step with the elements cache and guarded by length.
+		sequenceOffsetCache map[OpID][]uint32
+
+		// insertOrderPositionCache maps each insert-order operation to its index,
+		// so an insertion anchor resolves in constant time instead of scanning
+		// the order. Insert order only ever grows, so a length guard is enough to
+		// detect staleness.
+		insertOrderPositionCache map[OpID]map[OpID]int
+
 		// mapKeyIndex groups operation IDs by the map property they address so
 		// reading a key does not scan the whole operation set. It is built on
 		// first use and then maintained as operations are applied.
@@ -73,16 +85,18 @@ type (
 
 func NewState() *State {
 	return &State{
-		changes:               make(map[ChangeHash]*Change),
-		actorSequence:         make(map[ActorID]uint64),
-		operations:            make(map[OpID]Operation),
-		superseded:            make(map[OpID]struct{}),
-		heads:                 make(map[ChangeHash]struct{}),
-		sequenceCache:         make(map[OpID][]Operation),
-		insertOrderCache:      make(map[OpID][]OpID),
-		sequenceValuesCache:   make(map[OpID][]sequenceValue),
-		sequenceElementsCache: make(map[OpID][]Operation),
-		mapKeyIndex:           make(map[ObjectID]map[string][]OpID),
+		changes:                  make(map[ChangeHash]*Change),
+		actorSequence:            make(map[ActorID]uint64),
+		operations:               make(map[OpID]Operation),
+		superseded:               make(map[OpID]struct{}),
+		heads:                    make(map[ChangeHash]struct{}),
+		sequenceCache:            make(map[OpID][]Operation),
+		insertOrderCache:         make(map[OpID][]OpID),
+		sequenceValuesCache:      make(map[OpID][]sequenceValue),
+		sequenceElementsCache:    make(map[OpID][]Operation),
+		sequenceOffsetCache:      make(map[OpID][]uint32),
+		insertOrderPositionCache: make(map[OpID]map[OpID]int),
+		mapKeyIndex:              make(map[ObjectID]map[string][]OpID),
 	}
 }
 
@@ -200,8 +214,10 @@ func (s *State) ApplyChange(change *Change) error {
 		if !operation.Object.IsRoot {
 			delete(s.sequenceCache, operation.Object.OpID)
 			delete(s.insertOrderCache, operation.Object.OpID)
+			delete(s.insertOrderPositionCache, operation.Object.OpID)
 			delete(s.sequenceValuesCache, operation.Object.OpID)
 			delete(s.sequenceElementsCache, operation.Object.OpID)
+			delete(s.sequenceOffsetCache, operation.Object.OpID)
 		}
 
 		s.indexMapKeyOperation(operation)

@@ -155,12 +155,15 @@ func (s *State) spliceInsertOrder(operation Operation) {
 
 	if operation.Key.IsHead {
 		s.insertOrderCache[object] = append([]OpID{operation.ID}, order...)
+		// A prepend shifts every position, so the index is rebuilt on demand.
+		delete(s.insertOrderPositionCache, object)
 
 		return
 	}
 
 	if operation.Key.Element == nil {
 		delete(s.insertOrderCache, object)
+		delete(s.insertOrderPositionCache, object)
 
 		return
 	}
@@ -169,6 +172,13 @@ func (s *State) spliceInsertOrder(operation Operation) {
 
 	if len(order) > 0 && order[len(order)-1] == anchor {
 		s.insertOrderCache[object] = append(order, operation.ID)
+
+		// Appending at the end keeps every existing index, so extend the position
+		// index in step to keep sequential typing constant time.
+		if positions, ok := s.insertOrderPositionCache[object]; ok &&
+			len(positions) == len(order) {
+			positions[operation.ID] = len(order)
+		}
 
 		return
 	}
@@ -184,12 +194,15 @@ func (s *State) spliceInsertOrder(operation Operation) {
 		updated = append(updated, operation.ID)
 		updated = append(updated, order[position:]...)
 		s.insertOrderCache[object] = updated
+		// An insertion in the middle shifts later positions; rebuild on demand.
+		delete(s.insertOrderPositionCache, object)
 
 		return
 	}
 
 	// The anchor is not present in the cached order; rebuild lazily.
 	delete(s.insertOrderCache, object)
+	delete(s.insertOrderPositionCache, object)
 }
 
 func (s *State) sequenceValues(object OpID) []sequenceValue {
@@ -260,6 +273,7 @@ func (s *State) updateSequenceValues(operation Operation) {
 	if !appended {
 		delete(s.sequenceValuesCache, object)
 		delete(s.sequenceElementsCache, object)
+		delete(s.sequenceOffsetCache, object)
 
 		return
 	}
@@ -273,7 +287,57 @@ func (s *State) updateSequenceValues(operation Operation) {
 
 	if cached, ok := s.sequenceElementsCache[object]; ok {
 		s.sequenceElementsCache[object] = append(cached, operation)
+
+		// Extend the offset index in step so appending stays constant time. A
+		// valid offset slice for N elements holds N+1 entries, so it lines up
+		// with the pre-append element count; the new element starts at the
+		// previous total width.
+		if offsets, ok := s.sequenceOffsetCache[object]; ok &&
+			len(offsets) == len(cached)+1 {
+			s.sequenceOffsetCache[object] = append(
+				offsets,
+				offsets[len(offsets)-1]+elementLength(operation),
+			)
+		}
 	}
+}
+
+// sequenceOffsets returns the cumulative UTF-16 width before each element of the
+// given sequence, with a trailing entry holding the total width. It is cached
+// and rebuilt whenever it does not line up with the elements, so a text index
+// can be resolved by binary search rather than a linear walk.
+func (s *State) sequenceOffsets(object OpID, elements []Operation) []uint32 {
+	if cached, ok := s.sequenceOffsetCache[object]; ok && len(cached) == len(elements)+1 {
+		return cached
+	}
+
+	offsets := make([]uint32, len(elements)+1)
+	for i, operation := range elements {
+		offsets[i+1] = offsets[i] + elementLength(operation)
+	}
+
+	s.sequenceOffsetCache[object] = offsets
+
+	return offsets
+}
+
+// insertOrderPositions returns each insert-order operation's index. Insert order
+// only ever grows, so a length mismatch is a sufficient staleness check.
+func (s *State) insertOrderPositions(object OpID) map[OpID]int {
+	order := s.insertOrder(object)
+
+	if cached, ok := s.insertOrderPositionCache[object]; ok && len(cached) == len(order) {
+		return cached
+	}
+
+	positions := make(map[OpID]int, len(order))
+	for index, id := range order {
+		positions[id] = index
+	}
+
+	s.insertOrderPositionCache[object] = positions
+
+	return positions
 }
 
 // elementValueWinners returns, for every list element that has been assigned a

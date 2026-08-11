@@ -98,8 +98,9 @@ func (b *Engine) SpliceText(
 	// blocks, so walk the full visible element sequence (text and block markers)
 	// rather than the text-only view.
 	sequence := b.state.sequenceElements(object.OpID)
+	offsets := b.state.sequenceOffsets(object.OpID, sequence)
 
-	start, end, previous, err := sequenceRange(sequence, index, uint32(deleteCount))
+	start, end, previous, err := sequenceRange(sequence, offsets, index, uint32(deleteCount))
 	if err != nil {
 		return err
 	}

@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 )
 
 func (b *Engine) addPending(operation Operation) error {
@@ -426,62 +427,51 @@ func richTextPosition(
 	return nil, previous, nil
 }
 
+// sequenceRange resolves a UTF-16 index and delete count against the visible
+// sequence using the precomputed cumulative offsets, so a splice locates its
+// position by binary search rather than walking the whole sequence. offsets has
+// one entry per element plus a trailing total, where offsets[i] is the width
+// before element i.
 func sequenceRange(
 	sequence []Operation,
+	offsets []uint32,
 	index uint32,
 	deleteCount uint32,
 ) (int, int, *OpID, error) {
-	position := uint32(0)
-	start := -1
+	total := offsets[len(offsets)-1]
+	if index > total {
+		return 0, 0, nil, fmt.Errorf("text index %d is out of bounds", index)
+	}
 
-	var (
-		previous      *OpID
-		previousValue OpID
-	)
+	// Find the element whose starting offset is the last one at or before index.
+	// When that offset equals index the insertion sits on the boundary before
+	// the element; when it is smaller the index fell inside the element (a UTF-16
+	// caller addressing the middle of a surrogate pair), so advance to the
+	// boundary after it, matching the reference.
+	boundary := sort.Search(len(offsets), func(i int) bool { return offsets[i] > index })
+	start := boundary - 1
+	if offsets[start] < index {
+		start++
+	}
 
-	for i, operation := range sequence {
-		if position == index {
-			start = i
-			break
-		}
-
-		length := elementLength(operation)
-		if position+length > index {
-			// UTF-16 callers can address the middle of a surrogate pair.
-			// Upstream Rust advances such a position to the boundary after
-			// the character rather than rejecting the edit.
-			position += length
-			previousValue = operation.ID
-			previous = &previousValue
-			start = i + 1
-
-			break
-		}
-
-		position += length
-		previousValue = operation.ID
+	var previous *OpID
+	if start > 0 {
+		previousValue := sequence[start-1].ID
 		previous = &previousValue
-	}
-
-	if start == -1 {
-		if position != index {
-			return 0, 0, nil, fmt.Errorf("text index %d is out of bounds", index)
-		}
-
-		start = len(sequence)
-	}
-
-	target := position + deleteCount
-
-	end := start
-	for end < len(sequence) && position < target {
-		position += elementLength(sequence[end])
-		end++
 	}
 
 	// A deletion that runs past the end of the sequence is clamped to the
 	// remaining elements rather than rejected, matching the reference, whose
-	// splice stops once there are no more elements to delete.
+	// splice stops once there are no more elements to delete. end is the first
+	// element boundary at or past the deletion target.
+	target := offsets[start] + deleteCount
+	end := start + sort.Search(len(sequence)-start+1, func(i int) bool {
+		return offsets[start+i] >= target
+	})
+	if end > len(sequence) {
+		end = len(sequence)
+	}
+
 	return start, end, previous, nil
 }
 

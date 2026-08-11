@@ -119,20 +119,12 @@ func (s *State) insertAnchorKey(object OpID, base Key) Key {
 			return base
 		}
 
-		found := false
-
-		for i, id := range order {
-			if id == *base.Element {
-				start = i + 1
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
+		position, ok := s.insertOrderPositions(object)[*base.Element]
+		if !ok {
 			return base
 		}
+
+		start = position + 1
 	}
 
 	type candidate struct {
