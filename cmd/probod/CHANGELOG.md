@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.257.0] - 2026-08-11
+
+### Added
+
+- Console and compliance portal now send a Content-Security-Policy header, with a matching policy applied to their local Vite dev servers, restricting scripts, styles, and connections to known origins (including object storage, Google Fonts, Google favicons, and Markdown image sources), and hardened against configuration and origin injection.
+
+### Fixed
+
+- Clearing a person's contract end date now updates the people list immediately instead of only on the server, and the people list's actions column no longer starves date columns of space.
+
+### Changed
+
+- Cookie banner presentation now matches each jurisdiction's actual disclosure duties: Japan and jurisdictions with no cookie-consent law move to the opt-out layout instead of interrupting every visitor on load, Brazil (LGPD) requires prior opt-in, and a US visitor whose state cannot be resolved falls back to CCPA rather than no regulation. Only Mexico keeps the notice-on-load presentation.
+- Opt-out button copy is split into a generic label and a California-specific statutory label, so the "Do Not Sell or Share" phrasing no longer appears outside US state privacy laws.
+
 ## [0.256.0] - 2026-08-10
 
 ### Added
