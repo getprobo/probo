@@ -379,6 +379,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			rows := make([][]string, 0, len(entries))
 			for _, e := range entries {
 				admin := "unknown"
+
 				if e.IsAdmin != nil {
 					if *e.IsAdmin {
 						admin = "yes"
