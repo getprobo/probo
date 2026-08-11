@@ -162,7 +162,7 @@ type (
 )
 
 const (
-	documentContentMaxTextLength = 50_000
+	documentContentMaxTextLength = 200_000
 	documentContentMaxJSONBytes  = 500_000
 )
 
