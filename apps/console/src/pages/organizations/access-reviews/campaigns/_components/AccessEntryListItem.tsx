@@ -20,6 +20,7 @@
 
 import { dateFormat } from "@probo/i18n";
 import { Badge, Checkbox, IconRobot } from "@probo/ui";
+import * as Popover from "@radix-ui/react-popover";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -83,7 +84,7 @@ export function AccessEntryListItem({
   const email = entry.email.trim();
   const title = fullName || email;
   const role = entry.roles[0] ?? null;
-  const extraRoles = entry.roles.length > 1 ? entry.roles.length - 1 : 0;
+  const extraRoles = entry.roles.slice(1);
 
   return (
     <li className={item()}>
@@ -126,13 +127,42 @@ export function AccessEntryListItem({
             : null}
           {role
             ? (
-                <span className="truncate" title={entry.roles.join(", ")}>
+                <span className="truncate" title={role}>
                   {role}
                 </span>
               )
             : null}
-          {extraRoles > 0 && (
-            <span className="shrink-0">{`+${extraRoles}`}</span>
+          {extraRoles.length > 0 && (
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <button
+                  type="button"
+                  className="shrink-0 cursor-pointer hover:text-txt-primary"
+                  title={extraRoles.join(", ")}
+                >
+                  {`+${extraRoles.length}`}
+                </button>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  className="z-50 max-w-sm rounded-md border bg-level-0 p-3 shadow-md"
+                  sideOffset={4}
+                  align="start"
+                >
+                  <div className="flex flex-wrap gap-1">
+                    {extraRoles.map((extraRole, index) => (
+                      <Badge
+                        key={`${index}-${extraRole}`}
+                        variant="neutral"
+                        className="text-xs"
+                      >
+                        {extraRole}
+                      </Badge>
+                    ))}
+                  </div>
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
           )}
         </div>
       </div>
