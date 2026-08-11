@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.258.0] - 2026-08-11
+
+### Added
+
+- Nuki access review integration: connect a Nuki account to review who can open which smart locks, with door grants, roles, last activity, and active state per person, and unlinked keypad codes and fobs surfaced as service accounts.
+
+### Fixed
+
+- Certificates of Completion now print `signed_at` at the same microsecond precision used to compute the seal, so the certificate's own Seal Verification procedure reproduces the digest instead of appearing to fail. Certificates generated before this change remain unverifiable by the printed procedure.
+- Electronic signatures are rejected when the signer has no name, and compliance portal visitors without a full name are redirected to set one before they can sign the NDA instead of accepting it with a blank signature.
+- Identity and membership profile names are trimmed when set, so whitespace-only names can no longer be stored.
+- The console's Content-Security-Policy now allows Google favicons served from `*.gstatic.com`, and console schema validation no longer needs `eval`, so both work under the policy.
+- Access review CSV sources accept multiple roles in the `role` column, separated by semicolons.
+
+### Changed
+
+- Access review admin status, MFA, and other provider signals distinguish unknown from false: values the source does not report, or reports in an unfamiliar form, now display as unknown instead of being shown as negative. Campaign entry rows and the additional-roles popover were reworked to present this consistently.
+- Document content now allows up to 200,000 characters of text, up from 50,000.
+
 ## [0.257.0] - 2026-08-11
 
 ### Added
