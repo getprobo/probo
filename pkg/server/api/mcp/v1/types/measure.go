@@ -56,6 +56,25 @@ func NewListControlMeasuresOutput(measurePage *page.Page[*coredata.Measure, core
 	}
 }
 
+func NewListRiskMeasuresOutput(measurePage *page.Page[*coredata.Measure, coredata.MeasureOrderField]) ListRiskMeasuresOutput {
+	measures := make([]*Measure, 0, len(measurePage.Data))
+	for _, v := range measurePage.Data {
+		measures = append(measures, NewMeasure(v))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if len(measurePage.Data) > 0 {
+		cursorKey := measurePage.Data[len(measurePage.Data)-1].CursorKey(measurePage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListRiskMeasuresOutput{
+		NextCursor: nextCursor,
+		Measures:   measures,
+	}
+}
+
 func NewListMeasuresOutput(measurePage *page.Page[*coredata.Measure, coredata.MeasureOrderField]) ListMeasuresOutput {
 	measures := make([]*Measure, 0, len(measurePage.Data))
 	for _, v := range measurePage.Data {

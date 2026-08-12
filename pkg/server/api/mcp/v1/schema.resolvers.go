@@ -1937,6 +1937,36 @@ func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToo
 	return nil, types.NewListRiskObligationsOutput(obligationPage), nil
 }
 
+func (r *Resolver) ListRiskMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskMeasuresInput) (*mcp.CallToolResult, types.ListRiskMeasuresOutput, error) {
+	scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskGet)
+	if err != nil {
+		return nil, types.ListRiskMeasuresOutput{}, err
+	}
+
+	prb := r.proboSvc
+
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	measurePage, err := prb.Measures.ListForRiskID(ctx, scope, input.RiskID, cursor, coredata.NewMeasureFilter(nil, nil, nil))
+	if err != nil {
+		return nil, types.ListRiskMeasuresOutput{}, fmt.Errorf("failed to list risk measures: %w", err)
+	}
+
+	return nil, types.NewListRiskMeasuresOutput(measurePage), nil
+}
+
 func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskInput) (*mcp.CallToolResult, types.LinkRiskOutput, error) {
 	svc := r.proboSvc
 

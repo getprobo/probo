@@ -6529,6 +6529,37 @@ components:
           items:
             $ref: "#/components/schemas/Obligation"
 
+    ListRiskMeasuresInput:
+      type: object
+      required:
+        - risk_id
+      properties:
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/MeasureOrderBy"
+          description: Measure order by
+
+    ListRiskMeasuresOutput:
+      type: object
+      required:
+        - measures
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        measures:
+          type: array
+          items:
+            $ref: "#/components/schemas/Measure"
+
     LinkRiskInput:
       type: object
       required:
@@ -16284,6 +16315,18 @@ tools:
       $ref: "#/components/schemas/ListRiskObligationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListRiskObligationsOutput"
+  - name: listRiskMeasures
+    title: List Risk Measures
+    description: List measures linked to a risk
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskMeasuresInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskMeasuresOutput"
   - name: linkRisk
     title: Link Risk
     description: Link a risk to a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.

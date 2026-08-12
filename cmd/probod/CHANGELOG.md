@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- MCP `listRiskMeasures` tool to list measures linked to a risk (reverse of `listMeasureRisks`), so callers can discover links to unlink before `deleteRisk`.
+
 ## [0.259.0] - 2026-08-13
 
 ### Added
