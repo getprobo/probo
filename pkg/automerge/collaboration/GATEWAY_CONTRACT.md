@@ -117,10 +117,14 @@ PM → spans conversion runs.
   `Text.getCursor` and resolves them with `Text.getCursorPosition`; the presence
   decorations in `packages/ui/src/RichEditor/presence.ts` render from the resolved
   positions.
-- **Cross-instance ephemeral is still single-instance today.** `realtime.Events`
-  carries only the version id (a "changed" signal) over `NOTIFY`; carrying the
-  ephemeral payload across server instances is a follow-up. Sync already fans out
-  cross-instance via the existing refresh path.
+- **Cross-instance ephemeral** is delivered by publishing the frame over the
+  collaboration `NOTIFY` channel in a typed envelope
+  (`realtime.CollaborationEphemeral`) alongside the bare version-id "changed"
+  signal. The `/repo` loop relays each gossiped frame with
+  `DocumentService.NotifyCollaborationEphemeral`; the receiving instance decodes
+  the envelope in `notifyExternal` and fans it out to local peers, skipping the
+  publishing instance's own echo. Oversized frames fall back to local-only
+  fan-out.
 
 ## 6. Reconnect and revision
 
@@ -156,5 +160,5 @@ PM → spans conversion runs.
 | `/repo` route wiring | done, driven end-to-end in Go by a real `ClientConn` (Postgres integration + live JS still pending) |
 | ProseMirror → spans forward conversion (`prosemirror.ToSpans`) | done, round-trips the whole shared corpus |
 | Server-authoritative seeding | done, seeds on first open from stored content and materializes over the loop (Postgres lifecycle still to integration-test) |
-| Cross-instance ephemeral fan-out | pending (extend `realtime.Events`) |
+| Cross-instance ephemeral fan-out | done, published over the NOTIFY channel and delivered to local peers with self-echo suppression (Postgres delivery still to integration-test) |
 | Repo `NetworkAdapter` targeting `/repo` (frontend) | pending (needs `@automerge/automerge-repo` dep + gateway) |

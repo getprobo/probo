@@ -260,10 +260,11 @@ or cross-instance notification:
 These need the migrated frontend (and a Postgres-backed integration test) to
 settle, so they are intentionally not encoded as untested production code yet:
 
-- **Cross-instance ephemeral** — `realtime.Events` currently carries only the
-  document-version id (a "changed" signal) over `NOTIFY`. Repo ephemeral gossip
-  across server instances needs the payload carried too, or a separate pub/sub
-  channel. Single-instance fan-out (above) is complete.
+- **Cross-instance ephemeral** — done. Repo ephemeral gossip is published over
+  the collaboration `NOTIFY` channel in a typed envelope
+  (`realtime.CollaborationEphemeral`) that coexists with the bare version-id
+  "changed" signal; the receiving instance fans it out to local peers and
+  suppresses the publisher's own echo.
 - **Seeding** — the legacy handshake ships `SeedContent` for the client to apply;
   the repo protocol has no such field. The repo endpoint must instead seed the
   server-side document (authoritative) before serving, or rely on the first
