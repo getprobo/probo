@@ -19,9 +19,7 @@
 // SOFTWARE.
 
 import type { Icon } from "@phosphor-icons/react";
-import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
-import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
-import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Link } from "react-router";
 
 import { navRail } from "./variants";
@@ -34,24 +32,24 @@ export interface NavRailItemProps {
 }
 
 /**
- * One product in the rail: an icon that names itself on hover.
+ * One product in the rail: an icon, and a label that fades in once the rail
+ * opens.
  *
- * The label is the tooltip *and* the accessible name, so the icon never has to
- * carry meaning on its own.
+ * The label is always in the DOM rather than swapped in on hover, so it names
+ * the link for assistive technology even while it is visually hidden. That is
+ * why there is no `aria-label` here.
  */
 export function NavRailItem({ icon: IconComponent, label, to, active }: NavRailItemProps) {
   const slots = navRail({ active });
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={(
-          <Link to={to} aria-label={label} className={slots.item()}>
-            <IconComponent size={20} aria-hidden />
-          </Link>
-        )}
-      />
-      <TooltipPopup side="right">{label}</TooltipPopup>
-    </Tooltip>
+    <Link to={to} className={slots.item()}>
+      <span className={slots.icon()}>
+        <IconComponent size={20} aria-hidden />
+      </span>
+      <Text size={2} className={slots.label()}>
+        {label}
+      </Text>
+    </Link>
   );
 }

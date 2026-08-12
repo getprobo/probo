@@ -80,19 +80,48 @@ export const viewerMembershipMenuTrigger = tv({
   ],
 });
 
+// The product rail, which widens on hover to name its icons.
+//
+// It expands as an overlay rather than in flow: `root` holds the collapsed
+// width in the flex row and the rail itself is absolute inside it, so opening
+// it cannot shove the panel and the page sideways every time the pointer
+// brushes past. `overflow-hidden` is what hides the labels while it is narrow;
+// it clips vertically too, which is fine at nine products but would want
+// `overflow-y-auto` if the rail ever outgrew a short viewport.
 export const navRail = tv({
   slots: {
-    rail: "flex w-14 shrink-0 flex-col items-center gap-1 border-r border-sand-6 bg-sand-1 py-3",
+    root: "relative w-14 shrink-0",
+    rail: [
+      "group absolute inset-y-0 left-0 z-2 flex w-14 flex-col gap-1 overflow-hidden",
+      "border-r border-sand-6 bg-sand-1 p-2",
+      "transition-[width,box-shadow] duration-150 ease-out",
+    ],
     item: [
-      "flex size-9 items-center justify-center rounded-3 text-sand-11 outline-none transition-colors",
+      "flex h-10 w-full items-center rounded-3 text-sand-11 outline-none transition-colors",
       "hover:bg-sand-4 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
+    ],
+    // A 40px box inside 8px of padding puts the icon's centre on the collapsed
+    // rail's centre line, so widening the rail does not shift it.
+    icon: "flex size-10 shrink-0 items-center justify-center",
+    label: [
+      "truncate pr-3 opacity-0 transition-opacity duration-150 ease-out",
+      "group-hover:opacity-100 group-focus-within:opacity-100",
     ],
   },
   variants: {
     active: {
       true: { item: "bg-sand-5 text-sand-12" },
     },
+    // Off for the skeleton, which would otherwise open onto nothing.
+    expandable: {
+      true: {
+        rail: "hover:w-56 hover:shadow-4 focus-within:w-56 focus-within:shadow-4",
+      },
+    },
+  },
+  defaultVariants: {
+    expandable: true,
   },
 });
 

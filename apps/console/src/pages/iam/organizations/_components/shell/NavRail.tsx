@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TooltipProvider } from "@probo/ui/src/v2/Tooltip/TooltipProvider";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -68,7 +67,8 @@ export interface NavRailProps {
 }
 
 /**
- * The products, as a column of icons.
+ * The products, as a column of icons that name themselves when the rail is
+ * hovered or focused.
  *
  * Each icon links to the first entry of its product, so the rail alone is
  * enough to move around; the panel beside it then offers the rest.
@@ -84,10 +84,8 @@ export function NavRail({ organizationKey }: NavRailProps) {
   const slots = navRail();
 
   return (
-    <nav className={slots.rail()} aria-label={t("nav.products")}>
-      {/* Shared timing: once one label has appeared, sliding down the rail
-          shows the others immediately. */}
-      <TooltipProvider>
+    <div className={slots.root()}>
+      <nav className={slots.rail()} aria-label={t("nav.products")}>
         {groups.map(group => (
           <NavRailItem
             key={group.key}
@@ -97,7 +95,7 @@ export function NavRail({ organizationKey }: NavRailProps) {
             active={group.key === activeGroup?.key}
           />
         ))}
-      </TooltipProvider>
-    </nav>
+      </nav>
+    </div>
   );
 }

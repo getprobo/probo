@@ -47,7 +47,10 @@ const PANEL_ITEMS = [
 export function OrganizationLayoutSkeleton() {
   const layoutSlots = organizationLayout();
   const topBarSlots = topBar();
-  const railSlots = navRail();
+  // Not expandable: opening the rail while loading would reveal an empty
+  // column. The root wrapper is still required, since the rail positions
+  // against it.
+  const railSlots = navRail({ expandable: false });
   const panelSlots = navPanel();
 
   return (
@@ -64,10 +67,12 @@ export function OrganizationLayoutSkeleton() {
       </div>
 
       <div className={layoutSlots.body()}>
-        <div className={railSlots.rail()}>
-          {NAV_GROUPS.map(group => (
-            <div key={group.key} className="size-9 animate-pulse rounded-3 bg-sand-3" />
-          ))}
+        <div className={railSlots.root()}>
+          <div className={railSlots.rail()}>
+            {NAV_GROUPS.map(group => (
+              <div key={group.key} className="size-10 animate-pulse rounded-3 bg-sand-3" />
+            ))}
+          </div>
         </div>
 
         <div className={panelSlots.panel()}>
