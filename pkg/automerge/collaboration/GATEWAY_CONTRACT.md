@@ -163,7 +163,7 @@ PM → spans conversion runs.
 | Opaque ephemeral fan-out (`BroadcastEphemeral` / `Ephemeral`) | done, tested |
 | Cursor-based selection presence (`TextSelectionValue`) | done, tested |
 | TS `deriveDocumentId` mirror (`@probo/ui`) | done, tested for byte-parity with Go |
-| `/repo` route wiring | pending (needs Postgres integration test) |
-| Server-authoritative seeding | pending (choose conversion location) |
+| `/repo` route wiring | done, driven end-to-end in Go by a real `ClientConn` (Postgres integration + live JS still pending) |
+| Server-authoritative seeding | pending (choose conversion location); the `/repo` route refuses an unseeded document until then |
 | Cross-instance ephemeral fan-out | pending (extend `realtime.Events`) |
 | Repo `NetworkAdapter` targeting `/repo` (frontend) | pending (needs `@automerge/automerge-repo` dep + gateway) |
