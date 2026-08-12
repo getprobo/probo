@@ -5,6 +5,14 @@ documented in this file.
 
 ## Unreleased
 
+## [0.5.1] - 2026-08-12
+
+### Fixed
+
+- Windows MSI now embeds its cabinet instead of shipping it as a sidecar
+  file, fixing installs that paired a downloaded MSI with the wrong
+  arch's cabinet.
+
 ## [0.5.0] - 2026-08-12
 
 ### Added
