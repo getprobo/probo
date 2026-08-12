@@ -45,6 +45,10 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskAnalysisOrder) {
               start
               end
             }
+            matrixSize {
+              rows
+              cols
+            }
             createdAt
             updatedAt
           }
@@ -67,6 +71,10 @@ type riskAnalysis struct {
 		Start *string `json:"start"`
 		End   *string `json:"end"`
 	} `json:"period"`
+	MatrixSize struct {
+		Rows int `json:"rows"`
+		Cols int `json:"cols"`
+	} `json:"matrixSize"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
 }
@@ -202,11 +210,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					desc,
 					periodStart,
 					periodEnd,
+					fmt.Sprintf("%d×%d", r.MatrixSize.Rows, r.MatrixSize.Cols),
 					cmdutil.FormatTime(r.CreatedAt),
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "DESCRIPTION", "PERIOD START", "PERIOD END", "CREATED AT").Rows(rows...)
+			t := cmdutil.NewTable("ID", "NAME", "DESCRIPTION", "PERIOD START", "PERIOD END", "MATRIX SIZE", "CREATED AT").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

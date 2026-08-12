@@ -6449,11 +6449,20 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		}
 	}
 
+	var matrixSize *riskmanagement.MatrixSize
+	if input.MatrixSize != nil {
+		matrixSize = &riskmanagement.MatrixSize{
+			Rows: input.MatrixSize.Rows,
+			Cols: input.MatrixSize.Cols,
+		}
+	}
+
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAnalysisRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Description:    input.Description,
 		Period:         period,
+		MatrixSize:     matrixSize,
 	})
 	if err != nil {
 		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("failed to create risk analysis: %w", err)
@@ -6478,11 +6487,20 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
+	var matrixSize *riskmanagement.MatrixSize
+	if input.MatrixSize != nil {
+		matrixSize = &riskmanagement.MatrixSize{
+			Rows: input.MatrixSize.Rows,
+			Cols: input.MatrixSize.Cols,
+		}
+	}
+
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAnalysisRequest{
 		ID:          input.ID,
 		Name:        input.Name,
 		Description: UnwrapOmittable(input.Description),
 		Period:      period,
+		MatrixSize:  matrixSize,
 	})
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("failed to update risk analysis: %w", err)

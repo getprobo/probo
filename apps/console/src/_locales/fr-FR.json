@@ -4750,8 +4750,14 @@
     "details": "Détails",
     "fields": {
       "period": "Période",
+      "matrixSize": "Taille de matrice",
       "createdAt": "Créé le",
       "updatedAt": "Mis à jour le"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     },
     "diagrams": "Diagrammes",
     "emptyDiagrams": "Aucun diagramme pour l’instant. Créez un diagramme pour commencer à définir des nœuds, des processus et des menaces."
@@ -4763,7 +4769,13 @@
       "name": "Nom",
       "description": "Description",
       "period": "Période",
+      "matrixSize": "Matrice",
       "created": "Créé le"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     }
   },
   "riskAnalysisBoundaryActions": {
@@ -4855,14 +4867,21 @@
     "fields": {
       "name": "Nom",
       "description": "Description",
+      "matrixSize": "Taille de matrice",
       "periodStart": "Début de période",
       "periodEnd": "Fin de période"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     },
     "validation": {
       "nameRequired": "Ce champ est requis",
       "periodStartRequired": "Ce champ est requis",
       "periodEndRequired": "Ce champ est requis",
-      "periodEndBeforeStart": "La fin de période doit être égale ou postérieure au début"
+      "periodEndBeforeStart": "La fin de période doit être égale ou postérieure au début",
+      "matrixSizeRequired": "La taille de matrice est requise"
     },
     "placeholders": {
       "name": "ex. Modèle de menace de la plateforme 2026",
@@ -4880,8 +4899,14 @@
     "fields": {
       "name": "Nom",
       "description": "Description",
+      "matrixSize": "Taille de matrice",
       "periodStart": "Début de période",
       "periodEnd": "Fin de période"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     },
     "validation": {
       "nameRequired": "Ce champ est requis",

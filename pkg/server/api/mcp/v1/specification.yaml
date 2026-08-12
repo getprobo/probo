@@ -656,6 +656,30 @@ components:
           format: date-time
           description: End of the period
 
+    MatrixSize:
+      type: object
+      required:
+        - rows
+        - cols
+      description: >
+        Likelihood/impact matrix dimensions. Valid sizes are exactly 3×3, 4×4,
+        or 5×5 — rows and cols must be equal, and each must be 3, 4, or 5.
+      properties:
+        rows:
+          type: integer
+          enum:
+            - 3
+            - 4
+            - 5
+          description: Number of likelihood rows (must equal cols; one of 3, 4, or 5)
+        cols:
+          type: integer
+          enum:
+            - 3
+            - 4
+            - 5
+          description: Number of impact columns (must equal rows; one of 3, 4, or 5)
+
     ListOrganizationsInput:
       type: object
       properties:
@@ -13227,6 +13251,7 @@ components:
         - id
         - organization_id
         - name
+        - matrix_size
         - created_at
         - updated_at
       properties:
@@ -13243,6 +13268,9 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        matrix_size:
+          $ref: "#/components/schemas/MatrixSize"
+          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
         created_at:
           type: string
           format: date-time
@@ -13478,6 +13506,7 @@ components:
       required:
         - organization_id
         - name
+        - matrix_size
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -13491,6 +13520,9 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        matrix_size:
+          $ref: "#/components/schemas/MatrixSize"
+          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
 
     AddRiskAnalysisOutput:
       type: object
@@ -13518,6 +13550,9 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        matrix_size:
+          $ref: "#/components/schemas/MatrixSize"
+          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
 
     UpdateRiskAnalysisOutput:
       type: object

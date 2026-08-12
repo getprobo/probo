@@ -51,11 +51,17 @@ type (
 		End   *time.Time
 	}
 
+	MatrixSize struct {
+		Rows int
+		Cols int
+	}
+
 	CreateRiskAnalysisRequest struct {
 		OrganizationID gid.GID
 		Name           string
 		Description    *string
 		Period         *Period
+		MatrixSize     *MatrixSize
 	}
 
 	UpdateRiskAnalysisRequest struct {
@@ -63,6 +69,7 @@ type (
 		Name        *string
 		Description **string
 		Period      *Period
+		MatrixSize  *MatrixSize
 	}
 
 	CreateRiskAnalysisDiagramRequest struct {
@@ -167,6 +174,8 @@ func (r *CreateRiskAnalysisRequest) Validate() error {
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(r.MatrixSize, "matrix_size", validator.Required())
+	validateMatrixSize(v, r.MatrixSize)
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
@@ -180,6 +189,7 @@ func (r *UpdateRiskAnalysisRequest) Validate() error {
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.RiskAnalysisEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
+	validateMatrixSize(v, r.MatrixSize)
 
 	if r.Period != nil {
 		validatePeriodRange(v, r.Period.Start, r.Period.End)
@@ -201,6 +211,28 @@ func validatePeriodRange(v *validator.Validator, periodStart, periodEnd *time.Ti
 				return &validator.ValidationError{
 					Code:    validator.ErrorCodeOutOfRange,
 					Message: fmt.Sprintf("must be on or after %s", periodStart.Format(time.DateOnly)),
+				}
+			},
+		)
+	}
+}
+
+func validateMatrixSize(v *validator.Validator, size *MatrixSize) {
+	if size == nil {
+		return
+	}
+
+	v.Check(size.Rows, "matrix_size.rows", validator.OneOfSlice([]int{3, 4, 5}))
+	v.Check(size.Cols, "matrix_size.cols", validator.OneOfSlice([]int{3, 4, 5}))
+
+	if size.Rows != size.Cols {
+		v.Check(
+			size.Cols,
+			"matrix_size.cols",
+			func(any) *validator.ValidationError {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeInvalidFormat,
+					Message: "must equal matrix_size.rows",
 				}
 			},
 		)
@@ -374,6 +406,8 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 		OrganizationID: req.OrganizationID,
 		Name:           req.Name,
 		Description:    req.Description,
+		MatrixRows:     req.MatrixSize.Rows,
+		MatrixCols:     req.MatrixSize.Cols,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -445,6 +479,11 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 			if req.Period != nil {
 				ra.PeriodStart = req.Period.Start
 				ra.PeriodEnd = req.Period.End
+			}
+
+			if req.MatrixSize != nil {
+				ra.MatrixRows = req.MatrixSize.Rows
+				ra.MatrixCols = req.MatrixSize.Cols
 			}
 
 			v := validator.New()

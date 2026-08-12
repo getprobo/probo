@@ -47,6 +47,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateDiagramDialog } from "./_components/CreateDiagramDialog";
 import { DiagramCard } from "./_components/DiagramCard";
+import { formatMatrixSize } from "./_components/matrixSize";
 import { UpdateRiskAnalysisDialog } from "./_components/UpdateRiskAnalysisDialog";
 
 export const riskAnalysisDetailPageQuery = graphql`
@@ -59,6 +60,10 @@ export const riskAnalysisDetailPageQuery = graphql`
         period {
           start
           end
+        }
+        matrixSize {
+          rows
+          cols
         }
         createdAt
         updatedAt
@@ -180,6 +185,7 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
                   name: ra.name ?? "",
                   description: ra.description,
                   period: ra.period,
+                  matrixSize: ra.matrixSize,
                 }}
                 canDelete={ra.canDelete}
                 onDelete={handleDelete}
@@ -206,13 +212,21 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
           {ra.description && (
             <div className="text-sm text-txt-secondary">{ra.description}</div>
           )}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
               <div className="text-xs text-txt-tertiary font-semibold mb-1">
                 {t("riskAnalysisDetailPage.fields.period")}
               </div>
               <div className="text-sm text-txt-primary">
                 {periodLabel}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-txt-tertiary font-semibold mb-1">
+                {t("riskAnalysisDetailPage.fields.matrixSize")}
+              </div>
+              <div className="text-sm text-txt-primary">
+                {formatMatrixSize(ra.matrixSize.rows, ra.matrixSize.cols)}
               </div>
             </div>
             <div>

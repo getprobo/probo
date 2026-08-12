@@ -42,6 +42,10 @@ mutation($input: CreateRiskAnalysisInput!) {
           start
           end
         }
+        matrixSize {
+          rows
+          cols
+        }
         createdAt
         updatedAt
       }
@@ -61,6 +65,10 @@ type createResponse struct {
 					Start *string `json:"start"`
 					End   *string `json:"end"`
 				} `json:"period"`
+				MatrixSize struct {
+					Rows int `json:"rows"`
+					Cols int `json:"cols"`
+				} `json:"matrixSize"`
 				CreatedAt string `json:"createdAt"`
 				UpdatedAt string `json:"updatedAt"`
 			} `json:"node"`
@@ -75,6 +83,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagDescription string
 		flagPeriodStart string
 		flagPeriodEnd   string
+		flagMatrixRows  int
+		flagMatrixCols  int
 	)
 
 	cmd := &cobra.Command{
@@ -84,7 +94,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb risk-analysis create
 
   # Create a risk analysis non-interactively
-  prb risk-analysis create --name "Annual Risk Analysis" --period-start 2026-01-01 --period-end 2026-12-31`,
+  prb risk-analysis create --name "Annual Risk Analysis" --matrix-rows 5 --matrix-cols 5 --period-start 2026-01-01 --period-end 2026-12-31`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -122,6 +132,32 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
+				if !cmd.Flags().Changed("matrix-rows") && !cmd.Flags().Changed("matrix-cols") {
+					var matrixSize string
+
+					err := huh.NewSelect[string]().
+						Title("Matrix size").
+						Options(
+							huh.NewOption("3×3", "3"),
+							huh.NewOption("4×4", "4"),
+							huh.NewOption("5×5", "5"),
+						).
+						Value(&matrixSize).
+						Run()
+					if err != nil {
+						return err
+					}
+
+					switch matrixSize {
+					case "3":
+						flagMatrixRows, flagMatrixCols = 3, 3
+					case "4":
+						flagMatrixRows, flagMatrixCols = 4, 4
+					case "5":
+						flagMatrixRows, flagMatrixCols = 5, 5
+					}
+				}
 			}
 
 			if flagName == "" {
@@ -148,6 +184,18 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				input["period"] = period
+			}
+
+			rowsSet := cmd.Flags().Changed("matrix-rows") || flagMatrixRows != 0
+			colsSet := cmd.Flags().Changed("matrix-cols") || flagMatrixCols != 0
+
+			if !rowsSet || !colsSet {
+				return fmt.Errorf("both --matrix-rows and --matrix-cols are required; pass flags or run interactively")
+			}
+
+			input["matrixSize"] = map[string]any{
+				"rows": flagMatrixRows,
+				"cols": flagMatrixCols,
 			}
 
 			data, err := client.Do(
@@ -180,6 +228,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description")
 	cmd.Flags().StringVar(&flagPeriodStart, "period-start", "", "Period start date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
+	cmd.Flags().IntVar(&flagMatrixRows, "matrix-rows", 0, "Matrix rows (3, 4, or 5; required)")
+	cmd.Flags().IntVar(&flagMatrixCols, "matrix-cols", 0, "Matrix cols (3, 4, or 5; required, must match --matrix-rows)")
 
 	return cmd
 }

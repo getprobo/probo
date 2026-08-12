@@ -4746,8 +4746,14 @@
     "details": "Details",
     "fields": {
       "period": "Periode",
+      "matrixSize": "Matrixgrootte",
       "createdAt": "Aangemaakt op",
       "updatedAt": "Bijgewerkt op"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     },
     "diagrams": "Diagrammen",
     "emptyDiagrams": "Nog geen diagrammen. Maak een diagram aan om nodes, processen en dreigingen te definiëren."
@@ -4759,7 +4765,13 @@
       "name": "Naam",
       "description": "Beschrijving",
       "period": "Periode",
+      "matrixSize": "Matrix",
       "created": "Aangemaakt"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     }
   },
   "riskAnalysisBoundaryActions": {
@@ -4851,14 +4863,21 @@
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
+      "matrixSize": "Matrixgrootte",
       "periodStart": "Periode start",
       "periodEnd": "Periode eind"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     },
     "validation": {
       "nameRequired": "Dit veld is verplicht",
       "periodStartRequired": "Dit veld is verplicht",
       "periodEndRequired": "Dit veld is verplicht",
-      "periodEndBeforeStart": "Periode eind moet op of na periode start liggen"
+      "periodEndBeforeStart": "Periode eind moet op of na periode start liggen",
+      "matrixSizeRequired": "Matrixgrootte is verplicht"
     },
     "placeholders": {
       "name": "bijv. Platform Dreigingsmodel 2026",
@@ -4876,8 +4895,14 @@
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
+      "matrixSize": "Matrixgrootte",
       "periodStart": "Periode start",
       "periodEnd": "Periode eind"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
     },
     "validation": {
       "nameRequired": "Dit veld is verplicht",
