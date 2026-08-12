@@ -162,4 +162,5 @@ PM → spans conversion runs.
 | ProseMirror → spans forward conversion (`prosemirror.ToSpans`) | done, round-trips the whole shared corpus |
 | Server-authoritative seeding | done, seeds on first open from stored content and materializes over the loop (Postgres lifecycle still to integration-test) |
 | Cross-instance ephemeral fan-out | done, published over the NOTIFY channel and delivered to local peers with self-echo suppression (Postgres delivery still to integration-test) |
-| Repo `NetworkAdapter` targeting `/repo` (frontend) | pending (needs `@automerge/automerge-repo` dep + gateway) |
+| Frontend repo client (`connectRepoDocument`) | done, `Repo` + `WebSocketClientAdapter` over `/repo`; presence rides repo ephemeral with stable cursors (PM↔Automerge mapping unit-tested) |
+| Legacy `/sync` removal | done: `/sync` route, the custom `AutomergeDocumentHandle`, the DB-backed presence, and the hub's structured presence are removed; the editor uses `/repo` exclusively |
