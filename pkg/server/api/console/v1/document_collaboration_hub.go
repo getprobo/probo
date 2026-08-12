@@ -45,6 +45,13 @@ type (
 	documentCollaborationRoomPeer struct {
 		connectionID string
 		wake         chan documentCollaborationWake
+		// ephemeral carries opaque automerge-repo gossip frames (presence,
+		// cursors) destined for this peer. It is kept separate from wake so a
+		// dropped best-effort gossip frame never coalesces with, or masks, a
+		// sync refresh. Delivery is best-effort: a full buffer drops the
+		// oldest-style (the frame is skipped), which is acceptable for
+		// ephemeral state that the sender re-emits.
+		ephemeral chan []byte
 	}
 
 	documentCollaborationDocuments interface {
@@ -89,10 +96,13 @@ type (
 		room              *documentCollaborationRoom
 		peerID            uint64
 		Wake              <-chan documentCollaborationWake
+		Ephemeral         <-chan []byte
 		seedOwner         bool
 		once              sync.Once
 	}
 )
+
+const documentCollaborationEphemeralBuffer = 64
 
 const (
 	documentCollaborationPersistDebounce = 50 * time.Millisecond
@@ -180,9 +190,11 @@ func (h *documentCollaborationHub) addPeerLocked(
 	peerID := room.nextPeerID
 	room.nextPeerID++
 	wake := make(chan documentCollaborationWake, 8)
+	ephemeral := make(chan []byte, documentCollaborationEphemeralBuffer)
 	room.peers[peerID] = documentCollaborationRoomPeer{
 		connectionID: connectionID,
 		wake:         wake,
+		ephemeral:    ephemeral,
 	}
 	room.mu.Unlock()
 
@@ -192,6 +204,7 @@ func (h *documentCollaborationHub) addPeerLocked(
 		room:              room,
 		peerID:            peerID,
 		Wake:              wake,
+		Ephemeral:         ephemeral,
 	}
 }
 
@@ -222,6 +235,32 @@ func (l *documentCollaborationRoomLease) NotifyPeers() {
 
 		select {
 		case peer.wake <- documentCollaborationWake{}:
+		default:
+		}
+	}
+}
+
+// BroadcastEphemeral fans an opaque automerge-repo gossip frame out to every
+// other local peer in the room, leaving the originating peer untouched. It is
+// the repo-protocol counterpart of UpdatePresence: presence and cursor state
+// travel as opaque ephemeral frames rather than as the structured snapshots the
+// legacy protocol used. Delivery is best-effort; a peer whose buffer is full
+// skips the frame, relying on the sender to re-emit its ephemeral state.
+//
+// Fan-out is scoped to this server instance. Cross-instance gossip would require
+// carrying the payload through realtime.Events, which today only signals a
+// document changed; that remains a follow-up.
+func (l *documentCollaborationRoomLease) BroadcastEphemeral(frame []byte) {
+	l.room.mu.Lock()
+	defer l.room.mu.Unlock()
+
+	for peerID, peer := range l.room.peers {
+		if peerID == l.peerID {
+			continue
+		}
+
+		select {
+		case peer.ephemeral <- frame:
 		default:
 		}
 	}

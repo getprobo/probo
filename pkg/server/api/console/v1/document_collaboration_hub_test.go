@@ -147,6 +147,86 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 	assert.NotContains(t, hub.rooms, versionID)
 }
 
+func TestDocumentCollaborationRoom_BroadcastsEphemeralToOtherPeers(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	document, err := automerge.New(context.Background(), automerge.ActorID{3})
+	require.NoError(t, err)
+
+	room := &documentCollaborationRoom{
+		collaboration: &probo.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+		peers:     make(map[uint64]documentCollaborationRoomPeer),
+		presences: make(map[string]documentCollaborationPresence),
+	}
+	room.revision.Store(1)
+	hub := &documentCollaborationHub{
+		rooms: map[gid.GID]*documentCollaborationRoom{
+			versionID: room,
+		},
+	}
+
+	hub.mu.Lock()
+	first := hub.addPeerLocked(versionID, room, "first")
+	second := hub.addPeerLocked(versionID, room, "second")
+	third := hub.addPeerLocked(versionID, room, "third")
+	hub.mu.Unlock()
+
+	frame := []byte{0x01, 0x02, 0x03}
+	first.BroadcastEphemeral(frame)
+
+	for _, lease := range []*documentCollaborationRoomLease{second, third} {
+		select {
+		case got := <-lease.Ephemeral:
+			assert.Equal(t, frame, got)
+		default:
+			require.Fail(t, "peer did not receive the ephemeral frame")
+		}
+	}
+
+	select {
+	case <-first.Ephemeral:
+		require.Fail(t, "originating peer must not receive its own ephemeral frame")
+	default:
+	}
+
+	require.NoError(t, document.Close(context.Background()))
+}
+
+func TestDocumentCollaborationRoom_DropsEphemeralWhenBufferFull(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	document, err := automerge.New(context.Background(), automerge.ActorID{4})
+	require.NoError(t, err)
+
+	room := &documentCollaborationRoom{
+		collaboration: &probo.DocumentCollaboration{Document: document, Revision: 1},
+		peers:         make(map[uint64]documentCollaborationRoomPeer),
+		presences:     make(map[string]documentCollaborationPresence),
+	}
+	room.revision.Store(1)
+	hub := &documentCollaborationHub{
+		rooms: map[gid.GID]*documentCollaborationRoom{versionID: room},
+	}
+
+	hub.mu.Lock()
+	sender := hub.addPeerLocked(versionID, room, "sender")
+	_ = hub.addPeerLocked(versionID, room, "slow")
+	hub.mu.Unlock()
+
+	for range documentCollaborationEphemeralBuffer + 10 {
+		sender.BroadcastEphemeral([]byte{0xff})
+	}
+
+	require.NoError(t, document.Close(context.Background()))
+}
+
 func TestDocumentCollaborationRoom_DebouncesPersistence(t *testing.T) {
 	t.Parallel()
 
