@@ -170,10 +170,6 @@ func NewMux(
 
 		r.Handle("/graphql", graphqlHandler)
 		r.Get(
-			"/document-versions/{documentVersionID}/sync",
-			collaborationHandler.handle,
-		)
-		r.Get(
 			"/document-versions/{documentVersionID}/repo",
 			collaborationHandler.handleRepo,
 		)

@@ -336,11 +336,6 @@ func serveRepoCollaboration(
 				return err
 			}
 		case wake := <-lease.Wake:
-			// Legacy structured presence is not used by the repo protocol.
-			if wake.presence {
-				continue
-			}
-
 			if err := lease.PersistError(); err != nil {
 				return fmt.Errorf("cannot persist repo collaboration: %w", err)
 			}

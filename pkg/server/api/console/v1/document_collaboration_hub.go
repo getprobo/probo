@@ -23,7 +23,6 @@ package console_v1
 import (
 	"context"
 	"fmt"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -37,9 +36,7 @@ import (
 
 type (
 	documentCollaborationWake struct {
-		refresh   bool
-		presence  bool
-		presences []documentCollaborationPresence
+		refresh bool
 	}
 
 	documentCollaborationRoomPeer struct {
@@ -83,7 +80,6 @@ type (
 		versionID     gid.GID
 		revision      atomic.Int64
 		peers         map[uint64]documentCollaborationRoomPeer
-		presences     map[string]documentCollaborationPresence
 		nextPeerID    uint64
 		dirty         chan struct{}
 		stop          chan struct{}
@@ -165,7 +161,6 @@ func (h *documentCollaborationHub) acquire(
 		scope:         scope,
 		versionID:     documentVersionID,
 		peers:         make(map[uint64]documentCollaborationRoomPeer),
-		presences:     make(map[string]documentCollaborationPresence),
 		dirty:         make(chan struct{}, 1),
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),
@@ -251,11 +246,10 @@ func (l *documentCollaborationRoomLease) NotifyPeers() {
 }
 
 // BroadcastEphemeral fans an opaque automerge-repo gossip frame out to every
-// other local peer in the room, leaving the originating peer untouched. It is
-// the repo-protocol counterpart of UpdatePresence: presence and cursor state
-// travel as opaque ephemeral frames rather than as the structured snapshots the
-// legacy protocol used. Delivery is best-effort; a peer whose buffer is full
-// skips the frame, relying on the sender to re-emit its ephemeral state.
+// other local peer in the room, leaving the originating peer untouched. Presence
+// and cursor state travel as these opaque ephemeral frames. Delivery is
+// best-effort; a peer whose buffer is full skips the frame, relying on the
+// sender to re-emit its ephemeral state.
 //
 // This delivers only to peers on the current server instance. Peers on other
 // instances are reached separately, by publishing the frame over the
@@ -272,39 +266,6 @@ func (l *documentCollaborationRoomLease) BroadcastEphemeral(frame []byte) {
 
 		select {
 		case peer.ephemeral <- frame:
-		default:
-		}
-	}
-}
-
-func (l *documentCollaborationRoomLease) UpdatePresence(
-	presence documentCollaborationPresence,
-) {
-	l.room.mu.Lock()
-	defer l.room.mu.Unlock()
-
-	l.room.presences[presence.ConnectionID] = presence
-	l.room.notifyPresenceLocked()
-}
-
-func (r *documentCollaborationRoom) notifyPresenceLocked() {
-	for _, peer := range r.peers {
-		presences := make([]documentCollaborationPresence, 0, len(r.presences))
-		for connectionID, presence := range r.presences {
-			if connectionID != peer.connectionID {
-				presences = append(presences, presence)
-			}
-		}
-
-		sort.Slice(presences, func(i, j int) bool {
-			return presences[i].ConnectionID < presences[j].ConnectionID
-		})
-
-		select {
-		case peer.wake <- documentCollaborationWake{
-			presence:  true,
-			presences: presences,
-		}:
 		default:
 		}
 	}
@@ -398,14 +359,9 @@ func (l *documentCollaborationRoomLease) Close() {
 	l.once.Do(func() {
 		l.hub.mu.Lock()
 		l.room.mu.Lock()
-		peer := l.room.peers[l.peerID]
 		delete(l.room.peers, l.peerID)
-		delete(l.room.presences, peer.connectionID)
 
 		empty := len(l.room.peers) == 0
-		if !empty {
-			l.room.notifyPresenceLocked()
-		}
 
 		l.room.mu.Unlock()
 
