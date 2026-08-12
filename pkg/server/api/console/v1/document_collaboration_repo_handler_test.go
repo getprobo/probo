@@ -47,6 +47,7 @@ func newRepoTestServer(
 	hub *documentCollaborationHub,
 	scope coredata.Scoper,
 	versionID gid.GID,
+	publishEphemeral func(ctx context.Context, frame []byte) error,
 ) *httptest.Server {
 	t.Helper()
 
@@ -91,8 +92,10 @@ func newRepoTestServer(
 		defer func() { _ = syncState.Close(context.Background()) }()
 
 		_ = serveRepoCollaboration(r.Context(), connection, lease, syncState, repoCollaborationConfig{
-			serverPeerID: "probo-gateway-" + connectionID,
-			shutdown:     context.Background(),
+			serverPeerID:      "probo-gateway-" + connectionID,
+			documentVersionID: versionID,
+			shutdown:          context.Background(),
+			publishEphemeral:  publishEphemeral,
 		})
 	}))
 
@@ -298,7 +301,7 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := newDocumentCollaborationHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	documentID := collaboration.DeriveDocumentID(versionID.String())
@@ -339,7 +342,7 @@ func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
 		},
 	}
 	hub := newDocumentCollaborationHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	documentID := collaboration.DeriveDocumentID(versionID.String())
@@ -375,7 +378,7 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := newDocumentCollaborationHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	documentID := collaboration.DeriveDocumentID(versionID.String())
@@ -397,5 +400,64 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 		require.NoError(t, err)
 	case <-time.After(10 * time.Second):
 		require.Fail(t, "the second client did not receive the gossiped ephemeral")
+	}
+}
+
+// TestServeRepoCollaboration_PublishesEphemeralCrossInstance confirms the loop
+// hands each gossiped frame to the cross-instance publisher, which is how
+// presence and cursors reach peers on other server instances.
+func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+
+	serverDocument, err := automerge.New(ctx, automerge.ActorID{203})
+	require.NoError(t, err)
+	defer func() { _ = serverDocument.Close(ctx) }()
+
+	text, err := serverDocument.CreateText(ctx, "body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(ctx, 0, 0, "shared"))
+	_, err = serverDocument.Commit(ctx, "seed", time.Unix(1786147200, 0).UTC())
+	require.NoError(t, err)
+
+	documents := &fakeDocumentCollaborationDocuments{
+		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+	}
+	hub := newDocumentCollaborationHub(documents, nil)
+
+	published := make(chan []byte, 4)
+	publisher := func(_ context.Context, frame []byte) error {
+		select {
+		case published <- append([]byte(nil), frame...):
+		default:
+		}
+
+		return nil
+	}
+
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, publisher)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	documentID := collaboration.DeriveDocumentID(versionID.String())
+
+	client := dialRepoClient(t, ctx, wsURL, "client-a", documentID)
+	client.waitForBody(t, ctx, "shared")
+
+	payload := []byte("cursor-payload")
+	client.send <- payload
+
+	select {
+	case frame := <-published:
+		message, err := collaboration.DecodeMessage(frame)
+		require.NoError(t, err)
+		assert.Equal(t, collaboration.MessageEphemeral, message.Type)
+		assert.Equal(t, payload, message.Data)
+	case <-time.After(10 * time.Second):
+		require.Fail(t, "the loop did not publish the ephemeral across instances")
 	}
 }

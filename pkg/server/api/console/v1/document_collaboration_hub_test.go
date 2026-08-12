@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/realtime"
 )
 
 type fakeDocumentCollaborationDocuments struct {
@@ -191,6 +192,69 @@ func TestDocumentCollaborationRoom_BroadcastsEphemeralToOtherPeers(t *testing.T)
 	select {
 	case <-first.Ephemeral:
 		require.Fail(t, "originating peer must not receive its own ephemeral frame")
+	default:
+	}
+
+	require.NoError(t, document.Close(context.Background()))
+}
+
+func TestDocumentCollaborationHub_DeliversExternalEphemeral(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	document, err := automerge.New(context.Background(), automerge.ActorID{5})
+	require.NoError(t, err)
+
+	room := &documentCollaborationRoom{
+		collaboration: &probo.DocumentCollaboration{Document: document, Revision: 1},
+		peers:         make(map[uint64]documentCollaborationRoomPeer),
+		presences:     make(map[string]documentCollaborationPresence),
+	}
+	room.revision.Store(1)
+	hub := &documentCollaborationHub{
+		rooms:      map[gid.GID]*documentCollaborationRoom{versionID: room},
+		instanceID: "local-instance",
+	}
+
+	hub.mu.Lock()
+	first := hub.addPeerLocked(versionID, room, "first")
+	second := hub.addPeerLocked(versionID, room, "second")
+	hub.mu.Unlock()
+
+	frame := []byte{0x0a, 0x0b, 0x0c}
+	remote, err := realtime.EncodeCollaborationEphemeral(realtime.CollaborationEphemeral{
+		VersionID:  versionID.String(),
+		InstanceID: "remote-instance",
+		Frame:      frame,
+	})
+	require.NoError(t, err)
+
+	hub.notifyExternal(remote)
+
+	// A frame from another instance reaches every local peer.
+	for _, lease := range []*documentCollaborationRoomLease{first, second} {
+		select {
+		case got := <-lease.Ephemeral:
+			assert.Equal(t, frame, got)
+		default:
+			require.Fail(t, "peer did not receive the external ephemeral frame")
+		}
+	}
+
+	// This instance's own echo is ignored: it already delivered locally.
+	own, err := realtime.EncodeCollaborationEphemeral(realtime.CollaborationEphemeral{
+		VersionID:  versionID.String(),
+		InstanceID: "local-instance",
+		Frame:      []byte{0xff},
+	})
+	require.NoError(t, err)
+
+	hub.notifyExternal(own)
+
+	select {
+	case <-first.Ephemeral:
+		require.Fail(t, "the hub must ignore its own ephemeral echo")
 	default:
 	}
 

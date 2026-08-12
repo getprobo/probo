@@ -69,9 +69,10 @@ type (
 	}
 
 	documentCollaborationHub struct {
-		mu        sync.Mutex
-		documents documentCollaborationDocuments
-		rooms     map[gid.GID]*documentCollaborationRoom
+		mu         sync.Mutex
+		documents  documentCollaborationDocuments
+		rooms      map[gid.GID]*documentCollaborationRoom
+		instanceID string
 	}
 
 	documentCollaborationRoom struct {
@@ -113,9 +114,18 @@ func newDocumentCollaborationHub(
 	documents documentCollaborationDocuments,
 	events *realtime.Events,
 ) *documentCollaborationHub {
+	instanceID, err := newDocumentCollaborationConnectionID()
+	if err != nil {
+		// A random instance id only suppresses a server's own ephemeral echo; if
+		// generation ever fails, an empty id degrades to client-side dedup rather
+		// than breaking the hub.
+		instanceID = ""
+	}
+
 	hub := &documentCollaborationHub{
-		documents: documents,
-		rooms:     make(map[gid.GID]*documentCollaborationRoom),
+		documents:  documents,
+		rooms:      make(map[gid.GID]*documentCollaborationRoom),
+		instanceID: instanceID,
 	}
 	if events != nil {
 		events.Subscribe(hub.notifyExternal)
@@ -247,9 +257,10 @@ func (l *documentCollaborationRoomLease) NotifyPeers() {
 // legacy protocol used. Delivery is best-effort; a peer whose buffer is full
 // skips the frame, relying on the sender to re-emit its ephemeral state.
 //
-// Fan-out is scoped to this server instance. Cross-instance gossip would require
-// carrying the payload through realtime.Events, which today only signals a
-// document changed; that remains a follow-up.
+// This delivers only to peers on the current server instance. Peers on other
+// instances are reached separately, by publishing the frame over the
+// collaboration NOTIFY channel; the receiving instance delivers it with
+// fanoutEphemeral.
 func (l *documentCollaborationRoomLease) BroadcastEphemeral(frame []byte) {
 	l.room.mu.Lock()
 	defer l.room.mu.Unlock()
@@ -300,6 +311,13 @@ func (r *documentCollaborationRoom) notifyPresenceLocked() {
 }
 
 func (h *documentCollaborationHub) notifyExternal(payload string) {
+	// An ephemeral envelope carries opaque repo gossip (presence, cursors) from
+	// another instance; a bare document-version id signals a persisted change.
+	if ephemeral, ok := realtime.DecodeCollaborationEphemeral(payload); ok {
+		h.notifyExternalEphemeral(ephemeral)
+		return
+	}
+
 	documentVersionID, err := gid.ParseGID(payload)
 	if err != nil || documentVersionID.EntityType() != coredata.DocumentVersionEntityType {
 		return
@@ -319,6 +337,44 @@ func (h *documentCollaborationHub) notifyExternal(payload string) {
 	for _, peer := range room.peers {
 		select {
 		case peer.wake <- documentCollaborationWake{refresh: true}:
+		default:
+		}
+	}
+}
+
+func (h *documentCollaborationHub) notifyExternalEphemeral(ephemeral realtime.CollaborationEphemeral) {
+	// Our own echo: this instance already delivered the frame to its local peers
+	// when it published it, so re-delivering would surface a peer's own cursor.
+	if ephemeral.InstanceID != "" && ephemeral.InstanceID == h.instanceID {
+		return
+	}
+
+	documentVersionID, err := gid.ParseGID(ephemeral.VersionID)
+	if err != nil || documentVersionID.EntityType() != coredata.DocumentVersionEntityType {
+		return
+	}
+
+	h.mu.Lock()
+	room := h.rooms[documentVersionID]
+	h.mu.Unlock()
+
+	if room == nil {
+		return
+	}
+
+	room.fanoutEphemeral(ephemeral.Frame)
+}
+
+// fanoutEphemeral delivers a repo gossip frame that arrived from another server
+// instance to every local peer in the room. Unlike the lease's BroadcastEphemeral
+// there is no originating local peer to exclude.
+func (r *documentCollaborationRoom) fanoutEphemeral(frame []byte) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, peer := range r.peers {
+		select {
+		case peer.ephemeral <- frame:
 		default:
 		}
 	}

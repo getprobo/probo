@@ -66,6 +66,9 @@ type repoCollaborationConfig struct {
 	documentVersionID gid.GID
 	logger            *log.Logger
 	shutdown          context.Context
+	// publishEphemeral relays a gossip frame to other server instances. It may be
+	// nil, which limits ephemeral fan-out to this instance.
+	publishEphemeral func(ctx context.Context, frame []byte) error
 }
 
 // handleRepo serves one document version over the automerge-repo protocol. It
@@ -152,6 +155,14 @@ func (h *documentCollaborationHandler) handleRepo(w http.ResponseWriter, r *http
 		documentVersionID: documentVersionID,
 		logger:            h.logger,
 		shutdown:          h.shutdown,
+		publishEphemeral: func(ctx context.Context, frame []byte) error {
+			return h.probo.Documents.NotifyCollaborationEphemeral(
+				ctx,
+				documentVersionID,
+				h.hub.instanceID,
+				frame,
+			)
+		},
 	}
 
 	if err := serveRepoCollaboration(r.Context(), connection, lease, syncState, config); err != nil {
@@ -293,6 +304,21 @@ func serveRepoCollaboration(
 
 			if fanout != nil {
 				lease.BroadcastEphemeral(fanout)
+
+				// Relay to peers on other instances. A failure here (including an
+				// oversized frame) must not drop the connection: local peers
+				// already have the frame and the sender re-emits its state.
+				if config.publishEphemeral != nil {
+					if err := config.publishEphemeral(ctx, fanout); err != nil && config.logger != nil {
+						config.logger.WarnCtx(
+							ctx,
+							"cannot relay collaboration ephemeral across instances",
+							log.Error(err),
+							log.String("document_version_id", config.documentVersionID.String()),
+						)
+					}
+				}
+
 				continue
 			}
 
