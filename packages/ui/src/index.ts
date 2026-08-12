@@ -149,3 +149,12 @@ export {
   parseAutomergeUrl,
   validDocumentId,
 } from "./RichEditor/repoDocumentId";
+export {
+  isCollapsed,
+  resolveSelection,
+  textSelection,
+} from "./RichEditor/repoSelection";
+export type {
+  ResolvedSelection,
+  TextSelection,
+} from "./RichEditor/repoSelection";
