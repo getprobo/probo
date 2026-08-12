@@ -162,7 +162,8 @@ PM → spans conversion runs.
 | Document id derivation + `automerge:` URL (`documentid.go`) | done, tested against a real repo id |
 | Opaque ephemeral fan-out (`BroadcastEphemeral` / `Ephemeral`) | done, tested |
 | Cursor-based selection presence (`TextSelectionValue`) | done, tested |
+| TS `deriveDocumentId` mirror (`@probo/ui`) | done, tested for byte-parity with Go |
 | `/repo` route wiring | pending (needs Postgres integration test) |
 | Server-authoritative seeding | pending (choose conversion location) |
 | Cross-instance ephemeral fan-out | pending (extend `realtime.Events`) |
-| TS `deriveDocumentId` + repo `NetworkAdapter` | pending (frontend) |
+| Repo `NetworkAdapter` targeting `/repo` (frontend) | pending (needs `@automerge/automerge-repo` dep + gateway) |
