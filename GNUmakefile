@@ -278,6 +278,11 @@ test-automerge-official-fixtures: ## Replay official benchmark-battery documents
 generate-automerge-collaboration-fixtures: ## Regenerate automerge-repo protocol fixtures from the pinned JS packages
 	$(NODE) packages/automerge-conformance/generate-collaboration-fixtures.mjs
 
+.PHONY: test-automerge-repo-interop
+test-automerge-repo-interop: ## Sync a real automerge-repo JS client against the Go gateway
+	AUTOMERGE_REPO_INTEROP_CLIENT=$(CURDIR)/packages/automerge-conformance/collaboration-interop-client.mjs \
+		$(GO_BASE) test -count=1 -run '^TestInterop_' ./pkg/automerge/collaboration
+
 .PHONY: benchmark-prosemirror
 benchmark-prosemirror: ## Benchmark Go rendering and the frontend ProseMirror bridge
 	$(GO_BASE) test -run '^$$' -bench '^BenchmarkRender$$' -benchmem \
