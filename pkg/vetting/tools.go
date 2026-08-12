@@ -50,17 +50,11 @@ type (
 		Certifications                []string `json:"certifications" jsonschema:"Compliance certifications found"`
 	}
 
-	saveThirdPartyInfoParams struct {
-		saveThirdPartyInfoToolParams
-		Countries coredata.CountryCodes
-	}
-
 	linkSubThirdPartyParams struct {
 		Name        string `json:"name" jsonschema:"Sub-third-party company name"`
 		Description string `json:"description,omitempty" jsonschema:"One-sentence description of what this third party does"`
 		Category    string `json:"category,omitempty" jsonschema:"Category: ANALYTICS, CLOUD_PROVIDER, SECURITY, etc."`
 		WebsiteURL  string `json:"website_url,omitempty" jsonschema:"Website URL if known"`
-		Country     string `json:"country,omitempty" jsonschema:"Country where the sub-third-party operates"`
 		Purpose     string `json:"purpose,omitempty" jsonschema:"Purpose or role of this sub-third-party"`
 	}
 
@@ -100,9 +94,7 @@ func SaveThirdPartyInfoTool(pc *PersistenceContext) agent.Tool {
 						return err
 					}
 
-					applySaveParams(thirdParty, pc.WebsiteURL, saveThirdPartyInfoParams{
-						saveThirdPartyInfoToolParams: p,
-					}, ancestorBaseNames)
+					applySaveParams(thirdParty, pc.WebsiteURL, p, ancestorBaseNames)
 					thirdParty.UpdatedAt = time.Now()
 
 					if err := thirdParty.Update(ctx, conn, scope); err != nil {
