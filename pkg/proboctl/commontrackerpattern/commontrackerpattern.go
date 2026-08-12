@@ -77,10 +77,13 @@ func enrichmentState(p *coredata.CommonTrackerPattern) string {
 }
 
 // resolvedFieldStatuses are the per-field enrichment statuses that carry a
-// value, as opposed to not_found.
+// value, as opposed to not_found. first_party is a settled answer — the
+// artifact has no third party and therefore no vendor-informed description
+// — so it counts as resolved rather than reading as an empty result.
 var resolvedFieldStatuses = map[string]struct{}{
 	"found":           {},
 	"exists_external": {},
+	"first_party":     {},
 }
 
 // enrichmentCompleteness counts how many of the fields the last enrichment

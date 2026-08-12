@@ -795,83 +795,44 @@ func (h *trackerMappingHandler) identifyWithAgent(
 }
 
 // vendorAttributionRejected reports whether the agent's vendor
-// attribution must be discarded, logging the reason. It enforces, in
-// order: a confident attribution, a concrete evidence source (no
-// general-knowledge guesses), the scanned-site backstop, and the
-// cookie-database-aggregator backstop.
+// attribution must be discarded, logging the reason.
+//
+// The acceptance bar itself lives in rejectVendorAttribution, shared with
+// the common pattern enricher so both paths into the global catalog apply
+// the same guards. This wrapper only supplies the worker's context — a
+// scanned site is always known here, which arms the scanned-site
+// backstop — and logs the outcome.
+//
+// The reason is logged as a field rather than as distinct messages so
+// rejection rates can be queried by cause, which is how the effect of
+// prompt changes on catalog noise is measured.
 func (h *trackerMappingHandler) vendorAttributionRejected(
 	ctx context.Context,
 	tp coredata.TrackerPattern,
 	identification TrackerMappingAgentResult,
 	siteOrigin string,
 ) bool {
-	// The agent's confidence gauges the attribution (who set the
-	// tracker), not whether the artifact is a meaningful tracker. Without
-	// a confident vendor there is nothing to catalog here.
-	if identification.ThirdPartyName == "" || identification.ThirdPartyConfidence < agentThirdPartyConfidenceThreshold {
-		h.logger.InfoCtx(
-			ctx,
-			"agent third-party attribution below confidence threshold",
-			log.String("pattern", tp.Pattern),
-			log.Float64("third_party_confidence", identification.ThirdPartyConfidence),
-		)
-
-		return true
+	actx := attributionContext{Pattern: tp.Pattern}
+	if siteOrigin != "" {
+		actx.SiteOrigin = &siteOrigin
 	}
 
-	// Evidence guard: a vendor is attributed only on concrete evidence (a
-	// database match, a meaningful naming convention, or a web/browser
-	// result that names the setter). An attribution with no evidence
-	// source is a general-knowledge guess and is discarded, so a wrong
-	// precedent never enters the catalog.
-	if !evidenceSupportsAttribution(identification.EvidenceSource) {
-		h.logger.InfoCtx(
-			ctx,
-			"agent attribution lacks concrete evidence, discarding",
-			log.String("pattern", tp.Pattern),
-			log.String("evidence_source", identification.EvidenceSource),
-		)
-
-		return true
+	rejection := rejectVendorAttribution(identification, actx)
+	if rejection == attributionAccepted {
+		return false
 	}
 
-	// Backstop for the prompt rule that the scanned site is never a third
-	// party of itself: a pattern that embeds the site's own domain (e.g.
-	// an "ethereum-https://example.com" wallet-extension key, or an
-	// owner-set tracker) can lead the agent to attribute the site's own
-	// brand. Discard such attributions outright so the pattern falls
-	// through to the unmatched fallback instead of being mapped to the
-	// site owner.
-	if nameMatchesSiteDomain(identification.ThirdPartyName, siteOrigin) {
-		h.logger.InfoCtx(
-			ctx,
-			"agent attributed scanned site as third party, discarding",
-			log.String("pattern", tp.Pattern),
-		)
+	h.logger.InfoCtx(
+		ctx,
+		"discarded agent third-party attribution",
+		log.String("pattern", tp.Pattern),
+		log.String("reason", string(rejection)),
+		log.String("third_party_name", identification.ThirdPartyName),
+		log.Float64("third_party_confidence", identification.ThirdPartyConfidence),
+		log.String("evidence_source", identification.EvidenceSource),
+	)
 
-		return true
-	}
-
-	// Cookie-database and cookie-banner directory sites (Cookifi,
-	// Cookiepedia, cookiedatabase.org, ...) rank highly in web search
-	// only because they catalog cookies, not because they set them. A
-	// web result hosted on one can lead the agent to attribute the
-	// tracker to the directory operator itself. Discard such an
-	// attribution so the pattern falls through to the unmatched fallback
-	// instead of being mapped to a database aggregator. The denylist is
-	// scoped to pure aggregators, so a CMP's own product cookie (e.g.
-	// OptanonConsent -> OneTrust) is still attributed normally.
-	if nameIsCookieDatabaseAggregator(identification.ThirdPartyName) {
-		h.logger.InfoCtx(
-			ctx,
-			"agent attributed cookie-database aggregator as third party, discarding",
-			log.String("pattern", tp.Pattern),
-		)
-
-		return true
-	}
-
-	return false
+	return true
 }
 
 // nameMatchesSiteDomain reports whether a candidate vendor name refers to

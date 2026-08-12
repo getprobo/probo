@@ -10,13 +10,18 @@ Return a structured JSON response with:
 - category: the business category of the third party
 - third_party_confidence: how confident you are about WHICH company or service set this tracker (0.0 to 1.0). This is the confidence in the attribution alone — not a judgment of whether the artifact is a "real" web tracker. A browser-extension artifact whose name names its vendor can still warrant high confidence here.
 - evidence_source: the concrete evidence that backs the attribution — one of "database_match" (an exact pattern match in the internal database), "naming_convention" (the tracker's meaningful prefix or an embedded vendor name), "web_search" (a web result that names the setter), "browser_page" (a page you opened that names the setter), or "none" (no concrete evidence). It MUST be "none" whenever third_party_name is empty, and it MUST be a concrete kind (not "none") whenever you name a vendor — an attribution with evidence_source "none" is discarded.
-- is_first_party: true when the artifact has no third party at all — it is the scanned site's own tracker, a generic library or log key (e.g. "loglevel", "debug"), a browser-extension key that embeds the scanned site's origin, or otherwise not attributable to any external vendor. Leave it false whenever a vendor is or might be responsible.
+- is_first_party: true only when the artifact evidences NO data leaving the browser to any party other than the site operator. This is a data-egress test, not a name test: a bundled open-source library writes its key locally and sends nothing anywhere, so it is first-party even though the library has a name (e.g. "i18next", "loglevel", "redux-persist"). Leave it false whenever data is or might be sent to an external party — including a bundled vendor SDK, which is a third party precisely because it transmits to its own endpoint (e.g. PostHog, Mixpanel, Sentry). When you cannot tell whether the artifact egresses, leave is_first_party false AND third_party_name empty: that leaves the tracker undetermined for a later, better-informed run, which is the correct answer under uncertainty because a first-party verdict is permanent.
 </task>
 
 <instructions>
 1. First use the search_tracker_patterns tool to look for similar known patterns in the database. Strip variable parts (IDs, UUIDs, timestamps) from the pattern name and search for the fixed prefix or root (e.g. for "_gat_UA-12345678-1", search for "_gat"). Weigh the results by their confidence: a high-confidence match (a curated/seed entry) is authoritative, but a lower-confidence match is only a hint from an earlier automatic guess — corroborate it with the naming convention or a web/browser result before relying on it, and never treat it as proof on its own. Only count this as evidence_source "database_match" for an exact, high-confidence match on the same pattern.
 
-2. If search_tracker_patterns returns results with a third party name, use the search_third_parties tool to confirm the exact name in the database and get its category.
+2. Before you name a vendor, call search_third_parties and reuse an existing catalog entry rather than minting a variant of it. Search the vendor's shortest distinctive brand token ("Hotjar", not "Hotjar Ltd"), and try the parent company too when the tracker belongs to a product ("Google" as well as "Google Analytics"). Then:
+   - If a result is the same company, return its `name` field VERBATIM — exact spelling, spacing, casing, and punctuation. The catalog deduplicates on the `slug` derived from the name, so "Hotjar Ltd" and "Hotjar" become two separate entries for one company. Copying the existing name is what prevents that.
+   - Never add a legal suffix (Inc, LLC, Ltd, GmbH, SA, B.V.) or a country/region code to a name. The catalog stores brand names: "Hotjar", not "Hotjar Ltd" or "Hotjar UK".
+   - Never abbreviate or expand a name that already exists: if the catalog has "Google Analytics", do not return "GA", "Google", or "Google Analytics 4".
+   - Distinct products of the same parent are distinct entries. "Google Analytics" and "Google Ads" are separate catalog entries with separate cookie families; do not fold either into "Google". Return the entry for the specific product that set the tracker when the catalog has it.
+   - When no result is the company, name it with the vendor's own common brand name as it appears on its website — no legal suffix, no country code, no product-version number.
 
 3. Only use web_search as a last resort if the internal tools return nothing useful. Try up to 3 different queries, adapting your strategy based on the available signals:
    - If the tracker has a recognizable prefix or name, start with: "[prefix] cookie tracking" (e.g. "_ce.s cookie tracking").
@@ -52,7 +57,7 @@ Return a structured JSON response with:
    - 0.5-0.6: reasonable guess based on partial naming patterns
    - Below 0.5: uncertain, speculative
 
-   Do not lower third_party_confidence just because the artifact is a browser-extension key, localStorage entry, or otherwise not a classic web tracker. The goal is to attribute the vendor, not to judge how "tracker-worthy" the artifact is — if the name unambiguously names its source, attribute it with high confidence.
+   Do not lower third_party_confidence just because the artifact is a browser-extension key, localStorage entry, or otherwise not a classic web tracker. The goal is to attribute the vendor, not to judge how "tracker-worthy" the artifact is — if the name unambiguously names its source, attribute it with high confidence. This rule governs the confidence NUMBER once you have established that a vendor is responsible; it never overrides the egress test in rule 12. If the named source is a bundled library that egresses nothing, the answer is is_first_party=true with an empty third_party_name — not a high-confidence attribution to the library.
 
 9. If you truly cannot identify who set the tracker, set third_party_name to an empty string and third_party_confidence below 0.3.
 
@@ -60,8 +65,29 @@ Return a structured JSON response with:
 
 11. Always set evidence_source to the kind of evidence you actually used for the attribution, and only to a concrete kind ("database_match", "naming_convention", "web_search", or "browser_page") when that evidence genuinely exists. If you are tempted to name a vendor from general knowledge or a vague resemblance with no concrete evidence, set evidence_source to "none" and leave third_party_name empty instead — an attribution carrying evidence_source "none" is rejected.
 
-12. Set is_first_party to true when the artifact plainly has no external vendor behind it. This covers: the scanned site's own trackers; generic developer/library keys that any application can write (e.g. "loglevel", "debug", "redux", framework-internal keys); a browser-extension key that embeds the scanned site's own origin (e.g. "ethereum-https://<scanned_site>"); and any key whose only plausible owner is the first party. A true value is a terminal verdict — the tracker will never be re-examined for a vendor — so only set it when you are confident no third party is responsible; when a vendor is or might be responsible, leave it false and attribute (or leave undetermined) instead.
+12. Decide first-party versus third-party by DATA EGRESS, not by whether the artifact's name has an owner. Ask: does this artifact evidence data being sent to a party other than the site operator? Almost every client-side key is written by *some* named piece of software; that name is not what makes a third party. Transmission is.
 
-13. For the category field, use one of: {{.Categories}}.
+   FIRST_PARTY — the software writes the key locally and egresses nothing:
+   - A bundled open-source library storing its own state: "i18next" / "i18nextLng" (language preference), "loglevel" (log level), "debug" (namespace filter), "redux-persist:root" (rehydrated store), "theme", "colorScheme", "sidebar-collapsed".
+   - The site operator's own keys: a session id, a cart, a feature flag the site itself set, a CSRF token.
+   - A browser-extension key that embeds the scanned site's own origin (e.g. "ethereum-https://<scanned_site>").
+   These carry no vendor even though a project name is obvious. The i18next project is not a data recipient: it has no servers in the request path.
+
+   THIRD_PARTY — the software transmits to an endpoint the vendor operates, so name the vendor and leave is_first_party false:
+   - A bundled analytics or product-telemetry SDK: PostHog ("ph_phc_*"), Mixpanel ("mp_*"), Amplitude ("amplitude_*"), Segment ("ajs_anonymous_id"), Heap, Matomo ("_pk_*").
+   - A bundled error or session-replay SDK that reports events: Sentry, LogRocket, FullStory, Hotjar ("_hj*").
+   - Any advertising, tag-management, CDP, consent, or support-widget vendor.
+   Being bundled into the site's own JavaScript bundle changes NOTHING. A PostHog SDK compiled into the first-party bundle still POSTs to a PostHog ingestion endpoint, so PostHog receives the data and is a third party. "Bundled" describes how the code was delivered; "third party" describes who receives the data.
+
+   The distinction is the vendor's role, not the library's licence. i18next and the PostHog JavaScript SDK are both MIT-licensed npm packages bundled the same way. i18next has no ingestion endpoint; PostHog does. That is the whole test.
+
+13. When egress is genuinely unclear, return UNDETERMINED — third_party_name empty, third_party_confidence below 0.3, evidence_source "none", and is_first_party FALSE. Do not force the binary. These cases are undetermined, not first-party:
+   - A library that CAN egress but may be configured not to (a self-hosted Matomo or Sentry instance; PostHog pointed at a customer-owned reverse proxy). The vendor's software is present, but a key name cannot tell you where the data lands. Prefer the vendor attribution when the key names the vendor and you have concrete evidence for it; never conclude FIRST_PARTY merely because the endpoint might be self-hosted.
+   - A configuration-only key for a vendor SDK, where the config key itself is local but the SDK it configures does egress (e.g. a "sentry-*" replay-sampling flag). Attribute the vendor: the artifact is evidence the vendor's SDK is installed, and the SDK egresses.
+   - An opaque key you cannot tie to any known software (e.g. "aX7f", "__tmp_2").
+   - A library you do not recognise. An unknown name is not evidence of no egress.
+   Reserve is_first_party=true for artifacts you can affirmatively identify as local-only. Because a first-party verdict is terminal — the tracker is never re-examined for a vendor — a wrong true permanently suppresses a real vendor, while the cost of UNDETERMINED is one more attempt on a later scan. When in doubt, leave it undetermined.
+
+14. For the category field, use one of: {{.Categories}}.
    Most cookies fall under ANALYTICS or MARKETING.
 </instructions>

@@ -34,16 +34,27 @@ type (
 	}
 
 	searchThirdPartiesResult struct {
-		Name       string `json:"name"`
+		Name string `json:"name"`
+		// Slug is the catalog's deduplication key, derived from the name.
+		// Exposing it lets the agent see that two spellings of one company
+		// would become two separate catalog entries.
+		Slug       string `json:"slug"`
 		Category   string `json:"category"`
 		WebsiteURL string `json:"website_url,omitempty"`
 	}
 )
 
+// searchThirdPartiesSearchLimit caps how many catalog matches the agent
+// sees. It is deliberately above the default LoadAll cap: results are
+// ordered by name, so a narrow cap on a broad fragment can hide the
+// specific entry the agent needs behind alphabetically earlier ones, and a
+// missed match means a duplicate catalog row gets created.
+const searchThirdPartiesSearchLimit = 50
+
 func searchThirdPartiesTool(pgClient *pg.Client) agent.Tool {
 	return agent.FunctionTool(
 		"search_third_parties",
-		"Search the internal database of known third parties (companies/services) by name fragment. Returns matching third party names, categories, and website URLs. Use this to find the exact name of a known third party to link the tracker to.",
+		"Search the internal catalog of known third parties (companies/services) by name fragment. Returns each match's exact name, its slug (the catalog's deduplication key), category, and website URL. Use this before naming a vendor: when a match is the same company, return its exact name verbatim so the tracker links to the existing catalog entry instead of creating a duplicate.",
 		func(ctx context.Context, p searchThirdPartiesParams) (agent.ToolResult, error) {
 			if p.Query == "" {
 				return agent.ResultError("query is required"), nil
@@ -55,10 +66,11 @@ func searchThirdPartiesTool(pgClient *pg.Client) agent.Tool {
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
 					var parties coredata.CommonThirdParties
-					if err := parties.LoadAll(
+					if err := parties.LoadAllWithLimit(
 						ctx,
 						conn,
 						coredata.NewCommonThirdPartyFilter(&p.Query),
+						searchThirdPartiesSearchLimit,
 					); err != nil {
 						return err
 					}
@@ -67,6 +79,7 @@ func searchThirdPartiesTool(pgClient *pg.Client) agent.Tool {
 					for i, tp := range parties {
 						out[i] = searchThirdPartiesResult{
 							Name:     tp.Name,
+							Slug:     tp.Slug,
 							Category: string(tp.Category),
 						}
 						if tp.WebsiteURL != nil {

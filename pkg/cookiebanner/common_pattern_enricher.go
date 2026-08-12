@@ -129,7 +129,7 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 	// prompt and gets linked. Attribution stays the mapping pipeline's
 	// job; the enricher only reuses it. An already-linked pattern skips
 	// this entirely.
-	var attribution *TrackerMappingAgentResult
+	var attribution *agentIdentification
 
 	if cp.CommonThirdPartyID == nil {
 		attribution, err = e.identifyThirdParty(ctx, cp, browserTools)
@@ -137,14 +137,26 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 			return err
 		}
 
-		if attribution != nil {
-			thirdPartyName = attribution.ThirdPartyName
+		if attribution != nil && !attribution.firstParty {
+			thirdPartyName = attribution.result.ThirdPartyName
 		}
 	}
 
-	description, err := e.research(ctx, cp, thirdPartyName, browserTools)
-	if err != nil {
-		return fmt.Errorf("cannot research tracker description: %w", err)
+	firstParty := attribution != nil && attribution.firstParty
+
+	// A first-party verdict discards the description, so researching one
+	// would burn an agent run and its web searches for nothing.
+	var description string
+
+	if !firstParty {
+		description, err = e.research(ctx, cp, thirdPartyName, browserTools)
+		if err != nil {
+			return fmt.Errorf("cannot research tracker description: %w", err)
+		}
+	}
+
+	if firstParty {
+		return e.persistFirstPartyVerdict(ctx, cp, attribution)
 	}
 
 	alreadyLinked := cp.CommonThirdPartyID != nil
@@ -159,7 +171,7 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 			var thirdPartyID *gid.GID
 
 			if attribution != nil && cp.CommonThirdPartyID == nil {
-				thirdPartyID, err = thirdparty.ResolveOrCreateCommonThirdParty(ctx, tx, e.logger, attribution.ThirdPartyName, attribution.Category)
+				thirdPartyID, err = thirdparty.ResolveOrCreateCommonThirdParty(ctx, tx, e.logger, attribution.result.ThirdPartyName, attribution.result.Category)
 				if err != nil {
 					return fmt.Errorf("cannot resolve or create common third party: %w", err)
 				}
@@ -167,10 +179,16 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 
 			linked := alreadyLinked || thirdPartyID != nil
 
+			var attributionResult *TrackerMappingAgentResult
+
+			if attribution != nil {
+				attributionResult = &attribution.result
+			}
+
 			meta := buildCommonPatternEnrichmentMetadata(
 				e.enrichmentCfg.Model,
 				description,
-				attribution,
+				attributionResult,
 				alreadyLinked,
 				linked,
 				time.Now(),
@@ -205,6 +223,78 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 				log.Bool("third_party_linked", linked),
 				log.Int("enrichment_attempts", cp.EnrichmentAttempts),
 				log.Int64("backfilled_tracker_patterns", backfilled),
+			)
+
+			return nil
+		},
+	)
+}
+
+// persistFirstPartyVerdict records the agent's terminal verdict that a
+// catalog pattern has no third party behind it, mirroring the operator
+// mark-first-party command: the attribution is set (which also clears any
+// vendor link), the description returns to empty because a terminal
+// non-vendor row keeps no vendor-naming prose, and the linked org patterns
+// are re-queued for mapping with their descriptions cleared.
+//
+// It still writes the enrichment payload. The payload's presence is what
+// marks the row as having been through the workflow, so the stale-recovery
+// sweep — which re-queues rows with a null payload — never loops on it.
+func (e *CommonPatternEnricher) persistFirstPartyVerdict(
+	ctx context.Context,
+	cp coredata.CommonTrackerPattern,
+	attribution *agentIdentification,
+) error {
+	meta := buildCommonPatternFirstPartyMetadata(e.enrichmentCfg.Model, time.Now())
+
+	payload, err := json.Marshal(meta)
+	if err != nil {
+		return fmt.Errorf("cannot marshal common tracker pattern enrichment metadata: %w", err)
+	}
+
+	return e.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			ids := []gid.GID{cp.ID}
+
+			var patterns coredata.CommonTrackerPatterns
+
+			if _, err := patterns.SetAttributionByIDs(
+				ctx,
+				tx,
+				ids,
+				coredata.CommonTrackerPatternAttributionFirstParty,
+			); err != nil {
+				return fmt.Errorf("cannot record first-party verdict: %w", err)
+			}
+
+			// Blank the description and write the payload in one statement.
+			// SetAttributionByIDs already nulled the vendor link, and the
+			// nil third party here leaves that null in place.
+			if err := cp.UpdateEnrichment(ctx, tx, "", nil, payload); err != nil {
+				return fmt.Errorf("cannot set common tracker pattern enriched: %w", err)
+			}
+
+			var orgPatterns coredata.TrackerPatterns
+
+			remapped, err := orgPatterns.RequestMappingForUncategorisedByCommonTrackerPatternIDs(ctx, tx, ids)
+			if err != nil {
+				return err
+			}
+
+			cleared, err := orgPatterns.ClearDescriptionForUncategorisedByCommonTrackerPatternIDs(ctx, tx, ids)
+			if err != nil {
+				return err
+			}
+
+			e.logger.InfoCtx(
+				ctx,
+				"recorded first-party verdict on common tracker pattern",
+				log.String("common_tracker_pattern_id", cp.ID.String()),
+				log.String("pattern", cp.Pattern),
+				log.Int("enrichment_attempts", cp.EnrichmentAttempts),
+				log.Int64("remapped_tracker_patterns", remapped),
+				log.Int64("cleared_tracker_patterns", cleared),
 			)
 
 			return nil
@@ -271,17 +361,17 @@ func (e *CommonPatternEnricher) research(
 	return strings.TrimSpace(result.Output.Description), nil
 }
 
-// identifyThirdParty reuses the tracker-mapping agent to attribute a
-// vendor to an unlinked catalog pattern. It performs no DB writes: it
-// returns the confident attribution (name, category, confidence) or nil
-// when the agent is unsure, leaving the caller to resolve or create the
-// catalog row. A failed agent run is best-effort and non-fatal,
-// mirroring the mapping worker's identifyWithAgent.
+// identifyThirdParty reuses the tracker-mapping agent to judge an unlinked
+// catalog pattern. It performs no DB writes: it returns a guard-accepted
+// vendor attribution, a terminal first-party verdict, or nil when the
+// agent is unsure, leaving the caller to persist. A failed agent run is
+// best-effort and non-fatal, mirroring the mapping worker's
+// identifyWithAgent.
 func (e *CommonPatternEnricher) identifyThirdParty(
 	ctx context.Context,
 	cp coredata.CommonTrackerPattern,
 	browserTools []agent.Tool,
-) (*TrackerMappingAgentResult, error) {
+) (*agentIdentification, error) {
 	if !e.mappingEnabled {
 		return nil, nil
 	}
@@ -314,12 +404,55 @@ func (e *CommonPatternEnricher) identifyThirdParty(
 		return nil, nil
 	}
 
-	out := result.Output
-	out.ThirdPartyName = strings.TrimSpace(out.ThirdPartyName)
-
-	if out.ThirdPartyName == "" || out.ThirdPartyConfidence < agentThirdPartyConfidenceThreshold {
-		return nil, nil
+	ident, rejection := interpretEnrichmentAttribution(result.Output, cp.Pattern)
+	if rejection != attributionAccepted {
+		e.logger.InfoCtx(
+			ctx,
+			"discarded agent third-party attribution during enrichment",
+			log.String("common_tracker_pattern_id", cp.ID.String()),
+			log.String("pattern", cp.Pattern),
+			log.String("reason", string(rejection)),
+			log.String("third_party_name", result.Output.ThirdPartyName),
+			log.Float64("third_party_confidence", result.Output.ThirdPartyConfidence),
+			log.String("evidence_source", result.Output.EvidenceSource),
+		)
 	}
 
-	return &out, nil
+	return ident, nil
+}
+
+// interpretEnrichmentAttribution applies the shared catalog acceptance bar
+// to a raw mapping-agent output for a catalog pattern and returns the
+// vendor attribution, a terminal first-party verdict, or nil.
+//
+// A catalog pattern belongs to no scanned site, so no site origin is
+// supplied and that one backstop is inapplicable; every other guard
+// applies exactly as it does in the mapping worker. This is what stops an
+// attribution the worker would discard from entering the global catalog
+// through enrichment instead.
+//
+// A rejected vendor still yields a first-party verdict when the agent
+// declared one: the guards judge the proposed vendor name, and an
+// artifact the agent affirmatively identified as having no external
+// recipient is a separate, terminal answer.
+//
+// Split from identifyThirdParty so the decision is testable without an
+// LLM. The returned rejection is for logging only; a nil identification
+// with attributionAccepted means the agent named no vendor at all.
+func interpretEnrichmentAttribution(
+	out TrackerMappingAgentResult,
+	pattern string,
+) (*agentIdentification, attributionRejection) {
+	out.ThirdPartyName = strings.TrimSpace(out.ThirdPartyName)
+
+	rejection := rejectVendorAttribution(out, attributionContext{Pattern: pattern})
+	if rejection == attributionAccepted {
+		return &agentIdentification{result: out}, attributionAccepted
+	}
+
+	if out.IsFirstParty {
+		return &agentIdentification{firstParty: true}, rejection
+	}
+
+	return nil, rejection
 }

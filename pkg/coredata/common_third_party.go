@@ -624,11 +624,38 @@ WHERE
 	return nil
 }
 
+// defaultCommonThirdPartyLoadAllLimit caps an unpaginated catalog lookup.
+// LoadAll is a name-search convenience, not a full scan: callers that need
+// every row page through Load instead.
+const defaultCommonThirdPartyLoadAllLimit = 20
+
+// LoadAll returns catalog rows matching the filter, ordered by name and
+// capped at defaultCommonThirdPartyLoadAllLimit.
+//
+// Note the cap interacts with the ordering: it keeps the alphabetically
+// first matches, not the most relevant ones, so a broad fragment can hide
+// a specific match behind earlier names. Callers that surface results to a
+// consumer choosing among them should raise the cap accordingly.
 func (t *CommonThirdParties) LoadAll(
 	ctx context.Context,
 	conn pg.Querier,
 	filter *CommonThirdPartyFilter,
 ) error {
+	return t.LoadAllWithLimit(ctx, conn, filter, defaultCommonThirdPartyLoadAllLimit)
+}
+
+// LoadAllWithLimit is LoadAll with an explicit row cap. A limit of zero or
+// less falls back to the default.
+func (t *CommonThirdParties) LoadAllWithLimit(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonThirdPartyFilter,
+	limit int,
+) error {
+	if limit <= 0 {
+		limit = defaultCommonThirdPartyLoadAllLimit
+	}
+
 	q := `
 SELECT
     id,
@@ -661,12 +688,12 @@ FROM
 WHERE
     %s
 ORDER BY name ASC
-LIMIT 20
+LIMIT @limit
 `
 
 	q = fmt.Sprintf(q, filter.SQLFragment())
 
-	args := pgx.StrictNamedArgs{}
+	args := pgx.StrictNamedArgs{"limit": limit}
 	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

@@ -34,6 +34,13 @@ const (
 	commonPatternFieldStatusNotFound = "not_found"
 	commonPatternFieldStatusExternal = "exists_external"
 
+	// commonPatternFieldStatusFirstParty records that the artifact was
+	// determined to have no third party behind it. It is a definitive
+	// answer, not a missing one, so it counts as resolved: a first-party
+	// row would otherwise report no_result forever despite the question
+	// being settled.
+	commonPatternFieldStatusFirstParty = "first_party"
+
 	// Run-level status recorded at the top of the enrichment payload.
 	commonPatternStatusDone     = "done"
 	commonPatternStatusPartial  = "partial"
@@ -60,6 +67,11 @@ type (
 		Category       string  `json:"category,omitempty"`
 		Confidence     float64 `json:"confidence"`
 		Linked         bool    `json:"linked"`
+
+		// FirstParty records a terminal verdict that the artifact has no
+		// third party behind it, so the decision stays auditable from the
+		// payload after the vendor link has been cleared.
+		FirstParty bool `json:"first_party,omitempty"`
 	}
 
 	// CommonPatternEnrichmentMetadata is the full payload stored in the
@@ -135,6 +147,35 @@ func buildCommonPatternEnrichmentMetadata(
 	return meta
 }
 
+// buildCommonPatternFirstPartyMetadata assembles the provenance for a run
+// that ended in a terminal first-party verdict. Both enrichment targets
+// are recorded as first_party rather than not_found: the artifact has no
+// vendor to name and therefore no vendor-informed description to write, so
+// the run resolved both questions rather than failing at them.
+func buildCommonPatternFirstPartyMetadata(
+	model string,
+	now time.Time,
+) CommonPatternEnrichmentMetadata {
+	fields := map[string]CommonPatternFieldMeta{
+		commonPatternFieldDescription: {
+			Status:    commonPatternFieldStatusFirstParty,
+			UpdatedAt: now,
+		},
+		commonPatternFieldThirdParty: {
+			Status:    commonPatternFieldStatusFirstParty,
+			UpdatedAt: now,
+		},
+	}
+
+	return CommonPatternEnrichmentMetadata{
+		Model:       model,
+		AttemptedAt: now,
+		Status:      commonPatternRunStatus(fields),
+		Fields:      fields,
+		Attribution: &CommonPatternAttributionMeta{FirstParty: true},
+	}
+}
+
 // commonPatternRunStatus classifies the run from its per-field outcomes:
 // done when every field resolved a value, no_result when none did, partial
 // otherwise.
@@ -162,7 +203,9 @@ func commonPatternRunStatus(fields map[string]CommonPatternFieldMeta) string {
 // one.
 func commonPatternFieldResolved(status string) bool {
 	switch status {
-	case commonPatternFieldStatusFound, commonPatternFieldStatusExternal:
+	case commonPatternFieldStatusFound,
+		commonPatternFieldStatusExternal,
+		commonPatternFieldStatusFirstParty:
 		return true
 	default:
 		return false

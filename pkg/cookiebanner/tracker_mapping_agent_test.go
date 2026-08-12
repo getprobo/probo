@@ -139,6 +139,58 @@ func TestNameIsCookieDatabaseAggregator(t *testing.T) {
 	}
 }
 
+// TestNameIsBundledFirstPartyLibrary pins the bundled-library backstop.
+//
+// The allowed half is the load-bearing half: every vendor listed there
+// operates an ingestion endpoint its SDK reports to and is a curated
+// catalog entry, so adding any of them to the denylist would silently
+// suppress a real third party across every tenant. Those cases are the
+// fence against the list drifting toward "libraries that feel
+// first-party".
+func TestNameIsBundledFirstPartyLibrary(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		vendor   string
+		expected bool
+	}{
+		{name: "i18next is denied", vendor: "i18next", expected: true},
+		{name: "i18next storage key form is denied", vendor: "i18nextLng", expected: true},
+		{name: "loglevel is denied", vendor: "loglevel", expected: true},
+		{name: "casing insensitive", vendor: "LogLevel", expected: true},
+		{name: "hyphenated form is denied", vendor: "redux-persist", expected: true},
+		{name: "spacing insensitive", vendor: "Redux Persist", expected: true},
+		{name: "scoped package form is denied", vendor: "react-i18next", expected: true},
+		{name: "jquery is denied", vendor: "jQuery", expected: true},
+		{name: "date-fns is denied", vendor: "date-fns", expected: true},
+		{name: "core-js is denied", vendor: "core-js", expected: true},
+		{name: "i18next domain form is denied", vendor: "i18next.com", expected: true},
+		// Vendors that operate an ingestion endpoint: all curated catalog
+		// entries, all must stay attributable.
+		{name: "posthog is allowed", vendor: "PostHog", expected: false},
+		{name: "sentry is allowed", vendor: "Sentry", expected: false},
+		{name: "mixpanel is allowed", vendor: "Mixpanel", expected: false},
+		{name: "segment is allowed", vendor: "Segment", expected: false},
+		{name: "amplitude is allowed", vendor: "Amplitude", expected: false},
+		{name: "vercel is allowed", vendor: "Vercel", expected: false},
+		{name: "nextjs is allowed", vendor: "Next.js", expected: false},
+		{name: "matomo is allowed", vendor: "Matomo", expected: false},
+		{name: "unrelated vendor is allowed", vendor: "Google Analytics", expected: false},
+		{name: "empty name", vendor: "", expected: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.expected, nameIsBundledFirstPartyLibrary(tt.vendor))
+			},
+		)
+	}
+}
+
 func TestEvidenceSupportsAttribution(t *testing.T) {
 	t.Parallel()
 
@@ -341,6 +393,160 @@ func TestVendorAttributionRejected(t *testing.T) {
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
 	)
+
+	t.Run(
+		"rejects bundled first-party library",
+		func(t *testing.T) {
+			t.Parallel()
+
+			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "i18next" })
+			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
+		},
+	)
+}
+
+// TestRejectVendorAttribution pins the shared acceptance bar that governs
+// every write into the global catalog.
+//
+// The nil-SiteOrigin cases carry the design: a catalog pattern belongs to
+// no scanned site, so the scanned-site backstop must be inapplicable
+// there while every other guard stays armed. That is precisely the
+// invariant the enricher used to break by applying no guards at all.
+func TestRejectVendorAttribution(t *testing.T) {
+	t.Parallel()
+
+	origin := "https://example.com"
+
+	confident := func(mut func(*TrackerMappingAgentResult)) TrackerMappingAgentResult {
+		r := TrackerMappingAgentResult{
+			ThirdPartyName:       "Acme Analytics",
+			Category:             coredata.ThirdPartyCategoryAnalytics,
+			ThirdPartyConfidence: 0.9,
+			EvidenceSource:       evidenceSourceNamingConvention,
+		}
+		if mut != nil {
+			mut(&r)
+		}
+
+		return r
+	}
+
+	tests := []struct {
+		name       string
+		mutate     func(*TrackerMappingAgentResult)
+		siteOrigin *string
+		expected   attributionRejection
+	}{
+		{
+			name:       "accepts a confident evidence-backed attribution",
+			siteOrigin: &origin,
+			expected:   attributionAccepted,
+		},
+		{
+			name:     "accepts with no scanned site",
+			expected: attributionAccepted,
+		},
+		{
+			name:       "accepts exactly at the confidence threshold",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyConfidence = 0.6 },
+			siteOrigin: &origin,
+			expected:   attributionAccepted,
+		},
+		{
+			name:       "rejects below the confidence threshold",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyConfidence = 0.3 },
+			siteOrigin: &origin,
+			expected:   attributionRejectedConfidence,
+		},
+		{
+			name:       "rejects an empty name",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedConfidence,
+		},
+		{
+			name:       "rejects a whitespace-only name",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "   " },
+			siteOrigin: &origin,
+			expected:   attributionRejectedConfidence,
+		},
+		{
+			name:       "rejects evidence source none",
+			mutate:     func(r *TrackerMappingAgentResult) { r.EvidenceSource = evidenceSourceNone },
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+		{
+			name:       "rejects an empty evidence source",
+			mutate:     func(r *TrackerMappingAgentResult) { r.EvidenceSource = "" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+		{
+			name:       "rejects an unknown evidence source",
+			mutate:     func(r *TrackerMappingAgentResult) { r.EvidenceSource = "vibes" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+		{
+			name:       "rejects the scanned site as its own third party",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Example" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedScannedSite,
+		},
+		{
+			name:     "scanned-site backstop is inapplicable without an origin",
+			mutate:   func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Example" },
+			expected: attributionAccepted,
+		},
+		{
+			name:       "rejects a cookie-database aggregator",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Cookiepedia" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedAggregator,
+		},
+		{
+			name:     "rejects a cookie-database aggregator without an origin",
+			mutate:   func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Cookiepedia" },
+			expected: attributionRejectedAggregator,
+		},
+		{
+			name:       "rejects a bundled first-party library",
+			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "i18next" },
+			siteOrigin: &origin,
+			expected:   attributionRejectedFirstPartyLib,
+		},
+		{
+			name:     "rejects a bundled first-party library without an origin",
+			mutate:   func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "i18next" },
+			expected: attributionRejectedFirstPartyLib,
+		},
+		{
+			name: "missing evidence outranks a denylisted name",
+			mutate: func(r *TrackerMappingAgentResult) {
+				r.ThirdPartyName = "i18next"
+				r.EvidenceSource = evidenceSourceNone
+			},
+			siteOrigin: &origin,
+			expected:   attributionRejectedNoEvidence,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				got := rejectVendorAttribution(
+					confident(tt.mutate),
+					attributionContext{Pattern: "_x", SiteOrigin: tt.siteOrigin},
+				)
+
+				assert.Equal(t, tt.expected, got)
+			},
+		)
+	}
 }
 
 func TestBuildAgentPrompt(t *testing.T) {
