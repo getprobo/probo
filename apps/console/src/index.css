@@ -1,9 +1,31 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
 @import "tailwindcss";
+
+/* Both kits in one build, mid-migration.
+ *
+ * theme.css registers the v1 semantic tokens (txt-primary, level-0, …) and
+ * theme-tokens.css the v2 numeric scales (sand-3, text-2, rounded-3, …). The
+ * vocabularies do not overlap, and theme-tokens.css is the reset-free v2 entry
+ * (see packages/ui/src/v2/theme-tokens.css), so it adds its scales without
+ * wiping the v1 ones. Order matters: v1 clears the Tailwind palette on the way
+ * in, so it has to come first.
+ *
+ * Pages migrate to v2 one zone at a time; until a page is converted it keeps
+ * resolving v1 tokens. Typography is the exception and moves in one go: there
+ * is a single --font-sans slot, and the v2 theme claims it for Inter, so v1
+ * pages render in Inter too rather than the Geist they were designed against.
+ */
 @import "@probo/ui/src/theme.css";
+@import "@probo/ui/src/v2/theme-tokens.css";
 @import "tw-animate-css";
 @source "../../../packages/ui/src";
 @source "../../../packages/helpers/src";
+
+/* The two kits disagree on how dark mode is triggered: v1 writes `@variant
+ * dark` (which defaults to prefers-color-scheme) while the v2 Radix scales
+ * flip on a `.dark` class. Left alone, an OS-dark visitor would get v1 dark
+ * chrome around v2 light components. Pinning both to the class keeps them in
+ * step; the console never sets it, so both stay light. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Hide scrollbar utility */
 .scrollbar-hide {

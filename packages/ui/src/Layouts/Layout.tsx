@@ -62,7 +62,7 @@ export function Layout({
   return (
     <LayoutContext value={layoutContext}>
       <div className="text-txt-primary bg-level-0 min-h-screen">
-        <header className="fixed top-0 z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
+        <header className="fixed top-0 z-[2] left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
           <Link to="/">
             <Logo className="w-12 h-5" />
           </Link>
