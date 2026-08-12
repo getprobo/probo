@@ -157,6 +157,7 @@ PM → spans conversion runs.
 | Opaque ephemeral fan-out (`BroadcastEphemeral` / `Ephemeral`) | done, tested |
 | Cursor-based selection presence (`TextSelectionValue`) | done, tested |
 | TS `deriveDocumentId` mirror (`@probo/ui`) | done, tested for byte-parity with Go |
+| TS cursor-based selection helper (`@probo/ui` `repoSelection`) | done, tested for cursor stability across concurrent edits (browser↔browser) |
 | `/repo` route wiring | done, driven end-to-end in Go by a real `ClientConn` (Postgres integration + live JS still pending) |
 | ProseMirror → spans forward conversion (`prosemirror.ToSpans`) | done, round-trips the whole shared corpus |
 | Server-authoritative seeding | done, seeds on first open from stored content and materializes over the loop (Postgres lifecycle still to integration-test) |
