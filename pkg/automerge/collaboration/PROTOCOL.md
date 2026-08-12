@@ -246,6 +246,14 @@ or cross-instance notification:
   `lease.BroadcastEphemeral`, and reads other peers' frames from
   `lease.Ephemeral` to write to its socket. This is scoped to one server
   instance.
+- **Selections/carets** — a caret or selection is published as a presence
+  `update` whose value is a `TextSelectionValue`: the addressed text field plus a
+  stable Automerge anchor and head cursor (the bytes from `Text.Cursor`), never
+  integer offsets. Offsets drift when anyone types before the caret; a cursor
+  resolves (via `Text.CursorPosition`) to the same character after arbitrary
+  concurrent edits, so remote carets stay anchored. The presence layer only
+  transports the cursor bytes, keeping it independent of the CRDT engine; the
+  server and Go agents create and resolve the cursors.
 
 ### Remaining contract decisions before enabling the endpoint
 
