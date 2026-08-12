@@ -5029,7 +5029,7 @@ func (r *Resolver) UpdateCompliancePortalTool(ctx context.Context, req *mcp.Call
 	}
 
 	if capabilities := UnwrapOmittable(input.Capabilities); capabilities != nil && *capabilities != nil {
-		updateReq.Capabilities = &coredata.CompliancePortalCapabilities{
+		updateReq.Capabilities = &coredata.CompliancePortalCapabilitiesPatch{
 			RightsRequests: (*capabilities).RightsRequests,
 		}
 	}
@@ -5666,7 +5666,7 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 	}
 
 	if v := UnwrapOmittable(input.Capabilities); v != nil && *v != nil {
-		updateReq.Capabilities = &coredata.CookieBannerCapabilities{
+		updateReq.Capabilities = &coredata.CookieBannerCapabilitiesPatch{
 			ResourceReporting: (*v).ResourceReporting,
 		}
 	}

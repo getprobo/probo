@@ -10282,6 +10282,16 @@ components:
           type: boolean
           description: Whether visitors can submit rights requests on the compliance portal
 
+    CompliancePortalCapabilitiesInput:
+      type: object
+      description: Partial update; an omitted capability keeps its current value
+      properties:
+        rights_requests:
+          type:
+            - boolean
+            - "null"
+          description: Whether visitors can submit rights requests on the compliance portal
+
     CompliancePortal:
       type: object
       required:
@@ -10587,9 +10597,9 @@ components:
           go.probo.inc/mcpgen/omittable: true
         capabilities:
           anyOf:
-            - $ref: "#/components/schemas/CompliancePortalCapabilities"
+            - $ref: "#/components/schemas/CompliancePortalCapabilitiesInput"
             - type: "null"
-          description: Capabilities enabled on the compliance portal
+          description: Capabilities to change on the compliance portal
           go.probo.inc/mcpgen/omittable: true
         description:
           type:
@@ -11607,6 +11617,16 @@ components:
           type: boolean
           description: Whether the SDK reports detected resources
 
+    CookieBannerCapabilitiesInput:
+      type: object
+      description: Partial update; an omitted capability keeps its current value
+      properties:
+        resource_reporting:
+          type:
+            - boolean
+            - "null"
+          description: Whether the SDK reports detected resources
+
     CookieBanner:
       type: object
       required:
@@ -12108,9 +12128,9 @@ components:
           go.probo.inc/mcpgen/omittable: true
         capabilities:
           anyOf:
-            - $ref: "#/components/schemas/CookieBannerCapabilities"
+            - $ref: "#/components/schemas/CookieBannerCapabilitiesInput"
             - type: "null"
-          description: Capabilities enabled on the cookie banner
+          description: Capabilities to change on the cookie banner
           go.probo.inc/mcpgen/omittable: true
 
     UpdateCookieBannerOutput:

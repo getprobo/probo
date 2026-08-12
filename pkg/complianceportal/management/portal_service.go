@@ -49,7 +49,7 @@ type (
 		Active                       *bool
 		Slug                         *string
 		SearchEngineIndexing         *coredata.SearchEngineIndexing
-		Capabilities                 *coredata.CompliancePortalCapabilities
+		Capabilities                 *coredata.CompliancePortalCapabilitiesPatch
 		NonDisclosureAgreementFileID *gid.GID
 		EntityName                   *string
 		Description                  **string
@@ -405,7 +405,7 @@ func (s *Service) Update(
 			}
 
 			if req.Capabilities != nil {
-				portal.Capabilities = *req.Capabilities
+				portal.Capabilities = req.Capabilities.Apply(portal.Capabilities)
 			}
 
 			if req.EntityName != nil {

@@ -1215,9 +1215,9 @@ func (r *mutationResolver) UpdateCompliancePortal(ctx context.Context, input typ
 		return nil, err
 	}
 
-	var capabilities *coredata.CompliancePortalCapabilities
+	var capabilities *coredata.CompliancePortalCapabilitiesPatch
 	if input.Capabilities != nil {
-		capabilities = &coredata.CompliancePortalCapabilities{
+		capabilities = &coredata.CompliancePortalCapabilitiesPatch{
 			RightsRequests: input.Capabilities.RightsRequests,
 		}
 	}

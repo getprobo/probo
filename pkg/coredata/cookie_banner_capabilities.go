@@ -26,9 +26,15 @@ import (
 	"fmt"
 )
 
-type CookieBannerCapabilities struct {
-	ResourceReporting bool `json:"resource_reporting"`
-}
+type (
+	CookieBannerCapabilities struct {
+		ResourceReporting bool `json:"resource_reporting"`
+	}
+
+	CookieBannerCapabilitiesPatch struct {
+		ResourceReporting *bool
+	}
+)
 
 func DefaultCookieBannerCapabilities() CookieBannerCapabilities {
 	return CookieBannerCapabilities{
@@ -46,9 +52,9 @@ func (c CookieBannerCapabilities) Value() (driver.Value, error) {
 }
 
 func (c *CookieBannerCapabilities) Scan(value any) error {
-	if value == nil {
-		*c = DefaultCookieBannerCapabilities()
+	*c = DefaultCookieBannerCapabilities()
 
+	if value == nil {
 		return nil
 	}
 
@@ -64,8 +70,6 @@ func (c *CookieBannerCapabilities) Scan(value any) error {
 	}
 
 	if len(data) == 0 {
-		*c = DefaultCookieBannerCapabilities()
-
 		return nil
 	}
 
@@ -74,4 +78,12 @@ func (c *CookieBannerCapabilities) Scan(value any) error {
 	}
 
 	return nil
+}
+
+func (p CookieBannerCapabilitiesPatch) Apply(c CookieBannerCapabilities) CookieBannerCapabilities {
+	if p.ResourceReporting != nil {
+		c.ResourceReporting = *p.ResourceReporting
+	}
+
+	return c
 }

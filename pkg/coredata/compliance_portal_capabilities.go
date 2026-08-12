@@ -26,9 +26,15 @@ import (
 	"fmt"
 )
 
-type CompliancePortalCapabilities struct {
-	RightsRequests bool `json:"rights_requests"`
-}
+type (
+	CompliancePortalCapabilities struct {
+		RightsRequests bool `json:"rights_requests"`
+	}
+
+	CompliancePortalCapabilitiesPatch struct {
+		RightsRequests *bool
+	}
+)
 
 func DefaultCompliancePortalCapabilities() CompliancePortalCapabilities {
 	return CompliancePortalCapabilities{
@@ -46,9 +52,9 @@ func (c CompliancePortalCapabilities) Value() (driver.Value, error) {
 }
 
 func (c *CompliancePortalCapabilities) Scan(value any) error {
-	if value == nil {
-		*c = DefaultCompliancePortalCapabilities()
+	*c = DefaultCompliancePortalCapabilities()
 
+	if value == nil {
 		return nil
 	}
 
@@ -64,8 +70,6 @@ func (c *CompliancePortalCapabilities) Scan(value any) error {
 	}
 
 	if len(data) == 0 {
-		*c = DefaultCompliancePortalCapabilities()
-
 		return nil
 	}
 
@@ -74,4 +78,12 @@ func (c *CompliancePortalCapabilities) Scan(value any) error {
 	}
 
 	return nil
+}
+
+func (p CompliancePortalCapabilitiesPatch) Apply(c CompliancePortalCapabilities) CompliancePortalCapabilities {
+	if p.RightsRequests != nil {
+		c.RightsRequests = *p.RightsRequests
+	}
+
+	return c
 }

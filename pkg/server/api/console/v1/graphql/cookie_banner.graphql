@@ -669,7 +669,7 @@ input CreateCookieBannerInput {
 }
 
 input CookieBannerCapabilitiesInput {
-    resourceReporting: Boolean!
+    resourceReporting: Boolean
 }
 
 input UpdateCookieBannerInput {

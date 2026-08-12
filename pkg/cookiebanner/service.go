@@ -75,7 +75,7 @@ type (
 		CookiePolicyURL   *string
 		ConsentExpiryDays *int
 		DefaultLanguage   *string
-		Capabilities      *coredata.CookieBannerCapabilities
+		Capabilities      *coredata.CookieBannerCapabilitiesPatch
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -917,7 +917,7 @@ func (s *Service) UpdateCookieBanner(
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
 			capabilitiesChanged := req.Capabilities != nil &&
-				*req.Capabilities != banner.Capabilities
+				req.Capabilities.Apply(banner.Capabilities) != banner.Capabilities
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
@@ -946,7 +946,7 @@ func (s *Service) UpdateCookieBanner(
 			}
 
 			if req.Capabilities != nil {
-				banner.Capabilities = *req.Capabilities
+				banner.Capabilities = req.Capabilities.Apply(banner.Capabilities)
 			}
 
 			banner.UpdatedAt = time.Now()

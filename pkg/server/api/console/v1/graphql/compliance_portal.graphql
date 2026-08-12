@@ -836,7 +836,7 @@ input DeleteCompliancePortalInput {
 }
 
 input CompliancePortalCapabilitiesInput {
-    rightsRequests: Boolean!
+    rightsRequests: Boolean
 }
 
 input UpdateCompliancePortalInput {

@@ -630,9 +630,9 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 		return nil, err
 	}
 
-	var capabilities *coredata.CookieBannerCapabilities
+	var capabilities *coredata.CookieBannerCapabilitiesPatch
 	if input.Capabilities != nil {
-		capabilities = &coredata.CookieBannerCapabilities{
+		capabilities = &coredata.CookieBannerCapabilitiesPatch{
 			ResourceReporting: input.Capabilities.ResourceReporting,
 		}
 	}
