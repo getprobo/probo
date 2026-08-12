@@ -52,7 +52,12 @@ export { Field } from "./Molecules/Field/Field";
 export { Input } from "./Atoms/Input/Input";
 export { DurationInput } from "./Atoms/Input/DurationInput";
 export { Textarea } from "./Atoms/Textarea/Textarea";
-export { Option, Select, SelectGroup, SelectLabel } from "./Atoms/Select/Select";
+export {
+  Option,
+  Select,
+  SelectGroup,
+  SelectLabel,
+} from "./Atoms/Select/Select";
 export { Label } from "./Atoms/Label/Label";
 export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 export { Table, Tbody, Td, Th, Thead, Tr, TrButton } from "./Atoms/Table/Table";
@@ -133,3 +138,14 @@ export {
   collaborationDebug,
   summarizeAutomergeSpans,
 } from "./RichEditor/collaborationDebug";
+export {
+  AUTOMERGE_URL_PREFIX,
+  DOCUMENT_ID_BYTE_LENGTH,
+  automergeUrl,
+  decodeDocumentId,
+  deriveAutomergeUrl,
+  deriveDocumentId,
+  encodeDocumentId,
+  parseAutomergeUrl,
+  validDocumentId,
+} from "./RichEditor/repoDocumentId";
