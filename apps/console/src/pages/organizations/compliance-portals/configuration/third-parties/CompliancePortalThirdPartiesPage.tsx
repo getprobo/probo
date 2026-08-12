@@ -22,33 +22,45 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePortalThirdPartiesPageQuery } from "#/__generated__/core/CompliancePortalThirdPartiesPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { CompliancePortalThirdPartyList } from "./_components/CompliancePortalThirdPartyList";
 
 export const compliancePortalThirdPartiesPageQuery = graphql`
-  query CompliancePortalThirdPartiesPageQuery($compliancePortalId: ID!) {
+  query CompliancePortalThirdPartiesPageQuery(
+    $organizationId: ID!
+    $compliancePortalId: ID!
+  ) {
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        ...CompliancePortalThirdPartyList_organization
+          @arguments(compliancePortalId: $compliancePortalId)
+      }
+    }
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
-        ...CompliancePortalThirdPartyListFragment
+        ...CompliancePortalThirdPartyList_compliancePortal
       }
     }
   }
 `;
 
-export default function CompliancePortalThirdPartiesPage(props: {
+export function CompliancePortalThirdPartiesPage(props: {
   queryRef: PreloadedQuery<CompliancePortalThirdPartiesPageQuery>;
 }) {
-  const { queryRef } = props;
-
   const { t } = useTranslation("organizations/compliance-portals");
 
   const data = usePreloadedQuery<CompliancePortalThirdPartiesPageQuery>(
     compliancePortalThirdPartiesPageQuery,
-    queryRef,
+    props.queryRef,
   );
-  if (data.compliancePortal.__typename !== "CompliancePortal") {
-    throw new Error("invalid type for node");
+  if (data.organization?.__typename !== "Organization") {
+    throw new NotFoundError("Organization not found");
+  }
+  if (data.compliancePortal?.__typename !== "CompliancePortal") {
+    throw new NotFoundError("Compliance portal not found");
   }
 
   return (
@@ -62,7 +74,10 @@ export default function CompliancePortalThirdPartiesPage(props: {
         </div>
       </div>
 
-      <CompliancePortalThirdPartyList fragmentRef={data.compliancePortal} />
+      <CompliancePortalThirdPartyList
+        organizationKey={data.organization}
+        compliancePortalKey={data.compliancePortal}
+      />
     </div>
   );
 }

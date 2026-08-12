@@ -36,6 +36,7 @@ export const compliancePortalsOverviewPageQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
+        canCreateCompliancePortal: permission(action: "compliance-portal:portal:create")
         compliancePortals(first: 50, orderBy: { field: CREATED_AT, direction: DESC })
           @connection(key: "CompliancePortalsOverviewPage_compliancePortals", filters: [])
           @required(action: THROW) {
@@ -84,7 +85,9 @@ export function CompliancePortalsOverviewPage({ queryRef }: CompliancePortalsOve
           description={t("overviewPage.description")}
         />
         <CompliancePortalEmptyState>
-          <Button to={newPortalHref}>{t("overviewPage.actions.createFirst")}</Button>
+          {organization.canCreateCompliancePortal && (
+            <Button to={newPortalHref}>{t("overviewPage.actions.createFirst")}</Button>
+          )}
         </CompliancePortalEmptyState>
       </div>
     );
@@ -98,9 +101,11 @@ export function CompliancePortalsOverviewPage({ queryRef }: CompliancePortalsOve
       />
 
       <div className="space-y-4">
-        <div className="flex justify-end">
-          <Button to={newPortalHref}>{t("overviewPage.actions.create")}</Button>
-        </div>
+        {organization.canCreateCompliancePortal && (
+          <div className="flex justify-end">
+            <Button to={newPortalHref}>{t("overviewPage.actions.create")}</Button>
+          </div>
+        )}
 
         <Card className="divide-y divide-border-low rounded-lg">
           {portals.map(portal => (

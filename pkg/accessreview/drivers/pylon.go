@@ -116,7 +116,7 @@ func (d *PylonDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				FullName:    pylonFullName(u, email),
 				Roles:       pylonRoles(role),
 				Active:      activeFromStatus(u.Status),
-				IsAdmin:     pylonIsAdmin(role),
+				IsAdmin:     new(pylonIsAdmin(role)),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

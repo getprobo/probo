@@ -298,6 +298,7 @@ export function PeopleList(props: {
               <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{t("peopleList.columns.email")}</SortableTh>
               {canManageRoles && <Th>{t("peopleList.columns.role")}</Th>}
               <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{t("peopleList.columns.createdOn")}</SortableTh>
+              <Th>{t("peopleList.columns.contractEndDate")}</Th>
               <Th></Th>
             </Tr>
           </Thead>
@@ -305,7 +306,7 @@ export function PeopleList(props: {
             {peoplePagination.data.profiles.totalCount === 0
               ? (
                   <Tr>
-                    <Td colSpan={7} className="text-center text-txt-secondary">
+                    <Td colSpan={canManageRoles ? 7 : 6} className="text-center text-txt-secondary">
                       {t("peopleList.empty")}
                     </Td>
                   </Tr>

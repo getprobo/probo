@@ -43,6 +43,9 @@ query($id: ID!) {
       privacyPolicyUrl
       consentExpiryDays
       showBranding
+      capabilities {
+        resourceReporting
+      }
       defaultLanguage
       createdAt
       updatedAt
@@ -62,9 +65,12 @@ type viewResponse struct {
 		PrivacyPolicyUrl  *string `json:"privacyPolicyUrl"`
 		ConsentExpiryDays int     `json:"consentExpiryDays"`
 		ShowBranding      bool    `json:"showBranding"`
-		DefaultLanguage   string  `json:"defaultLanguage"`
-		CreatedAt         string  `json:"createdAt"`
-		UpdatedAt         string  `json:"updatedAt"`
+		Capabilities      struct {
+			ResourceReporting bool `json:"resourceReporting"`
+		} `json:"capabilities"`
+		DefaultLanguage string `json:"defaultLanguage"`
+		CreatedAt       string `json:"createdAt"`
+		UpdatedAt       string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -128,6 +134,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), v.State)
 			_, _ = fmt.Fprintf(out, "%s%d days\n", label.Render("Consent Expiry:"), v.ConsentExpiryDays)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Default Language:"), v.DefaultLanguage)
+			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Resource Reporting:"), v.Capabilities.ResourceReporting)
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Cookie Policy:"), v.CookiePolicyUrl)
 			if v.PrivacyPolicyUrl != nil && *v.PrivacyPolicyUrl != "" {

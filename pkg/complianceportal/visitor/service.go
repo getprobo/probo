@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
@@ -41,7 +42,18 @@ import (
 	"go.probo.inc/probo/pkg/slack"
 )
 
-const NDAConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact security@probo.com."
+const DefaultNDAContactEmail = "security@probo.com"
+
+func ndaConsentText(contactEmail string) string {
+	if contactEmail == "" {
+		contactEmail = DefaultNDAContactEmail
+	}
+
+	return fmt.Sprintf(
+		"By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact %s.",
+		contactEmail,
+	)
+}
 
 type (
 	// Service is the visitor-facing compliance portal service. It exposes the
@@ -359,7 +371,7 @@ func (s *Service) ProvisionPortalMember(
 							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 							FileID:         *compliancePage.NonDisclosureAgreementFileID,
 							SignerEmail:    identity.EmailAddress,
-							ConsentText:    NDAConsentText,
+							ConsentText:    ndaConsentText(ref.UnrefOrZero(compliancePage.Email)),
 						},
 					)
 					if err != nil {

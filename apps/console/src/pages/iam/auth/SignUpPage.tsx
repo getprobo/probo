@@ -26,11 +26,11 @@ import { useTranslation } from "react-i18next";
 import { useMutation, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { SignUpPageMutation } from "#/__generated__/iam/SignUpPageMutation.graphql";
 import type { SignUpPageQuery } from "#/__generated__/iam/SignUpPageQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const signUpPageQuery = graphql`
   query SignUpPageQuery {

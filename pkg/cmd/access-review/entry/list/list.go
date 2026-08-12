@@ -142,7 +142,7 @@ type entryNode struct {
 	FullName       string   `json:"fullName"`
 	Role           string   `json:"role"`
 	JobTitle       string   `json:"jobTitle"`
-	IsAdmin        bool     `json:"isAdmin"`
+	IsAdmin        *bool    `json:"isAdmin"`
 	Active         *bool    `json:"active"`
 	MfaStatus      string   `json:"mfaStatus"`
 	AuthMethod     string   `json:"authMethod"`
@@ -378,9 +378,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(entries))
 			for _, e := range entries {
-				admin := ""
-				if e.IsAdmin {
-					admin = "yes"
+				admin := "unknown"
+
+				if e.IsAdmin != nil {
+					if *e.IsAdmin {
+						admin = "yes"
+					} else {
+						admin = "no"
+					}
 				}
 
 				active := "unknown"

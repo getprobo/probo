@@ -13,6 +13,7 @@ import (
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -662,6 +663,34 @@ func (r *thirdPartyResolver) Organization(ctx context.Context, obj *types.ThirdP
 	return types.NewOrganization(organization), nil
 }
 
+// CompliancePortalThirdParty is the resolver for the compliancePortalThirdParty field.
+func (r *thirdPartyResolver) CompliancePortalThirdParty(ctx context.Context, obj *types.ThirdParty, compliancePortalID gid.GID) (*types.CompliancePortalThirdParty, error) {
+	scope, err := r.authorize(ctx, compliancePortalID, management.ActionCompliancePortalGet)
+	if err != nil {
+		return nil, err
+	}
+
+	link, err := dataloader.FromContext(ctx).CompliancePortalThirdParty.Load(
+		ctx,
+		dataloader.CompliancePortalThirdPartyKey{
+			TenantID:           scope.GetTenantID(),
+			CompliancePortalID: compliancePortalID,
+			ThirdPartyID:       obj.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalThirdParty(link), nil
+}
+
 // ComplianceReports is the resolver for the complianceReports field.
 func (r *thirdPartyResolver) ComplianceReports(ctx context.Context, obj *types.ThirdParty, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyComplianceReportOrderBy) (*types.ThirdPartyComplianceReportConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyComplianceReportList)
@@ -1003,7 +1032,7 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 		return nil, err
 	}
 
-	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ID)
+	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1036,7 +1065,7 @@ func (r *thirdPartyComplianceReportResolver) ThirdParty(ctx context.Context, obj
 		return nil, err
 	}
 
-	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ID)
+	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1138,6 +1167,14 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 
 		return count, nil
+	case *businessFunctionResolver:
+		count, err := r.probo.BusinessFunctions.CountThirdParties(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count business function third parties", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
@@ -1185,7 +1222,7 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 		return nil, err
 	}
 
-	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ID)
+	thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, obj.ThirdParty.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)

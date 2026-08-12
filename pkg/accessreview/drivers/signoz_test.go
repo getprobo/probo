@@ -54,7 +54,7 @@ func TestSigNozDriver(t *testing.T) {
 	assert.Equal(t, "admin@example.com", records[0].Email)
 	assert.Equal(t, "Admin User", records[0].FullName)
 	assert.Equal(t, []string{"Admin"}, records[0].Roles)
-	assert.True(t, records[0].IsAdmin)
+	assert.Equal(t, new(true), records[0].IsAdmin)
 	assert.Equal(t, "00000000-0000-4000-8000-000000000001", records[0].ExternalID)
 	assert.Equal(t, coredata.MFAStatusUnknown, records[0].MFAStatus)
 	require.NotNil(t, records[0].Active)
@@ -64,12 +64,12 @@ func TestSigNozDriver(t *testing.T) {
 	// isRoot -> admin even with a non-admin role.
 	assert.Equal(t, "owner@example.com", records[1].Email)
 	assert.Equal(t, []string{"Viewer"}, records[1].Roles)
-	assert.True(t, records[1].IsAdmin)
+	assert.Equal(t, new(true), records[1].IsAdmin)
 
 	// Managed-role display name -> Editor; not admin.
 	assert.Equal(t, "editor@example.com", records[2].Email)
 	assert.Equal(t, []string{"Editor"}, records[2].Roles)
-	assert.False(t, records[2].IsAdmin)
+	assert.Equal(t, new(false), records[2].IsAdmin)
 	require.NotNil(t, records[2].Active)
 	assert.True(t, *records[2].Active)
 

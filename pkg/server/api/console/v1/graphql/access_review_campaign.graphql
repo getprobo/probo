@@ -430,7 +430,7 @@ type AccessReviewEntry implements Node {
     fullName: String!
     roles: [String!]!
     jobTitle: String!
-    isAdmin: Boolean!
+    isAdmin: Boolean
     active: Boolean
     mfaStatus: MfaStatus!
     authMethod: AccessReviewEntryAuthMethod!

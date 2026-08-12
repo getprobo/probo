@@ -27,6 +27,8 @@ const apiScopeLabels: Record<string, string> = {
   "v1:asset": "Manage assets",
   "v1:audit:read": "Read audits",
   "v1:audit": "Manage audits",
+  "v1:business-function:read": "Read business functions",
+  "v1:business-function": "Manage business functions",
   "v1:common-third-party:read": "Read common third parties",
   "v1:common-third-party": "Manage common third parties",
   "v1:compliance-page:read": "Read compliance portals",

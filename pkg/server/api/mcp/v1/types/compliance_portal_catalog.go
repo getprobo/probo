@@ -26,11 +26,14 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewCompliancePortalCatalogDocument(entry *management.PortalDocument) *CompliancePortalCatalogDocument {
+func NewCompliancePortalCatalogDocument(
+	link *coredata.CompliancePortalDocument,
+	document *coredata.Document,
+) *CompliancePortalCatalogDocument {
 	return &CompliancePortalCatalogDocument{
-		ID:         entry.ID,
-		Document:   NewDocument(entry.Document),
-		Visibility: entry.Visibility,
+		ID:         link.ID,
+		Document:   NewDocument(document),
+		Visibility: link.Visibility,
 	}
 }
 
@@ -51,7 +54,7 @@ func NewCompliancePortalCatalogThirdParty(entry *management.PortalThirdParty) *C
 
 func NewListCompliancePortalDocumentsOutput(
 	entries []*CompliancePortalCatalogDocument,
-	p *page.Page[*management.PortalDocument, coredata.DocumentOrderField],
+	p *page.Page[*coredata.Document, coredata.DocumentOrderField],
 ) ListCompliancePortalDocumentsOutput {
 	var nextCursor *page.CursorKey
 

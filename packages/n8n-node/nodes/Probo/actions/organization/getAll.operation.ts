@@ -97,7 +97,7 @@ export async function execute(
 	const memberships = await proboConnectApiRequestAllItems.call(
 		this,
 		query,
-		{ filter: { state: 'ACTIVE' } },
+		{ filter: { states: ['ACTIVE'] } },
 		(response: IDataObject) => {
 			const data = response?.data as IDataObject | undefined;
 			const viewer = data?.viewer as IDataObject | undefined;

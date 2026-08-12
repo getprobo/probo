@@ -47,13 +47,16 @@ import (
 // source, false = deactivated / suspended / deleted). Drivers whose API does
 // not distinguish active from deactivated accounts must leave Active nil
 // rather than fabricate a value.
+// IsAdmin follows the same three-valued contract: nil means the source does
+// not expose admin privileges, while non-nil means the driver observed or
+// derived an explicit value.
 type AccountRecord struct {
 	Email       string
 	FullName    string
 	Roles       []string // system roles/permissions (e.g. "Admin", "Viewer")
 	JobTitle    string   // HR job title / department (e.g. "Software Engineer")
 	Active      *bool
-	IsAdmin     bool
+	IsAdmin     *bool
 	MFAStatus   coredata.MFAStatus
 	AuthMethod  coredata.AccessReviewEntryAuthMethod
 	AccountType coredata.AccessReviewEntryAccountType

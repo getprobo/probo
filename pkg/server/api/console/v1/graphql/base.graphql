@@ -18,6 +18,16 @@ scalar Duration
 scalar BigInt
 scalar EmailAddr
 
+type Period {
+    start: Datetime
+    end: Datetime
+}
+
+input PeriodInput {
+    start: Datetime
+    end: Datetime
+}
+
 interface Node {
     id: ID!
 }

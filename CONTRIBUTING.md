@@ -48,7 +48,8 @@ Signed-off-by: John Doe <john.doe@example.org>
 ### Prerequisites
 
 - Go 1.21+
-- Node.js 22+
+- Node.js 24.15+
+- npm 12.0.2+
 - Docker
 
 ### Installation Steps

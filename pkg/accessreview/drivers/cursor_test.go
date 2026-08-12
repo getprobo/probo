@@ -47,7 +47,7 @@ func TestCursorDriver(t *testing.T) {
 	assert.Equal(t, "jane@example.com", member.Email)
 	assert.Equal(t, "Jane Doe", member.FullName)
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	// The Cursor Admin API returns the member id as a string; it is used
 	// verbatim as the stable ExternalID.
 	assert.Equal(t, "10000001", member.ExternalID)
@@ -56,7 +56,7 @@ func TestCursorDriver(t *testing.T) {
 
 	owner := records[1]
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	require.NotNil(t, owner.Active)
 	assert.True(t, *owner.Active)
 
@@ -64,7 +64,7 @@ func TestCursorDriver(t *testing.T) {
 	// flagged inactive rather than dropped, per the AccountRecord contract.
 	removed := records[2]
 	assert.Equal(t, []string{"Removed"}, removed.Roles)
-	assert.False(t, removed.IsAdmin)
+	assert.Equal(t, new(false), removed.IsAdmin)
 	require.NotNil(t, removed.Active)
 	assert.False(t, *removed.Active)
 
@@ -73,7 +73,7 @@ func TestCursorDriver(t *testing.T) {
 	// must mark the account inactive.
 	removedByRole := records[3]
 	assert.Equal(t, []string{"Removed"}, removedByRole.Roles)
-	assert.False(t, removedByRole.IsAdmin)
+	assert.Equal(t, new(false), removedByRole.IsAdmin)
 	require.NotNil(t, removedByRole.Active)
 	assert.False(t, *removedByRole.Active)
 }

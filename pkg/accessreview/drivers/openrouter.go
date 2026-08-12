@@ -89,11 +89,13 @@ func (d *OpenRouterDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 				continue
 			}
 
+			role := strings.TrimSpace(m.Role)
+
 			records = append(records, AccountRecord{
 				Email:       email,
 				FullName:    openRouterFullName(m, email),
-				Roles:       openRouterRoles(m.Role),
-				IsAdmin:     m.Role == "org:admin",
+				Roles:       openRouterRoles(role),
+				IsAdmin:     openRouterIsAdmin(role),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -172,16 +174,34 @@ func openRouterFullName(m openRouterMember, fallback string) string {
 // (org:admin / org:member) to a display label, preserving any unknown
 // future role verbatim.
 func openRouterRoles(role string) []string {
+	role = strings.TrimSpace(role)
+
 	switch role {
 	case "org:admin":
 		return []string{"Admin"}
 	case "org:member":
 		return []string{"Member"}
 	default:
-		if strings.TrimSpace(role) != "" {
+		if role != "" {
 			return []string{role}
 		}
 
 		return []string{}
+	}
+}
+
+// openRouterIsAdmin maps the documented organization roles to an admin flag.
+// Unknown roles remain unclassified so future role additions are not
+// incorrectly treated as non-admin.
+func openRouterIsAdmin(role string) *bool {
+	role = strings.TrimSpace(role)
+
+	switch role {
+	case "org:admin":
+		return new(true)
+	case "org:member":
+		return new(false)
+	default:
+		return nil
 	}
 }

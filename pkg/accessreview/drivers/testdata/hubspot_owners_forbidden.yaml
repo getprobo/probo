@@ -1,0 +1,88 @@
+# Hand-authored cassette: Owners API rejects the token for missing
+# crm.objects.owners.read. Settings Users succeeds first; the driver must
+# fail the fetch rather than classify every user as active.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.hubapi.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.hubapi.com/settings/v3/users/roles
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[]}'
+        headers:
+            Content-Type:
+                - application/json;charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.hubapi.com
+        form:
+            limit:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.hubapi.com/settings/v3/users?limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[{"id":"10000001","email":"john.smith@example.com","firstName":"John","lastName":"Smith","roleIds":[],"superAdmin":false}]}'
+        headers:
+            Content-Type:
+                - application/json;charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.hubapi.com
+        form:
+            archived:
+                - "true"
+            limit:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.hubapi.com/crm/v3/owners?archived=true&limit=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"error","message":"This app hasn''t been granted all required scopes to make this call.","category":"MISSING_SCOPES"}'
+        headers:
+            Content-Type:
+                - application/json;charset=utf-8
+        status: 403 Forbidden
+        code: 403
+        duration: 100ms

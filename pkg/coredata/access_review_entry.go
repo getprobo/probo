@@ -45,7 +45,7 @@ type (
 		FullName                     string                          `db:"full_name"`
 		Roles                        []string                        `db:"roles"`
 		JobTitle                     string                          `db:"job_title"`
-		IsAdmin                      bool                            `db:"is_admin"`
+		IsAdmin                      *bool                           `db:"is_admin"`
 		MFAStatus                    MFAStatus                       `db:"mfa_status"`
 		AuthMethod                   AccessReviewEntryAuthMethod     `db:"auth_method"`
 		AccountType                  AccessReviewEntryAccountType    `db:"account_type"`

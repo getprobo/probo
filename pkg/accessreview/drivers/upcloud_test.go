@@ -53,7 +53,7 @@ func TestUpCloudDriver(t *testing.T) {
 	assert.Equal(t, "Main Account", main.FullName)
 	assert.Equal(t, "main@example.com", main.Email)
 	assert.Equal(t, []string{"technical"}, main.Roles)
-	assert.True(t, main.IsAdmin)
+	assert.Equal(t, new(true), main.IsAdmin)
 	assert.Nil(t, main.Active)
 	assert.Equal(t, coredata.MFAStatusUnknown, main.MFAStatus)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, main.AccountType)
@@ -63,7 +63,7 @@ func TestUpCloudDriver(t *testing.T) {
 	assert.Equal(t, "Sub Account", sub.FullName)
 	assert.Equal(t, "sub@example.com", sub.Email)
 	assert.Equal(t, []string{"technical"}, sub.Roles)
-	assert.False(t, sub.IsAdmin)
+	assert.Equal(t, new(false), sub.IsAdmin)
 
 	// no roles assigned; details answers 403, which is a stable "no details"
 	// rather than an error, so the record keeps its list-only fields.
@@ -72,14 +72,14 @@ func TestUpCloudDriver(t *testing.T) {
 	assert.Equal(t, "my_temp_account", temp.FullName)
 	assert.Empty(t, temp.Email)
 	assert.Equal(t, []string{}, temp.Roles)
-	assert.False(t, temp.IsAdmin)
+	assert.Equal(t, new(false), temp.IsAdmin)
 
 	billing := records[3]
 	assert.Equal(t, "my_billing_account", billing.ExternalID)
 	assert.Equal(t, "Billing Account", billing.FullName)
 	assert.Equal(t, "billing@example.com", billing.Email)
 	assert.Equal(t, []string{"billing"}, billing.Roles)
-	assert.False(t, billing.IsAdmin)
+	assert.Equal(t, new(false), billing.IsAdmin)
 }
 
 // TestUpCloudDriverContextCancellation verifies that a context canceled

@@ -118,7 +118,7 @@ func (d *DeepgramDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			Email:       email,
 			FullName:    deepgramFullName(*m, email),
 			Roles:       deepgramRoles(m.Scopes),
-			IsAdmin:     deepgramIsAdmin(m.Scopes),
+			IsAdmin:     new(deepgramIsAdmin(m.Scopes)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

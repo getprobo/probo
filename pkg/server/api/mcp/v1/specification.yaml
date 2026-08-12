@@ -179,6 +179,8 @@ components:
         - EMPLOYEE
         - VIEWER
         - AUDITOR
+        - COMPLIANCE_PORTAL_MANAGER
+        - COMPLIANCE_PORTAL_ACCESS_MANAGER
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipRole
 
     ProfileState:
@@ -212,7 +214,30 @@ components:
         - UK_GDPR
         - FADP
         - CCPA
+        - VCDPA
+        - CPA
+        - CTDPA
+        - UCPA
+        - TDPSA
+        - OCPA
+        - MTCDPA
+        - FDBR
+        - IA_ICDPA
+        - DE_DPDPA
+        - NHPA
+        - NE_NDPA
+        - NJDPA
+        - TIPA
+        - MNDPA
+        - MODPA
+        - IN_ICDPA
+        - KCDPA
+        - RIDTPPA
         - PIPEDA
+        - PIPA_AB
+        - PIPA_BC
+        - PIPA_CA
+        - LAW_25
         - LGPD
         - LFPDPPP
         - POPIA
@@ -614,6 +639,22 @@ components:
       type: string
       format: string
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/page.CursorKey
+
+    Period:
+      type: object
+      properties:
+        start:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Start of the period
+        end:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: End of the period
 
     ListOrganizationsInput:
       type: object
@@ -4219,6 +4260,689 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted obligation ID
 
+    BusinessFunctionClassification:
+      type: string
+      enum:
+        - CRITICAL
+        - IMPORTANT
+        - SECONDARY
+        - STANDARD
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BusinessFunctionClassification
+
+    BusinessFunctionOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - REFERENCE_ID
+        - NAME
+        - CLASSIFICATION
+        - MTD_MINUTES
+        - RTO_MINUTES
+        - RPO_MINUTES
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BusinessFunctionOrderField
+
+    BusinessFunctionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/BusinessFunctionOrderField"
+          description: Business function order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Business function order direction
+
+    BusinessFunction:
+      type: object
+      required:
+        - id
+        - organization_id
+        - reference_id
+        - name
+        - classification
+        - mtd_minutes
+        - rto_minutes
+        - rpo_minutes
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        reference_id:
+          type: string
+          description: Reference ID
+        name:
+          type: string
+          description: Name
+        classification:
+          $ref: "#/components/schemas/BusinessFunctionClassification"
+          description: Classification
+        mtd_minutes:
+          type: integer
+          description: Maximum tolerable downtime in minutes
+        rto_minutes:
+          type: integer
+          description: Recovery time objective in minutes
+        rpo_minutes:
+          type: integer
+          description: Recovery point objective in minutes
+        impact_tolerance:
+          type:
+            - string
+            - "null"
+          description: Impact tolerance
+        notes:
+          type:
+            - string
+            - "null"
+          description: Notes
+        owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListBusinessFunctionsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/BusinessFunctionOrderBy"
+          description: Business function order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            classification:
+              anyOf:
+                - $ref: "#/components/schemas/BusinessFunctionClassification"
+                - type: "null"
+              description: Filter by classification. Defaults to null which returns all classifications.
+
+    ListBusinessFunctionsOutput:
+      type: object
+      required:
+        - business_functions
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        business_functions:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessFunction"
+
+    GetBusinessFunctionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+
+    GetBusinessFunctionOutput:
+      type: object
+      required:
+        - business_function
+      properties:
+        business_function:
+          $ref: "#/components/schemas/BusinessFunction"
+
+    AddBusinessFunctionInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - classification
+        - mtd_minutes
+        - rto_minutes
+        - rpo_minutes
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        classification:
+          $ref: "#/components/schemas/BusinessFunctionClassification"
+          description: Classification
+        mtd_minutes:
+          type: integer
+          description: Maximum tolerable downtime in minutes
+        rto_minutes:
+          type: integer
+          description: Recovery time objective in minutes
+        rpo_minutes:
+          type: integer
+          description: Recovery point objective in minutes
+        impact_tolerance:
+          type: string
+          description: Impact tolerance
+        notes:
+          type: string
+          description: Notes
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        asset_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Asset IDs
+        third_party_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Third party IDs
+
+    AddBusinessFunctionOutput:
+      type: object
+      required:
+        - business_function
+      properties:
+        business_function:
+          $ref: "#/components/schemas/BusinessFunction"
+
+    UpdateBusinessFunctionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+        name:
+          type: string
+          description: Name
+        classification:
+          $ref: "#/components/schemas/BusinessFunctionClassification"
+          description: Classification
+        mtd_minutes:
+          type: integer
+          description: Maximum tolerable downtime in minutes
+        rto_minutes:
+          type: integer
+          description: Recovery time objective in minutes
+        rpo_minutes:
+          type: integer
+          description: Recovery point objective in minutes
+        impact_tolerance:
+          type: ["string", "null"]
+          description: Impact tolerance
+          go.probo.inc/mcpgen/omittable: true
+        notes:
+          type: ["string", "null"]
+          description: Notes
+          go.probo.inc/mcpgen/omittable: true
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        asset_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Asset IDs
+        third_party_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Third party IDs
+
+    UpdateBusinessFunctionOutput:
+      type: object
+      required:
+        - business_function
+      properties:
+        business_function:
+          $ref: "#/components/schemas/BusinessFunction"
+
+    DeleteBusinessFunctionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Business function ID
+
+    DeleteBusinessFunctionOutput:
+      type: object
+      required:
+        - deleted_business_function_id
+      properties:
+        deleted_business_function_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted business function ID
+
+    AiSystemStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - IN_DEVELOPMENT
+        - DECOMMISSIONED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemStatus
+
+    AiSystemRiskClassification:
+      type: string
+      enum:
+        - HIGH_RISK
+        - LIMITED
+        - MINIMAL
+        - GPAI
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemRiskClassification
+
+    AiSystemCompanyRole:
+      type: string
+      enum:
+        - PROVIDER
+        - DEPLOYER
+        - USER
+        - DEVELOPER
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemCompanyRole
+
+    AiSystemOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+        - STATUS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AiSystemOrderField
+
+    AiSystemOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AiSystemOrderField"
+          description: AI system order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: AI system order direction
+
+    AiSystem:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - company_roles
+        - status
+        - risk_classification
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        version:
+          type:
+            - string
+            - "null"
+          description: Version
+        company_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystemCompanyRole"
+          description: Company roles
+        status:
+          $ref: "#/components/schemas/AiSystemStatus"
+          description: Status
+        owner_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+        source:
+          type:
+            - string
+            - "null"
+          description: Source
+        purpose:
+          type:
+            - string
+            - "null"
+          description: Purpose
+        intended_use_cases:
+          type:
+            - string
+            - "null"
+          description: Intended use cases
+        autonomy_level:
+          type:
+            - string
+            - "null"
+          description: Autonomy level
+        human_oversight_mechanism:
+          type:
+            - string
+            - "null"
+          description: Human oversight mechanism
+        risk_classification:
+          $ref: "#/components/schemas/AiSystemRiskClassification"
+          description: Risk classification
+        key_stakeholders:
+          type:
+            - string
+            - "null"
+          description: Key stakeholders
+        data_sources_and_type:
+          type:
+            - string
+            - "null"
+          description: Data sources and type
+        deployment_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Deployment date
+        last_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next review date
+        notes:
+          type:
+            - string
+            - "null"
+          description: Notes
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListAiSystemsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AiSystemOrderBy"
+          description: AI system order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            status:
+              anyOf:
+                - $ref: "#/components/schemas/AiSystemStatus"
+                - type: "null"
+              description: Filter by status. Defaults to null which returns all statuses.
+            risk_classification:
+              anyOf:
+                - $ref: "#/components/schemas/AiSystemRiskClassification"
+                - type: "null"
+              description: Filter by risk classification. Defaults to null which returns all classifications.
+
+    ListAiSystemsOutput:
+      type: object
+      required:
+        - ai_systems
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        ai_systems:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystem"
+
+    GetAiSystemInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+
+    GetAiSystemOutput:
+      type: object
+      required:
+        - ai_system
+      properties:
+        ai_system:
+          $ref: "#/components/schemas/AiSystem"
+
+    AddAiSystemInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - status
+        - risk_classification
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Name
+        version:
+          type: string
+          description: Version
+        company_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystemCompanyRole"
+          description: Company roles
+        status:
+          $ref: "#/components/schemas/AiSystemStatus"
+          description: Status
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        source:
+          type: string
+          description: Source
+        purpose:
+          type: string
+          description: Purpose
+        intended_use_cases:
+          type: string
+          description: Intended use cases
+        autonomy_level:
+          type: string
+          description: Autonomy level
+        human_oversight_mechanism:
+          type: string
+          description: Human oversight mechanism
+        risk_classification:
+          $ref: "#/components/schemas/AiSystemRiskClassification"
+          description: Risk classification
+        key_stakeholders:
+          type: string
+          description: Key stakeholders
+        data_sources_and_type:
+          type: string
+          description: Data sources and type
+        deployment_date:
+          type: string
+          format: date-time
+          description: Deployment date
+        last_review_date:
+          type: string
+          format: date-time
+          description: Last review date
+        next_review_date:
+          type: string
+          format: date-time
+          description: Next review date
+        notes:
+          type: string
+          description: Notes
+
+    AddAiSystemOutput:
+      type: object
+      required:
+        - ai_system
+      properties:
+        ai_system:
+          $ref: "#/components/schemas/AiSystem"
+
+    UpdateAiSystemInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+        name:
+          type: string
+          description: Name
+        version:
+          type: ["string", "null"]
+          description: Version
+          go.probo.inc/mcpgen/omittable: true
+        company_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSystemCompanyRole"
+          description: Company roles
+        status:
+          $ref: "#/components/schemas/AiSystemStatus"
+          description: Status
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        source:
+          type: ["string", "null"]
+          description: Source
+          go.probo.inc/mcpgen/omittable: true
+        purpose:
+          type: ["string", "null"]
+          description: Purpose
+          go.probo.inc/mcpgen/omittable: true
+        intended_use_cases:
+          type: ["string", "null"]
+          description: Intended use cases
+          go.probo.inc/mcpgen/omittable: true
+        autonomy_level:
+          type: ["string", "null"]
+          description: Autonomy level
+          go.probo.inc/mcpgen/omittable: true
+        human_oversight_mechanism:
+          type: ["string", "null"]
+          description: Human oversight mechanism
+          go.probo.inc/mcpgen/omittable: true
+        risk_classification:
+          $ref: "#/components/schemas/AiSystemRiskClassification"
+          description: Risk classification
+        key_stakeholders:
+          type: ["string", "null"]
+          description: Key stakeholders
+          go.probo.inc/mcpgen/omittable: true
+        data_sources_and_type:
+          type: ["string", "null"]
+          description: Data sources and type
+          go.probo.inc/mcpgen/omittable: true
+        deployment_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Deployment date
+          go.probo.inc/mcpgen/omittable: true
+        last_review_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Last review date
+          go.probo.inc/mcpgen/omittable: true
+        next_review_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Next review date
+          go.probo.inc/mcpgen/omittable: true
+        notes:
+          type: ["string", "null"]
+          description: Notes
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateAiSystemOutput:
+      type: object
+      required:
+        - ai_system
+      properties:
+        ai_system:
+          $ref: "#/components/schemas/AiSystem"
+
+    DeleteAiSystemInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: AI system ID
+
+    DeleteAiSystemOutput:
+      type: object
+      required:
+        - deleted_ai_system_id
+      properties:
+        deleted_ai_system_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted AI system ID
+
     ProcessingActivityRole:
       type: string
       enum:
@@ -6578,6 +7302,9 @@ components:
               items:
                 $ref: "#/components/schemas/DocumentStatus"
               description: Document statuses
+            published:
+              type: boolean
+              description: Filter by whether a document has a published version
 
     ListDocumentsOutput:
       type: object
@@ -7688,6 +8415,68 @@ components:
           $ref: "#/components/schemas/GID"
           description: Created document version ID
 
+    PublishBusinessFunctionListInput:
+      type: object
+      required:
+        - organization_id
+        - minor
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+
+    PublishBusinessFunctionListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
+    PublishAiSystemListInput:
+      type: object
+      required:
+        - organization_id
+        - minor
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        approver_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Optional approver profile IDs. When minor is false and at least one ID is provided, an approval is requested as a major version. Ignored when minor is true.
+        minor:
+          type: boolean
+          description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+
+    PublishAiSystemListOutput:
+      type: object
+      required:
+        - document_id
+        - document_version_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Created or updated document ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Created document version ID
+
     PublishProcessingActivityListInput:
       type: object
       required:
@@ -8225,7 +9014,6 @@ components:
         - full_name
         - roles
         - job_title
-        - is_admin
         - mfa_status
         - auth_method
         - account_type
@@ -8268,8 +9056,10 @@ components:
           type: string
           description: User job title
         is_admin:
-          type: boolean
-          description: Whether the user has admin privileges
+          type:
+            - boolean
+            - "null"
+          description: Whether the user has admin privileges (null when unknown)
         active:
           type:
             - boolean
@@ -9483,6 +10273,25 @@ components:
           type: string
           format: date-time
 
+    CompliancePortalCapabilities:
+      type: object
+      required:
+        - rights_requests
+      properties:
+        rights_requests:
+          type: boolean
+          description: Whether visitors can submit rights requests on the compliance portal
+
+    CompliancePortalCapabilitiesInput:
+      type: object
+      description: Partial update; an omitted capability keeps its current value
+      properties:
+        rights_requests:
+          type:
+            - boolean
+            - "null"
+          description: Whether visitors can submit rights requests on the compliance portal
+
     CompliancePortal:
       type: object
       required:
@@ -9490,6 +10299,7 @@ components:
         - organization_id
         - active
         - search_engine_indexing
+        - capabilities
         - entity_name
         - created_at
         - updated_at
@@ -9502,6 +10312,9 @@ components:
           type: boolean
         search_engine_indexing:
           $ref: "#/components/schemas/SearchEngineIndexing"
+        capabilities:
+          $ref: "#/components/schemas/CompliancePortalCapabilities"
+          description: Capabilities enabled on the compliance portal
         logo:
           $ref: "#/components/schemas/File"
         dark_logo:
@@ -9781,6 +10594,12 @@ components:
             - $ref: "#/components/schemas/SearchEngineIndexing"
             - type: "null"
           description: Search engine indexing setting
+          go.probo.inc/mcpgen/omittable: true
+        capabilities:
+          anyOf:
+            - $ref: "#/components/schemas/CompliancePortalCapabilitiesInput"
+            - type: "null"
+          description: Capabilities to change on the compliance portal
           go.probo.inc/mcpgen/omittable: true
         description:
           type:
@@ -10789,6 +11608,25 @@ components:
         deleted_custom_domain:
           $ref: "#/components/schemas/CustomDomain"
 
+    CookieBannerCapabilities:
+      type: object
+      required:
+        - resource_reporting
+      properties:
+        resource_reporting:
+          type: boolean
+          description: Whether the SDK reports detected resources
+
+    CookieBannerCapabilitiesInput:
+      type: object
+      description: Partial update; an omitted capability keeps its current value
+      properties:
+        resource_reporting:
+          type:
+            - boolean
+            - "null"
+          description: Whether the SDK reports detected resources
+
     CookieBanner:
       type: object
       required:
@@ -10800,6 +11638,7 @@ components:
         - cookie_policy_url
         - consent_expiry_days
         - show_branding
+        - capabilities
         - default_language
         - created_at
         - updated_at
@@ -10834,6 +11673,9 @@ components:
         show_branding:
           type: boolean
           description: Whether to show Probo branding
+        capabilities:
+          $ref: "#/components/schemas/CookieBannerCapabilities"
+          description: Capabilities enabled on the cookie banner
         default_language:
           type: string
           description: Default language code
@@ -11161,6 +12003,11 @@ components:
           $ref: "#/components/schemas/CountryCode"
           description: Visitor country code (ISO 3166-1 alpha-2)
           nullable: true
+        subdivision_code:
+          type:
+            - string
+            - "null"
+          description: Visitor subdivision code (ISO 3166-2)
         created_at:
           type: string
           format: date-time
@@ -11278,6 +12125,12 @@ components:
           type:
             - string
             - "null"
+          go.probo.inc/mcpgen/omittable: true
+        capabilities:
+          anyOf:
+            - $ref: "#/components/schemas/CookieBannerCapabilitiesInput"
+            - type: "null"
+          description: Capabilities to change on the cookie banner
           go.probo.inc/mcpgen/omittable: true
 
     UpdateCookieBannerOutput:
@@ -12234,141 +13087,141 @@ components:
           items:
             $ref: "#/components/schemas/SCIMEvent"
 
-    RiskAssessmentNodeType:
+    RiskAnalysisNodeType:
       type: string
       enum:
         - ENTITY
         - ASSET
         - DATA
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeType
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeType
 
-    RiskAssessmentOrderField:
+    RiskAnalysisOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisOrderField
 
-    RiskAssessmentOrderBy:
+    RiskAnalysisOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAssessmentOrderField"
+          $ref: "#/components/schemas/RiskAnalysisOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAssessmentScopeOrderField:
+    RiskAnalysisDiagramOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentScopeOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisDiagramOrderField
 
-    RiskAssessmentScopeOrderBy:
+    RiskAnalysisDiagramOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAssessmentScopeOrderField"
+          $ref: "#/components/schemas/RiskAnalysisDiagramOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAssessmentNodeOrderField:
+    RiskAnalysisNodeOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisNodeOrderField
 
-    RiskAssessmentNodeOrderBy:
+    RiskAnalysisNodeOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAssessmentNodeOrderField"
+          $ref: "#/components/schemas/RiskAnalysisNodeOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAssessmentBoundaryOrderField:
+    RiskAnalysisBoundaryOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentBoundaryOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisBoundaryOrderField
 
-    RiskAssessmentBoundaryOrderBy:
+    RiskAnalysisBoundaryOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAssessmentBoundaryOrderField"
+          $ref: "#/components/schemas/RiskAnalysisBoundaryOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAssessmentProcessOrderField:
+    RiskAnalysisProcessOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentProcessOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisProcessOrderField
 
-    RiskAssessmentProcessOrderBy:
+    RiskAnalysisProcessOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAssessmentProcessOrderField"
+          $ref: "#/components/schemas/RiskAnalysisProcessOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAssessmentThreatOrderField:
+    RiskAnalysisThreatOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentThreatOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisThreatOrderField
 
-    RiskAssessmentThreatOrderBy:
+    RiskAnalysisThreatOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAssessmentThreatOrderField"
+          $ref: "#/components/schemas/RiskAnalysisThreatOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAssessmentScenarioOrderField:
+    RiskAnalysisScenarioOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentScenarioOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAnalysisScenarioOrderField
 
-    RiskAssessmentScenarioOrderBy:
+    RiskAnalysisScenarioOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/RiskAssessmentScenarioOrderField"
+          $ref: "#/components/schemas/RiskAnalysisScenarioOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
-    RiskAssessment:
+    RiskAnalysis:
       type: object
       required:
         - id
@@ -12387,6 +13240,9 @@ components:
           type:
             - string
             - "null"
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period
         created_at:
           type: string
           format: date-time
@@ -12394,12 +13250,12 @@ components:
           type: string
           format: date-time
 
-    RiskAssessmentScope:
+    RiskAnalysisDiagram:
       type: object
       required:
         - id
         - organization_id
-        - risk_assessment_id
+        - risk_analysis_id
         - name
         - created_at
         - updated_at
@@ -12408,7 +13264,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_assessment_id:
+        risk_analysis_id:
           $ref: "#/components/schemas/GID"
         name:
           type: string
@@ -12419,12 +13275,12 @@ components:
           type: string
           format: date-time
 
-    RiskAssessmentNode:
+    RiskAnalysisNode:
       type: object
       required:
         - id
         - organization_id
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - node_type
         - name
         - created_at
@@ -12434,13 +13290,13 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         boundary_id:
           $ref: "#/components/schemas/GID"
           description: ID of the boundary that contains this node, if any
         node_type:
-          $ref: "#/components/schemas/RiskAssessmentNodeType"
+          $ref: "#/components/schemas/RiskAnalysisNodeType"
         name:
           type: string
         created_at:
@@ -12450,12 +13306,12 @@ components:
           type: string
           format: date-time
 
-    RiskAssessmentBoundary:
+    RiskAnalysisBoundary:
       type: object
       required:
         - id
         - organization_id
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - name
         - created_at
         - updated_at
@@ -12464,7 +13320,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         parent_boundary_id:
           $ref: "#/components/schemas/GID"
@@ -12478,12 +13334,12 @@ components:
           type: string
           format: date-time
 
-    RiskAssessmentProcess:
+    RiskAnalysisProcess:
       type: object
       required:
         - id
         - organization_id
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - source_node_id
         - target_node_id
         - name
@@ -12494,7 +13350,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         source_node_id:
           $ref: "#/components/schemas/GID"
@@ -12509,12 +13365,12 @@ components:
           type: string
           format: date-time
 
-    RiskAssessmentThreat:
+    RiskAnalysisThreat:
       type: object
       required:
         - id
         - organization_id
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - process_id
         - name
         - category
@@ -12525,7 +13381,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         process_id:
           $ref: "#/components/schemas/GID"
@@ -12540,12 +13396,12 @@ components:
           type: string
           format: date-time
 
-    RiskAssessmentScenario:
+    RiskAnalysisScenario:
       type: object
       required:
         - id
         - organization_id
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - name
         - created_at
         - updated_at
@@ -12554,7 +13410,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
         name:
           type: string
@@ -12569,7 +13425,7 @@ components:
           type: string
           format: date-time
 
-    ListRiskAssessmentsInput:
+    ListRiskAnalysesInput:
       type: object
       required:
         - organization_id
@@ -12578,7 +13434,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/RiskAssessmentOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisOrderBy"
           description: Order by
         size:
           type: integer
@@ -12587,37 +13443,37 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAssessmentsOutput:
+    ListRiskAnalysesOutput:
       type: object
       required:
-        - risk_assessments
+        - risk_analyses
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_assessments:
+        risk_analyses:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAssessment"
+            $ref: "#/components/schemas/RiskAnalysis"
 
-    GetRiskAssessmentInput:
+    GetRiskAnalysisInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment ID
+          description: Risk analysis ID
 
-    GetRiskAssessmentOutput:
+    GetRiskAnalysisOutput:
       type: object
       required:
-        - risk_assessment
+        - risk_analysis
       properties:
-        risk_assessment:
-          $ref: "#/components/schemas/RiskAssessment"
+        risk_analysis:
+          $ref: "#/components/schemas/RiskAnalysis"
 
-    AddRiskAssessmentInput:
+    AddRiskAnalysisInput:
       type: object
       required:
         - organization_id
@@ -12628,71 +13484,77 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Risk assessment name
+          description: Risk analysis name
         description:
           type: string
-          description: Risk assessment description
+          description: Risk analysis description
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period
 
-    AddRiskAssessmentOutput:
+    AddRiskAnalysisOutput:
       type: object
       required:
-        - risk_assessment
+        - risk_analysis
       properties:
-        risk_assessment:
-          $ref: "#/components/schemas/RiskAssessment"
+        risk_analysis:
+          $ref: "#/components/schemas/RiskAnalysis"
 
-    UpdateRiskAssessmentInput:
+    UpdateRiskAnalysisInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment ID
+          description: Risk analysis ID
         name:
           type: string
-          description: Risk assessment name
+          description: Risk analysis name
         description:
           type: ["string", "null"]
-          description: Risk assessment description
+          description: Risk analysis description
           go.probo.inc/mcpgen/omittable: true
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period
 
-    UpdateRiskAssessmentOutput:
+    UpdateRiskAnalysisOutput:
       type: object
       required:
-        - risk_assessment
+        - risk_analysis
       properties:
-        risk_assessment:
-          $ref: "#/components/schemas/RiskAssessment"
+        risk_analysis:
+          $ref: "#/components/schemas/RiskAnalysis"
 
-    DeleteRiskAssessmentInput:
+    DeleteRiskAnalysisInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment ID
+          description: Risk analysis ID
 
-    DeleteRiskAssessmentOutput:
+    DeleteRiskAnalysisOutput:
       type: object
       required:
-        - deleted_risk_assessment_id
+        - deleted_risk_analysis_id
       properties:
-        deleted_risk_assessment_id:
+        deleted_risk_analysis_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment ID
 
-    ListRiskAssessmentScopesInput:
+    ListRiskAnalysisDiagramsInput:
       type: object
       required:
-        - risk_assessment_id
+        - risk_analysis_id
       properties:
-        risk_assessment_id:
+        risk_analysis_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment ID
+          description: Risk analysis ID
         order_by:
-          $ref: "#/components/schemas/RiskAssessmentScopeOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisDiagramOrderBy"
           description: Order by
         size:
           type: integer
@@ -12701,123 +13563,123 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAssessmentScopesOutput:
+    ListRiskAnalysisDiagramsOutput:
       type: object
       required:
-        - risk_assessment_scopes
+        - risk_analysis_diagrams
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_assessment_scopes:
+        risk_analysis_diagrams:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAssessmentScope"
+            $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    GetRiskAssessmentScopeInput:
+    GetRiskAnalysisDiagramInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
 
-    GetRiskAssessmentScopeOutput:
+    GetRiskAnalysisDiagramOutput:
       type: object
       required:
-        - risk_assessment_scope
+        - risk_analysis_diagram
       properties:
-        risk_assessment_scope:
-          $ref: "#/components/schemas/RiskAssessmentScope"
+        risk_analysis_diagram:
+          $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    GetRiskAssessmentScopeMermaidChartInput:
+    GetRiskAnalysisDiagramMermaidChartInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
 
-    GetRiskAssessmentScopeMermaidChartOutput:
+    GetRiskAnalysisDiagramMermaidChartOutput:
       type: object
       required:
         - mermaid_chart
       properties:
         mermaid_chart:
           type: string
-          description: Mermaid chart of the scope
+          description: Mermaid chart of the diagram
 
-    AddRiskAssessmentScopeInput:
+    AddRiskAnalysisDiagramInput:
       type: object
       required:
-        - risk_assessment_id
+        - risk_analysis_id
         - name
       properties:
-        risk_assessment_id:
+        risk_analysis_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment ID
+          description: Risk analysis ID
         name:
           type: string
-          description: Risk assessment scope name
+          description: Risk analysis diagram name
 
-    AddRiskAssessmentScopeOutput:
+    AddRiskAnalysisDiagramOutput:
       type: object
       required:
-        - risk_assessment_scope
+        - risk_analysis_diagram
       properties:
-        risk_assessment_scope:
-          $ref: "#/components/schemas/RiskAssessmentScope"
+        risk_analysis_diagram:
+          $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    UpdateRiskAssessmentScopeInput:
+    UpdateRiskAnalysisDiagramInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         name:
           type: string
-          description: Risk assessment scope name
+          description: Risk analysis diagram name
 
-    UpdateRiskAssessmentScopeOutput:
+    UpdateRiskAnalysisDiagramOutput:
       type: object
       required:
-        - risk_assessment_scope
+        - risk_analysis_diagram
       properties:
-        risk_assessment_scope:
-          $ref: "#/components/schemas/RiskAssessmentScope"
+        risk_analysis_diagram:
+          $ref: "#/components/schemas/RiskAnalysisDiagram"
 
-    DeleteRiskAssessmentScopeInput:
+    DeleteRiskAnalysisDiagramInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
 
-    DeleteRiskAssessmentScopeOutput:
+    DeleteRiskAnalysisDiagramOutput:
       type: object
       required:
-        - deleted_risk_assessment_scope_id
+        - deleted_risk_analysis_diagram_id
       properties:
-        deleted_risk_assessment_scope_id:
+        deleted_risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted risk assessment scope ID
+          description: Deleted risk analysis diagram ID
 
-    ListRiskAssessmentNodesInput:
+    ListRiskAnalysisNodesInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         order_by:
-          $ref: "#/components/schemas/RiskAssessmentNodeOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisNodeOrderBy"
           description: Order by
         size:
           type: integer
@@ -12826,118 +13688,118 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAssessmentNodesOutput:
+    ListRiskAnalysisNodesOutput:
       type: object
       required:
-        - risk_assessment_nodes
+        - risk_analysis_nodes
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_assessment_nodes:
+        risk_analysis_nodes:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAssessmentNode"
+            $ref: "#/components/schemas/RiskAnalysisNode"
 
-    GetRiskAssessmentNodeInput:
+    GetRiskAnalysisNodeInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment node ID
+          description: Risk analysis node ID
 
-    GetRiskAssessmentNodeOutput:
+    GetRiskAnalysisNodeOutput:
       type: object
       required:
-        - risk_assessment_node
+        - risk_analysis_node
       properties:
-        risk_assessment_node:
-          $ref: "#/components/schemas/RiskAssessmentNode"
+        risk_analysis_node:
+          $ref: "#/components/schemas/RiskAnalysisNode"
 
-    AddRiskAssessmentNodeInput:
+    AddRiskAnalysisNodeInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - node_type
         - name
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         boundary_id:
           $ref: "#/components/schemas/GID"
           description: ID of the boundary that contains this node (optional)
         node_type:
-          $ref: "#/components/schemas/RiskAssessmentNodeType"
+          $ref: "#/components/schemas/RiskAnalysisNodeType"
           description: Node type
         name:
           type: string
-          description: Risk assessment node name
+          description: Risk analysis node name
 
-    AddRiskAssessmentNodeOutput:
+    AddRiskAnalysisNodeOutput:
       type: object
       required:
-        - risk_assessment_node
+        - risk_analysis_node
       properties:
-        risk_assessment_node:
-          $ref: "#/components/schemas/RiskAssessmentNode"
+        risk_analysis_node:
+          $ref: "#/components/schemas/RiskAnalysisNode"
 
-    UpdateRiskAssessmentNodeInput:
+    UpdateRiskAnalysisNodeInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment node ID
+          description: Risk analysis node ID
         boundary_id:
           $ref: "#/components/schemas/GID"
           description: ID of the boundary that contains this node (optional)
         node_type:
-          $ref: "#/components/schemas/RiskAssessmentNodeType"
+          $ref: "#/components/schemas/RiskAnalysisNodeType"
           description: Node type
         name:
           type: string
-          description: Risk assessment node name
+          description: Risk analysis node name
 
-    UpdateRiskAssessmentNodeOutput:
+    UpdateRiskAnalysisNodeOutput:
       type: object
       required:
-        - risk_assessment_node
+        - risk_analysis_node
       properties:
-        risk_assessment_node:
-          $ref: "#/components/schemas/RiskAssessmentNode"
+        risk_analysis_node:
+          $ref: "#/components/schemas/RiskAnalysisNode"
 
-    DeleteRiskAssessmentNodeInput:
+    DeleteRiskAnalysisNodeInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment node ID
+          description: Risk analysis node ID
 
-    DeleteRiskAssessmentNodeOutput:
+    DeleteRiskAnalysisNodeOutput:
       type: object
       required:
-        - deleted_risk_assessment_node_id
+        - deleted_risk_analysis_node_id
       properties:
-        deleted_risk_assessment_node_id:
+        deleted_risk_analysis_node_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment node ID
 
-    ListRiskAssessmentBoundariesInput:
+    ListRiskAnalysisBoundariesInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         order_by:
-          $ref: "#/components/schemas/RiskAssessmentBoundaryOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisBoundaryOrderBy"
           description: Order by
         size:
           type: integer
@@ -12946,111 +13808,111 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAssessmentBoundariesOutput:
+    ListRiskAnalysisBoundariesOutput:
       type: object
       required:
-        - risk_assessment_boundaries
+        - risk_analysis_boundaries
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_assessment_boundaries:
+        risk_analysis_boundaries:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAssessmentBoundary"
+            $ref: "#/components/schemas/RiskAnalysisBoundary"
 
-    GetRiskAssessmentBoundaryInput:
+    GetRiskAnalysisBoundaryInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment boundary ID
+          description: Risk analysis boundary ID
 
-    GetRiskAssessmentBoundaryOutput:
+    GetRiskAnalysisBoundaryOutput:
       type: object
       required:
-        - risk_assessment_boundary
+        - risk_analysis_boundary
       properties:
-        risk_assessment_boundary:
-          $ref: "#/components/schemas/RiskAssessmentBoundary"
+        risk_analysis_boundary:
+          $ref: "#/components/schemas/RiskAnalysisBoundary"
 
-    AddRiskAssessmentBoundaryInput:
+    AddRiskAnalysisBoundaryInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - name
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         parent_boundary_id:
           $ref: "#/components/schemas/GID"
           description: ID of the parent boundary (optional, for nested boundaries)
         name:
           type: string
-          description: Risk assessment boundary name
+          description: Risk analysis boundary name
 
-    AddRiskAssessmentBoundaryOutput:
+    AddRiskAnalysisBoundaryOutput:
       type: object
       required:
-        - risk_assessment_boundary
+        - risk_analysis_boundary
       properties:
-        risk_assessment_boundary:
-          $ref: "#/components/schemas/RiskAssessmentBoundary"
+        risk_analysis_boundary:
+          $ref: "#/components/schemas/RiskAnalysisBoundary"
 
-    UpdateRiskAssessmentBoundaryInput:
+    UpdateRiskAnalysisBoundaryInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment boundary ID
+          description: Risk analysis boundary ID
         parent_boundary_id:
           $ref: "#/components/schemas/GID"
           description: ID of the parent boundary (optional, for nested boundaries)
         name:
           type: string
-          description: Risk assessment boundary name
+          description: Risk analysis boundary name
 
-    UpdateRiskAssessmentBoundaryOutput:
+    UpdateRiskAnalysisBoundaryOutput:
       type: object
       required:
-        - risk_assessment_boundary
+        - risk_analysis_boundary
       properties:
-        risk_assessment_boundary:
-          $ref: "#/components/schemas/RiskAssessmentBoundary"
+        risk_analysis_boundary:
+          $ref: "#/components/schemas/RiskAnalysisBoundary"
 
-    DeleteRiskAssessmentBoundaryInput:
+    DeleteRiskAnalysisBoundaryInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment boundary ID
+          description: Risk analysis boundary ID
 
-    DeleteRiskAssessmentBoundaryOutput:
+    DeleteRiskAnalysisBoundaryOutput:
       type: object
       required:
-        - deleted_risk_assessment_boundary_id
+        - deleted_risk_analysis_boundary_id
       properties:
-        deleted_risk_assessment_boundary_id:
+        deleted_risk_analysis_boundary_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment boundary ID
 
-    ListRiskAssessmentProcessesInput:
+    ListRiskAnalysisProcessesInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         order_by:
-          $ref: "#/components/schemas/RiskAssessmentProcessOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisProcessOrderBy"
           description: Order by
         size:
           type: integer
@@ -13059,47 +13921,47 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAssessmentProcessesOutput:
+    ListRiskAnalysisProcessesOutput:
       type: object
       required:
-        - risk_assessment_processes
+        - risk_analysis_processes
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_assessment_processes:
+        risk_analysis_processes:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAssessmentProcess"
+            $ref: "#/components/schemas/RiskAnalysisProcess"
 
-    GetRiskAssessmentProcessInput:
+    GetRiskAnalysisProcessInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment process ID
+          description: Risk analysis process ID
 
-    GetRiskAssessmentProcessOutput:
+    GetRiskAnalysisProcessOutput:
       type: object
       required:
-        - risk_assessment_process
+        - risk_analysis_process
       properties:
-        risk_assessment_process:
-          $ref: "#/components/schemas/RiskAssessmentProcess"
+        risk_analysis_process:
+          $ref: "#/components/schemas/RiskAnalysisProcess"
 
-    AddRiskAssessmentProcessInput:
+    AddRiskAnalysisProcessInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - source_node_id
         - target_node_id
         - name
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         source_node_id:
           $ref: "#/components/schemas/GID"
           description: Source node ID
@@ -13108,24 +13970,24 @@ components:
           description: Target node ID
         name:
           type: string
-          description: Risk assessment process name
+          description: Risk analysis process name
 
-    AddRiskAssessmentProcessOutput:
+    AddRiskAnalysisProcessOutput:
       type: object
       required:
-        - risk_assessment_process
+        - risk_analysis_process
       properties:
-        risk_assessment_process:
-          $ref: "#/components/schemas/RiskAssessmentProcess"
+        risk_analysis_process:
+          $ref: "#/components/schemas/RiskAnalysisProcess"
 
-    UpdateRiskAssessmentProcessInput:
+    UpdateRiskAnalysisProcessInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment process ID
+          description: Risk analysis process ID
         source_node_id:
           $ref: "#/components/schemas/GID"
           description: Source node ID
@@ -13134,44 +13996,44 @@ components:
           description: Target node ID
         name:
           type: string
-          description: Risk assessment process name
+          description: Risk analysis process name
 
-    UpdateRiskAssessmentProcessOutput:
+    UpdateRiskAnalysisProcessOutput:
       type: object
       required:
-        - risk_assessment_process
+        - risk_analysis_process
       properties:
-        risk_assessment_process:
-          $ref: "#/components/schemas/RiskAssessmentProcess"
+        risk_analysis_process:
+          $ref: "#/components/schemas/RiskAnalysisProcess"
 
-    DeleteRiskAssessmentProcessInput:
+    DeleteRiskAnalysisProcessInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment process ID
+          description: Risk analysis process ID
 
-    DeleteRiskAssessmentProcessOutput:
+    DeleteRiskAnalysisProcessOutput:
       type: object
       required:
-        - deleted_risk_assessment_process_id
+        - deleted_risk_analysis_process_id
       properties:
-        deleted_risk_assessment_process_id:
+        deleted_risk_analysis_process_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment process ID
 
-    ListRiskAssessmentThreatsInput:
+    ListRiskAnalysisThreatsInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         order_by:
-          $ref: "#/components/schemas/RiskAssessmentThreatOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisThreatOrderBy"
           description: Order by
         size:
           type: integer
@@ -13180,119 +14042,119 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAssessmentThreatsOutput:
+    ListRiskAnalysisThreatsOutput:
       type: object
       required:
-        - risk_assessment_threats
+        - risk_analysis_threats
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_assessment_threats:
+        risk_analysis_threats:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAssessmentThreat"
+            $ref: "#/components/schemas/RiskAnalysisThreat"
 
-    GetRiskAssessmentThreatInput:
+    GetRiskAnalysisThreatInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment threat ID
+          description: Risk analysis threat ID
 
-    GetRiskAssessmentThreatOutput:
+    GetRiskAnalysisThreatOutput:
       type: object
       required:
-        - risk_assessment_threat
+        - risk_analysis_threat
       properties:
-        risk_assessment_threat:
-          $ref: "#/components/schemas/RiskAssessmentThreat"
+        risk_analysis_threat:
+          $ref: "#/components/schemas/RiskAnalysisThreat"
 
-    AddRiskAssessmentThreatInput:
+    AddRiskAnalysisThreatInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - process_id
         - name
         - category
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         process_id:
           $ref: "#/components/schemas/GID"
           description: Process ID
         name:
           type: string
-          description: Risk assessment threat name
+          description: Risk analysis threat name
         category:
           type: string
-          description: Risk assessment threat category
+          description: Risk analysis threat category
 
-    AddRiskAssessmentThreatOutput:
+    AddRiskAnalysisThreatOutput:
       type: object
       required:
-        - risk_assessment_threat
+        - risk_analysis_threat
       properties:
-        risk_assessment_threat:
-          $ref: "#/components/schemas/RiskAssessmentThreat"
+        risk_analysis_threat:
+          $ref: "#/components/schemas/RiskAnalysisThreat"
 
-    UpdateRiskAssessmentThreatInput:
+    UpdateRiskAnalysisThreatInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment threat ID
+          description: Risk analysis threat ID
         process_id:
           $ref: "#/components/schemas/GID"
           description: Process ID
         name:
           type: string
-          description: Risk assessment threat name
+          description: Risk analysis threat name
         category:
           type: string
-          description: Risk assessment threat category
+          description: Risk analysis threat category
 
-    UpdateRiskAssessmentThreatOutput:
+    UpdateRiskAnalysisThreatOutput:
       type: object
       required:
-        - risk_assessment_threat
+        - risk_analysis_threat
       properties:
-        risk_assessment_threat:
-          $ref: "#/components/schemas/RiskAssessmentThreat"
+        risk_analysis_threat:
+          $ref: "#/components/schemas/RiskAnalysisThreat"
 
-    DeleteRiskAssessmentThreatInput:
+    DeleteRiskAnalysisThreatInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment threat ID
+          description: Risk analysis threat ID
 
-    DeleteRiskAssessmentThreatOutput:
+    DeleteRiskAnalysisThreatOutput:
       type: object
       required:
-        - deleted_risk_assessment_threat_id
+        - deleted_risk_analysis_threat_id
       properties:
-        deleted_risk_assessment_threat_id:
+        deleted_risk_analysis_threat_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment threat ID
 
-    ListRiskAssessmentScenariosInput:
+    ListRiskAnalysisScenariosInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         order_by:
-          $ref: "#/components/schemas/RiskAssessmentScenarioOrderBy"
+          $ref: "#/components/schemas/RiskAnalysisScenarioOrderBy"
           description: Order by
         size:
           type: integer
@@ -13301,164 +14163,164 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListRiskAssessmentScenariosOutput:
+    ListRiskAnalysisScenariosOutput:
       type: object
       required:
-        - risk_assessment_scenarios
+        - risk_analysis_scenarios
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        risk_assessment_scenarios:
+        risk_analysis_scenarios:
           type: array
           items:
-            $ref: "#/components/schemas/RiskAssessmentScenario"
+            $ref: "#/components/schemas/RiskAnalysisScenario"
 
-    GetRiskAssessmentScenarioInput:
+    GetRiskAnalysisScenarioInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scenario ID
+          description: Risk analysis scenario ID
 
-    GetRiskAssessmentScenarioOutput:
+    GetRiskAnalysisScenarioOutput:
       type: object
       required:
-        - risk_assessment_scenario
+        - risk_analysis_scenario
       properties:
-        risk_assessment_scenario:
-          $ref: "#/components/schemas/RiskAssessmentScenario"
+        risk_analysis_scenario:
+          $ref: "#/components/schemas/RiskAnalysisScenario"
 
-    AddRiskAssessmentScenarioInput:
+    AddRiskAnalysisScenarioInput:
       type: object
       required:
-        - risk_assessment_scope_id
+        - risk_analysis_diagram_id
         - name
       properties:
-        risk_assessment_scope_id:
+        risk_analysis_diagram_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scope ID
+          description: Risk analysis diagram ID
         name:
           type: string
-          description: Risk assessment scenario name
+          description: Risk analysis scenario name
         description:
           type: string
-          description: Risk assessment scenario description
+          description: Risk analysis scenario description
 
-    AddRiskAssessmentScenarioOutput:
+    AddRiskAnalysisScenarioOutput:
       type: object
       required:
-        - risk_assessment_scenario
+        - risk_analysis_scenario
       properties:
-        risk_assessment_scenario:
-          $ref: "#/components/schemas/RiskAssessmentScenario"
+        risk_analysis_scenario:
+          $ref: "#/components/schemas/RiskAnalysisScenario"
 
-    UpdateRiskAssessmentScenarioInput:
+    UpdateRiskAnalysisScenarioInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scenario ID
+          description: Risk analysis scenario ID
         name:
           type: string
-          description: Risk assessment scenario name
+          description: Risk analysis scenario name
         description:
           type: ["string", "null"]
-          description: Risk assessment scenario description
+          description: Risk analysis scenario description
           go.probo.inc/mcpgen/omittable: true
 
-    UpdateRiskAssessmentScenarioOutput:
+    UpdateRiskAnalysisScenarioOutput:
       type: object
       required:
-        - risk_assessment_scenario
+        - risk_analysis_scenario
       properties:
-        risk_assessment_scenario:
-          $ref: "#/components/schemas/RiskAssessmentScenario"
+        risk_analysis_scenario:
+          $ref: "#/components/schemas/RiskAnalysisScenario"
 
-    DeleteRiskAssessmentScenarioInput:
+    DeleteRiskAnalysisScenarioInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scenario ID
+          description: Risk analysis scenario ID
 
-    DeleteRiskAssessmentScenarioOutput:
+    DeleteRiskAnalysisScenarioOutput:
       type: object
       required:
-        - deleted_risk_assessment_scenario_id
+        - deleted_risk_analysis_scenario_id
       properties:
-        deleted_risk_assessment_scenario_id:
+        deleted_risk_analysis_scenario_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment scenario ID
 
-    LinkRiskAssessmentScenarioThreatInput:
+    LinkRiskAnalysisScenarioThreatInput:
       type: object
       required:
-        - risk_assessment_scenario_id
+        - risk_analysis_scenario_id
         - threat_id
       properties:
-        risk_assessment_scenario_id:
+        risk_analysis_scenario_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scenario ID
+          description: Risk analysis scenario ID
         threat_id:
           $ref: "#/components/schemas/GID"
           description: Threat ID
 
-    LinkRiskAssessmentScenarioThreatOutput:
+    LinkRiskAnalysisScenarioThreatOutput:
       type: object
 
-    UnlinkRiskAssessmentScenarioThreatInput:
+    UnlinkRiskAnalysisScenarioThreatInput:
       type: object
       required:
-        - risk_assessment_scenario_id
+        - risk_analysis_scenario_id
         - threat_id
       properties:
-        risk_assessment_scenario_id:
+        risk_analysis_scenario_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scenario ID
+          description: Risk analysis scenario ID
         threat_id:
           $ref: "#/components/schemas/GID"
           description: Threat ID
 
-    UnlinkRiskAssessmentScenarioThreatOutput:
+    UnlinkRiskAnalysisScenarioThreatOutput:
       type: object
 
-    LinkRiskAssessmentScenarioRiskInput:
+    LinkRiskAnalysisScenarioRiskInput:
       type: object
       required:
-        - risk_assessment_scenario_id
+        - risk_analysis_scenario_id
         - risk_id
       properties:
-        risk_assessment_scenario_id:
+        risk_analysis_scenario_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scenario ID
+          description: Risk analysis scenario ID
         risk_id:
           $ref: "#/components/schemas/GID"
           description: Risk ID
 
-    LinkRiskAssessmentScenarioRiskOutput:
+    LinkRiskAnalysisScenarioRiskOutput:
       type: object
 
-    UnlinkRiskAssessmentScenarioRiskInput:
+    UnlinkRiskAnalysisScenarioRiskInput:
       type: object
       required:
-        - risk_assessment_scenario_id
+        - risk_analysis_scenario_id
         - risk_id
       properties:
-        risk_assessment_scenario_id:
+        risk_analysis_scenario_id:
           $ref: "#/components/schemas/GID"
-          description: Risk assessment scenario ID
+          description: Risk analysis scenario ID
         risk_id:
           $ref: "#/components/schemas/GID"
           description: Risk ID
 
-    UnlinkRiskAssessmentScenarioRiskOutput:
+    UnlinkRiskAnalysisScenarioRiskOutput:
       type: object
 
     # --- Mailing lists ---
@@ -14859,6 +15721,126 @@ tools:
       $ref: "#/components/schemas/DeleteObligationInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteObligationOutput"
+  - name: listBusinessFunctions
+    title: List Business Functions
+    description: List all business functions for the organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListBusinessFunctionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListBusinessFunctionsOutput"
+  - name: getBusinessFunction
+    title: Get Business Function
+    description: Get a business function by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetBusinessFunctionOutput"
+  - name: addBusinessFunction
+    title: Add Business Function
+    description: Add a new business function to the organization
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddBusinessFunctionOutput"
+  - name: updateBusinessFunction
+    title: Update Business Function
+    description: Update an existing business function
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateBusinessFunctionOutput"
+  - name: deleteBusinessFunction
+    title: Delete Business Function
+    description: Delete a business function
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteBusinessFunctionInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteBusinessFunctionOutput"
+  - name: listAiSystems
+    title: List AI Systems
+    description: List all AI systems for the organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListAiSystemsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAiSystemsOutput"
+  - name: getAiSystem
+    title: Get AI System
+    description: Get an AI system by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAiSystemOutput"
+  - name: addAiSystem
+    title: Add AI System
+    description: Add a new AI system to the organization
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddAiSystemOutput"
+  - name: updateAiSystem
+    title: Update AI System
+    description: Update an existing AI system
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAiSystemOutput"
+  - name: deleteAiSystem
+    title: Delete AI System
+    description: Delete an AI system
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteAiSystemInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteAiSystemOutput"
   - name: listProcessingActivities
     title: List Processing Activities
     description: List all processing activities for the organization
@@ -15711,6 +16693,30 @@ tools:
       $ref: "#/components/schemas/PublishObligationListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishObligationListOutput"
+  - name: publishBusinessFunctionList
+    title: Publish Business Function List
+    description: Publish the business function register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishBusinessFunctionListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishBusinessFunctionListOutput"
+  - name: publishAiSystemList
+    title: Publish AI System List
+    description: Publish the AI system register for an organization as a document. If a document already exists, a new version is created.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishAiSystemListInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishAiSystemListOutput"
   - name: publishProcessingActivityList
     title: Publish Processing Activity List
     description: Publish the processing activity register for an organization as a document. If a document already exists, a new version is created.
@@ -17199,8 +18205,8 @@ tools:
       $ref: "#/components/schemas/ListSCIMEventsInput"
     outputSchema:
       $ref: "#/components/schemas/ListSCIMEventsOutput"
-  - name: listRiskAssessments
-    title: List Risk Assessments
+  - name: listRiskAnalyses
+    title: List Risk Analyses
     description: List all risk assessments for an organization
     hints:
       readonly: true
@@ -17208,11 +18214,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentsInput"
+      $ref: "#/components/schemas/ListRiskAnalysesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentsOutput"
-  - name: getRiskAssessment
-    title: Get Risk Assessment
+      $ref: "#/components/schemas/ListRiskAnalysesOutput"
+  - name: getRiskAnalysis
+    title: Get Risk Analysis
     description: Get a risk assessment by ID
     hints:
       readonly: true
@@ -17220,11 +18226,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentInput"
+      $ref: "#/components/schemas/GetRiskAnalysisInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentOutput"
-  - name: addRiskAssessment
-    title: Add Risk Assessment
+      $ref: "#/components/schemas/GetRiskAnalysisOutput"
+  - name: addRiskAnalysis
+    title: Add Risk Analysis
     description: Create a new risk assessment
     hints:
       readonly: false
@@ -17232,11 +18238,11 @@ tools:
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentInput"
+      $ref: "#/components/schemas/AddRiskAnalysisInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentOutput"
-  - name: updateRiskAssessment
-    title: Update Risk Assessment
+      $ref: "#/components/schemas/AddRiskAnalysisOutput"
+  - name: updateRiskAnalysis
+    title: Update Risk Analysis
     description: Update an existing risk assessment
     hints:
       readonly: false
@@ -17244,11 +18250,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentOutput"
-  - name: deleteRiskAssessment
-    title: Delete Risk Assessment
+      $ref: "#/components/schemas/UpdateRiskAnalysisOutput"
+  - name: deleteRiskAnalysis
+    title: Delete Risk Analysis
     description: Delete a risk assessment
     hints:
       readonly: false
@@ -17256,95 +18262,95 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentOutput"
-  - name: listRiskAssessmentScopes
-    title: List Risk Assessment Scopes
-    description: List all scopes for a risk assessment
+      $ref: "#/components/schemas/DeleteRiskAnalysisOutput"
+  - name: listRiskAnalysisDiagrams
+    title: List Risk Analysis Diagrams
+    description: List all diagrams for a risk analysis
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentScopesInput"
+      $ref: "#/components/schemas/ListRiskAnalysisDiagramsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentScopesOutput"
-  - name: getRiskAssessmentScope
-    title: Get Risk Assessment Scope
-    description: Get a risk assessment scope by ID
+      $ref: "#/components/schemas/ListRiskAnalysisDiagramsOutput"
+  - name: getRiskAnalysisDiagram
+    title: Get Risk Analysis Diagram
+    description: Get a risk analysis diagram by ID
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentScopeInput"
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentScopeOutput"
-  - name: getRiskAssessmentScopeMermaidChart
-    title: Get Risk Assessment Scope Mermaid Chart
-    description: Get the Mermaid chart for a risk assessment scope
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramOutput"
+  - name: getRiskAnalysisDiagramMermaidChart
+    title: Get Risk Analysis Diagram Mermaid Chart
+    description: Get the Mermaid chart for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentScopeMermaidChartInput"
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramMermaidChartInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentScopeMermaidChartOutput"
-  - name: addRiskAssessmentScope
-    title: Add Risk Assessment Scope
-    description: Create a new risk assessment scope
+      $ref: "#/components/schemas/GetRiskAnalysisDiagramMermaidChartOutput"
+  - name: addRiskAnalysisDiagram
+    title: Add Risk Analysis Diagram
+    description: Create a new risk analysis diagram
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentScopeInput"
+      $ref: "#/components/schemas/AddRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentScopeOutput"
-  - name: updateRiskAssessmentScope
-    title: Update Risk Assessment Scope
-    description: Update an existing risk assessment scope
+      $ref: "#/components/schemas/AddRiskAnalysisDiagramOutput"
+  - name: updateRiskAnalysisDiagram
+    title: Update Risk Analysis Diagram
+    description: Update an existing risk analysis diagram
     hints:
       readonly: false
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentScopeInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentScopeOutput"
-  - name: deleteRiskAssessmentScope
-    title: Delete Risk Assessment Scope
-    description: Delete a risk assessment scope
+      $ref: "#/components/schemas/UpdateRiskAnalysisDiagramOutput"
+  - name: deleteRiskAnalysisDiagram
+    title: Delete Risk Analysis Diagram
+    description: Delete a risk analysis diagram
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentScopeInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisDiagramInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentScopeOutput"
-  - name: listRiskAssessmentNodes
-    title: List Risk Assessment Nodes
-    description: List all nodes for a risk assessment scope
+      $ref: "#/components/schemas/DeleteRiskAnalysisDiagramOutput"
+  - name: listRiskAnalysisNodes
+    title: List Risk Analysis Nodes
+    description: List all nodes for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentNodesInput"
+      $ref: "#/components/schemas/ListRiskAnalysisNodesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentNodesOutput"
-  - name: getRiskAssessmentNode
-    title: Get Risk Assessment Node
+      $ref: "#/components/schemas/ListRiskAnalysisNodesOutput"
+  - name: getRiskAnalysisNode
+    title: Get Risk Analysis Node
     description: Get a risk assessment node by ID
     hints:
       readonly: true
@@ -17352,11 +18358,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentNodeInput"
+      $ref: "#/components/schemas/GetRiskAnalysisNodeInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentNodeOutput"
-  - name: addRiskAssessmentNode
-    title: Add Risk Assessment Node
+      $ref: "#/components/schemas/GetRiskAnalysisNodeOutput"
+  - name: addRiskAnalysisNode
+    title: Add Risk Analysis Node
     description: Create a new risk assessment node
     hints:
       readonly: false
@@ -17364,11 +18370,11 @@ tools:
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentNodeInput"
+      $ref: "#/components/schemas/AddRiskAnalysisNodeInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentNodeOutput"
-  - name: updateRiskAssessmentNode
-    title: Update Risk Assessment Node
+      $ref: "#/components/schemas/AddRiskAnalysisNodeOutput"
+  - name: updateRiskAnalysisNode
+    title: Update Risk Analysis Node
     description: Update an existing risk assessment node
     hints:
       readonly: false
@@ -17376,11 +18382,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentNodeInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisNodeInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentNodeOutput"
-  - name: deleteRiskAssessmentNode
-    title: Delete Risk Assessment Node
+      $ref: "#/components/schemas/UpdateRiskAnalysisNodeOutput"
+  - name: deleteRiskAnalysisNode
+    title: Delete Risk Analysis Node
     description: Delete a risk assessment node
     hints:
       readonly: false
@@ -17388,23 +18394,23 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentNodeInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisNodeInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentNodeOutput"
-  - name: listRiskAssessmentBoundaries
-    title: List Risk Assessment Boundaries
-    description: List all boundaries for a risk assessment scope
+      $ref: "#/components/schemas/DeleteRiskAnalysisNodeOutput"
+  - name: listRiskAnalysisBoundaries
+    title: List Risk Analysis Boundaries
+    description: List all boundaries for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentBoundariesInput"
+      $ref: "#/components/schemas/ListRiskAnalysisBoundariesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentBoundariesOutput"
-  - name: getRiskAssessmentBoundary
-    title: Get Risk Assessment Boundary
+      $ref: "#/components/schemas/ListRiskAnalysisBoundariesOutput"
+  - name: getRiskAnalysisBoundary
+    title: Get Risk Analysis Boundary
     description: Get a risk assessment boundary by ID
     hints:
       readonly: true
@@ -17412,11 +18418,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentBoundaryInput"
+      $ref: "#/components/schemas/GetRiskAnalysisBoundaryInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentBoundaryOutput"
-  - name: addRiskAssessmentBoundary
-    title: Add Risk Assessment Boundary
+      $ref: "#/components/schemas/GetRiskAnalysisBoundaryOutput"
+  - name: addRiskAnalysisBoundary
+    title: Add Risk Analysis Boundary
     description: Create a new risk assessment boundary
     hints:
       readonly: false
@@ -17424,11 +18430,11 @@ tools:
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentBoundaryInput"
+      $ref: "#/components/schemas/AddRiskAnalysisBoundaryInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentBoundaryOutput"
-  - name: updateRiskAssessmentBoundary
-    title: Update Risk Assessment Boundary
+      $ref: "#/components/schemas/AddRiskAnalysisBoundaryOutput"
+  - name: updateRiskAnalysisBoundary
+    title: Update Risk Analysis Boundary
     description: Update an existing risk assessment boundary
     hints:
       readonly: false
@@ -17436,11 +18442,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentBoundaryInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisBoundaryInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentBoundaryOutput"
-  - name: deleteRiskAssessmentBoundary
-    title: Delete Risk Assessment Boundary
+      $ref: "#/components/schemas/UpdateRiskAnalysisBoundaryOutput"
+  - name: deleteRiskAnalysisBoundary
+    title: Delete Risk Analysis Boundary
     description: Delete a risk assessment boundary
     hints:
       readonly: false
@@ -17448,23 +18454,23 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentBoundaryInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisBoundaryInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentBoundaryOutput"
-  - name: listRiskAssessmentProcesses
-    title: List Risk Assessment Processes
-    description: List all processes for a risk assessment scope
+      $ref: "#/components/schemas/DeleteRiskAnalysisBoundaryOutput"
+  - name: listRiskAnalysisProcesses
+    title: List Risk Analysis Processes
+    description: List all processes for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentProcessesInput"
+      $ref: "#/components/schemas/ListRiskAnalysisProcessesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentProcessesOutput"
-  - name: getRiskAssessmentProcess
-    title: Get Risk Assessment Process
+      $ref: "#/components/schemas/ListRiskAnalysisProcessesOutput"
+  - name: getRiskAnalysisProcess
+    title: Get Risk Analysis Process
     description: Get a risk assessment process by ID
     hints:
       readonly: true
@@ -17472,11 +18478,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentProcessInput"
+      $ref: "#/components/schemas/GetRiskAnalysisProcessInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentProcessOutput"
-  - name: addRiskAssessmentProcess
-    title: Add Risk Assessment Process
+      $ref: "#/components/schemas/GetRiskAnalysisProcessOutput"
+  - name: addRiskAnalysisProcess
+    title: Add Risk Analysis Process
     description: Create a new risk assessment process
     hints:
       readonly: false
@@ -17484,11 +18490,11 @@ tools:
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentProcessInput"
+      $ref: "#/components/schemas/AddRiskAnalysisProcessInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentProcessOutput"
-  - name: updateRiskAssessmentProcess
-    title: Update Risk Assessment Process
+      $ref: "#/components/schemas/AddRiskAnalysisProcessOutput"
+  - name: updateRiskAnalysisProcess
+    title: Update Risk Analysis Process
     description: Update an existing risk assessment process
     hints:
       readonly: false
@@ -17496,11 +18502,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentProcessInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisProcessInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentProcessOutput"
-  - name: deleteRiskAssessmentProcess
-    title: Delete Risk Assessment Process
+      $ref: "#/components/schemas/UpdateRiskAnalysisProcessOutput"
+  - name: deleteRiskAnalysisProcess
+    title: Delete Risk Analysis Process
     description: Delete a risk assessment process
     hints:
       readonly: false
@@ -17508,23 +18514,23 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentProcessInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisProcessInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentProcessOutput"
-  - name: listRiskAssessmentThreats
-    title: List Risk Assessment Threats
-    description: List all threats for a risk assessment scope
+      $ref: "#/components/schemas/DeleteRiskAnalysisProcessOutput"
+  - name: listRiskAnalysisThreats
+    title: List Risk Analysis Threats
+    description: List all threats for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentThreatsInput"
+      $ref: "#/components/schemas/ListRiskAnalysisThreatsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentThreatsOutput"
-  - name: getRiskAssessmentThreat
-    title: Get Risk Assessment Threat
+      $ref: "#/components/schemas/ListRiskAnalysisThreatsOutput"
+  - name: getRiskAnalysisThreat
+    title: Get Risk Analysis Threat
     description: Get a risk assessment threat by ID
     hints:
       readonly: true
@@ -17532,11 +18538,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentThreatInput"
+      $ref: "#/components/schemas/GetRiskAnalysisThreatInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentThreatOutput"
-  - name: addRiskAssessmentThreat
-    title: Add Risk Assessment Threat
+      $ref: "#/components/schemas/GetRiskAnalysisThreatOutput"
+  - name: addRiskAnalysisThreat
+    title: Add Risk Analysis Threat
     description: Create a new risk assessment threat
     hints:
       readonly: false
@@ -17544,11 +18550,11 @@ tools:
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentThreatInput"
+      $ref: "#/components/schemas/AddRiskAnalysisThreatInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentThreatOutput"
-  - name: updateRiskAssessmentThreat
-    title: Update Risk Assessment Threat
+      $ref: "#/components/schemas/AddRiskAnalysisThreatOutput"
+  - name: updateRiskAnalysisThreat
+    title: Update Risk Analysis Threat
     description: Update an existing risk assessment threat
     hints:
       readonly: false
@@ -17556,11 +18562,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentThreatInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisThreatInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentThreatOutput"
-  - name: deleteRiskAssessmentThreat
-    title: Delete Risk Assessment Threat
+      $ref: "#/components/schemas/UpdateRiskAnalysisThreatOutput"
+  - name: deleteRiskAnalysisThreat
+    title: Delete Risk Analysis Threat
     description: Delete a risk assessment threat
     hints:
       readonly: false
@@ -17568,23 +18574,23 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentThreatInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisThreatInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentThreatOutput"
-  - name: listRiskAssessmentScenarios
-    title: List Risk Assessment Scenarios
-    description: List all scenarios for a risk assessment scope
+      $ref: "#/components/schemas/DeleteRiskAnalysisThreatOutput"
+  - name: listRiskAnalysisScenarios
+    title: List Risk Analysis Scenarios
+    description: List all scenarios for a risk analysis diagram
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentScenariosInput"
+      $ref: "#/components/schemas/ListRiskAnalysisScenariosInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskAssessmentScenariosOutput"
-  - name: getRiskAssessmentScenario
-    title: Get Risk Assessment Scenario
+      $ref: "#/components/schemas/ListRiskAnalysisScenariosOutput"
+  - name: getRiskAnalysisScenario
+    title: Get Risk Analysis Scenario
     description: Get a risk assessment scenario by ID
     hints:
       readonly: true
@@ -17592,11 +18598,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentScenarioInput"
+      $ref: "#/components/schemas/GetRiskAnalysisScenarioInput"
     outputSchema:
-      $ref: "#/components/schemas/GetRiskAssessmentScenarioOutput"
-  - name: addRiskAssessmentScenario
-    title: Add Risk Assessment Scenario
+      $ref: "#/components/schemas/GetRiskAnalysisScenarioOutput"
+  - name: addRiskAnalysisScenario
+    title: Add Risk Analysis Scenario
     description: Create a new risk assessment scenario
     hints:
       readonly: false
@@ -17604,11 +18610,11 @@ tools:
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentScenarioInput"
+      $ref: "#/components/schemas/AddRiskAnalysisScenarioInput"
     outputSchema:
-      $ref: "#/components/schemas/AddRiskAssessmentScenarioOutput"
-  - name: updateRiskAssessmentScenario
-    title: Update Risk Assessment Scenario
+      $ref: "#/components/schemas/AddRiskAnalysisScenarioOutput"
+  - name: updateRiskAnalysisScenario
+    title: Update Risk Analysis Scenario
     description: Update an existing risk assessment scenario
     hints:
       readonly: false
@@ -17616,11 +18622,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentScenarioInput"
+      $ref: "#/components/schemas/UpdateRiskAnalysisScenarioInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateRiskAssessmentScenarioOutput"
-  - name: deleteRiskAssessmentScenario
-    title: Delete Risk Assessment Scenario
+      $ref: "#/components/schemas/UpdateRiskAnalysisScenarioOutput"
+  - name: deleteRiskAnalysisScenario
+    title: Delete Risk Analysis Scenario
     description: Delete a risk assessment scenario
     hints:
       readonly: false
@@ -17628,11 +18634,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentScenarioInput"
+      $ref: "#/components/schemas/DeleteRiskAnalysisScenarioInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteRiskAssessmentScenarioOutput"
-  - name: linkRiskAssessmentScenarioThreat
-    title: Link Risk Assessment Scenario Threat
+      $ref: "#/components/schemas/DeleteRiskAnalysisScenarioOutput"
+  - name: linkRiskAnalysisScenarioThreat
+    title: Link Risk Analysis Scenario Threat
     description: Link a threat to a risk assessment scenario
     hints:
       readonly: false
@@ -17640,11 +18646,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/LinkRiskAssessmentScenarioThreatInput"
+      $ref: "#/components/schemas/LinkRiskAnalysisScenarioThreatInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkRiskAssessmentScenarioThreatOutput"
-  - name: unlinkRiskAssessmentScenarioThreat
-    title: Unlink Risk Assessment Scenario Threat
+      $ref: "#/components/schemas/LinkRiskAnalysisScenarioThreatOutput"
+  - name: unlinkRiskAnalysisScenarioThreat
+    title: Unlink Risk Analysis Scenario Threat
     description: Unlink a threat from a risk assessment scenario
     hints:
       readonly: false
@@ -17652,11 +18658,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioThreatInput"
+      $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioThreatInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioThreatOutput"
-  - name: linkRiskAssessmentScenarioRisk
-    title: Link Risk Assessment Scenario Risk
+      $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioThreatOutput"
+  - name: linkRiskAnalysisScenarioRisk
+    title: Link Risk Analysis Scenario Risk
     description: Link a risk to a risk assessment scenario
     hints:
       readonly: false
@@ -17664,11 +18670,11 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/LinkRiskAssessmentScenarioRiskInput"
+      $ref: "#/components/schemas/LinkRiskAnalysisScenarioRiskInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkRiskAssessmentScenarioRiskOutput"
-  - name: unlinkRiskAssessmentScenarioRisk
-    title: Unlink Risk Assessment Scenario Risk
+      $ref: "#/components/schemas/LinkRiskAnalysisScenarioRiskOutput"
+  - name: unlinkRiskAnalysisScenarioRisk
+    title: Unlink Risk Analysis Scenario Risk
     description: Unlink a risk from a risk assessment scenario
     hints:
       readonly: false
@@ -17676,9 +18682,9 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioRiskInput"
+      $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioRiskInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioRiskOutput"
+      $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioRiskOutput"
   - name: getMailingList
     title: Get Mailing List
     description: Get the mailing list for a compliance portal

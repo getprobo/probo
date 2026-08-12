@@ -38,12 +38,12 @@ import { useTranslation } from "react-i18next";
 import { ConnectionHandler, useLazyLoadQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { NewOAuthTokenPageCreateMutation } from "#/__generated__/iam/NewOAuthTokenPageCreateMutation.graphql";
 import type { NewOAuthTokenPageQuery } from "#/__generated__/iam/NewOAuthTokenPageQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { z } from "#/lib/zod";
 
 import { OAuthTokenCredentialsDialog } from "./_components/OAuthTokenCredentialsDialog";
 import { formatApiScopeLabel } from "./_components/scopeLabels";

@@ -48,7 +48,7 @@ func TestCrispDriver(t *testing.T) {
 	assert.Equal(t, "alex@example.com", owner.Email)
 	assert.Equal(t, "Alex Martin", owner.FullName)
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, "Founder", owner.JobTitle)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
 	// Crisp's operators/list exposes no MFA or account-status signal, so the
@@ -60,7 +60,7 @@ func TestCrispDriver(t *testing.T) {
 	assert.Equal(t, "9a1f3c2e-6b4d-4f8a-bc11-7d2e9f0a1b22", member.ExternalID)
 	assert.Equal(t, "jordan@example.com", member.Email)
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	assert.Equal(t, "Support Agent", member.JobTitle)
 	assert.Equal(t, coredata.MFAStatusUnknown, member.MFAStatus)
 	assert.Nil(t, member.Active)

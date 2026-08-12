@@ -763,7 +763,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 			WithWriteModes(filter.WriteModes).
 			WithDocumentTypes(filter.DocumentTypes).
 			WithClassifications(filter.Classifications).
-			WithStatus(filter.Status)
+			WithStatus(filter.Status).
+			WithPublished(filter.Published)
 	}
 
 	page, err := r.probo.Documents.ListByOrganizationID(ctx, scope, obj.ID, cursor, documentFilter)
@@ -892,6 +893,147 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID), nil
+}
+
+// BusinessFunctionsDocument is the resolver for the businessFunctionsDocument field.
+func (r *organizationResolver) BusinessFunctionsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	businessFunctionDocumentID, err := r.probo.GeneratedDocuments.GetBusinessFunctionsDocumentID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get business function list document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if businessFunctionDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := r.probo.Documents.Get(ctx, scope, *businessFunctionDocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load business function list document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
+// BusinessFunctions is the resolver for the businessFunctions field.
+func (r *organizationResolver) BusinessFunctions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.BusinessFunctionOrderBy, filter *types.BusinessFunctionFilter) (*types.BusinessFunctionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionBusinessFunctionList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.BusinessFunctionOrderField]{
+		Field:     coredata.BusinessFunctionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.BusinessFunctionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var classification *coredata.BusinessFunctionClassification
+	if filter != nil {
+		classification = filter.Classification
+	}
+
+	businessFunctionFilter := coredata.NewBusinessFunctionFilter(classification)
+
+	pageResult, err := r.probo.BusinessFunctions.ListForOrganizationID(ctx, scope, obj.ID, cursor, businessFunctionFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization business functions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewBusinessFunctionConnection(pageResult, r, obj.ID, filter), nil
+}
+
+// AiSystemsDocument is the resolver for the aiSystemsDocument field.
+func (r *organizationResolver) AiSystemsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	aiSystemDocumentID, err := r.probo.GeneratedDocuments.GetAiSystemsDocumentID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get ai system list document ID", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if aiSystemDocumentID == nil {
+		return nil, nil
+	}
+
+	doc, err := r.probo.Documents.Get(ctx, scope, *aiSystemDocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load ai system list document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(doc), nil
+}
+
+// AiSystems is the resolver for the aiSystems field.
+func (r *organizationResolver) AiSystems(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AiSystemOrderBy, filter *types.AiSystemFilter) (*types.AiSystemConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAiSystemList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AiSystemOrderField]{
+		Field:     coredata.AiSystemOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AiSystemOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var (
+		status             *coredata.AiSystemStatus
+		riskClassification *coredata.AiSystemRiskClassification
+	)
+
+	if filter != nil {
+		status = filter.Status
+		riskClassification = filter.RiskClassification
+	}
+
+	aiSystemFilter := coredata.NewAiSystemFilter(status, riskClassification)
+
+	pageResult, err := r.probo.AiSystems.ListForOrganizationID(ctx, scope, obj.ID, cursor, aiSystemFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization ai systems", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAiSystemConnection(pageResult, r, obj.ID, filter), nil
 }
 
 // ProcessingActivities is the resolver for the processingActivities field.
@@ -1051,20 +1193,20 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 	return types.NewDocument(document), nil
 }
 
-// RiskAssessments is the resolver for the riskAssessments field.
-func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentOrderBy) (*types.RiskAssessmentConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentList)
+// RiskAnalyses is the resolver for the riskAnalyses field.
+func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisOrderBy) (*types.RiskAnalysisConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAssessmentOrderField]{
-		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisOrderField]{
+		Field:     coredata.RiskAnalysisOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAssessmentOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1078,23 +1220,23 @@ func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.O
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAssessmentConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisConnection(p, r, obj.ID), nil
 }
 
-// RiskAssessmentScenarios is the resolver for the riskAssessmentScenarios field.
-func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+// RiskAnalysisScenarios is the resolver for the riskAnalysisScenarios field.
+func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
-		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
+		Field:     coredata.RiskAnalysisScenarioOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+		pageOrderBy = page.OrderBy[coredata.RiskAnalysisScenarioOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1108,7 +1250,7 @@ func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
+	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
 }
 
 // Tasks is the resolver for the tasks field.

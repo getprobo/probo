@@ -50,7 +50,7 @@ func TestSendGridDriver(t *testing.T) {
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Empty(t, owner.FullName)
 	assert.Equal(t, []string{"Owner"}, owner.Roles)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	assert.Equal(t, "owner@example.com", owner.ExternalID)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
 	// is_sso=false on the owner -> authenticates with SendGrid credentials.
@@ -69,7 +69,7 @@ func TestSendGridDriver(t *testing.T) {
 	assert.Equal(t, "taylor@example.com", teammate.Email)
 	assert.Equal(t, "Taylor Teammate", teammate.FullName)
 	assert.Equal(t, []string{"Teammate"}, teammate.Roles)
-	assert.False(t, teammate.IsAdmin)
+	assert.Equal(t, new(false), teammate.IsAdmin)
 	// Non-unified teammate: username is a handle distinct from the email.
 	assert.Equal(t, "taylor-teammate", teammate.ExternalID)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, teammate.AuthMethod)

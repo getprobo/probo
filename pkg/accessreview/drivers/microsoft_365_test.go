@@ -55,7 +55,7 @@ func TestMicrosoft365Driver(t *testing.T) {
 	assert.Equal(t, "Alice Admin", alice.FullName)
 	assert.Equal(t, "11111111-1111-1111-1111-111111111111", alice.ExternalID)
 	assert.Equal(t, []string{"Global Administrator"}, alice.Roles)
-	assert.True(t, alice.IsAdmin)
+	assert.Equal(t, new(true), alice.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, alice.MFAStatus)
 	assert.Equal(t, "Security Engineer", alice.JobTitle)
 	require.NotNil(t, alice.Active)
@@ -67,7 +67,7 @@ func TestMicrosoft365Driver(t *testing.T) {
 	// Bob: User Administrator with MFA not registered.
 	bob := recordsByEmail["bob@example.com"]
 	assert.Equal(t, []string{"User Administrator"}, bob.Roles)
-	assert.True(t, bob.IsAdmin)
+	assert.Equal(t, new(true), bob.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, bob.MFAStatus)
 	require.NotNil(t, bob.Active)
 	assert.True(t, *bob.Active)
@@ -76,13 +76,13 @@ func TestMicrosoft365Driver(t *testing.T) {
 	// case-insensitive UPN fallback when the report id differs.
 	carol := recordsByEmail["carol@example.com"]
 	assert.Equal(t, []string{"User"}, carol.Roles)
-	assert.False(t, carol.IsAdmin)
+	assert.Equal(t, new(false), carol.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, carol.MFAStatus)
 
 	// Dana: inactive, absent from the MFA registration report → Unknown.
 	dana := recordsByEmail["dana@example.com"]
 	assert.Equal(t, []string{"User"}, dana.Roles)
-	assert.False(t, dana.IsAdmin)
+	assert.Equal(t, new(false), dana.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusUnknown, dana.MFAStatus)
 	require.NotNil(t, dana.Active)
 	assert.False(t, *dana.Active)

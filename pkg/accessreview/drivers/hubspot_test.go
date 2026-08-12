@@ -22,11 +22,9 @@ package drivers
 
 import (
 	"context"
-	"io"
-	"net/http"
 	"os"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,52 +39,156 @@ func TestHubSpotDriver(t *testing.T) {
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.NotEmpty(t, records)
+	require.Len(t, records, 3)
 
-	r := records[0]
-	assert.NotEmpty(t, r.Email)
-	assert.NotEmpty(t, r.FullName)
-	assert.NotEmpty(t, r.ExternalID)
+	// Active super-admin with a resolved role.
+	active := records[0]
+	assert.Equal(t, "10000001", active.ExternalID)
+	assert.Equal(t, "john.smith@example.com", active.Email)
+	assert.Equal(t, "John Smith", active.FullName)
+	assert.Equal(t, []string{"Sales Admin", "Super Admin"}, active.Roles)
+	assert.Equal(t, new(true), active.IsAdmin)
+	require.NotNil(t, active.Active)
+	assert.True(t, *active.Active)
+	require.NotNil(t, active.LastLogin)
+	assert.Equal(t, time.Date(2025, 2, 7, 14, 12, 13, 544000000, time.UTC), active.LastLogin.UTC())
+
+	// Still listed in Settings Users, but archived as an owner → inactive.
+	listedInactive := records[1]
+	assert.Equal(t, "10000002", listedInactive.ExternalID)
+	assert.Equal(t, "jane.doe@example.com", listedInactive.Email)
+	assert.Equal(t, "Jane Doe", listedInactive.FullName)
+	assert.Equal(t, new(false), listedInactive.IsAdmin)
+	require.NotNil(t, listedInactive.Active)
+	assert.False(t, *listedInactive.Active)
+	// Failed login is ignored; successful older login wins.
+	require.NotNil(t, listedInactive.LastLogin)
+	assert.Equal(t, time.Date(2025, 1, 15, 12, 0, 0, 0, time.UTC), listedInactive.LastLogin.UTC())
+
+	// Archived-only owner (missing from Settings Users); empty name → email.
+	archivedOnly := records[2]
+	assert.Equal(t, "10000003", archivedOnly.ExternalID)
+	assert.Equal(t, "gone@example.com", archivedOnly.Email)
+	assert.Equal(t, "gone@example.com", archivedOnly.FullName)
+	require.NotNil(t, archivedOnly.Active)
+	assert.False(t, *archivedOnly.Active)
+	assert.Nil(t, archivedOnly.LastLogin)
 }
 
-func TestHubSpotDriverArchivedUsers(t *testing.T) {
+func TestHubSpotDriverOwnersRequired(t *testing.T) {
 	t.Parallel()
 
-	client := &http.Client{
-		Transport: roundTripFunc(
-			func(req *http.Request) (*http.Response, error) {
-				switch req.URL.Path {
-				case "/settings/v3/users/roles":
-					return hubspotResponse(
-						http.StatusOK,
-						`{"results":[{"id":"role-1","name":"Sales Admin"}]}`,
-					), nil
-				case "/settings/v3/users":
-					return hubspotResponse(
-						http.StatusOK,
-						`{"results":[{"id":"user-1","email":"active@example.com","firstName":"Active","lastName":"User","roleIds":["role-1"],"superAdmin":false,"isActive":true},{"id":"user-2","email":"","firstName":"Archived","lastName":"User","superAdmin":false,"archived":true}]}`,
-					), nil
-				default:
-					return hubspotResponse(http.StatusNotFound, `{"message":"not found"}`), nil
-				}
-			},
-		),
-	}
+	rec := newRecorder(t, "testdata/hubspot_owners_forbidden", "HUBSPOT_TOKEN")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("HUBSPOT_TOKEN")))
+	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
 
+	_, err := driver.ListAccounts(context.Background())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot fetch hubspot owners")
+}
+
+func TestHubSpotDriverLoginsOptional(t *testing.T) {
+	t.Parallel()
+
+	rec := newRecorder(t, "testdata/hubspot_logins_forbidden", "HUBSPOT_TOKEN")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("HUBSPOT_TOKEN")))
 	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.Len(t, records, 2)
+	require.Len(t, records, 1)
+	assert.Equal(t, "10000001", records[0].ExternalID)
+	assert.Nil(t, records[0].LastLogin)
+}
 
-	assert.Equal(t, []string{"Sales Admin"}, records[0].Roles)
+func TestHubSpotDriverEmailMatchDoesNotDuplicate(t *testing.T) {
+	t.Parallel()
+
+	rec := newRecorder(t, "testdata/hubspot_email_match", "HUBSPOT_TOKEN")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("HUBSPOT_TOKEN")))
+	driver := NewHubSpotDriver(client, "https://api.hubapi.com")
+
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+
+	assert.Equal(t, "settings-1", records[0].ExternalID)
+	assert.Equal(t, "Jane.Doe@example.com", records[0].Email)
+	assert.Equal(t, []string{"Super Admin"}, records[0].Roles)
 	require.NotNil(t, records[0].Active)
-	assert.True(t, *records[0].Active)
+	assert.False(t, *records[0].Active)
+}
 
-	assert.Equal(t, "user-2", records[1].ExternalID)
-	assert.Empty(t, records[1].Email)
-	require.NotNil(t, records[1].Active)
-	assert.False(t, *records[1].Active)
+func TestHubSpotOwnerUserID(t *testing.T) {
+	t.Parallel()
+
+	inactiveID := int64(9685555)
+	activeID := int64(123)
+
+	assert.Equal(t, "9685555", hubspotOwnerUserID(hubspotOwner{
+		UserIDIncludingInactive: &inactiveID,
+	}))
+	assert.Equal(t, "123", hubspotOwnerUserID(hubspotOwner{
+		UserID: &activeID,
+	}))
+	assert.Equal(t, "", hubspotOwnerUserID(hubspotOwner{}))
+
+	zero := int64(0)
+	assert.Equal(t, "", hubspotOwnerUserID(hubspotOwner{
+		UserIDIncludingInactive: &zero,
+	}))
+}
+
+func TestHubSpotApplyLastLogins(t *testing.T) {
+	t.Parallel()
+
+	byUserID := map[string]time.Time{
+		"1": time.Date(2025, 2, 1, 0, 0, 0, 0, time.UTC),
+	}
+	byEmail := map[string]time.Time{
+		"alice@example.com": time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC),
+		"bob@example.com":   time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	records := []AccountRecord{
+		{ExternalID: "1", Email: "alice@example.com"},
+		{ExternalID: "2", Email: "Bob@Example.com"},
+		{ExternalID: "3", Email: "nobody@example.com"},
+	}
+
+	hubspotApplyLastLogins(records, byUserID, byEmail)
+
+	require.NotNil(t, records[0].LastLogin)
+	assert.Equal(t, byUserID["1"], records[0].LastLogin.UTC())
+	require.NotNil(t, records[1].LastLogin)
+	assert.Equal(t, byEmail["bob@example.com"], records[1].LastLogin.UTC())
+	assert.Nil(t, records[2].LastLogin)
+}
+
+func TestHubSpotParseTime(t *testing.T) {
+	t.Parallel()
+
+	t.Run("fractional seconds", func(t *testing.T) {
+		t.Parallel()
+
+		got, ok := hubspotParseTime("2025-02-07T14:12:13.544Z")
+		require.True(t, ok)
+		assert.Equal(t, time.Date(2025, 2, 7, 14, 12, 13, 544000000, time.UTC), got.UTC())
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
+
+		_, ok := hubspotParseTime("")
+		assert.False(t, ok)
+	})
+
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		_, ok := hubspotParseTime("not-a-time")
+		assert.False(t, ok)
+	})
 }
 
 func TestHubSpotRoles(t *testing.T) {
@@ -145,19 +247,5 @@ func TestHubSpotRoles(t *testing.T) {
 
 			assert.Equal(t, tt.want, hubspotRoles(tt.user, roleMap))
 		})
-	}
-}
-
-type roundTripFunc func(req *http.Request) (*http.Response, error)
-
-func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req)
-}
-
-func hubspotResponse(statusCode int, body string) *http.Response {
-	return &http.Response{
-		StatusCode: statusCode,
-		Body:       io.NopCloser(strings.NewReader(body)),
-		Header:     make(http.Header),
 	}
 }

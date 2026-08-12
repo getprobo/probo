@@ -363,7 +363,7 @@ func googleAnalyticsRecords(members map[string]*googleAnalyticsMember) []Account
 			Email:       email,
 			FullName:    email,
 			Roles:       roles,
-			IsAdmin:     member.isAdmin,
+			IsAdmin:     new(member.isAdmin),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

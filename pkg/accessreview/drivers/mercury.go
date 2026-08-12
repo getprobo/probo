@@ -91,7 +91,7 @@ func (d *MercuryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Email:       email,
 				FullName:    mercuryFullName(u, email),
 				Roles:       mercuryRoles(u.OrganizationRole),
-				IsAdmin:     u.OrganizationRole == "administrator",
+				IsAdmin:     new(u.OrganizationRole == "administrator"),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

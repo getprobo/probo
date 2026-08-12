@@ -31,24 +31,24 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (string, error) {
+func (s *Service) BuildDiagramMermaidChart(ctx context.Context, scope coredata.Scoper, diagramID gid.GID) (string, error) {
 	var (
-		nodes      coredata.RiskAssessmentNodes
-		boundaries coredata.RiskAssessmentBoundaries
-		processes  coredata.RiskAssessmentProcesses
-		threats    coredata.RiskAssessmentThreats
+		nodes      coredata.RiskAnalysisNodes
+		boundaries coredata.RiskAnalysisBoundaries
+		processes  coredata.RiskAnalysisProcesses
+		threats    coredata.RiskAnalysisThreats
 	)
 
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		loadedNodes, err := page.LoadAll(
 			ctx,
-			page.OrderBy[coredata.RiskAssessmentNodeOrderField]{
-				Field:     coredata.RiskAssessmentNodeOrderFieldCreatedAt,
+			page.OrderBy[coredata.RiskAnalysisNodeOrderField]{
+				Field:     coredata.RiskAnalysisNodeOrderFieldCreatedAt,
 				Direction: page.OrderDirectionAsc,
 			},
-			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentNodeOrderField]) ([]*coredata.RiskAssessmentNode, error) {
-				var batch coredata.RiskAssessmentNodes
-				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisNodeOrderField]) ([]*coredata.RiskAnalysisNode, error) {
+				var batch coredata.RiskAnalysisNodes
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load nodes: %w", err)
 				}
 
@@ -63,13 +63,13 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 
 		loadedBoundaries, err := page.LoadAll(
 			ctx,
-			page.OrderBy[coredata.RiskAssessmentBoundaryOrderField]{
-				Field:     coredata.RiskAssessmentBoundaryOrderFieldCreatedAt,
+			page.OrderBy[coredata.RiskAnalysisBoundaryOrderField]{
+				Field:     coredata.RiskAnalysisBoundaryOrderFieldCreatedAt,
 				Direction: page.OrderDirectionAsc,
 			},
-			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentBoundaryOrderField]) ([]*coredata.RiskAssessmentBoundary, error) {
-				var batch coredata.RiskAssessmentBoundaries
-				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisBoundaryOrderField]) ([]*coredata.RiskAnalysisBoundary, error) {
+				var batch coredata.RiskAnalysisBoundaries
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load boundaries: %w", err)
 				}
 
@@ -84,13 +84,13 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 
 		loadedProcesses, err := page.LoadAll(
 			ctx,
-			page.OrderBy[coredata.RiskAssessmentProcessOrderField]{
-				Field:     coredata.RiskAssessmentProcessOrderFieldCreatedAt,
+			page.OrderBy[coredata.RiskAnalysisProcessOrderField]{
+				Field:     coredata.RiskAnalysisProcessOrderFieldCreatedAt,
 				Direction: page.OrderDirectionAsc,
 			},
-			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentProcessOrderField]) ([]*coredata.RiskAssessmentProcess, error) {
-				var batch coredata.RiskAssessmentProcesses
-				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisProcessOrderField]) ([]*coredata.RiskAnalysisProcess, error) {
+				var batch coredata.RiskAnalysisProcesses
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load processes: %w", err)
 				}
 
@@ -105,13 +105,13 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 
 		loadedThreats, err := page.LoadAll(
 			ctx,
-			page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
-				Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
+			page.OrderBy[coredata.RiskAnalysisThreatOrderField]{
+				Field:     coredata.RiskAnalysisThreatOrderFieldCreatedAt,
 				Direction: page.OrderDirectionAsc,
 			},
-			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentThreatOrderField]) ([]*coredata.RiskAssessmentThreat, error) {
-				var batch coredata.RiskAssessmentThreats
-				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAnalysisThreatOrderField]) ([]*coredata.RiskAnalysisThreat, error) {
+				var batch coredata.RiskAnalysisThreats
+				if err := batch.LoadByRiskAnalysisDiagramID(ctx, conn, scope, diagramID, cursor); err != nil {
 					return nil, fmt.Errorf("cannot load threats: %w", err)
 				}
 
@@ -130,14 +130,14 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 		return "", err
 	}
 
-	return buildScopeMermaidChart(nodes, boundaries, processes, threats), nil
+	return buildDiagramMermaidChart(nodes, boundaries, processes, threats), nil
 }
 
-func buildScopeMermaidChart(
-	nodes coredata.RiskAssessmentNodes,
-	boundaries coredata.RiskAssessmentBoundaries,
-	processes coredata.RiskAssessmentProcesses,
-	threats coredata.RiskAssessmentThreats,
+func buildDiagramMermaidChart(
+	nodes coredata.RiskAnalysisNodes,
+	boundaries coredata.RiskAnalysisBoundaries,
+	processes coredata.RiskAnalysisProcesses,
+	threats coredata.RiskAnalysisThreats,
 ) string {
 	if len(nodes) == 0 && len(boundaries) == 0 {
 		return ""
@@ -154,9 +154,9 @@ func buildScopeMermaidChart(
 	}
 
 	// Group boundaries by their parent so nested boundaries become nested subgraphs.
-	childBoundaries := make(map[gid.GID]coredata.RiskAssessmentBoundaries)
+	childBoundaries := make(map[gid.GID]coredata.RiskAnalysisBoundaries)
 
-	var rootBoundaries coredata.RiskAssessmentBoundaries
+	var rootBoundaries coredata.RiskAnalysisBoundaries
 
 	for _, bnd := range boundaries {
 		if bnd.ParentBoundaryID != nil {
@@ -171,9 +171,9 @@ func buildScopeMermaidChart(
 
 	// Group nodes by the boundary that contains them; nodes without a
 	// boundary (or referencing an unknown one) are rendered at the top level.
-	nodesByBoundary := make(map[gid.GID]coredata.RiskAssessmentNodes)
+	nodesByBoundary := make(map[gid.GID]coredata.RiskAnalysisNodes)
 
-	var rootNodes coredata.RiskAssessmentNodes
+	var rootNodes coredata.RiskAnalysisNodes
 
 	for _, n := range nodes {
 		if n.BoundaryID != nil {
@@ -193,15 +193,15 @@ func buildScopeMermaidChart(
 	// subgraph block, so collect them and emit once all shapes are written.
 	var classLines []string
 
-	emitNode := func(n *coredata.RiskAssessmentNode, indent string) {
+	emitNode := func(n *coredata.RiskAnalysisNode, indent string) {
 		id := nodeAlias[n.ID]
 		fmt.Fprintf(&b, "%s%s\n", indent, mermaidNodeShape(n.NodeType, id, n.Name))
 		classLines = append(classLines, fmt.Sprintf("  class %s %s", id, mermaidNodeClass(n.NodeType)))
 	}
 
-	var emitBoundary func(bnd *coredata.RiskAssessmentBoundary, indent string)
+	var emitBoundary func(bnd *coredata.RiskAnalysisBoundary, indent string)
 
-	emitBoundary = func(bnd *coredata.RiskAssessmentBoundary, indent string) {
+	emitBoundary = func(bnd *coredata.RiskAnalysisBoundary, indent string) {
 		alias := boundaryAlias[bnd.ID]
 		fmt.Fprintf(&b, "%ssubgraph %s[\"%s\"]\n", indent, alias, escapeMermaidLabel(bnd.Name))
 
@@ -274,28 +274,28 @@ func buildScopeMermaidChart(
 	return strings.TrimRight(b.String(), "\n")
 }
 
-func mermaidNodeShape(t coredata.RiskAssessmentNodeType, id, name string) string {
+func mermaidNodeShape(t coredata.RiskAnalysisNodeType, id, name string) string {
 	label := `"` + escapeMermaidLabel(name) + `"`
 
 	switch t {
-	case coredata.RiskAssessmentNodeTypeEntity:
+	case coredata.RiskAnalysisNodeTypeEntity:
 		return fmt.Sprintf("%s([%s])", id, label)
-	case coredata.RiskAssessmentNodeTypeData:
+	case coredata.RiskAnalysisNodeTypeData:
 		return fmt.Sprintf("%s[(%s)]", id, label)
-	case coredata.RiskAssessmentNodeTypeAsset:
+	case coredata.RiskAnalysisNodeTypeAsset:
 		fallthrough
 	default:
 		return fmt.Sprintf("%s[%s]", id, label)
 	}
 }
 
-func mermaidNodeClass(t coredata.RiskAssessmentNodeType) string {
+func mermaidNodeClass(t coredata.RiskAnalysisNodeType) string {
 	switch t {
-	case coredata.RiskAssessmentNodeTypeEntity:
+	case coredata.RiskAnalysisNodeTypeEntity:
 		return "nodeEntity"
-	case coredata.RiskAssessmentNodeTypeData:
+	case coredata.RiskAnalysisNodeTypeData:
 		return "nodeData"
-	case coredata.RiskAssessmentNodeTypeAsset:
+	case coredata.RiskAnalysisNodeTypeAsset:
 		fallthrough
 	default:
 		return "nodeAsset"

@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { z } from "zod";
-
 import type { FormRiskDialog_risk$data } from "#/__generated__/core/FormRiskDialog_risk.graphql";
+import { z } from "#/lib/zod";
 
 import { useFormWithSchema } from "../useFormWithSchema";
 

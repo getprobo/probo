@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/clientip"
 	"go.probo.inc/probo/pkg/server/jsonx"
 	"go.probo.inc/probo/pkg/uri"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type Handler struct {
@@ -81,8 +82,8 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 
 	lang := r.URL.Query().Get("lang")
 	sdkVersion := sdkVersionFromContext(r.Context())
-	cc := h.resolveCountryCode(r)
-	regulation, _ := cookiebanner.ResolveRegulation(cc)
+	location := h.resolveLocation(r)
+	regulation, _ := cookiebanner.ResolveRegulation(location)
 
 	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation, sdkVersion)
 	if err != nil {
@@ -105,14 +106,14 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderJSON(w, http.StatusOK, config)
 }
 
-func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
+func (h *Handler) resolveLocation(r *http.Request) *coredata.IPLocationBlock {
 	ip := clientip.Extract(r)
 
-	cc, err := h.geolocSvc.LookupCountry(r.Context(), ip)
+	location, err := h.geolocSvc.LookupLocation(r.Context(), ip)
 	if err != nil {
 		h.logger.ErrorCtx(
 			r.Context(),
-			"cannot resolve country for IP",
+			"cannot resolve location for IP",
 			log.Error(err),
 			log.String("sdk_version", sdkVersionFromContext(r.Context())),
 		)
@@ -120,11 +121,11 @@ func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
 		return nil
 	}
 
-	if cc == "" {
+	if location.CountryCode == "" {
 		return nil
 	}
 
-	return &cc
+	return &location
 }
 
 func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
@@ -198,8 +199,8 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	ip := clientip.Extract(r)
 	ua := r.UserAgent()
 	sdkVersion := sdkVersionFromContext(r.Context())
-	cc := h.resolveCountryCode(r)
-	regulation, regulationSource := cookiebanner.ResolveRegulation(cc)
+	location := h.resolveLocation(r)
+	regulation, regulationSource := cookiebanner.ResolveRegulation(location)
 
 	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(regulation))
 
@@ -213,8 +214,11 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		SdkVersion:       sdkVersion,
 		Regulation:       &regulation,
 		RegulationSource: regulationSource,
-		CountryCode:      cc,
 		ConsentMode:      &cm,
+	}
+	if location != nil {
+		req.CountryCode = &location.CountryCode
+		req.SubdivisionCode = location.SubdivisionCode
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)
@@ -226,6 +230,11 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) || errors.Is(err, cookiebanner.ErrVersionNotPublished) {
 			jsonx.RenderBadRequest(w, fmt.Errorf("invalid version"))
+			return
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			jsonx.RenderBadRequest(w, validationErrors)
 			return
 		}
 
@@ -320,6 +329,19 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 	for _, c := range body.Cookies {
 		name := strings.TrimSpace(c.Name)
 		if name == "" {
+			continue
+		}
+
+		if len(name) > cookiebanner.MaxTrackerIdentifierLength {
+			h.logger.InfoCtx(
+				r.Context(),
+				"skipping oversized detected cookie name",
+				log.String("banner_id", bannerID.String()),
+				log.String("tracker_type", string(coredata.TrackerTypeCookie)),
+				log.Int("identifier_length", len(name)),
+				log.String("sdk_version", sdkVersionFromContext(r.Context())),
+			)
+
 			continue
 		}
 
@@ -427,6 +449,19 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			continue
 		}
 
+		if len(name) > cookiebanner.MaxTrackerIdentifierLength {
+			h.logger.InfoCtx(
+				r.Context(),
+				"skipping oversized detected cookie name",
+				log.String("banner_id", bannerID.String()),
+				log.String("tracker_type", string(coredata.TrackerTypeCookie)),
+				log.Int("identifier_length", len(name)),
+				log.String("sdk_version", sdkVersionFromContext(r.Context())),
+			)
+
+			continue
+		}
+
 		var source coredata.CookieSource
 
 		switch strings.TrimSpace(c.Source) {
@@ -454,6 +489,19 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	for _, s := range body.Storage {
 		key := strings.TrimSpace(s.Key)
 		if key == "" {
+			continue
+		}
+
+		if len(key) > cookiebanner.MaxTrackerIdentifierLength {
+			h.logger.InfoCtx(
+				r.Context(),
+				"skipping oversized detected storage key",
+				log.String("banner_id", bannerID.String()),
+				log.String("storage_type", strings.TrimSpace(s.StorageType)),
+				log.Int("identifier_length", len(key)),
+				log.String("sdk_version", sdkVersionFromContext(r.Context())),
+			)
+
 			continue
 		}
 

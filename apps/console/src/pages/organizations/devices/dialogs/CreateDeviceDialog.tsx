@@ -32,11 +32,11 @@ import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { CreateDeviceDialogMutation } from "#/__generated__/core/CreateDeviceDialogMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 import { EnrollmentInstructions } from "../../employee/_components/EnrollmentInstructions";
 

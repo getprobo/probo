@@ -18,27 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  IconSend,
-  IconUpload,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
 import type { ReactNode } from "react";
-import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { PublishRiskListDialogMutation } from "#/__generated__/core/PublishRiskListDialogMutation.graphql";
-import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import {
+  PublishListDialog,
+  type PublishListDialogInput,
+} from "#/components/dialogs/PublishListDialog";
 
 const publishMutation = graphql`
   mutation PublishRiskListDialogMutation(
@@ -54,126 +43,45 @@ const publishMutation = graphql`
   }
 `;
 
-interface PublishRiskListDialogProps {
+type Props = {
   children: ReactNode;
   organizationId: string;
   defaultApproverIds?: string[];
   onPublished?: (documentId: string) => void;
-}
+};
 
 export function PublishRiskListDialog({
   children,
   organizationId,
   defaultApproverIds,
   onPublished,
-}: PublishRiskListDialogProps) {
+}: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const dialogRef = useDialogRef();
+  const [publish, isPublishing] = useMutation<PublishRiskListDialogMutation>(publishMutation);
 
-  const schema = useMemo(() =>
-    z.object({
-      approverIds: z.array(z.string()),
-    }), []);
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-  } = useFormWithSchema(schema, {
-    defaultValues: {
-      approverIds: defaultApproverIds ?? [],
-    },
-  });
-
-  const [publish, isPublishing]
-    = useMutation<PublishRiskListDialogMutation>(publishMutation);
-
-  const minorRef = useRef(false);
-
-  const approverIds = watch("approverIds");
-  const hasApprovers = approverIds.length > 0;
-
-  const onSubmit = (data: z.infer<typeof schema>) => {
-    publish({
-      variables: {
-        input: {
-          minor: minorRef.current,
-          organizationId,
-          approverIds: !minorRef.current && data.approverIds.length > 0 ? data.approverIds : undefined,
+  const onPublish = (input: PublishListDialogInput) =>
+    new Promise<string | null | undefined>((resolve, reject) => {
+      publish({
+        variables: { input },
+        onCompleted: (response) => {
+          resolve(response.publishRiskList?.documentEdge?.node?.id);
         },
-      },
-      onCompleted(response) {
-        const documentId = response.publishRiskList?.documentEdge?.node?.id;
-        if (documentId) {
-          toast({
-            title: t("publishRiskListDialog.messages.success"),
-            description: hasApprovers
-              ? t("publishRiskListDialog.messages.approvalRequested")
-              : t("publishRiskListDialog.messages.published"),
-            variant: "success",
-          });
-          dialogRef.current?.close();
-          reset();
-          onPublished?.(documentId);
-        }
-      },
-      onError(error) {
-        toast({
-          title: t("publishRiskListDialog.messages.error"),
-          description: formatError(
-            t("publishRiskListDialog.errors.publish"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
+        onError: reject,
+      });
     });
-  };
 
   return (
-    <Dialog
-      className="max-w-xl"
-      ref={dialogRef}
-      trigger={children}
+    <PublishListDialog
+      organizationId={organizationId}
+      defaultApproverIds={defaultApproverIds}
+      isPublishing={isPublishing}
+      onPublish={onPublish}
+      onPublished={onPublished}
       title={t("publishRiskListDialog.title")}
+      publishedMessage={t("publishRiskListDialog.messages.published")}
+      publishError={t("publishRiskListDialog.errors.publish")}
     >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded>
-          <div className="space-y-4">
-            <p className="text-sm text-txt-secondary">
-              {t("publishRiskListDialog.description")}
-            </p>
-            <PeopleMultiSelectField
-              name="approverIds"
-              label={t("publishRiskListDialog.fields.approvers")}
-              control={control}
-              organizationId={organizationId}
-              placeholder={t("publishRiskListDialog.fields.approversPlaceholder")}
-            />
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            type="submit"
-            variant="secondary"
-            icon={IconUpload}
-            onClick={() => { minorRef.current = true; }}
-            disabled={isPublishing}
-          >
-            {t("publishRiskListDialog.actions.publishMinor")}
-          </Button>
-          <Button
-            type="submit"
-            icon={hasApprovers ? IconSend : IconUpload}
-            onClick={() => { minorRef.current = false; }}
-            disabled={isPublishing}
-          >
-            {hasApprovers ? t("publishRiskListDialog.actions.requestApproval") : t("publishRiskListDialog.actions.publish")}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Dialog>
+      {children}
+    </PublishListDialog>
   );
 }

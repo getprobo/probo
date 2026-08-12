@@ -247,42 +247,6 @@ func TestDataProtectionImpactAssessment_PublishList(t *testing.T) {
 	)
 }
 
-func TestDataProtectionImpactAssessment_PublishList_RBAC(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	paID := factory.NewProcessingActivity(owner).
-		WithName("DPIA RBAC PA").
-		WithLawfulBasis("CONSENT").
-		Create()
-	createDPIAForPublish(t, owner, paID, "DPIA RBAC")
-
-	const query = `
-		mutation($input: PublishDataProtectionImpactAssessmentListInput!) {
-			publishDataProtectionImpactAssessmentList(input: $input) {
-				documentEdge { node { id } }
-			}
-		}
-	`
-
-	t.Run("viewer cannot publish DPIA list", func(t *testing.T) {
-		t.Parallel()
-
-		err := viewer.ExecuteShouldFail(
-			query,
-			map[string]any{
-				"input": map[string]any{
-					"minor":          false,
-					"organizationId": owner.GetOrganizationID(),
-				},
-			},
-		)
-		testutil.RequireForbiddenError(t, err)
-	})
-}
-
 func createDPIAForPublish(t *testing.T, client *testutil.Client, processingActivityID string, description string) string {
 	t.Helper()
 

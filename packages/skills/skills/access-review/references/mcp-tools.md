@@ -1,7 +1,26 @@
 # Access review MCP tools
 
-All tools are on the Probo MCP server (`probo`). Read each tool schema before
-calling.
+All tools are on a Probo MCP server (`probo-us`, `probo-eu`, or a self-hosted
+server configured in the agent). Read each tool schema before calling.
+
+## Organization scope
+
+### `listOrganizations`
+
+List organizations the caller can access on the server it is called on. No
+required input, so it serves two distinct purposes:
+
+1. **Choosing a server** when the region is unknown — call it on each connected
+   server. A non-empty result does not identify the region, since the caller can
+   have organizations on both. Only a unique match for the organization the user
+   named settles it; otherwise show each server with its organizations and ask.
+2. **Choosing an organization** on a server that is already settled — including
+   a single self-hosted instance serving several organizations. Take the unique
+   name match, or the only organization when the server returns one, and
+   otherwise list them and ask.
+
+Either way the organization must be resolved before `listAccessReviewCampaigns`,
+which requires `organization_id`.
 
 ## Read
 
@@ -10,7 +29,7 @@ calling.
 List campaigns for an organization. Use to resolve `$ARGUMENTS` to a campaign
 when the user provides a name instead of a GID.
 
-Required: `organization_id`
+Required: `organization_id` — resolve the organization before calling this.
 
 ### `listAccessEntries`
 

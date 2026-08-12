@@ -1,6 +1,6 @@
 {
   "name": "@probo/cookie-banner",
-  "version": "0.11.0",
+  "version": "0.14.0",
   "description": "Probo cookie consent banner SDK",
   "type": "module",
   "main": "dist/cookie-banner.mjs",
@@ -25,7 +25,9 @@
   },
   "scripts": {
     "build": "node build.mjs && tsc --emitDeclarationOnly",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "author": {
     "name": "Probo Inc",
@@ -56,6 +58,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.1",
-    "typescript": "~6.0.3"
+    "typescript": "~7.0.2",
+    "vitest": "^4.1.10"
   }
 }

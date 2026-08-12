@@ -630,6 +630,13 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 		return nil, err
 	}
 
+	var capabilities *coredata.CookieBannerCapabilitiesPatch
+	if input.Capabilities != nil {
+		capabilities = &coredata.CookieBannerCapabilitiesPatch{
+			ResourceReporting: input.Capabilities.ResourceReporting,
+		}
+	}
+
 	banner, err := r.cookieBanner.UpdateCookieBanner(
 		ctx,
 		scope,
@@ -640,6 +647,7 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 			CookiePolicyURL:   input.CookiePolicyURL,
 			ConsentExpiryDays: input.ConsentExpiryDays,
 			DefaultLanguage:   input.DefaultLanguage,
+			Capabilities:      capabilities,
 		},
 	)
 	if err != nil {

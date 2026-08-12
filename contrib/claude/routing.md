@@ -141,6 +141,8 @@ function OrganizationIndex() {
   switch (role) {
     case Role.EMPLOYEE: return <Navigate to="employee" />;
     case Role.AUDITOR:  return <Navigate to="measures" />;
+    case Role.COMPLIANCE_PORTAL_MANAGER: return <Navigate to="compliance-portals" />;
+    case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER: return <Navigate to="compliance-portals" />;
     default:            return <Navigate to="tasks" />;
   }
 }

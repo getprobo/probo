@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { useCallback, useMemo, useState } from "react";
-import { z, ZodError } from "zod";
+
+import { z, ZodError } from "#/lib/zod";
 
 export function useStateWithSchema<T extends z.ZodType<Record<string, unknown>>>(
   schema: T,

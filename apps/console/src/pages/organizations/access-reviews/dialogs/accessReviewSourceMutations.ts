@@ -31,7 +31,7 @@ export const createAccessReviewSourceMutation = graphql`
           id
           name
           createdAt
-          ...AccessReviewSourceRowFragment
+          ...AccessReviewSourceListItem_source
         }
       }
     }

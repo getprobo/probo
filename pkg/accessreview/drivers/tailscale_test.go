@@ -22,6 +22,8 @@ package drivers
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -45,4 +47,24 @@ func TestTailscaleDriver(t *testing.T) {
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.Roles)
 	assert.NotNil(t, r.Active)
+}
+
+func TestTailscaleDriver_NormalizesRoleForAdminStatus(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"users":[{"id":"1","loginName":"user@example.com","role":" admin "}]}`))
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	records, err := NewTailscaleDriver(server.Client(), server.URL).ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, []string{"admin"}, records[0].Roles)
+	assert.Equal(t, new(true), records[0].IsAdmin)
 }

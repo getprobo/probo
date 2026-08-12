@@ -87,7 +87,7 @@ func (d *SupabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			Email:       m.Email,
 			FullName:    m.UserName,
 			Roles:       roles,
-			IsAdmin:     isAdmin,
+			IsAdmin:     new(isAdmin),
 			ExternalID:  m.UserID,
 			MFAStatus:   mfaStatus,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

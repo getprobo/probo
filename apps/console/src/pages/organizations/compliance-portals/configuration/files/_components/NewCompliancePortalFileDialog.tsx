@@ -31,11 +31,11 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, type DialogRef, Dro
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type DataID, graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { NewCompliancePortalFileDialog_createMutation } from "#/__generated__/core/NewCompliancePortalFileDialog_createMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutation } from "#/lib/relay/useMutation";
+import { z } from "#/lib/zod";
 
 const acceptedFileTypes = {
   ...acceptDocument,

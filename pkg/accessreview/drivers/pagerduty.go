@@ -102,7 +102,7 @@ func (d *PagerDutyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 				Email:       u.Email,
 				FullName:    u.Name,
 				Roles:       roles,
-				IsAdmin:     isAdmin,
+				IsAdmin:     new(isAdmin),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

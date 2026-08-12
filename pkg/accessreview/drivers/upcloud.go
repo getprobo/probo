@@ -149,7 +149,7 @@ func (d *UpCloudDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		record := AccountRecord{
 			FullName:    username,
 			Roles:       upcloudRoles(a.Roles.Role),
-			IsAdmin:     upcloudIsMainAccount(a.Type),
+			IsAdmin:     new(upcloudIsMainAccount(a.Type)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

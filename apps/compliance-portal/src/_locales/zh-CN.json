@@ -1,7 +1,7 @@
 {
   "topBar": {
     "tagline": "合规门户",
-    "getAccess": "获取访问权限",
+    "getAccess": "申请访问",
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "menuTitle": "菜单",
@@ -21,7 +21,6 @@
     "switchToLightMode": "切换到浅色模式"
   },
   "common": {
-    "cancel": "取消",
     "error": "出现问题",
     "previousPage": "上一页",
     "nextPage": "下一页",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "返回合规门户",
-      "tryAgain": "重试"
+      "tryAgain": "重试",
+      "contactSupport": "联系支持",
+      "requestAccess": "申请访问"
     },
     "inline": {
       "message": "无法加载内容",

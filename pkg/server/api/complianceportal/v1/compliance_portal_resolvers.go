@@ -282,16 +282,13 @@ func (r *compliancePortalResolver) NonDisclosureAgreement(ctx context.Context, o
 // ViewerSubscription is the resolver for the viewerSubscription field.
 func (r *compliancePortalResolver) ViewerSubscription(ctx context.Context, obj *types.CompliancePortal) (*types.MailingListSubscriber, error) {
 	compliancePortal := complianceportal.CompliancePortalFromContext(ctx)
-	if compliancePortal.MailingListID == nil {
-		return nil, nil
-	}
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, nil
 	}
 
-	subscriber, err := r.mailman.GetSubscriber(ctx, *compliancePortal.MailingListID, identity.EmailAddress)
+	subscriber, err := r.mailman.GetSubscriber(ctx, compliancePortal.MailingListID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -302,6 +299,24 @@ func (r *compliancePortalResolver) ViewerSubscription(ctx context.Context, obj *
 	}
 
 	return types.NewMailingListSubscriber(subscriber), nil
+}
+
+// ViewerHasRequestedAccess is the resolver for the viewerHasRequestedAccess field.
+func (r *compliancePortalResolver) ViewerHasRequestedAccess(ctx context.Context, obj *types.CompliancePortal) (bool, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return false, nil
+	}
+
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	hasRequested, err := r.visitor.HasRequestedAccess(ctx, scope, obj.ID, identity.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot check viewer requested access", log.Error(err))
+		return false, gqlutils.Internal(ctx)
+	}
+
+	return hasRequested, nil
 }
 
 // Documents is the resolver for the documents field.
@@ -540,17 +555,13 @@ func (r *compliancePortalResolver) Updates(ctx context.Context, obj *types.Compl
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	if tc.MailingListID == nil {
-		return &types.MailingListUpdateConnection{Edges: []*types.MailingListUpdateEdge{}, PageInfo: &types.PageInfo{}}, nil
-	}
-
 	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
 		Field:     coredata.MailingListUpdateOrderFieldUpdatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.mailman.ListSentMailingListUpdates(ctx, *tc.MailingListID, cursor)
+	result, err := r.mailman.ListSentMailingListUpdates(ctx, tc.MailingListID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1093,7 +1104,8 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	}
 
 	return &types.RequestDocumentAccessPayload{
-		Document: types.NewDocument(document),
+		Document:         types.NewDocument(document),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}, nil
 }
 
@@ -1142,7 +1154,8 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	}
 
 	return &types.RequestReportAccessPayload{
-		Audit: types.NewAudit(audit),
+		Audit:            types.NewAudit(audit),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}, nil
 }
 
@@ -1191,7 +1204,8 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 	}
 
 	return &types.RequestFileAccessPayload{
-		File: types.NewCompliancePortalFile(portalFile),
+		File:             types.NewCompliancePortalFile(portalFile),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}, nil
 }
 
@@ -1215,9 +1229,10 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 	// per-resource resolvers, which load and guard ahead of the request). Only
 	// the resolved, non-public ids are forwarded to RequestPortalAccess.
 	payload := &types.RequestAccessesResultPayload{
-		Documents: make([]*types.Document, 0, len(input.DocumentIds)),
-		Audits:    make([]*types.Audit, 0, len(input.ReportIds)),
-		Files:     make([]*types.CompliancePortalFile, 0, len(input.CompliancePortalFileIds)),
+		Documents:        make([]*types.Document, 0, len(input.DocumentIds)),
+		Audits:           make([]*types.Audit, 0, len(input.ReportIds)),
+		Files:            make([]*types.CompliancePortalFile, 0, len(input.CompliancePortalFileIds)),
+		CompliancePortal: types.NewCompliancePortal(compliancePortal),
 	}
 
 	requestDocumentIDs := make([]gid.GID, 0, len(input.DocumentIds))

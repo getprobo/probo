@@ -46,17 +46,17 @@ func TestMercuryDriver(t *testing.T) {
 	assert.Equal(t, "ada@example.com", admin.Email)
 	assert.Equal(t, "Ada Admin", admin.FullName)
 	assert.Equal(t, []string{"Administrator"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
 	assert.Equal(t, coredata.MFAStatusUnknown, admin.MFAStatus)
 
 	bookkeeper := records[1]
 	assert.Equal(t, []string{"Bookkeeper"}, bookkeeper.Roles)
-	assert.False(t, bookkeeper.IsAdmin)
+	assert.Equal(t, new(false), bookkeeper.IsAdmin)
 
 	employee := records[2]
 	assert.Equal(t, []string{"Employee"}, employee.Roles)
-	assert.False(t, employee.IsAdmin)
+	assert.Equal(t, new(false), employee.IsAdmin)
 }
 
 func TestMercuryRoles(t *testing.T) {

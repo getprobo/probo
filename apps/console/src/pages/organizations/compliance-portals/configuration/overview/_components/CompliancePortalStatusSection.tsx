@@ -31,6 +31,9 @@ const fragment = graphql`
     id
     active
     searchEngineIndexing
+    capabilities {
+      rightsRequests
+    }
     canUpdate: permission(action: "compliance-portal:portal:update")
   }
 `;
@@ -66,6 +69,17 @@ export function CompliancePortalStatusSection(props: {
         input: {
           compliancePortalId: compliancePortal.id,
           searchEngineIndexing: indexable ? "INDEXABLE" : "NOT_INDEXABLE",
+        },
+      },
+    });
+  };
+
+  const handleToggleRightsRequests = async (rightsRequests: boolean) => {
+    await updateCompliancePortal({
+      variables: {
+        input: {
+          compliancePortalId: compliancePortal.id,
+          capabilities: { rightsRequests },
         },
       },
     });
@@ -118,6 +132,21 @@ export function CompliancePortalStatusSection(props: {
               }
             />
           </span>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-border-solid pt-4">
+          <div className="space-y-1">
+            <h3 className="font-medium">{t("statusSection.rightsRequests.title")}</h3>
+            <p className="text-sm text-txt-tertiary">
+              {t("statusSection.rightsRequests.description")}
+            </p>
+          </div>
+          <Toggle
+            checked={compliancePortal.capabilities.rightsRequests}
+            onChange={checked => void handleToggleRightsRequests(checked)}
+            disabled={!compliancePortal.canUpdate}
+            aria-label={t("statusSection.rightsRequests.title")}
+          />
         </div>
       </Card>
     </div>

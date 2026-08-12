@@ -22,7 +22,6 @@ import { Button, Dialog, DialogContent, DialogFooter, Field, Label, Option, Spin
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { CompliancePortalCommitmentDialogCreateMutation, CompliancePortalCommitmentIcon } from "#/__generated__/core/CompliancePortalCommitmentDialogCreateMutation.graphql";
 import type { CompliancePortalCommitmentDialogUpdateMutation } from "#/__generated__/core/CompliancePortalCommitmentDialogUpdateMutation.graphql";
@@ -30,6 +29,7 @@ import type { CompliancePortalCommitmentListItemFragment$data } from "#/__genera
 import { ControlledSelect } from "#/components/form/ControlledField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { z } from "#/lib/zod";
 
 import { COMMITMENT_ICON_VALUES } from "../_lib/commitmentIcons";
 

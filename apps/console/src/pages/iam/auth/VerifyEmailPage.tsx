@@ -26,10 +26,10 @@ import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { VerifyEmailPageMutation } from "#/__generated__/iam/VerifyEmailPageMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const verifyEmailMutation = graphql`
   mutation VerifyEmailPageMutation($input: VerifyEmailInput!) {

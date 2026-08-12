@@ -22,6 +22,7 @@ package drivers
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -47,16 +48,16 @@ func TestApolloDriver(t *testing.T) {
 	assert.Equal(t, "alice@example.com", admin.Email)
 	assert.Equal(t, "Alice Admin", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
 
 	rep := records[1]
 	assert.Equal(t, []string{"Sales Rep"}, rep.Roles)
-	assert.False(t, rep.IsAdmin)
+	assert.Equal(t, new(false), rep.IsAdmin)
 
 	manager := records[2]
 	assert.Equal(t, []string{"Billing and Seat Manager"}, manager.Roles)
-	assert.False(t, manager.IsAdmin)
+	assert.Equal(t, new(false), manager.IsAdmin)
 
 	// No name and no first/last: the display name falls back to the email.
 	noName := records[3]
@@ -67,10 +68,35 @@ func TestApolloDriver(t *testing.T) {
 func TestApolloIsAdmin(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, apolloIsAdmin("Admin"))
-	assert.True(t, apolloIsAdmin("admin"))
+	assert.Equal(t, new(true), apolloIsAdmin("Admin"))
+	assert.Equal(t, new(true), apolloIsAdmin("admin"))
 	// Exact match only: profiles that merely contain "admin" are not admins.
-	assert.False(t, apolloIsAdmin("Master Admin"))
-	assert.False(t, apolloIsAdmin("Billing Admin"))
-	assert.False(t, apolloIsAdmin("Sales Rep"))
+	assert.Equal(t, new(false), apolloIsAdmin("Master Admin"))
+	assert.Equal(t, new(false), apolloIsAdmin("Billing Admin"))
+	assert.Equal(t, new(false), apolloIsAdmin("Sales Rep"))
+	assert.Nil(t, apolloIsAdmin(""))
+}
+
+func TestApolloIsAdmin_UnreadableRoleIsUnknown(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		raw  json.RawMessage
+	}{
+		{name: "absent"},
+		{name: "null", raw: json.RawMessage(`null`)},
+		{name: "unparseable", raw: json.RawMessage(`{`)},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Nil(t, apolloIsAdmin(apolloRole(tt.raw)))
+			},
+		)
+	}
 }

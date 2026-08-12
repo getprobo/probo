@@ -50,6 +50,7 @@ type (
 		Regulation            *Regulation         `db:"regulation"`
 		RegulationSource      *RegulationSource   `db:"regulation_source"`
 		CountryCode           *CountryCode        `db:"country_code"`
+		SubdivisionCode       *SubdivisionCode    `db:"subdivision_code"`
 		ConsentMode           *CookieConsentMode  `db:"consent_mode"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
@@ -128,6 +129,7 @@ SELECT
 	regulation,
 	regulation_source,
 	country_code,
+	subdivision_code,
 	consent_mode,
 	created_at
 FROM
@@ -216,6 +218,7 @@ INSERT INTO cookie_consent_records (
 	regulation,
 	regulation_source,
 	country_code,
+	subdivision_code,
 	consent_mode,
 	created_at
 ) VALUES (
@@ -233,6 +236,7 @@ INSERT INTO cookie_consent_records (
 	@regulation,
 	@regulation_source,
 	@country_code,
+	@subdivision_code,
 	@consent_mode,
 	@created_at
 )
@@ -253,6 +257,7 @@ INSERT INTO cookie_consent_records (
 		"regulation":               r.Regulation,
 		"regulation_source":        r.RegulationSource,
 		"country_code":             r.CountryCode,
+		"subdivision_code":         r.SubdivisionCode,
 		"consent_mode":             r.ConsentMode,
 		"created_at":               r.CreatedAt,
 	}
@@ -286,6 +291,7 @@ SELECT
 	regulation,
 	regulation_source,
 	country_code,
+	subdivision_code,
 	consent_mode,
 	created_at
 FROM
@@ -341,6 +347,7 @@ SELECT
 	regulation,
 	regulation_source,
 	country_code,
+	subdivision_code,
 	consent_mode,
 	created_at
 FROM

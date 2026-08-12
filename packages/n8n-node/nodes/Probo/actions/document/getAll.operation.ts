@@ -112,6 +112,13 @@ export const description: INodeProperties[] = [
 				],
 			},
 			{
+				displayName: 'Published',
+				name: 'published',
+				type: 'boolean',
+				default: true,
+				description: 'Whether to return documents with a published version',
+			},
+			{
 				displayName: 'Query',
 				name: 'query',
 				type: 'string',
@@ -158,6 +165,7 @@ export async function execute(
 	if ((filters.writeModes as string[])?.length) filter.writeModes = filters.writeModes;
 	if ((filters.documentTypes as string[])?.length) filter.documentTypes = filters.documentTypes;
 	if ((filters.classifications as string[])?.length) filter.classifications = filters.classifications;
+	if (filters.published !== undefined) filter.published = filters.published;
 	filter.status = (filters.status as string[])?.length ? filters.status : ['ACTIVE'];
 
 	const query = `

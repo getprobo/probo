@@ -47,7 +47,7 @@ func TestDotfileDriver(t *testing.T) {
 	assert.Equal(t, "a1b2c3d4-0000-4000-8000-000000000001", owner.ExternalID)
 	assert.Equal(t, "alice.martin@example.com", owner.Email)
 	assert.Equal(t, "Alice Martin", owner.FullName)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	require.NotNil(t, owner.Active)
 	assert.True(t, *owner.Active)
 	assert.Equal(t, []string{"owner"}, owner.Roles)
@@ -59,7 +59,7 @@ func TestDotfileDriver(t *testing.T) {
 	// Admin: also administrative.
 	admin := records[1]
 	assert.Equal(t, "bob.durand@example.com", admin.Email)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, []string{"admin"}, admin.Roles)
 	require.NotNil(t, admin.Active)
 	assert.True(t, *admin.Active)
@@ -67,7 +67,7 @@ func TestDotfileDriver(t *testing.T) {
 	// Member: suspended (suspended_at set) → inactive, not admin.
 	member := records[2]
 	assert.Equal(t, "carla.petit@example.com", member.Email)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	assert.Equal(t, []string{"member"}, member.Roles)
 	require.NotNil(t, member.Active)
 	assert.False(t, *member.Active)

@@ -1,0 +1,198 @@
+enum AiSystemStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AiSystemStatus") {
+    ACTIVE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AiSystemStatusActive")
+    IN_DEVELOPMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemStatusInDevelopment"
+        )
+    DECOMMISSIONED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemStatusDecommissioned"
+        )
+}
+
+enum AiSystemRiskClassification
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AiSystemRiskClassification"
+    ) {
+    HIGH_RISK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemRiskClassificationHighRisk"
+        )
+    LIMITED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemRiskClassificationLimited"
+        )
+    MINIMAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemRiskClassificationMinimal"
+        )
+    GPAI
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemRiskClassificationGPAI"
+        )
+}
+
+enum AiSystemCompanyRole
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AiSystemCompanyRole") {
+    PROVIDER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemCompanyRoleProvider"
+        )
+    DEPLOYER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemCompanyRoleDeployer"
+        )
+    USER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AiSystemCompanyRoleUser")
+    DEVELOPER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemCompanyRoleDeveloper"
+        )
+}
+
+enum AiSystemOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AiSystemOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AiSystemOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AiSystemOrderFieldName")
+    STATUS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AiSystemOrderFieldStatus")
+}
+
+input AiSystemOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AiSystemOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AiSystemOrderField!
+}
+
+input AiSystemFilter {
+    status: AiSystemStatus
+    riskClassification: AiSystemRiskClassification
+}
+
+type AiSystem implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    name: String!
+    version: String
+    companyRoles: [AiSystemCompanyRole!]!
+    status: AiSystemStatus!
+    owner: Profile @goField(forceResolver: true)
+    source: String
+    purpose: String
+    intendedUseCases: String
+    autonomyLevel: String
+    humanOversightMechanism: String
+    riskClassification: AiSystemRiskClassification!
+    keyStakeholders: String
+    dataSourcesAndType: String
+    deploymentDate: Datetime
+    lastReviewDate: Datetime
+    nextReviewDate: Datetime
+    notes: String
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AiSystemConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AiSystemConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AiSystemEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AiSystemEdge {
+    cursor: CursorKey!
+    node: AiSystem!
+}
+
+extend type Mutation {
+    createAiSystem(
+        input: CreateAiSystemInput!
+    ): CreateAiSystemPayload!
+    updateAiSystem(input: UpdateAiSystemInput!): UpdateAiSystemPayload!
+    deleteAiSystem(input: DeleteAiSystemInput!): DeleteAiSystemPayload!
+    publishAiSystemList(
+        input: PublishAiSystemListInput!
+    ): PublishAiSystemListPayload!
+}
+
+input PublishAiSystemListInput {
+    organizationId: ID!
+    approverIds: [ID!]
+    minor: Boolean!
+}
+
+type PublishAiSystemListPayload {
+    documentEdge: DocumentEdge!
+    documentVersionEdge: DocumentVersionEdge!
+}
+
+input CreateAiSystemInput {
+    organizationId: ID!
+    name: String!
+    version: String
+    companyRoles: [AiSystemCompanyRole!]
+    status: AiSystemStatus!
+    ownerId: ID
+    source: String
+    purpose: String
+    intendedUseCases: String
+    autonomyLevel: String
+    humanOversightMechanism: String
+    riskClassification: AiSystemRiskClassification!
+    keyStakeholders: String
+    dataSourcesAndType: String
+    deploymentDate: Datetime
+    lastReviewDate: Datetime
+    nextReviewDate: Datetime
+    notes: String
+}
+
+input UpdateAiSystemInput {
+    id: ID!
+    name: String @goField(omittable: true)
+    version: String @goField(omittable: true)
+    companyRoles: [AiSystemCompanyRole!] @goField(omittable: true)
+    status: AiSystemStatus @goField(omittable: true)
+    ownerId: ID @goField(omittable: true)
+    source: String @goField(omittable: true)
+    purpose: String @goField(omittable: true)
+    intendedUseCases: String @goField(omittable: true)
+    autonomyLevel: String @goField(omittable: true)
+    humanOversightMechanism: String @goField(omittable: true)
+    riskClassification: AiSystemRiskClassification @goField(omittable: true)
+    keyStakeholders: String @goField(omittable: true)
+    dataSourcesAndType: String @goField(omittable: true)
+    deploymentDate: Datetime @goField(omittable: true)
+    lastReviewDate: Datetime @goField(omittable: true)
+    nextReviewDate: Datetime @goField(omittable: true)
+    notes: String @goField(omittable: true)
+}
+
+input DeleteAiSystemInput {
+    aiSystemId: ID!
+}
+
+type CreateAiSystemPayload {
+    aiSystemEdge: AiSystemEdge!
+}
+
+type UpdateAiSystemPayload {
+    aiSystem: AiSystem!
+}
+
+type DeleteAiSystemPayload {
+    deletedAiSystemId: ID!
+}

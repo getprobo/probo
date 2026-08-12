@@ -142,7 +142,7 @@ func (d *CrispDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			FullName:    crispFullName(details, email),
 			Roles:       ownerMemberRoles(details.Role),
 			JobTitle:    strings.TrimSpace(details.Title),
-			IsAdmin:     isOwnerRole(details.Role),
+			IsAdmin:     new(isOwnerRole(details.Role)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

@@ -108,6 +108,14 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'The URL to the privacy policy. Leave empty to clear the existing value.',
 			},
+			{
+				displayName: 'Resource Reporting Enabled',
+				name: 'resourceReportingEnabled',
+				type: 'boolean',
+				default: true,
+				description:
+					'Whether the SDK reports detected resources. Only add this field when you intend to change the value; omit it to keep the banner\'s current setting.',
+			},
 		],
 	},
 ];
@@ -123,6 +131,7 @@ export async function execute(
 	const defaultLanguage = this.getNodeParameter('defaultLanguage', itemIndex, '') as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		privacyPolicyUrl?: string;
+		resourceReportingEnabled?: boolean;
 	};
 
 	const query = `
@@ -137,6 +146,7 @@ export async function execute(
 					cookiePolicyUrl
 					consentExpiryDays
 					showBranding
+					capabilities { resourceReporting }
 					defaultLanguage
 					createdAt
 					updatedAt
@@ -152,6 +162,9 @@ export async function execute(
 	if (defaultLanguage) input.defaultLanguage = defaultLanguage;
 	if (additionalFields.privacyPolicyUrl !== undefined) {
 		input.privacyPolicyUrl = additionalFields.privacyPolicyUrl === '' ? null : additionalFields.privacyPolicyUrl;
+	}
+	if (additionalFields.resourceReportingEnabled !== undefined) {
+		input.capabilities = { resourceReporting: additionalFields.resourceReportingEnabled };
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

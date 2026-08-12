@@ -58,6 +58,14 @@ export class AssumptionRequiredError extends Error {
   }
 }
 
+export class MembershipRequiredError extends Error {
+  constructor(message?: string) {
+    super(message || "MEMBERSHIP_REQUIRED");
+    this.name = "MembershipRequiredError";
+    Object.setPrototypeOf(this, MembershipRequiredError.prototype);
+  }
+}
+
 export class ForbiddenError extends Error {
   constructor(message?: string) {
     super(message || "FORBIDDEN");

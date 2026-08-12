@@ -29,12 +29,12 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 import { ControlledField } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { ThirdPartiesMultiSelectField } from "#/components/form/ThirdPartiesMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 import { useCreateDatum } from "../../../../hooks/graph/DatumGraph";
 

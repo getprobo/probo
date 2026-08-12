@@ -32,6 +32,8 @@ const roleOptions = [
 	{ name: 'Employee', value: 'EMPLOYEE' },
 	{ name: 'Viewer', value: 'VIEWER' },
 	{ name: 'Auditor', value: 'AUDITOR' },
+	{ name: 'Compliance Portal Manager', value: 'COMPLIANCE_PORTAL_MANAGER' },
+	{ name: 'Compliance Portal Access Manager', value: 'COMPLIANCE_PORTAL_ACCESS_MANAGER' },
 ];
 
 const kindOptions = [

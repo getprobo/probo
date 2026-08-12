@@ -112,8 +112,8 @@ type Risk implements Node {
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: RiskAssessmentScenarioOrder
-    ): RiskAssessmentScenarioConnection! @goField(forceResolver: true)
+        orderBy: RiskAnalysisScenarioOrder
+    ): RiskAnalysisScenarioConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!

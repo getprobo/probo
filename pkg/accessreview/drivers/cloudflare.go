@@ -31,9 +31,11 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// CloudflareDriver fetches account members from the Cloudflare API.
+// CloudflareDriver fetches account members from the Cloudflare API for a
+// single selected account.
 type CloudflareDriver struct {
 	httpClient *http.Client
+	accountID  string
 	baseURL    string
 }
 
@@ -43,6 +45,12 @@ const (
 	cloudflareAccountsPath   = "/accounts"
 	cloudflareMembersSegment = "members"
 )
+
+// cloudflareDefaultBaseURL is the Cloudflare API root. It backs only the
+// exported ListCloudflareOrganizations, and only when its caller resolves no
+// APIBase for the provider (unregistered, or registered without one). Every
+// other path goes through the injected baseURL instead.
+const cloudflareDefaultBaseURL = "https://api.cloudflare.com/client/v4"
 
 type cloudflareAccount struct {
 	ID   string `json:"id"`
@@ -81,95 +89,18 @@ type cloudflareListMembersResponse struct {
 	ResultInfo cloudflareResultInfo `json:"result_info"`
 }
 
-func NewCloudflareDriver(httpClient *http.Client, baseURL string) *CloudflareDriver {
+// NewCloudflareDriver builds a driver scoped to accountID against baseURL
+// (e.g. https://api.cloudflare.com/client/v4).
+func NewCloudflareDriver(httpClient *http.Client, accountID, baseURL string) *CloudflareDriver {
 	return &CloudflareDriver{
 		httpClient: httpClient,
+		accountID:  accountID,
 		baseURL:    baseURL,
 	}
 }
 
 func (d *CloudflareDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	accounts, err := d.queryAllAccounts(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var records []AccountRecord
-
-	for _, account := range accounts {
-		members, err := d.queryAllMembers(ctx, account.ID)
-		if err != nil {
-			return nil, fmt.Errorf("cannot fetch members for cloudflare account %s: %w", account.ID, err)
-		}
-
-		records = append(records, members...)
-	}
-
-	return records, nil
-}
-
-func (d *CloudflareDriver) queryAllAccounts(ctx context.Context) ([]cloudflareAccount, error) {
-	var accounts []cloudflareAccount
-
-	for page := range maxPaginationPages {
-		resp, err := d.queryAccounts(ctx, page+1)
-		if err != nil {
-			return nil, err
-		}
-
-		accounts = append(accounts, resp.Result...)
-
-		if page+1 >= resp.ResultInfo.TotalPages {
-			return accounts, nil
-		}
-	}
-
-	return nil, fmt.Errorf("cannot list all cloudflare accounts: %w", ErrPaginationLimitReached)
-}
-
-func (d *CloudflareDriver) queryAccounts(ctx context.Context, page int) (*cloudflareListAccountsResponse, error) {
-	endpoint, err := url.JoinPath(d.baseURL, cloudflareAccountsPath)
-	if err != nil {
-		return nil, fmt.Errorf("cannot build cloudflare accounts URL: %w", err)
-	}
-
-	parsed, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
-	}
-
-	q := parsed.Query()
-	q.Set("page", strconv.Itoa(page))
-	q.Set("per_page", "50")
-	parsed.RawQuery = q.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create cloudflare accounts request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-
-	httpResp, err := d.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot execute cloudflare accounts request: %w", err)
-	}
-
-	defer func() {
-		_ = httpResp.Body.Close()
-	}()
-
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot fetch cloudflare accounts: unexpected status %d", httpResp.StatusCode)
-	}
-
-	var resp cloudflareListAccountsResponse
-	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return nil, fmt.Errorf("cannot decode cloudflare accounts response: %w", err)
-	}
-
-	return &resp, nil
+	return d.queryAllMembers(ctx, d.accountID)
 }
 
 func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string) ([]AccountRecord, error) {
@@ -210,7 +141,7 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 				FullName:    m.User.FirstName + " " + m.User.LastName,
 				Roles:       roles,
 				Active:      new(m.Status == "accepted"),
-				IsAdmin:     isAdmin,
+				IsAdmin:     new(isAdmin),
 				ExternalID:  m.ID,
 				MFAStatus:   mfaStatus,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
@@ -275,65 +206,139 @@ func (d *CloudflareDriver) queryMembers(ctx context.Context, accountID string, p
 	return &resp, nil
 }
 
-// cloudflareNameResolver resolves the Cloudflare account name.
+// cloudflareNameResolver resolves the Cloudflare account name for the
+// selected account.
 type cloudflareNameResolver struct {
 	httpClient *http.Client
+	accountID  string
 	baseURL    string
 }
 
-func NewCloudflareNameResolver(httpClient *http.Client, baseURL string) NameResolver {
-	return &cloudflareNameResolver{httpClient: httpClient, baseURL: baseURL}
+func NewCloudflareNameResolver(httpClient *http.Client, accountID, baseURL string) NameResolver {
+	return &cloudflareNameResolver{httpClient: httpClient, accountID: accountID, baseURL: baseURL}
 }
 
 func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	endpoint, err := url.JoinPath(r.baseURL, cloudflareAccountsPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot build cloudflare accounts URL: %w", err)
+	if r.accountID == "" {
+		return "", nil
 	}
 
-	cfURL, err := url.Parse(endpoint)
+	endpoint, err := url.JoinPath(r.baseURL, cloudflareAccountsPath, url.PathEscape(r.accountID))
 	if err != nil {
-		return "", fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
+		return "", fmt.Errorf("cannot build cloudflare account URL: %w", err)
 	}
 
-	q := cfURL.Query()
-	q.Set("page", "1")
-	// Cloudflare requires per_page in the range 5..50; per_page=1 is rejected
-	// with a 400 (which, before terminal classification, caused a 400 storm).
-	// Do not "optimize" this back down to 1.
-	q.Set("per_page", "50")
-	cfURL.RawQuery = q.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return "", fmt.Errorf("cannot create cloudflare accounts request: %w", err)
+		return "", fmt.Errorf("cannot create cloudflare account request: %w", err)
 	}
 
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("cannot execute cloudflare accounts request: %w", err)
+		return "", fmt.Errorf("cannot execute cloudflare account request: %w", err)
 	}
 
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", nameStatusError("cloudflare accounts", httpResp.StatusCode)
+		return "", nameStatusError("cloudflare account", httpResp.StatusCode)
 	}
 
 	var resp struct {
-		Result []struct {
+		Result struct {
 			Name string `json:"name"`
 		} `json:"result"`
 	}
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return "", fmt.Errorf("cannot decode cloudflare accounts response: %w", err)
+		return "", fmt.Errorf("cannot decode cloudflare account response: %w", err)
 	}
 
-	if len(resp.Result) == 0 {
-		return "", fmt.Errorf("no cloudflare accounts found")
+	return resp.Result.Name, nil
+}
+
+// ListCloudflareOrganizations fetches the Cloudflare accounts the
+// authenticated token can access, from baseURL ("" for the Cloudflare SaaS API).
+func ListCloudflareOrganizations(ctx context.Context, httpClient *http.Client, baseURL string) ([]Organization, error) {
+	if baseURL == "" {
+		baseURL = cloudflareDefaultBaseURL
 	}
 
-	return resp.Result[0].Name, nil
+	var result []Organization
+
+	for page := range maxPaginationPages {
+		resp, err := queryCloudflareAccounts(ctx, httpClient, baseURL, page+1)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, a := range resp.Result {
+			displayName := a.Name
+			if displayName == "" {
+				displayName = a.ID
+			}
+
+			result = append(result, Organization{Slug: a.ID, DisplayName: displayName})
+		}
+
+		if page+1 >= resp.ResultInfo.TotalPages {
+			return result, nil
+		}
+	}
+
+	return nil, fmt.Errorf("cannot list all cloudflare accounts: %w", ErrPaginationLimitReached)
+}
+
+func queryCloudflareAccounts(
+	ctx context.Context,
+	httpClient *http.Client,
+	baseURL string,
+	page int,
+) (*cloudflareListAccountsResponse, error) {
+	endpoint, err := url.JoinPath(baseURL, cloudflareAccountsPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build cloudflare accounts URL: %w", err)
+	}
+
+	parsed, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("page", strconv.Itoa(page))
+	// Cloudflare requires per_page in the range 5..50; per_page=1 is rejected
+	// with a 400 (which, before terminal classification, caused a 400 storm).
+	// Do not "optimize" this back down to 1.
+	q.Set("per_page", "50")
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create cloudflare accounts request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	httpResp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute cloudflare accounts request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot fetch cloudflare accounts: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp cloudflareListAccountsResponse
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("cannot decode cloudflare accounts response: %w", err)
+	}
+
+	return &resp, nil
 }

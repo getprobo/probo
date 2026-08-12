@@ -74,6 +74,7 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 			CookiePolicyURL:   "https://tracker-pattern-test.example.com/cookies",
 			ConsentExpiryDays: 180,
 			ShowBranding:      false,
+			Capabilities:      coredata.DefaultCookieBannerCapabilities(),
 			DefaultLanguage:   "en",
 			CreatedAt:         now,
 			UpdatedAt:         now,

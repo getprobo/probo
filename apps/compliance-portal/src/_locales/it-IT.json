@@ -21,7 +21,6 @@
     "switchToLightMode": "Passa alla modalità chiara"
   },
   "common": {
-    "cancel": "Annulla",
     "error": "Qualcosa è andato storto",
     "previousPage": "Pagina precedente",
     "nextPage": "Pagina successiva",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Torna al portale di conformità",
-      "tryAgain": "Riprova"
+      "tryAgain": "Riprova",
+      "contactSupport": "Contatta il supporto",
+      "requestAccess": "Richiedi accesso"
     },
     "inline": {
       "message": "Impossibile caricare il contenuto",

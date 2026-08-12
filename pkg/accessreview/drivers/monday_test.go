@@ -44,7 +44,7 @@ func TestMondayDriver(t *testing.T) {
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.FullName)
-	assert.True(t, r.IsAdmin)
+	assert.Equal(t, new(true), r.IsAdmin)
 	assert.NotEmpty(t, r.JobTitle)
 	require.NotNil(t, r.Active)
 	assert.True(t, *r.Active)

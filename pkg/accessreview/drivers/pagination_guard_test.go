@@ -66,7 +66,7 @@ func TestDriversRefuseCrossHostPagination(t *testing.T) {
 		{
 			name:    "asana members",
 			baseURL: "https://app.asana.com/api/1.0",
-			body:    `{"data":[{"gid":"1","name":"Alice","email":"alice@example.com"}],"next_page":{"uri":"https://evil.example.com/api/1.0/workspaces/12345/users?offset=abc"}}`,
+			body:    `{"data":[{"user":{"gid":"1","name":"Alice","email":"alice@example.com"},"is_admin":false,"is_guest":false,"is_view_only":false,"is_active":true}],"next_page":{"uri":"https://evil.example.com/api/1.0/workspaces/12345/workspace_memberships?offset=abc"}}`,
 			listFunc: func(ctx context.Context, client *http.Client, baseURL string) error {
 				_, err := NewAsanaDriver(client, "12345", baseURL).ListAccounts(ctx)
 

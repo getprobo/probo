@@ -129,7 +129,7 @@ func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				FullName:    fullName,
 				Roles:       roles,
 				Active:      &confirmed,
-				IsAdmin:     m.Role == "OWNER" || m.Role == "owner",
+				IsAdmin:     new(m.Role == "OWNER" || m.Role == "owner"),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

@@ -43,8 +43,9 @@ func TestMCP_Measure_CRUD(t *testing.T) {
 		} `json:"measure"`
 	}
 	mc.CallToolInto("addMeasure", map[string]any{
-		"organizationId": orgID,
-		"name":           factory.SafeName("Measure"),
+		"organization_id": orgID,
+		"name":            factory.SafeName("Measure"),
+		"category":        "POLICY",
 	}, &addResult)
 	require.NotEmpty(t, addResult.Measure.ID)
 
@@ -79,7 +80,7 @@ func TestMCP_Measure_CRUD(t *testing.T) {
 		} `json:"measures"`
 	}
 	mc.CallToolInto("listMeasures", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Measures)
 
@@ -88,26 +89,26 @@ func TestMCP_Measure_CRUD(t *testing.T) {
 		Risks []struct{ ID string } `json:"risks"`
 	}
 	mc.CallToolInto("listMeasureRisks", map[string]any{
-		"measureId": addResult.Measure.ID,
+		"measure_id": addResult.Measure.ID,
 	}, &risksResult)
 
 	var controlsResult struct {
 		Controls []struct{ ID string } `json:"controls"`
 	}
 	mc.CallToolInto("listMeasureControls", map[string]any{
-		"measureId": addResult.Measure.ID,
+		"measure_id": addResult.Measure.ID,
 	}, &controlsResult)
 
 	var tasksResult struct {
 		Tasks []struct{ ID string } `json:"tasks"`
 	}
 	mc.CallToolInto("listMeasureTasks", map[string]any{
-		"measureId": addResult.Measure.ID,
+		"measure_id": addResult.Measure.ID,
 	}, &tasksResult)
 
 	// Delete
 	var deleteResult struct {
-		DeletedMeasureID string `json:"deletedMeasureId"`
+		DeletedMeasureID string `json:"deleted_measure_id"`
 	}
 	mc.CallToolInto("deleteMeasure", map[string]any{
 		"id": addResult.Measure.ID,

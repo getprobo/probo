@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { Button, Card, Field, Input, Label, Option, Select, useToast } from "@probo/ui";
+import { Button, Card, Field, Input, Label, Option, Select, Toggle, useToast } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -37,6 +37,9 @@ const bannerSettingsFormFragment = graphql`
     privacyPolicyUrl
     consentExpiryDays
     defaultLanguage
+    capabilities {
+      resourceReporting
+    }
   }
 `;
 
@@ -50,6 +53,9 @@ const updateBannerMutation = graphql`
         privacyPolicyUrl
         consentExpiryDays
         defaultLanguage
+        capabilities {
+          resourceReporting
+        }
         latestVersion {
           id
           version
@@ -66,6 +72,7 @@ interface BannerSettingsFormValues {
   privacyPolicyUrl: string;
   consentExpiryDays: string;
   defaultLanguage: string;
+  resourceReportingEnabled: boolean;
 }
 
 interface BannerSettingsFormProps {
@@ -87,6 +94,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
       privacyPolicyUrl: banner.privacyPolicyUrl ?? "",
       consentExpiryDays: String(banner.consentExpiryDays),
       defaultLanguage: banner.defaultLanguage,
+      resourceReportingEnabled: banner.capabilities.resourceReporting,
     },
   });
 
@@ -100,6 +108,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           privacyPolicyUrl: data.privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(data.consentExpiryDays, 10),
           defaultLanguage: data.defaultLanguage,
+          capabilities: { resourceReporting: data.resourceReportingEnabled },
         },
       },
       onCompleted() {
@@ -153,10 +162,31 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
                     <Option value="fr">{t("bannerSettingsForm.languages.french")}</Option>
                     <Option value="de">{t("bannerSettingsForm.languages.german")}</Option>
                     <Option value="es">{t("bannerSettingsForm.languages.spanish")}</Option>
+                    <Option value="nl">{t("bannerSettingsForm.languages.dutch")}</Option>
                   </Select>
                 )}
               />
             </div>
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <Label>{t("bannerSettingsForm.fields.resourceReportingEnabled")}</Label>
+              <p className="text-sm text-txt-tertiary">
+                {t("bannerSettingsForm.fields.resourceReportingEnabledHelp")}
+              </p>
+            </div>
+            <Controller
+              name="resourceReportingEnabled"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  checked={field.value}
+                  onChange={field.onChange}
+                  aria-label={t("bannerSettingsForm.fields.resourceReportingEnabled")}
+                />
+              )}
+            />
           </div>
 
           <Button type="submit" disabled={isUpdating}>

@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -71,7 +72,7 @@ type (
 // SupportedIdentityLocales are short URL locale tags accepted for
 // Identity.locale. Keep in sync with the compliance-portal URL_LOCALES list.
 var SupportedIdentityLocales = []string{
-	"en", "fr", "de", "es", "id", "it", "ja", "ko", "pl", "pt", "tr", "uk", "zh",
+	"en", "fr", "de", "es", "id", "it", "ja", "ko", "nl", "pl", "pt", "tr", "uk", "zh",
 }
 
 const (
@@ -90,7 +91,9 @@ func (req ChangeEmailRequest) Validate() error {
 	return v.Error()
 }
 
-func (req UpdateIdentityRequest) Validate() error {
+func (req *UpdateIdentityRequest) Validate() error {
+	req.FullName = strings.TrimSpace(req.FullName)
+
 	v := validator.New()
 
 	v.Check(req.FullName, "full_name", validator.NotEmpty(), validator.MinLen(2), validator.MaxLen(255))

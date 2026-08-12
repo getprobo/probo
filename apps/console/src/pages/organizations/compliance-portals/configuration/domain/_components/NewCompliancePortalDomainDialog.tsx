@@ -30,11 +30,11 @@ import {
 import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { NewCompliancePortalDomainDialogMutation } from "#/__generated__/core/NewCompliancePortalDomainDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutation } from "#/lib/relay/useMutation";
+import { z } from "#/lib/zod";
 
 const createCustomDomainMutation = graphql`
   mutation NewCompliancePortalDomainDialogMutation($input: CreateCustomDomainInput!) {

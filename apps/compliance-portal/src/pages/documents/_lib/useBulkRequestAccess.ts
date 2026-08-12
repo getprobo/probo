@@ -57,6 +57,10 @@ const bulkMutation = graphql`
           status
         }
       }
+      compliancePortal {
+        id
+        viewerHasRequestedAccess
+      }
     }
   }
 `;

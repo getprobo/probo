@@ -15,6 +15,8 @@ export default defineConfig([
   globalIgnores([
     "examples/**",
     "pkg/**",
+    // Vite public/ assets are copied as-is; not part of any tsconfig project.
+    "apps/*/public/**",
     "packages/coredata/**",
     "packages/cookie-banner/**",
     "packages/skills/**",
@@ -69,6 +71,26 @@ export default defineConfig([
               importNames: ["default"],
               message:
                 "Don't import i18next's default (global singleton). Build a dedicated instance via `import { createInstance } from \"i18next\"`.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Zod JIT uses eval/new Function; console CSP forbids unsafe-eval. All
+    // zod usage must go through #/lib/zod which sets jitless: true.
+    files: ["apps/console/**"],
+    ignores: ["apps/console/src/lib/zod.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "zod",
+              message:
+                "Import from #/lib/zod (jitless config for CSP), not zod directly.",
             },
           ],
         },

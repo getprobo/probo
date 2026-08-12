@@ -60,9 +60,9 @@ const fragment = graphql`
     id
     title
     description
-    canUpdate: permission(action: "core:compliance-portal-commitment-group:update")
-    canDelete: permission(action: "core:compliance-portal-commitment-group:delete")
-    canCreateCommitment: permission(action: "core:compliance-portal-commitment:create")
+    canUpdate: permission(action: "compliance-portal:commitment-group:update")
+    canDelete: permission(action: "compliance-portal:commitment-group:delete")
+    canCreateCommitment: permission(action: "compliance-portal:commitment:create")
     commitments(first: 100, orderBy: { field: RANK, direction: ASC }) {
       edges {
         node {

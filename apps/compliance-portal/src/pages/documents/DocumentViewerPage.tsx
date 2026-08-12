@@ -21,6 +21,8 @@
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
+
 import type { DocumentViewerPageQuery } from "./__generated__/DocumentViewerPageQuery.graphql";
 import { DocumentViewer } from "./_components/DocumentViewer";
 import { useAccessRequest } from "./_lib/useAccessRequest";
@@ -35,16 +37,35 @@ export const documentViewerPageQuery = graphql`
         id
         title
         isUserAuthorized
+        access {
+          id
+          status
+        }
       }
       ... on CompliancePortalFile {
         id
         name
         isUserAuthorized
+        access {
+          id
+          status
+        }
       }
       ... on AuditReport {
         id
         fileName
         isUserAuthorized
+        access {
+          id
+          status
+        }
+      }
+    }
+    currentCompliancePortal {
+      nonDisclosureAgreement {
+        viewerSignature {
+          status
+        }
       }
     }
   }
@@ -59,16 +80,35 @@ interface ResolvedNode {
   id: string;
   title: string;
   isAuthorized: boolean;
+  requested: boolean;
 }
 
 function resolveNode(node: DocumentViewerPageQuery["response"]["aliasedNode"]): ResolvedNode {
   switch (node.__typename) {
     case "Document":
-      return { kind: "Document", id: node.id, title: node.title, isAuthorized: node.isUserAuthorized };
+      return {
+        kind: "Document",
+        id: node.id,
+        title: node.title,
+        isAuthorized: node.isUserAuthorized,
+        requested: node.access?.status === "REQUESTED",
+      };
     case "CompliancePortalFile":
-      return { kind: "CompliancePortalFile", id: node.id, title: node.name, isAuthorized: node.isUserAuthorized };
+      return {
+        kind: "CompliancePortalFile",
+        id: node.id,
+        title: node.name,
+        isAuthorized: node.isUserAuthorized,
+        requested: node.access?.status === "REQUESTED",
+      };
     case "AuditReport":
-      return { kind: "AuditReport", id: node.id, title: node.fileName, isAuthorized: node.isUserAuthorized };
+      return {
+        kind: "AuditReport",
+        id: node.id,
+        title: node.fileName,
+        isAuthorized: node.isUserAuthorized,
+        requested: node.access?.status === "REQUESTED",
+      };
     default:
       throw new Error(`Unexpected aliased node type: ${node.__typename}`);
   }
@@ -82,12 +122,24 @@ export function DocumentViewerPage({ queryRef }: DocumentViewerPageProps) {
   const node = resolveNode(data.aliasedNode);
   const { dataUri } = useDocumentExport(node.kind, node.id, node.isAuthorized);
   const { requestAccess, isRequesting } = useAccessRequest(node.kind, node.id);
+  const localizedPath = useLocalizedPath();
 
   if (!node.isAuthorized) {
+    const signature = data.currentCompliancePortal?.nonDisclosureAgreement?.viewerSignature;
+    const needsNda = signature != null && signature.status !== "COMPLETED";
+    const ndaHref = needsNda
+      ? `${localizedPath("/nda")}?continue=${encodeURIComponent(window.location.href)}`
+      : null;
+
     return (
       <DocumentViewer
         title={node.title}
-        locked={{ onGetAccess: requestAccess, isRequesting }}
+        locked={{
+          onGetAccess: requestAccess,
+          isRequesting,
+          requested: node.requested,
+          ndaHref,
+        }}
       />
     );
   }

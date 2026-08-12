@@ -37,7 +37,6 @@ import { useMutation } from "react-relay";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import { Link } from "react-router";
 import type { OperationType } from "relay-runtime";
-import { z } from "zod";
 
 import type { AssetGraphDeleteMutation } from "#/__generated__/core/AssetGraphDeleteMutation.graphql";
 import type {
@@ -50,6 +49,7 @@ import {
   updateAssetMutation,
 } from "#/hooks/graph/AssetGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 import { EditableTable } from "../table/EditableTable";
 import { PeopleCell } from "../table/PeopleCell";

@@ -31,9 +31,9 @@ import (
 
 type rightsRequest struct {
 	ID           string  `json:"id"`
-	RequestType  string  `json:"requestType"`
-	RequestState string  `json:"requestState"`
-	DataSubject  string  `json:"dataSubject"`
+	RequestType  string  `json:"request_type"`
+	RequestState string  `json:"request_state"`
+	DataSubject  string  `json:"data_subject"`
 	Contact      *string `json:"contact"`
 	Details      *string `json:"details"`
 }
@@ -45,15 +45,15 @@ func TestMCP_AddRightsRequest(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	var result struct {
-		RightsRequest rightsRequest `json:"rightsRequest"`
+		RightsRequest rightsRequest `json:"rights_request"`
 	}
 	mc.CallToolInto("addRightsRequest", map[string]any{
-		"organizationId": orgID,
-		"requestType":    "ACCESS",
-		"requestState":   "TODO",
-		"dataSubject":    "John Doe",
-		"contact":        "john@example.com",
-		"details":        "Request for data access",
+		"organization_id": orgID,
+		"request_type":    "ACCESS",
+		"request_state":   "TODO",
+		"data_subject":    "John Doe",
+		"contact":         "john@example.com",
+		"details":         "Request for data access",
 	}, &result)
 
 	assert.NotEmpty(t, result.RightsRequest.ID)
@@ -70,19 +70,19 @@ func TestMCP_GetRightsRequest(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		RightsRequest rightsRequest `json:"rightsRequest"`
+		RightsRequest rightsRequest `json:"rights_request"`
 	}
 	mc.CallToolInto("addRightsRequest", map[string]any{
-		"organizationId": orgID,
-		"requestType":    "DELETION",
-		"requestState":   "TODO",
-		"dataSubject":    "Jane Doe",
+		"organization_id": orgID,
+		"request_type":    "DELETION",
+		"request_state":   "TODO",
+		"data_subject":    "Jane Doe",
 	}, &addResult)
 	require.NotEmpty(t, addResult.RightsRequest.ID)
 
 	// Get
 	var getResult struct {
-		RightsRequest rightsRequest `json:"rightsRequest"`
+		RightsRequest rightsRequest `json:"rights_request"`
 	}
 	mc.CallToolInto("getRightsRequest", map[string]any{
 		"id": addResult.RightsRequest.ID,
@@ -101,24 +101,24 @@ func TestMCP_UpdateRightsRequest(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		RightsRequest rightsRequest `json:"rightsRequest"`
+		RightsRequest rightsRequest `json:"rights_request"`
 	}
 	mc.CallToolInto("addRightsRequest", map[string]any{
-		"organizationId": orgID,
-		"requestType":    "ACCESS",
-		"requestState":   "TODO",
-		"dataSubject":    "Test Subject",
+		"organization_id": orgID,
+		"request_type":    "ACCESS",
+		"request_state":   "TODO",
+		"data_subject":    "Test Subject",
 	}, &addResult)
 	require.NotEmpty(t, addResult.RightsRequest.ID)
 
 	// Update
 	var updateResult struct {
-		RightsRequest rightsRequest `json:"rightsRequest"`
+		RightsRequest rightsRequest `json:"rights_request"`
 	}
 	mc.CallToolInto("updateRightsRequest", map[string]any{
-		"id":           addResult.RightsRequest.ID,
-		"requestState": "IN_PROGRESS",
-		"dataSubject":  "Updated Subject",
+		"id":            addResult.RightsRequest.ID,
+		"request_state": "IN_PROGRESS",
+		"data_subject":  "Updated Subject",
 	}, &updateResult)
 
 	assert.Equal(t, addResult.RightsRequest.ID, updateResult.RightsRequest.ID)
@@ -134,19 +134,19 @@ func TestMCP_DeleteRightsRequest(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		RightsRequest rightsRequest `json:"rightsRequest"`
+		RightsRequest rightsRequest `json:"rights_request"`
 	}
 	mc.CallToolInto("addRightsRequest", map[string]any{
-		"organizationId": orgID,
-		"requestType":    "PORTABILITY",
-		"requestState":   "TODO",
-		"dataSubject":    "Delete Subject",
+		"organization_id": orgID,
+		"request_type":    "PORTABILITY",
+		"request_state":   "TODO",
+		"data_subject":    "Delete Subject",
 	}, &addResult)
 	require.NotEmpty(t, addResult.RightsRequest.ID)
 
 	// Delete
 	var deleteResult struct {
-		DeletedRightsRequestID string `json:"deletedRightsRequestId"`
+		DeletedRightsRequestID string `json:"deleted_rights_request_id"`
 	}
 	mc.CallToolInto("deleteRightsRequest", map[string]any{
 		"id": addResult.RightsRequest.ID,
@@ -164,23 +164,23 @@ func TestMCP_ListRightsRequests(t *testing.T) {
 	// Create multiple rights requests
 	for _, reqType := range []string{"ACCESS", "DELETION", "PORTABILITY"} {
 		var result struct {
-			RightsRequest rightsRequest `json:"rightsRequest"`
+			RightsRequest rightsRequest `json:"rights_request"`
 		}
 		mc.CallToolInto("addRightsRequest", map[string]any{
-			"organizationId": orgID,
-			"requestType":    reqType,
-			"requestState":   "TODO",
-			"dataSubject":    factory.SafeName("Subject"),
+			"organization_id": orgID,
+			"request_type":    reqType,
+			"request_state":   "TODO",
+			"data_subject":    factory.SafeName("Subject"),
 		}, &result)
 		require.NotEmpty(t, result.RightsRequest.ID)
 	}
 
 	// List
 	var listResult struct {
-		RightsRequests []rightsRequest `json:"rightsRequests"`
+		RightsRequests []rightsRequest `json:"rights_requests"`
 	}
 	mc.CallToolInto("listRightsRequests", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 
 	assert.GreaterOrEqual(t, len(listResult.RightsRequests), 3)
@@ -195,13 +195,13 @@ func TestMCP_RightsRequest_Types(t *testing.T) {
 	for _, reqType := range []string{"ACCESS", "DELETION", "PORTABILITY"} {
 		t.Run(reqType, func(t *testing.T) {
 			var result struct {
-				RightsRequest rightsRequest `json:"rightsRequest"`
+				RightsRequest rightsRequest `json:"rights_request"`
 			}
 			mc.CallToolInto("addRightsRequest", map[string]any{
-				"organizationId": orgID,
-				"requestType":    reqType,
-				"requestState":   "TODO",
-				"dataSubject":    factory.SafeName("Subject"),
+				"organization_id": orgID,
+				"request_type":    reqType,
+				"request_state":   "TODO",
+				"data_subject":    factory.SafeName("Subject"),
 			}, &result)
 
 			assert.Equal(t, reqType, result.RightsRequest.RequestType)

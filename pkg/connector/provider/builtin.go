@@ -92,6 +92,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		neonRegistration(),
 		netlifyRegistration(),
 		notionRegistration(),
+		nukiRegistration(),
 		oktaRegistration(),
 		onePasswordRegistration(),
 		openaiRegistration(),

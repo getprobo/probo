@@ -84,6 +84,16 @@ export class Probo implements INodeType {
 						description: 'Manage access review campaigns',
 					},
 					{
+						name: 'Access Review Source',
+						value: 'accessReviewSource',
+						description: 'Manage access review sources',
+					},
+					{
+						name: 'AI System',
+						value: 'aiSystem',
+						description: 'Manage AI systems',
+					},
+					{
 						name: 'Asset',
 						value: 'asset',
 						description: 'Manage assets',
@@ -97,6 +107,11 @@ export class Probo implements INodeType {
 						name: 'Audit Log',
 						value: 'auditLog',
 						description: 'View audit log entries',
+					},
+					{
+						name: 'Business Function',
+						value: 'businessFunction',
+						description: 'Manage business functions',
 					},
 					{
 						name: 'Compliance Portal',
@@ -204,9 +219,9 @@ export class Probo implements INodeType {
 						description: 'Manage risks',
 					},
 					{
-						name: 'Risk Assessment',
-						value: 'riskAssessment',
-						description: 'Manage risk assessments',
+						name: 'Risk Analysis',
+						value: 'riskAnalysis',
+						description: 'Manage risk analyses',
 					},
 					{
 						name: 'Statement of Applicability',

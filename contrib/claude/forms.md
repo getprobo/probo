@@ -79,7 +79,7 @@ When validation is complex or needs specific messages, parse a zod schema in `on
 
 ```tsx
 import { Form } from "@base-ui/react/form";
-import { z } from "zod";
+import { z } from "#/lib/zod";
 
 const schema = z.object({
   name: z.string().min(1, "measures.form.nameRequired"),

@@ -23,12 +23,14 @@ package root
 import (
 	"github.com/spf13/cobra"
 	accessreview "go.probo.inc/probo/pkg/cmd/access-review"
+	"go.probo.inc/probo/pkg/cmd/aisystem"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
 	"go.probo.inc/probo/pkg/cmd/asset"
 	"go.probo.inc/probo/pkg/cmd/audit"
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
 	"go.probo.inc/probo/pkg/cmd/browse"
+	"go.probo.inc/probo/pkg/cmd/businessfunction"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/completion"
 	complianceportal "go.probo.inc/probo/pkg/cmd/compliance-portal"
@@ -52,7 +54,7 @@ import (
 	resourcealias "go.probo.inc/probo/pkg/cmd/resource-alias"
 	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
-	riskassessment "go.probo.inc/probo/pkg/cmd/risk-assessment"
+	riskanalysis "go.probo.inc/probo/pkg/cmd/risk-analysis"
 	"go.probo.inc/probo/pkg/cmd/scim"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/task"
@@ -98,12 +100,14 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd.AddCommand(accessreview.NewCmdAccessReview(f))
+	cmd.AddCommand(aisystem.NewCmdAiSystem(f))
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
 	cmd.AddCommand(asset.NewCmdAsset(f))
 	cmd.AddCommand(audit.NewCmdAudit(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
 	cmd.AddCommand(browse.NewCmdBrowse(f))
+	cmd.AddCommand(businessfunction.NewCmdBusinessFunction(f))
 	cmd.AddCommand(completion.NewCmdCompletion(f))
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	cmd.AddCommand(consentrecord.NewCmdConsentRecord(f))
@@ -126,7 +130,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))
 	cmd.AddCommand(rightsrequest.NewCmdRightsRequest(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
-	cmd.AddCommand(riskassessment.NewCmdRiskAssessment(f))
+	cmd.AddCommand(riskanalysis.NewCmdRiskAnalysis(f))
 	cmd.AddCommand(resourcealias.NewCmdResourceAlias(f))
 	cmd.AddCommand(scim.NewCmdScim(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))

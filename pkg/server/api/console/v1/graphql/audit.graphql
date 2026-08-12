@@ -163,6 +163,9 @@ type Audit implements Node {
     auditEndDate: Datetime
     reportFile: File @goField(forceResolver: true)
     state: AuditState!
+    compliancePortalAudit(
+        compliancePortalId: ID!
+    ): CompliancePortalAudit @goField(forceResolver: true)
 
     controls(
         first: Int

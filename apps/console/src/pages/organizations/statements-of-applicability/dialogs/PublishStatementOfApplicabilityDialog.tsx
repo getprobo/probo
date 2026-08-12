@@ -34,12 +34,12 @@ import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { PublishStatementOfApplicabilityDialogMutation } from "#/__generated__/core/PublishStatementOfApplicabilityDialogMutation.graphql";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 const publishMutation = graphql`
   mutation PublishStatementOfApplicabilityDialogMutation(

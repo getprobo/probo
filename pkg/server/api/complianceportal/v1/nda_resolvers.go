@@ -54,6 +54,10 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
+		if mapped := mapNDASigningValidationError(ctx, err); mapped != nil {
+			return nil, mapped
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -85,16 +89,21 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		compliancePortal.ID,
 		identity.ID,
 		&esign.RecordEventRequest{
-			SignatureID: input.SignatureID,
-			EventType:   input.EventType,
-			EventSource: coredata.ElectronicSignatureEventSourceClient,
-			ActorEmail:  identity.EmailAddress,
-			ActorIPAddr: actorIP,
-			ActorUA:     httpReq.UserAgent(),
+			SignatureID:   input.SignatureID,
+			EventType:     input.EventType,
+			EventSource:   coredata.ElectronicSignatureEventSourceClient,
+			ActorFullName: identity.FullName,
+			ActorEmail:    identity.EmailAddress,
+			ActorIPAddr:   actorIP,
+			ActorUA:       httpReq.UserAgent(),
 		},
 	); err != nil {
 		if errors.Is(err, esign.ErrSignatureAccessDenied) {
 			return nil, gqlutils.Forbidden(ctx, err)
+		}
+
+		if mapped := mapNDASigningValidationError(ctx, err); mapped != nil {
+			return nil, mapped
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))

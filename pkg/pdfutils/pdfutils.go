@@ -28,11 +28,12 @@ import (
 	"image/png"
 	"io"
 	"math"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
-	"go.probo.inc/probo/pkg/mail"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
@@ -40,6 +41,7 @@ import (
 )
 
 const (
+	MaxWatermarkTextLength  = 64
 	watermarkFontSize       = 90
 	watermarkRotationDegree = -55.0
 	watermarkOpacity        = 0.1
@@ -68,12 +70,16 @@ func MergePDFs(pdfs ...[]byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func AddConfidentialWithTimestamp(pdfData []byte, email mail.Addr) ([]byte, error) {
+func AddConfidentialWithTimestamp(pdfData []byte, watermarkText string) ([]byte, error) {
+	if err := ValidateWatermarkText(watermarkText); err != nil {
+		return nil, fmt.Errorf("cannot validate watermark text: %w", err)
+	}
+
 	reader := bytes.NewReader(pdfData)
 
 	watermarkLines := []string{
 		"Confidential",
-		email.String(),
+		watermarkText,
 		time.Now().Format("2006-01-02"),
 	}
 
@@ -109,6 +115,27 @@ func AddConfidentialWithTimestamp(pdfData []byte, email mail.Addr) ([]byte, erro
 	}
 
 	return buf.Bytes(), nil
+}
+
+func ValidateWatermarkText(watermarkText string) error {
+	if strings.TrimSpace(watermarkText) == "" {
+		return fmt.Errorf("watermark text is required")
+	}
+
+	if len(watermarkText) > MaxWatermarkTextLength {
+		return fmt.Errorf("watermark text must not exceed %d bytes", MaxWatermarkTextLength)
+	}
+
+	return nil
+}
+
+func TruncateWatermarkText(watermarkText string) string {
+	for len(watermarkText) > MaxWatermarkTextLength {
+		_, size := utf8.DecodeLastRuneInString(watermarkText)
+		watermarkText = watermarkText[:len(watermarkText)-size]
+	}
+
+	return watermarkText
 }
 
 func generateTextImage(lines []string) (*image.RGBA, error) {

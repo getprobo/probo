@@ -78,7 +78,6 @@ func (d *IntercomDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			FullName:    a.Name,
 			Roles:       intercomRoles(a.HasInboxSeat),
 			JobTitle:    a.JobTitle,
-			IsAdmin:     false, // Intercom API does not expose admin role information
 			ExternalID:  a.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

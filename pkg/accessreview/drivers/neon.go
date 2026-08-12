@@ -104,7 +104,7 @@ func (d *NeonDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 				Roles:    neonRoles(m.Member.Role),
 				// deactivated_at is absent for active accounts.
 				Active:      new(m.User.DeactivatedAt == ""),
-				IsAdmin:     neonIsAdmin(m.Member.Role),
+				IsAdmin:     new(neonIsAdmin(m.Member.Role)),
 				MFAStatus:   neonMFAStatus(m.User.HasMFA),
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

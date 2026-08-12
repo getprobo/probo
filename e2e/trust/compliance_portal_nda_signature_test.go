@@ -49,6 +49,22 @@ const minimalPDFBase64 = "JVBERi0xLjcKJeLjz9MKMSAwIG9iago8PC9QYWdlcyAyIDAgUi9UeX
 	"ES//AhpppZNeBhllklmyLLLKJrsclh/4AgAA//9tzQSTZW5kc3RyZWFtCmVuZG9iagoKc3RhcnR4" +
 	"cmVmCjUxMgolJUVPRg=="
 
+const acceptElectronicSignatureMutation = `
+	mutation($input: AcceptElectronicSignatureInput!) {
+		acceptElectronicSignature(input: $input) {
+			signature { id status }
+		}
+	}
+`
+
+const recordSigningEventMutation = `
+	mutation($input: RecordSigningEventInput!) {
+		recordSigningEvent(input: $input) {
+			success
+		}
+	}
+`
+
 // TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature is a
 // regression test for GHSA-22xj-f767-ppw6: any self-provisioned trust
 // center visitor could accept another visitor's NDA signature, or inject
@@ -65,33 +81,22 @@ func TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature(t *t
 	victim := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
 	attacker := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
 
+	// Signing mutations require a full name before the ownership check; set
+	// names so this test observes FORBIDDEN rather than FULL_NAME_REQUIRED.
+	updateVisitorFullName(t, victim, trustHost, "Victim Visitor")
+	updateVisitorFullName(t, attacker, trustHost, "Attacker Visitor")
+
 	victimSignatureID, victimSignatureStatus := viewerSignature(t, victim, trustHost)
 	require.NotEmpty(t, victimSignatureID)
 	require.Equal(t, "PENDING", victimSignatureStatus)
 
-	const acceptMutation = `
-		mutation($input: AcceptElectronicSignatureInput!) {
-			acceptElectronicSignature(input: $input) {
-				signature { id status }
-			}
-		}
-	`
-
-	err := attacker.ExecuteTrust(trustHost, acceptMutation, map[string]any{
+	err := attacker.ExecuteTrust(trustHost, acceptElectronicSignatureMutation, map[string]any{
 		"input": map[string]any{"signatureId": victimSignatureID},
 	}, nil)
 	require.Error(t, err, "attacker must not be able to accept another visitor's signature")
 	assertForbidden(t, err)
 
-	const recordEventMutation = `
-		mutation($input: RecordSigningEventInput!) {
-			recordSigningEvent(input: $input) {
-				success
-			}
-		}
-	`
-
-	err = attacker.ExecuteTrust(trustHost, recordEventMutation, map[string]any{
+	err = attacker.ExecuteTrust(trustHost, recordSigningEventMutation, map[string]any{
 		"input": map[string]any{
 			"signatureId": victimSignatureID,
 			"eventType":   "DOCUMENT_VIEWED",
@@ -112,11 +117,49 @@ func TestCompliancePortal_AcceptElectronicSignature_RejectsForeignSignature(t *t
 		} `json:"acceptElectronicSignature"`
 	}
 
-	err = victim.ExecuteTrust(trustHost, acceptMutation, map[string]any{
+	err = victim.ExecuteTrust(trustHost, acceptElectronicSignatureMutation, map[string]any{
 		"input": map[string]any{"signatureId": victimSignatureID},
 	}, &acceptResult)
 	require.NoError(t, err, "the legitimate signer must still be able to accept their own signature")
 	assert.Equal(t, "ACCEPTED", acceptResult.AcceptElectronicSignature.Signature.Status)
+}
+
+// TestCompliancePortal_NDASigning_RequiresFullName ensures visitors with an
+// empty identity name cannot accept or record NDA signing events. Soft paths
+// to /nda no longer hit requireCompletedNDA; both mutations map esign full-name
+// validation to FULL_NAME_REQUIRED.
+func TestCompliancePortal_NDASigning_RequiresFullName(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	compliancePortalID := lookupCompliancePortalID(t, owner)
+
+	uploadCompliancePortalNDA(t, owner, compliancePortalID)
+	trustHost := lookupTrustHost(t, owner, compliancePortalID)
+
+	visitor := testutil.SelfProvisionCompliancePortalVisitor(t, trustHost)
+
+	signatureID, signatureStatus := viewerSignature(t, visitor, trustHost)
+	require.NotEmpty(t, signatureID)
+	require.Equal(t, "PENDING", signatureStatus)
+
+	err := visitor.ExecuteTrust(trustHost, acceptElectronicSignatureMutation, map[string]any{
+		"input": map[string]any{"signatureId": signatureID},
+	}, nil)
+	require.Error(t, err, "accept must require a full name")
+	assertFullNameRequired(t, err)
+
+	err = visitor.ExecuteTrust(trustHost, recordSigningEventMutation, map[string]any{
+		"input": map[string]any{
+			"signatureId": signatureID,
+			"eventType":   "DOCUMENT_VIEWED",
+		},
+	}, nil)
+	require.Error(t, err, "recordSigningEvent must require a full name")
+	assertFullNameRequired(t, err)
+
+	_, statusAfter := viewerSignature(t, visitor, trustHost)
+	assert.Equal(t, "PENDING", statusAfter, "failed gate attempts must not complete the signature")
 }
 
 func uploadCompliancePortalNDA(t *testing.T, owner *testutil.Client, compliancePortalID string) {
@@ -179,6 +222,30 @@ func viewerSignature(t *testing.T, visitor *testutil.Client, trustHost string) (
 	return sig.ID, sig.Status
 }
 
+func updateVisitorFullName(t *testing.T, visitor *testutil.Client, trustHost, fullName string) {
+	t.Helper()
+
+	const mutation = `
+		mutation($input: UpdateFullNameInput!) {
+			updateFullName(input: $input) {
+				success
+			}
+		}
+	`
+
+	var result struct {
+		UpdateFullName struct {
+			Success bool `json:"success"`
+		} `json:"updateFullName"`
+	}
+
+	err := visitor.ExecuteTrust(trustHost, mutation, map[string]any{
+		"input": map[string]any{"fullName": fullName},
+	}, &result)
+	require.NoError(t, err)
+	require.True(t, result.UpdateFullName.Success)
+}
+
 func assertForbidden(t *testing.T, err error) {
 	t.Helper()
 
@@ -186,4 +253,13 @@ func assertForbidden(t *testing.T, err error) {
 	require.True(t, ok, "expected a GraphQL error, got %T: %v", err, err)
 	require.NotEmpty(t, gqlErrs)
 	assert.Equal(t, "FORBIDDEN", gqlErrs[0].Code())
+}
+
+func assertFullNameRequired(t *testing.T, err error) {
+	t.Helper()
+
+	gqlErrs, ok := err.(testutil.GraphQLErrors)
+	require.True(t, ok, "expected a GraphQL error, got %T: %v", err, err)
+	require.NotEmpty(t, gqlErrs)
+	assert.Equal(t, "FULL_NAME_REQUIRED", gqlErrs[0].Code())
 }

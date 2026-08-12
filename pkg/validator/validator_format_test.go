@@ -157,7 +157,7 @@ func TestOrigin(t *testing.T) {
 		{"invalid - has path", "https://example.com/path", true},
 		{"invalid - has query", "https://example.com?q=1", true},
 		{"invalid - has fragment", "https://example.com#section", true},
-		{"invalid - has userinfo", "https://user:pass@example.com", true},
+		{"invalid - has userinfo", "https://user:pass@example.com", true}, // trufflehog:ignore
 		{"invalid - no scheme", "example.com", true},
 		{"invalid - ftp scheme", "ftp://example.com", true},
 		{"invalid - no host", "https://", true},

@@ -86,7 +86,7 @@ func (d *MetabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			FullName:    metabaseFullName(u),
 			Roles:       metabaseRoles(u.IsSuperuser),
 			Active:      new(u.IsActive),
-			IsAdmin:     u.IsSuperuser,
+			IsAdmin:     new(u.IsSuperuser),
 			ExternalID:  strconv.Itoa(u.ID),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

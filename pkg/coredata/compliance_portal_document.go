@@ -84,6 +84,53 @@ func (cpd *CompliancePortalDocument) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
+func (cpd *CompliancePortalDocument) LoadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentLinkID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	compliance_portal_id,
+	document_id,
+	visibility,
+	created_at,
+	updated_at
+FROM
+	cp_documents
+WHERE
+	%s
+	AND id = @document_link_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_link_id": documentLinkID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal document: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CompliancePortalDocument])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect compliance portal document: %w", err)
+	}
+
+	*cpd = row
+
+	return nil
+}
+
 func (cpd *CompliancePortalDocument) LoadByCompliancePortalIDAndDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

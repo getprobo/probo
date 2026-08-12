@@ -45,6 +45,7 @@ query($id: ID!) {
       regulation
       regulationSource
       countryCode
+      subdivisionCode
       createdAt
     }
   }
@@ -64,6 +65,7 @@ type viewResponse struct {
 		Regulation       *string `json:"regulation"`
 		RegulationSource *string `json:"regulationSource"`
 		CountryCode      *string `json:"countryCode"`
+		SubdivisionCode  *string `json:"subdivisionCode"`
 		CreatedAt        string  `json:"createdAt"`
 	} `json:"node"`
 }
@@ -138,6 +140,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if v.CountryCode != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Country Code:"), *v.CountryCode)
+			}
+
+			if v.SubdivisionCode != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Subdivision Code:"), *v.SubdivisionCode)
 			}
 
 			if v.IPAddress != nil && *v.IPAddress != "" {

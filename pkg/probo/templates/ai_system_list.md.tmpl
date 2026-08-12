@@ -1,0 +1,81 @@
+# 1. Purpose
+
+This document provides a comprehensive register of AI systems within the
+organization, including their roles, risk classification, oversight mechanisms,
+and review schedule.
+
+---
+
+# 2. AI Systems
+
+{{ if not .Rows -}}
+No AI systems recorded.
+{{ else -}}
+{{ range $i, $r := .Rows -}}
+## 2.{{ add $i 1 }} {{ $r.Name }}
+
+### 2.{{ add $i 1 }}.1 General Information
+
+**Version:** {{ $r.Version }}
+
+**Company roles:** {{ $r.CompanyRoles }}
+
+**Status:** {{ $r.Status }}
+
+**System owner:** {{ $r.Owner }}
+
+### 2.{{ add $i 1 }}.2 Risk and Review
+
+**Risk classification:** {{ $r.RiskClassification }}
+
+**Deployment date:** {{ $r.DeploymentDate }}
+
+**Last review date:** {{ $r.LastReviewDate }}
+
+**Next review date:** {{ $r.NextReviewDate }}
+
+### 2.{{ add $i 1 }}.3 Description and Use
+
+**Source:** {{ $r.Source }}
+
+**Purpose:** {{ $r.Purpose }}
+
+**Intended use cases:** {{ $r.IntendedUseCases }}
+
+**Autonomy level:** {{ $r.AutonomyLevel }}
+
+**Human oversight mechanism:** {{ $r.HumanOversightMechanism }}
+
+### 2.{{ add $i 1 }}.4 Data and Notes
+
+**Key stakeholders:** {{ $r.KeyStakeholders }}
+
+**Data sources and type:** {{ $r.DataSourcesAndType }}
+
+**Notes:** {{ $r.Notes }}
+
+---
+{{ end -}}
+{{ end -}}
+
+# 3. Definitions
+
+### Status
+
+- **Active:** The AI system is deployed and used in production or live operations.
+- **In development:** The AI system is being designed, built, or tested and is not yet in production use.
+- **Decommissioned:** The AI system is retired and no longer used by the organization.
+
+### Company roles
+
+- **Provider:** The organization develops or places the AI system on the market.
+- **Deployer:** The organization uses the AI system under its own authority in a professional context.
+- **User:** The organization uses the output of the AI system without operating it directly.
+- **Developer:** The organization contributes to the design, training, or maintenance of the AI system.
+
+### Risk classification
+
+- **High-risk:** The AI system falls within a high-risk category under applicable AI regulations.
+- **Limited:** The AI system presents limited risk and may be subject to transparency obligations.
+- **Minimal:** The AI system presents minimal risk with no additional regulatory obligations beyond general requirements.
+- **GPAI:** The AI system is a general-purpose AI model or system with cross-cutting applicability.

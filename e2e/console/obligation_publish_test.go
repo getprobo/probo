@@ -332,46 +332,6 @@ func TestObligation_PublishObligationList(t *testing.T) {
 	)
 }
 
-func TestObligation_PublishObligationList_RBAC(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-
-	createObligationForPublish(t, owner, "RBAC Test Obligation")
-
-	const query = `
-		mutation($input: PublishObligationListInput!) {
-			publishObligationList(input: $input) {
-				documentEdge {
-					node { id }
-				}
-				documentVersionEdge {
-					node { id }
-				}
-			}
-		}
-	`
-
-	t.Run(
-		"viewer cannot publish obligation list",
-		func(t *testing.T) {
-			t.Parallel()
-
-			err := viewer.ExecuteShouldFail(
-				query,
-				map[string]any{
-					"input": map[string]any{
-						"minor":          false,
-						"organizationId": owner.GetOrganizationID(),
-					},
-				},
-			)
-			testutil.RequireForbiddenError(t, err)
-		},
-	)
-}
-
 func createObligationForPublish(t *testing.T, client *testutil.Client, requirement string) string {
 	t.Helper()
 

@@ -45,5 +45,5 @@ func TestPagerDutyDriver(t *testing.T) {
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.Roles)
-	assert.True(t, r.IsAdmin)
+	assert.Equal(t, new(true), r.IsAdmin)
 }

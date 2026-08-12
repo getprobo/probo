@@ -32,10 +32,10 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { VettingDialogMutation } from "#/__generated__/core/VettingDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const vetMutation = graphql`
   mutation VettingDialogMutation($input: VetThirdPartyInput!) {

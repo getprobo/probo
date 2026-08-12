@@ -8,9 +8,8 @@
     },
     "actions": {
       "create": "Create compliance portal",
-      "createFirst": "Create your first compliance portal",
-      "showMore": "Show more"
-    }
+      "createFirst": "Create your first compliance portal"
+      }
   },
   "newPortalPage": {
     "pageTitle": "New compliance portal",
@@ -141,29 +140,19 @@
     "description": "Manage audit reports and compliance certifications"
   },
   "auditList": {
-    "addAudit": "Add audit",
     "columns": {
+      "displayed": "Displayed",
       "framework": "Framework",
       "name": "Name",
       "validUntil": "Valid Until",
       "state": "State",
       "visibility": "Visibility"
     },
-    "empty": "No audits on this portal yet",
-    "addDialog": {
-      "title": "Add audit to portal",
-      "auditLabel": "Audit",
-      "visibilityLabel": "Visibility",
-      "submit": "Add",
-      "cancel": "Cancel",
-      "loading": "Loading audits…",
-      "success": "Audit added to the portal.",
-      "error": "Failed to add audit to the portal"
-    }
+    "empty": "No audits available"
   },
   "auditListItem": {
     "messages": {
-      "visibilityUpdated": "Audit visibility updated successfully.",
+      "visibilityUpdated": "Audit portal settings updated successfully.",
       "removed": "Audit removed from the portal."
     },
     "errors": {
@@ -171,7 +160,7 @@
       "remove": "Failed to remove audit from the portal"
     },
     "actions": {
-      "remove": "Remove from portal"
+      "toggle": "Toggle {{title}} on the compliance portal"
     },
     "noExpiry": "No expiry",
     "untitled": "Untitled",
@@ -380,28 +369,18 @@
     "description": "Manage policies, procedures and compliance documents"
   },
   "documentList": {
-    "addDocument": "Add document",
     "columns": {
+      "displayed": "Displayed",
       "name": "Name",
       "type": "Type",
       "alias": "Alias",
       "visibility": "Visibility"
     },
-    "empty": "No documents on this portal yet",
-    "addDialog": {
-      "title": "Add document to portal",
-      "documentLabel": "Document",
-      "visibilityLabel": "Visibility",
-      "submit": "Add",
-      "cancel": "Cancel",
-      "loading": "Loading documents…",
-      "success": "Document added to the portal.",
-      "error": "Failed to add document to the portal"
-    }
+    "empty": "No active published documents available"
   },
   "documentListItem": {
     "messages": {
-      "visibilityUpdated": "Document visibility updated successfully.",
+      "visibilityUpdated": "Document portal settings updated successfully.",
       "removed": "Document removed from the portal."
     },
     "errors": {
@@ -409,7 +388,7 @@
       "remove": "Failed to remove document from the portal"
     },
     "actions": {
-      "remove": "Remove from portal"
+      "toggle": "Toggle {{title}} on the compliance portal"
     }
   },
   "domainPage": {
@@ -420,33 +399,24 @@
   },
   "thirdPartyListItem": {
     "messages": {
-      "visibilityUpdated": "Subprocessor visibility updated successfully.",
+      "linked": "Subprocessor added to the portal.",
       "removed": "Subprocessor removed from the portal."
     },
     "errors": {
-      "visibilityUpdate": "Failed to update subprocessor visibility",
+      "link": "Failed to add subprocessor to the portal",
       "remove": "Failed to remove subprocessor from the portal"
     },
     "actions": {
-      "remove": "Remove from portal"
+      "toggle": "Toggle {{title}} on the compliance portal"
     }
   },
   "thirdPartyList": {
-    "addThirdParty": "Add subprocessor",
     "columns": {
+      "displayed": "Displayed",
       "name": "Name",
       "category": "Category"
     },
-    "empty": "No subprocessors on this portal yet",
-    "addDialog": {
-      "title": "Add subprocessor to portal",
-      "thirdPartyLabel": "Subprocessor",
-      "submit": "Add",
-      "cancel": "Cancel",
-      "loading": "Loading subprocessors…",
-      "success": "Subprocessor added to the portal.",
-      "error": "Failed to add subprocessor to the portal"
-    }
+    "empty": "No subprocessors available"
   },
   "thirdPartiesPage": {
     "title": "Subprocessors",
@@ -477,6 +447,10 @@
       "title": "Search engine indexing",
       "description": "Allow search engines to index your compliance portal and make it discoverable",
       "disabledHint": "Activate your compliance portal first to enable search engine indexing"
+    },
+    "rightsRequests": {
+      "title": "Rights requests",
+      "description": "Let visitors submit data subject rights requests on your compliance portal"
     }
   },
   "slackSection": {

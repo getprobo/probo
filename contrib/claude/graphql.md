@@ -11,6 +11,21 @@ Each API's schema lives in `pkg/server/api/{api}/v1/graphql/` as multiple `.grap
 
 gqlgen's `follow-schema` layout generates one resolver file per schema file (e.g., `thirdParty.resolvers.go`). Types that get extended across files (Organization, Mutation, Viewer, TrustCenter) must be defined in `base.graphql`.
 
+### Node interface
+
+Every first-class `coredata` entity that corresponds to a persisted DB row with a GID **must** `implement Node` and be wired into `Query.node` in `base_resolvers.go`.
+
+Checklist when adding such a type:
+
+1. **Schema** — `type Foo implements Node { id: ID! … }`
+2. **Coredata** — `LoadByID` on the entity (plus `FooEntityType` / `NewEntityFromID` — see [`gid.md`](gid.md))
+3. **Service** — a Get-by-id method used by the node loader
+4. **`Query.node`** — a `case coredata.FooEntityType` that authorizes and returns `types.NewFoo(...)`
+
+Junction / catalog link rows (e.g. `CompliancePortalDocument`) are first-class entities when they have their own GID — they implement Node too. Do **not** map GraphQL entity objects onto `coredata` structs with `@goModel`; let gqlgen emit the types package struct and use a hand-written `New*` constructor.
+
+`implements Node` enables `node(id:)` refetch. It does **not** by itself update parameterized parent fields after a mutation. For create/link/delete of a child linked from a parent (e.g. `Document.compliancePortalDocument(compliancePortalId:)`), mutation payloads must also return the parent with that field selected so Relay can write the store without a manual `updater`.
+
 ### `extend type` restrictions
 
 **The only permitted use of `extend type` is `extend type Mutation`.** Never use `extend type` on any other type — not on entity types, not on `Organization`, not on `Query`. If `CookieBanner` needs a `consentRecords` connection, add the field directly to the `CookieBanner` type definition in `cookie_banner.graphql` — do not write `extend type CookieBanner` in another file. This keeps each entity's full field set visible in one place and avoids resolver mis-routing across generated files.

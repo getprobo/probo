@@ -16,11 +16,11 @@ import { Button, Card, Field, Label, Spinner, Textarea } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { CompliancePortalProfileSection_compliancePortalFragment$key } from "#/__generated__/core/CompliancePortalProfileSection_compliancePortalFragment.graphql";
 import { useUpdateCompliancePortalMutation } from "#/hooks/graph/CompliancePortalGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const compliancePortalFragment = graphql`
   fragment CompliancePortalProfileSection_compliancePortalFragment on CompliancePortal {

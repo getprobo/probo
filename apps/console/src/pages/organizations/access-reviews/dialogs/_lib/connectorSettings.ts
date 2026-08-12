@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ProviderInfo } from "../AddAccessReviewSourceDialog";
-
 // DATADOG_SITES labels are technical identifiers (region code + hostname),
 // intentionally not translated. The dialog's prose strings are.
 export const DATADOG_SITES: { value: string; label: string }[] = [
@@ -161,14 +159,15 @@ export function cleanZendeskSubdomain(raw: string): string {
 // and navigates the browser to it, kicking off the authorization redirect.
 export function connectOAuthProvider(
   organizationId: string,
-  info: ProviderInfo,
+  provider: string,
+  oauth2Scopes: ReadonlyArray<string>,
   extras?: Record<string, string>,
 ) {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/connectors/initiate", baseURL);
   url.searchParams.append("organization_id", organizationId);
-  url.searchParams.append("provider", info.provider);
-  for (const scope of info.oauth2Scopes) {
+  url.searchParams.append("provider", provider);
+  for (const scope of oauth2Scopes) {
     url.searchParams.append("scope", scope);
   }
   if (extras) {

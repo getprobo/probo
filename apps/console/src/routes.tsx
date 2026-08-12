@@ -35,6 +35,8 @@ import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
+import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
+import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/routes";
 import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
@@ -273,6 +275,10 @@ const routes = [
                   return <Navigate to="employee" />;
                 case Role.AUDITOR:
                   return <Navigate to="measures" />;
+                case Role.COMPLIANCE_PORTAL_MANAGER:
+                  return <Navigate to="compliance-portals" />;
+                case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER:
+                  return <Navigate to="compliance-portals" />;
                 default:
                   return <Navigate to="tasks" />;
               }
@@ -342,6 +348,8 @@ const routes = [
           ...auditRoutes,
           ...contextRoutes,
           ...findingRoutes,
+          ...businessFunctionRoutes,
+          ...aiSystemRoutes,
           ...obligationRoutes,
           ...rightsRequestRoutes,
           ...processingActivityRoutes,

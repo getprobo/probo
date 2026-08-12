@@ -25,14 +25,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
 	"mime"
 	"net/mail"
 	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/jackc/pgx/v5"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
@@ -51,6 +49,7 @@ type (
 		Active                       *bool
 		Slug                         *string
 		SearchEngineIndexing         *coredata.SearchEngineIndexing
+		Capabilities                 *coredata.CompliancePortalCapabilitiesPatch
 		NonDisclosureAgreementFileID *gid.GID
 		EntityName                   *string
 		Description                  **string
@@ -215,7 +214,8 @@ func (s *Service) Create(
 				Active:               false,
 				EntityName:           req.EntityName,
 				SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
-				MailingListID:        &mailingList.ID,
+				Capabilities:         coredata.DefaultCompliancePortalCapabilities(),
+				MailingListID:        mailingList.ID,
 				CreatedAt:            now,
 				UpdatedAt:            now,
 			}
@@ -402,6 +402,10 @@ func (s *Service) Update(
 
 			if req.SearchEngineIndexing != nil {
 				portal.SearchEngineIndexing = *req.SearchEngineIndexing
+			}
+
+			if req.Capabilities != nil {
+				portal.Capabilities = req.Capabilities.Apply(portal.Capabilities)
 			}
 
 			if req.EntityName != nil {
@@ -931,12 +935,8 @@ func (s *Service) GetMailingList(
 				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
 
-			if portal.MailingListID == nil {
-				return nil
-			}
-
 			mailingList = &coredata.MailingList{}
-			if err := mailingList.LoadByID(ctx, conn, scope, *portal.MailingListID); err != nil {
+			if err := mailingList.LoadByID(ctx, conn, scope, portal.MailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 
@@ -1004,20 +1004,14 @@ func (s *Service) Delete(
 				}
 			}
 
-			mailingListID := portal.MailingListID
+			mailingList := &coredata.MailingList{ID: portal.MailingListID}
 
 			if err := portal.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete compliance portal: %w", err)
 			}
 
-			if mailingListID != nil {
-				q := fmt.Sprintf(`DELETE FROM mailing_lists WHERE %s AND id = @id`, scope.SQLFragment())
-				args := pgx.StrictNamedArgs{"id": *mailingListID}
-				maps.Copy(args, scope.SQLArguments())
-
-				if _, err := tx.Exec(ctx, q, args); err != nil {
-					return fmt.Errorf("cannot delete mailing list: %w", err)
-				}
+			if err := mailingList.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete mailing list: %w", err)
 			}
 
 			return nil

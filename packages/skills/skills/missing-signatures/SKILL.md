@@ -21,10 +21,14 @@ Before executing, read these files **relative to this skill directory**:
 
 ## Preconditions
 
-1. Probo MCP must be connected. If tools fail with auth errors, stop and tell
-   the user to complete OAuth sign-in for the Probo MCP server in their agent
-   (Claude Code: `/mcp` or `claude mcp login probo`; Codex: `codex mcp login
-   probo`; OpenCode/Cursor: configure MCP in settings then authenticate).
+1. A Probo MCP server must be connected. The plugin ships two hosted servers,
+   `probo-us` and `probo-eu`; self-hosted instances are configured in the agent.
+   Use the server for the user's region, and when the region is unknown call
+   `listOrganizations` on each connected server and keep the one that returns
+   the organization. If tools fail with auth errors, stop and tell the user to
+   complete OAuth sign-in for that server (Claude Code: `/mcp` or
+   `claude mcp login probo-us`; Codex: `codex mcp login probo-us`;
+   OpenCode/Cursor: configure MCP in settings then authenticate).
 2. Resolve the organization from `$ARGUMENTS` (name match or GID). If ambiguous,
    call `listOrganizations` and ask the user to pick one.
 3. This skill is **reporting only**. Do not request signatures, cancel requests,

@@ -53,7 +53,7 @@ func TestBetterStackDriver(t *testing.T) {
 	assert.Equal(t, "alice@example.com", r.Email)
 	assert.Equal(t, "Alice Smith", r.FullName)
 	assert.Equal(t, []string{"Admin"}, r.Roles)
-	assert.True(t, r.IsAdmin)
+	assert.Equal(t, new(true), r.IsAdmin)
 	assert.Equal(t, "101", r.ExternalID)
 	require.NotNil(t, r.Active)
 	assert.True(t, *r.Active)

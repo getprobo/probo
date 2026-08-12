@@ -127,6 +127,13 @@ input CookieCategoryFilter
     excludeKind: CookieCategoryKind
 }
 
+type CookieBannerCapabilities
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerCapabilities"
+    ) {
+    resourceReporting: Boolean!
+}
+
 type CookieBanner implements Node {
     id: ID!
     name: String!
@@ -136,6 +143,7 @@ type CookieBanner implements Node {
     cookiePolicyUrl: String!
     consentExpiryDays: Int!
     showBranding: Boolean!
+    capabilities: CookieBannerCapabilities!
     defaultLanguage: String!
 
     organization: Organization @goField(forceResolver: true)
@@ -660,6 +668,10 @@ input CreateCookieBannerInput {
     consentExpiryDays: Int!
 }
 
+input CookieBannerCapabilitiesInput {
+    resourceReporting: Boolean
+}
+
 input UpdateCookieBannerInput {
     cookieBannerId: ID!
     name: String
@@ -667,6 +679,7 @@ input UpdateCookieBannerInput {
     cookiePolicyUrl: String
     consentExpiryDays: Int
     defaultLanguage: String
+    capabilities: CookieBannerCapabilitiesInput
 }
 
 input DeleteCookieBannerInput {

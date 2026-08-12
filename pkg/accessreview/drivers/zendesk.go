@@ -148,7 +148,7 @@ func zendeskRecord(u zendeskUser) AccountRecord {
 		FullName:  u.Name,
 		Roles:     roles,
 		Active:    &active,
-		IsAdmin:   isAdmin,
+		IsAdmin:   new(isAdmin),
 		MFAStatus: mfaStatus,
 		// Zendesk's users API does not expose the sign-in method
 		// (password / SSO / social), so the auth method is unknown.

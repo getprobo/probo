@@ -92,7 +92,7 @@ func (d *GrafanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Email:       email,
 				FullName:    strings.TrimSpace(u.Name),
 				Roles:       roles,
-				IsAdmin:     strings.EqualFold(role, "Admin"),
+				IsAdmin:     new(strings.EqualFold(role, "Admin")),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

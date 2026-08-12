@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -207,6 +208,8 @@ func (req UpdateOrganizationRequest) Validate() error {
 }
 
 func (cur *CreateUserRequest) Validate() error {
+	cur.FullName = strings.TrimSpace(cur.FullName)
+
 	v := validator.New()
 
 	v.Check(cur.OrganizationID, "id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
@@ -223,6 +226,8 @@ func (cur *CreateUserRequest) Validate() error {
 }
 
 func (upr *UpdateUserRequest) Validate() error {
+	upr.FullName = strings.TrimSpace(upr.FullName)
+
 	v := validator.New()
 
 	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))

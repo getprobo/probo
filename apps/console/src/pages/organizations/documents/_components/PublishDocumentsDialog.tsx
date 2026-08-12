@@ -34,10 +34,10 @@ import { type ReactNode, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { PublishDocumentsDialog_bulkPublishMutation } from "#/__generated__/core/PublishDocumentsDialog_bulkPublishMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 type Props = {
   documentIds: string[];

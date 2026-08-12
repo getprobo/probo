@@ -39,6 +39,8 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+const MaxTrackerIdentifierLength = 255
+
 type Service struct {
 	pg           *pg.Client
 	showBranding bool
@@ -73,6 +75,7 @@ type (
 		CookiePolicyURL   *string
 		ConsentExpiryDays *int
 		DefaultLanguage   *string
+		Capabilities      *coredata.CookieBannerCapabilitiesPatch
 	}
 
 	UpdateCookieCategoryRequest struct {
@@ -111,6 +114,7 @@ type (
 		Regulation       *Regulation
 		RegulationSource coredata.RegulationSource
 		CountryCode      *coredata.CountryCode
+		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
 	}
 
@@ -199,19 +203,20 @@ type (
 	}
 
 	BannerConfig struct {
-		BannerID          gid.GID                                        `json:"banner_id"`
-		Version           int                                            `json:"version"`
-		Language          string                                         `json:"language"`
-		DefaultLanguage   string                                         `json:"default_language"`
-		PrivacyPolicyURL  string                                         `json:"privacy_policy_url,omitempty"`
-		CookiePolicyURL   string                                         `json:"cookie_policy_url"`
-		ConsentExpiryDays int                                            `json:"consent_expiry_days"`
-		ConsentMode       string                                         `json:"consent_mode"`
-		Regulation        Regulation                                     `json:"regulation"`
-		Layout            Layout                                         `json:"layout"`
-		ShowBranding      bool                                           `json:"show_branding"`
-		Categories        []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
-		Texts             map[string]string                              `json:"texts"`
+		BannerID                 gid.GID                                        `json:"banner_id"`
+		Version                  int                                            `json:"version"`
+		Language                 string                                         `json:"language"`
+		DefaultLanguage          string                                         `json:"default_language"`
+		PrivacyPolicyURL         string                                         `json:"privacy_policy_url,omitempty"`
+		CookiePolicyURL          string                                         `json:"cookie_policy_url"`
+		ConsentExpiryDays        int                                            `json:"consent_expiry_days"`
+		ConsentMode              string                                         `json:"consent_mode"`
+		Regulation               Regulation                                     `json:"regulation"`
+		Layout                   Layout                                         `json:"layout"`
+		ShowBranding             bool                                           `json:"show_branding"`
+		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
+		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
+		Texts                    map[string]string                              `json:"texts"`
 	}
 
 	UpsertCookieBannerTranslationRequest struct {
@@ -372,7 +377,7 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 			return s
 		}(),
 	))
-	v.Check(r.Pattern, "pattern", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(r.Pattern, "pattern", validator.Required(), validator.SafeTextNoNewLine(MaxTrackerIdentifierLength))
 	v.Check(string(r.MatchType), "match_type", validator.Required(), validator.OneOfSlice(
 		func() []string {
 			types := coredata.TrackerPatternMatchTypes()
@@ -407,7 +412,7 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 
 		return nil
 	})
-	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(MaxTrackerIdentifierLength))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -626,6 +631,7 @@ func (s *Service) CreateCookieBanner(
 				CookiePolicyURL:   req.CookiePolicyURL,
 				ConsentExpiryDays: req.ConsentExpiryDays,
 				ShowBranding:      s.showBranding,
+				Capabilities:      coredata.DefaultCookieBannerCapabilities(),
 				DefaultLanguage:   "en",
 				CreatedAt:         now,
 				UpdatedAt:         now,
@@ -910,10 +916,12 @@ func (s *Service) UpdateCookieBanner(
 			cookiePolicyChanged := req.CookiePolicyURL != nil && *req.CookiePolicyURL != banner.CookiePolicyURL
 			expiryChanged := req.ConsentExpiryDays != nil && *req.ConsentExpiryDays != banner.ConsentExpiryDays
 			defaultLangChanged := req.DefaultLanguage != nil && *req.DefaultLanguage != banner.DefaultLanguage
+			capabilitiesChanged := req.Capabilities != nil &&
+				req.Capabilities.Apply(banner.Capabilities) != banner.Capabilities
 
 			snapshotChanged := privacyChanged || cookiePolicyChanged || expiryChanged || defaultLangChanged
 
-			if !nameChanged && !snapshotChanged {
+			if !nameChanged && !snapshotChanged && !capabilitiesChanged {
 				return nil
 			}
 
@@ -935,6 +943,10 @@ func (s *Service) UpdateCookieBanner(
 
 			if req.DefaultLanguage != nil {
 				banner.DefaultLanguage = *req.DefaultLanguage
+			}
+
+			if req.Capabilities != nil {
+				banner.Capabilities = req.Capabilities.Apply(banner.Capabilities)
 			}
 
 			banner.UpdatedAt = time.Now()
@@ -1774,6 +1786,18 @@ func (s *Service) GetActiveBannerConfig(
 	config.ConsentMode = ConsentModeForRegulation(regulation)
 	config.Layout = LayoutForRegulation(regulation)
 
+	if IsUSStatePrivacyRegulation(regulation) && !IsCaliforniaPrivacyRegulation(regulation) {
+		applyUSStatePrivacyBannerTexts(config)
+	}
+
+	if IsCanadianOptOutPrivacyRegulation(regulation) {
+		applyCanadianPrivacyBannerTexts(config)
+	}
+
+	if IsCaliforniaPrivacyRegulation(regulation) {
+		applyCCPABannerTexts(config)
+	}
+
 	applyBannerTextCompat(config, sdkVersion)
 
 	return config, nil
@@ -1835,16 +1859,17 @@ func buildBannerConfig(
 	}
 
 	return &BannerConfig{
-		BannerID:          banner.ID,
-		Version:           version.Version,
-		Language:          resolvedLang,
-		DefaultLanguage:   defaultLang,
-		PrivacyPolicyURL:  privacyPolicyURL,
-		CookiePolicyURL:   snapshot.CookiePolicyURL,
-		ConsentExpiryDays: snapshot.ConsentExpiryDays,
-		ShowBranding:      banner.ShowBranding,
-		Categories:        categories,
-		Texts:             texts,
+		BannerID:                 banner.ID,
+		Version:                  version.Version,
+		Language:                 resolvedLang,
+		DefaultLanguage:          defaultLang,
+		PrivacyPolicyURL:         privacyPolicyURL,
+		CookiePolicyURL:          snapshot.CookiePolicyURL,
+		ConsentExpiryDays:        snapshot.ConsentExpiryDays,
+		ShowBranding:             banner.ShowBranding,
+		ResourceReportingEnabled: banner.Capabilities.ResourceReporting,
+		Categories:               categories,
+		Texts:                    texts,
 	}
 }
 
@@ -2095,6 +2120,7 @@ func (s *Service) RecordConsent(
 				Regulation:            req.Regulation,
 				RegulationSource:      &req.RegulationSource,
 				CountryCode:           req.CountryCode,
+				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
 				CreatedAt:             time.Now(),
 			}
@@ -2147,6 +2173,10 @@ func (s *Service) ReportDetectedTrackers(
 				}
 
 				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			if !banner.Capabilities.ResourceReporting {
+				req.Resources = nil
 			}
 
 			var uncategorised coredata.CookieCategory
@@ -2260,6 +2290,10 @@ func (s *Service) reportDetectedTracker(
 	inserted *int,
 	matchedPatternIDs *[]gid.GID,
 ) error {
+	if len(info.Identifier) > MaxTrackerIdentifierLength {
+		return nil
+	}
+
 	var matchedPattern coredata.TrackerPattern
 
 	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)

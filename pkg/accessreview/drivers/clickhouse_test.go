@@ -48,18 +48,18 @@ func TestClickHouseDriver(t *testing.T) {
 	assert.Equal(t, "admin@example.com", admin.Email)
 	assert.Equal(t, "Admin User", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.NotNil(t, admin.CreatedAt)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
 
 	dev := records[1]
 	assert.Equal(t, []string{"Developer"}, dev.Roles)
-	assert.False(t, dev.IsAdmin)
+	assert.Equal(t, new(false), dev.IsAdmin)
 
 	// assignedRoles wins over the deprecated role field; a custom role
 	// merely containing "Admin" is not promoted to admin.
 	custom := records[2]
 	assert.Equal(t, "custom@example.com", custom.FullName)
 	assert.Equal(t, []string{"Billing Admin"}, custom.Roles)
-	assert.False(t, custom.IsAdmin)
+	assert.Equal(t, new(false), custom.IsAdmin)
 }

@@ -22,6 +22,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"go.gearno.de/kit/log"
@@ -39,11 +40,29 @@ func cloudflareRegistration() *Registration {
 			APIBase: "https://api.cloudflare.com/client/v4",
 		},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewCloudflareDriver(c, ep.APIBase), nil
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
+			if err != nil {
+				return nil, fmt.Errorf("cannot read cloudflare connector settings: %w", err)
+			}
+
+			if s.AccountID == "" {
+				return nil, fmt.Errorf("cannot create cloudflare driver: account_id is required")
+			}
+
+			return drivers.NewCloudflareDriver(c, s.AccountID, ep.APIBase), nil
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewCloudflareNameResolver(c, ep.APIBase)
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+			s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
+			if err != nil {
+				logger.ErrorCtx(ctx, "cannot read cloudflare connector settings", log.Error(err))
+				return nil
+			}
+
+			return drivers.NewCloudflareNameResolver(c, s.AccountID, ep.APIBase)
+		},
+		SetOrganizationSettings: func(c *coredata.Connector, accountID string) error {
+			return c.SetSettings(&coredata.CloudflareConnectorSettings{AccountID: accountID})
 		},
 	}
 }

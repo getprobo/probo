@@ -106,6 +106,24 @@ func AccountAlreadyActivated(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
+// MembershipRequired reports that the identity is authenticated but belongs to
+// no organization on an instance where signup is disabled. It is distinct from
+// FORBIDDEN so the frontend can offer a sign-out screen instead of rendering a
+// not-found page.
+func MembershipRequired(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "MEMBERSHIP_REQUIRED",
+		},
+	}
+}
+
+func MembershipRequiredf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return MembershipRequired(ctx, fmt.Errorf(format, a...))
+}
+
 func Forbidden(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),

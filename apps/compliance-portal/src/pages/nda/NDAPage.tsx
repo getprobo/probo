@@ -62,6 +62,7 @@ export const ndaPageQuery = graphql`
   query NDAPageQuery {
     viewer {
       id
+      fullName
     }
     currentCompliancePortal @required(action: THROW) {
       entityName
@@ -115,7 +116,8 @@ interface NDAPageProps {
 // the electronic signature, polls until it is sealed, then returns to the
 // continue URL. A Documents back link dismisses without signing (avoids bouncing
 // into the continue URL that re-triggers the gate). Reached from the route
-// boundary / mutation layer on NDA_SIGNATURE_REQUIRED.
+// boundary / mutation layer on NDA_SIGNATURE_REQUIRED. Visitors without a full
+// name are sent to /full-name before the sign UI (mutations still enforce it).
 export function NDAPage({ queryRef }: NDAPageProps) {
   const { t } = useTranslation("nda");
   const localizedPath = useLocalizedPath();
@@ -135,6 +137,7 @@ export function NDAPage({ queryRef }: NDAPageProps) {
 
   const nda = compliancePortal.nonDisclosureAgreement;
   const signature = fragment.nonDisclosureAgreement.viewerSignature;
+  const hasFullName = data.viewer != null && data.viewer.fullName !== "";
 
   const safeContinueUrl = getSafeContinueUrl(searchParams.get("continue"));
 
@@ -172,14 +175,17 @@ export function NDAPage({ queryRef }: NDAPageProps) {
   }, [isProcessing, refetch]);
 
   // Record that the document was viewed once, on first render of a pending gate.
+  // Skip when the full-name gate will redirect — signing mutations reject empty
+  // names, and we must not flash a DOCUMENT_VIEWED error redirect race.
   useEffect(() => {
-    if (signature?.status === "PENDING" && !documentViewedRef.current) {
-      documentViewedRef.current = true;
-      void recordSigningEvent({
-        variables: { input: { signatureId: signature.id, eventType: "DOCUMENT_VIEWED" } },
-      }).catch(() => {});
+    if (!hasFullName || signature?.status !== "PENDING" || documentViewedRef.current) {
+      return;
     }
-  }, [signature, recordSigningEvent]);
+    documentViewedRef.current = true;
+    void recordSigningEvent({
+      variables: { input: { signatureId: signature.id, eventType: "DOCUMENT_VIEWED" } },
+    }).catch(() => {});
+  }, [hasFullName, signature, recordSigningEvent]);
 
   const handleAccept = () => {
     if (!signature) {
@@ -218,6 +224,17 @@ export function NDAPage({ queryRef }: NDAPageProps) {
 
   if (!data.viewer) {
     return <Navigate to={localizedPath("/")} replace />;
+  }
+
+  // Soft entry to /nda (banner / locked CTA) never hits requireCompletedNDA.
+  // Send nameless visitors to the full-name gate first; continue returns here.
+  if (!hasFullName) {
+    return (
+      <Navigate
+        to={`${localizedPath("/full-name")}?continue=${encodeURIComponent(window.location.href)}`}
+        replace
+      />
+    );
   }
 
   if (!nda || !signature) {

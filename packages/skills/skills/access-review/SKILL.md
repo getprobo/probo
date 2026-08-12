@@ -18,13 +18,30 @@ Before executing, read these files **relative to this skill directory**:
 
 ## Preconditions
 
-1. Probo MCP must be connected. If tools fail with auth errors, stop and tell
-   the user to complete OAuth sign-in for the Probo MCP server in their agent
-   (Claude Code: `/mcp` or `claude mcp login probo`; Codex: `codex mcp login
-   probo`; OpenCode/Cursor: configure MCP in settings then authenticate).
-2. Resolve the campaign from `$ARGUMENTS` (name match or GID). If ambiguous,
-   list `listAccessReviewCampaigns` results and ask the user to pick one.
-3. Campaign `status` must be `IN_PROGRESS` or `PENDING_ACTIONS`. Stop with a
+1. A Probo MCP server must be connected. The plugin ships two hosted servers,
+   `probo-us` and `probo-eu`; self-hosted instances are configured in the agent.
+   If tools fail with auth errors, stop and tell the user to complete OAuth
+   sign-in for that server (Claude Code: `/mcp` or `claude mcp login probo-us`;
+   Codex: `codex mcp login probo-us`; OpenCode/Cursor: configure MCP in settings
+   then authenticate).
+2. Resolve **the server**, then **the organization**. These are separate
+   choices: one server can hold several organizations, and the caller can have
+   organizations on more than one server. Settle both before any campaign call,
+   because `listAccessReviewCampaigns` requires `organization_id`.
+   - **Server.** Use the server for the region the user names, or the only
+     connected server when there is one. Otherwise call `listOrganizations` on
+     each connected server and take the server whose organizations uniquely
+     match the one the user named. Never infer the region from a merely
+     non-empty result — when the match is not unique, show each server with the
+     organizations it returned and ask which to use.
+   - **Organization.** Once the server is settled, call `listOrganizations` on
+     it unless an earlier probe already returned its organizations. Take the
+     unique name match, or the only organization when the server returns one.
+     Otherwise list them and ask the user to pick.
+3. Resolve the campaign from `$ARGUMENTS` (name match or GID) within that
+   organization. If the campaign is ambiguous, list `listAccessReviewCampaigns`
+   results and ask the user to pick one.
+4. Campaign `status` must be `IN_PROGRESS` or `PENDING_ACTIONS`. Stop with a
    clear message for `DRAFT`, `COMPLETED`, or `CANCELLED`.
 
 ## Working notes file

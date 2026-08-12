@@ -28,6 +28,7 @@ func NewCompliancePortal(cp *coredata.CompliancePortal) *CompliancePortal {
 	return &CompliancePortal{
 		ID:                 cp.ID,
 		Active:             cp.Active,
+		Capabilities:       &cp.Capabilities,
 		Slug:               cp.Slug,
 		EntityName:         cp.EntityName,
 		Description:        cp.Description,

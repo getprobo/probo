@@ -50,7 +50,7 @@ func TestBrevoDriver(t *testing.T) {
 	assert.Equal(t, "000000000000000000000001", owner.ExternalID)
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Equal(t, "owner@example.com", owner.FullName)
-	assert.True(t, owner.IsAdmin)
+	assert.Equal(t, new(true), owner.IsAdmin)
 	require.NotNil(t, owner.Active)
 	assert.True(t, *owner.Active)
 	assert.Equal(t, []string{"owner"}, owner.Roles)
@@ -59,7 +59,7 @@ func TestBrevoDriver(t *testing.T) {
 	// Non-owner; "none" levels filtered, the remaining "full" de-duplicated.
 	member := records[1]
 	assert.Equal(t, "000000000000000000000002", member.ExternalID)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	assert.Equal(t, []string{"full"}, member.Roles)
 	require.NotNil(t, member.Active)
 	assert.True(t, *member.Active)
@@ -68,7 +68,7 @@ func TestBrevoDriver(t *testing.T) {
 	viewer := records[2]
 	assert.Equal(t, "000000000000000000000003", viewer.ExternalID)
 	assert.Equal(t, "viewer@example.com", viewer.Email)
-	assert.False(t, viewer.IsAdmin)
+	assert.Equal(t, new(false), viewer.IsAdmin)
 	assert.Equal(t, []string{"full"}, viewer.Roles)
 }
 

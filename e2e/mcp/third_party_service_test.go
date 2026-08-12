@@ -42,12 +42,12 @@ func TestMCP_AddThirdPartyService(t *testing.T) {
 	thirdPartyID := factory.CreateThirdParty(owner)
 
 	var result struct {
-		ThirdPartyService thirdPartyService `json:"thirdPartyService"`
+		ThirdPartyService thirdPartyService `json:"third_party_service"`
 	}
 	mc.CallToolInto("addThirdPartyService", map[string]any{
-		"thirdPartyId": thirdPartyID,
-		"name":         "Cloud Storage",
-		"description":  "Object storage service",
+		"third_party_id": thirdPartyID,
+		"name":           "Cloud Storage",
+		"description":    "Object storage service",
 	}, &result)
 
 	assert.NotEmpty(t, result.ThirdPartyService.ID)
@@ -62,17 +62,17 @@ func TestMCP_UpdateThirdPartyService(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		ThirdPartyService thirdPartyService `json:"thirdPartyService"`
+		ThirdPartyService thirdPartyService `json:"third_party_service"`
 	}
 	mc.CallToolInto("addThirdPartyService", map[string]any{
-		"thirdPartyId": thirdPartyID,
-		"name":         "Original Service",
+		"third_party_id": thirdPartyID,
+		"name":           "Original Service",
 	}, &addResult)
 	require.NotEmpty(t, addResult.ThirdPartyService.ID)
 
 	// Update
 	var updateResult struct {
-		ThirdPartyService thirdPartyService `json:"thirdPartyService"`
+		ThirdPartyService thirdPartyService `json:"third_party_service"`
 	}
 	mc.CallToolInto("updateThirdPartyService", map[string]any{
 		"id":   addResult.ThirdPartyService.ID,
@@ -91,17 +91,17 @@ func TestMCP_DeleteThirdPartyService(t *testing.T) {
 
 	// Create
 	var addResult struct {
-		ThirdPartyService thirdPartyService `json:"thirdPartyService"`
+		ThirdPartyService thirdPartyService `json:"third_party_service"`
 	}
 	mc.CallToolInto("addThirdPartyService", map[string]any{
-		"thirdPartyId": thirdPartyID,
-		"name":         "Service to delete",
+		"third_party_id": thirdPartyID,
+		"name":           "Service to delete",
 	}, &addResult)
 	require.NotEmpty(t, addResult.ThirdPartyService.ID)
 
 	// Delete
 	var deleteResult struct {
-		DeletedThirdPartyServiceID string `json:"deletedThirdPartyServiceId"`
+		DeletedThirdPartyServiceID string `json:"deleted_third_party_service_id"`
 	}
 	mc.CallToolInto("deleteThirdPartyService", map[string]any{
 		"id": addResult.ThirdPartyService.ID,
@@ -119,11 +119,11 @@ func TestMCP_ListThirdPartyServices(t *testing.T) {
 	// Create services
 	for i := range 3 {
 		var result struct {
-			ThirdPartyService thirdPartyService `json:"thirdPartyService"`
+			ThirdPartyService thirdPartyService `json:"third_party_service"`
 		}
 		mc.CallToolInto("addThirdPartyService", map[string]any{
-			"thirdPartyId": thirdPartyID,
-			"name":         factory.SafeName("Service"),
+			"third_party_id": thirdPartyID,
+			"name":           factory.SafeName("Service"),
 		}, &result)
 		require.NotEmpty(t, result.ThirdPartyService.ID)
 
@@ -132,10 +132,10 @@ func TestMCP_ListThirdPartyServices(t *testing.T) {
 
 	// List
 	var listResult struct {
-		ThirdPartyServices []thirdPartyService `json:"thirdPartyServices"`
+		ThirdPartyServices []thirdPartyService `json:"third_party_services"`
 	}
 	mc.CallToolInto("listThirdPartyServices", map[string]any{
-		"thirdPartyId": thirdPartyID,
+		"third_party_id": thirdPartyID,
 	}, &listResult)
 
 	assert.GreaterOrEqual(t, len(listResult.ThirdPartyServices), 3)

@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/validator"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -83,14 +84,39 @@ type (
 	}
 
 	RecordEventRequest struct {
-		SignatureID gid.GID
-		EventType   coredata.ElectronicSignatureEventType
-		EventSource coredata.ElectronicSignatureEventSource
-		ActorEmail  mail.Addr
-		ActorIPAddr string
-		ActorUA     string
+		SignatureID   gid.GID
+		EventType     coredata.ElectronicSignatureEventType
+		EventSource   coredata.ElectronicSignatureEventSource
+		ActorFullName string
+		ActorEmail    mail.Addr
+		ActorIPAddr   string
+		ActorUA       string
 	}
 )
+
+func (req AcceptSignatureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.SignerFullName, "signer_full_name", validator.NotEmpty())
+
+	return v.Error()
+}
+
+func (req CreateAndAcceptSignatureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.SignerFullName, "signer_full_name", validator.NotEmpty())
+
+	return v.Error()
+}
+
+func (req RecordEventRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.ActorFullName, "actor_full_name", validator.NotEmpty())
+
+	return v.Error()
+}
 
 func NewService(
 	pgClient *pg.Client,
@@ -209,6 +235,10 @@ func (s *Service) CreateAndAcceptSignature(
 	conn pg.Tx,
 	req *CreateAndAcceptSignatureRequest,
 ) (*coredata.ElectronicSignature, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	sig, err := s.CreateSignature(
 		ctx,
 		conn,
@@ -245,12 +275,13 @@ func (s *Service) CreateAndAcceptSignature(
 		conn,
 		scope,
 		&RecordEventRequest{
-			SignatureID: sig.ID,
-			EventType:   coredata.ElectronicSignatureEventTypeSignatureAccepted,
-			EventSource: coredata.ElectronicSignatureEventSourceServer,
-			ActorEmail:  req.SignerEmail,
-			ActorIPAddr: req.SignerIPAddr,
-			ActorUA:     req.SignerUA,
+			SignatureID:   sig.ID,
+			EventType:     coredata.ElectronicSignatureEventTypeSignatureAccepted,
+			EventSource:   coredata.ElectronicSignatureEventSourceServer,
+			ActorFullName: req.SignerFullName,
+			ActorEmail:    req.SignerEmail,
+			ActorIPAddr:   req.SignerIPAddr,
+			ActorUA:       req.SignerUA,
 		},
 	); err != nil {
 		return nil, fmt.Errorf("cannot record signature event: %w", err)
@@ -318,6 +349,10 @@ func (s *Service) createStampedDocument(
 }
 
 func (s *Service) AcceptSignature(ctx context.Context, scope coredata.Scoper, req *AcceptSignatureRequest) (*coredata.ElectronicSignature, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	var (
 		now       = time.Now()
 		signature = coredata.ElectronicSignature{}
@@ -364,12 +399,13 @@ func (s *Service) AcceptSignature(ctx context.Context, scope coredata.Scoper, re
 				tx,
 				scope,
 				&RecordEventRequest{
-					SignatureID: signature.ID,
-					EventType:   coredata.ElectronicSignatureEventTypeSignatureAccepted,
-					EventSource: coredata.ElectronicSignatureEventSourceServer,
-					ActorEmail:  req.SignerEmail,
-					ActorIPAddr: req.SignerIPAddr,
-					ActorUA:     req.SignerUA,
+					SignatureID:   signature.ID,
+					EventType:     coredata.ElectronicSignatureEventTypeSignatureAccepted,
+					EventSource:   coredata.ElectronicSignatureEventSourceServer,
+					ActorFullName: req.SignerFullName,
+					ActorEmail:    req.SignerEmail,
+					ActorIPAddr:   req.SignerIPAddr,
+					ActorUA:       req.SignerUA,
 				},
 			); err != nil {
 				return fmt.Errorf("cannot record event: %w", err)
@@ -386,6 +422,10 @@ func (s *Service) AcceptSignature(ctx context.Context, scope coredata.Scoper, re
 }
 
 func (s *Service) RecordEvent(ctx context.Context, scope coredata.Scoper, req *RecordEventRequest) error {
+	if err := req.Validate(); err != nil {
+		return fmt.Errorf("invalid request: %w", err)
+	}
+
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {

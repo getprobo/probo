@@ -46,7 +46,7 @@ func TestRailwayDriver(t *testing.T) {
 	assert.Equal(t, "ada@example.com", admin.Email)
 	assert.Equal(t, "Ada Lovelace", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, admin.MFAStatus)
 	// Railway's WorkspaceMember exposes no status/active field.
 	assert.Nil(t, admin.Active)
@@ -56,7 +56,7 @@ func TestRailwayDriver(t *testing.T) {
 	assert.Equal(t, "1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e", member.ExternalID)
 	assert.Equal(t, "grace@example.com", member.Email)
 	assert.Equal(t, []string{"Member"}, member.Roles)
-	assert.False(t, member.IsAdmin)
+	assert.Equal(t, new(false), member.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, member.MFAStatus)
 	assert.Nil(t, member.Active)
 }
@@ -104,17 +104,17 @@ func TestRailwayRecords(t *testing.T) {
 
 	alice := byID["u-alice"]
 	assert.Equal(t, []string{"Admin", "Member"}, alice.Roles)
-	assert.True(t, alice.IsAdmin)
+	assert.Equal(t, new(true), alice.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, alice.MFAStatus)
 	assert.Nil(t, alice.Active)
 
 	bob := byID["u-bob"]
 	assert.Equal(t, []string{"Member"}, bob.Roles)
-	assert.False(t, bob.IsAdmin)
+	assert.Equal(t, new(false), bob.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, bob.MFAStatus)
 
 	carol := byID["u-carol"]
 	assert.Equal(t, []string{"Viewer"}, carol.Roles)
-	assert.False(t, carol.IsAdmin)
+	assert.Equal(t, new(false), carol.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusUnknown, carol.MFAStatus)
 }

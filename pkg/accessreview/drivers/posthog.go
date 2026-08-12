@@ -313,7 +313,7 @@ func posthogAccountRecord(member posthogMember) AccountRecord {
 		Email:       member.User.Email,
 		FullName:    posthogFullName(member.User),
 		Roles:       posthogRoles(member.Level, member.User.RoleAtOrganization),
-		IsAdmin:     posthogIsAdmin(member.Level),
+		IsAdmin:     new(posthogIsAdmin(member.Level)),
 		ExternalID:  member.User.UUID,
 		MFAStatus:   posthogMFAStatus(member.Is2FAEnabled),
 		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

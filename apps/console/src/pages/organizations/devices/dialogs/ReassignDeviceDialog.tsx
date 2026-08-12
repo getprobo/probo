@@ -32,12 +32,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { ReassignDeviceDialog_device$key } from "#/__generated__/core/ReassignDeviceDialog_device.graphql";
 import type { ReassignDeviceDialogMutation } from "#/__generated__/core/ReassignDeviceDialogMutation.graphql";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const reassignDeviceDialogFragment = graphql`
   fragment ReassignDeviceDialog_device on Device {

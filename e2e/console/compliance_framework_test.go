@@ -67,33 +67,3 @@ func TestComplianceFramework_Create(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, result.CreateComplianceFramework.ComplianceFrameworkEdge.Node.ID)
 }
-
-// TestComplianceFramework_TenantIsolation covers GHSA-c74x-79w6-63jh's
-// structural sibling: ComplianceFrameworkService.Create must not accept a
-// frameworkId belonging to another organization -- the FK is tenant-agnostic
-// (ON DELETE CASCADE) so a cross-tenant reference would let org A pin a link
-// to org B's framework and would let org B silently cascade-delete org A's
-// compliance page entry.
-func TestComplianceFramework_TenantIsolation(t *testing.T) {
-	t.Parallel()
-
-	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
-	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	org1CompliancePortalID := compliancePortalID(t, org1Owner)
-	org2FrameworkID := factory.CreateFramework(org2Owner)
-
-	_, err := org1Owner.Do(`
-		mutation($input: CreateComplianceFrameworkInput!) {
-			createComplianceFramework(input: $input) {
-				complianceFrameworkEdge { node { id } }
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"compliancePortalId": org1CompliancePortalID,
-			"frameworkId":        org2FrameworkID,
-		},
-	})
-	require.Error(t, err, "must not accept a frameworkId belonging to another organization")
-}

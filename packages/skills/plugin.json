@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "probo",
+  "version": "0.3.0",
+  "description": "Open-source compliance workflows powered by the Probo MCP API",
+  "author": {
+    "name": "Probo Inc",
+    "email": "hello@probo.com",
+    "url": "https://www.probo.com"
+  },
+  "homepage": "https://github.com/getprobo/probo/tree/main/packages/skills",
+  "repository": "https://github.com/getprobo/probo",
+  "license": "MIT",
+  "keywords": [
+    "probo",
+    "compliance",
+    "grc",
+    "mcp",
+    "agent-skills",
+    "open-source"
+  ]
+}

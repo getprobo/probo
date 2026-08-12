@@ -112,7 +112,7 @@ func (d *CursorDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			FullName:    m.Name,
 			Roles:       cursorRoles(m.Role),
 			Active:      &active,
-			IsAdmin:     cursorIsAdmin(m.Role),
+			IsAdmin:     new(cursorIsAdmin(m.Role)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

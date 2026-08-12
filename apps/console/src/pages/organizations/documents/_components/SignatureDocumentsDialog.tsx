@@ -39,7 +39,6 @@ import { type ReactNode, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { SignatureDocumentsDialogMutation } from "#/__generated__/core/SignatureDocumentsDialogMutation.graphql";
 import type { SignatureDocumentsDialogPeopleFragment$key } from "#/__generated__/core/SignatureDocumentsDialogPeopleFragment.graphql";
@@ -48,6 +47,7 @@ import type { SignatureDocumentsDialogPeopleRefetchQuery } from "#/__generated__
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 type Props = {
   documentIds: string[];

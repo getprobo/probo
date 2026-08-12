@@ -51,6 +51,7 @@ import { useDisplayMode } from "#/lib/displayMode/useDisplayMode";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 
+import type { TopBarMobileNav_compliancePortal$key } from "./__generated__/TopBarMobileNav_compliancePortal.graphql";
 import type { TopBarMobileNav_identity$key } from "./__generated__/TopBarMobileNav_identity.graphql";
 import { LocaleSelect } from "./LocaleSelect";
 import { TOP_BAR_NAV_ITEMS } from "./navItems";
@@ -63,8 +64,17 @@ const topBarMobileNavFragment = graphql`
   }
 `;
 
+const topBarMobileNavCompliancePortalFragment = graphql`
+  fragment TopBarMobileNav_compliancePortal on CompliancePortal {
+    capabilities {
+      rightsRequests
+    }
+  }
+`;
+
 interface TopBarMobileNavProps {
   identityKey: TopBarMobileNav_identity$key | null;
+  compliancePortalKey: TopBarMobileNav_compliancePortal$key;
 }
 
 function isActive(pathname: string, to: string): boolean {
@@ -73,7 +83,7 @@ function isActive(pathname: string, to: string): boolean {
 
 // Burger trigger + right-edge drawer listing the same nav and account actions as
 // the desktop TopBar.
-export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
+export function TopBarMobileNav({ identityKey, compliancePortalKey }: TopBarMobileNavProps) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { openSubscribe, isSubscribed, unsubscribe, isUnsubscribing } = useSubscribeDialog();
@@ -85,6 +95,10 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
   // transform and would break Base UI's modal inert cutout over the trigger.
   const drawerViewportRef = useRef<HTMLDivElement>(null);
   const identity = useFragment(topBarMobileNavFragment, identityKey);
+  const compliancePortal = useFragment(
+    topBarMobileNavCompliancePortalFragment,
+    compliancePortalKey,
+  );
   const localizedPath = useLocalizedPath();
 
   const barSlots = topBar();
@@ -92,6 +106,10 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
   const displayName = identity
     ? (identity.fullName.trim() || identity.email)
     : null;
+
+  const navItems = TOP_BAR_NAV_ITEMS.filter(
+    item => item.to !== "/requests" || compliancePortal.capabilities.rightsRequests,
+  );
 
   const close = () => setOpen(false);
 
@@ -130,7 +148,7 @@ export function TopBarMobileNav({ identityKey }: TopBarMobileNavProps) {
 
         <DrawerBody>
           <nav className="contents">
-            {TOP_BAR_NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const to = localizedPath(item.to);
               return (
                 <ButtonLink

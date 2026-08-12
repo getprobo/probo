@@ -187,7 +187,7 @@ func (d *HerokuDriver) listTeamMembers(ctx context.Context) ([]AccountRecord, er
 			Email:       email,
 			FullName:    fullName,
 			Roles:       roles,
-			IsAdmin:     isAdmin,
+			IsAdmin:     new(isAdmin),
 			MFAStatus:   mfaStatus,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -246,8 +246,8 @@ func (d *HerokuDriver) listPersonalAccounts(ctx context.Context) ([]AccountRecor
 		}
 
 		if i, ok := seen[key]; ok {
-			if rec.IsAdmin {
-				records[i].IsAdmin = true
+			if rec.IsAdmin != nil && *rec.IsAdmin {
+				records[i].IsAdmin = new(true)
 			}
 
 			return
@@ -308,7 +308,7 @@ func herokuPersonalRecord(externalID, email, role string, isAdmin bool) AccountR
 		Email:       email,
 		FullName:    email,
 		Roles:       roles,
-		IsAdmin:     isAdmin,
+		IsAdmin:     new(isAdmin),
 		MFAStatus:   coredata.MFAStatusUnknown,
 		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 		AccountType: coredata.AccessReviewEntryAccountTypeUser,

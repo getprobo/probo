@@ -56,6 +56,7 @@ export async function execute(
 					cookiePolicyUrl
 					consentExpiryDays
 					showBranding
+					capabilities { resourceReporting }
 					defaultLanguage
 					createdAt
 					updatedAt

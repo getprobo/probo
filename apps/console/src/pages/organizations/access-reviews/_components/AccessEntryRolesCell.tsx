@@ -19,14 +19,14 @@
 // SOFTWARE.
 
 import { Badge, Td } from "@probo/ui";
-import * as Popover from "@radix-ui/react-popover";
 import { graphql, useFragment } from "react-relay";
 
 import type { AccessEntryRolesCell_accessEntry$key } from "#/__generated__/core/AccessEntryRolesCell_accessEntry.graphql";
 
+import { AccessEntryExtraRolesPopover } from "./AccessEntryExtraRolesPopover";
 import { NotAvailable } from "./accessReviewHelpers";
 
-const VISIBLE_ROLE_COUNT = 3;
+const VISIBLE_ROLE_COUNT = 2;
 
 const accessEntryRolesCellFragment = graphql`
   fragment AccessEntryRolesCell_accessEntry on AccessReviewEntry {
@@ -44,7 +44,7 @@ export function AccessEntryRolesCell({ accessEntryKey }: Props) {
 
   if (roles.length === 0) {
     return (
-      <Td className="max-w-xs">
+      <Td className="max-w-0 py-2.5">
         <NotAvailable />
       </Td>
     );
@@ -52,41 +52,36 @@ export function AccessEntryRolesCell({ accessEntryKey }: Props) {
 
   const visibleRoles = roles.slice(0, VISIBLE_ROLE_COUNT);
   const hiddenRoles = roles.slice(VISIBLE_ROLE_COUNT);
+  const primaryRole = visibleRoles[0];
+  const secondaryRoles = visibleRoles.slice(1);
 
   return (
-    <Td noLink className="max-w-xs">
-      <div className="flex flex-wrap gap-1">
-        {visibleRoles.map((role, index) => (
-          <Badge key={`${index}-${role}`} variant="neutral" className="text-xs">
+    <Td noLink className="max-w-0 py-2.5">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="min-w-0 truncate text-sm" title={primaryRole}>
+          {primaryRole}
+        </span>
+        {secondaryRoles.map((role, index) => (
+          <Badge
+            key={`${index}-${role}`}
+            variant="neutral"
+            className="shrink-0 text-xs"
+            title={role}
+          >
             {role}
           </Badge>
         ))}
         {hiddenRoles.length > 0 && (
-          <Popover.Root>
-            <Popover.Trigger asChild>
-              <button type="button" className="inline-flex">
-                <Badge variant="neutral" className="text-xs cursor-pointer">
-                  +
-                  {hiddenRoles.length}
-                </Badge>
-              </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content
-                className="z-50 rounded-md border bg-level-0 p-3 shadow-md max-w-sm"
-                sideOffset={4}
-                align="start"
-              >
-                <div className="flex flex-wrap gap-1">
-                  {hiddenRoles.map((role, index) => (
-                    <Badge key={`${index}-${role}`} variant="neutral" className="text-xs">
-                      {role}
-                    </Badge>
-                  ))}
-                </div>
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
+          <AccessEntryExtraRolesPopover
+            roles={hiddenRoles}
+            className="inline-flex shrink-0"
+            trigger={(
+              <Badge variant="neutral" className="cursor-pointer text-xs">
+                +
+                {hiddenRoles.length}
+              </Badge>
+            )}
+          />
         )}
       </div>
     </Td>

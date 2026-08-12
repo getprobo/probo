@@ -373,6 +373,17 @@ func (es *ElectronicSignature) ComputeSeal(version int) (string, error) {
 	}
 }
 
+// SealSignedAt renders SignedAt exactly as the seal hashes it. Anything
+// displaying the timestamp to a verifier must use this, or the seal cannot be
+// recomputed from what they were shown.
+func (es *ElectronicSignature) SealSignedAt() string {
+	if es.SignedAt == nil {
+		return ""
+	}
+
+	return es.SignedAt.UTC().Truncate(time.Microsecond).Format(time.RFC3339Nano)
+}
+
 func (es *ElectronicSignature) computeSealV1() (string, error) {
 	if es.SignedAt == nil {
 		return "", fmt.Errorf("signed_at must not be nil")
@@ -389,7 +400,7 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 		ref.UnrefOrZero(es.SignerIPAddress),
 		ref.UnrefOrZero(es.SignerUserAgent),
 		es.ConsentText,
-		es.SignedAt.UTC().Truncate(time.Microsecond).Format(time.RFC3339Nano),
+		es.SealSignedAt(),
 	}
 
 	for i, f := range fields {

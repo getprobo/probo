@@ -35,6 +35,9 @@ import { pdfPreview } from "./variants";
 
 // Bundle the pdf.js worker with the app (via Vite's `?url`) instead of loading
 // it from a CDN, so the viewer works under a strict trust-center CSP.
+// Resolve `pdfjs-dist` only via react-pdf's dependency — a direct newer
+// pdfjs-dist makes Vite emit a mismatched worker and Document fails with
+// only a silent warning ("API version does not match the Worker version").
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 // Fit-to-width at 100% zoom: mobile keeps a tight phone gutter; desktop pages
@@ -185,6 +188,9 @@ export function PdfPreview({ file, scale, ref, onNumPages, onVisiblePageChange }
           setNumPages(document.numPages);
           onNumPages(document.numPages);
           onVisiblePageChange(1);
+        }}
+        onLoadError={(error) => {
+          console.error("Failed to load PDF document", error);
         }}
       >
         {pageWidth != null

@@ -330,7 +330,7 @@ func TestMCP_UpdateCompliancePortalCatalogVisibilityReturnsOpaqueError(t *testin
 		"compliance_portal_visibility": "PUBLIC",
 	})
 
-	assert.Equal(t, "internal server error", errorText)
+	assert.Contains(t, errorText, "resource not found")
 }
 
 func TestMCP_AddCompliancePortalReference(t *testing.T) {

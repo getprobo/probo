@@ -44,21 +44,7 @@ export interface Category {
   posthog_consent: boolean;
 }
 
-export type Regulation =
-  | "GDPR"
-  | "UK_GDPR"
-  | "FADP"
-  | "CCPA"
-  | "PIPEDA"
-  | "LGPD"
-  | "LFPDPPP"
-  | "POPIA"
-  | "PDPA"
-  | "PIPL"
-  | "PIPA"
-  | "APPI"
-  | "DPDP"
-  | "PDPL";
+export type Regulation = string;
 
 export type Presentation = "OPT_IN" | "OPT_OUT" | "NOTICE";
 
@@ -104,6 +90,7 @@ export interface BannerConfig {
   regulation: Regulation | null;
   layout: BannerLayout;
   show_branding: boolean;
+  resource_reporting_enabled: boolean;
   categories: Category[];
   texts: BannerTexts;
 }

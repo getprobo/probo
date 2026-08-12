@@ -32,11 +32,11 @@ import {
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { z } from "zod";
 
 import type { EditServiceDialog_service$key } from "#/__generated__/core/EditServiceDialog_service.graphql";
 import type { EditServiceDialogUpdateMutation } from "#/__generated__/core/EditServiceDialogUpdateMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 type Props = {
   serviceKey: EditServiceDialog_service$key;

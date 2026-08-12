@@ -69,6 +69,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 		CookiePolicyURL:   "https://worker-test.example.com/cookies",
 		ConsentExpiryDays: 180,
 		ShowBranding:      false,
+		Capabilities:      coredata.DefaultCookieBannerCapabilities(),
 		DefaultLanguage:   "en",
 		CreatedAt:         now,
 		UpdatedAt:         now,

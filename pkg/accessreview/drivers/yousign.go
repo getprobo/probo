@@ -96,7 +96,7 @@ func (d *YousignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Roles:       yousignRoles(u.Role),
 				JobTitle:    strings.TrimSpace(u.JobTitle),
 				Active:      &active,
-				IsAdmin:     yousignIsAdmin(u.Role),
+				IsAdmin:     new(yousignIsAdmin(u.Role)),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

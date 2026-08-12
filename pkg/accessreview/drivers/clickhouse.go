@@ -100,7 +100,7 @@ func (d *ClickHouseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 			Email:       email,
 			FullName:    clickhouseFullName(m, email),
 			Roles:       clickhouseRoles(m),
-			IsAdmin:     clickhouseIsAdmin(m),
+			IsAdmin:     new(clickhouseIsAdmin(m)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

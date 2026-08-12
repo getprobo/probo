@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
@@ -174,6 +175,20 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		return types.NewCompliancePortalFile(portalFile), nil
 
+	case coredata.MailingListUpdateEntityType:
+		update, err := r.mailman.GetSentMailingListUpdate(ctx, scope, compliancePortal.MailingListID, id)
+		if err != nil {
+			if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot get mailing list update", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return types.NewMailingListUpdate(update), nil
+
 	default:
 		return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 	}
@@ -248,13 +263,17 @@ func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after 
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
+	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
+	if !compliancePage.Capabilities.RightsRequests {
+		return nil, gqlutils.NotFoundf(ctx, "rights requests are not available on this compliance portal")
+	}
+
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		emptyPage := page.NewPage([]*coredata.RightsRequest{}, cursor)
 		return types.NewRightsRequestConnection(emptyPage), nil
 	}
 
-	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 
 	result, err := r.visitor.ListRightsRequestsForCompliancePortalIDAndContact(

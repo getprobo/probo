@@ -166,7 +166,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			FullName:    fullName,
 			Roles:       roles,
 			Active:      new(membership.State == "active"),
-			IsAdmin:     membership.Role == "admin",
+			IsAdmin:     new(membership.Role == "admin"),
 			MFAStatus:   mfaStatus,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: accountType,

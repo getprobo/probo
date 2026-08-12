@@ -98,7 +98,7 @@ func (d *IncidentIODriver) ListAccounts(ctx context.Context) ([]AccountRecord, e
 				Email:       email,
 				FullName:    incidentIOFullName(u, email),
 				Roles:       incidentIORoles(u),
-				IsAdmin:     incidentIOIsAdmin(u),
+				IsAdmin:     new(incidentIOIsAdmin(u)),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

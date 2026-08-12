@@ -32,10 +32,10 @@ import {
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
-import { z } from "zod";
 
 import type { EditBusinessAssociateAgreementDialogMutation } from "#/__generated__/core/EditBusinessAssociateAgreementDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const updateBusinessAssociateAgreementMutation = graphql`
   mutation EditBusinessAssociateAgreementDialogMutation(

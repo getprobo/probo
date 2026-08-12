@@ -21,7 +21,6 @@
     "switchToLightMode": "Zum hellen Modus wechseln"
   },
   "common": {
-    "cancel": "Abbrechen",
     "error": "Etwas ist schiefgelaufen",
     "previousPage": "Vorherige Seite",
     "nextPage": "Nächste Seite",
@@ -83,7 +82,9 @@
     },
     "actions": {
       "backToCompliancePortal": "Zurück zum Compliance-Portal",
-      "tryAgain": "Erneut versuchen"
+      "tryAgain": "Erneut versuchen",
+      "contactSupport": "Support kontaktieren",
+      "requestAccess": "Zugang anfordern"
     },
     "inline": {
       "message": "Inhalt kann nicht geladen werden",

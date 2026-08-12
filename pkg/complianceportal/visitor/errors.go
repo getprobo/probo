@@ -40,4 +40,5 @@ var (
 	ErrPortalFileNotVisible    = errors.New("portal file not visible")
 	ErrPortalReferenceNotFound = errors.New("portal reference not found")
 	ErrNoAccessTargets         = errors.New("at least one document, report, or file id is required")
+	ErrRightsRequestsDisabled  = errors.New("rights requests are disabled on this compliance portal")
 )

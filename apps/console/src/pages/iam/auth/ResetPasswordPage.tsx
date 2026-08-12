@@ -25,10 +25,10 @@ import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { ResetPasswordPageMutation } from "#/__generated__/iam/ResetPasswordPageMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const resetPasswordMutation = graphql`
   mutation ResetPasswordPageMutation($input: ResetPasswordInput!) {

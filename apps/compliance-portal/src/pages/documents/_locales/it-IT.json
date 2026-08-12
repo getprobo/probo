@@ -47,7 +47,8 @@
     "downloadToView": "Questo tipo di file non può essere visualizzato in anteprima qui. Lo scarichi per consultarlo.",
     "locked": {
       "title": "Accesso necessario",
-      "description": "Non ha ancora accesso a questo documento."
+      "description": "Non ha ancora accesso a questo documento.",
+      "signNda": "Leggi e firma l'NDA"
     }
   }
 }

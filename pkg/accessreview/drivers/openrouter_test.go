@@ -48,7 +48,7 @@ func TestOpenRouterDriver(t *testing.T) {
 	assert.Equal(t, "ada.admin@example.com", admin.Email)
 	assert.Equal(t, "Ada Admin", admin.FullName)
 	assert.Equal(t, []string{"Admin"}, admin.Roles)
-	assert.True(t, admin.IsAdmin)
+	assert.Equal(t, new(true), admin.IsAdmin)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, admin.AccountType)
 	// The members endpoint carries no account-status field, so Active stays nil.
 	assert.Nil(t, admin.Active)
@@ -59,9 +59,37 @@ func TestOpenRouterRoles(t *testing.T) {
 
 	assert.Equal(t, []string{"Admin"}, openRouterRoles("org:admin"))
 	assert.Equal(t, []string{"Member"}, openRouterRoles("org:member"))
-	// An unknown future role is preserved verbatim; an empty role yields none.
+	// An unknown future role is preserved for display; an empty role yields none.
 	assert.Equal(t, []string{"org:billing"}, openRouterRoles("org:billing"))
+	assert.Equal(t, []string{"org:billing"}, openRouterRoles(" org:billing "))
 	assert.Equal(t, []string{}, openRouterRoles(""))
+}
+
+func TestOpenRouterIsAdmin(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		role     string
+		expected *bool
+	}{
+		{name: "admin", role: "org:admin", expected: new(true)},
+		{name: "member", role: "org:member", expected: new(false)},
+		{name: "trimmed admin", role: " org:admin ", expected: new(true)},
+		{name: "future role", role: "org:billing", expected: nil},
+		{name: "empty role", role: "", expected: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.expected, openRouterIsAdmin(tt.role))
+			},
+		)
+	}
 }
 
 func TestOpenRouterFullName(t *testing.T) {

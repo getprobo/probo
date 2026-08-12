@@ -24,11 +24,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { z } from "zod";
 
 import type { DocumentTitleFormFragment$key } from "#/__generated__/core/DocumentTitleFormFragment.graphql";
 import type { DocumentTitleFormMutation } from "#/__generated__/core/DocumentTitleFormMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { z } from "#/lib/zod";
 
 const updateDocumentTitleMutation = graphql`
   mutation DocumentTitleFormMutation($input: UpdateDocumentInput!) {

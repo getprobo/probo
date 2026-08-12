@@ -114,7 +114,7 @@ func (d *RenderDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			FullName:    renderFullName(member),
 			Roles:       renderRoles(member.Role),
 			Active:      renderActive(member.Status),
-			IsAdmin:     renderIsAdmin(member.Role),
+			IsAdmin:     new(renderIsAdmin(member.Role)),
 			MFAStatus:   renderMFAStatus(member.MFAEnabled),
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

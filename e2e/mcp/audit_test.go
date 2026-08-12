@@ -44,8 +44,9 @@ func TestMCP_Audit_CRUD(t *testing.T) {
 		} `json:"audit"`
 	}
 	mc.CallToolInto("addAudit", map[string]any{
-		"frameworkId": frameworkID,
-		"name":        factory.SafeName("Audit"),
+		"organization_id": orgID,
+		"framework_id":    frameworkID,
+		"name":            factory.SafeName("Audit"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Audit.ID)
 
@@ -80,13 +81,13 @@ func TestMCP_Audit_CRUD(t *testing.T) {
 		} `json:"audits"`
 	}
 	mc.CallToolInto("listAudits", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Audits)
 
 	// Delete
 	var deleteResult struct {
-		DeletedAuditID string `json:"deletedAuditId"`
+		DeletedAuditID string `json:"deleted_audit_id"`
 	}
 	mc.CallToolInto("deleteAudit", map[string]any{
 		"id": addResult.Audit.ID,
@@ -106,10 +107,10 @@ func TestMCP_AuditLog(t *testing.T) {
 	var listResult struct {
 		AuditLogEntries []struct {
 			ID string `json:"id"`
-		} `json:"auditLogEntries"`
+		} `json:"audit_log_entries"`
 	}
 	mc.CallToolInto("listAuditLogEntries", map[string]any{
-		"organizationId": orgID,
+		"organization_id": orgID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.AuditLogEntries)
 }

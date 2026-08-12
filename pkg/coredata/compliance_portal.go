@@ -37,25 +37,26 @@ import (
 
 type (
 	CompliancePortal struct {
-		ID                           gid.GID              `db:"id"`
-		OrganizationID               gid.GID              `db:"organization_id"`
-		TenantID                     gid.TenantID         `db:"tenant_id"`
-		Active                       bool                 `db:"active"`
-		Slug                         string               `db:"slug"`
-		SearchEngineIndexing         SearchEngineIndexing `db:"search_engine_indexing"`
-		MailingListID                *gid.GID             `db:"mailing_list_id"`
-		LogoFileID                   *gid.GID             `db:"logo_file_id"`
-		DarkLogoFileID               *gid.GID             `db:"dark_logo_file_id"`
-		NonDisclosureAgreementFileID *gid.GID             `db:"non_disclosure_agreement_file_id"`
-		DefaultDomainID              *gid.GID             `db:"default_domain_id"`
-		CustomDomainID               *gid.GID             `db:"custom_domain_id"`
-		EntityName                   string               `db:"entity_name"`
-		Description                  *string              `db:"description"`
-		WebsiteURL                   *string              `db:"website_url"`
-		Email                        *string              `db:"email"`
-		HeadquarterAddress           *string              `db:"headquarter_address"`
-		CreatedAt                    time.Time            `db:"created_at"`
-		UpdatedAt                    time.Time            `db:"updated_at"`
+		ID                           gid.GID                      `db:"id"`
+		OrganizationID               gid.GID                      `db:"organization_id"`
+		TenantID                     gid.TenantID                 `db:"tenant_id"`
+		Active                       bool                         `db:"active"`
+		Slug                         string                       `db:"slug"`
+		SearchEngineIndexing         SearchEngineIndexing         `db:"search_engine_indexing"`
+		Capabilities                 CompliancePortalCapabilities `db:"capabilities"`
+		MailingListID                gid.GID                      `db:"mailing_list_id"`
+		LogoFileID                   *gid.GID                     `db:"logo_file_id"`
+		DarkLogoFileID               *gid.GID                     `db:"dark_logo_file_id"`
+		NonDisclosureAgreementFileID *gid.GID                     `db:"non_disclosure_agreement_file_id"`
+		DefaultDomainID              *gid.GID                     `db:"default_domain_id"`
+		CustomDomainID               *gid.GID                     `db:"custom_domain_id"`
+		EntityName                   string                       `db:"entity_name"`
+		Description                  *string                      `db:"description"`
+		WebsiteURL                   *string                      `db:"website_url"`
+		Email                        *string                      `db:"email"`
+		HeadquarterAddress           *string                      `db:"headquarter_address"`
+		CreatedAt                    time.Time                    `db:"created_at"`
+		UpdatedAt                    time.Time                    `db:"updated_at"`
 	}
 
 	CompliancePortals []*CompliancePortal
@@ -126,6 +127,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -185,6 +187,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -245,6 +248,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -332,6 +336,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -391,6 +396,7 @@ SELECT
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -446,6 +452,7 @@ INSERT INTO compliance_portals (
 	active,
 	slug,
 	search_engine_indexing,
+	capabilities,
 	non_disclosure_agreement_file_id,
 	default_domain_id,
 	custom_domain_id,
@@ -466,6 +473,7 @@ INSERT INTO compliance_portals (
 	@active,
 	@slug,
 	@search_engine_indexing,
+	@capabilities,
 	@non_disclosure_agreement_file_id,
 	@default_domain_id,
 	@custom_domain_id,
@@ -489,6 +497,7 @@ INSERT INTO compliance_portals (
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
+		"capabilities":                     tc.Capabilities,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,
@@ -526,6 +535,7 @@ SET
 	active = @active,
 	slug = @slug,
 	search_engine_indexing = @search_engine_indexing,
+	capabilities = @capabilities,
 	logo_file_id = @logo_file_id,
 	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
@@ -551,6 +561,7 @@ WHERE
 		"active":                           tc.Active,
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
+		"capabilities":                     tc.Capabilities,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"default_domain_id":                tc.DefaultDomainID,
 		"custom_domain_id":                 tc.CustomDomainID,

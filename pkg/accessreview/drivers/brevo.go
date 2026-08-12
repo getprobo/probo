@@ -119,7 +119,7 @@ func (d *BrevoDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			FullName:    email,
 			Roles:       brevoRoles(u.FeatureAccess),
 			Active:      activeFromStatus(u.Status),
-			IsAdmin:     brevoIsOwner(u.IsOwner),
+			IsAdmin:     new(brevoIsOwner(u.IsOwner)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,

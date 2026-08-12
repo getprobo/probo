@@ -50,7 +50,6 @@ import {
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
-import { z } from "zod";
 
 import type { FindingDetailsPageDeleteMutation } from "#/__generated__/core/FindingDetailsPageDeleteMutation.graphql";
 import type { FindingDetailsPageQuery } from "#/__generated__/core/FindingDetailsPageQuery.graphql";
@@ -60,6 +59,7 @@ import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { RiskSelectField } from "#/components/form/RiskSelectField";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { z } from "#/lib/zod";
 
 import { FindingsConnectionKey } from "./FindingsPage";
 

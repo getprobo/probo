@@ -25,6 +25,12 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+func NewCookieBannerCapabilities(c coredata.CookieBannerCapabilities) *CookieBannerCapabilities {
+	return &CookieBannerCapabilities{
+		ResourceReporting: c.ResourceReporting,
+	}
+}
+
 func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 	return &CookieBanner{
 		ID:                b.ID,
@@ -36,6 +42,7 @@ func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 		CookiePolicyURL:   b.CookiePolicyURL,
 		ConsentExpiryDays: b.ConsentExpiryDays,
 		ShowBranding:      b.ShowBranding,
+		Capabilities:      NewCookieBannerCapabilities(b.Capabilities),
 		DefaultLanguage:   b.DefaultLanguage,
 		CreatedAt:         b.CreatedAt,
 		UpdatedAt:         b.UpdatedAt,

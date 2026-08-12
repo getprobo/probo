@@ -19,10 +19,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           go: "false"
@@ -67,10 +67,10 @@ jobs:
           - { goos: openbsd, goarch: amd64 }
           - { goos: openbsd, goarch: arm64 }
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -126,10 +126,10 @@ jobs:
           - { goos: freebsd, goarch: amd64 }
           - { goos: freebsd, goarch: arm64 }
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -165,10 +165,10 @@ jobs:
             platform: "linux/arm64"
             runner: "4cpu-linux-arm64"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5" # v4.1.0
-      - uses: "docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee" # v4.2.0
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - uses: "docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c" # v4.2.0
+      - uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4.6.0
         with:
           registry: artifact.probo.inc
           username: ${{ secrets.HARBOR_USERNAME }}
@@ -213,10 +213,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" # v0.24.0
         with:
           path: ./
@@ -236,10 +236,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -274,10 +274,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -295,10 +295,10 @@ jobs:
       contents: "read"
       pull-requests: "write"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -352,14 +352,16 @@ jobs:
       contents: "read"
       pull-requests: "write"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
         with:
           go: "false"
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+      - name: "Validate @probo/skills"
+        run: npm --workspace @probo/skills run validate
       - name: "Generate Relay artifacts"
         run: make relay
       - name: "Run eslint"
@@ -381,10 +383,10 @@ jobs:
       contents: "read"
       pull-requests: "write"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a" # v2.4.0
         with:
           swift-version: "6.0"
@@ -419,10 +421,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - name: "Install shellcheck and shfmt"
         env:
           SHELLCHECK_VERSION: "v0.11.0"
@@ -448,10 +450,10 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
       - name: "Create placeholder dist files"
         run: |
@@ -462,6 +464,8 @@ jobs:
       - run: "make test"
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
+      - name: "Race-test e2e harness packages"
+        run: "CGO_ENABLED=1 go test -race -count=1 ./e2e/internal/..."
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: "always()"
@@ -481,21 +485,53 @@ jobs:
           retention-days: 30
 
   test-e2e:
-    name: "test-e2e"
+    name: "${{ matrix.name }}"
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    env:
-      COMPOSE_FILE: "compose.yaml:compose.github-action.yaml"
-      DOCKER_COMPOSE_FLAGS: "-f compose.github-action.yaml"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "test-e2e"
+            build_target: "bin/probod"
+            run_target: "test-e2e-run"
+            binary: "bin/probod"
+            junit_file: "junit-e2e.xml"
+            artifact_name: "junit-e2e-results"
+            coverage: false
+          - name: "test-e2e-coverage"
+            build_target: "bin/probod-coverage"
+            run_target: "test-e2e-coverage-run"
+            binary: "bin/probod-coverage"
+            junit_file: "junit-e2e-coverage.xml"
+            artifact_name: "junit-e2e-coverage-results"
+            coverage: true
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
+      - name: "Configure Docker image source"
+        # Pull requests from forks don't get repository secrets, so
+        # HARBOR_USERNAME/HARBOR_PASSWORD are unavailable and logging into
+        # the artifact.probo.inc mirror would fail. Fall back to pulling
+        # images straight from their origin registries in that case.
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "Fork pull request: pulling images from their origin registries, not the artifact.probo.inc mirror"
+            echo "USE_HARBOR_MIRROR=false" >> "$GITHUB_ENV"
+            echo "COMPOSE_FILE=compose.yaml" >> "$GITHUB_ENV"
+            echo "DOCKER_COMPOSE_FLAGS=" >> "$GITHUB_ENV"
+          else
+            echo "USE_HARBOR_MIRROR=true" >> "$GITHUB_ENV"
+            echo "COMPOSE_FILE=compose.yaml:compose.github-action.yaml" >> "$GITHUB_ENV"
+            echo "DOCKER_COMPOSE_FLAGS=-f compose.github-action.yaml" >> "$GITHUB_ENV"
+          fi
       - uses: "docker/setup-compose-action@4eb059ff7f16592f9c84d5ca339c53cb7c5064e2" # v2.3.0
-      - uses: "docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee" # v4.2.0
+      - uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4.6.0
+        if: "env.USE_HARBOR_MIRROR == 'true'"
         with:
           registry: artifact.probo.inc
           username: ${{ secrets.HARBOR_USERNAME }}
@@ -509,7 +545,7 @@ jobs:
         uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
         with:
           path: /tmp/docker-images
-          key: "docker-images-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
+          key: "docker-images-${{ env.USE_HARBOR_MIRROR }}-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
       - name: "Load cached Docker images"
         if: steps.docker-cache.outputs.cache-hit == 'true'
         run: "docker load -i /tmp/docker-images/images.tar"
@@ -520,23 +556,48 @@ jobs:
           mkdir -p /tmp/docker-images
           docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
       - name: "Build probod"
-        run: "make bin/probod"
+        run: "make ${{ matrix.build_target }}"
       - name: "Start stack"
         run: "make stack-up"
       - run: "make stack-ps"
       - name: "Run e2e tests"
         env:
-          PROBO_E2E_BINARY: "${{ github.workspace }}/bin/probod"
+          PROBO_E2E_ARTIFACT_DIR: "${{ github.workspace }}/e2e-artifacts"
           GOTESTSUM_FORMAT: "testname"
-          GOTESTSUM_JUNITFILE: "junit-e2e.xml"
+          GOTESTSUM_JUNITFILE: "${{ matrix.junit_file }}"
         run: |
           PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
-            CGO_ENABLED=1 go tool gotestsum -- -race -cover -coverprofile=coverage.out -count=1 ./e2e/console/...
+            make "${{ matrix.run_target }}" \
+              E2E_BINARY="${{ github.workspace }}/${{ matrix.binary }}" \
+              E2E_TEST_FLAGS="-parallel=8"
+      - name: "Report e2e coverage"
+        if: "${{ always() && matrix.coverage }}"
+        run: |
+          if [ -f coverage-e2e.txt ]; then
+            full_coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e.txt)"
+            core_coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e-core.txt)"
+            {
+              echo "### E2E coverage"
+              echo "- Full probod: ${full_coverage}"
+              echo "- Core product: ${core_coverage}"
+            } >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "### E2E application coverage unavailable" >> "${GITHUB_STEP_SUMMARY}"
+          fi
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: "always()"
         continue-on-error: true
         with:
-          name: "junit-e2e-results"
-          path: "junit-e2e.xml"
+          name: "${{ matrix.artifact_name }}"
+          path: |
+            ${{ matrix.junit_file }}
+            e2e-artifacts
+            coverage-e2e.out
+            coverage-e2e.txt
+            coverage-e2e.html
+            coverage-e2e-core.out
+            coverage-e2e-core.txt
+            coverage-e2e-core.html
+            coverage-e2e-packages.txt
           retention-days: 30
