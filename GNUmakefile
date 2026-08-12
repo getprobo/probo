@@ -12,6 +12,7 @@ MKCERT ?=	mkcert
 MKDIR ?=	mkdir -p
 NPM ?=	npm
 NPX ?=	npx
+NODE ?=	node
 OPENSSL ?=	openssl
 AUTOMERGE_BATTERY_OUTPUT ?=	$(CURDIR)/.cache/automerge-battery.json
 AUTOMERGE_BATTERY_FIXTURES ?=	$(CURDIR)/.cache/automerge-battery-fixtures
@@ -272,6 +273,10 @@ test-automerge-official-fixtures: ## Replay official benchmark-battery documents
 	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
 		$(GO_BASE) test -count=1 -run '^TestOfficialBenchmarkBatteryFixtures$$' \
 		./pkg/automerge
+
+.PHONY: generate-automerge-collaboration-fixtures
+generate-automerge-collaboration-fixtures: ## Regenerate automerge-repo protocol fixtures from the pinned JS packages
+	$(NODE) packages/automerge-conformance/generate-collaboration-fixtures.mjs
 
 .PHONY: benchmark-prosemirror
 benchmark-prosemirror: ## Benchmark Go rendering and the frontend ProseMirror bridge
