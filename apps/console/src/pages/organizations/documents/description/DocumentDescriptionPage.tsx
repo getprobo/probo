@@ -20,14 +20,17 @@
 
 import { formatError } from "@probo/helpers";
 import {
-  createRichEditorAutomergeDocument,
   RichEditor,
   supportsRichEditorCollaboration,
   useToast,
 } from "@probo/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
+import {
+  type PreloadedQuery,
+  useMutation,
+  usePreloadedQuery,
+} from "react-relay";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
@@ -36,21 +39,24 @@ import type { DocumentDescriptionPage_updateContentMutation } from "#/__generate
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 
 import {
-  type AutomergeDocumentHandle,
-  connectAutomergeDocument,
-} from "./_lib/AutomergeDocumentHandle";
+  connectRepoDocument,
+  type RepoCollaborationHandle,
+} from "./_lib/connectRepoDocument";
 
 const autoSaveIntervalMs = 1000;
 
 type CollaborationState = {
   versionID: string;
-  handle?: AutomergeDocumentHandle;
+  handle?: RepoCollaborationHandle;
   failed?: boolean;
-  reconnecting?: boolean;
 };
 
 export const documentDescriptionPageQuery = graphql`
-  query DocumentDescriptionPageQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
+  query DocumentDescriptionPageQuery(
+    $documentId: ID!
+    $versionId: ID!
+    $versionSpecified: Boolean!
+  ) {
     # We use this on /documents/:documentId/versions/:versionId/description
     version: node(id: $versionId) @include(if: $versionSpecified) {
       __typename
@@ -68,7 +74,10 @@ export const documentDescriptionPageQuery = graphql`
         writeMode
         canUpdate: permission(action: "core:document:update")
         # We use this on /documents/:documentId/description
-        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
+        lastVersion: versions(
+          first: 1
+          orderBy: { field: CREATED_AT, direction: DESC }
+        ) @skip(if: $versionSpecified) {
           edges {
             node {
               id
@@ -83,7 +92,9 @@ export const documentDescriptionPageQuery = graphql`
 `;
 
 const updateContentMutation = graphql`
-  mutation DocumentDescriptionPage_updateContentMutation($input: UpdateDocumentInput!) {
+  mutation DocumentDescriptionPage_updateContentMutation(
+    $input: UpdateDocumentInput!
+  ) {
     updateDocument(input: $input) {
       document {
         id
@@ -114,7 +125,10 @@ export function DocumentDescriptionPage(props: {
     documentDescriptionPageQuery,
     queryRef,
   );
-  if (document.__typename !== "Document" || (version && version.__typename !== "DocumentVersion")) {
+  if (
+    document.__typename !== "Document" ||
+    (version && version.__typename !== "DocumentVersion")
+  ) {
     throw new Error("invalid type for node");
   }
 
@@ -124,137 +138,124 @@ export function DocumentDescriptionPage(props: {
     throw new Error("Document version not found");
   }
 
-  const [updateContent] = useMutation<DocumentDescriptionPage_updateContentMutation>(updateContentMutation);
+  const [updateContent] =
+    useMutation<DocumentDescriptionPage_updateContentMutation>(
+      updateContentMutation,
+    );
 
   const documentId = document.id;
   const wasDraft = currentVersion.status === "DRAFT";
 
   const handleUpdate = useDebounceCallback(
-    useCallback((content: string) => {
-      updateContent({
-        variables: {
-          input: {
-            id: documentId,
-            content,
+    useCallback(
+      (content: string) => {
+        updateContent({
+          variables: {
+            input: {
+              id: documentId,
+              content,
+            },
           },
-        },
-        onCompleted: (data, errors) => {
-          if (errors?.length) {
+          onCompleted: (data, errors) => {
+            if (errors?.length) {
+              toast({
+                title: t("documentDescriptionPage.errors.title"),
+                description: formatError(
+                  t("documentDescriptionPage.errors.save"),
+                  errors,
+                ),
+                variant: "error",
+              });
+              return;
+            }
+
+            const draftReturned = !!data.updateDocument.documentVersion;
+            if (wasDraft !== draftReturned) {
+              onDocumentUpdated();
+            }
+
+            toast({
+              title: t("documentDescriptionPage.messages.successTitle"),
+              description: t("documentDescriptionPage.messages.saved"),
+              variant: "success",
+            });
+          },
+          onError: (error) => {
             toast({
               title: t("documentDescriptionPage.errors.title"),
-              description: formatError(t("documentDescriptionPage.errors.save"), errors),
+              description:
+                error.message ?? t("documentDescriptionPage.errors.save"),
               variant: "error",
             });
-            return;
-          }
-
-          const draftReturned = !!data.updateDocument.documentVersion;
-          if (wasDraft !== draftReturned) {
-            onDocumentUpdated();
-          }
-
-          toast({
-            title: t("documentDescriptionPage.messages.successTitle"),
-            description: t("documentDescriptionPage.messages.saved"),
-            variant: "success",
-          });
-        },
-        onError: (error) => {
-          toast({
-            title: t("documentDescriptionPage.errors.title"),
-            description: error.message ?? t("documentDescriptionPage.errors.save"),
-            variant: "error",
-          });
-        },
-      });
-    }, [documentId, wasDraft, updateContent, toast, t, onDocumentUpdated]),
+          },
+        });
+      },
+      [documentId, wasDraft, updateContent, toast, t, onDocumentUpdated],
+    ),
     autoSaveIntervalMs,
   );
 
-  const canEdit = isEditable
-    && document.canUpdate
-    && document.status !== "ARCHIVED"
-    && document.writeMode !== "GENERATED";
-  const collaborationSupported = canEdit
-    && supportsRichEditorCollaboration(currentVersion.content);
+  const canEdit =
+    isEditable &&
+    document.canUpdate &&
+    document.status !== "ARCHIVED" &&
+    document.writeMode !== "GENERATED";
+  const collaborationSupported =
+    canEdit && supportsRichEditorCollaboration(currentVersion.content);
   const [collaboration, setCollaboration] = useState<CollaborationState>();
 
   useEffect(() => {
     if (!collaborationSupported) return;
 
     let cancelled = false;
-    let activeHandle: AutomergeDocumentHandle | undefined;
+    let activeHandle: RepoCollaborationHandle | undefined;
 
-    void connectAutomergeDocument(
-      currentVersion.id,
-      content => createRichEditorAutomergeDocument(content),
-      (connected) => {
+    connectRepoDocument(currentVersion.id)
+      .then((handle) => {
+        if (cancelled) {
+          handle.close();
+          return;
+        }
+
+        activeHandle = handle;
+        setCollaboration({
+          versionID: currentVersion.id,
+          handle,
+        });
+      })
+      .catch((error) => {
         if (cancelled) return;
 
         setCollaboration({
           versionID: currentVersion.id,
-          handle: activeHandle,
-          reconnecting: !connected,
+          failed: true,
         });
-        if (!connected) {
-          toast({
-            title: t("documentDescriptionPage.errors.title"),
-            description: t("documentDescriptionPage.errors.save"),
-            variant: "error",
-          });
-        }
-      },
-    ).then((handle) => {
-      if (cancelled) {
-        handle.close();
-        return;
-      }
-
-      activeHandle = handle;
-      setCollaboration({
-        versionID: currentVersion.id,
-        handle,
+        toast({
+          title: t("documentDescriptionPage.errors.title"),
+          description:
+            error instanceof Error
+              ? error.message
+              : t("documentDescriptionPage.errors.save"),
+          variant: "error",
+        });
       });
-    }).catch((error) => {
-      if (cancelled) return;
-
-      setCollaboration({
-        versionID: currentVersion.id,
-        failed: true,
-      });
-      toast({
-        title: t("documentDescriptionPage.errors.title"),
-        description: error instanceof Error
-          ? error.message
-          : t("documentDescriptionPage.errors.save"),
-        variant: "error",
-      });
-    });
 
     return () => {
       cancelled = true;
       activeHandle?.close();
     };
-  }, [
-    collaborationSupported,
-    currentVersion.id,
-    t,
-    toast,
-  ]);
+  }, [collaborationSupported, currentVersion.id, t, toast]);
 
-  const collaborationConnecting = collaborationSupported
-    && (
-      collaboration?.versionID !== currentVersion.id
-      || (!collaboration?.handle && !collaboration?.failed)
-    );
-  const collaborationHandle = collaborationSupported
-    && collaboration?.versionID === currentVersion.id
-    && !collaboration.failed
-    ? collaboration.handle
-    : undefined;
-  const collaborationReconnecting = collaborationSupported
-    && collaboration?.versionID === currentVersion.id
-    && collaboration.reconnecting;
+  const collaborationConnecting =
+    collaborationSupported &&
+    (collaboration?.versionID !== currentVersion.id ||
+      (!collaboration?.handle && !collaboration?.failed));
+  const collaborationHandle =
+    collaborationSupported &&
+    collaboration?.versionID === currentVersion.id &&
+    !collaboration.failed
+      ? collaboration.handle
+      : undefined;
 
   // The editor key must change on explicit actions (delete draft, edit
   // title/type) but NOT on auto-save side effects (cursor preservation).
@@ -272,7 +273,7 @@ export function DocumentDescriptionPage(props: {
     if (currentVersion.id !== prevVersionId) {
       // Both changed at once — data was already available.
       setPrevVersionId(currentVersion.id);
-      setDataGeneration(g => g + 1);
+      setDataGeneration((g) => g + 1);
       setPendingExplicit(false);
     } else {
       // Explicit action fired but data hasn't arrived yet.
@@ -282,7 +283,7 @@ export function DocumentDescriptionPage(props: {
     setPrevVersionId(currentVersion.id);
     if (pendingExplicit) {
       // Fresh data arrived for a pending explicit action — remount.
-      setDataGeneration(g => g + 1);
+      setDataGeneration((g) => g + 1);
       setPendingExplicit(false);
     }
     // Otherwise auto-save changed the version — don't bump generation.
@@ -296,7 +297,7 @@ export function DocumentDescriptionPage(props: {
       className="flex-1"
       content={currentVersion.content}
       data-theme="document"
-      disabled={!canEdit || collaborationConnecting || collaborationReconnecting}
+      disabled={!canEdit || collaborationConnecting}
       collaborationHandle={collaborationHandle}
       onChangeContent={handleUpdate}
     />

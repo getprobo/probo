@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@automerge/automerge": "^3.4.0",
+    "@automerge/automerge-repo": "2.6.0-alpha.3",
+    "@automerge/automerge-repo-network-websocket": "2.6.0-alpha.3",
     "@automerge/prosemirror": "^0.2.0",
     "@hookform/resolvers": "^5.7.1",
     "@phosphor-icons/react": "^2.1.10",
