@@ -65,6 +65,13 @@ func newRepoTestServer(
 
 		defer lease.Close()
 
+		if lease.SeedOwner() {
+			if err := seedRepoCollaboration(r.Context(), lease); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
 		connection, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 			InsecureSkipVerify: true, // test-only: no Origin from the Go client
 		})
@@ -298,6 +305,48 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 
 	client := dialRepoClient(t, ctx, wsURL, "client-a", documentID)
 	client.waitForBody(t, ctx, "hello repo")
+}
+
+// TestServeRepoCollaboration_SeedsUnseededDocument confirms the server seeds an
+// unseeded version from its stored ProseMirror content: the connection that
+// claims the seed converts the content to spans, and a repo client then
+// materializes it. This is the whole server-authoritative seeding path.
+func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+
+	// A fresh, empty document with no body: exactly what OpenCollaboration
+	// returns for a version that has never been seeded.
+	serverDocument, err := automerge.New(ctx, automerge.ActorID{202})
+	require.NoError(t, err)
+	defer func() { _ = serverDocument.Close(ctx) }()
+
+	const seedContent = `{"type":"doc","content":[` +
+		`{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Seeded"}]},` +
+		`{"type":"paragraph","content":[{"type":"text","text":"body text"}]}]}`
+
+	documents := &fakeDocumentCollaborationDocuments{
+		collaboration: &probo.DocumentCollaboration{
+			Document:    serverDocument,
+			Revision:    1,
+			NeedsSeed:   true,
+			SeedContent: seedContent,
+		},
+	}
+	hub := newDocumentCollaborationHub(documents, nil)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	documentID := collaboration.DeriveDocumentID(versionID.String())
+
+	client := dialRepoClient(t, ctx, wsURL, "client-a", documentID)
+	// The flat text of the seeded document is the concatenation of its blocks.
+	client.waitForBody(t, ctx, "Seededbody text")
 }
 
 // TestServeRepoCollaboration_FansOutEphemeral connects two repo clients and

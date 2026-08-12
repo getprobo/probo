@@ -28,14 +28,18 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/automerge/collaboration"
+	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/jsonx"
 )
+
+// emptyRichEditorDocument is the ProseMirror document a version with no stored
+// content seeds from, matching the frontend's default empty editor.
+const emptyRichEditorDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
 
 const documentCollaborationRepoRefreshInterval = 500 * time.Millisecond
 
@@ -99,18 +103,15 @@ func (h *documentCollaborationHandler) handleRepo(w http.ResponseWriter, r *http
 
 	defer lease.Close()
 
-	// The repo protocol has no seed handshake, so it cannot bootstrap an
-	// unseeded document; the server would otherwise serve an empty document as
-	// authoritative. Seeding the server-side document is a pending contract item
-	// (GATEWAY_CONTRACT.md), so refuse rather than risk clobbering content.
+	// The repo protocol has no seed handshake, so the server is authoritative for
+	// seeding: the connection that claimed the seed converts the version's stored
+	// ProseMirror content into the CRDT before serving it. The persist that
+	// follows marks the state seeded, so later connections skip this.
 	if lease.SeedOwner() {
-		httpserver.RenderError(
-			w,
-			http.StatusConflict,
-			fmt.Errorf("document is not initialized for the repo protocol"),
-		)
-
-		return
+		if err := seedRepoCollaboration(r.Context(), lease); err != nil {
+			h.renderServiceError(w, r, documentVersionIDString, err)
+			return
+		}
 	}
 
 	connection, err := websocket.Accept(
@@ -156,6 +157,45 @@ func (h *documentCollaborationHandler) handleRepo(w http.ResponseWriter, r *http
 	if err := serveRepoCollaboration(r.Context(), connection, lease, syncState, config); err != nil {
 		h.closeWithError(r.Context(), connection, documentVersionIDString, err)
 	}
+}
+
+// seedRepoCollaboration converts the version's stored ProseMirror content into
+// Automerge rich-text spans and writes them into the shared document, then
+// schedules a persist. It is called once per document, by the connection that
+// claimed the seed, and is safe if the body already exists (it reuses it rather
+// than recreating it).
+func seedRepoCollaboration(ctx context.Context, lease *documentCollaborationRoomLease) error {
+	content := lease.Collaboration().SeedContent
+	if content == "" {
+		content = emptyRichEditorDocument
+	}
+
+	spans, err := automergeprosemirror.ToSpans(content)
+	if err != nil {
+		return fmt.Errorf("cannot convert seed content to spans: %w", err)
+	}
+
+	document := lease.Collaboration().Document
+
+	text, err := document.Text(ctx, "body")
+	if err != nil {
+		text, err = document.CreateText(ctx, "body")
+		if err != nil {
+			return fmt.Errorf("cannot create seed text object: %w", err)
+		}
+	}
+
+	if err := text.UpdateSpans(ctx, spans, automergeprosemirror.UpdateSpansConfig()); err != nil {
+		return fmt.Errorf("cannot write seed spans: %w", err)
+	}
+
+	if _, err := document.Commit(ctx, "Seed collaboration document", time.Now()); err != nil {
+		return fmt.Errorf("cannot commit seed: %w", err)
+	}
+
+	lease.SchedulePersist()
+
+	return nil
 }
 
 // serveRepoCollaboration runs the automerge-repo protocol for one connection. It
