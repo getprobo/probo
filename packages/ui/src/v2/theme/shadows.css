@@ -41,15 +41,9 @@
  * light↔dark, so the scales adapt to dark mode from a single definition.
  * The alpha tokens these reference are imported in colors.css.
  *
- * --shadow-* and --inset-shadow-* are reset to initial first so the v2 build
- * exposes only these numeric scales (not Tailwind's shadow-sm/md/lg or the
- * 2xs/xs/sm inset defaults).
+ * `--shadow-*: initial` and `--inset-shadow-*: initial`, which drop Tailwind's
+ * shadow-sm/md/lg and the 2xs/xs/sm inset defaults, live in ./reset.css.
  * ------------------------------------------------------------------------- */
-@theme {
-    --shadow-*: initial;
-    --inset-shadow-*: initial;
-}
-
 @theme inline {
     --shadow-1:
         0 0 0 1px var(--sand-a3),

@@ -78,16 +78,13 @@
 @import "@radix-ui/colors/black-alpha.css";
 
 /* ---------------------------------------------------------------------------
- * Reset the default Tailwind palette
+ * Base colors
  *
- * v2 is a standalone theme: an app opts in by importing the v2 theme instead
- * of the v1 theme.css. Wiping --color-* removes Tailwind's default palette so
- * the only colors available are the v2 Radix scales below, plus the three base
- * colors kept here. This must precede the @theme inline block so it does not
- * wipe the scales registered after it.
+ * The three non-scale colors the kit relies on. `--color-*: initial` (which
+ * removes Tailwind's default palette) lives in ./reset.css, imported ahead of
+ * this file by ../theme.css — see that file for why the reset is separate.
  * ------------------------------------------------------------------------- */
 @theme {
-    --color-*: initial;
     --color-transparent: transparent;
     --color-black: #000000;
     --color-white: #ffffff;

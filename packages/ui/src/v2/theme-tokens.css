@@ -1,0 +1,50 @@
+/* Copyright (c) 2026 Probo Inc <hello@probo.com>.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/*
+ * v2 tokens without the namespace resets
+ *
+ * Registers the v2 scales (sand-1…12, text-1…9, rounded-1…6, shadow-1…6,
+ * z-1…6) and nothing else. Because it never wipes a Tailwind namespace, it can
+ * be imported *after* another theme without destroying that theme's tokens.
+ *
+ * Two consumers, two entry points:
+ *
+ *   theme.css         a pure v2 app (compliance-portal, storybook v2).
+ *                     Resets + these tokens: the v2 scales are all there is.
+ *   theme-tokens.css  an app migrating to v2 one zone at a time (console).
+ *                     v1 tokens keep resolving for pages not yet converted,
+ *                     while converted ones use the v2 scales. The vocabularies
+ *                     do not collide: v1 is semantic (txt-primary, level-0),
+ *                     v2 is numeric (sand-3, text-2).
+ *
+ * The mixed mode has one caveat: --font-sans is a single global slot, so the
+ * last theme imported owns the default font family. The console handles that
+ * with a scoped class — see apps/console/src/index.css.
+ *
+ * Spacing intentionally stays on Tailwind's native scale (not tokenized).
+ * See contrib/claude/v2-tokens.md for the full usage guide.
+ */
+@import "./theme/colors.css";
+@import "./theme/typography.css";
+@import "./theme/radius.css";
+@import "./theme/shadows.css";
+@import "./theme/z-index.css";

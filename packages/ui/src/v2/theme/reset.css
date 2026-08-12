@@ -20,30 +20,29 @@
  */
 
 /* ---------------------------------------------------------------------------
- * Radius — Radix Themes radius scale (steps 1–6)
+ * Namespace resets — v2-only
  *
- * Sourced from the "Probo Radix UI" Figma file, which defaults to the
- * Radix "Medium" radius set. Exposed as rounded-1 … rounded-6, matching the
- * numbered convention used for color and type.
+ * Wiping a Tailwind namespace to `initial` removes its defaults so a pure v2
+ * build exposes nothing but the numeric Radix scales: no bg-slate-500, no
+ * text-sm, no rounded-lg, no shadow-md, no z-10.
  *
- *   Step   value           rem
- *   ─────  ──────────────  ─────────
- *   1      3px             0.1875rem
- *   2      4px             0.25rem
- *   3      6px             0.375rem
- *   4      8px             0.5rem
- *   5      12px            0.75rem
- *   6      16px            1rem
+ * These resets live apart from the token layers on purpose. They are the only
+ * part of the v2 theme that is destructive, so an app that needs the v2 tokens
+ * *alongside* another token set (the console, mid-migration) imports
+ * ../theme-tokens.css and skips this file. Keeping the resets inline in each
+ * layer would make that impossible, since `--color-*: initial` in colors.css
+ * would wipe the tokens the other kit registered earlier in the build.
  *
- * `--radius-*: initial`, which leaves the numeric Radix scale as the only
- * theme-driven radius (the static rounded-none / rounded-full utilities are
- * unaffected), lives in ./reset.css.
+ * A namespace reset only affects its own namespace, and this file is imported
+ * before every layer, so each reset still precedes the definitions it guards.
+ *
+ * See contrib/claude/v2-tokens.md for the full usage guide.
  * ------------------------------------------------------------------------- */
 @theme {
-    --radius-1: 0.1875rem;
-    --radius-2: 0.25rem;
-    --radius-3: 0.375rem;
-    --radius-4: 0.5rem;
-    --radius-5: 0.75rem;
-    --radius-6: 1rem;
+    --color-*: initial;
+    --text-*: initial;
+    --radius-*: initial;
+    --shadow-*: initial;
+    --inset-shadow-*: initial;
+    --z-index-*: initial;
 }
