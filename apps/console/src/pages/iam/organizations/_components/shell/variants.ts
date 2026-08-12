@@ -45,7 +45,10 @@ export const organizationLayout = tv({
 
 export const topBar = tv({
   slots: {
-    bar: "flex h-14 shrink-0 items-center gap-3 border-b border-sand-6 bg-sand-1 px-4",
+    // sand-a3 is the kit's divider weight (Separator, Tabs, List rows). The
+    // solid sand-6 is for outlining a contained surface like a Card, and reads
+    // far too heavy for chrome that only needs regions told apart.
+    bar: "flex h-14 shrink-0 items-center gap-3 border-b border-sand-a3 bg-sand-1 px-4",
     brand: "flex shrink-0 items-center",
     logo: "h-5 w-12 text-sand-12",
     separator: "text-sand-8",
@@ -93,12 +96,13 @@ export const navRail = tv({
     root: "relative w-14 shrink-0",
     rail: [
       "group absolute inset-y-0 left-0 z-2 flex w-14 flex-col gap-1 overflow-hidden",
-      "border-r border-sand-6 bg-sand-1 p-2",
-      "transition-[width,box-shadow] duration-150 ease-out",
+      "border-r border-sand-a3 bg-sand-1 p-2",
+      "transition-[width,box-shadow,border-color] duration-150 ease-out",
     ],
     item: [
       "flex h-10 w-full items-center rounded-3 text-sand-11 outline-none transition-colors",
-      "hover:bg-sand-4 hover:text-sand-12",
+      // Step 3 so a passing hover stays lighter than the selected item below.
+      "hover:bg-sand-3 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
     ],
     // A 40px box inside 8px of padding puts the icon's centre on the collapsed
@@ -110,13 +114,26 @@ export const navRail = tv({
     ],
   },
   variants: {
+    // Gold marks the product you are in. It is the only accent in the chrome,
+    // so across nine near-identical icons it is unambiguous.
+    //
+    // Step 4, not 3: selection has to outweigh hover, and a hover one step
+    // above it would read as the heavier state despite being transient. The
+    // panel matches by switching ButtonLink to its soft variant when active.
     active: {
-      true: { item: "bg-sand-5 text-sand-12" },
+      true: { item: "bg-gold-4 text-gold-12" },
     },
     // Off for the skeleton, which would otherwise open onto nothing.
+    //
+    // Every v2 shadow opens with a 1px sand-a3 ring, which lands just outside
+    // the border box and so doubles up with the border on the right edge. The
+    // border hands over to the ring while expanded, keeping the edge 1px.
     expandable: {
       true: {
-        rail: "hover:w-56 hover:shadow-4 focus-within:w-56 focus-within:shadow-4",
+        rail: [
+          "hover:w-56 hover:border-transparent hover:shadow-4",
+          "focus-within:w-56 focus-within:border-transparent focus-within:shadow-4",
+        ],
       },
     },
   },
@@ -127,7 +144,7 @@ export const navRail = tv({
 
 export const navPanel = tv({
   slots: {
-    panel: "flex w-56 shrink-0 flex-col gap-1 border-r border-sand-6 bg-sand-1 px-3 py-4",
+    panel: "flex w-56 shrink-0 flex-col gap-1 border-r border-sand-a3 bg-sand-1 px-3 py-4",
     title: "px-2 pb-2",
     list: "flex flex-col gap-0.5",
     // Nav entries read as a list, so they fill the column and align left

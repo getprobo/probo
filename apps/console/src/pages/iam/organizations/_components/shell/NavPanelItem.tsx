@@ -43,8 +43,14 @@ export function NavPanelItem({ label, to }: NavPanelItemProps) {
   return (
     <ButtonLink
       to={to}
-      variant="ghost"
-      color="neutral"
+      // Gold only once selected. Colouring every entry would spend the accent
+      // on the list rather than on the one entry worth pointing at.
+      //
+      // Soft rather than ghost while selected: ghost-active lands on gold-3,
+      // the same weight as the neutral hover, so selection would not read as
+      // the stronger state. Soft-active lands a step above it.
+      variant={active ? "soft" : "ghost"}
+      color={active ? "gold" : "neutral"}
       size={2}
       active={active}
       className={slots.item()}
