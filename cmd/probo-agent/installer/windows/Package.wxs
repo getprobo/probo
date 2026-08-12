@@ -1,0 +1,75 @@
+<!-- Copyright (c) 2026 Probo Inc <hello@probo.com>.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<!--
+		Builds the per-machine Probo Agent MSI.
+
+		Preprocessor variables (passed by build.ps1 via wix -d):
+		  Version   Product version, e.g. 0.3.0  → $(var.Version)
+		  AgentExe  Absolute path to probo-agent.exe → $(var.AgentExe)
+	-->
+	<Package
+		Name="Probo Agent"
+		Manufacturer="Probo Inc"
+		Version="$(var.Version)"
+		UpgradeCode="71b7d5c8-733b-4fd7-887e-bdffa6a6c0d8"
+		Scope="perMachine"
+	>
+		<MajorUpgrade
+			DowngradeErrorMessage="A newer version of Probo Agent is already installed."
+		/>
+
+		<StandardDirectory Id="ProgramFiles64Folder">
+			<Directory Id="INSTALLFOLDER" Name="Probo" />
+		</StandardDirectory>
+
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<Component Guid="62994ec7-7696-4513-92ab-0cb41cadfc0a">
+				<File
+					Id="ProboAgentExe"
+					Source="$(var.AgentExe)"
+					Name="probo-agent.exe"
+					KeyPath="yes"
+				/>
+			</Component>
+
+			<Component Guid="6603ee19-ddba-42f1-8961-5cd945374657">
+				<RegistryKey Root="HKLM" Key="Software\Classes\probo">
+					<RegistryValue
+						Type="string"
+						Value="URL:Probo Enrollment Protocol"
+						KeyPath="yes"
+					/>
+					<RegistryValue Name="URL Protocol" Type="string" Value="" />
+					<RegistryKey Key="shell\open\command">
+						<RegistryValue
+							Type="string"
+							Value="&quot;[INSTALLFOLDER]probo-agent.exe&quot; &quot;%1&quot;"
+						/>
+					</RegistryKey>
+				</RegistryKey>
+			</Component>
+		</ComponentGroup>
+
+		<Feature Id="Main" Title="Probo Agent" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+	</Package>
+</Wix>
