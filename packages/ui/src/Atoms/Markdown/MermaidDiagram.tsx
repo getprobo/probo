@@ -70,7 +70,7 @@ export function MermaidDiagram({ chart }: Props) {
   const toggleFullscreen = () => {
     if (document.fullscreenElement === wrapper.current) {
       document.exitFullscreen().catch(console.error);
-      return
+      return;
     }
     wrapper.current?.requestFullscreen().catch(console.error);
   };
