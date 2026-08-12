@@ -1,0 +1,67 @@
+---
+# Hand-authored fixture for the Front access-review driver. Two interactions:
+#
+#   0. GET /teammates  — page 1: a human admin, a plain teammate, a blocked
+#      teammate with no first/last name (display name falls back to the "@"
+#      mention username), and a rule bot. `_pagination.next` points at page 2
+#      on the same host, so the driver follows it.
+#   1. GET /teammates?page_token=... — page 2: one OAuth-client (api) bot and a
+#      null `next`, ending the walk.
+#
+# Expected: 6 records. Object shapes mirror the documented TeammateResponse
+# schema. Synthetic IDs and .example.com emails only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api2.frontapp.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api2.frontapp.com/teammates
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"_pagination":{"next":"https://api2.frontapp.com/teammates?page_token=9fa92a7f385fd7be43f7153055b30e6d"},"_links":{"self":"https://api2.frontapp.com/teammates"},"_results":[{"_links":{"self":"https://api2.frontapp.com/teammates/tea_1"},"id":"tea_1","email":"alice@example.com","username":"alice","first_name":"Alice","last_name":"Admin","is_admin":true,"is_available":true,"is_blocked":false,"type":"user","custom_fields":{}},{"_links":{"self":"https://api2.frontapp.com/teammates/tea_2"},"id":"tea_2","email":"bob@example.com","username":"bob","first_name":"Bob","last_name":"Member","is_admin":false,"is_available":false,"is_blocked":false,"type":"user","custom_fields":{}},{"_links":{"self":"https://api2.frontapp.com/teammates/tea_3"},"id":"tea_3","email":"carol@example.com","username":"carol_offboarded","first_name":"","last_name":"","is_admin":false,"is_available":false,"is_blocked":true,"type":"user","custom_fields":{}},{"_links":{"self":"https://api2.frontapp.com/teammates/tea_4"},"id":"tea_4","email":"","username":"triage_rule","first_name":"","last_name":"","is_admin":false,"is_available":true,"is_blocked":false,"type":"rule","custom_fields":{}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 110ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api2.frontapp.com
+        form:
+            page_token:
+                - 9fa92a7f385fd7be43f7153055b30e6d
+        headers:
+            Accept:
+                - application/json
+        url: https://api2.frontapp.com/teammates?page_token=9fa92a7f385fd7be43f7153055b30e6d
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"_pagination":{"next":null},"_links":{"self":"https://api2.frontapp.com/teammates?page_token=9fa92a7f385fd7be43f7153055b30e6d"},"_results":[{"_links":{"self":"https://api2.frontapp.com/teammates/tea_5"},"id":"tea_5","email":"","username":"probo_integration","first_name":"","last_name":"","is_admin":false,"is_available":true,"is_blocked":false,"type":"api","custom_fields":{}},{"_links":{"self":"https://api2.frontapp.com/teammates/tea_6"},"id":"tea_6","email":"dave@example.com","username":"dave","first_name":"Dave","last_name":"Integration","is_admin":true,"is_available":true,"is_blocked":false,"type":"application","custom_fields":{}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 95ms

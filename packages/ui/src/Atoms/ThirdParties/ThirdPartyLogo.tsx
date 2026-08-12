@@ -38,6 +38,7 @@ import { Deepgram } from "./Deepgram";
 import { DocuSign } from "./DocuSign";
 import { Dotfile } from "./Dotfile";
 import { Figma } from "./Figma";
+import { Front } from "./Front";
 import { GitHub } from "./GitHub";
 import { GitLab } from "./GitLab";
 import { Google } from "./Google";
@@ -101,6 +102,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   DOCUSIGN: DocuSign,
   DOTFILE: Dotfile,
   FIGMA: Figma,
+  FRONT: Front,
   GITHUB: GitHub,
   GITLAB: GitLab,
   GOOGLE: Google,
