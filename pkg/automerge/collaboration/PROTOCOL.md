@@ -171,6 +171,35 @@ Both fields are optional. `isEphemeral` marks a peer that does not persist
 documents. Our gateway can present its own metadata and must not trust a peer's
 metadata as identity (see below).
 
+### Sync choreography (server as authority)
+
+The server WebSocket adapter is a pure relay: it performs the handshake and then
+hands every message to the repo's synchronizer. The synchronizer, not the
+adapter, runs the sync protocol, so a gateway that is itself the document
+authority must reproduce the synchronizer's server-side behavior. From
+`DocSynchronizer`:
+
+- Inbound `sync` and `request` are handled identically: apply the payload with
+  `receiveSyncMessage`, then generate outbound messages.
+- The message type the synchronizer emits is `request` only when it does **not**
+  have the document (no heads, empty shared heads, peer status unknown);
+  otherwise it emits `sync`. Our gateway always holds the document, so it
+  **always emits `sync`** and never `request`.
+- `doc-unavailable` is emitted only when the responder has no data and
+  availability settles unavailable. Our gateway always has the document (access
+  is decided by authentication at connect time, returning 404/403 rather than a
+  protocol frame), so it does **not** send `doc-unavailable`.
+- The payload bytes are exactly `generateSyncMessage`/`receiveSyncMessage` from
+  `@automerge/automerge`, which is the same V2 sync protocol
+  `pkg/automerge.SyncState` implements, so repo `sync.data` is one of our sync
+  messages unchanged. This is the interop linchpin and is covered by the existing
+  sync parity suite.
+
+The resulting server loop: on connect, announce by draining
+`GenerateMessage` into `sync` frames; on each inbound `sync`/`request`, call
+`ReceiveMessage` then drain `GenerateMessage` into `sync` frames; forward
+non-duplicate `ephemeral` frames to the room and room frames to the socket.
+
 ### Gateway responsibilities (transport)
 
 - Accept a binary WebSocket, read `join`, negotiate `"1"`, reply `peer` with a
