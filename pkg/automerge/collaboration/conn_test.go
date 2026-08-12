@@ -205,6 +205,93 @@ func TestServerConn_SyncChangedDrains(t *testing.T) {
 	assert.Equal(t, []byte{3, 3}, message.Data)
 }
 
+// TestAdoptingServerConn_LearnsDocumentIDFromClient starts without a document id
+// (so it announces nothing) and adopts the id from the client's first sync
+// frame, then answers for that same id.
+func TestAdoptingServerConn_LearnsDocumentIDFromClient(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	sync := &scriptedSync{}
+
+	conn, err := NewAdoptingServerConn(ServerConfig{ServerPeerID: "server"}, sync)
+	require.NoError(t, err)
+
+	out, accepted, err := conn.Start(ctx, joinFixture(t))
+	require.NoError(t, err)
+	require.True(t, accepted)
+	require.Len(t, out, 1, "an adopting connection announces nothing until the client asks")
+	assert.Empty(t, conn.DocumentID())
+
+	sync.outbound = [][]byte{{9, 9}}
+
+	inboundSync, err := EncodeMessage(Message{
+		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+		DocumentID: "client-chosen-doc", Data: []byte{7, 7},
+	})
+	require.NoError(t, err)
+
+	reply, _, err := conn.Receive(ctx, inboundSync)
+	require.NoError(t, err)
+	require.Len(t, reply, 1)
+	assert.Equal(t, "client-chosen-doc", conn.DocumentID())
+
+	message, err := DecodeMessage(reply[0])
+	require.NoError(t, err)
+	assert.Equal(t, "client-chosen-doc", message.DocumentID,
+		"the server answers for the id the client requested")
+}
+
+// TestAdoptingServerConn_RejectsSecondDocument holds the connection to the first
+// document id it adopts.
+func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	conn, err := NewAdoptingServerConn(ServerConfig{ServerPeerID: "server"}, &scriptedSync{})
+	require.NoError(t, err)
+
+	_, _, err = conn.Start(ctx, joinFixture(t))
+	require.NoError(t, err)
+
+	first, err := EncodeMessage(Message{
+		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+		DocumentID: "doc-a", Data: []byte{1},
+	})
+	require.NoError(t, err)
+	_, _, err = conn.Receive(ctx, first)
+	require.NoError(t, err)
+
+	second, err := EncodeMessage(Message{
+		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+		DocumentID: "doc-b", Data: []byte{2},
+	})
+	require.NoError(t, err)
+	_, _, err = conn.Receive(ctx, second)
+	require.Error(t, err)
+}
+
+// TestServerConn_RejectsForeignDocument keeps a fixed-id connection from serving
+// a different document than it was constructed for.
+func TestServerConn_RejectsForeignDocument(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	conn := newConn(t, &scriptedSync{})
+
+	_, _, err := conn.Start(ctx, joinFixture(t))
+	require.NoError(t, err)
+
+	foreign, err := EncodeMessage(Message{
+		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+		DocumentID: "other-doc", Data: []byte{1},
+	})
+	require.NoError(t, err)
+
+	_, _, err = conn.Receive(ctx, foreign)
+	require.Error(t, err)
+}
+
 // TestServerConn_RequiresStart refuses frames before the handshake.
 func TestServerConn_RequiresStart(t *testing.T) {
 	t.Parallel()

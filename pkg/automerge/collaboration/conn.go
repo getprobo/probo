@@ -48,22 +48,42 @@ type ServerConn struct {
 	session      *ServerSession
 	sync         SyncSession
 	documentID   string
+	adoptDocID   bool
 	serverPeerID string
 	remotePeerID string
 	started      bool
 }
 
-// NewServerConn creates a connection driver for one document. documentID is the
-// automerge-repo document id this connection is scoped to, and sync is the peer's
-// sync state.
+// NewServerConn creates a connection driver for a known document. documentID is
+// the automerge-repo document id this connection is scoped to, and sync is the
+// peer's sync state. Use this when the server already knows which document the
+// connection serves and both peers agree on the id; the server announces the
+// document proactively after the handshake.
+//
+// When the id the client will request is not known ahead of time (the common
+// production case, where the frontend picks the automerge:<id> URL), use
+// NewAdoptingServerConn instead.
 func NewServerConn(config ServerConfig, documentID string, sync SyncSession) (*ServerConn, error) {
+	if documentID == "" {
+		return nil, fmt.Errorf("server connection requires a document id")
+	}
+
+	return newServerConn(config, documentID, false, sync)
+}
+
+// NewAdoptingServerConn creates a connection driver that learns its document id
+// from the client's first sync or request frame. Because the id is unknown until
+// then, the server does not announce the document in Start; it answers the
+// client once the client asks for a specific document. Every subsequent frame on
+// the connection must reference the same id.
+func NewAdoptingServerConn(config ServerConfig, sync SyncSession) (*ServerConn, error) {
+	return newServerConn(config, "", true, sync)
+}
+
+func newServerConn(config ServerConfig, documentID string, adopt bool, sync SyncSession) (*ServerConn, error) {
 	session, err := NewServerSession(config)
 	if err != nil {
 		return nil, err
-	}
-
-	if documentID == "" {
-		return nil, fmt.Errorf("server connection requires a document id")
 	}
 
 	if sync == nil {
@@ -74,6 +94,7 @@ func NewServerConn(config ServerConfig, documentID string, sync SyncSession) (*S
 		session:      session,
 		sync:         sync,
 		documentID:   documentID,
+		adoptDocID:   adopt,
 		serverPeerID: config.ServerPeerID,
 	}, nil
 }
@@ -101,6 +122,12 @@ func (c *ServerConn) Start(ctx context.Context, joinFrame []byte) (out [][]byte,
 	c.started = true
 	c.remotePeerID = handshake.RemotePeerID
 
+	// In adopt mode the document id is unknown until the client asks for it, so
+	// there is nothing to announce yet: the client drives with a request frame.
+	if c.adoptDocID {
+		return out, true, nil
+	}
+
 	// Announce: drain the initial sync messages the server has for this peer.
 	syncFrames, err := c.drainSync(ctx)
 	if err != nil {
@@ -126,6 +153,10 @@ func (c *ServerConn) Receive(ctx context.Context, frame []byte) (reply [][]byte,
 
 	switch inbound.Kind {
 	case InboundSync:
+		if err := c.adoptDocumentID(inbound.Message.DocumentID); err != nil {
+			return nil, nil, err
+		}
+
 		if err := c.sync.ReceiveMessage(ctx, inbound.Message.Data); err != nil {
 			return nil, nil, fmt.Errorf("cannot apply inbound sync message: %w", err)
 		}
@@ -160,10 +191,40 @@ func (c *ServerConn) SyncChanged(ctx context.Context) ([][]byte, error) {
 	return c.drainSync(ctx)
 }
 
+// adoptDocumentID binds the connection to the document id the client asked for.
+// A fixed-id connection rejects a mismatching id; an adopting one records the
+// first non-empty id it sees and then holds the peer to it. This guarantees one
+// connection only ever serves a single document.
+func (c *ServerConn) adoptDocumentID(id string) error {
+	if id == "" {
+		return nil
+	}
+
+	if c.documentID == "" {
+		c.documentID = id
+
+		return nil
+	}
+
+	if c.documentID != id {
+		return fmt.Errorf(
+			"connection scoped to document %q received a frame for document %q",
+			c.documentID, id,
+		)
+	}
+
+	return nil
+}
+
 // drainSync generates sync frames until the peer is up to date. The server is
 // always the document authority, so every generated message is a sync frame,
-// never a request.
+// never a request. Before the document id is known (adopt mode, prior to the
+// client's first request) there is nothing to send.
 func (c *ServerConn) drainSync(ctx context.Context) ([][]byte, error) {
+	if c.documentID == "" {
+		return nil, nil
+	}
+
 	var frames [][]byte
 
 	for {
@@ -194,4 +255,11 @@ func (c *ServerConn) drainSync(ctx context.Context) ([][]byte, error) {
 // RemotePeerID returns the connected client's peer id after Start.
 func (c *ServerConn) RemotePeerID() string {
 	return c.remotePeerID
+}
+
+// DocumentID returns the document id this connection serves. For an adopting
+// connection it is empty until the client's first sync or request frame binds
+// it.
+func (c *ServerConn) DocumentID() string {
+	return c.documentID
 }
