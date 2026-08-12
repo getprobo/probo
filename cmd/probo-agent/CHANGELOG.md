@@ -5,6 +5,14 @@ documented in this file.
 
 ## Unreleased
 
+## [0.5.0] - 2026-08-12
+
+### Added
+
+- Windows installs now ship an Authenticode-signed MSI (Azure Trusted
+  Signing) for initial install, alongside the existing zip archive used
+  for auto-update.
+
 ## [0.4.2] - 2026-07-30
 
 ### Fixed
