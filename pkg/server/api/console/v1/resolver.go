@@ -173,6 +173,10 @@ func NewMux(
 			"/document-versions/{documentVersionID}/sync",
 			collaborationHandler.handle,
 		)
+		r.Get(
+			"/document-versions/{documentVersionID}/repo",
+			collaborationHandler.handleRepo,
+		)
 
 		r.Get(
 			"/connectors/initiate",
