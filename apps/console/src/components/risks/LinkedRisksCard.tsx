@@ -162,7 +162,7 @@ function RiskRow(props: {
   const { t } = useTranslation();
 
   return (
-    <Tr to={`/organizations/${organizationId}/risks/${risk.id}`}>
+    <Tr to={`/organizations/${organizationId}/risk-management/risks/${risk.id}`}>
       <Td>{risk.name}</Td>
       <Td>
         <RiskBadge level={risk.inherentRiskScore} />

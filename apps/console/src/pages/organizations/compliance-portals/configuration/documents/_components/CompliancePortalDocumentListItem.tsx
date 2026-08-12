@@ -232,7 +232,7 @@ export function CompliancePortalDocumentListItem(props: {
   const versionTitle = latestVersion?.title;
 
   return (
-    <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
+    <Tr to={`/organizations/${organizationId}/governance/documents/${document.id}`}>
       <Td noLink>
         <Checkbox
           checked={isLinked}

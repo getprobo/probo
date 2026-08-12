@@ -399,7 +399,7 @@ export function DiagramCard(props: {
                               <span key={risk.id}>
                                 {i > 0 && ", "}
                                 <Link
-                                  to={`/organizations/${organizationId}/risks/${risk.id}`}
+                                  to={`/organizations/${organizationId}/risk-management/risks/${risk.id}`}
                                   className="text-txt-primary underline"
                                 >
                                   {risk.name}

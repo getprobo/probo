@@ -108,7 +108,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
             },
           },
           onCompleted: () => {
-            void navigate(`/organizations/${organizationId}/people`);
+            void navigate(`/organizations/${organizationId}/settings/people`);
           },
         });
       },
@@ -129,7 +129,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
             },
           },
           onCompleted: () => {
-            void navigate(`/organizations/${organizationId}/people`);
+            void navigate(`/organizations/${organizationId}/settings/people`);
           },
         });
       },
@@ -148,7 +148,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
         items={[
           {
             label: t("personPage.breadcrumb.people"),
-            to: `/organizations/${organizationId}/people`,
+            to: `/organizations/${organizationId}/settings/people`,
           },
           {
             label: person.fullName,

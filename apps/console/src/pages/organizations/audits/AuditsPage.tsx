@@ -287,7 +287,7 @@ function AuditRow({
   const deleteAudit = useDeleteAudit(entry, connectionId);
 
   return (
-    <Tr to={`/organizations/${organizationId}/audits/${entry.id}`}>
+    <Tr to={`/organizations/${organizationId}/governance/audits/${entry.id}`}>
       <Td>{entry.name || t("auditsPage.row.untitled")}</Td>
       <Td>{entry.framework?.name ?? t("auditsPage.row.unknownFramework")}</Td>
       <Td>

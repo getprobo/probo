@@ -184,7 +184,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
           },
         })
           .then(() => {
-            void navigate(`/organizations/${organizationId}/statements-of-applicability`);
+            void navigate(`/organizations/${organizationId}/governance/statements-of-applicability`);
           })
           .catch((error) => {
             toast({
@@ -318,7 +318,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     resetApprovers({ approverIds: defaultApproverIds });
   };
 
-  const listUrl = `/organizations/${organizationId}/statements-of-applicability`;
+  const listUrl = `/organizations/${organizationId}/governance/statements-of-applicability`;
 
   return (
     <div className="space-y-6">
@@ -385,7 +385,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
         {statementOfApplicability.document?.id && (
           <Button variant="secondary" asChild>
             <Link
-              to={`/organizations/${organizationId}/documents/${statementOfApplicability.document.id}`}
+              to={`/organizations/${organizationId}/governance/documents/${statementOfApplicability.document.id}`}
             >
               <IconPageTextLine size={16} />
               {t("statementOfApplicabilityDetailPage.actions.document")}
@@ -398,7 +398,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
             defaultApproverIds={defaultApproverIds}
             onPublished={(documentId) => {
               void navigate(
-                `/organizations/${organizationId}/documents/${documentId}`,
+                `/organizations/${organizationId}/governance/documents/${documentId}`,
               );
             }}
           >

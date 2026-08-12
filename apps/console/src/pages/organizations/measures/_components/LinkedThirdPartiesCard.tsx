@@ -155,7 +155,7 @@ function ThirdPartyRow(props: {
 
   return (
     <Tr
-      to={`/organizations/${organizationId}/third-parties/${thirdParty.id}/overview`}
+      to={`/organizations/${organizationId}/tprm/third-parties/${thirdParty.id}/overview`}
     >
       <Td>
         <span className="inline-flex gap-2 items-center">

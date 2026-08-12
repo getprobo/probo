@@ -188,7 +188,7 @@ export default function RisksPage(props: RisksPageProps) {
               variant="secondary"
               icon={IconPageTextLine}
               onClick={() => void navigate(
-                `/organizations/${organizationId}/documents/${risksDocument.id}`,
+                `/organizations/${organizationId}/governance/documents/${risksDocument.id}`,
               )}
             >
               {t("risksPage.actions.document")}
@@ -199,7 +199,7 @@ export default function RisksPage(props: RisksPageProps) {
               organizationId={organizationId}
               defaultApproverIds={defaultApproverIds}
               onPublished={documentId => void navigate(
-                `/organizations/${organizationId}/documents/${documentId}`,
+                `/organizations/${organizationId}/governance/documents/${documentId}`,
               )}
             >
               <Button variant="secondary" icon={IconUpload}>

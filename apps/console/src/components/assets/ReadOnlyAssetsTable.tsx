@@ -74,7 +74,7 @@ function AssetRow({ entry }: { entry: AssetEntry }) {
   const thirdParties = entry.thirdParties?.edges.map(edge => edge.node) ?? [];
 
   return (
-    <Tr to={`/organizations/${organizationId}/assets/${entry.id}`}>
+    <Tr to={`/organizations/${organizationId}/risk-management/assets/${entry.id}`}>
       <Td>{entry.name}</Td>
       <Td>
         <Badge variant={getAssetTypeVariant(entry.assetType)}>

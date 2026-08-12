@@ -275,7 +275,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
           {organization.node.findingsDocument?.id && (
             <Button variant="secondary" asChild>
               <Link
-                to={`/organizations/${organizationId}/documents/${organization.node.findingsDocument.id}`}
+                to={`/organizations/${organizationId}/governance/documents/${organization.node.findingsDocument.id}`}
               >
                 <IconPageTextLine size={16} />
                 {t("findingsPage.actions.document")}
@@ -288,7 +288,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
               defaultApproverIds={defaultApproverIds}
               onPublished={(documentId) => {
                 void navigate(
-                  `/organizations/${organizationId}/documents/${documentId}`,
+                  `/organizations/${organizationId}/governance/documents/${documentId}`,
                 );
               }}
             >
@@ -472,7 +472,7 @@ function FindingRow(props: FindingRowProps) {
     );
   };
 
-  const detailsUrl = `/organizations/${organizationId}/findings/${finding.id}`;
+  const detailsUrl = `/organizations/${organizationId}/governance/findings/${finding.id}`;
 
   return (
     <Tr to={detailsUrl}>

@@ -88,7 +88,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
   const [confirmDelete, isDeleting] = useDeleteDevice({
     organizationId,
     onDeleted: () => {
-      void navigate(`/organizations/${organizationId}/devices`, { replace: true });
+      void navigate(`/organizations/${organizationId}/itam/devices`, { replace: true });
     },
   });
 
@@ -102,7 +102,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
         items={[
           {
             label: t("devices.title"),
-            to: `/organizations/${organizationId}/devices`,
+            to: `/organizations/${organizationId}/itam/devices`,
           },
           { label: hostnameLabel },
         ]}

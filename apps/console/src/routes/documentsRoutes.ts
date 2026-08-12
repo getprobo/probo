@@ -35,7 +35,7 @@ const documentTabs = (prefix: string) => {
       loader: ({
         params: { organizationId, documentId, versionId },
       }: LoaderFunctionArgs) => {
-        const basePath = `/organizations/${organizationId}/documents/${documentId}`;
+        const basePath = `/organizations/${organizationId}/governance/documents/${documentId}`;
         const redirectPath = versionId
           ? `${basePath}/versions/${versionId}/description`
           : `${basePath}/description`;

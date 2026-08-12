@@ -137,7 +137,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
               connections: [connectionId],
             },
             onCompleted() {
-              void navigate(`/organizations/${organizationId}/risks`);
+              void navigate(`/organizations/${organizationId}/risk-management/risks`);
               resolve();
             },
             onError(error) {
@@ -157,8 +157,8 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
   const scenariosCount = risk.scenariosInfo?.totalCount ?? 0;
 
-  const risksUrl = `/organizations/${organizationId}/risks`;
-  const baseTabUrl = `/organizations/${organizationId}/risks/${riskId}`;
+  const risksUrl = `/organizations/${organizationId}/risk-management/risks`;
+  const baseTabUrl = `/organizations/${organizationId}/risk-management/risks/${riskId}`;
 
   return (
     <div className="space-y-6">

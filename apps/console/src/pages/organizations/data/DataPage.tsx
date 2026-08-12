@@ -157,7 +157,7 @@ export default function DataPage(props: Props) {
           {data.dataListDocument?.id && (
             <Button variant="secondary" asChild>
               <Link
-                to={`/organizations/${organizationId}/documents/${data.dataListDocument.id}`}
+                to={`/organizations/${organizationId}/governance/documents/${data.dataListDocument.id}`}
               >
                 <IconPageTextLine size={16} />
                 {t("dataPage.actions.document")}
@@ -170,7 +170,7 @@ export default function DataPage(props: Props) {
               defaultApproverIds={defaultApproverIds}
               onPublished={(documentId) => {
                 void navigate(
-                  `/organizations/${organizationId}/documents/${documentId}`,
+                  `/organizations/${organizationId}/governance/documents/${documentId}`,
                 );
               }}
             >
@@ -228,7 +228,7 @@ function DataRow({
   const { t } = useTranslation();
   const deleteDatum = useDeleteDatum(entry, connectionId);
   const thirdParties = entry.thirdParties?.edges.map(edge => edge.node) ?? [];
-  const detailUrl = `/organizations/${organizationId}/data/${entry.id}`;
+  const detailUrl = `/organizations/${organizationId}/risk-management/data/${entry.id}`;
 
   return (
     <Tr to={detailUrl}>

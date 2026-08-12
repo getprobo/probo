@@ -286,7 +286,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           },
           onCompleted: () => {
             void navigate(
-              `/organizations/${organizationId}/frameworks/${framework.id}`,
+              `/organizations/${organizationId}/governance/frameworks/${framework.id}`,
             );
           },
         });

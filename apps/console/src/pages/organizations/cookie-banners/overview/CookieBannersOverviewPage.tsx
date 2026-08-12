@@ -98,7 +98,7 @@ export function CookieBannersOverviewPage({ queryRef }: CookieBannersOverviewPag
 
   const connectionId = organization.cookieBanners.__id;
   const banners = organization.cookieBanners.edges.map(e => e.node);
-  const newBannerHref = `/organizations/${organizationId}/cookie-banners/new`;
+  const newBannerHref = `/organizations/${organizationId}/privacy/cookie-banners/new`;
 
   const [deleteCookieBanner] = useMutation<CookieBannersOverviewPageDeleteMutation>(deleteCookieBannerMutation);
 
@@ -180,7 +180,7 @@ export function CookieBannersOverviewPage({ queryRef }: CookieBannersOverviewPag
           {banners.map(banner => (
             <Link
               key={banner.id}
-              to={`/organizations/${organizationId}/cookie-banners/${banner.id}`}
+              to={`/organizations/${organizationId}/privacy/cookie-banners/${banner.id}`}
               className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50 transition-colors"
             >
               <div className="min-w-0 flex-1">

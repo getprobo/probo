@@ -208,7 +208,7 @@ function MeasureRow(props: {
   const { t } = useTranslation();
 
   return (
-    <Tr to={`/organizations/${organizationId}/measures/${measure.id}`}>
+    <Tr to={`/organizations/${organizationId}/governance/measures/${measure.id}`}>
       <Td>{measure.name}</Td>
       <Td>
         <MeasureBadge state={measure.state} />

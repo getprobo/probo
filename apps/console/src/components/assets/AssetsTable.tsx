@@ -117,7 +117,7 @@ export function AssetsTable(props: Props) {
       action={({ item }) => (
         <ActionDropdown>
           <DropdownItem asChild>
-            <Link to={`/organizations/${organizationId}/assets/${item.id}`}>
+            <Link to={`/organizations/${organizationId}/risk-management/assets/${item.id}`}>
               <IconPencil size={16} />
               {t("assetsTable.actions.edit")}
             </Link>

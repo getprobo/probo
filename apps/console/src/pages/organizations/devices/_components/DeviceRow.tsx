@@ -100,7 +100,7 @@ export function DeviceRow({
         deviceKey={device}
         organizationId={organizationId}
       />
-      <Tr to={`/organizations/${organizationId}/devices/${device.id}`}>
+      <Tr to={`/organizations/${organizationId}/itam/devices/${device.id}`}>
         <Td>{displayValue(device.hostname, pendingLabel)}</Td>
         <Td>{device.owner?.fullName ?? t("devices.values.unassigned")}</Td>
         <Td>

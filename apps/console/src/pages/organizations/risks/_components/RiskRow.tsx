@@ -115,7 +115,7 @@ export function RiskRow(props: RiskRowProps) {
     );
   };
 
-  const riskUrl = `/organizations/${organizationId}/risks/${risk.id}/overview`;
+  const riskUrl = `/organizations/${organizationId}/risk-management/risks/${risk.id}/overview`;
 
   return (
     <>

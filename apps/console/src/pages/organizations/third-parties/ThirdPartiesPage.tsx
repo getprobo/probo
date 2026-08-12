@@ -158,7 +158,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
               variant="secondary"
               icon={IconPageTextLine}
               onClick={() => void navigate(
-                `/organizations/${organizationId}/documents/${thirdPartiesDocument.id}`,
+                `/organizations/${organizationId}/governance/documents/${thirdPartiesDocument.id}`,
               )}
             >
               {t("thirdPartiesPage.actions.document")}
@@ -169,7 +169,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
               organizationId={organizationId}
               defaultApproverIds={defaultApproverIds}
               onPublished={documentId => void navigate(
-                `/organizations/${organizationId}/documents/${documentId}`,
+                `/organizations/${organizationId}/governance/documents/${documentId}`,
               )}
             >
               <Button variant="secondary" icon={IconUpload}>

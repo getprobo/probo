@@ -178,7 +178,7 @@ export default function MeasureEvidencesTab() {
         <EvidencePreviewDialog
           key={evidence.id}
           onClose={() => {
-            void navigate(`/organizations/${organizationId}/measures/${measureId}/evidences`);
+            void navigate(`/organizations/${organizationId}/governance/measures/${measureId}/evidences`);
           }}
           evidenceId={evidence.id}
           filename={evidence.file?.fileName || ""}
@@ -247,7 +247,7 @@ function EvidenceRow(props: {
     );
   };
 
-  const evidenceUrl = `/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`;
+  const evidenceUrl = `/organizations/${props.organizationId}/governance/measures/${props.measureId}/evidences/${evidence.id}`;
 
   return (
     <>

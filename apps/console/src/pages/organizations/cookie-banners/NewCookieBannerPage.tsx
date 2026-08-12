@@ -88,7 +88,7 @@ export default function NewCookieBannerPage() {
           variant: "success",
         });
         const bannerId = data.createCookieBanner.cookieBannerEdge.node.id;
-        void navigate(`/organizations/${organizationId}/cookie-banners/${bannerId}`);
+        void navigate(`/organizations/${organizationId}/privacy/cookie-banners/${bannerId}`);
       },
       onError(error) {
         toast({
@@ -106,7 +106,7 @@ export default function NewCookieBannerPage() {
         items={[
           {
             label: t("newCookieBannerPage.breadcrumbs.index"),
-            to: `/organizations/${organizationId}/cookie-banners`,
+            to: `/organizations/${organizationId}/privacy/cookie-banners`,
           },
           {
             label: t("newCookieBannerPage.breadcrumbs.new"),

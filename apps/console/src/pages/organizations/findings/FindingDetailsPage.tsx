@@ -331,7 +331,7 @@ export default function FindingDetailsPage(props: Props) {
     { value: "HIGH", label: t("findingDetails.priority.high") },
   ];
 
-  const breadcrumbFindingsUrl = `/organizations/${organizationId}/findings`;
+  const breadcrumbFindingsUrl = `/organizations/${organizationId}/governance/findings`;
 
   return (
     <div className="space-y-6">

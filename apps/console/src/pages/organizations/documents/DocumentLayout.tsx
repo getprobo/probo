@@ -165,7 +165,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const handleDocumentUpdated = useCallback(() => {
     if (versionId) {
       void navigate(
-        `/organizations/${organizationId}/documents/${document.id}/${currentTab}`,
+        `/organizations/${organizationId}/governance/documents/${document.id}/${currentTab}`,
         { replace: true },
       );
     } else {
@@ -178,7 +178,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const handleVersionChanged = useCallback(() => {
     if (versionId) {
       void navigate(
-        `/organizations/${organizationId}/documents/${document.id}/${currentTab}`,
+        `/organizations/${organizationId}/governance/documents/${document.id}/${currentTab}`,
         { replace: true },
       );
     } else {
@@ -188,8 +188,8 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   }, [versionId, currentTab, navigate, organizationId, document.id, onRefetch]);
 
   const urlPrefix = versionId
-    ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
-    : `/organizations/${organizationId}/documents/${document.id}`;
+    ? `/organizations/${organizationId}/governance/documents/${document.id}/versions/${versionId}`
+    : `/organizations/${organizationId}/governance/documents/${document.id}`;
 
   return (
     <>
@@ -199,7 +199,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             items={[
               {
                 label: t("documentLayout.breadcrumbs.documents"),
-                to: `/organizations/${organizationId}/documents`,
+                to: `/organizations/${organizationId}/governance/documents`,
               },
               {
                 label: currentVersion.title,

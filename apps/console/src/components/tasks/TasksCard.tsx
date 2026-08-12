@@ -636,7 +636,7 @@ function TaskRow(props: TaskRowProps) {
                   <IconArrowCornerDownLeft className="scale-x-[-1]" size={14} />
                   <Link
                     className="hover:underline"
-                    to={`/organizations/${organizationId}/measures/${task.measure?.id}`}
+                    to={`/organizations/${organizationId}/governance/measures/${task.measure?.id}`}
                   >
                     {task.measure?.name}
                   </Link>
@@ -657,7 +657,7 @@ function TaskRow(props: TaskRowProps) {
           <div className="text-sm text-txt-secondary ml-auto mr-8">
             <Link
               className="hover:underline"
-              to={`/organizations/${organizationId}/people/${task.assignedTo.id}`}
+              to={`/organizations/${organizationId}/settings/people/${task.assignedTo.id}`}
             >
               {task.assignedTo.fullName}
             </Link>

@@ -171,7 +171,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
               connections: [connectionId],
             },
             onCompleted() {
-              void navigate(`/organizations/${organizationId}/third-parties`);
+              void navigate(`/organizations/${organizationId}/tprm/third-parties`);
               resolve();
             },
             onError(error) {
@@ -199,9 +199,9 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
   const isVettingFailed = thirdParty.vettingStatus === "FAILED";
   const ancestors = thirdParty.ancestors ?? [];
 
-  const thirdPartiesUrl = `/organizations/${organizationId}/third-parties`;
+  const thirdPartiesUrl = `/organizations/${organizationId}/tprm/third-parties`;
   const baseThirdPartyUrl
-    = `/organizations/${organizationId}/third-parties/${thirdParty.id}`;
+    = `/organizations/${organizationId}/tprm/third-parties/${thirdParty.id}`;
 
   return (
     <div className="space-y-6">
@@ -252,7 +252,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
                 <span key={ancestor.id}>
                   {i > 0 && " / "}
                   <Link
-                    to={`/organizations/${organizationId}/third-parties/${ancestor.id}/overview`}
+                    to={`/organizations/${organizationId}/tprm/third-parties/${ancestor.id}/overview`}
                     className="text-txt-primary underline hover:no-underline"
                   >
                     {ancestor.name}

@@ -253,7 +253,7 @@ export default function StatementOfApplicabilityControlsTab({
             {linkedControls.map(control => (
               <Tr
                 key={control.controlId}
-                to={`/organizations/${organizationId}/frameworks/${control.frameworkId}/controls/${control.controlId}`}
+                to={`/organizations/${organizationId}/governance/frameworks/${control.frameworkId}/controls/${control.controlId}`}
               >
                 <Td className="font-medium text-txt-secondary">
                   {control.frameworkName}

@@ -235,7 +235,7 @@ export function AiSystemsPage({ queryRef }: AiSystemsPageProps) {
           {organization.node.aiSystemsDocument?.id && (
             <Button variant="secondary" asChild>
               <Link
-                to={`/organizations/${organizationId}/documents/${organization.node.aiSystemsDocument.id}`}
+                to={`/organizations/${organizationId}/governance/documents/${organization.node.aiSystemsDocument.id}`}
               >
                 <IconPageTextLine size={16} />
                 {t("aiSystemsPage.actions.document")}
@@ -247,7 +247,7 @@ export function AiSystemsPage({ queryRef }: AiSystemsPageProps) {
               organizationKey={organization.node}
               onPublished={(documentId) => {
                 void navigate(
-                  `/organizations/${organizationId}/documents/${documentId}`,
+                  `/organizations/${organizationId}/governance/documents/${documentId}`,
                 );
               }}
             >

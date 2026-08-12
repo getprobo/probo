@@ -144,7 +144,7 @@ export default function RightsRequestDetailsPage(props: Props) {
   const typeOptions = ["ACCESS", "DELETION", "RECTIFICATION", "PORTABILITY", "OBJECTION", "COMPLAINT"] as const;
   const stateOptions = ["TODO", "IN_PROGRESS", "DONE", "REJECTED"] as const;
 
-  const breadcrumbRequestsUrl = `/organizations/${organizationId}/rights-requests`;
+  const breadcrumbRequestsUrl = `/organizations/${organizationId}/privacy/rights-requests`;
 
   return (
     <div className="space-y-6">

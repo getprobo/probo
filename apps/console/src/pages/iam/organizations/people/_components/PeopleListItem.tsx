@@ -260,7 +260,7 @@ export function PeopleListItem(props: {
   };
 
   return (
-    <Tr to={`/organizations/${organizationId}/people/${profile.id}`}>
+    <Tr to={`/organizations/${organizationId}/settings/people/${profile.id}`}>
       <Td className={clsx(
         isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",

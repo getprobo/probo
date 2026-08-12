@@ -97,7 +97,7 @@ export default function AuditDetailsPage(props: Props) {
   const deleteAudit = useDeleteAudit(
     { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
-    () => void navigate(`/organizations/${organizationId}/audits`),
+    () => void navigate(`/organizations/${organizationId}/governance/audits`),
   );
 
   const { control, formState, handleSubmit, register, reset }
@@ -180,7 +180,7 @@ export default function AuditDetailsPage(props: Props) {
         items={[
           {
             label: t("auditDetailsPage.breadcrumb.audits"),
-            to: `/organizations/${organizationId}/audits`,
+            to: `/organizations/${organizationId}/governance/audits`,
           },
           {
             label:

@@ -219,7 +219,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
             return (
               <Tr
                 key={child.id}
-                to={`/organizations/${organizationId}/third-parties/${child.id}/overview`}
+                to={`/organizations/${organizationId}/tprm/third-parties/${child.id}/overview`}
               >
                 <Td>
                   <div className="flex gap-2 items-center">

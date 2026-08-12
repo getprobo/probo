@@ -87,7 +87,7 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
   const { toast } = useToast();
 
   const latestAssessment = thirdParty.riskAssessments?.edges[0]?.node;
-  const thirdPartyUrl = `/organizations/${organizationId}/third-parties/${thirdParty.id}/overview`;
+  const thirdPartyUrl = `/organizations/${organizationId}/tprm/third-parties/${thirdParty.id}/overview`;
 
   const onDelete = () => {
     confirm(

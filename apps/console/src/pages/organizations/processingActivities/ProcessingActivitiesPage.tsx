@@ -212,7 +212,7 @@ export default function ProcessingActivitiesPage({
   const tiaDefaultApproverIds = (tiaDocument?.defaultApprovers ?? []).map(a => a.id);
 
   const goToDocument = (documentId: string) => {
-    void navigate(`/organizations/${organizationId}/documents/${documentId}`);
+    void navigate(`/organizations/${organizationId}/governance/documents/${documentId}`);
   };
 
   const {
@@ -317,7 +317,7 @@ export default function ProcessingActivitiesPage({
             {paDocument?.id && (
               <Button variant="secondary" asChild>
                 <Link
-                  to={`/organizations/${organizationId}/documents/${paDocument.id}`}
+                  to={`/organizations/${organizationId}/governance/documents/${paDocument.id}`}
                 >
                   <IconPageTextLine size={16} />
                   {t("processingActivitiesPage.actions.document")}
@@ -342,7 +342,7 @@ export default function ProcessingActivitiesPage({
             {dpiaDocument?.id && (
               <Button variant="secondary" asChild>
                 <Link
-                  to={`/organizations/${organizationId}/documents/${dpiaDocument.id}`}
+                  to={`/organizations/${organizationId}/governance/documents/${dpiaDocument.id}`}
                 >
                   <IconPageTextLine size={16} />
                   {t("processingActivitiesPage.actions.document")}
@@ -367,7 +367,7 @@ export default function ProcessingActivitiesPage({
             {tiaDocument?.id && (
               <Button variant="secondary" asChild>
                 <Link
-                  to={`/organizations/${organizationId}/documents/${tiaDocument.id}`}
+                  to={`/organizations/${organizationId}/governance/documents/${tiaDocument.id}`}
                 >
                   <IconPageTextLine size={16} />
                   {t("processingActivitiesPage.actions.document")}
@@ -603,7 +603,7 @@ function ActivityRow({
   };
 
   const activityUrl
-    = `/organizations/${organizationId}/processing-activities/${activity.id}`;
+    = `/organizations/${organizationId}/privacy/processing-activities/${activity.id}`;
 
   return (
     <Tr to={activityUrl}>
@@ -659,7 +659,7 @@ function DPIARow({
   const { t } = useTranslation();
 
   const activityUrl
-    = `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
+    = `/organizations/${organizationId}/privacy/processing-activities/${dpia.processingActivity.id}#dpia`;
 
   return (
     <Tr to={activityUrl}>
@@ -713,7 +713,7 @@ function TIARow({
   const organizationId = useOrganizationId();
 
   const activityUrl
-    = `/organizations/${organizationId}/processing-activities/${tia.processingActivity.id}#tia`;
+    = `/organizations/${organizationId}/privacy/processing-activities/${tia.processingActivity.id}#tia`;
 
   return (
     <Tr to={activityUrl}>

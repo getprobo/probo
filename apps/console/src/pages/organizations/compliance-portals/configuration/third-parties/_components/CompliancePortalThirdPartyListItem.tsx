@@ -188,7 +188,7 @@ export function CompliancePortalThirdPartyListItem(props: {
   const isMutating = isLinking || isRemoving;
 
   return (
-    <Tr to={`/organizations/${organizationId}/third-parties/${thirdParty.id}/overview`}>
+    <Tr to={`/organizations/${organizationId}/tprm/third-parties/${thirdParty.id}/overview`}>
       <Td noLink>
         <Checkbox
           checked={isLinked}

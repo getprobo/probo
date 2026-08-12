@@ -234,7 +234,7 @@ function RisksChartCell({
       {risks.map(risk => (
         <DropdownItem key={risk.id} asChild>
           <Link
-            to={`/organizations/${organizationId}/risks/${risk.id}`}
+            to={`/organizations/${organizationId}/risk-management/risks/${risk.id}`}
           >
             <IconFire3 size={16} className="flex-none" />
             {risk.name}

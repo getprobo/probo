@@ -34,7 +34,7 @@ const deviceTabs = () => [
     }: LoaderFunctionArgs) => {
       // eslint-disable-next-line
       throw redirect(
-        `/organizations/${organizationId}/devices/${deviceId}/history`,
+        `/organizations/${organizationId}/itam/devices/${deviceId}/history`,
       );
     },
     Component: Fragment,

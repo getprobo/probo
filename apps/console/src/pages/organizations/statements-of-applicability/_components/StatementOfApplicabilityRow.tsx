@@ -105,7 +105,7 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
     );
   };
 
-  const detailUrl = `/organizations/${organizationId}/statements-of-applicability/${statementOfApplicability.id}`;
+  const detailUrl = `/organizations/${organizationId}/governance/statements-of-applicability/${statementOfApplicability.id}`;
 
   return (
     <Tr to={detailUrl}>

@@ -175,7 +175,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         items={[
           {
             label: t("configLayout.breadcrumbs.index"),
-            to: `/organizations/${organizationId}/cookie-banners`,
+            to: `/organizations/${organizationId}/privacy/cookie-banners`,
           },
           {
             label: banner.name,
@@ -226,7 +226,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
               <>
                 <span className="text-border-primary">·</span>
                 <Link
-                  to={`/organizations/${organizationId}/documents/${banner.policyDocument.id}`}
+                  to={`/organizations/${organizationId}/governance/documents/${banner.policyDocument.id}`}
                   className="font-medium text-txt-primary underline"
                 >
                   {t("configLayout.metadata.cookiePolicy")}
@@ -254,27 +254,27 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
       </PageHeader>
 
       <Tabs>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/display`}>
+        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/display`}>
           <IconPageTextLine size={20} />
           {t("configLayout.tabs.display")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/settings`}>
+        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/settings`}>
           <IconSettingsGear2 size={20} />
           {t("configLayout.tabs.settings")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/translations`}>
+        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/translations`}>
           <IconGlobe size={20} />
           {t("configLayout.tabs.translations")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/trackers`}>
+        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/trackers`}>
           <MagnifyingGlassIcon size={20} />
           {t("configLayout.tabs.trackers")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/resources`}>
+        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/resources`}>
           <CodeIcon size={20} />
           {t("configLayout.tabs.resources")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/consent-records`}>
+        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/consent-records`}>
           <ClipboardTextIcon size={20} />
           {t("configLayout.tabs.consentRecords")}
         </TabLink>

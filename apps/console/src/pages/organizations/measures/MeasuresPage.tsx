@@ -491,7 +491,7 @@ function MeasureRow(props: MeasureRowProps) {
   return (
     <>
       <MeasureFormDialog measure={measure} ref={dialogRef} />
-      <Tr to={`/organizations/${organizationId}/measures/${measure.id}`}>
+      <Tr to={`/organizations/${organizationId}/governance/measures/${measure.id}`}>
         <Td>{measure.name}</Td>
         <Td>{measure.category}</Td>
         <Td width={120}>

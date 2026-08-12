@@ -135,7 +135,7 @@ export default function FrameworkDetailPage(props: Props) {
   const onDelete = () => {
     deleteFramework({
       onSuccess: () => {
-        void navigate(`/organizations/${organizationId}/frameworks`);
+        void navigate(`/organizations/${organizationId}/governance/frameworks`);
       },
     });
   };
@@ -143,7 +143,7 @@ export default function FrameworkDetailPage(props: Props) {
   if (!controlId && controls.length > 0) {
     return (
       <Navigate
-        to={`/organizations/${organizationId}/frameworks/${framework.id}/controls/${controls[0].id}`}
+        to={`/organizations/${organizationId}/governance/frameworks/${framework.id}/controls/${controls[0].id}`}
       />
     );
   }
@@ -214,7 +214,7 @@ export default function FrameworkDetailPage(props: Props) {
               key={control.id}
               id={control.sectionTitle}
               description={control.name}
-              to={`/organizations/${organizationId}/frameworks/${framework.id}/controls/${control.id}`}
+              to={`/organizations/${organizationId}/governance/frameworks/${framework.id}/controls/${control.id}`}
               active={selectedControl?.id === control.id}
             />
           ))}

@@ -36,7 +36,6 @@ export const viewerLayoutQuery = graphql`
 `;
 
 export function ViewerLayout(props: {
-  hideSidebar?: boolean;
   queryRef: PreloadedQuery<ViewerLayoutQuery>;
 }) {
   const { queryRef } = props;

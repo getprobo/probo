@@ -288,7 +288,7 @@ function StatementOfApplicabilityRow(props: {
 
   return (
     <Tr
-      to={`/organizations/${organizationId}/statements-of-applicability/${soa.statementOfApplicability.id}`}
+      to={`/organizations/${organizationId}/governance/statements-of-applicability/${soa.statementOfApplicability.id}`}
     >
       <Td>{soa.statementOfApplicability.name}</Td>
       <Td>

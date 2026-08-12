@@ -2410,7 +2410,26 @@
   "membershipsDropdownMenu": {
     "pendingInvitations": "Openstaande uitnodigingen"
   },
-  "sidebar": {
+  "organizationSwitcher": {
+    "empty": "Geen organisaties gevonden",
+    "sessionActive": "Aangemeld",
+    "sessionExpired": "Sessie verlopen",
+    "sessionLocked": "Niet aangemeld"
+  },
+  "nav": {
+    "products": "Producten",
+    "groups": {
+      "governance": "Governance",
+      "privacy": "Privacy",
+      "tprm": "Derdepartijbeheer",
+      "itam": "IT-assetbeheer",
+      "riskManagement": "Risicobeheer",
+      "registries": "Registers",
+      "compliancePortal": "Compliancepagina",
+      "accessReview": "Toegangsbeoordeling",
+      "settings": "Instellingen"
+    },
+    "organization": "Organisatie",
     "context": "Context",
     "tasks": "Taken",
     "measures": "Maatregelen",
@@ -2432,8 +2451,7 @@
     "rightsRequests": "Rechtenverzoeken",
     "accessReviews": "Toegangsbeoordelingen",
     "compliancePortals": "Compliancepagina's",
-    "cookieBanners": "Cookiebanners",
-    "settings": "Instellingen"
+    "cookieBanners": "Cookiebanners"
   },
   "viewerMembershipDropdown": {
     "errors": {

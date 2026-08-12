@@ -412,7 +412,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   });
 
   const breadcrumbProcessingActivitiesUrl
-    = `/organizations/${organizationId}/processing-activities`;
+    = `/organizations/${organizationId}/privacy/processing-activities`;
 
   return (
     <div className="space-y-6">

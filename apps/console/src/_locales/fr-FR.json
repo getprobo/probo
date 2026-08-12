@@ -2410,7 +2410,26 @@
   "membershipsDropdownMenu": {
     "pendingInvitations": "Invitations en attente"
   },
-  "sidebar": {
+  "organizationSwitcher": {
+    "empty": "Aucune organisation trouvée",
+    "sessionActive": "Connecté",
+    "sessionExpired": "Session expirée",
+    "sessionLocked": "Non connecté"
+  },
+  "nav": {
+    "products": "Produits",
+    "groups": {
+      "governance": "Gouvernance",
+      "privacy": "Confidentialité",
+      "tprm": "Gestion des tiers",
+      "itam": "Parc informatique",
+      "riskManagement": "Gestion des risques",
+      "registries": "Registres",
+      "compliancePortal": "Portail de conformité",
+      "accessReview": "Revue d’accès",
+      "settings": "Paramètres"
+    },
+    "organization": "Organisation",
     "context": "Contexte",
     "tasks": "Tâches",
     "measures": "Mesures",
@@ -2432,8 +2451,7 @@
     "rightsRequests": "Demandes d’exercice de droits",
     "accessReviews": "Revues d’accès",
     "compliancePortals": "Portails de conformité",
-    "cookieBanners": "Bannières de cookies",
-    "settings": "Paramètres"
+    "cookieBanners": "Bannières de cookies"
   },
   "viewerMembershipDropdown": {
     "errors": {

@@ -278,7 +278,7 @@ const routes = [
       },
       {
         Component: lazy(
-          () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
+          () => import("./pages/iam/organizations/OrganizationLayoutLoader"),
         ),
         ErrorBoundary: OrganizationErrorBoundary,
         children: [
@@ -290,97 +290,129 @@ const routes = [
                 case Role.EMPLOYEE:
                   return <Navigate to="employee" />;
                 case Role.AUDITOR:
-                  return <Navigate to="measures" />;
+                  return <Navigate to="governance/measures" />;
                 case Role.COMPLIANCE_PORTAL_MANAGER:
                   return <Navigate to="compliance-portals" />;
                 case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER:
                   return <Navigate to="compliance-portals" />;
                 default:
-                  return <Navigate to="tasks" />;
+                  return <Navigate to="governance/tasks" />;
               }
             },
           },
+
+          // Features are grouped under a product segment, mirroring the rail in
+          // the navigation. The segments live here rather than in the page tree
+          // (no pages/governance/ folder): the grouping is expected to move as
+          // products evolve, and reparenting a route array is cheaper than
+          // moving folders. The table in _lib/navigation.ts must agree with
+          // these segments — it is what builds the links.
+          {
+            path: "governance",
+            children: [
+              ...frameworkRoutes,
+              ...auditRoutes,
+              ...findingRoutes,
+              ...measureRoutes,
+              ...documentsRoutes,
+              ...taskRoutes,
+              ...statementsOfApplicabilityRoutes,
+            ],
+          },
+          {
+            path: "privacy",
+            children: [
+              ...rightsRequestRoutes,
+              ...processingActivityRoutes,
+              ...cookieBannerRoutes,
+            ],
+          },
+          {
+            path: "tprm",
+            children: [...thirdPartyRoutes],
+          },
+          {
+            path: "itam",
+            children: [...deviceRoutes],
+          },
+          {
+            path: "risk-management",
+            children: [...dataRoutes, ...assetRoutes, ...riskRoutes],
+          },
+          {
+            path: "registries",
+            children: [
+              ...businessFunctionRoutes,
+              ...aiSystemRoutes,
+              ...obligationRoutes,
+            ],
+          },
+
+          // These two already name their product, so an extra segment would
+          // only repeat it.
+          ...accessReviewRoutes,
+          ...compliancePortalRoutes,
+
           {
             path: "settings",
-            Fallback: PageSkeleton,
-            Component: lazy(
-              () =>
-                import("./pages/organizations/settings/SettingsLayoutLoader"),
-            ),
             children: [
+              ...contextRoutes,
+              ...peopleRoutes,
+              // Pathless, so the organization pages sit at settings/general
+              // rather than settings/settings/general while still sharing the
+              // tab chrome.
               {
-                index: true,
-                loader: () => {
-                  // eslint-disable-next-line
-                  throw redirect("general");
-                },
-              },
-              {
-                path: "general",
+                Fallback: PageSkeleton,
                 Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                  () => import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
                 ),
-              },
-              {
-                path: "saml-sso",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "scim",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "webhooks",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "slackbot",
-                Component: lazy(
-                  () =>
-                    import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
-                ),
-              },
-              {
-                path: "audit-log",
-                Component: lazy(
-                  () =>
-                    import("./pages/iam/organizations/settings/AuditLogSettingsPageLoader"),
-                ),
+                children: [
+                  {
+                    index: true,
+                    loader: () => {
+                      // eslint-disable-next-line
+                      throw redirect("general");
+                    },
+                  },
+                  {
+                    path: "general",
+                    Component: lazy(
+                      () =>
+                        import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                    ),
+                  },
+                  {
+                    path: "saml-sso",
+                    Component: lazy(
+                      () =>
+                        import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
+                    ),
+                  },
+                  {
+                    path: "scim",
+                    Component: lazy(
+                      () =>
+                        import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
+                    ),
+                  },
+                  {
+                    path: "webhooks",
+                    Component: lazy(
+                      () =>
+                        import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
+                    ),
+                  },
+                  {
+                    path: "audit-log",
+                    Component: lazy(
+                      () =>
+                        import("./pages/iam/organizations/settings/AuditLogSettingsPageLoader"),
+                    ),
+                  },
+                ],
               },
             ],
           },
-          ...peopleRoutes,
-          ...riskRoutes,
-          ...measureRoutes,
-          ...documentsRoutes,
-          ...thirdPartyRoutes,
-          ...deviceRoutes,
-          ...frameworkRoutes,
-          ...taskRoutes,
-          ...assetRoutes,
-          ...dataRoutes,
-          ...auditRoutes,
-          ...contextRoutes,
-          ...findingRoutes,
-          ...businessFunctionRoutes,
-          ...aiSystemRoutes,
-          ...obligationRoutes,
-          ...rightsRequestRoutes,
-          ...processingActivityRoutes,
-          ...statementsOfApplicabilityRoutes,
-          ...accessReviewRoutes,
-          ...compliancePortalRoutes,
-          ...cookieBannerRoutes,
           {
             path: "*",
             Component: PageError,

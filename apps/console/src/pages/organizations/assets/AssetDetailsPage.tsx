@@ -109,7 +109,7 @@ export default function AssetDetailsPage(props: Props) {
   const breadcrumbItems = [
     {
       label: t("assetDetailsPage.breadcrumb.assets"),
-      to: `/organizations/${organizationId}/assets`,
+      to: `/organizations/${organizationId}/risk-management/assets`,
     },
     {
       label: assetEntry?.name ?? "",

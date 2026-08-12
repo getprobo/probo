@@ -223,7 +223,7 @@ export function CompliancePortalAuditListItem(props: {
     : t("auditListItem.noExpiry");
 
   return (
-    <Tr to={`/organizations/${organizationId}/audits/${audit.id}`}>
+    <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td noLink>
         <Checkbox
           checked={isLinked}

@@ -18,36 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Skeleton } from "@probo/ui";
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { ViewerMembershipLayoutQuery } from "#/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
+import type { OrganizationLayoutQuery } from "#/__generated__/iam/OrganizationLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
-
 import {
-  ViewerMembershipLayout,
-  viewerMembershipLayoutQuery,
-} from "../../iam/organizations/ViewerMembershipLayout";
+  OrganizationLayout,
+  organizationLayoutQuery,
+} from "#/pages/iam/organizations/OrganizationLayout";
+import { OrganizationLayoutSkeleton } from "#/pages/iam/organizations/OrganizationLayoutSkeleton";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 function EmployeeLayoutQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<ViewerMembershipLayoutQuery>(
-    viewerMembershipLayoutQuery,
+  const [queryRef, loadQuery] = useQueryLoader<OrganizationLayoutQuery>(
+    organizationLayoutQuery,
   );
 
   useEffect(() => {
-    loadQuery({ organizationId, hideSidebar: true });
+    loadQuery({ organizationId, hideNavigation: true });
   }, [organizationId, loadQuery]);
 
   if (!queryRef) {
-    return <Skeleton className="w-full h-screen" />;
+    return <OrganizationLayoutSkeleton />;
   }
 
   return (
-    <Suspense fallback={<Skeleton className="w-full h-screen" />}>
-      <ViewerMembershipLayout queryRef={queryRef} hideSidebar />
+    <Suspense fallback={<OrganizationLayoutSkeleton />}>
+      <OrganizationLayout queryRef={queryRef} hideNavigation />
     </Suspense>
   );
 }
