@@ -129,9 +129,69 @@ Each Go codec change must round-trip these. The wire-framing fixtures (join/peer
 handshake, socket frames) are added in the transport phase alongside the pinned
 websocket adapter.
 
+## Transport layer (WebSocket adapter)
+
+Pinned: `@automerge/automerge-repo-network-websocket@2.6.0-alpha.3`. The current
+`WebSocketClientAdapter` and server adapters encode every frame with the same
+repo CBOR helper used for payloads (`useRecords: false`, `tagUint8Array: false`).
+The older `encoder.js` and `WSShared.js` in that package are legacy compat and
+are not used by the current adapters.
+
+Each binary WebSocket frame is exactly one CBOR-encoded message; the WebSocket
+message boundary is the framing, so there is no length prefix of our own. The
+server must read binary frames (not text) and treat each as one message.
+
+Protocol version is `"1"` (`ProtocolV1`).
+
+### Handshake
+
+```text
+client ──▶ join   { type:"join", senderId, peerMetadata, supportedProtocolVersions:["1"] }
+server ──▶ peer   { type:"peer", senderId, targetId, peerMetadata, selectedProtocolVersion:"1" }
+```
+
+- `join` is the first frame the client sends, before it knows the server peer id,
+  so it has no `targetId`.
+- The server replies `peer` selecting a protocol version, or `error`
+  `{ type:"error", senderId, targetId, message }` and then closes the socket.
+- After the handshake, both directions exchange the repo messages from the
+  message-union section (`sync`, `request`, `ephemeral`, `doc-unavailable`, and
+  the two remote-heads messages), each as its own CBOR frame.
+- There is no explicit `leave` frame; a disconnect is the socket closing. A
+  presence `goodbye` (inside an ephemeral) is the graceful application-level
+  signal.
+
+### PeerMetadata
+
+```text
+{ storageId?: string (StorageId), isEphemeral?: boolean }
+```
+
+Both fields are optional. `isEphemeral` marks a peer that does not persist
+documents. Our gateway can present its own metadata and must not trust a peer's
+metadata as identity (see below).
+
+### Gateway responsibilities (transport)
+
+- Accept a binary WebSocket, read `join`, negotiate `"1"`, reply `peer` with a
+  server `senderId`.
+- The repo `PeerId` in `join` is peer-chosen and is **not** a user identity;
+  authenticate the connection out of band (our existing session auth) and bind
+  the authenticated identity to the connection, never to `senderId`.
+- Route `sync`/`request` payloads into the per-peer, per-document
+  `automerge.SyncState`; forward `ephemeral` frames to the room with the existing
+  cross-instance fanout, de-duplicated by `(sessionId, count)`.
+
+## Fixtures
+
+`testdata/` also holds transport fixtures generated from the pinned adapter's own
+CBOR encoder:
+
+- `wire-join.json`, `wire-peer.json`, `wire-error.json` — the handshake frames.
+- `wire-sync.json`, `wire-ephemeral.json` — a framed document message.
+
 ## Deliberately deferred
 
-- WebSocket adapter framing and the join/peer/leave handshake (transport phase).
 - `remote-subscription-change` and `remote-heads-changed` handling (not needed by
   a single-authority gateway; revisit if multi-storage subscription is wanted).
 - Storage adapters: PostgreSQL remains the document authority; we do not adopt

@@ -108,6 +108,77 @@ fixtures["presence-roundtrip"] = (() => {
   };
 })();
 
+// Transport-layer frames, encoded with the same repo CBOR helper the WebSocket
+// adapter uses for every frame. Each frame is one CBOR-encoded message.
+const peerMetadata = { isEphemeral: false };
+
+const wireFrames = {
+  "wire-join": {
+    description: "Client join handshake frame",
+    message: {
+      type: "join",
+      senderId: "peer-a",
+      peerMetadata,
+      supportedProtocolVersions: ["1"],
+    },
+  },
+  "wire-peer": {
+    description: "Server peer handshake reply frame",
+    message: {
+      type: "peer",
+      senderId: "server",
+      targetId: "peer-a",
+      peerMetadata,
+      selectedProtocolVersion: "1",
+    },
+  },
+  "wire-error": {
+    description: "Server error frame before closing the socket",
+    message: {
+      type: "error",
+      senderId: "server",
+      targetId: "peer-a",
+      message: "unauthorized",
+    },
+  },
+  "wire-sync": {
+    description: "Framed sync message carrying opaque Automerge sync bytes",
+    message: {
+      type: "sync",
+      senderId: "peer-a",
+      targetId: "server",
+      documentId: "4NMNnkMhL2wRfvHYuG1uxN",
+      data: new Uint8Array([0, 1, 2, 3]),
+    },
+  },
+  "wire-ephemeral": {
+    description: "Framed ephemeral message carrying a presence heartbeat payload",
+    message: {
+      type: "ephemeral",
+      senderId: "peer-a",
+      targetId: "server",
+      documentId: "4NMNnkMhL2wRfvHYuG1uxN",
+      sessionId: "session-a",
+      count: 1,
+      data: cbor.encode({ [PRESENCE_MESSAGE_MARKER]: { type: "heartbeat" } }),
+    },
+  },
+};
+
+for (const [name, frame] of Object.entries(wireFrames)) {
+  const encoded = cbor.encode(frame.message);
+  const message = { ...frame.message };
+  if (message.data instanceof Uint8Array) {
+    message.data = base64(message.data);
+  }
+
+  fixtures[name] = {
+    description: frame.description,
+    message,
+    frameCborBase64: base64(encoded),
+  };
+}
+
 for (const [name, fixture] of Object.entries(fixtures)) {
   const path = join(outputDir, `${name}.json`);
   writeFileSync(path, `${JSON.stringify(fixture, null, 2)}\n`);
