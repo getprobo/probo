@@ -91,24 +91,14 @@ field in the repo handshake, and clients never seed via the protocol.
 - A collaboration connection is served a materialized Automerge document for the
   version. The custom `needsSeed` / `seedContent` / seed-owner handshake and
   `ReleaseCollaborationSeed` machinery are **dropped** from the repo path.
-- **Target implementation** — seed the server-side Automerge document once from
-  the version's stored ProseMirror JSON and persist it, so every connection just
-  syncs an existing document down. Conversion is ProseMirror JSON → Automerge
-  spans.
-- **Open sub-decision (implementation, not protocol):** that conversion lives
-  today only in TypeScript (`packages/ui` schema adapter + `@automerge/prosemirror`
-  `pmNodeToSpans`); Go has the reverse (Automerge → ProseMirror render) but not
-  the forward direction. Two ways to close it, to be chosen when the endpoint is
-  built:
-  1. **Seed at draft creation** — run the existing TS conversion once when a draft
-     version is created (or first opened) and persist the resulting Automerge
-     document. The gateway then always has a document. Simplest; no new Go code.
-  2. **Port the forward conversion to Go** — implement ProseMirror JSON → spans in
-     Go and seed lazily on first open. More code, but keeps seeding server-only
-     with no JS build step.
-- Interim fallback if neither is ready: the first client seeds via the repo
-  `doc-unavailable` → `repo.create()` path. This is a temporary bridge, not the
-  contract, because it reintroduces client-side seeding.
+- **Implementation (done)** — the conversion was ported to Go
+  (`pkg/automerge/prosemirror.ToSpans`, the inverse of `Render`, validated to
+  round-trip the entire shared ProseMirror corpus). The `/repo` handler seeds
+  lazily on first open: the connection that claims the seed converts the
+  version's stored ProseMirror JSON to spans, writes them into the shared
+  document, and persists; the persist marks the state seeded, so later
+  connections skip it. No JavaScript build step and no draft-creation change are
+  required.
 
 Rationale: server-authoritative seeding matches the CRDT authority model and
 removes fragile handshake state; the only real work is where the one-time
@@ -164,6 +154,7 @@ PM → spans conversion runs.
 | Cursor-based selection presence (`TextSelectionValue`) | done, tested |
 | TS `deriveDocumentId` mirror (`@probo/ui`) | done, tested for byte-parity with Go |
 | `/repo` route wiring | done, driven end-to-end in Go by a real `ClientConn` (Postgres integration + live JS still pending) |
-| Server-authoritative seeding | pending (choose conversion location); the `/repo` route refuses an unseeded document until then |
+| ProseMirror → spans forward conversion (`prosemirror.ToSpans`) | done, round-trips the whole shared corpus |
+| Server-authoritative seeding | done, seeds on first open from stored content and materializes over the loop (Postgres lifecycle still to integration-test) |
 | Cross-instance ephemeral fan-out | pending (extend `realtime.Events`) |
 | Repo `NetworkAdapter` targeting `/repo` (frontend) | pending (needs `@automerge/automerge-repo` dep + gateway) |
