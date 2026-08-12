@@ -158,3 +158,9 @@ export type {
   ResolvedSelection,
   TextSelection,
 } from "./RichEditor/repoSelection";
+export {
+  pmSelectionFromPresence,
+  presenceFromPmSelection,
+  richEditorPresenceAdapter,
+} from "./RichEditor/repoPresence";
+export type { PmPresenceSelection } from "./RichEditor/repoPresence";
