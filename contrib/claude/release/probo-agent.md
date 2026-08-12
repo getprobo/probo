@@ -158,7 +158,7 @@ Published assets per arch:
 
 | Artifact | Role |
 |----------|------|
-| `probo-agent_*_windows_*.msi` | Initial install (double-click or `msiexec /i … /qn`) |
+| `probo-agent_*_windows_*.msi` | Initial install (double-click or `msiexec /i … /qn`); self-contained (embedded CAB) |
 | `probo-agent_Windows_*.zip` | Auto-update only (unchanged updater contract) |
 
 Both the nested `probo-agent.exe` and the MSI are Authenticode-signed

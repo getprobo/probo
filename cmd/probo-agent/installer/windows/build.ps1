@@ -127,4 +127,16 @@ if (-not (Test-Path -LiteralPath $Output)) {
     throw "error: expected MSI was not produced at $Output"
 }
 
+# Package.wxs sets MediaTemplate EmbedCab=yes; fail loudly if WiX still
+# emits a sidecar cabinet (users would need both files to install).
+$outputDir = Split-Path -Parent $Output
+if (-not $outputDir) {
+    $outputDir = (Get-Location).Path
+}
+$sidecarCabs = @(Get-ChildItem -LiteralPath $outputDir -Filter "*.cab" -File -ErrorAction SilentlyContinue)
+if ($sidecarCabs.Count -gt 0) {
+    $names = ($sidecarCabs | ForEach-Object { $_.Name }) -join ", "
+    throw "error: unexpected external cabinet(s) next to MSI ($names); expected EmbedCab=yes"
+}
+
 Write-Host "Wrote $Output"

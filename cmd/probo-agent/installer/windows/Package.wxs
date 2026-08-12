@@ -36,6 +36,10 @@ SOFTWARE. -->
 			DowngradeErrorMessage="A newer version of Probo Agent is already installed."
 		/>
 
+		<!-- Embed payload in the MSI so releases ship a single downloadable
+		     file. WiX defaults to an external cab{N}.cab beside the MSI. -->
+		<MediaTemplate EmbedCab="yes" />
+
 		<StandardDirectory Id="ProgramFiles64Folder">
 			<Directory Id="INSTALLFOLDER" Name="Probo" />
 		</StandardDirectory>
