@@ -219,6 +219,51 @@ CBOR encoder:
 - `wire-join.json`, `wire-peer.json`, `wire-error.json` — the handshake frames.
 - `wire-sync.json`, `wire-ephemeral.json` — a framed document message.
 
+## Gateway wiring
+
+The protocol drivers (`ServerConn`, `ClientConn`) are transport-agnostic and
+fully tested. Wiring them into the authenticated production WebSocket endpoint
+reuses the existing collaboration hub rather than duplicating rooms, persistence,
+or cross-instance notification:
+
+- **Auth** — mount the repo route inside the same authenticated router group as
+  `/document-versions/{documentVersionID}/sync` and reuse
+  `documentCollaborationHandler.authorize`. The repo `PeerId` is never trusted as
+  identity.
+- **Document authority & persistence** — `hub.acquire` yields a lease over the
+  shared `*automerge.Document`; each connection uses its own
+  `Document.NewSyncState`. Sync fan-out reuses `lease.NotifyPeers`/`lease.Wake`
+  and persistence reuses `lease.SchedulePersist`/`lease.PersistError`, exactly as
+  the legacy handler does.
+- **Document id** — the frontend chooses the `automerge:<id>` URL, so the gateway
+  uses `NewAdoptingServerConn`: it announces nothing on `Start` and binds to the
+  id in the client's first `sync`/`request` frame, then answers for that id and
+  rejects any other. This removes the need for a server/frontend id-derivation
+  contract.
+- **Ephemeral (presence/cursors)** — repo presence travels as opaque `ephemeral`
+  frames, not the legacy structured snapshots. `ServerConn.Receive` returns a
+  non-duplicate ephemeral frame as `fanout`; the handler publishes it with
+  `lease.BroadcastEphemeral`, and reads other peers' frames from
+  `lease.Ephemeral` to write to its socket. This is scoped to one server
+  instance.
+
+### Remaining contract decisions before enabling the endpoint
+
+These need the migrated frontend (and a Postgres-backed integration test) to
+settle, so they are intentionally not encoded as untested production code yet:
+
+- **Cross-instance ephemeral** — `realtime.Events` currently carries only the
+  document-version id (a "changed" signal) over `NOTIFY`. Repo ephemeral gossip
+  across server instances needs the payload carried too, or a separate pub/sub
+  channel. Single-instance fan-out (above) is complete.
+- **Seeding** — the legacy handshake ships `SeedContent` for the client to apply;
+  the repo protocol has no such field. The repo endpoint must instead seed the
+  server-side document (authoritative) before serving, or rely on the first
+  writer. Which of these the frontend expects is undecided.
+- **Auth token transport** — a repo client sets no cookies by default; how the
+  frontend presents the session/bearer credential on the WebSocket upgrade must
+  match `authn` middleware expectations.
+
 ## Deliberately deferred
 
 - `remote-subscription-change` and `remote-heads-changed` handling (not needed by
