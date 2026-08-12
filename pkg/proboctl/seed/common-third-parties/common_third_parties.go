@@ -183,6 +183,32 @@ func loadThirdParties() ([]thirdPartyData, error) {
 	return thirdParties, nil
 }
 
+// SeededSlugs returns the slug of every curated catalog entry.
+//
+// A seeded slug is recreated by the next seed run, which makes it decisive
+// for cleanup: merging such a row away resurrects it on the following
+// deploy. Callers use this to prefer a seeded row as a merge winner and to
+// refuse deleting one.
+//
+// Derived from the same embedded dataset the seed writes, so the two cannot
+// disagree about which slugs are curated.
+func SeededSlugs() (map[string]struct{}, error) {
+	thirdParties, err := loadThirdParties()
+	if err != nil {
+		return nil, err
+	}
+
+	slugs := make(map[string]struct{}, len(thirdParties))
+
+	for _, tp := range thirdParties {
+		if s := slug.Make(tp.Name); s != "" {
+			slugs[s] = struct{}{}
+		}
+	}
+
+	return slugs, nil
+}
+
 func parseCategory(errOut io.Writer, tp thirdPartyData) coredata.ThirdPartyCategory {
 	if tp.Category == nil || *tp.Category == "" {
 		return coredata.ThirdPartyCategoryOther

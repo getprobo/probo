@@ -744,6 +744,65 @@ func (v *ThirdParties) CountByCompliancePortalID(
 	return v.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 }
 
+// CountByCommonThirdPartyID returns how many organization third parties
+// link to each catalog entry, keyed by catalog id.
+//
+// Catalog cleanup needs the whole histogram to rank merge winners, so this
+// aggregates in one round trip rather than counting per candidate row.
+// Callers pass NewNoScope to span tenants: the catalog is global, so a
+// single entry's references are spread across every tenant that imported
+// it, and a tenant-scoped count would understate its true usage.
+func (v *ThirdParties) CountByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+) (map[gid.GID]int, error) {
+	q := `
+SELECT
+    common_third_party_id,
+    COUNT(id)
+FROM
+    third_parties
+WHERE
+    %s
+    AND common_third_party_id IS NOT NULL
+GROUP BY
+    common_third_party_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot count third parties by common third party: %w", err)
+	}
+	defer rows.Close()
+
+	counts := make(map[gid.GID]int)
+
+	for rows.Next() {
+		var (
+			id    gid.GID
+			count int
+		)
+
+		if err := rows.Scan(&id, &count); err != nil {
+			return nil, fmt.Errorf("cannot scan third party count: %w", err)
+		}
+
+		counts[id] = count
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate third party counts: %w", err)
+	}
+
+	return counts, nil
+}
+
 func (v *ThirdParties) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -745,6 +746,149 @@ ORDER BY name ASC
 	}
 
 	return ids, nil
+}
+
+// LoadAllUnreferencedIDs returns catalog entries that nothing points at:
+// no catalog tracker pattern, no organization third party in any tenant,
+// and no owned domain.
+//
+// These are the leftovers of a bad attribution — an entry created for a
+// vendor that turned out not to exist, which nothing ever linked. They are
+// not duplicates of anything, so merging cannot clean them up.
+//
+// createdBefore excludes entries still in flight: an entry is created
+// before the enrichment worker fills it in and before the pattern that
+// triggered it is linked, so a brand-new entry legitimately has no
+// references yet. unenrichedOnly further narrows to entries that never
+// completed enrichment.
+func (t *CommonThirdParties) LoadAllUnreferencedIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	createdBefore time.Time,
+	unenrichedOnly bool,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    ctp.id
+FROM
+    common_third_parties AS ctp
+WHERE
+    ctp.created_at < @created_before
+    AND (NOT @unenriched_only OR ctp.enrichment IS NULL)
+    AND NOT EXISTS (
+        SELECT 1 FROM common_tracker_patterns AS p
+        WHERE p.common_third_party_id = ctp.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM third_parties AS tp
+        WHERE tp.common_third_party_id = ctp.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM common_third_party_domains AS d
+        WHERE d.common_third_party_id = ctp.id
+    )
+ORDER BY
+    ctp.created_at ASC,
+    ctp.id ASC
+`
+
+	args := pgx.StrictNamedArgs{
+		"created_before":  createdBefore,
+		"unenriched_only": unenrichedOnly,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query unreferenced common third parties: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect unreferenced common third parties: %w", err)
+	}
+
+	return ids, nil
+}
+
+// UpdateName renames a catalog entry, leaving its slug alone.
+//
+// The slug is the identity key that dedup and the seed both match on, so a
+// rename is display-only: correcting a name never silently moves an entry's
+// identity. Use UpdateSlug for that, deliberately and separately.
+func (t CommonThirdParty) UpdateName(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	name string,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    name = @name,
+    updated_at = NOW()
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":   id,
+		"name": name,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update common third party name: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// UpdateSlug changes a catalog entry's slug.
+//
+// The slug is the entry's identity: dedup resolves against it and the seed
+// upserts on it, so changing it changes both which future resolutions land
+// on this entry and whether a seed run recreates the old one. Returns
+// ErrResourceAlreadyExists when another entry already holds the slug.
+func (t CommonThirdParty) UpdateSlug(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	slug string,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    slug = @slug,
+    updated_at = NOW()
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":   id,
+		"slug": slug,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok &&
+			pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "common_third_parties_slug_key" {
+			return ErrResourceAlreadyExists
+		}
+
+		return fmt.Errorf("cannot update common third party slug: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (t CommonThirdParty) UpdateLogoFileID(

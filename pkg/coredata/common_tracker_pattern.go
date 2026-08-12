@@ -985,6 +985,102 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
+// CountByCommonThirdPartyID returns how many catalog patterns are
+// attributed to each catalog third party, keyed by catalog id.
+//
+// Catalog cleanup ranks merge winners on how much each candidate is
+// referenced, so the whole histogram is aggregated in one round trip rather
+// than counted per candidate.
+func (ps *CommonTrackerPatterns) CountByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+) (map[gid.GID]int, error) {
+	q := `
+SELECT
+    common_third_party_id,
+    COUNT(id)
+FROM
+    common_tracker_patterns
+WHERE
+    common_third_party_id IS NOT NULL
+GROUP BY
+    common_third_party_id
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("cannot count common tracker patterns by third party: %w", err)
+	}
+	defer rows.Close()
+
+	counts := make(map[gid.GID]int)
+
+	for rows.Next() {
+		var (
+			id    gid.GID
+			count int
+		)
+
+		if err := rows.Scan(&id, &count); err != nil {
+			return nil, fmt.Errorf("cannot scan common tracker pattern count: %w", err)
+		}
+
+		counts[id] = count
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate common tracker pattern counts: %w", err)
+	}
+
+	return counts, nil
+}
+
+// RepointCommonThirdPartyID moves every catalog pattern attributed to
+// fromID onto toID. It backs the catalog merge, which folds one vendor row
+// into another.
+//
+// Unlike RelinkCommonThirdPartyByIDs this preserves confidence. That method
+// is an operator attribution and promotes the row to full confidence; a
+// merge is a statement that two catalog rows are the same vendor, which
+// says nothing new about how well any pattern was attributed, so a
+// low-confidence link must stay low-confidence.
+//
+// Attribution is forced to THIRD_PARTY because a row carrying a vendor must
+// record that verdict, which every affected row already did — they held
+// fromID. Selecting by the vendor id rather than a list of pattern ids
+// keeps the whole repoint in one statement.
+//
+// Returns the number of rows updated.
+func (ps *CommonTrackerPatterns) RepointCommonThirdPartyID(
+	ctx context.Context,
+	tx pg.Tx,
+	fromID gid.GID,
+	toID gid.GID,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    common_third_party_id = @to_id,
+    attribution = @attribution,
+    updated_at = NOW()
+WHERE
+    common_third_party_id = @from_id
+`
+
+	args := pgx.StrictNamedArgs{
+		"from_id":     fromID,
+		"to_id":       toID,
+		"attribution": CommonTrackerPatternAttributionThirdParty,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot repoint common tracker pattern third party: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // SetAttributionByIDs records a terminal attribution verdict on the given
 // catalog rows. It is an operator action: marking a row FIRST_PARTY (or
 // UNDETERMINED) clears any vendor link, because a non-third-party verdict

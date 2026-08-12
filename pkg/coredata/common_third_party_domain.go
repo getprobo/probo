@@ -239,6 +239,56 @@ LIMIT @limit;
 	return nil
 }
 
+// LoadAllGroupedByCommonThirdPartyID returns every owned domain in the
+// catalog, grouped by the catalog entry that owns it.
+//
+// Duplicate detection compares domain sets across the whole catalog, so it
+// needs all of them at once; loading per entry would be one round trip per
+// candidate. Only the domain strings are returned because that is all the
+// comparison uses.
+func (ds *CommonThirdPartyDomains) LoadAllGroupedByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+) (map[gid.GID][]string, error) {
+	q := `
+SELECT
+    common_third_party_id,
+    domain
+FROM
+    common_third_party_domains
+ORDER BY
+    common_third_party_id,
+    domain
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common third party domains: %w", err)
+	}
+	defer rows.Close()
+
+	byParty := make(map[gid.GID][]string)
+
+	for rows.Next() {
+		var (
+			partyID gid.GID
+			domain  string
+		)
+
+		if err := rows.Scan(&partyID, &domain); err != nil {
+			return nil, fmt.Errorf("cannot scan common third party domain: %w", err)
+		}
+
+		byParty[partyID] = append(byParty[partyID], domain)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate common third party domains: %w", err)
+	}
+
+	return byParty, nil
+}
+
 func (ds *CommonThirdPartyDomains) LoadByCommonThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,

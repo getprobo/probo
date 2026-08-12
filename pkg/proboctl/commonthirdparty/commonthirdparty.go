@@ -34,13 +34,20 @@ import (
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
 
-// NewCmdCommonThirdParty is the entry point for inspecting and
-// re-enriching the global common third party catalog.
+// NewCmdCommonThirdParty is the entry point for inspecting, re-enriching,
+// and cleaning up the global common third party catalog.
+//
+// The catalog is global and referenced from every tenant, so the cleanup
+// commands are ordered by how recoverable they are: find-duplicates only
+// reports, merge preserves references by moving them, and prune deletes only
+// what nothing references. rename and set-slug exist for the case merge must
+// not be used for — two entries that are genuinely different vendors, one of
+// them misnamed.
 func NewCmdCommonThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "common-third-party <command>",
 		Aliases: []string{"ctp3"},
-		Short:   "Inspect and re-enrich the global common third party catalog",
+		Short:   "Inspect, re-enrich, and clean up the global common third party catalog",
 	}
 
 	cmd.AddCommand(newCmdList(f))
@@ -49,6 +56,11 @@ func NewCmdCommonThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(newCmdUpsert(f))
 	cmd.AddCommand(newCmdReenrich(f))
 	cmd.AddCommand(newCmdStats(f))
+	cmd.AddCommand(newCmdFindDuplicates(f))
+	cmd.AddCommand(newCmdMerge(f))
+	cmd.AddCommand(newCmdPrune(f))
+	cmd.AddCommand(newCmdRename(f))
+	cmd.AddCommand(newCmdSetSlug(f))
 
 	return cmd
 }
