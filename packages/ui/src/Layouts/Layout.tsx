@@ -42,7 +42,11 @@ type Props = PropsWithChildren<{
   sidebar?: ReactNode;
 }>;
 
-const LayoutContext = createContext<{ setDrawer: (v: boolean) => void }>({
+// Lets a Drawer anywhere in the tree tell its host to reserve room for it.
+// Exported because the shell that hosts the drawer is no longer always this
+// Layout: apps migrating off the v1 chrome provide the context themselves so
+// `Drawer` keeps shifting the content instead of covering it.
+export const LayoutContext = createContext<{ setDrawer: (v: boolean) => void }>({
   setDrawer: () => {},
 });
 

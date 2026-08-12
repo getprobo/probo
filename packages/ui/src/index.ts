@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // Layouts
-export { Drawer, Layout } from "./Layouts/Layout";
+export { Drawer, Layout, LayoutContext } from "./Layouts/Layout";
 export {
   ErrorDetailMessage,
   ErrorDetails,
