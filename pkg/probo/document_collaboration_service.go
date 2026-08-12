@@ -214,6 +214,44 @@ func (s *DocumentService) OpenCollaboration(
 	}, nil
 }
 
+// NotifyCollaborationEphemeral relays an opaque automerge-repo gossip frame
+// (presence, cursors) to peers connected to other server instances, over the
+// same NOTIFY channel that carries persisted-change signals. The instanceID
+// identifies the publishing server so it can ignore its own echo. It is
+// fire-and-forget: it does not touch the document and runs outside any
+// transaction. An oversized frame returns an error and is not sent; the caller
+// still delivers it to its local peers.
+func (s *DocumentService) NotifyCollaborationEphemeral(
+	ctx context.Context,
+	documentVersionID gid.GID,
+	instanceID string,
+	frame []byte,
+) error {
+	payload, err := realtime.EncodeCollaborationEphemeral(realtime.CollaborationEphemeral{
+		VersionID:  documentVersionID.String(),
+		InstanceID: instanceID,
+		Frame:      frame,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot encode collaboration ephemeral: %w", err)
+	}
+
+	return s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if _, err := conn.Exec(
+			ctx,
+			`SELECT pg_notify(@channel, @payload)`,
+			pgx.StrictNamedArgs{
+				"channel": realtime.DocumentCollaborationChannel,
+				"payload": payload,
+			},
+		); err != nil {
+			return fmt.Errorf("cannot notify collaboration ephemeral: %w", err)
+		}
+
+		return nil
+	})
+}
+
 func (s *DocumentService) PersistCollaboration(
 	ctx context.Context,
 	scope coredata.Scoper,
