@@ -287,8 +287,22 @@ func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing
 		return reloaded.ClearEnrichmentRequestedAt(ctx, tx)
 	}))
 
+	// Back-date the attempt clock past the staleness window below. The
+	// window is compared against a timestamp taken in this process while
+	// the claim stamps the database's own clock, so a zero window would
+	// make eligibility depend on the skew between the two.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`UPDATE common_tracker_patterns SET last_enrichment_attempt_at = NOW() - interval '1 hour' WHERE id = $1`,
+			blank.ID,
+		)
+
+		return err
+	}))
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return coredata.ResetStaleEnrichments(ctx, conn, -time.Minute, 3)
+		return coredata.ResetStaleEnrichments(ctx, conn, time.Minute, 3)
 	}))
 
 	afterSweep := loadCommonTrackerPattern(t, ctx, client, blank.ID)

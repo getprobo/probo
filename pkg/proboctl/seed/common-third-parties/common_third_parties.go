@@ -120,14 +120,16 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 							return fmt.Errorf("cannot upsert common third party %q: %w", tp.Name, err)
 						}
 
+						// Upsert returns the written row and syncs the
+						// receiver, so party.ID identifies the row the
+						// domains below belong to on both paths. Do not
+						// reload by name here: lower(name) is not unique,
+						// so a reload could return a different row and
+						// attach this entry's domains to it.
 						if wasInserted {
 							inserted++
 						} else {
 							updated++
-
-							if err := party.LoadByName(ctx, tx, tp.Name); err != nil {
-								return fmt.Errorf("cannot reload common third party %q: %w", tp.Name, err)
-							}
 						}
 
 						for _, domain := range tp.Domains {

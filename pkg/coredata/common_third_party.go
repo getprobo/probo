@@ -170,6 +170,13 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByName loads the catalog row matching a name case-insensitively.
+//
+// lower(name) is not unique: the index enforcing it was dropped when slug
+// became the identity key, so a name shared by several rows is possible
+// and is exactly what catalog cleanup is meant to resolve. The oldest row
+// wins so repeated resolutions of one name converge on a single row
+// instead of oscillating across a duplicate set between calls.
 func (t *CommonThirdParty) LoadByName(
 	ctx context.Context,
 	conn pg.Querier,
@@ -206,6 +213,9 @@ FROM
     common_third_parties
 WHERE
     lower(name) = lower(@name)
+ORDER BY
+    created_at ASC,
+    id ASC
 LIMIT 1;
 `
 
