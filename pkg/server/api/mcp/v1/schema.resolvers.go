@@ -2558,6 +2558,10 @@ func (r *Resolver) DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	err = svc.Risks.Delete(ctx, scope, input.ID)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, types.DeleteRiskOutput{}, coredata.ErrResourceInUse
+		}
+
 		return nil, types.DeleteRiskOutput{}, fmt.Errorf("failed to delete risk: %w", err)
 	}
 

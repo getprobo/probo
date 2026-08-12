@@ -181,6 +181,11 @@ func TestMCP_Risk_ListMeasures(t *testing.T) {
 	require.Len(t, linkedList.Measures, 1)
 	assert.Equal(t, measureResult.Measure.ID, linkedList.Measures[0].ID)
 
+	msg := mc.CallToolExpectToolError("deleteRisk", map[string]any{
+		"id": riskResult.Risk.ID,
+	})
+	assert.Equal(t, "resource is in use", msg)
+
 	mc.CallToolInto("unlinkMeasure", map[string]any{
 		"measure_id":  measureResult.Measure.ID,
 		"resource_id": riskResult.Risk.ID,
