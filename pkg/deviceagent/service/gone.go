@@ -18,15 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tray
+package service
 
-import "errors"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
+func isWindowsServiceMissing(out string) bool {
+	lower := strings.ToLower(out)
 
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+	return strings.Contains(lower, "1060") ||
+		strings.Contains(lower, "does not exist as an installed service") ||
+		strings.Contains(lower, "specified service does not exist")
+}
+
+func waitUntilWindowsServiceGone(
+	query func() (string, error),
+	timeout time.Duration,
+	sleep func(time.Duration),
+) error {
+	deadline := time.Now().Add(timeout)
+
+	for {
+		out, err := query()
+		if isWindowsServiceMissing(out) {
+			return nil
+		}
+
+		if time.Now().After(deadline) {
+			msg := strings.TrimSpace(out)
+			if msg == "" && err != nil {
+				msg = err.Error()
+			}
+
+			return fmt.Errorf("cannot wait for previous windows service deletion: %s", msg)
+		}
+
+		sleep(50 * time.Millisecond)
+	}
 }

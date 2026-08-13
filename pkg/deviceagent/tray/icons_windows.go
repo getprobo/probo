@@ -22,8 +22,21 @@
 
 package tray
 
-import "fyne.io/systray"
+import (
+	_ "embed"
+
+	"fyne.io/systray"
+)
+
+//go:embed icon_windows.png
+var iconWindowsData []byte
 
 func setTrayIcons() {
-	systray.SetIcon(iconData)
+	ico, err := pngToMultiSizeICO(iconWindowsData, 16, 32)
+	if err != nil {
+		systray.SetIcon(systrayIcon(iconWindowsData))
+		return
+	}
+
+	systray.SetIcon(ico)
 }

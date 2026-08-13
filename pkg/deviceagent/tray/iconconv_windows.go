@@ -18,15 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//go:build windows
+
 package tray
 
-import "errors"
+func systrayIcon(png []byte) []byte {
+	ico, err := pngToICO(png)
+	if err != nil {
+		return png
+	}
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
-
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+	return ico
 }

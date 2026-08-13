@@ -110,17 +110,55 @@ if (-not $wix) {
     throw "error: wix CLI not found on PATH (install with: dotnet tool install --global wix)"
 }
 
+function ConvertTo-LicenseRtf {
+    param([string]$LicensePath)
+
+    $text = Get-Content -LiteralPath $LicensePath -Raw
+    $escaped = $text.Replace('\', '\\').Replace('{', '\{').Replace('}', '\}')
+    $escaped = $escaped -replace "`r`n", "\par`r`n"
+    $escaped = $escaped -replace "(?<!\r)`n", "\par`n"
+    return "{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fswiss Helvetica;}}\fs18 $escaped\par}"
+}
+
+function Ensure-WixUiExtension {
+    $listed = & wix extension list -g 2>$null | Out-String
+    if ($listed -notmatch 'WixToolset\.UI\.wixext') {
+        Write-Host "Adding WixToolset.UI.wixext"
+        & wix extension add -g WixToolset.UI.wixext/6.0.2
+        if ($LASTEXITCODE -ne 0) {
+            throw "error: failed to add WixToolset.UI.wixext"
+        }
+    }
+}
+
+Ensure-WixUiExtension
+
+$LicenseSrc = Join-Path $RepoRoot "LICENSE"
+if (-not (Test-Path -LiteralPath $LicenseSrc)) {
+    throw "error: LICENSE missing at $LicenseSrc"
+}
+
+$LicenseRtf = Join-Path ([System.IO.Path]::GetTempPath()) "probo-agent-license-$PID.rtf"
+[System.IO.File]::WriteAllText($LicenseRtf, (ConvertTo-LicenseRtf -LicensePath $LicenseSrc))
+$LicenseRtfArg = $LicenseRtf.Replace('\', '/')
+
 Write-Host "Building MSI: binary=$Binary arch=$WixArch version=$Version output=$Output"
 
-& wix build `
-    -arch $WixArch `
-    -d "Version=$Version" `
-    -d "AgentExe=$Binary" `
-    -o $Output `
-    $PackageWxs
+try {
+    & wix build `
+        -arch $WixArch `
+        -ext WixToolset.UI.wixext `
+        -d "Version=$Version" `
+        -d "AgentExe=$Binary" `
+        -d "LicenseRtf=$LicenseRtfArg" `
+        -o $Output `
+        $PackageWxs
 
-if ($LASTEXITCODE -ne 0) {
-    throw "error: wix build failed with exit code $LASTEXITCODE"
+    if ($LASTEXITCODE -ne 0) {
+        throw "error: wix build failed with exit code $LASTEXITCODE"
+    }
+} finally {
+    Remove-Item -LiteralPath $LicenseRtf -ErrorAction SilentlyContinue
 }
 
 if (-not (Test-Path -LiteralPath $Output)) {

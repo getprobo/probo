@@ -18,14 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+//go:build darwin && cgo
 
-import "strings"
+package tray
 
-func isWindowsServiceMissing(out string) bool {
-	lower := strings.ToLower(out)
-
-	return strings.Contains(lower, "1060") ||
-		strings.Contains(lower, "does not exist as an installed service") ||
-		strings.Contains(lower, "specified service does not exist")
-}
+func DetachConsole() {}

@@ -18,15 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//go:build darwin && !cgo
+
 package tray
 
-import "errors"
-
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
-
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
-}
+func DetachConsole() {}

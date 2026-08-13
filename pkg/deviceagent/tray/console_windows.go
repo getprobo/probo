@@ -18,15 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//go:build windows
+
 package tray
 
-import "errors"
+import "golang.org/x/sys/windows"
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
+var (
+	modKernel32     = windows.NewLazySystemDLL("kernel32.dll")
+	procFreeConsole = modKernel32.NewProc("FreeConsole")
+)
 
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+func DetachConsole() {
+	_, _, _ = procFreeConsole.Call()
 }

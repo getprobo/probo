@@ -18,15 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//go:build windows
+
 package tray
 
-import "errors"
+import (
+	"errors"
+	"fmt"
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
+	"golang.org/x/sys/windows"
+)
 
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+const trayInstanceMutexName = `Local\ProboAgentTray`
+
+func acquireTrayInstance() (func(), error) {
+	name, err := windows.UTF16PtrFromString(trayInstanceMutexName)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode tray instance mutex name: %w", err)
+	}
+
+	handle, err := windows.CreateMutex(nil, false, name)
+	if handle == 0 {
+		return nil, fmt.Errorf("cannot create tray instance mutex: %w", err)
+	}
+
+	if errors.Is(err, windows.ERROR_ALREADY_EXISTS) {
+		_ = windows.CloseHandle(handle)
+
+		return nil, errTrayAlreadyRunning
+	}
+
+	return func() {
+		_ = windows.CloseHandle(handle)
+	}, nil
 }

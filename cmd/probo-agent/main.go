@@ -433,19 +433,32 @@ func newRunCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := resolveDir(cmd)
 
-			ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
-			defer stop()
-
 			logger := newAgentLogger()
 			agent := deviceagent.New(dir, version, logger)
 			agent.Updater = newUpdater(logger, dir)
 
-			err := agent.Run(ctx)
-			if errors.Is(err, context.Canceled) {
-				return nil
+			run := func(ctx context.Context) error {
+				err := agent.Run(ctx)
+				if errors.Is(err, context.Canceled) {
+					return nil
+				}
+
+				return err
 			}
 
-			return err
+			isSvc, err := service.IsWindowsService()
+			if err != nil {
+				return err
+			}
+
+			if isSvc {
+				return service.RunWindowsService(service.DefaultWindowsName, run)
+			}
+
+			ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
+			defer stop()
+
+			return run(ctx)
 		},
 	}
 }

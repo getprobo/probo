@@ -18,15 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tray
+//go:build !windows
 
-import "errors"
+package service
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
+import (
+	"testing"
 
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestIsWindowsService_ReportsNotAService(t *testing.T) {
+	t.Parallel()
+
+	isSvc, err := IsWindowsService()
+	require.NoError(t, err)
+	assert.False(t, isSvc)
 }

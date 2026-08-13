@@ -20,13 +20,23 @@
 
 package tray
 
-import "errors"
+import "strings"
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
+const agentExeBaseName = "probo-agent.exe"
 
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+func shouldStopInteractiveAgentProcess(
+	baseName string,
+	pid uint32,
+	selfPID uint32,
+	sessionID uint32,
+) bool {
+	if pid == selfPID {
+		return false
+	}
+
+	if sessionID == 0 {
+		return false
+	}
+
+	return strings.EqualFold(baseName, agentExeBaseName)
 }

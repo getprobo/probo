@@ -18,15 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//go:build windows
+
 package tray
 
-import "errors"
+import (
+	"testing"
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/sys/windows"
+)
 
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+func TestTrayRunCommand_QuotesPaths(t *testing.T) {
+	t.Parallel()
+
+	got := trayRunCommand(
+		`C:\Program Files\Probo\probo-agent.exe`,
+		`C:\ProgramData\Probo\run`,
+	)
+
+	assert.Equal(
+		t,
+		`"C:\Program Files\Probo\probo-agent.exe" tray --run-dir "C:\ProgramData\Probo\run"`,
+		got,
+	)
+}
+
+func TestCreateProcessWithTokenWFlags_OmitsUnsupportedBits(t *testing.T) {
+	t.Parallel()
+
+	flags := createProcessWithTokenWFlags(true)
+
+	assert.Equal(t, uint32(0), flags&windows.CREATE_NO_WINDOW)
+	assert.Equal(t, uint32(0), flags&windows.CREATE_BREAKAWAY_FROM_JOB)
+	assert.Equal(t, uint32(windows.CREATE_UNICODE_ENVIRONMENT), flags&windows.CREATE_UNICODE_ENVIRONMENT)
+
+	flags = createProcessWithTokenWFlags(false)
+	assert.Equal(t, uint32(0), flags)
 }

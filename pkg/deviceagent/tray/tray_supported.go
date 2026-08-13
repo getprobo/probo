@@ -23,6 +23,7 @@
 package tray
 
 import (
+	"errors"
 	"os"
 	"os/signal"
 	"sync"
@@ -34,6 +35,19 @@ import (
 )
 
 func Run(opts Options) error {
+	DetachConsole()
+
+	release, err := acquireTrayInstance()
+	if errors.Is(err, errTrayAlreadyRunning) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	defer release()
+
 	done := make(chan struct{})
 
 	var shutdown sync.Once
@@ -89,7 +103,7 @@ func onReady(opts Options, done <-chan struct{}) {
 	setTrayTitle()
 
 	connectedItem := systray.AddMenuItem("Connected", "Device is enrolled and reporting")
-	connectedItem.SetIcon(statusConnectedIconData)
+	connectedItem.SetIcon(systrayIcon(statusConnectedIconData))
 	connectedItem.Disable()
 	connectedItem.Hide()
 
@@ -97,7 +111,7 @@ func onReady(opts Options, done <-chan struct{}) {
 		"Enrollment required",
 		"Device is not enrolled yet",
 	)
-	enrollmentRequiredItem.SetIcon(statusEnrollmentIconData)
+	enrollmentRequiredItem.SetIcon(systrayIcon(statusEnrollmentIconData))
 	enrollmentRequiredItem.Disable()
 	enrollmentRequiredItem.Hide()
 
@@ -105,7 +119,7 @@ func onReady(opts Options, done <-chan struct{}) {
 		"Status unavailable",
 		"Cannot read enrollment status",
 	)
-	statusUnavailableItem.SetIcon(statusUnavailableIconData)
+	statusUnavailableItem.SetIcon(systrayIcon(statusUnavailableIconData))
 	statusUnavailableItem.Disable()
 	statusUnavailableItem.Hide()
 

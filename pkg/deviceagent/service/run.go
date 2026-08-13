@@ -18,15 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package tray
+//go:build !windows
 
-import "errors"
+package service
 
-var errTrayAlreadyRunning = errors.New("tray helper is already running")
+import (
+	"context"
+	"errors"
+)
 
-type Options struct {
-	RunDir    string
-	ExePath   string
-	ServerURL string
-	Version   string
+func IsWindowsService() (bool, error) {
+	return false, nil
+}
+
+func RunWindowsService(_ string, _ func(context.Context) error) error {
+	return errors.New("windows service mode is not supported on this platform")
 }

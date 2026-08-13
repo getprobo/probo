@@ -94,6 +94,7 @@ jobs:
           dotnet tool install --global wix --version 6.0.2
           "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           & "$env:USERPROFILE\.dotnet\tools\wix.exe" --version
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add -g WixToolset.UI.wixext/6.0.2
       - name: "Build binary"
         shell: "pwsh"
         env:
