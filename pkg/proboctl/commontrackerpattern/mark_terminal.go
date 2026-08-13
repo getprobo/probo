@@ -30,7 +30,45 @@ import (
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
 
+// newCmdMarkFirstParty records the terminal FIRST_PARTY verdict: the artifact
+// belongs to the site operator.
 func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
+	return newCmdMarkTerminal(
+		f,
+		"mark-first-party",
+		"Mark common tracker patterns as first-party (the operator's own)",
+		"Record the terminal FIRST_PARTY verdict: the artifact belongs to the site "+
+			"operator - its own tracker, or a bundled library that stores state "+
+			"locally and egresses nothing.\n\n",
+		coredata.CommonTrackerPatternAttributionFirstParty,
+	)
+}
+
+// newCmdMarkNotAttributable records the terminal NOT_ATTRIBUTABLE verdict: real
+// software belonging to neither the operator nor a vendor they engaged.
+func newCmdMarkNotAttributable(f *cmdutil.Factory) *cobra.Command {
+	return newCmdMarkTerminal(
+		f,
+		"mark-not-attributable",
+		"Mark common tracker patterns as belonging to nobody's register",
+		"Record the terminal NOT_ATTRIBUTABLE verdict: the artifact comes from real "+
+			"software that is neither the operator's nor a third party they engaged, "+
+			"so it belongs in nobody's register. Browser extensions and other "+
+			"visitor-installed tooling inject keys into a page the operator does not "+
+			"control.\n\nUse this rather than mark-first-party for extensions: the "+
+			"operator did not write that code and cannot remove it, so calling it "+
+			"their own would state something false in a privacy register.\n\n",
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	)
+}
+
+func newCmdMarkTerminal(
+	f *cmdutil.Factory,
+	use string,
+	short string,
+	longPrefix string,
+	verdict coredata.CommonTrackerPatternAttribution,
+) *cobra.Command {
 	var (
 		flagIDs                []string
 		flagLinkedBanner       string
@@ -45,11 +83,9 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "mark-first-party",
-		Short: "Mark common tracker patterns as first-party (no third party)",
-		Long: "Record the terminal FIRST_PARTY verdict on selected common tracker " +
-			"patterns: the artifact has no third party (it is the scanned site's own, " +
-			"a generic library/log key, or an extension key embedding the site origin). " +
+		Use:   use,
+		Short: short,
+		Long: longPrefix +
 			"Any vendor link is cleared and the now-stale description - which may name " +
 			"the wrong vendor - is blanked on both the catalog row and the uncategorised " +
 			"org tracker patterns linked to it. Those org patterns are remapped (org " +
@@ -104,14 +140,14 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 		}
 
 		if flagDryRun {
-			_, _ = fmt.Fprintf(out, "Would mark %d common tracker pattern(s) as first-party.\n", len(ids))
+			_, _ = fmt.Fprintf(out, "Would mark %d common tracker pattern(s) as %s.\n", len(ids), verdict)
 			printSample(out, ids)
 
 			return nil
 		}
 
 		if !flagYes {
-			return fmt.Errorf("about to mark %d pattern(s) as first-party; pass --yes to proceed or --dry-run to preview", len(ids))
+			return fmt.Errorf("about to mark %d pattern(s) as %s; pass --yes to proceed or --dry-run to preview", len(ids), verdict)
 		}
 
 		var (
@@ -125,7 +161,7 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 			func(ctx context.Context, tx pg.Tx) error {
 				var ps coredata.CommonTrackerPatterns
 
-				marked, err = ps.SetAttributionByIDs(ctx, tx, ids, coredata.CommonTrackerPatternAttributionFirstParty)
+				marked, err = ps.SetAttributionByIDs(ctx, tx, ids, verdict)
 				if err != nil {
 					return err
 				}
@@ -149,13 +185,14 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 				return nil
 			},
 		); err != nil {
-			return fmt.Errorf("cannot mark common tracker patterns first-party: %w", err)
+			return fmt.Errorf("cannot mark common tracker patterns %s: %w", verdict, err)
 		}
 
 		_, _ = fmt.Fprintf(
 			out,
-			"Marked %d pattern(s) first-party, remapped %d uncategorised org tracker pattern(s), cleared %d stale org description(s).\n",
+			"Marked %d pattern(s) %s, remapped %d uncategorised org tracker pattern(s), cleared %d stale org description(s).\n",
 			marked,
+			verdict,
 			remapped,
 			cleared,
 		)

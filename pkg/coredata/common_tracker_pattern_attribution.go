@@ -36,17 +36,57 @@ import (
 // resolved; the row carries a common_third_party_id.
 //
 // CommonTrackerPatternAttributionFirstParty: terminal verdict that the
-// artifact has no third party — it is the scanned site's own, a generic
-// library/log key, an extension key embedding the site origin, or
-// otherwise not attributable to any vendor. The mapping pipeline never
-// attributes such a row again.
+// artifact belongs to the site operator — its own tracker, or a bundled
+// library that stores state locally and egresses nothing.
+//
+// CommonTrackerPatternAttributionNotAttributable: terminal verdict that the
+// artifact comes from real software that is neither the operator's nor a
+// vendor they engaged, so it belongs in nobody's register. Browser
+// extensions and other visitor-installed tooling inject keys into a page
+// the operator does not control. Distinct from FIRST_PARTY because calling
+// an extension the site's own code is simply false, and a register that
+// says so is wrong in a way an operator would notice.
+//
+// Both are terminal: the mapping pipeline never attributes such a row
+// again. Use IsTerminal rather than comparing against FIRST_PARTY.
 type CommonTrackerPatternAttribution string
 
 const (
 	CommonTrackerPatternAttributionUndetermined CommonTrackerPatternAttribution = "UNDETERMINED"
 	CommonTrackerPatternAttributionThirdParty   CommonTrackerPatternAttribution = "THIRD_PARTY"
 	CommonTrackerPatternAttributionFirstParty   CommonTrackerPatternAttribution = "FIRST_PARTY"
+
+	// CommonTrackerPatternAttributionNotAttributable covers software that is
+	// neither the operator's nor a third party they engaged.
+	CommonTrackerPatternAttributionNotAttributable CommonTrackerPatternAttribution = "NOT_ATTRIBUTABLE"
 )
+
+// IsTerminal reports whether the verdict settles the question of who set the
+// artifact, so the mapping pipeline stops probing it. Callers must use this
+// rather than testing for FIRST_PARTY, which would silently keep re-probing
+// every other terminal verdict.
+// terminalAttributions lists the verdicts that settle attribution, for SQL
+// that must treat them as a set. Kept beside IsTerminal so the two cannot
+// disagree about which verdicts are terminal.
+//
+// Returns strings because pgx has no encode plan for a slice of the enum type;
+// the column accepts the text form.
+func terminalAttributions() []string {
+	return []string{
+		string(CommonTrackerPatternAttributionFirstParty),
+		string(CommonTrackerPatternAttributionNotAttributable),
+	}
+}
+
+func (v CommonTrackerPatternAttribution) IsTerminal() bool {
+	switch v {
+	case CommonTrackerPatternAttributionFirstParty,
+		CommonTrackerPatternAttributionNotAttributable:
+		return true
+	}
+
+	return false
+}
 
 var (
 	_ fmt.Stringer             = CommonTrackerPatternAttribution("")
@@ -59,6 +99,7 @@ func CommonTrackerPatternAttributions() []CommonTrackerPatternAttribution {
 		CommonTrackerPatternAttributionUndetermined,
 		CommonTrackerPatternAttributionThirdParty,
 		CommonTrackerPatternAttributionFirstParty,
+		CommonTrackerPatternAttributionNotAttributable,
 	}
 }
 
@@ -67,7 +108,8 @@ func (v CommonTrackerPatternAttribution) IsValid() bool {
 	case
 		CommonTrackerPatternAttributionUndetermined,
 		CommonTrackerPatternAttributionThirdParty,
-		CommonTrackerPatternAttributionFirstParty:
+		CommonTrackerPatternAttributionFirstParty,
+		CommonTrackerPatternAttributionNotAttributable:
 		return true
 	}
 

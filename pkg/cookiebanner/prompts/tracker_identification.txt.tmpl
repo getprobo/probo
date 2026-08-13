@@ -10,6 +10,7 @@ Return a structured JSON response with:
 - category: the business category of the third party
 - third_party_confidence: how confident you are about WHICH company or service set this tracker (0.0 to 1.0). This is the confidence in the attribution alone — not a judgment of whether the artifact is a "real" web tracker. A browser-extension artifact whose name names its vendor can still warrant high confidence here.
 - evidence_source: the concrete evidence that backs the attribution — one of "database_match" (an exact pattern match in the internal database), "naming_convention" (the tracker's meaningful prefix or an embedded vendor name), "web_search" (a web result that names the setter), "browser_page" (a page you opened that names the setter), or "none" (no concrete evidence). It MUST be "none" whenever third_party_name is empty, and it MUST be a concrete kind (not "none") whenever you name a vendor — an attribution with evidence_source "none" is discarded.
+- is_not_attributable: true when the artifact comes from software the VISITOR installed rather than the site: a browser-extension key, a userscript, or other visitor-side tooling. The operator did not write it and cannot remove it, so it belongs to neither them nor a vendor they engaged. Set this instead of is_first_party for extensions.
 - is_first_party: true only when the artifact evidences NO data leaving the browser to any party other than the site operator. This is a data-egress test, not a name test: a bundled open-source library writes its key locally and sends nothing anywhere, so it is first-party even though the library has a name (e.g. "i18next", "loglevel", "redux-persist"). Leave it false whenever data is or might be sent to an external party — including a bundled vendor SDK, which is a third party precisely because it transmits to its own endpoint (e.g. PostHog, Mixpanel, Sentry). When you cannot tell whether the artifact egresses, leave is_first_party false AND third_party_name empty: that leaves the tracker undetermined for a later, better-informed run, which is the correct answer under uncertainty because a first-party verdict is permanent.
 </task>
 
@@ -70,7 +71,6 @@ Return a structured JSON response with:
    FIRST_PARTY — the software writes the key locally and egresses nothing:
    - A bundled open-source library storing its own state: "i18next" / "i18nextLng" (language preference), "loglevel" (log level), "debug" (namespace filter), "redux-persist:root" (rehydrated store), "theme", "colorScheme", "sidebar-collapsed".
    - The site operator's own keys: a session id, a cart, a feature flag the site itself set, a CSRF token.
-   - A browser-extension key that embeds the scanned site's own origin (e.g. "ethereum-https://<scanned_site>").
    These carry no vendor even though a project name is obvious. The i18next project is not a data recipient: it has no servers in the request path.
 
    THIRD_PARTY — the software transmits to an endpoint the vendor operates, so name the vendor and leave is_first_party false:
@@ -81,13 +81,15 @@ Return a structured JSON response with:
 
    The distinction is the vendor's role, not the library's licence. i18next and the PostHog JavaScript SDK are both MIT-licensed npm packages bundled the same way. i18next has no ingestion endpoint; PostHog does. That is the whole test.
 
-13. When egress is genuinely unclear, return UNDETERMINED — third_party_name empty, third_party_confidence below 0.3, evidence_source "none", and is_first_party FALSE. Do not force the binary. These cases are undetermined, not first-party:
+13. A browser extension is NOT first-party: set is_not_attributable instead. The visitor installed it, so the site operator neither wrote it nor can remove it, and recording it as the operator's own tracker would be false. Recognise it from an extension-shaped key ("__darkreader__*", "h265ify", "ethereum-https://<scanned_site>" where a wallet extension appended the page origin) or a key embedding a chrome-/moz-/safari-extension origin. Name no vendor: leave third_party_name empty with third_party_confidence below 0.3. Like a first-party verdict this is terminal, so only set it when the artifact is plainly visitor-side software rather than something the page loaded.
+
+14. When egress is genuinely unclear, return UNDETERMINED — third_party_name empty, third_party_confidence below 0.3, evidence_source "none", and is_first_party FALSE. Do not force the binary. These cases are undetermined, not first-party:
    - A library that CAN egress but may be configured not to (a self-hosted Matomo or Sentry instance; PostHog pointed at a customer-owned reverse proxy). The vendor's software is present, but a key name cannot tell you where the data lands. Prefer the vendor attribution when the key names the vendor and you have concrete evidence for it; never conclude FIRST_PARTY merely because the endpoint might be self-hosted.
    - A configuration-only key for a vendor SDK, where the config key itself is local but the SDK it configures does egress (e.g. a "sentry-*" replay-sampling flag). Attribute the vendor: the artifact is evidence the vendor's SDK is installed, and the SDK egresses.
    - An opaque key you cannot tie to any known software (e.g. "aX7f", "__tmp_2").
    - A library you do not recognise. An unknown name is not evidence of no egress.
    Reserve is_first_party=true for artifacts you can affirmatively identify as local-only. Because a first-party verdict is terminal — the tracker is never re-examined for a vendor — a wrong true permanently suppresses a real vendor, while the cost of UNDETERMINED is one more attempt on a later scan. When in doubt, leave it undetermined.
 
-14. For the category field, use one of: {{.Categories}}.
+15. For the category field, use one of: {{.Categories}}.
    Most cookies fall under ANALYTICS or MARKETING.
 </instructions>

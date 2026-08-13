@@ -1325,7 +1325,7 @@ WHERE id IN (
 			WHERE ctp.id = tracker_patterns.common_tracker_pattern_id
 				AND (
 					ctp.common_third_party_id IS NOT NULL
-					OR ctp.attribution = 'FIRST_PARTY'
+					OR ctp.attribution = ANY(@terminal_attributions)
 				)
 		)
 		AND id IN (
@@ -1347,7 +1347,10 @@ WHERE id IN (
 		"cookie_banner_id":   cookieBannerID,
 		"exclude_pattern_id": excludePatternID,
 		"extension_source":   CookieSourceExtension,
-		"domains":            domains,
+		// A terminal catalog verdict suppresses the cascade the same way a
+		// resolved vendor does: the question is settled either way.
+		"terminal_attributions": terminalAttributions(),
+		"domains":               domains,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

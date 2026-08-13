@@ -289,7 +289,7 @@ INSERT INTO common_tracker_patterns (
 ON CONFLICT (tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO UPDATE
 SET
     common_third_party_id = CASE
-        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY' THEN NULL
+        WHEN common_tracker_patterns.attribution = ANY(@terminal_attributions) THEN NULL
         ELSE EXCLUDED.common_third_party_id
     END,
     match_type            = EXCLUDED.match_type,
@@ -299,12 +299,12 @@ SET
     END,
     confidence            = EXCLUDED.confidence,
     attribution           = CASE
-        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY'
+        WHEN common_tracker_patterns.attribution = ANY(@terminal_attributions)
         THEN common_tracker_patterns.attribution
         ELSE EXCLUDED.attribution
     END,
     enrichment_requested_at = CASE
-        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+        WHEN NOT (common_tracker_patterns.attribution = ANY(@terminal_attributions))
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
@@ -312,7 +312,7 @@ SET
         ELSE common_tracker_patterns.enrichment_requested_at
     END,
     enrichment_attempts   = CASE
-        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+        WHEN NOT (common_tracker_patterns.attribution = ANY(@terminal_attributions))
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
@@ -320,7 +320,7 @@ SET
         ELSE common_tracker_patterns.enrichment_attempts
     END,
     enrichment            = CASE
-        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+        WHEN NOT (common_tracker_patterns.attribution = ANY(@terminal_attributions))
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
@@ -360,6 +360,10 @@ RETURNING
 		"attribution":           p.Attribution,
 		"created_at":            p.CreatedAt,
 		"updated_at":            p.UpdatedAt,
+		// A terminal verdict is never overwritten by a later mapping-side
+		// upsert. Passed as a set rather than compared against one value, so
+		// adding a terminal verdict does not silently make it re-probeable.
+		"terminal_attributions": terminalAttributions(),
 	}
 
 	rows, err := conn.Query(ctx, q, args)

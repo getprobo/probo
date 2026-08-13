@@ -259,11 +259,16 @@ func (e *CommonPatternEnricher) persistFirstPartyVerdict(
 
 			var patterns coredata.CommonTrackerPatterns
 
+			verdict := attribution.terminalVerdict
+			if verdict == "" {
+				verdict = coredata.CommonTrackerPatternAttributionFirstParty
+			}
+
 			if _, err := patterns.SetAttributionByIDs(
 				ctx,
 				tx,
 				ids,
-				coredata.CommonTrackerPatternAttributionFirstParty,
+				verdict,
 			); err != nil {
 				return fmt.Errorf("cannot record first-party verdict: %w", err)
 			}
@@ -445,8 +450,8 @@ func interpretEnrichmentAttribution(
 		return &agentIdentification{result: out}, attributionAccepted
 	}
 
-	if out.IsFirstParty {
-		return &agentIdentification{firstParty: true}, rejection
+	if verdict := terminalVerdictFor(out); verdict != "" {
+		return &agentIdentification{firstParty: true, terminalVerdict: verdict}, rejection
 	}
 
 	return nil, rejection

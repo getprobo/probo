@@ -492,50 +492,64 @@ func TestCommonTrackerPattern_Upsert_RoundTripsAttribution(t *testing.T) {
 // TestCommonTrackerPattern_Upsert_PreservesFirstPartyVerdict pins the
 // terminal contract: once a row is FIRST_PARTY, an automated upsert that
 // carries a vendor neither flips the verdict nor attaches the vendor.
-func TestCommonTrackerPattern_Upsert_PreservesFirstPartyVerdict(t *testing.T) {
+func TestCommonTrackerPattern_Upsert_PreservesTerminalVerdict(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	party := seedCommonThirdParty(t, ctx, client)
+	// Every terminal verdict must resist a later mapping-side upsert, not just
+	// FIRST_PARTY. The SQL tests membership of a set for that reason, so adding
+	// a verdict cannot silently make it re-attributable.
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
 
-	now := time.Now().UTC().Truncate(time.Microsecond)
-	pattern := "first_party_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+			require.True(t, verdict.IsTerminal(), "fixture must be a terminal verdict")
 
-	firstParty := coredata.CommonTrackerPattern{
-		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-		TrackerType: coredata.TrackerTypeLocalStorage,
-		Pattern:     pattern,
-		MatchType:   coredata.TrackerPatternMatchTypeExact,
-		Confidence:  0.8,
-		Attribution: coredata.CommonTrackerPatternAttributionFirstParty,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+			party := seedCommonThirdParty(t, ctx, client)
+
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			pattern := "terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+
+			terminal := coredata.CommonTrackerPattern{
+				ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType: coredata.TrackerTypeLocalStorage,
+				Pattern:     pattern,
+				MatchType:   coredata.TrackerPatternMatchTypeExact,
+				Confidence:  0.8,
+				Attribution: verdict,
+				CreatedAt:   now,
+				UpdatedAt:   now,
+			}
+			insertCommonTrackerPattern(t, ctx, client, terminal)
+
+			// An automated upsert (same key) that tries to attach a vendor.
+			intruder := coredata.CommonTrackerPattern{
+				ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				CommonThirdPartyID: &party.ID,
+				TrackerType:        coredata.TrackerTypeLocalStorage,
+				Pattern:            pattern,
+				MatchType:          coredata.TrackerPatternMatchTypeExact,
+				Confidence:         0.7,
+				Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+				CreatedAt:          now,
+				UpdatedAt:          now.Add(time.Minute),
+			}
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				_, err := intruder.Upsert(ctx, tx)
+				return err
+			}))
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, terminal.ID)
+			assert.Equal(t, verdict, reloaded.Attribution, "a terminal verdict must survive an automated upsert")
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal row must stay vendor-free")
+		})
 	}
-	insertCommonTrackerPattern(t, ctx, client, firstParty)
-
-	// An automated upsert (same key) that tries to attach a vendor.
-	intruder := coredata.CommonTrackerPattern{
-		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-		CommonThirdPartyID: &party.ID,
-		TrackerType:        coredata.TrackerTypeLocalStorage,
-		Pattern:            pattern,
-		MatchType:          coredata.TrackerPatternMatchTypeExact,
-		Confidence:         0.7,
-		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
-		CreatedAt:          now,
-		UpdatedAt:          now.Add(time.Minute),
-	}
-
-	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		_, err := intruder.Upsert(ctx, tx)
-		return err
-	}))
-
-	reloaded := loadCommonTrackerPattern(t, ctx, client, firstParty.ID)
-	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, reloaded.Attribution, "FIRST_PARTY verdict must survive an automated upsert")
-	assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal first-party row must stay vendor-free")
 }
 
 // TestCommonTrackerPatterns_SetAttributionByIDs pins that the operator

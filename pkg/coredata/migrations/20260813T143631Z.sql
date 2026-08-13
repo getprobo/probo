@@ -1,0 +1,34 @@
+-- Copyright (c) 2026 Probo Inc <hello@probo.com>.
+--
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+--
+-- The above copyright notice and this permission notice shall be included in
+-- all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-- SOFTWARE.
+
+-- A browser extension is not the site operator's own code, so recording its
+-- keys as FIRST_PARTY states something false in a privacy register: the
+-- operator did not write it and cannot remove it. It is not a third party
+-- either, since the operator engaged no one. NOT_ATTRIBUTABLE covers real
+-- software belonging to neither party, which visitor-installed tooling injects
+-- into a page the operator does not control.
+--
+-- It is terminal like FIRST_PARTY: the mapping pipeline stops probing the row
+-- and the org-scoped cascade stays suppressed. Only the meaning differs, so
+-- reporting can distinguish "yours" from "nobody's".
+--
+-- IF NOT EXISTS so the migration is a no-op where the value was added by hand.
+ALTER TYPE common_tracker_pattern_attribution
+    ADD VALUE IF NOT EXISTS 'NOT_ATTRIBUTABLE';

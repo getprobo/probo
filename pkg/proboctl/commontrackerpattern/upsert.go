@@ -188,12 +188,11 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 						// a third party. When the operator did not set an
 						// explicit --attribution, normalize the verdict to
 						// THIRD_PARTY so the row never persists with an
-						// UNDETERMINED (or unset) verdict. A FIRST_PARTY row is
-						// terminal and stays vendor-free — the upsert discards
-						// the incoming vendor and keeps the verdict — so it is
-						// left untouched.
+						// UNDETERMINED (or unset) verdict. A terminal row stays
+						// vendor-free — the upsert discards the incoming vendor
+						// and keeps the verdict — so it is left untouched.
 						if !cmd.Flags().Changed("attribution") &&
-							pattern.Attribution != coredata.CommonTrackerPatternAttributionFirstParty {
+							!pattern.Attribution.IsTerminal() {
 							pattern.Attribution = coredata.CommonTrackerPatternAttributionThirdParty
 						}
 					}
