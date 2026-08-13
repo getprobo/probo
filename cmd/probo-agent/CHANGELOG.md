@@ -5,6 +5,32 @@ documented in this file.
 
 ## Unreleased
 
+## [0.6.0] - 2026-08-13
+
+### Added
+
+- Devices list now shows the agent's last reported version alongside OS
+  version, so rollouts can be tracked without opening each device.
+
+### Changed
+
+- Windows exe/MSI/tray icons are now generated from two shared master PNGs
+  (a color mark and a macOS menu-bar outline) instead of separate
+  per-platform rasters, so the icons can no longer drift out of sync.
+- Devices list now shows short Windows OS version strings (e.g.
+  `10.0.26200`) instead of the full localized `ver` banner, matching
+  Darwin.
+
+### Fixed
+
+- Windows service now speaks the SCM service protocol after enroll, fixing
+  the agent being stopped right after install (error 1053); the tray now
+  autostarts via an HKLM-persisted entry with a proper ICO instead of being
+  missing or blank.
+- macOS PKG postinstall now calls the same `setup-tray` path as the Windows
+  installer, fixing tray bootstrap being skipped on a PKG upgrade when the
+  LaunchAgent plist was already up to date.
+
 ## [0.5.1] - 2026-08-12
 
 ### Fixed
