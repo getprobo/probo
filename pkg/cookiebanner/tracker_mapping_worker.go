@@ -157,13 +157,15 @@ type catalogMatch struct {
 }
 
 // interpretCatalogRow maps a resolved catalog row onto the mapping
-// pipeline's adoption rules. A FIRST_PARTY row is terminal. A vendor is
+// pipeline's adoption rules. A terminal row stops the pipeline. A vendor is
 // adopted only when the row clears trustedAttributionConfidence;
 // otherwise the vendor is surfaced as untrusted so the agent can
 // corroborate it rather than the pipeline inheriting a low-confidence
 // precedent.
 func interpretCatalogRow(cp coredata.CommonTrackerPattern) (adopt *gid.GID, untrusted *gid.GID, firstParty bool) {
-	if cp.Attribution == coredata.CommonTrackerPatternAttributionFirstParty {
+	// Any terminal verdict stops attribution, not only FIRST_PARTY: an
+	// extension key is settled too, just not as the operator's own.
+	if cp.Attribution.IsTerminal() {
 		return nil, nil, true
 	}
 
@@ -226,15 +228,23 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// Phase 2: tracker-mapping agent (no transaction). It runs only when
 	// the deterministic signals could not resolve a catalog third party.
 	// The LLM and web-search calls happen outside any transaction; the
-	// result is persisted in its own short transaction. Patterns whose
-	// source is PRE_EXISTING are skipped: that source is the low-signal
-	// catch-all (storage enumerated at SDK init, which bundles extension
-	// state and prior-session artifacts), so a speculative agent run on it
-	// is more likely to invent a vendor than to find a real one. The
-	// deterministic catalog match still applies above, so a known cookie
-	// still maps; and a later SCRIPT/EXTENSION detection upgrades the
-	// source and re-arms mapping, giving the agent a better-grounded run.
-	if commonThirdPartyID == nil && h.mappingEnabled && !det.firstParty && !isPreExistingSource(tp) {
+	// result is persisted in its own short transaction.
+	//
+	// Two sources are skipped. PRE_EXISTING is the low-signal catch-all
+	// (storage enumerated at SDK init, bundling extension state and
+	// prior-session artifacts), so a speculative agent run on it is more
+	// likely to invent a vendor than find one. EXTENSION is the opposite —
+	// proof rather than absence of evidence: the write's stack carried a
+	// browser-extension frame, so the artifact belongs to software the
+	// visitor installed, not to any vendor the site operator engaged. Asking
+	// the agent to attribute it can only produce a wrong answer, and that
+	// answer would enter the global catalog for every tenant.
+	//
+	// The deterministic catalog match still applies above, so a known cookie
+	// still maps; a later SCRIPT detection upgrades a PRE_EXISTING row and
+	// re-arms mapping, giving the agent a better-grounded run.
+	if commonThirdPartyID == nil && h.mappingEnabled && !det.firstParty &&
+		!isPreExistingSource(tp) && !isExtensionSource(tp) {
 		ident, err := h.identifyWithAgent(ctx, tp, det.origin)
 		if err != nil {
 			return fmt.Errorf("cannot identify with agent: %w", err)
@@ -247,7 +257,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 					var match *catalogMatch
 
 					if ident.firstParty {
-						match, err = h.persistFirstPartyVerdict(ctx, tx, tp)
+						match, err = h.persistFirstPartyVerdict(ctx, tx, tp, ident.terminalVerdict)
 					} else {
 						match, err = h.persistAgentIdentification(ctx, tx, tp, *ident, det.untrustedThirdPartyID)
 					}
@@ -565,6 +575,15 @@ func isPreExistingSource(tp coredata.TrackerPattern) bool {
 	return tp.Source != nil && *tp.Source == coredata.CookieSourcePreExisting
 }
 
+// isExtensionSource reports whether the write was confirmed to come from a
+// browser extension, its stack carrying an extension frame. That is stronger
+// evidence than any agent verdict, and it settles the question: the artifact
+// belongs to visitor-installed software, so no vendor attribution exists to
+// find. The org-scoped cascade already excludes these rows.
+func isExtensionSource(tp coredata.TrackerPattern) bool {
+	return tp.Source != nil && *tp.Source == coredata.CookieSourceExtension
+}
+
 // firstNonNil returns a when it is set, otherwise b. It keeps the first
 // catalog row id resolved by the pipeline stable: later signals upsert
 // the same row (same key) and return the same id, but the explicit guard
@@ -690,8 +709,29 @@ func (h *trackerMappingHandler) matchByDomain(
 // terminal no-third-party verdict; otherwise result holds a defensible
 // vendor attribution.
 type agentIdentification struct {
-	result     TrackerMappingAgentResult
-	firstParty bool
+	result TrackerMappingAgentResult
+
+	// firstParty marks any terminal verdict, which the pipeline treats
+	// identically: stop attributing this artifact. terminalVerdict says which
+	// one to persist, so an extension is not recorded as the operator's own.
+	firstParty      bool
+	terminalVerdict coredata.CommonTrackerPatternAttribution
+}
+
+// terminalVerdictFor maps the agent's terminal flags onto the attribution to
+// persist, or "" when the agent settled nothing. NOT_ATTRIBUTABLE wins over
+// FIRST_PARTY: an extension key egresses nothing to a vendor, so it satisfies
+// the first-party test too, but the operator did not write it and saying they
+// did would be false.
+func terminalVerdictFor(r TrackerMappingAgentResult) coredata.CommonTrackerPatternAttribution {
+	switch {
+	case r.IsNotAttributable:
+		return coredata.CommonTrackerPatternAttributionNotAttributable
+	case r.IsFirstParty:
+		return coredata.CommonTrackerPatternAttributionFirstParty
+	default:
+		return ""
+	}
 }
 
 // identifyWithAgent runs the tracker-mapping agent outside any
@@ -781,14 +821,18 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	// artifact. Otherwise leave the pattern undetermined for a later,
 	// better-informed attempt (the unmatched fallback records it with no
 	// third party).
-	if identification.IsFirstParty {
+	// NOT_ATTRIBUTABLE is checked first: an extension key can look
+	// first-party (nothing egresses to a vendor) but is not the operator's
+	// code, and the more precise verdict is the truthful one.
+	if verdict := terminalVerdictFor(identification); verdict != "" {
 		h.logger.InfoCtx(
 			ctx,
-			"agent declared tracker first-party",
+			"agent declared tracker terminal",
 			log.String("pattern", tp.Pattern),
+			log.String("attribution", string(verdict)),
 		)
 
-		return &agentIdentification{firstParty: true}, nil
+		return &agentIdentification{firstParty: true, terminalVerdict: verdict}, nil
 	}
 
 	return nil, nil
@@ -978,7 +1022,11 @@ func (h *trackerMappingHandler) persistFirstPartyVerdict(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
+	verdict coredata.CommonTrackerPatternAttribution,
 ) (*catalogMatch, error) {
+	if verdict == "" {
+		verdict = coredata.CommonTrackerPatternAttributionFirstParty
+	}
 	now := time.Now()
 	commonPattern := coredata.CommonTrackerPattern{
 		ID:            gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
@@ -987,7 +1035,7 @@ func (h *trackerMappingHandler) persistFirstPartyVerdict(
 		MatchType:     tp.MatchType,
 		MaxAgeSeconds: tp.MaxAgeSeconds,
 		Confidence:    agentSourceConfidence,
-		Attribution:   coredata.CommonTrackerPatternAttributionFirstParty,
+		Attribution:   verdict,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}

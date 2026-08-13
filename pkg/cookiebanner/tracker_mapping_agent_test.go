@@ -590,3 +590,60 @@ func TestBuildAgentPrompt(t *testing.T) {
 		},
 	)
 }
+
+// TestTerminalVerdictFor pins which attribution a terminal agent verdict
+// persists. NOT_ATTRIBUTABLE must win over FIRST_PARTY: an extension key
+// egresses nothing to a vendor and so satisfies the first-party test too, but
+// the operator did not write it and recording it as theirs would be false.
+func TestTerminalVerdictFor(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		firstParty      bool
+		notAttributable bool
+		expected        coredata.CommonTrackerPatternAttribution
+	}{
+		{name: "neither flag settles nothing", expected: ""},
+		{name: "first party alone", firstParty: true, expected: coredata.CommonTrackerPatternAttributionFirstParty},
+		{name: "not attributable alone", notAttributable: true, expected: coredata.CommonTrackerPatternAttributionNotAttributable},
+		{
+			name:            "not attributable wins over first party",
+			firstParty:      true,
+			notAttributable: true,
+			expected:        coredata.CommonTrackerPatternAttributionNotAttributable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := terminalVerdictFor(TrackerMappingAgentResult{
+				IsFirstParty:      tt.firstParty,
+				IsNotAttributable: tt.notAttributable,
+			})
+
+			assert.Equal(t, tt.expected, got)
+
+			if tt.expected != "" {
+				assert.True(t, got.IsTerminal(), "a persisted verdict must be terminal")
+			}
+		})
+	}
+}
+
+// TestIsExtensionSource pins the guard that keeps a confirmed extension write
+// away from the mapping agent. The stack carried an extension frame, which is
+// stronger evidence than any verdict the agent could produce, so asking it to
+// attribute a vendor could only pollute the global catalog.
+func TestIsExtensionSource(t *testing.T) {
+	t.Parallel()
+
+	extension := coredata.CookieSourceExtension
+	script := coredata.CookieSourceScript
+
+	assert.True(t, isExtensionSource(coredata.TrackerPattern{Source: &extension}))
+	assert.False(t, isExtensionSource(coredata.TrackerPattern{Source: &script}))
+	assert.False(t, isExtensionSource(coredata.TrackerPattern{}), "an unknown source must not be treated as an extension")
+}
