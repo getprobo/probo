@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime, getAssignableRoles, getMembershipRoles, peopleRoles, roles } from "@probo/helpers";
+import { formatDatetime, getAssignableRoles, getMembershipRoles, roles } from "@probo/helpers";
 import { Button, Field, Input, Option } from "@probo/ui";
 import { use } from "react";
 import { useWatch } from "react-hook-form";
@@ -252,19 +252,12 @@ export function PersonForm(props: {
           </div>
         </>
       )}
-      <ControlledField
-        control={control}
-        name="kind"
-        type="select"
+      <Field
+        {...register("kind")}
+        type="text"
         label={t("personForm.fields.type")}
         disabled={disabled || scimManaged}
-      >
-        {peopleRoles.map(role => (
-          <Option key={role} value={role}>
-            {t(`personForm.kinds.${role}`)}
-          </Option>
-        ))}
-      </ControlledField>
+      />
       <Field
         label={t("personForm.fields.position")}
         {...register("position")}
