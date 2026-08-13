@@ -4,6 +4,15 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.219.0] - 2026-08-13
+
+### Added
+
+- `AI System` resource (`Create`, `Get`, `Get Many`, `Update`, `Delete`, `Publish`), for managing an organization's AI Systems register
+- `Period Start` / `Period End` fields on Risk Analysis `Create` and `Update`, and `period` on `Get` / `Get Many`
+- `Compliance Portal Manager` and `Compliance Portal Access Manager` membership roles, for delegating full compliance portal management or just visitor access approval without broader admin access
+- Cookie Banner `Update`: `Resource Reporting Enabled` option, to enable or disable resource detection on the banner
+
 ## [0.218.0] - 2026-08-10
 
 ### Changed
