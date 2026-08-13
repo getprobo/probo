@@ -4088,6 +4088,7 @@
   "measureEvidencesTab": {
     "pageTitle": "{{name}} - Bewijsstukken",
     "columns": {
+      "name": "Naam",
       "description": "Beschrijving",
       "fileType": "Bestandstype",
       "fileSize": "Bestandsgrootte",

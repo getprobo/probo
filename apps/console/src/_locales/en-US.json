@@ -2034,7 +2034,7 @@
   },
   "measureEvidencesTab": {
     "pageTitle": "{{name}} - Evidences",
-    "columns": { "description": "Description", "fileType": "File type", "fileSize": "File size", "createdAt": "Created at" },
+    "columns": { "name": "Name", "description": "Description", "fileType": "File type", "fileSize": "File size", "createdAt": "Created at" },
     "messages": { "deleted": "Evidence \"{{name}}\" has been deleted successfully" },
     "errors": { "delete": "Failed to delete evidence" },
     "deleteConfirmation": "This will permanently delete the evidence \"{{name}}\". This action cannot be undone.",
