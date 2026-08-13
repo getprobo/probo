@@ -4,6 +4,31 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.259.0] - 2026-08-13
+
+### Added
+
+- `COMPLIANCE_PORTAL_MANAGER` and `COMPLIANCE_PORTAL_ACCESS_MANAGER` membership roles, for delegating full compliance portal management or just visitor access approval without broader admin access
+- AI Systems register: track an organization's AI system inventory with a dedicated backend, console UI, and publish flow, alongside CLI, MCP, and n8n surfaces
+- Optional period start/end fields on risk analyses
+- Cookie banner resource reporting switch, so operators can disable resource detection per banner while cookies and storage keep reporting normally
+
+### Changed
+
+- Compliance portal tabs a role cannot access now show a no-access state inline instead of being hidden, so the header and other tabs stay usable
+- Cookie banner resource reporting and compliance portal rights requests are exposed through a nested `capabilities` object on GraphQL and MCP instead of separate flat boolean fields; the CLI, n8n node, console, and visitor portal follow. The browser-facing banner config keeps its flat `resource_reporting_enabled` key so already-released cookie banner SDKs keep working
+- The person profile "Type" field is free text instead of a fixed set of options
+- Document content JSON now allows up to 1 MiB, up from 500,000 bytes
+
+### Fixed
+
+- Evidence names are shown again as a separate column in measures, so linked and uploaded evidence stays identifiable when no generated description is available
+- The vetting agent no longer overwrites a third party's countries
+
+### Removed
+
+- Dropped the unused `generateDocumentChangelog` mutation; the console publish flow already collects a changelog by hand
+
 ## [0.258.0] - 2026-08-11
 
 ### Added
