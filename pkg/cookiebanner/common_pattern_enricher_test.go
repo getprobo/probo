@@ -107,23 +107,23 @@ func TestInterpretEnrichmentAttribution(t *testing.T) {
 			expectedRejection: attributionRejectedNoEvidence,
 		},
 		{
-			name: "bundled library with a first-party verdict is terminal",
+			name: "rejected name with a first-party verdict is terminal",
 			mutate: func(r *TrackerMappingAgentResult) {
-				r.ThirdPartyName = "i18next"
+				r.ThirdPartyName = "Cookiepedia"
 				r.ThirdPartyConfidence = 0.95
 				r.IsFirstParty = true
 			},
 			expectFirstParty:  true,
-			expectedRejection: attributionRejectedFirstPartyLib,
+			expectedRejection: attributionRejectedAggregator,
 		},
 		{
-			name: "bundled library without a first-party verdict yields nothing",
+			name: "rejected name without a first-party verdict yields nothing",
 			mutate: func(r *TrackerMappingAgentResult) {
-				r.ThirdPartyName = "i18next"
+				r.ThirdPartyName = "Cookiepedia"
 				r.ThirdPartyConfidence = 0.95
 			},
 			expectNil:         true,
-			expectedRejection: attributionRejectedFirstPartyLib,
+			expectedRejection: attributionRejectedAggregator,
 		},
 		{
 			name:              "cookie-database aggregator yields nothing",

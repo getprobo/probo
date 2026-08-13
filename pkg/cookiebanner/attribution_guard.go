@@ -40,12 +40,11 @@ type attributionContext struct {
 type attributionRejection string
 
 const (
-	attributionAccepted              attributionRejection = ""
-	attributionRejectedConfidence    attributionRejection = "below_confidence_threshold"
-	attributionRejectedNoEvidence    attributionRejection = "no_concrete_evidence"
-	attributionRejectedScannedSite   attributionRejection = "scanned_site_as_third_party"
-	attributionRejectedAggregator    attributionRejection = "cookie_database_aggregator"
-	attributionRejectedFirstPartyLib attributionRejection = "bundled_first_party_library"
+	attributionAccepted            attributionRejection = ""
+	attributionRejectedConfidence  attributionRejection = "below_confidence_threshold"
+	attributionRejectedNoEvidence  attributionRejection = "no_concrete_evidence"
+	attributionRejectedScannedSite attributionRejection = "scanned_site_as_third_party"
+	attributionRejectedAggregator  attributionRejection = "cookie_database_aggregator"
 )
 
 // rejectVendorAttribution is the single acceptance bar for creating a common
@@ -53,12 +52,11 @@ const (
 // enricher call it, so an attribution one would discard can no longer enter
 // the global catalog through the other.
 //
-// Every rejection leaves the artifact undetermined rather than first-party.
-// These guards judge the proposed NAME, not the artifact, so a hallucinated
-// library name on a genuine vendor pattern must fall through for a later
-// attempt: a first-party verdict is terminal and would suppress the real
-// vendor permanently. Callers that also got an explicit first-party verdict
-// from the agent record it themselves.
+// Every rejection leaves the artifact undetermined rather than terminal. These
+// guards judge the proposed NAME, not the artifact, so a wrong name on a
+// genuine vendor pattern must fall through for a later attempt: a terminal
+// verdict would suppress the real vendor permanently. Callers that also got an
+// explicit terminal verdict from the agent record it themselves.
 //
 // No I/O and no logging: callers log with their own context.
 func rejectVendorAttribution(
@@ -85,10 +83,6 @@ func rejectVendorAttribution(
 
 	if nameIsCookieDatabaseAggregator(name) {
 		return attributionRejectedAggregator
-	}
-
-	if nameIsBundledFirstPartyLibrary(name) {
-		return attributionRejectedFirstPartyLib
 	}
 
 	return attributionAccepted

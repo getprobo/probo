@@ -139,58 +139,6 @@ func TestNameIsCookieDatabaseAggregator(t *testing.T) {
 	}
 }
 
-// TestNameIsBundledFirstPartyLibrary pins the bundled-library backstop.
-//
-// The allowed half is the load-bearing half: every vendor listed there
-// operates an ingestion endpoint its SDK reports to and is a curated
-// catalog entry, so adding any of them to the denylist would silently
-// suppress a real third party across every tenant. Those cases are the
-// fence against the list drifting toward "libraries that feel
-// first-party".
-func TestNameIsBundledFirstPartyLibrary(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		vendor   string
-		expected bool
-	}{
-		{name: "i18next is denied", vendor: "i18next", expected: true},
-		{name: "i18next storage key form is denied", vendor: "i18nextLng", expected: true},
-		{name: "loglevel is denied", vendor: "loglevel", expected: true},
-		{name: "casing insensitive", vendor: "LogLevel", expected: true},
-		{name: "hyphenated form is denied", vendor: "redux-persist", expected: true},
-		{name: "spacing insensitive", vendor: "Redux Persist", expected: true},
-		{name: "scoped package form is denied", vendor: "react-i18next", expected: true},
-		{name: "jquery is denied", vendor: "jQuery", expected: true},
-		{name: "date-fns is denied", vendor: "date-fns", expected: true},
-		{name: "core-js is denied", vendor: "core-js", expected: true},
-		{name: "i18next domain form is denied", vendor: "i18next.com", expected: true},
-		// Vendors that operate an ingestion endpoint: all curated catalog
-		// entries, all must stay attributable.
-		{name: "posthog is allowed", vendor: "PostHog", expected: false},
-		{name: "sentry is allowed", vendor: "Sentry", expected: false},
-		{name: "mixpanel is allowed", vendor: "Mixpanel", expected: false},
-		{name: "segment is allowed", vendor: "Segment", expected: false},
-		{name: "amplitude is allowed", vendor: "Amplitude", expected: false},
-		{name: "vercel is allowed", vendor: "Vercel", expected: false},
-		{name: "nextjs is allowed", vendor: "Next.js", expected: false},
-		{name: "matomo is allowed", vendor: "Matomo", expected: false},
-		{name: "unrelated vendor is allowed", vendor: "Google Analytics", expected: false},
-		{name: "empty name", vendor: "", expected: false},
-	}
-
-	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				t.Parallel()
-				assert.Equal(t, tt.expected, nameIsBundledFirstPartyLibrary(tt.vendor))
-			},
-		)
-	}
-}
-
 func TestEvidenceSupportsAttribution(t *testing.T) {
 	t.Parallel()
 
@@ -393,16 +341,6 @@ func TestVendorAttributionRejected(t *testing.T) {
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
 	)
-
-	t.Run(
-		"rejects bundled first-party library",
-		func(t *testing.T) {
-			t.Parallel()
-
-			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "i18next" })
-			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
-		},
-	)
 }
 
 // TestRejectVendorAttribution pins the shared acceptance bar that governs
@@ -511,20 +449,9 @@ func TestRejectVendorAttribution(t *testing.T) {
 			expected: attributionRejectedAggregator,
 		},
 		{
-			name:       "rejects a bundled first-party library",
-			mutate:     func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "i18next" },
-			siteOrigin: &origin,
-			expected:   attributionRejectedFirstPartyLib,
-		},
-		{
-			name:     "rejects a bundled first-party library without an origin",
-			mutate:   func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "i18next" },
-			expected: attributionRejectedFirstPartyLib,
-		},
-		{
 			name: "missing evidence outranks a denylisted name",
 			mutate: func(r *TrackerMappingAgentResult) {
-				r.ThirdPartyName = "i18next"
+				r.ThirdPartyName = "Cookiepedia"
 				r.EvidenceSource = evidenceSourceNone
 			},
 			siteOrigin: &origin,

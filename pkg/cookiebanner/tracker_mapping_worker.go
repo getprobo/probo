@@ -1027,6 +1027,7 @@ func (h *trackerMappingHandler) persistFirstPartyVerdict(
 	if verdict == "" {
 		verdict = coredata.CommonTrackerPatternAttributionFirstParty
 	}
+
 	now := time.Now()
 	commonPattern := coredata.CommonTrackerPattern{
 		ID:            gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
