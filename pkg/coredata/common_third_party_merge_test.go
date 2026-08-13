@@ -145,6 +145,115 @@ func loadCommonThirdPartyLogo(
 	return party.LogoFileID
 }
 
+// seedOrgTrackerPattern creates a cookie banner, a category, and one
+// organization tracker pattern resolving to the given catalog pattern with no
+// third party of its own. It returns the tracker pattern id.
+//
+// A pattern in this state surfaces the catalog entry rather than a managed
+// third party, which is what the catalog merge has to fix once the entry it
+// resolves through moves.
+func seedOrgTrackerPattern(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	organizationID gid.GID,
+	commonTrackerPatternID gid.GID,
+) gid.GID {
+	t.Helper()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	tenantID := organizationID.TenantID()
+	bannerID := gid.New(tenantID, coredata.CookieBannerEntityType)
+	categoryID := gid.New(tenantID, coredata.CookieCategoryEntityType)
+	patternID := gid.New(tenantID, coredata.TrackerPatternEntityType)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if _, err := tx.Exec(
+			ctx,
+			`INSERT INTO cookie_banners
+			     (id, tenant_id, organization_id, name, origin, state, consent_expiry_days,
+			      show_branding, default_language, cookie_policy_url, capabilities, created_at, updated_at)
+			 VALUES ($1,$2,$3,'merge-test',$5,'ACTIVE',180,true,'en',
+			         'https://merge.test/cookies','{}'::jsonb,$4,$4)`,
+			bannerID.String(), tenantID.String(), organizationID.String(), now,
+			// One active banner per origin, so namespace it: an organization
+			// may need several banners across tests.
+			"https://"+strings.ToLower(bannerID.String())+".merge.test",
+		); err != nil {
+			return err
+		}
+
+		if _, err := tx.Exec(
+			ctx,
+			`INSERT INTO cookie_categories
+			     (id, tenant_id, organization_id, cookie_banner_id, name, description, rank,
+			      kind, slug, gcm_consent_types, posthog_consent, created_at, updated_at)
+			 VALUES ($1,$2,$3,$4,'Analytics','',1,'NORMAL','analytics','{}',false,$5,$5)`,
+			categoryID.String(), tenantID.String(), organizationID.String(), bannerID.String(), now,
+		); err != nil {
+			return err
+		}
+
+		_, err := tx.Exec(
+			ctx,
+			`INSERT INTO tracker_patterns
+			     (id, tenant_id, organization_id, cookie_banner_id, cookie_category_id,
+			      tracker_type, pattern, match_type, display_name, description, excluded,
+			      common_tracker_pattern_id, third_party_id, created_at, updated_at)
+			 VALUES ($1,$2,$3,$4,$5,'COOKIE',$6,'EXACT','Merge test','',false,$7,NULL,$8,$8)`,
+			patternID.String(), tenantID.String(), organizationID.String(), bannerID.String(),
+			categoryID.String(), "_merge_"+patternID.String(), commonTrackerPatternID.String(), now,
+		)
+
+		return err
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			for _, q := range []string{
+				`DELETE FROM tracker_patterns WHERE id = $1`,
+			} {
+				if _, err := tx.Exec(ctx, q, patternID.String()); err != nil {
+					return err
+				}
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM cookie_categories WHERE id = $1`, categoryID.String()); err != nil {
+				return err
+			}
+
+			_, err := tx.Exec(ctx, `DELETE FROM cookie_banners WHERE id = $1`, bannerID.String())
+
+			return err
+		})
+	})
+
+	return patternID
+}
+
+// loadOrgTrackerPatternThirdPartyID reads an organization tracker pattern's
+// third party link.
+func loadOrgTrackerPatternThirdPartyID(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	patternID gid.GID,
+) *gid.GID {
+	t.Helper()
+
+	var got *gid.GID
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return conn.QueryRow(
+			ctx,
+			`SELECT third_party_id FROM tracker_patterns WHERE id = $1`,
+			patternID,
+		).Scan(&got)
+	}))
+
+	return got
+}
+
 // seedCommonThirdPartyDomain attaches a domain to a catalog third party.
 func seedCommonThirdPartyDomain(
 	t *testing.T,
@@ -396,6 +505,103 @@ func TestMergeCommonThirdParty_RepointsPatternsPreservingConfidence(t *testing.T
 		assert.Equal(t, coredata.CommonTrackerPatternAttributionThirdParty, stored.Attribution)
 		assert.InDelta(t, tc.confidence, stored.Confidence, 0.0001, "merge must not change confidence")
 	}
+}
+
+// TestMergeCommonThirdParty_RelinksOrgTrackerPatterns pins the follow-up the
+// merge owes an organization that already managed a third party for the
+// winner.
+//
+// Such an organization's patterns resolved through the loser, so they carried
+// no third party of their own and surfaced the catalog entry. Once their
+// catalog row names the winner they must surface the managed third party
+// instead, and nothing else would do it: the import path is idempotent on
+// (organization, catalog entry) and skips an organization that already holds
+// the row, so the pattern would surface the catalog entry indefinitely.
+func TestMergeCommonThirdParty_RelinksOrgTrackerPatterns(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	winner := seedCommonThirdParty(t, ctx, client)
+	loser := seedCommonThirdParty(t, ctx, client)
+
+	// One organization that already manages a third party for the winner.
+	orgID, managed := seedOrgThirdParty(t, ctx, client, nil, winner.ID)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	catalogPattern := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: &loser.ID,
+		TrackerType:        coredata.TrackerTypeCookie,
+		Pattern:            "relink-" + loser.Slug,
+		MatchType:          coredata.TrackerPatternMatchTypeExact,
+		Confidence:         0.8,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	insertCommonTrackerPattern(t, ctx, client, catalogPattern)
+
+	orgPattern := seedOrgTrackerPattern(t, ctx, client, orgID, catalogPattern.ID)
+
+	require.Nil(
+		t,
+		loadOrgTrackerPatternThirdPartyID(t, ctx, client, orgPattern),
+		"the pattern must start unlinked, surfacing the catalog entry",
+	)
+
+	result := mergeInTx(t, ctx, client, winner.ID, loser.ID)
+
+	assert.Equal(t, int64(1), result.OrgTrackerPatternsRelinked)
+
+	got := loadOrgTrackerPatternThirdPartyID(t, ctx, client, orgPattern)
+	require.NotNil(t, got, "the pattern must now surface the managed third party")
+	assert.Equal(t, managed, *got)
+}
+
+// TestMergeCommonThirdParty_RequeuesMovedPatternsForEnrichment pins that the
+// patterns the merge moved are re-armed. Their descriptions were researched
+// against a vendor that no longer exists, so they would otherwise keep naming
+// it indefinitely.
+func TestMergeCommonThirdParty_RequeuesMovedPatternsForEnrichment(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	winner := seedCommonThirdParty(t, ctx, client)
+	loser := seedCommonThirdParty(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	cp := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: &loser.ID,
+		TrackerType:        coredata.TrackerTypeCookie,
+		Pattern:            "requeue-" + loser.Slug,
+		MatchType:          coredata.TrackerPatternMatchTypeExact,
+		Description:        "Set by the vendor about to be folded away.",
+		Confidence:         0.8,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	insertCommonTrackerPattern(t, ctx, client, cp)
+
+	require.Nil(
+		t,
+		loadCommonTrackerPattern(t, ctx, client, cp.ID).EnrichmentRequestedAt,
+		"the pattern must start off the enrichment queue",
+	)
+
+	result := mergeInTx(t, ctx, client, winner.ID, loser.ID)
+
+	assert.Equal(t, int64(1), result.TrackerPatternsRequeued)
+
+	stored := loadCommonTrackerPattern(t, ctx, client, cp.ID)
+	assert.NotNil(t, stored.EnrichmentRequestedAt, "a moved pattern must be re-armed for enrichment")
 }
 
 // TestMergeCommonThirdParty_RepointsThirdPartiesCrossTenant pins that the
@@ -653,7 +859,7 @@ func TestPreviewMergeCommonThirdParty_MatchesApply(t *testing.T) {
 	seedCommonThirdPartyDomain(t, ctx, client, loser.ID, "solo-"+loser.Slug+".com")
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
-	insertCommonTrackerPattern(t, ctx, client, coredata.CommonTrackerPattern{
+	loserPattern := coredata.CommonTrackerPattern{
 		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
 		CommonThirdPartyID: &loser.ID,
 		TrackerType:        coredata.TrackerTypeCookie,
@@ -663,11 +869,26 @@ func TestPreviewMergeCommonThirdParty_MatchesApply(t *testing.T) {
 		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
 		CreatedAt:          now,
 		UpdatedAt:          now,
-	})
+	}
+
+	winnerPattern := loserPattern
+	winnerPattern.ID = gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType)
+	winnerPattern.CommonThirdPartyID = &winner.ID
+	winnerPattern.Pattern = "preview-" + winner.Slug
+
+	insertCommonTrackerPattern(t, ctx, client, loserPattern)
+	insertCommonTrackerPattern(t, ctx, client, winnerPattern)
 
 	orgID, _ := seedOrgThirdParty(t, ctx, client, nil, winner.ID)
 	seedOrgThirdParty(t, ctx, client, &orgID, loser.ID)
 	seedOrgThirdParty(t, ctx, client, nil, loser.ID)
+
+	// Unlinked organization patterns on both sides of the merge, so the
+	// preview's projection of the relink is actually exercised: one resolving
+	// through the loser (which the merge moves) and one already resolving
+	// through the winner.
+	seedOrgTrackerPattern(t, ctx, client, orgID, loserPattern.ID)
+	seedOrgTrackerPattern(t, ctx, client, orgID, winnerPattern.ID)
 
 	loserLogo := seedFile(t, ctx, client)
 	setCommonThirdPartyLogo(t, ctx, client, loser.ID, loserLogo)

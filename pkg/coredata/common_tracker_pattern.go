@@ -1050,13 +1050,15 @@ GROUP BY
 // fromID. Selecting by the vendor id rather than a list of pattern ids
 // keeps the whole repoint in one statement.
 //
-// Returns the number of rows updated.
+// Returns the ids of the rows moved, so the caller can re-queue exactly
+// those for enrichment: their descriptions were researched against the
+// vendor that no longer exists.
 func (ps *CommonTrackerPatterns) RepointCommonThirdPartyID(
 	ctx context.Context,
 	tx pg.Tx,
 	fromID gid.GID,
 	toID gid.GID,
-) (int64, error) {
+) ([]gid.GID, error) {
 	q := `
 UPDATE common_tracker_patterns
 SET
@@ -1065,6 +1067,7 @@ SET
     updated_at = NOW()
 WHERE
     common_third_party_id = @from_id
+RETURNING id
 `
 
 	args := pgx.StrictNamedArgs{
@@ -1073,12 +1076,17 @@ WHERE
 		"attribution": CommonTrackerPatternAttributionThirdParty,
 	}
 
-	result, err := tx.Exec(ctx, q, args)
+	rows, err := tx.Query(ctx, q, args)
 	if err != nil {
-		return 0, fmt.Errorf("cannot repoint common tracker pattern third party: %w", err)
+		return nil, fmt.Errorf("cannot repoint common tracker pattern third party: %w", err)
 	}
 
-	return result.RowsAffected(), nil
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect repointed common tracker patterns: %w", err)
+	}
+
+	return ids, nil
 }
 
 // SetAttributionByIDs records a terminal attribution verdict on the given

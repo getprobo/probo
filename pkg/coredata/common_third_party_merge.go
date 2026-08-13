@@ -50,6 +50,16 @@ type MergeCommonThirdPartyResult struct {
 	// the winner.
 	TrackerPatternsRepointed int64
 
+	// TrackerPatternsRequeued counts catalog patterns re-armed for
+	// enrichment because their description was researched against the
+	// vendor that no longer exists.
+	TrackerPatternsRequeued int64
+
+	// OrgTrackerPatternsRelinked counts organization tracker patterns now
+	// pointing at the third party their organization manages for the
+	// winner, across all tenants.
+	OrgTrackerPatternsRelinked int64
+
 	// ThirdPartiesRepointed counts organization third parties, across all
 	// tenants, now linked to the winner.
 	ThirdPartiesRepointed int64
@@ -120,12 +130,38 @@ func MergeCommonThirdParty(
 
 	var patterns CommonTrackerPatterns
 
-	result.TrackerPatternsRepointed, err = patterns.RepointCommonThirdPartyID(ctx, tx, loserID, winnerID)
+	movedPatterns, err := patterns.RepointCommonThirdPartyID(ctx, tx, loserID, winnerID)
 	if err != nil {
 		return result, err
 	}
 
+	result.TrackerPatternsRepointed = int64(len(movedPatterns))
+
+	// Those patterns' descriptions were researched against a vendor that no
+	// longer exists, so re-arm them for a vendor-informed second pass.
+	if len(movedPatterns) > 0 {
+		result.TrackerPatternsRequeued, err = patterns.RequestEnrichmentByIDs(ctx, tx, movedPatterns)
+		if err != nil {
+			return result, err
+		}
+	}
+
 	result.ThirdPartiesRepointed, err = repointThirdParties(ctx, tx, winnerID, loserID)
+	if err != nil {
+		return result, err
+	}
+
+	// Re-point the organization-scoped tracker patterns last, once every
+	// catalog reference names the winner.
+	//
+	// An organization that already managed a third party for the winner has
+	// patterns that, before the merge, resolved through the loser and so
+	// carried no organization link. Their catalog row now names the winner,
+	// which that organization does manage, so they must surface the managed
+	// third party rather than the catalog entry. Nothing else would do it:
+	// the import path is idempotent on (organization, catalog entry) and
+	// skips an organization that already holds the row.
+	result.OrgTrackerPatternsRelinked, err = relinkOrgTrackerPatterns(ctx, tx, winnerID)
 	if err != nil {
 		return result, err
 	}
@@ -238,6 +274,31 @@ SELECT
 
 	result.LogoAdopted = logoAdopted > 0
 
+	// Every repointed pattern is re-armed for enrichment.
+	result.TrackerPatternsRequeued = result.TrackerPatternsRepointed
+
+	// The organization relink runs after the catalog patterns move, so
+	// predicting it means counting the patterns that will resolve to the
+	// winner once they have: the loser's patterns plus any the winner
+	// already carries, for each organization that manages the winner.
+	var parties ThirdParties
+
+	links, err := parties.LoadOrganizationLinksByCommonThirdPartyID(ctx, conn, NewNoScope(), winnerID)
+	if err != nil {
+		return result, err
+	}
+
+	for _, link := range links {
+		for _, catalogID := range []gid.GID{winnerID, loserID} {
+			count, err := countUnlinkedOrgPatterns(ctx, conn, link.OrganizationID, catalogID)
+			if err != nil {
+				return result, err
+			}
+
+			result.OrgTrackerPatternsRelinked += count
+		}
+	}
+
 	return result, nil
 }
 
@@ -299,6 +360,98 @@ WHERE common_third_party_id = @loser_id
 	}
 
 	return moveResult.RowsAffected(), deleteResult.RowsAffected(), nil
+}
+
+// relinkOrgTrackerPatterns points each organization's unlinked tracker
+// patterns at the third party that organization manages for the winner.
+//
+// Run after the catalog patterns have been repointed, so the resolution
+// below sees the winner. It reuses LinkThirdPartyByCommonThirdPartyID, which
+// only touches patterns with no third_party_id and so never overrides an
+// existing link, making it safe to run for every affected organization.
+//
+// Spans tenants, scoping per organization: the catalog is global, and each
+// organization's patterns must resolve to that organization's own third
+// party, never another tenant's.
+func relinkOrgTrackerPatterns(
+	ctx context.Context,
+	tx pg.Tx,
+	winnerID gid.GID,
+) (int64, error) {
+	var parties ThirdParties
+
+	links, err := parties.LoadOrganizationLinksByCommonThirdPartyID(ctx, tx, NewNoScope(), winnerID)
+	if err != nil {
+		return 0, err
+	}
+
+	var relinked int64
+
+	for _, link := range links {
+		before, err := countUnlinkedOrgPatterns(ctx, tx, link.OrganizationID, winnerID)
+		if err != nil {
+			return 0, err
+		}
+
+		if before == 0 {
+			continue
+		}
+
+		var patterns TrackerPatterns
+
+		if err := patterns.LinkThirdPartyByCommonThirdPartyID(
+			ctx,
+			tx,
+			NewScope(link.OrganizationID.TenantID()),
+			link.OrganizationID,
+			winnerID,
+			link.ThirdPartyID,
+		); err != nil {
+			return 0, err
+		}
+
+		relinked += before
+	}
+
+	return relinked, nil
+}
+
+// countUnlinkedOrgPatterns counts an organization's tracker patterns that
+// resolve to the given catalog entry but carry no third party yet. It is the
+// same predicate LinkThirdPartyByCommonThirdPartyID updates, read before the
+// write so the merge can report how many rows it moved.
+func countUnlinkedOrgPatterns(
+	ctx context.Context,
+	conn pg.Querier,
+	organizationID gid.GID,
+	commonThirdPartyID gid.GID,
+) (int64, error) {
+	q := `
+SELECT
+    count(*)
+FROM
+    tracker_patterns
+WHERE
+    organization_id = @organization_id
+    AND third_party_id IS NULL
+    AND common_tracker_pattern_id IN (
+        SELECT id FROM common_tracker_patterns
+        WHERE common_third_party_id = @common_third_party_id
+    )
+`
+
+	args := pgx.StrictNamedArgs{
+		"organization_id":       organizationID,
+		"common_third_party_id": commonThirdPartyID,
+	}
+
+	var count int64
+
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count unlinked organization tracker patterns: %w", err)
+	}
+
+	return count, nil
 }
 
 // collidingThirdPartyIDs returns the loser's organization third parties

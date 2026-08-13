@@ -315,7 +315,18 @@ func printMergeResult(
 		result.DomainsDroppedAsDup,
 	)
 
-	_, _ = fmt.Fprintf(out, "  tracker patterns:   %d repointed\n", result.TrackerPatternsRepointed)
+	_, _ = fmt.Fprintf(
+		out,
+		"  tracker patterns:   %d repointed, %d re-queued for enrichment\n",
+		result.TrackerPatternsRepointed,
+		result.TrackerPatternsRequeued,
+	)
+
+	_, _ = fmt.Fprintf(
+		out,
+		"  org patterns:       %d relinked to the managed third party\n",
+		result.OrgTrackerPatternsRelinked,
+	)
 
 	_, _ = fmt.Fprintf(
 		out,

@@ -744,6 +744,63 @@ func (v *ThirdParties) CountByCompliancePortalID(
 	return v.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 }
 
+// ThirdPartyOrganizationLink identifies one organization's third party that
+// links a catalog entry. It carries the organization so a caller can scope
+// per-tenant work, and the third party so it can be linked to.
+type ThirdPartyOrganizationLink struct {
+	OrganizationID gid.GID `db:"organization_id"`
+	ThirdPartyID   gid.GID `db:"id"`
+}
+
+// LoadOrganizationLinksByCommonThirdPartyID returns, for every tenant, the
+// organization third parties that link the given catalog entry.
+//
+// A catalog merge uses this to re-point each affected organization's tracker
+// patterns at the third party that organization already manages. It spans
+// tenants deliberately, because a global catalog entry is referenced from
+// every organization that imported it.
+//
+// One organization can hold several matching rows (nothing enforces
+// uniqueness on the pair), so the lowest id per organization wins, matching
+// what LoadByOrganizationIDAndCommonThirdPartyID resolves to.
+func (v *ThirdParties) LoadOrganizationLinksByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	commonThirdPartyID gid.GID,
+) ([]ThirdPartyOrganizationLink, error) {
+	q := `
+SELECT DISTINCT ON (organization_id)
+    organization_id,
+    id
+FROM
+    third_parties
+WHERE
+    %s
+    AND common_third_party_id = @common_third_party_id
+ORDER BY
+    organization_id,
+    id ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"common_third_party_id": commonThirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query third party organization links: %w", err)
+	}
+
+	links, err := pgx.CollectRows(rows, pgx.RowToStructByName[ThirdPartyOrganizationLink])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect third party organization links: %w", err)
+	}
+
+	return links, nil
+}
+
 // CountByCommonThirdPartyID returns how many organization third parties
 // link to each catalog entry, keyed by catalog id.
 //
