@@ -113,7 +113,7 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
 
   usePageTitle(ra?.name ?? t("riskAnalysisDetailPage.title"));
 
-  if (!ra?.id) {
+  if (!ra?.id || !ra.matrixSize) {
     return null;
   }
 
