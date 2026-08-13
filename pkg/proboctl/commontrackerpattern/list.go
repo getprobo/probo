@@ -41,6 +41,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagLinkedBanner         string
 		flagLinkedOrg            string
 		flagKeyword              string
+		flagPatternKeyword       string
 		flagState                string
 		flagAttribution          string
 		flagWithCommonThirdParty bool
@@ -63,6 +64,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagLinkedBanner, "linked-banner", "", "Filter to catalog rows linked to a cookie banner's patterns (GID)")
 	cmd.Flags().StringVar(&flagLinkedOrg, "linked-org", "", "Filter to catalog rows linked to an organization's patterns (GID)")
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by pattern/description substring")
+	cmd.Flags().StringVar(&flagPatternKeyword, "pattern-keyword", "", "Filter by a substring of the pattern key only (stable: unlike --keyword it ignores descriptions)")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().StringVar(&flagAttribution, "attribution", "", "Filter by attribution verdict (UNDETERMINED, THIRD_PARTY, FIRST_PARTY)")
 	cmd.Flags().BoolVar(&flagWithCommonThirdParty, "with-common-third-party", false, "Filter by whether the pattern is linked to a common third party (true/false); ignored when not set")
@@ -101,7 +103,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			described = new(false)
 		}
 
-		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagState, flagAttribution, withCommonThirdParty, described)
+		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagPatternKeyword, flagState, flagAttribution, withCommonThirdParty, described)
 		if err != nil {
 			return err
 		}
@@ -318,7 +320,7 @@ func parseOrderBy(sort, order string) (page.OrderBy[coredata.CommonTrackerPatter
 }
 
 func buildListFilter(
-	trackerType, matchType, keyword, state, attribution string,
+	trackerType, matchType, keyword, patternKeyword, state, attribution string,
 	withCommonThirdParty, described *bool,
 ) (*coredata.CommonTrackerPatternFilter, error) {
 	filter := coredata.NewCommonTrackerPatternFilter()
@@ -343,6 +345,10 @@ func buildListFilter(
 
 	if keyword != "" {
 		filter.WithKeyword(&keyword)
+	}
+
+	if patternKeyword != "" {
+		filter.WithPatternKeyword(&patternKeyword)
 	}
 
 	if state != "" {

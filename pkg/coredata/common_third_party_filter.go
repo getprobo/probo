@@ -102,6 +102,10 @@ func (f *CommonThirdPartyFilter) WithCategory(category *ThirdPartyCategory) *Com
 	return f
 }
 
+// WithKeyword matches a substring of the name or slug. Both are stable
+// identifiers rather than generated prose, so unlike the catalog pattern
+// filter's keyword this selection does not drift as enrichment runs, and no
+// pattern-only variant is needed.
 func (f *CommonThirdPartyFilter) WithKeyword(keyword *string) *CommonThirdPartyFilter {
 	f.keyword = keyword
 	return f

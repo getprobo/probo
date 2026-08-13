@@ -82,6 +82,7 @@ type CommonTrackerPatternFilter struct {
 	matchType          *TrackerPatternMatchType
 	commonThirdPartyID *gid.GID
 	keyword            *string
+	patternKeyword     *string
 	linked             *bool
 	described          *bool
 	state              *CommonTrackerPatternEnrichmentState
@@ -114,8 +115,24 @@ func (f *CommonTrackerPatternFilter) WithCommonThirdPartyID(id *gid.GID) *Common
 	return f
 }
 
+// WithKeyword matches a substring of the pattern key or the description.
+//
+// The description is agent-written and rewritten by enrichment, so a selection
+// built on it is not stable over time. Prefer WithPatternKeyword for anything
+// that acts on the rows it selects.
 func (f *CommonTrackerPatternFilter) WithKeyword(keyword *string) *CommonTrackerPatternFilter {
 	f.keyword = keyword
+	return f
+}
+
+// WithPatternKeyword matches a substring of the pattern key only.
+//
+// The key is immutable, so the same selection returns the same rows however
+// often it runs. That matters for bulk actions: an action that also clears
+// descriptions would otherwise change what a description-matching selection
+// finds on the next run.
+func (f *CommonTrackerPatternFilter) WithPatternKeyword(keyword *string) *CommonTrackerPatternFilter {
+	f.patternKeyword = keyword
 	return f
 }
 
@@ -181,6 +198,12 @@ func (f *CommonTrackerPatternFilter) SQLFragment() string {
 	END
 	AND
 	CASE
+		WHEN @filter_pattern_keyword::text IS NOT NULL AND @filter_pattern_keyword::text != '' THEN
+			pattern ILIKE '%' || @filter_pattern_keyword || '%'
+		ELSE TRUE
+	END
+	AND
+	CASE
 		WHEN @filter_linked::boolean IS NULL THEN TRUE
 		WHEN @filter_linked::boolean THEN common_third_party_id IS NOT NULL
 		ELSE common_third_party_id IS NULL
@@ -216,6 +239,7 @@ func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_match_type":            nil,
 		"filter_common_third_party_id": nil,
 		"filter_keyword":               nil,
+		"filter_pattern_keyword":       nil,
 		"filter_linked":                nil,
 		"filter_described":             nil,
 		"filter_state_queued":          false,
@@ -242,6 +266,10 @@ func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.commonThirdPartyID != nil {
 		args["filter_common_third_party_id"] = *f.commonThirdPartyID
+	}
+
+	if f.patternKeyword != nil {
+		args["filter_pattern_keyword"] = *f.patternKeyword
 	}
 
 	if f.keyword != nil {
