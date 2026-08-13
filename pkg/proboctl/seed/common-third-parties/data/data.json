@@ -232,9 +232,6 @@
   {
     "name": "Adobe Audience Manager",
     "category": "MARKETING",
-    "domains": [
-      "demdex.net"
-    ],
     "websiteUrl": "https://business.adobe.com/products/audience-manager/adobe-audience-manager.html",
     "legalName": "Adobe Inc.",
     "headquarterAddress": "345 Park Avenue, San Jose, CA 95110, United States",
@@ -243,9 +240,6 @@
   {
     "name": "Adobe ColdFusion",
     "category": "OTHER",
-    "domains": [
-      "adobe.com"
-    ],
     "legalName": "Adobe Inc.",
     "headquarterAddress": "345 Park Avenue, San Jose, CA 95110, United States",
     "websiteUrl": "https://www.adobe.com/products/coldfusion-family.html",
@@ -286,10 +280,7 @@
     "statusPageUrl": "https://status.adobe.com/",
     "termsOfServiceUrl": "https://www.adobe.com/legal/terms.html",
     "securityPageUrl": "https://www.adobe.com/trust/security.html",
-    "trustPageUrl": "https://www.adobe.com/trust.html",
-    "domains": [
-      "adobe.com"
-    ]
+    "trustPageUrl": "https://www.adobe.com/trust.html"
   },
   {
     "name": "adscale.de",
@@ -396,10 +387,7 @@
     "websiteUrl": "https://www.akamai.com/products/bot-manager",
     "legalName": "Akamai Technologies, Inc.",
     "headquarterAddress": "145 Broadway, Cambridge, MA 02142, United States",
-    "privacyPolicyUrl": "https://www.akamai.com/legal/privacy-and-policies/privacy-statement",
-    "domains": [
-      "akamai.com"
-    ]
+    "privacyPolicyUrl": "https://www.akamai.com/legal/privacy-and-policies/privacy-statement"
   },
   {
     "name": "Akamai mPulse (Boomerang)",
@@ -469,7 +457,7 @@
   },
   {
     "name": "Amazon Web Services",
-    "category": "OTHER",
+    "category": "CLOUD_PROVIDER",
     "headquarterAddress": "410 Terry Avenue North, Seattle, WA 98109, United States",
     "legalName": "Amazon Web Services, Inc.",
     "websiteUrl": "https://aws.amazon.com",
@@ -492,99 +480,13 @@
       "amazonaws.com",
       "aws.amazon.com",
       "cloudfront.net",
-      "elasticbeanstalk.com"
-    ]
-  },
-  {
-    "name": "Amazon Web Services (AWS)",
-    "headquarterAddress": "410 Terry Avenue North, Seattle, WA",
-    "legalName": "Amazon Web Services, Inc.",
-    "websiteUrl": "https://aws.amazon.com",
-    "privacyPolicyUrl": "https://aws.amazon.com/privacy/",
+      "elasticbeanstalk.com",
+      "amazon.com"
+    ],
     "serviceLevelAgreementUrl": "https://aws.amazon.com/legal/service-level-agreements/",
-    "dataProcessingAgreementUrl": "https://docs.aws.amazon.com/whitepapers/latest/navigating-gdpr-compliance/aws-data-processing-addendum-dpa.html",
     "businessAssociateAgreementUrl": "https://aws.amazon.com/compliance/hipaa-compliance/",
     "subprocessorsListUrl": "https://aws.amazon.com/compliance/sub-processors/",
-    "category": "CLOUD_PROVIDER",
-    "certifications": [
-      "CSA",
-      "ProcessUnity",
-      "CyberVadis",
-      "EC",
-      "ISO 9001",
-      "ISO 14001",
-      "ISO 20000",
-      "ISO 22301",
-      "ISO 27001",
-      "ISO 27017",
-      "ISO 27701",
-      "ISO 27018",
-      "ISO 42001",
-      "ISO 50001",
-      "PCI DSS Level 1",
-      "SOC 1 Type 2",
-      "SOC 2 Type 2",
-      "SOC 3",
-      "PBHVA",
-      "CCCS Medium",
-      "CJIS",
-      "CMMC",
-      "DFARS",
-      "DoD SRG",
-      "FedRAMP",
-      "FERPA",
-      "FIPS",
-      "FISMA",
-      "GxP",
-      "HIPAA",
-      "HITRUST CSF",
-      "ITAR",
-      "MPAA",
-      "NIST",
-      "PIPEDA",
-      "SEC Rule 17a-4(f)",
-      "VPAT / Section 508",
-      "CSAP",
-      "FinTech",
-      "FISC",
-      "IRAP",
-      "ISMAP",
-      "ISO 20000",
-      "K-ISMS",
-      "Medical Information Guidelines",
-      "MeitY",
-      "MTCS Tier 3",
-      "NISC",
-      "OSPAR",
-      "SNI 27001",
-      "BIO Thema-uitwerking Clouddiensten",
-      "C5",
-      "Data Protection Code of Conduct",
-      "CPSTIC",
-      "Cyber Essentials Plus",
-      "DESC CSP",
-      "ENS High",
-      "FINMA ISAE 3000 Type 2 Report",
-      "G-Cloud",
-      "GNS",
-      "GSMA",
-      "HDS",
-      "IAR",
-      "NHS DSPT",
-      "PASF",
-      "Pinakes",
-      "PiTuKri ISAE 3000 Type 2",
-      "TiSAX"
-    ],
-    "securityPageUrl": "https://aws.amazon.com/security/",
-    "trustPageUrl": "https://aws.amazon.com/trust-center/",
-    "statusPageUrl": "https://status.aws.amazon.com/",
-    "termsOfServiceUrl": "https://aws.amazon.com/service-terms/",
-    "domains": [
-      "amazonaws.com",
-      "amazon.com",
-      "aws.amazon.com"
-    ]
+    "securityPageUrl": "https://aws.amazon.com/security/"
   },
   {
     "name": "Amplitude",
@@ -690,17 +592,6 @@
     ]
   },
   {
-    "name": "ASP.net",
-    "category": "OTHER",
-    "domains": [
-      "asp.net"
-    ],
-    "legalName": "Microsoft Corporation",
-    "headquarterAddress": "One Microsoft Way, Redmond, WA 98052, United States",
-    "websiteUrl": "https://dotnet.microsoft.com/en-us/apps/aspnet",
-    "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement"
-  },
-  {
     "name": "AssemblyAI",
     "headquarterAddress": "San Francisco, CA",
     "legalName": "AssemblyAI, Inc.",
@@ -714,7 +605,8 @@
     "trustPageUrl": "https://www.assemblyai.com/trust",
     "domains": [
       "assemblyai.com"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "AT Internet",
@@ -840,17 +732,6 @@
       "awin1.com",
       "zanox.com"
     ]
-  },
-  {
-    "name": "AWS Cookies Popup",
-    "category": "OTHER",
-    "domains": [
-      "amazonaws.com"
-    ],
-    "legalName": "Amazon Web Services, Inc.",
-    "headquarterAddress": "410 Terry Avenue North, Seattle, WA 98109, United States",
-    "websiteUrl": "https://aws.amazon.com",
-    "privacyPolicyUrl": "https://aws.amazon.com/privacy/"
   },
   {
     "name": "Axeptio",
@@ -1046,17 +927,6 @@
     "privacyPolicyUrl": "https://www.bidswitch.com/privacy-policy/"
   },
   {
-    "name": "Bing / Microsoft",
-    "category": "MARKETING",
-    "domains": [
-      "bing.com"
-    ],
-    "websiteUrl": "https://www.bing.com",
-    "legalName": "Microsoft Corporation",
-    "headquarterAddress": "One Microsoft Way, Redmond, WA 98052, United States",
-    "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement"
-  },
-  {
     "name": "Bit.ly",
     "category": "ANALYTICS",
     "domains": [
@@ -1172,7 +1042,8 @@
     "securityPageUrl": "https://www.paypal.com/us/security",
     "domains": [
       "braintreepayments.com"
-    ]
+    ],
+    "category": "FINANCE"
   },
   {
     "name": "Braze",
@@ -1252,7 +1123,8 @@
     "privacyPolicyUrl": "https://smartbear.com/privacy/",
     "domains": [
       "bugsnag.com"
-    ]
+    ],
+    "category": "CLOUD_MONITORING"
   },
   {
     "name": "bunny.net",
@@ -1460,7 +1332,8 @@
     "trustPageUrl": "https://www.chargebee.com/trust/",
     "domains": [
       "chargebee.com"
-    ]
+    ],
+    "category": "FINANCE"
   },
   {
     "name": "Chartbeat",
@@ -1492,7 +1365,8 @@
     "trustPageUrl": "https://www.checkout.com/trust",
     "domains": [
       "checkout.com"
-    ]
+    ],
+    "category": "FINANCE"
   },
   {
     "name": "Checkr",
@@ -1562,7 +1436,8 @@
     "termsOfServiceUrl": "https://www.trychroma.com/terms",
     "domains": [
       "trychroma.com"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Citrix",
@@ -1782,7 +1657,8 @@
     "securityPageUrl": "https://coder.com/security",
     "domains": [
       "coder.com"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "CognitoForms",
@@ -1815,7 +1691,8 @@
     "trustPageUrl": "https://trustcenter.cohere.com",
     "domains": [
       "cohere.com"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Command Act",
@@ -1987,7 +1864,8 @@
     "termsOfServiceUrl": "https://coolify.io/terms",
     "domains": [
       "coolify.io"
-    ]
+    ],
+    "category": "CLOUD_PROVIDER"
   },
   {
     "name": "CraftCMS",
@@ -2065,7 +1943,8 @@
     "trustPageUrl": "https://crowdin.com/trust",
     "domains": [
       "crowdin.com"
-    ]
+    ],
+    "category": "PRODUCT_AND_DESIGN"
   },
   {
     "name": "csync.loopme.me",
@@ -2259,7 +2138,8 @@
     ],
     "domains": [
       "deepgram.com"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Depot",
@@ -2273,17 +2153,6 @@
     "domains": [
       "depot.dev"
     ]
-  },
-  {
-    "name": "Devise (Ruby on Rails)",
-    "category": "OTHER",
-    "domains": [
-      "rubyonrails.org"
-    ],
-    "legalName": "Heartcombo (open-source)",
-    "headquarterAddress": "Brazil",
-    "websiteUrl": "https://github.com/heartcombo/devise",
-    "privacyPolicyUrl": "https://github.com/heartcombo/devise"
   },
   {
     "name": "Didomi",
@@ -2376,17 +2245,6 @@
     "legalName": "Disqus, Inc.",
     "headquarterAddress": "717 Market Street, Suite 700, San Francisco, CA 94103, United States",
     "privacyPolicyUrl": "https://disqus.com/privacy-policy/"
-  },
-  {
-    "name": "Django",
-    "category": "OTHER",
-    "domains": [
-      "djangoproject.com"
-    ],
-    "legalName": "Django Software Foundation",
-    "headquarterAddress": "Lawrence, KS, United States",
-    "websiteUrl": "https://www.djangoproject.com",
-    "privacyPolicyUrl": "https://www.djangoproject.com/privacy/"
   },
   {
     "name": "Docker",
@@ -2650,7 +2508,8 @@
     "trustPageUrl": "https://compliance.elevenlabs.io/",
     "domains": [
       "elevenlabs.io"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Emetric",
@@ -2702,7 +2561,8 @@
     "trustPageUrl": "https://www.equinix.com/trust/",
     "domains": [
       "equinix.com"
-    ]
+    ],
+    "category": "CLOUD_PROVIDER"
   },
   {
     "name": "Exa",
@@ -2714,7 +2574,8 @@
     "securityPageUrl": "https://exa.ai/security",
     "domains": [
       "exa.ai"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Exponea",
@@ -3092,7 +2953,8 @@
     "trustPageUrl": "https://gamma.app/privacy",
     "domains": [
       "gamma.app"
-    ]
+    ],
+    "category": "PRODUCT_AND_DESIGN"
   },
   {
     "name": "Gandi.net",
@@ -3106,7 +2968,8 @@
     "trustPageUrl": "https://www.gandi.net/en/trust-center",
     "domains": [
       "gandi.net"
-    ]
+    ],
+    "category": "IT"
   },
   {
     "name": "Gcore",
@@ -3235,7 +3098,8 @@
     "termsOfServiceUrl": "https://www.gladia.io/terms-and-conditions",
     "domains": [
       "gladia.io"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "GoCardless",
@@ -3255,7 +3119,8 @@
     "trustPageUrl": "https://gocardless.com/trust/",
     "domains": [
       "gocardless.com"
-    ]
+    ],
+    "category": "FINANCE"
   },
   {
     "name": "GoDaddy",
@@ -3305,12 +3170,7 @@
     "termsOfServiceUrl": "https://policies.google.com/terms",
     "domains": [
       "doubleclick.net",
-      "googleadservices.com",
-      "google-analytics.com",
-      "googleapis.com",
       "google.com",
-      "googlesyndication.com",
-      "googletagmanager.com",
       "gstatic.com",
       "youtube.com"
     ]
@@ -3336,7 +3196,6 @@
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
     "privacyPolicyUrl": "https://policies.google.com/privacy",
     "domains": [
-      "google.com",
       "googlesyndication.com",
       "googleadservices.com"
     ]
@@ -3360,9 +3219,7 @@
     ],
     "termsOfServiceUrl": "https://marketingplatform.google.com/about/analytics/terms/us/",
     "domains": [
-      "google.com",
-      "google-analytics.com",
-      "googletagmanager.com"
+      "google-analytics.com"
     ]
   },
   {
@@ -3537,10 +3394,7 @@
     "websiteUrl": "https://www.google.com/travel/flights",
     "legalName": "Google LLC",
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
-    "privacyPolicyUrl": "https://policies.google.com/privacy",
-    "domains": [
-      "google.com"
-    ]
+    "privacyPolicyUrl": "https://policies.google.com/privacy"
   },
   {
     "name": "Google Hotel Ads",
@@ -3548,10 +3402,7 @@
     "websiteUrl": "https://www.google.com/travel/hotels",
     "legalName": "Google LLC",
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
-    "privacyPolicyUrl": "https://policies.google.com/privacy",
-    "domains": [
-      "google.com"
-    ]
+    "privacyPolicyUrl": "https://policies.google.com/privacy"
   },
   {
     "name": "Google Optimize",
@@ -3561,7 +3412,6 @@
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
     "privacyPolicyUrl": "https://policies.google.com/privacy",
     "domains": [
-      "google.com",
       "googleoptimize.com"
     ]
   },
@@ -3573,7 +3423,6 @@
     "headquarterAddress": "1600 Amphitheatre Parkway, Mountain View, CA 94043, United States",
     "privacyPolicyUrl": "https://policies.google.com/privacy",
     "domains": [
-      "google.com",
       "googletagmanager.com"
     ]
   },
@@ -3604,9 +3453,7 @@
     "statusPageUrl": "https://www.google.com/appsstatus/dashboard/",
     "termsOfServiceUrl": "https://policies.google.com/terms",
     "domains": [
-      "google.com",
-      "googleapis.com",
-      "gstatic.com"
+      "googleapis.com"
     ]
   },
   {
@@ -3633,7 +3480,8 @@
     "securityPageUrl": "https://grafana.com/docs/grafana/latest/administration/security/",
     "domains": [
       "grafana.com"
-    ]
+    ],
+    "category": "CLOUD_MONITORING"
   },
   {
     "name": "Granola",
@@ -3652,7 +3500,8 @@
     "securityPageUrl": "https://www.granola.ai/security",
     "domains": [
       "granola.ai"
-    ]
+    ],
+    "category": "COLLABORATION"
   },
   {
     "name": "Groovinads",
@@ -3681,7 +3530,8 @@
     "trustPageUrl": "https://trust.groq.com",
     "domains": [
       "groq.com"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "GumGum",
@@ -3796,7 +3646,8 @@
     "termsOfServiceUrl": "https://www.heygen.com/terms-of-service",
     "domains": [
       "heygen.com"
-    ]
+    ],
+    "category": "PRODUCT_AND_DESIGN"
   },
   {
     "name": "Hightouch",
@@ -3812,7 +3663,8 @@
     "trustPageUrl": "https://hightouch.com/trust",
     "domains": [
       "hightouch.com"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Honeycomb",
@@ -3826,7 +3678,8 @@
     "securityPageUrl": "https://www.honeycomb.io/security",
     "domains": [
       "honeycomb.io"
-    ]
+    ],
+    "category": "CLOUD_MONITORING"
   },
   {
     "name": "Hotjar",
@@ -4021,7 +3874,8 @@
     "trustPageUrl": "https://trust.inngest.com/",
     "domains": [
       "inngest.com"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Inspectlet",
@@ -4103,17 +3957,6 @@
     ]
   },
   {
-    "name": "J2EE",
-    "category": "OTHER",
-    "domains": [
-      "oracle.com"
-    ],
-    "legalName": "Oracle Corporation",
-    "headquarterAddress": "2300 Oracle Way, Austin, TX 78741, United States",
-    "websiteUrl": "https://www.oracle.com/java/technologies/",
-    "privacyPolicyUrl": "https://www.oracle.com/legal/privacy/"
-  },
-  {
     "name": "Jasper",
     "category": "MARKETING",
     "headquarterAddress": "3001 Bee Caves Rd., Ste. 100 A, Rollingwood, TX 78746, United States",
@@ -4150,7 +3993,8 @@
     "securityPageUrl": "https://www.jetbrains.com/security/",
     "domains": [
       "jetbrains.com"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Jimdo",
@@ -4178,9 +4022,6 @@
   {
     "name": "Joomla! Engagebox",
     "category": "OTHER",
-    "domains": [
-      "joomla.org"
-    ],
     "legalName": "Tassos Marinos",
     "headquarterAddress": "Thessaloniki, Greece",
     "websiteUrl": "https://www.tassos.gr/joomla-extensions/engagebox",
@@ -4334,17 +4175,6 @@
     ]
   },
   {
-    "name": "Laravel",
-    "category": "OTHER",
-    "domains": [
-      "laravel.com"
-    ],
-    "legalName": "Laravel Holdings Inc.",
-    "headquarterAddress": "Little Rock, AR, United States",
-    "websiteUrl": "https://laravel.com",
-    "privacyPolicyUrl": "https://laravel.com/privacy"
-  },
-  {
     "name": "LastPass",
     "category": "PASSWORD_MANAGEMENT",
     "websiteUrl": "https://www.lastpass.com",
@@ -4394,7 +4224,8 @@
     "trustPageUrl": "https://launchdarkly.com/trust",
     "domains": [
       "launchdarkly.com"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Lavender",
@@ -4542,7 +4373,8 @@
     "trustPageUrl": "https://liveblocks.safebase.us",
     "domains": [
       "liveblocks.io"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "LiveChat",
@@ -4579,7 +4411,7 @@
     "privacyPolicyUrl": "https://liveramp.com/privacy/"
   },
   {
-    "name": "LiveZilla GmbH",
+    "name": "LiveZilla",
     "category": "OTHER",
     "domains": [
       "livezilla.net"
@@ -4614,7 +4446,8 @@
     "trustPageUrl": "https://lokalise.com/trust",
     "domains": [
       "lokalise.com"
-    ]
+    ],
+    "category": "PRODUCT_AND_DESIGN"
   },
   {
     "name": "Loops",
@@ -4721,7 +4554,8 @@
     "trustPageUrl": "https://www.mailgun.com/trust",
     "domains": [
       "mailgun.com"
-    ]
+    ],
+    "category": "MARKETING"
   },
   {
     "name": "Mailjet",
@@ -4737,7 +4571,8 @@
     "trustPageUrl": "https://www.mailjet.com/trust/",
     "domains": [
       "mailjet.com"
-    ]
+    ],
+    "category": "MARKETING"
   },
   {
     "name": "MailMunch",
@@ -4923,7 +4758,8 @@
     "securityPageUrl": "https://www.metabase.com/security",
     "domains": [
       "metabase.com"
-    ]
+    ],
+    "category": "ANALYTICS"
   },
   {
     "name": "Microsoft",
@@ -5041,7 +4877,8 @@
     "securityPageUrl": "https://www.microsoft.com/en-us/trust-center/security/secure-future-initiative",
     "trustPageUrl": "https://www.microsoft.com/en-us/trust-center",
     "domains": [
-      "clarity.ms"
+      "clarity.ms",
+      "bing.com"
     ]
   },
   {
@@ -5299,8 +5136,6 @@
     "headquarterAddress": "One Microsoft Way, Redmond, WA 98052, United States",
     "privacyPolicyUrl": "https://privacy.microsoft.com/en-us/privacystatement",
     "domains": [
-      "microsoft.com",
-      "azure.com",
       "applicationinsights.io"
     ]
   },
@@ -5371,7 +5206,8 @@
     "termsOfServiceUrl": "https://mistral.ai/fr/terms-of-service",
     "domains": [
       "mistral.ai"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Mixpanel",
@@ -5400,7 +5236,8 @@
     "termsOfServiceUrl": "https://modal.com/terms",
     "domains": [
       "modal.com"
-    ]
+    ],
+    "category": "CLOUD_PROVIDER"
   },
   {
     "name": "monday.com",
@@ -5493,7 +5330,8 @@
     "securityPageUrl": "https://n8n.io/security",
     "domains": [
       "n8n.io"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Namecheap",
@@ -5545,7 +5383,8 @@
     "trustPageUrl": "https://neo4j.com/trust/",
     "domains": [
       "neo4j.com"
-    ]
+    ],
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Neon",
@@ -5577,7 +5416,8 @@
     "trustPageUrl": "https://www.netlify.com/trust/",
     "domains": [
       "netlify.com"
-    ]
+    ],
+    "category": "CLOUD_PROVIDER"
   },
   {
     "name": "Netskope",
@@ -5641,29 +5481,6 @@
       "nr-assets.net",
       "nr-data.net"
     ]
-  },
-  {
-    "name": "Next",
-    "category": "OTHER",
-    "domains": [
-      "nextjs.org"
-    ],
-    "legalName": "Vercel, Inc.",
-    "headquarterAddress": "440 N Barranca Avenue, #4133, Covina, CA 91723, United States",
-    "websiteUrl": "https://nextjs.org",
-    "privacyPolicyUrl": "https://vercel.com/legal/privacy-policy"
-  },
-  {
-    "name": "Next.js",
-    "category": "OTHER",
-    "domains": [
-      "nextjs.org",
-      "vercel.com"
-    ],
-    "legalName": "Vercel, Inc.",
-    "headquarterAddress": "440 N Barranca Avenue, #4133, Covina, CA 91723, United States",
-    "websiteUrl": "https://nextjs.org",
-    "privacyPolicyUrl": "https://vercel.com/legal/privacy-policy"
   },
   {
     "name": "NextAuth.js",
@@ -6043,10 +5860,7 @@
     "securityPageUrl": "https://corporate.ovhcloud.com/en/trusted-cloud/security-certifications/",
     "trustPageUrl": "https://corporate.ovhcloud.com/en/trusted-cloud/security-certifications/",
     "statusPageUrl": "https://www.status-ovhcloud.com/",
-    "termsOfServiceUrl": "https://www.ovhcloud.com/en/terms-and-conditions/contracts/",
-    "domains": [
-      "ovhcloud.com"
-    ]
+    "termsOfServiceUrl": "https://www.ovhcloud.com/en/terms-and-conditions/contracts/"
   },
   {
     "name": "OVHcloud US",
@@ -6095,7 +5909,8 @@
     "trustPageUrl": "https://www.pandadoc.com/trust/",
     "domains": [
       "pandadoc.com"
-    ]
+    ],
+    "category": "DOCUMENT_MANAGEMENT"
   },
   {
     "name": "Pangle",
@@ -6458,7 +6273,8 @@
     "websiteUrl": "https://playwright.dev/",
     "domains": [
       "playwright.dev"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Plesk",
@@ -6542,7 +6358,8 @@
     "trustPageUrl": "https://www.postman.com/trust",
     "domains": [
       "postman.com"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Postmark",
@@ -6584,7 +6401,7 @@
     "privacyPolicyUrl": "https://www.powerlinks.com/privacy-policy/"
   },
   {
-    "name": "PowerLinks Media Limited",
+    "name": "PowerLinks Media",
     "category": "MARKETING",
     "domains": [
       "px.powerlinks.com"
@@ -6884,7 +6701,8 @@
     "trustPageUrl": "https://trust.railway.com/",
     "domains": [
       "railway.com"
-    ]
+    ],
+    "category": "CLOUD_PROVIDER"
   },
   {
     "name": "Ramp",
@@ -6959,7 +6777,8 @@
     "privacyPolicyUrl": "https://www.recall.ai/privacy",
     "domains": [
       "recall.ai"
-    ]
+    ],
+    "category": "COLLABORATION"
   },
   {
     "name": "Reddit",
@@ -7013,7 +6832,8 @@
     "trustPageUrl": "https://render.com/security",
     "domains": [
       "render.com"
-    ]
+    ],
+    "category": "CLOUD_PROVIDER"
   },
   {
     "name": "Replit",
@@ -7057,7 +6877,8 @@
     "trustPageUrl": "https://www.revenuecat.com/trust",
     "domains": [
       "revenuecat.com"
-    ]
+    ],
+    "category": "FINANCE"
   },
   {
     "name": "Revolut",
@@ -7071,7 +6892,8 @@
     "trustPageUrl": "https://www.revolut.com/legal/trust",
     "domains": [
       "revolut.com"
-    ]
+    ],
+    "category": "FINANCE"
   },
   {
     "name": "richAudience",
@@ -7118,17 +6940,6 @@
     "legalName": "Roku, Inc.",
     "headquarterAddress": "1155 Coleman Avenue, San Jose, CA 95110, United States",
     "privacyPolicyUrl": "https://docs.roku.com/published/userprivacypolicy/"
-  },
-  {
-    "name": "Ruby on Rails",
-    "category": "OTHER",
-    "domains": [
-      "rubyonrails.org"
-    ],
-    "legalName": "Rails Core Team (open-source)",
-    "headquarterAddress": "Global (community-driven)",
-    "websiteUrl": "https://rubyonrails.org",
-    "privacyPolicyUrl": "https://rubyonrails.org/privacy"
   },
   {
     "name": "Rudderstack",
@@ -7357,7 +7168,8 @@
     "securityPageUrl": "https://semgrep.dev/security",
     "domains": [
       "semgrep.dev"
-    ]
+    ],
+    "category": "SECURITY"
   },
   {
     "name": "Sendgrid",
@@ -7600,7 +7412,8 @@
     "trustPageUrl": "https://www.smtp2go.com/trust/",
     "domains": [
       "smtp2go.com"
-    ]
+    ],
+    "category": "MARKETING"
   },
   {
     "name": "Snapchat",
@@ -7882,7 +7695,8 @@
     "trustPageUrl": "https://www.statsig.com/trust/security",
     "domains": [
       "statsig.com"
-    ]
+    ],
+    "category": "ANALYTICS"
   },
   {
     "name": "Stonly",
@@ -7983,7 +7797,8 @@
     "termsOfServiceUrl": "https://superhuman.com/terms",
     "domains": [
       "superhuman.com"
-    ]
+    ],
+    "category": "COLLABORATION"
   },
   {
     "name": "SurveyMonkey",
@@ -8016,7 +7831,8 @@
     "trustPageUrl": "https://www.svix.com/trust",
     "domains": [
       "svix.com"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Swym",
@@ -8132,10 +7948,7 @@
     "websiteUrl": "https://www.tawk.to",
     "legalName": "tawk.to inc.",
     "headquarterAddress": "187 East Warm Springs Road, Suite B286, Las Vegas, NV 89119, United States",
-    "privacyPolicyUrl": "https://www.tawk.to/privacy-policy/",
-    "domains": [
-      "tawk.to"
-    ]
+    "privacyPolicyUrl": "https://www.tawk.to/privacy-policy/"
   },
   {
     "name": "Teads",
@@ -8281,9 +8094,7 @@
     "headquarterAddress": "San Francisco, CA",
     "legalName": "Timescale, Inc.",
     "websiteUrl": "https://github.com/timescale/timescaledb",
-    "domains": [
-      "github.com"
-    ]
+    "category": "DATA_STORAGE_AND_PROCESSING"
   },
   {
     "name": "Tinybird",
@@ -8299,7 +8110,8 @@
     "privacyPolicyUrl": "https://tiptap.dev/privacy-policy",
     "domains": [
       "tiptap.dev"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Together AI",
@@ -8450,7 +8262,8 @@
     "trustPageUrl": "https://www.twingate.com/trust",
     "domains": [
       "twingate.com"
-    ]
+    ],
+    "category": "SECURITY"
   },
   {
     "name": "Twitch",
@@ -8547,7 +8360,8 @@
     "termsOfServiceUrl": "https://upcloud.com/terms-of-service/",
     "domains": [
       "upcloud.com"
-    ]
+    ],
+    "category": "CLOUD_PROVIDER"
   },
   {
     "name": "Upstash",
@@ -8636,7 +8450,8 @@
     "trustPageUrl": "https://help.userway.org/en/collections/17078126-userway-trust-center-powered-by-level-access",
     "domains": [
       "userway.org"
-    ]
+    ],
+    "category": "PRODUCT_AND_DESIGN"
   },
   {
     "name": "vBulletin",
@@ -8731,7 +8546,8 @@
     "securityPageUrl": "https://code.visualstudio.com/security",
     "domains": [
       "code.visualstudio.com"
-    ]
+    ],
+    "category": "ENGINEERING"
   },
   {
     "name": "Visual Website Optimizer",
@@ -8929,7 +8745,6 @@
     "name": "WooCommerce / Jetpack",
     "category": "OTHER",
     "domains": [
-      "woocommerce.com",
       "jetpack.com"
     ],
     "legalName": "Automattic Inc.",
