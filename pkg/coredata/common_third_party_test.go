@@ -90,6 +90,7 @@ func TestCommonThirdPartyUpsert_SyncsReceiverToWrittenRow(t *testing.T) {
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
+
 		inserted, err = reseeded.Upsert(ctx, tx)
 
 		return err

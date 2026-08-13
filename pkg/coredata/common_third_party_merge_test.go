@@ -292,6 +292,7 @@ func mergeInTx(
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
+
 		result, err = coredata.MergeCommonThirdParty(ctx, tx, winnerID, loserID)
 
 		return err
@@ -509,6 +510,7 @@ func TestMergeCommonThirdParty_DeletesLoser(t *testing.T) {
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var gone coredata.CommonThirdParty
+
 		err := gone.LoadByID(ctx, conn, loser.ID)
 		assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
@@ -674,6 +676,7 @@ func TestPreviewMergeCommonThirdParty_MatchesApply(t *testing.T) {
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var err error
+
 		preview, err = coredata.PreviewMergeCommonThirdParty(ctx, conn, winner.ID, loser.ID)
 
 		return err

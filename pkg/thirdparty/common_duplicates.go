@@ -473,12 +473,14 @@ func buildClusters(items []normalized, pairs []DuplicatePair) []DuplicateCluster
 	}
 
 	members := make(map[int][]int)
+
 	for i := range items {
 		root := find(i)
 		members[root] = append(members[root], i)
 	}
 
 	pairsByRoot := make(map[int][]DuplicatePair)
+
 	for _, p := range pairs {
 		root := find(indexByID[p.A])
 		pairsByRoot[root] = append(pairsByRoot[root], p)

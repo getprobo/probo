@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"go.gearno.de/kit/pg"
@@ -340,20 +341,20 @@ func printMergeResult(
 func formatGIDs(ids []gid.GID) string {
 	const sampleSize = 10
 
-	out := ""
+	var out strings.Builder
 
 	for i, id := range ids {
 		if i >= sampleSize {
-			out += fmt.Sprintf(" ... and %d more", len(ids)-sampleSize)
+			fmt.Fprintf(&out, " ... and %d more", len(ids)-sampleSize)
 			break
 		}
 
 		if i > 0 {
-			out += " "
+			out.WriteString(" ")
 		}
 
-		out += id.String()
+		out.WriteString(id.String())
 	}
 
-	return out
+	return out.String()
 }
