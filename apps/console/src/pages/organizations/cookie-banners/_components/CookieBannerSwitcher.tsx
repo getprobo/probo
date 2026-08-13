@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { CaretDownIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
@@ -31,14 +30,15 @@ import { useLocation, useParams } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { cookieBannerSwitcher } from "#/pages/iam/organizations/_components/shell/variants";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
+import { CookieBannerNavItems } from "./CookieBannerNavItems";
+import { cookieBannerSwitcher } from "./variants";
 import {
   CookieBannerSwitcherMenu,
   cookieBannerSwitcherMenuQuery,
 } from "./CookieBannerSwitcherMenu";
-import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
+import { CookieBannerSwitcherValue, CookieBannerSwitcherValueSkeleton } from "./CookieBannerSwitcherValue";
 
 /**
  * Privacy-panel control that picks a cookie banner instead of linking to a
@@ -50,13 +50,17 @@ import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
  * open this menu. The selected banner's name is a separate query so the
  * trigger can show it without loading the list. CoreRelayProvider is local
  * because the surrounding chrome runs on the IAM environment. The group label
- * around this control belongs to NavPanelGroup.
+ * around this control belongs to NavPanelGroup. Configure, Discovery, and
+ * Trail hang off the same group once a banner is in the URL.
  */
 export function CookieBannerSwitcher() {
   return (
-    <CoreRelayProvider>
-      <CookieBannerSwitcherInner />
-    </CoreRelayProvider>
+    <>
+      <CoreRelayProvider>
+        <CookieBannerSwitcherInner />
+      </CoreRelayProvider>
+      <CookieBannerNavItems />
+    </>
   );
 }
 
@@ -70,8 +74,10 @@ function CookieBannerSwitcherInner() {
   );
 
   const prefix = `/organizations/${organizationId}/privacy/cookie-banners/`;
-  const active = pathname.startsWith(prefix);
   const isNew = pathname === `${prefix}new`;
+  // Gold only on /new: once a banner is selected, Configure / Discovery /
+  // Trail carry the accent and the trigger stays an outline picker.
+  const active = isNew;
   const selectLabel = t("nav.cookieBannerSwitcher.select");
   const newLabel = t("nav.cookieBannerSwitcher.new");
 
@@ -81,30 +87,28 @@ function CookieBannerSwitcherInner() {
     }
   }, [loadQuery, organizationId]);
 
-  const slots = cookieBannerSwitcher();
+  const slots = cookieBannerSwitcher({ outlined: !active, active });
 
   return (
     <Dropdown onOpenChange={handleOpenChange}>
       <DropdownTrigger
         render={(
-          <Button
-            variant={active ? "soft" : "outline"}
-            color={active ? "gold" : "neutral"}
-            size={2}
-            active={active}
-            iconEnd={<CaretDownIcon />}
-            className={slots.trigger()}
-          >
+          <button type="button" className={slots.trigger()}>
             <span className={slots.value()}>
               {cookieBannerId != null
                 ? (
-                    <Suspense fallback={selectLabel}>
+                    <Suspense fallback={<CookieBannerSwitcherValueSkeleton />}>
                       <CookieBannerSwitcherValue fallback={selectLabel} />
                     </Suspense>
                   )
-                : (isNew ? newLabel : selectLabel)}
+                : (
+                    <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
+                      {isNew ? newLabel : selectLabel}
+                    </Text>
+                  )}
             </span>
-          </Button>
+            <CaretDownIcon className={slots.valueCaret()} />
+          </button>
         )}
       />
       <DropdownPopup side="bottom" align="start" className={slots.popup()}>

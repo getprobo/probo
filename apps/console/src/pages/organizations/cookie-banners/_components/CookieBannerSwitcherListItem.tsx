@@ -26,7 +26,8 @@ import { Link, useParams } from "react-router";
 
 import type { CookieBannerSwitcherListItem_cookieBanner$key } from "#/__generated__/core/CookieBannerSwitcherListItem_cookieBanner.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { cookieBannerSwitcher } from "#/pages/iam/organizations/_components/shell/variants";
+
+import { cookieBannerSwitcher } from "./variants";
 
 const cookieBannerSwitcherListItemFragment = graphql`
   fragment CookieBannerSwitcherListItem_cookieBanner on CookieBanner {
@@ -58,7 +59,7 @@ export function CookieBannerSwitcherListItem({ cookieBannerKey }: CookieBannerSw
       className={slots.item()}
       render={(
         <Link
-          to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}`}
+          to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/configure`}
         />
       )}
     >

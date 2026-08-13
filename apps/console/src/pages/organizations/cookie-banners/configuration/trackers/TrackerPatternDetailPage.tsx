@@ -79,11 +79,11 @@ export default function TrackerPatternDetailPage({
         items={[
           {
             label: cookieBanner.name,
-            to: `/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/settings`,
+            to: `/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/configure/settings`,
           },
           {
             label: t("trackerPatternDetailPage.breadcrumbs.trackers"),
-            to: `/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/trackers`,
+            to: `/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/discovery`,
           },
           {
             label: pattern.displayName,

@@ -2452,6 +2452,9 @@
     "accessReviews": "Toegangsbeoordelingen",
     "compliancePortals": "Compliancepagina's",
     "cookieBanners": "Cookiebanners",
+    "cookieBannersConfigure": "Configureren",
+    "cookieBannersDiscovery": "Ontdekking",
+    "cookieBannersTrail": "Logboek",
     "cookieBannerSwitcher": {
       "select": "Selecteer banner",
       "new": "Nieuwe banner",

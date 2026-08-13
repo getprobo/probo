@@ -28,8 +28,8 @@ import { Link } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { cookieBannerSwitcher } from "#/pages/iam/organizations/_components/shell/variants";
 
+import { cookieBannerSwitcher } from "./variants";
 import { CookieBannerSwitcherListItem } from "./CookieBannerSwitcherListItem";
 
 export const cookieBannerSwitcherMenuQuery = graphql`

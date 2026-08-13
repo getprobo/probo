@@ -22,8 +22,10 @@ import { dateFormat } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
+import { useParams } from "react-router";
 
 import type { ConsentRecordRowFragment$key } from "#/__generated__/core/ConsentRecordRowFragment.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   formatAnonymizedIp,
@@ -54,10 +56,12 @@ interface ConsentRecordRowProps {
 
 export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const organizationId = useOrganizationId();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const record = useFragment(consentRecordFragment, recordKey);
 
   return (
-    <Tr to={record.id}>
+    <Tr to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/consent-records/${record.id}`}>
       <Td>
         <span className="font-mono text-sm">{record.visitorId}</span>
       </Td>

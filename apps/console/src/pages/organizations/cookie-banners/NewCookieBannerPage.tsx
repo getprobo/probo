@@ -97,7 +97,7 @@ export default function NewCookieBannerPage() {
           variant: "success",
         });
         const bannerId = data.createCookieBanner.cookieBannerEdge.node.id;
-        void navigate(`/organizations/${organizationId}/privacy/cookie-banners/${bannerId}`);
+        void navigate(`/organizations/${organizationId}/privacy/cookie-banners/${bannerId}/configure`);
       },
       onError(error) {
         toast({

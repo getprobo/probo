@@ -18,27 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ClipboardTextIcon, CodeIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
 import {
   ActionDropdown,
   Badge,
   Button,
   DropdownItem,
-  IconGlobe,
-  IconPageTextLine,
-  IconSettingsGear2,
   IconSquareBehindSquare2,
   IconTrashCan,
   PageHeader,
-  TabLink,
-  Tabs,
   useConfirm,
   useToast,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { Link, Outlet, useNavigate, useParams } from "react-router";
+import { Link, Outlet, useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayoutActivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutActivateMutation.graphql";
@@ -134,7 +128,6 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
   const confirm = useConfirm();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(cookieBannerConfigLayoutQuery, queryRef);
   if (data.node.__typename !== "CookieBanner") {
@@ -210,7 +203,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
               for (const edge of edges) {
                 const id = edge?.getLinkedRecord("node")?.getDataID();
                 if (typeof id === "string" && id !== banner.id) {
-                  nextPath = `/organizations/${organizationId}/privacy/cookie-banners/${id}`;
+                  nextPath = `/organizations/${organizationId}/privacy/cookie-banners/${id}/configure`;
                   return;
                 }
               }
@@ -334,33 +327,6 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
           </ActionDropdown>
         )}
       </PageHeader>
-
-      <Tabs>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/display`}>
-          <IconPageTextLine size={20} />
-          {t("configLayout.tabs.display")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/settings`}>
-          <IconSettingsGear2 size={20} />
-          {t("configLayout.tabs.settings")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/translations`}>
-          <IconGlobe size={20} />
-          {t("configLayout.tabs.translations")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/trackers`}>
-          <MagnifyingGlassIcon size={20} />
-          {t("configLayout.tabs.trackers")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/resources`}>
-          <CodeIcon size={20} />
-          {t("configLayout.tabs.resources")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/consent-records`}>
-          <ClipboardTextIcon size={20} />
-          {t("configLayout.tabs.consentRecords")}
-        </TabLink>
-      </Tabs>
 
       <Outlet />
     </div>

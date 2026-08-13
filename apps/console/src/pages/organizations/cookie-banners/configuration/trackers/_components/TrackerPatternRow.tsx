@@ -35,6 +35,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
+import { useParams } from "react-router";
 
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
@@ -167,6 +168,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const { toast } = useToast();
   const confirm = useConfirm();
   const organizationId = useOrganizationId();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -366,7 +368,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
 
   return (
     <Tr
-      to={pattern.id}
+      to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/trackers/${pattern.id}`}
       className={
         pattern.excluded
           ? "bg-txt-quaternary/70 line-through"

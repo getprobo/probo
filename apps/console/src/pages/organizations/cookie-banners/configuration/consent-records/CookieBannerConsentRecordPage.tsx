@@ -123,11 +123,11 @@ export default function CookieBannerConsentRecordPage({
         items={[
           {
             label: bannerName,
-            to: `/organizations/${organizationId}/privacy/cookie-banners/${bannerId}`,
+            to: `/organizations/${organizationId}/privacy/cookie-banners/${bannerId}/configure`,
           },
           {
             label: t("consentRecordPage.breadcrumbs.records"),
-            to: `/organizations/${organizationId}/privacy/cookie-banners/${bannerId}/consent-records`,
+            to: `/organizations/${organizationId}/privacy/cookie-banners/${bannerId}/trail`,
           },
           {
             label: record.id,

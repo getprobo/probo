@@ -18,10 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useLazyLoadQuery } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
+
+import { cookieBannerSwitcher } from "./variants";
 
 const cookieBannerSwitcherValueQuery = graphql`
   query CookieBannerSwitcherValueQuery($cookieBannerId: ID!) {
@@ -49,9 +52,26 @@ export function CookieBannerSwitcherValue({ fallback }: CookieBannerSwitcherValu
   const data = useLazyLoadQuery<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
     { cookieBannerId: cookieBannerId ?? "" },
+    { fetchPolicy: "store-or-network" },
   );
+  const slots = cookieBannerSwitcher();
   if (data.node?.__typename !== "CookieBanner") {
     return fallback;
   }
-  return data.node.name;
+  return (
+    <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
+      {data.node.name}
+    </Text>
+  );
+}
+
+/**
+ * A pulse bar the same height as the trigger name, used while the selected
+ * banner query suspends. A plain "Select Banner" string inherited the page
+ * font and flashed larger than the closed trigger.
+ */
+export function CookieBannerSwitcherValueSkeleton() {
+  const slots = cookieBannerSwitcher();
+
+  return <span className={slots.valueSkeletonName()} aria-hidden />;
 }

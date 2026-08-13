@@ -2452,6 +2452,9 @@
     "accessReviews": "Revues d’accès",
     "compliancePortals": "Portails de conformité",
     "cookieBanners": "Bannières de cookies",
+    "cookieBannersConfigure": "Configurer",
+    "cookieBannersDiscovery": "Découverte",
+    "cookieBannersTrail": "Journal",
     "cookieBannerSwitcher": {
       "select": "Sélectionner une bannière",
       "new": "Nouvelle bannière",

@@ -181,33 +181,11 @@ export const navPanel = tv({
     // Nav entries read as a list, so they fill the column and align left
     // rather than sitting as centred pills like a row of buttons would.
     item: "w-full justify-start",
-    group: "mt-4 flex w-full flex-col gap-1 first:mt-0",
+    group: "mt-3 flex w-full flex-col gap-1 first:mt-0",
     groupLabel: "px-3",
     // Matches Button size 2 (h-8 rounded-2) at full panel width while a
     // lazy switcher chunk loads. Not ButtonSkeleton: that one is a fixed
     // w-24, and lite tv will not merge a w-full override.
     groupFallback: "block h-8 w-full animate-pulse rounded-2 bg-sand-3",
-  },
-});
-
-// Cookie-banner picker in the privacy panel. Two-line items (name + origin)
-// do not fit the kit DropdownItem's fixed height, so the list item owns these
-// slots and renders a Menu.Item directly.
-export const cookieBannerSwitcher = tv({
-  slots: {
-    popup: "w-72 p-0",
-    list: "max-h-96 overflow-y-auto px-1 py-1",
-    empty: "block px-3 py-2",
-    item: [
-      "group flex w-full cursor-pointer items-center gap-2 rounded-2 px-3 py-2 outline-none select-none",
-      "text-sand-12 data-disabled:pointer-events-none data-disabled:opacity-50",
-      "data-highlighted:bg-gold-9 data-highlighted:text-white",
-    ],
-    itemBody: "flex min-w-0 flex-1 flex-col gap-0.5",
-    itemName: "truncate group-data-highlighted:text-white",
-    itemOrigin: "truncate group-data-highlighted:text-white",
-    itemCheck: "size-4 shrink-0",
-    trigger: "w-full min-w-0 justify-start",
-    value: "min-w-0 flex-1 truncate text-left",
   },
 });
