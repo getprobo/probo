@@ -29,7 +29,13 @@
 --
 -- Partial: the column is NULL for every third party that was not imported
 -- from the global catalog, which is the large majority of the table.
-CREATE INDEX third_parties_common_third_party_id_idx
+--
+-- IF NOT EXISTS so this is a no-op where the index was already built by hand.
+-- third_parties is large and CREATE INDEX takes ACCESS EXCLUSIVE, so an
+-- operator may create it CONCURRENTLY ahead of the deploy to avoid blocking
+-- writes. CONCURRENTLY cannot be used here: the migration runner wraps each
+-- file in a transaction, and CONCURRENTLY is not allowed inside one.
+CREATE INDEX IF NOT EXISTS third_parties_common_third_party_id_idx
     ON third_parties (common_third_party_id)
     WHERE common_third_party_id IS NOT NULL;
 
@@ -37,4 +43,4 @@ CREATE INDEX third_parties_common_third_party_id_idx
 -- common_third_party_domains_party_domain_key on
 -- (common_third_party_id, domain), whose leading column serves every lookup
 -- this index could.
-DROP INDEX idx_common_third_party_domains_third_party;
+DROP INDEX IF EXISTS idx_common_third_party_domains_third_party;
