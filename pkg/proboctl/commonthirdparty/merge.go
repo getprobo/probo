@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 	seed "go.probo.inc/probo/pkg/proboctl/seed/common-third-parties"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 func newCmdMerge(f *cmdutil.Factory) *cobra.Command {
@@ -148,12 +149,12 @@ func newCmdMerge(f *cmdutil.Factory) *cobra.Command {
 		var failed int
 
 		for _, loser := range losers {
-			var result coredata.MergeCommonThirdPartyResult
+			var result thirdparty.MergeCatalogResult
 
 			if err := pgClient.WithTx(
 				ctx,
 				func(ctx context.Context, tx pg.Tx) error {
-					result, err = coredata.MergeCommonThirdParty(ctx, tx, winner.ID, loser.ID)
+					result, err = thirdparty.MergeCatalog(ctx, tx, winner.ID, loser.ID)
 
 					return err
 				},
@@ -233,7 +234,7 @@ func resolveMergeLosers(
 			return nil, fmt.Errorf(
 				"%q is the winner, so it cannot also be a loser: %w",
 				ref,
-				coredata.ErrCannotMergeIntoSelf,
+				thirdparty.ErrCannotMergeIntoSelf,
 			)
 		}
 
@@ -264,9 +265,9 @@ func previewMerges(
 					_, _ = fmt.Fprintln(out)
 				}
 
-				result, err := coredata.PreviewMergeCommonThirdParty(ctx, conn, winner.ID, loser.ID)
+				result, err := thirdparty.PreviewMergeCatalog(ctx, conn, winner.ID, loser.ID)
 				if err != nil {
-					if errors.Is(err, coredata.ErrCannotMergeIntoSelf) {
+					if errors.Is(err, thirdparty.ErrCannotMergeIntoSelf) {
 						return err
 					}
 
@@ -290,7 +291,7 @@ func printMergeResult(
 	out io.Writer,
 	winner coredata.CommonThirdParty,
 	loser coredata.CommonThirdParty,
-	result coredata.MergeCommonThirdPartyResult,
+	result thirdparty.MergeCatalogResult,
 	dryRun bool,
 ) {
 	verb := "Merged"

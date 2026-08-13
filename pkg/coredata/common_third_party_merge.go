@@ -20,9 +20,14 @@
 
 package coredata
 
+// Statements backing a catalog third party merge, one per affected table.
+//
+// The ordering these must be applied in, and the reporting of what moved,
+// belong to the caller that orchestrates them: see thirdparty.MergeCatalog.
+// Each function here does one table's write and returns what it touched.
+
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -30,181 +35,38 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// ErrCannotMergeIntoSelf is returned when a merge names the same catalog
-// row as both winner and loser, which would delete the row it was meant to
-// keep.
-var ErrCannotMergeIntoSelf = errors.New("cannot merge a common third party into itself")
+// CommonThirdPartyMergeCounts is one row of counters describing what a merge
+// of two catalog entries would touch, per table.
+type CommonThirdPartyMergeCounts struct {
+	// DomainsMovable and DomainsColliding partition the loser's domains by
+	// whether the winner already claims the same domain.
+	DomainsMovable   int64 `db:"domains_movable"`
+	DomainsColliding int64 `db:"domains_colliding"`
 
-// MergeCommonThirdPartyResult reports what a merge moved. A merge is
-// otherwise invisible — it repoints references across tables and tenants
-// and then deletes a row — so the operator needs a per-table account of
-// what happened, and above all which references were left behind.
-type MergeCommonThirdPartyResult struct {
-	// DomainsMoved and DomainsDroppedAsDup partition the loser's domains:
-	// moved to the winner, or discarded because the winner already claimed
-	// the same domain.
-	DomainsMoved        int64
-	DomainsDroppedAsDup int64
+	// TrackerPatterns counts the catalog patterns attributed to the loser.
+	TrackerPatterns int64 `db:"tracker_patterns"`
 
-	// TrackerPatternsRepointed counts catalog patterns now attributed to
-	// the winner.
-	TrackerPatternsRepointed int64
+	// ThirdPartiesRepointable counts the loser's organization third parties
+	// whose organization does not already link the winner.
+	ThirdPartiesRepointable int64 `db:"third_parties_repointable"`
 
-	// TrackerPatternsRequeued counts catalog patterns re-armed for
-	// enrichment because their description was researched against the
-	// vendor that no longer exists.
-	TrackerPatternsRequeued int64
-
-	// OrgTrackerPatternsRelinked counts organization tracker patterns now
-	// pointing at the third party their organization manages for the
-	// winner, across all tenants.
-	OrgTrackerPatternsRelinked int64
-
-	// ThirdPartiesRepointed counts organization third parties, across all
-	// tenants, now linked to the winner.
-	ThirdPartiesRepointed int64
-
-	// ThirdPartiesSkipped names organization third parties left linked to
-	// the loser because their organization already had a third party
-	// pointing at the winner. Repointing them would create two rows in one
-	// organization referencing the same catalog entry, a state no
-	// constraint forbids and that the catalog-import lookup then hides
-	// permanently. They end up unlinked once the loser is deleted, so they
-	// are reported for follow-up by whoever owns that tenant's data.
-	ThirdPartiesSkipped []gid.GID
-
-	// LogoAdopted reports whether the winner took over the loser's logo,
-	// which happens only when the winner had none.
-	LogoAdopted bool
+	// LogoAdoptable reports whether the winner would inherit the loser's
+	// logo, which happens only when the winner has none.
+	LogoAdoptable bool `db:"logo_adoptable"`
 }
 
-// MergeCommonThirdParty folds loserID into winnerID and deletes the loser.
+// CountCommonThirdPartyMergeEffects counts, in one round trip, what merging
+// loserID into winnerID would touch.
 //
-// The catalog is global, so this deliberately spans tenants: an
-// organization third party in any tenant may reference a catalog row, and
-// all of them must be repointed before the row disappears. That is why no
-// Scoper is taken — a tenant scope would silently leave other tenants'
-// rows dangling on a deleted id.
-//
-// Every reference is repointed explicitly rather than left to the foreign
-// keys. Letting ON DELETE fire would produce two broken states: catalog
-// patterns would keep attribution THIRD_PARTY while their vendor went
-// NULL, and the counts reported above would be unobservable.
-//
-// Step order matters. Domains move first because they are the only step
-// that can violate a unique constraint. Patterns and organization third
-// parties are repointed before the delete so no cascade sees them. The
-// logo is adopted while the loser row still exists. The delete is last.
-//
-// Scalar metadata (website, policy URLs, certifications) and the
-// enrichment payload are NOT merged: the payload records per-field
-// provenance for the row's own columns, so mixing two rows' values would
-// leave it describing neither. Callers re-arm enrichment on the winner
-// instead, which regenerates the whole profile coherently.
-func MergeCommonThirdParty(
-	ctx context.Context,
-	tx pg.Tx,
-	winnerID gid.GID,
-	loserID gid.GID,
-) (MergeCommonThirdPartyResult, error) {
-	var result MergeCommonThirdPartyResult
-
-	if winnerID == loserID {
-		return result, ErrCannotMergeIntoSelf
-	}
-
-	skipped, err := collidingThirdPartyIDs(ctx, tx, winnerID, loserID)
-	if err != nil {
-		return result, err
-	}
-
-	result.ThirdPartiesSkipped = skipped
-
-	moved, dropped, err := mergeCommonThirdPartyDomains(ctx, tx, winnerID, loserID)
-	if err != nil {
-		return result, err
-	}
-
-	result.DomainsMoved = moved
-	result.DomainsDroppedAsDup = dropped
-
-	var patterns CommonTrackerPatterns
-
-	movedPatterns, err := patterns.RepointCommonThirdPartyID(ctx, tx, loserID, winnerID)
-	if err != nil {
-		return result, err
-	}
-
-	result.TrackerPatternsRepointed = int64(len(movedPatterns))
-
-	// Those patterns' descriptions were researched against a vendor that no
-	// longer exists, so re-arm them for a vendor-informed second pass.
-	if len(movedPatterns) > 0 {
-		result.TrackerPatternsRequeued, err = patterns.RequestEnrichmentByIDs(ctx, tx, movedPatterns)
-		if err != nil {
-			return result, err
-		}
-	}
-
-	result.ThirdPartiesRepointed, err = repointThirdParties(ctx, tx, winnerID, loserID)
-	if err != nil {
-		return result, err
-	}
-
-	// Re-point the organization-scoped tracker patterns last, once every
-	// catalog reference names the winner.
-	//
-	// An organization that already managed a third party for the winner has
-	// patterns that, before the merge, resolved through the loser and so
-	// carried no organization link. Their catalog row now names the winner,
-	// which that organization does manage, so they must surface the managed
-	// third party rather than the catalog entry. Nothing else would do it:
-	// the import path is idempotent on (organization, catalog entry) and
-	// skips an organization that already holds the row.
-	result.OrgTrackerPatternsRelinked, err = relinkOrgTrackerPatterns(ctx, tx, winnerID)
-	if err != nil {
-		return result, err
-	}
-
-	result.LogoAdopted, err = adoptCommonThirdPartyLogo(ctx, tx, winnerID, loserID)
-	if err != nil {
-		return result, err
-	}
-
-	if err := (CommonThirdParty{}).Delete(ctx, tx, loserID); err != nil {
-		return result, fmt.Errorf("cannot delete merged common third party: %w", err)
-	}
-
-	return result, nil
-}
-
-// PreviewMergeCommonThirdParty reports what MergeCommonThirdParty would do
-// without writing anything.
-//
-// It runs the same predicates as the apply path against a read-only
-// connection, so the two cannot disagree about which domains collide or
-// which organization third parties would be skipped. A merge deletes a
-// globally referenced row, so the operator needs that account before
-// committing, not after.
-func PreviewMergeCommonThirdParty(
+// Every predicate below mirrors the one in the corresponding write, so a
+// preview built from these counters cannot disagree with the merge it
+// describes.
+func CountCommonThirdPartyMergeEffects(
 	ctx context.Context,
 	conn pg.Querier,
 	winnerID gid.GID,
 	loserID gid.GID,
-) (MergeCommonThirdPartyResult, error) {
-	var result MergeCommonThirdPartyResult
-
-	if winnerID == loserID {
-		return result, ErrCannotMergeIntoSelf
-	}
-
-	skipped, err := collidingThirdPartyIDs(ctx, conn, winnerID, loserID)
-	if err != nil {
-		return result, err
-	}
-
-	result.ThirdPartiesSkipped = skipped
-
+) (CommonThirdPartyMergeCounts, error) {
 	q := `
 SELECT
     (
@@ -217,7 +79,7 @@ SELECT
               WHERE winner.common_third_party_id = @winner_id
                 AND winner.domain = loser.domain
           )
-    ) AS domains_moved,
+    ) AS domains_movable,
     (
         SELECT count(*)
         FROM common_third_party_domains AS loser
@@ -228,12 +90,12 @@ SELECT
               WHERE winner.common_third_party_id = @winner_id
                 AND winner.domain = loser.domain
           )
-    ) AS domains_dropped,
+    ) AS domains_colliding,
     (
         SELECT count(*)
         FROM common_tracker_patterns
         WHERE common_third_party_id = @loser_id
-    ) AS patterns_repointed,
+    ) AS tracker_patterns,
     (
         SELECT count(*)
         FROM third_parties AS loser
@@ -244,15 +106,15 @@ SELECT
               WHERE winner.organization_id = loser.organization_id
                 AND winner.common_third_party_id = @winner_id
           )
-    ) AS third_parties_repointed,
-    (
-        SELECT count(*)
+    ) AS third_parties_repointable,
+    EXISTS (
+        SELECT 1
         FROM common_third_parties AS winner, common_third_parties AS loser
         WHERE winner.id = @winner_id
           AND loser.id = @loser_id
           AND winner.logo_file_id IS NULL
           AND loser.logo_file_id IS NOT NULL
-    ) AS logo_adopted
+    ) AS logo_adoptable
 `
 
 	args := pgx.StrictNamedArgs{
@@ -260,50 +122,22 @@ SELECT
 		"loser_id":  loserID,
 	}
 
-	var logoAdopted int64
+	var counts CommonThirdPartyMergeCounts
 
 	if err := conn.QueryRow(ctx, q, args).Scan(
-		&result.DomainsMoved,
-		&result.DomainsDroppedAsDup,
-		&result.TrackerPatternsRepointed,
-		&result.ThirdPartiesRepointed,
-		&logoAdopted,
+		&counts.DomainsMovable,
+		&counts.DomainsColliding,
+		&counts.TrackerPatterns,
+		&counts.ThirdPartiesRepointable,
+		&counts.LogoAdoptable,
 	); err != nil {
-		return result, fmt.Errorf("cannot preview common third party merge: %w", err)
+		return counts, fmt.Errorf("cannot count common third party merge effects: %w", err)
 	}
 
-	result.LogoAdopted = logoAdopted > 0
-
-	// Every repointed pattern is re-armed for enrichment.
-	result.TrackerPatternsRequeued = result.TrackerPatternsRepointed
-
-	// The organization relink runs after the catalog patterns move, so
-	// predicting it means counting the patterns that will resolve to the
-	// winner once they have: the loser's patterns plus any the winner
-	// already carries, for each organization that manages the winner.
-	var parties ThirdParties
-
-	links, err := parties.LoadOrganizationLinksByCommonThirdPartyID(ctx, conn, NewNoScope(), winnerID)
-	if err != nil {
-		return result, err
-	}
-
-	for _, link := range links {
-		for _, catalogID := range []gid.GID{winnerID, loserID} {
-			count, err := countUnlinkedOrgPatterns(ctx, conn, link.OrganizationID, catalogID)
-			if err != nil {
-				return result, err
-			}
-
-			result.OrgTrackerPatternsRelinked += count
-		}
-	}
-
-	return result, nil
+	return counts, nil
 }
 
-// mergeCommonThirdPartyDomains moves the loser's domains to the winner and
-// deletes whatever remains.
+// MergeCommonThirdPartyDomains moves the loser's domains to the winner and
 //
 // This is the only step that can violate a unique constraint:
 // common_third_party_domains is unique on (common_third_party_id, domain),
@@ -315,7 +149,7 @@ SELECT
 // domain is CITEXT, so the equality below is already case-insensitive and
 // matches the unique index's own semantics. Wrapping it in lower() would
 // diverge from the index and let a collision through.
-func mergeCommonThirdPartyDomains(
+func MergeCommonThirdPartyDomains(
 	ctx context.Context,
 	tx pg.Tx,
 	winnerID gid.GID,
@@ -362,7 +196,7 @@ WHERE common_third_party_id = @loser_id
 	return moveResult.RowsAffected(), deleteResult.RowsAffected(), nil
 }
 
-// relinkOrgTrackerPatterns points each organization's unlinked tracker
+// RelinkOrgTrackerPatterns points each organization's unlinked tracker
 // patterns at the third party that organization manages for the winner.
 //
 // Run after the catalog patterns have been repointed, so the resolution
@@ -373,7 +207,7 @@ WHERE common_third_party_id = @loser_id
 // Spans tenants, scoping per organization: the catalog is global, and each
 // organization's patterns must resolve to that organization's own third
 // party, never another tenant's.
-func relinkOrgTrackerPatterns(
+func RelinkOrgTrackerPatterns(
 	ctx context.Context,
 	tx pg.Tx,
 	winnerID gid.GID,
@@ -388,7 +222,7 @@ func relinkOrgTrackerPatterns(
 	var relinked int64
 
 	for _, link := range links {
-		before, err := countUnlinkedOrgPatterns(ctx, tx, link.OrganizationID, winnerID)
+		before, err := CountUnlinkedOrgPatterns(ctx, tx, link.OrganizationID, winnerID)
 		if err != nil {
 			return 0, err
 		}
@@ -416,11 +250,11 @@ func relinkOrgTrackerPatterns(
 	return relinked, nil
 }
 
-// countUnlinkedOrgPatterns counts an organization's tracker patterns that
+// CountUnlinkedOrgPatterns counts an organization's tracker patterns that
 // resolve to the given catalog entry but carry no third party yet. It is the
 // same predicate LinkThirdPartyByCommonThirdPartyID updates, read before the
 // write so the merge can report how many rows it moved.
-func countUnlinkedOrgPatterns(
+func CountUnlinkedOrgPatterns(
 	ctx context.Context,
 	conn pg.Querier,
 	organizationID gid.GID,
@@ -454,7 +288,7 @@ WHERE
 	return count, nil
 }
 
-// collidingThirdPartyIDs returns the loser's organization third parties
+// CollidingThirdPartyIDs returns the loser's organization third parties
 // whose organization already links the winner.
 //
 // These cannot be repointed: two rows in one organization pointing at the
@@ -463,7 +297,7 @@ WHERE
 // other row would be permanently invisible to every import and mapping
 // path. They are reported instead, and end up unlinked when the loser is
 // deleted.
-func collidingThirdPartyIDs(
+func CollidingThirdPartyIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	winnerID gid.GID,
@@ -504,16 +338,16 @@ ORDER BY
 	return ids, nil
 }
 
-// repointThirdParties links the loser's organization third parties to the
+// RepointThirdPartiesToCommonThirdParty links the loser's organization third parties to the
 // winner, across every tenant, skipping the collisions described by
-// collidingThirdPartyIDs.
+// CollidingThirdPartyIDs.
 //
 // This is raw SQL rather than a loop over ThirdParty.Update because that
 // method rewrites the entity's full column set from a Go struct: it would
 // round-trip unrelated state through the application, clobber concurrent
 // writes, and could not express the NOT EXISTS guard. Note the deliberate
 // absence of any tenant predicate — see MergeCommonThirdParty.
-func repointThirdParties(
+func RepointThirdPartiesToCommonThirdParty(
 	ctx context.Context,
 	tx pg.Tx,
 	winnerID gid.GID,
@@ -547,14 +381,14 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
-// adoptCommonThirdPartyLogo gives the winner the loser's logo when the
+// AdoptCommonThirdPartyLogo gives the winner the loser's logo when the
 // winner has none, and reports whether it did.
 //
 // The logo reference has no ON DELETE action, so without this the loser's
 // file row survives the merge with nothing referencing it. The guard makes
 // the statement a no-op when the winner already has a logo, so an existing
 // one is never overwritten.
-func adoptCommonThirdPartyLogo(
+func AdoptCommonThirdPartyLogo(
 	ctx context.Context,
 	tx pg.Tx,
 	winnerID gid.GID,

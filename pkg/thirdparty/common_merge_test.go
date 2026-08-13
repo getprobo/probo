@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package coredata_test
+package thirdparty_test
 
 import (
 	"context"
@@ -34,7 +34,81 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
+
+// seedCatalogParty inserts a global catalog third party with a collision-free
+// name and slug. The catalog is not tenant-scoped and is uniquely indexed on
+// slug, so parallel tests must namespace their rows.
+func seedCatalogParty(t *testing.T, ctx context.Context, client *pg.Client) coredata.CommonThirdParty {
+	t.Helper()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	id := gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType)
+	suffix := id.String()
+
+	party := coredata.CommonThirdParty{
+		ID:             id,
+		Name:           "Acme " + suffix,
+		Slug:           "acme-" + suffix,
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return party.Insert(ctx, tx)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, id)
+			return err
+		})
+	})
+
+	return party
+}
+
+// insertCatalogPattern inserts a catalog pattern verbatim so a test can stage
+// an exact attribution and enrichment state.
+func insertCatalogPattern(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	cp coredata.CommonTrackerPattern,
+) {
+	t.Helper()
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return cp.Insert(ctx, tx)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, cp.ID)
+			return err
+		})
+	})
+}
+
+func loadCatalogPattern(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	id gid.GID,
+) coredata.CommonTrackerPattern {
+	t.Helper()
+
+	var reloaded coredata.CommonTrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, id)
+	}))
+
+	return reloaded
+}
 
 // seedMergeTestOrganization inserts a placeholder organization in its own
 // tenant, which both org third parties and files require.
@@ -394,15 +468,15 @@ func mergeInTx(
 	ctx context.Context,
 	client *pg.Client,
 	winnerID, loserID gid.GID,
-) coredata.MergeCommonThirdPartyResult {
+) thirdparty.MergeCatalogResult {
 	t.Helper()
 
-	var result coredata.MergeCommonThirdPartyResult
+	var result thirdparty.MergeCatalogResult
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
 
-		result, err = coredata.MergeCommonThirdParty(ctx, tx, winnerID, loserID)
+		result, err = thirdparty.MergeCatalog(ctx, tx, winnerID, loserID)
 
 		return err
 	}))
@@ -410,19 +484,19 @@ func mergeInTx(
 	return result
 }
 
-// TestMergeCommonThirdParty_MovesDomainsAndDropsCollisions pins the only
+// TestMergeCatalog_MovesDomainsAndDropsCollisions pins the only
 // step that can violate a constraint. common_third_party_domains is unique
 // on (common_third_party_id, domain), so a domain both rows claim would
 // collide on the move. The loser's mixed-case duplicate also proves the
 // comparison follows the index's case-insensitive semantics.
-func TestMergeCommonThirdParty_MovesDomainsAndDropsCollisions(t *testing.T) {
+func TestMergeCatalog_MovesDomainsAndDropsCollisions(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	shared := "shared-" + winner.Slug + ".com"
 	unique := "unique-" + loser.Slug + ".fr"
@@ -449,21 +523,21 @@ func TestMergeCommonThirdParty_MovesDomainsAndDropsCollisions(t *testing.T) {
 	assert.Empty(t, loadCommonThirdPartyDomains(t, ctx, client, loser.ID))
 }
 
-// TestMergeCommonThirdParty_RepointsPatternsPreservingConfidence pins two
+// TestMergeCatalog_RepointsPatternsPreservingConfidence pins two
 // things: catalog patterns follow the merge, and the merge does not inflate
 // how well they were attributed. A merge says two rows are one vendor; it
 // says nothing new about any pattern's attribution, so confidence must
 // survive untouched. It also proves no pattern is left with the THIRD_PARTY
 // verdict and a NULL vendor, which is what the foreign key's ON DELETE
 // would have produced.
-func TestMergeCommonThirdParty_RepointsPatternsPreservingConfidence(t *testing.T) {
+func TestMergeCatalog_RepointsPatternsPreservingConfidence(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
@@ -484,8 +558,8 @@ func TestMergeCommonThirdParty_RepointsPatternsPreservingConfidence(t *testing.T
 	strong.Pattern = "strong-" + loser.Slug
 	strong.Confidence = 1
 
-	insertCommonTrackerPattern(t, ctx, client, weak)
-	insertCommonTrackerPattern(t, ctx, client, strong)
+	insertCatalogPattern(t, ctx, client, weak)
+	insertCatalogPattern(t, ctx, client, strong)
 
 	result := mergeInTx(t, ctx, client, winner.ID, loser.ID)
 
@@ -498,7 +572,7 @@ func TestMergeCommonThirdParty_RepointsPatternsPreservingConfidence(t *testing.T
 		{weak.ID, 0.5},
 		{strong.ID, 1},
 	} {
-		stored := loadCommonTrackerPattern(t, ctx, client, tc.id)
+		stored := loadCatalogPattern(t, ctx, client, tc.id)
 
 		require.NotNil(t, stored.CommonThirdPartyID, "pattern must not be left without a vendor")
 		assert.Equal(t, winner.ID, *stored.CommonThirdPartyID)
@@ -507,7 +581,7 @@ func TestMergeCommonThirdParty_RepointsPatternsPreservingConfidence(t *testing.T
 	}
 }
 
-// TestMergeCommonThirdParty_RelinksOrgTrackerPatterns pins the follow-up the
+// TestMergeCatalog_RelinksOrgTrackerPatterns pins the follow-up the
 // merge owes an organization that already managed a third party for the
 // winner.
 //
@@ -517,14 +591,14 @@ func TestMergeCommonThirdParty_RepointsPatternsPreservingConfidence(t *testing.T
 // instead, and nothing else would do it: the import path is idempotent on
 // (organization, catalog entry) and skips an organization that already holds
 // the row, so the pattern would surface the catalog entry indefinitely.
-func TestMergeCommonThirdParty_RelinksOrgTrackerPatterns(t *testing.T) {
+func TestMergeCatalog_RelinksOrgTrackerPatterns(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	// One organization that already manages a third party for the winner.
 	orgID, managed := seedOrgThirdParty(t, ctx, client, nil, winner.ID)
@@ -542,7 +616,7 @@ func TestMergeCommonThirdParty_RelinksOrgTrackerPatterns(t *testing.T) {
 		UpdatedAt:          now,
 	}
 
-	insertCommonTrackerPattern(t, ctx, client, catalogPattern)
+	insertCatalogPattern(t, ctx, client, catalogPattern)
 
 	orgPattern := seedOrgTrackerPattern(t, ctx, client, orgID, catalogPattern.ID)
 
@@ -561,18 +635,18 @@ func TestMergeCommonThirdParty_RelinksOrgTrackerPatterns(t *testing.T) {
 	assert.Equal(t, managed, *got)
 }
 
-// TestMergeCommonThirdParty_RequeuesMovedPatternsForEnrichment pins that the
+// TestMergeCatalog_RequeuesMovedPatternsForEnrichment pins that the
 // patterns the merge moved are re-armed. Their descriptions were researched
 // against a vendor that no longer exists, so they would otherwise keep naming
 // it indefinitely.
-func TestMergeCommonThirdParty_RequeuesMovedPatternsForEnrichment(t *testing.T) {
+func TestMergeCatalog_RequeuesMovedPatternsForEnrichment(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	cp := coredata.CommonTrackerPattern{
@@ -588,11 +662,11 @@ func TestMergeCommonThirdParty_RequeuesMovedPatternsForEnrichment(t *testing.T) 
 		UpdatedAt:          now,
 	}
 
-	insertCommonTrackerPattern(t, ctx, client, cp)
+	insertCatalogPattern(t, ctx, client, cp)
 
 	require.Nil(
 		t,
-		loadCommonTrackerPattern(t, ctx, client, cp.ID).EnrichmentRequestedAt,
+		loadCatalogPattern(t, ctx, client, cp.ID).EnrichmentRequestedAt,
 		"the pattern must start off the enrichment queue",
 	)
 
@@ -600,21 +674,21 @@ func TestMergeCommonThirdParty_RequeuesMovedPatternsForEnrichment(t *testing.T) 
 
 	assert.Equal(t, int64(1), result.TrackerPatternsRequeued)
 
-	stored := loadCommonTrackerPattern(t, ctx, client, cp.ID)
+	stored := loadCatalogPattern(t, ctx, client, cp.ID)
 	assert.NotNil(t, stored.EnrichmentRequestedAt, "a moved pattern must be re-armed for enrichment")
 }
 
-// TestMergeCommonThirdParty_RepointsThirdPartiesCrossTenant pins that the
+// TestMergeCatalog_RepointsThirdPartiesCrossTenant pins that the
 // merge spans tenants. The catalog is global, so a row can be referenced
 // from any tenant and every reference must move before the row is deleted.
-func TestMergeCommonThirdParty_RepointsThirdPartiesCrossTenant(t *testing.T) {
+func TestMergeCatalog_RepointsThirdPartiesCrossTenant(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	_, tpA := seedOrgThirdParty(t, ctx, client, nil, loser.ID)
 	_, tpB := seedOrgThirdParty(t, ctx, client, nil, loser.ID)
@@ -631,7 +705,7 @@ func TestMergeCommonThirdParty_RepointsThirdPartiesCrossTenant(t *testing.T) {
 	}
 }
 
-// TestMergeCommonThirdParty_SkipsSameOrgCollision pins the silent hazard.
+// TestMergeCatalog_SkipsSameOrgCollision pins the silent hazard.
 //
 // When one organization already links the winner, repointing its loser-linked
 // third party would leave two rows in that organization pointing at the same
@@ -639,14 +713,14 @@ func TestMergeCommonThirdParty_RepointsThirdPartiesCrossTenant(t *testing.T) {
 // organization-scoped lookup then hides permanently. The merge leaves such a
 // row alone and names it, so it ends up unlinked rather than invisibly
 // duplicated.
-func TestMergeCommonThirdParty_SkipsSameOrgCollision(t *testing.T) {
+func TestMergeCatalog_SkipsSameOrgCollision(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	orgID, tpWinner := seedOrgThirdParty(t, ctx, client, nil, winner.ID)
 	_, tpLoser := seedOrgThirdParty(t, ctx, client, &orgID, loser.ID)
@@ -665,17 +739,17 @@ func TestMergeCommonThirdParty_SkipsSameOrgCollision(t *testing.T) {
 	assert.Nil(t, loadThirdPartyCommonID(t, ctx, client, tpLoser))
 }
 
-// TestMergeCommonThirdParty_AdoptsLoserLogoOnlyWhenWinnerHasNone pins that
+// TestMergeCatalog_AdoptsLoserLogoOnlyWhenWinnerHasNone pins that
 // a logo is inherited but never overwritten.
-func TestMergeCommonThirdParty_AdoptsLoserLogoOnlyWhenWinnerHasNone(t *testing.T) {
+func TestMergeCatalog_AdoptsLoserLogoOnlyWhenWinnerHasNone(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
 	t.Run("adopts when the winner has none", func(t *testing.T) {
-		winner := seedCommonThirdParty(t, ctx, client)
-		loser := seedCommonThirdParty(t, ctx, client)
+		winner := seedCatalogParty(t, ctx, client)
+		loser := seedCatalogParty(t, ctx, client)
 
 		loserLogo := seedFile(t, ctx, client)
 		setCommonThirdPartyLogo(t, ctx, client, loser.ID, loserLogo)
@@ -687,8 +761,8 @@ func TestMergeCommonThirdParty_AdoptsLoserLogoOnlyWhenWinnerHasNone(t *testing.T
 	})
 
 	t.Run("keeps the winner's own logo", func(t *testing.T) {
-		winner := seedCommonThirdParty(t, ctx, client)
-		loser := seedCommonThirdParty(t, ctx, client)
+		winner := seedCatalogParty(t, ctx, client)
+		loser := seedCatalogParty(t, ctx, client)
 
 		winnerLogo := seedFile(t, ctx, client)
 		loserLogo := seedFile(t, ctx, client)
@@ -702,15 +776,15 @@ func TestMergeCommonThirdParty_AdoptsLoserLogoOnlyWhenWinnerHasNone(t *testing.T
 	})
 }
 
-// TestMergeCommonThirdParty_DeletesLoser pins that the folded row is gone.
-func TestMergeCommonThirdParty_DeletesLoser(t *testing.T) {
+// TestMergeCatalog_DeletesLoser pins that the folded row is gone.
+func TestMergeCatalog_DeletesLoser(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	mergeInTx(t, ctx, client, winner.ID, loser.ID)
 
@@ -726,22 +800,22 @@ func TestMergeCommonThirdParty_DeletesLoser(t *testing.T) {
 	}))
 }
 
-// TestMergeCommonThirdParty_RejectsSelfMerge pins the guard: merging a row
+// TestMergeCatalog_RejectsSelfMerge pins the guard: merging a row
 // into itself would delete the row it was meant to keep.
-func TestMergeCommonThirdParty_RejectsSelfMerge(t *testing.T) {
+func TestMergeCatalog_RejectsSelfMerge(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	party := seedCommonThirdParty(t, ctx, client)
+	party := seedCatalogParty(t, ctx, client)
 
 	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		_, err := coredata.MergeCommonThirdParty(ctx, tx, party.ID, party.ID)
+		_, err := thirdparty.MergeCatalog(ctx, tx, party.ID, party.ID)
 		return err
 	})
 
-	require.True(t, errors.Is(err, coredata.ErrCannotMergeIntoSelf), "got %v", err)
+	require.True(t, errors.Is(err, thirdparty.ErrCannotMergeIntoSelf), "got %v", err)
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var kept coredata.CommonThirdParty
@@ -759,13 +833,13 @@ func TestCountByCommonThirdPartyID_AggregatesReferences(t *testing.T) {
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	busy := seedCommonThirdParty(t, ctx, client)
-	quiet := seedCommonThirdParty(t, ctx, client)
+	busy := seedCatalogParty(t, ctx, client)
+	quiet := seedCatalogParty(t, ctx, client)
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
 	for i, pattern := range []string{"count-a", "count-b"} {
-		insertCommonTrackerPattern(t, ctx, client, coredata.CommonTrackerPattern{
+		insertCatalogPattern(t, ctx, client, coredata.CommonTrackerPattern{
 			ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
 			CommonThirdPartyID: &busy.ID,
 			TrackerType:        coredata.TrackerTypeCookie,
@@ -817,8 +891,8 @@ func TestLoadAllGroupedByCommonThirdPartyID_GroupsDomains(t *testing.T) {
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	party := seedCommonThirdParty(t, ctx, client)
-	bare := seedCommonThirdParty(t, ctx, client)
+	party := seedCatalogParty(t, ctx, client)
+	bare := seedCatalogParty(t, ctx, client)
 
 	first := "alpha-" + party.Slug + ".com"
 	second := "beta-" + party.Slug + ".com"
@@ -840,18 +914,18 @@ func TestLoadAllGroupedByCommonThirdPartyID_GroupsDomains(t *testing.T) {
 	}))
 }
 
-// TestPreviewMergeCommonThirdParty_MatchesApply pins that the preview and
+// TestPreviewMergeCatalog_MatchesApply pins that the preview and
 // the merge agree. The preview is what an operator decides on before
 // deleting a globally referenced row, so any drift between the two would
 // mislead exactly when it matters most.
-func TestPreviewMergeCommonThirdParty_MatchesApply(t *testing.T) {
+func TestPreviewMergeCatalog_MatchesApply(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
 	ctx := context.Background()
 
-	winner := seedCommonThirdParty(t, ctx, client)
-	loser := seedCommonThirdParty(t, ctx, client)
+	winner := seedCatalogParty(t, ctx, client)
+	loser := seedCatalogParty(t, ctx, client)
 
 	shared := "shared-" + winner.Slug + ".com"
 	seedCommonThirdPartyDomain(t, ctx, client, winner.ID, shared)
@@ -876,8 +950,8 @@ func TestPreviewMergeCommonThirdParty_MatchesApply(t *testing.T) {
 	winnerPattern.CommonThirdPartyID = &winner.ID
 	winnerPattern.Pattern = "preview-" + winner.Slug
 
-	insertCommonTrackerPattern(t, ctx, client, loserPattern)
-	insertCommonTrackerPattern(t, ctx, client, winnerPattern)
+	insertCatalogPattern(t, ctx, client, loserPattern)
+	insertCatalogPattern(t, ctx, client, winnerPattern)
 
 	orgID, _ := seedOrgThirdParty(t, ctx, client, nil, winner.ID)
 	seedOrgThirdParty(t, ctx, client, &orgID, loser.ID)
@@ -893,12 +967,12 @@ func TestPreviewMergeCommonThirdParty_MatchesApply(t *testing.T) {
 	loserLogo := seedFile(t, ctx, client)
 	setCommonThirdPartyLogo(t, ctx, client, loser.ID, loserLogo)
 
-	var preview coredata.MergeCommonThirdPartyResult
+	var preview thirdparty.MergeCatalogResult
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var err error
 
-		preview, err = coredata.PreviewMergeCommonThirdParty(ctx, conn, winner.ID, loser.ID)
+		preview, err = thirdparty.PreviewMergeCatalog(ctx, conn, winner.ID, loser.ID)
 
 		return err
 	}))
