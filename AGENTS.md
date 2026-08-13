@@ -22,7 +22,6 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/e2e.md`](contrib/claude/e2e.md) — End-to-end testing (factory builders, RBAC tests, tenant isolation, assertions)
 - [`contrib/claude/e2e-refactor.md`](contrib/claude/e2e-refactor.md) — E2E suite migration plan, fixture isolation, batch acceptance
 - [`contrib/claude/agent.md`](contrib/claude/agent.md) — Agent orchestration framework (tools, handoffs, execution)
-- [`contrib/claude/probot.md`](contrib/claude/probot.md) — Probot layers, capability contracts, provider policy, and reliability workers
 - [`contrib/claude/app-arborescence.md`](contrib/claude/app-arborescence.md) — Frontend app folder layout (pages, routes at resource folders, loaders, skeletons, _components, _lib, _locales)
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
 - [`contrib/claude/hooks.md`](contrib/claude/hooks.md) — Custom hooks (_lib placement, awaitable useMutation primitive, auto error handling)
