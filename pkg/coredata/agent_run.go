@@ -359,6 +359,11 @@ INSERT INTO agent_runs (
 	start_agent_name,
 	status,
 	input_messages,
+	execution_kind,
+	session_messages,
+	processing_input_ids,
+	attempt_count,
+	max_attempts,
 	created_at,
 	updated_at
 ) VALUES (
@@ -368,6 +373,11 @@ INSERT INTO agent_runs (
 	@start_agent_name,
 	@status,
 	@input_messages,
+	@execution_kind,
+	@session_messages,
+	@processing_input_ids,
+	@attempt_count,
+	@max_attempts,
 	@created_at,
 	@updated_at
 )
@@ -386,14 +396,19 @@ RETURNING
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":               e.ID.String(),
-		"tenant_id":        scope.GetTenantID(),
-		"organization_id":  e.OrganizationID.String(),
-		"start_agent_name": e.StartAgentName,
-		"status":           e.Status,
-		"input_messages":   e.InputMessages,
-		"created_at":       e.CreatedAt,
-		"updated_at":       e.UpdatedAt,
+		"id":                   e.ID.String(),
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      e.OrganizationID.String(),
+		"start_agent_name":     e.StartAgentName,
+		"status":               e.Status,
+		"input_messages":       e.InputMessages,
+		"execution_kind":       AgentExecutionKindOneShot,
+		"session_messages":     e.InputMessages,
+		"processing_input_ids": []string{},
+		"attempt_count":        0,
+		"max_attempts":         1,
+		"created_at":           e.CreatedAt,
+		"updated_at":           e.UpdatedAt,
 	}
 
 	rows, err := tx.Query(ctx, q, args)

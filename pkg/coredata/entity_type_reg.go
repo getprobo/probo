@@ -145,7 +145,19 @@ const (
 	CompliancePortalDocumentEntityType               uint16 = 113
 	BusinessFunctionEntityType                       uint16 = 114
 	AiSystemEntityType                               uint16 = 115
-	SlackIdentityBindingEntityType                   uint16 = 116
+	ProbotIdentityBindingEntityType                  uint16 = 116
+	SlackbotInstallationEntityType                   uint16 = 117
+	BotDeliveryDestinationEntityType                 uint16 = 118
+	SlackbotMessageEntityType                        uint16 = 119
+	SlackbotEventEntityType                          uint16 = 120
+	_                                                uint16 = 121 // BotConversationEntityType - removed
+	SlackbotInteractiveCommandEntityType             uint16 = 122
+	OperationReceiptEntityType                       uint16 = 123
+	SlackDeliveryOperationEntityType                 uint16 = 124
+	AgentInputEntityType                             uint16 = 125
+	AgentExecutionAnchorEntityType                   uint16 = 126
+	BotMessageEntityType                             uint16 = 127
+	BotThreadSubjectEntityType                       uint16 = 128
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -364,8 +376,30 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &BusinessFunction{ID: id}, true
 	case AiSystemEntityType:
 		return &AiSystem{ID: id}, true
-	case SlackIdentityBindingEntityType:
-		return &SlackIdentityBinding{ID: id}, true
+	case ProbotIdentityBindingEntityType:
+		return &ProbotIdentityBinding{ID: id}, true
+	case SlackbotInstallationEntityType:
+		return &SlackbotInstallation{ID: id}, true
+	case BotDeliveryDestinationEntityType:
+		return &BotDeliveryDestination{ID: id}, true
+	case SlackbotMessageEntityType:
+		return &SlackbotMessage{ID: id}, true
+	case SlackbotEventEntityType:
+		return &SlackbotEvent{ID: id}, true
+	case SlackbotInteractiveCommandEntityType:
+		return &SlackbotInteractiveCommand{ID: id}, true
+	case OperationReceiptEntityType:
+		return &OperationReceipt{ID: id}, true
+	case SlackDeliveryOperationEntityType:
+		return &SlackDeliveryOperation{ID: id}, true
+	case AgentInputEntityType:
+		return &AgentInput{ID: id}, true
+	case AgentExecutionAnchorEntityType:
+		return &AgentExecutionAnchor{ID: id}, true
+	case BotMessageEntityType:
+		return &BotMessage{ID: id}, true
+	case BotThreadSubjectEntityType:
+		return &BotThreadSubject{ID: id}, true
 	default:
 		return nil, false
 	}

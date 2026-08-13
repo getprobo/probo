@@ -18,25 +18,11 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE TABLE slackbot_agents (
-    agent_id       TEXT        PRIMARY KEY,
-    session_id     TEXT        NOT NULL UNIQUE,
-    channel        TEXT        NOT NULL,
-    thread_ts      TEXT        NOT NULL DEFAULT '',
-    slack_user_id  TEXT        NOT NULL DEFAULT '',
-    status         TEXT        NOT NULL DEFAULT 'available',
-    checkpoint     JSONB,
-    messages       JSONB       NOT NULL DEFAULT '[]',
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE slackbot_interactions (
-    interaction_id TEXT        PRIMARY KEY,
-    agent_id       TEXT        NOT NULL REFERENCES slackbot_agents (agent_id),
-    event_id       TEXT        UNIQUE,
-    event_type     TEXT        NOT NULL,
-    payload        JSONB       NOT NULL,
-    processed_at   TIMESTAMPTZ,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE slackbot_bind_callbacks (
+    team_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    encrypted_response_url BYTEA NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (team_id, user_id)
 );

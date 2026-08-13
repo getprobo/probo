@@ -18,14 +18,28 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE TABLE slack_identity_bind_token_uses (
-    hashed_token BYTEA       PRIMARY KEY,
-    identity_id  TEXT        NOT NULL REFERENCES identities (id) ON DELETE CASCADE,
-    used_at      TIMESTAMPTZ NOT NULL,
-    expires_at   TIMESTAMPTZ NOT NULL
-);
-
-CREATE TABLE slackbot_processed_events (
-    event_id   TEXT        PRIMARY KEY,
-    created_at TIMESTAMPTZ NOT NULL
+CREATE TABLE agent_execution_anchors (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL,
+    agent_run_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    external_conversation_id TEXT NOT NULL,
+    external_message_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT agent_execution_anchors_organization_id_fkey
+        FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    CONSTRAINT agent_execution_anchors_agent_run_id_fkey
+        FOREIGN KEY (agent_run_id) REFERENCES agent_runs(id) ON DELETE CASCADE,
+    CONSTRAINT agent_execution_anchors_execution_provider_key
+        UNIQUE (tenant_id, organization_id, agent_run_id, provider),
+    CONSTRAINT agent_execution_anchors_provider_coordinates_key
+        UNIQUE (
+            tenant_id,
+            organization_id,
+            provider,
+            external_conversation_id,
+            external_message_id
+        )
 );

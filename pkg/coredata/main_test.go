@@ -18,61 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package coredata
+package coredata_test
 
 import (
-	"encoding"
-	"fmt"
+	"os"
+	"testing"
+
+	internaltest "go.probo.inc/probo/internal/test"
 )
 
-type (
-	SlackbotAgentStatus string
-)
-
-const (
-	SlackbotAgentStatusAvailable SlackbotAgentStatus = "available"
-	SlackbotAgentStatusBusy      SlackbotAgentStatus = "busy"
-)
-
-var (
-	_ fmt.Stringer             = SlackbotAgentStatus("")
-	_ encoding.TextMarshaler   = SlackbotAgentStatus("")
-	_ encoding.TextUnmarshaler = (*SlackbotAgentStatus)(nil)
-)
-
-func SlackbotAgentStatuses() []SlackbotAgentStatus {
-	return []SlackbotAgentStatus{
-		SlackbotAgentStatusAvailable,
-		SlackbotAgentStatusBusy,
-	}
-}
-
-func (v SlackbotAgentStatus) IsValid() bool {
-	switch v {
-	case
-		SlackbotAgentStatusAvailable,
-		SlackbotAgentStatusBusy:
-		return true
-	}
-
-	return false
-}
-
-func (v SlackbotAgentStatus) String() string {
-	return string(v)
-}
-
-func (v SlackbotAgentStatus) MarshalText() ([]byte, error) {
-	return []byte(v.String()), nil
-}
-
-func (v *SlackbotAgentStatus) UnmarshalText(text []byte) error {
-	val := SlackbotAgentStatus(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid SlackbotAgentStatus value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+func TestMain(m *testing.M) {
+	os.Exit(internaltest.RunGlobalQueuePackage(m))
 }

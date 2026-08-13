@@ -18,13 +18,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-CREATE TABLE slack_identity_bindings (
-    id            TEXT        PRIMARY KEY,
-    team_id       TEXT        NOT NULL,
-    slack_user_id TEXT        NOT NULL,
-    identity_id   TEXT        NOT NULL REFERENCES identities (id) ON DELETE CASCADE,
-    created_at    TIMESTAMPTZ NOT NULL,
-    updated_at    TIMESTAMPTZ NOT NULL,
-    UNIQUE (team_id, slack_user_id),
-    UNIQUE (identity_id, team_id)
+CREATE TABLE slackbot_processed_events (
+    event_id   TEXT        PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL
 );

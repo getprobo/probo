@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -29,6 +30,30 @@ import (
 	"go.gearno.de/kit/pg"
 )
 
+func (e *SlackbotProcessedEvent) Exists(ctx context.Context, conn pg.Querier) (bool, error) {
+	q := `SELECT event_id, created_at FROM slackbot_processed_events WHERE event_id = @event_id`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"event_id": e.EventID})
+	if err != nil {
+		return false, fmt.Errorf("cannot query slackbot processed event: %w", err)
+	}
+
+	event, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SlackbotProcessedEvent])
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("cannot collect slackbot processed event: %w", err)
+	}
+
+	*e = event
+
+	return true, nil
+}
+
+// SlackbotProcessedEvent is the inner event-effect dedupe ledger. It is
+// unscoped because Slack event IDs are unique per app, not per tenant.
 type SlackbotProcessedEvent struct {
 	EventID   string    `db:"event_id"`
 	CreatedAt time.Time `db:"created_at"`
@@ -63,4 +88,47 @@ ON CONFLICT (event_id) DO NOTHING
 	}
 
 	return result.RowsAffected() > 0, nil
+}
+
+func DeleteSlackbotProcessedEventsBefore(
+	ctx context.Context,
+	conn pg.Querier,
+	before time.Time,
+) error {
+	_, err := DeleteSlackbotProcessedEventsBeforeBatch(ctx, conn, before, 1000)
+
+	return err
+}
+
+func DeleteSlackbotProcessedEventsBeforeBatch(
+	ctx context.Context,
+	conn pg.Querier,
+	before time.Time,
+	limit int,
+) (int64, error) {
+	q := `
+WITH doomed AS (
+	SELECT event_id
+	FROM slackbot_processed_events
+	WHERE created_at < @before
+	ORDER BY created_at ASC, event_id ASC
+	LIMIT @limit
+)
+DELETE FROM slackbot_processed_events
+WHERE event_id IN (SELECT event_id FROM doomed)
+`
+
+	result, err := conn.Exec(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"before": before,
+			"limit":  limit,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot delete Slackbot processed events: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }

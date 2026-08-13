@@ -288,7 +288,7 @@ func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing
 	}))
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return coredata.ResetStaleEnrichments(ctx, conn, 0, 3)
+		return coredata.ResetStaleEnrichments(ctx, conn, -time.Minute, 3)
 	}))
 
 	afterSweep := loadCommonTrackerPattern(t, ctx, client, blank.ID)

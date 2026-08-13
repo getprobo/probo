@@ -34,6 +34,11 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 )
 
+const (
+	SlackMessageMetadataDedupKey      = "dedup_key"
+	SlackMessageMetadataSourceEventID = "source_event_id"
+)
+
 type (
 	SlackMessage struct {
 		ID                    gid.GID          `db:"id"`
@@ -459,6 +464,129 @@ LIMIT 1
 	return nil
 }
 
+func (s *SlackMessage) LoadLatestDeliveredByChannelAndTS(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	channelID string,
+	messageTS string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
+FROM slack_messages
+WHERE message_ts = @message_ts
+	AND channel_id = @channel_id
+	AND sent_at IS NOT NULL
+	AND error IS NULL
+	AND %s
+ORDER BY created_at DESC, id DESC
+LIMIT 1
+	`
+
+	args := pgx.StrictNamedArgs{
+		"message_ts": messageTS,
+		"channel_id": channelID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query slack message: %w", err)
+	}
+
+	message, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SlackMessage])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrSlackMessageNotFound{}
+		}
+
+		return fmt.Errorf("cannot collect slack message: %w", err)
+	}
+
+	*s = message
+
+	return nil
+}
+
+func (s *SlackMessage) LoadLatestDeliveredByOrganizationIDChannelAndTS(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	channelID string,
+	messageTS string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
+FROM slack_messages
+WHERE message_ts = @message_ts
+	AND channel_id = @channel_id
+	AND organization_id = @organization_id
+	AND sent_at IS NOT NULL
+	AND error IS NULL
+	AND %s
+ORDER BY created_at DESC, id DESC
+LIMIT 1
+	`
+
+	args := pgx.StrictNamedArgs{
+		"message_ts":      messageTS,
+		"channel_id":      channelID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query slack message: %w", err)
+	}
+
+	message, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SlackMessage])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrSlackMessageNotFound{}
+		}
+
+		return fmt.Errorf("cannot collect slack message: %w", err)
+	}
+
+	*s = message
+
+	return nil
+}
+
 func (s *SlackMessage) Update(
 	ctx context.Context,
 	conn pg.Tx,
@@ -578,6 +706,60 @@ LIMIT 1
 	return nil
 }
 
+func (s *SlackMessage) LoadBySourceEventID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sourceEventID string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
+FROM slack_messages
+WHERE %s
+	AND metadata->>@metadata_key = @source_event_id
+LIMIT 1
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"metadata_key":    SlackMessageMetadataSourceEventID,
+		"source_event_id": sourceEventID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query slack message by source event: %w", err)
+	}
+
+	message, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SlackMessage])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrSlackMessageNotFound{}
+		}
+
+		return fmt.Errorf("cannot collect slack message by source event: %w", err)
+	}
+
+	*s = message
+
+	return nil
+}
+
 func (s *SlackMessage) LoadLatestByInitialMessageID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -633,13 +815,13 @@ LIMIT 1
 	return nil
 }
 
-func (s *SlackMessage) LoadLatestByRequesterEmailAndType(
+func (s *SlackMessage) LoadLatestByOrganizationIDMessageTypeAndDedupKey(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	requesterEmail mail.Addr,
 	messageType SlackMessageType,
+	dedupKey string,
 	since time.Time,
 ) error {
 	q := `
@@ -661,8 +843,8 @@ SELECT
 FROM slack_messages
 WHERE %s
 	AND organization_id = @organization_id
-	AND requester_email = @requester_email
 	AND type = @type
+	AND metadata ->> @metadata_key = @dedup_key
 	AND created_at >= @since
 ORDER BY created_at DESC
 LIMIT 1
@@ -672,8 +854,9 @@ LIMIT 1
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
-		"requester_email": requesterEmail,
 		"type":            messageType,
+		"metadata_key":    SlackMessageMetadataDedupKey,
+		"dedup_key":       dedupKey,
 		"since":           since,
 	}
 	maps.Copy(args, scope.SQLArguments())
