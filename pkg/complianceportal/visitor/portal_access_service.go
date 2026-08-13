@@ -26,9 +26,10 @@ import (
 	"fmt"
 	"time"
 
-	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/bot"
+	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -41,6 +42,81 @@ type PortalAccessRequest struct {
 	DocumentIDs             []gid.GID
 	ReportIDs               []gid.GID
 	CompliancePortalFileIDs []gid.GID
+}
+
+func accessMessageParams(
+	organizationID gid.GID,
+	accessID gid.GID,
+	eventKey string,
+	purpose coredata.BotMessagePurpose,
+) bot.MessageParams {
+	return bot.MessageParams{
+		OrganizationID: organizationID,
+		Capability:     portal.AccessCapability,
+		MessageType:    portal.AccessMessageType,
+		Attributes: map[string]any{
+			portal.AccessIDAttribute: accessID.String(),
+		},
+		SubjectNamespace: portal.AccessSubjectNamespace,
+		SubjectKey:       accessID.String(),
+		EventKey:         eventKey,
+		Purpose:          purpose,
+	}
+}
+
+func accessMutationEventKey(
+	action string,
+	operationKey string,
+	documentIDs []gid.GID,
+	reportIDs []gid.GID,
+	fileIDs []gid.GID,
+) string {
+	if operationKey != "" {
+		return action + ":" + operationKey
+	}
+
+	components := make([]string, 0, len(documentIDs)+len(reportIDs)+len(fileIDs))
+	for _, id := range documentIDs {
+		components = append(components, "document:"+id.String())
+	}
+
+	for _, id := range reportIDs {
+		components = append(components, "report:"+id.String())
+	}
+
+	for _, id := range fileIDs {
+		components = append(components, "file:"+id.String())
+	}
+
+	return bot.StableEventKey(action, components...)
+}
+
+func requestPortalAccessBotEnqueue(
+	existingDocumentIDs []gid.GID,
+	existingReportIDs []gid.GID,
+	existingFileIDs []gid.GID,
+	newDocumentIDs []gid.GID,
+	newReportIDs []gid.GID,
+	newFileIDs []gid.GID,
+) (eventKey string, purpose coredata.BotMessagePurpose, enqueue bool) {
+	if len(newDocumentIDs) == 0 && len(newReportIDs) == 0 && len(newFileIDs) == 0 {
+		return "", "", false
+	}
+
+	purpose = coredata.BotMessagePurposePost
+	if len(existingDocumentIDs) > 0 ||
+		len(existingReportIDs) > 0 ||
+		len(existingFileIDs) > 0 {
+		purpose = coredata.BotMessagePurposeUpdate
+	}
+
+	return accessMutationEventKey(
+		"request",
+		"",
+		newDocumentIDs,
+		newReportIDs,
+		newFileIDs,
+	), purpose, true
 }
 
 const (
@@ -180,15 +256,35 @@ func (s *Service) RequestPortalAccess(
 				return fmt.Errorf("cannot rerequest compliance page file accesses: %w", err)
 			}
 
+			eventKey, purpose, enqueue := requestPortalAccessBotEnqueue(
+				existingDocumentIDs,
+				existingReportIDs,
+				existingCompliancePortalFileIDs,
+				newDocumentIDs,
+				newReportIDs,
+				newCompliancePortalFileIDs,
+			)
+			if enqueue {
+				if _, err := s.bot.EnqueueMessage(
+					ctx,
+					tx,
+					scope,
+					accessMessageParams(
+						access.OrganizationID,
+						access.ID,
+						eventKey,
+						purpose,
+					),
+				); err != nil {
+					return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
+				}
+			}
+
 			return nil
 		},
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	if err := s.slack.QueueSlackNotification(ctx, scope, req.IdentityID, req.CompliancePortalID); err != nil {
-		s.logger.ErrorCtx(ctx, "cannot queue slack notification", log.Error(err))
 	}
 
 	return access, nil
@@ -437,12 +533,51 @@ func (s *Service) GrantPortalAccessByIDs(
 	reportIDs []gid.GID,
 	fileIDs []gid.GID,
 ) error {
+	return s.GrantPortalAccessByIDsIdempotently(
+		ctx,
+		scope,
+		compliancePortalID,
+		email,
+		documentIDs,
+		reportIDs,
+		fileIDs,
+		"",
+	)
+}
+
+func (s *Service) GrantPortalAccessByIDsIdempotently(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	email mail.Addr,
+	documentIDs []gid.GID,
+	reportIDs []gid.GID,
+	fileIDs []gid.GID,
+	operationKey string,
+) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.CompliancePortal{}
 			if err := loadPortalByID(ctx, tx, scope, compliancePortalID, compliancePage); err != nil {
 				return err
+			}
+
+			if operationKey != "" {
+				receipt := coredata.NewOperationReceipt(
+					scope,
+					compliancePage.OrganizationID,
+					operationKey,
+				)
+
+				claimed, err := receipt.Claim(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot claim portal access operation: %w", err)
+				}
+
+				if !claimed {
+					return nil
+				}
 			}
 
 			identity := &coredata.Identity{}
@@ -498,6 +633,26 @@ func (s *Service) GrantPortalAccessByIDs(
 			if shouldSendEmail {
 				if err := s.sendPortalAccessEmail(ctx, tx, scope, access, profile); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
+				}
+
+				if _, err := s.bot.EnqueueMessage(
+					ctx,
+					tx,
+					scope,
+					accessMessageParams(
+						access.OrganizationID,
+						access.ID,
+						accessMutationEventKey(
+							"grant",
+							operationKey,
+							documentIDs,
+							reportIDs,
+							fileIDs,
+						),
+						coredata.BotMessagePurposeUpdate,
+					),
+				); err != nil {
+					return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
 				}
 			}
 
@@ -564,12 +719,51 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 	reportIDs []gid.GID,
 	fileIDs []gid.GID,
 ) error {
+	return s.RejectOrRevokePortalAccessByIDsIdempotently(
+		ctx,
+		scope,
+		compliancePortalID,
+		email,
+		documentIDs,
+		reportIDs,
+		fileIDs,
+		"",
+	)
+}
+
+func (s *Service) RejectOrRevokePortalAccessByIDsIdempotently(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	email mail.Addr,
+	documentIDs []gid.GID,
+	reportIDs []gid.GID,
+	fileIDs []gid.GID,
+	operationKey string,
+) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.CompliancePortal{}
 			if err := loadPortalByID(ctx, tx, scope, compliancePortalID, compliancePage); err != nil {
 				return err
+			}
+
+			if operationKey != "" {
+				receipt := coredata.NewOperationReceipt(
+					scope,
+					compliancePage.OrganizationID,
+					operationKey,
+				)
+
+				claimed, err := receipt.Claim(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot claim portal access operation: %w", err)
+				}
+
+				if !claimed {
+					return nil
+				}
 			}
 
 			identity := &coredata.Identity{}
@@ -617,6 +811,26 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 			if shouldSendEmail {
 				if err := s.sendPortalDocumentAccessRejectedEmail(ctx, tx, scope, access, profile, documentIDs, reportIDs, fileIDs); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
+				}
+
+				if _, err := s.bot.EnqueueMessage(
+					ctx,
+					tx,
+					scope,
+					accessMessageParams(
+						access.OrganizationID,
+						access.ID,
+						accessMutationEventKey(
+							"reject-or-revoke",
+							operationKey,
+							documentIDs,
+							reportIDs,
+							fileIDs,
+						),
+						coredata.BotMessagePurposeUpdate,
+					),
+				); err != nil {
+					return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
 				}
 			}
 

@@ -204,6 +204,12 @@ func insertPortalRequestWebhookPortal(
 
 	now := time.Now()
 	portalID := gid.New(organizationID.TenantID(), coredata.CompliancePortalEntityType)
+	mailingList := coredata.MailingList{
+		ID:             gid.New(organizationID.TenantID(), coredata.MailingListEntityType),
+		OrganizationID: organizationID,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 	portal := coredata.CompliancePortal{
 		ID:             portalID,
 		OrganizationID: organizationID,
@@ -213,6 +219,7 @@ func insertPortalRequestWebhookPortal(
 		Slug:                 strings.ToLower(portalID.String()),
 		SearchEngineIndexing: coredata.SearchEngineIndexingNotIndexable,
 		Capabilities:         capabilities,
+		MailingListID:        mailingList.ID,
 		EntityName:           "Portal Request Webhook",
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -221,6 +228,10 @@ func insertPortalRequestWebhookPortal(
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := mailingList.Insert(ctx, tx, scope); err != nil {
+				return err
+			}
+
 			return portal.Insert(ctx, tx, scope)
 		},
 	)

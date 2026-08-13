@@ -28,11 +28,12 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/bot"
+	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -78,6 +79,38 @@ func (utcar *UpdateAccessRequest) Validate() error {
 	}
 
 	return v.Error()
+}
+
+func managementAccessEventKey(req *UpdateAccessRequest) string {
+	components := make(
+		[]string,
+		0,
+		len(req.DocumentAccesses)+
+			len(req.ReportAccesses)+
+			len(req.CompliancePortalFileAccesses),
+	)
+	for _, access := range req.DocumentAccesses {
+		components = append(
+			components,
+			fmt.Sprintf("document:%s:%s", access.ID, access.Status),
+		)
+	}
+
+	for _, access := range req.ReportAccesses {
+		components = append(
+			components,
+			fmt.Sprintf("report:%s:%s", access.ID, access.Status),
+		)
+	}
+
+	for _, access := range req.CompliancePortalFileAccesses {
+		components = append(
+			components,
+			fmt.Sprintf("file:%s:%s", access.ID, access.Status),
+		)
+	}
+
+	return bot.StableEventKey("management-update", components...)
 }
 
 func (s *Service) ListAccesses(
@@ -235,7 +268,7 @@ func (s *Service) UpdateAccess(
 	var (
 		access                         *coredata.CompliancePortalAccess
 		compliancePortalAcessActivated bool
-		shouldUpdateSlackMessage       bool
+		shouldRefreshBotMessage        bool
 	)
 
 	err := s.pg.WithTx(
@@ -360,24 +393,38 @@ func (s *Service) UpdateAccess(
 				}
 			}
 
-			shouldUpdateSlackMessage = compliancePortalAcessActivated ||
+			shouldRefreshBotMessage = compliancePortalAcessActivated ||
 				len(req.DocumentAccesses) > 0 ||
 				len(req.ReportAccesses) > 0 ||
 				len(req.CompliancePortalFileAccesses) > 0
+
+			if shouldRefreshBotMessage {
+				if _, err := s.bot.EnqueueMessage(
+					ctx,
+					tx,
+					scope,
+					bot.MessageParams{
+						OrganizationID: access.OrganizationID,
+						Capability:     portal.AccessCapability,
+						MessageType:    portal.AccessMessageType,
+						Attributes: map[string]any{
+							portal.AccessIDAttribute: access.ID.String(),
+						},
+						SubjectNamespace: portal.AccessSubjectNamespace,
+						SubjectKey:       access.ID.String(),
+						EventKey:         managementAccessEventKey(req),
+						Purpose:          coredata.BotMessagePurposeUpdate,
+					},
+				); err != nil {
+					return fmt.Errorf("cannot enqueue compliance portal bot message: %w", err)
+				}
+			}
 
 			return nil
 		},
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	if shouldUpdateSlackMessage {
-		if err := s.SlackMessages.QueueSlackNotification(ctx, scope, access.IdentityID, access.CompliancePortalID); err != nil {
-			if !errors.Is(err, slack.ErrNoSlackConnector) {
-				return nil, fmt.Errorf("cannot queue slack notification: %w", err)
-			}
-		}
 	}
 
 	return access, nil

@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
@@ -39,7 +40,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/resourcealias"
-	"go.probo.inc/probo/pkg/slack"
 )
 
 const DefaultNDAContactEmail = "security@probo.com"
@@ -68,7 +68,7 @@ type (
 		html2pdfConverter *html2pdf.Converter
 		fileManager       *filemanager.Service
 		logger            *log.Logger
-		slack             *slack.Service
+		bot               *bot.Service
 		resourceAlias     *resourcealias.Service
 		management        *management.Service
 	}
@@ -83,7 +83,7 @@ func NewService(
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
-	slack *slack.Service,
+	botService *bot.Service,
 	resourceAliasSvc *resourcealias.Service,
 	managementSvc *management.Service,
 ) *Service {
@@ -96,7 +96,7 @@ func NewService(
 		html2pdfConverter: html2pdfConverter,
 		fileManager:       fileManagerService,
 		logger:            logger,
-		slack:             slack,
+		bot:               botService,
 		resourceAlias:     resourceAliasSvc,
 		management:        managementSvc,
 	}
