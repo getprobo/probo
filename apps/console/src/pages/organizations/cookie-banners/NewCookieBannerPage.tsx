@@ -21,7 +21,6 @@
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import {
-  Breadcrumb,
   Button,
   Card,
   Field,
@@ -33,17 +32,21 @@ import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { useNavigate } from "react-router";
-import { graphql } from "relay-runtime";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { NewCookieBannerPageMutation } from "#/__generated__/core/NewCookieBannerPageMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createCookieBannerMutation = graphql`
-  mutation NewCookieBannerPageMutation($input: CreateCookieBannerInput!) {
+  mutation NewCookieBannerPageMutation(
+    $input: CreateCookieBannerInput!
+    $connections: [ID!]!
+  ) {
     createCookieBanner(input: $input) {
-      cookieBannerEdge {
+      cookieBannerEdge @prependEdge(connections: $connections) {
         node {
           id
+          ...CookieBannerSwitcherListItem_cookieBanner
         }
       }
     }
@@ -67,6 +70,11 @@ export default function NewCookieBannerPage() {
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("");
   const [consentExpiryDays, setConsentExpiryDays] = useState("365");
 
+  const connectionId = ConnectionHandler.getConnectionID(
+    organizationId,
+    "CookieBannerSwitcherMenu_cookieBanners",
+  );
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -80,6 +88,7 @@ export default function NewCookieBannerPage() {
           privacyPolicyUrl: privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(consentExpiryDays, 10),
         },
+        connections: [connectionId],
       },
       onCompleted(data) {
         toast({
@@ -102,17 +111,6 @@ export default function NewCookieBannerPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("newCookieBannerPage.breadcrumbs.index"),
-            to: `/organizations/${organizationId}/privacy/cookie-banners`,
-          },
-          {
-            label: t("newCookieBannerPage.breadcrumbs.new"),
-          },
-        ]}
-      />
       <PageHeader
         title={t("newCookieBannerPage.title")}
         description={t("newCookieBannerPage.description")}

@@ -70,12 +70,19 @@ export type NavPermission
     | "canListCookieBanners"
     | "canUpdateOrganization";
 
-export interface NavItem {
+/**
+ * One panel/rail entry. `kind: "switcher"` is a labelled control rather than
+ * a link; `path` is still the URL prefix and the lazy-registry key.
+ */
+export type NavItem = {
   /** Path relative to the group segment, e.g. "frameworks". */
   path: string;
   labelKey: string;
   permission: NavPermission;
-}
+} & (
+  | { kind?: "link" }
+  | { kind: "switcher" }
+);
 
 export interface NavGroup {
   /** Stable id; also the i18n key suffix and the React key. */
@@ -120,7 +127,7 @@ export const NAV_GROUPS: NavGroup[] = [
         labelKey: "nav.processingActivities",
         permission: "canListProcessingActivities",
       },
-      { path: "cookie-banners", labelKey: "nav.cookieBanners", permission: "canListCookieBanners" },
+      { path: "cookie-banners", kind: "switcher", labelKey: "nav.cookieBanners", permission: "canListCookieBanners" },
     ],
   },
   {
@@ -230,4 +237,17 @@ export function navItemPath(group: NavGroup, item: NavItem): string {
 /** Absolute href of an item. */
 export function navItemHref(organizationId: string, group: NavGroup, item: NavItem): string {
   return `/organizations/${organizationId}/${navItemPath(group, item)}`;
+}
+
+/**
+ * The rail target for a product. Switchers have no index route, so the first
+ * link wins; a switcher-only group falls back to its first item.
+ */
+export function navGroupLandingItem(group: NavGroup): NavItem {
+  for (const item of group.items) {
+    if (item.kind !== "switcher") {
+      return item;
+    }
+  }
+  return group.items[0];
 }

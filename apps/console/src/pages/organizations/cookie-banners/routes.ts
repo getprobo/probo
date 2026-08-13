@@ -28,11 +28,6 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
 export const cookieBannerRoutes = [
   {
-    path: "cookie-banners",
-    Fallback: PageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/cookie-banners/overview/CookieBannersOverviewPageLoader")),
-  },
-  {
     path: "cookie-banners/new",
     Fallback: PageSkeleton,
     Component: lazy(() => import("#/pages/organizations/cookie-banners/NewCookieBannerPage")),

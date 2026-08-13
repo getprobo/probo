@@ -49,25 +49,6 @@
       "placeholderButton": "Placeholder button"
     }
   },
-  "overviewPage": {
-    "pageTitle": "Cookie Banners",
-    "title": "Cookie Banners",
-    "description": "Manage cookie consent banners for your websites. Configure categories, cookies, and install the SDK.",
-    "messages": { "successTitle": "Success", "deleted": "Cookie banner deleted successfully" },
-    "errors": { "title": "Error", "delete": "Failed to delete cookie banner" },
-    "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
-    "actions": { "createFirst": "Create your first banner", "create": "Create banner", "delete": "Delete" },
-    "status": { "active": "Active", "inactive": "Inactive" }
-  },
-  "emptyState": {
-    "title": "No cookie banners yet",
-    "description": "Create your first cookie consent banner to start collecting GDPR-compliant consent from your website visitors.",
-    "steps": {
-      "create": { "title": "Create a banner", "description": "Set up your cookie consent banner with a name, origin URL, and privacy policy link." },
-      "categories": { "title": "Configure categories", "description": "Organize your cookies into categories like Analytics, Advertising, and Functional." },
-      "sdk": { "title": "Install the SDK", "description": "Add a single script tag or import the ES module to start collecting consent." }
-    }
-  },
   "translationsPage": {
     "necessaryFallback": "Necessary",
     "languageDefault": "{{language}} (default)",
@@ -108,7 +89,7 @@
     "duration": { "second_one": "{{count}} second", "second_other": "{{count}} seconds" }
   },
   "trackerPatternDetailPage": {
-    "breadcrumbs": { "index": "Cookie banners", "trackers": "Trackers" }
+    "breadcrumbs": { "trackers": "Trackers" }
   },
   "trackersPage": {
     "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories" },
@@ -211,7 +192,7 @@
     "empty": { "title": "No consent records", "description": "Consent records will appear here once visitors interact with your cookie banner." }
   },
   "consentRecordPage": {
-    "breadcrumbs": { "index": "Cookie banners", "records": "Consent records" },
+    "breadcrumbs": { "records": "Consent records" },
     "title": "Consent record",
     "properties": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "userAgent": "User agent", "sdkVersion": "SDK version", "regulation": "Regulation", "regulationSource": "Regulation source", "country": "Country", "subdivision": "Subdivision", "date": "Date" },
     "actions": { "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
@@ -221,19 +202,18 @@
     "cookies": { "columns": { "cookie": "Cookie", "duration": "Duration", "description": "Description" } }
     },
   "configLayout": {
-    "breadcrumbs": { "index": "Cookie banners" },
     "version": "v{{version}}",
     "draft": " (draft)",
     "metadata": { "origin": "Origin", "id": "ID", "cookiePolicy": "Cookie policy" },
-    "messages": { "successTitle": "Success", "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "idCopied": "Banner ID copied to clipboard" },
-    "errors": { "title": "Error", "activate": "Failed to activate", "deactivate": "Failed to deactivate", "publish": "Failed to publish" },
+    "messages": { "successTitle": "Success", "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "idCopied": "Banner ID copied to clipboard", "deleted": "Cookie banner deleted successfully" },
+    "errors": { "title": "Error", "activate": "Failed to activate", "deactivate": "Failed to deactivate", "publish": "Failed to publish", "delete": "Failed to delete cookie banner" },
+    "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publishing": "Publishing...", "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate" },
+    "actions": { "publishing": "Publishing...", "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete" },
     "tabs": { "display": "Display", "settings": "Settings", "translations": "Translations", "trackers": "Trackers", "resources": "Resources", "consentRecords": "Consent records" }
   },
   "newCookieBannerPage": {
     "pageTitle": "New cookie banner",
-    "breadcrumbs": { "index": "Cookie banners", "new": "New" },
     "title": "Create cookie banner",
     "description": "Set up a new cookie consent banner with its origin URL and consent configuration.",
     "messages": { "successTitle": "Success", "created": "Cookie banner created successfully" },

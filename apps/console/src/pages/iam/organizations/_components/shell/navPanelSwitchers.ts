@@ -18,30 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { lazy } from "@probo/react-lazy";
+import type { ComponentType } from "react";
 
-import type { CookieBannersOverviewPageQuery } from "#/__generated__/core/CookieBannersOverviewPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+/**
+ * Feature switchers, loaded only when the active panel renders that item.
+ *
+ * Keep this as lazy() loaders, never static imports: the organization layout
+ * must not pull cookie-banner (or later) Relay artifacts into the shell chunk.
+ */
+export const navPanelSwitchers = {
+  "cookie-banners": lazy(async () => {
+    const { CookieBannerSwitcher } = await import(
+      "#/pages/organizations/cookie-banners/_components/CookieBannerSwitcher"
+    );
+    return { default: CookieBannerSwitcher as ComponentType };
+  }),
+} as const;
 
-import { CookieBannersOverviewPage, cookieBannersOverviewPageQuery } from "./CookieBannersOverviewPage";
-
-export default function CookieBannersOverviewPageLoader() {
-  const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannersOverviewPageQuery>(cookieBannersOverviewPageQuery);
-
-  useEffect(() => {
-    loadQuery({ organizationId });
-  }, [loadQuery, organizationId]);
-
-  if (!queryRef) {
-    return <PageSkeleton />;
+export function navPanelSwitcher(path: string) {
+  if (!(path in navPanelSwitchers)) {
+    throw new Error(`missing nav panel switcher for ${path}`);
   }
-
-  return (
-    <Suspense fallback={<PageSkeleton />}>
-      <CookieBannersOverviewPage queryRef={queryRef} />
-    </Suspense>
-  );
+  return navPanelSwitchers[path as keyof typeof navPanelSwitchers];
 }

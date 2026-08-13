@@ -122,10 +122,6 @@ export default function CookieBannerConsentRecordPage({
       <Breadcrumb
         items={[
           {
-            label: t("consentRecordPage.breadcrumbs.index"),
-            to: `/organizations/${organizationId}/privacy/cookie-banners`,
-          },
-          {
             label: bannerName,
             to: `/organizations/${organizationId}/privacy/cookie-banners/${bannerId}`,
           },

@@ -24,7 +24,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { NavRail_organization$key } from "#/__generated__/iam/NavRail_organization.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { navItemHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
+import { navGroupLandingItem, navItemHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
 import { NavRailItem } from "./NavRailItem";
@@ -76,8 +76,9 @@ export interface NavRailProps {
  * products, and who you are signed in as, all naming themselves when the rail
  * is hovered or focused.
  *
- * Each product icon links to the first entry of its product, so the rail alone
- * is enough to move around; the panel beside it then offers the rest.
+ * Each product icon links to the first link of its product (switchers have no
+ * index route), so the rail alone is enough to move around; the panel beside
+ * it then offers the rest.
  */
 export function NavRail({ organizationKey }: NavRailProps) {
   const { t } = useTranslation();
@@ -100,7 +101,7 @@ export function NavRail({ organizationKey }: NavRailProps) {
               key={group.key}
               icon={group.icon}
               label={t(`nav.groups.${group.key}`)}
-              to={navItemHref(organizationId, group, group.items[0])}
+              to={navItemHref(organizationId, group, navGroupLandingItem(group))}
               active={group.key === activeGroup?.key}
             />
           ))}

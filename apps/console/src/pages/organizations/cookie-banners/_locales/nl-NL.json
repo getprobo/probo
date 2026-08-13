@@ -49,25 +49,6 @@
       "placeholderButton": "Placeholderknop"
     }
   },
-  "overviewPage": {
-    "pageTitle": "Cookiebanners",
-    "title": "Cookiebanners",
-    "description": "Beheer cookietoestemmingsbanners voor uw websites. Configureer categorieën, cookies en installeer de SDK.",
-    "messages": { "successTitle": "Gelukt", "deleted": "Cookiebanner succesvol verwijderd" },
-    "errors": { "title": "Fout", "delete": "Cookiebanner verwijderen mislukt" },
-    "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
-    "actions": { "createFirst": "Maak uw eerste banner aan", "create": "Banner aanmaken", "delete": "Verwijderen" },
-    "status": { "active": "Actief", "inactive": "Inactief" }
-  },
-  "emptyState": {
-    "title": "Nog geen cookiebanners",
-    "description": "Maak uw eerste cookietoestemmingsbanner aan om AVG-conforme toestemming van uw websitebezoekers te verzamelen.",
-    "steps": {
-      "create": { "title": "Een banner aanmaken", "description": "Stel uw cookietoestemmingsbanner in met een naam, origin-URL en link naar het privacybeleid." },
-      "categories": { "title": "Categorieën configureren", "description": "Organiseer uw cookies in categorieën zoals Analytics, Advertenties en Functioneel." },
-      "sdk": { "title": "De SDK installeren", "description": "Voeg één scripttag toe of importeer de ES-module om toestemming te verzamelen." }
-    }
-  },
   "translationsPage": {
     "necessaryFallback": "Noodzakelijk",
     "languageDefault": "{{language}} (standaard)",
@@ -108,7 +89,7 @@
     "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} seconden" }
   },
   "trackerPatternDetailPage": {
-    "breadcrumbs": { "index": "Cookiebanners", "trackers": "Trackers" }
+    "breadcrumbs": { "trackers": "Trackers" }
   },
   "trackersPage": {
     "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën" },
@@ -211,7 +192,7 @@
     "empty": { "title": "Geen toestemmingsregistraties", "description": "Toestemmingsregistraties verschijnen hier zodra bezoekers interactie hebben met uw cookiebanner." }
   },
   "consentRecordPage": {
-    "breadcrumbs": { "index": "Cookiebanners", "records": "Toestemmingsregistraties" },
+    "breadcrumbs": { "records": "Toestemmingsregistraties" },
     "title": "Toestemmingsregistratie",
     "properties": { "visitorId": "Bezoekers-ID", "action": "Actie", "bannerVersion": "Bannerversie", "ipAddress": "IP-adres", "userAgent": "User agent", "sdkVersion": "SDK-versie", "regulation": "Regelgeving", "regulationSource": "Bron van regelgeving", "country": "Land", "subdivision": "Subdivisie", "date": "Datum" },
     "actions": { "accept_all": "Alles accepteren", "reject_all": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },
@@ -221,19 +202,18 @@
     "cookies": { "columns": { "cookie": "Cookie", "duration": "Duur", "description": "Beschrijving" } }
   },
   "configLayout": {
-    "breadcrumbs": { "index": "Cookiebanners" },
     "version": "v{{version}}",
     "draft": " (concept)",
     "metadata": { "origin": "Origin", "id": "ID", "cookiePolicy": "Cookiebeleid" },
-    "messages": { "successTitle": "Gelukt", "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord" },
-    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt" },
+    "messages": { "successTitle": "Gelukt", "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
+    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt" },
+    "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publishing": "Bezig met publiceren...", "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren" },
+    "actions": { "publishing": "Bezig met publiceren...", "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen" },
     "tabs": { "display": "Weergave", "settings": "Instellingen", "translations": "Vertalingen", "trackers": "Trackers", "resources": "Resources", "consentRecords": "Toestemmingsregistraties" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nieuwe cookiebanner",
-    "breadcrumbs": { "index": "Cookiebanners", "new": "Nieuw" },
     "title": "Cookiebanner aanmaken",
     "description": "Stel een nieuwe cookietoestemmingsbanner in met de origin-URL en toestemmingsconfiguratie.",
     "messages": { "successTitle": "Gelukt", "created": "Cookiebanner succesvol aangemaakt" },

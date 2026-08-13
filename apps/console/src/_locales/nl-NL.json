@@ -2451,7 +2451,14 @@
     "rightsRequests": "Rechtenverzoeken",
     "accessReviews": "Toegangsbeoordelingen",
     "compliancePortals": "Compliancepagina's",
-    "cookieBanners": "Cookiebanners"
+    "cookieBanners": "Cookiebanners",
+    "cookieBannerSwitcher": {
+      "select": "Selecteer banner",
+      "new": "Nieuwe banner",
+      "create": "Nieuwe cookiebanner",
+      "empty": "Geen cookiebanners",
+      "loading": "Laden…"
+    }
   },
   "viewerMembershipDropdown": {
     "errors": {

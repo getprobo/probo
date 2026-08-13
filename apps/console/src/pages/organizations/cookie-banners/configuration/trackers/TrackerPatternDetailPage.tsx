@@ -78,10 +78,6 @@ export default function TrackerPatternDetailPage({
       <Breadcrumb
         items={[
           {
-            label: t("trackerPatternDetailPage.breadcrumbs.index"),
-            to: `/organizations/${organizationId}/privacy/cookie-banners`,
-          },
-          {
             label: cookieBanner.name,
             to: `/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/settings`,
           },

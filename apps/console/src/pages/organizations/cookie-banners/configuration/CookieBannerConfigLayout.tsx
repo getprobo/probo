@@ -21,25 +21,29 @@
 import { ClipboardTextIcon, CodeIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
 import {
+  ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
+  DropdownItem,
   IconGlobe,
   IconPageTextLine,
   IconSettingsGear2,
   IconSquareBehindSquare2,
+  IconTrashCan,
   PageHeader,
   TabLink,
   Tabs,
+  useConfirm,
   useToast,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { Link, Outlet, useParams } from "react-router";
-import { graphql } from "relay-runtime";
+import { Link, Outlet, useNavigate, useParams } from "react-router";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayoutActivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutActivateMutation.graphql";
 import type { CookieBannerConfigLayoutDeactivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutDeactivateMutation.graphql";
+import type { CookieBannerConfigLayoutDeleteMutation } from "#/__generated__/core/CookieBannerConfigLayoutDeleteMutation.graphql";
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -53,6 +57,7 @@ export const cookieBannerConfigLayoutQuery = graphql`
         name
         origin
         state
+        canDelete: permission(action: "core:cookie-banner:delete")
         latestVersion {
           id
           version
@@ -88,6 +93,17 @@ const deactivateMutation = graphql`
   }
 `;
 
+const deleteMutation = graphql`
+  mutation CookieBannerConfigLayoutDeleteMutation(
+    $input: DeleteCookieBannerInput!
+    $connections: [ID!]!
+  ) {
+    deleteCookieBanner(input: $input) {
+      deletedCookieBannerId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
 const publishMutation = graphql`
   mutation CookieBannerConfigLayoutPublishMutation($input: PublishCookieBannerVersionInput!) {
     publishCookieBannerVersion(input: $input) {
@@ -115,6 +131,8 @@ interface CookieBannerConfigLayoutProps {
 export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfigLayoutProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
+  const confirm = useConfirm();
+  const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
 
@@ -130,6 +148,12 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
     deactivateMutation,
   );
   const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(publishMutation);
+  const [deleteCookieBanner] = useMutation<CookieBannerConfigLayoutDeleteMutation>(deleteMutation);
+
+  const connectionId = ConnectionHandler.getConnectionID(
+    organizationId,
+    "CookieBannerSwitcherMenu_cookieBanners",
+  );
 
   const handleToggleState = () => {
     if (banner.state === "ACTIVE") {
@@ -167,22 +191,69 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
     });
   };
 
+  const handleDelete = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          let nextPath = `/organizations/${organizationId}/privacy/cookie-banners/new`;
+          deleteCookieBanner({
+            variables: {
+              input: { cookieBannerId: banner.id },
+              connections: [connectionId],
+            },
+            updater(store) {
+              const connection = store.get(connectionId);
+              if (connection == null) {
+                return;
+              }
+              const edges = connection.getLinkedRecords("edges") ?? [];
+              for (const edge of edges) {
+                const id = edge?.getLinkedRecord("node")?.getDataID();
+                if (typeof id === "string" && id !== banner.id) {
+                  nextPath = `/organizations/${organizationId}/privacy/cookie-banners/${id}`;
+                  return;
+                }
+              }
+            },
+            onCompleted(_, errors) {
+              if (errors?.length) {
+                toast({
+                  title: t("configLayout.errors.title"),
+                  description: errors[0].message,
+                  variant: "error",
+                });
+              } else {
+                toast({
+                  title: t("configLayout.messages.successTitle"),
+                  description: t("configLayout.messages.deleted"),
+                  variant: "success",
+                });
+                void navigate(nextPath);
+              }
+              resolve();
+            },
+            onError(error) {
+              toast({
+                title: t("configLayout.errors.title"),
+                description: formatError(t("configLayout.errors.delete"), error),
+                variant: "error",
+              });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: t("configLayout.deleteConfirmation", { name: banner.name }),
+        variant: "danger",
+        label: t("configLayout.actions.delete"),
+      },
+    );
+  };
+
   const hasDraft = banner.latestVersion?.state === "DRAFT";
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("configLayout.breadcrumbs.index"),
-            to: `/organizations/${organizationId}/privacy/cookie-banners`,
-          },
-          {
-            label: banner.name,
-          },
-        ]}
-      />
-
       <PageHeader
         title={(
           <div className="align-baseline">
@@ -251,6 +322,17 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         >
           {banner.state === "ACTIVE" ? t("configLayout.actions.deactivate") : t("configLayout.actions.activate")}
         </Button>
+        {banner.canDelete && banner.state !== "ACTIVE" && (
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={handleDelete}
+            >
+              {t("configLayout.actions.delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </PageHeader>
 
       <Tabs>

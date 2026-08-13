@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -28,7 +28,9 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navItemHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
+import { NavPanelGroup } from "./NavPanelGroup";
 import { NavPanelItem } from "./NavPanelItem";
+import { navPanelSwitcher } from "./navPanelSwitchers";
 import { navPanel } from "./variants";
 
 // Every permission below is read, but through the `permission` key on each
@@ -88,17 +90,30 @@ export function NavPanel({ organizationKey }: NavPanelProps) {
     <aside className={slots.panel()}>
       {activeGroup != null && (
         <>
-          <Text size={1} weight="medium" color="neutral" className={slots.title()}>
+          <Text size={2} weight="medium" color="faint" className={slots.title()}>
             {t(`nav.groups.${activeGroup.key}`)}
           </Text>
           <div className={slots.list()}>
-            {activeGroup.items.map(item => (
-              <NavPanelItem
-                key={item.path}
-                label={t(item.labelKey)}
-                to={navItemHref(organizationId, activeGroup, item)}
-              />
-            ))}
+            {activeGroup.items.map((item) => {
+              if (item.kind === "switcher") {
+                const Switcher = navPanelSwitcher(item.path);
+                return (
+                  <NavPanelGroup key={item.path} label={t(item.labelKey)}>
+                    <Suspense fallback={<span className={slots.groupFallback()} aria-hidden />}>
+                      <Switcher />
+                    </Suspense>
+                  </NavPanelGroup>
+                );
+              }
+
+              return (
+                <NavPanelItem
+                  key={item.path}
+                  label={t(item.labelKey)}
+                  to={navItemHref(organizationId, activeGroup, item)}
+                />
+              );
+            })}
           </div>
         </>
       )}
