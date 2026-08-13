@@ -172,9 +172,9 @@ const routes = [
             ),
           },
           {
-            path: "me/slack/bind",
+            path: "me/probot/bind",
             Component: lazy(
-              () => import("./pages/me/slack/bind/SlackBindPageLoader"),
+              () => import("./pages/me/probot/bind/ProbotBindPageLoader"),
             ),
           },
           {
@@ -294,7 +294,8 @@ const routes = [
             path: "settings",
             Fallback: PageSkeleton,
             Component: lazy(
-              () => import("./pages/iam/organizations/settings/SettingsLayout"),
+              () =>
+                import("./pages/organizations/settings/SettingsLayoutLoader"),
             ),
             children: [
               {
@@ -330,6 +331,13 @@ const routes = [
                 Component: lazy(
                   () =>
                     import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
+                ),
+              },
+              {
+                path: "slackbot",
+                Component: lazy(
+                  () =>
+                    import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
                 ),
               },
               {

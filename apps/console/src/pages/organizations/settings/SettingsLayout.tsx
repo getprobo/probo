@@ -25,17 +25,53 @@ import {
   IconSend,
   IconSettingsGear2,
   PageHeader,
+  Slack,
   TabLink,
   Tabs,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
+import {
+  type PreloadedQuery,
+  usePreloadedQuery,
+} from "react-relay";
 import { Outlet } from "react-router";
+import { graphql } from "relay-runtime";
 
+import type { SettingsLayoutQuery } from "#/__generated__/core/SettingsLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export default function SettingsLayout() {
+export const settingsLayoutQuery = graphql`
+  query SettingsLayoutQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        slackbotAvailable
+        canConnectSlack: permission(action: "core:connector:initiate")
+        canUninstallSlack: permission(action: "core:connector:delete")
+      }
+    }
+  }
+`;
+
+interface SettingsLayoutProps {
+  queryRef: PreloadedQuery<SettingsLayoutQuery>;
+}
+
+export function SettingsLayout({ queryRef }: SettingsLayoutProps) {
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
+  const data = usePreloadedQuery<SettingsLayoutQuery>(
+    settingsLayoutQuery,
+    queryRef,
+  );
+
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("Relay node is not an organization");
+  }
+
+  const showSlackTab = data.organization.slackbotAvailable
+    && (data.organization.canConnectSlack
+      || data.organization.canUninstallSlack);
 
   return (
     <div className="space-y-6">
@@ -58,6 +94,12 @@ export default function SettingsLayout() {
           <IconSend size={20} />
           {t("settingsLayout.tabs.webhooks")}
         </TabLink>
+        {showSlackTab && (
+          <TabLink to={`/organizations/${organizationId}/settings/slackbot`}>
+            <Slack className="h-5 w-5" />
+            {t("settingsLayout.tabs.slackBot")}
+          </TabLink>
+        )}
         <TabLink to={`/organizations/${organizationId}/settings/audit-log`}>
           <IconListStack size={20} />
           {t("settingsLayout.tabs.auditLog")}

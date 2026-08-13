@@ -29,7 +29,7 @@ import { CompliancePortalSlackSection } from "./_components/CompliancePortalSlac
 import { CompliancePortalStatusSection } from "./_components/CompliancePortalStatusSection";
 
 export const compliancePortalOverviewPageQuery = graphql`
-  query CompliancePortalOverviewPageQuery($compliancePortalId: ID!, $organizationId: ID!) {
+  query CompliancePortalOverviewPageQuery($compliancePortalId: ID!) {
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
@@ -37,10 +37,8 @@ export const compliancePortalOverviewPageQuery = graphql`
         ...CompliancePortalStatusSectionFragment
         ...CompliancePortalFrameworksSectionFragment
         ...CompliancePortalNDASectionFragment
+        ...CompliancePortalSlackSection_compliancePortal
       }
-    }
-    organization: node(id: $organizationId) {
-      ...CompliancePortalSlackSectionFragment
     }
   }
 `;
@@ -58,7 +56,7 @@ export default function CompliancePortalOverviewPage({ queryRef }: CompliancePor
     throw new Error("invalid type for node");
   }
 
-  const { compliancePortal, organization } = data;
+  const { compliancePortal } = data;
 
   return (
     <div className="space-y-6">
@@ -70,7 +68,7 @@ export default function CompliancePortalOverviewPage({ queryRef }: CompliancePor
         <CompliancePortalNDASection fragmentRef={compliancePortal} />
       )}
 
-      <CompliancePortalSlackSection fragmentRef={organization} />
+      <CompliancePortalSlackSection compliancePortalKey={compliancePortal} />
     </div>
   );
 }

@@ -20,30 +20,30 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
-import type { CompliancePortalOverviewPageQuery } from "#/__generated__/core/CompliancePortalOverviewPageQuery.graphql";
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import type { SettingsLayoutQuery } from "#/__generated__/core/SettingsLayoutQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import CompliancePortalOverviewPage, { compliancePortalOverviewPageQuery } from "./CompliancePortalOverviewPage";
+import { SettingsLayout, settingsLayoutQuery } from "./SettingsLayout";
 
-export default function CompliancePortalOverviewPageLoader() {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalOverviewPageQuery>(compliancePortalOverviewPageQuery);
+export default function SettingsLayoutLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery] = useQueryLoader<SettingsLayoutQuery>(
+    settingsLayoutQuery,
+  );
 
   useEffect(() => {
-    if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
-    }
-  }, [loadQuery, compliancePortalId]);
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
 
   if (!queryRef) {
-    return <LinkCardSkeleton />;
+    return <PageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<LinkCardSkeleton />}>
-      <CompliancePortalOverviewPage queryRef={queryRef} />
+    <Suspense fallback={<PageSkeleton />}>
+      <SettingsLayout queryRef={queryRef} />
     </Suspense>
   );
 }

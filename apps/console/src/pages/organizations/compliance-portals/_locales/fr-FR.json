@@ -454,30 +454,24 @@
     }
   },
   "slackSection": {
-    "title": "Intégrations",
-    "disconnect": {
-      "title": "Déconnecter Slack",
-      "description": "Voulez-vous vraiment déconnecter ce canal Slack ? Cette action est irréversible."
-    },
-    "emptyDescription": "Gérez l’accès à votre portail de conformité avec Slack",
-    "actions": {
-      "connect": "Connecter",
-      "disconnect": "Déconnecter"
-    }
-  },
-  "slackConnectionCard": {
-    "title": "Slack",
-    "connected": "Connecté le {{date}}",
-    "connectedWithChannel": "Connecté le {{date}} • Canal : {{channel}}",
-    "notConfiguredDescription": "Slack est connecté, mais aucun canal n’est encore configuré pour la portail de conformité.",
-    "status": {
-      "connected": "Connecté",
-      "notConfigured": "Canal non configuré"
+    "title": "Notifications Slack",
+    "connectionTitle": "Canal de notification",
+    "notInstalledTitle": "Bot Slack non installé",
+    "description": "Choisissez où envoyer les demandes d’accès à ce portail de conformité.",
+    "notInstalled": "Installez l’application Slack Probo depuis les paramètres de l’organisation avant de choisir un canal.",
+    "channel": {
+      "label": "Canal",
+      "placeholder": "Choisir un canal",
+      "help": "Invitez @Probo dans un canal avant de le sélectionner.",
+      "emptyTitle": "Aucun canal Slack pour le moment",
+      "emptyDescription": "Dans Slack, invitez @Probo dans un canal, puis actualisez cette liste."
     },
     "actions": {
-      "changeChannel": "Changer de canal",
-      "connect": "Connecter",
-      "disconnect": "Déconnecter"
+      "clear": "Effacer",
+      "install": "Installer",
+      "refresh": "Actualiser",
+      "loadMore": "Charger plus",
+      "loadingMore": "Chargement…"
     }
   },
   "externalUrls": {

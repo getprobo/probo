@@ -170,18 +170,25 @@
     }
   },
   "slackSection": {
-    "title": "Integraties",
-    "disconnect": { "title": "Slack loskoppelen", "description": "Weet u zeker dat u dit Slack-kanaal wilt loskoppelen? Deze actie kan niet ongedaan worden gemaakt." },
-    "emptyDescription": "Beheer de toegang tot uw compliancepagina met Slack",
-    "actions": { "connect": "Verbinden", "disconnect": "Loskoppelen" }
-  },
-  "slackConnectionCard": {
-    "title": "Slack",
-    "connected": "Verbonden op {{date}}",
-    "connectedWithChannel": "Verbonden op {{date}} • Kanaal: {{channel}}",
-    "notConfiguredDescription": "Slack is verbonden, maar er is nog geen kanaal ingesteld voor de compliancepagina.",
-    "status": { "connected": "Verbonden", "notConfigured": "Kanaal niet geconfigureerd" },
-    "actions": { "changeChannel": "Kanaal wijzigen", "connect": "Verbinden", "disconnect": "Loskoppelen" }
+    "title": "Slack-meldingen",
+    "connectionTitle": "Meldingskanaal",
+    "notInstalledTitle": "Slack-bot niet geïnstalleerd",
+    "description": "Kies waar toegangsverzoeken voor deze compliancepagina naartoe worden gestuurd.",
+    "notInstalled": "Installeer de Probo Slack-app via de organisatie-instellingen voordat u een kanaal kiest.",
+    "channel": {
+      "label": "Kanaal",
+      "placeholder": "Kies een kanaal",
+      "help": "Nodig @Probo uit in een kanaal voordat u het selecteert.",
+      "emptyTitle": "Nog geen Slack-kanaal",
+      "emptyDescription": "Nodig @Probo in Slack uit in een kanaal en vernieuw daarna deze lijst."
+    },
+    "actions": {
+      "clear": "Wissen",
+      "install": "Installeren",
+      "refresh": "Vernieuwen",
+      "loadMore": "Meer laden",
+      "loadingMore": "Laden…"
+    }
   },
   "externalUrls": {
     "title": "Aangepaste links",

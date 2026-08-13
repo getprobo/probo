@@ -2659,7 +2659,27 @@
       "samlSso": "SAML SSO",
       "scim": "SCIM",
       "webhooks": "Webhooks",
+      "slackBot": "SlackBot",
       "auditLog": "Auditlogboek"
+    }
+  },
+  "slackBotSettingsPage": {
+    "title": "SlackBot",
+    "connectionTitle": "Slack",
+    "emptyDescription": "Installeer de Probo Slack-app om meldingen te ontvangen",
+    "installed": "De Probo Slack-app is geïnstalleerd",
+    "uninstallConfirmation": "De Probo Slack-app verwijderen? Probo ontvangt dan geen Slack-gebeurtenissen meer en stuurt geen meldingen meer naar deze werkruimte.",
+    "messages": {
+      "uninstalled": "De Probo Slack-app is verwijderd"
+    },
+    "errors": {
+      "uninstall": "De Probo Slack-app kon niet worden verwijderd"
+    },
+    "actions": {
+      "install": "Installeren",
+      "configure": "Configureren",
+      "uninstall": "Verwijderen",
+      "uninstalling": "Verwijderen..."
     }
   },
   "connectorList": {
@@ -6317,6 +6337,17 @@
   "thirdPartyRiskAssessmentRow": {
     "expired": "Verlopen",
     "notes": "Opmerkingen"
+  },
+  "probotBindPage": {
+    "title": "Extern account koppelen",
+    "description": "Bevestig dat dit externe account uw Probo-identiteit moet gebruiken.",
+    "loading": "Laden…",
+    "confirmed": "Gekoppeld. U kunt terugkeren naar de dienst en de bot opnieuw een bericht sturen.",
+    "fields": { "provider": "Provider", "tenant": "Werkruimte", "account": "Account" },
+    "providers": { "slack": "Slack" },
+    "actions": { "confirm": "Koppeling bevestigen", "back": "Terug naar Probo" },
+    "messages": { "linkFailed": "Koppelen mislukt", "success": "Gelukt", "linked": "Uw externe account is nu gekoppeld aan Probo." },
+    "errors": { "missingToken": "Deze link bevat geen token.", "invalidOrExpiredToken": "Deze link is ongeldig of verlopen. Vraag de bot om een nieuwe." }
   },
   "country": {
     "GLOBAL": "Wereldwijd",

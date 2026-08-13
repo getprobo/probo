@@ -20,22 +20,26 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
-import type { CompliancePortalOverviewPageQuery } from "#/__generated__/core/CompliancePortalOverviewPageQuery.graphql";
+import type { SlackBotSettingsPageQuery } from "#/__generated__/core/SlackBotSettingsPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
-import CompliancePortalOverviewPage, { compliancePortalOverviewPageQuery } from "./CompliancePortalOverviewPage";
+import {
+  SlackBotSettingsPage,
+  slackBotSettingsPageQuery,
+} from "./SlackBotSettingsPage";
 
-export default function CompliancePortalOverviewPageLoader() {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalOverviewPageQuery>(compliancePortalOverviewPageQuery);
+function SlackBotSettingsPageQueryLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery] = useQueryLoader<SlackBotSettingsPageQuery>(
+    slackBotSettingsPageQuery,
+  );
 
   useEffect(() => {
-    if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
-    }
-  }, [loadQuery, compliancePortalId]);
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
 
   if (!queryRef) {
     return <LinkCardSkeleton />;
@@ -43,7 +47,15 @@ export default function CompliancePortalOverviewPageLoader() {
 
   return (
     <Suspense fallback={<LinkCardSkeleton />}>
-      <CompliancePortalOverviewPage queryRef={queryRef} />
+      <SlackBotSettingsPage queryRef={queryRef} />
     </Suspense>
+  );
+}
+
+export default function SlackBotSettingsPageLoader() {
+  return (
+    <CoreRelayProvider>
+      <SlackBotSettingsPageQueryLoader />
+    </CoreRelayProvider>
   );
 }

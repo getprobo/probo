@@ -2659,7 +2659,27 @@
       "samlSso": "SAML SSO",
       "scim": "SCIM",
       "webhooks": "Webhooks",
+      "slackBot": "SlackBot",
       "auditLog": "Journal d’audit"
+    }
+  },
+  "slackBotSettingsPage": {
+    "title": "SlackBot",
+    "connectionTitle": "Slack",
+    "emptyDescription": "Installez l’application Slack Probo pour recevoir des notifications",
+    "installed": "L’application Slack Probo est installée",
+    "uninstallConfirmation": "Désinstaller l’application Slack Probo ? Probo cessera de recevoir les événements Slack et d’envoyer des notifications dans cet espace de travail.",
+    "messages": {
+      "uninstalled": "L’application Slack Probo a été désinstallée"
+    },
+    "errors": {
+      "uninstall": "Échec de la désinstallation de l’application Slack Probo"
+    },
+    "actions": {
+      "install": "Installer",
+      "configure": "Configurer",
+      "uninstall": "Désinstaller",
+      "uninstalling": "Désinstallation..."
     }
   },
   "connectorList": {
@@ -6321,6 +6341,17 @@
   "thirdPartyRiskAssessmentRow": {
     "expired": "Expiré",
     "notes": "Notes"
+  },
+  "probotBindPage": {
+    "title": "Lier un compte externe",
+    "description": "Confirmez que ce compte externe doit utiliser votre identité Probo.",
+    "loading": "Chargement…",
+    "confirmed": "Compte lié. Vous pouvez retourner au service et envoyer à nouveau un message au bot.",
+    "fields": { "provider": "Fournisseur", "tenant": "Espace de travail", "account": "Compte" },
+    "providers": { "slack": "Slack" },
+    "actions": { "confirm": "Confirmer la liaison", "back": "Retour à Probo" },
+    "messages": { "linkFailed": "Échec de la liaison", "success": "Succès", "linked": "Votre compte externe est maintenant lié à Probo." },
+    "errors": { "missingToken": "Ce lien ne contient aucun jeton.", "invalidOrExpiredToken": "Ce lien est invalide ou a expiré. Demandez un nouveau lien au bot." }
   },
   "country": {
     "GLOBAL": "Mondial",

@@ -454,30 +454,24 @@
     }
   },
   "slackSection": {
-    "title": "Integrations",
-    "disconnect": {
-      "title": "Disconnect Slack",
-      "description": "Are you sure you want to disconnect this Slack channel? This action cannot be undone."
-    },
-    "emptyDescription": "Manage your compliance portal access with Slack",
-    "actions": {
-      "connect": "Connect",
-      "disconnect": "Disconnect"
-    }
-  },
-  "slackConnectionCard": {
-    "title": "Slack",
-    "connected": "Connected on {{date}}",
-    "connectedWithChannel": "Connected on {{date}} • Channel: {{channel}}",
-    "notConfiguredDescription": "Slack is connected, but no channel is set up for the compliance portal yet.",
-    "status": {
-      "connected": "Connected",
-      "notConfigured": "Channel not configured"
+    "title": "Slack notifications",
+    "connectionTitle": "Notification channel",
+    "notInstalledTitle": "Slack bot not installed",
+    "description": "Choose where access requests for this compliance portal are sent.",
+    "notInstalled": "Install the Probo Slack app from organization settings before choosing a channel.",
+    "channel": {
+      "label": "Channel",
+      "placeholder": "Choose a channel",
+      "help": "Invite @Probo to a channel before selecting it.",
+      "emptyTitle": "No Slack channel yet",
+      "emptyDescription": "In Slack, invite @Probo to a channel, then refresh this list."
     },
     "actions": {
-      "changeChannel": "Change channel",
-      "connect": "Connect",
-      "disconnect": "Disconnect"
+      "clear": "Clear",
+      "install": "Install",
+      "refresh": "Refresh",
+      "loadMore": "Load more",
+      "loadingMore": "Loading…"
     }
   },
   "externalUrls": {
