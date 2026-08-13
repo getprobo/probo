@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.probo.inc/probo/pkg/bot"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
@@ -162,7 +163,7 @@ func (c *Capability) execute(
 func (c *Capability) authorize(
 	ctx context.Context,
 	identityID gid.GID,
-	message messaging.Message,
+	message bot.Message,
 ) (*coredata.Scope, error) {
 	lookupScope := coredata.NewScopeFromObjectID(message.OrganizationID)
 

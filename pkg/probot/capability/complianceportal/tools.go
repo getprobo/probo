@@ -27,6 +27,7 @@ import (
 	"fmt"
 
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/bot"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -154,22 +155,22 @@ func (c *Capability) Tools() []agent.Tool {
 	}
 }
 
-func (c *Capability) messageFromRunContext(ctx context.Context) (messaging.Message, error) {
+func (c *Capability) messageFromRunContext(ctx context.Context) (bot.Message, error) {
 	rc := agent.RunContextFrom[*messaging.RunContext](ctx)
 	if rc == nil ||
 		rc.OrganizationID == gid.Nil ||
 		rc.MessageAnchor.ConversationID == "" ||
 		rc.MessageAnchor.MessageID == "" {
-		return messaging.Message{}, fmt.Errorf("current conversation is not an access request thread")
+		return bot.Message{}, fmt.Errorf("current conversation is not an access request thread")
 	}
 
 	message, err := c.resolveInitialMessage(ctx, rc.OrganizationID, rc.MessageAnchor)
 	if err != nil {
-		return messaging.Message{}, fmt.Errorf("cannot load notification message: %w", err)
+		return bot.Message{}, fmt.Errorf("cannot load notification message: %w", err)
 	}
 
 	if message.Message.Type != portal.AccessMessageType {
-		return messaging.Message{}, fmt.Errorf("%w", messaging.ErrCapabilityNotFound)
+		return bot.Message{}, fmt.Errorf("%w", messaging.ErrCapabilityNotFound)
 	}
 
 	return message.Message, nil
@@ -179,7 +180,7 @@ func (c *Capability) resolveInitialMessage(
 	ctx context.Context,
 	organizationID gid.GID,
 	anchor messaging.MessageAnchor,
-) (*messaging.DeliveredMessage, error) {
+) (*bot.DeliveredMessage, error) {
 	return c.notifications.GetInitialMessage(ctx, organizationID, anchor)
 }
 

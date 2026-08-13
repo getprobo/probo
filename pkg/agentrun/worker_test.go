@@ -53,12 +53,7 @@ func TestWorker_PicksUpAndCompletes(t *testing.T) {
 		},
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"echo-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "go"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "echo-agent", "go")
 
 	runWorker := newTestWorker(
 		client,
@@ -73,16 +68,15 @@ func TestWorker_PicksUpAndCompletes(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
 	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
-	assert.NotNil(t, completed.Result)
+	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
 }
@@ -117,12 +111,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 		slowTool,
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"worker-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do work"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "worker-agent", "do work")
 
 	runWorker := newTestWorker(
 		client,
@@ -196,16 +185,15 @@ func TestWorker_StopAndResume(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
 	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
-	assert.NotNil(t, completed.Result)
+	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
 }
@@ -244,12 +232,7 @@ func TestWorker_AwaitsApprovalDoesNotFail(t *testing.T) {
 		agent.WithApproval(agent.ApprovalConfig{ToolNames: []string{"danger"}}),
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"approval-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do the dangerous thing"}}}},
-	)
+	run, _ := insertPendingTurn(t, client, "approval-agent", "do the dangerous thing")
 
 	runWorker := newTestWorker(
 		client,
@@ -330,12 +313,7 @@ func TestWorker_ApprovalApprovedResumesAndCompletes(t *testing.T) {
 		agent.WithApproval(agent.ApprovalConfig{ToolNames: []string{"danger"}}),
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"approval-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "go"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "approval-agent", "go")
 
 	runWorker := newTestWorker(
 		client,
@@ -369,16 +347,15 @@ func TestWorker_ApprovalApprovedResumesAndCompletes(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
 	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
-	assert.NotNil(t, completed.Result)
+	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
 	assert.True(t, executed.Load(), "approved tool must execute on resume")
@@ -420,12 +397,7 @@ func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
 		agent.WithApproval(agent.ApprovalConfig{ToolNames: []string{"danger"}}),
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"approval-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "go"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "approval-agent", "go")
 
 	runWorker := newTestWorker(
 		client,
@@ -459,16 +431,15 @@ func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
 	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
-	assert.NotNil(t, completed.Result)
+	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
 	assert.False(t, executed.Load(), "denied tool must not execute on resume")
@@ -531,12 +502,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 		},
 	}
 
-	run := insertPendingRun(
-		t,
-		client,
-		"root-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do work"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "root-agent", "do work")
 
 	runWorker := newTestWorker(client, registry)
 
@@ -595,16 +561,15 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
 	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
-	assert.NotNil(t, completed.Result)
+	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
 }
@@ -664,12 +629,7 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 		},
 	}
 
-	run := insertPendingRun(
-		t,
-		client,
-		"outer-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do work"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "outer-agent", "do work")
 
 	runWorker := newTestWorker(client, registry)
 
@@ -729,16 +689,15 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
 	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
-	assert.NotNil(t, completed.Result)
+	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
 }
@@ -813,12 +772,7 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 		},
 	}
 
-	run := insertPendingRun(
-		t,
-		client,
-		"outer-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do work"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "outer-agent", "do work")
 
 	runWorker := newTestWorker(client, registry)
 
@@ -882,16 +836,15 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
 	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
-	assert.NotNil(t, completed.Result)
+	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
 }
@@ -934,12 +887,7 @@ func TestWorker_LeaseLossCancelsAndFencesStaleWriter(t *testing.T) {
 		agent.WithTools(slowTool),
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"worker-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do work"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "worker-agent", "do work")
 
 	runWorkerA := newTestWorker(
 		client,
@@ -976,28 +924,25 @@ func TestWorker_LeaseLossCancelsAndFencesStaleWriter(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+			return conversationSettled(client, run.ID, input.ID)
 		},
 		15*time.Second,
 		200*time.Millisecond,
 	)
 
-	winner := loadAgentRun(t, client, run.ID)
-	winnerResult := append(json.RawMessage(nil), winner.Result...)
-	require.NotNil(t, winnerResult)
+	winner := loadAgentExecution(t, client, run.ID)
+	winnerSession := append(json.RawMessage(nil), winner.SessionMessages...)
+	require.NotEmpty(t, winnerSession)
 
 	close(toolRelease)
 
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			if err != nil {
-				return false
-			}
+			current := loadAgentExecution(t, client, run.ID)
 
-			return r.Status == coredata.AgentRunStatusCompleted && string(r.Result) == string(winnerResult)
+			return current.Status == coredata.AgentRunStatusPending &&
+				string(current.SessionMessages) == string(winnerSession)
 		},
 		10*time.Second,
 		200*time.Millisecond,
@@ -1007,12 +952,7 @@ func TestWorker_LeaseLossCancelsAndFencesStaleWriter(t *testing.T) {
 func TestWorker_UnknownAgentFails(t *testing.T) {
 	client := test.PGClient(t)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"missing-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "go"}}}},
-	)
+	run, _ := insertPendingTurn(t, client, "missing-agent", "go")
 
 	runWorker := newTestWorker(
 		client,
@@ -1049,14 +989,9 @@ func TestWorker_InvalidInputMessagesFails(t *testing.T) {
 		},
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"worker-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "go"}}}},
-	)
+	run, input := insertPendingTurn(t, client, "worker-agent", "go")
 
-	overwriteRunInputMessagesRaw(t, client, run.ID, `"invalid-json"`)
+	overwriteAgentInputMessageRaw(t, client, input.ID, `"invalid-json"`)
 
 	runWorker := newTestWorker(
 		client,
@@ -1081,7 +1016,7 @@ func TestWorker_InvalidInputMessagesFails(t *testing.T) {
 	failed := loadAgentRun(t, client, run.ID)
 	assert.Equal(t, coredata.AgentRunStatusFailed, failed.Status)
 	require.NotNil(t, failed.ErrorMessage)
-	assert.Contains(t, *failed.ErrorMessage, "cannot unmarshal input messages")
+	assert.Contains(t, *failed.ErrorMessage, "cannot unmarshal conversational input")
 }
 
 func TestWorker_SIGTERM(t *testing.T) {
@@ -1167,12 +1102,7 @@ func runSIGTERMSubprocess(t *testing.T) {
 		makeBattleTools(workStarted)...,
 	)
 
-	run := insertPendingRun(
-		t,
-		client,
-		"battle-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "start"}}}},
-	)
+	run, _ := insertPendingTurn(t, client, "battle-agent", "start")
 
 	runWorker := newTestWorker(
 		client,

@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go.probo.inc/probo/pkg/probot"
+	"go.probo.inc/probo/pkg/bot"
 )
 
 const (
@@ -35,14 +35,14 @@ const (
 	cardBodyLimit     = 200
 )
 
-func RenderMessageIntent(intent probot.MessageIntent) map[string]any {
+func RenderMessageIntent(intent bot.MessageIntent) map[string]any {
 	cards := intent.Cards
 	if len(cards) > messageBlockLimit {
 		hiddenCount := len(cards) - messageBlockLimit + 1
-		visible := append([]probot.CardIntent(nil), cards[:messageBlockLimit-1]...)
+		visible := append([]bot.CardIntent(nil), cards[:messageBlockLimit-1]...)
 		cards = append(
 			visible,
-			probot.CardIntent{
+			bot.CardIntent{
 				ID:    "truncation-summary",
 				Title: "Additional resources not shown",
 				Body:  fmt.Sprintf("%d additional item(s) are available in Probo.", hiddenCount),
@@ -94,9 +94,9 @@ func RenderMessageIntent(intent probot.MessageIntent) map[string]any {
 				}
 
 				switch action.Style {
-				case probot.ActionStylePrimary:
+				case bot.ActionStylePrimary:
 					element["style"] = "primary"
-				case probot.ActionStyleDanger:
+				case bot.ActionStyleDanger:
 					element["style"] = "danger"
 				}
 

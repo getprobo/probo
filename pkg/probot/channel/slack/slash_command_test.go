@@ -61,7 +61,7 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	bindURL := "https://console.example.com/me/probot/bind?token=test"
+	bindURL := "https://console.example.com/organizations/org/employee/bind?token=test"
 
 	t.Run(
 		"returns an ephemeral bind link",

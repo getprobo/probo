@@ -28,6 +28,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 )
 
@@ -95,8 +96,10 @@ func (h *Handler) HandleSlashCommand(
 		return ephemeralSlashResponse(bindSlashUsageText, nil)
 	}
 
+	var organizationID gid.GID
 	if h.installations != nil {
-		if _, _, _, err := h.clientForTeam(ctx, cmd.TeamID); err != nil {
+		var err error
+		if _, organizationID, _, err = h.clientForTeam(ctx, cmd.TeamID); err != nil {
 			return ephemeralSlashResponse(bindSlashUnavailableText, nil)
 		}
 	}
@@ -114,7 +117,7 @@ func (h *Handler) HandleSlashCommand(
 		return ephemeralSlashResponse(bindSlashAlreadyLinkedText, nil)
 	}
 
-	bindURL, err := h.bindings.BindURL(ctx, subject)
+	bindURL, err := h.bindings.BindURL(ctx, subject, organizationID)
 	if err != nil {
 		return ephemeralSlashResponse(bindSlashFailedText, nil)
 	}

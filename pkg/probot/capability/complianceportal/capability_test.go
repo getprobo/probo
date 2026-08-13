@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/bot"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -39,14 +40,14 @@ import (
 
 type (
 	fakeAccessService struct {
-		message              messaging.Message
+		message              bot.Message
 		renderer             *portal.Renderer
 		documentIDs          []gid.GID
 		resolvedAccessID     gid.GID
 		lookupOrganizationID gid.GID
 		lookupAnchor         messaging.MessageAnchor
 		claimedKeys          map[string]struct{}
-		eventIntent          messaging.MessageIntent
+		eventIntent          bot.MessageIntent
 		claimCount           int
 		updateCount          int
 		updateErr            error
@@ -67,8 +68,8 @@ type (
 
 func (f *fakeAccessService) RenderMessage(
 	ctx context.Context,
-	message messaging.Message,
-) (messaging.MessageIntent, error) {
+	message bot.Message,
+) (bot.MessageIntent, error) {
 	return f.renderer.RenderMessage(ctx, message)
 }
 
@@ -85,11 +86,11 @@ func (f *fakeAccessService) GetInitialMessage(
 	_ context.Context,
 	organizationID gid.GID,
 	anchor messaging.MessageAnchor,
-) (*messaging.DeliveredMessage, error) {
+) (*bot.DeliveredMessage, error) {
 	f.lookupOrganizationID = organizationID
 	f.lookupAnchor = anchor
 
-	return &messaging.DeliveredMessage{Message: f.message}, nil
+	return &bot.DeliveredMessage{Message: f.message}, nil
 }
 
 func (f *fakeAccessService) GetMessageResourceIDs(
@@ -103,7 +104,7 @@ func (f *fakeAccessService) GetMessageResourceIDs(
 func (f *fakeAccessService) ResolveCompliancePortalAccessID(
 	context.Context,
 	coredata.Scoper,
-	messaging.Message,
+	bot.Message,
 ) (gid.GID, error) {
 	if f.resolvedAccessID != gid.Nil {
 		return f.resolvedAccessID, nil
@@ -247,7 +248,7 @@ func TestCapability_BuildsOutboundMessage(t *testing.T) {
 
 	tenantID := gid.NewTenantID()
 	notifications := &fakeAccessService{
-		eventIntent: messaging.MessageIntent{FallbackText: "New access request"},
+		eventIntent: bot.MessageIntent{FallbackText: "New access request"},
 	}
 	capability := NewCapability(notifications, &fakeVisitor{}, &fakeAuthorizer{})
 
@@ -271,7 +272,7 @@ func TestCapability_ButtonAndAgentUseSameCommand(t *testing.T) {
 
 	tenantID := gid.NewTenantID()
 	requesterEmail := mail.Addr("requester@example.com")
-	message := messaging.Message{
+	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Type:           portal.AccessMessageType,
@@ -360,7 +361,7 @@ func TestCapability_FailedActionCanRetry(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	message := messaging.Message{
+	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Type:           portal.AccessMessageType,
@@ -401,7 +402,7 @@ func TestCapability_RejectsEmptyApproveAll(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	message := messaging.Message{
+	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Type:           portal.AccessMessageType,
@@ -432,7 +433,7 @@ func TestCapability_ManageToolRequiresToolCallID(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	message := messaging.Message{
+	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Type:           portal.AccessMessageType,
@@ -492,7 +493,7 @@ func TestCapability_RenderMessageProducesChannelNeutralIntent(t *testing.T) {
 
 	intent, err := capability.RenderMessage(
 		context.Background(),
-		messaging.Message{
+		bot.Message{
 			ID:             messageID,
 			OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 			Type:           portal.AccessMessageType,
@@ -559,7 +560,7 @@ func TestCapability_RefreshesFromTrustedContextWithoutActor(t *testing.T) {
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	accessID := gid.New(tenantID, coredata.CompliancePortalAccessEntityType)
 	notifications := &fakeAccessService{
-		message: messaging.Message{
+		message: bot.Message{
 			ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 			OrganizationID: organizationID,
 			Type:           portal.AccessMessageType,
@@ -611,7 +612,7 @@ func TestCapability_RejectsUnauthorizedAgentAction(t *testing.T) {
 
 	tenantID := gid.NewTenantID()
 	requesterEmail := mail.Addr("requester@example.com")
-	message := messaging.Message{
+	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Type:           portal.AccessMessageType,

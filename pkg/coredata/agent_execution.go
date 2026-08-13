@@ -22,7 +22,6 @@ package coredata
 
 import (
 	"context"
-	"encoding"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,87 +34,40 @@ import (
 )
 
 type (
-	AgentExecutionKind string
-
 	// AgentExecution is the provider-neutral scheduling view of an agent_runs
-	// row. AgentRun remains the compatibility view used by the one-shot API.
+	// row. AgentRun remains the GraphQL list/approval view of the same row.
 	AgentExecution struct {
-		ID                    gid.GID            `db:"id"`
-		OrganizationID        gid.GID            `db:"organization_id"`
-		StartAgentName        string             `db:"start_agent_name"`
-		Status                AgentRunStatus     `db:"status"`
-		Checkpoint            json.RawMessage    `db:"checkpoint"`
-		InputMessages         json.RawMessage    `db:"input_messages"`
-		Result                json.RawMessage    `db:"result"`
-		ErrorMessage          *string            `db:"error_message"`
-		StartedAt             *time.Time         `db:"started_at"`
-		ExecutionKind         AgentExecutionKind `db:"execution_kind"`
-		Source                *string            `db:"source"`
-		SessionKey            *string            `db:"session_key"`
-		SourceCoordinates     json.RawMessage    `db:"source_coordinates"`
-		TrustedContext        json.RawMessage    `db:"trusted_context"`
-		SessionMessages       json.RawMessage    `db:"session_messages"`
-		ProcessingOwnerToken  *string            `db:"processing_owner_token"`
-		ProcessingHeartbeatAt *time.Time         `db:"processing_heartbeat_at"`
-		ProcessingInputIDs    []string           `db:"processing_input_ids"`
-		AttemptCount          int                `db:"attempt_count"`
-		MaxAttempts           int                `db:"max_attempts"`
-		NextAttemptAt         *time.Time         `db:"next_attempt_at"`
-		LastError             *string            `db:"last_error"`
-		DeadLetteredAt        *time.Time         `db:"dead_lettered_at"`
-		CreatedAt             time.Time          `db:"created_at"`
-		UpdatedAt             time.Time          `db:"updated_at"`
+		ID                    gid.GID         `db:"id"`
+		OrganizationID        gid.GID         `db:"organization_id"`
+		StartAgentName        string          `db:"start_agent_name"`
+		Status                AgentRunStatus  `db:"status"`
+		Checkpoint            json.RawMessage `db:"checkpoint"`
+		InputMessages         json.RawMessage `db:"input_messages"`
+		Result                json.RawMessage `db:"result"`
+		ErrorMessage          *string         `db:"error_message"`
+		StartedAt             *time.Time      `db:"started_at"`
+		Source                *string         `db:"source"`
+		SessionKey            *string         `db:"session_key"`
+		SourceCoordinates     json.RawMessage `db:"source_coordinates"`
+		TrustedContext        json.RawMessage `db:"trusted_context"`
+		SessionMessages       json.RawMessage `db:"session_messages"`
+		ProcessingOwnerToken  *string         `db:"processing_owner_token"`
+		ProcessingHeartbeatAt *time.Time      `db:"processing_heartbeat_at"`
+		ProcessingInputIDs    []string        `db:"processing_input_ids"`
+		AttemptCount          int             `db:"attempt_count"`
+		MaxAttempts           int             `db:"max_attempts"`
+		NextAttemptAt         *time.Time      `db:"next_attempt_at"`
+		LastError             *string         `db:"last_error"`
+		DeadLetteredAt        *time.Time      `db:"dead_lettered_at"`
+		CreatedAt             time.Time       `db:"created_at"`
+		UpdatedAt             time.Time       `db:"updated_at"`
 	}
 )
 
 const (
-	AgentExecutionKindOneShot        AgentExecutionKind = "ONE_SHOT"
-	AgentExecutionKindConversational AgentExecutionKind = "CONVERSATIONAL"
-
 	AgentExecutionDefaultMaxAttempts = 5
 	AgentExecutionStaleLeaseError    = "agent execution processing lease expired"
 )
-
-var (
-	_ fmt.Stringer             = AgentExecutionKind("")
-	_ encoding.TextMarshaler   = AgentExecutionKind("")
-	_ encoding.TextUnmarshaler = (*AgentExecutionKind)(nil)
-)
-
-func AgentExecutionKinds() []AgentExecutionKind {
-	return []AgentExecutionKind{
-		AgentExecutionKindOneShot,
-		AgentExecutionKindConversational,
-	}
-}
-
-func (v AgentExecutionKind) IsValid() bool {
-	switch v {
-	case AgentExecutionKindOneShot, AgentExecutionKindConversational:
-		return true
-	}
-
-	return false
-}
-
-func (v AgentExecutionKind) String() string {
-	return string(v)
-}
-
-func (v AgentExecutionKind) MarshalText() ([]byte, error) {
-	return []byte(v.String()), nil
-}
-
-func (v *AgentExecutionKind) UnmarshalText(text []byte) error {
-	val := AgentExecutionKind(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AgentExecutionKind value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
-}
 
 func (e *AgentExecution) UpsertConversationalBySourceSession(
 	ctx context.Context,
@@ -138,7 +90,6 @@ INSERT INTO agent_runs (
 	start_agent_name,
 	status,
 	input_messages,
-	execution_kind,
 	source,
 	session_key,
 	source_coordinates,
@@ -156,7 +107,6 @@ INSERT INTO agent_runs (
 	@start_agent_name,
 	@status,
 	@input_messages,
-	@execution_kind,
 	@source,
 	@session_key,
 	@source_coordinates,
@@ -185,7 +135,6 @@ RETURNING
 	result,
 	error_message,
 	started_at,
-	execution_kind,
 	source,
 	session_key,
 	source_coordinates,
@@ -223,7 +172,6 @@ RETURNING
 		"start_agent_name":     e.StartAgentName,
 		"status":               AgentRunStatusPending,
 		"input_messages":       e.InputMessages,
-		"execution_kind":       AgentExecutionKindConversational,
 		"source":               e.Source,
 		"session_key":          e.SessionKey,
 		"source_coordinates":   e.SourceCoordinates,
@@ -268,7 +216,6 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	execution_kind,
 	source,
 	session_key,
 	source_coordinates,
@@ -313,14 +260,12 @@ SET
 WHERE
 	%s
 	AND id = @id
-	AND execution_kind = @execution_kind
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
 		"id":                 e.ID,
 		"source_coordinates": coordinates,
 		"updated_at":         now,
-		"execution_kind":     AgentExecutionKindConversational,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -356,26 +301,20 @@ WITH candidate AS (
 		AND attempt_count < max_attempts
 		AND (next_attempt_at IS NULL OR next_attempt_at <= @now)
 		AND (
-			execution_kind = @one_shot_kind
-			OR (
-				execution_kind = @conversational_kind
-				AND (
-					checkpoint IS NOT NULL
-					OR cardinality(processing_input_ids) > 0
-					OR EXISTS (
-						SELECT 1
-						FROM agent_inputs
-						WHERE
-							agent_inputs.agent_run_id = agent_runs.id
-							AND agent_inputs.processed_at IS NULL
-							AND agent_inputs.dead_lettered_at IS NULL
-							AND agent_inputs.attempt_count < agent_inputs.max_attempts
-							AND (
-								agent_inputs.next_attempt_at IS NULL
-								OR agent_inputs.next_attempt_at <= @now
-							)
+			checkpoint IS NOT NULL
+			OR cardinality(processing_input_ids) > 0
+			OR EXISTS (
+				SELECT 1
+				FROM agent_inputs
+				WHERE
+					agent_inputs.agent_run_id = agent_runs.id
+					AND agent_inputs.processed_at IS NULL
+					AND agent_inputs.dead_lettered_at IS NULL
+					AND agent_inputs.attempt_count < agent_inputs.max_attempts
+					AND (
+						agent_inputs.next_attempt_at IS NULL
+						OR agent_inputs.next_attempt_at <= @now
 					)
-				)
 			)
 		)
 	ORDER BY updated_at ASC, id ASC
@@ -401,7 +340,6 @@ RETURNING
 	result,
 	error_message,
 	started_at,
-	execution_kind,
 	source,
 	session_key,
 	source_coordinates,
@@ -420,12 +358,10 @@ RETURNING
 `
 
 	args := pgx.StrictNamedArgs{
-		"one_shot_kind":       AgentExecutionKindOneShot,
-		"conversational_kind": AgentExecutionKindConversational,
-		"pending_status":      AgentRunStatusPending,
-		"running_status":      AgentRunStatusRunning,
-		"now":                 now,
-		"owner_token":         ownerToken,
+		"pending_status": AgentRunStatusPending,
+		"running_status": AgentRunStatusRunning,
+		"now":            now,
+		"owner_token":    ownerToken,
 	}
 
 	return e.loadExactlyOne(ctx, conn, q, args)
@@ -607,69 +543,6 @@ WHERE
 
 	e.ProcessingInputIDs = []string{}
 	e.ProcessingHeartbeatAt = &now
-	e.UpdatedAt = now
-
-	return nil
-}
-
-func (e *AgentExecution) CommitOneShotResult(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	ownerToken string,
-	now time.Time,
-) error {
-	q := `
-UPDATE agent_runs
-SET
-	status = @status,
-	checkpoint = CASE WHEN @clear_checkpoint THEN NULL ELSE checkpoint END,
-	result = @result,
-	error_message = @error_message,
-	started_at = NULL,
-	processing_owner_token = NULL,
-	processing_heartbeat_at = NULL,
-	attempt_count = 0,
-	next_attempt_at = NULL,
-	last_error = NULL,
-	updated_at = @now
-WHERE
-	%s
-	AND id = @id
-	AND processing_owner_token = @owner_token
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.StrictNamedArgs{
-		"id":               e.ID,
-		"status":           e.Status,
-		"clear_checkpoint": e.Status == AgentRunStatusCompleted,
-		"result":           e.Result,
-		"error_message":    e.ErrorMessage,
-		"owner_token":      ownerToken,
-		"now":              now,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	result, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot commit one-shot agent execution result: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
-
-	if e.Status == AgentRunStatusCompleted {
-		e.Checkpoint = nil
-	}
-
-	e.StartedAt = nil
-	e.ProcessingOwnerToken = nil
-	e.ProcessingHeartbeatAt = nil
-	e.AttemptCount = 0
-	e.NextAttemptAt = nil
-	e.LastError = nil
 	e.UpdatedAt = now
 
 	return nil
@@ -1031,8 +904,7 @@ WITH doomed AS (
 	SELECT id
 	FROM agent_runs
 	WHERE
-		execution_kind = @conversational_kind
-		AND processing_owner_token IS NULL
+		processing_owner_token IS NULL
 		AND checkpoint IS NULL
 		AND (
 			(dead_lettered_at IS NOT NULL AND dead_lettered_at < @dead_letter_before)
@@ -1060,10 +932,9 @@ WHERE id IN (SELECT id FROM doomed)
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"conversational_kind": AgentExecutionKindConversational,
-			"idle_before":         idleBefore,
-			"dead_letter_before":  deadLetterBefore,
-			"limit":               limit,
+			"idle_before":        idleBefore,
+			"dead_letter_before": deadLetterBefore,
+			"limit":              limit,
 		},
 	)
 	if err != nil {

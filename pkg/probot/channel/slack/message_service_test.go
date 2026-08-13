@@ -31,6 +31,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot"
@@ -264,12 +265,12 @@ func TestMessageService_QueueRoutesModernAndLegacy(t *testing.T) {
 						Capability:     "compliance_access",
 						MessageType:    "ACCESS_REQUEST",
 						Result: probot.OutboundMessage{
-							Message: probot.Message{
+							Message: bot.Message{
 								ID:             gid.New(scope.GetTenantID(), coredata.SlackbotMessageEntityType),
 								OrganizationID: organizationID,
 								Type:           "ACCESS_REQUEST",
 							},
-							Intent:         probot.MessageIntent{FallbackText: "hello"},
+							Intent:         bot.MessageIntent{FallbackText: "hello"},
 							DeliveryTarget: target,
 						},
 					},

@@ -62,9 +62,9 @@ func (c outboundTestCapability) MessageTypes() []string {
 
 func (c outboundTestCapability) RenderMessage(
 	context.Context,
-	Message,
-) (MessageIntent, error) {
-	return MessageIntent{FallbackText: c.name}, nil
+	bot.Message,
+) (bot.MessageIntent, error) {
+	return bot.MessageIntent{FallbackText: c.name}, nil
 }
 
 func (c outboundTestCapability) BuildOutboundMessage(
@@ -74,11 +74,11 @@ func (c outboundTestCapability) BuildOutboundMessage(
 	_ map[string]any,
 ) (OutboundMessage, error) {
 	return OutboundMessage{
-		Message: Message{
+		Message: bot.Message{
 			OrganizationID: organizationID,
 			Type:           messageType,
 		},
-		Intent: MessageIntent{FallbackText: "queued"},
+		Intent: bot.MessageIntent{FallbackText: "queued"},
 		DeliveryTarget: DeliveryTarget{
 			Namespace: "test-ns",
 			Key:       "test-key",

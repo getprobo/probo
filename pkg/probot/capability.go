@@ -29,6 +29,7 @@ import (
 	"sync"
 
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -46,7 +47,7 @@ type (
 		DeduplicationKey string
 		ResponseToken    string
 		ActorIdentityID  gid.GID
-		Message          Message
+		Message          bot.Message
 	}
 
 	ActionResult struct {
@@ -97,8 +98,8 @@ type (
 	}
 
 	OutboundMessage struct {
-		Message        Message
-		Intent         MessageIntent
+		Message        bot.Message
+		Intent         bot.MessageIntent
 		DeliveryTarget DeliveryTarget
 	}
 
@@ -113,7 +114,7 @@ type (
 
 	MessageCapability interface {
 		MessageTypeContributor
-		RenderMessage(ctx context.Context, message Message) (MessageIntent, error)
+		RenderMessage(ctx context.Context, message bot.Message) (bot.MessageIntent, error)
 	}
 
 	ActionCapability interface {
@@ -373,10 +374,10 @@ func (r *CapabilityRegistry) BuildOutboundMessage(
 
 func (r *CapabilityRegistry) RenderMessage(
 	ctx context.Context,
-	message Message,
-) (MessageIntent, error) {
+	message bot.Message,
+) (bot.MessageIntent, error) {
 	if r == nil || message.Type == "" {
-		return MessageIntent{}, ErrCapabilityNotFound
+		return bot.MessageIntent{}, ErrCapabilityNotFound
 	}
 
 	r.mu.RLock()
@@ -384,7 +385,7 @@ func (r *CapabilityRegistry) RenderMessage(
 	r.mu.RUnlock()
 
 	if !ok {
-		return MessageIntent{}, fmt.Errorf(
+		return bot.MessageIntent{}, fmt.Errorf(
 			"%w for message type %q",
 			ErrCapabilityNotFound,
 			message.Type,

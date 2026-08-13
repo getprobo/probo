@@ -27,6 +27,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot"
@@ -159,8 +160,8 @@ func (s *MessageService) DeliverVerification(
 	ctx context.Context,
 	organizationID gid.GID,
 	target probot.DeliveryTarget,
-	message probot.Message,
-	intent probot.MessageIntent,
+	message bot.Message,
+	intent bot.MessageIntent,
 ) error {
 	return s.queue(
 		ctx,

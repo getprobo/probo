@@ -106,7 +106,6 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 		),
 	)
 	assert.True(t, inserted)
-	assert.Equal(t, coredata.AgentExecutionKindConversational, execution.ExecutionKind)
 	assert.Equal(t, coredata.AgentExecutionDefaultMaxAttempts, execution.MaxAttempts)
 
 	duplicate := coredata.AgentExecution{

@@ -270,9 +270,5 @@ func loadAnchoredExecution(
 		return nil, fmt.Errorf("cannot load anchored Slack execution: %w", err)
 	}
 
-	if execution.ExecutionKind != coredata.AgentExecutionKindConversational {
-		return nil, fmt.Errorf("slack execution anchor points to a non-conversational execution")
-	}
-
 	return &execution, nil
 }

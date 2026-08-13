@@ -88,24 +88,24 @@ type (
 			ctx context.Context,
 			organizationID gid.GID,
 			anchor probot.MessageAnchor,
-		) (*probot.DeliveredMessage, error)
+		) (*bot.DeliveredMessage, error)
 		GetMessage(
 			ctx context.Context,
 			scope coredata.Scoper,
 			messageID gid.GID,
-		) (*probot.DeliveredMessage, error)
+		) (*bot.DeliveredMessage, error)
 		UpdateMessage(
 			ctx context.Context,
 			messageID gid.GID,
-			message probot.Message,
-			intent probot.MessageIntent,
+			message bot.Message,
+			intent bot.MessageIntent,
 		) error
 		DeliverVerification(
 			ctx context.Context,
 			organizationID gid.GID,
 			target probot.DeliveryTarget,
-			message probot.Message,
-			intent probot.MessageIntent,
+			message bot.Message,
+			intent bot.MessageIntent,
 		) error
 	}
 
@@ -133,8 +133,8 @@ func NewService(
 
 func (s *Service) RenderMessage(
 	ctx context.Context,
-	message probot.Message,
-) (probot.MessageIntent, error) {
+	message bot.Message,
+) (bot.MessageIntent, error) {
 	return s.renderer.RenderMessage(ctx, message)
 }
 
@@ -185,7 +185,7 @@ func (s *Service) GetInitialMessage(
 	ctx context.Context,
 	organizationID gid.GID,
 	anchor probot.MessageAnchor,
-) (*probot.DeliveredMessage, error) {
+) (*bot.DeliveredMessage, error) {
 	return s.delivery.GetInitialMessage(
 		ctx,
 		organizationID,
@@ -211,7 +211,7 @@ func (s *Service) GetMessageResourceIDs(
 func (s *Service) ResolveCompliancePortalAccessID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	message probot.Message,
+	message bot.Message,
 ) (gid.GID, error) {
 	if accessID, ok := gidFromMetadata(message.Attributes, "compliance_portal_access_id"); ok {
 		return accessID, nil
@@ -423,7 +423,7 @@ func (s *Service) QueueWelcome(
 		compliancePortal.EntityName,
 		accessURL,
 	)
-	message := probot.Message{
+	message := bot.Message{
 		OrganizationID: organizationID,
 		Type:           welcomeMessageType,
 		Attributes: map[string]any{
@@ -439,7 +439,7 @@ func (s *Service) QueueWelcome(
 			Key:       compliancePortalID.String(),
 		},
 		message,
-		probot.MessageIntent{FallbackText: text},
+		bot.MessageIntent{FallbackText: text},
 	)
 }
 
@@ -493,7 +493,7 @@ func (s *Service) loadAccessRequestState(
 	return state, nil
 }
 
-func (s *Service) accessRequestMessage(state *accessRequestState) probot.Message {
+func (s *Service) accessRequestMessage(state *accessRequestState) bot.Message {
 	attributes := messageMetadata{
 		CompliancePortalID:       state.Portal.ID,
 		CompliancePortalAccessID: state.Access.ID,
@@ -504,7 +504,7 @@ func (s *Service) accessRequestMessage(state *accessRequestState) probot.Message
 	attributes["requester_name"] = state.Identity.FullName
 	attributes["requester_email"] = state.Identity.EmailAddress.String()
 
-	return probot.Message{
+	return bot.Message{
 		OrganizationID: state.Portal.OrganizationID,
 		Type:           portal.AccessMessageType,
 		Attributes:     attributes,
@@ -521,7 +521,7 @@ func (m messageMetadata) toMap() map[string]any {
 	}
 }
 
-func requesterEmailFromMessage(message probot.Message) (mail.Addr, bool) {
+func requesterEmailFromMessage(message bot.Message) (mail.Addr, bool) {
 	raw, ok := message.Attributes["requester_email"].(string)
 	return mail.Addr(raw), ok && raw != ""
 }

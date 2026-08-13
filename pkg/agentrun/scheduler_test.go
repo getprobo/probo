@@ -58,13 +58,6 @@ func (p *recordingIdentityPreparer) Prepare(
 	return ctx, registry, nil
 }
 
-func userMessage(text string) llm.Message {
-	return llm.Message{
-		Role:  llm.RoleUser,
-		Parts: []llm.Part{llm.TextPart{Text: text}},
-	}
-}
-
 func TestScheduler_PreparesEachUserInputWithItsIdentity(t *testing.T) {
 	client := test.PGClient(t)
 	organizationID := insertTestOrganization(t, client)

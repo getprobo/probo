@@ -141,49 +141,13 @@ func (h *handler) Process(ctx context.Context, execution coredata.AgentExecution
 		)
 	}
 
-	preparedCtx := runCtx
-	registry := h.registry
-	var (
-		err    error
-		runErr error
+	runErr := h.processConversation(
+		runCtx,
+		ctx,
+		&execution,
+		ownerToken,
+		stopHeartbeat,
 	)
-
-	switch execution.ExecutionKind {
-	case coredata.AgentExecutionKindOneShot:
-		preparedCtx, registry, err = h.preparer.Prepare(runCtx, &execution, h.registry, nil)
-		if err != nil {
-			stopHeartbeat()
-
-			return h.handleFailure(ctx, &execution, nil, ownerToken, fmt.Errorf("cannot prepare agent execution: %w", err))
-		}
-
-		runErr = h.processOneShot(
-			preparedCtx,
-			ctx,
-			registry,
-			&execution,
-			ownerToken,
-			stopHeartbeat,
-		)
-	case coredata.AgentExecutionKindConversational:
-		runErr = h.processConversation(
-			runCtx,
-			ctx,
-			&execution,
-			ownerToken,
-			stopHeartbeat,
-		)
-	default:
-		stopHeartbeat()
-
-		return h.handleFailure(
-			ctx,
-			&execution,
-			nil,
-			ownerToken,
-			fmt.Errorf("unsupported agent execution kind %q", execution.ExecutionKind),
-		)
-	}
 
 	stopHeartbeat()
 
@@ -270,76 +234,6 @@ func (h *handler) maintainLease(
 			}
 		}
 	}
-}
-
-func (h *handler) processOneShot(
-	runCtx context.Context,
-	commitCtx context.Context,
-	registry agent.AgentRegistry,
-	execution *coredata.AgentExecution,
-	ownerToken string,
-	stopHeartbeat func(),
-) error {
-	checkpointer := &leaseCheckpointer{
-		pg:         h.pg,
-		execution:  execution,
-		ownerToken: ownerToken,
-	}
-
-	result, runErr := h.runAgent(runCtx, registry, execution, checkpointer, execution.InputMessages)
-
-	stopHeartbeat()
-
-	if cause := context.Cause(runCtx); cause != nil && !errors.Is(cause, agent.ErrSuspendForCheckpoint) {
-		return cause
-	}
-
-	execution.Result = nil
-	execution.ErrorMessage = nil
-
-	switch {
-	case runErr == nil:
-		execution.Status = coredata.AgentRunStatusCompleted
-
-		if result != nil {
-			data, err := json.Marshal(result)
-			if err != nil {
-				runErr = fmt.Errorf("cannot marshal agent run result: %w", err)
-			} else {
-				execution.Result = data
-			}
-		}
-	case isSuspended(runErr):
-		execution.Status = coredata.AgentRunStatusPending
-		runErr = nil
-	case isInterrupted(runErr):
-		execution.Status = coredata.AgentRunStatusAwaitingApproval
-		runErr = nil
-	}
-
-	if runErr != nil {
-		return h.handleFailure(commitCtx, execution, nil, ownerToken, runErr)
-	}
-
-	now := h.now()
-
-	err := h.pg.WithConn(
-		context.WithoutCancel(commitCtx),
-		func(ctx context.Context, conn pg.Querier) error {
-			return execution.CommitOneShotResult(
-				ctx,
-				conn,
-				coredata.NewScopeFromObjectID(execution.ID),
-				ownerToken,
-				now,
-			)
-		},
-	)
-	if err != nil {
-		return h.mapLeaseWriteError("cannot commit one-shot agent execution", err)
-	}
-
-	return nil
 }
 
 func (h *handler) processConversation(

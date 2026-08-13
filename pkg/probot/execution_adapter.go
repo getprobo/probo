@@ -114,10 +114,6 @@ func (r *ExecutionAdapterRegistry) Prepare(
 	registry agent.AgentRegistry,
 	input *coredata.AgentInput,
 ) (context.Context, agent.AgentRegistry, error) {
-	if execution.ExecutionKind == coredata.AgentExecutionKindOneShot {
-		return ctx, registry, nil
-	}
-
 	if execution.Source == nil || *execution.Source == "" {
 		return nil, nil, fmt.Errorf("%w: execution source is empty", ErrExecutionAdapterUnknown)
 	}

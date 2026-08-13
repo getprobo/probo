@@ -113,6 +113,7 @@ func (f *fakeExecutionBindings) Lookup(
 func (*fakeExecutionBindings) BindURL(
 	context.Context,
 	identitybinding.Subject,
+	gid.GID,
 ) (string, error) {
 	return "", nil
 }

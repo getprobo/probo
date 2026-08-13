@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -48,7 +49,7 @@ type (
 			organizationID gid.GID,
 			channelID string,
 			messageTS string,
-		) (*probot.DeliveredMessage, error)
+		) (*bot.DeliveredMessage, error)
 	}
 
 	interactiveCommandHandler struct {
@@ -292,7 +293,7 @@ func (h *interactiveCommandHandler) dispatch(
 		DeduplicationKey: hex.EncodeToString(command.RequestDigest),
 		ResponseToken:    payload.ResponseURL,
 		ActorIdentityID:  binding.IdentityID,
-		Message: probot.Message{
+		Message: bot.Message{
 			ID:             delivered.Message.ID,
 			OrganizationID: delivered.Message.OrganizationID,
 			Type:           delivered.Message.Type,

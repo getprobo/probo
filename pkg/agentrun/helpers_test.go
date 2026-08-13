@@ -295,6 +295,63 @@ func resetRunToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 	require.NoError(t, err)
 }
 
+func userMessage(text string) llm.Message {
+	return llm.Message{
+		Role:  llm.RoleUser,
+		Parts: []llm.Part{llm.TextPart{Text: text}},
+	}
+}
+
+func insertPendingTurn(
+	t *testing.T,
+	client *pg.Client,
+	agentName string,
+	prompt string,
+) (coredata.AgentRun, coredata.AgentInput) {
+	t.Helper()
+
+	orgID := insertTestOrganization(t, client)
+	execution := insertConversationalExecution(
+		t,
+		client,
+		orgID,
+		agentName,
+		"test",
+		t.Name(),
+		1,
+	)
+	input := enqueueAgentInput(t, client, execution, t.Name(), userMessage(prompt))
+
+	return loadAgentRun(t, client, execution.ID), input
+}
+
+func conversationSettled(client *pg.Client, executionID, inputID gid.GID) bool {
+	var input coredata.AgentInput
+
+	err := client.WithConn(
+		context.Background(),
+		func(ctx context.Context, conn pg.Querier) error {
+			return input.LoadByID(ctx, conn, coredata.NewNoScope(), inputID)
+		},
+	)
+	if err != nil || input.ProcessedAt == nil {
+		return false
+	}
+
+	var execution coredata.AgentExecution
+
+	err = client.WithConn(
+		context.Background(),
+		func(ctx context.Context, conn pg.Querier) error {
+			return execution.LoadByID(ctx, conn, coredata.NewNoScope(), executionID)
+		},
+	)
+
+	return err == nil &&
+		execution.Status == coredata.AgentRunStatusPending &&
+		execution.Checkpoint == nil
+}
+
 func insertConversationalExecution(
 	t *testing.T,
 	client *pg.Client,
@@ -466,10 +523,10 @@ func loadAgentInput(t *testing.T, client *pg.Client, id gid.GID) coredata.AgentI
 	return input
 }
 
-func overwriteRunInputMessagesRaw(
+func overwriteAgentInputMessageRaw(
 	t *testing.T,
 	client *pg.Client,
-	runID gid.GID,
+	inputID gid.GID,
 	rawJSON string,
 ) {
 	t.Helper()
@@ -479,11 +536,11 @@ func overwriteRunInputMessagesRaw(
 		func(ctx context.Context, conn pg.Querier) error {
 			_, err := conn.Exec(
 				ctx,
-				`UPDATE agent_runs
-				 SET input_messages = $2::jsonb,
+				`UPDATE agent_inputs
+				 SET message = $2::jsonb,
 				     updated_at = now()
 				 WHERE id = $1`,
-				runID.String(),
+				inputID.String(),
 				rawJSON,
 			)
 

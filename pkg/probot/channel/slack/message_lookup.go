@@ -26,6 +26,7 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot"
@@ -36,7 +37,7 @@ func (s *MessageService) GetInitialByChannelAndTS(
 	organizationID gid.GID,
 	channelID string,
 	messageTS string,
-) (*probot.DeliveredMessage, error) {
+) (*bot.DeliveredMessage, error) {
 	if organizationID != gid.Nil {
 		scope := coredata.NewScopeFromObjectID(organizationID)
 		if s.modern != nil {
@@ -100,7 +101,7 @@ func (s *MessageService) GetInitialMessage(
 	ctx context.Context,
 	organizationID gid.GID,
 	anchor probot.MessageAnchor,
-) (*probot.DeliveredMessage, error) {
+) (*bot.DeliveredMessage, error) {
 	return s.GetInitialByChannelAndTS(
 		ctx,
 		organizationID,
@@ -113,7 +114,7 @@ func (s *MessageService) GetMessage(
 	ctx context.Context,
 	scope coredata.Scoper,
 	messageID gid.GID,
-) (*probot.DeliveredMessage, error) {
+) (*bot.DeliveredMessage, error) {
 	switch messageID.EntityType() {
 	case coredata.SlackbotMessageEntityType:
 		message, err := s.modern.GetByID(ctx, scope, messageID)
@@ -135,8 +136,8 @@ func (s *MessageService) GetMessage(
 func (s *MessageService) UpdateMessage(
 	ctx context.Context,
 	messageID gid.GID,
-	message probot.Message,
-	intent probot.MessageIntent,
+	message bot.Message,
+	intent bot.MessageIntent,
 ) error {
 	scope := coredata.NewScopeFromObjectID(message.OrganizationID)
 	delivered, err := s.GetMessage(ctx, scope, messageID)
@@ -188,9 +189,9 @@ func (s *MessageService) UpdateMessage(
 	return nil
 }
 
-func modernMessage(message *coredata.SlackbotMessage) *probot.DeliveredMessage {
-	return &probot.DeliveredMessage{
-		Message: probot.Message{
+func modernMessage(message *coredata.SlackbotMessage) *bot.DeliveredMessage {
+	return &bot.DeliveredMessage{
+		Message: bot.Message{
 			ID:             message.ID,
 			OrganizationID: message.OrganizationID,
 			Type:           message.MessageType,
@@ -201,7 +202,7 @@ func modernMessage(message *coredata.SlackbotMessage) *probot.DeliveredMessage {
 	}
 }
 
-func legacyMessage(message *coredata.SlackMessage) *probot.DeliveredMessage {
+func legacyMessage(message *coredata.SlackMessage) *bot.DeliveredMessage {
 	attributes := cloneNotificationData(message.Metadata)
 	if message.RequesterEmail != nil {
 		attributes["requester_email"] = message.RequesterEmail.String()
@@ -212,8 +213,8 @@ func legacyMessage(message *coredata.SlackMessage) *probot.DeliveredMessage {
 		messageType = original
 	}
 
-	return &probot.DeliveredMessage{
-		Message: probot.Message{
+	return &bot.DeliveredMessage{
+		Message: bot.Message{
 			ID:             message.ID,
 			OrganizationID: message.OrganizationID,
 			Type:           messageType,

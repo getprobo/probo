@@ -415,7 +415,7 @@ func TestInstallationUninstall_RemovesIdentityBindings(t *testing.T) {
 		ExternalTenantID: otherTeamID,
 		ExternalUserID:   "U-keep",
 	}
-	token := issueUninstallBindToken(t, ctx, bindings, subject)
+	token := issueUninstallBindToken(t, ctx, bindings, subject, organization.ID)
 	_, err = bindings.Confirm(ctx, identityID, token)
 	require.NoError(t, err)
 
@@ -428,8 +428,15 @@ func TestInstallationUninstall_RemovesIdentityBindings(t *testing.T) {
 			ExternalTenantID: teamID,
 			ExternalUserID:   "U-pending",
 		},
+		organization.ID,
 	)
-	otherToken := issueUninstallBindToken(t, ctx, bindings, otherSubject)
+	otherToken := issueUninstallBindToken(
+		t,
+		ctx,
+		bindings,
+		otherSubject,
+		organization.ID,
+	)
 	otherBinding, err := bindings.Confirm(ctx, otherIdentityID, otherToken)
 	require.NoError(t, err)
 
@@ -543,10 +550,11 @@ func issueUninstallBindToken(
 	ctx context.Context,
 	service *identitybinding.Service,
 	subject identitybinding.Subject,
+	organizationID gid.GID,
 ) string {
 	t.Helper()
 
-	bindURL, err := service.BindURL(ctx, subject)
+	bindURL, err := service.BindURL(ctx, subject, organizationID)
 	require.NoError(t, err)
 	parsed, err := url.Parse(bindURL)
 	require.NoError(t, err)

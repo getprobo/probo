@@ -23,6 +23,7 @@ package complianceportal
 import (
 	"context"
 
+	"go.probo.inc/probo/pkg/bot"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -35,11 +36,11 @@ const capabilityName = portal.AccessCapability
 
 type (
 	accessService interface {
-		RenderMessage(ctx context.Context, message messaging.Message) (messaging.MessageIntent, error)
+		RenderMessage(ctx context.Context, message bot.Message) (bot.MessageIntent, error)
 		BuildOutboundMessage(ctx context.Context, organizationID gid.GID, messageType string, attributes map[string]any) (messaging.OutboundMessage, error)
-		GetInitialMessage(ctx context.Context, organizationID gid.GID, anchor messaging.MessageAnchor) (*messaging.DeliveredMessage, error)
+		GetInitialMessage(ctx context.Context, organizationID gid.GID, anchor messaging.MessageAnchor) (*bot.DeliveredMessage, error)
 		GetMessageResourceIDs(ctx context.Context, scope coredata.Scoper, messageID gid.GID) ([]gid.GID, []gid.GID, []gid.GID, error)
-		ResolveCompliancePortalAccessID(ctx context.Context, scope coredata.Scoper, message messaging.Message) (gid.GID, error)
+		ResolveCompliancePortalAccessID(ctx context.Context, scope coredata.Scoper, message bot.Message) (gid.GID, error)
 		ResolveCompliancePortalID(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, metadata map[string]any) (gid.GID, error)
 		UpdateAccessRequest(ctx context.Context, scope coredata.Scoper, messageID gid.GID, requesterEmail mail.Addr) error
 	}
@@ -87,8 +88,8 @@ func (c *Capability) Name() string {
 
 func (c *Capability) RenderMessage(
 	ctx context.Context,
-	message messaging.Message,
-) (messaging.MessageIntent, error) {
+	message bot.Message,
+) (bot.MessageIntent, error) {
 	return c.notifications.RenderMessage(ctx, message)
 }
 

@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -48,7 +49,7 @@ type (
 	}
 
 	fakeInteractiveMessageResolver struct {
-		message *probot.DeliveredMessage
+		message *bot.DeliveredMessage
 		err     error
 	}
 
@@ -72,6 +73,7 @@ func (f fakeInteractiveBindingGate) Lookup(
 func (fakeInteractiveBindingGate) BindURL(
 	context.Context,
 	identitybinding.Subject,
+	gid.GID,
 ) (string, error) {
 	return "", nil
 }
@@ -81,7 +83,7 @@ func (f fakeInteractiveMessageResolver) GetInitialByChannelAndTS(
 	gid.GID,
 	string,
 	string,
-) (*probot.DeliveredMessage, error) {
+) (*bot.DeliveredMessage, error) {
 	return f.message, f.err
 }
 
@@ -165,8 +167,8 @@ func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
 			},
 		},
 		messages: fakeInteractiveMessageResolver{
-			message: &probot.DeliveredMessage{
-				Message: probot.Message{
+			message: &bot.DeliveredMessage{
+				Message: bot.Message{
 					ID:             gid.New(tenantID, coredata.SlackbotMessageEntityType),
 					OrganizationID: organizationID,
 					Type:           "test-message",

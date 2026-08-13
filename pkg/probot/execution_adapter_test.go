@@ -60,8 +60,7 @@ func TestExecutionAdapterRegistry(t *testing.T) {
 	_, _, err := registry.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ExecutionKind: coredata.AgentExecutionKindConversational,
-			Source:        &source,
+			Source: &source,
 		},
 		nil,
 		nil,
@@ -73,8 +72,7 @@ func TestExecutionAdapterRegistry(t *testing.T) {
 	_, _, err = registry.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ExecutionKind: coredata.AgentExecutionKindConversational,
-			Source:        &unknown,
+			Source: &unknown,
 		},
 		nil,
 		nil,
@@ -82,19 +80,17 @@ func TestExecutionAdapterRegistry(t *testing.T) {
 	assert.ErrorIs(t, err, ErrExecutionAdapterUnknown)
 }
 
-func TestExecutionAdapterRegistryLeavesOneShotUnchanged(t *testing.T) {
+func TestExecutionAdapterRegistryRequiresSource(t *testing.T) {
 	t.Parallel()
 
 	registry := NewExecutionAdapterRegistry()
-	ctx, prepared, err := registry.Prepare(
+	_, _, err := registry.Prepare(
 		t.Context(),
-		&coredata.AgentExecution{ExecutionKind: coredata.AgentExecutionKindOneShot},
+		&coredata.AgentExecution{},
 		nil,
 		nil,
 	)
-	require.NoError(t, err)
-	assert.NotNil(t, ctx)
-	assert.Nil(t, prepared)
+	assert.ErrorIs(t, err, ErrExecutionAdapterUnknown)
 }
 
 func TestAgentProfileRegistry(t *testing.T) {
