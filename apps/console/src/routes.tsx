@@ -218,7 +218,8 @@ const routes = [
           },
           {
             Component: lazy(
-              () => import("./pages/organizations/employee/EmployeeTabsLayout"),
+              () =>
+                import("./pages/organizations/employee/EmployeeTabsLayoutLoader"),
             ),
             children: [
               {

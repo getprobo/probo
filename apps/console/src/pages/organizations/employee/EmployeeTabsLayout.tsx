@@ -20,10 +20,44 @@
 
 import { PageHeader, TabLink, Tabs } from "@probo/ui";
 import { useTranslation } from "react-i18next";
+import {
+  graphql,
+  type PreloadedQuery,
+  usePreloadedQuery,
+} from "react-relay";
 import { Outlet } from "react-router";
 
-export default function EmployeeTabsLayout() {
+import type { EmployeeTabsLayoutQuery } from "#/__generated__/core/EmployeeTabsLayoutQuery.graphql";
+
+export const employeeTabsLayoutQuery = graphql`
+  query EmployeeTabsLayoutQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        slackbotInstallation {
+          active
+        }
+      }
+    }
+  }
+`;
+
+interface EmployeeTabsLayoutProps {
+  queryRef: PreloadedQuery<EmployeeTabsLayoutQuery>;
+}
+
+export function EmployeeTabsLayout({ queryRef }: EmployeeTabsLayoutProps) {
   const { t } = useTranslation();
+  const data = usePreloadedQuery<EmployeeTabsLayoutQuery>(
+    employeeTabsLayoutQuery,
+    queryRef,
+  );
+
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("Relay node is not an organization");
+  }
+
+  const showSlackTab = data.organization.slackbotInstallation?.active === true;
 
   return (
     <div className="space-y-6">
@@ -38,9 +72,11 @@ export default function EmployeeTabsLayout() {
         <TabLink to="devices" end>
           {t("devices.title")}
         </TabLink>
-        <TabLink to="bindings" end>
-          {t("employeeTabsLayout.tabs.bindings", { defaultValue: "Slack" })}
-        </TabLink>
+        {showSlackTab && (
+          <TabLink to="bindings" end>
+            {t("employeeTabsLayout.tabs.bindings", { defaultValue: "Slack" })}
+          </TabLink>
+        )}
       </Tabs>
       <Outlet />
     </div>
