@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
@@ -38,7 +38,7 @@ func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
-		Register(agentrun.OAuth2ScopeMappings).
+		Register(agentexecution.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings)
 }
 

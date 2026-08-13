@@ -12,7 +12,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -1374,20 +1374,20 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 	return types.NewTaskConnection(page, r, obj.ID), nil
 }
 
-// AgentRuns is the resolver for the agentRuns field.
-func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AgentRunOrderBy) (*types.AgentRunConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, agentrun.ActionAgentRunList)
+// AgentExecutions is the resolver for the agentExecutions field.
+func (r *organizationResolver) AgentExecutions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AgentExecutionOrderBy) (*types.AgentExecutionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, agentexecution.ActionAgentExecutionList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AgentRunOrderField]{
-		Field:     coredata.AgentRunOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.AgentExecutionOrderField]{
+		Field:     coredata.AgentExecutionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AgentRunOrderField]{
+		pageOrderBy = page.OrderBy[coredata.AgentExecutionOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1395,13 +1395,13 @@ func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organiz
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.agentRun.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	page, err := r.agentExecution.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization agent runs", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list organization agent executions", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewAgentRunConnection(page, r, obj.ID), nil
+	return types.NewAgentExecutionConnection(page, r, obj.ID), nil
 }
 
 // CompliancePortals is the resolver for the compliancePortals field.

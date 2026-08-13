@@ -78,7 +78,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 	source := "provider"
 	sessionKey := "opaque-session"
 	execution := coredata.AgentExecution{
-		ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+		ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 		OrganizationID:    organizationID,
 		StartAgentName:    "assistant",
 		Source:            &source,
@@ -109,7 +109,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 	assert.Equal(t, coredata.AgentExecutionDefaultMaxAttempts, execution.MaxAttempts)
 
 	duplicate := coredata.AgentExecution{
-		ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+		ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 		OrganizationID:    organizationID,
 		StartAgentName:    "updated-assistant",
 		Source:            &source,
@@ -141,14 +141,14 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 
 	eventID := "event-1"
 	input := coredata.AgentInput{
-		ID:             gid.New(tenantID, coredata.AgentInputEntityType),
-		OrganizationID: organizationID,
-		AgentRunID:     execution.ID,
-		Source:         source,
-		SourceEventID:  &eventID,
-		Message:        []byte(`{"role":"user","text":"hello"}`),
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:               gid.New(tenantID, coredata.AgentInputEntityType),
+		OrganizationID:   organizationID,
+		AgentExecutionID: execution.ID,
+		Source:           source,
+		SourceEventID:    &eventID,
+		Message:          []byte(`{"role":"user","text":"hello"}`),
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}
 
 	require.NoError(
@@ -167,14 +167,14 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 	assert.True(t, inserted)
 
 	duplicateInput := coredata.AgentInput{
-		ID:             gid.New(tenantID, coredata.AgentInputEntityType),
-		OrganizationID: organizationID,
-		AgentRunID:     execution.ID,
-		Source:         source,
-		SourceEventID:  &eventID,
-		Message:        []byte(`{"role":"user","text":"duplicate"}`),
-		CreatedAt:      now.Add(time.Second),
-		UpdatedAt:      now.Add(time.Second),
+		ID:               gid.New(tenantID, coredata.AgentInputEntityType),
+		OrganizationID:   organizationID,
+		AgentExecutionID: execution.ID,
+		Source:           source,
+		SourceEventID:    &eventID,
+		Message:          []byte(`{"role":"user","text":"duplicate"}`),
+		CreatedAt:        now.Add(time.Second),
+		UpdatedAt:        now.Add(time.Second),
 	}
 
 	require.NoError(
@@ -208,7 +208,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 		),
 	)
 	assert.Equal(t, execution.ID, claimed.ID)
-	assert.Equal(t, coredata.AgentRunStatusRunning, claimed.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusRunning, claimed.Status)
 	assert.Equal(t, 1, claimed.AttemptCount)
 	require.NotNil(t, claimed.ProcessingOwnerToken)
 	assert.Equal(t, ownerToken, *claimed.ProcessingOwnerToken)
@@ -220,7 +220,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 		client.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
-				return pending.LoadPendingByAgentRunID(
+				return pending.LoadPendingByAgentExecutionID(
 					ctx,
 					conn,
 					scope,
@@ -281,20 +281,20 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 			},
 		),
 	)
-	assert.Equal(t, coredata.AgentRunStatusPending, persistedExecution.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, persistedExecution.Status)
 	assert.Nil(t, persistedExecution.ProcessingOwnerToken)
 	assert.Equal(t, 0, persistedExecution.AttemptCount)
 
 	secondEventID := "event-2"
 	secondInput := coredata.AgentInput{
-		ID:             gid.New(tenantID, coredata.AgentInputEntityType),
-		OrganizationID: organizationID,
-		AgentRunID:     execution.ID,
-		Source:         source,
-		SourceEventID:  &secondEventID,
-		Message:        []byte(`{"role":"user","text":"again"}`),
-		CreatedAt:      now.Add(4 * time.Second),
-		UpdatedAt:      now.Add(4 * time.Second),
+		ID:               gid.New(tenantID, coredata.AgentInputEntityType),
+		OrganizationID:   organizationID,
+		AgentExecutionID: execution.ID,
+		Source:           source,
+		SourceEventID:    &secondEventID,
+		Message:          []byte(`{"role":"user","text":"again"}`),
+		CreatedAt:        now.Add(4 * time.Second),
+		UpdatedAt:        now.Add(4 * time.Second),
 	}
 
 	require.NoError(
@@ -348,7 +348,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 			},
 		),
 	)
-	assert.Equal(t, coredata.AgentRunStatusPending, persistedExecution.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, persistedExecution.Status)
 	assert.Nil(t, persistedExecution.ProcessingOwnerToken)
 	require.NotNil(t, persistedExecution.LastError)
 	assert.Equal(t, "agent execution processing lease expired", *persistedExecution.LastError)
@@ -357,19 +357,19 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 func TestAgentInput_NullSourceEventIDsRemainDistinct(t *testing.T) {
 	ctx := t.Context()
 	client := test.PGClient(t)
-	run := insertPendingRun(t, client, "test-agent", nil)
+	run := insertPendingExecution(t, client, "test-agent", nil)
 	scope := coredata.NewScope(run.ID.TenantID())
 	now := time.Now().UTC()
 
 	for range 2 {
 		input := coredata.AgentInput{
-			ID:             gid.New(run.ID.TenantID(), coredata.AgentInputEntityType),
-			OrganizationID: run.OrganizationID,
-			AgentRunID:     run.ID,
-			Source:         "manual",
-			Message:        []byte(`{"role":"user","text":"hello"}`),
-			CreatedAt:      now,
-			UpdatedAt:      now,
+			ID:               gid.New(run.ID.TenantID(), coredata.AgentInputEntityType),
+			OrganizationID:   run.OrganizationID,
+			AgentExecutionID: run.ID,
+			Source:           "manual",
+			Message:          []byte(`{"role":"user","text":"hello"}`),
+			CreatedAt:        now,
+			UpdatedAt:        now,
 		}
 
 		var inserted bool

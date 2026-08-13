@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun_test
+package agentexecution_test
 
 import (
 	"context"
@@ -32,7 +32,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
@@ -101,8 +101,8 @@ func TestScheduler_PreparesEachUserInputWithItsIdentity(t *testing.T) {
 	runWorker := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"conversation-agent": ag}},
-		agentrun.WithWorkerInterval(20*time.Millisecond),
-		agentrun.WithExecutionPreparer(preparer),
+		agentexecution.WithWorkerInterval(20*time.Millisecond),
+		agentexecution.WithExecutionPreparer(preparer),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -154,7 +154,7 @@ func TestScheduler_ConversationalTurnsProcessOneInputAtATime(t *testing.T) {
 	runWorker := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"conversation-agent": ag}},
-		agentrun.WithWorkerInterval(20*time.Millisecond),
+		agentexecution.WithWorkerInterval(20*time.Millisecond),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -178,7 +178,7 @@ func TestScheduler_ConversationalTurnsProcessOneInputAtATime(t *testing.T) {
 	)
 
 	persisted := loadAgentExecution(t, client, execution.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, persisted.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, persisted.Status)
 	assert.Nil(t, persisted.Result, "conversational final messages must not enter the API result field")
 	assert.Nil(t, persisted.Checkpoint)
 	assert.Empty(t, persisted.ProcessingInputIDs)
@@ -236,9 +236,9 @@ func TestScheduler_HeartbeatPreventsStaleRecovery(t *testing.T) {
 	runWorker := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"heartbeat-agent": ag}},
-		agentrun.WithWorkerInterval(20*time.Millisecond),
-		agentrun.WithWorkerHeartbeatInterval(20*time.Millisecond),
-		agentrun.WithWorkerStaleAfter(100*time.Millisecond),
+		agentexecution.WithWorkerInterval(20*time.Millisecond),
+		agentexecution.WithWorkerHeartbeatInterval(20*time.Millisecond),
+		agentexecution.WithWorkerStaleAfter(100*time.Millisecond),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -269,7 +269,7 @@ func TestScheduler_HeartbeatPreventsStaleRecovery(t *testing.T) {
 	)
 
 	running := loadAgentExecution(t, client, execution.ID)
-	assert.Equal(t, coredata.AgentRunStatusRunning, running.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusRunning, running.Status)
 	assert.NotNil(t, running.ProcessingOwnerToken)
 
 	close(toolRelease)
@@ -300,8 +300,8 @@ func TestScheduler_ConversationalFailuresRetryThenDeadLetter(t *testing.T) {
 	runWorker := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{}},
-		agentrun.WithWorkerInterval(10*time.Millisecond),
-		agentrun.WithWorkerRetryBackoff(20*time.Millisecond, 20*time.Millisecond),
+		agentexecution.WithWorkerInterval(10*time.Millisecond),
+		agentexecution.WithWorkerRetryBackoff(20*time.Millisecond, 20*time.Millisecond),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -320,7 +320,7 @@ func TestScheduler_ConversationalFailuresRetryThenDeadLetter(t *testing.T) {
 
 	failedExecution := loadAgentExecution(t, client, execution.ID)
 	failedInput := loadAgentInput(t, client, input.ID)
-	assert.Equal(t, coredata.AgentRunStatusFailed, failedExecution.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusFailed, failedExecution.Status)
 	assert.Equal(t, 2, failedExecution.AttemptCount)
 	assert.NotNil(t, failedExecution.LastError)
 	assert.NotNil(t, failedInput.DeadLetteredAt)
@@ -362,7 +362,7 @@ func TestScheduler_StaleProcessingInputIDsFallThroughToPendingInput(t *testing.T
 
 				_, err := conn.Exec(
 					ctx,
-					`UPDATE agent_runs
+					`UPDATE agent_executions
 					 SET processing_input_ids = ARRAY[$2]::text[],
 					     status = 'PENDING',
 					     processing_owner_token = NULL,
@@ -388,7 +388,7 @@ func TestScheduler_StaleProcessingInputIDsFallThroughToPendingInput(t *testing.T
 	runWorker := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"conversation-agent": ag}},
-		agentrun.WithWorkerInterval(20*time.Millisecond),
+		agentexecution.WithWorkerInterval(20*time.Millisecond),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -405,7 +405,7 @@ func TestScheduler_StaleProcessingInputIDsFallThroughToPendingInput(t *testing.T
 	)
 
 	assert.NotNil(t, loadAgentInput(t, client, staleInput.ID).ProcessedAt)
-	assert.NotEqual(t, coredata.AgentRunStatusFailed, loadAgentExecution(t, client, execution.ID).Status)
+	assert.NotEqual(t, coredata.AgentExecutionStatusFailed, loadAgentExecution(t, client, execution.ID).Status)
 }
 
 func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
@@ -455,8 +455,8 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 	firstWorker := newTestWorker(
 		client,
 		registry,
-		agentrun.WithWorkerInterval(20*time.Millisecond),
-		agentrun.WithWorkerHeartbeatInterval(20*time.Millisecond),
+		agentexecution.WithWorkerInterval(20*time.Millisecond),
+		agentexecution.WithWorkerHeartbeatInterval(20*time.Millisecond),
 	)
 
 	firstCtx, stopFirst := context.WithCancel(context.Background())
@@ -484,7 +484,7 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 		func() bool {
 			persisted := loadAgentExecution(t, client, execution.ID)
 
-			return persisted.Status == coredata.AgentRunStatusPending &&
+			return persisted.Status == coredata.AgentExecutionStatusPending &&
 				persisted.Checkpoint != nil &&
 				persisted.ProcessingOwnerToken == nil
 		},
@@ -496,7 +496,7 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 	secondWorker := newTestWorker(
 		client,
 		registry,
-		agentrun.WithWorkerInterval(20*time.Millisecond),
+		agentexecution.WithWorkerInterval(20*time.Millisecond),
 	)
 
 	secondCtx, stopSecond := context.WithTimeout(context.Background(), 10*time.Second)
@@ -515,5 +515,5 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 
 	persisted := loadAgentExecution(t, client, execution.ID)
 	assert.Nil(t, persisted.Checkpoint)
-	assert.Equal(t, coredata.AgentRunStatusPending, persisted.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, persisted.Status)
 }

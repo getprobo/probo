@@ -307,7 +307,7 @@ func TestNotificationService_QueueIsIdempotentBySourceEvent(t *testing.T) {
 	fixture := newNotificationFixture(t)
 	sourceEventID := gid.New(
 		fixture.scope.GetTenantID(),
-		coredata.AgentRunEntityType,
+		coredata.AgentExecutionEntityType,
 	).String()
 	req := slackchannel.QueueNotificationRequest{
 		OrganizationID: fixture.organizationID,
@@ -450,7 +450,7 @@ func TestNotificationService_QueueReloadsOnSourceEventRace(t *testing.T) {
 	fixture := newNotificationFixture(t)
 	sourceEventID := gid.New(
 		fixture.scope.GetTenantID(),
-		coredata.AgentRunEntityType,
+		coredata.AgentExecutionEntityType,
 	).String()
 
 	var (

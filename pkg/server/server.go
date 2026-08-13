@@ -29,7 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/apps/console"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/complianceportal/management"
@@ -74,7 +74,7 @@ type Config struct {
 	Management              *management.Service
 	CertManager             *certmanager.Service
 	AccessReview            *accessreview.Service
-	AgentRun                *agentrun.Service
+	AgentExecution          *agentexecution.Service
 	Slack                   *slack.Service
 	BotDeliveryDestinations api.BotDeliveryDestinations
 	ComplianceMessages      api.ComplianceMessages
@@ -125,7 +125,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Management:              cfg.Management,
 		CertManager:             cfg.CertManager,
 		AccessReview:            cfg.AccessReview,
-		AgentRun:                cfg.AgentRun,
+		AgentExecution:          cfg.AgentExecution,
 		Slack:                   cfg.Slack,
 		BotDeliveryDestinations: cfg.BotDeliveryDestinations,
 		ComplianceMessages:      cfg.ComplianceMessages,

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution
 
 import (
 	"go.probo.inc/probo/pkg/iam"
@@ -27,31 +27,31 @@ import (
 
 var organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
 
-// FullAccessPolicy grants complete agent-run access, including approval
+// FullAccessPolicy grants complete agent-execution access, including approval
 // decisions, to organization owners and admins.
 var FullAccessPolicy = policy.NewPolicy(
-	"agentrun:full-access",
-	"Agent Run Full Access",
+	"agentexecution:full-access",
+	"Agent Execution Full Access",
 	policy.Allow(
-		ActionAgentRunGet,
-		ActionAgentRunList,
-		ActionAgentRunApprove,
-	).WithSID("agent-run-full-access").When(organizationCondition),
-).WithDescription("Full agent-run access including approval decisions")
+		ActionAgentExecutionGet,
+		ActionAgentExecutionList,
+		ActionAgentExecutionApprove,
+	).WithSID("agent-execution-full-access").When(organizationCondition),
+).WithDescription("Full agent-execution access including approval decisions")
 
-// ReadAccessPolicy grants read-only agent-run access to viewers and auditors.
+// ReadAccessPolicy grants read-only agent-execution access to viewers and auditors.
 var ReadAccessPolicy = policy.NewPolicy(
-	"agentrun:read-access",
-	"Agent Run Read Access",
+	"agentexecution:read-access",
+	"Agent Execution Read Access",
 	policy.Allow(
-		ActionAgentRunGet,
-		ActionAgentRunList,
-	).WithSID("agent-run-read-access").When(organizationCondition),
-).WithDescription("Read-only agent-run access")
+		ActionAgentExecutionGet,
+		ActionAgentExecutionList,
+	).WithSID("agent-execution-read-access").When(organizationCondition),
+).WithDescription("Read-only agent-execution access")
 
-// PolicySet returns the PolicySet for the agent-run service. It is owned by
+// PolicySet returns the PolicySet for the agent-execution service. It is owned by
 // this package and registered into the authorizer at composition time so the
-// agent-run authorization rules live alongside the agent-run domain logic
+// agent-execution authorization rules live alongside the agent-execution domain logic
 // instead of in the core probo policy set.
 func PolicySet() *iam.PolicySet {
 	return iam.NewPolicySet().

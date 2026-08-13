@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution
 
 import (
 	"context"
@@ -310,9 +310,9 @@ func (h *handler) processConversation(
 	}
 
 	if isSuspended(runErr) || isInterrupted(runErr) {
-		status := coredata.AgentRunStatusPending
+		status := coredata.AgentExecutionStatusPending
 		if isInterrupted(runErr) {
-			status = coredata.AgentRunStatusAwaitingApproval
+			status = coredata.AgentExecutionStatusAwaitingApproval
 		}
 
 		return h.releaseResting(commitCtx, execution, ownerToken, status)
@@ -435,7 +435,7 @@ func (h *handler) loadConversationInputs(
 				}
 			}
 
-			if err := inputs.LoadPendingByAgentRunID(
+			if err := inputs.LoadPendingByAgentExecutionID(
 				ctx,
 				tx,
 				scope,
@@ -559,7 +559,7 @@ func (h *handler) releaseResting(
 	ctx context.Context,
 	execution *coredata.AgentExecution,
 	ownerToken string,
-	status coredata.AgentRunStatus,
+	status coredata.AgentExecutionStatus,
 ) error {
 	now := h.now()
 

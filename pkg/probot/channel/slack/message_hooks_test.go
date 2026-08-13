@@ -52,7 +52,7 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 	sessionKey := "hook-session-" + organizationID.String()
 	now := time.Now().UTC()
 	execution := coredata.AgentExecution{
-		ID:                gid.New(scope.GetTenantID(), coredata.AgentRunEntityType),
+		ID:                gid.New(scope.GetTenantID(), coredata.AgentExecutionEntityType),
 		OrganizationID:    organizationID,
 		StartAgentName:    "assistant",
 		Source:            &source,
@@ -146,7 +146,7 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 			},
 		),
 	)
-	assert.Equal(t, execution.ID, anchor.AgentRunID)
+	assert.Equal(t, execution.ID, anchor.AgentExecutionID)
 
 	var destination coredata.BotDeliveryDestination
 	require.NoError(

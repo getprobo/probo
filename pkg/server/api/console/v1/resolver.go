@@ -34,7 +34,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/complianceportal/management"
@@ -85,7 +85,7 @@ type (
 		management              *management.Service
 		certManager             *certmanager.Service
 		accessReview            *accessreview.Service
-		agentRun                *agentrun.Service
+		agentExecution          *agentexecution.Service
 		mailman                 *mailman.Service
 		cookieBanner            *cookiebanner.Service
 		connectorRegistry       *connector.ConnectorRegistry
@@ -114,7 +114,7 @@ func NewMux(
 	managementSvc *management.Service,
 	certManagerSvc *certmanager.Service,
 	accessReviewSvc *accessreview.Service,
-	agentRunSvc *agentrun.Service,
+	agentExecutionSvc *agentexecution.Service,
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	cookieConfig securecookie.Config,
@@ -145,7 +145,7 @@ func NewMux(
 		managementSvc,
 		certManagerSvc,
 		accessReviewSvc,
-		agentRunSvc,
+		agentExecutionSvc,
 		mailmanSvc,
 		cookieBannerSvc,
 		connectorRegistry,

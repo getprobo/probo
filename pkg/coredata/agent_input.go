@@ -38,22 +38,22 @@ type (
 	AgentInputPurpose string
 
 	AgentInput struct {
-		ID             gid.GID           `db:"id"`
-		OrganizationID gid.GID           `db:"organization_id"`
-		AgentRunID     gid.GID           `db:"agent_run_id"`
-		Source         string            `db:"source"`
-		SourceEventID  *string           `db:"source_event_id"`
-		Purpose        AgentInputPurpose `db:"purpose"`
-		IdentityID     *gid.GID          `db:"identity_id"`
-		Message        json.RawMessage   `db:"message"`
-		ProcessedAt    *time.Time        `db:"processed_at"`
-		AttemptCount   int               `db:"attempt_count"`
-		MaxAttempts    int               `db:"max_attempts"`
-		NextAttemptAt  *time.Time        `db:"next_attempt_at"`
-		LastError      *string           `db:"last_error"`
-		DeadLetteredAt *time.Time        `db:"dead_lettered_at"`
-		CreatedAt      time.Time         `db:"created_at"`
-		UpdatedAt      time.Time         `db:"updated_at"`
+		ID               gid.GID           `db:"id"`
+		OrganizationID   gid.GID           `db:"organization_id"`
+		AgentExecutionID gid.GID           `db:"agent_execution_id"`
+		Source           string            `db:"source"`
+		SourceEventID    *string           `db:"source_event_id"`
+		Purpose          AgentInputPurpose `db:"purpose"`
+		IdentityID       *gid.GID          `db:"identity_id"`
+		Message          json.RawMessage   `db:"message"`
+		ProcessedAt      *time.Time        `db:"processed_at"`
+		AttemptCount     int               `db:"attempt_count"`
+		MaxAttempts      int               `db:"max_attempts"`
+		NextAttemptAt    *time.Time        `db:"next_attempt_at"`
+		LastError        *string           `db:"last_error"`
+		DeadLetteredAt   *time.Time        `db:"dead_lettered_at"`
+		CreatedAt        time.Time         `db:"created_at"`
+		UpdatedAt        time.Time         `db:"updated_at"`
 	}
 
 	AgentInputs []*AgentInput
@@ -115,7 +115,7 @@ INSERT INTO agent_inputs (
 	id,
 	tenant_id,
 	organization_id,
-	agent_run_id,
+	agent_execution_id,
 	source,
 	source_event_id,
 	purpose,
@@ -133,7 +133,7 @@ INSERT INTO agent_inputs (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@agent_run_id,
+	@agent_execution_id,
 	@source,
 	@source_event_id,
 	@purpose,
@@ -147,11 +147,11 @@ INSERT INTO agent_inputs (
 	@dead_lettered_at,
 	@created_at,
 	@updated_at
-FROM agent_runs
+FROM agent_executions
 WHERE
-	agent_runs.id = @agent_run_id
-	AND agent_runs.tenant_id = @tenant_id
-	AND agent_runs.organization_id = @organization_id
+	agent_executions.id = @agent_execution_id
+	AND agent_executions.tenant_id = @tenant_id
+	AND agent_executions.organization_id = @organization_id
 ON CONFLICT (tenant_id, organization_id, source, source_event_id)
 	WHERE source_event_id IS NOT NULL
 DO UPDATE SET
@@ -159,7 +159,7 @@ DO UPDATE SET
 RETURNING
 	id,
 	organization_id,
-	agent_run_id,
+	agent_execution_id,
 	source,
 	source_event_id,
 	purpose,
@@ -189,23 +189,23 @@ RETURNING
 
 	originalID := i.ID
 	args := pgx.StrictNamedArgs{
-		"id":               i.ID,
-		"tenant_id":        scope.GetTenantID(),
-		"organization_id":  i.OrganizationID,
-		"agent_run_id":     i.AgentRunID,
-		"source":           i.Source,
-		"source_event_id":  i.SourceEventID,
-		"purpose":          i.Purpose,
-		"identity_id":      i.IdentityID,
-		"message":          i.Message,
-		"processed_at":     i.ProcessedAt,
-		"attempt_count":    i.AttemptCount,
-		"max_attempts":     i.MaxAttempts,
-		"next_attempt_at":  i.NextAttemptAt,
-		"last_error":       i.LastError,
-		"dead_lettered_at": i.DeadLetteredAt,
-		"created_at":       i.CreatedAt,
-		"updated_at":       i.UpdatedAt,
+		"id":                 i.ID,
+		"tenant_id":          scope.GetTenantID(),
+		"organization_id":    i.OrganizationID,
+		"agent_execution_id": i.AgentExecutionID,
+		"source":             i.Source,
+		"source_event_id":    i.SourceEventID,
+		"purpose":            i.Purpose,
+		"identity_id":        i.IdentityID,
+		"message":            i.Message,
+		"processed_at":       i.ProcessedAt,
+		"attempt_count":      i.AttemptCount,
+		"max_attempts":       i.MaxAttempts,
+		"next_attempt_at":    i.NextAttemptAt,
+		"last_error":         i.LastError,
+		"dead_lettered_at":   i.DeadLetteredAt,
+		"created_at":         i.CreatedAt,
+		"updated_at":         i.UpdatedAt,
 	}
 
 	rows, err := conn.Query(ctx, q, args)
@@ -237,7 +237,7 @@ func (i *AgentInput) LoadByID(
 SELECT
 	id,
 	organization_id,
-	agent_run_id,
+	agent_execution_id,
 	source,
 	source_event_id,
 	purpose,
@@ -316,11 +316,11 @@ SELECT EXISTS (
 	return exists, nil
 }
 
-func (is *AgentInputs) LoadPendingByAgentRunID(
+func (is *AgentInputs) LoadPendingByAgentExecutionID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	agentRunID gid.GID,
+	agentExecutionID gid.GID,
 	ownerToken string,
 	now time.Time,
 	limit int,
@@ -329,7 +329,7 @@ func (is *AgentInputs) LoadPendingByAgentRunID(
 SELECT
 	id,
 	organization_id,
-	agent_run_id,
+	agent_execution_id,
 	source,
 	source_event_id,
 	purpose,
@@ -346,17 +346,17 @@ SELECT
 FROM agent_inputs
 WHERE
 	%s
-	AND agent_run_id = @agent_run_id
+	AND agent_execution_id = @agent_execution_id
 	AND processed_at IS NULL
 	AND dead_lettered_at IS NULL
 	AND attempt_count < max_attempts
 	AND (next_attempt_at IS NULL OR next_attempt_at <= @now)
 	AND EXISTS (
 		SELECT 1
-		FROM agent_runs
+		FROM agent_executions
 		WHERE
-			agent_runs.id = agent_inputs.agent_run_id
-			AND agent_runs.processing_owner_token = @owner_token
+			agent_executions.id = agent_inputs.agent_execution_id
+			AND agent_executions.processing_owner_token = @owner_token
 	)
 ORDER BY created_at ASC, id ASC
 LIMIT @limit
@@ -364,10 +364,10 @@ LIMIT @limit
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
-		"agent_run_id": agentRunID,
-		"owner_token":  ownerToken,
-		"now":          now,
-		"limit":        limit,
+		"agent_execution_id": agentExecutionID,
+		"owner_token":        ownerToken,
+		"now":                now,
+		"limit":              limit,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -390,7 +390,7 @@ func (is *AgentInputs) LoadPendingByIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	agentRunID gid.GID,
+	agentExecutionID gid.GID,
 	ownerToken string,
 	inputIDs []string,
 	limit int,
@@ -399,7 +399,7 @@ func (is *AgentInputs) LoadPendingByIDs(
 SELECT
 	id,
 	organization_id,
-	agent_run_id,
+	agent_execution_id,
 	source,
 	source_event_id,
 	purpose,
@@ -416,16 +416,16 @@ SELECT
 FROM agent_inputs
 WHERE
 	%s
-	AND agent_run_id = @agent_run_id
+	AND agent_execution_id = @agent_execution_id
 	AND id = ANY(@input_ids::text[])
 	AND processed_at IS NULL
 	AND dead_lettered_at IS NULL
 	AND EXISTS (
 		SELECT 1
-		FROM agent_runs
+		FROM agent_executions
 		WHERE
-			agent_runs.id = agent_inputs.agent_run_id
-			AND agent_runs.processing_owner_token = @owner_token
+			agent_executions.id = agent_inputs.agent_execution_id
+			AND agent_executions.processing_owner_token = @owner_token
 	)
 ORDER BY created_at ASC, id ASC
 LIMIT @limit
@@ -433,10 +433,10 @@ LIMIT @limit
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
-		"agent_run_id": agentRunID,
-		"owner_token":  ownerToken,
-		"input_ids":    inputIDs,
-		"limit":        limit,
+		"agent_execution_id": agentExecutionID,
+		"owner_token":        ownerToken,
+		"input_ids":          inputIDs,
+		"limit":              limit,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -476,10 +476,10 @@ WHERE
 	AND dead_lettered_at IS NULL
 	AND EXISTS (
 		SELECT 1
-		FROM agent_runs
+		FROM agent_executions
 		WHERE
-			agent_runs.id = agent_inputs.agent_run_id
-			AND agent_runs.processing_owner_token = @owner_token
+			agent_executions.id = agent_inputs.agent_execution_id
+			AND agent_executions.processing_owner_token = @owner_token
 	)
 `
 
@@ -532,10 +532,10 @@ WHERE
 	AND attempt_count + 1 < max_attempts
 	AND EXISTS (
 		SELECT 1
-		FROM agent_runs
+		FROM agent_executions
 		WHERE
-			agent_runs.id = agent_inputs.agent_run_id
-			AND agent_runs.processing_owner_token = @owner_token
+			agent_executions.id = agent_inputs.agent_execution_id
+			AND agent_executions.processing_owner_token = @owner_token
 	)
 `
 
@@ -589,10 +589,10 @@ WHERE
 	AND dead_lettered_at IS NULL
 	AND EXISTS (
 		SELECT 1
-		FROM agent_runs
+		FROM agent_executions
 		WHERE
-			agent_runs.id = agent_inputs.agent_run_id
-			AND agent_runs.processing_owner_token = @owner_token
+			agent_executions.id = agent_inputs.agent_execution_id
+			AND agent_executions.processing_owner_token = @owner_token
 	)
 `
 
@@ -643,13 +643,13 @@ WHERE
 	AND dead_lettered_at IS NULL
 	AND EXISTS (
 		SELECT 1
-		FROM agent_runs
+		FROM agent_executions
 		WHERE
-			agent_runs.id = agent_inputs.agent_run_id
-			AND agent_inputs.id = ANY(agent_runs.processing_input_ids)
-			AND agent_runs.processing_owner_token IS NOT NULL
-			AND agent_runs.processing_heartbeat_at <= @stale_before
-			AND agent_runs.attempt_count >= agent_runs.max_attempts
+			agent_executions.id = agent_inputs.agent_execution_id
+			AND agent_inputs.id = ANY(agent_executions.processing_input_ids)
+			AND agent_executions.processing_owner_token IS NOT NULL
+			AND agent_executions.processing_heartbeat_at <= @stale_before
+			AND agent_executions.attempt_count >= agent_executions.max_attempts
 	)
 `
 

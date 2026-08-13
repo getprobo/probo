@@ -34,26 +34,26 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-func insertPendingRun(
+func insertPendingExecution(
 	t *testing.T,
 	client *pg.Client,
 	agentName string,
 	inputMessages []llm.Message,
-) coredata.AgentRun {
+) coredata.AgentExecution {
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
 	orgID := gid.New(tenantID, coredata.OrganizationEntityType)
-	runID := gid.New(tenantID, coredata.AgentRunEntityType)
+	runID := gid.New(tenantID, coredata.AgentExecutionEntityType)
 	inputJSON, err := json.Marshal(inputMessages)
 	require.NoError(t, err)
 
 	now := time.Now()
-	run := coredata.AgentRun{
+	run := coredata.AgentExecution{
 		ID:             runID,
 		OrganizationID: orgID,
 		StartAgentName: agentName,
-		Status:         coredata.AgentRunStatusPending,
+		Status:         coredata.AgentExecutionStatusPending,
 		InputMessages:  inputJSON,
 		CreatedAt:      now,
 		UpdatedAt:      now,

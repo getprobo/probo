@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution
 
 import (
 	"context"
@@ -44,15 +44,15 @@ func NewService(pgClient *pg.Client) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	scope coredata.Scoper,
-	agentRunID gid.GID,
-) (*coredata.AgentRun, error) {
-	run := &coredata.AgentRun{}
+	agentExecutionID gid.GID,
+) (*coredata.AgentExecution, error) {
+	run := &coredata.AgentExecution{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := run.LoadByID(ctx, conn, scope, agentRunID); err != nil {
-				return fmt.Errorf("cannot load agent run: %w", err)
+			if err := run.LoadByID(ctx, conn, scope, agentExecutionID); err != nil {
+				return fmt.Errorf("cannot load agent execution: %w", err)
 			}
 
 			return nil
@@ -69,9 +69,9 @@ func (s *Service) ListForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.AgentRunOrderField],
-) (*page.Page[*coredata.AgentRun, coredata.AgentRunOrderField], error) {
-	var runs coredata.AgentRuns
+	cursor *page.Cursor[coredata.AgentExecutionOrderField],
+) (*page.Page[*coredata.AgentExecution, coredata.AgentExecutionOrderField], error) {
+	var runs coredata.AgentExecutions
 
 	err := s.pg.WithConn(
 		ctx,
@@ -82,7 +82,7 @@ func (s *Service) ListForOrganizationID(
 			}
 
 			if err := runs.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
-				return fmt.Errorf("cannot load agent runs: %w", err)
+				return fmt.Errorf("cannot load agent executions: %w", err)
 			}
 
 			return nil
@@ -104,28 +104,28 @@ func (s *Service) ListForOrganizationID(
 func (s *Service) SubmitApproval(
 	ctx context.Context,
 	scope coredata.Scoper,
-	agentRunID gid.GID,
+	agentExecutionID gid.GID,
 	decisions map[string]agent.ApprovalResult,
-) (*coredata.AgentRun, error) {
-	run := &coredata.AgentRun{}
+) (*coredata.AgentExecution, error) {
+	run := &coredata.AgentExecution{}
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := run.LoadByIDForUpdate(ctx, tx, scope, agentRunID); err != nil {
+			if err := run.LoadByIDForUpdate(ctx, tx, scope, agentExecutionID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrAgentRunNotFound
+					return ErrAgentExecutionNotFound
 				}
 
-				return fmt.Errorf("cannot load agent run: %w", err)
+				return fmt.Errorf("cannot load agent execution: %w", err)
 			}
 
-			if run.Status != coredata.AgentRunStatusAwaitingApproval {
+			if run.Status != coredata.AgentExecutionStatusAwaitingApproval {
 				return ErrNotAwaitingApproval
 			}
 
 			if run.Checkpoint == nil {
-				return fmt.Errorf("agent run %s has no checkpoint", agentRunID)
+				return fmt.Errorf("agent execution %s has no checkpoint", agentExecutionID)
 			}
 
 			checkpoint, err := agent.MergeApprovalDecisions(run.Checkpoint, decisions)
@@ -138,12 +138,12 @@ func (s *Service) SubmitApproval(
 			}
 
 			run.Checkpoint = checkpoint
-			run.Status = coredata.AgentRunStatusPending
+			run.Status = coredata.AgentExecutionStatusPending
 			run.StartedAt = nil
 			run.UpdatedAt = time.Now()
 
 			if err := run.RequeueForApprovalResume(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot requeue agent run for approval resume: %w", err)
+				return fmt.Errorf("cannot requeue agent execution for approval resume: %w", err)
 			}
 
 			return nil
@@ -166,11 +166,11 @@ func (s *Service) CountForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
-			runs := &coredata.AgentRuns{}
+			runs := &coredata.AgentExecutions{}
 
 			count, err = runs.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
-				return fmt.Errorf("cannot count agent runs: %w", err)
+				return fmt.Errorf("cannot count agent executions: %w", err)
 			}
 
 			return nil

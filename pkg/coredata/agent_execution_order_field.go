@@ -28,48 +28,48 @@ import (
 )
 
 type (
-	AgentRunOrderField string
+	AgentExecutionOrderField string
 )
 
 const (
-	AgentRunOrderFieldCreatedAt AgentRunOrderField = "CREATED_AT"
+	AgentExecutionOrderFieldCreatedAt AgentExecutionOrderField = "CREATED_AT"
 )
 
 var (
-	_ page.OrderField          = AgentRunOrderField("")
-	_ fmt.Stringer             = AgentRunOrderField("")
-	_ encoding.TextMarshaler   = AgentRunOrderField("")
-	_ encoding.TextUnmarshaler = (*AgentRunOrderField)(nil)
+	_ page.OrderField          = AgentExecutionOrderField("")
+	_ fmt.Stringer             = AgentExecutionOrderField("")
+	_ encoding.TextMarshaler   = AgentExecutionOrderField("")
+	_ encoding.TextUnmarshaler = (*AgentExecutionOrderField)(nil)
 )
 
-func AgentRunOrderFields() []AgentRunOrderField {
-	return []AgentRunOrderField{
-		AgentRunOrderFieldCreatedAt,
+func AgentExecutionOrderFields() []AgentExecutionOrderField {
+	return []AgentExecutionOrderField{
+		AgentExecutionOrderFieldCreatedAt,
 	}
 }
 
-func (v AgentRunOrderField) IsValid() bool {
+func (v AgentExecutionOrderField) IsValid() bool {
 	switch v {
 	case
-		AgentRunOrderFieldCreatedAt:
+		AgentExecutionOrderFieldCreatedAt:
 		return true
 	}
 
 	return false
 }
 
-func (v AgentRunOrderField) String() string {
+func (v AgentExecutionOrderField) String() string {
 	return string(v)
 }
 
-func (v AgentRunOrderField) MarshalText() ([]byte, error) {
+func (v AgentExecutionOrderField) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *AgentRunOrderField) UnmarshalText(text []byte) error {
-	val := AgentRunOrderField(text)
+func (v *AgentExecutionOrderField) UnmarshalText(text []byte) error {
+	val := AgentExecutionOrderField(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid AgentRunOrderField value: %q", string(text))
+		return fmt.Errorf("invalid AgentExecutionOrderField value: %q", string(text))
 	}
 
 	*v = val
@@ -77,9 +77,9 @@ func (v *AgentRunOrderField) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (p AgentRunOrderField) Column() string {
+func (p AgentExecutionOrderField) Column() string {
 	switch p {
-	case AgentRunOrderFieldCreatedAt:
+	case AgentExecutionOrderFieldCreatedAt:
 		return "created_at"
 	}
 

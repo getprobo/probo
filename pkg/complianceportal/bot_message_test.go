@@ -35,7 +35,7 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 
 	tenantID := gid.NewTenantID()
 	portalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
-	messageID := gid.New(tenantID, coredata.AgentRunEntityType)
+	messageID := gid.New(tenantID, coredata.AgentExecutionEntityType)
 	intent, err := NewRenderer("https://app.example.com").RenderMessage(
 		t.Context(),
 		bot.Message{

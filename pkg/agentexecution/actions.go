@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution
 
-// Agent run service actions.
-// Format: agent:run:<action>
+// Agent execution service actions.
+// Format: agent:execution:<action>
 const (
-	ActionAgentRunGet     = "agent:run:get"
-	ActionAgentRunList    = "agent:run:list"
-	ActionAgentRunApprove = "agent:run:approve"
+	ActionAgentExecutionGet     = "agent:execution:get"
+	ActionAgentExecutionList    = "agent:execution:list"
+	ActionAgentExecutionApprove = "agent:execution:approve"
 )

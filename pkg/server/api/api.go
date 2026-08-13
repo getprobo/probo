@@ -31,7 +31,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/complianceportal/management"
@@ -81,7 +81,7 @@ type (
 		Management              *management.Service
 		CertManager             *certmanager.Service
 		AccessReview            *accessreview.Service
-		AgentRun                *agentrun.Service
+		AgentExecution          *agentexecution.Service
 		Slack                   *slack.Service
 		BotDeliveryDestinations BotDeliveryDestinations
 		ComplianceMessages      ComplianceMessages
@@ -223,7 +223,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Management,
 			cfg.CertManager,
 			cfg.AccessReview,
-			cfg.AgentRun,
+			cfg.AgentExecution,
 			cfg.Mailman,
 			cfg.CookieBanner,
 			cfg.Cookie,

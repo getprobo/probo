@@ -20,8 +20,8 @@
 
 // Package test provides shared Postgres test fixtures for packages that
 // exercise the database layer against a real Postgres instance. Centralizing
-// the connection bootstrap and agent_runs schema setup here keeps a single
-// copy of that logic so it cannot drift between the coredata and agentrun
+// the connection bootstrap and agent_executions schema setup here keeps a single
+// copy of that logic so it cannot drift between the coredata and agentexecution
 // test suites.
 package test
 
@@ -64,7 +64,7 @@ var (
 
 // PGClient returns a process-wide shared pg.Client connected to the test
 // database described by the PROBO_TEST_PG_URL environment variable (falling
-// back to a local compose Postgres), applying the agent_runs migrations on
+// back to a local compose Postgres), applying the agent_executions migrations on
 // first use. The test is skipped when no database is reachable so `make test`
 // stays a pure unit-test run.
 func PGClient(t *testing.T) *pg.Client {

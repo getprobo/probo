@@ -27,11 +27,11 @@ import (
 )
 
 type (
-	AgentRunOrderBy OrderBy[coredata.AgentRunOrderField]
+	AgentExecutionOrderBy OrderBy[coredata.AgentExecutionOrderField]
 
-	AgentRunConnection struct {
+	AgentExecutionConnection struct {
 		TotalCount int
-		Edges      []*AgentRunEdge
+		Edges      []*AgentExecutionEdge
 		PageInfo   PageInfo
 
 		Resolver any
@@ -39,18 +39,18 @@ type (
 	}
 )
 
-func NewAgentRunConnection(
-	p *page.Page[*coredata.AgentRun, coredata.AgentRunOrderField],
+func NewAgentExecutionConnection(
+	p *page.Page[*coredata.AgentExecution, coredata.AgentExecutionOrderField],
 	parentType any,
 	parentID gid.GID,
-) *AgentRunConnection {
-	var edges = make([]*AgentRunEdge, len(p.Data))
+) *AgentExecutionConnection {
+	var edges = make([]*AgentExecutionEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewAgentRunEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewAgentExecutionEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &AgentRunConnection{
+	return &AgentExecutionConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -59,15 +59,15 @@ func NewAgentRunConnection(
 	}
 }
 
-func NewAgentRunEdge(run *coredata.AgentRun, orderBy coredata.AgentRunOrderField) *AgentRunEdge {
-	return &AgentRunEdge{
+func NewAgentExecutionEdge(run *coredata.AgentExecution, orderBy coredata.AgentExecutionOrderField) *AgentExecutionEdge {
+	return &AgentExecutionEdge{
 		Cursor: run.CursorKey(orderBy),
-		Node:   NewAgentRun(run),
+		Node:   NewAgentExecution(run),
 	}
 }
 
-func NewAgentRun(run *coredata.AgentRun) *AgentRun {
-	return &AgentRun{
+func NewAgentExecution(run *coredata.AgentExecution) *AgentExecution {
+	return &AgentExecution{
 		ID: run.ID,
 		Organization: &Organization{
 			ID: run.OrganizationID,

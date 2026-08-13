@@ -18,19 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun_test
+package agentexecution
 
-import (
-	"os"
-	"testing"
-
-	internaltest "go.probo.inc/probo/internal/test"
-)
-
-func TestMain(m *testing.M) {
-	if os.Getenv("TEST_SIGTERM_SUBPROCESS") == "1" {
-		os.Exit(m.Run())
-	}
-
-	os.Exit(internaltest.RunGlobalQueuePackage(m))
+// ShutdownBroadcast returns the channel that closes once the worker has
+// broadcast graceful shutdown to all in-flight runs. It is compiled only
+// in test builds so external tests can synchronize tool release with
+// shutdown propagation without leaking a test-only method into the
+// worker's public API.
+func (w *Worker) ShutdownBroadcast() <-chan struct{} {
+	return w.handler.shutdownCh
 }

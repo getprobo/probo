@@ -48,7 +48,7 @@ import (
 	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bot"
@@ -562,7 +562,7 @@ func (impl *Implm) Run(
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(management.OAuth2ScopeMappings).
-		Register(agentrun.OAuth2ScopeMappings).
+		Register(agentexecution.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings)
@@ -785,9 +785,9 @@ func (impl *Implm) Run(
 		l.Named("access-review"),
 	)
 
-	agentRunService := agentrun.NewService(pgClient)
+	agentExecutionService := agentexecution.NewService(pgClient)
 
-	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(agentexecution.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
@@ -906,7 +906,7 @@ func (impl *Implm) Run(
 			Management:              managementService,
 			CertManager:             certManagerService,
 			AccessReview:            accessReviewService,
-			AgentRun:                agentRunService,
+			AgentExecution:          agentExecutionService,
 			Mailman:                 mailmanService,
 			CookieBanner:            cookieBannerService,
 			Geoloc:                  geolocService,
@@ -1048,22 +1048,21 @@ func (impl *Implm) Run(
 		},
 	)
 
-	agentRunWorker := agentrun.NewWorker(
+	agentExecutionWorker := agentexecution.NewWorker(
 		pgClient,
-		nil,
 		probotProfiles,
-		l.Named("agent-run-worker"),
-		agentrun.WithWorkerInterval(time.Second),
-		agentrun.WithExecutionPreparer(probotAdapters),
-		agentrun.WithWorkerRegisterer(r),
-		agentrun.WithWorkerTracerProvider(tp),
+		l.Named("agent-execution-worker"),
+		agentexecution.WithWorkerInterval(time.Second),
+		agentexecution.WithExecutionPreparer(probotAdapters),
+		agentexecution.WithWorkerRegisterer(r),
+		agentexecution.WithWorkerTracerProvider(tp),
 	)
-	agentRunWorkerCtx, stopAgentRunWorker := context.WithCancel(context.WithoutCancel(ctx))
+	agentExecutionWorkerCtx, stopAgentExecutionWorker := context.WithCancel(context.WithoutCancel(ctx))
 
 	wg.Go(
 		func() {
-			if err := agentRunWorker.Run(agentRunWorkerCtx); err != nil {
-				cancel(fmt.Errorf("agent run worker crashed: %w", err))
+			if err := agentExecutionWorker.Run(agentExecutionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("agent execution worker crashed: %w", err))
 			}
 		},
 	)
@@ -1515,7 +1514,7 @@ func (impl *Implm) Run(
 	stopITAMGC()
 	stopMailer()
 	stopSlackSender()
-	stopAgentRunWorker()
+	stopAgentExecutionWorker()
 	stopBotMessageWorker()
 	stopSlackbotEventWorker()
 	stopSlackbotNotificationWorker()

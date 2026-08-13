@@ -116,7 +116,7 @@ const (
 	OAuth2DeviceCodeEntityType                       uint16 = 84
 	_                                                uint16 = 85 // CookieEntityType - removed
 	CookieBannerTranslationEntityType                uint16 = 86
-	AgentRunEntityType                               uint16 = 87
+	AgentExecutionEntityType                         uint16 = 87
 	_                                                uint16 = 88 // CookiePatternEntityType - removed
 	TrackerPatternEntityType                         uint16 = 89
 	DetectedTrackerEntityType                        uint16 = 90
@@ -320,8 +320,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &OAuth2DeviceCode{ID: id}, true
 	case CookieBannerTranslationEntityType:
 		return &CookieBannerTranslation{ID: id}, true
-	case AgentRunEntityType:
-		return &AgentRun{ID: id}, true
+	case AgentExecutionEntityType:
+		return &AgentExecution{ID: id}, true
 	case TrackerPatternEntityType:
 		return &TrackerPattern{ID: id}, true
 	case DetectedTrackerEntityType:

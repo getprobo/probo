@@ -190,7 +190,7 @@ func TestService_QueueIsIdempotentBySourceEvent(t *testing.T) {
 	service := slack.NewService(fixture.client, "", "", log.NewLogger())
 	sourceEventID := gid.New(
 		fixture.scope.GetTenantID(),
-		coredata.AgentRunEntityType,
+		coredata.AgentExecutionEntityType,
 	).String()
 	req := slack.QueueRequest{
 		OrganizationID: fixture.organizationID,

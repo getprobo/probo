@@ -18,23 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution_test
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"os"
+	"testing"
 
-const (
-	ScopeV1AgentRead coredata.OAuth2Scope = "v1:agent:read"
-	ScopeV1Agent     coredata.OAuth2Scope = "v1:agent"
+	internaltest "go.probo.inc/probo/internal/test"
 )
 
-var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
-	ScopeV1AgentRead: {
-		ActionAgentRunGet,
-		ActionAgentRunList,
-	},
-	ScopeV1Agent: {
-		ActionAgentRunGet,
-		ActionAgentRunList,
-		ActionAgentRunApprove,
-	},
+func TestMain(m *testing.M) {
+	if os.Getenv("TEST_SIGTERM_SUBPROCESS") == "1" {
+		os.Exit(m.Run())
+	}
+
+	os.Exit(internaltest.RunGlobalQueuePackage(m))
 }

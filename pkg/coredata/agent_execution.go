@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"encoding"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,43 +32,428 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
-	// AgentExecution is the provider-neutral scheduling view of an agent_runs
-	// row. AgentRun remains the GraphQL list/approval view of the same row.
+	AgentExecutionStatus string
+
 	AgentExecution struct {
-		ID                    gid.GID         `db:"id"`
-		OrganizationID        gid.GID         `db:"organization_id"`
-		StartAgentName        string          `db:"start_agent_name"`
-		Status                AgentRunStatus  `db:"status"`
-		Checkpoint            json.RawMessage `db:"checkpoint"`
-		InputMessages         json.RawMessage `db:"input_messages"`
-		Result                json.RawMessage `db:"result"`
-		ErrorMessage          *string         `db:"error_message"`
-		StartedAt             *time.Time      `db:"started_at"`
-		Source                *string         `db:"source"`
-		SessionKey            *string         `db:"session_key"`
-		SourceCoordinates     json.RawMessage `db:"source_coordinates"`
-		TrustedContext        json.RawMessage `db:"trusted_context"`
-		SessionMessages       json.RawMessage `db:"session_messages"`
-		ProcessingOwnerToken  *string         `db:"processing_owner_token"`
-		ProcessingHeartbeatAt *time.Time      `db:"processing_heartbeat_at"`
-		ProcessingInputIDs    []string        `db:"processing_input_ids"`
-		AttemptCount          int             `db:"attempt_count"`
-		MaxAttempts           int             `db:"max_attempts"`
-		NextAttemptAt         *time.Time      `db:"next_attempt_at"`
-		LastError             *string         `db:"last_error"`
-		DeadLetteredAt        *time.Time      `db:"dead_lettered_at"`
-		CreatedAt             time.Time       `db:"created_at"`
-		UpdatedAt             time.Time       `db:"updated_at"`
+		ID                    gid.GID              `db:"id"`
+		OrganizationID        gid.GID              `db:"organization_id"`
+		StartAgentName        string               `db:"start_agent_name"`
+		Status                AgentExecutionStatus `db:"status"`
+		Checkpoint            json.RawMessage      `db:"checkpoint"`
+		InputMessages         json.RawMessage      `db:"input_messages"`
+		Result                json.RawMessage      `db:"result"`
+		ErrorMessage          *string              `db:"error_message"`
+		StartedAt             *time.Time           `db:"started_at"`
+		Source                *string              `db:"source"`
+		SessionKey            *string              `db:"session_key"`
+		SourceCoordinates     json.RawMessage      `db:"source_coordinates"`
+		TrustedContext        json.RawMessage      `db:"trusted_context"`
+		SessionMessages       json.RawMessage      `db:"session_messages"`
+		ProcessingOwnerToken  *string              `db:"processing_owner_token"`
+		ProcessingHeartbeatAt *time.Time           `db:"processing_heartbeat_at"`
+		ProcessingInputIDs    []string             `db:"processing_input_ids"`
+		AttemptCount          int                  `db:"attempt_count"`
+		MaxAttempts           int                  `db:"max_attempts"`
+		NextAttemptAt         *time.Time           `db:"next_attempt_at"`
+		LastError             *string              `db:"last_error"`
+		DeadLetteredAt        *time.Time           `db:"dead_lettered_at"`
+		CreatedAt             time.Time            `db:"created_at"`
+		UpdatedAt             time.Time            `db:"updated_at"`
 	}
+
+	AgentExecutions []*AgentExecution
 )
 
 const (
 	AgentExecutionDefaultMaxAttempts = 5
 	AgentExecutionStaleLeaseError    = "agent execution processing lease expired"
+
+	AgentExecutionStatusPending          AgentExecutionStatus = "PENDING"
+	AgentExecutionStatusRunning          AgentExecutionStatus = "RUNNING"
+	AgentExecutionStatusSuspended        AgentExecutionStatus = "SUSPENDED"
+	AgentExecutionStatusAwaitingApproval AgentExecutionStatus = "AWAITING_APPROVAL"
+	AgentExecutionStatusCompleted        AgentExecutionStatus = "COMPLETED"
+	AgentExecutionStatusFailed           AgentExecutionStatus = "FAILED"
 )
+
+var (
+	_ fmt.Stringer             = AgentExecutionStatus("")
+	_ encoding.TextMarshaler   = AgentExecutionStatus("")
+	_ encoding.TextUnmarshaler = (*AgentExecutionStatus)(nil)
+)
+
+func AgentExecutionStatuses() []AgentExecutionStatus {
+	return []AgentExecutionStatus{
+		AgentExecutionStatusPending,
+		AgentExecutionStatusRunning,
+		AgentExecutionStatusSuspended,
+		AgentExecutionStatusAwaitingApproval,
+		AgentExecutionStatusCompleted,
+		AgentExecutionStatusFailed,
+	}
+}
+
+func (v AgentExecutionStatus) IsValid() bool {
+	switch v {
+	case
+		AgentExecutionStatusPending,
+		AgentExecutionStatusRunning,
+		AgentExecutionStatusSuspended,
+		AgentExecutionStatusAwaitingApproval,
+		AgentExecutionStatusCompleted,
+		AgentExecutionStatusFailed:
+		return true
+	}
+
+	return false
+}
+
+func (v AgentExecutionStatus) String() string {
+	return string(v)
+}
+
+func (v AgentExecutionStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AgentExecutionStatus) UnmarshalText(text []byte) error {
+	val := AgentExecutionStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AgentExecutionStatus value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (e AgentExecution) CursorKey(orderBy AgentExecutionOrderField) page.CursorKey {
+	switch orderBy {
+	case AgentExecutionOrderFieldCreatedAt:
+		return page.NewCursorKey(e.ID, e.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (e *AgentExecution) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM agent_executions WHERE id = ANY(@resource_ids::text[])`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
+}
+
+func (e *AgentExecution) LoadByIDForUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	start_agent_name,
+	status,
+	checkpoint,
+	input_messages,
+	result,
+	error_message,
+	started_at,
+	source,
+	session_key,
+	source_coordinates,
+	trusted_context,
+	session_messages,
+	processing_owner_token,
+	processing_heartbeat_at,
+	processing_input_ids,
+	attempt_count,
+	max_attempts,
+	next_attempt_at,
+	last_error,
+	dead_lettered_at,
+	created_at,
+	updated_at
+FROM
+	agent_executions
+WHERE
+	%s
+	AND id = @id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	return e.loadExactlyOne(ctx, tx, q, args)
+}
+
+func (es *AgentExecutions) LoadByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[AgentExecutionOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	start_agent_name,
+	status,
+	checkpoint,
+	input_messages,
+	result,
+	error_message,
+	started_at,
+	source,
+	session_key,
+	source_coordinates,
+	trusted_context,
+	session_messages,
+	processing_owner_token,
+	processing_heartbeat_at,
+	processing_input_ids,
+	attempt_count,
+	max_attempts,
+	next_attempt_at,
+	last_error,
+	dead_lettered_at,
+	created_at,
+	updated_at
+FROM
+	agent_executions
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID.String()}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query agent executions: %w", err)
+	}
+
+	entities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AgentExecution])
+	if err != nil {
+		return fmt.Errorf("cannot collect agent executions: %w", err)
+	}
+
+	*es = entities
+
+	return nil
+}
+
+func (es *AgentExecutions) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	agent_executions
+WHERE
+	%s
+	AND organization_id = @organization_id;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID.String()}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count agent executions: %w", err)
+	}
+
+	return count, nil
+}
+
+func (e *AgentExecution) Insert(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+INSERT INTO agent_executions (
+	id,
+	tenant_id,
+	organization_id,
+	start_agent_name,
+	status,
+	input_messages,
+	session_messages,
+	processing_input_ids,
+	attempt_count,
+	max_attempts,
+	created_at,
+	updated_at
+) VALUES (
+	@id,
+	@tenant_id,
+	@organization_id,
+	@start_agent_name,
+	@status,
+	@input_messages,
+	@session_messages,
+	@processing_input_ids,
+	@attempt_count,
+	@max_attempts,
+	@created_at,
+	@updated_at
+)
+RETURNING
+	id,
+	organization_id,
+	start_agent_name,
+	status,
+	checkpoint,
+	input_messages,
+	result,
+	error_message,
+	started_at,
+	source,
+	session_key,
+	source_coordinates,
+	trusted_context,
+	session_messages,
+	processing_owner_token,
+	processing_heartbeat_at,
+	processing_input_ids,
+	attempt_count,
+	max_attempts,
+	next_attempt_at,
+	last_error,
+	dead_lettered_at,
+	created_at,
+	updated_at;
+`
+
+	sessionMessages := e.SessionMessages
+	if sessionMessages == nil {
+		sessionMessages = e.InputMessages
+	}
+
+	if e.InputMessages == nil {
+		e.InputMessages = json.RawMessage("[]")
+		if sessionMessages == nil {
+			sessionMessages = e.InputMessages
+		}
+	}
+
+	if e.MaxAttempts <= 0 {
+		e.MaxAttempts = 1
+	}
+
+	args := pgx.StrictNamedArgs{
+		"id":                   e.ID.String(),
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      e.OrganizationID.String(),
+		"start_agent_name":     e.StartAgentName,
+		"status":               e.Status,
+		"input_messages":       e.InputMessages,
+		"session_messages":     sessionMessages,
+		"processing_input_ids": []string{},
+		"attempt_count":        e.AttemptCount,
+		"max_attempts":         e.MaxAttempts,
+		"created_at":           e.CreatedAt,
+		"updated_at":           e.UpdatedAt,
+	}
+
+	return e.loadExactlyOne(ctx, tx, q, args)
+}
+
+func (e *AgentExecution) RequeueForApprovalResume(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE agent_executions
+SET
+	checkpoint = @checkpoint,
+	status = @status,
+	started_at = @started_at,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+	AND status = @expected_status;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":              e.ID.String(),
+		"checkpoint":      e.Checkpoint,
+		"status":          e.Status,
+		"started_at":      e.StartedAt,
+		"updated_at":      e.UpdatedAt,
+		"expected_status": AgentExecutionStatusAwaitingApproval,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot requeue agent execution for approval resume: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
 
 func (e *AgentExecution) UpsertConversationalBySourceSession(
 	ctx context.Context,
@@ -83,7 +469,7 @@ func (e *AgentExecution) UpsertConversationalBySourceSession(
 	}
 
 	q := `
-INSERT INTO agent_runs (
+INSERT INTO agent_executions (
 	id,
 	tenant_id,
 	organization_id,
@@ -123,7 +509,7 @@ ON CONFLICT (tenant_id, organization_id, source, session_key)
 DO UPDATE SET
 	start_agent_name = EXCLUDED.start_agent_name,
 	source_coordinates = EXCLUDED.source_coordinates,
-	trusted_context = COALESCE(EXCLUDED.trusted_context, agent_runs.trusted_context),
+	trusted_context = COALESCE(EXCLUDED.trusted_context, agent_executions.trusted_context),
 	updated_at = EXCLUDED.updated_at
 RETURNING
 	id,
@@ -170,7 +556,7 @@ RETURNING
 		"tenant_id":            scope.GetTenantID(),
 		"organization_id":      e.OrganizationID,
 		"start_agent_name":     e.StartAgentName,
-		"status":               AgentRunStatusPending,
+		"status":               AgentExecutionStatusPending,
 		"input_messages":       e.InputMessages,
 		"source":               e.Source,
 		"session_key":          e.SessionKey,
@@ -231,7 +617,7 @@ SELECT
 	dead_lettered_at,
 	created_at,
 	updated_at
-FROM agent_runs
+FROM agent_executions
 WHERE
 	%s
 	AND id = @id
@@ -253,7 +639,7 @@ func (e *AgentExecution) UpdateSourceCoordinates(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	source_coordinates = @source_coordinates,
 	updated_at = @updated_at
@@ -293,7 +679,7 @@ func (e *AgentExecution) ClaimNextForUpdateSkipLocked(
 	q := `
 WITH candidate AS (
 	SELECT id
-	FROM agent_runs
+	FROM agent_executions
 	WHERE
 		status = @pending_status
 		AND processing_owner_token IS NULL
@@ -307,7 +693,7 @@ WITH candidate AS (
 				SELECT 1
 				FROM agent_inputs
 				WHERE
-					agent_inputs.agent_run_id = agent_runs.id
+					agent_inputs.agent_execution_id = agent_executions.id
 					AND agent_inputs.processed_at IS NULL
 					AND agent_inputs.dead_lettered_at IS NULL
 					AND agent_inputs.attempt_count < agent_inputs.max_attempts
@@ -321,7 +707,7 @@ WITH candidate AS (
 	LIMIT 1
 	FOR UPDATE SKIP LOCKED
 )
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	status = @running_status,
 	started_at = @now,
@@ -358,8 +744,8 @@ RETURNING
 `
 
 	args := pgx.StrictNamedArgs{
-		"pending_status": AgentRunStatusPending,
-		"running_status": AgentRunStatusRunning,
+		"pending_status": AgentExecutionStatusPending,
+		"running_status": AgentExecutionStatusRunning,
 		"now":            now,
 		"owner_token":    ownerToken,
 	}
@@ -375,7 +761,7 @@ func (e *AgentExecution) UpdateSessionState(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	checkpoint = @checkpoint,
 	trusted_context = @trusted_context,
@@ -423,7 +809,7 @@ func (e *AgentExecution) SaveCheckpoint(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	checkpoint = @checkpoint,
 	processing_heartbeat_at = @now,
@@ -468,7 +854,7 @@ func (e *AgentExecution) SetProcessingInputIDs(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	processing_input_ids = @input_ids,
 	processing_heartbeat_at = @now,
@@ -513,7 +899,7 @@ func (e *AgentExecution) ClearProcessingInputIDs(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	processing_input_ids = '{}',
 	processing_heartbeat_at = @now,
@@ -556,7 +942,7 @@ func (e *AgentExecution) CommitConversationalSuccess(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	status = @status,
 	checkpoint = NULL,
@@ -578,7 +964,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
 		"id":               e.ID,
-		"status":           AgentRunStatusPending,
+		"status":           AgentExecutionStatusPending,
 		"session_messages": e.SessionMessages,
 		"owner_token":      ownerToken,
 		"now":              now,
@@ -594,7 +980,7 @@ WHERE
 		return ErrResourceNotFound
 	}
 
-	e.Status = AgentRunStatusPending
+	e.Status = AgentExecutionStatusPending
 	e.Checkpoint = nil
 	e.ProcessingInputIDs = nil
 	e.StartedAt = nil
@@ -616,7 +1002,7 @@ func (e *AgentExecution) Heartbeat(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	processing_heartbeat_at = @now,
 	updated_at = @now
@@ -661,7 +1047,7 @@ func (e *AgentExecution) Release(
 		conn,
 		scope,
 		ownerToken,
-		AgentRunStatusPending,
+		AgentExecutionStatusPending,
 		now,
 	)
 }
@@ -671,11 +1057,11 @@ func (e *AgentExecution) ReleaseToStatus(
 	conn pg.Querier,
 	scope Scoper,
 	ownerToken string,
-	status AgentRunStatus,
+	status AgentExecutionStatus,
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	status = @status,
 	started_at = NULL,
@@ -731,7 +1117,7 @@ func (e *AgentExecution) RecordFailure(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	status = @status,
 	started_at = NULL,
@@ -751,7 +1137,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":              e.ID,
 		"owner_token":     ownerToken,
-		"status":          AgentRunStatusPending,
+		"status":          AgentExecutionStatusPending,
 		"next_attempt_at": nextAttemptAt,
 		"last_error":      lastError,
 		"now":             now,
@@ -767,7 +1153,7 @@ WHERE
 		return ErrResourceNotFound
 	}
 
-	e.Status = AgentRunStatusPending
+	e.Status = AgentExecutionStatusPending
 	e.StartedAt = nil
 	e.ProcessingOwnerToken = nil
 	e.ProcessingHeartbeatAt = nil
@@ -787,7 +1173,7 @@ func (e *AgentExecution) DeadLetter(
 	now time.Time,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	status = @status,
 	started_at = NULL,
@@ -809,7 +1195,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":          e.ID,
 		"owner_token": ownerToken,
-		"status":      AgentRunStatusFailed,
+		"status":      AgentExecutionStatusFailed,
 		"last_error":  lastError,
 		"now":         now,
 	}
@@ -824,7 +1210,7 @@ WHERE
 		return ErrResourceNotFound
 	}
 
-	e.Status = AgentRunStatusFailed
+	e.Status = AgentExecutionStatusFailed
 	e.StartedAt = nil
 	e.ProcessingOwnerToken = nil
 	e.ProcessingHeartbeatAt = nil
@@ -845,7 +1231,7 @@ func ResetStaleAgentExecutionLeases(
 	staleAfter time.Duration,
 ) error {
 	q := `
-UPDATE agent_runs
+UPDATE agent_executions
 SET
 	status = CASE
 		WHEN attempt_count >= max_attempts THEN @failed_status
@@ -878,8 +1264,8 @@ WHERE
 `
 
 	args := pgx.StrictNamedArgs{
-		"failed_status":  AgentRunStatusFailed,
-		"pending_status": AgentRunStatusPending,
+		"failed_status":  AgentExecutionStatusFailed,
+		"pending_status": AgentExecutionStatusPending,
 		"now":            now,
 		"last_error":     AgentExecutionStaleLeaseError,
 		"stale_before":   now.Add(-staleAfter),
@@ -902,7 +1288,7 @@ func DeleteRetiredConversationalAgentExecutionsBefore(
 	q := `
 WITH doomed AS (
 	SELECT id
-	FROM agent_runs
+	FROM agent_executions
 	WHERE
 		processing_owner_token IS NULL
 		AND checkpoint IS NULL
@@ -915,7 +1301,7 @@ WITH doomed AS (
 					SELECT 1
 					FROM agent_inputs
 					WHERE
-						agent_inputs.agent_run_id = agent_runs.id
+						agent_inputs.agent_execution_id = agent_executions.id
 						AND agent_inputs.processed_at IS NULL
 						AND agent_inputs.dead_lettered_at IS NULL
 				)
@@ -924,7 +1310,7 @@ WITH doomed AS (
 	ORDER BY updated_at ASC, id ASC
 	LIMIT @limit
 )
-DELETE FROM agent_runs
+DELETE FROM agent_executions
 WHERE id IN (SELECT id FROM doomed)
 `
 

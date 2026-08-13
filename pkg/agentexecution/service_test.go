@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun_test
+package agentexecution_test
 
 import (
 	"context"
@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -36,9 +36,9 @@ import (
 
 func TestService_Get(t *testing.T) {
 	client := test.PGClient(t)
-	svc := agentrun.NewService(client)
+	svc := agentexecution.NewService(client)
 
-	run := insertPendingRun(
+	run := insertPendingExecution(
 		t,
 		client,
 		"service-get-agent",
@@ -50,7 +50,7 @@ func TestService_Get(t *testing.T) {
 	require.NotNil(t, got)
 	assert.Equal(t, run.ID, got.ID)
 
-	missingID := gid.New(run.ID.TenantID(), coredata.AgentRunEntityType)
+	missingID := gid.New(run.ID.TenantID(), coredata.AgentExecutionEntityType)
 	_, err = svc.Get(context.Background(), coredata.NewNoScope(), missingID)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
@@ -58,19 +58,19 @@ func TestService_Get(t *testing.T) {
 
 func TestService_ListForOrganizationID(t *testing.T) {
 	client := test.PGClient(t)
-	svc := agentrun.NewService(client)
+	svc := agentexecution.NewService(client)
 
 	orgID := insertTestOrganization(t, client)
 
-	runA := insertPendingRunInOrg(t, client, orgID, "service-list-agent-a", nil)
-	runB := insertPendingRunInOrg(t, client, orgID, "service-list-agent-b", nil)
+	runA := insertPendingExecutionInOrg(t, client, orgID, "service-list-agent-a", nil)
+	runB := insertPendingExecutionInOrg(t, client, orgID, "service-list-agent-b", nil)
 
 	cursor := page.NewCursor(
 		10,
 		nil,
 		page.Head,
-		page.OrderBy[coredata.AgentRunOrderField]{
-			Field:     coredata.AgentRunOrderFieldCreatedAt,
+		page.OrderBy[coredata.AgentExecutionOrderField]{
+			Field:     coredata.AgentExecutionOrderFieldCreatedAt,
 			Direction: page.OrderDirectionDesc,
 		},
 	)
@@ -90,10 +90,10 @@ func TestService_ListForOrganizationID(t *testing.T) {
 
 func TestService_SubmitApproval_NotAwaitingApproval(t *testing.T) {
 	client := test.PGClient(t)
-	svc := agentrun.NewService(client)
+	svc := agentexecution.NewService(client)
 
 	// A freshly inserted run is PENDING, not AWAITING_APPROVAL.
-	run := insertPendingRun(t, client, "service-approval-agent", nil)
+	run := insertPendingExecution(t, client, "service-approval-agent", nil)
 
 	_, err := svc.SubmitApproval(
 		context.Background(),
@@ -102,17 +102,17 @@ func TestService_SubmitApproval_NotAwaitingApproval(t *testing.T) {
 		map[string]agent.ApprovalResult{"tc_x": {Approved: true}},
 	)
 	require.Error(t, err)
-	assert.ErrorIs(t, err, agentrun.ErrNotAwaitingApproval)
+	assert.ErrorIs(t, err, agentexecution.ErrNotAwaitingApproval)
 }
 
 func TestService_CountForOrganizationID(t *testing.T) {
 	client := test.PGClient(t)
-	svc := agentrun.NewService(client)
+	svc := agentexecution.NewService(client)
 
 	orgID := insertTestOrganization(t, client)
-	_ = insertPendingRunInOrg(t, client, orgID, "service-count-agent-a", nil)
-	_ = insertPendingRunInOrg(t, client, orgID, "service-count-agent-b", nil)
-	_ = insertPendingRunInOrg(t, client, orgID, "service-count-agent-c", nil)
+	_ = insertPendingExecutionInOrg(t, client, orgID, "service-count-agent-a", nil)
+	_ = insertPendingExecutionInOrg(t, client, orgID, "service-count-agent-b", nil)
+	_ = insertPendingExecutionInOrg(t, client, orgID, "service-count-agent-c", nil)
 
 	count, err := svc.CountForOrganizationID(context.Background(), coredata.NewNoScope(), orgID)
 	require.NoError(t, err)

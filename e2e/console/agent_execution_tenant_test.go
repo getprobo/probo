@@ -29,15 +29,15 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestAgentRun_TenantIsolation(t *testing.T) {
+func TestAgentExecution_TenantIsolation(t *testing.T) {
 	t.Parallel()
 
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	runID := seedAgentRun(t, org1Owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, org1Owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "compliance-agent",
-		status:    coredata.AgentRunStatusCompleted,
+		status:    coredata.AgentExecutionStatusCompleted,
 	})
 
 	t.Run("other org cannot fetch the run by id", func(t *testing.T) {
@@ -46,7 +46,7 @@ func TestAgentRun_TenantIsolation(t *testing.T) {
 		const query = `
 			query($id: ID!) {
 				node(id: $id) {
-					... on AgentRun { id }
+					... on AgentExecution { id }
 				}
 			}
 		`
@@ -58,41 +58,41 @@ func TestAgentRun_TenantIsolation(t *testing.T) {
 		}
 
 		err := org2Owner.Execute(query, map[string]any{"id": runID.String()}, &result)
-		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "AgentRun")
+		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "AgentExecution")
 	})
 
 	t.Run("other org list does not include the run", func(t *testing.T) {
 		t.Parallel()
 
-		var result agentRunConnectionResult
+		var result agentExecutionConnectionResult
 
-		err := org2Owner.Execute(agentRunListQuery, map[string]any{
+		err := org2Owner.Execute(agentExecutionListQuery, map[string]any{
 			"orgId": org2Owner.GetOrganizationID().String(),
 		}, &result)
 		require.NoError(t, err)
 		require.NotNil(t, result.Node, "organization node should resolve")
 
-		assert.Equal(t, 0, result.Node.AgentRuns.TotalCount)
-		assert.Empty(t, result.Node.AgentRuns.Edges)
+		assert.Equal(t, 0, result.Node.AgentExecutions.TotalCount)
+		assert.Empty(t, result.Node.AgentExecutions.Edges)
 	})
 }
-func TestAgentRun_SubmitApproval_TenantIsolation(t *testing.T) {
+func TestAgentExecution_SubmitApproval_TenantIsolation(t *testing.T) {
 	t.Parallel()
 
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	runID := seedAgentRun(t, org1Owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, org1Owner.GetOrganizationID(), agentExecutionSeed{
 		agentName:  "approval-agent",
-		status:     coredata.AgentRunStatusAwaitingApproval,
+		status:     coredata.AgentExecutionStatusAwaitingApproval,
 		checkpoint: awaitingApprovalCheckpoint(t, "tc_1"),
 	})
 
-	var result submitAgentRunApprovalResult
+	var result submitAgentExecutionApprovalResult
 
-	err := org2Owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+	err := org2Owner.Execute(submitAgentExecutionApprovalMutation, map[string]any{
 		"input": map[string]any{
-			"agentRunId": runID.String(),
+			"agentExecutionId": runID.String(),
 			"decisions": []map[string]any{
 				{"toolCallId": "tc_1", "approved": true},
 			},

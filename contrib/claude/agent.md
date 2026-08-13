@@ -77,7 +77,7 @@ Implications:
   it must derive its own with `context.WithTimeout(ctx, ...)` inside
   the tool body.
 
-The agent run worker (`pkg/agentrun/handler.go`) maps a SIGTERM-driven
+The agent execution worker (`pkg/agentexecution/handler.go`) maps a SIGTERM-driven
 shutdown broadcast onto a per-run `cancelRun(agent.ErrSuspendForCheckpoint)`,
 so the same contract drives both the public Go API and the worker
 infrastructure path.

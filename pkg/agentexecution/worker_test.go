@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun_test
+package agentexecution_test
 
 import (
 	"bufio"
@@ -39,7 +39,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/llm"
 )
@@ -74,8 +74,8 @@ func TestWorker_PicksUpAndCompletes(t *testing.T) {
 		200*time.Millisecond,
 	)
 
-	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	completed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, completed.Status)
 	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
@@ -83,7 +83,6 @@ func TestWorker_PicksUpAndCompletes(t *testing.T) {
 
 func TestWorker_StopAndResume(t *testing.T) {
 	client := test.PGClient(t)
-	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
 	toolRelease := make(chan struct{})
@@ -145,28 +144,27 @@ func TestWorker_StopAndResume(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
+			r, err := tryLoadAgentExecution(client, run.ID)
 
 			return err == nil &&
-				r.Status == coredata.AgentRunStatusPending &&
+				r.Status == coredata.AgentExecutionStatusPending &&
 				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	suspended := loadAgentRun(t, client, run.ID)
+	suspended := loadAgentExecution(t, client, run.ID)
 	assert.Equal(
 		t,
-		coredata.AgentRunStatusPending,
+		coredata.AgentExecutionStatusPending,
 		suspended.Status,
 		"graceful shutdown must requeue the run as PENDING without manual recovery",
 	)
 	assert.Nil(t, suspended.Result)
 	assert.Nil(t, suspended.ErrorMessage)
 
-	cp, err := store.Load(context.Background(), run.ID.String())
-	require.NoError(t, err)
+	cp := loadCheckpoint(t, client, run.ID)
 	require.NotNil(t, cp)
 	assert.Equal(t, agent.AgentStatusSuspended, cp.Status)
 
@@ -191,8 +189,8 @@ func TestWorker_StopAndResume(t *testing.T) {
 		200*time.Millisecond,
 	)
 
-	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	completed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, completed.Status)
 	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
@@ -205,7 +203,6 @@ func TestWorker_StopAndResume(t *testing.T) {
 // re-claimed while it rests.
 func TestWorker_AwaitsApprovalDoesNotFail(t *testing.T) {
 	client := test.PGClient(t)
-	store := coredata.NewPGCheckpointer(client)
 
 	dangerTool := agent.FunctionTool[struct{}](
 		"danger",
@@ -247,21 +244,20 @@ func TestWorker_AwaitsApprovalDoesNotFail(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusAwaitingApproval
+			r, err := tryLoadAgentExecution(client, run.ID)
+			return err == nil && r.Status == coredata.AgentExecutionStatusAwaitingApproval
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	awaiting := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusAwaitingApproval, awaiting.Status)
+	awaiting := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusAwaitingApproval, awaiting.Status)
 	assert.Nil(t, awaiting.Result)
 	assert.Nil(t, awaiting.ErrorMessage)
 	assert.NotNil(t, awaiting.Checkpoint)
 
-	cp, err := store.Load(context.Background(), run.ID.String())
-	require.NoError(t, err)
+	cp := loadCheckpoint(t, client, run.ID)
 	require.NotNil(t, cp)
 	assert.Equal(t, agent.AgentStatusAwaitingApproval, cp.Status)
 	require.Len(t, cp.PendingApprovals, 1)
@@ -272,8 +268,8 @@ func TestWorker_AwaitsApprovalDoesNotFail(t *testing.T) {
 	// FAILED. Confirm it holds AWAITING_APPROVAL.
 	time.Sleep(time.Second)
 
-	stillAwaiting := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusAwaitingApproval, stillAwaiting.Status)
+	stillAwaiting := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusAwaitingApproval, stillAwaiting.Status)
 }
 
 // TestWorker_ApprovalApprovedResumesAndCompletes is the full happy-path
@@ -328,14 +324,14 @@ func TestWorker_ApprovalApprovedResumesAndCompletes(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusAwaitingApproval
+			r, err := tryLoadAgentExecution(client, run.ID)
+			return err == nil && r.Status == coredata.AgentExecutionStatusAwaitingApproval
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	svc := agentrun.NewService(client)
+	svc := agentexecution.NewService(client)
 	_, err := svc.SubmitApproval(
 		context.Background(),
 		coredata.NewNoScope(),
@@ -353,8 +349,8 @@ func TestWorker_ApprovalApprovedResumesAndCompletes(t *testing.T) {
 		200*time.Millisecond,
 	)
 
-	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	completed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, completed.Status)
 	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
@@ -412,14 +408,14 @@ func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusAwaitingApproval
+			r, err := tryLoadAgentExecution(client, run.ID)
+			return err == nil && r.Status == coredata.AgentExecutionStatusAwaitingApproval
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	svc := agentrun.NewService(client)
+	svc := agentexecution.NewService(client)
 	_, err := svc.SubmitApproval(
 		context.Background(),
 		coredata.NewNoScope(),
@@ -437,8 +433,8 @@ func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
 		200*time.Millisecond,
 	)
 
-	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	completed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, completed.Status)
 	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
@@ -451,7 +447,6 @@ func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
 // resumed run continues in that branch and completes.
 func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 	client := test.PGClient(t)
-	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
 	toolRelease := make(chan struct{})
@@ -530,18 +525,17 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
+			r, err := tryLoadAgentExecution(client, run.ID)
 
 			return err == nil &&
-				r.Status == coredata.AgentRunStatusPending &&
+				r.Status == coredata.AgentExecutionStatusPending &&
 				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	cp, err := store.Load(context.Background(), run.ID.String())
-	require.NoError(t, err)
+	cp := loadCheckpoint(t, client, run.ID)
 	require.NotNil(t, cp)
 	assert.Equal(t, agent.AgentStatusSuspended, cp.Status)
 	assert.Equal(
@@ -567,8 +561,8 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 		200*time.Millisecond,
 	)
 
-	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	completed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, completed.Status)
 	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
@@ -576,7 +570,6 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 
 func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 	client := test.PGClient(t)
-	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
 	toolRelease := make(chan struct{})
@@ -657,18 +650,17 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
+			r, err := tryLoadAgentExecution(client, run.ID)
 
 			return err == nil &&
-				r.Status == coredata.AgentRunStatusPending &&
+				r.Status == coredata.AgentExecutionStatusPending &&
 				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	cp, err := store.Load(context.Background(), run.ID.String())
-	require.NoError(t, err)
+	cp := loadCheckpoint(t, client, run.ID)
 	require.NotNil(t, cp)
 	assert.Equal(t, agent.AgentStatusSuspended, cp.Status)
 	assert.Equal(t, "outer-agent", cp.AgentName)
@@ -695,8 +687,8 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 		200*time.Millisecond,
 	)
 
-	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	completed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, completed.Status)
 	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
@@ -704,7 +696,6 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 
 func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	client := test.PGClient(t)
-	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
 	toolRelease := make(chan struct{})
@@ -800,18 +791,17 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
+			r, err := tryLoadAgentExecution(client, run.ID)
 
 			return err == nil &&
-				r.Status == coredata.AgentRunStatusPending &&
+				r.Status == coredata.AgentExecutionStatusPending &&
 				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	cp, err := store.Load(context.Background(), run.ID.String())
-	require.NoError(t, err)
+	cp := loadCheckpoint(t, client, run.ID)
 	require.NotNil(t, cp)
 	assert.Equal(t, "outer-agent", cp.AgentName)
 
@@ -842,8 +832,8 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 		200*time.Millisecond,
 	)
 
-	completed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusPending, completed.Status)
+	completed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, completed.Status)
 	assert.NotNil(t, loadAgentInput(t, client, input.ID).ProcessedAt)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
@@ -892,9 +882,9 @@ func TestWorker_LeaseLossCancelsAndFencesStaleWriter(t *testing.T) {
 	runWorkerA := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
-		agentrun.WithWorkerMaxConcurrency(1),
-		agentrun.WithWorkerHeartbeatInterval(50*time.Millisecond),
-		agentrun.WithWorkerStaleAfter(500*time.Millisecond),
+		agentexecution.WithWorkerMaxConcurrency(1),
+		agentexecution.WithWorkerHeartbeatInterval(50*time.Millisecond),
+		agentexecution.WithWorkerStaleAfter(500*time.Millisecond),
 	)
 
 	ctxA, cancelA := context.WithTimeout(context.Background(), 30*time.Second)
@@ -908,12 +898,12 @@ func TestWorker_LeaseLossCancelsAndFencesStaleWriter(t *testing.T) {
 		t.Fatal("timed out waiting for first worker tool call")
 	}
 
-	resetRunToPending(t, client, run.ID)
+	resetExecutionToPending(t, client, run.ID)
 
 	runWorkerB := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
-		agentrun.WithWorkerMaxConcurrency(1),
+		agentexecution.WithWorkerMaxConcurrency(1),
 	)
 
 	ctxB, cancelB := context.WithTimeout(context.Background(), 30*time.Second)
@@ -941,7 +931,7 @@ func TestWorker_LeaseLossCancelsAndFencesStaleWriter(t *testing.T) {
 		func() bool {
 			current := loadAgentExecution(t, client, run.ID)
 
-			return current.Status == coredata.AgentRunStatusPending &&
+			return current.Status == coredata.AgentExecutionStatusPending &&
 				string(current.SessionMessages) == string(winnerSession)
 		},
 		10*time.Second,
@@ -967,15 +957,15 @@ func TestWorker_UnknownAgentFails(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusFailed
+			r, err := tryLoadAgentExecution(client, run.ID)
+			return err == nil && r.Status == coredata.AgentExecutionStatusFailed
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	failed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusFailed, failed.Status)
+	failed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusFailed, failed.Status)
 	require.NotNil(t, failed.ErrorMessage)
 	assert.Contains(t, *failed.ErrorMessage, "cannot resolve agent")
 }
@@ -1006,15 +996,15 @@ func TestWorker_InvalidInputMessagesFails(t *testing.T) {
 	require.Eventually(
 		t,
 		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Status == coredata.AgentRunStatusFailed
+			r, err := tryLoadAgentExecution(client, run.ID)
+			return err == nil && r.Status == coredata.AgentExecutionStatusFailed
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
 
-	failed := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusFailed, failed.Status)
+	failed := loadAgentExecution(t, client, run.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusFailed, failed.Status)
 	require.NotNil(t, failed.ErrorMessage)
 	assert.Contains(t, *failed.ErrorMessage, "cannot unmarshal conversational input")
 }
@@ -1107,8 +1097,8 @@ func runSIGTERMSubprocess(t *testing.T) {
 	runWorker := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"battle-agent": ag}},
-		agentrun.WithWorkerInterval(150*time.Millisecond),
-		agentrun.WithWorkerMaxConcurrency(1),
+		agentexecution.WithWorkerInterval(150*time.Millisecond),
+		agentexecution.WithWorkerMaxConcurrency(1),
 	)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM)
@@ -1136,7 +1126,7 @@ func runSIGTERMSubprocess(t *testing.T) {
 
 	// The in-flight run may checkpoint or be recovered later depending on
 	// timing, but it must still be queryable after graceful shutdown.
-	_, err := tryLoadAgentRun(client, run.ID)
+	_, err := tryLoadAgentExecution(client, run.ID)
 	require.NoError(t, err)
 }
 

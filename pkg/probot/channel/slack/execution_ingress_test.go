@@ -89,7 +89,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 	var (
 		executionCount int
 		inputCount     int
-		status         coredata.AgentRunStatus
+		status         coredata.AgentExecutionStatus
 		messageRaw     []byte
 		storedIdentity *string
 	)
@@ -102,7 +102,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 				return conn.QueryRow(
 					ctx,
 					`SELECT count(*)
-					 FROM agent_runs
+					 FROM agent_executions
 					 WHERE tenant_id = $1 AND organization_id = $2
 					   AND source = $3 AND session_key = $4`,
 					scope.GetTenantID(),
@@ -121,7 +121,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 				return conn.QueryRow(
 					ctx,
 					`SELECT status
-					 FROM agent_runs
+					 FROM agent_executions
 					 WHERE tenant_id = $1 AND organization_id = $2
 					   AND source = $3 AND session_key = $4`,
 					scope.GetTenantID(),
@@ -171,7 +171,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 		),
 	)
 	assert.Equal(t, 1, executionCount)
-	assert.Equal(t, coredata.AgentRunStatusPending, status)
+	assert.Equal(t, coredata.AgentExecutionStatusPending, status)
 	assert.Equal(t, 1, inputCount)
 	require.NotNil(t, storedIdentity)
 	assert.Equal(t, identityID.String(), *storedIdentity)
@@ -282,7 +282,7 @@ func TestExecutionIngressReusesThreadSessionAndCopiesSubjectContext(t *testing.T
 				if err := conn.QueryRow(
 					ctx,
 					`SELECT count(*)
-					 FROM agent_runs
+					 FROM agent_executions
 					 WHERE tenant_id = $1 AND organization_id = $2
 					   AND source = $3 AND session_key = $4`,
 					scope.GetTenantID(),
@@ -296,7 +296,7 @@ func TestExecutionIngressReusesThreadSessionAndCopiesSubjectContext(t *testing.T
 				return conn.QueryRow(
 					ctx,
 					`SELECT trusted_context
-					 FROM agent_runs
+					 FROM agent_executions
 					 WHERE tenant_id = $1 AND organization_id = $2
 					   AND source = $3 AND session_key = $4`,
 					scope.GetTenantID(),
@@ -343,7 +343,7 @@ func TestExecutionIngressRoutesAnchoredReplyWithoutChangingDomainSession(t *test
 	source := ProviderName
 	sessionKey := "domain-session-" + organizationID.String()
 	execution := &coredata.AgentExecution{
-		ID:              gid.New(scope.GetTenantID(), coredata.AgentRunEntityType),
+		ID:              gid.New(scope.GetTenantID(), coredata.AgentExecutionEntityType),
 		OrganizationID:  organizationID,
 		StartAgentName:  defaultAgentProfile,
 		Source:          &source,
@@ -366,7 +366,7 @@ func TestExecutionIngressRoutesAnchoredReplyWithoutChangingDomainSession(t *test
 				anchor := &coredata.AgentExecutionAnchor{
 					ID:                     gid.New(scope.GetTenantID(), coredata.AgentExecutionAnchorEntityType),
 					OrganizationID:         organizationID,
-					AgentRunID:             execution.ID,
+					AgentExecutionID:       execution.ID,
 					Provider:               ProviderName,
 					ExternalConversationID: "C999",
 					ExternalMessageID:      "900.000",

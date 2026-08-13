@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun_test
+package agentexecution_test
 
 import (
 	"context"
@@ -33,7 +33,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
@@ -93,19 +93,16 @@ func newDummyAgent(name string, responses []*llm.ChatCompletionResponse, tools .
 func newTestWorker(
 	client *pg.Client,
 	registry agent.AgentRegistry,
-	opts ...agentrun.WorkerOption,
-) *agentrun.Worker {
-	store := coredata.NewPGCheckpointer(client)
-
-	baseOpts := []agentrun.WorkerOption{
-		agentrun.WithWorkerInterval(250 * time.Millisecond),
+	opts ...agentexecution.WorkerOption,
+) *agentexecution.Worker {
+	baseOpts := []agentexecution.WorkerOption{
+		agentexecution.WithWorkerInterval(250 * time.Millisecond),
 	}
 
 	baseOpts = append(baseOpts, opts...)
 
-	return agentrun.NewWorker(
+	return agentexecution.NewWorker(
 		client,
-		store,
 		registry,
 		testLogger(),
 		baseOpts...,
@@ -181,40 +178,40 @@ func insertTestOrganization(t *testing.T, client *pg.Client) gid.GID {
 	return orgID
 }
 
-func insertPendingRun(
+func insertPendingExecution(
 	t *testing.T,
 	client *pg.Client,
 	agentName string,
 	inputMessages []llm.Message,
-) coredata.AgentRun {
+) coredata.AgentExecution {
 	t.Helper()
 
 	orgID := insertTestOrganization(t, client)
 
-	return insertPendingRunInOrg(t, client, orgID, agentName, inputMessages)
+	return insertPendingExecutionInOrg(t, client, orgID, agentName, inputMessages)
 }
 
-func insertPendingRunInOrg(
+func insertPendingExecutionInOrg(
 	t *testing.T,
 	client *pg.Client,
 	organizationID gid.GID,
 	agentName string,
 	inputMessages []llm.Message,
-) coredata.AgentRun {
+) coredata.AgentExecution {
 	t.Helper()
 
-	runID := gid.New(organizationID.TenantID(), coredata.AgentRunEntityType)
+	runID := gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType)
 
 	inputJSON, err := json.Marshal(inputMessages)
 	require.NoError(t, err)
 
 	now := time.Now()
 
-	run := coredata.AgentRun{
+	run := coredata.AgentExecution{
 		ID:             runID,
 		OrganizationID: organizationID,
 		StartAgentName: agentName,
-		Status:         coredata.AgentRunStatusPending,
+		Status:         coredata.AgentExecutionStatusPending,
 		InputMessages:  inputJSON,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -241,24 +238,8 @@ func cleanupOrganization(client *pg.Client, id gid.GID) {
 	})
 }
 
-func loadAgentRun(t *testing.T, client *pg.Client, id gid.GID) coredata.AgentRun {
-	t.Helper()
-
-	var run coredata.AgentRun
-
-	err := client.WithConn(
-		context.Background(),
-		func(ctx context.Context, conn pg.Querier) error {
-			return run.LoadByID(ctx, conn, coredata.NewNoScope(), id)
-		},
-	)
-	require.NoError(t, err, "cannot load agent run %s", id)
-
-	return run
-}
-
-func tryLoadAgentRun(client *pg.Client, id gid.GID) (coredata.AgentRun, error) {
-	var run coredata.AgentRun
+func tryLoadAgentExecution(client *pg.Client, id gid.GID) (coredata.AgentExecution, error) {
+	var run coredata.AgentExecution
 
 	err := client.WithConn(
 		context.Background(),
@@ -270,7 +251,7 @@ func tryLoadAgentRun(client *pg.Client, id gid.GID) (coredata.AgentRun, error) {
 	return run, err
 }
 
-func resetRunToPending(t *testing.T, client *pg.Client, runID gid.GID) {
+func resetExecutionToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 	t.Helper()
 
 	err := client.WithConn(
@@ -278,7 +259,7 @@ func resetRunToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 		func(ctx context.Context, conn pg.Querier) error {
 			_, err := conn.Exec(
 				ctx,
-				`UPDATE agent_runs
+				`UPDATE agent_executions
 				 SET status = 'PENDING',
 				     started_at = NULL,
 				     processing_owner_token = NULL,
@@ -307,7 +288,7 @@ func insertPendingTurn(
 	client *pg.Client,
 	agentName string,
 	prompt string,
-) (coredata.AgentRun, coredata.AgentInput) {
+) (coredata.AgentExecution, coredata.AgentInput) {
 	t.Helper()
 
 	orgID := insertTestOrganization(t, client)
@@ -322,7 +303,7 @@ func insertPendingTurn(
 	)
 	input := enqueueAgentInput(t, client, execution, t.Name(), userMessage(prompt))
 
-	return loadAgentRun(t, client, execution.ID), input
+	return loadAgentExecution(t, client, execution.ID), input
 }
 
 func conversationSettled(client *pg.Client, executionID, inputID gid.GID) bool {
@@ -348,7 +329,7 @@ func conversationSettled(client *pg.Client, executionID, inputID gid.GID) bool {
 	)
 
 	return err == nil &&
-		execution.Status == coredata.AgentRunStatusPending &&
+		execution.Status == coredata.AgentExecutionStatusPending &&
 		execution.Checkpoint == nil
 }
 
@@ -365,7 +346,7 @@ func insertConversationalExecution(
 
 	now := time.Now()
 	execution := coredata.AgentExecution{
-		ID:              gid.New(organizationID.TenantID(), coredata.AgentRunEntityType),
+		ID:              gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 		OrganizationID:  organizationID,
 		StartAgentName:  agentName,
 		Source:          &source,
@@ -409,14 +390,14 @@ func enqueueAgentInput(
 
 	now := time.Now()
 	input := coredata.AgentInput{
-		ID:             gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
-		OrganizationID: execution.OrganizationID,
-		AgentRunID:     execution.ID,
-		Source:         *execution.Source,
-		SourceEventID:  &eventID,
-		Message:        data,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:               gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
+		OrganizationID:   execution.OrganizationID,
+		AgentExecutionID: execution.ID,
+		Source:           *execution.Source,
+		SourceEventID:    &eventID,
+		Message:          data,
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}
 
 	require.NoError(
@@ -453,15 +434,15 @@ func enqueueAgentInputWithIdentity(
 
 	now := time.Now()
 	input := coredata.AgentInput{
-		ID:             gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
-		OrganizationID: execution.OrganizationID,
-		AgentRunID:     execution.ID,
-		Source:         *execution.Source,
-		SourceEventID:  &eventID,
-		IdentityID:     &identityID,
-		Message:        data,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:               gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
+		OrganizationID:   execution.OrganizationID,
+		AgentExecutionID: execution.ID,
+		Source:           *execution.Source,
+		SourceEventID:    &eventID,
+		IdentityID:       &identityID,
+		Message:          data,
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}
 
 	require.NoError(
@@ -503,6 +484,20 @@ func loadAgentExecution(
 	)
 
 	return execution
+}
+
+func loadCheckpoint(t *testing.T, client *pg.Client, id gid.GID) *agent.Checkpoint {
+	t.Helper()
+
+	execution := loadAgentExecution(t, client, id)
+	if execution.Checkpoint == nil {
+		return nil
+	}
+
+	cp := new(agent.Checkpoint)
+	require.NoError(t, json.Unmarshal(execution.Checkpoint, cp))
+
+	return cp
 }
 
 func loadAgentInput(t *testing.T, client *pg.Client, id gid.GID) coredata.AgentInput {

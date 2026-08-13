@@ -81,7 +81,7 @@ E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 E2E_BINARY ?=
 E2E_COVERAGE_BINARY ?= $(CURDIR)/bin/probod-coverage
-E2E_CORE_COVER_PKGS ?= go.probo.inc/probo/pkg/coredata,go.probo.inc/probo/pkg/probo,go.probo.inc/probo/pkg/server/api/console/v1,go.probo.inc/probo/pkg/server/api/connect/v1,go.probo.inc/probo/pkg/server/api/complianceportal/v1,go.probo.inc/probo/pkg/server/api/mcp/v1,go.probo.inc/probo/pkg/accessreview,go.probo.inc/probo/pkg/agentrun,go.probo.inc/probo/pkg/complianceportal/management,go.probo.inc/probo/pkg/complianceportal/visitor,go.probo.inc/probo/pkg/cookiebanner,go.probo.inc/probo/pkg/riskmanagement,go.probo.inc/probo/pkg/thirdparty,go.probo.inc/probo/pkg/webhook
+E2E_CORE_COVER_PKGS ?= go.probo.inc/probo/pkg/coredata,go.probo.inc/probo/pkg/probo,go.probo.inc/probo/pkg/server/api/console/v1,go.probo.inc/probo/pkg/server/api/connect/v1,go.probo.inc/probo/pkg/server/api/complianceportal/v1,go.probo.inc/probo/pkg/server/api/mcp/v1,go.probo.inc/probo/pkg/accessreview,go.probo.inc/probo/pkg/agentexecution,go.probo.inc/probo/pkg/complianceportal/management,go.probo.inc/probo/pkg/complianceportal/visitor,go.probo.inc/probo/pkg/cookiebanner,go.probo.inc/probo/pkg/riskmanagement,go.probo.inc/probo/pkg/thirdparty,go.probo.inc/probo/pkg/webhook
 
 DOCKER_REGISTRY=	artifact.probo.inc
 DOCKER_PROXY=		$(DOCKER_REGISTRY)/dockerhub

@@ -354,13 +354,13 @@ type Organization implements Node {
         orderBy: TaskOrder
     ): TaskConnection! @goField(forceResolver: true)
 
-    agentRuns(
+    agentExecutions(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: AgentRunOrder
-    ): AgentRunConnection! @goField(forceResolver: true)
+        orderBy: AgentExecutionOrder
+    ): AgentExecutionConnection! @goField(forceResolver: true)
 
     compliancePortals(
         first: Int

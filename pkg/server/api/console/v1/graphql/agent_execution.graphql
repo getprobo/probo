@@ -1,0 +1,81 @@
+enum AgentExecutionStatus
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatus") {
+    PENDING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusPending")
+    RUNNING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusRunning")
+    SUSPENDED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusSuspended")
+    AWAITING_APPROVAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusAwaitingApproval"
+        )
+    COMPLETED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusCompleted")
+    FAILED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusFailed")
+}
+
+enum AgentExecutionOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.AgentExecutionOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AgentExecutionOrderFieldCreatedAt"
+        )
+}
+
+input AgentExecutionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgentExecutionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: AgentExecutionOrderField!
+}
+
+type AgentExecution implements Node {
+    id: ID!
+    organization: Organization! @goField(forceResolver: true)
+    agentName: String!
+    status: AgentExecutionStatus!
+    errorMessage: String
+    startedAt: Datetime
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type AgentExecutionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AgentExecutionConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AgentExecutionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AgentExecutionEdge {
+    cursor: CursorKey!
+    node: AgentExecution!
+}
+
+extend type Mutation {
+    submitAgentExecutionApproval(
+        input: SubmitAgentExecutionApprovalInput!
+    ): SubmitAgentExecutionApprovalPayload!
+}
+
+input AgentExecutionApprovalDecisionInput {
+    toolCallId: String!
+    approved: Boolean!
+    reason: String
+}
+
+input SubmitAgentExecutionApprovalInput {
+    agentExecutionId: ID!
+    decisions: [AgentExecutionApprovalDecisionInput!]!
+}
+
+type SubmitAgentExecutionApprovalPayload {
+    agentExecution: AgentExecution!
+}

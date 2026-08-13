@@ -35,20 +35,20 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-// agentRunSeed describes the agent run row inserted directly into the test
-// database. Agent runs have no creation mutation on the console API (they are
-// produced by the agent run worker), so e2e coverage seeds them straight into
+// agentExecutionSeed describes the agent execution row inserted directly into the test
+// database. Agent executions have no creation mutation on the console API (they are
+// produced by the agent execution worker), so e2e coverage seeds them straight into
 // Postgres, mirroring the common-third-party catalog seeding helper.
-type agentRunSeed struct {
+type agentExecutionSeed struct {
 	agentName    string
-	status       coredata.AgentRunStatus
+	status       coredata.AgentExecutionStatus
 	errorMessage *string
 	startedAt    *time.Time
 	createdAt    time.Time
 	checkpoint   []byte
 }
 
-func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.GID {
+func seedAgentExecution(t *testing.T, organizationID gid.GID, seed agentExecutionSeed) gid.GID {
 	t.Helper()
 
 	ctx := context.Background()
@@ -60,14 +60,14 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 	}
 
 	if seed.status == "" {
-		seed.status = coredata.AgentRunStatusPending
+		seed.status = coredata.AgentExecutionStatusPending
 	}
 
 	if seed.createdAt.IsZero() {
 		seed.createdAt = time.Now().UTC()
 	}
 
-	id := gid.New(organizationID.TenantID(), coredata.AgentRunEntityType)
+	id := gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType)
 
 	var checkpoint any
 	if len(seed.checkpoint) > 0 {
@@ -75,7 +75,7 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 	}
 
 	_, err := conn.Exec(ctx, `
-		INSERT INTO agent_runs (
+		INSERT INTO agent_executions (
 			id, tenant_id, organization_id, start_agent_name, status,
 			input_messages, checkpoint, error_message, started_at,
 			session_messages, processing_input_ids,
@@ -100,7 +100,7 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 		1,
 		seed.createdAt,
 	)
-	require.NoError(t, err, "cannot seed agent run")
+	require.NoError(t, err, "cannot seed agent execution")
 
 	t.Cleanup(func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -110,18 +110,18 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 
 		defer func() { _ = cleanupConn.Close(cleanupCtx) }()
 
-		_, err := cleanupConn.Exec(cleanupCtx, `DELETE FROM agent_runs WHERE id = $1`, id)
-		assert.NoError(t, err, "cleanup: cannot delete seeded agent run %s", id)
+		_, err := cleanupConn.Exec(cleanupCtx, `DELETE FROM agent_executions WHERE id = $1`, id)
+		assert.NoError(t, err, "cleanup: cannot delete seeded agent execution %s", id)
 	})
 
 	return id
 }
 
-const agentRunListQuery = `
-	query($orgId: ID!, $orderBy: AgentRunOrder) {
+const agentExecutionListQuery = `
+	query($orgId: ID!, $orderBy: AgentExecutionOrder) {
 		node(id: $orgId) {
 			... on Organization {
-				agentRuns(first: 50, orderBy: $orderBy) {
+				agentExecutions(first: 50, orderBy: $orderBy) {
 					totalCount
 					edges {
 						cursor
@@ -147,7 +147,7 @@ const agentRunListQuery = `
 	}
 `
 
-type agentRunNode struct {
+type agentExecutionNode struct {
 	ID           string  `json:"id"`
 	AgentName    string  `json:"agentName"`
 	Status       string  `json:"status"`
@@ -157,52 +157,52 @@ type agentRunNode struct {
 	UpdatedAt    string  `json:"updatedAt"`
 }
 
-type agentRunConnectionResult struct {
+type agentExecutionConnectionResult struct {
 	Node *struct {
-		AgentRuns struct {
+		AgentExecutions struct {
 			TotalCount int `json:"totalCount"`
 			Edges      []struct {
-				Cursor string       `json:"cursor"`
-				Node   agentRunNode `json:"node"`
+				Cursor string             `json:"cursor"`
+				Node   agentExecutionNode `json:"node"`
 			} `json:"edges"`
 			PageInfo testutil.PageInfo `json:"pageInfo"`
-		} `json:"agentRuns"`
+		} `json:"agentExecutions"`
 	} `json:"node"`
 }
 
-func TestAgentRun_List(t *testing.T) {
+func TestAgentExecution_List(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	errMsg := "boom"
 	startedAt := time.Now().UTC().Add(-time.Minute)
 
-	completedID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	completedID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "compliance-agent",
-		status:    coredata.AgentRunStatusCompleted,
+		status:    coredata.AgentExecutionStatusCompleted,
 		startedAt: &startedAt,
 	})
-	failedID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	failedID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName:    "vetting-agent",
-		status:       coredata.AgentRunStatusFailed,
+		status:       coredata.AgentExecutionStatusFailed,
 		errorMessage: &errMsg,
 		startedAt:    &startedAt,
 	})
 
-	var result agentRunConnectionResult
+	var result agentExecutionConnectionResult
 
-	err := owner.Execute(agentRunListQuery, map[string]any{
+	err := owner.Execute(agentExecutionListQuery, map[string]any{
 		"orgId": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
 	require.NotNil(t, result.Node, "organization node should resolve")
 
-	assert.Equal(t, 2, result.Node.AgentRuns.TotalCount)
-	require.Len(t, result.Node.AgentRuns.Edges, 2)
+	assert.Equal(t, 2, result.Node.AgentExecutions.TotalCount)
+	require.Len(t, result.Node.AgentExecutions.Edges, 2)
 
-	byID := make(map[string]agentRunNode, 2)
+	byID := make(map[string]agentExecutionNode, 2)
 
-	for _, edge := range result.Node.AgentRuns.Edges {
+	for _, edge := range result.Node.AgentExecutions.Edges {
 		assert.NotEmpty(t, edge.Cursor, "edge cursor should be set")
 		byID[edge.Node.ID] = edge.Node
 	}
@@ -224,77 +224,77 @@ func TestAgentRun_List(t *testing.T) {
 	assert.Equal(t, "boom", *failed.ErrorMessage)
 }
 
-func TestAgentRun_ListEmpty(t *testing.T) {
+func TestAgentExecution_ListEmpty(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	var result agentRunConnectionResult
+	var result agentExecutionConnectionResult
 
-	err := owner.Execute(agentRunListQuery, map[string]any{
+	err := owner.Execute(agentExecutionListQuery, map[string]any{
 		"orgId": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
 	require.NotNil(t, result.Node, "organization node should resolve")
 
-	assert.Equal(t, 0, result.Node.AgentRuns.TotalCount)
-	assert.Empty(t, result.Node.AgentRuns.Edges)
-	assert.False(t, result.Node.AgentRuns.PageInfo.HasNextPage)
-	assert.False(t, result.Node.AgentRuns.PageInfo.HasPreviousPage)
+	assert.Equal(t, 0, result.Node.AgentExecutions.TotalCount)
+	assert.Empty(t, result.Node.AgentExecutions.Edges)
+	assert.False(t, result.Node.AgentExecutions.PageInfo.HasNextPage)
+	assert.False(t, result.Node.AgentExecutions.PageInfo.HasPreviousPage)
 }
 
-func TestAgentRun_Ordering(t *testing.T) {
+func TestAgentExecution_Ordering(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	base := time.Now().UTC().Add(-time.Hour)
-	oldestID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{createdAt: base})
-	middleID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{createdAt: base.Add(time.Minute)})
-	newestID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{createdAt: base.Add(2 * time.Minute)})
+	oldestID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{createdAt: base})
+	middleID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{createdAt: base.Add(time.Minute)})
+	newestID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{createdAt: base.Add(2 * time.Minute)})
 
 	t.Run("ascending by createdAt", func(t *testing.T) {
 		t.Parallel()
 
-		var result agentRunConnectionResult
+		var result agentExecutionConnectionResult
 
-		err := owner.Execute(agentRunListQuery, map[string]any{
+		err := owner.Execute(agentExecutionListQuery, map[string]any{
 			"orgId":   owner.GetOrganizationID().String(),
 			"orderBy": map[string]any{"direction": "ASC", "field": "CREATED_AT"},
 		}, &result)
 		require.NoError(t, err)
 		require.NotNil(t, result.Node, "organization node should resolve")
-		require.Len(t, result.Node.AgentRuns.Edges, 3)
+		require.Len(t, result.Node.AgentExecutions.Edges, 3)
 
-		assert.Equal(t, oldestID.String(), result.Node.AgentRuns.Edges[0].Node.ID)
-		assert.Equal(t, middleID.String(), result.Node.AgentRuns.Edges[1].Node.ID)
-		assert.Equal(t, newestID.String(), result.Node.AgentRuns.Edges[2].Node.ID)
+		assert.Equal(t, oldestID.String(), result.Node.AgentExecutions.Edges[0].Node.ID)
+		assert.Equal(t, middleID.String(), result.Node.AgentExecutions.Edges[1].Node.ID)
+		assert.Equal(t, newestID.String(), result.Node.AgentExecutions.Edges[2].Node.ID)
 	})
 
 	t.Run("descending by createdAt", func(t *testing.T) {
 		t.Parallel()
 
-		var result agentRunConnectionResult
+		var result agentExecutionConnectionResult
 
-		err := owner.Execute(agentRunListQuery, map[string]any{
+		err := owner.Execute(agentExecutionListQuery, map[string]any{
 			"orgId":   owner.GetOrganizationID().String(),
 			"orderBy": map[string]any{"direction": "DESC", "field": "CREATED_AT"},
 		}, &result)
 		require.NoError(t, err)
 		require.NotNil(t, result.Node, "organization node should resolve")
-		require.Len(t, result.Node.AgentRuns.Edges, 3)
+		require.Len(t, result.Node.AgentExecutions.Edges, 3)
 
-		assert.Equal(t, newestID.String(), result.Node.AgentRuns.Edges[0].Node.ID)
-		assert.Equal(t, middleID.String(), result.Node.AgentRuns.Edges[1].Node.ID)
-		assert.Equal(t, oldestID.String(), result.Node.AgentRuns.Edges[2].Node.ID)
+		assert.Equal(t, newestID.String(), result.Node.AgentExecutions.Edges[0].Node.ID)
+		assert.Equal(t, middleID.String(), result.Node.AgentExecutions.Edges[1].Node.ID)
+		assert.Equal(t, oldestID.String(), result.Node.AgentExecutions.Edges[2].Node.ID)
 	})
 }
 
-func TestAgentRun_Pagination(t *testing.T) {
+func TestAgentExecution_Pagination(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	base := time.Now().UTC().Add(-time.Hour)
 	for i := range 3 {
-		seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+		seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 			createdAt: base.Add(time.Duration(i) * time.Minute),
 		})
 	}
@@ -303,7 +303,7 @@ func TestAgentRun_Pagination(t *testing.T) {
 		query($orgId: ID!, $first: Int, $after: CursorKey) {
 			node(id: $orgId) {
 				... on Organization {
-					agentRuns(first: $first, after: $after, orderBy: {direction: ASC, field: CREATED_AT}) {
+					agentExecutions(first: $first, after: $after, orderBy: {direction: ASC, field: CREATED_AT}) {
 						totalCount
 						edges {
 							cursor
@@ -321,7 +321,7 @@ func TestAgentRun_Pagination(t *testing.T) {
 		}
 	`
 
-	var firstPage agentRunConnectionResult
+	var firstPage agentExecutionConnectionResult
 
 	err := owner.Execute(query, map[string]any{
 		"orgId": owner.GetOrganizationID().String(),
@@ -330,47 +330,47 @@ func TestAgentRun_Pagination(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, firstPage.Node, "organization node should resolve")
 
-	assert.Equal(t, 3, firstPage.Node.AgentRuns.TotalCount)
-	testutil.AssertFirstPage(t, len(firstPage.Node.AgentRuns.Edges), firstPage.Node.AgentRuns.PageInfo, 2, true)
-	require.NotNil(t, firstPage.Node.AgentRuns.PageInfo.EndCursor)
+	assert.Equal(t, 3, firstPage.Node.AgentExecutions.TotalCount)
+	testutil.AssertFirstPage(t, len(firstPage.Node.AgentExecutions.Edges), firstPage.Node.AgentExecutions.PageInfo, 2, true)
+	require.NotNil(t, firstPage.Node.AgentExecutions.PageInfo.EndCursor)
 
-	var secondPage agentRunConnectionResult
+	var secondPage agentExecutionConnectionResult
 
 	err = owner.Execute(query, map[string]any{
 		"orgId": owner.GetOrganizationID().String(),
 		"first": 2,
-		"after": *firstPage.Node.AgentRuns.PageInfo.EndCursor,
+		"after": *firstPage.Node.AgentExecutions.PageInfo.EndCursor,
 	}, &secondPage)
 	require.NoError(t, err)
 	require.NotNil(t, secondPage.Node, "organization node should resolve")
 
-	testutil.AssertLastPage(t, len(secondPage.Node.AgentRuns.Edges), secondPage.Node.AgentRuns.PageInfo, 1, true)
+	testutil.AssertLastPage(t, len(secondPage.Node.AgentExecutions.Edges), secondPage.Node.AgentExecutions.PageInfo, 1, true)
 
 	// The page boundary must not overlap.
 	firstIDs := map[string]struct{}{}
-	for _, edge := range firstPage.Node.AgentRuns.Edges {
+	for _, edge := range firstPage.Node.AgentExecutions.Edges {
 		firstIDs[edge.Node.ID] = struct{}{}
 	}
 
-	for _, edge := range secondPage.Node.AgentRuns.Edges {
+	for _, edge := range secondPage.Node.AgentExecutions.Edges {
 		_, overlap := firstIDs[edge.Node.ID]
 		assert.False(t, overlap, "second page must not repeat a first-page run")
 	}
 }
 
-func TestAgentRun_Get(t *testing.T) {
+func TestAgentExecution_Get(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "compliance-agent",
-		status:    coredata.AgentRunStatusRunning,
+		status:    coredata.AgentExecutionStatusRunning,
 	})
 
 	const query = `
 		query($id: ID!) {
 			node(id: $id) {
-				... on AgentRun {
+				... on AgentExecution {
 					id
 					agentName
 					status
@@ -379,7 +379,7 @@ func TestAgentRun_Get(t *testing.T) {
 					createdAt
 					updatedAt
 					organization { id }
-					permission(action: "agent:run:get")
+					permission(action: "agent:execution:get")
 				}
 			}
 		}
@@ -409,7 +409,7 @@ func TestAgentRun_Get(t *testing.T) {
 	assert.Equal(t, "RUNNING", result.Node.Status)
 	assert.Nil(t, result.Node.ErrorMessage)
 	assert.Equal(t, owner.GetOrganizationID().String(), result.Node.Organization.ID)
-	assert.True(t, result.Node.Permission, "owner should have agent-run:get permission")
+	assert.True(t, result.Node.Permission, "owner should have agent-execution:get permission")
 }
 
 // awaitingApprovalCheckpoint builds the JSON checkpoint a worker persists
@@ -442,10 +442,10 @@ func awaitingApprovalCheckpoint(t *testing.T, toolCallIDs ...string) []byte {
 	return data
 }
 
-const submitAgentRunApprovalMutation = `
-	mutation($input: SubmitAgentRunApprovalInput!) {
-		submitAgentRunApproval(input: $input) {
-			agentRun {
+const submitAgentExecutionApprovalMutation = `
+	mutation($input: SubmitAgentExecutionApprovalInput!) {
+		submitAgentExecutionApproval(input: $input) {
+			agentExecution {
 				id
 				status
 			}
@@ -453,30 +453,30 @@ const submitAgentRunApprovalMutation = `
 	}
 `
 
-type submitAgentRunApprovalResult struct {
-	SubmitAgentRunApproval struct {
-		AgentRun struct {
+type submitAgentExecutionApprovalResult struct {
+	SubmitAgentExecutionApproval struct {
+		AgentExecution struct {
 			ID     string `json:"id"`
 			Status string `json:"status"`
-		} `json:"agentRun"`
-	} `json:"submitAgentRunApproval"`
+		} `json:"agentExecution"`
+	} `json:"submitAgentExecutionApproval"`
 }
 
-func TestAgentRun_SubmitApproval(t *testing.T) {
+func TestAgentExecution_SubmitApproval(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName:  "approval-agent",
-		status:     coredata.AgentRunStatusAwaitingApproval,
+		status:     coredata.AgentExecutionStatusAwaitingApproval,
 		checkpoint: awaitingApprovalCheckpoint(t, "tc_1"),
 	})
 
-	var result submitAgentRunApprovalResult
+	var result submitAgentExecutionApprovalResult
 
-	err := owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+	err := owner.Execute(submitAgentExecutionApprovalMutation, map[string]any{
 		"input": map[string]any{
-			"agentRunId": runID.String(),
+			"agentExecutionId": runID.String(),
 			"decisions": []map[string]any{
 				{"toolCallId": "tc_1", "approved": true},
 			},
@@ -485,24 +485,24 @@ func TestAgentRun_SubmitApproval(t *testing.T) {
 	require.NoError(t, err)
 
 	// A submitted decision requeues the run so a worker resumes it.
-	assert.Equal(t, runID.String(), result.SubmitAgentRunApproval.AgentRun.ID)
-	assert.Equal(t, "PENDING", result.SubmitAgentRunApproval.AgentRun.Status)
+	assert.Equal(t, runID.String(), result.SubmitAgentExecutionApproval.AgentExecution.ID)
+	assert.Equal(t, "PENDING", result.SubmitAgentExecutionApproval.AgentExecution.Status)
 }
 
-func TestAgentRun_SubmitApproval_NotAwaiting(t *testing.T) {
+func TestAgentExecution_SubmitApproval_NotAwaiting(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "approval-agent",
-		status:    coredata.AgentRunStatusCompleted,
+		status:    coredata.AgentExecutionStatusCompleted,
 	})
 
-	var result submitAgentRunApprovalResult
+	var result submitAgentExecutionApprovalResult
 
-	err := owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+	err := owner.Execute(submitAgentExecutionApprovalMutation, map[string]any{
 		"input": map[string]any{
-			"agentRunId": runID.String(),
+			"agentExecutionId": runID.String(),
 			"decisions": []map[string]any{
 				{"toolCallId": "tc_1", "approved": true},
 			},
@@ -511,22 +511,22 @@ func TestAgentRun_SubmitApproval_NotAwaiting(t *testing.T) {
 	testutil.RequireErrorCode(t, err, "CONFLICT")
 }
 
-func TestAgentRun_SubmitApproval_IncompleteDecisions(t *testing.T) {
+func TestAgentExecution_SubmitApproval_IncompleteDecisions(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	// Two pending approvals, but only one decision is supplied.
-	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName:  "approval-agent",
-		status:     coredata.AgentRunStatusAwaitingApproval,
+		status:     coredata.AgentExecutionStatusAwaitingApproval,
 		checkpoint: awaitingApprovalCheckpoint(t, "tc_1", "tc_2"),
 	})
 
-	var result submitAgentRunApprovalResult
+	var result submitAgentExecutionApprovalResult
 
-	err := owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+	err := owner.Execute(submitAgentExecutionApprovalMutation, map[string]any{
 		"input": map[string]any{
-			"agentRunId": runID.String(),
+			"agentExecutionId": runID.String(),
 			"decisions": []map[string]any{
 				{"toolCallId": "tc_1", "approved": true},
 			},

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution
 
 import (
 	"context"
@@ -162,7 +162,6 @@ func WithWorkerTracerProvider(provider trace.TracerProvider) WorkerOption {
 
 func NewWorker(
 	pgClient *pg.Client,
-	_ *coredata.PGCheckpointer,
 	registry agent.AgentRegistry,
 	logger *log.Logger,
 	opts ...WorkerOption,
@@ -215,7 +214,7 @@ func NewWorker(
 	}
 
 	w := worker.New(
-		"agent-run-worker",
+		"agent-execution-worker",
 		h,
 		logger,
 		kitOpts...,

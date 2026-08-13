@@ -40,7 +40,7 @@ func (s *MessageService) OnSlackbotDeliverySuccess(
 	if source, ok := message.Metadata[deliverySourceEventMetadata].(string); ok {
 		executionID, err := gid.ParseGID(source)
 		if err == nil &&
-			executionID.EntityType() == coredata.AgentRunEntityType &&
+			executionID.EntityType() == coredata.AgentExecutionEntityType &&
 			message.ChannelID != nil &&
 			message.MessageTS != nil {
 			if err := bindExecutionAnchor(ctx, tx, scope, executionID, message); err != nil {
@@ -143,7 +143,7 @@ func bindExecutionAnchor(
 	anchor := &coredata.AgentExecutionAnchor{
 		ID:                     gid.New(scope.GetTenantID(), coredata.AgentExecutionAnchorEntityType),
 		OrganizationID:         message.OrganizationID,
-		AgentRunID:             executionID,
+		AgentExecutionID:       executionID,
 		Provider:               ProviderName,
 		ExternalConversationID: *message.ChannelID,
 		ExternalMessageID:      *message.MessageTS,

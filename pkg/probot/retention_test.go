@@ -129,7 +129,7 @@ func TestRetentionHandlerPreservesReceiptsBeyondReplayState(t *testing.T) {
 	source := "retention-test"
 	sessionKey := "retention-" + organizationID.String()
 	execution := &coredata.AgentExecution{
-		ID:              gid.New(tenantID, coredata.AgentRunEntityType),
+		ID:              gid.New(tenantID, coredata.AgentExecutionEntityType),
 		OrganizationID:  organizationID,
 		StartAgentName:  "probot",
 		Source:          &source,
@@ -185,12 +185,12 @@ func TestRetentionHandlerPreservesReceiptsBeyondReplayState(t *testing.T) {
 					return err
 				}
 
-				input.AgentRunID = execution.ID
+				input.AgentExecutionID = execution.ID
 				if _, err := input.EnqueueIdempotently(ctx, tx, scope); err != nil {
 					return err
 				}
 
-				anchor.AgentRunID = execution.ID
+				anchor.AgentExecutionID = execution.ID
 				if _, err := anchor.Upsert(ctx, tx, scope); err != nil {
 					return err
 				}
@@ -238,7 +238,7 @@ func TestRetentionHandlerPreservesReceiptsBeyondReplayState(t *testing.T) {
 				return conn.QueryRow(
 					ctx,
 					`SELECT
-						(SELECT count(*) FROM agent_runs WHERE id = @execution_id),
+						(SELECT count(*) FROM agent_executions WHERE id = @execution_id),
 						(SELECT count(*) FROM agent_inputs WHERE id = @input_id),
 						(SELECT count(*) FROM agent_execution_anchors WHERE id = @anchor_id),
 						(SELECT count(*) FROM operation_receipts WHERE id = @old_receipt_id),

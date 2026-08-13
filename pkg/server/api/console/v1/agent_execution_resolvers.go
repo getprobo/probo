@@ -13,7 +13,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -23,7 +23,7 @@ import (
 )
 
 // Organization is the resolver for the organization field.
-func (r *agentRunResolver) Organization(ctx context.Context, obj *types.AgentRun) (*types.Organization, error) {
+func (r *agentExecutionResolver) Organization(ctx context.Context, obj *types.AgentExecution) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
@@ -45,36 +45,36 @@ func (r *agentRunResolver) Organization(ctx context.Context, obj *types.AgentRun
 }
 
 // Permission is the resolver for the permission field.
-func (r *agentRunResolver) Permission(ctx context.Context, obj *types.AgentRun, action string) (bool, error) {
+func (r *agentExecutionResolver) Permission(ctx context.Context, obj *types.AgentExecution, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *agentRunConnectionResolver) TotalCount(ctx context.Context, obj *types.AgentRunConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, agentrun.ActionAgentRunList)
+func (r *agentExecutionConnectionResolver) TotalCount(ctx context.Context, obj *types.AgentExecutionConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, agentexecution.ActionAgentExecutionList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.agentRun.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.agentExecution.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot count agent runs", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot count agent executions", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 
 		return count, nil
 	}
 
-	r.logger.ErrorCtx(ctx, "unsupported resolver for agent run connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+	r.logger.ErrorCtx(ctx, "unsupported resolver for agent execution connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 
 	return 0, gqlutils.Internal(ctx)
 }
 
-// SubmitAgentRunApproval is the resolver for the submitAgentRunApproval field.
-func (r *mutationResolver) SubmitAgentRunApproval(ctx context.Context, input types.SubmitAgentRunApprovalInput) (*types.SubmitAgentRunApprovalPayload, error) {
-	scope, err := r.authorize(ctx, input.AgentRunID, agentrun.ActionAgentRunApprove)
+// SubmitAgentExecutionApproval is the resolver for the submitAgentExecutionApproval field.
+func (r *mutationResolver) SubmitAgentExecutionApproval(ctx context.Context, input types.SubmitAgentExecutionApprovalInput) (*types.SubmitAgentExecutionApprovalPayload, error) {
+	scope, err := r.authorize(ctx, input.AgentExecutionID, agentexecution.ActionAgentExecutionApprove)
 	if err != nil {
 		return nil, err
 	}
@@ -92,35 +92,35 @@ func (r *mutationResolver) SubmitAgentRunApproval(ctx context.Context, input typ
 		}
 	}
 
-	run, err := r.agentRun.SubmitApproval(ctx, scope, input.AgentRunID, decisions)
+	run, err := r.agentExecution.SubmitApproval(ctx, scope, input.AgentExecutionID, decisions)
 	if err != nil {
 		switch {
-		case errors.Is(err, agentrun.ErrAgentRunNotFound):
+		case errors.Is(err, agentexecution.ErrAgentExecutionNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
-		case errors.Is(err, agentrun.ErrNotAwaitingApproval):
-			return nil, gqlutils.Conflictf(ctx, "agent run is not awaiting approval")
-		case errors.Is(err, agentrun.ErrApprovalDecisionsMismatch):
+		case errors.Is(err, agentexecution.ErrNotAwaitingApproval):
+			return nil, gqlutils.Conflictf(ctx, "agent execution is not awaiting approval")
+		case errors.Is(err, agentexecution.ErrApprovalDecisionsMismatch):
 			return nil, gqlutils.Invalidf(ctx, "approval decisions must match the run's pending approvals")
 		default:
-			r.logger.ErrorCtx(ctx, "cannot submit agent run approval", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot submit agent execution approval", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
 	}
 
-	return &types.SubmitAgentRunApprovalPayload{
-		AgentRun: types.NewAgentRun(run),
+	return &types.SubmitAgentExecutionApprovalPayload{
+		AgentExecution: types.NewAgentExecution(run),
 	}, nil
 }
 
-// AgentRun returns schema.AgentRunResolver implementation.
-func (r *Resolver) AgentRun() schema.AgentRunResolver { return &agentRunResolver{r} }
+// AgentExecution returns schema.AgentExecutionResolver implementation.
+func (r *Resolver) AgentExecution() schema.AgentExecutionResolver { return &agentExecutionResolver{r} }
 
-// AgentRunConnection returns schema.AgentRunConnectionResolver implementation.
-func (r *Resolver) AgentRunConnection() schema.AgentRunConnectionResolver {
-	return &agentRunConnectionResolver{r}
+// AgentExecutionConnection returns schema.AgentExecutionConnectionResolver implementation.
+func (r *Resolver) AgentExecutionConnection() schema.AgentExecutionConnectionResolver {
+	return &agentExecutionConnectionResolver{r}
 }
 
 type (
-	agentRunResolver           struct{ *Resolver }
-	agentRunConnectionResolver struct{ *Resolver }
+	agentExecutionResolver           struct{ *Resolver }
+	agentExecutionConnectionResolver struct{ *Resolver }
 )

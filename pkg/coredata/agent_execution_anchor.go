@@ -34,7 +34,7 @@ import (
 type AgentExecutionAnchor struct {
 	ID                     gid.GID   `db:"id"`
 	OrganizationID         gid.GID   `db:"organization_id"`
-	AgentRunID             gid.GID   `db:"agent_run_id"`
+	AgentExecutionID       gid.GID   `db:"agent_execution_id"`
 	Provider               string    `db:"provider"`
 	ExternalConversationID string    `db:"external_conversation_id"`
 	ExternalMessageID      string    `db:"external_message_id"`
@@ -49,22 +49,22 @@ func (a *AgentExecutionAnchor) Upsert(
 ) (bool, error) {
 	q := `
 INSERT INTO agent_execution_anchors (
-	id, tenant_id, organization_id, agent_run_id, provider,
+	id, tenant_id, organization_id, agent_execution_id, provider,
 	external_conversation_id, external_message_id, created_at, updated_at
 ) SELECT
-	@id, @tenant_id, @organization_id, @agent_run_id, @provider,
+	@id, @tenant_id, @organization_id, @agent_execution_id, @provider,
 	@external_conversation_id, @external_message_id, @created_at, @updated_at
-FROM agent_runs
+FROM agent_executions
 WHERE
-	agent_runs.id = @agent_run_id
-	AND agent_runs.tenant_id = @tenant_id
-	AND agent_runs.organization_id = @organization_id
-ON CONFLICT (tenant_id, organization_id, agent_run_id, provider) DO UPDATE SET
+	agent_executions.id = @agent_execution_id
+	AND agent_executions.tenant_id = @tenant_id
+	AND agent_executions.organization_id = @organization_id
+ON CONFLICT (tenant_id, organization_id, agent_execution_id, provider) DO UPDATE SET
 	external_conversation_id = EXCLUDED.external_conversation_id,
 	external_message_id = EXCLUDED.external_message_id,
 	updated_at = EXCLUDED.updated_at
 RETURNING
-	id, organization_id, agent_run_id, provider, external_conversation_id,
+	id, organization_id, agent_execution_id, provider, external_conversation_id,
 	external_message_id, created_at, updated_at
 `
 	originalID := a.ID
@@ -76,7 +76,7 @@ RETURNING
 			"id":                       a.ID,
 			"tenant_id":                scope.GetTenantID(),
 			"organization_id":          a.OrganizationID,
-			"agent_run_id":             a.AgentRunID,
+			"agent_execution_id":       a.AgentExecutionID,
 			"provider":                 a.Provider,
 			"external_conversation_id": a.ExternalConversationID,
 			"external_message_id":      a.ExternalMessageID,
@@ -116,7 +116,7 @@ func (a *AgentExecutionAnchor) LoadByProviderCoordinates(
 ) error {
 	q := `
 SELECT
-	id, organization_id, agent_run_id, provider, external_conversation_id,
+	id, organization_id, agent_execution_id, provider, external_conversation_id,
 	external_message_id, created_at, updated_at
 FROM agent_execution_anchors
 WHERE

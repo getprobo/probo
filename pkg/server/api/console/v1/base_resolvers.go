@@ -13,7 +13,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -461,15 +461,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewWebhookSubscription(wc), nil
 		}
-	case coredata.AgentRunEntityType:
-		action = agentrun.ActionAgentRunGet
+	case coredata.AgentExecutionEntityType:
+		action = agentexecution.ActionAgentExecutionGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			run, err := r.agentRun.Get(ctx, scope, id)
+			run, err := r.agentExecution.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewAgentRun(run), nil
+			return types.NewAgentExecution(run), nil
 		}
 	case coredata.DeviceEntityType:
 		action = itam.ActionDeviceGet

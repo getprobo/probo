@@ -138,7 +138,7 @@ func TestExecutionAdapterPreparesTrustedInboundSlackRun(t *testing.T) {
 	tenantID := gid.NewTenantID()
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	identityID := gid.New(tenantID, coredata.IdentityEntityType)
-	executionID := gid.New(tenantID, coredata.AgentRunEntityType)
+	executionID := gid.New(tenantID, coredata.AgentExecutionEntityType)
 	coordinates, err := json.Marshal(
 		ExecutionSourceCoordinates{
 			TeamID:         "T123",
@@ -252,7 +252,7 @@ func TestExecutionAdapterPreparesUnboundDirectSlackRun(t *testing.T) {
 	preparedCtx, _, err := adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -321,7 +321,7 @@ func TestExecutionAdapterUsesInputIdentityWithoutBindingLookup(t *testing.T) {
 	preparedCtx, _, err := adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -376,7 +376,7 @@ func TestExecutionAdapterPrepare_RefreshesAssistantStatus(t *testing.T) {
 	_, _, err = adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -441,7 +441,7 @@ func TestExecutionAdapterPrepare_UsesMessageTSWhenThreadTSEmpty(t *testing.T) {
 	_, _, err = adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -481,7 +481,7 @@ func TestExecutionAdapterPrepare_SkipsAssistantStatusWithoutCoordinates(t *testi
 	_, _, err := adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:             gid.New(tenantID, coredata.AgentRunEntityType),
+			ID:             gid.New(tenantID, coredata.AgentExecutionEntityType),
 			OrganizationID: organizationID,
 			StartAgentName: "probot",
 		},
@@ -525,7 +525,7 @@ func TestExecutionAdapterPrepare_RefreshesAssistantStatusByOrganization(t *testi
 	_, _, err = adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -582,7 +582,7 @@ func TestExecutionAdapterPrepare_AssistantStatusErrorsDoNotFailPrepare(t *testin
 			_, _, err = adapter.Prepare(
 				t.Context(),
 				&coredata.AgentExecution{
-					ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+					ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 					OrganizationID:    organizationID,
 					StartAgentName:    "probot",
 					SourceCoordinates: coordinates,
@@ -646,7 +646,7 @@ func TestExecutionAdapterPrepare_AssistantStatusErrorsDoNotFailPrepare(t *testin
 			_, _, err = adapter.Prepare(
 				t.Context(),
 				&coredata.AgentExecution{
-					ID:                gid.New(tenantID, coredata.AgentRunEntityType),
+					ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
 					OrganizationID:    organizationID,
 					StartAgentName:    "probot",
 					SourceCoordinates: coordinates,

@@ -131,7 +131,7 @@ func (h *Handler) enqueueExecutionInput(
 				source := ProviderName
 
 				execution = &coredata.AgentExecution{
-					ID:                gid.New(scope.GetTenantID(), coredata.AgentRunEntityType),
+					ID:                gid.New(scope.GetTenantID(), coredata.AgentExecutionEntityType),
 					OrganizationID:    organizationID,
 					StartAgentName:    defaultAgentProfile,
 					Source:            &source,
@@ -161,17 +161,17 @@ func (h *Handler) enqueueExecutionInput(
 			}
 
 			input := &coredata.AgentInput{
-				ID:             gid.New(scope.GetTenantID(), coredata.AgentInputEntityType),
-				OrganizationID: organizationID,
-				AgentRunID:     execution.ID,
-				Source:         ProviderName,
-				SourceEventID:  &eventID,
-				Purpose:        coredata.AgentInputPurposeUser,
-				IdentityID:     new(identityID),
-				Message:        message,
-				MaxAttempts:    coredata.AgentInputDefaultMaxAttempts,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:               gid.New(scope.GetTenantID(), coredata.AgentInputEntityType),
+				OrganizationID:   organizationID,
+				AgentExecutionID: execution.ID,
+				Source:           ProviderName,
+				SourceEventID:    &eventID,
+				Purpose:          coredata.AgentInputPurposeUser,
+				IdentityID:       new(identityID),
+				Message:          message,
+				MaxAttempts:      coredata.AgentInputDefaultMaxAttempts,
+				CreatedAt:        now,
+				UpdatedAt:        now,
 			}
 			if _, err := input.EnqueueIdempotently(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot enqueue Slack agent input: %w", err)
@@ -266,7 +266,7 @@ func loadAnchoredExecution(
 	}
 
 	var execution coredata.AgentExecution
-	if err := execution.LoadByID(ctx, tx, scope, anchor.AgentRunID); err != nil {
+	if err := execution.LoadByID(ctx, tx, scope, anchor.AgentExecutionID); err != nil {
 		return nil, fmt.Errorf("cannot load anchored Slack execution: %w", err)
 	}
 

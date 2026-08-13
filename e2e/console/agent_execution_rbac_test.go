@@ -29,19 +29,19 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestAgentRun_RBAC(t *testing.T) {
+func TestAgentExecution_RBAC(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "compliance-agent",
-		status:    coredata.AgentRunStatusCompleted,
+		status:    coredata.AgentExecutionStatusCompleted,
 	})
 
 	const getQuery = `
 		query($id: ID!) {
 			node(id: $id) {
-				... on AgentRun {
+				... on AgentExecution {
 					id
 					agentName
 				}
@@ -51,18 +51,18 @@ func TestAgentRun_RBAC(t *testing.T) {
 
 	roles := []testutil.TestRole{testutil.RoleAdmin, testutil.RoleViewer}
 	for _, role := range roles {
-		t.Run(string(role)+" can list and get agent runs", func(t *testing.T) {
+		t.Run(string(role)+" can list and get agent executions", func(t *testing.T) {
 			t.Parallel()
 			member := testutil.NewClientInOrg(t, role, owner)
 
-			var listResult agentRunConnectionResult
+			var listResult agentExecutionConnectionResult
 
-			err := member.Execute(agentRunListQuery, map[string]any{
+			err := member.Execute(agentExecutionListQuery, map[string]any{
 				"orgId": member.GetOrganizationID().String(),
 			}, &listResult)
 			require.NoError(t, err)
 			require.NotNil(t, listResult.Node, "organization node should resolve")
-			assert.Equal(t, 1, listResult.Node.AgentRuns.TotalCount)
+			assert.Equal(t, 1, listResult.Node.AgentExecutions.TotalCount)
 
 			var getResult struct {
 				Node struct {
@@ -78,27 +78,27 @@ func TestAgentRun_RBAC(t *testing.T) {
 		})
 	}
 }
-func TestAgentRun_SubmitApproval_RBAC(t *testing.T) {
+func TestAgentExecution_SubmitApproval_RBAC(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName:  "approval-agent",
-		status:     coredata.AgentRunStatusAwaitingApproval,
+		status:     coredata.AgentExecutionStatusAwaitingApproval,
 		checkpoint: awaitingApprovalCheckpoint(t, "tc_1"),
 	})
 
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
-	var result submitAgentRunApprovalResult
+	var result submitAgentExecutionApprovalResult
 
-	err := viewer.Execute(submitAgentRunApprovalMutation, map[string]any{
+	err := viewer.Execute(submitAgentExecutionApprovalMutation, map[string]any{
 		"input": map[string]any{
-			"agentRunId": runID.String(),
+			"agentExecutionId": runID.String(),
 			"decisions": []map[string]any{
 				{"toolCallId": "tc_1", "approved": true},
 			},
 		},
 	}, &result)
-	testutil.RequireForbiddenError(t, err, "viewer should not be able to approve agent runs")
+	testutil.RequireForbiddenError(t, err, "viewer should not be able to approve agent executions")
 }

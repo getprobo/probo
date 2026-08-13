@@ -18,13 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution
 
-// ShutdownBroadcast returns the channel that closes once the worker has
-// broadcast graceful shutdown to all in-flight runs. It is compiled only
-// in test builds so external tests can synchronize tool release with
-// shutdown propagation without leaking a test-only method into the
-// worker's public API.
-func (w *Worker) ShutdownBroadcast() <-chan struct{} {
-	return w.handler.shutdownCh
-}
+import (
+	"errors"
+)
+
+var (
+	// ErrAgentExecutionNotFound is returned when the target agent execution does not
+	// exist. It wraps coredata.ErrResourceNotFound so callers depend on the
+	// agentexecution API rather than the underlying data layer.
+	ErrAgentExecutionNotFound = errors.New("agent execution not found")
+
+	// ErrNotAwaitingApproval is returned when an approval decision is
+	// submitted for a run that is not currently parked in AWAITING_APPROVAL.
+	ErrNotAwaitingApproval = errors.New("agent execution is not awaiting approval")
+
+	// ErrApprovalDecisionsMismatch is returned when the submitted decisions
+	// do not cover exactly the run's pending approvals. It shields callers
+	// from the agent package's internal mismatch error.
+	ErrApprovalDecisionsMismatch = errors.New("approval decisions do not match the run's pending approvals")
+)

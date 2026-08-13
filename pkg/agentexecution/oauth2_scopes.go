@@ -18,24 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package agentrun
+package agentexecution
 
-import (
-	"errors"
+import "go.probo.inc/probo/pkg/coredata"
+
+const (
+	ScopeV1AgentRead coredata.OAuth2Scope = "v1:agent:read"
+	ScopeV1Agent     coredata.OAuth2Scope = "v1:agent"
 )
 
-var (
-	// ErrAgentRunNotFound is returned when the target agent run does not
-	// exist. It wraps coredata.ErrResourceNotFound so callers depend on the
-	// agentrun API rather than the underlying data layer.
-	ErrAgentRunNotFound = errors.New("agent run not found")
-
-	// ErrNotAwaitingApproval is returned when an approval decision is
-	// submitted for a run that is not currently parked in AWAITING_APPROVAL.
-	ErrNotAwaitingApproval = errors.New("agent run is not awaiting approval")
-
-	// ErrApprovalDecisionsMismatch is returned when the submitted decisions
-	// do not cover exactly the run's pending approvals. It shields callers
-	// from the agent package's internal mismatch error.
-	ErrApprovalDecisionsMismatch = errors.New("approval decisions do not match the run's pending approvals")
-)
+var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
+	ScopeV1AgentRead: {
+		ActionAgentExecutionGet,
+		ActionAgentExecutionList,
+	},
+	ScopeV1Agent: {
+		ActionAgentExecutionGet,
+		ActionAgentExecutionList,
+		ActionAgentExecutionApprove,
+	},
+}
