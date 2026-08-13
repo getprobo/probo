@@ -20,11 +20,11 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
-	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -513,11 +513,6 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 	return types.NewSlackConnectionConnection(page), nil
 }
 
-// SlackOAuth2Scopes is the resolver for the slackOAuth2Scopes field.
-func (r *organizationResolver) SlackOAuth2Scopes(ctx context.Context, obj *types.Organization) ([]string, error) {
-	return slack.OAuth2Scopes, nil
-}
-
 // Connectors is the resolver for the connectors field.
 func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, filter *types.ConnectorFilter) ([]*types.Connector, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList)
@@ -547,6 +542,102 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 	}
 
 	return types.NewConnectors(connectors), nil
+}
+
+// SlackbotAvailable is the resolver for the slackbotAvailable field.
+func (r *organizationResolver) SlackbotAvailable(ctx context.Context, obj *types.Organization) (bool, error) {
+	return r.slackbotInstallations != nil, nil
+}
+
+// SlackbotInstallation is the resolver for the slackbotInstallation field.
+func (r *organizationResolver) SlackbotInstallation(ctx context.Context, obj *types.Organization) (*types.SlackbotInstallation, error) {
+	if r.slackbotInstallations == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorInitiate)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	installation, err := r.slackbotInstallations.GetByOrganizationID(
+		ctx,
+		scope,
+		obj.ID,
+	)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Slackbot installation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SlackbotInstallation{
+		TeamID:    installation.TeamID,
+		BotUserID: installation.BotUserID,
+		Scopes:    installation.Scopes,
+		Active:    installation.Status == coredata.SlackbotInstallationStatusActive,
+	}, nil
+}
+
+// SlackbotChannels is the resolver for the slackbotChannels field.
+func (r *organizationResolver) SlackbotChannels(ctx context.Context, obj *types.Organization, cursor *string) (*types.SlackbotChannelPage, error) {
+	if r.slackbotInstallations == nil {
+		return &types.SlackbotChannelPage{Channels: []*types.SlackbotChannel{}}, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorInitiate)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return &types.SlackbotChannelPage{Channels: []*types.SlackbotChannel{}}, nil
+		}
+
+		return nil, err
+	}
+
+	slackCursor := ""
+	if cursor != nil {
+		slackCursor = *cursor
+	}
+
+	page, err := r.slackbotInstallations.ListMemberConversations(
+		ctx,
+		scope,
+		obj.ID,
+		slackCursor,
+	)
+	if errors.Is(err, slackchannel.ErrSlackbotNotInstalled) {
+		return &types.SlackbotChannelPage{Channels: []*types.SlackbotChannel{}}, nil
+	}
+
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list Slackbot channels", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	channels := make([]*types.SlackbotChannel, len(page.Conversations))
+	for i, channel := range page.Conversations {
+		channels[i] = &types.SlackbotChannel{
+			ID:   channel.ID,
+			Name: channel.Name,
+		}
+	}
+
+	var nextCursor *string
+	if page.NextCursor != "" {
+		nextCursor = new(page.NextCursor)
+	}
+
+	return &types.SlackbotChannelPage{
+		Channels:   channels,
+		NextCursor: nextCursor,
+	}, nil
 }
 
 // Controls is the resolver for the controls field.

@@ -41,9 +41,9 @@ models:
   EmailAddr:
     model:
       - "go.probo.inc/probo/pkg/server/gqlutils/types/mail.AddrScalar"
-  SlackIdentityBinding:
+  ProbotIdentityBinding:
     model:
-      - "go.probo.inc/probo/pkg/server/api/console/v1/types.SlackIdentityBinding"
-  SlackIdentityBindPreview:
+      - "go.probo.inc/probo/pkg/server/api/console/v1/types.ProbotIdentityBinding"
+  ProbotIdentityBindPreview:
     model:
-      - "go.probo.inc/probo/pkg/server/api/console/v1/types.SlackIdentityBindPreview"
+      - "go.probo.inc/probo/pkg/server/api/console/v1/types.ProbotIdentityBindPreview"

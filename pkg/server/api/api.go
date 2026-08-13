@@ -46,6 +46,9 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -59,40 +62,47 @@ import (
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
-	"go.probo.inc/probo/pkg/slackbot"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type (
+	BotDeliveryDestinations = console_v1.BotDeliveryDestinations
+	ComplianceMessages      = console_v1.ComplianceMessages
+
 	Config struct {
-		BaseURL           *baseurl.BaseURL
-		AllowedOrigins    []string
-		Probo             *probo.Service
-		ResourceAlias     *resourcealias.Service
-		File              *filemanager.Service
-		IAM               *iam.Service
-		Visitor           *visitor.Service
-		ESign             *esign.Service
-		Management        *management.Service
-		CertManager       *certmanager.Service
-		AccessReview      *accessreview.Service
-		AgentRun          *agentrun.Service
-		Slack             *slack.Service
-		SlackbotEvents    http.Handler
-		SlackbotBindings  *slackbot.BindingService
-		Mailman           *mailman.Service
-		CookieBanner      *cookiebanner.Service
-		Geoloc            *geoloc.Service
-		ThirdParty        *thirdparty.Service
-		RiskManagement    *riskmanagement.Service
-		ITAM              *itam.Service
-		Cookie            securecookie.Config
-		TokenSecret       string
-		ConnectorRegistry *connector.ConnectorRegistry
-		ProviderRegistry  *provider.Registry
-		CustomDomainCname string
-		GraphQLLimits     gqlutils.Limits
-		Logger            *log.Logger
+		BaseURL                 *baseurl.BaseURL
+		AllowedOrigins          []string
+		Probo                   *probo.Service
+		ResourceAlias           *resourcealias.Service
+		File                    *filemanager.Service
+		IAM                     *iam.Service
+		Visitor                 *visitor.Service
+		ESign                   *esign.Service
+		Management              *management.Service
+		CertManager             *certmanager.Service
+		AccessReview            *accessreview.Service
+		AgentRun                *agentrun.Service
+		Slack                   *slack.Service
+		BotDeliveryDestinations BotDeliveryDestinations
+		ComplianceMessages      ComplianceMessages
+		SlackbotEvents          http.Handler
+		SlackInteractiveInbox   *slackchannel.InteractiveCommandInbox
+		ProbotIdentityBindings  *identitybinding.Service
+		SlackbotInstallations   *slackchannel.InstallationService
+		ProbotCapabilities      *probot.CapabilityRegistry
+		Mailman                 *mailman.Service
+		CookieBanner            *cookiebanner.Service
+		Geoloc                  *geoloc.Service
+		ThirdParty              *thirdparty.Service
+		RiskManagement          *riskmanagement.Service
+		ITAM                    *itam.Service
+		Cookie                  securecookie.Config
+		TokenSecret             string
+		ConnectorRegistry       *connector.ConnectorRegistry
+		ProviderRegistry        *provider.Registry
+		CustomDomainCname       string
+		GraphQLLimits           gqlutils.Limits
+		Logger                  *log.Logger
 	}
 
 	MCPConfig struct {
@@ -225,7 +235,10 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,
-			cfg.SlackbotBindings,
+			cfg.ProbotIdentityBindings,
+			cfg.SlackbotInstallations,
+			cfg.BotDeliveryDestinations,
+			cfg.ComplianceMessages,
 			cfg.GraphQLLimits,
 			cfg.ITAM,
 		),
@@ -263,8 +276,9 @@ func NewServer(cfg Config) (*Server, error) {
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),
 			cfg.Slack,
-			cfg.Visitor,
+			cfg.SlackInteractiveInbox,
 			cfg.SlackbotEvents,
+			cfg.SlackbotInstallations,
 		),
 		connectHandler: connect_v1.NewMux(
 			cfg.Logger.Named("connect.v1"),

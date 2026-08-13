@@ -384,6 +384,8 @@ type CompliancePortal implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
+    slackbotNotificationChannel: SlackbotNotificationChannel
+        @goField(forceResolver: true)
 
     accesses(
         first: Int

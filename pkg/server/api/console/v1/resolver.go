@@ -49,6 +49,9 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -58,35 +61,47 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/slackbot"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type (
+	BotDeliveryDestinations interface {
+		GetDestination(ctx context.Context, scope coredata.Scoper, target probot.DeliveryTarget) (*coredata.BotDeliveryDestination, error)
+		SetDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget, externalDestinationID string) (*coredata.BotDeliveryDestination, error)
+		ClearDestination(ctx context.Context, scope coredata.Scoper, target probot.DeliveryTarget) error
+	}
+
+	ComplianceMessages interface {
+		QueueWelcome(ctx context.Context, organizationID, compliancePortalID gid.GID) error
+	}
+
 	Resolver struct {
-		authorize         authz.AuthorizeFunc
-		batchAuthorize    authz.BatchAuthorizeFunc
-		probo             *probo.Service
-		resourceAlias     *resourcealias.Service
-		iam               *iam.Service
-		esign             *esign.Service
-		management        *management.Service
-		certManager       *certmanager.Service
-		accessReview      *accessreview.Service
-		agentRun          *agentrun.Service
-		mailman           *mailman.Service
-		cookieBanner      *cookiebanner.Service
-		connectorRegistry *connector.ConnectorRegistry
-		providerRegistry  *provider.Registry
-		riskManagement    *riskmanagement.Service
-		thirdParty        *thirdparty.Service
-		itam              *itam.Service
-		logger            *log.Logger
-		fileManager       *filemanager.Service
-		baseURL           *baseurl.BaseURL
-		customDomainCname string
-		tokenSecret       string
-		slackbotBindings  *slackbot.BindingService
+		authorize               authz.AuthorizeFunc
+		batchAuthorize          authz.BatchAuthorizeFunc
+		probo                   *probo.Service
+		resourceAlias           *resourcealias.Service
+		iam                     *iam.Service
+		esign                   *esign.Service
+		management              *management.Service
+		certManager             *certmanager.Service
+		accessReview            *accessreview.Service
+		agentRun                *agentrun.Service
+		mailman                 *mailman.Service
+		cookieBanner            *cookiebanner.Service
+		connectorRegistry       *connector.ConnectorRegistry
+		providerRegistry        *provider.Registry
+		riskManagement          *riskmanagement.Service
+		thirdParty              *thirdparty.Service
+		itam                    *itam.Service
+		logger                  *log.Logger
+		fileManager             *filemanager.Service
+		baseURL                 *baseurl.BaseURL
+		customDomainCname       string
+		tokenSecret             string
+		probotIdentityBindings  *identitybinding.Service
+		slackbotInstallations   *slackchannel.InstallationService
+		botDeliveryDestinations BotDeliveryDestinations
+		complianceMessages      ComplianceMessages
 	}
 )
 
@@ -111,7 +126,10 @@ func NewMux(
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
-	slackbotBindings *slackbot.BindingService,
+	probotIdentityBindings *identitybinding.Service,
+	slackbotInstallations *slackchannel.InstallationService,
+	botDeliveryDestinations BotDeliveryDestinations,
+	complianceMessages ComplianceMessages,
 	graphqlLimits gqlutils.Limits,
 	itamSvc *itam.Service,
 ) *chi.Mux {
@@ -141,7 +159,10 @@ func NewMux(
 		baseURL,
 		graphqlLimits,
 		itamSvc,
-		slackbotBindings,
+		probotIdentityBindings,
+		slackbotInstallations,
+		botDeliveryDestinations,
+		complianceMessages,
 	)
 
 	r.Group(func(r chi.Router) {
@@ -176,7 +197,26 @@ func NewMux(
 				safeRedirect,
 			),
 		)
+
+		r.Get(
+			"/slackbot/install/initiate",
+			handleSlackbotInstallInitiate(
+				logger,
+				iamSvc,
+				slackbotInstallations,
+			),
+		)
 	})
+
+	r.Get(
+		"/slackbot/install/complete",
+		handleSlackbotInstallComplete(
+			logger,
+			baseURL,
+			slackbotInstallations,
+			safeRedirect,
+		),
+	)
 
 	// Public, unauthenticated: the OAuth Client ID Metadata Document (CIMD)
 	// is fetched server-to-server by public-client providers (PostHog)

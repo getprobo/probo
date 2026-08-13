@@ -18,49 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package types
+package slack_v1
 
 import (
-	"time"
+	"net/http"
+	"testing"
 
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
+	"github.com/stretchr/testify/assert"
 )
 
-type (
-	SlackIdentityBinding struct {
-		ID          gid.GID   `json:"id"`
-		TeamID      string    `json:"teamId"`
-		SlackUserID string    `json:"slackUserId"`
-		CreatedAt   time.Time `json:"createdAt"`
-		UpdatedAt   time.Time `json:"updatedAt"`
-	}
+func TestSlackInteractiveDefersAuthorizationToWorker(t *testing.T) {
+	t.Parallel()
 
-	SlackIdentityBindPreview struct {
-		TeamID      string `json:"teamId"`
-		SlackUserID string `json:"slackUserId"`
-	}
-)
+	inbox := &fakeInteractiveInbox{inserted: true}
+	response := performSlackAction(t, inbox)
 
-func NewSlackIdentityBinding(binding *coredata.SlackIdentityBinding) *SlackIdentityBinding {
-	return &SlackIdentityBinding{
-		ID:          binding.ID,
-		TeamID:      binding.TeamID,
-		SlackUserID: binding.SlackUserID,
-		CreatedAt:   binding.CreatedAt,
-		UpdatedAt:   binding.UpdatedAt,
-	}
-}
-
-func (SlackIdentityBinding) IsNode() {}
-
-func (b SlackIdentityBinding) GetID() gid.GID {
-	return b.ID
-}
-
-func NewSlackIdentityBindPreview(teamID, slackUserID string) *SlackIdentityBindPreview {
-	return &SlackIdentityBindPreview{
-		TeamID:      teamID,
-		SlackUserID: slackUserID,
-	}
+	assert.Equal(t, http.StatusOK, response.Code)
+	assert.Len(t, inbox.payloads, 1)
 }

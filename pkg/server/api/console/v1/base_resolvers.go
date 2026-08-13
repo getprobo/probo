@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -731,6 +732,37 @@ func (r *queryResolver) CrispVerificationCode(ctx context.Context, organizationI
 	}
 
 	return computeCrispVerificationCode(r.tokenSecret, organizationID.String(), websiteID), nil
+}
+
+// ProbotIdentityBindPreview is the resolver for the probotIdentityBindPreview field.
+func (r *queryResolver) ProbotIdentityBindPreview(ctx context.Context, token string) (*types.ProbotIdentityBindPreview, error) {
+	if r.probotIdentityBindings == nil {
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if authn.IdentityFromContext(ctx) == nil {
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	preview, err := r.probotIdentityBindings.Preview(ctx, token)
+	if err != nil {
+		switch {
+		case errors.Is(err, identitybinding.ErrChallengeAlreadyUsed),
+			errors.Is(err, identitybinding.ErrChallengeExpired),
+			errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(
+				ctx,
+				"cannot preview Probot identity binding",
+				log.Error(err),
+			)
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return types.NewProbotIdentityBindPreview(*preview), nil
 }
 
 // Mutation returns schema.MutationResolver implementation.

@@ -25,25 +25,37 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/complianceportal/visitor"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/slack"
 )
 
 func NewMux(
 	logger *log.Logger,
 	slackSvc *slack.Service,
-	visitorSvc *visitor.Service,
+	inbox slackInteractiveCommandInbox,
 	eventsHandler http.Handler,
+	installations *slackchannel.InstallationService,
 ) *chi.Mux {
 	r := chi.NewMux()
 
 	logger.Info("Registering Slack interactive endpoint")
 
 	r.Post("/interactive", SlackHandler(
-		slackSvc,
-		slackSvc.GetSlackSigningSecret(),
+		inbox,
+		interactiveSigningSecrets(slackSvc, installations),
 		logger,
-		visitorSvc,
+	))
+
+	var slashCommander slackSlashCommander
+	if handler, ok := eventsHandler.(*slackchannel.Handler); ok && handler != nil {
+		slashCommander = handler
+	}
+
+	logger.Info("Registering Slack slash command endpoint")
+	r.Post("/commands", SlackCommandHandler(
+		slashCommander,
+		slackbotSigningSecrets(installations),
+		logger,
 	))
 
 	if eventsHandler != nil {
@@ -52,4 +64,27 @@ func NewMux(
 	}
 
 	return r
+}
+
+func interactiveSigningSecrets(
+	slackSvc *slack.Service,
+	installations *slackchannel.InstallationService,
+) []string {
+	secrets := make([]string, 0, 2)
+	if installations != nil {
+		secrets = append(secrets, installations.SigningSecret())
+	}
+	if slackSvc != nil {
+		secrets = append(secrets, slackSvc.GetSlackSigningSecret())
+	}
+
+	return secrets
+}
+
+func slackbotSigningSecrets(installations *slackchannel.InstallationService) []string {
+	if installations == nil {
+		return nil
+	}
+
+	return []string{installations.SigningSecret()}
 }

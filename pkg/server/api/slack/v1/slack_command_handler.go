@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
 package slack_v1
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"mime"
@@ -33,19 +32,15 @@ import (
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 )
 
-type (
-	slackInteractiveCommandInbox interface {
-		Enqueue(ctx context.Context, verifiedPayload []byte) (bool, error)
-	}
+type slackSlashCommander interface {
+	HandleSlashCommand(
+		ctx context.Context,
+		cmd slackchannel.SlashCommand,
+	) slackchannel.SlashCommandResponse
+}
 
-	SlackInteractiveResponse struct {
-		Success bool   `json:"success"`
-		Message string `json:"message,omitempty"`
-	}
-)
-
-func SlackHandler(
-	inbox slackInteractiveCommandInbox,
+func SlackCommandHandler(
+	commander slackSlashCommander,
 	signingSecrets []string,
 	logger *log.Logger,
 ) http.HandlerFunc {
@@ -54,15 +49,22 @@ func SlackHandler(
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "cannot read request body")
+			httpserver.RenderJSON(
+				w,
+				http.StatusOK,
+				ephemeralCommandError("cannot read request body"),
+			)
 			return
 		}
 
 		timestamp := r.Header.Get("X-Slack-Request-Timestamp")
-
 		signature := r.Header.Get("X-Slack-Signature")
 		if timestamp == "" || signature == "" {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "missing Slack signature headers")
+			httpserver.RenderJSON(
+				w,
+				http.StatusBadRequest,
+				ephemeralCommandError("missing Slack signature headers"),
+			)
 			return
 		}
 
@@ -72,66 +74,55 @@ func SlackHandler(
 			body,
 			signingSecrets...,
 		); err != nil {
-			logger.ErrorCtx(ctx, "invalid Slack signature", log.Error(err))
-			renderSlackInteractiveError(w, http.StatusUnauthorized, "invalid Slack signature")
-
+			logger.ErrorCtx(ctx, "invalid Slack slash command signature", log.Error(err))
+			httpserver.RenderJSON(
+				w,
+				http.StatusUnauthorized,
+				ephemeralCommandError("invalid Slack signature"),
+			)
 			return
 		}
 
 		mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 		if err != nil || mediaType != "application/x-www-form-urlencoded" {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "unsupported content type")
+			httpserver.RenderJSON(
+				w,
+				http.StatusOK,
+				ephemeralCommandError("unsupported content type"),
+			)
 			return
 		}
 
 		form, err := url.ParseQuery(string(body))
 		if err != nil {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "cannot parse form")
+			httpserver.RenderJSON(
+				w,
+				http.StatusOK,
+				ephemeralCommandError("cannot parse form"),
+			)
 			return
 		}
 
-		rawPayload := []byte(form.Get("payload"))
-		if len(bytes.TrimSpace(rawPayload)) == 0 {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "empty payload field")
-			return
-		}
-
-		if _, err := slackchannel.DecodeInteractivePayload(rawPayload); err != nil {
-			logger.ErrorCtx(ctx, "cannot validate Slack interactive payload", log.Error(err))
-			renderSlackInteractiveError(w, http.StatusBadRequest, "cannot parse Slack payload")
-
-			return
-		}
-
-		if inbox == nil {
-			logger.ErrorCtx(ctx, "Slack interactive command inbox is unavailable")
-			renderSlackInteractiveError(w, http.StatusServiceUnavailable, "interactive commands unavailable")
-
-			return
-		}
-
-		if _, err := inbox.Enqueue(ctx, rawPayload); err != nil {
-			logger.ErrorCtx(ctx, "cannot persist Slack interactive command", log.Error(err))
-			renderSlackInteractiveError(w, http.StatusServiceUnavailable, "cannot accept interactive command")
-
+		if commander == nil {
+			httpserver.RenderJSON(
+				w,
+				http.StatusOK,
+				ephemeralCommandError("Probot is not available in this workspace."),
+			)
 			return
 		}
 
 		httpserver.RenderJSON(
 			w,
 			http.StatusOK,
-			SlackInteractiveResponse{Success: true},
+			commander.HandleSlashCommand(ctx, slackchannel.ParseSlashCommand(form)),
 		)
 	}
 }
 
-func renderSlackInteractiveError(w http.ResponseWriter, status int, message string) {
-	httpserver.RenderJSON(
-		w,
-		status,
-		SlackInteractiveResponse{
-			Success: false,
-			Message: message,
-		},
-	)
+func ephemeralCommandError(text string) slackchannel.SlashCommandResponse {
+	return slackchannel.SlashCommandResponse{
+		ResponseType: slackchannel.SlashResponseTypeEphemeral,
+		Text:         text,
+	}
 }

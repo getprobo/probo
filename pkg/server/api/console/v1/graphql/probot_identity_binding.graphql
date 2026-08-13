@@ -18,45 +18,44 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-extend type Query {
-    slackIdentityBindPreview(token: String!): SlackIdentityBindPreview!
-        @goField(forceResolver: true)
-}
-
 extend type Mutation {
-    confirmSlackIdentityBinding(
-        input: ConfirmSlackIdentityBindingInput!
-    ): ConfirmSlackIdentityBindingPayload!
-    deleteSlackIdentityBinding(
-        input: DeleteSlackIdentityBindingInput!
-    ): DeleteSlackIdentityBindingPayload!
+    confirmProbotIdentityBinding(
+        input: ConfirmProbotIdentityBindingInput!
+    ): ConfirmProbotIdentityBindingPayload!
+    deleteProbotIdentityBinding(
+        input: DeleteProbotIdentityBindingInput!
+    ): DeleteProbotIdentityBindingPayload!
 }
 
-type SlackIdentityBinding implements Node {
+type ProbotIdentityBinding {
     id: ID!
-    teamId: String!
-    slackUserId: String!
+    provider: String!
+    externalTenantId: String!
+    externalUserId: String!
     createdAt: Datetime!
     updatedAt: Datetime!
 }
 
-type SlackIdentityBindPreview {
-    teamId: String!
-    slackUserId: String!
+type ProbotIdentityBindPreview {
+    provider: String!
+    externalTenantId: String!
+    externalUserId: String!
+    externalTenantName: String!
+    externalUserName: String!
 }
 
-input ConfirmSlackIdentityBindingInput {
+input ConfirmProbotIdentityBindingInput {
     token: String!
 }
 
-type ConfirmSlackIdentityBindingPayload {
-    slackIdentityBinding: SlackIdentityBinding!
+type ConfirmProbotIdentityBindingPayload {
+    probotIdentityBinding: ProbotIdentityBinding!
 }
 
-input DeleteSlackIdentityBindingInput {
+input DeleteProbotIdentityBindingInput {
     id: ID!
 }
 
-type DeleteSlackIdentityBindingPayload {
-    slackIdentityBindingId: ID!
+type DeleteProbotIdentityBindingPayload {
+    probotIdentityBindingId: ID!
 }

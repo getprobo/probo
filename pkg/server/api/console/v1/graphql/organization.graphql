@@ -199,8 +199,11 @@ type Organization implements Node {
         last: Int
         before: CursorKey
     ): SlackConnectionConnection! @goField(forceResolver: true)
-    slackOAuth2Scopes: [String!]! @goField(forceResolver: true)
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
+    slackbotAvailable: Boolean! @goField(forceResolver: true)
+    slackbotInstallation: SlackbotInstallation @goField(forceResolver: true)
+    slackbotChannels(cursor: String): SlackbotChannelPage!
+        @goField(forceResolver: true)
 
     controls(
         first: Int

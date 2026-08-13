@@ -1,0 +1,60 @@
+type SlackbotInstallation {
+    teamId: String!
+    botUserId: String!
+    scopes: [String!]!
+    active: Boolean!
+}
+
+type SlackbotNotificationChannel {
+    channelId: String!
+    channelName: String!
+}
+
+type SlackbotChannel {
+    id: String!
+    name: String!
+}
+
+type SlackbotChannelPage {
+    channels: [SlackbotChannel!]!
+    nextCursor: String
+}
+
+input SetSlackbotNotificationChannelInput {
+    compliancePortalId: ID!
+    channelId: String!
+}
+
+type SetSlackbotNotificationChannelPayload {
+    channel: SlackbotNotificationChannel!
+}
+
+input ClearSlackbotNotificationChannelInput {
+    compliancePortalId: ID!
+}
+
+type ClearSlackbotNotificationChannelPayload {
+    channelId: String
+}
+
+input UninstallSlackbotInput {
+    organizationId: ID!
+}
+
+type UninstallSlackbotPayload {
+    organization: Organization!
+}
+
+extend type Mutation {
+    setSlackbotNotificationChannel(
+        input: SetSlackbotNotificationChannelInput!
+    ): SetSlackbotNotificationChannelPayload!
+
+    clearSlackbotNotificationChannel(
+        input: ClearSlackbotNotificationChannelInput!
+    ): ClearSlackbotNotificationChannelPayload!
+
+    uninstallSlackbot(
+        input: UninstallSlackbotInput!
+    ): UninstallSlackbotPayload!
+}

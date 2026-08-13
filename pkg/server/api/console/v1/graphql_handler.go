@@ -38,13 +38,14 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/slackbot"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -70,33 +71,39 @@ func NewGraphQLHandler(
 	baseURL *baseurl.BaseURL,
 	limits gqlutils.Limits,
 	itamSvc *itam.Service,
-	slackbotBindings *slackbot.BindingService,
+	probotIdentityBindings *identitybinding.Service,
+	slackbotInstallations *slackchannel.InstallationService,
+	botDeliveryDestinations BotDeliveryDestinations,
+	complianceMessages ComplianceMessages,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:         dataloader.NewAuthorizeFunc(logger),
-			batchAuthorize:    authz.NewBatchAuthorizeFunc(iamSvc, logger),
-			probo:             proboSvc,
-			resourceAlias:     resourceAliasSvc,
-			iam:               iamSvc,
-			esign:             esignSvc,
-			management:        managementSvc,
-			certManager:       certManagerSvc,
-			accessReview:      accessReviewSvc,
-			agentRun:          agentRunSvc,
-			mailman:           mailmanSvc,
-			cookieBanner:      cookieBannerSvc,
-			connectorRegistry: connectorRegistry,
-			providerRegistry:  providerRegistry,
-			riskManagement:    riskManagementSvc,
-			thirdParty:        thirdPartySvc,
-			customDomainCname: customDomainCname,
-			tokenSecret:       tokenSecret,
-			fileManager:       fileManagerSvc,
-			baseURL:           baseURL,
-			itam:              itamSvc,
-			logger:            logger,
-			slackbotBindings:  slackbotBindings,
+			authorize:               dataloader.NewAuthorizeFunc(logger),
+			batchAuthorize:          authz.NewBatchAuthorizeFunc(iamSvc, logger),
+			probo:                   proboSvc,
+			resourceAlias:           resourceAliasSvc,
+			iam:                     iamSvc,
+			esign:                   esignSvc,
+			management:              managementSvc,
+			certManager:             certManagerSvc,
+			accessReview:            accessReviewSvc,
+			agentRun:                agentRunSvc,
+			mailman:                 mailmanSvc,
+			cookieBanner:            cookieBannerSvc,
+			connectorRegistry:       connectorRegistry,
+			providerRegistry:        providerRegistry,
+			riskManagement:          riskManagementSvc,
+			thirdParty:              thirdPartySvc,
+			customDomainCname:       customDomainCname,
+			tokenSecret:             tokenSecret,
+			fileManager:             fileManagerSvc,
+			baseURL:                 baseURL,
+			itam:                    itamSvc,
+			logger:                  logger,
+			probotIdentityBindings:  probotIdentityBindings,
+			slackbotInstallations:   slackbotInstallations,
+			botDeliveryDestinations: botDeliveryDestinations,
+			complianceMessages:      complianceMessages,
 		},
 	}
 

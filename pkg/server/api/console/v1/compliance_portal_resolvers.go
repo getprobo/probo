@@ -17,6 +17,8 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -122,6 +124,44 @@ func (r *compliancePortalResolver) Organization(ctx context.Context, obj *types.
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// SlackbotNotificationChannel is the resolver for the slackbotNotificationChannel field.
+func (r *compliancePortalResolver) SlackbotNotificationChannel(ctx context.Context, obj *types.CompliancePortal) (*types.SlackbotNotificationChannel, error) {
+	if r.botDeliveryDestinations == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorInitiate)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	destination, err := r.botDeliveryDestinations.GetDestination(
+		ctx,
+		scope,
+		probot.DeliveryTarget{
+			Namespace: "compliance_portal",
+			Key:       obj.ID.String(),
+		},
+	)
+	if errors.Is(err, slackchannel.ErrSlackbotChannelNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Slackbot notification channel", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SlackbotNotificationChannel{
+		ChannelID:   destination.ExternalDestinationID,
+		ChannelName: destination.ExternalName,
+	}, nil
 }
 
 // Accesses is the resolver for the accesses field.
