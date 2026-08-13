@@ -48,7 +48,7 @@ export function RisksTabs({ queryRef }: RisksTabsProps) {
   const canListRisks = data.organization?.canListRisks ?? false;
   const canListRiskAnalyses
     = data.organization?.canListRiskAnalyses ?? false;
-  const baseUrl = `/organizations/${organizationId}`;
+  const baseUrl = `/organizations/${organizationId}/risk-management`;
 
   return (
     <Tabs>
