@@ -25,32 +25,23 @@ import (
 	"go.probo.inc/probo/pkg/uri"
 )
 
-// bundledFirstPartyLibraries holds alphanumeric-normalised names of
-// client-side libraries that write local keys but egress no data to any
-// endpoint their maintainers operate. They ship inside a site's own
-// JavaScript bundle, so the key they lay is the site's own state: the
-// project has a name, but there is no data recipient and therefore no
-// third party to catalog.
+// bundledFirstPartyLibraries holds client-side libraries that write local
+// keys but egress nothing, so the key they lay is the site's own state: the
+// project has a name, but no data recipient and therefore no third party.
 //
-// Membership is decided by one question only: does the project operate an
-// ingestion endpoint its client code reports to? A library that receives
-// nothing belongs here. Any project running a hosted service its SDK
-// transmits to is a genuine third party and must never appear here —
-// Sentry, PostHog, Mixpanel, Segment, Amplitude, and Vercel are all
-// curated catalog vendors. That exclusion mirrors how
-// cookieDatabaseAggregators deliberately omits consent-management vendors
-// that do set their own product cookies.
+// Membership turns on one question: does the project operate an ingestion
+// endpoint its client code reports to? Any project running a hosted service
+// its SDK transmits to is a genuine third party and must never appear here —
+// Sentry, PostHog, Mixpanel, Segment, Amplitude and Vercel are all curated
+// catalog vendors.
 //
-// The list is deliberately narrow: it pins the recurring offenders the
-// identification prompt has been observed to miss, not every library that
-// feels first-party. The prompt's egress test handles the long tail. When
-// in doubt about a project, leave it out — a missing entry costs one
-// discarded attribution the prompt usually catches anyway, while a wrong
-// entry silently suppresses a real vendor across every tenant.
+// Deliberately narrow: it pins the offenders the prompt has been observed to
+// miss, not every library that feels first-party. When in doubt leave a project
+// out, since a missing entry costs one discarded attribution while a wrong one
+// suppresses a real vendor across every tenant.
 //
-// Keys are stored already-normalised because stringsx.NormalizeAlnum
-// folds away hyphens, dots, and casing (so "react-i18next" arrives as
-// "reacti18next").
+// Keys are pre-normalised because NormalizeAlnum folds away hyphens, dots and
+// casing ("react-i18next" arrives as "reacti18next").
 var bundledFirstPartyLibraries = map[string]struct{}{
 	// Internationalisation: stores the selected locale locally.
 	"i18next":      {},
@@ -89,13 +80,11 @@ var bundledFirstPartyLibraries = map[string]struct{}{
 	"babel":   {},
 }
 
-// nameIsBundledFirstPartyLibrary reports whether a candidate vendor name is
-// a bundled client-side library that egresses nothing and therefore must
-// never become a catalog third party. The agent may return a bare project
+// nameIsBundledFirstPartyLibrary reports whether a candidate vendor name is a
+// bundled library that egresses nothing. The agent may return a bare project
 // name ("i18next"), a package form ("react-i18next"), or a domain form
-// ("i18next.com"), so the candidate is checked both as-is and reduced to
-// its primary domain label. Both lookups are alphanumeric-normalised so
-// spacing, punctuation, and casing do not matter.
+// ("i18next.com"), so the candidate is checked as-is and reduced to its
+// primary domain label.
 func nameIsBundledFirstPartyLibrary(name string) bool {
 	if _, ok := bundledFirstPartyLibraries[stringsx.NormalizeAlnum(name)]; ok {
 		return true

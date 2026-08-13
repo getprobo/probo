@@ -30,71 +30,36 @@ import (
 	"go.probo.inc/probo/pkg/slug"
 )
 
-// Duplicate-pair scores. Higher means more certainly the same vendor.
+// Duplicate-pair scores, and the threshold that decides which are reported.
 //
-// The thresholds encode an asymmetry: folding two distinct vendors into one
-// row destroys which of them each reference meant and cannot be undone,
-// while leaving two rows for one vendor is repaired by merging them. So a
-// signal is scored high only when the difference between the two names
-// carries no identity.
+// Folding two distinct vendors into one row destroys which of them each
+// reference meant and cannot be undone, while leaving two rows for one vendor
+// is repaired by merging them. So only the name-identity signals — equal once
+// noise that carries no identity is removed — sit at or above the default
+// threshold.
+//
+// Everything domain- or prefix-based sits below it. Those find real
+// duplicates ("Tawk.to" / "Tawk.to Chat") but equally find a vendor's
+// legitimate product family: "Google" prefixes "Google Analytics" and "Google
+// Workspace" and all carry google.com, while "Adobe Analytics" and "Adobe
+// ColdFusion" share adobe.com, each a distinct entry with its own category
+// and agreements. Those need a human, so they are opt-in via a lower
+// threshold.
 const (
-	// DuplicateScoreExactName is a case-insensitive name match: the state
-	// the catalog's original name uniqueness used to prevent.
-	DuplicateScoreExactName = 1.0
+	DuplicateScoreExactName      = 1.0  // equal lowercased
+	DuplicateScoreNormalizedName = 0.95 // equal after legal form and parentheses
+	DuplicateScoreNormalizedSlug = 0.9  // equal once punctuation folds away
 
-	// DuplicateScoreNormalizedName is a match after removing legal forms
-	// and parenthesised qualifiers ("Acme Inc" / "Acme (EU)" / "Acme").
-	DuplicateScoreNormalizedName = 0.95
+	DuplicateScoreBrandPrefixWithDomain = 0.75 // token prefix and a shared domain
+	DuplicateScoreSharedDomain          = 0.7  // shared domain alone
+	DuplicateScoreBrandPrefix           = 0.55 // token prefix alone
 
-	// DuplicateScoreNormalizedSlug is a match once punctuation and spacing
-	// are folded away too.
-	DuplicateScoreNormalizedSlug = 0.9
-
-	// DuplicateScoreBrandPrefixWithDomain is one name being a leading
-	// whole-token prefix of the other AND a shared domain.
-	//
-	// Deliberately below DefaultDuplicateMinScore, because this is precisely
-	// the shape a vendor's product family takes: "Google" prefixes "Google
-	// Analytics", "Google Tag Manager", and "Google Workspace", and all of
-	// them carry google.com, yet each is a distinct catalog entry with its
-	// own category, cookie family, and DPA. Merging them would be an
-	// irreversible loss. It does also catch true duplicates ("Tawk.to" and
-	// "Tawk.to Chat"), so it is reported one threshold step down for a human
-	// to adjudicate.
-	DuplicateScoreBrandPrefixWithDomain = 0.75
-
-	// DuplicateScoreSharedDomain is a shared owned domain and nothing else.
-	//
-	// Also below the default: the catalog routinely gives a whole product
-	// family the parent's marketing domain, so "Adobe Analytics" and "Adobe
-	// ColdFusion" share adobe.com and "Github" and "TimescaleDB" share
-	// github.com while being entirely distinct entries.
-	DuplicateScoreSharedDomain = 0.7
-
-	// DuplicateScoreBrandPrefix is a leading whole-token prefix alone.
-	//
-	// Deliberately below DefaultDuplicateMinScore: distinct products of one
-	// parent are legitimately separate catalog entries with their own
-	// categories and cookie families, so "Google Analytics" and "Google"
-	// must never be suggested for merging on their names alone. It is
-	// reported only when the operator explicitly lowers the threshold.
-	DuplicateScoreBrandPrefix = 0.55
-
-	// DefaultDuplicateMinScore is the reporting threshold. It admits only
-	// the name-identity signals — two rows whose names are the same once
-	// noise that carries no identity is removed — because those are the
-	// merges an operator can accept without adjudicating each one.
-	//
-	// Every domain- and prefix-based signal sits below it. Those find real
-	// duplicates too, but they equally find a vendor's legitimate product
-	// family, so they are opt-in via a lower threshold.
 	DefaultDuplicateMinScore = 0.9
 )
 
-// minBrandPrefixTokens and minBrandPrefixRunes bound the prefix signal. A
-// short single token prefixes a large share of any catalog ("Go", "In"), so
-// a prefix only counts when the shorter side is either multi-token or long
-// enough to be distinctive on its own.
+// A short token prefixes a large share of any catalog ("Go", "In"), so the
+// prefix signal requires the shorter side to be multi-token or long enough to
+// be distinctive alone.
 const (
 	minBrandPrefixTokens = 2
 	minBrandPrefixRunes  = 5
@@ -154,26 +119,17 @@ type normalized struct {
 	domains    map[string]struct{}
 }
 
-// normalizeCatalogName reduces a catalog name to the form used for duplicate
-// comparison: lowercased, with a trailing parenthesised group and a legal
-// form removed. Both are noise that carries no identity, so two names equal
-// under this reduction are the same vendor.
+// normalizeCatalogName lowercases a name and removes a trailing parenthesised
+// group and legal form, neither of which carries identity. Legal-form removal
+// runs twice because the parentheses can hide one behind them: "Hotjar Ltd
+// (UK)".
 //
-// Legal-form removal runs twice because the parenthesised group can hide one
-// behind it: "Hotjar Ltd (UK)" needs the parentheses gone before "Ltd" is at
-// the end.
-//
-// Trailing geographic qualifiers are deliberately NOT removed. A country
-// often marks a separately incorporated entity with its own data residency
-// and processing agreement, so "OVHcloud US" is not "OVHcloud" and merging
-// them would erase a jurisdictional distinction the register exists to
-// record. Unlike legal forms, which are a closed set of two dozen terms that
-// are never anything else, geographic qualifiers are open-ended and their
-// short forms collide with ordinary words: stripping country codes would
-// reduce "Fireworks AI" and "Together AI" to "Fireworks" and "Together",
-// since .ai is a country code. A genuinely country-suffixed duplicate still
-// surfaces through the prefix signal at a lower threshold, where an operator
-// adjudicates it.
+// Geographic qualifiers are deliberately kept. "OVHcloud US" is a separately
+// incorporated entity with its own data residency, and unlike legal forms —
+// a closed set that is never anything else — country codes collide with
+// ordinary words, so stripping them would reduce "Fireworks AI" to
+// "Fireworks". A country-suffixed duplicate still surfaces through the prefix
+// signal at a lower threshold.
 func normalizeCatalogName(name string) string {
 	out := strings.ToLower(strings.TrimSpace(name))
 	out = parentheticalSuffix.ReplaceAllString(out, "")
@@ -470,14 +426,12 @@ func buildClusters(items []normalized, pairs []DuplicatePair) []DuplicateCluster
 	return clusters
 }
 
-// preferAsWinner reports whether a should absorb b.
+// preferAsWinner reports whether a should absorb b, in the tier order below.
 //
-// Seeded wins first and decisively: the next seed run recreates that slug,
-// so merging it away guarantees the duplicate returns. Organization links
-// come next because repointing fewer of them disturbs fewer tenants and
-// risks fewer same-organization collisions. Then pattern links, then how
-// far enrichment got. Creation time and id break ties last so the ordering
-// is stable across runs, which matters when the output is piped into merge
+// Seeded wins decisively: the next seed run recreates that slug, so merging it
+// away guarantees the duplicate returns. Organization links rank above pattern
+// links because repointing fewer of them disturbs fewer tenants. Creation time
+// and id break ties last, keeping the output stable enough to pipe into merge
 // commands.
 func preferAsWinner(a, b *CatalogEntry) bool {
 	if a.Seeded != b.Seeded {

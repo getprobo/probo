@@ -138,17 +138,16 @@ SELECT
 }
 
 // MergeCommonThirdPartyDomains moves the loser's domains to the winner and
+// deletes whatever remains, returning both counts.
 //
-// This is the only step that can violate a unique constraint:
-// common_third_party_domains is unique on (common_third_party_id, domain),
-// so a domain both rows claim would collide. The NOT EXISTS guard moves
-// only the domains the winner lacks, and the delete then clears the
-// collisions. Moving rather than re-inserting preserves each domain row's
-// id and creation time.
+// The only step of a merge that can violate a unique constraint, since
+// common_third_party_domains is unique on (common_third_party_id, domain):
+// the NOT EXISTS guard moves only what the winner lacks and the delete clears
+// the collisions. Moving rather than re-inserting preserves each row's id.
 //
-// domain is CITEXT, so the equality below is already case-insensitive and
-// matches the unique index's own semantics. Wrapping it in lower() would
-// diverge from the index and let a collision through.
+// domain is CITEXT, so the equality is already case-insensitive and matches
+// the index's own semantics — a lower() here would diverge from the index and
+// let a collision through.
 func MergeCommonThirdPartyDomains(
 	ctx context.Context,
 	tx pg.Tx,
@@ -197,16 +196,12 @@ WHERE common_third_party_id = @loser_id
 }
 
 // RelinkOrgTrackerPatterns points each organization's unlinked tracker
-// patterns at the third party that organization manages for the winner.
+// patterns at the third party that organization manages for the winner. Run
+// after the catalog patterns move, so the resolution below sees the winner.
 //
-// Run after the catalog patterns have been repointed, so the resolution
-// below sees the winner. It reuses LinkThirdPartyByCommonThirdPartyID, which
-// only touches patterns with no third_party_id and so never overrides an
-// existing link, making it safe to run for every affected organization.
-//
-// Spans tenants, scoping per organization: the catalog is global, and each
-// organization's patterns must resolve to that organization's own third
-// party, never another tenant's.
+// Spans tenants but scopes per organization, so an organization's patterns
+// only ever resolve to its own third party. Safe to run for every affected
+// organization: it touches only patterns with no third_party_id.
 func RelinkOrgTrackerPatterns(
 	ctx context.Context,
 	tx pg.Tx,
@@ -288,15 +283,11 @@ WHERE
 	return count, nil
 }
 
-// CollidingThirdPartyIDs returns the loser's organization third parties
-// whose organization already links the winner.
-//
-// These cannot be repointed: two rows in one organization pointing at the
-// same catalog entry is a state no constraint forbids, and the
-// organization-scoped catalog lookup returns only the lowest id, so the
-// other row would be permanently invisible to every import and mapping
-// path. They are reported instead, and end up unlinked when the loser is
-// deleted.
+// CollidingThirdPartyIDs returns the loser's organization third parties whose
+// organization already links the winner. These cannot be repointed: no
+// constraint forbids two rows in one organization on the same catalog entry,
+// but the organization-scoped lookup returns only the lowest id, leaving the
+// other permanently invisible. They are reported instead.
 func CollidingThirdPartyIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -338,15 +329,14 @@ ORDER BY
 	return ids, nil
 }
 
-// RepointThirdPartiesToCommonThirdParty links the loser's organization third parties to the
-// winner, across every tenant, skipping the collisions described by
-// CollidingThirdPartyIDs.
+// RepointThirdPartiesToCommonThirdParty links the loser's organization third
+// parties to the winner across every tenant, skipping the collisions
+// CollidingThirdPartyIDs describes. The absence of a tenant predicate is
+// deliberate: see thirdparty.MergeCatalog.
 //
-// This is raw SQL rather than a loop over ThirdParty.Update because that
-// method rewrites the entity's full column set from a Go struct: it would
-// round-trip unrelated state through the application, clobber concurrent
-// writes, and could not express the NOT EXISTS guard. Note the deliberate
-// absence of any tenant predicate — see MergeCommonThirdParty.
+// Raw SQL rather than a loop over ThirdParty.Update, which rewrites the whole
+// column set from a Go struct: that would clobber concurrent writes and could
+// not express the NOT EXISTS guard.
 func RepointThirdPartiesToCommonThirdParty(
 	ctx context.Context,
 	tx pg.Tx,

@@ -421,24 +421,19 @@ func (e *CommonPatternEnricher) identifyThirdParty(
 	return ident, nil
 }
 
-// interpretEnrichmentAttribution applies the shared catalog acceptance bar
-// to a raw mapping-agent output for a catalog pattern and returns the
-// vendor attribution, a terminal first-party verdict, or nil.
+// interpretEnrichmentAttribution applies the shared catalog acceptance bar to
+// a mapping-agent output and returns a vendor attribution, a terminal
+// first-party verdict, or nil. Applying the same bar as the mapping worker is
+// what stops an attribution the worker would discard entering the catalog
+// through enrichment instead; only the scanned-site backstop is skipped, since
+// a catalog pattern belongs to no site.
 //
-// A catalog pattern belongs to no scanned site, so no site origin is
-// supplied and that one backstop is inapplicable; every other guard
-// applies exactly as it does in the mapping worker. This is what stops an
-// attribution the worker would discard from entering the global catalog
-// through enrichment instead.
-//
-// A rejected vendor still yields a first-party verdict when the agent
-// declared one: the guards judge the proposed vendor name, and an
-// artifact the agent affirmatively identified as having no external
+// A rejected vendor still yields a first-party verdict when the agent declared
+// one: the guards judge the proposed name, and an artifact with no external
 // recipient is a separate, terminal answer.
 //
-// Split from identifyThirdParty so the decision is testable without an
-// LLM. The returned rejection is for logging only; a nil identification
-// with attributionAccepted means the agent named no vendor at all.
+// Split from identifyThirdParty so the decision is testable without an LLM.
+// The rejection is for logging only.
 func interpretEnrichmentAttribution(
 	out TrackerMappingAgentResult,
 	pattern string,
