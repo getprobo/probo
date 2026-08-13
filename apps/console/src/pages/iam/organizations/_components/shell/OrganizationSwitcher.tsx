@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretUpDownIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, CaretUpDownIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -38,15 +39,22 @@ import {
   OrganizationSwitcherMenu,
   organizationSwitcherMenuQuery,
 } from "./OrganizationSwitcherMenu";
-import { organizationSwitcher } from "./variants";
+import { navRail, organizationSwitcher } from "./variants";
 
 const organizationSwitcherFragment = graphql`
   fragment OrganizationSwitcher_organization on Organization {
     name
+    logo {
+      downloadUrl
+    }
   }
 `;
 
 export interface OrganizationSwitcherProps {
+  // "rail" is a full-width row matching the nav items, avatar first and the
+  // name revealed as the rail opens; "bar" is the pill the employee portal's
+  // top bar uses.
+  variant?: "bar" | "rail";
   organizationKey: OrganizationSwitcher_organization$key;
 }
 
@@ -56,7 +64,7 @@ export interface OrganizationSwitcherProps {
  * The list is only fetched when the menu opens: most sessions never switch, and
  * the query walks every organization the viewer belongs to.
  */
-export function OrganizationSwitcher({ organizationKey }: OrganizationSwitcherProps) {
+export function OrganizationSwitcher({ variant = "bar", organizationKey }: OrganizationSwitcherProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const [search, setSearch] = useState("");
@@ -73,20 +81,48 @@ export function OrganizationSwitcher({ organizationKey }: OrganizationSwitcherPr
   }, [loadQuery]);
 
   const slots = organizationSwitcher();
+  const railSlots = navRail();
+  const isRail = variant === "rail";
+
+  const trigger = isRail
+    ? (
+        <button type="button" className={railSlots.item()}>
+          <span className={railSlots.icon()}>
+            {/* One step below the 40px icon box, so the row's hover reads as a
+                ring around the mark rather than stopping at its edge. Solid
+                gold so an organization with no logo still shows a mark rather
+                than faint text. */}
+            <Avatar
+              size={2}
+              variant="solid"
+              color="gold"
+              radius="small"
+              src={organization.logo?.downloadUrl ?? undefined}
+              fallback={organization.name.charAt(0) || "?"}
+            />
+          </span>
+          <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
+            {organization.name}
+          </Text>
+          {/* Points down, matching where the menu opens. */}
+          <CaretDownIcon className={railSlots.caret()} />
+        </button>
+      )
+    : (
+        <button type="button" className={slots.trigger()}>
+          <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
+            {organization.name}
+          </Text>
+          <CaretUpDownIcon className="size-4 shrink-0 text-sand-11" />
+        </button>
+      );
 
   return (
     <Dropdown onOpenChange={handleOpenChange}>
-      <DropdownTrigger
-        render={(
-          <button type="button" className={slots.trigger()}>
-            <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
-              {organization.name}
-            </Text>
-            <CaretUpDownIcon className="size-4 shrink-0 text-sand-11" />
-          </button>
-        )}
-      />
-      <DropdownPopup align="start" className={slots.popup()}>
+      <DropdownTrigger render={trigger} />
+      {/* Drops below the trigger in both presentations. In the rail that puts
+          it just inside the left edge, offset by the rail's own padding. */}
+      <DropdownPopup side="bottom" align="start" className={slots.popup()}>
         <div className={slots.search()}>
           <TextField
             autoFocus

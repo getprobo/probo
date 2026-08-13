@@ -100,17 +100,33 @@ export const navRail = tv({
       "transition-[width,box-shadow,border-color] duration-150 ease-out",
     ],
     item: [
-      "flex h-10 w-full items-center rounded-3 text-sand-11 outline-none transition-colors",
+      // The gap sits between the icon box and the label, so it spaces the two
+      // without moving the icon off the collapsed rail's centre line.
+      "flex h-10 w-full items-center gap-2 rounded-3 text-sand-11 outline-none transition-colors",
       // Step 3 so a passing hover stays lighter than the selected item below.
       "hover:bg-sand-3 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
     ],
+    // Takes the space between the organization row and the account row, so the
+    // account row sits at the bottom whatever the product count.
+    items: "flex min-h-0 flex-1 flex-col gap-1",
     // A 40px box inside 8px of padding puts the icon's centre on the collapsed
     // rail's centre line, so widening the rail does not shift it.
     icon: "flex size-10 shrink-0 items-center justify-center",
     label: [
-      "truncate pr-3 opacity-0 transition-opacity duration-150 ease-out",
-      "group-hover:opacity-100 group-focus-within:opacity-100",
+      "min-w-0 flex-1 truncate pr-2 text-left opacity-0",
+      "transition-opacity duration-150 ease-out",
+      "group-hover:opacity-100 group-has-focus-visible:opacity-100",
+      "group-has-data-popup-open:opacity-100",
+    ],
+    // Only the rows that open a menu carry one; it points the way the menu will
+    // open, and fades with the label so a collapsed rail stays a clean column
+    // of icons.
+    caret: [
+      "mr-2 size-4 shrink-0 text-sand-11 opacity-0",
+      "transition-opacity duration-150 ease-out",
+      "group-hover:opacity-100 group-has-focus-visible:opacity-100",
+      "group-has-data-popup-open:opacity-100",
     ],
   },
   variants: {
@@ -128,11 +144,24 @@ export const navRail = tv({
     // Every v2 shadow opens with a 1px sand-a3 ring, which lands just outside
     // the border box and so doubles up with the border on the right edge. The
     // border hands over to the ring while expanded, keeping the edge 1px.
+    //
+    // The third trigger is a menu being open inside the rail. Its popup is
+    // portaled out, so the pointer moving onto it ends :hover and focus lands
+    // outside the rail's subtree -- without this the rail would collapse from
+    // under the menu the user just opened. Base UI marks the open trigger with
+    // data-popup-open.
+    // Keyboard focus rather than focus-within: closing a menu restores focus to
+    // its trigger, which lives in the rail, so focus-within would reopen the
+    // rail the moment a click outside collapsed it and leave it stuck open
+    // until the next click elsewhere. :focus-visible does not match focus
+    // restored after a pointer interaction, so the mouse path settles closed
+    // while tabbing still opens the rail.
     expandable: {
       true: {
         rail: [
           "hover:w-56 hover:border-transparent hover:shadow-4",
-          "focus-within:w-56 focus-within:border-transparent focus-within:shadow-4",
+          "has-focus-visible:w-56 has-focus-visible:border-transparent has-focus-visible:shadow-4",
+          "has-data-popup-open:w-56 has-data-popup-open:border-transparent has-data-popup-open:shadow-4",
         ],
       },
     },

@@ -40,7 +40,7 @@ export const organizationLayoutQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...TopBar_organization
+        ...TopBar_organization @include(if: $hideNavigation)
         ...NavRail_organization @skip(if: $hideNavigation)
         ...NavPanel_organization @skip(if: $hideNavigation)
         viewer @required(action: THROW) {
@@ -58,19 +58,22 @@ export const organizationLayoutQuery = graphql`
 `;
 
 export interface OrganizationLayoutProps {
-  // The employee portal reuses this layout but has no product navigation, so
-  // both nav columns are dropped and their permission fields go unrequested.
+  // The employee portal reuses this layout but has no products to navigate.
+  // It falls back to the top bar, which is the only place its occupants can
+  // switch organization or sign out.
   hideNavigation?: boolean;
   queryRef: PreloadedQuery<OrganizationLayoutQuery>;
 }
 
 /**
- * Chrome for the organization area: a top bar, the product rail, the panel of
- * the active product, and the page.
+ * Chrome for the organization area: the rail, the panel of the active product,
+ * and the page. The rail carries the organization and the account as its first
+ * and last rows, so there is no top bar — except in the employee portal, which
+ * has no rail to put them in.
  *
  * The frame owns the viewport — the page scrolls inside `content` rather than
- * on the document, which is what holds the top bar and both nav columns in
- * place without any of them being `position: fixed`.
+ * on the document, which is what holds the chrome in place without any of it
+ * being `position: fixed`.
  */
 export function OrganizationLayout({ hideNavigation = false, queryRef }: OrganizationLayoutProps) {
   const { organization, viewer } = usePreloadedQuery<OrganizationLayoutQuery>(
@@ -93,7 +96,7 @@ export function OrganizationLayout({ hideNavigation = false, queryRef }: Organiz
   return (
     <LayoutContext value={drawerContext}>
       <div className={slots.root()}>
-        <TopBar organizationKey={organization} />
+        {hideNavigation && <TopBar organizationKey={organization} />}
         <div className={slots.body()}>
           {!hideNavigation && <NavRail organizationKey={organization} />}
           {!hideNavigation && <NavPanel organizationKey={organization} />}

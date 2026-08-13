@@ -45,7 +45,10 @@ export function NavRailItem({ icon: IconComponent, label, to, active }: NavRailI
   return (
     <Link to={to} className={slots.item()}>
       <span className={slots.icon()}>
-        <IconComponent size={20} aria-hidden />
+        {/* Duotone rather than outlined or filled: at 20px in a narrow column
+            thin strokes go muddy, but a flat fill loses the interior detail
+            that tells the products apart. */}
+        <IconComponent size={20} weight="duotone" aria-hidden />
       </span>
       <Text size={2} className={slots.label()}>
         {label}

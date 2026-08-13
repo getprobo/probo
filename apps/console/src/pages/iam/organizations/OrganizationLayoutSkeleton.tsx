@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Logo } from "@probo/ui";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { navPanel, navRail, organizationLayout, topBar } from "./_components/shell/variants";
+import { navPanel, navRail, organizationLayout } from "./_components/shell/variants";
 import { NAV_GROUPS } from "./_lib/navigation";
 
 // Width per panel entry, sized to the English labels of the widest product
@@ -46,7 +45,6 @@ const PANEL_ITEMS = [
  */
 export function OrganizationLayoutSkeleton() {
   const layoutSlots = organizationLayout();
-  const topBarSlots = topBar();
   // Not expandable: opening the rail while loading would reveal an empty
   // column. The root wrapper is still required, since the rail positions
   // against it.
@@ -55,23 +53,21 @@ export function OrganizationLayoutSkeleton() {
 
   return (
     <div className={layoutSlots.root()}>
-      <div className={topBarSlots.bar()}>
-        <div className={topBarSlots.brand()}>
-          <Logo className={topBarSlots.logo()} />
-        </div>
-        <span className={topBarSlots.separator()} aria-hidden>/</span>
-        <TextSkeleton size={2} className="w-32" />
-        <div className={topBarSlots.trailing()}>
-          <TextSkeleton size={2} className="w-32" />
-        </div>
-      </div>
-
       <div className={layoutSlots.body()}>
         <div className={railSlots.root()}>
           <div className={railSlots.rail()}>
-            {NAV_GROUPS.map(group => (
-              <div key={group.key} className="size-10 animate-pulse rounded-3 bg-sand-3" />
-            ))}
+            {/* Organization, products, account — the rail's three regions. */}
+            <div className={railSlots.icon()}>
+              <div className="size-8 animate-pulse rounded-2 bg-sand-3" />
+            </div>
+            <div className={railSlots.items()}>
+              {NAV_GROUPS.map(group => (
+                <div key={group.key} className="size-10 animate-pulse rounded-3 bg-sand-3" />
+              ))}
+            </div>
+            <div className={railSlots.icon()}>
+              <div className="size-8 animate-pulse rounded-full bg-sand-3" />
+            </div>
           </div>
         </div>
 

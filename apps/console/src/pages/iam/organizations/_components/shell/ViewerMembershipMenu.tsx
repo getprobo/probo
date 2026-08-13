@@ -20,6 +20,7 @@
 
 import {
   CaretDownIcon,
+  CaretRightIcon,
   FileTextIcon,
   KeyIcon,
   QuestionIcon,
@@ -44,7 +45,7 @@ import type { ViewerMembershipMenu_organization$key } from "#/__generated__/iam/
 import type { ViewerMembershipMenuSignOutMutation } from "#/__generated__/iam/ViewerMembershipMenuSignOutMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { viewerMembershipMenuTrigger } from "./variants";
+import { navRail, viewerMembershipMenuTrigger } from "./variants";
 
 const viewerMembershipMenuFragment = graphql`
   fragment ViewerMembershipMenu_organization on Organization {
@@ -70,11 +71,15 @@ const signOutMutation = graphql`
 `;
 
 export interface ViewerMembershipMenuProps {
+  // "rail" is a full-width row matching the nav items, avatar first and the
+  // name revealed as the rail opens; "bar" is the pill the employee portal's
+  // top bar uses.
+  variant?: "bar" | "rail";
   organizationKey: ViewerMembershipMenu_organization$key;
 }
 
 /** Who you are signed in as, and the account-level actions. */
-export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuProps) {
+export function ViewerMembershipMenu({ variant = "bar", organizationKey }: ViewerMembershipMenuProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { toast } = useToast();
@@ -116,20 +121,52 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
     });
   };
 
+  const railSlots = navRail();
+  const isRail = variant === "rail";
+
+  const trigger = isRail
+    ? (
+        <button type="button" className={railSlots.item()}>
+          <span className={railSlots.icon()}>
+            {/* A person reads as a round avatar, against the organization's
+                squared one at the top of the rail. */}
+            <Avatar
+              size={2}
+              variant="soft"
+              color="gold"
+              radius="full"
+              fallback={displayName.charAt(0).toUpperCase() || <UserIcon />}
+            />
+          </span>
+          <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
+            {displayName}
+          </Text>
+          {/* Points right, matching where the menu opens. */}
+          <CaretRightIcon className={railSlots.caret()} />
+        </button>
+      )
+    : (
+        <button type="button" className={viewerMembershipMenuTrigger()} aria-label={displayName}>
+          <Avatar size={1} variant="soft" color="gold" radius="small" fallback={<UserIcon />} />
+          <Text size={2} weight="medium" color="neutral" highContrast className="max-w-36 truncate">
+            {displayName}
+          </Text>
+          <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
+        </button>
+      );
+
   return (
     <Dropdown>
-      <DropdownTrigger
-        render={(
-          <button type="button" className={viewerMembershipMenuTrigger()} aria-label={displayName}>
-            <Avatar size={1} variant="soft" color="gold" radius="small" fallback={<UserIcon />} />
-            <Text size={2} weight="medium" color="neutral" highContrast className="max-w-36 truncate">
-              {displayName}
-            </Text>
-            <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
-          </button>
-        )}
-      />
-      <DropdownPopup align="end">
+      <DropdownTrigger render={trigger} />
+      {/* Anchored to the side in the rail so the menu clears it rather than
+          covering the column it was opened from. The offset is measured from
+          the trigger, which sits inside the rail's 8px padding, so it takes
+          that plus a gap to clear the rail's edge. */}
+      <DropdownPopup
+        side={isRail ? "right" : "bottom"}
+        sideOffset={isRail ? 12 : 4}
+        align="end"
+      >
         <DropdownGroup>
           <div className="flex w-full flex-col gap-1 px-3 py-3">
             <Text size={2} weight="medium" color="neutral" highContrast>

@@ -28,7 +28,9 @@ import { navItemHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/na
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
 import { NavRailItem } from "./NavRailItem";
+import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { navRail } from "./variants";
+import { ViewerMembershipMenu } from "./ViewerMembershipMenu";
 
 // Every permission below is read, but through the `permission` key on each
 // entry of the nav table rather than by name here, which the rule cannot
@@ -36,6 +38,9 @@ import { navRail } from "./variants";
 /* eslint-disable relay/unused-fields */
 const navRailFragment = graphql`
   fragment NavRail_organization on Organization {
+    ...OrganizationSwitcher_organization
+    ...ViewerMembershipMenu_organization
+
     canGetContext: permission(action: "core:organization-context:get")
     canListTasks: permission(action: "core:task:list")
     canListMeasures: permission(action: "core:measure:list")
@@ -67,18 +72,19 @@ export interface NavRailProps {
 }
 
 /**
- * The products, as a column of icons that name themselves when the rail is
- * hovered or focused.
+ * The whole chrome for an organization: which organization you are in, the
+ * products, and who you are signed in as, all naming themselves when the rail
+ * is hovered or focused.
  *
- * Each icon links to the first entry of its product, so the rail alone is
- * enough to move around; the panel beside it then offers the rest.
+ * Each product icon links to the first entry of its product, so the rail alone
+ * is enough to move around; the panel beside it then offers the rest.
  */
 export function NavRail({ organizationKey }: NavRailProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const permissions = useFragment(navRailFragment, organizationKey);
+  const organization = useFragment(navRailFragment, organizationKey);
 
-  const groups = useMemo(() => visibleNavGroups(permissions), [permissions]);
+  const groups = useMemo(() => visibleNavGroups(organization), [organization]);
   const activeGroup = useActiveNavGroup(groups);
 
   const slots = navRail();
@@ -86,15 +92,21 @@ export function NavRail({ organizationKey }: NavRailProps) {
   return (
     <div className={slots.root()}>
       <nav className={slots.rail()} aria-label={t("nav.products")}>
-        {groups.map(group => (
-          <NavRailItem
-            key={group.key}
-            icon={group.icon}
-            label={t(`nav.groups.${group.key}`)}
-            to={navItemHref(organizationId, group, group.items[0])}
-            active={group.key === activeGroup?.key}
-          />
-        ))}
+        <OrganizationSwitcher variant="rail" organizationKey={organization} />
+
+        <div className={slots.items()}>
+          {groups.map(group => (
+            <NavRailItem
+              key={group.key}
+              icon={group.icon}
+              label={t(`nav.groups.${group.key}`)}
+              to={navItemHref(organizationId, group, group.items[0])}
+              active={group.key === activeGroup?.key}
+            />
+          ))}
+        </div>
+
+        <ViewerMembershipMenu variant="rail" organizationKey={organization} />
       </nav>
     </div>
   );
