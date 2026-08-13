@@ -268,7 +268,6 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionDocumentCreate,
 		ActionDocumentUpdate,
 		ActionDocumentDelete,
-		ActionDocumentChangelogGenerate,
 		ActionDocumentArchive,
 		ActionDocumentUnarchive,
 		ActionDocumentDeleteDraft,

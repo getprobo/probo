@@ -564,9 +564,6 @@ extend type Mutation {
     bulkExportDocuments(
         input: BulkExportDocumentsInput!
     ): BulkExportDocumentsPayload!
-    generateDocumentChangelog(
-        input: GenerateDocumentChangelogInput!
-    ): GenerateDocumentChangelogPayload!
     requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!
     bulkRequestSignatures(
         input: BulkRequestSignaturesInput!
@@ -670,10 +667,6 @@ input BulkExportDocumentsInput {
     watermarkText: String
     watermarkEmail: EmailAddr @deprecated(reason: "Use watermarkText.")
     withSignatures: Boolean!
-}
-
-input GenerateDocumentChangelogInput {
-    documentId: ID!
 }
 
 input RequestSignatureInput {
@@ -793,8 +786,4 @@ type ApproveDocumentVersionPayload {
 
 type RejectDocumentVersionPayload {
     approvalDecision: DocumentVersionApprovalDecision!
-}
-
-type GenerateDocumentChangelogPayload {
-    changelog: String!
 }
