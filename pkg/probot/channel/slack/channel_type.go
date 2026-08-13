@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,39 +20,16 @@
 
 package slack
 
-import (
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
+type ChannelType string
+
+const (
+	ChannelTypeChannel ChannelType = "channel"
+	ChannelTypeGroup   ChannelType = "group"
+	ChannelTypeIM      ChannelType = "im"
+	ChannelTypeMPIM    ChannelType = "mpim"
+	ChannelTypeAppHome ChannelType = "app_home"
 )
 
-type Service struct {
-	pg                 *pg.Client
-	logger             *log.Logger
-	slackSigningSecret string
-	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
-	// threaded in by probod so a deployment that repoints the Slack connector
-	// moves these calls too. See NewClient.
-	slackAPIBaseURL string
-}
-
-func NewService(
-	pg *pg.Client,
-	slackSigningSecret string,
-	slackAPIBaseURL string,
-	logger *log.Logger,
-) *Service {
-	return &Service{
-		pg:                 pg,
-		logger:             logger,
-		slackSigningSecret: slackSigningSecret,
-		slackAPIBaseURL:    slackAPIBaseURL,
-	}
-}
-
-func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.slackAPIBaseURL, s.logger)
-}
-
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
+func (v ChannelType) String() string {
+	return string(v)
 }

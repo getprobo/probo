@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +21,36 @@
 package slack
 
 import (
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
+	"errors"
+	"time"
 )
 
-type Service struct {
-	pg                 *pg.Client
-	logger             *log.Logger
-	slackSigningSecret string
-	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
-	// threaded in by probod so a deployment that repoints the Slack connector
-	// moves these calls too. See NewClient.
-	slackAPIBaseURL string
-}
+func exponentialRetryDelay(attempt int, base, max time.Duration) time.Duration {
+	delay := base
+	for idx := 1; idx < attempt && delay < max; idx++ {
+		if delay > max/2 {
+			return max
+		}
 
-func NewService(
-	pg *pg.Client,
-	slackSigningSecret string,
-	slackAPIBaseURL string,
-	logger *log.Logger,
-) *Service {
-	return &Service{
-		pg:                 pg,
-		logger:             logger,
-		slackSigningSecret: slackSigningSecret,
-		slackAPIBaseURL:    slackAPIBaseURL,
+		delay *= 2
 	}
+
+	if delay > max {
+		return max
+	}
+
+	return delay
 }
 
-func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.slackAPIBaseURL, s.logger)
-}
+func slackAPIRetryDelay(attempt int, base, max time.Duration, err error) time.Duration {
+	delay := exponentialRetryDelay(attempt, base, max)
+	if apiErr, ok := errors.AsType[*APIError](err); ok && apiErr.RetryAfter > delay {
+		delay = apiErr.RetryAfter
+	}
 
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
+	if delay > max {
+		return max
+	}
+
+	return delay
 }

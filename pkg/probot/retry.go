@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,41 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package slack
+package probot
 
-import (
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
-)
+import "time"
 
-type Service struct {
-	pg                 *pg.Client
-	logger             *log.Logger
-	slackSigningSecret string
-	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
-	// threaded in by probod so a deployment that repoints the Slack connector
-	// moves these calls too. See NewClient.
-	slackAPIBaseURL string
-}
+func exponentialRetryDelay(attempt int, base, max time.Duration) time.Duration {
+	delay := base
+	for idx := 1; idx < attempt && delay < max; idx++ {
+		if delay > max/2 {
+			return max
+		}
 
-func NewService(
-	pg *pg.Client,
-	slackSigningSecret string,
-	slackAPIBaseURL string,
-	logger *log.Logger,
-) *Service {
-	return &Service{
-		pg:                 pg,
-		logger:             logger,
-		slackSigningSecret: slackSigningSecret,
-		slackAPIBaseURL:    slackAPIBaseURL,
+		delay *= 2
 	}
-}
 
-func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.slackAPIBaseURL, s.logger)
-}
+	if delay > max {
+		return max
+	}
 
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
+	return delay
 }

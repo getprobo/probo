@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,41 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package slack
+package probot
 
 import (
 	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/llm"
 )
 
-type Service struct {
-	pg                 *pg.Client
-	logger             *log.Logger
-	slackSigningSecret string
-	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
-	// threaded in by probod so a deployment that repoints the Slack connector
-	// moves these calls too. See NewClient.
-	slackAPIBaseURL string
-}
+const instructions = `You are Probot, Probo's operational assistant.
+Be concise, helpful, and proactive.
 
-func NewService(
-	pg *pg.Client,
-	slackSigningSecret string,
-	slackAPIBaseURL string,
-	logger *log.Logger,
-) *Service {
-	return &Service{
-		pg:                 pg,
-		logger:             logger,
-		slackSigningSecret: slackSigningSecret,
-		slackAPIBaseURL:    slackAPIBaseURL,
+Registered capabilities add domain-specific tools at runtime. Use their typed arguments and
+trusted conversation context instead of guessing identifiers. For state-changing requests, only
+act when the user's intent is explicit; inspect the current request with the relevant read tool
+before targeting an individual resource.
+
+User-visible responses must use an available message tool or the capability's dedicated
+initial-message tool. Final assistant text is an internal completion note and is not delivered.`
+
+func NewAgent(
+	client *llm.Client,
+	l *log.Logger,
+	opts ...agent.Option,
+) *agent.Agent {
+	base := []agent.Option{
+		agent.WithLogger(l),
+		agent.WithInstructions(instructions),
 	}
-}
 
-func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.slackAPIBaseURL, s.logger)
-}
-
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
+	return agent.New("Probot", client, append(base, opts...)...)
 }

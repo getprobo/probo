@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +21,48 @@
 package slack
 
 import (
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-type Service struct {
-	pg                 *pg.Client
-	logger             *log.Logger
-	slackSigningSecret string
-	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
-	// threaded in by probod so a deployment that repoints the Slack connector
-	// moves these calls too. See NewClient.
-	slackAPIBaseURL string
+func TestEnvelopeInstallationTeamID(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(
+		t,
+		"T_CONTEXT",
+		(Envelope{
+			TeamID:        "T_ACTOR",
+			ContextTeamID: "T_CONTEXT",
+			Authorizations: []Authorization{{
+				TeamID: "T_AUTHORIZATION",
+			}},
+		}).InstallationTeamID(),
+	)
+	assert.Equal(
+		t,
+		"T_AUTHORIZATION",
+		(Envelope{
+			TeamID: "T_ACTOR",
+			Authorizations: []Authorization{{
+				TeamID: "T_AUTHORIZATION",
+			}},
+		}).InstallationTeamID(),
+	)
 }
 
-func NewService(
-	pg *pg.Client,
-	slackSigningSecret string,
-	slackAPIBaseURL string,
-	logger *log.Logger,
-) *Service {
-	return &Service{
-		pg:                 pg,
-		logger:             logger,
-		slackSigningSecret: slackSigningSecret,
-		slackAPIBaseURL:    slackAPIBaseURL,
-	}
-}
+func TestEventActorTeamID(t *testing.T) {
+	t.Parallel()
 
-func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.slackAPIBaseURL, s.logger)
-}
-
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
+	assert.Equal(
+		t,
+		"T_EXTERNAL",
+		(EventBody{UserTeam: "T_EXTERNAL"}).ActorTeamID("T_INSTALL"),
+	)
+	assert.Equal(
+		t,
+		"T_INSTALL",
+		(EventBody{}).ActorTeamID("T_INSTALL"),
+	)
 }

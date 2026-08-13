@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +21,29 @@
 package slack
 
 import (
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
+	"context"
+	"encoding/json"
+	"fmt"
 )
 
-type Service struct {
-	pg                 *pg.Client
-	logger             *log.Logger
-	slackSigningSecret string
-	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
-	// threaded in by probod so a deployment that repoints the Slack connector
-	// moves these calls too. See NewClient.
-	slackAPIBaseURL string
-}
-
-func NewService(
-	pg *pg.Client,
-	slackSigningSecret string,
-	slackAPIBaseURL string,
-	logger *log.Logger,
-) *Service {
-	return &Service{
-		pg:                 pg,
-		logger:             logger,
-		slackSigningSecret: slackSigningSecret,
-		slackAPIBaseURL:    slackAPIBaseURL,
+func (c *Client) SetStatus(
+	ctx context.Context,
+	channelID string,
+	threadTS string,
+	status string,
+	loadingMessages []string,
+) error {
+	body, err := json.Marshal(
+		setStatusRequest{
+			ChannelID:       channelID,
+			ThreadTS:        threadTS,
+			Status:          status,
+			LoadingMessages: loadingMessages,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot marshal set status request: %w", err)
 	}
-}
 
-func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.slackAPIBaseURL, s.logger)
-}
-
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
+	return c.post(ctx, slackMethodAssistantSetStatus, body)
 }

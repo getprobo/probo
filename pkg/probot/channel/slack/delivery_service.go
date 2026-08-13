@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +21,56 @@
 package slack
 
 import (
-	"go.gearno.de/kit/log"
+	"context"
+	"fmt"
+
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
-type Service struct {
-	pg                 *pg.Client
-	logger             *log.Logger
-	slackSigningSecret string
-	// slackAPIBaseURL is the SLACK provider registration's Endpoints.APIBase,
-	// threaded in by probod so a deployment that repoints the Slack connector
-	// moves these calls too. See NewClient.
-	slackAPIBaseURL string
+type DeliveryService struct {
+	pg *pg.Client
 }
 
-func NewService(
-	pg *pg.Client,
-	slackSigningSecret string,
-	slackAPIBaseURL string,
-	logger *log.Logger,
-) *Service {
-	return &Service{
-		pg:                 pg,
-		logger:             logger,
-		slackSigningSecret: slackSigningSecret,
-		slackAPIBaseURL:    slackAPIBaseURL,
+func NewDeliveryService(pgClient *pg.Client) *DeliveryService {
+	return &DeliveryService{pg: pgClient}
+}
+
+func (s *DeliveryService) Queue(
+	ctx context.Context,
+	organizationID gid.GID,
+	operationKey string,
+	kind coredata.SlackDeliveryOperationKind,
+	payload map[string]any,
+) (*coredata.SlackDeliveryOperation, bool, error) {
+	scope := coredata.NewScopeFromObjectID(organizationID)
+	operation := coredata.NewSlackDeliveryOperation(
+		scope,
+		organizationID,
+		operationKey,
+		kind,
+		payload,
+	)
+
+	var inserted bool
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var err error
+
+			inserted, err = operation.Upsert(ctx, tx, scope)
+			if err != nil {
+				return fmt.Errorf("cannot upsert Slack delivery operation: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot queue Slack delivery operation: %w", err)
 	}
-}
 
-func (s *Service) GetSlackClient() *Client {
-	return NewClient(s.slackAPIBaseURL, s.logger)
-}
-
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
+	return operation, inserted, nil
 }

@@ -39,7 +39,6 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/slack"
 )
 
 const (
@@ -84,7 +83,6 @@ type (
 		html2pdfConverter                     *html2pdf.Converter
 		fileManager                           *filemanager.Service
 		logger                                *log.Logger
-		slack                                 *slack.Service
 		esign                                 *esign.Service
 		connectorRegistry                     *connector.ConnectorRegistry
 		invitationTokenValidity               time.Duration
@@ -119,7 +117,6 @@ type (
 		StatementsOfApplicability             *StatementOfApplicabilityService
 		GeneratedDocuments                    *GeneratedDocumentService
 		Files                                 *FileService
-		SlackMessages                         *slack.Service
 		LogExports                            ExportService
 	}
 )
@@ -137,7 +134,6 @@ func NewService(
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
-	slackService *slack.Service,
 	iamService *iam.Service,
 	esignService *esign.Service,
 	connectorRegistry *connector.ConnectorRegistry,
@@ -161,7 +157,6 @@ func NewService(
 		html2pdfConverter:       html2pdfConverter,
 		fileManager:             fileManagerService,
 		logger:                  logger,
-		slack:                   slackService,
 		esign:                   esignService,
 		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
@@ -235,7 +230,6 @@ func NewService(
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}
 	svc.GeneratedDocuments = &GeneratedDocumentService{svc: svc}
 	svc.Files = &FileService{svc: svc}
-	svc.SlackMessages = slackService
 	svc.LogExports = iamService.LogExports
 
 	return svc, nil

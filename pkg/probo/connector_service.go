@@ -21,11 +21,9 @@
 package probo
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"text/template"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -34,19 +32,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
-)
-
-var (
-	welcomeTemplate = template.Must(
-		template.New("welcome.json.tmpl").
-			Funcs(template.FuncMap{
-				"jsonEscape": func(s string) string {
-					b, _ := json.Marshal(s)
-					return string(b[1 : len(b)-1])
-				},
-			}).
-			ParseFS(Templates, "templates/welcome.json.tmpl"),
-	)
 )
 
 type (
@@ -287,39 +272,6 @@ func (s *ConnectorService) Create(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := newConnector.Insert(ctx, tx, scope, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot create connector: %w", err)
-			}
-
-			if req.Provider == coredata.ConnectorProviderSlack {
-				slackConn, ok := req.Connection.(*connector.SlackConnection)
-				if ok && slackConn.Settings.Channel != "" {
-					var organization coredata.Organization
-					if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
-						return fmt.Errorf("cannot load organization: %w", err)
-					}
-
-					data := struct {
-						OrganizationName string
-						ChannelName      string
-					}{
-						OrganizationName: organization.Name,
-						ChannelName:      slackConn.Settings.Channel,
-					}
-
-					var buf bytes.Buffer
-					if err := welcomeTemplate.Execute(&buf, data); err != nil {
-						return fmt.Errorf("cannot execute template: %w", err)
-					}
-
-					var body map[string]any
-					if err := json.NewDecoder(&buf).Decode(&body); err != nil {
-						return fmt.Errorf("cannot parse template JSON: %w", err)
-					}
-
-					slackMessage := coredata.NewSlackMessage(scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body)
-					if err := slackMessage.Insert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot insert slack message: %w", err)
-					}
-				}
 			}
 
 			return nil
