@@ -23,9 +23,12 @@
 package tray
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseLoggedInUsernames(t *testing.T) {
@@ -84,4 +87,62 @@ func TestParseLoggedInUsernames(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestLaunchAgentIsCurrent(t *testing.T) {
+	t.Parallel()
+
+	const (
+		exePath = "/usr/local/bin/probo-agent"
+		runDir  = "/var/run/probo-agent"
+	)
+
+	t.Run(
+		"missing file",
+		func(t *testing.T) {
+			t.Parallel()
+
+			current, err := launchAgentIsCurrent(
+				filepath.Join(t.TempDir(), "missing.plist"),
+				exePath,
+				runDir,
+			)
+			require.NoError(t, err)
+			assert.False(t, current)
+		},
+	)
+
+	t.Run(
+		"matching bytes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			desired, err := renderLaunchAgentPlist(exePath, runDir)
+			require.NoError(t, err)
+
+			plistPath := filepath.Join(t.TempDir(), "tray.plist")
+			require.NoError(t, os.WriteFile(plistPath, desired, 0o644))
+
+			current, err := launchAgentIsCurrent(plistPath, exePath, runDir)
+			require.NoError(t, err)
+			assert.True(t, current)
+		},
+	)
+
+	t.Run(
+		"mismatched bytes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			plistPath := filepath.Join(t.TempDir(), "tray.plist")
+			require.NoError(
+				t,
+				os.WriteFile(plistPath, []byte("not the launch agent"), 0o644),
+			)
+
+			current, err := launchAgentIsCurrent(plistPath, exePath, runDir)
+			require.NoError(t, err)
+			assert.False(t, current)
+		},
+	)
 }

@@ -73,22 +73,18 @@ SOFTWARE. -->
 					</RegistryKey>
 				</RegistryKey>
 			</Component>
-
-			<!-- Machine-wide tray auto-start, equivalent to the macOS
-			     /Library/LaunchAgents plist. The helper is started
-			     immediately by RegisterTray after InstallFinalize. -->
-			<Component Guid="b8d41a2e-9f57-4c3b-8e16-7a0d5c9e2b44">
-				<RegistryValue
-					Root="HKLM"
-					Key="Software\Microsoft\Windows\CurrentVersion\Run"
-					Name="ProboAgentTray"
-					Type="string"
-					Value="&quot;[INSTALLFOLDER]probo-agent.exe&quot; tray --run-dir &quot;[CommonAppDataFolder]Probo\run&quot;"
-					KeyPath="yes"
-				/>
-			</Component>
 		</ComponentGroup>
 
+		<!-- Tray auto-start is persisted and started by setup-tray
+		     (RegisterAutoStart), same as the macOS LaunchAgent plist.
+		     The MSI does not write the Run key itself.
+
+		     Deferred + Impersonate="no" is required so setup-tray runs as
+		     LocalSystem and can write HKLM. Immediate CAs (including any
+		     sequenced after InstallFinalize) run in the client process;
+		     Impersonate is ignored there, so a standard-user per-machine
+		     install with over-the-shoulder elevation would succeed without
+		     machine-wide tray autostart. -->
 		<CustomAction
 			Id="RegisterTray"
 			FileRef="ProboAgentExe"

@@ -97,8 +97,8 @@ cmd/probo-agent/installer/macos/build.sh \
   --version "$(cat cmd/probo-agent/VERSION)"
 ```
 
-PKG postinstall always installs the global tray LaunchAgent, registers
-`probo://`, and installs the privileged helper
+PKG postinstall runs `probo-agent setup-tray` (LaunchAgent persist and
+start), registers `probo://`, and installs the privileged helper
 (`com.probo.agent.helper`) under `/Library/PrivilegedHelperTools` as
 root. The only admin authentication is the normal macOS Installer
 prompt for the PKG itself. The LaunchDaemon for `probo-agent run` is

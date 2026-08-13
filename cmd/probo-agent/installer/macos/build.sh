@@ -424,11 +424,7 @@ export COPYFILE_DISABLE=1
 
 ditto --norsrc --noextattr "${SCRIPT_DIR}/scripts/preinstall" "${SCRIPTS}/preinstall"
 ditto --norsrc --noextattr "${SCRIPT_DIR}/scripts/postinstall" "${SCRIPTS}/postinstall"
-ditto --norsrc --noextattr \
-  "${REPO_ROOT}/pkg/deviceagent/tray/launchagent.plist.tmpl" \
-  "${SCRIPTS}/launchagent.plist.tmpl"
 chmod 0755 "${SCRIPTS}/preinstall" "${SCRIPTS}/postinstall"
-chmod 0644 "${SCRIPTS}/launchagent.plist.tmpl"
 
 ditto --norsrc --noextattr "${SCRIPT_DIR}/Resources/welcome.html" "${RESOURCES}/welcome.html"
 ditto --norsrc --noextattr "${SCRIPT_DIR}/Resources/conclusion.html" "${RESOURCES}/conclusion.html"

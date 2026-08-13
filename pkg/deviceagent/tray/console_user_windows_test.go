@@ -28,63 +28,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIsInteractiveUserSID(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		sid  string
-		want bool
-	}{
-		{
-			name: "domain user sid",
-			sid:  "S-1-5-21-1234567890-123456789-123456789-1001",
-			want: true,
-		},
-		{
-			name: "entra user sid",
-			sid:  "S-1-12-1-3603547745-1252762009-756918658-301435180",
-			want: true,
-		},
-		{
-			name: "entra authority without user subauthority",
-			sid:  "S-1-12-2-3603547745-1252762009-756918658-301435180",
-			want: false,
-		},
-		{
-			name: "bare entra authority prefix",
-			sid:  "S-1-12-",
-			want: false,
-		},
-		{
-			name: "local system sid",
-			sid:  "S-1-5-18",
-			want: false,
-		},
-		{
-			name: "builtin administrators sid",
-			sid:  "S-1-5-32-544",
-			want: false,
-		},
-		{
-			name: "empty sid",
-			sid:  "",
-			want: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				t.Parallel()
-
-				assert.Equal(t, tt.want, isInteractiveUserSID(tt.sid))
-			},
-		)
-	}
-}
-
 func TestAppendUniqueSessionID(t *testing.T) {
 	t.Parallel()
 
