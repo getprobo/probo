@@ -43,7 +43,7 @@ const (
 	DuplicateScoreExactName = 1.0
 
 	// DuplicateScoreNormalizedName is a match after removing legal forms
-	// and geographic qualifiers ("Acme Inc" / "Acme France" / "Acme").
+	// and parenthesised qualifiers ("Acme Inc" / "Acme (EU)" / "Acme").
 	DuplicateScoreNormalizedName = 0.95
 
 	// DuplicateScoreNormalizedSlug is a match once punctuation and spacing
@@ -100,56 +100,6 @@ const (
 	minBrandPrefixRunes  = 5
 )
 
-// countryQualifiers are trailing geographic qualifiers removed when
-// comparing catalog names.
-//
-// Unlike corporateSuffixes these are NOT removed on the write path: a
-// country often marks a separately incorporated entity with its own data
-// residency and DPA, so collapsing it there would irreversibly erase a
-// jurisdictional distinction. Here the operator confirms each cluster
-// before merging, so surfacing them as candidates is safe and useful.
-//
-// Order matters: stripCountryQualifier returns on the first match, so
-// comma-prefixed and longer forms come before their shorter siblings.
-var countryQualifiers = []string{
-	" deutschland",
-	" nederland",
-	" singapore",
-	" australia",
-	" netherlands",
-	" switzerland",
-	" germany",
-	" ireland",
-	" belgium",
-	" portugal",
-	" benelux",
-	" nordics",
-	" espana",
-	" france",
-	" canada",
-	" brasil",
-	" brazil",
-	" mexico",
-	" italia",
-	" japan",
-	" india",
-	" china",
-	" korea",
-	" spain",
-	" italy",
-	" latam",
-	" emea",
-	" apac",
-	" usa",
-	" uk",
-	" us",
-	" eu",
-	" de",
-	" fr",
-	" jp",
-	" kk",
-}
-
 // parentheticalSuffix matches a trailing parenthesised group. Any content
 // counts: "(UK)", "(EU)", and "(legacy)" are all the same kind of
 // disambiguating noise appended to make a second row for one vendor.
@@ -204,35 +154,34 @@ type normalized struct {
 	domains    map[string]struct{}
 }
 
-// normalizeCatalogName reduces a catalog name to the form used for
-// duplicate comparison: lowercased, with a trailing parenthesised group,
-// legal form, and geographic qualifier removed.
+// normalizeCatalogName reduces a catalog name to the form used for duplicate
+// comparison: lowercased, with a trailing parenthesised group and a legal
+// form removed. Both are noise that carries no identity, so two names equal
+// under this reduction are the same vendor.
 //
-// Legal-form removal runs on both sides of the country removal so both
-// "Hotjar Ltd (UK)" (parentheses, then suffix) and "Acme France Inc"
-// (suffix, then country) reduce to the same brand.
+// Legal-form removal runs twice because the parenthesised group can hide one
+// behind it: "Hotjar Ltd (UK)" needs the parentheses gone before "Ltd" is at
+// the end.
+//
+// Trailing geographic qualifiers are deliberately NOT removed. A country
+// often marks a separately incorporated entity with its own data residency
+// and processing agreement, so "OVHcloud US" is not "OVHcloud" and merging
+// them would erase a jurisdictional distinction the register exists to
+// record. Unlike legal forms, which are a closed set of two dozen terms that
+// are never anything else, geographic qualifiers are open-ended and their
+// short forms collide with ordinary words: stripping country codes would
+// reduce "Fireworks AI" and "Together AI" to "Fireworks" and "Together",
+// since .ai is a country code. A genuinely country-suffixed duplicate still
+// surfaces through the prefix signal at a lower threshold, where an operator
+// adjudicates it.
 func normalizeCatalogName(name string) string {
 	out := strings.ToLower(strings.TrimSpace(name))
 	out = parentheticalSuffix.ReplaceAllString(out, "")
 	out = stripCorporateSuffixes(out)
-	out = stripCountryQualifier(out)
 	out = stripCorporateSuffixes(out)
 	out = whitespaceRun.ReplaceAllString(out, " ")
 
 	return strings.TrimSpace(out)
-}
-
-// stripCountryQualifier removes a single trailing geographic qualifier from
-// a lowercased name. Only one is removed, matching stripCorporateSuffixes,
-// so a name ending in two such words is not mangled.
-func stripCountryQualifier(lowerName string) string {
-	for _, q := range countryQualifiers {
-		if before, ok := strings.CutSuffix(lowerName, q); ok {
-			return strings.TrimSpace(before)
-		}
-	}
-
-	return lowerName
 }
 
 // FindDuplicates groups catalog entries that are likely the same vendor.
@@ -394,7 +343,7 @@ func scorePair(a, b normalized) (float64, string) {
 	case a.lowerName != "" && a.lowerName == b.lowerName:
 		return DuplicateScoreExactName, "identical name"
 	case a.normName != "" && a.normName == b.normName:
-		return DuplicateScoreNormalizedName, "same name once legal form and country are removed: " + a.normName
+		return DuplicateScoreNormalizedName, "same name once legal form and parentheses are removed: " + a.normName
 	case a.normSlug != "" && a.normSlug == b.normSlug:
 		return DuplicateScoreNormalizedSlug, "same normalized slug: " + a.normSlug
 	case sharedDomain != "":

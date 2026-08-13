@@ -62,11 +62,16 @@ func TestNormalizeCatalogName(t *testing.T) {
 		{name: "strips a comma legal form", input: "Acme, Inc.", expected: "acme"},
 		{name: "strips gmbh", input: "LiveZilla GmbH", expected: "livezilla"},
 		{name: "strips limited", input: "PowerLinks Media Limited", expected: "powerlinks media"},
-		{name: "strips a country", input: "Acme France", expected: "acme"},
-		{name: "strips a country code", input: "OVHcloud US", expected: "ovhcloud"},
 		{name: "strips a parenthesised qualifier", input: "Hotjar (UK)", expected: "hotjar"},
 		{name: "strips parentheses then legal form", input: "Hotjar Ltd (UK)", expected: "hotjar"},
-		{name: "strips legal form then country", input: "Acme France Inc", expected: "acme"},
+		// Geographic qualifiers are preserved: a country often marks a
+		// separately incorporated entity with its own data residency, and
+		// short forms collide with ordinary words (.ai is a country code).
+		{name: "keeps a country name", input: "Acme France", expected: "acme france"},
+		{name: "keeps a country code", input: "OVHcloud US", expected: "ovhcloud us"},
+		{name: "keeps a country after a legal form is stripped", input: "Acme France Inc", expected: "acme france"},
+		{name: "keeps an AI suffix", input: "Fireworks AI", expected: "fireworks ai"},
+		{name: "keeps a region word", input: "Acme EMEA", expected: "acme emea"},
 		{name: "collapses internal whitespace", input: "Acme   Analytics", expected: "acme analytics"},
 		// Conservatism: these words are not qualifiers, so the names must
 		// survive intact rather than over-merging onto a shorter brand.
@@ -110,11 +115,21 @@ func TestFindDuplicates_Signals(t *testing.T) {
 			expectedScore: DuplicateScoreNormalizedName,
 		},
 		{
-			name:          "country qualified variant",
-			a:             catalogEntry("Acme Analytics"),
-			b:             catalogEntry("Acme Analytics France"),
-			expectPaired:  true,
-			expectedScore: DuplicateScoreNormalizedName,
+			// A country qualifier is not noise: "OVHcloud US" is a separately
+			// incorporated entity with its own processing agreement, so this
+			// must not be offered as a merge.
+			name:         "country qualified name is not a duplicate",
+			a:            catalogEntry("Acme Analytics"),
+			b:            catalogEntry("Acme Analytics France"),
+			expectPaired: false,
+		},
+		{
+			// .ai is a country code, so any country-code stripping would
+			// reduce this to "Fireworks" and pair it with an unrelated vendor.
+			name:         "an AI-suffixed brand is not a duplicate of its stem",
+			a:            catalogEntry("Fireworks"),
+			b:            catalogEntry("Fireworks AI"),
+			expectPaired: false,
 		},
 		{
 			name:          "parenthesised variant",
@@ -244,7 +259,7 @@ func TestFindDuplicates_ClustersTransitively(t *testing.T) {
 
 	a := catalogEntry("Acme")
 	b := catalogEntry("Acme Inc")
-	c := catalogEntry("Acme France")
+	c := catalogEntry("Acme Ltd (EU)")
 	unrelated := catalogEntry("Mixpanel")
 
 	clusters := FindDuplicates([]*CatalogEntry{a, b, c, unrelated}, 0)
