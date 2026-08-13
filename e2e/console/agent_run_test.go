@@ -77,9 +77,13 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 	_, err := conn.Exec(ctx, `
 		INSERT INTO agent_runs (
 			id, tenant_id, organization_id, start_agent_name, status,
-			input_messages, checkpoint, error_message, started_at, created_at, updated_at
+			input_messages, checkpoint, error_message, started_at,
+			execution_kind, session_messages, processing_input_ids,
+			attempt_count, max_attempts,
+			created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $10
+			$1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9,
+			$10, $6::jsonb, $11, $12, $13, $14, $14
 		)
 	`,
 		id,
@@ -91,6 +95,10 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 		checkpoint,
 		seed.errorMessage,
 		seed.startedAt,
+		coredata.AgentExecutionKindOneShot,
+		[]string{},
+		0,
+		1,
 		seed.createdAt,
 	)
 	require.NoError(t, err, "cannot seed agent run")

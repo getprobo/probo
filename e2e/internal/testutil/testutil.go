@@ -99,7 +99,15 @@ func Setup() {
 			}
 		}
 
-		configPath, err := generateConfig(configOptions{})
+		opts := configOptions{
+			APIAddr:        os.Getenv("PROBO_E2E_API_ADDR"),
+			BaseURL:        os.Getenv("PROBO_E2E_BASE_URL"),
+			MetricsAddr:    os.Getenv("PROBO_E2E_METRICS_ADDR"),
+			TrustHTTPAddr:  os.Getenv("PROBO_E2E_TRUST_HTTP_ADDR"),
+			TrustHTTPSAddr: os.Getenv("PROBO_E2E_TRUST_HTTPS_ADDR"),
+		}
+
+		configPath, err := generateConfig(opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "e2etest: cannot generate config: %v\n", err)
 			os.Exit(1)
@@ -142,7 +150,16 @@ func Setup() {
 			testEnv.done <- err
 		}()
 
-		testEnv.BaseURL = "http://localhost:18080"
+		testEnv.BaseURL = opts.BaseURL
+		if testEnv.BaseURL == "" {
+			apiAddr := opts.APIAddr
+			if apiAddr == "" {
+				apiAddr = "localhost:18080"
+			}
+
+			testEnv.BaseURL = "http://" + apiAddr
+		}
+
 		testEnv.MailpitBaseURL = "http://localhost:8025"
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
