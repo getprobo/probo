@@ -142,6 +142,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
             <Th>{t("devices.fields.state")}</Th>
             <Th>{t("devices.fields.platform")}</Th>
             <Th>{t("devices.fields.osVersion")}</Th>
+            <Th>{t("devices.fields.agentVersion")}</Th>
             <SortableTh field="LAST_SEEN_AT">{t("devices.fields.lastSeen")}</SortableTh>
             <Th></Th>
           </Tr>

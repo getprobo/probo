@@ -21,58 +21,22 @@
 package deviceagent
 
 import (
-	"context"
-	"time"
+	"regexp"
+	"strings"
 )
 
-func platformString() string {
-	return "WINDOWS"
-}
+var windowsVerNumber = regexp.MustCompile(`\d+(?:\.\d+)+`)
 
-func collectOSVersion() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	out, _ := runQuiet(ctx, "cmd", "/C", "ver")
-	if out != "" {
-		return parseWindowsVerOutput(out)
+// parseWindowsVerOutput extracts the numeric version from `cmd /C ver` output.
+// The banner label is localized (English "Version", Spanish "Versión",
+// Japanese "バージョン"), so the parser takes the first dotted numeric
+// token rather than stripping a fixed word. Unparseable input is returned
+// trimmed.
+func parseWindowsVerOutput(s string) string {
+	s = strings.TrimSpace(s)
+	if m := windowsVerNumber.FindString(s); m != "" {
+		return m
 	}
 
-	out, _ = runQuiet(ctx, "uname", "-sr")
-
-	return out
-}
-
-func collectHardwareUUID() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// `wmic` is deprecated; `Get-CimInstance` requires PowerShell.
-	out, _ := runQuiet(
-		ctx,
-		"powershell",
-		"-NoProfile",
-		"-Command",
-		"(Get-CimInstance Win32_ComputerSystemProduct).UUID",
-	)
-	if out != "" {
-		return out
-	}
-
-	return hashFallbackUUID()
-}
-
-func collectSerialNumber() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	out, _ := runQuiet(
-		ctx,
-		"powershell",
-		"-NoProfile",
-		"-Command",
-		"(Get-CimInstance Win32_BIOS).SerialNumber",
-	)
-
-	return out
+	return s
 }
