@@ -51,7 +51,9 @@ import (
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/certmanager"
+	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
@@ -75,6 +77,10 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	compliancecapability "go.probo.inc/probo/pkg/probot/capability/complianceportal"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -164,7 +170,7 @@ func New() *Implm {
 			Notifications: NotificationsConfig{
 				Mailer: MailerConfig{
 					MailerInterval: 60,
-					SenderEmail:    "no-reply@notification.getprobo.com",
+					SenderEmail:    "no-reply@portal.getprobo.com",
 					SenderName:     "Probo",
 					SMTP: SMTPConfig{
 						Addr: "localhost:1025",
@@ -673,8 +679,6 @@ func (impl *Implm) Run(
 	slackService := slack.NewService(
 		pgClient,
 		impl.cfg.GetSlackSigningSecret(),
-		baseURL.String(),
-		impl.cfg.Auth.Cookie.Secret,
 		slackAPIBaseURL,
 		l.Named("slack"),
 	)
@@ -689,6 +693,11 @@ func (impl *Implm) Run(
 	)
 
 	resourceAliasService := resourcealias.NewService(pgClient)
+	botService := bot.NewService(
+		bot.ServiceConfig{
+			Disabled: !impl.cfg.Slackbot.Enabled,
+		},
+	)
 
 	managementService := management.NewService(
 		pgClient,
@@ -698,7 +707,7 @@ func (impl *Implm) Run(
 		impl.cfg.CompliancePortal.BaseDomain,
 		fileManagerService,
 		certManagerService,
-		slackService,
+		botService,
 		l.Named("compliance-portal-management"),
 	)
 
@@ -732,7 +741,6 @@ func (impl *Implm) Run(
 		html2pdfConverter,
 		fileManagerService,
 		l.Named("probo"),
-		slackService,
 		iamService,
 		esignService,
 		defaultConnectorRegistry,
@@ -751,7 +759,7 @@ func (impl *Implm) Run(
 		html2pdfConverter,
 		fileManagerService,
 		l,
-		slackService,
+		botService,
 		resourceAliasService,
 		managementService,
 	)
@@ -806,44 +814,117 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot build file storage CSP origin: %w", err)
 	}
 
-	slackbotBindings := impl.buildSlackbotBindingService(pgClient, baseURL)
-	slackbotHandler, err := impl.buildSlackbotHandler(ctx, pgClient, slackbotBindings, l, tp, r)
+	probotIdentityBindings := identitybinding.NewService(pgClient, baseURL)
+	slackbotInstallations := impl.buildSlackbotInstallationService(
+		pgClient,
+		encryptionKey,
+		slackRegistration.Endpoints,
+		l,
+	)
+	slackBindPrompts := slackchannel.NewBindPromptService(
+		pgClient,
+		encryptionKey,
+		l.Named("slackbot.bind-prompts"),
+	)
+	probotIdentityBindings.SetBindingConfirmedHandler(slackBindPrompts)
+	slackbotNotifications := slackchannel.NewNotificationService(pgClient)
+	slackInteractiveInbox := slackchannel.NewInteractiveCommandInbox(
+		pgClient,
+		encryptionKey,
+	)
+	complianceRenderer := portal.NewRenderer(baseURL.String())
+	probotCapabilities := probot.NewCapabilityRegistry()
+
+	slackMessages := slackchannel.NewMessageService(
+		pgClient,
+		slackbotInstallations,
+		slackbotNotifications,
+		slackService,
+		l.Named("slack-messages"),
+	)
+	complianceMessages := compliancecapability.NewService(
+		pgClient,
+		complianceRenderer,
+		slackMessages,
+		baseURL.String(),
+	)
+	if err := probotCapabilities.Register(
+		compliancecapability.NewCapability(
+			complianceMessages,
+			visitorService,
+			iamService.Authorizer,
+		),
+	); err != nil {
+		return fmt.Errorf("cannot register compliance Probot capability: %w", err)
+	}
+
+	slackbotHandler, probotAgent, err := impl.buildSlackbotHandler(
+		pgClient,
+		probotIdentityBindings,
+		slackbotInstallations,
+		slackBindPrompts,
+		l,
+		tp,
+		r,
+	)
 	if err != nil {
 		return fmt.Errorf("cannot build slackbot handler: %w", err)
 	}
-	if slackbotHandler != nil {
-		if err := slackbotHandler.ResumePending(ctx); err != nil {
-			return fmt.Errorf("cannot resume pending slackbot agents: %w", err)
+
+	probotProfiles := probot.NewAgentProfileRegistry()
+	probotAdapters := probot.NewExecutionAdapterRegistry()
+
+	if probotAgent != nil {
+		if err := probotProfiles.Register("probot", probotAgent); err != nil {
+			return fmt.Errorf("cannot register Probot agent profile: %w", err)
+		}
+
+		if err := probotAdapters.Register(
+			slackchannel.NewExecutionAdapter(
+				slackbotInstallations,
+				probotIdentityBindings,
+				probotProfiles,
+				probotCapabilities,
+				slackchannel.NewDeliveryService(pgClient),
+				l.Named("slackbot.execution"),
+			),
+		); err != nil {
+			return fmt.Errorf("cannot register Slack execution adapter: %w", err)
 		}
 	}
 
 	serverHandler, err := server.NewServer(
 		server.Config{
-			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
-			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
-			Probo:             proboService,
-			ResourceAlias:     resourceAliasService,
-			File:              fileManagerService,
-			IAM:               iamService,
-			Visitor:           visitorService,
-			ESign:             esignService,
-			Management:        managementService,
-			CertManager:       certManagerService,
-			AccessReview:      accessReviewService,
-			AgentRun:          agentRunService,
-			Mailman:           mailmanService,
-			CookieBanner:      cookieBannerService,
-			Geoloc:            geolocService,
-			ThirdParty:        thirdPartyService,
-			RiskManagement:    riskManagementService,
-			ITAM:              itamService,
-			Slack:             slackService,
-			SlackbotEvents:    slackbotHandler,
-			SlackbotBindings:  slackbotBindings,
-			ConnectorRegistry: defaultConnectorRegistry,
-			ProviderRegistry:  providerRegistry,
-			BaseURL:           baseURL,
-			FileStorageOrigin: fileStorageOrigin,
+			AllowedOrigins:          impl.cfg.Api.Cors.AllowedOrigins,
+			ExtraHeaderFields:       impl.cfg.Api.ExtraHeaderFields,
+			Probo:                   proboService,
+			ResourceAlias:           resourceAliasService,
+			File:                    fileManagerService,
+			IAM:                     iamService,
+			Visitor:                 visitorService,
+			ESign:                   esignService,
+			Management:              managementService,
+			CertManager:             certManagerService,
+			AccessReview:            accessReviewService,
+			AgentRun:                agentRunService,
+			Mailman:                 mailmanService,
+			CookieBanner:            cookieBannerService,
+			Geoloc:                  geolocService,
+			ThirdParty:              thirdPartyService,
+			RiskManagement:          riskManagementService,
+			ITAM:                    itamService,
+			Slack:                   slackService,
+			BotDeliveryDestinations: slackMessages,
+			ComplianceMessages:      complianceMessages,
+			SlackbotEvents:          slackbotHandler,
+			SlackInteractiveInbox:   slackInteractiveInbox,
+			ProbotIdentityBindings:  probotIdentityBindings,
+			SlackbotInstallations:   slackbotInstallations,
+			ProbotCapabilities:      probotCapabilities,
+			ConnectorRegistry:       defaultConnectorRegistry,
+			ProviderRegistry:        providerRegistry,
+			BaseURL:                 baseURL,
+			FileStorageOrigin:       fileStorageOrigin,
 			GraphQLLimits: gqlutils.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
@@ -943,6 +1024,160 @@ func (impl *Implm) Run(
 		func() {
 			if err := slackSendingWorker.Run(slackSenderCtx); err != nil {
 				cancel(fmt.Errorf("slack sending worker crashed: %w", err))
+			}
+		},
+	)
+
+	botMessageWorker := probot.NewMessageWorker(
+		pgClient,
+		probotCapabilities,
+		slackMessages,
+		l.Named("probot-message-worker"),
+		worker.WithInterval(time.Second),
+		worker.WithMaxConcurrency(4),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	botMessageWorkerCtx, stopBotMessageWorker := context.WithCancel(context.WithoutCancel(ctx))
+
+	wg.Go(
+		func() {
+			if err := botMessageWorker.Run(botMessageWorkerCtx); err != nil {
+				cancel(fmt.Errorf("probot message worker crashed: %w", err))
+			}
+		},
+	)
+
+	agentRunWorker := agentrun.NewWorker(
+		pgClient,
+		nil,
+		probotProfiles,
+		l.Named("agent-run-worker"),
+		agentrun.WithWorkerInterval(time.Second),
+		agentrun.WithExecutionPreparer(probotAdapters),
+		agentrun.WithWorkerRegisterer(r),
+		agentrun.WithWorkerTracerProvider(tp),
+	)
+	agentRunWorkerCtx, stopAgentRunWorker := context.WithCancel(context.WithoutCancel(ctx))
+
+	wg.Go(
+		func() {
+			if err := agentRunWorker.Run(agentRunWorkerCtx); err != nil {
+				cancel(fmt.Errorf("agent run worker crashed: %w", err))
+			}
+		},
+	)
+
+	stopSlackbotEventWorker := func() {}
+	stopSlackbotNotificationWorker := func() {}
+	stopSlackInteractiveCommandWorker := func() {}
+	stopSlackDeliveryWorker := func() {}
+
+	if impl.cfg.Slackbot.Enabled &&
+		slackbotHandler != nil &&
+		slackbotInstallations != nil &&
+		slackMessages != nil {
+		slackbotEventWorker := slackchannel.NewEventWorker(
+			pgClient,
+			slackbotHandler,
+			l.Named("slackbot-event-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithMaxConcurrency(4),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackbotEventWorkerCtx, stopEventWorker := context.WithCancel(context.WithoutCancel(ctx))
+		stopSlackbotEventWorker = stopEventWorker
+
+		wg.Go(
+			func() {
+				if err := slackbotEventWorker.Run(slackbotEventWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slackbot event worker crashed: %w", err))
+				}
+			},
+		)
+
+		slackbotNotificationWorker := slackchannel.NewNotificationWorker(
+			pgClient,
+			slackbotInstallations,
+			slackMessages,
+			l.Named("slackbot-notification-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithMaxConcurrency(4),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackbotNotificationWorkerCtx, stopNotificationWorker := context.WithCancel(context.WithoutCancel(ctx))
+		stopSlackbotNotificationWorker = stopNotificationWorker
+
+		wg.Go(
+			func() {
+				if err := slackbotNotificationWorker.Run(slackbotNotificationWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slackbot notification worker crashed: %w", err))
+				}
+			},
+		)
+
+		slackDeliveryWorker := slackchannel.NewDeliveryWorker(
+			pgClient,
+			slackbotInstallations,
+			l.Named("slack-delivery-operation-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackDeliveryWorkerCtx, stopDeliveryWorker := context.WithCancel(context.WithoutCancel(ctx))
+		stopSlackDeliveryWorker = stopDeliveryWorker
+
+		wg.Go(
+			func() {
+				if err := slackDeliveryWorker.Run(slackDeliveryWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slack delivery operation worker crashed: %w", err))
+				}
+			},
+		)
+
+		slackInteractiveCommandWorker := slackchannel.NewInteractiveCommandWorker(
+			pgClient,
+			encryptionKey,
+			slackbotInstallations,
+			probotIdentityBindings,
+			slackMessages,
+			probotCapabilities,
+			l.Named("slackbot-interactive-command-worker"),
+			worker.WithInterval(time.Second),
+			worker.WithMaxConcurrency(4),
+			worker.WithRegisterer(r),
+			worker.WithTracerProvider(tp),
+		)
+		slackInteractiveCommandWorkerCtx, stopInteractiveCommandWorker := context.WithCancel(
+			context.WithoutCancel(ctx),
+		)
+		stopSlackInteractiveCommandWorker = stopInteractiveCommandWorker
+
+		wg.Go(
+			func() {
+				if err := slackInteractiveCommandWorker.Run(slackInteractiveCommandWorkerCtx); err != nil {
+					cancel(fmt.Errorf("slack interactive command worker crashed: %w", err))
+				}
+			},
+		)
+	}
+
+	probotRetentionWorker := probot.NewRetentionWorker(
+		pgClient,
+		l.Named("probot-reliability-retention-worker"),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	probotRetentionWorkerCtx, stopProbotRetentionWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := probotRetentionWorker.Run(probotRetentionWorkerCtx); err != nil {
+				cancel(fmt.Errorf("probot reliability retention worker crashed: %w", err))
 			}
 		},
 	)
@@ -1280,6 +1515,13 @@ func (impl *Implm) Run(
 	stopITAMGC()
 	stopMailer()
 	stopSlackSender()
+	stopAgentRunWorker()
+	stopBotMessageWorker()
+	stopSlackbotEventWorker()
+	stopSlackbotNotificationWorker()
+	stopSlackInteractiveCommandWorker()
+	stopSlackDeliveryWorker()
+	stopProbotRetentionWorker()
 
 	wg.Wait()
 

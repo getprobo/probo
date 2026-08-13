@@ -365,7 +365,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			Slackbot: probodconfig.SlackbotConfig{
 				Enabled:       b.resolver.getEnvBoolOrDefault("PROBOD_SLACKBOT_ENABLED", false),
 				SigningSecret: b.resolver.getEnv("PROBOD_SLACKBOT_SIGNING_SECRET"),
-				BotToken:      b.resolver.getEnv("PROBOD_SLACKBOT_BOT_TOKEN"),
+				ClientID:      b.resolver.getEnv("PROBOD_SLACKBOT_CLIENT_ID"),
+				ClientSecret:  b.resolver.getEnv("PROBOD_SLACKBOT_CLIENT_SECRET"),
+				RedirectURI:   b.resolver.getEnv("PROBOD_SLACKBOT_REDIRECT_URI"),
 			},
 		},
 	}
@@ -635,6 +637,45 @@ func (b *Builder) validateRequired() error {
 			if b.resolver.getEnv(key) == "" {
 				missing = append(missing, key+" (required when PROBOD_CONNECTOR_SLACK_CLIENT_ID is set)")
 			}
+		}
+	}
+
+	if b.resolver.getEnvBoolOrDefault("PROBOD_SLACKBOT_ENABLED", false) {
+		slackbotRequired := []string{
+			"PROBOD_SLACKBOT_SIGNING_SECRET",
+			"PROBOD_SLACKBOT_CLIENT_ID",
+			"PROBOD_SLACKBOT_CLIENT_SECRET",
+			"PROBOD_SLACKBOT_REDIRECT_URI",
+		}
+		for _, key := range slackbotRequired {
+			if b.resolver.getEnv(key) == "" {
+				missing = append(missing, key+" (required when PROBOD_SLACKBOT_ENABLED is true)")
+			}
+		}
+
+		provider := b.resolver.getEnv("PROBOD_AGENT_SLACKBOT_PROVIDER")
+		if provider == "" {
+			provider = b.resolver.getEnv("PROBOD_AGENT_DEFAULT_PROVIDER")
+		}
+
+		if provider == "" {
+			provider = "openai"
+		}
+
+		var providerAPIKey string
+
+		switch provider {
+		case "openai":
+			providerAPIKey = "PROBOD_OPENAI_API_KEY"
+		case "anthropic":
+			providerAPIKey = "PROBOD_ANTHROPIC_API_KEY"
+		}
+
+		if providerAPIKey != "" && b.resolver.getEnv(providerAPIKey) == "" {
+			missing = append(
+				missing,
+				providerAPIKey+" (required by the enabled Slackbot agent provider)",
+			)
 		}
 	}
 

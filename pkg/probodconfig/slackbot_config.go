@@ -23,13 +23,11 @@ package probodconfig
 type SlackbotConfig struct {
 	Enabled       bool   `json:"enabled"`
 	SigningSecret string `json:"signing-secret,omitempty"`
-	BotToken      string `json:"bot-token,omitempty"`
+	ClientID      string `json:"client-id,omitempty"`
+	ClientSecret  string `json:"client-secret,omitempty"`
+	RedirectURI   string `json:"redirect-uri,omitempty"`
 }
 
 func (c *Config) GetSlackbotSigningSecret() string {
-	if c.Slackbot.SigningSecret != "" {
-		return c.Slackbot.SigningSecret
-	}
-
-	return c.GetSlackSigningSecret()
+	return c.Slackbot.SigningSecret
 }

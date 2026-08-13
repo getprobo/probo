@@ -21,7 +21,6 @@
 package probod
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,61 +28,83 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/slackbot"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 )
 
-func (impl *Implm) buildSlackbotBindingService(
-	pgClient *pg.Client,
-	baseURL *baseurl.BaseURL,
-) *slackbot.BindingService {
-	return slackbot.NewBindingService(
-		pgClient,
-		impl.cfg.Auth.Cookie.Secret,
-		baseURL,
-	)
-}
-
 func (impl *Implm) buildSlackbotHandler(
-	ctx context.Context,
 	pgClient *pg.Client,
-	bindings *slackbot.BindingService,
+	bindings identitybinding.Gate,
+	installations *slackchannel.InstallationService,
+	bindPrompts *slackchannel.BindPromptService,
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) (*slackbot.Handler, error) {
+) (*slackchannel.Handler, *agent.Agent, error) {
 	if !impl.cfg.Slackbot.Enabled {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	signingSecret := impl.cfg.GetSlackbotSigningSecret()
 	if signingSecret == "" {
-		return nil, fmt.Errorf("probod.slackbot.signing-secret is required when slackbot is enabled")
+		return nil, nil, fmt.Errorf("probod.slackbot.signing-secret is required when slackbot is enabled")
 	}
-	if impl.cfg.Slackbot.BotToken == "" {
-		return nil, fmt.Errorf("probod.slackbot.bot-token is required when slackbot is enabled")
+
+	if impl.cfg.Slackbot.ClientID == "" ||
+		impl.cfg.Slackbot.ClientSecret == "" ||
+		impl.cfg.Slackbot.RedirectURI == "" {
+		return nil, nil, fmt.Errorf("probod.slackbot OAuth client configuration is required when slackbot is enabled")
 	}
 
 	agentCfg, llmClient, err := impl.resolveAgentClient("slackbot", impl.cfg.Agents.Slackbot, l, tp, r)
 	if err != nil {
-		return nil, fmt.Errorf("cannot resolve slackbot agent client: %w", err)
+		return nil, nil, fmt.Errorf("cannot resolve slackbot agent client: %w", err)
 	}
 
-	slackClient := slackbot.NewClient(impl.cfg.Slackbot.BotToken, l.Named("slackbot.client"))
-	rootAgent := slackbot.NewAgent(
+	rootAgent := probot.NewAgent(
 		llmClient,
 		l.Named("slackbot.agent"),
 		agent.WithModel(agentCfg.ModelName),
-		agent.WithTools(slackbot.Tools(slackClient)...),
 	)
 
-	return slackbot.NewHandler(
+	handler := slackchannel.NewHandler(
 		signingSecret,
-		rootAgent,
-		slackClient,
 		bindings,
+		installations,
 		pgClient,
-		ctx,
 		l.Named("slackbot"),
-	), nil
+	)
+	handler.SetBindPrompts(bindPrompts)
+
+	return handler, rootAgent, nil
+}
+
+func (impl *Implm) buildSlackbotInstallationService(
+	pgClient *pg.Client,
+	encryptionKey cipher.EncryptionKey,
+	endpoints provider.Endpoints,
+	l *log.Logger,
+) *slackchannel.InstallationService {
+	if !impl.cfg.Slackbot.Enabled {
+		return nil
+	}
+
+	return slackchannel.NewInstallationService(
+		pgClient,
+		encryptionKey,
+		slackchannel.InstallationConfig{
+			ClientID:      impl.cfg.Slackbot.ClientID,
+			ClientSecret:  impl.cfg.Slackbot.ClientSecret,
+			RedirectURI:   impl.cfg.Slackbot.RedirectURI,
+			AuthURL:       endpoints.Auth,
+			TokenURL:      endpoints.Token,
+			APIBaseURL:    endpoints.APIBase,
+			StateSecret:   impl.cfg.Auth.Cookie.Secret,
+			SigningSecret: impl.cfg.GetSlackbotSigningSecret(),
+		},
+		l.Named("slackbot.installations"),
+	)
 }

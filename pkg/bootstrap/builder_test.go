@@ -107,6 +107,23 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			wantMissing: []string{"PROBOD_CONNECTOR_SLACK_CLIENT_SECRET", "PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"},
 		},
 		{
+			name: "enabled slackbot missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":            "key",
+				"PROBOD_AUTH_COOKIE_SECRET":        "secret",
+				"PROBOD_AUTH_PASSWORD_PEPPER":      "pepper",
+				"PROBOD_SLACKBOT_ENABLED":          "true",
+				"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "signing-key",
+			},
+			wantMissing: []string{
+				"PROBOD_SLACKBOT_SIGNING_SECRET",
+				"PROBOD_SLACKBOT_CLIENT_ID",
+				"PROBOD_SLACKBOT_CLIENT_SECRET",
+				"PROBOD_SLACKBOT_REDIRECT_URI",
+				"PROBOD_OPENAI_API_KEY",
+			},
+		},
+		{
 			name: "google workspace connector missing required fields",
 			env: map[string]string{
 				"PROBOD_ENCRYPTION_KEY":                       "key",
@@ -461,7 +478,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Slackbot
 	env["PROBOD_SLACKBOT_ENABLED"] = "true"
 	env["PROBOD_SLACKBOT_SIGNING_SECRET"] = "slackbot-signing-secret"
-	env["PROBOD_SLACKBOT_BOT_TOKEN"] = "xoxb-test-token"
+	env["PROBOD_SLACKBOT_CLIENT_ID"] = "slackbot-client-id"
+	env["PROBOD_SLACKBOT_CLIENT_SECRET"] = "slackbot-client-secret"
+	env["PROBOD_SLACKBOT_REDIRECT_URI"] = "https://console.example.com/api/console/v1/slackbot/install/complete"
 	env["PROBOD_AGENT_SLACKBOT_PROVIDER"] = "openai"
 	env["PROBOD_AGENT_SLACKBOT_MODEL_NAME"] = "gpt-4o-mini"
 	env["PROBOD_AGENT_SLACKBOT_MAX_TOKENS"] = "2048"
@@ -611,7 +630,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Slackbot
 	assert.True(t, cfg.Probod.Slackbot.Enabled)
 	assert.Equal(t, "slackbot-signing-secret", cfg.Probod.Slackbot.SigningSecret)
-	assert.Equal(t, "xoxb-test-token", cfg.Probod.Slackbot.BotToken)
+	assert.Equal(t, "slackbot-client-id", cfg.Probod.Slackbot.ClientID)
+	assert.Equal(t, "slackbot-client-secret", cfg.Probod.Slackbot.ClientSecret)
+	assert.Equal(t, "https://console.example.com/api/console/v1/slackbot/install/complete", cfg.Probod.Slackbot.RedirectURI)
 	assert.Equal(t, "openai", cfg.Probod.Agents.Slackbot.Provider)
 	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.Slackbot.ModelName)
 	require.NotNil(t, cfg.Probod.Agents.Slackbot.MaxTokens)
@@ -1024,6 +1045,9 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_TOKEN"] = "https://account-d.docusign.com/oauth/token"
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_PROBE"] = "https://account-d.docusign.com/oauth/userinfo"
 	env["PROBOD_CONNECTOR_DOCUSIGN_ENDPOINT_IDENTITY"] = "https://account-d.docusign.com/oauth/userinfo"
+	env["PROBOD_CONNECTOR_SLACK_ENDPOINT_AUTH"] = "https://auth.slack.test/oauth/v2/authorize"
+	env["PROBOD_CONNECTOR_SLACK_ENDPOINT_TOKEN"] = "https://api.slack.test/oauth.v2.access"
+	env["PROBOD_CONNECTOR_SLACK_ENDPOINT_API_BASE"] = "https://api.slack.test"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
@@ -1032,7 +1056,7 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 	cfg, err := b.Build()
 	require.NoError(t, err)
 
-	require.Len(t, cfg.Probod.ConnectorEndpoints, 1, "only the configured provider should appear")
+	require.Len(t, cfg.Probod.ConnectorEndpoints, 2, "only the configured providers should appear")
 
 	got, ok := cfg.Probod.ConnectorEndpoints["DOCUSIGN"]
 	require.True(t, ok)
@@ -1042,6 +1066,13 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 	assert.Equal(t, "https://account-d.docusign.com/oauth/userinfo", got.Probe)
 	assert.Equal(t, "https://account-d.docusign.com/oauth/userinfo", got.Identity)
 	assert.Empty(t, got.APIBase, "an unset field must stay empty so the compiled default survives")
+
+	got, ok = cfg.Probod.ConnectorEndpoints["SLACK"]
+	require.True(t, ok)
+
+	assert.Equal(t, "https://auth.slack.test/oauth/v2/authorize", got.Auth)
+	assert.Equal(t, "https://api.slack.test/oauth.v2.access", got.Token)
+	assert.Equal(t, "https://api.slack.test", got.APIBase)
 }
 
 // TestBuilder_Build_NoConnectorEndpointOverrides pins the default: a
