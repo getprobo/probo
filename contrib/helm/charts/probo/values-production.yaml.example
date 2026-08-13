@@ -271,16 +271,25 @@ probo:
   #   confidenceThreshold: 0.7
   #   maxAttempts: 3
 
-  # Slackbot assistant (optional). Events API URL:
+  # Slackbot assistant used by Probo's production deployment. Set enabled to
+  # false to deploy without Slack features. Events API URL:
   # https://<baseUrl>/slack/v1/events
-  # slackbot:
-  #   enabled: true
-  #   signingSecret: ""
-  #   botToken: ""
-  #   provider: "openai"
-  #   modelName: "gpt-4o"
-  #   temperature: "0.1"
-  #   maxTokens: "4096"
+  # Interactive URL: https://<baseUrl>/slack/v1/interactive
+  # Slash command Request URL: https://<baseUrl>/slack/v1/commands
+  # Create a /probot slash command on the Slackbot app pointing at that URL.
+  # OAuth requests the commands bot scope; reinstall after adding it.
+  # signingSecret is required and must belong to the Slackbot app. Do not copy
+  # the Slack connector signing secret when running two Slack apps in parallel.
+  slackbot:
+    enabled: true
+    signingSecret: ""
+    clientId: ""
+    clientSecret: ""
+    redirectUri: "https://app.example.com/api/console/v1/slackbot/install/complete"
+    provider: "openai"
+    modelName: "gpt-4o"
+    temperature: "0.1"
+    maxTokens: "4096"
 
   # OpenTelemetry tracing (optional)
   tracing:
@@ -315,6 +324,10 @@ probo:
         redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
         auth-url: "https://github.com/login/oauth/authorize"
         token-url: "https://github.com/login/oauth/access_token"
+
+  # Slack connector endpointToken (Enterprise Grid / private API gateway) is
+  # secret material. Set it in values; the chart mounts it via secretKeyRef.
+  # Do not put it in a ConfigMap or a plain Deployment env value.
 
 # PostgreSQL configuration (REQUIRED)
 # For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)

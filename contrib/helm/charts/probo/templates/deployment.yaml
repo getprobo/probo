@@ -469,30 +469,32 @@ spec:
             {{- end }}
             # Slackbot assistant
             {{- if .Values.probo.slackbot.enabled }}
+            {{- if eq .Values.probo.slackbot.provider "openai" }}
+            {{- $_ := required "probo.openai.apiKey is required when Slackbot uses the OpenAI provider" .Values.probo.openai.apiKey }}
+            {{- end }}
             - name: PROBOD_SLACKBOT_ENABLED
               value: "true"
-            {{- if .Values.probo.slackbot.signingSecret }}
             - name: PROBOD_SLACKBOT_SIGNING_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: slackbot-signing-secret
-            {{- end }}
-            {{- if .Values.probo.slackbot.botToken }}
-            - name: PROBOD_SLACKBOT_BOT_TOKEN
+            - name: PROBOD_SLACKBOT_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
-                  key: slackbot-bot-token
-            {{- end }}
-            {{- if .Values.probo.slackbot.provider }}
+                  key: slackbot-client-id
+            - name: PROBOD_SLACKBOT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-client-secret
+            - name: PROBOD_SLACKBOT_REDIRECT_URI
+              value: {{ required "probo.slackbot.redirectUri is required when Slackbot is enabled" .Values.probo.slackbot.redirectUri | quote }}
             - name: PROBOD_AGENT_SLACKBOT_PROVIDER
-              value: {{ .Values.probo.slackbot.provider | quote }}
-            {{- end }}
-            {{- if .Values.probo.slackbot.modelName }}
+              value: {{ required "probo.slackbot.provider is required when Slackbot is enabled" .Values.probo.slackbot.provider | quote }}
             - name: PROBOD_AGENT_SLACKBOT_MODEL_NAME
-              value: {{ .Values.probo.slackbot.modelName | quote }}
-            {{- end }}
+              value: {{ required "probo.slackbot.modelName is required when Slackbot is enabled" .Values.probo.slackbot.modelName | quote }}
             {{- if .Values.probo.slackbot.temperature }}
             - name: PROBOD_AGENT_SLACKBOT_TEMPERATURE
               value: {{ .Values.probo.slackbot.temperature | quote }}
@@ -519,13 +521,20 @@ spec:
             - name: PROBOD_CONNECTOR_SLACK_REDIRECT_URI
               value: {{ .config.redirectUri | quote }}
             {{- end }}
-            {{- if .config.authUrl }}
-            - name: PROBOD_CONNECTOR_SLACK_AUTH_URL
-              value: {{ .config.authUrl | quote }}
+            {{- if .config.endpointAuth }}
+            - name: PROBOD_CONNECTOR_SLACK_ENDPOINT_AUTH
+              value: {{ .config.endpointAuth | quote }}
             {{- end }}
-            {{- if .config.tokenUrl }}
-            - name: PROBOD_CONNECTOR_SLACK_TOKEN_URL
-              value: {{ .config.tokenUrl | quote }}
+            {{- if .config.endpointToken }}
+            - name: PROBOD_CONNECTOR_SLACK_ENDPOINT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-slack-endpoint-token
+            {{- end }}
+            {{- if .config.endpointApiBase }}
+            - name: PROBOD_CONNECTOR_SLACK_ENDPOINT_API_BASE
+              value: {{ .config.endpointApiBase | quote }}
             {{- end }}
             {{- if .config.signingSecret }}
             - name: PROBOD_CONNECTOR_SLACK_SIGNING_SECRET

@@ -395,13 +395,21 @@ probo:
     confidenceThreshold: 0.7
     maxAttempts: 3
 
-  # Slackbot assistant (optional). Requires bot token, signing secret, and
-  # an LLM provider key. Events API URL:
+  # Slackbot assistant and compliance notifications (optional). Each Slack
+  # workspace installs the app through OAuth. Events API URL:
   # https://<baseUrl>/slack/v1/events
+  # Interactive URL: https://<baseUrl>/slack/v1/interactive
+  # Slash command Request URL: https://<baseUrl>/slack/v1/commands
+  # Create a /probot slash command on the Slackbot app pointing at that URL.
+  # OAuth requests the commands bot scope; reinstall after adding it.
+  # signingSecret must be the Slackbot app secret. Do not reuse the Slack
+  # connector signing secret when Slackbot is a separate Slack app.
   slackbot:
     enabled: false
     signingSecret: ""
-    botToken: ""
+    clientId: ""
+    clientSecret: ""
+    redirectUri: ""
     provider: ""
     modelName: ""
     temperature: ""
@@ -432,6 +440,9 @@ probo:
   #     redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
   #     auth-url: "https://github.com/login/oauth/authorize"
   #     token-url: "https://github.com/login/oauth/access_token"
+  # Slack endpoint overrides use endpointAuth, endpointToken, and
+  # endpointApiBase in the connector config. endpointToken is secret
+  # material and is mounted from the chart Secret, not a plain env value.
 
 # PostgreSQL configuration
 # For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)
