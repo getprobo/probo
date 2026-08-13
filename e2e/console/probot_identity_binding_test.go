@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/gid"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 )
@@ -38,13 +39,14 @@ import (
 func newProbotBindToken(
 	t *testing.T,
 	subject identitybinding.Subject,
+	organizationID gid.GID,
 ) string {
 	t.Helper()
 
 	baseURL, err := baseurl.Parse("https://console.example.com")
 	require.NoError(t, err)
 	service := identitybinding.NewService(test.PGClient(t), baseURL)
-	bindURL, err := service.BindURL(context.Background(), subject)
+	bindURL, err := service.BindURL(context.Background(), subject, organizationID)
 	require.NoError(t, err)
 	parsed, err := url.Parse(bindURL)
 	require.NoError(t, err)
@@ -66,7 +68,7 @@ func TestProbotIdentityBinding_ConfirmWhileLoggedIn(t *testing.T) {
 		ExternalUserID:     externalUserID,
 		ExternalTenantName: "acme-workspace",
 		ExternalUserName:   "ada",
-	})
+	}, owner.GetOrganizationID())
 
 	const previewQuery = `
 		query($token: String!) {
@@ -131,6 +133,14 @@ func TestProbotIdentityBinding_ConfirmWhileLoggedIn(t *testing.T) {
 					externalTenantId
 					externalUserId
 				}
+				viewer {
+					probotIdentityBindings {
+						id
+						provider
+						externalTenantId
+						externalUserId
+					}
+				}
 			}
 		}
 	`
@@ -143,6 +153,14 @@ func TestProbotIdentityBinding_ConfirmWhileLoggedIn(t *testing.T) {
 				ExternalTenantID string `json:"externalTenantId"`
 				ExternalUserID   string `json:"externalUserId"`
 			} `json:"probotIdentityBinding"`
+			Viewer struct {
+				ProbotIdentityBindings []struct {
+					ID               string `json:"id"`
+					Provider         string `json:"provider"`
+					ExternalTenantID string `json:"externalTenantId"`
+					ExternalUserID   string `json:"externalUserId"`
+				} `json:"probotIdentityBindings"`
+			} `json:"viewer"`
 		} `json:"confirmProbotIdentityBinding"`
 	}
 
@@ -166,6 +184,57 @@ func TestProbotIdentityBinding_ConfirmWhileLoggedIn(t *testing.T) {
 		t,
 		confirmResult.ConfirmProbotIdentityBinding.ProbotIdentityBinding.ID,
 	)
+	require.Len(
+		t,
+		confirmResult.ConfirmProbotIdentityBinding.Viewer.ProbotIdentityBindings,
+		1,
+	)
+	assert.Equal(
+		t,
+		confirmResult.ConfirmProbotIdentityBinding.ProbotIdentityBinding.ID,
+		confirmResult.ConfirmProbotIdentityBinding.Viewer.ProbotIdentityBindings[0].ID,
+	)
+
+	const deleteMutation = `
+		mutation($input: DeleteProbotIdentityBindingInput!) {
+			deleteProbotIdentityBinding(input: $input) {
+				probotIdentityBindingId
+				viewer {
+					probotIdentityBindings {
+						id
+					}
+				}
+			}
+		}
+	`
+
+	var deleteResult struct {
+		DeleteProbotIdentityBinding struct {
+			ProbotIdentityBindingID string `json:"probotIdentityBindingId"`
+			Viewer                  struct {
+				ProbotIdentityBindings []struct {
+					ID string `json:"id"`
+				} `json:"probotIdentityBindings"`
+			} `json:"viewer"`
+		} `json:"deleteProbotIdentityBinding"`
+	}
+
+	err = owner.Execute(
+		deleteMutation,
+		map[string]any{
+			"input": map[string]any{
+				"id": confirmResult.ConfirmProbotIdentityBinding.ProbotIdentityBinding.ID,
+			},
+		},
+		&deleteResult,
+	)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		confirmResult.ConfirmProbotIdentityBinding.ProbotIdentityBinding.ID,
+		deleteResult.DeleteProbotIdentityBinding.ProbotIdentityBindingID,
+	)
+	assert.Empty(t, deleteResult.DeleteProbotIdentityBinding.Viewer.ProbotIdentityBindings)
 
 	err = owner.Execute(
 		previewQuery,

@@ -59,6 +59,17 @@ func NewProbotIdentityBinding(
 	}
 }
 
+func NewProbotIdentityBindings(
+	bindings []*identitybinding.Binding,
+) []*ProbotIdentityBinding {
+	result := make([]*ProbotIdentityBinding, len(bindings))
+	for i, binding := range bindings {
+		result[i] = NewProbotIdentityBinding(binding)
+	}
+
+	return result
+}
+
 func (b ProbotIdentityBinding) GetID() gid.GID {
 	return b.ID
 }

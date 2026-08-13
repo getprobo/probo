@@ -18,31 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { useTranslation } from "react-i18next";
-import { Outlet } from "react-router";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-export default function EmployeeTabsLayout() {
-  const { t } = useTranslation();
+import type { EmployeeBindingsPageQuery } from "#/__generated__/core/EmployeeBindingsPageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import {
+  EmployeeBindingsPage,
+  employeeBindingsPageQuery,
+} from "./EmployeeBindingsPage";
+
+function EmployeeBindingsPageQueryLoader() {
+  const [queryRef, loadQuery] = useQueryLoader<EmployeeBindingsPageQuery>(
+    employeeBindingsPageQuery,
+  );
+
+  useEffect(() => {
+    loadQuery({});
+  }, [loadQuery]);
+
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
+
+  return <EmployeeBindingsPage queryRef={queryRef} />;
+}
+
+export default function EmployeeBindingsPageLoader() {
   return (
-    <div className="space-y-6">
-      <PageHeader title={t("employeeTabsLayout.title")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {t("employeeTabsLayout.tabs.signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {t("employeeTabsLayout.tabs.approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {t("devices.title")}
-        </TabLink>
-        <TabLink to="bindings" end>
-          {t("employeeTabsLayout.tabs.bindings", { defaultValue: "Slack" })}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
+    <Suspense fallback={<PageSkeleton />}>
+      <EmployeeBindingsPageQueryLoader />
+    </Suspense>
   );
 }

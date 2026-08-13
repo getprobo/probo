@@ -191,6 +191,10 @@ export function CompliancePortalSlackSection({
     ).subscribe({
       next(data) {
         const page = data.organization.slackbotChannels;
+        if (!page) {
+          return;
+        }
+
         setExtraChannels(current => [...current, ...page.channels]);
         setNextCursor(page.nextCursor ?? null);
       },

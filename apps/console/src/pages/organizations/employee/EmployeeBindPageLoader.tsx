@@ -22,18 +22,18 @@ import { Component, Suspense, useEffect, type ReactNode } from "react";
 import { useQueryLoader } from "react-relay";
 import { useSearchParams } from "react-router";
 
-import type { ProbotBindPageQuery } from "#/__generated__/core/ProbotBindPageQuery.graphql";
+import type { EmployeeBindPageQuery } from "#/__generated__/core/EmployeeBindPageQuery.graphql";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import {
-  ProbotBindMissingToken,
-  ProbotBindPage,
-  ProbotBindPageFallback,
-  ProbotBindTokenErrorFallback,
-  probotBindPageQuery,
-} from "./ProbotBindPage";
+  EmployeeBindInvalidToken,
+  EmployeeBindLoading,
+  EmployeeBindMissingToken,
+  EmployeeBindPage,
+  employeeBindPageQuery,
+} from "./EmployeeBindPage";
 
-class ProbotBindErrorBoundary extends Component<
+class EmployeeBindPageErrorBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
   { hasError: boolean }
 > {
@@ -52,9 +52,9 @@ class ProbotBindErrorBoundary extends Component<
   }
 }
 
-function ProbotBindPageQueryLoader({ token }: { token: string }) {
-  const [queryRef, loadQuery] = useQueryLoader<ProbotBindPageQuery>(
-    probotBindPageQuery,
+function EmployeeBindPageQueryLoader({ token }: { token: string }) {
+  const [queryRef, loadQuery] = useQueryLoader<EmployeeBindPageQuery>(
+    employeeBindPageQuery,
   );
 
   useEffect(() => {
@@ -62,32 +62,30 @@ function ProbotBindPageQueryLoader({ token }: { token: string }) {
   }, [loadQuery, token]);
 
   if (!queryRef) {
-    return <ProbotBindPageFallback />;
+    return <EmployeeBindLoading />;
   }
 
-  return (
-    <Suspense fallback={<ProbotBindPageFallback />}>
-      <ProbotBindPage queryRef={queryRef} token={token} />
-    </Suspense>
-  );
+  return <EmployeeBindPage queryRef={queryRef} token={token} />;
 }
 
-export default function ProbotBindPageLoader() {
+export default function EmployeeBindPageLoader() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token")?.trim() ?? "";
 
+  if (token === "") {
+    return <EmployeeBindMissingToken />;
+  }
+
   return (
     <CoreRelayProvider>
-      {token === ""
-        ? <ProbotBindMissingToken />
-        : (
-            <ProbotBindErrorBoundary
-              key={token}
-              fallback={<ProbotBindTokenErrorFallback />}
-            >
-              <ProbotBindPageQueryLoader token={token} />
-            </ProbotBindErrorBoundary>
-          )}
+      <EmployeeBindPageErrorBoundary
+        key={token}
+        fallback={<EmployeeBindInvalidToken />}
+      >
+        <Suspense fallback={<EmployeeBindLoading />}>
+          <EmployeeBindPageQueryLoader token={token} />
+        </Suspense>
+      </EmployeeBindPageErrorBoundary>
     </CoreRelayProvider>
   );
 }

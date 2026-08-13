@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot"
@@ -53,9 +54,9 @@ func (renderOnlyCapability) MessageTypes() []string {
 
 func (renderOnlyCapability) RenderMessage(
 	context.Context,
-	probot.Message,
-) (probot.MessageIntent, error) {
-	return probot.MessageIntent{
+	bot.Message,
+) (bot.MessageIntent, error) {
+	return bot.MessageIntent{
 		FallbackText: "rendered",
 	}, nil
 }
@@ -67,7 +68,7 @@ func (renderOnlyCapability) BuildOutboundMessage(
 	map[string]any,
 ) (probot.OutboundMessage, error) {
 	return probot.OutboundMessage{
-		Intent: probot.MessageIntent{FallbackText: "event rendered"},
+		Intent: bot.MessageIntent{FallbackText: "event rendered"},
 	}, nil
 }
 
@@ -89,9 +90,9 @@ func (f *fakeCapability) Tools() []agent.Tool {
 
 func (f *fakeCapability) RenderMessage(
 	context.Context,
-	probot.Message,
-) (probot.MessageIntent, error) {
-	return probot.MessageIntent{
+	bot.Message,
+) (bot.MessageIntent, error) {
+	return bot.MessageIntent{
 		FallbackText: f.name,
 	}, nil
 }
@@ -168,7 +169,7 @@ func TestCapabilityRegistry_DispatchesRenderAndAction(t *testing.T) {
 
 	intent, err := registry.RenderMessage(
 		context.Background(),
-		probot.Message{Type: "approval"},
+		bot.Message{Type: "approval"},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, "first", intent.FallbackText)
@@ -177,7 +178,7 @@ func TestCapabilityRegistry_DispatchesRenderAndAction(t *testing.T) {
 		context.Background(),
 		probot.Action{
 			ID:      "first.approve",
-			Message: probot.Message{Type: "approval"},
+			Message: bot.Message{Type: "approval"},
 		},
 	)
 	require.NoError(t, err)
@@ -193,7 +194,7 @@ func TestCapabilityRegistry_AcceptsRendererWithoutToolsOrActions(t *testing.T) {
 
 	intent, err := registry.RenderMessage(
 		context.Background(),
-		probot.Message{Type: "render-only"},
+		bot.Message{Type: "render-only"},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, "rendered", intent.FallbackText)
@@ -264,7 +265,7 @@ func TestCapabilityRegistry_RejectsUnknownAction(t *testing.T) {
 		context.Background(),
 		probot.Action{
 			ID:      "another.approve",
-			Message: probot.Message{Type: "approval"},
+			Message: bot.Message{Type: "approval"},
 		},
 	)
 

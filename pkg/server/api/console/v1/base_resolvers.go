@@ -601,21 +601,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
-	identity := authn.IdentityFromContext(ctx)
-
-	session := authn.SessionFromContext(ctx)
-	apiKey := authn.APIKeyFromContext(ctx)
-
-	var viewerID gid.GID
-	if session != nil {
-		viewerID = session.ID
-	} else if apiKey != nil {
-		viewerID = apiKey.ID
-	} else {
-		viewerID = identity.ID
-	}
-
-	return &types.Viewer{ID: viewerID}, nil
+	return currentViewer(ctx), nil
 }
 
 // CommonThirdParties is the resolver for the commonThirdParties field.

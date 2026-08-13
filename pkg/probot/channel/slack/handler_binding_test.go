@@ -92,6 +92,7 @@ func (s *stubBindingGate) Lookup(
 func (s *stubBindingGate) BindURL(
 	_ context.Context,
 	subject identitybinding.Subject,
+	_ gid.GID,
 ) (string, error) {
 	s.bindSubject = subject
 
@@ -237,7 +238,7 @@ func TestHandler_HandleInteraction_UnboundPostsCTA(t *testing.T) {
 	eventID := "E-unbound-" + gid.New(gid.NilTenant, coredata.IdentityEntityType).String()
 	teamID := "T-unbound-" + gid.New(gid.NilTenant, coredata.IdentityEntityType).String()
 	bindings := &stubBindingGate{
-		bindURL: "https://console.example.com/me/probot/bind?token=test",
+		bindURL: "https://console.example.com/organizations/org/employee/bind?token=test",
 	}
 
 	handler := &Handler{
@@ -302,7 +303,7 @@ func TestHandler_HandleInteraction_BindCTARetriesWithStableClientID(t *testing.T
 	teamID := "T-bind-retry-" + gid.New(gid.NilTenant, coredata.IdentityEntityType).String()
 	handler := &Handler{
 		client:   slackClient,
-		bindings: &stubBindingGate{bindURL: "https://console.example.com/me/probot/bind?token=test"},
+		bindings: &stubBindingGate{bindURL: "https://console.example.com/organizations/org/employee/bind?token=test"},
 		pg:       client,
 		logger:   log.NewLogger(),
 	}
@@ -336,7 +337,7 @@ func TestHandler_HandleInteraction_UnboundInDMPostsSingleMessage(t *testing.T) {
 
 	handler := &Handler{
 		client:   slackClient,
-		bindings: &stubBindingGate{bindURL: "https://console.example.com/me/probot/bind?token=test"},
+		bindings: &stubBindingGate{bindURL: "https://console.example.com/organizations/org/employee/bind?token=test"},
 		pg:       client,
 		logger:   log.NewLogger(),
 	}

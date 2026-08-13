@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"time"
 
@@ -42,6 +43,7 @@ const (
 	challengeRetention  = 24 * time.Hour
 	challengeBytes      = 32
 	displayNameMaxRunes = 255
+	listByIdentityLimit = 20
 )
 
 var (
@@ -49,6 +51,7 @@ var (
 	ErrChallengeAlreadyUsed = errors.New("identity binding challenge already used")
 	ErrChallengeExpired     = errors.New("identity binding challenge expired")
 	ErrInvalidSubject       = errors.New("invalid external identity subject")
+	ErrOrganizationRequired = errors.New("organization is required")
 )
 
 type (
@@ -64,7 +67,7 @@ type (
 
 	Gate interface {
 		Lookup(ctx context.Context, subject Subject) (*Binding, error)
-		BindURL(ctx context.Context, subject Subject) (string, error)
+		BindURL(ctx context.Context, subject Subject, organizationID gid.GID) (string, error)
 	}
 
 	Service struct {
@@ -145,9 +148,14 @@ func (s *Service) Lookup(
 func (s *Service) BindURL(
 	ctx context.Context,
 	subject Subject,
+	organizationID gid.GID,
 ) (string, error) {
 	if err := subject.Validate(); err != nil {
 		return "", err
+	}
+
+	if organizationID == gid.Nil {
+		return "", ErrOrganizationRequired
 	}
 
 	tokenBytes := make([]byte, challengeBytes)
@@ -183,8 +191,18 @@ func (s *Service) BindURL(
 		return "", fmt.Errorf("cannot persist identity binding challenge: %w", err)
 	}
 
+	bindPath, err := url.JoinPath(
+		"/organizations",
+		url.PathEscape(organizationID.String()),
+		"employee",
+		"bind",
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot build identity binding path: %w", err)
+	}
+
 	bindURL, err := s.baseURL.
-		AppendPath("/me/probot/bind").
+		AppendPath(bindPath).
 		WithQuery("token", token).
 		String()
 	if err != nil {
@@ -192,6 +210,27 @@ func (s *Service) BindURL(
 	}
 
 	return bindURL, nil
+}
+
+func (s *Service) ListByIdentity(
+	ctx context.Context,
+	identityID gid.GID,
+) ([]*Binding, error) {
+	var bindings coredata.ProbotIdentityBindings
+
+	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return bindings.LoadByIdentityID(
+			ctx,
+			conn,
+			identityID,
+			listByIdentityLimit,
+		)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot list probot identity bindings: %w", err)
+	}
+
+	return bindings, nil
 }
 
 func (s *Service) Preview(

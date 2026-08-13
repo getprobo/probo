@@ -18,31 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PageHeader, TabLink, Tabs } from "@probo/ui";
-import { useTranslation } from "react-i18next";
-import { Outlet } from "react-router";
+package console_v1
 
-export default function EmployeeTabsLayout() {
-  const { t } = useTranslation();
+import (
+	"context"
 
-  return (
-    <div className="space-y-6">
-      <PageHeader title={t("employeeTabsLayout.title")} />
-      <Tabs>
-        <TabLink to="signatures" end>
-          {t("employeeTabsLayout.tabs.signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {t("employeeTabsLayout.tabs.approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {t("devices.title")}
-        </TabLink>
-        <TabLink to="bindings" end>
-          {t("employeeTabsLayout.tabs.bindings", { defaultValue: "Slack" })}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
-  );
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+)
+
+func currentViewer(ctx context.Context) *types.Viewer {
+	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+	apiKey := authn.APIKeyFromContext(ctx)
+
+	var viewerID gid.GID
+	if session != nil {
+		viewerID = session.ID
+	} else if apiKey != nil {
+		viewerID = apiKey.ID
+	} else if identity != nil {
+		viewerID = identity.ID
+	}
+
+	return &types.Viewer{ID: viewerID}
 }

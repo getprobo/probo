@@ -34,15 +34,19 @@ import (
 
 // ProbotIdentityBinding maps an external-provider actor to an identity.
 // The table is unscoped because lookup happens before tenant resolution.
-type ProbotIdentityBinding struct {
-	ID               gid.GID   `db:"id"`
-	Provider         string    `db:"provider"`
-	ExternalTenantID string    `db:"external_tenant_id"`
-	ExternalUserID   string    `db:"external_user_id"`
-	IdentityID       gid.GID   `db:"identity_id"`
-	CreatedAt        time.Time `db:"created_at"`
-	UpdatedAt        time.Time `db:"updated_at"`
-}
+type (
+	ProbotIdentityBinding struct {
+		ID               gid.GID   `db:"id"`
+		Provider         string    `db:"provider"`
+		ExternalTenantID string    `db:"external_tenant_id"`
+		ExternalUserID   string    `db:"external_user_id"`
+		IdentityID       gid.GID   `db:"identity_id"`
+		CreatedAt        time.Time `db:"created_at"`
+		UpdatedAt        time.Time `db:"updated_at"`
+	}
+
+	ProbotIdentityBindings []*ProbotIdentityBinding
+)
 
 const probotIdentityBindingColumns = `
     id,
@@ -101,6 +105,50 @@ LIMIT 1;
 		"provider":           provider,
 		"external_tenant_id": externalTenantID,
 	})
+}
+
+func (b *ProbotIdentityBindings) LoadByIdentityID(
+	ctx context.Context,
+	conn pg.Querier,
+	identityID gid.GID,
+	limit int,
+) error {
+	q := `
+SELECT
+` + probotIdentityBindingColumns + `
+FROM
+    probot_identity_bindings
+WHERE
+    identity_id = @identity_id
+ORDER BY
+    created_at DESC,
+    id DESC
+LIMIT @limit;
+`
+
+	rows, err := conn.Query(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"identity_id": identityID,
+			"limit":       limit,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot query probot identity bindings: %w", err)
+	}
+
+	bindings, err := pgx.CollectRows(
+		rows,
+		pgx.RowToAddrOfStructByName[ProbotIdentityBinding],
+	)
+	if err != nil {
+		return fmt.Errorf("cannot collect probot identity bindings: %w", err)
+	}
+
+	*b = bindings
+
+	return nil
 }
 
 func (b *ProbotIdentityBinding) LoadByID(

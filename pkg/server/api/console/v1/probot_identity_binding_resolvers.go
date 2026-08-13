@@ -54,6 +54,7 @@ func (r *mutationResolver) ConfirmProbotIdentityBinding(ctx context.Context, inp
 
 	return &types.ConfirmProbotIdentityBindingPayload{
 		ProbotIdentityBinding: types.NewProbotIdentityBinding(binding),
+		Viewer:                currentViewer(ctx),
 	}, nil
 }
 
@@ -85,5 +86,6 @@ func (r *mutationResolver) DeleteProbotIdentityBinding(ctx context.Context, inpu
 
 	return &types.DeleteProbotIdentityBindingPayload{
 		ProbotIdentityBindingID: input.ID,
+		Viewer:                  currentViewer(ctx),
 	}, nil
 }

@@ -50,6 +50,7 @@ input ConfirmProbotIdentityBindingInput {
 
 type ConfirmProbotIdentityBindingPayload {
     probotIdentityBinding: ProbotIdentityBinding!
+    viewer: Viewer!
 }
 
 input DeleteProbotIdentityBindingInput {
@@ -58,4 +59,5 @@ input DeleteProbotIdentityBindingInput {
 
 type DeleteProbotIdentityBindingPayload {
     probotIdentityBindingId: ID!
+    viewer: Viewer!
 }

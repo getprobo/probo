@@ -83,6 +83,10 @@ func seedIdentity(
 	return identityID
 }
 
+func testOrganizationID() gid.GID {
+	return gid.New(gid.NewTenantID(), coredata.OrganizationEntityType)
+}
+
 func issueToken(
 	t *testing.T,
 	ctx context.Context,
@@ -91,7 +95,7 @@ func issueToken(
 ) string {
 	t.Helper()
 
-	bindURL, err := service.BindURL(ctx, subject)
+	bindURL, err := service.BindURL(ctx, subject, testOrganizationID())
 	require.NoError(t, err)
 	parsed, err := url.Parse(bindURL)
 	require.NoError(t, err)
@@ -228,10 +232,55 @@ func TestServiceBindURLIsOpaque(t *testing.T) {
 		ExternalUserID:   "private.user@example.com",
 	}
 
-	bindURL, err := service.BindURL(ctx, subject)
+	organizationID := testOrganizationID()
+	bindURL, err := service.BindURL(ctx, subject, organizationID)
 	require.NoError(t, err)
 	assert.NotContains(t, bindURL, subject.ExternalUserID)
-	assert.Contains(t, bindURL, "/me/probot/bind")
+	assert.Contains(
+		t,
+		bindURL,
+		"/organizations/"+organizationID.String()+"/employee/bind",
+	)
+}
+
+func TestServiceBindURLRequiresOrganization(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	service, _ := newTestService(t)
+
+	_, err := service.BindURL(
+		ctx,
+		Subject{Provider: "slack", ExternalUserID: "U1"},
+		gid.Nil,
+	)
+	require.ErrorIs(t, err, ErrOrganizationRequired)
+}
+
+func TestServiceListByIdentity(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	service, client := newTestService(t)
+	identityID := seedIdentity(t, ctx, client)
+	otherID := seedIdentity(t, ctx, client)
+	subject := Subject{
+		Provider:         "slack",
+		ExternalTenantID: fmt.Sprintf("T-%s", identityID),
+		ExternalUserID:   "U-list",
+	}
+	token := issueToken(t, ctx, service, subject)
+	binding, err := service.Confirm(ctx, identityID, token)
+	require.NoError(t, err)
+
+	listed, err := service.ListByIdentity(ctx, identityID)
+	require.NoError(t, err)
+	require.Len(t, listed, 1)
+	assert.Equal(t, binding.ID, listed[0].ID)
+
+	otherListed, err := service.ListByIdentity(ctx, otherID)
+	require.NoError(t, err)
+	assert.Empty(t, otherListed)
 }
 
 func TestServiceRejectsConflictsAndCrossIdentityReplay(t *testing.T) {

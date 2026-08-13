@@ -632,7 +632,8 @@
     "title": "Documenten",
     "tabs": {
       "signatures": "Handtekeningen",
-      "approvals": "Goedkeuringen"
+      "approvals": "Goedkeuringen",
+      "bindings": "Slack"
     }
   },
   "approvableDocumentRow": {
@@ -6338,16 +6339,38 @@
     "expired": "Verlopen",
     "notes": "Opmerkingen"
   },
-  "probotBindPage": {
-    "title": "Extern account koppelen",
-    "description": "Bevestig dat dit externe account uw Probo-identiteit moet gebruiken.",
+  "employeeBindPage": {
+    "title": "Koppel Slack aan Probo",
+    "description": "Koppel dit Slack-account aan uw Probo-identiteit zodat Probot u kan helpen.",
     "loading": "Laden…",
-    "confirmed": "Gekoppeld. U kunt terugkeren naar de dienst en de bot opnieuw een bericht sturen.",
-    "fields": { "provider": "Provider", "tenant": "Werkruimte", "account": "Account" },
+    "fields": { "tenant": "Werkruimte", "account": "Account" },
+    "actions": { "confirm": "Slack-account koppelen", "linking": "Koppelen…" },
+    "messages": { "linked": "Uw Slack-account is nu gekoppeld aan Probo." },
+    "missingToken": {
+      "title": "Geen bevestigingslink",
+      "description": "Voer in Slack /probot bind uit om een privé bevestigingslink te ontvangen."
+    },
+    "errors": {
+      "linkFailed": "Koppelen mislukt",
+      "invalidOrExpiredTokenTitle": "Deze link is verlopen",
+      "invalidOrExpiredToken": "Vraag de bot om een nieuwe privé bevestigingslink."
+    }
+  },
+  "employeeBindingsPage": {
+    "title": "Slack",
+    "description": "Koppel uw Slack-account zodat Probot u vanuit deze organisatie kan helpen.",
+    "connectedDescription": "{{account}} · {{workspace}}",
     "providers": { "slack": "Slack" },
-    "actions": { "confirm": "Koppeling bevestigen", "back": "Terug naar Probo" },
-    "messages": { "linkFailed": "Koppelen mislukt", "success": "Gelukt", "linked": "Uw externe account is nu gekoppeld aan Probo." },
-    "errors": { "missingToken": "Deze link bevat geen token.", "invalidOrExpiredToken": "Deze link is ongeldig of verlopen. Vraag de bot om een nieuwe." }
+    "actions": { "unlink": "Ontkoppelen" },
+    "empty": {
+      "title": "Geen Slack-account gekoppeld",
+      "description": "Voer in Slack /probot bind uit om een privé bevestigingslink te ontvangen."
+    },
+    "messages": { "unlinked": "Slack-account ontkoppeld." },
+    "errors": { "unlinkFailed": "Dit account kon niet worden ontkoppeld." },
+    "confirmations": {
+      "unlink": "Dit Slack-account ontkoppelen? Probot kan u niet helpen tot u opnieuw koppelt."
+    }
   },
   "country": {
     "GLOBAL": "Wereldwijd",

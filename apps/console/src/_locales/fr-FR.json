@@ -632,7 +632,8 @@
     "title": "Documents",
     "tabs": {
       "signatures": "Signatures",
-      "approvals": "Approbations"
+      "approvals": "Approbations",
+      "bindings": "Slack"
     }
   },
   "approvableDocumentRow": {
@@ -6342,16 +6343,38 @@
     "expired": "Expiré",
     "notes": "Notes"
   },
-  "probotBindPage": {
-    "title": "Lier un compte externe",
-    "description": "Confirmez que ce compte externe doit utiliser votre identité Probo.",
+  "employeeBindPage": {
+    "title": "Connectez Slack à Probo",
+    "description": "Liez ce compte Slack à votre identité Probo pour que Probot puisse vous aider.",
     "loading": "Chargement…",
-    "confirmed": "Compte lié. Vous pouvez retourner au service et envoyer à nouveau un message au bot.",
-    "fields": { "provider": "Fournisseur", "tenant": "Espace de travail", "account": "Compte" },
+    "fields": { "tenant": "Espace de travail", "account": "Compte" },
+    "actions": { "confirm": "Lier le compte Slack", "linking": "Liaison…" },
+    "messages": { "linked": "Votre compte Slack est maintenant lié à Probo." },
+    "missingToken": {
+      "title": "Aucun lien de confirmation",
+      "description": "Dans Slack, exécutez /probot bind pour recevoir un lien de confirmation privé."
+    },
+    "errors": {
+      "linkFailed": "Échec de la liaison",
+      "invalidOrExpiredTokenTitle": "Ce lien a expiré",
+      "invalidOrExpiredToken": "Demandez un nouveau lien de confirmation privé au bot."
+    }
+  },
+  "employeeBindingsPage": {
+    "title": "Slack",
+    "description": "Liez votre compte Slack pour que Probot puisse vous aider depuis cette organisation.",
+    "connectedDescription": "{{account}} · {{workspace}}",
     "providers": { "slack": "Slack" },
-    "actions": { "confirm": "Confirmer la liaison", "back": "Retour à Probo" },
-    "messages": { "linkFailed": "Échec de la liaison", "success": "Succès", "linked": "Votre compte externe est maintenant lié à Probo." },
-    "errors": { "missingToken": "Ce lien ne contient aucun jeton.", "invalidOrExpiredToken": "Ce lien est invalide ou a expiré. Demandez un nouveau lien au bot." }
+    "actions": { "unlink": "Délier" },
+    "empty": {
+      "title": "Aucun compte Slack lié",
+      "description": "Dans Slack, exécutez /probot bind pour recevoir un lien de confirmation privé."
+    },
+    "messages": { "unlinked": "Compte Slack délié." },
+    "errors": { "unlinkFailed": "Impossible de délier ce compte." },
+    "confirmations": {
+      "unlink": "Délier ce compte Slack ? Probot ne pourra plus vous aider tant que vous ne le lierez pas à nouveau."
+    }
   },
   "country": {
     "GLOBAL": "Mondial",
