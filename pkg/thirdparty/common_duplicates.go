@@ -430,7 +430,8 @@ func buildClusters(items []normalized, pairs []DuplicatePair) []DuplicateCluster
 //
 // Seeded wins decisively: the next seed run recreates that slug, so merging it
 // away guarantees the duplicate returns. Organization links rank above pattern
-// links because repointing fewer of them disturbs fewer tenants. Creation time
+// links because repointing fewer of them disturbs fewer tenants, and both rank
+// above name shape so the most-referenced row always survives. Creation time
 // and id break ties last, keeping the output stable enough to pipe into merge
 // commands.
 func preferAsWinner(a, b *CatalogEntry) bool {
@@ -446,8 +447,17 @@ func preferAsWinner(a, b *CatalogEntry) bool {
 		return a.TrackerPatterns > b.TrackerPatterns
 	}
 
-	if ra, rb := enrichmentRank(a), enrichmentRank(b); ra != rb {
+	if ra, rb := enrichmentResolvedFields(a), enrichmentResolvedFields(b); ra != rb {
 		return ra > rb
+	}
+
+	// Between rows that are otherwise equal, prefer the cleaner name. A
+	// trailing parenthetical is disambiguating noise someone appended to get a
+	// second row past the unique slug, so the bare name is the better survivor
+	// — and suggesting a merge *into* the parenthesised one reads as a bug even
+	// when the tiers above are sound.
+	if qa, qb := nameNoise(a.Party.Name), nameNoise(b.Party.Name); qa != qb {
+		return qa < qb
 	}
 
 	if !a.Party.CreatedAt.Equal(b.Party.CreatedAt) {
@@ -457,19 +467,54 @@ func preferAsWinner(a, b *CatalogEntry) bool {
 	return a.Party.ID.String() < b.Party.ID.String()
 }
 
-// enrichmentRank scores how complete a row's profile is, so a fully
-// enriched row outranks a bare stub carrying only name and category.
-func enrichmentRank(e *CatalogEntry) int {
-	if len(e.Party.Enrichment) == 0 {
-		return 0
+// nameNoise scores how much disambiguating clutter a name carries, lower being
+// cleaner. It only breaks ties between rows the reference counts could not
+// separate, so it never overrides how widely an entry is actually used.
+func nameNoise(name string) int {
+	var noise int
+
+	if parentheticalSuffix.MatchString(strings.ToLower(strings.TrimSpace(name))) {
+		noise += 2
 	}
 
-	switch {
-	case strings.Contains(string(e.Party.Enrichment), `"status":"done"`):
-		return 3
-	case strings.Contains(string(e.Party.Enrichment), `"status":"partial"`):
-		return 2
+	// A slash joins two brands into one row ("WooCommerce / Jetpack"), which is
+	// the same kind of clutter as a parenthetical.
+	if strings.Contains(name, "/") {
+		noise += 2
+	}
+
+	// Length breaks the remaining ties, so "h265ify" beats a longer variant
+	// that carries no parentheses either.
+	return noise*100 + len(name)
+}
+
+// enrichmentResolvedFields counts how many fields the last enrichment run
+// actually resolved, so a row that filled ten of them outranks one that filled
+// one. Reading the run-level status instead would score both merely "partial"
+// and let the emptier row win a tie.
+//
+// A row that was never enriched counts zero.
+func enrichmentResolvedFields(e *CatalogEntry) int {
+	var resolved int
+
+	for _, field := range parseEnrichmentFields(e.Party.Enrichment) {
+		if enrichmentFieldResolved(field.Status) {
+			resolved++
+		}
+	}
+
+	return resolved
+}
+
+// enrichmentFieldResolved reports whether a per-field status carries a value,
+// as opposed to recording that the enricher looked and found nothing.
+func enrichmentFieldResolved(status string) bool {
+	switch status {
+	case enrichmentFieldStatusFound,
+		enrichmentFieldStatusExternal,
+		enrichmentFieldStatusFallbackDisplayName:
+		return true
 	default:
-		return 1
+		return false
 	}
 }

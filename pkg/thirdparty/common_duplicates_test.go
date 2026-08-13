@@ -331,27 +331,68 @@ func TestFindDuplicates_WinnerSelection(t *testing.T) {
 		assert.Equal(t, many.Party.ID, clusters[0].Winner.Party.ID)
 	})
 
-	t.Run("a fuller enrichment breaks a link tie", func(t *testing.T) {
+	t.Run("more resolved enrichment fields breaks a link tie", func(t *testing.T) {
 		t.Parallel()
 
-		bare := catalogEntry("Acme")
+		// Both names are equally clean and both runs report "partial", so only
+		// the number of fields actually resolved separates them.
+		thin := catalogEntry("Acme Ltd")
+		thin.Party.Enrichment = json.RawMessage(
+			`{"status":"partial","fields":{"website_url":{"status":"found"},"privacy_policy_url":{"status":"not_found"}}}`,
+		)
 
-		enriched := catalogEntry("Acme Inc")
-		enriched.Party.Enrichment = json.RawMessage(`{"status":"done"}`)
+		full := catalogEntry("Acme Inc")
+		full.Party.Enrichment = json.RawMessage(
+			`{"status":"partial","fields":{"website_url":{"status":"found"},"privacy_policy_url":{"status":"found"},"legal_name":{"status":"exists_external"}}}`,
+		)
 
-		clusters := FindDuplicates([]*CatalogEntry{bare, enriched}, 0)
+		clusters := FindDuplicates([]*CatalogEntry{thin, full}, 0)
 
 		require.Len(t, clusters, 1)
-		assert.Equal(t, enriched.Party.ID, clusters[0].Winner.Party.ID)
+		assert.Equal(t, full.Party.ID, clusters[0].Winner.Party.ID)
+	})
+
+	t.Run("a cleaner name breaks an otherwise total tie", func(t *testing.T) {
+		t.Parallel()
+
+		// Equal on every reference count and on enrichment, so the winner must
+		// not be decided by whichever row the agent happened to create first.
+		noisy := catalogEntry("h265ify (browser extension)")
+		noisy.Party.CreatedAt = time.Now().UTC().Add(-48 * time.Hour)
+
+		clean := catalogEntry("h265ify")
+
+		clusters := FindDuplicates([]*CatalogEntry{noisy, clean}, 0)
+
+		require.Len(t, clusters, 1)
+		assert.Equal(t, clean.Party.ID, clusters[0].Winner.Party.ID)
+	})
+
+	t.Run("reference counts outrank a cleaner name", func(t *testing.T) {
+		t.Parallel()
+
+		clean := catalogEntry("Microsoft Advertising")
+
+		used := catalogEntry("Microsoft Advertising (Bing)")
+		used.OrgThirdParties = 1
+		used.TrackerPatterns = 10
+
+		clusters := FindDuplicates([]*CatalogEntry{clean, used}, 0)
+
+		require.Len(t, clusters, 1)
+		assert.Equal(t, used.Party.ID, clusters[0].Winner.Party.ID,
+			"the most-referenced row must survive even with a noisier name")
 	})
 
 	t.Run("the oldest row breaks every other tie", func(t *testing.T) {
 		t.Parallel()
 
-		newer := catalogEntry("Acme")
+		// Same length and both free of parentheses, so the name tiebreak
+		// cannot separate them either.
+		newer := catalogEntry("Acme Inc")
 		newer.Party.CreatedAt = time.Now().UTC()
 
-		older := catalogEntry("Acme Inc")
+		older := catalogEntry("Acme Ltd")
 		older.Party.CreatedAt = newer.Party.CreatedAt.Add(-48 * time.Hour)
 
 		clusters := FindDuplicates([]*CatalogEntry{newer, older}, 0)
