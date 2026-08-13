@@ -45,7 +45,3 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/sandbox.md`](contrib/claude/sandbox.md) — Lima sandbox environments (create, manage, access services)
 - [`contrib/claude/n8n.md`](contrib/claude/n8n.md) — n8n community node (resources, operations, GraphQL helpers)
 - [`contrib/claude/skills.md`](contrib/claude/skills.md) — Agent skills package (`@probo/skills`, compliance workflows, Probo MCP)
-
-Internal operator skills live in `.claude/skills/` and are not published to customers:
-
-- [`.claude/skills/common-third-party-cleanup`](.claude/skills/common-third-party-cleanup/SKILL.md) — Diagnose and clean the global common third party catalog (duplicates, merges, non-vendors, categories)
