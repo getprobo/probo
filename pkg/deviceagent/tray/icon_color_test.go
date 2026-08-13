@@ -21,20 +21,36 @@
 package tray
 
 import (
-	_ "embed"
+	"bytes"
+	"image"
 	"image/color"
+	"image/png"
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// Icons are embedded PNGs; systray does not accept SVG.
-//
-// icon_template.png is the macOS menu-bar silhouette (black + alpha) and
-// the source for tinted status menu icons on every platform.
+func TestIconColor_HasTransparentCorners(t *testing.T) {
+	t.Parallel()
 
-//go:embed icon_template.png
-var iconTemplateData []byte
+	data, err := os.ReadFile("icon_color.png")
+	require.NoError(t, err)
 
-var (
-	statusConnectedColor   = color.RGBA{R: 52, G: 199, B: 89, A: 255}
-	statusEnrollmentColor  = color.RGBA{R: 255, G: 149, B: 0, A: 255}
-	statusUnavailableColor = color.RGBA{R: 255, G: 59, B: 48, A: 255}
-)
+	img, err := png.Decode(bytes.NewReader(data))
+	require.NoError(t, err)
+
+	b := img.Bounds()
+	corners := []image.Point{
+		{X: b.Min.X, Y: b.Min.Y},
+		{X: b.Max.X - 1, Y: b.Min.Y},
+		{X: b.Min.X, Y: b.Max.Y - 1},
+		{X: b.Max.X - 1, Y: b.Max.Y - 1},
+	}
+
+	for _, p := range corners {
+		a := color.NRGBAModel.Convert(img.At(p.X, p.Y)).(color.NRGBA).A
+		assert.Equal(t, uint8(0), a, "corner %v must be fully transparent", p)
+	}
+}

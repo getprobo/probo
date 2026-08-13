@@ -53,7 +53,9 @@ func pngToICO(pngBytes []byte) ([]byte, error) {
 	)
 }
 
-func pngToMultiSizeICO(pngBytes []byte, sizes ...int) ([]byte, error) {
+// PNGToMultiSizeICO resizes pngBytes to each size and wraps the frames
+// in an ICO container (PNG payloads, valid since Vista).
+func PNGToMultiSizeICO(pngBytes []byte, sizes ...int) ([]byte, error) {
 	src, err := png.Decode(bytes.NewReader(pngBytes))
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode png: %w", err)

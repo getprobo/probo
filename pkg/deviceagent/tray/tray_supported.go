@@ -103,7 +103,7 @@ func onReady(opts Options, done <-chan struct{}) {
 	setTrayTitle()
 
 	connectedItem := systray.AddMenuItem("Connected", "Device is enrolled and reporting")
-	connectedItem.SetIcon(systrayIcon(statusConnectedIconData))
+	connectedItem.SetIcon(systrayIcon(mustTintStatusIcon(iconTemplateData, statusConnectedColor)))
 	connectedItem.Disable()
 	connectedItem.Hide()
 
@@ -111,7 +111,7 @@ func onReady(opts Options, done <-chan struct{}) {
 		"Enrollment required",
 		"Device is not enrolled yet",
 	)
-	enrollmentRequiredItem.SetIcon(systrayIcon(statusEnrollmentIconData))
+	enrollmentRequiredItem.SetIcon(systrayIcon(mustTintStatusIcon(iconTemplateData, statusEnrollmentColor)))
 	enrollmentRequiredItem.Disable()
 	enrollmentRequiredItem.Hide()
 
@@ -119,7 +119,7 @@ func onReady(opts Options, done <-chan struct{}) {
 		"Status unavailable",
 		"Cannot read enrollment status",
 	)
-	statusUnavailableItem.SetIcon(systrayIcon(statusUnavailableIconData))
+	statusUnavailableItem.SetIcon(systrayIcon(mustTintStatusIcon(iconTemplateData, statusUnavailableColor)))
 	statusUnavailableItem.Disable()
 	statusUnavailableItem.Hide()
 

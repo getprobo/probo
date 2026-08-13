@@ -25,8 +25,9 @@ SOFTWARE. -->
 		Builds the per-machine Probo Agent MSI.
 
 		Preprocessor variables (passed by build.ps1 via wix -d):
-		  Version   Product version, e.g. 0.3.0  → $(var.Version)
-		  AgentExe  Absolute path to probo-agent.exe → $(var.AgentExe)
+		  Version      Product version, e.g. 0.3.0  → $(var.Version)
+		  AgentExe     Absolute path to probo-agent.exe → $(var.AgentExe)
+		  ProductIcon  Absolute path to the generated product ICO → $(var.ProductIcon)
 	-->
 	<Package
 		Name="Probo Agent"
@@ -42,6 +43,9 @@ SOFTWARE. -->
 		<!-- Embed payload in the MSI so releases ship a single downloadable
 		     file. WiX defaults to an external cab{N}.cab beside the MSI. -->
 		<MediaTemplate EmbedCab="yes" />
+
+		<Icon Id="ProductIcon" SourceFile="$(var.ProductIcon)" />
+		<Property Id="ARPPRODUCTICON" Value="ProductIcon" />
 
 		<StandardDirectory Id="ProgramFiles64Folder">
 			<Directory Id="INSTALLFOLDER" Name="Probo" />

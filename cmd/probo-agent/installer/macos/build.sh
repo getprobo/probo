@@ -173,8 +173,8 @@ team_id_option() {
   printf '"%s"' "${APPLE_TEAM_ID}"
 }
 
-# Build AppIcon.icns from the single committed master PNG
-# (enroll-ui/Resources/icon-original.png), matching auditor-mode's
+# Build AppIcon.icns from the single committed color mark
+# (pkg/deviceagent/tray/icon_color.png), matching auditor-mode's
 # pad-then-resize pipeline. Writes under STAGE; does not touch the
 # source tree.
 generate_app_icon_icns() {
@@ -301,7 +301,7 @@ build_probo_agent_app() {
   plist="${contents}/Info.plist"
   embedded_helper="${launch_services}/${HELPER_LABEL}"
   embedded_launchd="${launch_daemons}/${HELPER_LABEL}.plist"
-  app_icon_original="${ENROLL_UI_DIR}/Resources/icon-original.png"
+  app_icon_original="${REPO_ROOT}/pkg/deviceagent/tray/icon_color.png"
   app_icon_icns="${STAGE}/AppIcon.icns"
 
   rm -rf "${app_root}"

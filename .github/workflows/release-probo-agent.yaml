@@ -94,18 +94,23 @@ jobs:
           dotnet tool install --global wix --version 6.0.2
           "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           & "$env:USERPROFILE\.dotnet\tools\wix.exe" --version
-          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add -g WixToolset.UI.wixext/6.0.2
       - name: "Build binary"
         shell: "pwsh"
         env:
           CGO_ENABLED: "0"
-          GOOS: "windows"
-          GOARCH: "${{ matrix.goarch }}"
         run: |
           $ErrorActionPreference = "Stop"
           $Version = $env:GITHUB_REF_NAME -replace '^.*\/v', ''
+          $Arch = "${{ matrix.goarch }}"
           New-Item -ItemType Directory -Force -Path dist, archives | Out-Null
           $ldflags = "-s -w -X 'main.version=$Version'"
+          go run ./cmd/probo-agent/installer/windows/mkicon `
+            -png ./pkg/deviceagent/tray/icon_color.png `
+            -syso "./cmd/probo-agent/rsrc_windows_${Arch}.syso" `
+            -arch $Arch
+          if ($LASTEXITCODE -ne 0) { throw "mkicon failed" }
+          $env:GOOS = "windows"
+          $env:GOARCH = $Arch
           go build -ldflags $ldflags -gcflags="-e" -o dist/probo-agent.exe ./cmd/probo-agent
           if ($LASTEXITCODE -ne 0) { throw "go build failed" }
       - name: "Azure login"

@@ -53,17 +53,85 @@ func TestPNGToICO_WrapsSinglePNGFrame(t *testing.T) {
 	assert.Equal(t, src, ico[offset:])
 }
 
-func TestPNGToMultiSizeICO_WritesTwoFrames(t *testing.T) {
+func TestPNGToICO_Writes256Sentinel(t *testing.T) {
 	t.Parallel()
 
-	src := testPNG(t, 32)
+	src := testPNG(t, 256)
 
-	ico, err := pngToMultiSizeICO(src, 16, 32)
+	ico, err := pngToICO(src)
 	require.NoError(t, err)
 
-	assert.Equal(t, uint16(2), binary.LittleEndian.Uint16(ico[4:6]))
+	require.GreaterOrEqual(t, len(ico), 22)
+	assert.Equal(t, byte(0), ico[6])
+	assert.Equal(t, byte(0), ico[7])
+
+	offset := binary.LittleEndian.Uint32(ico[18:22])
+	cfg, err := png.DecodeConfig(bytes.NewReader(ico[offset:]))
+	require.NoError(t, err)
+	assert.Equal(t, 256, cfg.Width)
+	assert.Equal(t, 256, cfg.Height)
+}
+
+func TestPNGToICO_RejectsOversizedPNG(t *testing.T) {
+	t.Parallel()
+
+	src := testPNG(t, 1200)
+
+	ico, err := pngToICO(src)
+	require.Error(t, err)
+	assert.Nil(t, ico)
+	assert.ErrorContains(t, err, "must be 1-256")
+}
+
+func TestPNGToMultiSizeICO_WritesFourFrames(t *testing.T) {
+	t.Parallel()
+
+	src := testPNG(t, 256)
+
+	ico, err := PNGToMultiSizeICO(src, 16, 32, 48, 256)
+	require.NoError(t, err)
+
+	assert.Equal(t, uint16(4), binary.LittleEndian.Uint16(ico[4:6]))
 	assert.Equal(t, byte(16), ico[6])
 	assert.Equal(t, byte(32), ico[22])
+	assert.Equal(t, byte(48), ico[38])
+	assert.Equal(t, byte(0), ico[54])
+
+	offset := binary.LittleEndian.Uint32(ico[66:70])
+	cfg, err := png.DecodeConfig(bytes.NewReader(ico[offset:]))
+	require.NoError(t, err)
+	assert.Equal(t, 256, cfg.Width)
+	assert.Equal(t, 256, cfg.Height)
+}
+
+func TestPNGToMultiSizeICO_RejectsInvalidSize(t *testing.T) {
+	t.Parallel()
+
+	src := testPNG(t, 16)
+
+	t.Run(
+		"size 257",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ico, err := PNGToMultiSizeICO(src, 257)
+			require.Error(t, err)
+			assert.Nil(t, ico)
+			assert.ErrorContains(t, err, "must be 1-256")
+		},
+	)
+
+	t.Run(
+		"size 0",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ico, err := PNGToMultiSizeICO(src, 0)
+			require.Error(t, err)
+			assert.Nil(t, ico)
+			assert.ErrorContains(t, err, "must be 1-256")
+		},
+	)
 }
 
 func testPNG(t *testing.T, size int) []byte {

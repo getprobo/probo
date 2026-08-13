@@ -142,15 +142,36 @@ $LicenseRtf = Join-Path ([System.IO.Path]::GetTempPath()) "probo-agent-license-$
 [System.IO.File]::WriteAllText($LicenseRtf, (ConvertTo-LicenseRtf -LicensePath $LicenseSrc))
 $LicenseRtfArg = $LicenseRtf.Replace('\', '/')
 
+$IconPng = Join-Path $RepoRoot "pkg\deviceagent\tray\icon_color.png"
+if (-not (Test-Path -LiteralPath $IconPng)) {
+    throw "error: color icon missing at $IconPng"
+}
+
+$ProductIcon = Join-Path ([System.IO.Path]::GetTempPath()) "probo-agent-icon-$PID.ico"
+$ProductIconArg = $ProductIcon.Replace('\', '/')
+
 Write-Host "Building MSI: binary=$Binary arch=$WixArch version=$Version output=$Output"
 
 try {
+    Push-Location $RepoRoot
+    try {
+        & go run ./cmd/probo-agent/installer/windows/mkicon `
+            -png $IconPng `
+            -ico $ProductIcon
+        if ($LASTEXITCODE -ne 0) {
+            throw "error: mkicon failed with exit code $LASTEXITCODE"
+        }
+    } finally {
+        Pop-Location
+    }
+
     & wix build `
         -arch $WixArch `
         -ext WixToolset.UI.wixext `
         -d "Version=$Version" `
         -d "AgentExe=$Binary" `
         -d "LicenseRtf=$LicenseRtfArg" `
+        -d "ProductIcon=$ProductIconArg" `
         -o $Output `
         $PackageWxs
 
@@ -159,6 +180,7 @@ try {
     }
 } finally {
     Remove-Item -LiteralPath $LicenseRtf -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $ProductIcon -ErrorAction SilentlyContinue
 }
 
 if (-not (Test-Path -LiteralPath $Output)) {

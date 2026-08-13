@@ -21,20 +21,55 @@
 package tray
 
 import (
-	_ "embed"
+	"bytes"
+	"fmt"
+	"image"
 	"image/color"
+	"image/png"
 )
 
-// Icons are embedded PNGs; systray does not accept SVG.
-//
-// icon_template.png is the macOS menu-bar silhouette (black + alpha) and
-// the source for tinted status menu icons on every platform.
+func mustTintStatusIcon(templatePNG []byte, tint color.RGBA) []byte {
+	out, err := tintStatusIcon(templatePNG, tint, 16)
+	if err != nil {
+		return templatePNG
+	}
 
-//go:embed icon_template.png
-var iconTemplateData []byte
+	return out
+}
 
-var (
-	statusConnectedColor   = color.RGBA{R: 52, G: 199, B: 89, A: 255}
-	statusEnrollmentColor  = color.RGBA{R: 255, G: 149, B: 0, A: 255}
-	statusUnavailableColor = color.RGBA{R: 255, G: 59, B: 48, A: 255}
-)
+func tintStatusIcon(templatePNG []byte, tint color.RGBA, size int) ([]byte, error) {
+	src, err := png.Decode(bytes.NewReader(templatePNG))
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode template png: %w", err)
+	}
+
+	b := src.Bounds()
+	tinted := image.NewNRGBA(b)
+
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			_, _, _, a := src.At(x, y).RGBA()
+			tinted.SetNRGBA(
+				x,
+				y,
+				color.NRGBA{
+					R: tint.R,
+					G: tint.G,
+					B: tint.B,
+					A: uint8(a >> 8),
+				},
+			)
+		}
+	}
+
+	if size == b.Dx() && size == b.Dy() {
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, tinted); err != nil {
+			return nil, fmt.Errorf("cannot encode tinted png: %w", err)
+		}
+
+		return buf.Bytes(), nil
+	}
+
+	return resizePNG(tinted, size)
+}

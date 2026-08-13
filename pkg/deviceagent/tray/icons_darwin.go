@@ -25,5 +25,5 @@ package tray
 import "fyne.io/systray"
 
 func setTrayIcons() {
-	systray.SetTemplateIcon(iconTemplateData, iconData)
+	systray.SetTemplateIcon(iconTemplateData, iconTemplateData)
 }
