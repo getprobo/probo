@@ -896,14 +896,11 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	assert.Nil(t, completed.ErrorMessage)
 }
 
-// TestWorker_ReclaimedRunDoesNotClobberWinner simulates the residual
-// manual-recovery risk now that leasing is gone: a human moves a still
-// in-flight run back to PENDING (resetRunToPending) while worker A is
-// blocked in a tool. Worker B then claims and finishes it. When worker A
-// finally returns, its commit must be discarded because the row is no
-// longer RUNNING. The CommitAgentRunResult `status = 'RUNNING'` guard is
-// the only fence protecting the winner's result.
-func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
+// TestWorker_LeaseLossCancelsAndFencesStaleWriter simulates an execution
+// being administratively recovered while its first worker remains blocked
+// in a tool. The heartbeat detects owner-token loss, requests graceful
+// suspension, and all stale checkpoint/result writes remain fenced.
+func TestWorker_LeaseLossCancelsAndFencesStaleWriter(t *testing.T) {
 	client := test.PGClient(t)
 
 	toolReady := make(chan struct{})
@@ -927,7 +924,6 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 				Function: llm.FunctionCall{Name: "slow_work", Arguments: `{}`},
 			}),
 			stopResponse("winner result"),
-			stopResponse("stale result"),
 		},
 	}
 
@@ -949,6 +945,8 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
 		agentrun.WithWorkerMaxConcurrency(1),
+		agentrun.WithWorkerHeartbeatInterval(50*time.Millisecond),
+		agentrun.WithWorkerStaleAfter(500*time.Millisecond),
 	)
 
 	ctxA, cancelA := context.WithTimeout(context.Background(), 30*time.Second)
@@ -990,18 +988,6 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 	require.NotNil(t, winnerResult)
 
 	close(toolRelease)
-
-	require.Eventually(
-		t,
-		func() bool {
-			provider.mu.Lock()
-			defer provider.mu.Unlock()
-
-			return provider.calls >= 3
-		},
-		15*time.Second,
-		200*time.Millisecond,
-	)
 
 	require.Eventually(
 		t,

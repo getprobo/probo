@@ -24,9 +24,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
+	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -34,16 +36,61 @@ import (
 type (
 	Worker struct {
 		handler   *handler
-		kitWorker *worker.Worker[coredata.AgentRun]
+		kitWorker *worker.Worker[coredata.AgentExecution]
 	}
 
 	WorkerOption func(*workerConfig)
 
 	workerConfig struct {
-		interval       time.Duration
-		maxConcurrency int
+		interval          time.Duration
+		maxConcurrency    int
+		heartbeatInterval time.Duration
+		staleAfter        time.Duration
+		retryBase         time.Duration
+		retryMax          time.Duration
+		preparer          ExecutionPreparer
+		registerer        prometheus.Registerer
+		tracerProvider    trace.TracerProvider
 	}
+
+	// ExecutionPreparer is the provider-neutral extension point for attaching
+	// trusted run context and decorating an execution-specific agent registry.
+	ExecutionPreparer interface {
+		Prepare(
+			ctx context.Context,
+			execution *coredata.AgentExecution,
+			registry agent.AgentRegistry,
+			input *coredata.AgentInput,
+		) (context.Context, agent.AgentRegistry, error)
+	}
+
+	ExecutionPrepareFunc func(
+		ctx context.Context,
+		execution *coredata.AgentExecution,
+		registry agent.AgentRegistry,
+		input *coredata.AgentInput,
+	) (context.Context, agent.AgentRegistry, error)
+
+	defaultExecutionPreparer struct{}
 )
+
+func (f ExecutionPrepareFunc) Prepare(
+	ctx context.Context,
+	execution *coredata.AgentExecution,
+	registry agent.AgentRegistry,
+	input *coredata.AgentInput,
+) (context.Context, agent.AgentRegistry, error) {
+	return f(ctx, execution, registry, input)
+}
+
+func (defaultExecutionPreparer) Prepare(
+	ctx context.Context,
+	_ *coredata.AgentExecution,
+	registry agent.AgentRegistry,
+	_ *coredata.AgentInput,
+) (context.Context, agent.AgentRegistry, error) {
+	return ctx, registry, nil
+}
 
 func WithWorkerInterval(d time.Duration) WorkerOption {
 	return func(c *workerConfig) {
@@ -61,50 +108,124 @@ func WithWorkerMaxConcurrency(n int) WorkerOption {
 	}
 }
 
+func WithWorkerHeartbeatInterval(d time.Duration) WorkerOption {
+	return func(c *workerConfig) {
+		if d > 0 {
+			c.heartbeatInterval = d
+		}
+	}
+}
+
+func WithWorkerStaleAfter(d time.Duration) WorkerOption {
+	return func(c *workerConfig) {
+		if d > 0 {
+			c.staleAfter = d
+		}
+	}
+}
+
+func WithWorkerRetryBackoff(base time.Duration, maxDelay time.Duration) WorkerOption {
+	return func(c *workerConfig) {
+		if base > 0 {
+			c.retryBase = base
+		}
+
+		if maxDelay > 0 {
+			c.retryMax = maxDelay
+		}
+	}
+}
+
+func WithExecutionPreparer(preparer ExecutionPreparer) WorkerOption {
+	return func(c *workerConfig) {
+		if preparer != nil {
+			c.preparer = preparer
+		}
+	}
+}
+
+func WithWorkerRegisterer(registerer prometheus.Registerer) WorkerOption {
+	return func(c *workerConfig) {
+		if registerer != nil {
+			c.registerer = registerer
+		}
+	}
+}
+
+func WithWorkerTracerProvider(provider trace.TracerProvider) WorkerOption {
+	return func(c *workerConfig) {
+		if provider != nil {
+			c.tracerProvider = provider
+		}
+	}
+}
+
 func NewWorker(
 	pgClient *pg.Client,
-	store *coredata.PGCheckpointer,
+	_ *coredata.PGCheckpointer,
 	registry agent.AgentRegistry,
 	logger *log.Logger,
 	opts ...WorkerOption,
 ) *Worker {
 	cfg := workerConfig{
-		interval:       10 * time.Second,
-		maxConcurrency: 5,
+		interval:          10 * time.Second,
+		maxConcurrency:    5,
+		heartbeatInterval: 30 * time.Second,
+		staleAfter:        2 * time.Minute,
+		retryBase:         time.Second,
+		retryMax:          5 * time.Minute,
+		preparer:          defaultExecutionPreparer{},
 	}
 
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 
+	if cfg.heartbeatInterval >= cfg.staleAfter {
+		cfg.heartbeatInterval = cfg.staleAfter / 2
+	}
+
+	if cfg.retryMax < cfg.retryBase {
+		cfg.retryMax = cfg.retryBase
+	}
+
 	h := &handler{
-		pg:         pgClient,
-		store:      store,
-		registry:   registry,
-		logger:     logger,
-		shutdownCh: make(chan struct{}),
+		pg:                pgClient,
+		registry:          registry,
+		preparer:          cfg.preparer,
+		logger:            logger,
+		heartbeatInterval: cfg.heartbeatInterval,
+		staleAfter:        cfg.staleAfter,
+		retryBase:         cfg.retryBase,
+		retryMax:          cfg.retryMax,
+		shutdownCh:        make(chan struct{}),
+		now:               time.Now,
+	}
+
+	kitOpts := []worker.Option{
+		worker.WithInterval(cfg.interval),
+		worker.WithMaxConcurrency(cfg.maxConcurrency),
+	}
+	if cfg.registerer != nil {
+		kitOpts = append(kitOpts, worker.WithRegisterer(cfg.registerer))
+	}
+
+	if cfg.tracerProvider != nil {
+		kitOpts = append(kitOpts, worker.WithTracerProvider(cfg.tracerProvider))
 	}
 
 	w := worker.New(
 		"agent-run-worker",
 		h,
 		logger,
-		worker.WithInterval(cfg.interval),
-		worker.WithMaxConcurrency(cfg.maxConcurrency),
+		kitOpts...,
 	)
 
 	return &Worker{handler: h, kitWorker: w}
 }
 
-// Run starts the worker loop. It blocks until ctx is cancelled, then
-// closes the shutdown broadcast channel so in-flight Process calls can
-// checkpoint and exit, and waits for all of them to drain before
-// returning.
-//
-// signalShutdown is registered without a stop hook because it is
-// idempotent (sync.Once) and we want it to fire on every ctx
-// cancellation, even one that races with kitWorker.Run returning.
 func (w *Worker) Run(ctx context.Context) error {
 	context.AfterFunc(ctx, w.handler.signalShutdown)
+
 	return w.kitWorker.Run(ctx)
 }

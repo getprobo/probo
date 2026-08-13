@@ -1229,6 +1229,8 @@ func executeSingleTool(
 	execCtx, cleanupExecCtx := withSuspendableToolContext(toolCtx, tool)
 	defer cleanupExecCtx()
 
+	execCtx = WithToolCallID(execCtx, tc.ID)
+
 	result, err := tool.Execute(execCtx, tc.Function.Arguments)
 	if err != nil {
 		if _, ok := errors.AsType[*InterruptedError](err); ok {

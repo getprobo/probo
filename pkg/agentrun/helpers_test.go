@@ -281,6 +281,9 @@ func resetRunToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 				`UPDATE agent_runs
 				 SET status = 'PENDING',
 				     started_at = NULL,
+				     processing_owner_token = NULL,
+				     processing_heartbeat_at = NULL,
+				     attempt_count = 0,
 				     updated_at = now()
 				 WHERE id = $1`,
 				runID.String(),
@@ -290,6 +293,177 @@ func resetRunToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 		},
 	)
 	require.NoError(t, err)
+}
+
+func insertConversationalExecution(
+	t *testing.T,
+	client *pg.Client,
+	organizationID gid.GID,
+	agentName string,
+	source string,
+	sessionKey string,
+	maxAttempts int,
+) coredata.AgentExecution {
+	t.Helper()
+
+	now := time.Now()
+	execution := coredata.AgentExecution{
+		ID:              gid.New(organizationID.TenantID(), coredata.AgentRunEntityType),
+		OrganizationID:  organizationID,
+		StartAgentName:  agentName,
+		Source:          &source,
+		SessionKey:      &sessionKey,
+		SessionMessages: json.RawMessage("[]"),
+		MaxAttempts:     maxAttempts,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+
+	require.NoError(
+		t,
+		client.WithTx(
+			context.Background(),
+			func(ctx context.Context, tx pg.Tx) error {
+				_, err := execution.UpsertConversationalBySourceSession(
+					ctx,
+					tx,
+					coredata.NewScope(organizationID.TenantID()),
+				)
+
+				return err
+			},
+		),
+	)
+
+	return execution
+}
+
+func enqueueAgentInput(
+	t *testing.T,
+	client *pg.Client,
+	execution coredata.AgentExecution,
+	eventID string,
+	message llm.Message,
+) coredata.AgentInput {
+	t.Helper()
+
+	data, err := json.Marshal(message)
+	require.NoError(t, err)
+
+	now := time.Now()
+	input := coredata.AgentInput{
+		ID:             gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
+		OrganizationID: execution.OrganizationID,
+		AgentRunID:     execution.ID,
+		Source:         *execution.Source,
+		SourceEventID:  &eventID,
+		Message:        data,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(
+		t,
+		client.WithTx(
+			context.Background(),
+			func(ctx context.Context, tx pg.Tx) error {
+				_, err := input.EnqueueIdempotently(
+					ctx,
+					tx,
+					coredata.NewScope(execution.ID.TenantID()),
+				)
+
+				return err
+			},
+		),
+	)
+
+	return input
+}
+
+func enqueueAgentInputWithIdentity(
+	t *testing.T,
+	client *pg.Client,
+	execution coredata.AgentExecution,
+	eventID string,
+	message llm.Message,
+	identityID gid.GID,
+) coredata.AgentInput {
+	t.Helper()
+
+	data, err := json.Marshal(message)
+	require.NoError(t, err)
+
+	now := time.Now()
+	input := coredata.AgentInput{
+		ID:             gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
+		OrganizationID: execution.OrganizationID,
+		AgentRunID:     execution.ID,
+		Source:         *execution.Source,
+		SourceEventID:  &eventID,
+		IdentityID:     &identityID,
+		Message:        data,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(
+		t,
+		client.WithTx(
+			context.Background(),
+			func(ctx context.Context, tx pg.Tx) error {
+				_, err := input.EnqueueIdempotently(
+					ctx,
+					tx,
+					coredata.NewScope(execution.ID.TenantID()),
+				)
+
+				return err
+			},
+		),
+	)
+
+	return input
+}
+
+func loadAgentExecution(
+	t *testing.T,
+	client *pg.Client,
+	id gid.GID,
+) coredata.AgentExecution {
+	t.Helper()
+
+	var execution coredata.AgentExecution
+
+	require.NoError(
+		t,
+		client.WithConn(
+			context.Background(),
+			func(ctx context.Context, conn pg.Querier) error {
+				return execution.LoadByID(ctx, conn, coredata.NewNoScope(), id)
+			},
+		),
+	)
+
+	return execution
+}
+
+func loadAgentInput(t *testing.T, client *pg.Client, id gid.GID) coredata.AgentInput {
+	t.Helper()
+
+	var input coredata.AgentInput
+
+	require.NoError(
+		t,
+		client.WithConn(
+			context.Background(),
+			func(ctx context.Context, conn pg.Querier) error {
+				return input.LoadByID(ctx, conn, coredata.NewNoScope(), id)
+			},
+		),
+	)
+
+	return input
 }
 
 func overwriteRunInputMessagesRaw(
