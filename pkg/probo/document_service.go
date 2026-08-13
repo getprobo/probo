@@ -163,7 +163,7 @@ type (
 
 const (
 	documentContentMaxTextLength = 200_000
-	documentContentMaxJSONBytes  = 500_000
+	documentContentMaxJSONBytes  = 1 << 20 // 1 MiB
 )
 
 func (cdr *CreateDocumentRequest) Validate() error {
@@ -530,7 +530,7 @@ func (s DocumentService) GenerateChangelog(
 	}
 
 	if changelog == nil {
-		changelog, err = s.generateChangelog(ctx, scope, publishedVersion.Content, draftVersion.Content)
+		changelog, err = s.generateChangelog(ctx, publishedVersion.Content, draftVersion.Content)
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate changelog: %w", err)
 		}
@@ -543,8 +543,9 @@ func (s DocumentService) GenerateChangelog(
 var changelogGeneratorSystemPrompt string
 
 func (s DocumentService) generateChangelog(
-	ctx context.Context, scope coredata.Scoper,
-	oldContent, newContent string,
+	ctx context.Context,
+	oldContent,
+	newContent string,
 ) (*string, error) {
 	ag := agent.New(
 		"changelog_generator",
