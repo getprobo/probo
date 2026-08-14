@@ -192,6 +192,18 @@ func (s *Service) DoSomething(ctx context.Context) error {
 }
 ```
 
+Do **not** return a defensive error for a broken invariant that cannot happen on the real call path (for example a claimed agent execution with no `ProcessingOwnerToken`). That is a programming error: **panic**. Return errors for recoverable operational failures (not found, lease lost, upstream, validation). Panic when continuing would mean the program is in an impossible state.
+
+```go
+// Good — Claim always sets the token; a nil token is unrecoverable
+ownerToken := *execution.ProcessingOwnerToken
+
+// Bad — pretends an impossible state is a normal failure
+if execution.ProcessingOwnerToken == nil || *execution.ProcessingOwnerToken == "" {
+	return fmt.Errorf("claimed agent execution has no owner token")
+}
+```
+
 Sentinel errors in grouped `var ()` blocks. Custom error types implement `Unwrap() error`. Use `errors.Is` for sentinel checks. Use `errors.AsType[T](err)` (generic form) instead of `errors.As(err, &ptr)` for type assertions:
 
 ```go
