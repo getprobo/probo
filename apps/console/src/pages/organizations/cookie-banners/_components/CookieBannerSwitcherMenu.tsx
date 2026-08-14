@@ -24,7 +24,7 @@ import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Link, useLocation, useParams } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -55,6 +55,7 @@ export const cookieBannerSwitcherMenuQuery = graphql`
 
 export interface CookieBannerSwitcherMenuProps {
   queryRef: PreloadedQuery<CookieBannerSwitcherMenuQuery>;
+  selectedId: string | null;
 }
 
 /**
@@ -63,7 +64,7 @@ export interface CookieBannerSwitcherMenuProps {
  * Create sits last and outside the scrolling list so it stays reachable when
  * the organization has many banners.
  */
-export function CookieBannerSwitcherMenu({ queryRef }: CookieBannerSwitcherMenuProps) {
+export function CookieBannerSwitcherMenu({ queryRef, selectedId }: CookieBannerSwitcherMenuProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const slots = navPanelSwitcher();
@@ -77,11 +78,10 @@ export function CookieBannerSwitcherMenu({ queryRef }: CookieBannerSwitcherMenuP
   }
 
   const banners = organization.cookieBanners.edges.map(edge => edge.node);
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const { pathname } = useLocation();
   const prefix = `/organizations/${organizationId}/privacy/cookie-banners/`;
   const isNew = pathname === `${prefix}new`;
-  const selectedId = cookieBannerId ?? (isNew ? null : banners[0]?.id);
+  const checkedId = isNew ? null : (selectedId ?? banners[0]?.id);
   const newBannerHref = `${prefix}new`;
 
   return (
@@ -97,7 +97,7 @@ export function CookieBannerSwitcherMenu({ queryRef }: CookieBannerSwitcherMenuP
               <CookieBannerSwitcherListItem
                 key={banner.id}
                 cookieBannerKey={banner}
-                selected={selectedId === banner.id}
+                selected={checkedId === banner.id}
               />
             ))}
       </div>

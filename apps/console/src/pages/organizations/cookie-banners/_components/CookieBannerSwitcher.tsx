@@ -22,7 +22,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ReactNode, Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery, useQueryLoader } from "react-relay";
-import { useLocation, useParams } from "react-router";
+import { useLocation } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
 import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
@@ -34,6 +34,8 @@ import {
   NavPanelSwitcherValueSkeleton,
 } from "#/pages/organizations/_components/NavPanelSwitcher";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
+
+import { useSelectedCookieBannerId } from "../_lib/useSelectedCookieBannerId";
 
 import { CookieBannerNavItems } from "./CookieBannerNavItems";
 import {
@@ -62,6 +64,7 @@ function CookieBannerSwitcherInner() {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
+  const selectedId = useSelectedCookieBannerId();
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerSwitcherMenuQuery>(
     cookieBannerSwitcherMenuQuery,
   );
@@ -87,7 +90,7 @@ function CookieBannerSwitcherInner() {
             </Text>
           )}
         >
-          <CookieBannerSwitcherMenu queryRef={queryRef} />
+          <CookieBannerSwitcherMenu queryRef={queryRef} selectedId={selectedId} />
         </Suspense>
       )
     : null;
@@ -119,6 +122,7 @@ function CookieBannerSwitcherInner() {
       <CookieBannerSwitcherSelected
         fallback={selectLabel}
         onOpenChange={handleOpenChange}
+        selectedId={selectedId}
       >
         {menu}
       </CookieBannerSwitcherSelected>
@@ -129,22 +133,23 @@ function CookieBannerSwitcherInner() {
 interface CookieBannerSwitcherSelectedProps {
   fallback: string;
   onOpenChange: (open: boolean) => void;
+  selectedId: string | null;
   children?: ReactNode;
 }
 
 function CookieBannerSwitcherSelected({
   fallback,
   onOpenChange,
+  selectedId,
   children,
 }: CookieBannerSwitcherSelectedProps) {
   const organizationId = useOrganizationId();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const data = useLazyLoadQuery<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
     {
       organizationId,
-      cookieBannerId: cookieBannerId ?? "",
-      hasCookieBannerId: cookieBannerId != null,
+      cookieBannerId: selectedId ?? "",
+      hasCookieBannerId: selectedId != null,
     },
     { fetchPolicy: "store-or-network" },
   );
