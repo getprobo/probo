@@ -155,6 +155,7 @@ func New() *Implm {
 				HTTPAddr:   ":80",
 				HTTPSAddr:  ":443",
 				BaseDomain: "probopage.localhost",
+				TLSMode:    CompliancePortalTLSModeDirect,
 			},
 			AWS: AWSConfig{
 				Region: "us-east-1",
@@ -237,6 +238,11 @@ func (impl *Implm) Run(
 
 	ctx, rootSpan := tracer.Start(parentCtx, "probod.Run")
 	defer rootSpan.End()
+
+	if err := impl.cfg.CompliancePortal.TLSMode.Validate(); err != nil {
+		rootSpan.RecordError(err)
+		return fmt.Errorf("cannot validate compliance portal TLS config: %w", err)
+	}
 
 	// Parse config values that need conversion from strings to complex types
 	baseURL, err := baseurl.Parse(impl.cfg.BaseURL)
@@ -840,19 +846,20 @@ func (impl *Implm) Run(
 
 	compliancePortalHandler, err := complianceportal_v1.NewMux(
 		complianceportal_v1.MuxConfig{
-			BaseURL:           baseURL,
-			FileStorageOrigin: fileStorageOrigin,
-			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
-			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
-			Logger:            l.Named("compliance-portal"),
-			IAM:               iamService,
-			Visitor:           visitorService,
-			ResourceAlias:     resourceAliasService,
-			File:              fileManagerService,
-			ESign:             esignService,
-			Mailman:           mailmanService,
-			Cookie:            authCookie,
-			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
+			BaseURL:                 baseURL,
+			FileStorageOrigin:       fileStorageOrigin,
+			ExtraHeaderFields:       impl.cfg.Api.ExtraHeaderFields,
+			AllowedOrigins:          impl.cfg.Api.Cors.AllowedOrigins,
+			Logger:                  l.Named("compliance-portal"),
+			IAM:                     iamService,
+			Visitor:                 visitorService,
+			ResourceAlias:           resourceAliasService,
+			File:                    fileManagerService,
+			ESign:                   esignService,
+			Mailman:                 mailmanService,
+			Cookie:                  authCookie,
+			TokenSecret:             impl.cfg.Auth.Cookie.Secret,
+			ExternallyTerminatedTLS: impl.cfg.CompliancePortal.TLSMode.IsExternal(),
 			GraphQLLimits: gqlutils.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
@@ -1435,6 +1442,101 @@ func (impl *Implm) runCompliancePortalServer(
 	ctx, span := tracer.Start(ctx, "probod.runCompliancePortalServer")
 	defer span.End()
 
+	g, ctx := errgroup.WithContext(ctx)
+
+	l.Info("starting compliance portal services")
+	span.AddEvent("Trust center services starting")
+
+	if impl.cfg.CompliancePortal.TLSMode.IsExternal() {
+		acmeHandler := certmanager.NewACMEChallengeHandler(
+			pgClient,
+			l.Named("acme_handler"),
+		)
+
+		externalServer := httpserver.NewServer(
+			impl.cfg.CompliancePortal.HTTPAddr,
+			acmeHandler.Handle(trustRouter),
+			httpserver.WithLogger(l),
+			httpserver.WithRegisterer(r),
+			httpserver.WithTracerProvider(tp),
+		)
+		externalServer.ReadTimeout = 30 * time.Second
+		externalServer.WriteTimeout = 30 * time.Second
+
+		g.Go(
+			func() error {
+				l.InfoCtx(
+					ctx,
+					"starting externally terminated compliance portal server",
+					log.String("addr", externalServer.Addr),
+				)
+				span.AddEvent("Externally terminated compliance portal server starting")
+
+				listener, err := net.Listen("tcp", externalServer.Addr)
+				if err != nil {
+					return fmt.Errorf("cannot listen on %q: %w", externalServer.Addr, err)
+				}
+
+				defer func() { _ = listener.Close() }()
+
+				if len(impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies) > 0 {
+					policy, err := proxyproto.PolicyFromRanges(
+						impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies,
+						proxyproto.USE,
+						proxyproto.REJECT,
+					)
+					if err != nil {
+						return fmt.Errorf("cannot build proxy protocol policy: %w", err)
+					}
+
+					listener = &proxyproto.Listener{
+						Listener:          listener,
+						ReadHeaderTimeout: 10 * time.Second,
+						ConnPolicy:        policy,
+					}
+
+					l.Info(
+						"using proxy protocol for externally terminated compliance portal server",
+						log.Any("trusted-proxies", impl.cfg.CompliancePortal.ProxyProtocol.TrustedProxies),
+					)
+				}
+
+				if err := externalServer.Serve(listener); err != nil && err != http.ErrServerClosed {
+					return fmt.Errorf("cannot serve externally terminated compliance portal requests: %w", err)
+				}
+
+				return nil
+			},
+		)
+
+		l.Info("externally terminated compliance portal server started")
+		span.AddEvent("Externally terminated compliance portal server started")
+
+		go func() {
+			<-ctx.Done()
+
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			l.InfoCtx(ctx, "shutting down externally terminated compliance portal server...")
+			span.AddEvent("Externally terminated compliance portal server shutting down")
+
+			if err := externalServer.Shutdown(shutdownCtx); err != nil {
+				span.RecordError(err)
+				l.ErrorCtx(ctx, "cannot shutdown externally terminated compliance portal server", log.Error(err))
+			}
+
+			span.AddEvent("Externally terminated compliance portal server shutdown complete")
+		}()
+
+		if err := g.Wait(); err != nil {
+			span.RecordError(err)
+			return err
+		}
+
+		return ctx.Err()
+	}
+
 	certSelector := certmanager.NewSelector(pgClient, encryptionKey)
 
 	warmer := certmanager.NewCacheStore(pgClient, encryptionKey, l)
@@ -1442,11 +1544,6 @@ func (impl *Implm) runCompliancePortalServer(
 		span.RecordError(err)
 		l.ErrorCtx(ctx, "cannot warm certificate cache", log.Error(err))
 	}
-
-	g, ctx := errgroup.WithContext(ctx)
-
-	l.Info("starting compliance portal services")
-	span.AddEvent("Trust center services starting")
 
 	httpACMEHandler := certmanager.NewACMEChallengeHandler(
 		pgClient,

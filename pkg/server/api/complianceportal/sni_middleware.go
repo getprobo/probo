@@ -22,6 +22,7 @@ package complianceportal
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -34,17 +35,21 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.Handler {
+func NewDomainMiddleware(
+	visitorSvc *visitor.Service,
+	externallyTerminatedTLS bool,
+) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			if r.TLS == nil {
+			host, requestProto, ok := compliancePortalRequest(r, externallyTerminatedTLS)
+			if !ok {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			compliancePage, err := visitorSvc.GetPortalByDomainName(ctx, r.TLS.ServerName)
+			compliancePage, err := visitorSvc.GetPortalByDomainName(ctx, host)
 			if err != nil {
 				if errors.Is(err, visitor.ErrPageNotFound) {
 					next.ServeHTTP(w, r)
@@ -55,7 +60,7 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 					ctx,
 					"cannot get compliance portal by domain name",
 					log.Error(err),
-					log.String("server_name", r.TLS.ServerName),
+					log.String("host", host),
 				)
 
 				httpserver.RenderJSON(
@@ -67,6 +72,19 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 						},
 					},
 				)
+
+				return
+			}
+
+			if requestProto == "http" {
+				target := &url.URL{
+					Scheme:   "https",
+					Host:     host,
+					Path:     r.URL.Path,
+					RawQuery: r.URL.RawQuery,
+				}
+
+				http.Redirect(w, r, target.String(), http.StatusMovedPermanently)
 
 				return
 			}
@@ -97,7 +115,7 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 					return
 				}
 
-				if canonicalHost != "" && canonicalHost != r.Host {
+				if canonicalHost != "" && canonicalHost != host {
 					target := &url.URL{
 						Scheme:   "https",
 						Host:     canonicalHost,
@@ -115,10 +133,13 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 			// robots, brand assets, OAuth). Including r.URL.Path here would
 			// duplicate the route (e.g. /fr/documents/fr/documents).
 			baseURL := (&url.URL{
-				Host:   r.Host,
+				Host:   host,
 				Scheme: "https",
 			}).String()
 			ctx = ContextWithCompliancePortalBaseURL(ctx, baseURL)
+			if externallyTerminatedTLS && r.TLS == nil {
+				r.Host = host
+			}
 			r = r.WithContext(ctx)
 
 			if compliancePage.Active {
@@ -131,4 +152,79 @@ func NewSNIMiddleware(visitorSvc *visitor.Service) func(next http.Handler) http.
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func compliancePortalRequest(r *http.Request, externallyTerminatedTLS bool) (string, string, bool) {
+	if r.TLS != nil {
+		host, ok := normalizeCompliancePortalHost(r.TLS.ServerName)
+		if !ok {
+			return "", "", false
+		}
+
+		return host, "https", true
+	}
+
+	if !externallyTerminatedTLS {
+		return "", "", false
+	}
+
+	requestProto, ok := singleHeaderValue(r.Header, "X-Forwarded-Proto")
+	if !ok {
+		return "", "", false
+	}
+
+	requestProto = strings.ToLower(requestProto)
+	if requestProto != "http" && requestProto != "https" {
+		return "", "", false
+	}
+
+	// External mode establishes the reverse proxy as the TLS and host trust
+	// boundary. Deployments must prevent direct access to this listener and use
+	// a proxy that overwrites these forwarded headers rather than appending to
+	// client-supplied values.
+	host := r.Host
+	if len(r.Header.Values("X-Forwarded-Host")) > 0 {
+		forwardedHost, ok := singleHeaderValue(r.Header, "X-Forwarded-Host")
+		if !ok || forwardedHost == "" {
+			return "", "", false
+		}
+
+		host = forwardedHost
+	}
+
+	host, ok = normalizeCompliancePortalHost(host)
+	if !ok {
+		return "", "", false
+	}
+
+	return host, requestProto, true
+}
+
+func singleHeaderValue(header http.Header, name string) (string, bool) {
+	values := header.Values(name)
+	if len(values) != 1 || strings.Contains(values[0], ",") {
+		return "", false
+	}
+
+	return strings.TrimSpace(values[0]), true
+}
+
+func normalizeCompliancePortalHost(value string) (string, bool) {
+	host := strings.TrimSpace(value)
+	if host == "" || strings.Contains(host, ",") {
+		return "", false
+	}
+
+	if strings.Contains(host, ":") {
+		var err error
+
+		host, _, err = net.SplitHostPort(host)
+		if err != nil {
+			return "", false
+		}
+	}
+
+	host = strings.ToLower(strings.TrimSuffix(host, "."))
+
+	return host, host != ""
 }

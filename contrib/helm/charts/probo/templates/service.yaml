@@ -26,10 +26,12 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    {{- if ne .Values.probo.trustCenter.tlsMode "external" }}
     - port: {{ .Values.service.httpsPort }}
       targetPort: https
       protocol: TCP
       name: https
+    {{- end }}
     - port: {{ .Values.service.port }}
       targetPort: backoffice
       protocol: TCP

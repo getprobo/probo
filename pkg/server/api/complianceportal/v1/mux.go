@@ -37,20 +37,21 @@ import (
 )
 
 type MuxConfig struct {
-	BaseURL           *baseurl.BaseURL
-	FileStorageOrigin string
-	ExtraHeaderFields map[string]string
-	AllowedOrigins    []string
-	Logger            *log.Logger
-	IAM               *iam.Service
-	Visitor           *visitor.Service
-	ResourceAlias     *resourcealias.Service
-	File              *filemanager.Service
-	ESign             *esign.Service
-	Mailman           *mailman.Service
-	Cookie            securecookie.Config
-	TokenSecret       string
-	GraphQLLimits     gqlutils.Limits
+	BaseURL                 *baseurl.BaseURL
+	FileStorageOrigin       string
+	ExtraHeaderFields       map[string]string
+	AllowedOrigins          []string
+	Logger                  *log.Logger
+	IAM                     *iam.Service
+	Visitor                 *visitor.Service
+	ResourceAlias           *resourcealias.Service
+	File                    *filemanager.Service
+	ESign                   *esign.Service
+	Mailman                 *mailman.Service
+	Cookie                  securecookie.Config
+	TokenSecret             string
+	GraphQLLimits           gqlutils.Limits
+	ExternallyTerminatedTLS bool
 }
 
 func NewMux(cfg MuxConfig) (http.Handler, error) {
@@ -80,7 +81,7 @@ func NewMux(cfg MuxConfig) (http.Handler, error) {
 		return nil, fmt.Errorf("cannot build content security policy: %w", err)
 	}
 
-	r.Use(complianceportal.NewSNIMiddleware(cfg.Visitor))
+	r.Use(complianceportal.NewDomainMiddleware(cfg.Visitor, cfg.ExternallyTerminatedTLS))
 	r.Use(
 		server.NewSecurityHeadersMiddleware(
 			server.SecurityHeadersOptions{

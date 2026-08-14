@@ -70,6 +70,8 @@ spec:
               value: {{ include "probo.chrome.addr" . | quote }}
             - name: PROBOD_BRANDING
               value: {{ .Values.probo.branding | quote }}
+            - name: PROBOD_TRUST_CENTER_TLS_MODE
+              value: {{ .Values.probo.trustCenter.tlsMode | quote }}
             # API Configuration
             - name: PROBOD_API_ADDR
               value: ":{{ .Values.service.port }}"
@@ -502,9 +504,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.httpPort }}
               protocol: TCP
+            {{- if ne .Values.probo.trustCenter.tlsMode "external" }}
             - name: https
               containerPort: {{ .Values.service.httpsPort }}
               protocol: TCP
+            {{- end }}
             - name: backoffice
               containerPort: {{ .Values.service.port }}
               protocol: TCP

@@ -73,6 +73,13 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		return nil, fmt.Errorf("cannot parse PROBOD_AUTH_COOKIE_SAMESITE: %w", err)
 	}
 
+	compliancePortalTLSMode, err := probodconfig.ParseCompliancePortalTLSMode(
+		b.resolver.getEnvOrDefault("PROBOD_TRUST_CENTER_TLS_MODE", "direct"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse PROBOD_TRUST_CENTER_TLS_MODE: %w", err)
+	}
+
 	cfg := &probodconfig.FullConfig{
 		Unit: probodconfig.UnitConfig{
 			Metrics: probodconfig.MetricsConfig{
@@ -181,6 +188,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				HTTPAddr:   b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
 				HTTPSAddr:  b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
 				BaseDomain: b.resolver.getEnv("PROBOD_TRUST_CENTER_BASE_DOMAIN"),
+				TLSMode:    compliancePortalTLSMode,
 				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.resolver.getEnv("PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},

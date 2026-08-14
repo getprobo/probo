@@ -86,9 +86,10 @@ type (
 
 	// CompliancePortalConfig contains compliance portal server configuration.
 	CompliancePortalConfig struct {
-		HTTPAddr      string              `json:"http-addr,omitempty"`
-		HTTPSAddr     string              `json:"https-addr,omitempty"`
-		BaseDomain    string              `json:"base-domain,omitempty"`
-		ProxyProtocol ProxyProtocolConfig `json:"proxy-protocol,omitzero"`
+		HTTPAddr      string                  `json:"http-addr,omitempty"`
+		HTTPSAddr     string                  `json:"https-addr,omitempty"`
+		BaseDomain    string                  `json:"base-domain,omitempty"`
+		TLSMode       CompliancePortalTLSMode `json:"tls-mode,omitempty"`
+		ProxyProtocol ProxyProtocolConfig     `json:"proxy-protocol,omitzero"`
 	}
 )

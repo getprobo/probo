@@ -30,6 +30,7 @@ type (
 	TracingConfig                 = probodconfig.TracingConfig
 	ESignConfig                   = probodconfig.ESignConfig
 	CompliancePortalConfig        = probodconfig.CompliancePortalConfig
+	CompliancePortalTLSMode       = probodconfig.CompliancePortalTLSMode
 	APIConfig                     = probodconfig.APIConfig
 	CorsConfig                    = probodconfig.CorsConfig
 	GraphQLConfig                 = probodconfig.GraphQLConfig
@@ -70,7 +71,9 @@ type (
 )
 
 const (
-	CookieSameSiteLax    = probodconfig.CookieSameSiteLax
-	CookieSameSiteStrict = probodconfig.CookieSameSiteStrict
-	CookieSameSiteNone   = probodconfig.CookieSameSiteNone
+	CompliancePortalTLSModeDirect   = probodconfig.CompliancePortalTLSModeDirect
+	CompliancePortalTLSModeExternal = probodconfig.CompliancePortalTLSModeExternal
+	CookieSameSiteLax               = probodconfig.CookieSameSiteLax
+	CookieSameSiteStrict            = probodconfig.CookieSameSiteStrict
+	CookieSameSiteNone              = probodconfig.CookieSameSiteNone
 )
