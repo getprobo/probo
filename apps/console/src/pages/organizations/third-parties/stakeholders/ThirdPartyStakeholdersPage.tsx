@@ -29,7 +29,8 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
@@ -38,11 +39,11 @@ import type { ThirdPartyStakeholdersPageQuery } from "#/__generated__/core/Third
 import type { ThirdPartyStakeholdersPageRefetchQuery } from "#/__generated__/core/ThirdPartyStakeholdersPageRefetchQuery.graphql";
 import { PeopleMultiSelectField } from "#/components/form/PeopleMultiSelectField";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
-import { useThirdPartyForm } from "#/hooks/forms/useThirdPartyForm";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateContactDialog } from "../_components/CreateContactDialog";
 import { EditContactDialog } from "../_components/EditContactDialog";
+import { useUpdateThirdParty } from "../_lib/useUpdateThirdParty";
 
 import { ThirdPartyContactRow } from "./_components/ThirdPartyContactRow";
 
@@ -84,9 +85,14 @@ export const thirdPartyStakeholdersPageQuery = graphql`
     node(id: $thirdPartyId) {
       __typename
       ... on ThirdParty {
+        id
         name
         canUpdate: permission(action: "core:thirdParty:update")
-        ...useThirdPartyFormFragment
+        administrators {
+          id
+          fullName
+          emailAddress
+        }
         ...ThirdPartyStakeholdersPageFragment
       }
     }
@@ -95,6 +101,10 @@ export const thirdPartyStakeholdersPageQuery = graphql`
 
 interface ThirdPartyStakeholdersPageProps {
   queryRef: PreloadedQuery<ThirdPartyStakeholdersPageQuery>;
+}
+
+interface AdministratorsFormValues {
+  administratorIds: string[];
 }
 
 export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersPageProps) {
@@ -114,12 +124,14 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
     ThirdPartyStakeholdersPageFragment$key
   >(thirdPartyStakeholdersFragment, thirdParty);
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    administrators,
-  } = useThirdPartyForm(thirdParty);
+  const [update, isUpdating] = useUpdateThirdParty();
+  const administratorIds = useMemo(
+    () => thirdParty.administrators.map(administrator => administrator.id),
+    [thirdParty.administrators],
+  );
+  const { control } = useForm<AdministratorsFormValues>({
+    values: { administratorIds },
+  });
 
   const refetch = ({
     order,
@@ -147,8 +159,6 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
 
   usePageTitle(t("thirdPartyStakeholdersPage.pageTitle", { name: thirdParty.name }));
 
-  const isFormDisabled = isSubmitting || !thirdParty.canUpdate;
-
   return (
     <div className="space-y-12">
       <PageHeader
@@ -156,12 +166,7 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
         description={t("thirdPartyStakeholdersPage.description")}
       />
 
-      <form
-        onSubmit={!thirdParty.canUpdate
-          ? undefined
-          : e => void handleSubmit(e)}
-        className="space-y-4"
-      >
+      <div className="space-y-4">
         <h2 className="text-base font-medium">
           {t("thirdPartyStakeholdersPage.sections.administrators")}
         </h2>
@@ -171,24 +176,19 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
             control={control}
             name="administratorIds"
             label={t("thirdPartyStakeholdersPage.fields.administrators")}
-            error={errors.administratorIds?.message}
-            disabled={isFormDisabled}
-            selectedPeople={administrators.map(a => ({
-              id: a.id,
-              fullName: a.fullName,
-              emailAddress: a.emailAddress,
+            disabled={isUpdating || !thirdParty.canUpdate}
+            selectedPeople={thirdParty.administrators.map(administrator => ({
+              id: administrator.id,
+              fullName: administrator.fullName,
+              emailAddress: administrator.emailAddress,
             }))}
             placeholder={t("thirdPartyStakeholdersPage.placeholders.administrators")}
+            onIdsChange={(ids) => {
+              void update(thirdParty.id, "administratorIds", ids);
+            }}
           />
         </Card>
-        {thirdParty.canUpdate && (
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              {t("thirdPartyStakeholdersPage.actions.update")}
-            </Button>
-          </div>
-        )}
-      </form>
+      </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">

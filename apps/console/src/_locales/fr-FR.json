@@ -6230,7 +6230,6 @@
       "administrators": "Ajouter des administrateurs..."
     },
     "actions": {
-      "update": "Mettre à jour le tiers",
       "addContact": "Ajouter un contact"
     },
     "columns": {
@@ -6271,7 +6270,6 @@
       "trustPage": "URL de la page de confiance"
     },
     "actions": {
-      "update": "Mettre à jour le tiers",
       "addReport": "Ajouter un rapport"
     },
     "columns": {

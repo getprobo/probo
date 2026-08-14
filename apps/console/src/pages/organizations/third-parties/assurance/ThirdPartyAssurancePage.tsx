@@ -39,9 +39,8 @@ import {
   Tr,
 } from "@probo/ui";
 import { clsx } from "clsx";
-import type { ComponentProps } from "react";
-import { useMemo, useState } from "react";
-import { Controller } from "react-hook-form";
+import type { ComponentProps, FocusEvent } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery, useRefetchableFragment } from "react-relay";
 
@@ -49,9 +48,9 @@ import type { ThirdPartyAssurancePageFragment$key } from "#/__generated__/core/T
 import type { ThirdPartyAssurancePageQuery } from "#/__generated__/core/ThirdPartyAssurancePageQuery.graphql";
 import type { ThirdPartyAssurancePageRefetchQuery } from "#/__generated__/core/ThirdPartyAssurancePageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
-import { useThirdPartyForm } from "#/hooks/forms/useThirdPartyForm";
 
 import { UploadComplianceReportDialog } from "../_components/UploadComplianceReportDialog";
+import { useUpdateThirdParty } from "../_lib/useUpdateThirdParty";
 
 import { ThirdPartyComplianceReportRow } from "./_components/ThirdPartyComplianceReportRow";
 
@@ -92,9 +91,17 @@ export const thirdPartyAssurancePageQuery = graphql`
     node(id: $thirdPartyId) {
       __typename
       ... on ThirdParty {
+        id
         name
         canUpdate: permission(action: "core:thirdParty:update")
-        ...useThirdPartyFormFragment
+        certifications
+        statusPageUrl
+        termsOfServiceUrl
+        privacyPolicyUrl
+        serviceLevelAgreementUrl
+        dataProcessingAgreementUrl
+        securityPageUrl
+        trustPageUrl
         ...ThirdPartyAssurancePageFragment
       }
     }
@@ -103,6 +110,20 @@ export const thirdPartyAssurancePageQuery = graphql`
 
 interface ThirdPartyAssurancePageProps {
   queryRef: PreloadedQuery<ThirdPartyAssurancePageQuery>;
+}
+
+type UrlFieldName
+  = | "statusPageUrl"
+    | "termsOfServiceUrl"
+    | "privacyPolicyUrl"
+    | "serviceLevelAgreementUrl"
+    | "dataProcessingAgreementUrl"
+    | "securityPageUrl"
+    | "trustPageUrl";
+
+function normalizeUrl(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePageProps) {
@@ -115,8 +136,11 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
   }
   const thirdParty = data.node;
   const { t } = useTranslation();
-
-  const { control, handleSubmit, register } = useThirdPartyForm(thirdParty);
+  const [update] = useUpdateThirdParty();
+  const [pendingCertifications, setPendingCertifications] = useState<
+    readonly string[] | null
+  >(null);
+  const certificationsValue = pendingCertifications ?? thirdParty.certifications;
 
   const [reportsData, refetch] = useRefetchableFragment<
     ThirdPartyAssurancePageRefetchQuery,
@@ -126,27 +150,72 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
   const connectionId = reportsData.complianceReports.__id;
   const reports = reportsData.complianceReports.edges.map(edge => edge.node);
 
-  const urls = useMemo(
-    () =>
-      [
-        { name: "statusPageUrl", label: t("thirdPartyAssurancePage.urlLabels.statusPage") },
-        { name: "termsOfServiceUrl", label: t("thirdPartyAssurancePage.urlLabels.termsOfService") },
-        { name: "privacyPolicyUrl", label: t("thirdPartyAssurancePage.urlLabels.privacyPolicy") },
-        {
-          name: "serviceLevelAgreementUrl",
-          label: t("thirdPartyAssurancePage.urlLabels.serviceLevelAgreement"),
-        },
-        {
-          name: "dataProcessingAgreementUrl",
-          label: t("thirdPartyAssurancePage.urlLabels.dataProcessingAgreement"),
-        },
-        { name: "securityPageUrl", label: t("thirdPartyAssurancePage.urlLabels.securityPage") },
-        { name: "trustPageUrl", label: t("thirdPartyAssurancePage.urlLabels.trustPage") },
-      ] as const,
-    [t],
-  );
+  const urls = [
+    {
+      name: "statusPageUrl",
+      label: t("thirdPartyAssurancePage.urlLabels.statusPage"),
+      value: thirdParty.statusPageUrl,
+    },
+    {
+      name: "termsOfServiceUrl",
+      label: t("thirdPartyAssurancePage.urlLabels.termsOfService"),
+      value: thirdParty.termsOfServiceUrl,
+    },
+    {
+      name: "privacyPolicyUrl",
+      label: t("thirdPartyAssurancePage.urlLabels.privacyPolicy"),
+      value: thirdParty.privacyPolicyUrl,
+    },
+    {
+      name: "serviceLevelAgreementUrl",
+      label: t("thirdPartyAssurancePage.urlLabels.serviceLevelAgreement"),
+      value: thirdParty.serviceLevelAgreementUrl,
+    },
+    {
+      name: "dataProcessingAgreementUrl",
+      label: t("thirdPartyAssurancePage.urlLabels.dataProcessingAgreement"),
+      value: thirdParty.dataProcessingAgreementUrl,
+    },
+    {
+      name: "securityPageUrl",
+      label: t("thirdPartyAssurancePage.urlLabels.securityPage"),
+      value: thirdParty.securityPageUrl,
+    },
+    {
+      name: "trustPageUrl",
+      label: t("thirdPartyAssurancePage.urlLabels.trustPage"),
+      value: thirdParty.trustPageUrl,
+    },
+  ] as const satisfies ReadonlyArray<{
+    name: UrlFieldName;
+    label: string;
+    value: string | null | undefined;
+  }>;
 
   usePageTitle(t("thirdPartyAssurancePage.pageTitle", { name: thirdParty.name }));
+
+  function handleCertificationsChange(next: string[]) {
+    setPendingCertifications(next);
+    void update(thirdParty.id, "certifications", next)
+      .then(() => {
+        setPendingCertifications(null);
+      })
+      .catch(() => {
+        setPendingCertifications(null);
+      });
+  }
+
+  function handleUrlBlur(
+    field: UrlFieldName,
+    current: string | null | undefined,
+    event: FocusEvent<HTMLInputElement>,
+  ) {
+    const next = normalizeUrl(event.target.value);
+    if (next === normalizeUrl(current)) {
+      return;
+    }
+    void update(thirdParty.id, field, next);
+  }
 
   return (
     <div className="space-y-12">
@@ -155,35 +224,25 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
         description={t("thirdPartyAssurancePage.description")}
       />
 
-      <form
-        className="space-y-12"
-        onSubmit={thirdParty.canUpdate
-          ? e => void handleSubmit(e)
-          : undefined}
-      >
-        <div className="space-y-4">
-          <h2 className="text-base font-medium">
-            {t("thirdPartyAssurancePage.sections.certifications")}
-          </h2>
-          <Card padded>
-            <Controller
-              control={control}
-              name="certifications"
-              render={({ field }) => (
-                <Certifications
-                  onValueChange={field.onChange}
-                  value={field.value ?? []}
-                  readOnly={!thirdParty.canUpdate}
-                />
-              )}
-            />
-          </Card>
-        </div>
+      <div className="space-y-4">
+        <h2 className="text-base font-medium">
+          {t("thirdPartyAssurancePage.sections.certifications")}
+        </h2>
+        <Card padded>
+          <Certifications
+            onValueChange={handleCertificationsChange}
+            value={certificationsValue}
+            readOnly={!thirdParty.canUpdate || pendingCertifications !== null}
+          />
+        </Card>
+      </div>
 
-        <div className="space-y-4">
-          <h2 className="text-base font-medium">{t("thirdPartyAssurancePage.sections.links")}</h2>
-          <Card className="divide-y divide-border-low">
-            {urls.map(url => (
+      <div className="space-y-4">
+        <h2 className="text-base font-medium">{t("thirdPartyAssurancePage.sections.links")}</h2>
+        <Card className="divide-y divide-border-low">
+          {urls.map((url) => {
+            const savedValue = normalizeUrl(url.value) ?? "";
+            return (
               <div
                 key={url.name}
                 className="grid grid-cols-2 items-center divide-x divide-border-low"
@@ -195,25 +254,21 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
                   {url.label}
                 </label>
                 <Input
+                  key={savedValue}
                   className="p-4 focus:bg-tertiary-pressed outline-none"
                   id={url.name}
-                  {...register(url.name)}
+                  defaultValue={savedValue}
+                  onBlur={event => handleUrlBlur(url.name, url.value, event)}
                   type="text"
                   placeholder="https://..."
                   variant="ghost"
                   disabled={!thirdParty.canUpdate}
                 />
               </div>
-            ))}
-          </Card>
-        </div>
-
-        {thirdParty.canUpdate && (
-          <div className="flex justify-end">
-            <Button type="submit">{t("thirdPartyAssurancePage.actions.update")}</Button>
-          </div>
-        )}
-      </form>
+            );
+          })}
+        </Card>
+      </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
@@ -258,7 +313,7 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
 }
 
 interface CertificationsProps {
-  value: string[];
+  value: readonly string[];
   onValueChange: (value: string[]) => void;
   readOnly?: boolean;
 }

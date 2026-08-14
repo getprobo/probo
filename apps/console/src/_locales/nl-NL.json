@@ -6230,7 +6230,6 @@
       "administrators": "Beheerders toevoegen..."
     },
     "actions": {
-      "update": "Derde partij bijwerken",
       "addContact": "Contactpersoon toevoegen"
     },
     "columns": {
@@ -6271,7 +6270,6 @@
       "trustPage": "URL trustpagina"
     },
     "actions": {
-      "update": "Derde partij bijwerken",
       "addReport": "Rapport toevoegen"
     },
     "columns": {
