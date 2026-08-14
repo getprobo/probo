@@ -2424,6 +2424,7 @@
       "tprm": "TPRM",
       "itam": "IT-assetbeheer",
       "riskManagement": "Risicobeheer",
+      "registries": "Registers",
       "compliancePortal": "Compliancepagina",
       "accessReview": "Toegangsbeoordeling",
       "settings": "Instellingen"
@@ -2449,7 +2450,6 @@
     "businessFunctions": "Bedrijfsfuncties",
     "aiSystems": "AI-systemen",
     "obligations": "Verplichtingen",
-    "registries": "Registers",
     "processingActivities": "Verwerkingsactiviteiten",
     "dataProtectionImpactAssessments": "DPIAs",
     "transferImpactAssessments": "TIAs",

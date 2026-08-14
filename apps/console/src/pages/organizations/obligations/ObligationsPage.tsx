@@ -268,7 +268,7 @@ function ObligationRow({
     );
   };
 
-  const detailsUrl = `/organizations/${organizationId}/settings/obligations/${obligation.id}`;
+  const detailsUrl = `/organizations/${organizationId}/registries/obligations/${obligation.id}`;
 
   return (
     <Tr to={detailsUrl}>

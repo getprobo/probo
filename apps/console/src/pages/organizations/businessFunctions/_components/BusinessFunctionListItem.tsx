@@ -148,7 +148,7 @@ export function BusinessFunctionListItem({
   };
 
   const detailsUrl
-    = `/organizations/${organizationId}/settings/business-functions/${businessFunction.id}`;
+    = `/organizations/${organizationId}/registries/business-functions/${businessFunction.id}`;
   const assets = businessFunction.assets?.edges.map(edge => edge.node) ?? [];
   const thirdParties = businessFunction.thirdParties?.edges.map(edge => edge.node) ?? [];
 

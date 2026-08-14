@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import {
+  BooksIcon,
   GearIcon,
   type Icon,
   KeyIcon,
@@ -181,6 +182,20 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: "registries",
+    segment: "registries",
+    icon: BooksIcon,
+    items: [
+      {
+        path: "business-functions",
+        labelKey: "nav.businessFunctions",
+        permission: "canListBusinessFunctions",
+      },
+      { path: "ai-systems", labelKey: "nav.aiSystems", permission: "canListAiSystems" },
+      { path: "obligations", labelKey: "nav.obligations", permission: "canListObligations" },
+    ],
+  },
+  {
     key: "compliancePortal",
     segment: null,
     icon: ShieldIcon,
@@ -226,20 +241,6 @@ export const NAV_GROUPS: NavGroup[] = [
           { path: "people", labelKey: "nav.users", permission: "canListMembers" },
           { path: "auth", labelKey: "nav.authProvisioning", permission: "canUpdateOrganization" },
           { path: "audit-log", labelKey: "nav.auditLog", permission: "canListAuditLogEntries" },
-        ],
-      },
-      {
-        kind: "section",
-        key: "registries",
-        labelKey: "nav.registries",
-        items: [
-          {
-            path: "business-functions",
-            labelKey: "nav.businessFunctions",
-            permission: "canListBusinessFunctions",
-          },
-          { path: "ai-systems", labelKey: "nav.aiSystems", permission: "canListAiSystems" },
-          { path: "obligations", labelKey: "nav.obligations", permission: "canListObligations" },
         ],
       },
     ],

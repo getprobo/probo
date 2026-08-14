@@ -346,6 +346,14 @@ const routes = [
             path: "access-reviews",
             children: [...accessReviewRoutes],
           },
+          {
+            path: "registries",
+            children: [
+              ...businessFunctionRoutes,
+              ...aiSystemRoutes,
+              ...obligationRoutes,
+            ],
+          },
           // Compliance portals already name their product, so an extra
           // segment would only repeat it.
           ...compliancePortalRoutes,
@@ -380,9 +388,6 @@ const routes = [
               ...peopleRoutes,
               ...authRoutes,
               ...auditLogRoutes,
-              ...businessFunctionRoutes,
-              ...aiSystemRoutes,
-              ...obligationRoutes,
             ],
           },
           {

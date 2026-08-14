@@ -2424,6 +2424,7 @@
       "tprm": "TPRM",
       "itam": "IT Asset Management",
       "riskManagement": "Risk Management",
+      "registries": "Registries",
       "compliancePortal": "Compliance Portal",
       "accessReview": "Access Review",
       "settings": "Settings"
@@ -2448,7 +2449,6 @@
     "businessFunctions": "Business Functions",
     "aiSystems": "AI Systems",
     "obligations": "Obligations",
-    "registries": "Registries",
     "processingActivities": "Processing Activities",
     "dataProtectionImpactAssessments": "DPIAs",
     "transferImpactAssessments": "TIAs",
