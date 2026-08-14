@@ -298,10 +298,10 @@ export default function StatementOfApplicabilityControlsTab({
                             variant={control.maturityLevel !== "NONE" ? "success" : "neutral"}
                             size="sm"
                           >
-                            {t(`statementOfApplicabilityControlsTab.maturity.${control.maturityLevel.toLowerCase()}`)}
+                            {t(`statementOfApplicabilityControlsTab.maturity.${(control.maturityLevel ?? "NONE").toLowerCase()}`)}
                           </Badge>
                           {control.maturityLevel === "NONE" && control.notImplementedJustification && (
-                            <p className="text-xs text-txt-secondary break-words">
+                            <p className="text-xs text-txt-secondary wrap-break-word">
                               {control.notImplementedJustification}
                             </p>
                           )}

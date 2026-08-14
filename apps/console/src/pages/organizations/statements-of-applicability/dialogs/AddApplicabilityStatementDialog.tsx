@@ -100,6 +100,7 @@ const createApplicabilityStatementMutation = graphql`
                         name
                         bestPractice
                         notImplementedJustification
+                        maturityLevel
                         regulatory
                         contractual
                         riskAssessment
