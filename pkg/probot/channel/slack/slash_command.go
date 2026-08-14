@@ -32,7 +32,8 @@ import (
 )
 
 const (
-	slashCommandBindArg        = "bind"
+	slashCommandLoginArg       = "login"
+	slashCommandLoginAliasArg  = "bind"
 	SlashResponseTypeEphemeral = "ephemeral"
 )
 
@@ -75,7 +76,7 @@ func (s *Service) HandleSlashCommand(
 	}
 
 	arg := strings.ToLower(cmd.Text)
-	if arg != "" && arg != slashCommandBindArg {
+	if arg != "" && arg != slashCommandLoginArg && arg != slashCommandLoginAliasArg {
 		return ephemeralSlashResponse(bindSlashUsageText, nil)
 	}
 

@@ -24,14 +24,14 @@ const (
 	SlashCommandName = "/probot"
 
 	bindRequiredText = "I can't help until your Probo account is linked. " +
-		"Run `/probot bind` — I'll send you a private link."
+		"Run `/probot login` — I'll send you a private link."
 
 	bindSlashAlreadyLinkedText = "Your Probo account is already linked."
 	bindSlashLinkedText        = "Your Probo account is linked."
-	bindSlashUsageText         = "Usage: `/probot bind`"
+	bindSlashUsageText         = "Usage: `/probot login`"
 	bindSlashUnavailableText   = "Probot is not available in this workspace."
 	bindSlashFallbackText      = "Link your Probo account to use the Probo Slack assistant."
-	bindSlashFailedText        = "I couldn't create a link right now. Try `/probot bind` again."
+	bindSlashFailedText        = "I couldn't create a link right now. Try `/probot login` again."
 )
 
 func bindRequiredBlocks(bindURL string) []any {

@@ -6352,7 +6352,7 @@
     "messages": { "linked": "Votre compte Slack est maintenant lié à Probo." },
     "missingToken": {
       "title": "Aucun lien de confirmation",
-      "description": "Dans Slack, exécutez /probot bind pour recevoir un lien de confirmation privé."
+      "description": "Dans Slack, exécutez /probot login pour recevoir un lien de confirmation privé."
     },
     "errors": {
       "linkFailed": "Échec de la liaison",
@@ -6368,7 +6368,7 @@
     "actions": { "unlink": "Délier" },
     "empty": {
       "title": "Aucun compte Slack lié",
-      "description": "Dans Slack, exécutez /probot bind pour recevoir un lien de confirmation privé."
+      "description": "Dans Slack, exécutez /probot login pour recevoir un lien de confirmation privé."
     },
     "messages": { "unlinked": "Compte Slack délié." },
     "errors": { "unlinkFailed": "Impossible de délier ce compte." },

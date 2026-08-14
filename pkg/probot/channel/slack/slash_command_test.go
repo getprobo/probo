@@ -43,7 +43,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 	bindURL := "https://console.example.com/organizations/org/employee/bind?token=test"
 
 	t.Run(
-		"returns an ephemeral bind link",
+		"returns an ephemeral login link",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -53,7 +53,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 				ctx,
 				SlashCommand{
 					Command:    SlashCommandName,
-					Text:       "bind",
+					Text:       "login",
 					UserID:     "U456",
 					UserName:   "ada",
 					TeamID:     "T789",
@@ -80,7 +80,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 	)
 
 	t.Run(
-		"treats empty text as bind",
+		"treats empty text as login",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -90,6 +90,29 @@ func TestService_HandleSlashCommand(t *testing.T) {
 				ctx,
 				SlashCommand{
 					Command: SlashCommandName,
+					UserID:  "U456",
+					TeamID:  "T789",
+				},
+			)
+
+			assert.Equal(t, SlashResponseTypeEphemeral, response.ResponseType)
+			require.NotEmpty(t, response.Blocks)
+			assert.Equal(t, IdentitySubject("T789", "U456"), bindings.bindSubject)
+		},
+	)
+
+	t.Run(
+		"accepts bind as a login alias",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bindings := &stubBindingGate{bindURL: bindURL}
+			handler := &Service{bindings: bindings, logger: log.NewLogger()}
+			response := handler.HandleSlashCommand(
+				ctx,
+				SlashCommand{
+					Command: SlashCommandName,
+					Text:    "bind",
 					UserID:  "U456",
 					TeamID:  "T789",
 				},
@@ -117,7 +140,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 				ctx,
 				SlashCommand{
 					Command: SlashCommandName,
-					Text:    "bind",
+					Text:    "login",
 					UserID:  "U456",
 					TeamID:  "T789",
 				},
@@ -165,7 +188,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 				ctx,
 				SlashCommand{
 					Command: SlashCommandName,
-					Text:    "bind",
+					Text:    "login",
 					TeamID:  "T789",
 				},
 			)
@@ -191,7 +214,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 				ctx,
 				SlashCommand{
 					Command: SlashCommandName,
-					Text:    "bind",
+					Text:    "login",
 					UserID:  "U456",
 					TeamID:  uniqueSlackTeamID(t),
 				},
@@ -240,7 +263,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 				ctx,
 				SlashCommand{
 					Command:     SlashCommandName,
-					Text:        "bind",
+					Text:        "login",
 					UserID:      userID,
 					TeamID:      teamID,
 					ResponseURL: responseURL,

@@ -6348,7 +6348,7 @@
     "messages": { "linked": "Uw Slack-account is nu gekoppeld aan Probo." },
     "missingToken": {
       "title": "Geen bevestigingslink",
-      "description": "Voer in Slack /probot bind uit om een privé bevestigingslink te ontvangen."
+      "description": "Voer in Slack /probot login uit om een privé bevestigingslink te ontvangen."
     },
     "errors": {
       "linkFailed": "Koppelen mislukt",
@@ -6364,7 +6364,7 @@
     "actions": { "unlink": "Ontkoppelen" },
     "empty": {
       "title": "Geen Slack-account gekoppeld",
-      "description": "Voer in Slack /probot bind uit om een privé bevestigingslink te ontvangen."
+      "description": "Voer in Slack /probot login uit om een privé bevestigingslink te ontvangen."
     },
     "messages": { "unlinked": "Slack-account ontkoppeld." },
     "errors": { "unlinkFailed": "Dit account kon niet worden ontkoppeld." },

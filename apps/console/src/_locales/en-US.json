@@ -2817,7 +2817,7 @@
     "messages": { "linked": "Your Slack account is now linked to Probo." },
     "missingToken": {
       "title": "No confirmation link",
-      "description": "Run /probot bind in Slack to get a private confirmation link."
+      "description": "Run /probot login in Slack to get a private confirmation link."
     },
     "errors": {
       "linkFailed": "Link failed",
@@ -2833,7 +2833,7 @@
     "actions": { "unlink": "Unlink" },
     "empty": {
       "title": "No Slack account linked",
-      "description": "Run /probot bind in Slack to get a private confirmation link."
+      "description": "Run /probot login in Slack to get a private confirmation link."
     },
     "messages": { "unlinked": "Slack account unlinked." },
     "errors": { "unlinkFailed": "Could not unlink this account." },
