@@ -190,10 +190,6 @@
       "alt": "compliance portal dark logo",
       "uploadDescription": "Upload dark logo image (PNG, JPG, SVG, WEBP up to 5MB)"
     },
-    "visualIdentity": {
-      "title": "Visual identity",
-      "description": "Square logos displayed on your public compliance portal."
-    },
     "domains": {
       "title": "Domains",
       "description": "Your compliance portal is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own.",
@@ -848,6 +844,12 @@
       "audits": "Audits",
       "documents": "Documents",
       "files": "Files"
+    }
+  },
+  "landingLayout": {
+    "tabs": {
+      "branding": "Branding",
+      "content": "Content"
     }
   }
 }

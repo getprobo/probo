@@ -82,7 +82,19 @@ export const compliancePortalRoutes = [
       {
         path: "landing",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/landing/CompliancePortalLandingPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/landing/CompliancePortalLandingLayoutLoader")),
+        children: [
+          {
+            index: true,
+            Fallback: LinkCardSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/landing/branding/CompliancePortalBrandingPageLoader")),
+          },
+          {
+            path: "content",
+            Fallback: LinkCardSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/landing/content/CompliancePortalContentPageLoader")),
+          },
+        ],
       },
       {
         path: "documents",

@@ -21,29 +21,22 @@
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePortalLandingPageQuery } from "#/__generated__/core/CompliancePortalLandingPageQuery.graphql";
+import type { CompliancePortalContentPageQuery } from "#/__generated__/core/CompliancePortalContentPageQuery.graphql";
 
-import { CompliancePortalCommitmentGroupList } from "./_components/CompliancePortalCommitmentGroupList";
-import { CompliancePortalCustomLinksSection } from "./_components/CompliancePortalCustomLinksSection";
-import { CompliancePortalFrameworksSection } from "./_components/CompliancePortalFrameworksSection";
-import { CompliancePortalProfileSection } from "./_components/CompliancePortalProfileSection";
-import { CompliancePortalReferencesSection } from "./_components/CompliancePortalReferencesSection";
-import { CompliancePortalVisualIdentitySection } from "./_components/CompliancePortalVisualIdentitySection";
+import { CompliancePortalCommitmentGroupList } from "../_components/CompliancePortalCommitmentGroupList";
+import { CompliancePortalFrameworksSection } from "../_components/CompliancePortalFrameworksSection";
+import { CompliancePortalReferencesSection } from "../_components/CompliancePortalReferencesSection";
 
-export const compliancePortalLandingPageQuery = graphql`
-  query CompliancePortalLandingPageQuery($compliancePortalId: ID!) {
+export const compliancePortalContentPageQuery = graphql`
+  query CompliancePortalContentPageQuery($compliancePortalId: ID!) {
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
         id
-        canListCustomLinks: permission(action: "compliance-portal:compliance-custom-link:list")
         canListFrameworks: permission(action: "compliance-portal:compliance-framework:list")
         canListCommitmentGroups: permission(action: "compliance-portal:commitment-group:list")
         canListReferences: permission(action: "compliance-portal:portal-reference:list")
         canCreateGroup: permission(action: "compliance-portal:commitment-group:create")
-        ...CompliancePortalProfileSection_compliancePortalFragment
-        ...CompliancePortalVisualIdentitySection_compliancePortalFragment
-        ...CompliancePortalCustomLinksSection_compliancePortalFragment
         ...CompliancePortalFrameworksSectionFragment
         ...CompliancePortalCommitmentGroupListFragment
         ...CompliancePortalReferencesSectionFragment
@@ -52,13 +45,13 @@ export const compliancePortalLandingPageQuery = graphql`
   }
 `;
 
-interface CompliancePortalLandingPageProps {
-  queryRef: PreloadedQuery<CompliancePortalLandingPageQuery>;
+interface CompliancePortalContentPageProps {
+  queryRef: PreloadedQuery<CompliancePortalContentPageQuery>;
 }
 
-export function CompliancePortalLandingPage({ queryRef }: CompliancePortalLandingPageProps) {
-  const { compliancePortal } = usePreloadedQuery<CompliancePortalLandingPageQuery>(
-    compliancePortalLandingPageQuery,
+export function CompliancePortalContentPage({ queryRef }: CompliancePortalContentPageProps) {
+  const { compliancePortal } = usePreloadedQuery<CompliancePortalContentPageQuery>(
+    compliancePortalContentPageQuery,
     queryRef,
   );
   if (compliancePortal.__typename !== "CompliancePortal") {
@@ -67,14 +60,6 @@ export function CompliancePortalLandingPage({ queryRef }: CompliancePortalLandin
 
   return (
     <div className="space-y-8">
-      {compliancePortal.canListCustomLinks && (
-        <>
-          <CompliancePortalProfileSection compliancePortalRef={compliancePortal} />
-          <CompliancePortalVisualIdentitySection compliancePortalRef={compliancePortal} />
-          <CompliancePortalCustomLinksSection compliancePortalRef={compliancePortal} />
-        </>
-      )}
-
       {compliancePortal.canListFrameworks && (
         <CompliancePortalFrameworksSection fragmentRef={compliancePortal} />
       )}

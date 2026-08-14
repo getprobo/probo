@@ -22,15 +22,15 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { CompliancePortalLandingPageQuery } from "#/__generated__/core/CompliancePortalLandingPageQuery.graphql";
+import type { CompliancePortalContentPageQuery } from "#/__generated__/core/CompliancePortalContentPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
-import { CompliancePortalLandingPage, compliancePortalLandingPageQuery } from "./CompliancePortalLandingPage";
+import { CompliancePortalContentPage, compliancePortalContentPageQuery } from "./CompliancePortalContentPage";
 
-export default function CompliancePortalLandingPageLoader() {
+export default function CompliancePortalContentPageLoader() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalLandingPageQuery>(
-    compliancePortalLandingPageQuery,
+  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalContentPageQuery>(
+    compliancePortalContentPageQuery,
   );
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function CompliancePortalLandingPageLoader() {
 
   return (
     <Suspense fallback={<LinkCardSkeleton />}>
-      <CompliancePortalLandingPage queryRef={queryRef} />
+      <CompliancePortalContentPage queryRef={queryRef} />
     </Suspense>
   );
 }

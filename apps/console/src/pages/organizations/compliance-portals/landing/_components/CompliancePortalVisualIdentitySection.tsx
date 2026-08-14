@@ -14,11 +14,9 @@
 
 import {
   Button,
-  Card,
   FileButton,
   IconTrashCan,
   Label,
-  Spinner,
   useToast,
 } from "@probo/ui";
 import { type ChangeEventHandler, useState } from "react";
@@ -180,129 +178,115 @@ export function CompliancePortalVisualIdentitySection(props: CompliancePortalVis
   const currentDarkLogoUrl = darkLogoPreview || compliancePortal.darkLogo?.downloadUrl;
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-medium">{t("brandPage.visualIdentity.title")}</h2>
-          <p className="text-sm text-txt-tertiary">
-            {t("brandPage.visualIdentity.description")}
-          </p>
+    <div className="flex gap-6 items-start">
+      <div className="flex-1">
+        <Label>{t("brandPage.logo.label")}</Label>
+        <p className="text-sm text-txt-tertiary mb-3">
+          {t("brandPage.logo.description")}
+        </p>
+
+        <div className="flex items-center gap-4">
+          {currentLogoUrl
+            ? (
+                <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
+                  <img
+                    src={currentLogoUrl}
+                    alt={t("brandPage.logo.alt")}
+                    className="h-16 max-w-xs object-contain"
+                  />
+                </div>
+              )
+            : (
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-surface-secondary text-xs text-txt-tertiary">
+                  {t("brandPage.actions.noLogo")}
+                </div>
+              )}
+          <div className="space-y-1">
+            <FileButton
+              disabled={disabled}
+              onChange={handleLogoChange}
+              variant="secondary"
+              accept={acceptImageMimeTypes}
+            >
+              {isUpdating
+                ? t("brandPage.actions.uploading")
+                : currentLogoUrl
+                  ? t("brandPage.actions.changeLogo")
+                  : t("brandPage.actions.uploadLogo")}
+            </FileButton>
+            {!currentLogoUrl && (
+              <p className="text-xs text-txt-tertiary">
+                {t("brandPage.logo.uploadDescription")}
+              </p>
+            )}
+          </div>
+          {currentLogoUrl && (
+            <Button
+              type="button"
+              variant="quaternary"
+              icon={IconTrashCan}
+              onClick={() => void handleRemoveLogo()}
+              disabled={disabled}
+              aria-label={t("brandPage.actions.removeLogo")}
+              className="text-red-600 hover:text-red-700"
+            />
+          )}
         </div>
-        {isUpdating && <Spinner />}
       </div>
+      <div className="flex-1">
+        <Label>{t("brandPage.darkLogo.label")}</Label>
+        <p className="text-sm text-txt-tertiary mb-3">
+          {t("brandPage.darkLogo.description")}
+        </p>
 
-      <Card padded className="space-y-4">
-        <div className="flex gap-6 items-start">
-          <div className="flex-1">
-            <Label>{t("brandPage.logo.label")}</Label>
-            <p className="text-sm text-txt-tertiary mb-3">
-              {t("brandPage.logo.description")}
-            </p>
-
-            <div className="flex items-center gap-4">
-              {currentLogoUrl
-                ? (
-                    <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
-                      <img
-                        src={currentLogoUrl}
-                        alt={t("brandPage.logo.alt")}
-                        className="h-16 max-w-xs object-contain"
-                      />
-                    </div>
-                  )
-                : (
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-surface-secondary text-xs text-txt-tertiary">
-                      {t("brandPage.actions.noLogo")}
-                    </div>
-                  )}
-              <div className="space-y-1">
-                <FileButton
-                  disabled={disabled}
-                  onChange={handleLogoChange}
-                  variant="secondary"
-                  accept={acceptImageMimeTypes}
-                >
-                  {isUpdating
-                    ? t("brandPage.actions.uploading")
-                    : currentLogoUrl
-                      ? t("brandPage.actions.changeLogo")
-                      : t("brandPage.actions.uploadLogo")}
-                </FileButton>
-                {!currentLogoUrl && (
-                  <p className="text-xs text-txt-tertiary">
-                    {t("brandPage.logo.uploadDescription")}
-                  </p>
-                )}
-              </div>
-              {currentLogoUrl && (
-                <Button
-                  type="button"
-                  variant="quaternary"
-                  icon={IconTrashCan}
-                  onClick={() => void handleRemoveLogo()}
-                  disabled={disabled}
-                  aria-label={t("brandPage.actions.removeLogo")}
-                  className="text-red-600 hover:text-red-700"
-                />
+        <div className="flex items-center gap-4">
+          {currentDarkLogoUrl
+            ? (
+                <div className="border border-border-solid rounded-md p-4 bg-gray-900">
+                  <img
+                    src={currentDarkLogoUrl}
+                    alt={t("brandPage.darkLogo.alt")}
+                    className="h-16 max-w-xs object-contain"
+                  />
+                </div>
+              )
+            : (
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-gray-900 text-xs text-txt-tertiary">
+                  {t("brandPage.actions.noLogo")}
+                </div>
               )}
-            </div>
+          <div className="space-y-1">
+            <FileButton
+              disabled={disabled}
+              onChange={handleDarkLogoChange}
+              variant="secondary"
+              accept={acceptImageMimeTypes}
+            >
+              {isUpdating
+                ? t("brandPage.actions.uploading")
+                : currentDarkLogoUrl
+                  ? t("brandPage.actions.changeDarkLogo")
+                  : t("brandPage.actions.uploadDarkLogo")}
+            </FileButton>
+            {!currentDarkLogoUrl && (
+              <p className="text-xs text-txt-tertiary">
+                {t("brandPage.darkLogo.uploadDescription")}
+              </p>
+            )}
           </div>
-          <div className="flex-1">
-            <Label>{t("brandPage.darkLogo.label")}</Label>
-            <p className="text-sm text-txt-tertiary mb-3">
-              {t("brandPage.darkLogo.description")}
-            </p>
-
-            <div className="flex items-center gap-4">
-              {currentDarkLogoUrl
-                ? (
-                    <div className="border border-border-solid rounded-md p-4 bg-gray-900">
-                      <img
-                        src={currentDarkLogoUrl}
-                        alt={t("brandPage.darkLogo.alt")}
-                        className="h-16 max-w-xs object-contain"
-                      />
-                    </div>
-                  )
-                : (
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-gray-900 text-xs text-txt-tertiary">
-                      {t("brandPage.actions.noLogo")}
-                    </div>
-                  )}
-              <div className="space-y-1">
-                <FileButton
-                  disabled={disabled}
-                  onChange={handleDarkLogoChange}
-                  variant="secondary"
-                  accept={acceptImageMimeTypes}
-                >
-                  {isUpdating
-                    ? t("brandPage.actions.uploading")
-                    : currentDarkLogoUrl
-                      ? t("brandPage.actions.changeDarkLogo")
-                      : t("brandPage.actions.uploadDarkLogo")}
-                </FileButton>
-                {!currentDarkLogoUrl && (
-                  <p className="text-xs text-txt-tertiary">
-                    {t("brandPage.darkLogo.uploadDescription")}
-                  </p>
-                )}
-              </div>
-              {currentDarkLogoUrl && (
-                <Button
-                  type="button"
-                  variant="quaternary"
-                  icon={IconTrashCan}
-                  onClick={() => void handleRemoveDarkLogo()}
-                  disabled={disabled}
-                  aria-label={t("brandPage.actions.removeDarkLogo")}
-                  className="text-red-600 hover:text-red-700"
-                />
-              )}
-            </div>
-          </div>
+          {currentDarkLogoUrl && (
+            <Button
+              type="button"
+              variant="quaternary"
+              icon={IconTrashCan}
+              onClick={() => void handleRemoveDarkLogo()}
+              disabled={disabled}
+              aria-label={t("brandPage.actions.removeDarkLogo")}
+              className="text-red-600 hover:text-red-700"
+            />
+          )}
         </div>
-      </Card>
-    </section>
+      </div>
+    </div>
   );
 }

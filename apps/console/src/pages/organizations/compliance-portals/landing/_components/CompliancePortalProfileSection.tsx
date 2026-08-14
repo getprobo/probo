@@ -22,6 +22,8 @@ import { useUpdateCompliancePortalMutation } from "#/hooks/graph/CompliancePorta
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
 
+import { CompliancePortalVisualIdentitySection } from "./CompliancePortalVisualIdentitySection";
+
 const compliancePortalFragment = graphql`
   fragment CompliancePortalProfileSection_compliancePortalFragment on CompliancePortal {
     id
@@ -31,6 +33,7 @@ const compliancePortalFragment = graphql`
     email
     headquarterAddress
     canUpdate: permission(action: "compliance-portal:portal:update")
+    ...CompliancePortalVisualIdentitySection_compliancePortalFragment
   }
 `;
 
@@ -49,10 +52,11 @@ export function CompliancePortalProfileSection(props: {
 }) {
   const { t } = useTranslation("organizations/compliance-portals");
 
-  const { canUpdate, ...compliancePortal } = useFragment(
+  const compliancePortal = useFragment(
     compliancePortalFragment,
     props.compliancePortalRef,
   );
+  const { canUpdate } = compliancePortal;
 
   const [updateCompliancePortal, isUpdating] = useUpdateCompliancePortalMutation();
 
@@ -112,6 +116,7 @@ export function CompliancePortalProfileSection(props: {
             rows={3}
           />
         </div>
+        <CompliancePortalVisualIdentitySection compliancePortalRef={compliancePortal} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field
             {...register("websiteUrl")}

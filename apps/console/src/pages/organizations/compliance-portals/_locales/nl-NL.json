@@ -190,10 +190,6 @@
       "alt": "Donker logo van compliancepagina",
       "uploadDescription": "Upload een donkere logoafbeelding (PNG, JPG, SVG, WEBP tot 5 MB)"
     },
-    "visualIdentity": {
-      "title": "Visuele identiteit",
-      "description": "Vierkante logo's die worden weergegeven op uw publieke compliancepagina."
-    },
     "domains": {
       "title": "Domeinen",
       "description": "Uw compliancepagina is altijd beschikbaar op het standaard probopage.com-subdomein. U kunt deze ook aanbieden op een eigen aangepast domein.",
@@ -848,6 +844,12 @@
       "audits": "Audits",
       "documents": "Documenten",
       "files": "Bestanden"
+    }
+  },
+  "landingLayout": {
+    "tabs": {
+      "branding": "Huisstijl",
+      "content": "Inhoud"
     }
   }
 }

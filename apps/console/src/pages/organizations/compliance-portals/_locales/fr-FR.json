@@ -190,10 +190,6 @@
       "alt": "Logo sombre de la portail de conformité",
       "uploadDescription": "Téléversez une image de logo sombre (PNG, JPG, SVG, WEBP jusqu’à 5 Mo)"
     },
-    "visualIdentity": {
-      "title": "Identité visuelle",
-      "description": "Logos carrés affichés sur votre portail de conformité publique."
-    },
     "domains": {
       "title": "Domaines",
       "description": "Votre portail de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé.",
@@ -848,6 +844,12 @@
       "audits": "Audits",
       "documents": "Documents",
       "files": "Fichiers"
+    }
+  },
+  "landingLayout": {
+    "tabs": {
+      "branding": "Identité",
+      "content": "Contenu"
     }
   }
 }
