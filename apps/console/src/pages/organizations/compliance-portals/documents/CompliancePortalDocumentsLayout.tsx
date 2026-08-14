@@ -72,16 +72,16 @@ export function CompliancePortalDocumentsLayout({ queryRef }: CompliancePortalDo
   return (
     <div className="space-y-6">
       <Tabs>
-        {compliancePortal.canListAudits && (
-          <TabLink to={`${documentsBase}/audits`}>
-            <IconMedal className="size-4" />
-            {t("documentsLayout.tabs.audits")}
-          </TabLink>
-        )}
         {compliancePortal.canListDocuments && (
           <TabLink to={documentsBase} end>
             <IconPageTextLine className="size-4" />
             {t("documentsLayout.tabs.documents")}
+          </TabLink>
+        )}
+        {compliancePortal.canListAudits && (
+          <TabLink to={`${documentsBase}/audits`}>
+            <IconMedal className="size-4" />
+            {t("documentsLayout.tabs.audits")}
           </TabLink>
         )}
         {compliancePortal.canListFiles && (

@@ -129,6 +129,24 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: "riskManagement",
+    segment: "risk-management",
+    icon: WarningIcon,
+    items: [
+      { path: "data", labelKey: "nav.data", permission: "canListData" },
+      { path: "assets", labelKey: "nav.assets", permission: "canListAssets" },
+      { path: "risks", labelKey: "nav.risks", permission: "canListRisks" },
+    ],
+  },
+  {
+    key: "tprm",
+    segment: "tprm",
+    icon: StorefrontIcon,
+    items: [
+      { path: "third-parties", labelKey: "nav.thirdParties", permission: "canListThirdParties" },
+    ],
+  },
+  {
     key: "privacy",
     segment: "privacy",
     icon: LockIcon,
@@ -143,29 +161,11 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    key: "tprm",
-    segment: "tprm",
-    icon: StorefrontIcon,
-    items: [
-      { path: "third-parties", labelKey: "nav.thirdParties", permission: "canListThirdParties" },
-    ],
-  },
-  {
     key: "itam",
     segment: "itam",
     icon: LaptopIcon,
     items: [
       { path: "devices", labelKey: "nav.devices", permission: "canListDevices" },
-    ],
-  },
-  {
-    key: "riskManagement",
-    segment: "risk-management",
-    icon: WarningIcon,
-    items: [
-      { path: "data", labelKey: "nav.data", permission: "canListData" },
-      { path: "assets", labelKey: "nav.assets", permission: "canListAssets" },
-      { path: "risks", labelKey: "nav.risks", permission: "canListRisks" },
     ],
   },
   {
