@@ -133,3 +133,38 @@ func TestCompliancePortalRequest(t *testing.T) {
 		)
 	}
 }
+
+func TestNormalizeCompliancePortalHost(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		value    string
+		expected string
+	}{
+		{
+			name:     "normalizes case and trailing dot",
+			value:    "Portal.Example.com.",
+			expected: "portal.example.com",
+		},
+		{
+			name:     "removes port",
+			value:    "portal.example.com:443",
+			expected: "portal.example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				actual, ok := normalizeCompliancePortalHost(tt.value)
+
+				assert.True(t, ok)
+				assert.Equal(t, tt.expected, actual)
+			},
+		)
+	}
+}

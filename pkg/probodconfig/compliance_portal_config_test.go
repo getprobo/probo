@@ -43,6 +43,10 @@ func TestParseCompliancePortalTLSMode(t *testing.T) {
 			expected: probodconfig.CompliancePortalTLSModeDirect,
 		},
 		{
+			name:     "empty defaults to direct",
+			expected: probodconfig.CompliancePortalTLSModeDirect,
+		},
+		{
 			name:     "external",
 			value:    "external",
 			expected: probodconfig.CompliancePortalTLSModeExternal,
