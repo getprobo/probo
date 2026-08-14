@@ -21,6 +21,7 @@
 import { Menu } from "@base-ui/react/menu";
 import { CheckIcon } from "@phosphor-icons/react";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import { navPanelSwitcher } from "./NavPanelSwitcher";
@@ -28,20 +29,22 @@ import { navPanelSwitcher } from "./NavPanelSwitcher";
 export interface NavPanelSwitcherListItemProps {
   to: string;
   name: string;
-  detail: string;
+  detail?: string;
+  leading?: ReactNode;
   selected: boolean;
 }
 
 /**
  * One entity in a product-panel switcher.
  *
- * Name and detail stack because a single truncated line cannot tell two
- * similar entities apart. The check marks the entity the URL is on.
+ * Name and optional detail stack because a single truncated line cannot tell
+ * two similar entities apart. The check marks the entity the URL is on.
  */
 export function NavPanelSwitcherListItem({
   to,
   name,
   detail,
+  leading,
   selected,
 }: NavPanelSwitcherListItemProps) {
   const slots = navPanelSwitcher();
@@ -51,13 +54,16 @@ export function NavPanelSwitcherListItem({
       className={slots.item()}
       render={<Link to={to} />}
     >
+      {leading}
       <span className={slots.itemBody()}>
         <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
           {name}
         </Text>
-        <Text size={1} color="faint" className={slots.itemOrigin()}>
-          {detail}
-        </Text>
+        {detail != null && detail !== "" && (
+          <Text size={1} color="faint" className={slots.itemOrigin()}>
+            {detail}
+          </Text>
+        )}
       </span>
       {selected && <CheckIcon className={slots.itemCheck()} />}
     </Menu.Item>

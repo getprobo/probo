@@ -123,12 +123,14 @@ export function NavPanel({ organizationKey }: NavPanelProps) {
                   </Suspense>
                 );
                 // A sole switcher already sits under the product title; a
-                // second heading would only repeat it.
-                if (activeGroup.items.length === 1) {
-                  return <Fragment key={item.path}>{switcher}</Fragment>;
+                // heading: false switcher sits under a sibling that names the
+                // resource. The path is shared with that sibling, so the key
+                // has to mark this branch.
+                if (activeGroup.items.length === 1 || item.heading === false) {
+                  return <Fragment key={`switcher:${item.path}`}>{switcher}</Fragment>;
                 }
                 return (
-                  <NavPanelGroup key={item.path} label={t(item.labelKey)}>
+                  <NavPanelGroup key={`switcher:${item.path}`} label={t(item.labelKey)}>
                     {switcher}
                   </NavPanelGroup>
                 );
@@ -139,6 +141,7 @@ export function NavPanel({ organizationKey }: NavPanelProps) {
                   key={item.path}
                   label={t(item.labelKey)}
                   to={navItemHref(organizationId, activeGroup, item)}
+                  exact={item.exact}
                 />
               );
             })}

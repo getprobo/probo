@@ -2441,6 +2441,7 @@
     "users": "Utilisateurs",
     "authProvisioning": "Auth. et provisionnement",
     "auditLog": "Journal d’audit",
+    "allThirdParties": "Tous les tiers",
     "thirdParties": "Tiers",
     "documents": "Documents",
     "assets": "Actifs",
@@ -2478,6 +2479,12 @@
       "new": "Nouvelle bannière",
       "create": "Nouvelle bannière de cookies",
       "empty": "Aucune bannière de cookies",
+      "loading": "Chargement…"
+    },
+    "thirdPartySwitcher": {
+      "select": "Sélectionner un tiers",
+      "create": "Nouveau tiers",
+      "empty": "Aucun tiers",
       "loading": "Chargement…"
     },
     "compliancePortalSwitcher": {

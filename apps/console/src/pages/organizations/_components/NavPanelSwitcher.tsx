@@ -48,10 +48,15 @@ export const navPanelSwitcher = tv({
       "cursor-pointer outline-none transition-colors select-none",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     ],
-    value: "min-w-0 flex-1 truncate text-left",
+    value: "flex min-w-0 flex-1 items-center gap-2 text-left",
     valueCaret: "size-4 shrink-0",
+    // Selected siblings use a gold fill that otherwise kisses this outlined
+    // trigger. Collapse when this is the first or last child so a sole
+    // switcher does not drop away from the product title or leave a hole
+    // at the foot of the column.
+    root: "mt-2 mb-2 first:mt-0 last:mb-0",
     // Switcher plus a trailing action (open-in-new-tab) on one row.
-    row: "flex items-center gap-1",
+    row: "mt-2 mb-2 flex items-center gap-1 first:mt-0 last:mb-0",
     rowTrigger: "min-w-0 flex-1",
     // No [&_svg] size: Phosphor `size` on the icon is the source of truth.
     openLink: [
@@ -95,19 +100,21 @@ export function NavPanelSwitcher({ active, onOpenChange, value, children }: NavP
   const slots = navPanelSwitcher({ outlined: !active, active });
 
   return (
-    <Dropdown onOpenChange={onOpenChange}>
-      <DropdownTrigger
-        render={(
-          <button type="button" className={slots.trigger()}>
-            <span className={slots.value()}>{value}</span>
-            <CaretDownIcon className={slots.valueCaret()} />
-          </button>
-        )}
-      />
-      <DropdownPopup side="bottom" align="start" className={slots.popup()}>
-        {children}
-      </DropdownPopup>
-    </Dropdown>
+    <div className={slots.root()}>
+      <Dropdown onOpenChange={onOpenChange}>
+        <DropdownTrigger
+          render={(
+            <button type="button" className={slots.trigger()}>
+              <span className={slots.value()}>{value}</span>
+              <CaretDownIcon className={slots.valueCaret()} />
+            </button>
+          )}
+        />
+        <DropdownPopup side="bottom" align="start" className={slots.popup()}>
+          {children}
+        </DropdownPopup>
+      </Dropdown>
+    </div>
   );
 }
 

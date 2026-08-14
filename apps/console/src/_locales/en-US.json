@@ -2440,6 +2440,7 @@
     "users": "Users",
     "authProvisioning": "Auth & Provisioning",
     "auditLog": "Audit Log",
+    "allThirdParties": "All Third Parties",
     "thirdParties": "Third parties",
     "documents": "Documents",
     "assets": "Assets",
@@ -2478,6 +2479,12 @@
       "new": "New Banner",
       "create": "New cookie banner",
       "empty": "No cookie banners",
+      "loading": "Loading…"
+    },
+    "thirdPartySwitcher": {
+      "select": "Select Third Party",
+      "create": "New Third Party",
+      "empty": "No third parties",
       "loading": "Loading…"
     },
     "compliancePortalSwitcher": {

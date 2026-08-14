@@ -2441,6 +2441,7 @@
     "users": "Gebruikers",
     "authProvisioning": "Auth & provisioning",
     "auditLog": "Auditlogboek",
+    "allThirdParties": "Alle derde partijen",
     "thirdParties": "Derde partijen",
     "documents": "Documenten",
     "assets": "Assets",
@@ -2478,6 +2479,12 @@
       "new": "Nieuwe banner",
       "create": "Nieuwe cookiebanner",
       "empty": "Geen cookiebanners",
+      "loading": "Laden…"
+    },
+    "thirdPartySwitcher": {
+      "select": "Selecteer derde partij",
+      "create": "Nieuwe derde partij",
+      "empty": "Geen derde partijen",
       "loading": "Laden…"
     },
     "compliancePortalSwitcher": {

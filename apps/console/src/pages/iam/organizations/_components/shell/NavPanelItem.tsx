@@ -26,17 +26,21 @@ import { navPanel } from "./variants";
 export interface NavPanelItemProps {
   label: string;
   to: string;
+  exact?: boolean;
 }
 
 /**
  * One entry of the active product.
  *
  * Active state covers descendants, so a detail page keeps its list highlighted
- * (`/governance/frameworks/:id` still marks Frameworks).
+ * (`/governance/frameworks/:id` still marks Frameworks). `exact` opts out when
+ * a sibling switcher owns those descendant URLs.
  */
-export function NavPanelItem({ label, to }: NavPanelItemProps) {
+export function NavPanelItem({ label, to, exact }: NavPanelItemProps) {
   const { pathname } = useLocation();
-  const active = pathname === to || pathname.startsWith(`${to}/`);
+  const active = exact
+    ? pathname === to
+    : pathname === to || pathname.startsWith(`${to}/`);
 
   const slots = navPanel();
 

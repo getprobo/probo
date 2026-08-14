@@ -79,6 +79,10 @@ export type NavPermission
 /**
  * One panel/rail entry. `kind: "switcher"` is a labelled control rather than
  * a link; `path` is still the URL prefix and the lazy-registry key.
+ *
+ * `exact` keeps a list link from staying gold on a detail URL the switcher
+ * owns. `heading: false` skips the group label when a switcher sits under a
+ * sibling link that already names the resource.
  */
 export type NavLinkItem = {
   /** Path relative to the group segment, e.g. "frameworks". */
@@ -86,8 +90,8 @@ export type NavLinkItem = {
   labelKey: string;
   permission: NavPermission;
 } & (
-  | { kind?: "link" }
-  | { kind: "switcher" }
+  | { kind?: "link"; exact?: boolean }
+  | { kind: "switcher"; heading?: boolean }
 );
 
 /** A labelled cluster of links inside a product panel. */
@@ -150,7 +154,19 @@ export const NAV_GROUPS: NavGroup[] = [
     segment: "tprm",
     icon: StorefrontIcon,
     items: [
-      { path: "third-parties", labelKey: "nav.thirdParties", permission: "canListThirdParties" },
+      {
+        path: "third-parties",
+        labelKey: "nav.allThirdParties",
+        permission: "canListThirdParties",
+        exact: true,
+      },
+      {
+        path: "third-parties",
+        kind: "switcher",
+        heading: false,
+        labelKey: "nav.thirdParties",
+        permission: "canListThirdParties",
+      },
     ],
   },
   {

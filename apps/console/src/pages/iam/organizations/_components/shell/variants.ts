@@ -186,6 +186,6 @@ export const navPanel = tv({
     // Matches the switcher trigger (h-9 rounded-2) at full panel width
     // while a lazy chunk loads. Not ButtonSkeleton: that one is a fixed
     // w-24, and lite tv will not merge a w-full override.
-    groupFallback: "block h-9 w-full animate-pulse rounded-2 bg-sand-3",
+    groupFallback: "mt-2 mb-2 block h-9 w-full animate-pulse rounded-2 bg-sand-3 first:mt-0 last:mb-0",
   },
 });

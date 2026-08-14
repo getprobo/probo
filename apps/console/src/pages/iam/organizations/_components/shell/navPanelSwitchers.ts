@@ -40,6 +40,12 @@ export const navPanelSwitchers = {
     );
     return { default: CompliancePortalSwitcher as ComponentType };
   }),
+  "third-parties": lazy(async () => {
+    const { ThirdPartySwitcher } = await import(
+      "#/pages/organizations/third-parties/_components/ThirdPartySwitcher"
+    );
+    return { default: ThirdPartySwitcher as ComponentType };
+  }),
 } as const;
 
 export function navPanelSwitcher(path: string) {
