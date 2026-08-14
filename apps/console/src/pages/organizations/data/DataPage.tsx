@@ -228,7 +228,7 @@ function DataRow({
   const { t } = useTranslation();
   const deleteDatum = useDeleteDatum(entry, connectionId);
   const thirdParties = entry.thirdParties?.edges.map(edge => edge.node) ?? [];
-  const detailUrl = `/organizations/${organizationId}/risk-management/data/${entry.id}`;
+  const detailUrl = `/organizations/${organizationId}/registries/data/${entry.id}`;
 
   return (
     <Tr to={detailUrl}>

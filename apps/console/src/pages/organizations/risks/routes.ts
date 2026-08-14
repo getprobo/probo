@@ -29,31 +29,25 @@ import { RisksPageSkeleton } from "#/components/skeletons/RisksPageSkeleton";
 
 export const riskRoutes = [
   {
+    path: "risk-analyses",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("./RisksLayoutLoader")),
-    children: [
-      {
-        path: "risks",
-        Fallback: RisksPageSkeleton,
-        Component: lazy(() => import("./RisksPageLoader")),
-      },
-      {
-        path: "risk-analyses",
-        Fallback: PageSkeleton,
-        Component: lazy(
-          () =>
-            import("./risk-analyses/RiskAnalysesPageLoader"),
-        ),
-      },
-      {
-        path: "risk-assessments",
-        loader: () => {
-          // eslint-disable-next-line
-          throw redirect("../risk-analyses");
-        },
-        Component: Fragment,
-      },
-    ],
+    Component: lazy(
+      () =>
+        import("./risk-analyses/RiskAnalysesPageLoader"),
+    ),
+  },
+  {
+    path: "risks",
+    Fallback: RisksPageSkeleton,
+    Component: lazy(() => import("./RisksPageLoader")),
+  },
+  {
+    path: "risk-assessments",
+    loader: () => {
+      // eslint-disable-next-line
+      throw redirect("../risk-analyses");
+    },
+    Component: Fragment,
   },
   {
     path: "risks/:riskId",

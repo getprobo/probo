@@ -43,6 +43,7 @@ const navPanelFragment = graphql`
     canListTasks: permission(action: "core:task:list")
     canListMeasures: permission(action: "core:measure:list")
     canListRisks: permission(action: "core:risk:list")
+    canListRiskAnalyses: permission(action: "core:risk-analysis:list")
     canListFrameworks: permission(action: "core:framework:list")
     canListMembers: permission(action: "iam:membership:list")
     canListThirdParties: permission(action: "core:thirdParty:list")

@@ -2434,7 +2434,8 @@
     "webhooks": "Webhooks",
     "tasks": "Tâches",
     "measures": "Mesures",
-    "risks": "Risques",
+    "risks": "Tous les risques",
+    "riskAnalyses": "Analyses des risques",
     "frameworks": "Référentiels",
     "iam": "IAM",
     "users": "Utilisateurs",
@@ -4949,10 +4950,6 @@
       "residualRisk": "Risque résiduel",
       "owner": "Propriétaire"
     }
-  },
-  "risksTabs": {
-    "risks": "Risques",
-    "riskAnalyses": "Analyses des risques"
   },
   "formRiskDialog": {
     "breadcrumb": {

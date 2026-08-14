@@ -108,7 +108,7 @@ export default function DatumDetailsPage(props: Props) {
   const breadcrumbItems = [
     {
       label: t("datumDetails.breadcrumbs.data"),
-      to: `/organizations/${organizationId}/risk-management/data`,
+      to: `/organizations/${organizationId}/registries/data`,
     },
     {
       label: datumEntry?.name || "",

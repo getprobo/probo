@@ -2433,7 +2433,8 @@
     "webhooks": "Webhooks",
     "tasks": "Tasks",
     "measures": "Measures",
-    "risks": "Risks",
+    "risks": "All Risks",
+    "riskAnalyses": "Risk Analyses",
     "frameworks": "Frameworks",
     "iam": "IAM",
     "users": "Users",
@@ -4949,10 +4950,6 @@
       "residualRisk": "Residual Risk",
       "owner": "Owner"
     }
-  },
-  "risksTabs": {
-    "risks": "Risks",
-    "riskAnalyses": "Risk analyses"
   },
   "formRiskDialog": {
     "breadcrumb": {

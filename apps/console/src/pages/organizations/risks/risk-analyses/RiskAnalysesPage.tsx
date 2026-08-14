@@ -166,7 +166,7 @@ export default function RiskAnalysesPage({ queryRef }: RiskAnalysesPageProps) {
           {riskAnalyses.map(ra => (
             <Tr
               key={ra.id}
-              to={`/organizations/${organizationId}/risk-analyses/${ra.id}`}
+              to={`/organizations/${organizationId}/risk-management/risk-analyses/${ra.id}`}
             >
               <Td className="font-medium">{ra.name}</Td>
               <Td className="text-txt-secondary truncate max-w-xs">

@@ -124,7 +124,7 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
     organizationId,
     RiskAnalysesConnectionKey,
   );
-  const listUrl = `/organizations/${organizationId}/risk-analyses`;
+  const listUrl = `/organizations/${organizationId}/risk-management/risk-analyses`;
   const periodLabel = ra.period
     ? `${ra.period.start ? dateFormat(i18n.language, ra.period.start) : "—"} – ${ra.period.end ? dateFormat(i18n.language, ra.period.end) : "—"}`
     : "—";

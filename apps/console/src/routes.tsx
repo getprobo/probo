@@ -22,7 +22,7 @@ import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import { use } from "react";
+import { Fragment, use } from "react";
 import {
   createBrowserRouter,
   Navigate,
@@ -339,7 +339,41 @@ const routes = [
           },
           {
             path: "risk-management",
-            children: [...dataRoutes, ...assetRoutes, ...riskRoutes],
+            children: [
+              ...riskRoutes,
+              {
+                path: "data",
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("../registries/data");
+                },
+                Component: Fragment,
+              },
+              {
+                path: "data/:dataId",
+                loader: ({ params }) => {
+                  // eslint-disable-next-line
+                  throw redirect(`../registries/data/${params.dataId}`);
+                },
+                Component: Fragment,
+              },
+              {
+                path: "assets",
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("../registries/assets");
+                },
+                Component: Fragment,
+              },
+              {
+                path: "assets/:assetId",
+                loader: ({ params }) => {
+                  // eslint-disable-next-line
+                  throw redirect(`../registries/assets/${params.assetId}`);
+                },
+                Component: Fragment,
+              },
+            ],
           },
 
           {
@@ -349,6 +383,8 @@ const routes = [
           {
             path: "registries",
             children: [
+              ...dataRoutes,
+              ...assetRoutes,
               ...businessFunctionRoutes,
               ...aiSystemRoutes,
               ...obligationRoutes,

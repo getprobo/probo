@@ -2434,7 +2434,8 @@
     "webhooks": "Webhooks",
     "tasks": "Taken",
     "measures": "Maatregelen",
-    "risks": "Risico's",
+    "risks": "Alle risico's",
+    "riskAnalyses": "Risicobeoordelingen",
     "frameworks": "Frameworks",
     "iam": "IAM",
     "users": "Gebruikers",
@@ -4949,10 +4950,6 @@
       "residualRisk": "Restrisico",
       "owner": "Eigenaar"
     }
-  },
-  "risksTabs": {
-    "risks": "Risico's",
-    "riskAnalyses": "Risicobeoordelingen"
   },
   "formRiskDialog": {
     "breadcrumb": {

@@ -50,6 +50,7 @@ export type NavPermission
     | "canListTasks"
     | "canListMeasures"
     | "canListRisks"
+    | "canListRiskAnalyses"
     | "canListFrameworks"
     | "canListMembers"
     | "canListThirdParties"
@@ -136,9 +137,12 @@ export const NAV_GROUPS: NavGroup[] = [
     segment: "risk-management",
     icon: WarningIcon,
     items: [
-      { path: "data", labelKey: "nav.data", permission: "canListData" },
-      { path: "assets", labelKey: "nav.assets", permission: "canListAssets" },
       { path: "risks", labelKey: "nav.risks", permission: "canListRisks" },
+      {
+        path: "risk-analyses",
+        labelKey: "nav.riskAnalyses",
+        permission: "canListRiskAnalyses",
+      },
     ],
   },
   {
@@ -186,6 +190,8 @@ export const NAV_GROUPS: NavGroup[] = [
     segment: "registries",
     icon: BooksIcon,
     items: [
+      { path: "data", labelKey: "nav.data", permission: "canListData" },
+      { path: "assets", labelKey: "nav.assets", permission: "canListAssets" },
       {
         path: "business-functions",
         labelKey: "nav.businessFunctions",
