@@ -147,6 +147,7 @@ func TestLoadAllUnreferencedIDs_DomainsDoNotProtectAnEntry(t *testing.T) {
 		var parties coredata.CommonThirdParties
 
 		var err error
+
 		ids, err = parties.LoadAllUnreferencedIDs(ctx, conn, time.Now().Add(-time.Hour), false)
 
 		return err
