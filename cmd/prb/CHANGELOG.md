@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.217.0] - 2026-08-14
+
+### Added
+
+- `--matrix-rows` / `--matrix-cols` flags (required, 3, 4, or 5) on `prb risk-analysis create` and `update`, shown as a column on `list` and `view`, so the likelihood/impact matrix size is explicit per analysis
+
 ## [0.216.0] - 2026-08-13
 
 ### Added
