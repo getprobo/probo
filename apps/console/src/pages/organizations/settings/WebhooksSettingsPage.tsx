@@ -34,6 +34,7 @@ import {
   IconTrashCan,
   Input,
   Label,
+  PageHeader,
   Spinner,
   useDialogRef,
   useToast,
@@ -645,14 +646,8 @@ export function WebhooksSettingsPage(props: {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-medium">{t("webhooksSettingsPage.title")}</h2>
-          <p className="text-sm text-txt-tertiary">
-            {t("webhooksSettingsPage.description")}
-          </p>
-        </div>
+    <div className="space-y-6">
+      <PageHeader title={t("webhooksSettingsPage.title")}>
         <WebhookFormDialog
           mode="create"
           onSubmit={handleCreate}
@@ -663,7 +658,10 @@ export function WebhooksSettingsPage(props: {
             </Button>
           )}
         />
-      </div>
+      </PageHeader>
+      <p className="text-sm text-txt-tertiary">
+        {t("webhooksSettingsPage.description")}
+      </p>
 
       {webhooks.length === 0
         ? (

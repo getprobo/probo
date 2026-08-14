@@ -69,6 +69,7 @@ export type NavPermission
     | "canGetCompliancePortal"
     | "canListCookieBanners"
     | "canListAuditLogEntries"
+    | "canListWebhookSubscriptions"
     | "canUpdateOrganization";
 
 /**
@@ -202,10 +203,9 @@ export const NAV_GROUPS: NavGroup[] = [
     segment: "settings",
     icon: GearIcon,
     items: [
-      // The organization pages keep their own tab bar, so the panel links to
-      // the first tab rather than repeating every tab as a panel entry.
       { path: "general", labelKey: "nav.organization", permission: "canUpdateOrganization" },
       { path: "context", labelKey: "nav.context", permission: "canGetContext" },
+      { path: "webhooks", labelKey: "nav.webhooks", permission: "canListWebhookSubscriptions" },
       {
         kind: "section",
         key: "iam",

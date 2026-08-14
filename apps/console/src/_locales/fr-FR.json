@@ -2430,6 +2430,7 @@
     },
     "organization": "Organisation",
     "context": "Contexte",
+    "webhooks": "Webhooks",
     "tasks": "Tâches",
     "measures": "Mesures",
     "risks": "Risques",
@@ -2707,14 +2708,6 @@
     "tabs": {
       "samlSso": "SAML SSO",
       "scim": "SCIM"
-    }
-  },
-  "settingsLayout": {
-    "title": "Paramètres",
-    "tabs": {
-      "general": "Général",
-      "webhooks": "Webhooks",
-      "slackBot": "SlackBot"
     }
   },
   "slackBotSettingsPage": {

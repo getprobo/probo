@@ -353,45 +353,36 @@ const routes = [
           {
             path: "settings",
             children: [
+              {
+                index: true,
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("general");
+                },
+              },
+              {
+                path: "general",
+                Fallback: PageSkeleton,
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
+                ),
+              },
               ...contextRoutes,
+              {
+                path: "webhooks",
+                Fallback: PageSkeleton,
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
+                ),
+              },
               ...peopleRoutes,
               ...authRoutes,
               ...auditLogRoutes,
               ...businessFunctionRoutes,
               ...aiSystemRoutes,
               ...obligationRoutes,
-              // Pathless, so the organization pages sit at settings/general
-              // rather than settings/settings/general while still sharing the
-              // tab chrome.
-              {
-                Fallback: PageSkeleton,
-                Component: lazy(
-                  () => import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
-                ),
-                children: [
-                  {
-                    index: true,
-                    loader: () => {
-                      // eslint-disable-next-line
-                      throw redirect("general");
-                    },
-                  },
-                  {
-                    path: "general",
-                    Component: lazy(
-                      () =>
-                        import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
-                    ),
-                  },
-                  {
-                    path: "webhooks",
-                    Component: lazy(
-                      () =>
-                        import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-                    ),
-                  },
-                ],
-              },
             ],
           },
           {

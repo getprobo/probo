@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, IconTrashCan } from "@probo/ui";
+import { Button, Card, IconTrashCan, PageHeader } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
@@ -96,6 +96,7 @@ export function GeneralSettingsPage(props: {
 
   return (
     <div className="space-y-6">
+      <PageHeader title={t("nav.organization")} />
       <OrganizationForm fKey={organization} />
 
       {organization.canDelete && (

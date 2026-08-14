@@ -63,6 +63,7 @@ const navPanelFragment = graphql`
     canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
     canListCookieBanners: permission(action: "core:cookie-banner:list")
     canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
+    canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
     canUpdateOrganization: permission(action: "iam:organization:update")
   }
 `;
