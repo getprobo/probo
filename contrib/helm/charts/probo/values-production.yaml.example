@@ -108,8 +108,8 @@ probo:
 
   trustCenter:
     # Set to "external" when an external L7 proxy terminates TLS and forwards
-    # requests to service.httpPort. Probo's HTTPS port and the bundled HAProxy
-    # HTTPS TCP passthrough are disabled in this mode.
+    # requests privately to service.httpPort. Probo's HTTPS port and all
+    # bundled HAProxy TCP passthrough are disabled in this mode.
     tlsMode: "direct"
 
   # CORS configuration - add all domains that will access the API
