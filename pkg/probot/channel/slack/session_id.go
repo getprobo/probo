@@ -20,8 +20,6 @@
 
 package slack
 
-import "strings"
-
 // sessionIDFor builds a workspace-scoped conversation key so agents cannot
 // collide across teams or channels. Channel threads share one agent.
 //
@@ -53,12 +51,4 @@ func sessionIDFor(
 	}
 
 	return installationTeamID + ":" + channel + ":" + conversation
-}
-
-func teamIDFromSessionID(sessionID string) string {
-	if i := strings.Index(sessionID, ":"); i > 0 {
-		return sessionID[:i]
-	}
-
-	return ""
 }

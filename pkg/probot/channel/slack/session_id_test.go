@@ -80,7 +80,6 @@ func TestSessionIDFor(t *testing.T) {
 				"T1:D1",
 				sessionIDFor("T1", "D1", ChannelTypeIM, "111.000", "222.000"),
 			)
-			assert.Equal(t, "T1", teamIDFromSessionID("T1:D1"))
 		},
 	)
 

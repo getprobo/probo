@@ -64,24 +64,8 @@ type (
 		) (context.Context, agent.AgentRegistry, error)
 	}
 
-	ExecutionPrepareFunc func(
-		ctx context.Context,
-		execution *coredata.AgentExecution,
-		registry agent.AgentRegistry,
-		input *coredata.AgentInput,
-	) (context.Context, agent.AgentRegistry, error)
-
 	defaultExecutionPreparer struct{}
 )
-
-func (f ExecutionPrepareFunc) Prepare(
-	ctx context.Context,
-	execution *coredata.AgentExecution,
-	registry agent.AgentRegistry,
-	input *coredata.AgentInput,
-) (context.Context, agent.AgentRegistry, error) {
-	return f(ctx, execution, registry, input)
-}
 
 func (defaultExecutionPreparer) Prepare(
 	ctx context.Context,
