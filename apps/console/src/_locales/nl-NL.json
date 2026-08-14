@@ -2451,6 +2451,16 @@
     "rightsRequests": "Rechtenverzoeken",
     "accessReviews": "Toegangsbeoordelingen",
     "compliancePortals": "Compliancepagina's",
+    "compliancePortalsSettings": "Instellingen",
+    "compliancePortalsHosting": "Hosting",
+    "compliancePortalsPermissions": "Rechten",
+    "compliancePortalsIntegrations": "Integraties",
+    "compliancePortalsPages": "Pagina's",
+    "compliancePortalsLanding": "Startpagina",
+    "compliancePortalsDocuments": "Documenten",
+    "compliancePortalsSubprocessors": "Subverwerkers",
+    "compliancePortalsUpdates": "Updates",
+    "compliancePortalsRightRequests": "Rechtenverzoeken",
     "cookieBanners": "Cookiebanners",
     "cookieBannersConfigure": "Configureren",
     "cookieBannersDiscovery": "Ontdekking",
@@ -2460,6 +2470,13 @@
       "new": "Nieuwe banner",
       "create": "Nieuwe cookiebanner",
       "empty": "Geen cookiebanners",
+      "loading": "Laden…"
+    },
+    "compliancePortalSwitcher": {
+      "select": "Selecteer portaal",
+      "new": "Nieuw portaal",
+      "create": "Nieuw portaal",
+      "empty": "Geen complianceportalen",
       "loading": "Laden…"
     }
   },

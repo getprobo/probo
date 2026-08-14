@@ -177,6 +177,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       {
         path: "compliance-portals",
+        kind: "switcher",
         labelKey: "nav.compliancePortals",
         permission: "canGetCompliancePortal",
       },

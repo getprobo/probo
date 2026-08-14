@@ -29,7 +29,7 @@ export const compliancePortalRoutes = [
   {
     path: "compliance-portals",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/overview/CompliancePortalsOverviewPageLoader")),
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalsIndexPageLoader")),
   },
   {
     path: "compliance-portals/new",
@@ -63,6 +63,34 @@ export const compliancePortalRoutes = [
       // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw redirect("../compliance-portals");
     },
+  },
+  {
+    path: "compliance-portals/:compliancePortalId/hosting",
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
+  },
+  {
+    path: "compliance-portals/:compliancePortalId/permissions",
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
+  },
+  {
+    path: "compliance-portals/:compliancePortalId/integrations",
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
+  },
+  {
+    path: "compliance-portals/:compliancePortalId/landing",
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
+  },
+  {
+    path: "compliance-portals/:compliancePortalId/subprocessors",
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
+  },
+  {
+    path: "compliance-portals/:compliancePortalId/updates",
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
+  },
+  {
+    path: "compliance-portals/:compliancePortalId/right-requests",
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
   },
   {
     path: "compliance-portals/:compliancePortalId",

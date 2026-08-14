@@ -1,24 +1,8 @@
 {
-  "overviewPage": {
-    "title": "compliance portals",
-    "description": "Manage public compliance portals for your organization. Configure branding, documents, and access controls.",
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive"
-    },
-    "actions": {
-      "create": "Create compliance portal",
-      "createFirst": "Create your first compliance portal"
-      }
-  },
   "newPortalPage": {
     "pageTitle": "New compliance portal",
     "title": "Create compliance portal",
     "description": "Set up a new public compliance portal. Its URL slug is assigned automatically when the page is created.",
-    "breadcrumb": {
-      "root": "compliance portals",
-      "current": "New"
-    },
     "fields": {
       "entityName": {
         "label": "Entity name",
@@ -850,7 +834,6 @@
   },
   "configLayout": {
     "title": "compliance portal",
-    "breadcrumb": "compliance portals",
     "description": "Configure your public compliance portal to showcase your security and compliance posture.",
     "status": {
       "active": "Active",
@@ -871,9 +854,5 @@
       "access": "Access",
       "mailingList": "Mailing List"
     }
-  },
-  "emptyState": {
-    "title": "No compliance portals yet",
-    "description": "Create a public compliance portal to showcase your security posture, certifications, and policies to customers and partners."
   }
 }

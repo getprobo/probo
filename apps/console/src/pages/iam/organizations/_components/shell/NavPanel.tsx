@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense, useMemo } from "react";
+import { Fragment, Suspense, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -97,11 +97,19 @@ export function NavPanel({ organizationKey }: NavPanelProps) {
             {activeGroup.items.map((item) => {
               if (item.kind === "switcher") {
                 const Switcher = navPanelSwitcher(item.path);
+                const switcher = (
+                  <Suspense fallback={<span className={slots.groupFallback()} aria-hidden />}>
+                    <Switcher />
+                  </Suspense>
+                );
+                // A sole switcher already sits under the product title; a
+                // second heading would only repeat it.
+                if (activeGroup.items.length === 1) {
+                  return <Fragment key={item.path}>{switcher}</Fragment>;
+                }
                 return (
                   <NavPanelGroup key={item.path} label={t(item.labelKey)}>
-                    <Suspense fallback={<span className={slots.groupFallback()} aria-hidden />}>
-                      <Switcher />
-                    </Suspense>
+                    {switcher}
                   </NavPanelGroup>
                 );
               }

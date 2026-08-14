@@ -1,24 +1,8 @@
 {
-  "overviewPage": {
-    "title": "Portails de conformité",
-    "description": "Gérez les portails de conformité publiques de votre organisation. Configurez la marque, les documents et les contrôles d’accès.",
-    "status": {
-      "active": "Actif",
-      "inactive": "Inactif"
-    },
-    "actions": {
-      "create": "Créer une portail de conformité",
-      "createFirst": "Créer votre première portail de conformité"
-      }
-  },
   "newPortalPage": {
     "pageTitle": "Nouvelle portail de conformité",
     "title": "Créer une portail de conformité",
     "description": "Configurez une nouvelle portail de conformité publique. Son slug d’URL est attribué automatiquement à la création de la page.",
-    "breadcrumb": {
-      "root": "Portails de conformité",
-      "current": "Nouvelle"
-    },
     "fields": {
       "entityName": {
         "label": "Nom de l’entité",
@@ -850,7 +834,6 @@
   },
   "configLayout": {
     "title": "Portail de conformité",
-    "breadcrumb": "Portails de conformité",
     "description": "Configurez votre portail de conformité publique pour présenter votre posture de sécurité et de conformité.",
     "status": {
       "active": "Actif",
@@ -871,9 +854,5 @@
       "access": "Accès",
       "mailingList": "Liste de diffusion"
     }
-  },
-  "emptyState": {
-    "title": "Aucune portail de conformité",
-    "description": "Créez une portail de conformité publique pour présenter votre posture de sécurité, vos certifications et vos politiques à vos clients et partenaires."
   }
 }

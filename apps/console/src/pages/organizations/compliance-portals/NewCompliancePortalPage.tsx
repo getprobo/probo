@@ -21,7 +21,6 @@
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import {
-  Breadcrumb,
   Button,
   Card,
   Field,
@@ -47,10 +46,7 @@ const createCompliancePortalMutation = graphql`
       compliancePortalEdge @prependEdge(connections: $connections) {
         node {
           id
-          entityName
-          active
-          publicUrl
-          createdAt
+          ...CompliancePortalSwitcherListItem_compliancePortal
         }
       }
     }
@@ -72,7 +68,7 @@ export default function NewCompliancePortalPage() {
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    "CompliancePortalsOverviewPage_compliancePortals",
+    "CompliancePortalSwitcherMenu_compliancePortals",
   );
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -107,17 +103,6 @@ export default function NewCompliancePortalPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("newPortalPage.breadcrumb.root"),
-            to: `/organizations/${organizationId}/compliance-portals`,
-          },
-          {
-            label: t("newPortalPage.breadcrumb.current"),
-          },
-        ]}
-      />
       <PageHeader
         title={t("newPortalPage.title")}
         description={t("newPortalPage.description")}

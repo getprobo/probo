@@ -34,6 +34,12 @@ export const navPanelSwitchers = {
     );
     return { default: CookieBannerSwitcher as ComponentType };
   }),
+  "compliance-portals": lazy(async () => {
+    const { CompliancePortalSwitcher } = await import(
+      "#/pages/organizations/compliance-portals/_components/CompliancePortalSwitcher"
+    );
+    return { default: CompliancePortalSwitcher as ComponentType };
+  }),
 } as const;
 
 export function navPanelSwitcher(path: string) {

@@ -20,7 +20,7 @@
 
 import { safeOpenUrl } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Badge, Breadcrumb, Button, IconBell2, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconShield, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
+import { Badge, Button, IconBell2, IconCheckmark1, IconFolder2, IconMedal, IconPageTextLine, IconPencil, IconPeopleAdd, IconSettingsGear2, IconShield, IconStore, PageHeader, TabLink, Tabs } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Navigate, Outlet, useLocation, useParams } from "react-router";
@@ -86,8 +86,8 @@ export default function CompliancePortalConfigLayout({ queryRef }: CompliancePor
   const portalBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}`;
   const compliancePortalUrl = compliancePortal.publicUrl;
 
-  // Access managers land on the portal root (overview) from the list, but lack
-  // overview permissions — send them to Access instead of a forbidden page.
+  // Access managers land on the portal root (overview) from the switcher, but
+  // lack overview permissions — send them to Access instead of a forbidden page.
   if (
     pathname === portalBase
     && !compliancePortal.canListFrameworks
@@ -98,18 +98,6 @@ export default function CompliancePortalConfigLayout({ queryRef }: CompliancePor
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("configLayout.breadcrumb"),
-            to: `/organizations/${organizationId}/compliance-portals`,
-          },
-          {
-            label: compliancePortal.entityName,
-          },
-        ]}
-      />
-
       <PageHeader
         title={compliancePortal.entityName}
         description={t("configLayout.description")}

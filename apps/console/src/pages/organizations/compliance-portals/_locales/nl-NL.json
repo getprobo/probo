@@ -1,15 +1,8 @@
 {
-  "overviewPage": {
-    "title": "compliancepagina's",
-    "description": "Beheer openbare compliancepagina's voor uw organisatie. Configureer huisstijl, documenten en toegangsbeheer.",
-    "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "create": "Compliancepagina aanmaken", "createFirst": "Maak uw eerste compliancepagina aan" }
-  },
   "newPortalPage": {
     "pageTitle": "Nieuwe compliancepagina",
     "title": "Compliancepagina aanmaken",
     "description": "Stel een nieuwe openbare compliancepagina in. De URL-slug wordt automatisch toegewezen zodra de pagina is aangemaakt.",
-    "breadcrumb": { "root": "compliancepagina's", "current": "Nieuw" },
     "fields": { "entityName": { "label": "Naam van de organisatie", "placeholder": "Acme Corp" } },
     "actions": { "create": "Compliancepagina aanmaken", "creating": "Bezig met aanmaken..." },
     "messages": { "created": "Compliancepagina succesvol aangemaakt", "successTitle": "Succes" },
@@ -341,14 +334,9 @@
   },
   "configLayout": {
     "title": "compliancepagina",
-    "breadcrumb": "compliancepagina's",
     "description": "Configureer uw publieke compliancepagina om uw beveiligings- en compliancepositie te presenteren.",
     "status": { "active": "Actief", "inactive": "Inactief" },
     "actions": { "open": "Openen" },
     "tabs": { "overview": "Overzicht", "brand": "Huisstijl", "references": "Referenties", "commitments": "Toezeggingen", "audits": "Audits", "documents": "Documenten", "files": "Bestanden", "subprocessors": "Subverwerkers", "access": "Toegang", "mailingList": "Mailinglijst" }
-  },
-  "emptyState": {
-    "title": "Nog geen compliancepagina's",
-    "description": "Maak een openbare compliancepagina aan om uw beveiligingspositie, certificeringen en beleid te tonen aan klanten en partners."
   }
 }

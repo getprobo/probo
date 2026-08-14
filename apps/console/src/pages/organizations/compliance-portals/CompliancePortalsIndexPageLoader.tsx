@@ -21,19 +21,19 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { CompliancePortalsOverviewPageQuery } from "#/__generated__/core/CompliancePortalsOverviewPageQuery.graphql";
+import type { CompliancePortalsIndexPageQuery } from "#/__generated__/core/CompliancePortalsIndexPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
-  CompliancePortalsOverviewPage,
-  compliancePortalsOverviewPageQuery,
-} from "./CompliancePortalsOverviewPage";
+  CompliancePortalsIndexPage,
+  compliancePortalsIndexPageQuery,
+} from "./CompliancePortalsIndexPage";
 
-export default function CompliancePortalsOverviewPageLoader() {
+export default function CompliancePortalsIndexPageLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalsOverviewPageQuery>(
-    compliancePortalsOverviewPageQuery,
+  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalsIndexPageQuery>(
+    compliancePortalsIndexPageQuery,
   );
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function CompliancePortalsOverviewPageLoader() {
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <CompliancePortalsOverviewPage queryRef={queryRef} />
+      <CompliancePortalsIndexPage queryRef={queryRef} />
     </Suspense>
   );
 }

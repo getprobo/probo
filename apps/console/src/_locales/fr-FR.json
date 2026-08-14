@@ -2451,6 +2451,16 @@
     "rightsRequests": "Demandes d’exercice de droits",
     "accessReviews": "Revues d’accès",
     "compliancePortals": "Portails de conformité",
+    "compliancePortalsSettings": "Paramètres",
+    "compliancePortalsHosting": "Hébergement",
+    "compliancePortalsPermissions": "Autorisations",
+    "compliancePortalsIntegrations": "Intégrations",
+    "compliancePortalsPages": "Pages",
+    "compliancePortalsLanding": "Accueil",
+    "compliancePortalsDocuments": "Documents",
+    "compliancePortalsSubprocessors": "Sous-traitants",
+    "compliancePortalsUpdates": "Mises à jour",
+    "compliancePortalsRightRequests": "Demandes de droits",
     "cookieBanners": "Bannières de cookies",
     "cookieBannersConfigure": "Configurer",
     "cookieBannersDiscovery": "Découverte",
@@ -2460,6 +2470,13 @@
       "new": "Nouvelle bannière",
       "create": "Nouvelle bannière de cookies",
       "empty": "Aucune bannière de cookies",
+      "loading": "Chargement…"
+    },
+    "compliancePortalSwitcher": {
+      "select": "Sélectionner un portail",
+      "new": "Nouveau portail",
+      "create": "Nouveau portail",
+      "empty": "Aucun portail de conformité",
       "loading": "Chargement…"
     }
   },
