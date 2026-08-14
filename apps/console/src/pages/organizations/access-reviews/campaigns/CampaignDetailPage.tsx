@@ -21,7 +21,6 @@
 import { formatError } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import {
-  Breadcrumb,
   Button,
   Card,
   Dialog,
@@ -794,16 +793,6 @@ export default function CampaignDetailPage({ queryRef }: Props) {
 
   return (
     <div className={page()}>
-      <Breadcrumb
-        items={[
-          {
-            label: t("campaignDetailPage.breadcrumb"),
-            to: `/organizations/${organizationId}/access-reviews/campaigns`,
-          },
-          { label: campaign.name },
-        ]}
-      />
-
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-semibold">
           {campaign.name}

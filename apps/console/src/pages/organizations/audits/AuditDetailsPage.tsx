@@ -29,7 +29,6 @@ import { dateFormat, fileSize } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -176,20 +175,6 @@ export default function AuditDetailsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("auditDetailsPage.breadcrumb.audits"),
-            to: `/organizations/${organizationId}/governance/audits`,
-          },
-          {
-            label:
-              (auditEntry.name || auditEntry.framework?.name)
-              ?? t("auditDetailsPage.unknownAudit"),
-          },
-        ]}
-      />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">

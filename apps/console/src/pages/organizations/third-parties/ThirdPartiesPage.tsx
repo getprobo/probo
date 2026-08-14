@@ -138,7 +138,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
   const thirdParties = fragmentData.thirdParties?.edges.map(edge => edge.node) ?? [];
   const connectionId = fragmentData.thirdParties.__id;
 
-  usePageTitle(t("thirdPartiesPage.title"));
+  usePageTitle(t("nav.allThirdParties"));
 
   const hasAnyAction = thirdParties.some(({ canDelete }) => canDelete);
 
@@ -149,7 +149,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("thirdPartiesPage.title")}
+        title={t("nav.allThirdParties")}
         description={t("thirdPartiesPage.description")}
       >
         <div className="flex gap-2">

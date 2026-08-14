@@ -23,7 +23,6 @@ import {
 } from "@probo/helpers";
 import {
   ActionDropdown,
-  Breadcrumb,
   Button,
   DropdownItem,
   IconCheckmark1,
@@ -83,7 +82,6 @@ export const measureNodeQuery = graphql`
         name
         description
         state
-        category
         canUpdate: permission(action: "core:measure:update")
         canDelete: permission(action: "core:measure:delete")
         canListTasks: permission(action: "core:task:list")
@@ -198,27 +196,6 @@ export default function MeasureDetailPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Breadcrumb
-        items={[
-          {
-            label: t("measureDetailPage.breadcrumb.measures"),
-            to: `/organizations/${organizationId}/governance/measures`,
-          },
-          ...(measure.category
-            ? [
-                {
-                  label: measure.category,
-                  to: `/organizations/${organizationId}/governance/measures?category=${encodeURIComponent(measure.category)}`,
-                },
-              ]
-            : []),
-          {
-            label: t("measureDetailPage.breadcrumb.detail"),
-          },
-        ]}
-      />
-
       <PageHeader title={measure.name} description={measure.description}>
         {!measure.canUpdate && <MeasureBadge state={measure.state!} />}
         {measure.canUpdate && (

@@ -26,7 +26,6 @@ import {
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -331,22 +330,8 @@ export default function FindingDetailsPage(props: Props) {
     { value: "HIGH", label: t("findingDetails.priority.high") },
   ];
 
-  const breadcrumbFindingsUrl = `/organizations/${organizationId}/governance/findings`;
-
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("findingDetails.breadcrumbs.findings"),
-            to: breadcrumbFindingsUrl,
-          },
-          {
-            label: finding.referenceId || t("findingDetails.unknown"),
-          },
-        ]}
-      />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl font-semibold">

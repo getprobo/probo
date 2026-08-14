@@ -72,7 +72,7 @@ export function PeoplePage(props: {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("peoplePage.title")}>
+      <PageHeader title={t("nav.users")}>
         {organization.canCreateUser
           && (
             <AddPersonDialog connectionId={connectionId}>

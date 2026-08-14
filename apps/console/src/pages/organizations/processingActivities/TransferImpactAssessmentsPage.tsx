@@ -81,7 +81,7 @@ export default function TransferImpactAssessmentsPage({
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
-  usePageTitle(t("transferImpactAssessmentsPage.title"));
+  usePageTitle(t("nav.transferImpactAssessments"));
 
   const organization = usePreloadedQuery<ProcessingActivityGraphTIAListQuery>(
     transferImpactAssessmentsQuery,
@@ -118,7 +118,7 @@ export default function TransferImpactAssessmentsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("transferImpactAssessmentsPage.title")}
+        title={t("nav.transferImpactAssessments")}
         description={t("transferImpactAssessmentsPage.description")}
       />
 

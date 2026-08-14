@@ -18,12 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Breadcrumb, PageHeader } from "@probo/ui";
-import { useTranslation } from "react-i18next";
+import { PageHeader } from "@probo/ui";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { TrackerPatternDetailPageQuery } from "#/__generated__/core/TrackerPatternDetailPageQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { TrackerPatternDetectedTrackersSection } from "./_components/TrackerPatternDetectedTrackersSection";
 import { TrackerPatternPropertiesSection } from "./_components/TrackerPatternPropertiesSection";
@@ -35,10 +33,6 @@ export const trackerPatternDetailPageQuery = graphql`
   ) {
     cookieBanner: node(id: $cookieBannerId) @required(action: THROW) {
       __typename
-      ... on CookieBanner {
-        id
-        name
-      }
     }
     node(id: $trackerPatternId) @required(action: THROW) {
       __typename
@@ -59,8 +53,6 @@ interface TrackerPatternDetailPageProps {
 export default function TrackerPatternDetailPage({
   queryRef,
 }: TrackerPatternDetailPageProps) {
-  const { t } = useTranslation("organizations/cookie-banners");
-  const organizationId = useOrganizationId();
   const data = usePreloadedQuery<TrackerPatternDetailPageQuery>(trackerPatternDetailPageQuery, queryRef);
 
   if (data.cookieBanner.__typename !== "CookieBanner") {
@@ -70,27 +62,10 @@ export default function TrackerPatternDetailPage({
     throw new Error("invalid type for node");
   }
 
-  const cookieBanner = data.cookieBanner;
   const pattern = data.node;
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: cookieBanner.name,
-            to: `/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/configure/settings`,
-          },
-          {
-            label: t("trackerPatternDetailPage.breadcrumbs.trackers"),
-            to: `/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/discovery`,
-          },
-          {
-            label: pattern.displayName,
-          },
-        ]}
-      />
-
       <PageHeader title={pattern.displayName} />
 
       <TrackerPatternPropertiesSection trackerPatternKey={pattern} />

@@ -21,7 +21,6 @@
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   DropdownItem,
   Field,
@@ -105,20 +104,8 @@ export default function DatumDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbItems = [
-    {
-      label: t("datumDetails.breadcrumbs.data"),
-      to: `/organizations/${organizationId}/registries/data`,
-    },
-    {
-      label: datumEntry?.name || "",
-    },
-  ];
-
   return (
     <div className="space-y-6">
-      <Breadcrumb items={breadcrumbItems} />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl">{datumEntry?.name}</div>

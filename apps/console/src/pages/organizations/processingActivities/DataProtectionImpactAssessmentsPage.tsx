@@ -81,7 +81,7 @@ export default function DataProtectionImpactAssessmentsPage({
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
-  usePageTitle(t("dataProtectionImpactAssessmentsPage.title"));
+  usePageTitle(t("nav.dataProtectionImpactAssessments"));
 
   const organization = usePreloadedQuery<ProcessingActivityGraphDPIAListQuery>(
     dataProtectionImpactAssessmentsQuery,
@@ -119,7 +119,7 @@ export default function DataProtectionImpactAssessmentsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("dataProtectionImpactAssessmentsPage.title")}
+        title={t("nav.dataProtectionImpactAssessments")}
         description={t("dataProtectionImpactAssessmentsPage.description")}
       />
 

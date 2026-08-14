@@ -26,7 +26,6 @@ import {
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -160,33 +159,20 @@ export default function ObligationDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbObligationsUrl = `/organizations/${organizationId}/registries/obligations`;
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
-        <div>
-          <Breadcrumb
-            items={[
-              {
-                label: t("obligationDetailsPage.breadcrumb.obligations"),
-                to: breadcrumbObligationsUrl,
-              },
-              { label: t("obligationDetailsPage.breadcrumb.details") },
-            ]}
-          />
-          <div className="flex items-center gap-3 mt-2">
-            <h1 className="text-2xl font-bold">
-              {t("obligationDetailsPage.title")}
-            </h1>
-            <Badge
-              variant={getObligationStatusVariant(
-                obligation.status ?? "NON_COMPLIANT",
-              )}
-            >
-              {t(`obligationDetailsPage.statuses.${(obligation.status ?? "NON_COMPLIANT").toLowerCase()}`)}
-            </Badge>
-          </div>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">
+            {t("obligationDetailsPage.title")}
+          </h1>
+          <Badge
+            variant={getObligationStatusVariant(
+              obligation.status ?? "NON_COMPLIANT",
+            )}
+          >
+            {t(`obligationDetailsPage.statuses.${(obligation.status ?? "NON_COMPLIANT").toLowerCase()}`)}
+          </Badge>
         </div>
 
         {obligation.canDelete && (

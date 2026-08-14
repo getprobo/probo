@@ -22,7 +22,6 @@ import { getAssetTypeVariant } from "@probo/helpers";
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   DropdownItem,
   Field,
@@ -106,20 +105,8 @@ export default function AssetDetailsPage(props: Props) {
     reset(formData);
   });
 
-  const breadcrumbItems = [
-    {
-      label: t("assetDetailsPage.breadcrumb.assets"),
-      to: `/organizations/${organizationId}/registries/assets`,
-    },
-    {
-      label: assetEntry?.name ?? "",
-    },
-  ];
-
   return (
     <div className="space-y-6">
-      <Breadcrumb items={breadcrumbItems} />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl">{assetEntry?.name}</div>

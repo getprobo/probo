@@ -21,7 +21,6 @@
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -318,23 +317,8 @@ export function BusinessFunctionDetailsPage({
     });
   });
 
-  const breadcrumbListUrl = `/organizations/${organizationId}/registries/business-functions`;
-
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("businessFunctionDetailsPage.breadcrumb.businessFunctions"),
-            to: breadcrumbListUrl,
-          },
-          {
-            label: businessFunction.referenceId
-              || t("businessFunctionDetailsPage.breadcrumb.unknown"),
-          },
-        ]}
-      />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl font-semibold">

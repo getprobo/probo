@@ -22,7 +22,6 @@ import { formatDatetime } from "@probo/helpers";
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -305,18 +304,6 @@ export function AiSystemDetailsPage({ queryRef }: AiSystemDetailsPageProps) {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t(`${prefix}.breadcrumb.aiSystems`),
-            to: `/organizations/${organizationId}/registries/ai-systems`,
-          },
-          {
-            label: aiSystem.name || t(`${prefix}.breadcrumb.unknown`),
-          },
-        ]}
-      />
-
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="text-2xl font-semibold">{aiSystem.name}</div>

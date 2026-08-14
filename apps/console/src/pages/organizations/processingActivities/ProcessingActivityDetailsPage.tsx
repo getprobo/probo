@@ -25,7 +25,6 @@ import {
 } from "@probo/helpers";
 import {
   ActionDropdown,
-  Breadcrumb,
   Button,
   Card,
   Checkbox,
@@ -411,29 +410,17 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbProcessingActivitiesUrl
-    = `/organizations/${organizationId}/privacy/processing-activities`;
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Breadcrumb
-          items={[
-            {
-              label: t("processingActivityDetailsPage.breadcrumb.activities"),
-              to: breadcrumbProcessingActivitiesUrl,
-            },
-            { label: activity.name! },
-          ]}
-        />
-        {activity.canDelete && (
+      {activity.canDelete && (
+        <div className="flex items-center justify-end">
           <ActionDropdown>
             <DropdownItem onClick={deleteActivity} variant="danger">
               {t("processingActivityDetailsPage.actions.delete")}
             </DropdownItem>
           </ActionDropdown>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{activity.name}</h1>

@@ -647,7 +647,7 @@ export function WebhooksSettingsPage(props: {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("webhooksSettingsPage.title")}>
+      <PageHeader title={t("nav.webhooks")}>
         <WebhookFormDialog
           mode="create"
           onSubmit={handleCreate}

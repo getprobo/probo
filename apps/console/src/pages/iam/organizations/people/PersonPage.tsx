@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ActionDropdown, Avatar, Badge, Breadcrumb, Card, DropdownItem, IconArchive, IconTrashCan, useConfirm } from "@probo/ui";
+import { ActionDropdown, Avatar, Badge, Card, DropdownItem, IconArchive, IconTrashCan, useConfirm } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
@@ -144,17 +144,6 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("personPage.breadcrumb.people"),
-            to: `/organizations/${organizationId}/settings/people`,
-          },
-          {
-            label: person.fullName,
-          },
-        ]}
-      />
       <div className="flex justify-between">
         <div className="flex items-center gap-6">
           <Avatar name={person.fullName} size="xl" />

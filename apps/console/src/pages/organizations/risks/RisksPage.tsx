@@ -167,7 +167,7 @@ export default function RisksPage(props: RisksPageProps) {
     );
   };
 
-  usePageTitle(t("risksPage.title"));
+  usePageTitle(t("nav.risks"));
 
   const hasAnyAction = risks.some(
     ({ canDelete, canUpdate }) => canUpdate || canDelete,
@@ -179,7 +179,7 @@ export default function RisksPage(props: RisksPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("risksPage.title")}
+        title={t("nav.risks")}
         description={t("risksPage.description")}
       >
         <div className="flex gap-2">

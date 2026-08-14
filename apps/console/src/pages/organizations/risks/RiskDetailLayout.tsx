@@ -23,7 +23,6 @@ import {
   ActionDropdown,
   Avatar,
   Badge,
-  Breadcrumb,
   Button,
   Drawer,
   DropdownItem,
@@ -157,23 +156,11 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
   const scenariosCount = risk.scenariosInfo?.totalCount ?? 0;
 
-  const risksUrl = `/organizations/${organizationId}/risk-management/risks`;
   const baseTabUrl = `/organizations/${organizationId}/risk-management/risks/${riskId}`;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <Breadcrumb
-          items={[
-            {
-              label: t("riskDetailLayout.breadcrumb.risks"),
-              to: risksUrl,
-            },
-            {
-              label: t("riskDetailLayout.breadcrumb.detail"),
-            },
-          ]}
-        />
+      <div className="flex justify-end items-center mb-4">
         <div className="flex gap-2">
           {risk.canUpdate && (
             <FormRiskDialog

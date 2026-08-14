@@ -88,9 +88,6 @@
     "sources": { "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} seconden" }
   },
-  "trackerPatternDetailPage": {
-    "breadcrumbs": { "trackers": "Trackers" }
-  },
   "trackersPage": {
     "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
@@ -192,7 +189,6 @@
     "empty": { "title": "Geen toestemmingsregistraties", "description": "Toestemmingsregistraties verschijnen hier zodra bezoekers interactie hebben met uw cookiebanner." }
   },
   "consentRecordPage": {
-    "breadcrumbs": { "records": "Toestemmingsregistraties" },
     "title": "Toestemmingsregistratie",
     "properties": { "visitorId": "Bezoekers-ID", "action": "Actie", "bannerVersion": "Bannerversie", "ipAddress": "IP-adres", "userAgent": "User agent", "sdkVersion": "SDK-versie", "regulation": "Regelgeving", "regulationSource": "Bron van regelgeving", "country": "Land", "subdivision": "Subdivisie", "date": "Datum" },
     "actions": { "accept_all": "Alles accepteren", "reject_all": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },

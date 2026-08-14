@@ -23,7 +23,6 @@ import { usePageTitle } from "@probo/hooks";
 import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
-  Breadcrumb,
   Button,
   Card,
   DropdownItem,
@@ -318,24 +317,8 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     resetApprovers({ approverIds: defaultApproverIds });
   };
 
-  const listUrl = `/organizations/${organizationId}/governance/statements-of-applicability`;
-
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: t("statementOfApplicabilityDetailPage.breadcrumb.statementsOfApplicability"),
-            to: listUrl,
-          },
-          {
-            label:
-                            statementOfApplicability.name
-                            || t("statementOfApplicabilityDetailPage.breadcrumb.detail"),
-          },
-        ]}
-      />
-
       <PageHeader
         title={
           isEditingName && canUpdate

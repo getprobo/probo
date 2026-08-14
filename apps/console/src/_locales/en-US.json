@@ -48,9 +48,6 @@
     "none": "None"
   },
   "datumDetails": {
-    "breadcrumbs": {
-      "data": "Data"
-    },
     "fields": {
       "name": "Name",
       "classification": "Classification",
@@ -111,9 +108,6 @@
     }
   },
   "documentLayout": {
-    "breadcrumbs": {
-      "documents": "Documents"
-    },
     "actions": {
       "publish": "Publish"
     },
@@ -702,10 +696,6 @@
     }
   },
   "findingDetails": {
-    "breadcrumbs": {
-      "findings": "Findings"
-    },
-    "unknown": "Unknown finding",
     "kinds": {
       "minor_nonconformity": "Minor nonconformity",
       "major_nonconformity": "Major nonconformity",
@@ -2513,15 +2503,11 @@
     }
   },
   "peoplePage": {
-    "title": "People",
     "actions": {
       "add": "Add Person"
     }
   },
   "personPage": {
-    "breadcrumb": {
-      "people": "People"
-    },
     "messages": {
       "deactivated": "Person deactivated successfully",
       "removed": "Person removed successfully"
@@ -3202,7 +3188,6 @@
     },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
     "completeConfirmation": "Are you sure you want to complete this campaign? This action cannot be undone. All decisions will be finalized.",
-    "breadcrumb": "Campaigns",
     "status": {
       "draft": "Draft",
       "in_progress": "In progress",
@@ -3496,9 +3481,6 @@
     "emptyAvailableSearch": "No available providers match your search."
   },
   "assetDetailsPage": {
-    "breadcrumb": {
-      "assets": "Assets"
-    },
     "validation": {
       "nameRequired": "Name is required",
       "amountRequired": "Amount is required",
@@ -3590,10 +3572,6 @@
     "deleteConfirmation": "This will permanently delete the business function {{referenceId}}. This action cannot be undone."
   },
   "businessFunctionDetailsPage": {
-    "breadcrumb": {
-      "businessFunctions": "Business Functions",
-      "unknown": "Unknown Business Function"
-    },
     "validation": {
       "nameRequired": "Name is required"
     },
@@ -3751,10 +3729,6 @@
     "deleteConfirmation": "This will permanently delete the AI system \"{{name}}\". This action cannot be undone."
   },
   "aiSystemDetailsPage": {
-    "breadcrumb": {
-      "aiSystems": "AI Systems",
-      "unknown": "Unknown AI system"
-    },
     "validation": {
       "nameRequired": "Name is required"
     },
@@ -3951,10 +3925,6 @@
     }
   },
   "auditDetailsPage": {
-    "breadcrumb": {
-      "audits": "Audits"
-    },
-    "unknownAudit": "Unknown Audit",
     "errors": {
       "update": "Failed to update audit"
     },
@@ -4231,10 +4201,6 @@
     }
   },
   "measureDetailPage": {
-    "breadcrumb": {
-      "measures": "Measures",
-      "detail": "Measure detail"
-    },
     "deleteConfirmation": "This will permanently delete the measure \"{{name}}\". This action cannot be undone.",
     "fields": {
       "selectState": "Select state"
@@ -4441,10 +4407,6 @@
     }
   },
   "obligationDetailsPage": {
-    "breadcrumb": {
-      "obligations": "Obligations",
-      "details": "Obligation Details"
-    },
     "title": "Obligation",
     "messages": {
       "success": "Success",
@@ -4614,7 +4576,6 @@
     }
   },
   "dataProtectionImpactAssessmentsPage": {
-    "title": "Data Protection Impact Assessments",
     "description": "Review data protection impact assessments across your processing activities",
     "actions": {
       "document": "Document",
@@ -4634,7 +4595,6 @@
     }
   },
   "transferImpactAssessmentsPage": {
-    "title": "Transfer Impact Assessments",
     "description": "Review transfer impact assessments across your processing activities",
     "actions": {
       "document": "Document",
@@ -4654,9 +4614,6 @@
     }
   },
   "processingActivityDetailsPage": {
-    "breadcrumb": {
-      "activities": "Processing Activities"
-    },
     "tabs": {
       "overview": "Overview",
       "dpia": "Data Protection Impact Assessment",
@@ -4808,9 +4765,6 @@
     }
   },
   "rightsRequestDetailsPage": {
-    "breadcrumb": {
-      "requests": "Rights Requests"
-    },
     "messages": {
       "success": "Success",
       "error": "Error",
@@ -4913,10 +4867,6 @@
     }
   },
   "riskDetailLayout": {
-    "breadcrumb": {
-      "risks": "Risks",
-      "detail": "Risk detail"
-    },
     "deleteConfirmation": "This will permanently delete the risk \"{{name}}\". This action cannot be undone.",
     "actions": {
       "edit": "Edit",
@@ -4946,7 +4896,6 @@
     }
   },
   "risksPage": {
-    "title": "Risks",
     "description": "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
     "actions": {
       "document": "Document",
@@ -5076,9 +5025,6 @@
   },
   "riskAnalysisDetailPage": {
     "title": "Risk Analysis",
-    "breadcrumb": {
-      "assessments": "Risk Analyses"
-    },
     "messages": {
       "error": "Error"
     },
@@ -5510,7 +5456,6 @@
     }
   },
   "webhooksSettingsPage": {
-    "title": "Webhook Subscriptions",
     "description": "Configure webhooks to receive notifications when events occur in your organization.",
     "fields": {
       "endpointUrl": "Endpoint URL",
@@ -5577,10 +5522,6 @@
   },
   "statementOfApplicabilityDetailPage": {
     "title": "Statement of Applicability",
-    "breadcrumb": {
-      "statementsOfApplicability": "Statements of Applicability",
-      "detail": "Statement of Applicability detail"
-    },
     "sections": {
       "details": "Details",
       "statements": "Statements"
@@ -5617,7 +5558,6 @@
     }
   },
   "statementsOfApplicabilityPage": {
-    "title": "Statements of Applicability",
     "description": "Manage statements of applicability for your organization's frameworks.",
     "columns": {
       "name": "Name",
@@ -5803,7 +5743,6 @@
     }
   },
   "thirdPartiesPage": {
-    "title": "Third parties",
     "description": "Third parties are external services and providers that your company uses. Add them to keep track of their risk and compliance status.",
     "actions": {
       "document": "Document",

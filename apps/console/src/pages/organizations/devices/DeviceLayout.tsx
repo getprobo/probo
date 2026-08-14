@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { Breadcrumb, Button, IconEject, IconTrashCan, PageHeader } from "@probo/ui";
+import { Button, IconEject, IconTrashCan, PageHeader } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
@@ -98,15 +98,6 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
 
   return (
     <div className="flex flex-col gap-6 h-full">
-      <Breadcrumb
-        items={[
-          {
-            label: t("devices.title"),
-            to: `/organizations/${organizationId}/itam/devices`,
-          },
-          { label: hostnameLabel },
-        ]}
-      />
       <PageHeader title={hostnameLabel}>
         {!deletable && canRevokeDevice && (
           <Button

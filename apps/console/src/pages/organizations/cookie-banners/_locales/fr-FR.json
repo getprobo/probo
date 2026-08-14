@@ -88,9 +88,6 @@
     "sources": { "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "duration": { "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
   },
-  "trackerPatternDetailPage": {
-    "breadcrumbs": { "trackers": "Traceurs" }
-  },
   "trackersPage": {
     "filters": { "search": "Rechercher par nom ou description...", "allThirdParties": "Tous les tiers", "allCategories": "Toutes les catégories" },
     "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
@@ -192,7 +189,6 @@
     "empty": { "title": "Aucun enregistrement de consentement", "description": "Les enregistrements de consentement apparaîtront ici dès que des visiteurs interagiront avec votre bannière de cookies." }
   },
   "consentRecordPage": {
-    "breadcrumbs": { "records": "Enregistrements de consentement" },
     "title": "Enregistrement de consentement",
     "properties": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "ipAddress": "Adresse IP", "userAgent": "Agent utilisateur", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "regulationSource": "Source réglementaire", "country": "Pays", "subdivision": "Subdivision", "date": "Date" },
     "actions": { "accept_all": "Tout accepter", "reject_all": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },

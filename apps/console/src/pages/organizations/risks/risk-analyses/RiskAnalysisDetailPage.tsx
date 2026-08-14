@@ -23,7 +23,6 @@ import { usePageTitle } from "@probo/hooks";
 import { dateFormat } from "@probo/i18n";
 import {
   ActionDropdown,
-  Breadcrumb,
   Card,
   DropdownItem,
   IconTrashCan,
@@ -167,13 +166,6 @@ export default function RiskAnalysisDetailPage({ queryRef }: RiskAnalysisDetailP
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          { label: t("riskAnalysisDetailPage.breadcrumb.assessments"), to: listUrl },
-          { label: ra.name ?? "" },
-        ]}
-      />
-
       <PageHeader
         title={ra.name}
       >

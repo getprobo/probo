@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge, Breadcrumb, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
+import { Badge, Button, IconUpload, PageHeader, TabBadge, TabLink, Tabs } from "@probo/ui";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -41,7 +41,6 @@ export const documentLayoutQuery = graphql`
       __typename
       ... on DocumentVersion {
         id
-        title
         status
         ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_versionFragment
@@ -86,7 +85,6 @@ export const documentLayoutQuery = graphql`
           edges {
             node {
               id
-              title
               status
               ...DocumentTitleFormFragment
               ...DocumentActionsDropdown_versionFragment
@@ -194,19 +192,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   return (
     <>
       <div className="flex flex-col gap-6 h-full">
-        <div className="flex justify-between items-center mb-4">
-          <Breadcrumb
-            items={[
-              {
-                label: t("documentLayout.breadcrumbs.documents"),
-                to: `/organizations/${organizationId}/governance/documents`,
-              },
-              {
-                label: currentVersion.title,
-              },
-            ]}
-          />
-
+        <div className="flex justify-end items-center mb-4">
           <div className="flex gap-2">
             {isDraft && document.canPublish && (
               <Button
