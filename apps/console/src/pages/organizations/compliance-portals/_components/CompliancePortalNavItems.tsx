@@ -18,12 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment, useLazyLoadQuery } from "react-relay";
 import { useParams } from "react-router";
 
+import type { CompliancePortalNavItemsQuery } from "#/__generated__/core/CompliancePortalNavItemsQuery.graphql";
+import type { compliancePortalSections_compliancePortal$key } from "#/__generated__/core/compliancePortalSections_compliancePortal.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelGroup } from "#/pages/iam/organizations/_components/shell/NavPanelGroup";
 import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
+
+import {
+  COMPLIANCE_PORTAL_SECTION_GROUPS,
+  compliancePortalSectionsFragment,
+  sectionPermissionsFrom,
+  visibleCompliancePortalSections,
+} from "../_lib/compliancePortalSections";
+
+const compliancePortalNavItemsQuery = graphql`
+  query CompliancePortalNavItemsQuery($compliancePortalId: ID!) {
+    compliancePortal: node(id: $compliancePortalId) {
+      __typename
+      ... on CompliancePortal {
+        ...compliancePortalSections_compliancePortal
+      }
+    }
+  }
+`;
 
 /**
  * Settings and Pages clusters for the portal in the URL.
@@ -32,42 +54,62 @@ import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPan
  * page is not one of the sections.
  */
 export function CompliancePortalNavItems() {
-  const { t } = useTranslation();
-  const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
 
   if (compliancePortalId == null) {
     return null;
   }
 
+  return (
+    <Suspense fallback={null}>
+      <CompliancePortalNavItemsInner />
+    </Suspense>
+  );
+}
+
+function CompliancePortalNavItemsInner() {
+  const { t } = useTranslation();
+  const organizationId = useOrganizationId();
+  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
+
+  const data = useLazyLoadQuery<CompliancePortalNavItemsQuery>(
+    compliancePortalNavItemsQuery,
+    { compliancePortalId: compliancePortalId ?? "" },
+    { fetchPolicy: "store-or-network" },
+  );
+  const portalKey = data.compliancePortal.__typename === "CompliancePortal"
+    ? data.compliancePortal
+    : null;
+  const sectionData = useFragment<compliancePortalSections_compliancePortal$key>(
+    compliancePortalSectionsFragment,
+    portalKey,
+  );
+  if (sectionData == null) {
+    return null;
+  }
+  const permissions = sectionPermissionsFrom(sectionData);
+  const visible = visibleCompliancePortalSections(permissions);
   const prefix = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}`;
 
   return (
     <>
-      <NavPanelGroup label={t("nav.compliancePortalsSettings")}>
-        <NavPanelItem label={t("nav.compliancePortalsHosting")} to={`${prefix}/hosting`} />
-        <NavPanelItem
-          label={t("nav.compliancePortalsPermissions")}
-          to={`${prefix}/permissions`}
-        />
-        <NavPanelItem
-          label={t("nav.compliancePortalsIntegrations")}
-          to={`${prefix}/integrations`}
-        />
-      </NavPanelGroup>
-      <NavPanelGroup label={t("nav.compliancePortalsPages")}>
-        <NavPanelItem label={t("nav.compliancePortalsLanding")} to={`${prefix}/landing`} />
-        <NavPanelItem label={t("nav.compliancePortalsDocuments")} to={`${prefix}/documents`} />
-        <NavPanelItem
-          label={t("nav.compliancePortalsSubprocessors")}
-          to={`${prefix}/subprocessors`}
-        />
-        <NavPanelItem label={t("nav.compliancePortalsUpdates")} to={`${prefix}/updates`} />
-        <NavPanelItem
-          label={t("nav.compliancePortalsRightRequests")}
-          to={`${prefix}/right-requests`}
-        />
-      </NavPanelGroup>
+      {COMPLIANCE_PORTAL_SECTION_GROUPS.map((group) => {
+        const items = visible.filter(section => section.group === group.id);
+        if (items.length === 0) {
+          return null;
+        }
+        return (
+          <NavPanelGroup key={group.id} label={t(group.labelKey)}>
+            {items.map(section => (
+              <NavPanelItem
+                key={section.id}
+                label={t(section.labelKey)}
+                to={`${prefix}/${section.path}`}
+              />
+            ))}
+          </NavPanelGroup>
+        );
+      })}
     </>
   );
 }

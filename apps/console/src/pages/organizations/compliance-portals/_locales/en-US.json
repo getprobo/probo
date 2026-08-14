@@ -402,10 +402,6 @@
     },
     "empty": "No subprocessors available"
   },
-  "thirdPartiesPage": {
-    "title": "Subprocessors",
-    "description": "Manage subprocessor assessments and third-party risk information"
-  },
   "referenceList": {
     "columns": {
       "name": "Name",
@@ -422,7 +418,7 @@
     }
   },
   "statusSection": {
-    "title": "compliance portal status",
+    "title": "Visibility",
     "activation": {
       "title": "Activate compliance portal",
       "description": "Make your compliance portal publicly accessible to build customer confidence"
@@ -611,29 +607,6 @@
     "actions": {
       "delete": "Delete subscriber",
       "showMore": "Show more"
-    }
-  },
-  "mailingListPage": {
-    "messages": {
-      "updated": "Mailing list updated successfully"
-    },
-    "errors": {
-      "update": "Failed to update mailing list"
-    },
-    "settings": {
-      "title": "Settings",
-      "description": "Configure how your mailing list behaves",
-      "replyTo": "Reply-to email",
-      "replyToPlaceholder": "security@example.com"
-    },
-    "tabs": {
-      "updates": "Updates",
-      "subscribers": "Subscribers"
-    },
-    "actions": {
-      "save": "Save",
-      "addUpdate": "Add update",
-      "addSubscriber": "Add subscriber"
     }
   },
   "newFileDialog": {
@@ -832,7 +805,34 @@
       "delete": "Delete"
     }
   },
-  "configLayout": {
+  "subprocessorsPage": {
+    "title": "Subprocessors",
+    "description": "Manage subprocessor assessments and third-party risk information"
+  },
+  "updatesPage": {
+    "messages": {
+      "updated": "Mailing list updated successfully"
+    },
+    "errors": {
+      "update": "Failed to update mailing list"
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Configure how your mailing list behaves",
+      "replyTo": "Reply-to email",
+      "replyToPlaceholder": "security@example.com"
+    },
+    "tabs": {
+      "updates": "Updates",
+      "subscribers": "Subscribers"
+    },
+    "actions": {
+      "save": "Save",
+      "addUpdate": "Add update",
+      "addSubscriber": "Add subscriber"
+    }
+  },
+  "portalLayout": {
     "title": "compliance portal",
     "description": "Configure your public compliance portal to showcase your security and compliance posture.",
     "status": {
@@ -841,18 +841,13 @@
     },
     "actions": {
       "open": "Open"
-    },
+    }
+  },
+  "documentsLayout": {
     "tabs": {
-      "overview": "Overview",
-      "brand": "Brand",
-      "references": "References",
-      "commitments": "Commitments",
       "audits": "Audits",
       "documents": "Documents",
-      "files": "Files",
-      "subprocessors": "Subprocessors",
-      "access": "Access",
-      "mailingList": "Mailing List"
+      "files": "Files"
     }
   }
 }

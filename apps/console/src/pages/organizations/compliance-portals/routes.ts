@@ -25,6 +25,13 @@ import { redirect } from "react-router";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+function redirectTo(to: string) {
+  return () => {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
+    throw redirect(to);
+  };
+}
+
 export const compliancePortalRoutes = [
   {
     path: "compliance-portals",
@@ -38,114 +45,81 @@ export const compliancePortalRoutes = [
   },
   {
     path: "compliance-page",
-    loader: () => {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw redirect("compliance-portals");
-    },
+    loader: redirectTo("compliance-portals"),
   },
   {
     path: "compliance-page/*",
-    loader: () => {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw redirect("../compliance-portals");
-    },
+    loader: redirectTo("../compliance-portals"),
   },
   {
     path: "compliance-pages",
-    loader: () => {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw redirect("compliance-portals");
-    },
+    loader: redirectTo("compliance-portals"),
   },
   {
     path: "compliance-pages/*",
-    loader: () => {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw redirect("../compliance-portals");
-    },
-  },
-  {
-    path: "compliance-portals/:compliancePortalId/hosting",
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
-  },
-  {
-    path: "compliance-portals/:compliancePortalId/permissions",
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
-  },
-  {
-    path: "compliance-portals/:compliancePortalId/integrations",
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
-  },
-  {
-    path: "compliance-portals/:compliancePortalId/landing",
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
-  },
-  {
-    path: "compliance-portals/:compliancePortalId/subprocessors",
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
-  },
-  {
-    path: "compliance-portals/:compliancePortalId/updates",
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
-  },
-  {
-    path: "compliance-portals/:compliancePortalId/right-requests",
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalPlaceholderPage")),
+    loader: redirectTo("../compliance-portals"),
   },
   {
     path: "compliance-portals/:compliancePortalId",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/CompliancePortalConfigLayoutLoader")),
+    Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalLayoutLoader")),
     children: [
       {
-        index: true,
+        path: "hosting",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/overview/CompliancePortalOverviewPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/hosting/CompliancePortalHostingPageLoader")),
       },
       {
-        path: "brand",
+        path: "permissions",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/brand/CompliancePortalBrandPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/permissions/CompliancePortalPermissionsPageLoader")),
       },
       {
-        path: "references",
+        path: "integrations",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/references/CompliancePortalReferencesPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/integrations/CompliancePortalIntegrationsPageLoader")),
       },
       {
-        path: "commitments",
+        path: "landing",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/commitments/CompliancePortalCommitmentsPageLoader")),
-      },
-      {
-        path: "audits",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/audits/CompliancePortalAuditsPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/landing/CompliancePortalLandingPageLoader")),
       },
       {
         path: "documents",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/documents/CompliancePortalDocumentsPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/documents/CompliancePortalDocumentsLayoutLoader")),
+        children: [
+          {
+            index: true,
+            Fallback: LinkCardSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/documents/CompliancePortalDocumentsPageLoader")),
+          },
+          {
+            path: "audits",
+            Fallback: LinkCardSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/documents/audits/CompliancePortalAuditsPageLoader")),
+          },
+          {
+            path: "files",
+            Fallback: LinkCardSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/documents/files/CompliancePortalFilesPageLoader")),
+          },
+        ],
       },
       {
-        path: "files",
+        path: "subprocessors",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/files/CompliancePortalFilesPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/subprocessors/CompliancePortalSubprocessorsPageLoader")),
       },
       {
-        path: "third-parties",
+        path: "updates",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/third-parties/CompliancePortalThirdPartiesPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/updates/CompliancePortalUpdatesPageLoader")),
       },
       {
-        path: "access",
+        path: "right-requests",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/access/CompliancePortalAccessPageLoader")),
-      },
-      {
-        path: "mailing-list",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/configuration/mailing-list/CompliancePortalMailingListPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/compliance-portals/right-requests/CompliancePortalRightRequestsPageLoader")),
       },
     ],
   },

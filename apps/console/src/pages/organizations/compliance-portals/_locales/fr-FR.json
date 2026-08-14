@@ -402,10 +402,6 @@
     },
     "empty": "Aucun sous-traitant disponible"
   },
-  "thirdPartiesPage": {
-    "title": "Sous-traitants",
-    "description": "Gérez les évaluations des sous-traitants et les informations de risque tiers"
-  },
   "referenceList": {
     "columns": {
       "name": "Nom",
@@ -422,7 +418,7 @@
     }
   },
   "statusSection": {
-    "title": "Statut de la portail de conformité",
+    "title": "Visibilité",
     "activation": {
       "title": "Activer la portail de conformité",
       "description": "Rendez votre portail de conformité accessible publiquement pour renforcer la confiance de vos clients"
@@ -611,29 +607,6 @@
     "actions": {
       "delete": "Supprimer l’abonné",
       "showMore": "Afficher plus"
-    }
-  },
-  "mailingListPage": {
-    "messages": {
-      "updated": "Liste de diffusion mise à jour avec succès"
-    },
-    "errors": {
-      "update": "Échec de la mise à jour de la liste de diffusion"
-    },
-    "settings": {
-      "title": "Paramètres",
-      "description": "Configurez le comportement de votre liste de diffusion",
-      "replyTo": "E-mail de réponse",
-      "replyToPlaceholder": "security@example.com"
-    },
-    "tabs": {
-      "updates": "Mises à jour",
-      "subscribers": "Abonnés"
-    },
-    "actions": {
-      "save": "Enregistrer",
-      "addUpdate": "Ajouter une mise à jour",
-      "addSubscriber": "Ajouter un abonné"
     }
   },
   "newFileDialog": {
@@ -832,7 +805,34 @@
       "delete": "Supprimer"
     }
   },
-  "configLayout": {
+  "subprocessorsPage": {
+    "title": "Sous-traitants",
+    "description": "Gérez les évaluations des sous-traitants et les informations de risque tiers"
+  },
+  "updatesPage": {
+    "messages": {
+      "updated": "Liste de diffusion mise à jour avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de la liste de diffusion"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "description": "Configurez le comportement de votre liste de diffusion",
+      "replyTo": "E-mail de réponse",
+      "replyToPlaceholder": "security@example.com"
+    },
+    "tabs": {
+      "updates": "Mises à jour",
+      "subscribers": "Abonnés"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "addUpdate": "Ajouter une mise à jour",
+      "addSubscriber": "Ajouter un abonné"
+    }
+  },
+  "portalLayout": {
     "title": "Portail de conformité",
     "description": "Configurez votre portail de conformité publique pour présenter votre posture de sécurité et de conformité.",
     "status": {
@@ -841,18 +841,13 @@
     },
     "actions": {
       "open": "Ouvrir"
-    },
+    }
+  },
+  "documentsLayout": {
     "tabs": {
-      "overview": "Vue d’ensemble",
-      "brand": "Marque",
-      "references": "Références",
-      "commitments": "Engagements",
       "audits": "Audits",
       "documents": "Documents",
-      "files": "Fichiers",
-      "subprocessors": "Sous-traitants",
-      "access": "Accès",
-      "mailingList": "Liste de diffusion"
+      "files": "Fichiers"
     }
   }
 }

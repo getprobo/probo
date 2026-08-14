@@ -39,7 +39,7 @@ import { z } from "#/lib/zod";
 import {
   useCreateCompliancePortalReferenceMutation,
   useUpdateCompliancePortalReferenceMutation,
-} from "#/pages/organizations/compliance-portals/configuration/_lib/compliancePortalReferenceMutations";
+} from "#/pages/organizations/compliance-portals/_lib/compliancePortalReferenceMutations";
 
 const referenceSchema = z.object({
   name: z.string().min(1, "Name is required"),

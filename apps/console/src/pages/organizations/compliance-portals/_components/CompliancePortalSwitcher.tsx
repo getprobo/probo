@@ -57,12 +57,10 @@ import { CompliancePortalSwitcherValue } from "./CompliancePortalSwitcherValue";
  */
 export function CompliancePortalSwitcher() {
   return (
-    <>
-      <CoreRelayProvider>
-        <CompliancePortalSwitcherInner />
-      </CoreRelayProvider>
+    <CoreRelayProvider>
+      <CompliancePortalSwitcherInner />
       <CompliancePortalNavItems />
-    </>
+    </CoreRelayProvider>
   );
 }
 
