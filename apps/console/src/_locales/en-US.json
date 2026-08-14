@@ -1394,7 +1394,7 @@
   "nav": {
     "products": "Products",
     "groups": { "governance": "Governance", "privacy": "Privacy", "tprm": "TPRM", "itam": "ITAM", "riskManagement": "Risk Management", "registries": "Registries", "compliancePortal": "Compliance Portal", "accessReview": "Access Review", "settings": "Settings" },
-    "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "businessFunctions": "Business Functions", "aiSystems": "AI Systems", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "accessReviews": "Access Reviews", "compliancePortals": "Compliance Portals", "compliancePortalsSettings": "Settings", "compliancePortalsHosting": "Hosting", "compliancePortalsPermissions": "Permissions", "compliancePortalsIntegrations": "Integrations", "compliancePortalsPages": "Pages", "compliancePortalsLanding": "Landing", "compliancePortalsDocuments": "Documents", "compliancePortalsSubprocessors": "Subprocessors", "compliancePortalsUpdates": "Updates", "compliancePortalsRightRequests": "Right Requests", "cookieBanners": "Cookie Banners", "cookieBannersConfigure": "Configure", "cookieBannersDiscovery": "Discovery", "cookieBannersTrail": "Trail", "organization": "Organization",
+    "context": "Context", "tasks": "Tasks", "measures": "Measures", "risks": "Risks", "frameworks": "Frameworks", "people": "People", "thirdParties": "Third parties", "documents": "Documents", "assets": "Assets", "devices": "Devices", "data": "Data", "audits": "Audits", "findings": "Findings", "businessFunctions": "Business Functions", "aiSystems": "AI Systems", "obligations": "Obligations", "processingActivities": "Processing Activities", "statementsOfApplicability": "Statements of Applicability", "rightsRequests": "Rights Requests", "campaigns": "Campaigns", "connections": "Connections", "compliancePortals": "Compliance Portals", "compliancePortalsSettings": "Settings", "compliancePortalsHosting": "Hosting", "compliancePortalsPermissions": "Permissions", "compliancePortalsIntegrations": "Integrations", "compliancePortalsPages": "Pages", "compliancePortalsLanding": "Landing", "compliancePortalsDocuments": "Documents", "compliancePortalsSubprocessors": "Subprocessors", "compliancePortalsUpdates": "Updates", "compliancePortalsRightRequests": "Right Requests", "cookieBanners": "Cookie Banners", "cookieBannersConfigure": "Configure", "cookieBannersDiscovery": "Discovery", "cookieBannersTrail": "Trail", "organization": "Organization",
     "cookieBannerSwitcher": { "select": "Select Banner", "new": "New Banner", "create": "New cookie banner", "empty": "No cookie banners", "loading": "Loading…" },
     "compliancePortalSwitcher": { "new": "New Portal", "create": "New Portal", "empty": "No compliance portals", "loading": "Loading…", "open": "Open portal" }
   },
@@ -1576,10 +1576,16 @@
     "columns": { "time": "Time", "method": "Method", "path": "Path", "result": "Result" },
     "empty": "No SCIM events recorded yet."
   },
-  "accessReviewLayout": {
-    "title": "Access Reviews",
+  "accessReviewCampaignsPage": {
+    "title": "Campaigns",
     "description": "Review and manage user access across your organization's systems and applications.",
-    "tabs": { "campaigns": "Campaigns", "sources": "Connections" }
+    "errors": { "delete": "Failed to delete campaign" },
+    "messages": { "error": "Error", "success": "Success", "deleted": "Campaign deleted successfully." },
+    "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
+    "actions": { "new": "New campaign", "delete": "Delete", "loading": "Loading...", "loadMore": "Load more" },
+    "columns": { "name": "Name", "status": "Status", "createdAt": "Created at" },
+    "status": { "draft": "Draft", "in_progress": "In progress", "pending_actions": "Pending actions", "completed": "Completed", "cancelled": "Cancelled" },
+    "empty": "No access review campaigns yet. Create your first campaign to start reviewing access."
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "Add CSV Access Source",
@@ -1634,21 +1640,12 @@
       "inactive": "Inactive", "role_mismatch": "Role mismatch", "new": "New", "none": "None"
     }
   },
-  "accessReviewCampaignsTab": {
-    "errors": { "delete": "Failed to delete campaign" },
-    "messages": { "error": "Error", "success": "Success", "deleted": "Campaign deleted successfully." },
-    "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
-    "actions": { "new": "New campaign", "delete": "Delete", "loading": "Loading...", "loadMore": "Load more" },
-    "columns": { "name": "Name", "status": "Status", "createdAt": "Created at" },
-    "status": { "draft": "Draft", "in_progress": "In progress", "pending_actions": "Pending actions", "completed": "Completed", "cancelled": "Cancelled" },
-    "empty": "No access review campaigns yet. Create your first campaign to start reviewing access."
-  },
   "campaignDetailPage": {
     "errors": { "start": "Failed to start campaign", "delete": "Failed to delete campaign", "complete": "Failed to complete campaign", "recordDecisions_one": "Failed to record decisions for {{count}} entry.", "recordDecisions_other": "Failed to record decisions for {{count}} entries.", "updateFlags_one": "Failed to update flags for {{count}} entry.", "updateFlags_other": "Failed to update flags for {{count}} entries." },
     "messages": { "error": "Error", "success": "Success", "started": "Campaign started. Sources are being fetched.", "deleted": "Campaign deleted successfully.", "completed": "Campaign completed successfully.", "decisionsRecorded": "Decisions recorded successfully.", "flagsUpdated": "Flags updated for selected entries." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
     "completeConfirmation": "Are you sure you want to complete this campaign? This action cannot be undone. All decisions will be finalized.",
-    "breadcrumb": "Access Reviews",
+    "breadcrumb": "Campaigns",
     "status": { "draft": "Draft", "in_progress": "In progress", "pending_actions": "Pending actions", "completed": "Completed", "cancelled": "Cancelled", "active": "Active", "disabled": "Disabled" },
     "fetchStatus": { "success": "Success", "failed": "Failed", "fetching": "Fetching", "queued": "Queued" },
     "mfaStatus": { "enabled": "Enabled", "disabled": "Disabled", "unknown": "Unknown" },
@@ -1699,11 +1696,11 @@
   "createAccessReviewCampaignDialog": {
     "errors": { "create": "Failed to create campaign" },
     "messages": { "error": "Error", "success": "Success", "created": "Campaign created successfully." },
-    "breadcrumb": { "accessReviews": "Access Reviews", "newCampaign": "New Campaign" },
+    "breadcrumb": { "accessReviews": "Campaigns", "newCampaign": "New Campaign" },
     "fields": { "name": "Name", "description": "Description", "sources": "Sources" },
     "loadingSources": "Loading sources...",
     "actions": { "create": "Create" },
-    "emptySources": "No sources available. Add sources in the Sources tab first."
+    "emptySources": "No connections available. Add connections on the Connections page first."
   },
   "postHogDeploymentField": {
     "deployment": { "label": "Deployment", "placeholder": "Select a deployment", "usCloud": "PostHog Cloud (US)", "euCloud": "PostHog Cloud (EU)", "selfHosted": "Self-hosted" },
@@ -1739,7 +1736,9 @@
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." }
   },
-  "accessReviewSourcesTab": {
+  "accessReviewConnectionsPage": {
+    "title": "Connections",
+    "description": "Connect the systems whose access you want to review.",
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." },
     "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry" },

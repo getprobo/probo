@@ -428,7 +428,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
     const connections = [
       ConnectionHandler.getConnectionID(
         organizationId,
-        "AccessReviewCampaignsTab_accessReviewCampaigns",
+        "AccessReviewCampaignsPage_accessReviewCampaigns",
       ),
     ];
     confirm(
@@ -455,7 +455,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 variant: "success",
               });
               resolve();
-              void navigate(`/organizations/${organizationId}/access-reviews`);
+              void navigate(`/organizations/${organizationId}/access-reviews/campaigns`);
             },
             onError(error) {
               toast({
@@ -798,7 +798,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         items={[
           {
             label: t("campaignDetailPage.breadcrumb"),
-            to: `/organizations/${organizationId}/access-reviews`,
+            to: `/organizations/${organizationId}/access-reviews/campaigns`,
           },
           { label: campaign.name },
         ]}

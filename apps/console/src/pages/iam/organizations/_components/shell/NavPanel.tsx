@@ -59,6 +59,7 @@ const navPanelFragment = graphql`
     canListStatementsOfApplicability: permission(action: "core:statement-of-applicability:list")
     canListRightsRequests: permission(action: "core:rights-request:list")
     canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
+    canListAccessReviewSources: permission(action: "access-review:source:list")
     canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
     canListCookieBanners: permission(action: "core:cookie-banner:list")
     canUpdateOrganization: permission(action: "iam:organization:update")

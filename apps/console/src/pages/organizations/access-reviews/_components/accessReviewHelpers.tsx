@@ -103,15 +103,15 @@ export function statusLabel(
 ): string {
   switch (status) {
     case "DRAFT":
-      return t("accessReviewCampaignsTab.status.draft");
+      return t("accessReviewCampaignsPage.status.draft");
     case "IN_PROGRESS":
-      return t("accessReviewCampaignsTab.status.in_progress");
+      return t("accessReviewCampaignsPage.status.in_progress");
     case "PENDING_ACTIONS":
-      return t("accessReviewCampaignsTab.status.pending_actions");
+      return t("accessReviewCampaignsPage.status.pending_actions");
     case "COMPLETED":
-      return t("accessReviewCampaignsTab.status.completed");
+      return t("accessReviewCampaignsPage.status.completed");
     case "CANCELLED":
-      return t("accessReviewCampaignsTab.status.cancelled");
+      return t("accessReviewCampaignsPage.status.cancelled");
     default:
       return status;
   }

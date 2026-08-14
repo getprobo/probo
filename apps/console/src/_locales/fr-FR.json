@@ -2449,7 +2449,8 @@
     "processingActivities": "Activités de traitement",
     "statementsOfApplicability": "Déclarations d’applicabilité",
     "rightsRequests": "Demandes d’exercice de droits",
-    "accessReviews": "Revues d’accès",
+    "campaigns": "Campagnes",
+    "connections": "Connexions",
     "compliancePortals": "Portails de conformité",
     "compliancePortalsSettings": "Paramètres",
     "compliancePortalsHosting": "Hébergement",
@@ -3013,13 +3014,37 @@
     },
     "empty": "Aucun événement SCIM enregistré pour le moment."
   },
-  "accessReviewLayout": {
-    "title": "Revues d’accès",
+  "accessReviewCampaignsPage": {
+    "title": "Campagnes",
     "description": "Passez en revue et gérez les accès des utilisateurs à travers les systèmes et applications de votre organisation.",
-    "tabs": {
-      "campaigns": "Campagnes",
-      "sources": "Connexions"
-    }
+    "errors": {
+      "delete": "Échec de la suppression de la campagne"
+    },
+    "messages": {
+      "error": "Erreur",
+      "success": "Succès",
+      "deleted": "Campagne supprimée avec succès."
+    },
+    "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
+    "actions": {
+      "new": "Nouvelle campagne",
+      "delete": "Supprimer",
+      "loading": "Chargement...",
+      "loadMore": "Charger plus"
+    },
+    "columns": {
+      "name": "Nom",
+      "status": "Statut",
+      "createdAt": "Créé le"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "in_progress": "En cours",
+      "pending_actions": "Actions en attente",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "empty": "Aucune campagne de revue d’accès pour le moment. Créez votre première campagne pour commencer à revoir les accès."
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "Ajouter une source d’accès CSV",
@@ -3142,36 +3167,6 @@
       "none": "Aucun"
     }
   },
-  "accessReviewCampaignsTab": {
-    "errors": {
-      "delete": "Échec de la suppression de la campagne"
-    },
-    "messages": {
-      "error": "Erreur",
-      "success": "Succès",
-      "deleted": "Campagne supprimée avec succès."
-    },
-    "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
-    "actions": {
-      "new": "Nouvelle campagne",
-      "delete": "Supprimer",
-      "loading": "Chargement...",
-      "loadMore": "Charger plus"
-    },
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "createdAt": "Créé le"
-    },
-    "status": {
-      "draft": "Brouillon",
-      "in_progress": "En cours",
-      "pending_actions": "Actions en attente",
-      "completed": "Terminé",
-      "cancelled": "Annulé"
-    },
-    "empty": "Aucune campagne de revue d’accès pour le moment. Créez votre première campagne pour commencer à revoir les accès."
-  },
   "campaignDetailPage": {
     "errors": {
       "start": "Échec du démarrage de la campagne",
@@ -3193,7 +3188,7 @@
     },
     "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
     "completeConfirmation": "Voulez-vous vraiment finaliser cette campagne ? Cette action est irréversible. Toutes les décisions seront définitives.",
-    "breadcrumb": "Revues d’accès",
+    "breadcrumb": "Campagnes",
     "status": {
       "draft": "Brouillon",
       "in_progress": "En cours",
@@ -3351,7 +3346,7 @@
       "created": "Campagne créée avec succès."
     },
     "breadcrumb": {
-      "accessReviews": "Revues d’accès",
+      "accessReviews": "Campagnes",
       "newCampaign": "Nouvelle campagne"
     },
     "fields": {
@@ -3363,7 +3358,7 @@
     "actions": {
       "create": "Créer"
     },
-    "emptySources": "Aucune source disponible. Ajoutez d’abord des sources dans l’onglet Sources."
+    "emptySources": "Aucune connexion disponible. Ajoutez d’abord des connexions sur la page Connexions."
   },
   "postHogDeploymentField": {
     "deployment": {
@@ -3460,7 +3455,9 @@
       "created": "Source d’accès créée avec succès."
     }
   },
-  "accessReviewSourcesTab": {
+  "accessReviewConnectionsPage": {
+    "title": "Connexions",
+    "description": "Connectez les systèmes dont vous souhaitez revoir les accès.",
     "errors": {
       "create": "Échec de la création de la source d’accès"
     },

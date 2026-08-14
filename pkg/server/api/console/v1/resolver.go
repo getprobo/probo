@@ -488,7 +488,7 @@ func handleConnectorComplete(
 		// Access-review sources toast missing scopes after redirect. Other
 		// continue URLs (Slack compliance page, SCIM settings, …) must not
 		// get a false missing-scope error from this access-review check.
-		if strings.Contains(state.ContinueURL, "/access-reviews/sources") {
+		if strings.Contains(state.ContinueURL, "/access-reviews/connections") {
 			missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
 			if err != nil {
 				logger.WarnCtx(r.Context(), "cannot determine missing OAuth scopes after connector callback", log.Error(err))

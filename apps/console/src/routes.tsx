@@ -35,6 +35,7 @@ import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
+import { accessReviewRoutes } from "./pages/organizations/access-reviews/routes";
 import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
 import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/routes";
 import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
@@ -43,7 +44,6 @@ import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
-import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
 import { auditRoutes } from "./routes/auditRoutes";
 import { contextRoutes } from "./routes/contextRoutes";
@@ -348,9 +348,12 @@ const routes = [
             ],
           },
 
-          // These two already name their product, so an extra segment would
-          // only repeat it.
-          ...accessReviewRoutes,
+          {
+            path: "access-reviews",
+            children: [...accessReviewRoutes],
+          },
+          // Compliance portals already name their product, so an extra
+          // segment would only repeat it.
           ...compliancePortalRoutes,
 
           {

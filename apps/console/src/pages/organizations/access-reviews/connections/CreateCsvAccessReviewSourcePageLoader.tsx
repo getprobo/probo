@@ -21,25 +21,31 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { AccessReviewSourcesTabQuery } from "#/__generated__/core/AccessReviewSourcesTabQuery.graphql";
+import type { CreateCsvAccessReviewSourcePageQuery } from "#/__generated__/core/CreateCsvAccessReviewSourcePageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import AccessReviewSourcesTab, { accessReviewSourcesTabQuery } from "./AccessReviewSourcesTab";
+import {
+  CreateCsvAccessReviewSourcePage,
+  createCsvAccessReviewSourcePageQuery,
+} from "./CreateCsvAccessReviewSourcePage";
 
-export default function AccessReviewSourcesTabLoader() {
+export default function CreateCsvAccessReviewSourcePageLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<AccessReviewSourcesTabQuery>(accessReviewSourcesTabQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<CreateCsvAccessReviewSourcePageQuery>(createCsvAccessReviewSourcePageQuery);
 
   useEffect(() => {
     loadQuery({ organizationId });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) return <PageSkeleton />;
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <AccessReviewSourcesTab queryRef={queryRef} />
+      <CreateCsvAccessReviewSourcePage queryRef={queryRef} />
     </Suspense>
   );
 }

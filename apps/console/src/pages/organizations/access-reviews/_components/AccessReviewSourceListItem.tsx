@@ -49,7 +49,7 @@ import type { AccessReviewSourceListItemOrganizationsEmpty_source$key } from "#/
 import type { AccessReviewSourceListItemOrganizationsUnavailable_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsUnavailable_source.graphql";
 import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
 
-import { accessReviewSourceSection } from "../sources/_components/variants";
+import { accessReviewSourceSection } from "../connections/_components/variants";
 
 const fragment = graphql`
   fragment AccessReviewSourceListItem_source on AccessReviewSource {
@@ -306,7 +306,7 @@ export function AccessReviewSourceListItem({
     }
     url.searchParams.append(
       "continue",
-      `/organizations/${organizationId}/access-reviews/sources`,
+      `/organizations/${organizationId}/access-reviews/connections`,
     );
     return url.toString();
   };

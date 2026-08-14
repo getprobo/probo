@@ -485,7 +485,7 @@ func TestAccessReviewCampaign_Delete(t *testing.T) {
 // disappear from the organization's `accessReviewCampaigns` connection, and a
 // `node(id:)` lookup on the deleted GID must surface a NOT_FOUND error rather
 // than partial data. Without this contract the cached Relay query in the
-// access-reviews tab would render edges pointing to a vanished record and
+// access-reviews campaigns page would render edges pointing to a vanished record and
 // crash with "Unexpected error :(".
 func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
 	t.Parallel()
@@ -524,8 +524,8 @@ func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
 	assert.Equal(t, campaignID, deleteResult.DeleteAccessReviewCampaign.DeletedAccessReviewCampaignID)
 
 	// The campaign must no longer appear in the organization's campaign
-	// connection -- mirrors the AccessReviewCampaignsTabQuery the FE fires
-	// when the user navigates back to the access-reviews tab.
+	// connection -- mirrors the AccessReviewCampaignsPageQuery the FE fires
+	// when the user navigates back to the campaigns page.
 	const listQuery = `
 		query($id: ID!) {
 			node(id: $id) {

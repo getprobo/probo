@@ -2449,7 +2449,8 @@
     "processingActivities": "Verwerkingsactiviteiten",
     "statementsOfApplicability": "Verklaringen van toepasselijkheid",
     "rightsRequests": "Rechtenverzoeken",
-    "accessReviews": "Toegangsbeoordelingen",
+    "campaigns": "Campagnes",
+    "connections": "Verbindingen",
     "compliancePortals": "Compliancepagina's",
     "compliancePortalsSettings": "Instellingen",
     "compliancePortalsHosting": "Hosting",
@@ -3013,13 +3014,37 @@
     },
     "empty": "Nog geen SCIM-gebeurtenissen geregistreerd."
   },
-  "accessReviewLayout": {
-    "title": "Toegangsbeoordelingen",
+  "accessReviewCampaignsPage": {
+    "title": "Campagnes",
     "description": "Beoordeel en beheer gebruikerstoegang tot de systemen en applicaties van uw organisatie.",
-    "tabs": {
-      "campaigns": "Campagnes",
-      "sources": "Verbindingen"
-    }
+    "errors": {
+      "delete": "Verwijderen van campagne mislukt"
+    },
+    "messages": {
+      "error": "Fout",
+      "success": "Succes",
+      "deleted": "Campagne succesvol verwijderd."
+    },
+    "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "actions": {
+      "new": "Nieuwe campagne",
+      "delete": "Verwijderen",
+      "loading": "Laden...",
+      "loadMore": "Meer laden"
+    },
+    "columns": {
+      "name": "Naam",
+      "status": "Status",
+      "createdAt": "Aangemaakt op"
+    },
+    "status": {
+      "draft": "Concept",
+      "in_progress": "In uitvoering",
+      "pending_actions": "Acties in behandeling",
+      "completed": "Voltooid",
+      "cancelled": "Geannuleerd"
+    },
+    "empty": "Nog geen toegangsbeoordelingscampagnes. Maak uw eerste campagne aan om toegang te gaan beoordelen."
   },
   "createCsvAccessReviewSourcePage": {
     "pageTitle": "CSV-toegangsbron toevoegen",
@@ -3142,36 +3167,6 @@
       "none": "Geen"
     }
   },
-  "accessReviewCampaignsTab": {
-    "errors": {
-      "delete": "Verwijderen van campagne mislukt"
-    },
-    "messages": {
-      "error": "Fout",
-      "success": "Succes",
-      "deleted": "Campagne succesvol verwijderd."
-    },
-    "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
-    "actions": {
-      "new": "Nieuwe campagne",
-      "delete": "Verwijderen",
-      "loading": "Laden...",
-      "loadMore": "Meer laden"
-    },
-    "columns": {
-      "name": "Naam",
-      "status": "Status",
-      "createdAt": "Aangemaakt op"
-    },
-    "status": {
-      "draft": "Concept",
-      "in_progress": "In uitvoering",
-      "pending_actions": "Acties in behandeling",
-      "completed": "Voltooid",
-      "cancelled": "Geannuleerd"
-    },
-    "empty": "Nog geen toegangsbeoordelingscampagnes. Maak uw eerste campagne aan om toegang te gaan beoordelen."
-  },
   "campaignDetailPage": {
     "errors": {
       "start": "Starten van campagne mislukt",
@@ -3193,7 +3188,7 @@
     },
     "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "completeConfirmation": "Weet u zeker dat u deze campagne wilt afronden? Deze actie kan niet ongedaan worden gemaakt. Alle beslissingen worden definitief.",
-    "breadcrumb": "Toegangsbeoordelingen",
+    "breadcrumb": "Campagnes",
     "status": {
       "draft": "Concept",
       "in_progress": "In uitvoering",
@@ -3351,7 +3346,7 @@
       "created": "Campagne succesvol aangemaakt."
     },
     "breadcrumb": {
-      "accessReviews": "Toegangsbeoordelingen",
+      "accessReviews": "Campagnes",
       "newCampaign": "Nieuwe campagne"
     },
     "fields": {
@@ -3363,7 +3358,7 @@
     "actions": {
       "create": "Aanmaken"
     },
-    "emptySources": "Geen bronnen beschikbaar. Voeg eerst bronnen toe op het tabblad Bronnen."
+    "emptySources": "Geen verbindingen beschikbaar. Voeg eerst verbindingen toe op de pagina Verbindingen."
   },
   "postHogDeploymentField": {
     "deployment": {
@@ -3460,7 +3455,9 @@
       "created": "Toegangsbron succesvol aangemaakt."
     }
   },
-  "accessReviewSourcesTab": {
+  "accessReviewConnectionsPage": {
+    "title": "Verbindingen",
+    "description": "Verbind de systemen waarvan u de toegang wilt beoordelen.",
     "errors": {
       "create": "Aanmaken van toegangsbron mislukt"
     },

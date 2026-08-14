@@ -28,8 +28,8 @@ import { type NavGroup, navItemPath } from "./navigation";
  *
  * A group with a segment owns everything below it, which is one pattern and
  * covers routes the nav table does not enumerate: `settings/webhooks` has no
- * entry of its own but still belongs to Settings. The two groups that carry no
- * segment are identified by their entries' paths instead.
+ * entry of its own but still belongs to Settings. A group with no segment is
+ * identified by its entries' paths instead.
  */
 function navGroupPatterns(group: NavGroup): string[] {
   const prefixes = group.segment != null

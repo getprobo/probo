@@ -66,6 +66,7 @@ export type NavPermission
     | "canListStatementsOfApplicability"
     | "canListRightsRequests"
     | "canListAccessReviewCampaigns"
+    | "canListAccessReviewSources"
     | "canGetCompliancePortal"
     | "canListCookieBanners"
     | "canUpdateOrganization";
@@ -89,8 +90,8 @@ export interface NavGroup {
   key: string;
   /**
    * URL segment the group's routes are nested under, or null when the product
-   * is a single route that already names itself (compliance portals, access
-   * reviews) and would only gain a redundant level.
+   * is a single route that already names itself (compliance portals) and would
+   * only gain a redundant level.
    */
   segment: string | null;
   icon: Icon;
@@ -103,12 +104,12 @@ export const NAV_GROUPS: NavGroup[] = [
     segment: "governance",
     icon: ScalesIcon,
     items: [
+      { path: "tasks", labelKey: "nav.tasks", permission: "canListTasks" },
+      { path: "measures", labelKey: "nav.measures", permission: "canListMeasures" },
       { path: "frameworks", labelKey: "nav.frameworks", permission: "canListFrameworks" },
       { path: "audits", labelKey: "nav.audits", permission: "canListAudits" },
       { path: "findings", labelKey: "nav.findings", permission: "canListFindings" },
-      { path: "measures", labelKey: "nav.measures", permission: "canListMeasures" },
       { path: "documents", labelKey: "nav.documents", permission: "canListDocuments" },
-      { path: "tasks", labelKey: "nav.tasks", permission: "canListTasks" },
       {
         path: "statements-of-applicability",
         labelKey: "nav.statementsOfApplicability",
@@ -185,13 +186,18 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     key: "accessReview",
-    segment: null,
+    segment: "access-reviews",
     icon: KeyIcon,
     items: [
       {
-        path: "access-reviews",
-        labelKey: "nav.accessReviews",
+        path: "campaigns",
+        labelKey: "nav.campaigns",
         permission: "canListAccessReviewCampaigns",
+      },
+      {
+        path: "connections",
+        labelKey: "nav.connections",
+        permission: "canListAccessReviewSources",
       },
     ],
   },

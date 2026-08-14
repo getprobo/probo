@@ -38,7 +38,7 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
 
-import { createAccessReviewSourceMutation } from "./dialogs/accessReviewSourceMutations";
+import { createAccessReviewSourceMutation } from "../dialogs/accessReviewSourceMutations";
 
 export const createCsvAccessReviewSourcePageQuery = graphql`
   query CreateCsvAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -57,11 +57,13 @@ const csvSchema = z.object({
   csvData: z.string().min(1),
 });
 
-export default function CreateCsvAccessReviewSourcePage({
-  queryRef,
-}: {
+interface CreateCsvAccessReviewSourcePageProps {
   queryRef: PreloadedQuery<CreateCsvAccessReviewSourcePageQuery>;
-}) {
+}
+
+export function CreateCsvAccessReviewSourcePage({
+  queryRef,
+}: CreateCsvAccessReviewSourcePageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -86,7 +88,7 @@ export default function CreateCsvAccessReviewSourcePage({
 
   const connectionId = ConnectionHandler.getConnectionID(
     organization.id,
-    "AccessReviewSourcesTab_accessReviewSources",
+    "AccessReviewConnectionsPage_accessReviewSources",
   );
 
   const [createAccessReviewSource, isCreating]
@@ -132,7 +134,7 @@ export default function CreateCsvAccessReviewSourcePage({
           description: t("createCsvAccessReviewSourcePage.messages.created"),
           variant: "success",
         });
-        void navigate(`/organizations/${organizationId}/access-reviews/sources`);
+        void navigate(`/organizations/${organizationId}/access-reviews/connections`);
       },
       onError(error) {
         toast({
@@ -176,7 +178,7 @@ export default function CreateCsvAccessReviewSourcePage({
 
           <div className="flex items-center justify-end gap-2">
             <Button variant="secondary" asChild>
-              <Link to={`/organizations/${organizationId}/access-reviews/sources`}>
+              <Link to={`/organizations/${organizationId}/access-reviews/connections`}>
                 {t("createCsvAccessReviewSourcePage.actions.back")}
               </Link>
             </Button>

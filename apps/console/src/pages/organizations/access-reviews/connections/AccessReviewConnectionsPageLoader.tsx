@@ -21,25 +21,32 @@
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { AccessReviewCampaignsTabQuery } from "#/__generated__/core/AccessReviewCampaignsTabQuery.graphql";
+import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import AccessReviewCampaignsTab, { accessReviewCampaignsTabQuery } from "./AccessReviewCampaignsTab";
+import {
+  AccessReviewConnectionsPage,
+  accessReviewConnectionsPageQuery,
+} from "./AccessReviewConnectionsPage";
 
-export default function AccessReviewCampaignsTabLoader() {
+export default function AccessReviewConnectionsPageLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<AccessReviewCampaignsTabQuery>(accessReviewCampaignsTabQuery);
+  const [queryRef, loadQuery] = useQueryLoader<AccessReviewConnectionsPageQuery>(
+    accessReviewConnectionsPageQuery,
+  );
 
   useEffect(() => {
     loadQuery({ organizationId });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) return <PageSkeleton />;
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <AccessReviewCampaignsTab queryRef={queryRef} />
+      <AccessReviewConnectionsPage queryRef={queryRef} />
     </Suspense>
   );
 }

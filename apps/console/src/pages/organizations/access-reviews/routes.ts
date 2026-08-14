@@ -18,8 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import AccessReviewLayout from "./AccessReviewLayout";
+import { lazy } from "@probo/react-lazy";
+import type { AppRoute } from "@probo/routes";
 
-export default function AccessReviewLayoutLoader() {
-  return <AccessReviewLayout />;
-}
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+
+export const accessReviewRoutes = [
+  {
+    path: "campaigns",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./campaigns/AccessReviewCampaignsPageLoader"),
+    ),
+  },
+  {
+    path: "campaigns/:campaignId",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./campaigns/CampaignDetailPageLoader"),
+    ),
+  },
+  {
+    path: "connections",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./connections/AccessReviewConnectionsPageLoader"),
+    ),
+  },
+  {
+    path: "connections/new/csv",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./connections/CreateCsvAccessReviewSourcePageLoader"),
+    ),
+  },
+] satisfies AppRoute[];

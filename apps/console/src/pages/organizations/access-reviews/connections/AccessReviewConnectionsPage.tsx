@@ -19,17 +19,18 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { Button, Input, useToast } from "@probo/ui";
+import { usePageTitle } from "@probo/hooks";
+import { Button, Input, PageHeader, useToast } from "@probo/ui";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
 import { Link, useSearchParams } from "react-router";
 
+import type { AccessReviewConnectionsPageFragment$key } from "#/__generated__/core/AccessReviewConnectionsPageFragment.graphql";
+import type { AccessReviewConnectionsPagePaginationQuery } from "#/__generated__/core/AccessReviewConnectionsPagePaginationQuery.graphql";
+import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
-import type { AccessReviewSourcesTabFragment$key } from "#/__generated__/core/AccessReviewSourcesTabFragment.graphql";
-import type { AccessReviewSourcesTabPaginationQuery } from "#/__generated__/core/AccessReviewSourcesTabPaginationQuery.graphql";
-import type { AccessReviewSourcesTabQuery } from "#/__generated__/core/AccessReviewSourcesTabQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
@@ -47,8 +48,8 @@ function clearOAuthCallbackParams(params: URLSearchParams) {
   return params;
 }
 
-export const accessReviewSourcesTabQuery = graphql`
-  query AccessReviewSourcesTabQuery($organizationId: ID!) {
+export const accessReviewConnectionsPageQuery = graphql`
+  query AccessReviewConnectionsPageQuery($organizationId: ID!) {
     accessReviewDrivers {
       provider
       displayName
@@ -58,15 +59,15 @@ export const accessReviewSourcesTabQuery = graphql`
       __typename
       ... on Organization {
         canCreateSource: permission(action: "access-review:source:create")
-        ...AccessReviewSourcesTabFragment
+        ...AccessReviewConnectionsPageFragment
       }
     }
   }
 `;
 
 const sourcesFragment = graphql`
-  fragment AccessReviewSourcesTabFragment on Organization
-  @refetchable(queryName: "AccessReviewSourcesTabPaginationQuery")
+  fragment AccessReviewConnectionsPageFragment on Organization
+  @refetchable(queryName: "AccessReviewConnectionsPagePaginationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     order: {
@@ -83,7 +84,7 @@ const sourcesFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "AccessReviewSourcesTab_accessReviewSources") {
+    ) @connection(key: "AccessReviewConnectionsPage_accessReviewSources") {
       __id
       edges {
         node {
@@ -100,11 +101,11 @@ const sourcesFragment = graphql`
   }
 `;
 
-type Props = {
-  queryRef: PreloadedQuery<AccessReviewSourcesTabQuery>;
-};
+interface AccessReviewConnectionsPageProps {
+  queryRef: PreloadedQuery<AccessReviewConnectionsPageQuery>;
+}
 
-export default function AccessReviewSourcesTab({ queryRef }: Props) {
+export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnectionsPageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
@@ -112,8 +113,10 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const processedConnectorIdRef = useRef<string | null>(null);
 
-  const { organization, accessReviewDrivers } = usePreloadedQuery<AccessReviewSourcesTabQuery>(
-    accessReviewSourcesTabQuery,
+  usePageTitle(t("accessReviewConnectionsPage.title"));
+
+  const { organization, accessReviewDrivers } = usePreloadedQuery<AccessReviewConnectionsPageQuery>(
+    accessReviewConnectionsPageQuery,
     queryRef,
   );
   if (organization.__typename !== "Organization") {
@@ -126,8 +129,8 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
     hasNext,
     isLoadingNext,
   } = usePaginationFragment<
-    AccessReviewSourcesTabPaginationQuery,
-    AccessReviewSourcesTabFragment$key
+    AccessReviewConnectionsPagePaginationQuery,
+    AccessReviewConnectionsPageFragment$key
   >(sourcesFragment, organization);
 
   const existingSourceProviders = useMemo(
@@ -219,7 +222,7 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
         = processedConnectorIdRef.current === callbackConnectorId;
       if (callbackError && !createInFlight) {
         toast({
-          title: t("accessReviewSourcesTab.messages.error"),
+          title: t("accessReviewConnectionsPage.messages.error"),
           description: callbackError,
           variant: "error",
         });
@@ -256,9 +259,9 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
           processedConnectorIdRef.current = null;
           setSearchParams(clearOAuthCallbackParams, { replace: true });
           toast({
-            title: t("accessReviewSourcesTab.messages.error"),
+            title: t("accessReviewConnectionsPage.messages.error"),
             description: formatError(
-              t("accessReviewSourcesTab.errors.create"),
+              t("accessReviewConnectionsPage.errors.create"),
               errors,
             ),
             variant: "error",
@@ -267,14 +270,14 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
         }
         if (callbackError) {
           toast({
-            title: t("accessReviewSourcesTab.messages.error"),
+            title: t("accessReviewConnectionsPage.messages.error"),
             description: callbackError,
             variant: "error",
           });
         } else {
           toast({
-            title: t("accessReviewSourcesTab.messages.success"),
-            description: t("accessReviewSourcesTab.messages.created"),
+            title: t("accessReviewConnectionsPage.messages.success"),
+            description: t("accessReviewConnectionsPage.messages.created"),
             variant: "success",
           });
         }
@@ -285,9 +288,9 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
         processedConnectorIdRef.current = null;
         setSearchParams(clearOAuthCallbackParams, { replace: true });
         toast({
-          title: t("accessReviewSourcesTab.messages.error"),
+          title: t("accessReviewConnectionsPage.messages.error"),
           description: formatError(
-            t("accessReviewSourcesTab.errors.create"),
+            t("accessReviewConnectionsPage.errors.create"),
             error,
           ),
           variant: "error",
@@ -310,69 +313,76 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   ]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <Input
-        value={searchQuery}
-        onChange={event => setSearchQuery(event.target.value)}
-        placeholder={t("accessReviewSourcesTab.searchPlaceholder")}
-        className="max-w-sm"
+    <div className="space-y-6">
+      <PageHeader
+        title={t("accessReviewConnectionsPage.title")}
+        description={t("accessReviewConnectionsPage.description")}
       />
 
-      <SourceSection
-        title={t("accessReviewSourcesTab.sections.connected")}
-        count={filteredSources.length}
-        empty={isLoadingRemainingSources
-          ? t("accessReviewSourcesTab.actions.loading")
-          : hasFailedSearchLoad
-            ? t("accessReviewSourcesTab.searchLoadFailed")
-            : isSearching
-              ? t("accessReviewSourcesTab.emptyConnectedSearch")
-              : t("accessReviewSourcesTab.emptyConnected")}
-      >
-        {filteredSources.map(({ node }) => (
-          <AccessReviewSourceListItem
-            key={node.id}
-            sourceKey={node}
-            connectionId={accessReviewSources.__id}
-            organizationId={organizationId}
-          />
-        ))}
-      </SourceSection>
+      <div className="flex flex-col gap-8">
+        <Input
+          value={searchQuery}
+          onChange={event => setSearchQuery(event.target.value)}
+          placeholder={t("accessReviewConnectionsPage.searchPlaceholder")}
+          className="max-w-sm"
+        />
 
-      {hasNext && (!isSearching || hasFailedSearchLoad) && (
-        <Button
-          variant="secondary"
-          onClick={loadMoreSources}
-          disabled={isLoadingNext}
-          className="self-start"
-        >
-          {isLoadingNext
-            ? t("accessReviewSourcesTab.actions.loading")
-            : hasFailedSearchLoad
-              ? t("accessReviewSourcesTab.actions.retry")
-              : t("accessReviewSourcesTab.actions.loadMore")}
-        </Button>
-      )}
-
-      {organization.canCreateSource && (
         <SourceSection
-          title={t("accessReviewSourcesTab.sections.notConnected")}
-          count={availableProviders.length + (showCSV ? 1 : 0)}
-          empty={t("accessReviewSourcesTab.emptyAvailableSearch")}
+          title={t("accessReviewConnectionsPage.sections.connected")}
+          count={filteredSources.length}
+          empty={isLoadingRemainingSources
+            ? t("accessReviewConnectionsPage.actions.loading")
+            : hasFailedSearchLoad
+              ? t("accessReviewConnectionsPage.searchLoadFailed")
+              : isSearching
+                ? t("accessReviewConnectionsPage.emptyConnectedSearch")
+                : t("accessReviewConnectionsPage.emptyConnected")}
         >
-          {availableProviders.map(provider => (
-            <AccessReviewSourceProviderListItem
-              key={provider.provider}
-              providerKey={provider}
-              organizationId={organizationId}
+          {filteredSources.map(({ node }) => (
+            <AccessReviewSourceListItem
+              key={node.id}
+              sourceKey={node}
               connectionId={accessReviewSources.__id}
+              organizationId={organizationId}
             />
           ))}
-          {showCSV && (
-            <CSVSourceListItem organizationId={organizationId} />
-          )}
         </SourceSection>
-      )}
+
+        {hasNext && (!isSearching || hasFailedSearchLoad) && (
+          <Button
+            variant="secondary"
+            onClick={loadMoreSources}
+            disabled={isLoadingNext}
+            className="self-start"
+          >
+            {isLoadingNext
+              ? t("accessReviewConnectionsPage.actions.loading")
+              : hasFailedSearchLoad
+                ? t("accessReviewConnectionsPage.actions.retry")
+                : t("accessReviewConnectionsPage.actions.loadMore")}
+          </Button>
+        )}
+
+        {organization.canCreateSource && (
+          <SourceSection
+            title={t("accessReviewConnectionsPage.sections.notConnected")}
+            count={availableProviders.length + (showCSV ? 1 : 0)}
+            empty={t("accessReviewConnectionsPage.emptyAvailableSearch")}
+          >
+            {availableProviders.map(provider => (
+              <AccessReviewSourceProviderListItem
+                key={provider.provider}
+                providerKey={provider}
+                organizationId={organizationId}
+                connectionId={accessReviewSources.__id}
+              />
+            ))}
+            {showCSV && (
+              <CSVSourceListItem organizationId={organizationId} />
+            )}
+          </SourceSection>
+        )}
+      </div>
     </div>
   );
 }
@@ -427,7 +437,7 @@ function CSVSourceListItem({ organizationId }: { organizationId: string }) {
       <div className={trailing()}>
         <Button variant="primary" asChild>
           <Link
-            to={`/organizations/${organizationId}/access-reviews/sources/new/csv`}
+            to={`/organizations/${organizationId}/access-reviews/connections/new/csv`}
           >
             {t("addAccessReviewSourceDialog.actions.open")}
           </Link>

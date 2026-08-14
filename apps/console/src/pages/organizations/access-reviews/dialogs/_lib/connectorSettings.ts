@@ -180,7 +180,7 @@ export function connectOAuthProvider(
   }
   url.searchParams.append(
     "continue",
-    `/organizations/${organizationId}/access-reviews/sources`,
+    `/organizations/${organizationId}/access-reviews/connections`,
   );
   window.location.assign(url.toString());
 }
