@@ -2443,6 +2443,16 @@
     "auditLog": "Journal d’audit",
     "allThirdParties": "Tous les tiers",
     "thirdParties": "Tiers",
+    "thirdPartyCompliance": "Conformité",
+    "thirdPartyRisk": "Risque",
+    "thirdPartyProfile": "Profil",
+    "thirdPartyStakeholders": "Parties prenantes",
+    "thirdPartyAssurance": "Assurance",
+    "thirdPartyAgreements": "Accords",
+    "thirdPartyServices": "Services",
+    "thirdPartySupplyChain": "Chaîne d’approvisionnement",
+    "thirdPartyRisks": "Évaluations des risques",
+    "thirdPartyMeasures": "Mesures",
     "documents": "Documents",
     "assets": "Actifs",
     "devices": "Appareils",
@@ -5815,9 +5825,6 @@
   },
   "thirdPartyDetailLayout": {
     "title": "Tiers",
-    "breadcrumb": {
-      "thirdParties": "Tiers"
-    },
     "messages": {
       "error": "Erreur"
     },
@@ -5832,16 +5839,6 @@
     "actions": {
       "startVetting": "Démarrer la vérification",
       "delete": "Supprimer"
-    },
-    "tabs": {
-      "overview": "Vue d’ensemble",
-      "certifications": "Certifications",
-      "complianceReports": "Rapports de conformité",
-      "riskAssessment": "Évaluation des risques",
-      "contacts": "Contacts",
-      "services": "Services",
-      "thirdParties": "Tiers",
-      "measures": "Mesures"
     }
   },
   "addChildThirdPartyDialog": {
@@ -6171,74 +6168,13 @@
       "start": "Démarrer la vérification"
     }
   },
-  "thirdPartyCertificationsPage": {
-    "pageTitle": "{{name}} - Certifications",
-    "categories": {
-      "securityStandards": "Normes de sécurité",
-      "regulatoryLegal": "Réglementaire et juridique",
-      "industrySpecific": "Spécifique au secteur",
-      "internationalGov": "International et gouvernemental",
-      "custom": "Certifications personnalisées"
-    },
-    "placeholders": {
-      "add": "Ajouter une nouvelle certification"
-    },
-    "addCustom": "Ajouter une certification personnalisée : {{name}}",
-    "actions": {
-      "update": "Mettre à jour le tiers"
-    }
-  },
-  "thirdPartyCompliancePage": {
-    "pageTitle": "{{name}} - Rapports de conformité",
-    "title": "Rapports de conformité",
-    "description": "Suivez les certifications et rapports de conformité des tiers.",
-    "actions": {
-      "addReport": "Ajouter un rapport"
-    },
-    "columns": {
-      "reportName": "Nom du rapport",
-      "reportDate": "Date du rapport",
-      "validUntil": "Valide jusqu’au",
-      "fileSize": "Taille du fichier",
-      "actions": "Actions"
-    }
-  },
-  "thirdPartyComplianceReportRow": {
-    "messages": {
-      "error": "Erreur"
-    },
-    "errors": {
-      "delete": "Échec de la suppression du rapport"
-    },
-    "deleteConfirmation": "Cette action supprimera définitivement le rapport « {{name}} ». Cette action est irréversible.",
-    "actions": {
-      "download": "Télécharger",
-      "delete": "Supprimer"
-    }
-  },
-  "thirdPartyContactsPage": {
-    "pageTitle": "{{name}} - Contacts",
-    "title": "Contacts",
-    "description": "Gérez les contacts du tiers et leurs informations.",
-    "actions": {
-      "add": "Ajouter un contact"
-    },
-    "columns": {
-      "name": "Nom",
-      "email": "E-mail",
-      "phone": "Téléphone",
-      "role": "Rôle",
-      "actions": "Actions"
-    }
-  },
-  "thirdPartyOverviewPage": {
-    "pageTitle": "{{name}} - Aperçu",
+  "thirdPartyProfilePage": {
+    "pageTitle": "{{name}} - Profil",
+    "title": "Profil",
+    "description": "Identité et lieux d’activité de ce tiers.",
     "sections": {
       "details": "Détails du tiers",
-      "countries": "Pays",
-      "administrators": "Administrateurs",
-      "links": "Liens",
-      "dataAgreements": "Accords de données"
+      "countries": "Pays"
     },
     "fields": {
       "name": "Nom",
@@ -6246,12 +6182,10 @@
       "category": "Catégorie",
       "legalName": "Nom légal",
       "headquarterAddress": "Adresse du siège",
-      "websiteUrl": "URL du site web",
-      "administrators": "Administrateurs"
+      "websiteUrl": "URL du site web"
     },
     "placeholders": {
-      "category": "Sélectionner une catégorie",
-      "administrators": "Ajouter des administrateurs..."
+      "category": "Sélectionner une catégorie"
     },
     "categories": {
       "analytics": "Analytique",
@@ -6277,6 +6211,56 @@
       "security": "Sécurité",
       "versionControl": "Contrôle de version"
     },
+    "actions": {
+      "update": "Mettre à jour le tiers"
+    }
+  },
+  "thirdPartyStakeholdersPage": {
+    "pageTitle": "{{name}} - Parties prenantes",
+    "title": "Parties prenantes",
+    "description": "Les personnes responsables de cette relation — vos administrateurs et leurs contacts.",
+    "sections": {
+      "administrators": "Administrateurs",
+      "contacts": "Contacts"
+    },
+    "fields": {
+      "administrators": "Administrateurs"
+    },
+    "placeholders": {
+      "administrators": "Ajouter des administrateurs..."
+    },
+    "actions": {
+      "update": "Mettre à jour le tiers",
+      "addContact": "Ajouter un contact"
+    },
+    "columns": {
+      "name": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "role": "Rôle",
+      "actions": "Actions"
+    }
+  },
+  "thirdPartyAssurancePage": {
+    "pageTitle": "{{name}} - Assurance",
+    "title": "Assurance",
+    "description": "Preuves de la posture de sécurité et de confidentialité de ce tiers.",
+    "sections": {
+      "certifications": "Certifications",
+      "links": "Liens",
+      "reports": "Rapports de conformité"
+    },
+    "categories": {
+      "securityStandards": "Normes de sécurité",
+      "regulatoryLegal": "Réglementaire et juridique",
+      "industrySpecific": "Spécifique au secteur",
+      "internationalGov": "International et gouvernemental",
+      "custom": "Certifications personnalisées"
+    },
+    "placeholders": {
+      "add": "Ajouter une nouvelle certification"
+    },
+    "addCustom": "Ajouter une certification personnalisée : {{name}}",
     "urlLabels": {
       "statusPage": "URL de la page de statut",
       "termsOfService": "URL des conditions d’utilisation",
@@ -6286,6 +6270,22 @@
       "securityPage": "URL de la page de sécurité",
       "trustPage": "URL de la page de confiance"
     },
+    "actions": {
+      "update": "Mettre à jour le tiers",
+      "addReport": "Ajouter un rapport"
+    },
+    "columns": {
+      "reportName": "Nom du rapport",
+      "reportDate": "Date du rapport",
+      "validUntil": "Valide jusqu’au",
+      "fileSize": "Taille du fichier",
+      "actions": "Actions"
+    }
+  },
+  "thirdPartyAgreementsPage": {
+    "pageTitle": "{{name}} - Accords",
+    "title": "Accords",
+    "description": "Accords de traitement des données signés avec ce tiers.",
     "agreements": {
       "businessAssociate": "Accord de partenaire commercial",
       "dataPrivacy": "Accord de confidentialité des données",
@@ -6299,8 +6299,20 @@
     },
     "actions": {
       "downloadPdf": "Télécharger le PDF",
-      "upload": "Téléverser",
-      "update": "Mettre à jour le tiers"
+      "upload": "Téléverser"
+    }
+  },
+  "thirdPartyComplianceReportRow": {
+    "messages": {
+      "error": "Erreur"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du rapport"
+    },
+    "deleteConfirmation": "Cette action supprimera définitivement le rapport « {{name}} ». Cette action est irréversible.",
+    "actions": {
+      "download": "Télécharger",
+      "delete": "Supprimer"
     }
   },
   "thirdPartyRiskAssessmentPage": {
@@ -6343,10 +6355,10 @@
       "delete": "Supprimer"
     }
   },
-  "thirdPartyThirdPartiesPage": {
-    "pageTitle": "{{name}} - Tiers",
-    "title": "Tiers",
-    "description": "Gérez les tiers associés à ce tiers.",
+  "thirdPartySupplyChainPage": {
+    "pageTitle": "{{name}} - Chaîne d’approvisionnement",
+    "title": "Chaîne d’approvisionnement",
+    "description": "Les tiers sur lesquels ce fournisseur s’appuie.",
     "deleteConfirmation": "Supprimer « {{name}} » ?",
     "notAssessed": "Non évalué",
     "actions": {

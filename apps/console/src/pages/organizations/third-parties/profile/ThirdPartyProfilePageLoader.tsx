@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,15 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { ThirdPartyThirdPartiesPageQuery } from "#/__generated__/core/ThirdPartyThirdPartiesPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import type { ThirdPartyProfilePageQuery } from "#/__generated__/core/ThirdPartyProfilePageQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
-import ThirdPartyThirdPartiesPage, { thirdPartyThirdPartiesPageQuery } from "./ThirdPartyThirdPartiesPage";
+import { ThirdPartyProfilePage, thirdPartyProfilePageQuery } from "./ThirdPartyProfilePage";
 
-export default function ThirdPartyThirdPartiesPageLoader() {
+export default function ThirdPartyProfilePageLoader() {
   const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<ThirdPartyThirdPartiesPageQuery>(thirdPartyThirdPartiesPageQuery);
+  const [queryRef, loadQuery]
+    = useQueryLoader<ThirdPartyProfilePageQuery>(thirdPartyProfilePageQuery);
 
   useEffect(() => {
     if (thirdPartyId) {
@@ -38,12 +39,12 @@ export default function ThirdPartyThirdPartiesPageLoader() {
   }, [loadQuery, thirdPartyId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <LinkCardSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <ThirdPartyThirdPartiesPage queryRef={queryRef} />
+    <Suspense fallback={<LinkCardSkeleton />}>
+      <ThirdPartyProfilePage queryRef={queryRef} />
     </Suspense>
   );
 }

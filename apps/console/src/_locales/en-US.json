@@ -2442,6 +2442,16 @@
     "auditLog": "Audit Log",
     "allThirdParties": "All Third Parties",
     "thirdParties": "Third parties",
+    "thirdPartyCompliance": "Compliance",
+    "thirdPartyRisk": "Risk",
+    "thirdPartyProfile": "Profile",
+    "thirdPartyStakeholders": "Stakeholders",
+    "thirdPartyAssurance": "Assurance",
+    "thirdPartyAgreements": "Agreements",
+    "thirdPartyServices": "Services",
+    "thirdPartySupplyChain": "Supply chain",
+    "thirdPartyRisks": "Risk assessments",
+    "thirdPartyMeasures": "Measures",
     "documents": "Documents",
     "assets": "Assets",
     "devices": "Devices",
@@ -5815,9 +5825,6 @@
   },
   "thirdPartyDetailLayout": {
     "title": "Third party",
-    "breadcrumb": {
-      "thirdParties": "Third parties"
-    },
     "messages": {
       "error": "Error"
     },
@@ -5832,16 +5839,6 @@
     "actions": {
       "startVetting": "Start Vetting",
       "delete": "Delete"
-    },
-    "tabs": {
-      "overview": "Overview",
-      "certifications": "Certifications",
-      "complianceReports": "Compliance reports",
-      "riskAssessment": "Risk Assessment",
-      "contacts": "Contacts",
-      "services": "Services",
-      "thirdParties": "Third Parties",
-      "measures": "Measures"
     }
   },
   "addChildThirdPartyDialog": {
@@ -6171,74 +6168,13 @@
       "start": "Start Vetting"
     }
   },
-  "thirdPartyCertificationsPage": {
-    "pageTitle": "{{name}} - Certifications",
-    "categories": {
-      "securityStandards": "Security Standards",
-      "regulatoryLegal": "Regulatory & Legal",
-      "industrySpecific": "Industry-Specific",
-      "internationalGov": "International & Government",
-      "custom": "Custom certifications"
-    },
-    "placeholders": {
-      "add": "Add a new certification"
-    },
-    "addCustom": "Add a custom certification: {{name}}",
-    "actions": {
-      "update": "Update third party"
-    }
-  },
-  "thirdPartyCompliancePage": {
-    "pageTitle": "{{name}} - Compliance reports",
-    "title": "Compliance reports",
-    "description": "Track third party compliance certifications and reports.",
-    "actions": {
-      "addReport": "Add report"
-    },
-    "columns": {
-      "reportName": "Report name",
-      "reportDate": "Report date",
-      "validUntil": "Valid until",
-      "fileSize": "File size",
-      "actions": "Actions"
-    }
-  },
-  "thirdPartyComplianceReportRow": {
-    "messages": {
-      "error": "Error"
-    },
-    "errors": {
-      "delete": "Failed to delete report"
-    },
-    "deleteConfirmation": "This will permanently delete the report \"{{name}}\". This action cannot be undone.",
-    "actions": {
-      "download": "Download",
-      "delete": "Delete"
-    }
-  },
-  "thirdPartyContactsPage": {
-    "pageTitle": "{{name}} - Contacts",
-    "title": "Contacts",
-    "description": "Manage third party contacts and their information.",
-    "actions": {
-      "add": "Add contact"
-    },
-    "columns": {
-      "name": "Name",
-      "email": "Email",
-      "phone": "Phone",
-      "role": "Role",
-      "actions": "Actions"
-    }
-  },
-  "thirdPartyOverviewPage": {
-    "pageTitle": "{{name}} - Overview",
+  "thirdPartyProfilePage": {
+    "pageTitle": "{{name}} - Profile",
+    "title": "Profile",
+    "description": "Identity and operating locations for this third party.",
     "sections": {
       "details": "Third party details",
-      "countries": "Countries",
-      "administrators": "Administrators",
-      "links": "Links",
-      "dataAgreements": "Data agreements"
+      "countries": "Countries"
     },
     "fields": {
       "name": "Name",
@@ -6246,12 +6182,10 @@
       "category": "Category",
       "legalName": "Legal name",
       "headquarterAddress": "Headquarter address",
-      "websiteUrl": "Website URL",
-      "administrators": "Administrators"
+      "websiteUrl": "Website URL"
     },
     "placeholders": {
-      "category": "Select a category",
-      "administrators": "Add administrators..."
+      "category": "Select a category"
     },
     "categories": {
       "analytics": "Analytics",
@@ -6277,6 +6211,56 @@
       "security": "Security",
       "versionControl": "Version Control"
     },
+    "actions": {
+      "update": "Update third party"
+    }
+  },
+  "thirdPartyStakeholdersPage": {
+    "pageTitle": "{{name}} - Stakeholders",
+    "title": "Stakeholders",
+    "description": "People accountable for this relationship — your administrators and their contacts.",
+    "sections": {
+      "administrators": "Administrators",
+      "contacts": "Contacts"
+    },
+    "fields": {
+      "administrators": "Administrators"
+    },
+    "placeholders": {
+      "administrators": "Add administrators..."
+    },
+    "actions": {
+      "update": "Update third party",
+      "addContact": "Add contact"
+    },
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "actions": "Actions"
+    }
+  },
+  "thirdPartyAssurancePage": {
+    "pageTitle": "{{name}} - Assurance",
+    "title": "Assurance",
+    "description": "Evidence of this third party's security and privacy posture.",
+    "sections": {
+      "certifications": "Certifications",
+      "links": "Links",
+      "reports": "Compliance reports"
+    },
+    "categories": {
+      "securityStandards": "Security Standards",
+      "regulatoryLegal": "Regulatory & Legal",
+      "industrySpecific": "Industry-Specific",
+      "internationalGov": "International & Government",
+      "custom": "Custom certifications"
+    },
+    "placeholders": {
+      "add": "Add a new certification"
+    },
+    "addCustom": "Add a custom certification: {{name}}",
     "urlLabels": {
       "statusPage": "Status page URL",
       "termsOfService": "Terms of service URL",
@@ -6286,6 +6270,22 @@
       "securityPage": "Security page URL",
       "trustPage": "Trust page URL"
     },
+    "actions": {
+      "update": "Update third party",
+      "addReport": "Add report"
+    },
+    "columns": {
+      "reportName": "Report name",
+      "reportDate": "Report date",
+      "validUntil": "Valid until",
+      "fileSize": "File size",
+      "actions": "Actions"
+    }
+  },
+  "thirdPartyAgreementsPage": {
+    "pageTitle": "{{name}} - Agreements",
+    "title": "Agreements",
+    "description": "Signed data-processing agreements with this third party.",
     "agreements": {
       "businessAssociate": "Business Associate Agreement",
       "dataPrivacy": "Data Privacy Agreement",
@@ -6299,8 +6299,20 @@
     },
     "actions": {
       "downloadPdf": "Download PDF",
-      "upload": "Upload",
-      "update": "Update third party"
+      "upload": "Upload"
+    }
+  },
+  "thirdPartyComplianceReportRow": {
+    "messages": {
+      "error": "Error"
+    },
+    "errors": {
+      "delete": "Failed to delete report"
+    },
+    "deleteConfirmation": "This will permanently delete the report \"{{name}}\". This action cannot be undone.",
+    "actions": {
+      "download": "Download",
+      "delete": "Delete"
     }
   },
   "thirdPartyRiskAssessmentPage": {
@@ -6343,10 +6355,10 @@
       "delete": "Delete"
     }
   },
-  "thirdPartyThirdPartiesPage": {
-    "pageTitle": "{{name}} - Third Parties",
-    "title": "Third Parties",
-    "description": "Manage third parties linked to this third party.",
+  "thirdPartySupplyChainPage": {
+    "pageTitle": "{{name}} - Supply chain",
+    "title": "Supply chain",
+    "description": "Third parties this vendor relies on.",
     "deleteConfirmation": "Delete \"{{name}}\"?",
     "notAssessed": "Not assessed",
     "actions": {

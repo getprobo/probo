@@ -23,14 +23,10 @@ import { usePageTitle } from "@probo/hooks";
 import {
   ActionDropdown,
   Badge,
-  Breadcrumb,
   Button,
   DropdownItem,
   IconPageTextLine,
   IconTrashCan,
-  TabBadge,
-  TabLink,
-  Tabs,
   useConfirm,
   useToast,
 } from "@probo/ui";
@@ -51,6 +47,7 @@ import type { ThirdPartyDetailLayoutQuery } from "#/__generated__/core/ThirdPart
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { VettingDialog } from "./_components/VettingDialog";
+import { thirdPartyHref } from "./_lib/thirdPartySections";
 import { ThirdPartiesConnectionFilter, ThirdPartiesConnectionKey } from "./ThirdPartiesPage";
 
 export const thirdPartyDetailLayoutQuery = graphql`
@@ -69,16 +66,6 @@ export const thirdPartyDetailLayoutQuery = graphql`
         vettingStatus
         canVet: permission(action: "core:thirdParty:vet")
         canDelete: permission(action: "core:thirdParty:delete")
-        complianceReportsInfo: complianceReports(first: 100) {
-          edges {
-            node {
-              id
-            }
-          }
-        }
-        measuresInfo: measures(first: 0) {
-          totalCount
-        }
       }
     }
   }
@@ -194,14 +181,8 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
   };
 
   const logo = faviconUrl(thirdParty.websiteUrl);
-  const reportsCount = thirdParty.complianceReportsInfo?.edges.length ?? 0;
-  const measuresCount = thirdParty.measuresInfo?.totalCount ?? 0;
   const isVettingFailed = thirdParty.vettingStatus === "FAILED";
   const ancestors = thirdParty.ancestors ?? [];
-
-  const thirdPartiesUrl = `/organizations/${organizationId}/tprm/third-parties`;
-  const baseThirdPartyUrl
-    = `/organizations/${organizationId}/tprm/third-parties/${thirdParty.id}`;
 
   return (
     <div className="space-y-6">
@@ -219,48 +200,39 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
           {t("thirdPartyDetailLayout.vettingFailed")}
         </div>
       )}
-      <Breadcrumb
-        items={[
-          {
-            label: t("thirdPartyDetailLayout.breadcrumb.thirdParties"),
-            to: thirdPartiesUrl,
-          },
-          {
-            label: thirdParty.name ?? "",
-          },
-        ]}
-      />
       <div className="flex justify-between items-start">
-        <div className="space-y-4">
+        <div className="flex items-center gap-4">
           {logo && (
             <img
               src={logo}
               alt={thirdParty.name ?? ""}
-              className="shadow-mid rounded-2xl"
+              className="size-12 shrink-0 shadow-mid rounded-2xl"
             />
           )}
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">{thirdParty.name}</div>
-            <Badge variant={thirdParty.level === 1 ? "info" : "neutral"}>
-              {t("thirdPartyDetailLayout.level", { level: thirdParty.level })}
-            </Badge>
-          </div>
-          {ancestors.length > 0 && (
-            <div className="flex items-center gap-1 text-sm text-txt-secondary">
-              <span className="text-txt-tertiary">{t("thirdPartyDetailLayout.from")}</span>
-              {ancestors.map((ancestor, i) => (
-                <span key={ancestor.id}>
-                  {i > 0 && " / "}
-                  <Link
-                    to={`/organizations/${organizationId}/tprm/third-parties/${ancestor.id}/overview`}
-                    className="text-txt-primary underline hover:no-underline"
-                  >
-                    {ancestor.name}
-                  </Link>
-                </span>
-              ))}
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">{thirdParty.name}</div>
+              <Badge variant={thirdParty.level === 1 ? "info" : "neutral"}>
+                {t("thirdPartyDetailLayout.level", { level: thirdParty.level })}
+              </Badge>
             </div>
-          )}
+            {ancestors.length > 0 && (
+              <div className="flex items-center gap-1 text-sm text-txt-secondary">
+                <span className="text-txt-tertiary">{t("thirdPartyDetailLayout.from")}</span>
+                {ancestors.map((ancestor, i) => (
+                  <span key={ancestor.id}>
+                    {i > 0 && " / "}
+                    <Link
+                      to={thirdPartyHref(organizationId, ancestor.id)}
+                      className="text-txt-primary underline hover:no-underline"
+                    >
+                      {ancestor.name}
+                    </Link>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex gap-2 items-center">
           {thirdParty.canVet && !isVetting && (
@@ -286,27 +258,6 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
           )}
         </div>
       </div>
-
-      <Tabs>
-        <TabLink to={`${baseThirdPartyUrl}/overview`}>{t("thirdPartyDetailLayout.tabs.overview")}</TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/certifications`}>
-          {t("thirdPartyDetailLayout.tabs.certifications")}
-        </TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/compliance`}>
-          {t("thirdPartyDetailLayout.tabs.complianceReports")}
-          {reportsCount > 0 && <TabBadge>{reportsCount}</TabBadge>}
-        </TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/risks`}>{t("thirdPartyDetailLayout.tabs.riskAssessment")}</TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/contacts`}>{t("thirdPartyDetailLayout.tabs.contacts")}</TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/services`}>{t("thirdPartyDetailLayout.tabs.services")}</TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/third-parties`}>
-          {t("thirdPartyDetailLayout.tabs.thirdParties")}
-        </TabLink>
-        <TabLink to={`${baseThirdPartyUrl}/measures`}>
-          {t("thirdPartyDetailLayout.tabs.measures")}
-          {measuresCount > 0 && <TabBadge>{measuresCount}</TabBadge>}
-        </TabLink>
-      </Tabs>
 
       <Outlet />
     </div>

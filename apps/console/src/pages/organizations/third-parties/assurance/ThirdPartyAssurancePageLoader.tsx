@@ -22,15 +22,15 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { ThirdPartyCompliancePageQuery } from "#/__generated__/core/ThirdPartyCompliancePageQuery.graphql";
+import type { ThirdPartyAssurancePageQuery } from "#/__generated__/core/ThirdPartyAssurancePageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
-import ThirdPartyCompliancePage, { thirdPartyCompliancePageQuery } from "./ThirdPartyCompliancePage";
+import { ThirdPartyAssurancePage, thirdPartyAssurancePageQuery } from "./ThirdPartyAssurancePage";
 
-export default function ThirdPartyCompliancePageLoader() {
+export default function ThirdPartyAssurancePageLoader() {
   const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
   const [queryRef, loadQuery]
-    = useQueryLoader<ThirdPartyCompliancePageQuery>(thirdPartyCompliancePageQuery);
+    = useQueryLoader<ThirdPartyAssurancePageQuery>(thirdPartyAssurancePageQuery);
 
   useEffect(() => {
     if (thirdPartyId) {
@@ -44,7 +44,7 @@ export default function ThirdPartyCompliancePageLoader() {
 
   return (
     <Suspense fallback={<LinkCardSkeleton />}>
-      <ThirdPartyCompliancePage queryRef={queryRef} />
+      <ThirdPartyAssurancePage queryRef={queryRef} />
     </Suspense>
   );
 }

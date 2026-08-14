@@ -26,6 +26,15 @@ import { redirect } from "react-router";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { firstThirdPartySection } from "./_lib/thirdPartySections";
+
+function redirectTo(path: string) {
+  return () => {
+    // eslint-disable-next-line
+    throw redirect(path);
+  };
+}
+
 export const thirdPartyRoutes = [
   {
     path: "third-parties",
@@ -39,36 +48,13 @@ export const thirdPartyRoutes = [
     children: [
       {
         path: "",
-        loader: () => {
-          // eslint-disable-next-line
-          throw redirect("overview");
-        },
+        loader: redirectTo(firstThirdPartySection().path),
         Component: Fragment,
       },
       {
-        path: "overview",
+        path: "profile",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./overview/ThirdPartyOverviewPageLoader")),
-      },
-      {
-        path: "certifications",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./certifications/ThirdPartyCertificationsPageLoader")),
-      },
-      {
-        path: "compliance",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./compliance/ThirdPartyCompliancePageLoader")),
-      },
-      {
-        path: "risks",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./risks/ThirdPartyRiskAssessmentPageLoader")),
-      },
-      {
-        path: "contacts",
-        Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./contacts/ThirdPartyContactsPageLoader")),
+        Component: lazy(() => import("./profile/ThirdPartyProfilePageLoader")),
       },
       {
         path: "services",
@@ -76,14 +62,59 @@ export const thirdPartyRoutes = [
         Component: lazy(() => import("./services/ThirdPartyServicesPageLoader")),
       },
       {
-        path: "third-parties",
+        path: "supply-chain",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./third-parties/ThirdPartyThirdPartiesPageLoader")),
+        Component: lazy(() => import("./supply-chain/ThirdPartySupplyChainPageLoader")),
+      },
+      {
+        path: "stakeholders",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("./stakeholders/ThirdPartyStakeholdersPageLoader")),
+      },
+      {
+        path: "assurance",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("./assurance/ThirdPartyAssurancePageLoader")),
+      },
+      {
+        path: "agreements",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("./agreements/ThirdPartyAgreementsPageLoader")),
+      },
+      {
+        path: "risks",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(() => import("./risks/ThirdPartyRiskAssessmentPageLoader")),
       },
       {
         path: "measures",
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("./measures/ThirdPartyMeasuresPageLoader")),
+      },
+      {
+        path: "overview",
+        loader: redirectTo(`../${firstThirdPartySection().path}`),
+        Component: Fragment,
+      },
+      {
+        path: "certifications",
+        loader: redirectTo("../assurance"),
+        Component: Fragment,
+      },
+      {
+        path: "compliance",
+        loader: redirectTo("../assurance"),
+        Component: Fragment,
+      },
+      {
+        path: "contacts",
+        loader: redirectTo("../stakeholders"),
+        Component: Fragment,
+      },
+      {
+        path: "third-parties",
+        loader: redirectTo("../supply-chain"),
+        Component: Fragment,
       },
     ],
   },

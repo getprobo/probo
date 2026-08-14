@@ -46,7 +46,7 @@ const vetMutation = graphql`
         websiteUrl
         vettingStatus
         ...useThirdPartyFormFragment
-        ...ThirdPartyCompliancePageFragment
+        ...ThirdPartyAssurancePageFragment
         ...ThirdPartyRiskAssessmentPageFragment
       }
     }

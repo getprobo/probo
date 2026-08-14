@@ -18,11 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 
+import type { ThirdPartyMeasuresPageAttachMutation } from "#/__generated__/core/ThirdPartyMeasuresPageAttachMutation.graphql";
+import type { ThirdPartyMeasuresPageDetachMutation } from "#/__generated__/core/ThirdPartyMeasuresPageDetachMutation.graphql";
 import type { ThirdPartyMeasuresPageQuery } from "#/__generated__/core/ThirdPartyMeasuresPageQuery.graphql";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
-import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 
 export const thirdPartyMeasuresPageQuery = graphql`
   query ThirdPartyMeasuresPageQuery($thirdPartyId: ID!) {
@@ -95,23 +96,11 @@ export default function ThirdPartyMeasuresPage(props: ThirdPartyMeasuresPageProp
   const canUnlink = thirdParty.canDeleteMeasureThirdPartyMapping;
   const readOnly = !canLink && !canUnlink;
 
-  const incrementOptions = {
-    id: thirdParty.id,
-    node: "measures(first:0)",
-  };
-  const [detachMeasure, isDetaching] = useMutationWithIncrement(
+  const [detachMeasure, isDetaching] = useMutation<ThirdPartyMeasuresPageDetachMutation>(
     detachMeasureMutation,
-    {
-      ...incrementOptions,
-      value: -1,
-    },
   );
-  const [attachMeasure, isAttaching] = useMutationWithIncrement(
+  const [attachMeasure, isAttaching] = useMutation<ThirdPartyMeasuresPageAttachMutation>(
     attachMeasureMutation,
-    {
-      ...incrementOptions,
-      value: 1,
-    },
   );
   const isLoading = isDetaching || isAttaching;
 

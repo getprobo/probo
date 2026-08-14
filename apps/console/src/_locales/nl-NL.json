@@ -2443,6 +2443,16 @@
     "auditLog": "Auditlogboek",
     "allThirdParties": "Alle derde partijen",
     "thirdParties": "Derde partijen",
+    "thirdPartyCompliance": "Compliance",
+    "thirdPartyRisk": "Risico",
+    "thirdPartyProfile": "Profiel",
+    "thirdPartyStakeholders": "Belanghebbenden",
+    "thirdPartyAssurance": "Assurance",
+    "thirdPartyAgreements": "Overeenkomsten",
+    "thirdPartyServices": "Diensten",
+    "thirdPartySupplyChain": "Toeleveringsketen",
+    "thirdPartyRisks": "Risicobeoordelingen",
+    "thirdPartyMeasures": "Maatregelen",
     "documents": "Documenten",
     "assets": "Assets",
     "devices": "Apparaten",
@@ -5815,9 +5825,6 @@
   },
   "thirdPartyDetailLayout": {
     "title": "Derde partij",
-    "breadcrumb": {
-      "thirdParties": "Derde partijen"
-    },
     "messages": {
       "error": "Fout"
     },
@@ -5832,16 +5839,6 @@
     "actions": {
       "startVetting": "Screening starten",
       "delete": "Verwijderen"
-    },
-    "tabs": {
-      "overview": "Overzicht",
-      "certifications": "Certificeringen",
-      "complianceReports": "Compliancerapporten",
-      "riskAssessment": "Risicobeoordeling",
-      "contacts": "Contactpersonen",
-      "services": "Diensten",
-      "thirdParties": "Derde partijen",
-      "measures": "Maatregelen"
     }
   },
   "addChildThirdPartyDialog": {
@@ -6171,74 +6168,13 @@
       "start": "Screening starten"
     }
   },
-  "thirdPartyCertificationsPage": {
-    "pageTitle": "{{name}} - Certificeringen",
-    "categories": {
-      "securityStandards": "Beveiligingsstandaarden",
-      "regulatoryLegal": "Regelgeving en juridisch",
-      "industrySpecific": "Branchespecifiek",
-      "internationalGov": "Internationaal en overheid",
-      "custom": "Aangepaste certificeringen"
-    },
-    "placeholders": {
-      "add": "Nieuwe certificering toevoegen"
-    },
-    "addCustom": "Aangepaste certificering toevoegen: {{name}}",
-    "actions": {
-      "update": "Derde partij bijwerken"
-    }
-  },
-  "thirdPartyCompliancePage": {
-    "pageTitle": "{{name}} - Compliancerapporten",
-    "title": "Compliancerapporten",
-    "description": "Houd compliancecertificeringen en -rapporten van derde partijen bij.",
-    "actions": {
-      "addReport": "Rapport toevoegen"
-    },
-    "columns": {
-      "reportName": "Rapportnaam",
-      "reportDate": "Rapportdatum",
-      "validUntil": "Geldig tot",
-      "fileSize": "Bestandsgrootte",
-      "actions": "Acties"
-    }
-  },
-  "thirdPartyComplianceReportRow": {
-    "messages": {
-      "error": "Fout"
-    },
-    "errors": {
-      "delete": "Verwijderen van rapport mislukt"
-    },
-    "deleteConfirmation": "Hiermee wordt het rapport \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
-    "actions": {
-      "download": "Downloaden",
-      "delete": "Verwijderen"
-    }
-  },
-  "thirdPartyContactsPage": {
-    "pageTitle": "{{name}} - Contactpersonen",
-    "title": "Contactpersonen",
-    "description": "Beheer contactpersonen van derde partijen en hun gegevens.",
-    "actions": {
-      "add": "Contactpersoon toevoegen"
-    },
-    "columns": {
-      "name": "Naam",
-      "email": "E-mail",
-      "phone": "Telefoon",
-      "role": "Rol",
-      "actions": "Acties"
-    }
-  },
-  "thirdPartyOverviewPage": {
-    "pageTitle": "{{name}} - Overzicht",
+  "thirdPartyProfilePage": {
+    "pageTitle": "{{name}} - Profiel",
+    "title": "Profiel",
+    "description": "Identiteit en vestigingslanden van deze derde partij.",
     "sections": {
       "details": "Gegevens derde partij",
-      "countries": "Landen",
-      "administrators": "Beheerders",
-      "links": "Links",
-      "dataAgreements": "Gegevensovereenkomsten"
+      "countries": "Landen"
     },
     "fields": {
       "name": "Naam",
@@ -6246,12 +6182,10 @@
       "category": "Categorie",
       "legalName": "Wettelijke naam",
       "headquarterAddress": "Adres hoofdkantoor",
-      "websiteUrl": "Website-URL",
-      "administrators": "Beheerders"
+      "websiteUrl": "Website-URL"
     },
     "placeholders": {
-      "category": "Selecteer een categorie",
-      "administrators": "Beheerders toevoegen..."
+      "category": "Selecteer een categorie"
     },
     "categories": {
       "analytics": "Analytics",
@@ -6277,6 +6211,56 @@
       "security": "Beveiliging",
       "versionControl": "Versiebeheer"
     },
+    "actions": {
+      "update": "Derde partij bijwerken"
+    }
+  },
+  "thirdPartyStakeholdersPage": {
+    "pageTitle": "{{name}} - Belanghebbenden",
+    "title": "Belanghebbenden",
+    "description": "Personen die verantwoordelijk zijn voor deze relatie — uw beheerders en hun contactpersonen.",
+    "sections": {
+      "administrators": "Beheerders",
+      "contacts": "Contactpersonen"
+    },
+    "fields": {
+      "administrators": "Beheerders"
+    },
+    "placeholders": {
+      "administrators": "Beheerders toevoegen..."
+    },
+    "actions": {
+      "update": "Derde partij bijwerken",
+      "addContact": "Contactpersoon toevoegen"
+    },
+    "columns": {
+      "name": "Naam",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "role": "Rol",
+      "actions": "Acties"
+    }
+  },
+  "thirdPartyAssurancePage": {
+    "pageTitle": "{{name}} - Assurance",
+    "title": "Assurance",
+    "description": "Bewijs van de beveiligings- en privacyhouding van deze derde partij.",
+    "sections": {
+      "certifications": "Certificeringen",
+      "links": "Links",
+      "reports": "Compliancerapporten"
+    },
+    "categories": {
+      "securityStandards": "Beveiligingsstandaarden",
+      "regulatoryLegal": "Regelgeving en juridisch",
+      "industrySpecific": "Branchespecifiek",
+      "internationalGov": "Internationaal en overheid",
+      "custom": "Aangepaste certificeringen"
+    },
+    "placeholders": {
+      "add": "Nieuwe certificering toevoegen"
+    },
+    "addCustom": "Aangepaste certificering toevoegen: {{name}}",
     "urlLabels": {
       "statusPage": "URL statuspagina",
       "termsOfService": "URL algemene voorwaarden",
@@ -6286,6 +6270,22 @@
       "securityPage": "URL beveiligingspagina",
       "trustPage": "URL trustpagina"
     },
+    "actions": {
+      "update": "Derde partij bijwerken",
+      "addReport": "Rapport toevoegen"
+    },
+    "columns": {
+      "reportName": "Rapportnaam",
+      "reportDate": "Rapportdatum",
+      "validUntil": "Geldig tot",
+      "fileSize": "Bestandsgrootte",
+      "actions": "Acties"
+    }
+  },
+  "thirdPartyAgreementsPage": {
+    "pageTitle": "{{name}} - Overeenkomsten",
+    "title": "Overeenkomsten",
+    "description": "Ondertekende gegevensverwerkingsovereenkomsten met deze derde partij.",
     "agreements": {
       "businessAssociate": "Business Associate Agreement",
       "dataPrivacy": "Data Privacy Agreement",
@@ -6299,8 +6299,20 @@
     },
     "actions": {
       "downloadPdf": "PDF downloaden",
-      "upload": "Uploaden",
-      "update": "Derde partij bijwerken"
+      "upload": "Uploaden"
+    }
+  },
+  "thirdPartyComplianceReportRow": {
+    "messages": {
+      "error": "Fout"
+    },
+    "errors": {
+      "delete": "Verwijderen van rapport mislukt"
+    },
+    "deleteConfirmation": "Hiermee wordt het rapport \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "actions": {
+      "download": "Downloaden",
+      "delete": "Verwijderen"
     }
   },
   "thirdPartyRiskAssessmentPage": {
@@ -6343,10 +6355,10 @@
       "delete": "Verwijderen"
     }
   },
-  "thirdPartyThirdPartiesPage": {
-    "pageTitle": "{{name}} - Derde partijen",
-    "title": "Derde partijen",
-    "description": "Beheer derde partijen die aan deze derde partij zijn gekoppeld.",
+  "thirdPartySupplyChainPage": {
+    "pageTitle": "{{name}} - Toeleveringsketen",
+    "title": "Toeleveringsketen",
+    "description": "Derde partijen waarop deze leverancier steunt.",
     "deleteConfirmation": "\"{{name}}\" verwijderen?",
     "notAssessed": "Niet beoordeeld",
     "actions": {

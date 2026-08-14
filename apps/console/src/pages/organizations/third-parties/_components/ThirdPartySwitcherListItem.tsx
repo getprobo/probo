@@ -25,6 +25,8 @@ import type { ThirdPartySwitcherListItem_thirdParty$key } from "#/__generated__/
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelSwitcherListItem } from "#/pages/organizations/_components/NavPanelSwitcherListItem";
 
+import { thirdPartyHref } from "../_lib/thirdPartySections";
+
 import { ThirdPartySwitcherAvatar } from "./ThirdPartySwitcherAvatar";
 
 const thirdPartySwitcherListItemFragment = graphql`
@@ -49,7 +51,7 @@ export function ThirdPartySwitcherListItem({ thirdPartyKey }: ThirdPartySwitcher
 
   return (
     <NavPanelSwitcherListItem
-      to={`/organizations/${organizationId}/tprm/third-parties/${thirdParty.id}/overview`}
+      to={thirdPartyHref(organizationId, thirdParty.id)}
       name={thirdParty.name}
       detail={thirdParty.websiteUrl ?? undefined}
       leading={<ThirdPartySwitcherAvatar name={thirdParty.name} websiteUrl={thirdParty.websiteUrl} />}

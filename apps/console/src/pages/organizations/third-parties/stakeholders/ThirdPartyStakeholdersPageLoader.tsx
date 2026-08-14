@@ -22,15 +22,15 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { ThirdPartyContactsPageQuery } from "#/__generated__/core/ThirdPartyContactsPageQuery.graphql";
+import type { ThirdPartyStakeholdersPageQuery } from "#/__generated__/core/ThirdPartyStakeholdersPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
-import ThirdPartyContactsPage, { thirdPartyContactsPageQuery } from "./ThirdPartyContactsPage";
+import { ThirdPartyStakeholdersPage, thirdPartyStakeholdersPageQuery } from "./ThirdPartyStakeholdersPage";
 
-export default function ThirdPartyContactsPageLoader() {
+export default function ThirdPartyStakeholdersPageLoader() {
   const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
   const [queryRef, loadQuery]
-    = useQueryLoader<ThirdPartyContactsPageQuery>(thirdPartyContactsPageQuery);
+    = useQueryLoader<ThirdPartyStakeholdersPageQuery>(thirdPartyStakeholdersPageQuery);
 
   useEffect(() => {
     if (thirdPartyId) {
@@ -44,7 +44,7 @@ export default function ThirdPartyContactsPageLoader() {
 
   return (
     <Suspense fallback={<LinkCardSkeleton />}>
-      <ThirdPartyContactsPage queryRef={queryRef} />
+      <ThirdPartyStakeholdersPage queryRef={queryRef} />
     </Suspense>
   );
 }

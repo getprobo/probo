@@ -35,7 +35,10 @@ import {
 } from "#/pages/organizations/_components/NavPanelSwitcher";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
+import { thirdPartyHref } from "../_lib/thirdPartySections";
+
 import { CreateThirdPartyDialog } from "./CreateThirdPartyDialog";
+import { ThirdPartyNavItems } from "./ThirdPartyNavItems";
 import {
   ThirdPartySwitcherMenu,
   thirdPartySwitcherMenuQuery,
@@ -52,12 +55,14 @@ import { ThirdPartySwitcherValue } from "./ThirdPartySwitcherValue";
  * open this menu. The selected third party's name is a separate query so the
  * trigger can show it without loading the list. CoreRelayProvider is local
  * because the surrounding chrome runs on the IAM environment. The create
- * dialog is owned here so it survives the menu closing.
+ * dialog is owned here so it survives the menu closing. Section links hang
+ * off the same column once a third party is in the URL.
  */
 export function ThirdPartySwitcher() {
   return (
     <CoreRelayProvider>
       <ThirdPartySwitcherInner />
+      <ThirdPartyNavItems />
     </CoreRelayProvider>
   );
 }
@@ -82,7 +87,7 @@ function ThirdPartySwitcherInner() {
   }, [loadQuery, organizationId]);
 
   const handleCreated = useCallback((id: string) => {
-    void navigate(`/organizations/${organizationId}/tprm/third-parties/${id}/overview`);
+    void navigate(thirdPartyHref(organizationId, id));
   }, [navigate, organizationId]);
 
   return (

@@ -38,6 +38,8 @@ import type { ThirdPartyRow_thirdParty$key } from "#/__generated__/core/ThirdPar
 import type { ThirdPartyRowDeleteMutation } from "#/__generated__/core/ThirdPartyRowDeleteMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { thirdPartyHref } from "../_lib/thirdPartySections";
+
 const thirdPartyRowFragment = graphql`
   fragment ThirdPartyRow_thirdParty on ThirdParty {
     id
@@ -87,7 +89,7 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
   const { toast } = useToast();
 
   const latestAssessment = thirdParty.riskAssessments?.edges[0]?.node;
-  const thirdPartyUrl = `/organizations/${organizationId}/tprm/third-parties/${thirdParty.id}/overview`;
+  const thirdPartyUrl = thirdPartyHref(organizationId, thirdParty.id);
 
   const onDelete = () => {
     confirm(

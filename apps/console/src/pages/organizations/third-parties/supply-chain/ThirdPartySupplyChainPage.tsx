@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,20 +45,21 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ThirdPartyThirdPartiesPageDeleteMutation } from "#/__generated__/core/ThirdPartyThirdPartiesPageDeleteMutation.graphql";
-import type { ThirdPartyThirdPartiesPageFragment$key } from "#/__generated__/core/ThirdPartyThirdPartiesPageFragment.graphql";
-import type { ThirdPartyThirdPartiesPagePaginationQuery } from "#/__generated__/core/ThirdPartyThirdPartiesPagePaginationQuery.graphql";
-import type { ThirdPartyThirdPartiesPageQuery } from "#/__generated__/core/ThirdPartyThirdPartiesPageQuery.graphql";
+import type { ThirdPartySupplyChainPageDeleteMutation } from "#/__generated__/core/ThirdPartySupplyChainPageDeleteMutation.graphql";
+import type { ThirdPartySupplyChainPageFragment$key } from "#/__generated__/core/ThirdPartySupplyChainPageFragment.graphql";
+import type { ThirdPartySupplyChainPagePaginationQuery } from "#/__generated__/core/ThirdPartySupplyChainPagePaginationQuery.graphql";
+import type { ThirdPartySupplyChainPageQuery } from "#/__generated__/core/ThirdPartySupplyChainPageQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AddChildThirdPartyDialog } from "../_components/AddChildThirdPartyDialog";
+import { thirdPartyHref } from "../_lib/thirdPartySections";
 
 // Keep in sync with coredata.MaxThirdPartyLevel on the backend.
 const MAX_THIRD_PARTY_LEVEL = 4;
 
-export const thirdPartyThirdPartiesPageQuery = graphql`
-  query ThirdPartyThirdPartiesPageQuery($thirdPartyId: ID!) {
+export const thirdPartySupplyChainPageQuery = graphql`
+  query ThirdPartySupplyChainPageQuery($thirdPartyId: ID!) {
     node(id: $thirdPartyId) {
       __typename
       ... on ThirdParty {
@@ -69,15 +70,15 @@ export const thirdPartyThirdPartiesPageQuery = graphql`
           name
         }
         canUpdate: permission(action: "core:thirdParty:update")
-        ...ThirdPartyThirdPartiesPageFragment
+        ...ThirdPartySupplyChainPageFragment
       }
     }
   }
 `;
 
 const paginatedFragment = graphql`
-  fragment ThirdPartyThirdPartiesPageFragment on ThirdParty
-  @refetchable(queryName: "ThirdPartyThirdPartiesPagePaginationQuery")
+  fragment ThirdPartySupplyChainPageFragment on ThirdParty
+  @refetchable(queryName: "ThirdPartySupplyChainPagePaginationQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     order: { type: "ThirdPartyOrder", defaultValue: null }
@@ -91,7 +92,7 @@ const paginatedFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "ThirdPartyThirdPartiesPageFragment_childThirdParties", filters: []) {
+    ) @connection(key: "ThirdPartySupplyChainPageFragment_childThirdParties", filters: []) {
       __id
       edges {
         node {
@@ -118,7 +119,7 @@ const paginatedFragment = graphql`
 `;
 
 const deleteChildMutation = graphql`
-  mutation ThirdPartyThirdPartiesPageDeleteMutation(
+  mutation ThirdPartySupplyChainPageDeleteMutation(
     $input: DeleteThirdPartyInput!
     $connections: [ID!]!
   ) {
@@ -128,24 +129,27 @@ const deleteChildMutation = graphql`
   }
 `;
 
-interface Props {
-  queryRef: PreloadedQuery<ThirdPartyThirdPartiesPageQuery>;
+interface ThirdPartySupplyChainPageProps {
+  queryRef: PreloadedQuery<ThirdPartySupplyChainPageQuery>;
 }
 
-export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
-  const { node } = usePreloadedQuery<ThirdPartyThirdPartiesPageQuery>(thirdPartyThirdPartiesPageQuery, queryRef);
+export function ThirdPartySupplyChainPage({ queryRef }: ThirdPartySupplyChainPageProps) {
+  const { node } = usePreloadedQuery<ThirdPartySupplyChainPageQuery>(
+    thirdPartySupplyChainPageQuery,
+    queryRef,
+  );
   const thirdParty = node.__typename === "ThirdParty" ? node : null;
   const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
 
   const pagination = usePaginationFragment<
-    ThirdPartyThirdPartiesPagePaginationQuery,
-    ThirdPartyThirdPartiesPageFragment$key
-  >(paginatedFragment, thirdParty as ThirdPartyThirdPartiesPageFragment$key);
-  const [deleteChild] = useMutation<ThirdPartyThirdPartiesPageDeleteMutation>(deleteChildMutation);
+    ThirdPartySupplyChainPagePaginationQuery,
+    ThirdPartySupplyChainPageFragment$key
+  >(paginatedFragment, thirdParty as ThirdPartySupplyChainPageFragment$key);
+  const [deleteChild] = useMutation<ThirdPartySupplyChainPageDeleteMutation>(deleteChildMutation);
 
-  usePageTitle(t("thirdPartyThirdPartiesPage.pageTitle", { name: thirdParty?.name ?? "" }));
+  usePageTitle(t("thirdPartySupplyChainPage.pageTitle", { name: thirdParty?.name ?? "" }));
 
   if (!thirdParty) {
     return null;
@@ -177,7 +181,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
           });
         }),
       {
-        message: t("thirdPartyThirdPartiesPage.deleteConfirmation", { name: childName }),
+        message: t("thirdPartySupplyChainPage.deleteConfirmation", { name: childName }),
       },
     );
   };
@@ -185,8 +189,8 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("thirdPartyThirdPartiesPage.title")}
-        description={t("thirdPartyThirdPartiesPage.description")}
+        title={t("thirdPartySupplyChainPage.title")}
+        description={t("thirdPartySupplyChainPage.description")}
       >
         {thirdParty.canUpdate && thirdParty.level < MAX_THIRD_PARTY_LEVEL && (
           <AddChildThirdPartyDialog
@@ -195,7 +199,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
             organizationId={organizationId}
             connectionId={connectionId}
           >
-            <Button icon={IconPlusLarge}>{t("thirdPartyThirdPartiesPage.actions.add")}</Button>
+            <Button icon={IconPlusLarge}>{t("thirdPartySupplyChainPage.actions.add")}</Button>
           </AddChildThirdPartyDialog>
         )}
       </PageHeader>
@@ -205,10 +209,10 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
       >
         <Thead>
           <Tr>
-            <SortableTh field="NAME">{t("thirdPartyThirdPartiesPage.columns.thirdParty")}</SortableTh>
-            <Th>{t("thirdPartyThirdPartiesPage.columns.assessedAt")}</Th>
-            <Th>{t("thirdPartyThirdPartiesPage.columns.dataRisk")}</Th>
-            <Th>{t("thirdPartyThirdPartiesPage.columns.businessRisk")}</Th>
+            <SortableTh field="NAME">{t("thirdPartySupplyChainPage.columns.thirdParty")}</SortableTh>
+            <Th>{t("thirdPartySupplyChainPage.columns.assessedAt")}</Th>
+            <Th>{t("thirdPartySupplyChainPage.columns.dataRisk")}</Th>
+            <Th>{t("thirdPartySupplyChainPage.columns.businessRisk")}</Th>
             <Th />
           </Tr>
         </Thead>
@@ -219,7 +223,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
             return (
               <Tr
                 key={child.id}
-                to={`/organizations/${organizationId}/tprm/third-parties/${child.id}/overview`}
+                to={thirdPartyHref(organizationId, child.id)}
               >
                 <Td>
                   <div className="flex gap-2 items-center">
@@ -230,7 +234,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
                 <Td>
                   {latestAssessment?.createdAt
                     ? dateFormat(i18n.language, latestAssessment.createdAt)
-                    : t("thirdPartyThirdPartiesPage.notAssessed")}
+                    : t("thirdPartySupplyChainPage.notAssessed")}
                 </Td>
                 <Td>
                   <RiskBadge level={latestAssessment?.dataSensitivity ?? "NONE"} />

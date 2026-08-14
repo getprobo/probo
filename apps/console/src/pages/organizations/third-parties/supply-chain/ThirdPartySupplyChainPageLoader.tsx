@@ -22,15 +22,16 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { ThirdPartyOverviewPageQuery } from "#/__generated__/core/ThirdPartyOverviewPageQuery.graphql";
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import type { ThirdPartySupplyChainPageQuery } from "#/__generated__/core/ThirdPartySupplyChainPageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import ThirdPartyOverviewPage, { thirdPartyOverviewPageQuery } from "./ThirdPartyOverviewPage";
+import { ThirdPartySupplyChainPage, thirdPartySupplyChainPageQuery } from "./ThirdPartySupplyChainPage";
 
-export default function ThirdPartyOverviewPageLoader() {
+export default function ThirdPartySupplyChainPageLoader() {
   const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
-  const [queryRef, loadQuery]
-    = useQueryLoader<ThirdPartyOverviewPageQuery>(thirdPartyOverviewPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<ThirdPartySupplyChainPageQuery>(
+    thirdPartySupplyChainPageQuery,
+  );
 
   useEffect(() => {
     if (thirdPartyId) {
@@ -39,12 +40,12 @@ export default function ThirdPartyOverviewPageLoader() {
   }, [loadQuery, thirdPartyId]);
 
   if (!queryRef) {
-    return <LinkCardSkeleton />;
+    return <PageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<LinkCardSkeleton />}>
-      <ThirdPartyOverviewPage queryRef={queryRef} />
+    <Suspense fallback={<PageSkeleton />}>
+      <ThirdPartySupplyChainPage queryRef={queryRef} />
     </Suspense>
   );
 }
