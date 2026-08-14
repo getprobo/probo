@@ -50,6 +50,16 @@ export const navPanelSwitcher = tv({
     ],
     value: "min-w-0 flex-1 truncate text-left",
     valueCaret: "size-4 shrink-0",
+    // Switcher plus a trailing action (open-in-new-tab) on one row.
+    row: "flex items-center gap-1",
+    rowTrigger: "min-w-0 flex-1",
+    // No [&_svg] size: Phosphor `size` on the icon is the source of truth.
+    openLink: [
+      "flex size-7 shrink-0 items-center justify-center rounded-2",
+      "text-sand-11 outline-none transition-colors select-none",
+      "hover:bg-sand-3 hover:text-sand-12",
+      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+    ],
     // h-5 matches text-2 line-height so the trigger does not jump when the
     // selected name replaces this pulse.
     valueSkeletonName: "block h-5 w-28 animate-pulse rounded-1 bg-sand-3",

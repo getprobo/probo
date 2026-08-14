@@ -2476,7 +2476,8 @@
       "new": "Nouveau portail",
       "create": "Nouveau portail",
       "empty": "Aucun portail de conformité",
-      "loading": "Chargement…"
+      "loading": "Chargement…",
+      "open": "Ouvrir le portail"
     }
   },
   "viewerMembershipDropdown": {

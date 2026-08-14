@@ -18,42 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router";
+import { graphql, useFragment } from "react-relay";
 
-import type { CompliancePortalSwitcherValueQuery } from "#/__generated__/core/CompliancePortalSwitcherValueQuery.graphql";
-import {
-  NavPanelSwitcherValue,
-  NavPanelSwitcherValueSkeleton,
-} from "#/pages/organizations/_components/NavPanelSwitcher";
+import type { CompliancePortalSwitcherValue_compliancePortal$key } from "#/__generated__/core/CompliancePortalSwitcherValue_compliancePortal.graphql";
+import { NavPanelSwitcherValue } from "#/pages/organizations/_components/NavPanelSwitcher";
 
-const compliancePortalSwitcherValueQuery = graphql`
-  query CompliancePortalSwitcherValueQuery($compliancePortalId: ID!) {
-    node(id: $compliancePortalId) {
-      __typename
-      ... on CompliancePortal {
-        entityName
-      }
-    }
+const compliancePortalSwitcherValueFragment = graphql`
+  fragment CompliancePortalSwitcherValue_compliancePortal on CompliancePortal {
+    entityName
   }
 `;
 
+export interface CompliancePortalSwitcherValueProps {
+  compliancePortalKey: CompliancePortalSwitcherValue_compliancePortal$key;
+}
+
 /**
  * The entity name of the portal the URL is on.
- *
- * Mounted only when `:compliancePortalId` is present. The create form uses
- * "New Portal" in the trigger itself; the index pulses until a portal is
- * chosen.
  */
-export function CompliancePortalSwitcherValue() {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const data = useLazyLoadQuery<CompliancePortalSwitcherValueQuery>(
-    compliancePortalSwitcherValueQuery,
-    { compliancePortalId: compliancePortalId ?? "" },
-    { fetchPolicy: "store-or-network" },
+export function CompliancePortalSwitcherValue({
+  compliancePortalKey,
+}: CompliancePortalSwitcherValueProps) {
+  const compliancePortal = useFragment(
+    compliancePortalSwitcherValueFragment,
+    compliancePortalKey,
   );
-  if (data.node?.__typename !== "CompliancePortal") {
-    return <NavPanelSwitcherValueSkeleton />;
-  }
-  return <NavPanelSwitcherValue>{data.node.entityName}</NavPanelSwitcherValue>;
+  return <NavPanelSwitcherValue>{compliancePortal.entityName}</NavPanelSwitcherValue>;
 }

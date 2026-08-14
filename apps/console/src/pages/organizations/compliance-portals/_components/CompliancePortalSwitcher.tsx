@@ -39,7 +39,7 @@ import {
   CompliancePortalSwitcherMenu,
   compliancePortalSwitcherMenuQuery,
 } from "./CompliancePortalSwitcherMenu";
-import { CompliancePortalSwitcherValue } from "./CompliancePortalSwitcherValue";
+import { CompliancePortalSwitcherRow } from "./CompliancePortalSwitcherRow";
 
 /**
  * Product-panel control that picks a compliance portal instead of linking to
@@ -48,8 +48,8 @@ import { CompliancePortalSwitcherValue } from "./CompliancePortalSwitcherValue";
  * Lives next to the compliance-portal routes (not in the IAM shell) so Relay
  * compiles the query against the core schema. The list is fetched on open:
  * the panel is visible for every page in this product, and most of those
- * visits never open this menu. The selected portal's name is a separate
- * query so the trigger can show it without loading the list.
+ * visits never open this menu. The selected portal (name + public URL) is a
+ * separate query so the trigger row can render without loading the list.
  * CoreRelayProvider is local because the surrounding chrome runs on the IAM
  * environment. This product has no sibling panel entries, so NavPanel
  * skips the group heading and the product title is enough. Settings and
@@ -84,21 +84,8 @@ function CompliancePortalSwitcherInner() {
     }
   }, [loadQuery, organizationId]);
 
-  return (
-    <NavPanelSwitcher
-      active={isNew}
-      onOpenChange={handleOpenChange}
-      value={isNew
-        ? <NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>
-        : (
-            <Suspense fallback={<NavPanelSwitcherValueSkeleton />}>
-              {compliancePortalId != null
-                ? <CompliancePortalSwitcherValue />
-                : <NavPanelSwitcherValueSkeleton />}
-            </Suspense>
-          )}
-    >
-      {queryRef != null && (
+  const menu = queryRef != null
+    ? (
         <Suspense
           fallback={(
             <Text size={2} color="faint" className={slots.empty()}>
@@ -108,7 +95,46 @@ function CompliancePortalSwitcherInner() {
         >
           <CompliancePortalSwitcherMenu queryRef={queryRef} />
         </Suspense>
-      )}
-    </NavPanelSwitcher>
+      )
+    : null;
+
+  if (compliancePortalId != null && !isNew) {
+    return (
+      <div className={slots.row()}>
+        <Suspense
+          fallback={(
+            <div className={slots.rowTrigger()}>
+              <NavPanelSwitcher
+                active={false}
+                onOpenChange={handleOpenChange}
+                value={<NavPanelSwitcherValueSkeleton />}
+              >
+                {menu}
+              </NavPanelSwitcher>
+            </div>
+          )}
+        >
+          <CompliancePortalSwitcherRow onOpenChange={handleOpenChange}>
+            {menu}
+          </CompliancePortalSwitcherRow>
+        </Suspense>
+      </div>
+    );
+  }
+
+  return (
+    <div className={slots.row()}>
+      <div className={slots.rowTrigger()}>
+        <NavPanelSwitcher
+          active={isNew}
+          onOpenChange={handleOpenChange}
+          value={isNew
+            ? <NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>
+            : <NavPanelSwitcherValueSkeleton />}
+        >
+          {menu}
+        </NavPanelSwitcher>
+      </div>
+    </div>
   );
 }

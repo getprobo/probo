@@ -2476,7 +2476,8 @@
       "new": "Nieuw portaal",
       "create": "Nieuw portaal",
       "empty": "Geen complianceportalen",
-      "loading": "Laden…"
+      "loading": "Laden…",
+      "open": "Portaal openen"
     }
   },
   "viewerMembershipDropdown": {
