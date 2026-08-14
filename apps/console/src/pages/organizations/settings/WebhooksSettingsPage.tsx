@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { dateTimeFormat } from "@probo/i18n";
 import {
   Badge,
@@ -488,6 +489,7 @@ export function WebhooksSettingsPage(props: {
 }) {
   const { queryRef } = props;
   const { t } = useTranslation();
+  usePageTitle(t("nav.webhooks"));
   const { toast } = useToast();
   const environment = useRelayEnvironment();
   const deleteDialogRef = useDialogRef();

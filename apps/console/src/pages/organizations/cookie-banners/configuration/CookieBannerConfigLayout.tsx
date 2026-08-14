@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import {
   ActionDropdown,
   Badge,
@@ -135,6 +136,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
   }
 
   const banner = data.node;
+  usePageTitle(banner.name);
 
   const [activate, isActivating] = useMutation<CookieBannerConfigLayoutActivateMutation>(activateMutation);
   const [deactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(

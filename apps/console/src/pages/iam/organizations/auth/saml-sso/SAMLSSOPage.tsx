@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
 import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -65,6 +66,7 @@ export function SAMLSSOPage(props: {
     = useState<string>();
 
   const { t } = useTranslation();
+  usePageTitle(t("samlSsoPage.title"));
 
   const { organization } = usePreloadedQuery<SAMLSSOPageQuery>(samlSSOPageQuery, queryRef);
   if (organization.__typename !== "Organization") {

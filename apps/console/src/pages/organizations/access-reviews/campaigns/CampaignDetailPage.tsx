@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useList } from "@probo/hooks";
+import { useList, usePageTitle } from "@probo/hooks";
 import {
   Button,
   Card,
@@ -202,6 +202,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   }
 
   const campaign = data.node;
+  usePageTitle(campaign.name);
   const isInProgress = campaign.status === "IN_PROGRESS";
   const isDraft = campaign.status === "DRAFT";
   const isPendingActions = campaign.status === "PENDING_ACTIONS";

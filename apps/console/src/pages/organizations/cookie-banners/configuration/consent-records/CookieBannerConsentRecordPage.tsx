@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { dateFormat, humanizeSeconds } from "@probo/i18n";
 import { Badge, Card, PageHeader, PropertyRow } from "@probo/ui";
 import { useMemo } from "react";
@@ -83,6 +84,7 @@ export default function CookieBannerConsentRecordPage({
   queryRef,
 }: CookieBannerConsentRecordPageProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
+  usePageTitle(t("consentRecordPage.title"));
   const data = usePreloadedQuery<CookieBannerConsentRecordPageQuery>(cookieBannerConsentRecordPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieConsentRecord") {

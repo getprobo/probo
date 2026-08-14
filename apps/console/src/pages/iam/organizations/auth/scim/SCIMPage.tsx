@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import {
   Button,
   Dialog,
@@ -208,6 +209,7 @@ export function SCIMPage(props: {
 }) {
   const { queryRef } = props;
   const { t } = useTranslation();
+  usePageTitle(t("authLayout.tabs.scim"));
   const [searchParams, setSearchParams] = useSearchParams();
   const connectorId = searchParams.get("connector_id");
   const mutationTriggeredRef = useRef(false);

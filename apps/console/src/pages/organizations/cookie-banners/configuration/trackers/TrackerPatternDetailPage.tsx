@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { PageHeader } from "@probo/ui";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
@@ -63,6 +64,7 @@ export default function TrackerPatternDetailPage({
   }
 
   const pattern = data.node;
+  usePageTitle(pattern.displayName);
 
   return (
     <div className="space-y-6">

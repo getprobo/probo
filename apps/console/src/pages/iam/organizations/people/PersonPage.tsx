@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { ActionDropdown, Avatar, Badge, Card, DropdownItem, IconArchive, IconTrashCan, useConfirm } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -80,6 +81,8 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
   if (person.__typename !== "Profile") {
     throw new Error("invalid type for node");
   }
+
+  usePageTitle(person.fullName);
 
   const [deactivateUser, isDeactivating] = useMutationWithToasts(
     deactivateUserMutation,

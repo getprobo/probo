@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { dateFormat } from "@probo/i18n";
 import {
   Badge,
@@ -313,6 +314,7 @@ export function AuditLogPage(props: {
   queryRef: PreloadedQuery<AuditLogPageQuery>;
 }) {
   const { t, i18n } = useTranslation();
+  usePageTitle(t("auditLogPage.title"));
 
   const { organization } = usePreloadedQuery<AuditLogPageQuery>(
     auditLogPageQuery,
