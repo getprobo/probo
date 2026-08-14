@@ -18,10 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon } from "@phosphor-icons/react";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,6 +26,12 @@ import { useLocation, useParams } from "react-router";
 
 import type { CompliancePortalSwitcherMenuQuery } from "#/__generated__/core/CompliancePortalSwitcherMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import {
+  navPanelSwitcher,
+  NavPanelSwitcher,
+  NavPanelSwitcherValue,
+  NavPanelSwitcherValueSkeleton,
+} from "#/pages/organizations/_components/NavPanelSwitcher";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { CompliancePortalNavItems } from "./CompliancePortalNavItems";
@@ -37,11 +39,7 @@ import {
   CompliancePortalSwitcherMenu,
   compliancePortalSwitcherMenuQuery,
 } from "./CompliancePortalSwitcherMenu";
-import {
-  CompliancePortalSwitcherValue,
-  CompliancePortalSwitcherValueSkeleton,
-} from "./CompliancePortalSwitcherValue";
-import { compliancePortalSwitcher } from "./variants";
+import { CompliancePortalSwitcherValue } from "./CompliancePortalSwitcherValue";
 
 /**
  * Product-panel control that picks a compliance portal instead of linking to
@@ -79,11 +77,9 @@ function CompliancePortalSwitcherInner() {
 
   const prefix = `/organizations/${organizationId}/compliance-portals/`;
   const isNew = pathname === `${prefix}new`;
-  // Gold only on /new: once a portal is selected, the in-page tabs carry the
-  // accent and the trigger stays an outline picker.
-  const active = isNew;
   const selectLabel = t("nav.compliancePortalSwitcher.select");
   const newLabel = t("nav.compliancePortalSwitcher.new");
+  const slots = navPanelSwitcher();
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
@@ -91,43 +87,33 @@ function CompliancePortalSwitcherInner() {
     }
   }, [loadQuery, organizationId]);
 
-  const slots = compliancePortalSwitcher({ outlined: !active, active });
-
   return (
-    <Dropdown onOpenChange={handleOpenChange}>
-      <DropdownTrigger
-        render={(
-          <button type="button" className={slots.trigger()}>
-            <span className={slots.value()}>
-              {compliancePortalId != null
-                ? (
-                    <Suspense fallback={<CompliancePortalSwitcherValueSkeleton />}>
-                      <CompliancePortalSwitcherValue fallback={selectLabel} />
-                    </Suspense>
-                  )
-                : (
-                    <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
-                      {isNew ? newLabel : selectLabel}
-                    </Text>
-                  )}
-            </span>
-            <CaretDownIcon className={slots.valueCaret()} />
-          </button>
-        )}
-      />
-      <DropdownPopup side="bottom" align="start" className={slots.popup()}>
-        {queryRef != null && (
-          <Suspense
-            fallback={(
-              <Text size={2} color="faint" className={slots.empty()}>
-                {t("nav.compliancePortalSwitcher.loading")}
-              </Text>
-            )}
-          >
-            <CompliancePortalSwitcherMenu queryRef={queryRef} />
-          </Suspense>
-        )}
-      </DropdownPopup>
-    </Dropdown>
+    <NavPanelSwitcher
+      active={isNew}
+      onOpenChange={handleOpenChange}
+      value={compliancePortalId != null
+        ? (
+            <Suspense fallback={<NavPanelSwitcherValueSkeleton />}>
+              <CompliancePortalSwitcherValue fallback={selectLabel} />
+            </Suspense>
+          )
+        : (
+            <NavPanelSwitcherValue>
+              {isNew ? newLabel : selectLabel}
+            </NavPanelSwitcherValue>
+          )}
+    >
+      {queryRef != null && (
+        <Suspense
+          fallback={(
+            <Text size={2} color="faint" className={slots.empty()}>
+              {t("nav.compliancePortalSwitcher.loading")}
+            </Text>
+          )}
+        >
+          <CompliancePortalSwitcherMenu queryRef={queryRef} />
+        </Suspense>
+      )}
+    </NavPanelSwitcher>
   );
 }

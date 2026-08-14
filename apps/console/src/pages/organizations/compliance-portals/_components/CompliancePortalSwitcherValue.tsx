@@ -18,13 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useLazyLoadQuery } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CompliancePortalSwitcherValueQuery } from "#/__generated__/core/CompliancePortalSwitcherValueQuery.graphql";
-
-import { compliancePortalSwitcher } from "./variants";
+import { NavPanelSwitcherValue } from "#/pages/organizations/_components/NavPanelSwitcher";
 
 const compliancePortalSwitcherValueQuery = graphql`
   query CompliancePortalSwitcherValueQuery($compliancePortalId: ID!) {
@@ -54,24 +52,8 @@ export function CompliancePortalSwitcherValue({ fallback }: CompliancePortalSwit
     { compliancePortalId: compliancePortalId ?? "" },
     { fetchPolicy: "store-or-network" },
   );
-  const slots = compliancePortalSwitcher();
   if (data.node?.__typename !== "CompliancePortal") {
     return fallback;
   }
-  return (
-    <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
-      {data.node.entityName}
-    </Text>
-  );
-}
-
-/**
- * A pulse bar the same height as the trigger name, used while the selected
- * portal query suspends. A plain "Select Portal" string inherited the page
- * font and flashed larger than the closed trigger.
- */
-export function CompliancePortalSwitcherValueSkeleton() {
-  const slots = compliancePortalSwitcher();
-
-  return <span className={slots.valueSkeletonName()} aria-hidden />;
+  return <NavPanelSwitcherValue>{data.node.entityName}</NavPanelSwitcherValue>;
 }

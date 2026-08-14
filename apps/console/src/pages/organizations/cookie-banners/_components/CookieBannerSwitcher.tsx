@@ -18,10 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon } from "@phosphor-icons/react";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,15 +26,20 @@ import { useLocation, useParams } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import {
+  navPanelSwitcher,
+  NavPanelSwitcher,
+  NavPanelSwitcherValue,
+  NavPanelSwitcherValueSkeleton,
+} from "#/pages/organizations/_components/NavPanelSwitcher";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { CookieBannerNavItems } from "./CookieBannerNavItems";
-import { cookieBannerSwitcher } from "./variants";
 import {
   CookieBannerSwitcherMenu,
   cookieBannerSwitcherMenuQuery,
 } from "./CookieBannerSwitcherMenu";
-import { CookieBannerSwitcherValue, CookieBannerSwitcherValueSkeleton } from "./CookieBannerSwitcherValue";
+import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
 
 /**
  * Privacy-panel control that picks a cookie banner instead of linking to a
@@ -75,11 +76,9 @@ function CookieBannerSwitcherInner() {
 
   const prefix = `/organizations/${organizationId}/privacy/cookie-banners/`;
   const isNew = pathname === `${prefix}new`;
-  // Gold only on /new: once a banner is selected, Configure / Discovery /
-  // Trail carry the accent and the trigger stays an outline picker.
-  const active = isNew;
   const selectLabel = t("nav.cookieBannerSwitcher.select");
   const newLabel = t("nav.cookieBannerSwitcher.new");
+  const slots = navPanelSwitcher();
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
@@ -87,43 +86,33 @@ function CookieBannerSwitcherInner() {
     }
   }, [loadQuery, organizationId]);
 
-  const slots = cookieBannerSwitcher({ outlined: !active, active });
-
   return (
-    <Dropdown onOpenChange={handleOpenChange}>
-      <DropdownTrigger
-        render={(
-          <button type="button" className={slots.trigger()}>
-            <span className={slots.value()}>
-              {cookieBannerId != null
-                ? (
-                    <Suspense fallback={<CookieBannerSwitcherValueSkeleton />}>
-                      <CookieBannerSwitcherValue fallback={selectLabel} />
-                    </Suspense>
-                  )
-                : (
-                    <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
-                      {isNew ? newLabel : selectLabel}
-                    </Text>
-                  )}
-            </span>
-            <CaretDownIcon className={slots.valueCaret()} />
-          </button>
-        )}
-      />
-      <DropdownPopup side="bottom" align="start" className={slots.popup()}>
-        {queryRef != null && (
-          <Suspense
-            fallback={(
-              <Text size={2} color="faint" className={slots.empty()}>
-                {t("nav.cookieBannerSwitcher.loading")}
-              </Text>
-            )}
-          >
-            <CookieBannerSwitcherMenu queryRef={queryRef} />
-          </Suspense>
-        )}
-      </DropdownPopup>
-    </Dropdown>
+    <NavPanelSwitcher
+      active={isNew}
+      onOpenChange={handleOpenChange}
+      value={cookieBannerId != null
+        ? (
+            <Suspense fallback={<NavPanelSwitcherValueSkeleton />}>
+              <CookieBannerSwitcherValue fallback={selectLabel} />
+            </Suspense>
+          )
+        : (
+            <NavPanelSwitcherValue>
+              {isNew ? newLabel : selectLabel}
+            </NavPanelSwitcherValue>
+          )}
+    >
+      {queryRef != null && (
+        <Suspense
+          fallback={(
+            <Text size={2} color="faint" className={slots.empty()}>
+              {t("nav.cookieBannerSwitcher.loading")}
+            </Text>
+          )}
+        >
+          <CookieBannerSwitcherMenu queryRef={queryRef} />
+        </Suspense>
+      )}
+    </NavPanelSwitcher>
   );
 }

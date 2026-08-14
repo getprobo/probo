@@ -18,16 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Menu } from "@base-ui/react/menu";
-import { CheckIcon } from "@phosphor-icons/react";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useFragment } from "react-relay";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 
 import type { CookieBannerSwitcherListItem_cookieBanner$key } from "#/__generated__/core/CookieBannerSwitcherListItem_cookieBanner.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-
-import { cookieBannerSwitcher } from "./variants";
+import { NavPanelSwitcherListItem } from "#/pages/organizations/_components/NavPanelSwitcherListItem";
 
 const cookieBannerSwitcherListItemFragment = graphql`
   fragment CookieBannerSwitcherListItem_cookieBanner on CookieBanner {
@@ -43,35 +39,18 @@ export interface CookieBannerSwitcherListItemProps {
 
 /**
  * One cookie banner in the privacy-panel switcher.
- *
- * Name and origin stack because a single truncated line cannot tell two
- * banners on similar hosts apart. The check marks the banner the URL is on.
  */
 export function CookieBannerSwitcherListItem({ cookieBannerKey }: CookieBannerSwitcherListItemProps) {
   const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const cookieBanner = useFragment(cookieBannerSwitcherListItemFragment, cookieBannerKey);
-  const selected = cookieBannerId === cookieBanner.id;
-  const slots = cookieBannerSwitcher();
 
   return (
-    <Menu.Item
-      className={slots.item()}
-      render={(
-        <Link
-          to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/configure`}
-        />
-      )}
-    >
-      <span className={slots.itemBody()}>
-        <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
-          {cookieBanner.name}
-        </Text>
-        <Text size={1} color="faint" className={slots.itemOrigin()}>
-          {cookieBanner.origin}
-        </Text>
-      </span>
-      {selected && <CheckIcon className={slots.itemCheck()} />}
-    </Menu.Item>
+    <NavPanelSwitcherListItem
+      to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/configure`}
+      name={cookieBanner.name}
+      detail={cookieBanner.origin}
+      selected={cookieBannerId === cookieBanner.id}
+    />
   );
 }

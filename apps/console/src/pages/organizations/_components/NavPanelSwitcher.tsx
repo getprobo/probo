@@ -18,12 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretDownIcon } from "@phosphor-icons/react";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 import { tv } from "tailwind-variants/lite";
 
-// Compliance-portal picker in the product panel. Two-line items (entity
-// name + public URL) do not fit the kit DropdownItem's fixed height, so the
-// list item owns these slots and renders a Menu.Item directly.
-export const compliancePortalSwitcher = tv({
+// Product-panel picker. Two-line items (name + detail) do not fit the kit
+// DropdownItem's fixed height, so the list item owns these slots and renders
+// a Menu.Item directly.
+export const navPanelSwitcher = tv({
   slots: {
     popup: "w-72 p-0",
     list: "max-h-96 overflow-y-auto px-1 py-1",
@@ -60,3 +66,65 @@ export const compliancePortalSwitcher = tv({
     },
   },
 });
+
+export interface NavPanelSwitcherProps {
+  active: boolean;
+  onOpenChange: (open: boolean) => void;
+  value: ReactNode;
+  children?: ReactNode;
+}
+
+/**
+ * The dropdown chrome for a product-panel entity switcher.
+ *
+ * Feature switchers own the Relay queries and pass the trigger value and
+ * menu. Gold only while creating: once an entity is selected, the panel
+ * links carry the accent and the trigger stays an outline picker.
+ */
+export function NavPanelSwitcher({ active, onOpenChange, value, children }: NavPanelSwitcherProps) {
+  const slots = navPanelSwitcher({ outlined: !active, active });
+
+  return (
+    <Dropdown onOpenChange={onOpenChange}>
+      <DropdownTrigger
+        render={(
+          <button type="button" className={slots.trigger()}>
+            <span className={slots.value()}>{value}</span>
+            <CaretDownIcon className={slots.valueCaret()} />
+          </button>
+        )}
+      />
+      <DropdownPopup side="bottom" align="start" className={slots.popup()}>
+        {children}
+      </DropdownPopup>
+    </Dropdown>
+  );
+}
+
+export interface NavPanelSwitcherValueProps {
+  children: ReactNode;
+}
+
+/**
+ * The trigger or list-item name. Same type as the closed trigger so a
+ * fallback string does not inherit the page font and flash larger.
+ */
+export function NavPanelSwitcherValue({ children }: NavPanelSwitcherValueProps) {
+  const slots = navPanelSwitcher();
+
+  return (
+    <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
+      {children}
+    </Text>
+  );
+}
+
+/**
+ * A pulse bar the same height as the trigger name, used while the selected
+ * entity query suspends.
+ */
+export function NavPanelSwitcherValueSkeleton() {
+  const slots = navPanelSwitcher();
+
+  return <span className={slots.valueSkeletonName()} aria-hidden />;
+}

@@ -28,9 +28,9 @@ import { Link } from "react-router";
 
 import type { CompliancePortalSwitcherMenuQuery } from "#/__generated__/core/CompliancePortalSwitcherMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { navPanelSwitcher } from "#/pages/organizations/_components/NavPanelSwitcher";
 
 import { CompliancePortalSwitcherListItem } from "./CompliancePortalSwitcherListItem";
-import { compliancePortalSwitcher } from "./variants";
 
 export const compliancePortalSwitcherMenuQuery = graphql`
   query CompliancePortalSwitcherMenuQuery($organizationId: ID!) {
@@ -66,7 +66,7 @@ export interface CompliancePortalSwitcherMenuProps {
 export function CompliancePortalSwitcherMenu({ queryRef }: CompliancePortalSwitcherMenuProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const slots = compliancePortalSwitcher();
+  const slots = navPanelSwitcher();
 
   const { organization } = usePreloadedQuery<CompliancePortalSwitcherMenuQuery>(
     compliancePortalSwitcherMenuQuery,

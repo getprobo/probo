@@ -18,16 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Menu } from "@base-ui/react/menu";
-import { CheckIcon } from "@phosphor-icons/react";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useFragment } from "react-relay";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 
 import type { CompliancePortalSwitcherListItem_compliancePortal$key } from "#/__generated__/core/CompliancePortalSwitcherListItem_compliancePortal.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-
-import { compliancePortalSwitcher } from "./variants";
+import { NavPanelSwitcherListItem } from "#/pages/organizations/_components/NavPanelSwitcherListItem";
 
 const compliancePortalSwitcherListItemFragment = graphql`
   fragment CompliancePortalSwitcherListItem_compliancePortal on CompliancePortal {
@@ -43,10 +39,6 @@ export interface CompliancePortalSwitcherListItemProps {
 
 /**
  * One compliance portal in the product-panel switcher.
- *
- * Entity name and public URL stack because a single truncated line cannot
- * tell two portals with similar names apart. The check marks the portal the
- * URL is on.
  */
 export function CompliancePortalSwitcherListItem({
   compliancePortalKey,
@@ -54,27 +46,13 @@ export function CompliancePortalSwitcherListItem({
   const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const compliancePortal = useFragment(compliancePortalSwitcherListItemFragment, compliancePortalKey);
-  const selected = compliancePortalId === compliancePortal.id;
-  const slots = compliancePortalSwitcher();
 
   return (
-    <Menu.Item
-      className={slots.item()}
-      render={(
-        <Link
-          to={`/organizations/${organizationId}/compliance-portals/${compliancePortal.id}`}
-        />
-      )}
-    >
-      <span className={slots.itemBody()}>
-        <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
-          {compliancePortal.entityName}
-        </Text>
-        <Text size={1} color="faint" className={slots.itemOrigin()}>
-          {compliancePortal.publicUrl}
-        </Text>
-      </span>
-      {selected && <CheckIcon className={slots.itemCheck()} />}
-    </Menu.Item>
+    <NavPanelSwitcherListItem
+      to={`/organizations/${organizationId}/compliance-portals/${compliancePortal.id}`}
+      name={compliancePortal.entityName}
+      detail={compliancePortal.publicUrl}
+      selected={compliancePortalId === compliancePortal.id}
+    />
   );
 }
