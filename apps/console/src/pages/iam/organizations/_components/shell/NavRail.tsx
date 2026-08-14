@@ -64,6 +64,7 @@ const navRailFragment = graphql`
     canListAccessReviewSources: permission(action: "access-review:source:list")
     canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
     canListCookieBanners: permission(action: "core:cookie-banner:list")
+    canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
     canUpdateOrganization: permission(action: "iam:organization:update")
   }
 `;

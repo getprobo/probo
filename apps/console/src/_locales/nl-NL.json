@@ -2434,7 +2434,10 @@
     "measures": "Maatregelen",
     "risks": "Risico's",
     "frameworks": "Frameworks",
-    "people": "Personen",
+    "iam": "IAM",
+    "users": "Gebruikers",
+    "authProvisioning": "Auth & provisioning",
+    "auditLog": "Auditlogboek",
     "thirdParties": "Derde partijen",
     "documents": "Documenten",
     "assets": "Assets",
@@ -2609,7 +2612,7 @@
       "create": "Aanmaken"
     }
   },
-  "auditLogSettingsPage": {
+  "auditLogPage": {
     "title": "Auditlogboek",
     "description": "Een overzicht van alle acties die in uw organisatie zijn uitgevoerd. Items zijn onveranderlijk en kunnen niet worden bewerkt of verwijderd.",
     "empty": "Nog geen auditlogitems.",
@@ -2661,7 +2664,7 @@
       }
     }
   },
-  "samlSettingsPage": {
+  "samlSsoPage": {
     "title": "SAML Single Sign-On",
     "actions": {
       "addConfiguration": "Configuratie toevoegen"
@@ -2672,7 +2675,7 @@
       "verifyDomain": "Domein verifiëren"
     }
   },
-  "scimSettingsPage": {
+  "scimPage": {
     "manualScim": {
       "title": "Handmatige SCIM",
       "description": "Configureer SCIM handmatig als uw identity provider niet hierboven vermeld staat. Hiervoor moet u de SCIM-eindpunt-URL en de bearer-token instellen in uw identity provider."
@@ -2699,15 +2702,19 @@
       }
     }
   },
+  "authLayout": {
+    "title": "Auth & provisioning",
+    "tabs": {
+      "samlSso": "SAML SSO",
+      "scim": "SCIM"
+    }
+  },
   "settingsLayout": {
     "title": "Instellingen",
     "tabs": {
       "general": "Algemeen",
-      "samlSso": "SAML SSO",
-      "scim": "SCIM",
       "webhooks": "Webhooks",
-      "slackBot": "SlackBot",
-      "auditLog": "Auditlogboek"
+      "slackBot": "SlackBot"
     }
   },
   "slackBotSettingsPage": {
@@ -3526,10 +3533,34 @@
   "businessFunctionsPage": {
     "title": "Bedrijfsfuncties",
     "description": "Beheer het register van bedrijfsfuncties van uw organisatie.",
-    "actions": { "document": "Document", "publish": "Publiceren", "add": "Bedrijfsfunctie toevoegen", "loadMore": "Meer laden", "loading": "Laden..." },
-    "filters": { "allClassifications": "Alle classificaties" },
-    "classifications": { "critical": "Kritiek", "important": "Belangrijk", "secondary": "Secundair", "standard": "Standaard" },
-    "columns": { "referenceId": "Referentie-ID", "name": "Naam", "classification": "Classificatie", "mtd": "MTD", "rto": "RTO", "rpo": "RPO", "owner": "Eigenaar", "assets": "Assets", "thirdParties": "Derde partijen", "actions": "Acties" },
+    "actions": {
+      "document": "Document",
+      "publish": "Publiceren",
+      "add": "Bedrijfsfunctie toevoegen",
+      "loadMore": "Meer laden",
+      "loading": "Laden..."
+    },
+    "filters": {
+      "allClassifications": "Alle classificaties"
+    },
+    "classifications": {
+      "critical": "Kritiek",
+      "important": "Belangrijk",
+      "secondary": "Secundair",
+      "standard": "Standaard"
+    },
+    "columns": {
+      "referenceId": "Referentie-ID",
+      "name": "Naam",
+      "classification": "Classificatie",
+      "mtd": "MTD",
+      "rto": "RTO",
+      "rpo": "RPO",
+      "owner": "Eigenaar",
+      "assets": "Assets",
+      "thirdParties": "Derde partijen",
+      "actions": "Acties"
+    },
     "none": "Geen",
     "empty": {
       "title": "Nog geen bedrijfsfuncties",
@@ -3539,46 +3570,159 @@
     }
   },
   "businessFunctionListItem": {
-    "actions": { "delete": "Verwijderen" },
-    "messages": { "success": "Geslaagd", "deleted": "Bedrijfsfunctie succesvol verwijderd" },
-    "errors": { "delete": "Verwijderen van bedrijfsfunctie mislukt" },
+    "actions": {
+      "delete": "Verwijderen"
+    },
+    "messages": {
+      "success": "Geslaagd",
+      "deleted": "Bedrijfsfunctie succesvol verwijderd"
+    },
+    "errors": {
+      "delete": "Verwijderen van bedrijfsfunctie mislukt"
+    },
     "deleteConfirmation": "Dit verwijdert de bedrijfsfunctie {{referenceId}} permanent. Deze actie kan niet ongedaan worden gemaakt."
   },
   "businessFunctionDetailsPage": {
-    "breadcrumb": { "businessFunctions": "Bedrijfsfuncties", "unknown": "Onbekende bedrijfsfunctie" },
-    "validation": { "nameRequired": "Naam is verplicht" },
-    "fields": { "name": "Naam", "namePlaceholder": "Voer een naam in", "classification": "Classificatie", "classificationPlaceholder": "Selecteer classificatie", "mtd": "MTD (minuten)", "rto": "RTO (minuten)", "rpo": "RPO (minuten)", "durationHelper": "Veelgebruikte waarden: 1u = 60, 12u = 720, 24u = 1440, 3d = 4320 minuten", "impactTolerance": "Impacttolerantie", "impactTolerancePlaceholder": "Beschrijf acceptabele impact tijdens verstoring", "notes": "Notities", "notesPlaceholder": "Afhankelijkheden en andere notities", "owner": "Eigenaar", "assets": "Assets", "thirdParties": "Derde partijen" },
-    "classifications": { "critical": "Kritiek", "important": "Belangrijk", "secondary": "Secundair", "standard": "Standaard" },
-    "actions": { "delete": "Verwijderen", "update": "Bijwerken", "updating": "Bijwerken..." },
-    "messages": { "success": "Geslaagd", "updated": "Bedrijfsfunctie succesvol bijgewerkt", "deleted": "Bedrijfsfunctie succesvol verwijderd" },
-    "errors": { "update": "Bijwerken van bedrijfsfunctie mislukt", "delete": "Verwijderen van bedrijfsfunctie mislukt" },
+    "breadcrumb": {
+      "businessFunctions": "Bedrijfsfuncties",
+      "unknown": "Onbekende bedrijfsfunctie"
+    },
+    "validation": {
+      "nameRequired": "Naam is verplicht"
+    },
+    "fields": {
+      "name": "Naam",
+      "namePlaceholder": "Voer een naam in",
+      "classification": "Classificatie",
+      "classificationPlaceholder": "Selecteer classificatie",
+      "mtd": "MTD (minuten)",
+      "rto": "RTO (minuten)",
+      "rpo": "RPO (minuten)",
+      "durationHelper": "Veelgebruikte waarden: 1u = 60, 12u = 720, 24u = 1440, 3d = 4320 minuten",
+      "impactTolerance": "Impacttolerantie",
+      "impactTolerancePlaceholder": "Beschrijf acceptabele impact tijdens verstoring",
+      "notes": "Notities",
+      "notesPlaceholder": "Afhankelijkheden en andere notities",
+      "owner": "Eigenaar",
+      "assets": "Assets",
+      "thirdParties": "Derde partijen"
+    },
+    "classifications": {
+      "critical": "Kritiek",
+      "important": "Belangrijk",
+      "secondary": "Secundair",
+      "standard": "Standaard"
+    },
+    "actions": {
+      "delete": "Verwijderen",
+      "update": "Bijwerken",
+      "updating": "Bijwerken..."
+    },
+    "messages": {
+      "success": "Geslaagd",
+      "updated": "Bedrijfsfunctie succesvol bijgewerkt",
+      "deleted": "Bedrijfsfunctie succesvol verwijderd"
+    },
+    "errors": {
+      "update": "Bijwerken van bedrijfsfunctie mislukt",
+      "delete": "Verwijderen van bedrijfsfunctie mislukt"
+    },
     "dependenciesTruncated": "Deze bedrijfsfunctie heeft meer dan 100 gekoppelde assets of derde partijen. Bewerken van afhankelijkheden is uitgeschakeld zodat opslaan niet stilzwijgend relaties kan verwijderen die niet zijn geladen.",
     "deleteConfirmation": "Dit verwijdert de bedrijfsfunctie {{referenceId}} permanent. Deze actie kan niet ongedaan worden gemaakt."
   },
   "createBusinessFunctionDialog": {
-    "breadcrumb": { "businessFunctions": "Bedrijfsfuncties", "create": "Aanmaken" },
-    "validation": { "nameRequired": "Naam is verplicht" },
-    "fields": { "name": "Naam", "namePlaceholder": "Voer een naam in", "classification": "Classificatie", "classificationPlaceholder": "Selecteer classificatie", "mtd": "MTD (minuten)", "rto": "RTO (minuten)", "rpo": "RPO (minuten)", "durationHelper": "Veelgebruikte waarden: 1u = 60, 12u = 720, 24u = 1440, 3d = 4320 minuten", "impactTolerance": "Impacttolerantie", "impactTolerancePlaceholder": "Beschrijf de impacttolerantie", "notes": "Notities", "notesPlaceholder": "Afhankelijkheden en andere notities", "owner": "Eigenaar", "assets": "Assets", "thirdParties": "Derde partijen" },
-    "classifications": { "critical": "Kritiek", "important": "Belangrijk", "secondary": "Secundair", "standard": "Standaard" },
-    "actions": { "create": "Bedrijfsfunctie aanmaken", "creating": "Aanmaken..." },
-    "messages": { "success": "Geslaagd", "created": "Bedrijfsfunctie succesvol aangemaakt" },
-    "errors": { "create": "Aanmaken van bedrijfsfunctie mislukt" }
+    "breadcrumb": {
+      "businessFunctions": "Bedrijfsfuncties",
+      "create": "Aanmaken"
+    },
+    "validation": {
+      "nameRequired": "Naam is verplicht"
+    },
+    "fields": {
+      "name": "Naam",
+      "namePlaceholder": "Voer een naam in",
+      "classification": "Classificatie",
+      "classificationPlaceholder": "Selecteer classificatie",
+      "mtd": "MTD (minuten)",
+      "rto": "RTO (minuten)",
+      "rpo": "RPO (minuten)",
+      "durationHelper": "Veelgebruikte waarden: 1u = 60, 12u = 720, 24u = 1440, 3d = 4320 minuten",
+      "impactTolerance": "Impacttolerantie",
+      "impactTolerancePlaceholder": "Beschrijf de impacttolerantie",
+      "notes": "Notities",
+      "notesPlaceholder": "Afhankelijkheden en andere notities",
+      "owner": "Eigenaar",
+      "assets": "Assets",
+      "thirdParties": "Derde partijen"
+    },
+    "classifications": {
+      "critical": "Kritiek",
+      "important": "Belangrijk",
+      "secondary": "Secundair",
+      "standard": "Standaard"
+    },
+    "actions": {
+      "create": "Bedrijfsfunctie aanmaken",
+      "creating": "Aanmaken..."
+    },
+    "messages": {
+      "success": "Geslaagd",
+      "created": "Bedrijfsfunctie succesvol aangemaakt"
+    },
+    "errors": {
+      "create": "Aanmaken van bedrijfsfunctie mislukt"
+    }
   },
   "publishBusinessFunctionListDialog": {
     "title": "Bedrijfsfunctielijst publiceren",
-    "errors": { "publish": "Publiceren van bedrijfsfunctielijst mislukt" },
-    "messages": { "published": "Bedrijfsfunctielijst succesvol gepubliceerd." }
+    "errors": {
+      "publish": "Publiceren van bedrijfsfunctielijst mislukt"
+    },
+    "messages": {
+      "published": "Bedrijfsfunctielijst succesvol gepubliceerd."
+    }
   },
   "aiSystemsPage": {
     "pageTitle": "AI-systemen",
     "title": "AI-systemen",
     "description": "Volg AI-systemen die binnen uw organisatie worden gebruikt, inclusief rollen, risicoclassificatie en reviewplanning.",
-    "actions": { "document": "Document", "publish": "Publiceren", "add": "AI-systeem toevoegen", "loadMore": "Meer laden", "loading": "Laden…" },
-    "filters": { "allStatuses": "Alle statussen", "allRiskClassifications": "Alle risicoclassificaties" },
-    "status": { "active": "Actief", "inDevelopment": "In ontwikkeling", "decommissioned": "Buiten gebruik" },
-    "riskClassification": { "highRisk": "Hoog risico", "limited": "Beperkt", "minimal": "Minimaal", "gpai": "GPAI" },
-    "companyRoles": { "provider": "Aanbieder", "deployer": "Implementeerder", "user": "Gebruiker", "developer": "Ontwikkelaar" },
-    "columns": { "name": "Naam", "version": "Versie", "status": "Status", "riskClassification": "Risicoclassificatie", "owner": "Systeemeigenaar", "nextReviewDate": "Volgende review", "actions": "Acties" },
+    "actions": {
+      "document": "Document",
+      "publish": "Publiceren",
+      "add": "AI-systeem toevoegen",
+      "loadMore": "Meer laden",
+      "loading": "Laden…"
+    },
+    "filters": {
+      "allStatuses": "Alle statussen",
+      "allRiskClassifications": "Alle risicoclassificaties"
+    },
+    "status": {
+      "active": "Actief",
+      "inDevelopment": "In ontwikkeling",
+      "decommissioned": "Buiten gebruik"
+    },
+    "riskClassification": {
+      "highRisk": "Hoog risico",
+      "limited": "Beperkt",
+      "minimal": "Minimaal",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "Aanbieder",
+      "deployer": "Implementeerder",
+      "user": "Gebruiker",
+      "developer": "Ontwikkelaar"
+    },
+    "columns": {
+      "name": "Naam",
+      "version": "Versie",
+      "status": "Status",
+      "riskClassification": "Risicoclassificatie",
+      "owner": "Systeemeigenaar",
+      "nextReviewDate": "Volgende review",
+      "actions": "Acties"
+    },
     "empty": {
       "title": "Nog geen AI-systemen",
       "description": "Maak uw eerste AI-systeem aan om te beginnen.",
@@ -3587,14 +3731,26 @@
     }
   },
   "aiSystemListItem": {
-    "actions": { "delete": "Verwijderen" },
-    "messages": { "success": "Gelukt", "deleted": "AI-systeem succesvol verwijderd" },
-    "errors": { "delete": "Verwijderen van AI-systeem mislukt" },
+    "actions": {
+      "delete": "Verwijderen"
+    },
+    "messages": {
+      "success": "Gelukt",
+      "deleted": "AI-systeem succesvol verwijderd"
+    },
+    "errors": {
+      "delete": "Verwijderen van AI-systeem mislukt"
+    },
     "deleteConfirmation": "Dit verwijdert het AI-systeem \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt."
   },
   "aiSystemDetailsPage": {
-    "breadcrumb": { "aiSystems": "AI-systemen", "unknown": "Onbekend AI-systeem" },
-    "validation": { "nameRequired": "Naam is verplicht" },
+    "breadcrumb": {
+      "aiSystems": "AI-systemen",
+      "unknown": "Onbekend AI-systeem"
+    },
+    "validation": {
+      "nameRequired": "Naam is verplicht"
+    },
     "fields": {
       "name": "Naam",
       "namePlaceholder": "Voer systeemnaam in",
@@ -3625,17 +3781,47 @@
       "notesPlaceholder": "Aanvullende notities of observaties",
       "notSet": "Niet ingesteld"
     },
-    "status": { "active": "Actief", "inDevelopment": "In ontwikkeling", "decommissioned": "Buiten gebruik" },
-    "riskClassification": { "highRisk": "Hoog risico", "limited": "Beperkt", "minimal": "Minimaal", "gpai": "GPAI" },
-    "companyRoles": { "provider": "Aanbieder", "deployer": "Implementeerder", "user": "Gebruiker", "developer": "Ontwikkelaar" },
-    "actions": { "delete": "Verwijderen", "update": "Bijwerken", "updating": "Bezig met bijwerken…" },
-    "messages": { "success": "Gelukt", "updated": "AI-systeem succesvol bijgewerkt", "deleted": "AI-systeem succesvol verwijderd" },
-    "errors": { "update": "Bijwerken van AI-systeem mislukt", "delete": "Verwijderen van AI-systeem mislukt" },
+    "status": {
+      "active": "Actief",
+      "inDevelopment": "In ontwikkeling",
+      "decommissioned": "Buiten gebruik"
+    },
+    "riskClassification": {
+      "highRisk": "Hoog risico",
+      "limited": "Beperkt",
+      "minimal": "Minimaal",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "Aanbieder",
+      "deployer": "Implementeerder",
+      "user": "Gebruiker",
+      "developer": "Ontwikkelaar"
+    },
+    "actions": {
+      "delete": "Verwijderen",
+      "update": "Bijwerken",
+      "updating": "Bezig met bijwerken…"
+    },
+    "messages": {
+      "success": "Gelukt",
+      "updated": "AI-systeem succesvol bijgewerkt",
+      "deleted": "AI-systeem succesvol verwijderd"
+    },
+    "errors": {
+      "update": "Bijwerken van AI-systeem mislukt",
+      "delete": "Verwijderen van AI-systeem mislukt"
+    },
     "deleteConfirmation": "Dit verwijdert het AI-systeem \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt."
   },
   "createAiSystemDialog": {
-    "breadcrumb": { "aiSystems": "AI-systemen", "create": "Aanmaken" },
-    "validation": { "nameRequired": "Naam is verplicht" },
+    "breadcrumb": {
+      "aiSystems": "AI-systemen",
+      "create": "Aanmaken"
+    },
+    "validation": {
+      "nameRequired": "Naam is verplicht"
+    },
     "fields": {
       "name": "Naam",
       "namePlaceholder": "Voer systeemnaam in",
@@ -3666,12 +3852,34 @@
       "notesPlaceholder": "Aanvullende notities of observaties",
       "notSet": "Niet ingesteld"
     },
-    "status": { "active": "Actief", "inDevelopment": "In ontwikkeling", "decommissioned": "Buiten gebruik" },
-    "riskClassification": { "highRisk": "Hoog risico", "limited": "Beperkt", "minimal": "Minimaal", "gpai": "GPAI" },
-    "companyRoles": { "provider": "Aanbieder", "deployer": "Implementeerder", "user": "Gebruiker", "developer": "Ontwikkelaar" },
-    "actions": { "create": "AI-systeem aanmaken", "creating": "Bezig met aanmaken…" },
-    "messages": { "success": "Gelukt", "created": "AI-systeem succesvol aangemaakt" },
-    "errors": { "create": "Aanmaken van AI-systeem mislukt" }
+    "status": {
+      "active": "Actief",
+      "inDevelopment": "In ontwikkeling",
+      "decommissioned": "Buiten gebruik"
+    },
+    "riskClassification": {
+      "highRisk": "Hoog risico",
+      "limited": "Beperkt",
+      "minimal": "Minimaal",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "Aanbieder",
+      "deployer": "Implementeerder",
+      "user": "Gebruiker",
+      "developer": "Ontwikkelaar"
+    },
+    "actions": {
+      "create": "AI-systeem aanmaken",
+      "creating": "Bezig met aanmaken…"
+    },
+    "messages": {
+      "success": "Gelukt",
+      "created": "AI-systeem succesvol aangemaakt"
+    },
+    "errors": {
+      "create": "Aanmaken van AI-systeem mislukt"
+    }
   },
   "publishListDialog": {
     "description": "Selecteer goedkeurders om goedkeuring aan te vragen voordat u publiceert, of publiceer direct zonder goedkeurders.",

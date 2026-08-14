@@ -41,16 +41,16 @@ import {
 } from "react-relay";
 import { useSearchParams } from "react-router";
 
-import type { SCIMSettingsPageCreateSCIMConfigurationMutation } from "#/__generated__/iam/SCIMSettingsPageCreateSCIMConfigurationMutation.graphql";
-import type { SCIMSettingsPageExportMutation } from "#/__generated__/iam/SCIMSettingsPageExportMutation.graphql";
-import type { SCIMSettingsPageQuery } from "#/__generated__/iam/SCIMSettingsPageQuery.graphql";
+import type { SCIMPageCreateSCIMConfigurationMutation } from "#/__generated__/iam/SCIMPageCreateSCIMConfigurationMutation.graphql";
+import type { SCIMPageExportMutation } from "#/__generated__/iam/SCIMPageExportMutation.graphql";
+import type { SCIMPageQuery } from "#/__generated__/iam/SCIMPageQuery.graphql";
 
 import { ConnectorList } from "./_components/ConnectorList";
 import { SCIMConfiguration } from "./_components/SCIMConfiguration";
 import { SCIMEventList } from "./_components/SCIMEventList";
 
-export const scimSettingsPageQuery = graphql`
-  query SCIMSettingsPageQuery($organizationId: ID!) {
+export const scimPageQuery = graphql`
+  query SCIMPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
@@ -73,7 +73,7 @@ export const scimSettingsPageQuery = graphql`
 `;
 
 const createSCIMConfigurationMutation = graphql`
-  mutation SCIMSettingsPageCreateSCIMConfigurationMutation(
+  mutation SCIMPageCreateSCIMConfigurationMutation(
     $input: CreateSCIMConfigurationInput!
   ) {
     createSCIMConfiguration(input: $input) {
@@ -88,7 +88,7 @@ const createSCIMConfigurationMutation = graphql`
 `;
 
 const exportMutation = graphql`
-  mutation SCIMSettingsPageExportMutation(
+  mutation SCIMPageExportMutation(
     $input: RequestSCIMEventExportInput!
   ) {
     requestSCIMEventExport(input: $input) {
@@ -107,7 +107,7 @@ function ExportSCIMEventsDialog({
   const dialogRef = useDialogRef();
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [commitExport, isExporting] = useMutation<SCIMSettingsPageExportMutation>(exportMutation);
+  const [commitExport, isExporting] = useMutation<SCIMPageExportMutation>(exportMutation);
 
   const handleExport = () => {
     if (!fromDate || !toDate) return;
@@ -123,15 +123,15 @@ function ExportSCIMEventsDialog({
       onCompleted: (_response, errors) => {
         if (errors) {
           toast({
-            title: t("scimSettingsPage.export.errors.title"),
-            description: formatError(t("scimSettingsPage.export.errors.request"), errors),
+            title: t("scimPage.export.errors.title"),
+            description: formatError(t("scimPage.export.errors.request"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: t("scimSettingsPage.export.messages.successTitle"),
-          description: t("scimSettingsPage.export.messages.success"),
+          title: t("scimPage.export.messages.successTitle"),
+          description: t("scimPage.export.messages.success"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -140,8 +140,8 @@ function ExportSCIMEventsDialog({
       },
       onError: (error) => {
         toast({
-          title: t("scimSettingsPage.export.errors.title"),
-          description: formatError(t("scimSettingsPage.export.errors.request"), error),
+          title: t("scimPage.export.errors.title"),
+          description: formatError(t("scimPage.export.errors.request"), error),
           variant: "error",
         });
       },
@@ -155,18 +155,18 @@ function ExportSCIMEventsDialog({
         icon={IconArrowDown}
         onClick={() => dialogRef.current?.open()}
       >
-        {t("scimSettingsPage.export.actions.export")}
+        {t("scimPage.export.actions.export")}
       </Button>
       <Dialog
         className="max-w-md"
         ref={dialogRef}
-        title={t("scimSettingsPage.export.title")}
+        title={t("scimPage.export.title")}
       >
         <DialogContent className="space-y-4" padded>
           <p className="text-sm text-txt-secondary">
-            {t("scimSettingsPage.export.description")}
+            {t("scimPage.export.description")}
           </p>
-          <Field label={t("scimSettingsPage.export.fields.from")}>
+          <Field label={t("scimPage.export.fields.from")}>
             <Input
               type="date"
               value={fromDate}
@@ -174,7 +174,7 @@ function ExportSCIMEventsDialog({
               required
             />
           </Field>
-          <Field label={t("scimSettingsPage.export.fields.to")}>
+          <Field label={t("scimPage.export.fields.to")}>
             <Input
               type="date"
               value={toDate}
@@ -192,10 +192,10 @@ function ExportSCIMEventsDialog({
               ? (
                   <>
                     <Spinner size={16} />
-                    {t("scimSettingsPage.export.actions.exporting")}
+                    {t("scimPage.export.actions.exporting")}
                   </>
                 )
-              : t("scimSettingsPage.export.actions.export")}
+              : t("scimPage.export.actions.export")}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -203,8 +203,8 @@ function ExportSCIMEventsDialog({
   );
 }
 
-export function SCIMSettingsPage(props: {
-  queryRef: PreloadedQuery<SCIMSettingsPageQuery>;
+export function SCIMPage(props: {
+  queryRef: PreloadedQuery<SCIMPageQuery>;
 }) {
   const { queryRef } = props;
   const { t } = useTranslation();
@@ -212,13 +212,13 @@ export function SCIMSettingsPage(props: {
   const connectorId = searchParams.get("connector_id");
   const mutationTriggeredRef = useRef(false);
 
-  const { organization } = usePreloadedQuery<SCIMSettingsPageQuery>(scimSettingsPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<SCIMPageQuery>(scimPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }
 
   const [createSCIMConfiguration]
-    = useMutation<SCIMSettingsPageCreateSCIMConfigurationMutation>(
+    = useMutation<SCIMPageCreateSCIMConfigurationMutation>(
       createSCIMConfigurationMutation,
     );
 
@@ -302,10 +302,10 @@ export function SCIMSettingsPage(props: {
 
       {showManualScimSection && (
         <div className="space-y-4">
-          <h2 className="text-base font-medium">{t("scimSettingsPage.manualScim.title")}</h2>
+          <h2 className="text-base font-medium">{t("scimPage.manualScim.title")}</h2>
           {!hasManualScim && (
             <p className="text-sm text-txt-secondary">
-              {t("scimSettingsPage.manualScim.description")}
+              {t("scimPage.manualScim.description")}
             </p>
           )}
           <SCIMConfiguration fKey={organization} />
@@ -316,7 +316,7 @@ export function SCIMSettingsPage(props: {
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <h2 className="text-base font-medium">
-              {t("scimSettingsPage.provisioningEventHistory")}
+              {t("scimPage.provisioningEventHistory")}
             </h2>
             {organization.canExportSCIMEvents && (
               <ExportSCIMEventsDialog organizationId={organization.id} />

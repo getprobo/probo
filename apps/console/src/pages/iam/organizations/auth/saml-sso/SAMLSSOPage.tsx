@@ -29,7 +29,7 @@ import {
 } from "react-relay";
 
 import type { EditSAMLConfigurationFormQuery } from "#/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
-import type { SAMLSettingsPageQuery } from "#/__generated__/iam/SAMLSettingsPageQuery.graphql";
+import type { SAMLSSOPageQuery } from "#/__generated__/iam/SAMLSSOPageQuery.graphql";
 
 import {
   EditSAMLConfigurationForm,
@@ -39,8 +39,8 @@ import { NewSAMLConfigurationForm } from "./_components/NewSAMLConfigurationForm
 import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
 import { SAMLDomainVerifyDialog } from "./_components/SAMLDomainVerifyDialog";
 
-export const samlSettingsPageQuery = graphql`
-  query SAMLSettingsPageQuery($organizationId: ID!) {
+export const samlSSOPageQuery = graphql`
+  query SAMLSSOPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
@@ -53,8 +53,8 @@ export const samlSettingsPageQuery = graphql`
   }
 `;
 
-export function SAMLSettingsPage(props: {
-  queryRef: PreloadedQuery<SAMLSettingsPageQuery>;
+export function SAMLSSOPage(props: {
+  queryRef: PreloadedQuery<SAMLSSOPageQuery>;
 }) {
   const { queryRef } = props;
 
@@ -66,7 +66,7 @@ export function SAMLSettingsPage(props: {
 
   const { t } = useTranslation();
 
-  const { organization } = usePreloadedQuery<SAMLSettingsPageQuery>(samlSettingsPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<SAMLSSOPageQuery>(samlSSOPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }
@@ -97,14 +97,13 @@ export function SAMLSettingsPage(props: {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-base font-medium">{t("samlSettingsPage.title")}</h2>
-          {organization.canCreateSAMLConfiguration && (
+        {organization.canCreateSAMLConfiguration && (
+          <div className="flex justify-end">
             <Button onClick={() => handleOpenFormDialog()}>
-              {t("samlSettingsPage.actions.addConfiguration")}
+              {t("samlSsoPage.actions.addConfiguration")}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <SAMLConfigurationList
           fKey={organization}
@@ -116,7 +115,7 @@ export function SAMLSettingsPage(props: {
       <Dialog
         ref={formDialogRef}
         onClose={handleCloseFormDialog}
-        title={<Breadcrumb items={[t("samlSettingsPage.breadcrumb.settings"), t("samlSettingsPage.breadcrumb.configure")]} />}
+        title={<Breadcrumb items={[t("samlSsoPage.breadcrumb.settings"), t("samlSsoPage.breadcrumb.configure")]} />}
       >
         {isEditing
           ? (
@@ -138,7 +137,7 @@ export function SAMLSettingsPage(props: {
         ref={domainDialogRef}
         onClose={handleCloseVerifyDomainDialog}
         title={
-          <Breadcrumb items={[t("samlSettingsPage.breadcrumb.settings"), t("samlSettingsPage.breadcrumb.verifyDomain")]} />
+          <Breadcrumb items={[t("samlSsoPage.breadcrumb.settings"), t("samlSsoPage.breadcrumb.verifyDomain")]} />
         }
       >
         {domainVerificationToken && (

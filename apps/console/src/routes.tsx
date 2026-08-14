@@ -34,6 +34,8 @@ import { PageError } from "./components/PageError";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
+import { auditLogRoutes } from "./pages/iam/organizations/audit-log/routes";
+import { authRoutes } from "./pages/iam/organizations/auth/routes";
 import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { accessReviewRoutes } from "./pages/organizations/access-reviews/routes";
 import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
@@ -353,6 +355,8 @@ const routes = [
             children: [
               ...contextRoutes,
               ...peopleRoutes,
+              ...authRoutes,
+              ...auditLogRoutes,
               ...businessFunctionRoutes,
               ...aiSystemRoutes,
               ...obligationRoutes,
@@ -380,31 +384,10 @@ const routes = [
                     ),
                   },
                   {
-                    path: "saml-sso",
-                    Component: lazy(
-                      () =>
-                        import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
-                    ),
-                  },
-                  {
-                    path: "scim",
-                    Component: lazy(
-                      () =>
-                        import("./pages/iam/organizations/settings/SCIMSettingsPageLoader"),
-                    ),
-                  },
-                  {
                     path: "webhooks",
                     Component: lazy(
                       () =>
                         import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
-                    ),
-                  },
-                  {
-                    path: "audit-log",
-                    Component: lazy(
-                      () =>
-                        import("./pages/iam/organizations/settings/AuditLogSettingsPageLoader"),
                     ),
                   },
                 ],

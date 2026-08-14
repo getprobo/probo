@@ -2434,7 +2434,10 @@
     "measures": "Mesures",
     "risks": "Risques",
     "frameworks": "Référentiels",
-    "people": "Personnes",
+    "iam": "IAM",
+    "users": "Utilisateurs",
+    "authProvisioning": "Auth. et provisionnement",
+    "auditLog": "Journal d’audit",
     "thirdParties": "Tiers",
     "documents": "Documents",
     "assets": "Actifs",
@@ -2609,7 +2612,7 @@
       "create": "Créer"
     }
   },
-  "auditLogSettingsPage": {
+  "auditLogPage": {
     "title": "Journal d’audit",
     "description": "Un enregistrement de toutes les actions effectuées au sein de votre organisation. Les entrées sont immuables et ne peuvent pas être modifiées ou supprimées.",
     "empty": "Aucune entrée dans le journal d’audit pour le moment.",
@@ -2661,7 +2664,7 @@
       }
     }
   },
-  "samlSettingsPage": {
+  "samlSsoPage": {
     "title": "Authentification unique SAML",
     "actions": {
       "addConfiguration": "Ajouter une configuration"
@@ -2672,7 +2675,7 @@
       "verifyDomain": "Vérifier le domaine"
     }
   },
-  "scimSettingsPage": {
+  "scimPage": {
     "manualScim": {
       "title": "SCIM manuel",
       "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé ci-dessus. Cela nécessite de configurer l’URL du point de terminaison SCIM et le jeton porteur dans votre fournisseur d’identité."
@@ -2699,15 +2702,19 @@
       }
     }
   },
+  "authLayout": {
+    "title": "Auth. et provisionnement",
+    "tabs": {
+      "samlSso": "SAML SSO",
+      "scim": "SCIM"
+    }
+  },
   "settingsLayout": {
     "title": "Paramètres",
     "tabs": {
       "general": "Général",
-      "samlSso": "SAML SSO",
-      "scim": "SCIM",
       "webhooks": "Webhooks",
-      "slackBot": "SlackBot",
-      "auditLog": "Journal d’audit"
+      "slackBot": "SlackBot"
     }
   },
   "slackBotSettingsPage": {
@@ -3282,7 +3289,7 @@
       "mfa": "MFA",
       "authMethod": "Auth",
       "lastLogin": "Dernière connexion"
-      },
+    },
     "values": {
       "yes": "Oui",
       "no": "Non",
@@ -3526,10 +3533,34 @@
   "businessFunctionsPage": {
     "title": "Fonctions métier",
     "description": "Gérez le registre des fonctions métier de votre organisation.",
-    "actions": { "document": "Document", "publish": "Publier", "add": "Ajouter une fonction métier", "loadMore": "Charger plus", "loading": "Chargement…" },
-    "filters": { "allClassifications": "Toutes les classifications" },
-    "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
-    "columns": { "referenceId": "ID de référence", "name": "Nom", "classification": "Classification", "mtd": "MTD", "rto": "RTO", "rpo": "RPO", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers", "actions": "Actions" },
+    "actions": {
+      "document": "Document",
+      "publish": "Publier",
+      "add": "Ajouter une fonction métier",
+      "loadMore": "Charger plus",
+      "loading": "Chargement…"
+    },
+    "filters": {
+      "allClassifications": "Toutes les classifications"
+    },
+    "classifications": {
+      "critical": "Critique",
+      "important": "Important",
+      "secondary": "Secondaire",
+      "standard": "Standard"
+    },
+    "columns": {
+      "referenceId": "ID de référence",
+      "name": "Nom",
+      "classification": "Classification",
+      "mtd": "MTD",
+      "rto": "RTO",
+      "rpo": "RPO",
+      "owner": "Responsable",
+      "assets": "Actifs",
+      "thirdParties": "Tiers",
+      "actions": "Actions"
+    },
     "none": "Aucun",
     "empty": {
       "title": "Aucune fonction métier",
@@ -3539,30 +3570,108 @@
     }
   },
   "businessFunctionListItem": {
-    "actions": { "delete": "Supprimer" },
-    "messages": { "success": "Succès", "deleted": "Fonction métier supprimée avec succès" },
-    "errors": { "delete": "Échec de la suppression de la fonction métier" },
+    "actions": {
+      "delete": "Supprimer"
+    },
+    "messages": {
+      "success": "Succès",
+      "deleted": "Fonction métier supprimée avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression de la fonction métier"
+    },
     "deleteConfirmation": "Cela supprimera définitivement la fonction métier {{referenceId}}. Cette action est irréversible."
   },
   "businessFunctionDetailsPage": {
-    "breadcrumb": { "businessFunctions": "Fonctions métier", "unknown": "Fonction métier inconnue" },
-    "validation": { "nameRequired": "Le nom est requis" },
-    "fields": { "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire l'impact acceptable en cas de perturbation", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
-    "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
-    "actions": { "delete": "Supprimer", "update": "Mettre à jour", "updating": "Mise à jour…" },
-    "messages": { "success": "Succès", "updated": "Fonction métier mise à jour avec succès", "deleted": "Fonction métier supprimée avec succès" },
-    "errors": { "update": "Échec de la mise à jour de la fonction métier", "delete": "Échec de la suppression de la fonction métier" },
+    "breadcrumb": {
+      "businessFunctions": "Fonctions métier",
+      "unknown": "Fonction métier inconnue"
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis"
+    },
+    "fields": {
+      "name": "Nom",
+      "namePlaceholder": "Saisir un nom",
+      "classification": "Classification",
+      "classificationPlaceholder": "Sélectionner une classification",
+      "mtd": "MTD (minutes)",
+      "rto": "RTO (minutes)",
+      "rpo": "RPO (minutes)",
+      "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes",
+      "impactTolerance": "Tolérance d'impact",
+      "impactTolerancePlaceholder": "Décrire l'impact acceptable en cas de perturbation",
+      "notes": "Notes",
+      "notesPlaceholder": "Dépendances et autres notes",
+      "owner": "Responsable",
+      "assets": "Actifs",
+      "thirdParties": "Tiers"
+    },
+    "classifications": {
+      "critical": "Critique",
+      "important": "Important",
+      "secondary": "Secondaire",
+      "standard": "Standard"
+    },
+    "actions": {
+      "delete": "Supprimer",
+      "update": "Mettre à jour",
+      "updating": "Mise à jour…"
+    },
+    "messages": {
+      "success": "Succès",
+      "updated": "Fonction métier mise à jour avec succès",
+      "deleted": "Fonction métier supprimée avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de la fonction métier",
+      "delete": "Échec de la suppression de la fonction métier"
+    },
     "dependenciesTruncated": "Cette fonction métier a plus de 100 actifs ou tiers liés. L'édition des dépendances est désactivée afin qu'une sauvegarde ne puisse pas supprimer silencieusement des relations non chargées.",
     "deleteConfirmation": "Cela supprimera définitivement la fonction métier {{referenceId}}. Cette action est irréversible."
   },
   "createBusinessFunctionDialog": {
-    "breadcrumb": { "businessFunctions": "Fonctions métier", "create": "Créer" },
-    "validation": { "nameRequired": "Le nom est requis" },
-    "fields": { "name": "Nom", "namePlaceholder": "Saisir un nom", "classification": "Classification", "classificationPlaceholder": "Sélectionner une classification", "mtd": "MTD (minutes)", "rto": "RTO (minutes)", "rpo": "RPO (minutes)", "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes", "impactTolerance": "Tolérance d'impact", "impactTolerancePlaceholder": "Décrire la tolérance d'impact", "notes": "Notes", "notesPlaceholder": "Dépendances et autres notes", "owner": "Responsable", "assets": "Actifs", "thirdParties": "Tiers" },
-    "classifications": { "critical": "Critique", "important": "Important", "secondary": "Secondaire", "standard": "Standard" },
-    "actions": { "create": "Créer la fonction métier", "creating": "Création…" },
-    "messages": { "success": "Succès", "created": "Fonction métier créée avec succès" },
-    "errors": { "create": "Échec de la création de la fonction métier" }
+    "breadcrumb": {
+      "businessFunctions": "Fonctions métier",
+      "create": "Créer"
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis"
+    },
+    "fields": {
+      "name": "Nom",
+      "namePlaceholder": "Saisir un nom",
+      "classification": "Classification",
+      "classificationPlaceholder": "Sélectionner une classification",
+      "mtd": "MTD (minutes)",
+      "rto": "RTO (minutes)",
+      "rpo": "RPO (minutes)",
+      "durationHelper": "Valeurs courantes : 1h = 60, 12h = 720, 24h = 1440, 3j = 4320 minutes",
+      "impactTolerance": "Tolérance d'impact",
+      "impactTolerancePlaceholder": "Décrire la tolérance d'impact",
+      "notes": "Notes",
+      "notesPlaceholder": "Dépendances et autres notes",
+      "owner": "Responsable",
+      "assets": "Actifs",
+      "thirdParties": "Tiers"
+    },
+    "classifications": {
+      "critical": "Critique",
+      "important": "Important",
+      "secondary": "Secondaire",
+      "standard": "Standard"
+    },
+    "actions": {
+      "create": "Créer la fonction métier",
+      "creating": "Création…"
+    },
+    "messages": {
+      "success": "Succès",
+      "created": "Fonction métier créée avec succès"
+    },
+    "errors": {
+      "create": "Échec de la création de la fonction métier"
+    }
   },
   "publishBusinessFunctionListDialog": {
     "title": "Publier la liste des fonctions métier",
@@ -3577,12 +3686,43 @@
     "pageTitle": "Systèmes d'IA",
     "title": "Systèmes d'IA",
     "description": "Suivez les systèmes d'IA utilisés dans votre organisation, y compris les rôles, la classification des risques et le calendrier de revue.",
-    "actions": { "document": "Document", "publish": "Publier", "add": "Ajouter un système d'IA", "loadMore": "Charger plus", "loading": "Chargement…" },
-    "filters": { "allStatuses": "Tous les statuts", "allRiskClassifications": "Toutes les classifications de risque" },
-    "status": { "active": "Actif", "inDevelopment": "En développement", "decommissioned": "Décommissionné" },
-    "riskClassification": { "highRisk": "Risque élevé", "limited": "Limité", "minimal": "Minimal", "gpai": "GPAI" },
-    "companyRoles": { "provider": "Fournisseur", "deployer": "Déployeur", "user": "Utilisateur", "developer": "Développeur" },
-    "columns": { "name": "Nom", "version": "Version", "status": "Statut", "riskClassification": "Classification des risques", "owner": "Responsable du système", "nextReviewDate": "Prochaine revue", "actions": "Actions" },
+    "actions": {
+      "document": "Document",
+      "publish": "Publier",
+      "add": "Ajouter un système d'IA",
+      "loadMore": "Charger plus",
+      "loading": "Chargement…"
+    },
+    "filters": {
+      "allStatuses": "Tous les statuts",
+      "allRiskClassifications": "Toutes les classifications de risque"
+    },
+    "status": {
+      "active": "Actif",
+      "inDevelopment": "En développement",
+      "decommissioned": "Décommissionné"
+    },
+    "riskClassification": {
+      "highRisk": "Risque élevé",
+      "limited": "Limité",
+      "minimal": "Minimal",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "Fournisseur",
+      "deployer": "Déployeur",
+      "user": "Utilisateur",
+      "developer": "Développeur"
+    },
+    "columns": {
+      "name": "Nom",
+      "version": "Version",
+      "status": "Statut",
+      "riskClassification": "Classification des risques",
+      "owner": "Responsable du système",
+      "nextReviewDate": "Prochaine revue",
+      "actions": "Actions"
+    },
     "empty": {
       "title": "Aucun système d'IA",
       "description": "Créez votre premier système d'IA pour commencer.",
@@ -3591,14 +3731,26 @@
     }
   },
   "aiSystemListItem": {
-    "actions": { "delete": "Supprimer" },
-    "messages": { "success": "Succès", "deleted": "Système d'IA supprimé avec succès" },
-    "errors": { "delete": "Échec de la suppression du système d'IA" },
+    "actions": {
+      "delete": "Supprimer"
+    },
+    "messages": {
+      "success": "Succès",
+      "deleted": "Système d'IA supprimé avec succès"
+    },
+    "errors": {
+      "delete": "Échec de la suppression du système d'IA"
+    },
     "deleteConfirmation": "Cela supprimera définitivement le système d'IA « {{name}} ». Cette action est irréversible."
   },
   "aiSystemDetailsPage": {
-    "breadcrumb": { "aiSystems": "Systèmes d'IA", "unknown": "Système d'IA inconnu" },
-    "validation": { "nameRequired": "Le nom est requis" },
+    "breadcrumb": {
+      "aiSystems": "Systèmes d'IA",
+      "unknown": "Système d'IA inconnu"
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis"
+    },
     "fields": {
       "name": "Nom",
       "namePlaceholder": "Saisir le nom du système",
@@ -3629,17 +3781,47 @@
       "notesPlaceholder": "Notes ou observations supplémentaires",
       "notSet": "Non défini"
     },
-    "status": { "active": "Actif", "inDevelopment": "En développement", "decommissioned": "Décommissionné" },
-    "riskClassification": { "highRisk": "Risque élevé", "limited": "Limité", "minimal": "Minimal", "gpai": "GPAI" },
-    "companyRoles": { "provider": "Fournisseur", "deployer": "Déployeur", "user": "Utilisateur", "developer": "Développeur" },
-    "actions": { "delete": "Supprimer", "update": "Mettre à jour", "updating": "Mise à jour…" },
-    "messages": { "success": "Succès", "updated": "Système d'IA mis à jour avec succès", "deleted": "Système d'IA supprimé avec succès" },
-    "errors": { "update": "Échec de la mise à jour du système d'IA", "delete": "Échec de la suppression du système d'IA" },
+    "status": {
+      "active": "Actif",
+      "inDevelopment": "En développement",
+      "decommissioned": "Décommissionné"
+    },
+    "riskClassification": {
+      "highRisk": "Risque élevé",
+      "limited": "Limité",
+      "minimal": "Minimal",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "Fournisseur",
+      "deployer": "Déployeur",
+      "user": "Utilisateur",
+      "developer": "Développeur"
+    },
+    "actions": {
+      "delete": "Supprimer",
+      "update": "Mettre à jour",
+      "updating": "Mise à jour…"
+    },
+    "messages": {
+      "success": "Succès",
+      "updated": "Système d'IA mis à jour avec succès",
+      "deleted": "Système d'IA supprimé avec succès"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour du système d'IA",
+      "delete": "Échec de la suppression du système d'IA"
+    },
     "deleteConfirmation": "Cela supprimera définitivement le système d'IA « {{name}} ». Cette action est irréversible."
   },
   "createAiSystemDialog": {
-    "breadcrumb": { "aiSystems": "Systèmes d'IA", "create": "Créer" },
-    "validation": { "nameRequired": "Le nom est requis" },
+    "breadcrumb": {
+      "aiSystems": "Systèmes d'IA",
+      "create": "Créer"
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis"
+    },
     "fields": {
       "name": "Nom",
       "namePlaceholder": "Saisir le nom du système",
@@ -3670,12 +3852,34 @@
       "notesPlaceholder": "Notes ou observations supplémentaires",
       "notSet": "Non défini"
     },
-    "status": { "active": "Actif", "inDevelopment": "En développement", "decommissioned": "Décommissionné" },
-    "riskClassification": { "highRisk": "Risque élevé", "limited": "Limité", "minimal": "Minimal", "gpai": "GPAI" },
-    "companyRoles": { "provider": "Fournisseur", "deployer": "Déployeur", "user": "Utilisateur", "developer": "Développeur" },
-    "actions": { "create": "Créer le système d'IA", "creating": "Création…" },
-    "messages": { "success": "Succès", "created": "Système d'IA créé avec succès" },
-    "errors": { "create": "Échec de la création du système d'IA" }
+    "status": {
+      "active": "Actif",
+      "inDevelopment": "En développement",
+      "decommissioned": "Décommissionné"
+    },
+    "riskClassification": {
+      "highRisk": "Risque élevé",
+      "limited": "Limité",
+      "minimal": "Minimal",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "Fournisseur",
+      "deployer": "Déployeur",
+      "user": "Utilisateur",
+      "developer": "Développeur"
+    },
+    "actions": {
+      "create": "Créer le système d'IA",
+      "creating": "Création…"
+    },
+    "messages": {
+      "success": "Succès",
+      "created": "Système d'IA créé avec succès"
+    },
+    "errors": {
+      "create": "Échec de la création du système d'IA"
+    }
   },
   "publishListDialog": {
     "description": "Sélectionnez des approbateurs pour demander une approbation avant publication, ou publiez directement sans approbateurs.",

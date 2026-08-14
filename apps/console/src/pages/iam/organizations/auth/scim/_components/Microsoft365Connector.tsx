@@ -26,10 +26,10 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
-  Google,
   IconSettingsGear2,
   IconWarning,
   Input,
+  Microsoft,
   useDialogRef,
   useToast,
 } from "@probo/ui";
@@ -37,13 +37,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
-import type { GoogleWorkspaceConnectorDeleteMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorDeleteMutation.graphql";
-import type { GoogleWorkspaceConnectorFragment$key } from "#/__generated__/iam/GoogleWorkspaceConnectorFragment.graphql";
-import type { GoogleWorkspaceConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/GoogleWorkspaceConnectorUpdateSCIMBridgeMutation.graphql";
+import type { Microsoft365ConnectorDeleteMutation } from "#/__generated__/iam/Microsoft365ConnectorDeleteMutation.graphql";
+import type { Microsoft365ConnectorFragment$key } from "#/__generated__/iam/Microsoft365ConnectorFragment.graphql";
+import type { Microsoft365ConnectorUpdateSCIMBridgeMutation } from "#/__generated__/iam/Microsoft365ConnectorUpdateSCIMBridgeMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-const googleWorkspaceConnectorFragment = graphql`
-  fragment GoogleWorkspaceConnectorFragment on SCIMConfiguration {
+const microsoft365ConnectorFragment = graphql`
+  fragment Microsoft365ConnectorFragment on SCIMConfiguration {
     id
     bridge {
       id
@@ -60,7 +60,7 @@ const googleWorkspaceConnectorFragment = graphql`
 `;
 
 const deleteSCIMConfigurationMutation = graphql`
-  mutation GoogleWorkspaceConnectorDeleteMutation(
+  mutation Microsoft365ConnectorDeleteMutation(
     $input: DeleteSCIMConfigurationInput!
   ) {
     deleteSCIMConfiguration(input: $input) {
@@ -70,7 +70,7 @@ const deleteSCIMConfigurationMutation = graphql`
 `;
 
 const updateSCIMBridgeMutation = graphql`
-  mutation GoogleWorkspaceConnectorUpdateSCIMBridgeMutation(
+  mutation Microsoft365ConnectorUpdateSCIMBridgeMutation(
     $input: UpdateSCIMBridgeInput!
   ) {
     updateSCIMBridge(input: $input) {
@@ -82,13 +82,13 @@ const updateSCIMBridgeMutation = graphql`
   }
 `;
 
-export function GoogleWorkspaceConnector(props: {
-  fKey: GoogleWorkspaceConnectorFragment$key | null;
+export function Microsoft365Connector(props: {
+  fKey: Microsoft365ConnectorFragment$key | null;
   oauth2Scopes: readonly string[];
 }) {
   const { fKey, oauth2Scopes } = props;
-  const data = useFragment<GoogleWorkspaceConnectorFragment$key>(googleWorkspaceConnectorFragment, fKey);
-  const bridge = data?.bridge?.type === "GOOGLE_WORKSPACE" ? data.bridge : null;
+  const data = useFragment<Microsoft365ConnectorFragment$key>(microsoft365ConnectorFragment, fKey);
+  const bridge = data?.bridge?.type === "MICROSOFT_365" ? data.bridge : null;
   const connector = bridge?.connector;
   const scimConfigurationId = data?.id;
   const bridgeId = bridge?.id;
@@ -106,14 +106,14 @@ export function GoogleWorkspaceConnector(props: {
       ? "warning"
       : "success";
   const bridgeStatusLabel = isBridgeDisabled
-    ? t("googleWorkspaceConnector.status.disabled")
+    ? t("microsoft365Connector.status.disabled")
     : isBridgeFailed
-      ? t("googleWorkspaceConnector.status.error")
+      ? t("microsoft365Connector.status.error")
       : isBridgePending
-        ? t("googleWorkspaceConnector.status.syncing")
-        : t("googleWorkspaceConnector.status.connected");
+        ? t("microsoft365Connector.status.syncing")
+        : t("microsoft365Connector.status.connected");
   const bridgeErrorMessage = latestBridgeError
-    ?? t("googleWorkspaceConnector.errors.bridgeSync");
+    ?? t("microsoft365Connector.errors.bridgeSync");
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const excludedUserNamesDialogRef = useDialogRef();
@@ -121,12 +121,12 @@ export function GoogleWorkspaceConnector(props: {
   const [newUser, setNewUser] = useState("");
 
   const [deleteSCIMConfiguration, isDeleting]
-    = useMutation<GoogleWorkspaceConnectorDeleteMutation>(
+    = useMutation<Microsoft365ConnectorDeleteMutation>(
       deleteSCIMConfigurationMutation,
     );
 
   const [updateSCIMBridge, isUpdating]
-    = useMutation<GoogleWorkspaceConnectorUpdateSCIMBridgeMutation>(
+    = useMutation<Microsoft365ConnectorUpdateSCIMBridgeMutation>(
       updateSCIMBridgeMutation,
     );
 
@@ -134,11 +134,11 @@ export function GoogleWorkspaceConnector(props: {
     const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
     url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", "GOOGLE_WORKSPACE");
+    url.searchParams.append("provider", "MICROSOFT_365");
     for (const scope of oauth2Scopes) {
       url.searchParams.append("scope", scope);
     }
-    const continueUrl = `/organizations/${organizationId}/settings/scim`;
+    const continueUrl = `/organizations/${organizationId}/settings/auth/scim`;
     url.searchParams.append("continue", continueUrl);
     window.location.href = url.toString();
   };
@@ -164,7 +164,7 @@ export function GoogleWorkspaceConnector(props: {
         }
         toast({
           title: t("common.success"),
-          description: t("googleWorkspaceConnector.messages.disconnected"),
+          description: t("microsoft365Connector.messages.disconnected"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -203,7 +203,7 @@ export function GoogleWorkspaceConnector(props: {
         }
         toast({
           title: t("common.success"),
-          description: t("googleWorkspaceConnector.messages.excludedUsersUpdated"),
+          description: t("microsoft365Connector.messages.excludedUsersUpdated"),
           variant: "success",
         });
       },
@@ -229,37 +229,35 @@ export function GoogleWorkspaceConnector(props: {
     saveExcludedUserNames(currentExcludedUserNames.filter(e => e !== user));
   };
 
-  // Not connected state
   if (!connector) {
     return (
       <Card padded className="flex items-center gap-3">
         <div className="w-10 h-10 flex items-center justify-center bg-subtle rounded">
-          <Google className="w-6 h-6" />
+          <Microsoft className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{t("googleWorkspaceConnector.name")}</h3>
+          <h3 className="font-medium">{t("microsoft365Connector.name")}</h3>
           <p className="text-sm text-txt-secondary">
-            {t("googleWorkspaceConnector.connectDescription")}
+            {t("microsoft365Connector.connectDescription")}
           </p>
         </div>
         <Button variant="secondary" onClick={handleConnect}>
-          {t("googleWorkspaceConnector.actions.connect")}
+          {t("microsoft365Connector.actions.connect")}
         </Button>
       </Card>
     );
   }
 
-  // Connected state
   return (
     <Card padded className="space-y-3">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 flex items-center justify-center bg-subtle rounded">
-          <Google className="w-6 h-6" />
+          <Microsoft className="w-6 h-6" />
         </div>
         <div className="mr-auto">
-          <h3 className="font-medium">{t("googleWorkspaceConnector.name")}</h3>
+          <h3 className="font-medium">{t("microsoft365Connector.name")}</h3>
           <p className="text-sm text-txt-secondary">
-            {t("googleWorkspaceConnector.connectedOn", { date: dateTimeFormat(i18n.language, connector.createdAt) })}
+            {t("microsoft365Connector.connectedOn", { date: dateTimeFormat(i18n.language, connector.createdAt) })}
           </p>
         </div>
         <Badge variant={bridgeStatusBadgeVariant} size="md">
@@ -270,18 +268,18 @@ export function GoogleWorkspaceConnector(props: {
           trigger={(
             <Button variant="secondary">
               <IconSettingsGear2 size={16} />
-              {t("googleWorkspaceConnector.actions.settings")}
+              {t("microsoft365Connector.actions.settings")}
             </Button>
           )}
-          title={t("googleWorkspaceConnector.settings.title")}
+          title={t("microsoft365Connector.settings.title")}
           className="max-w-lg"
         >
           <DialogContent padded className="space-y-6">
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium">{t("googleWorkspaceConnector.settings.excludedUserNames")}</h4>
+                <h4 className="text-sm font-medium">{t("microsoft365Connector.settings.excludedUserNames")}</h4>
                 <p className="text-sm text-txt-secondary mt-1">
-                  {t("googleWorkspaceConnector.settings.excludedUserNamesDescription")}
+                  {t("microsoft365Connector.settings.excludedUserNamesDescription")}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -300,7 +298,7 @@ export function GoogleWorkspaceConnector(props: {
                   className="flex-1"
                 />
                 <Button onClick={handleAddUser} variant="secondary" disabled={isUpdating}>
-                  {t("googleWorkspaceConnector.actions.add")}
+                  {t("microsoft365Connector.actions.add")}
                 </Button>
               </div>
 
@@ -317,7 +315,7 @@ export function GoogleWorkspaceConnector(props: {
                         onClick={() => handleRemoveUser(user)}
                         disabled={isUpdating}
                       >
-                        {t("googleWorkspaceConnector.actions.remove")}
+                        {t("microsoft365Connector.actions.remove")}
                       </Button>
                     </div>
                   ))}
@@ -326,7 +324,7 @@ export function GoogleWorkspaceConnector(props: {
 
               {currentExcludedUserNames.length === 0 && (
                 <p className="text-sm text-txt-secondary text-center py-4">
-                  {t("googleWorkspaceConnector.settings.noExcludedUserNames")}
+                  {t("microsoft365Connector.settings.noExcludedUserNames")}
                 </p>
               )}
             </div>
@@ -336,18 +334,18 @@ export function GoogleWorkspaceConnector(props: {
           ref={dialogRef}
           trigger={(
             <Button variant="danger">
-              {t("googleWorkspaceConnector.actions.disconnect")}
+              {t("microsoft365Connector.actions.disconnect")}
             </Button>
           )}
-          title={t("googleWorkspaceConnector.disconnect.title")}
+          title={t("microsoft365Connector.disconnect.title")}
           className="max-w-lg"
         >
           <DialogContent padded className="space-y-4">
             <p className="text-txt-secondary text-sm">
-              {t("googleWorkspaceConnector.disconnect.description")}
+              {t("microsoft365Connector.disconnect.description")}
             </p>
             <p className="text-red-600 text-sm font-medium">
-              {t("googleWorkspaceConnector.disconnect.warning")}
+              {t("microsoft365Connector.disconnect.warning")}
             </p>
           </DialogContent>
           <DialogFooter>
@@ -357,8 +355,8 @@ export function GoogleWorkspaceConnector(props: {
               disabled={isDeleting}
             >
               {isDeleting
-                ? t("googleWorkspaceConnector.actions.disconnecting")
-                : t("googleWorkspaceConnector.actions.disconnect")}
+                ? t("microsoft365Connector.actions.disconnecting")
+                : t("microsoft365Connector.actions.disconnect")}
             </Button>
           </DialogFooter>
         </Dialog>
@@ -370,8 +368,8 @@ export function GoogleWorkspaceConnector(props: {
           <div className="space-y-1">
             <p className="text-sm font-medium text-txt-danger">
               {isBridgeDisabled
-                ? t("googleWorkspaceConnector.errors.bridgeDisabled")
-                : t("googleWorkspaceConnector.errors.bridgeFailed")}
+                ? t("microsoft365Connector.errors.bridgeDisabled")
+                : t("microsoft365Connector.errors.bridgeFailed")}
             </p>
             <p className="text-sm text-txt-secondary whitespace-pre-wrap break-all">
               {bridgeErrorMessage}

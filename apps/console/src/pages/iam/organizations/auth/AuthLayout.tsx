@@ -18,38 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { IconKey, IconLock, PageHeader, TabLink, Tabs } from "@probo/ui";
+import { useTranslation } from "react-i18next";
+import { Outlet } from "react-router";
 
-import type { SCIMSettingsPageQuery } from "#/__generated__/iam/SCIMSettingsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { SCIMSettingsPage, scimSettingsPageQuery } from "./SCIMSettingsPage";
-
-function SCIMSettingsPageQueryLoader() {
+export default function AuthLayout() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<SCIMSettingsPageQuery>(
-    scimSettingsPageQuery,
-  );
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    loadQuery({
-      organizationId,
-    });
-  }, [loadQuery, organizationId]);
-
-  if (!queryRef) {
-    return null;
-  }
-
-  return <SCIMSettingsPage queryRef={queryRef} />;
-}
-
-export default function SCIMSettingsPageLoader() {
   return (
-    <IAMRelayProvider>
-      <SCIMSettingsPageQueryLoader />
-    </IAMRelayProvider>
+    <div className="space-y-6">
+      <PageHeader title={t("authLayout.title")} />
+
+      <Tabs>
+        <TabLink to={`/organizations/${organizationId}/settings/auth/saml-sso`}>
+          <IconLock size={20} />
+          {t("authLayout.tabs.samlSso")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/settings/auth/scim`}>
+          <IconKey size={20} />
+          {t("authLayout.tabs.scim")}
+        </TabLink>
+      </Tabs>
+
+      <Outlet />
+    </div>
   );
 }

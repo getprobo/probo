@@ -30,6 +30,7 @@ import {
   IconArrowDown,
   IconChevronDown,
   Input,
+  PageHeader,
   Spinner,
   Table,
   Tbody,
@@ -51,28 +52,28 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 
-import type { AuditLogSettingsPageExportMutation } from "#/__generated__/iam/AuditLogSettingsPageExportMutation.graphql";
-import type { AuditLogSettingsPageFragment$key } from "#/__generated__/iam/AuditLogSettingsPageFragment.graphql";
-import type { AuditLogSettingsPageQuery } from "#/__generated__/iam/AuditLogSettingsPageQuery.graphql";
-import type { AuditLogSettingsPageRefetchQuery } from "#/__generated__/iam/AuditLogSettingsPageRefetchQuery.graphql";
-import type { AuditLogSettingsPageRowFragment$key } from "#/__generated__/iam/AuditLogSettingsPageRowFragment.graphql";
+import type { AuditLogPageExportMutation } from "#/__generated__/iam/AuditLogPageExportMutation.graphql";
+import type { AuditLogPageFragment$key } from "#/__generated__/iam/AuditLogPageFragment.graphql";
+import type { AuditLogPageQuery } from "#/__generated__/iam/AuditLogPageQuery.graphql";
+import type { AuditLogPageRefetchQuery } from "#/__generated__/iam/AuditLogPageRefetchQuery.graphql";
+import type { AuditLogPageRowFragment$key } from "#/__generated__/iam/AuditLogPageRowFragment.graphql";
 
-export const auditLogSettingsPageQuery = graphql`
-  query AuditLogSettingsPageQuery($organizationId: ID!) {
+export const auditLogPageQuery = graphql`
+  query AuditLogPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
         id
         canExportAuditLog: permission(action: "iam:audit-log:export")
-        ...AuditLogSettingsPageFragment
+        ...AuditLogPageFragment
       }
     }
   }
 `;
 
-const auditLogSettingsPageFragment = graphql`
-  fragment AuditLogSettingsPageFragment on Organization
-  @refetchable(queryName: "AuditLogSettingsPageRefetchQuery")
+const auditLogPageFragment = graphql`
+  fragment AuditLogPageFragment on Organization
+  @refetchable(queryName: "AuditLogPageRefetchQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     after: { type: "CursorKey" }
@@ -81,11 +82,11 @@ const auditLogSettingsPageFragment = graphql`
       first: $first
       after: $after
       orderBy: { field: CREATED_AT, direction: DESC }
-    ) @connection(key: "AuditLogSettingsPage_auditLogEntries") {
+    ) @connection(key: "AuditLogPage_auditLogEntries") {
       edges {
         node {
           id
-          ...AuditLogSettingsPageRowFragment
+          ...AuditLogPageRowFragment
         }
       }
       totalCount
@@ -98,7 +99,7 @@ const auditLogSettingsPageFragment = graphql`
 `;
 
 const auditLogEntryRowFragment = graphql`
-  fragment AuditLogSettingsPageRowFragment on AuditLogEntry {
+  fragment AuditLogPageRowFragment on AuditLogEntry {
     id
     actorId
     actorType
@@ -110,7 +111,7 @@ const auditLogEntryRowFragment = graphql`
 `;
 
 const exportMutation = graphql`
-  mutation AuditLogSettingsPageExportMutation(
+  mutation AuditLogPageExportMutation(
     $input: RequestAuditLogExportInput!
   ) {
     requestAuditLogExport(input: $input) {
@@ -165,7 +166,7 @@ function AuditLogEntryRow({
   entryKey,
   language,
 }: {
-  entryKey: AuditLogSettingsPageRowFragment$key;
+  entryKey: AuditLogPageRowFragment$key;
   language: string;
 }) {
   const entry = useFragment(auditLogEntryRowFragment, entryKey);
@@ -212,7 +213,7 @@ function ExportAuditLogDialog({
   const dialogRef = useDialogRef();
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [commitExport, isExporting] = useMutation<AuditLogSettingsPageExportMutation>(exportMutation);
+  const [commitExport, isExporting] = useMutation<AuditLogPageExportMutation>(exportMutation);
 
   const handleExport = () => {
     if (!fromDate || !toDate) return;
@@ -228,15 +229,15 @@ function ExportAuditLogDialog({
       onCompleted: (_response, errors) => {
         if (errors) {
           toast({
-            title: t("auditLogSettingsPage.export.errors.title"),
-            description: formatError(t("auditLogSettingsPage.export.errors.request"), errors),
+            title: t("auditLogPage.export.errors.title"),
+            description: formatError(t("auditLogPage.export.errors.request"), errors),
             variant: "error",
           });
           return;
         }
         toast({
-          title: t("auditLogSettingsPage.export.messages.successTitle"),
-          description: t("auditLogSettingsPage.export.messages.success"),
+          title: t("auditLogPage.export.messages.successTitle"),
+          description: t("auditLogPage.export.messages.success"),
           variant: "success",
         });
         dialogRef.current?.close();
@@ -245,8 +246,8 @@ function ExportAuditLogDialog({
       },
       onError: (error) => {
         toast({
-          title: t("auditLogSettingsPage.export.errors.title"),
-          description: formatError(t("auditLogSettingsPage.export.errors.request"), error),
+          title: t("auditLogPage.export.errors.title"),
+          description: formatError(t("auditLogPage.export.errors.request"), error),
           variant: "error",
         });
       },
@@ -260,18 +261,18 @@ function ExportAuditLogDialog({
         icon={IconArrowDown}
         onClick={() => dialogRef.current?.open()}
       >
-        {t("auditLogSettingsPage.export.actions.export")}
+        {t("auditLogPage.export.actions.export")}
       </Button>
       <Dialog
         className="max-w-md"
         ref={dialogRef}
-        title={t("auditLogSettingsPage.export.title")}
+        title={t("auditLogPage.export.title")}
       >
         <DialogContent className="space-y-4" padded>
           <p className="text-sm text-txt-secondary">
-            {t("auditLogSettingsPage.export.description")}
+            {t("auditLogPage.export.description")}
           </p>
-          <Field label={t("auditLogSettingsPage.export.fields.from")}>
+          <Field label={t("auditLogPage.export.fields.from")}>
             <Input
               type="date"
               value={fromDate}
@@ -279,7 +280,7 @@ function ExportAuditLogDialog({
               required
             />
           </Field>
-          <Field label={t("auditLogSettingsPage.export.fields.to")}>
+          <Field label={t("auditLogPage.export.fields.to")}>
             <Input
               type="date"
               value={toDate}
@@ -297,10 +298,10 @@ function ExportAuditLogDialog({
               ? (
                   <>
                     <Spinner size={16} />
-                    {t("auditLogSettingsPage.export.actions.exporting")}
+                    {t("auditLogPage.export.actions.exporting")}
                   </>
                 )
-              : t("auditLogSettingsPage.export.actions.export")}
+              : t("auditLogPage.export.actions.export")}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -308,13 +309,13 @@ function ExportAuditLogDialog({
   );
 }
 
-export function AuditLogSettingsPage(props: {
-  queryRef: PreloadedQuery<AuditLogSettingsPageQuery>;
+export function AuditLogPage(props: {
+  queryRef: PreloadedQuery<AuditLogPageQuery>;
 }) {
   const { t, i18n } = useTranslation();
 
-  const { organization } = usePreloadedQuery<AuditLogSettingsPageQuery>(
-    auditLogSettingsPageQuery,
+  const { organization } = usePreloadedQuery<AuditLogPageQuery>(
+    auditLogPageQuery,
     props.queryRef,
   );
   if (organization.__typename === "%other") {
@@ -323,47 +324,44 @@ export function AuditLogSettingsPage(props: {
 
   const { data, loadNext, hasNext, isLoadingNext }
     = usePaginationFragment<
-      AuditLogSettingsPageRefetchQuery,
-      AuditLogSettingsPageFragment$key
-    >(auditLogSettingsPageFragment, organization);
+      AuditLogPageRefetchQuery,
+      AuditLogPageFragment$key
+    >(auditLogPageFragment, organization);
 
   const entries = data?.auditLogEntries?.edges?.map(e => e.node) ?? [];
   const totalCount = data?.auditLogEntries?.totalCount ?? 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-base font-medium">{t("auditLogSettingsPage.title")}</h2>
-          <p className="text-sm text-txt-tertiary">
-            {t("auditLogSettingsPage.description")}
-          </p>
-        </div>
+    <div className="space-y-6">
+      <PageHeader title={t("auditLogPage.title")}>
         {organization.canExportAuditLog && (
           <ExportAuditLogDialog organizationId={organization.id} />
         )}
-      </div>
+      </PageHeader>
+      <p className="text-sm text-txt-tertiary">
+        {t("auditLogPage.description")}
+      </p>
 
       {entries.length === 0
         ? (
             <div className="text-center py-8">
               <p className="text-sm text-txt-tertiary">
-                {t("auditLogSettingsPage.empty")}
+                {t("auditLogPage.empty")}
               </p>
             </div>
           )
         : (
             <div className="space-y-4">
               <p className="text-sm text-txt-tertiary">
-                {t("auditLogSettingsPage.showing", { shown: entries.length, total: totalCount })}
+                {t("auditLogPage.showing", { shown: entries.length, total: totalCount })}
               </p>
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{t("auditLogSettingsPage.columns.date")}</Th>
-                    <Th>{t("auditLogSettingsPage.columns.actor")}</Th>
-                    <Th>{t("auditLogSettingsPage.columns.action")}</Th>
-                    <Th>{t("auditLogSettingsPage.columns.resource")}</Th>
+                    <Th>{t("auditLogPage.columns.date")}</Th>
+                    <Th>{t("auditLogPage.columns.actor")}</Th>
+                    <Th>{t("auditLogPage.columns.action")}</Th>
+                    <Th>{t("auditLogPage.columns.resource")}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -380,7 +378,7 @@ export function AuditLogSettingsPage(props: {
                   disabled={isLoadingNext}
                   icon={isLoadingNext ? Spinner : IconChevronDown}
                 >
-                  {t("auditLogSettingsPage.actions.showMore")}
+                  {t("auditLogPage.actions.showMore")}
                 </Button>
               )}
             </div>

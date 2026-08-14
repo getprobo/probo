@@ -19,9 +19,6 @@
 // SOFTWARE.
 
 import {
-  IconKey,
-  IconListStack,
-  IconLock,
   IconSend,
   IconSettingsGear2,
   PageHeader,
@@ -82,14 +79,6 @@ export function SettingsLayout({ queryRef }: SettingsLayoutProps) {
           <IconSettingsGear2 size={20} />
           {t("settingsLayout.tabs.general")}
         </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/saml-sso`}>
-          <IconLock size={20} />
-          {t("settingsLayout.tabs.samlSso")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/scim`}>
-          <IconKey size={20} />
-          {t("settingsLayout.tabs.scim")}
-        </TabLink>
         <TabLink to={`/organizations/${organizationId}/settings/webhooks`}>
           <IconSend size={20} />
           {t("settingsLayout.tabs.webhooks")}
@@ -100,10 +89,6 @@ export function SettingsLayout({ queryRef }: SettingsLayoutProps) {
             {t("settingsLayout.tabs.slackBot")}
           </TabLink>
         )}
-        <TabLink to={`/organizations/${organizationId}/settings/audit-log`}>
-          <IconListStack size={20} />
-          {t("settingsLayout.tabs.auditLog")}
-        </TabLink>
       </Tabs>
 
       <Outlet />

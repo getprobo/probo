@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,16 +21,16 @@
 import { useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { SAMLSettingsPageQuery } from "#/__generated__/iam/SAMLSettingsPageQuery.graphql";
+import type { SCIMPageQuery } from "#/__generated__/iam/SCIMPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { SAMLSettingsPage, samlSettingsPageQuery } from "./SAMLSettingsPage";
+import { SCIMPage, scimPageQuery } from "./SCIMPage";
 
-function SAMLSettingsPageQueryLoader() {
+function SCIMPageQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<SAMLSettingsPageQuery>(
-    samlSettingsPageQuery,
+  const [queryRef, loadQuery] = useQueryLoader<SCIMPageQuery>(
+    scimPageQuery,
   );
 
   useEffect(() => {
@@ -43,13 +43,13 @@ function SAMLSettingsPageQueryLoader() {
     return null;
   }
 
-  return <SAMLSettingsPage queryRef={queryRef} />;
+  return <SCIMPage queryRef={queryRef} />;
 }
 
-export default function SAMLSettingsPageLoader() {
+export default function SCIMPageLoader() {
   return (
     <IAMRelayProvider>
-      <SAMLSettingsPageQueryLoader />
+      <SCIMPageQueryLoader />
     </IAMRelayProvider>
   );
 }

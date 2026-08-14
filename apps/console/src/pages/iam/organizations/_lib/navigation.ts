@@ -68,6 +68,7 @@ export type NavPermission
     | "canListAccessReviewSources"
     | "canGetCompliancePortal"
     | "canListCookieBanners"
+    | "canListAuditLogEntries"
     | "canUpdateOrganization";
 
 /**
@@ -205,7 +206,16 @@ export const NAV_GROUPS: NavGroup[] = [
       // the first tab rather than repeating every tab as a panel entry.
       { path: "general", labelKey: "nav.organization", permission: "canUpdateOrganization" },
       { path: "context", labelKey: "nav.context", permission: "canGetContext" },
-      { path: "people", labelKey: "nav.people", permission: "canListMembers" },
+      {
+        kind: "section",
+        key: "iam",
+        labelKey: "nav.iam",
+        items: [
+          { path: "people", labelKey: "nav.users", permission: "canListMembers" },
+          { path: "auth", labelKey: "nav.authProvisioning", permission: "canUpdateOrganization" },
+          { path: "audit-log", labelKey: "nav.auditLog", permission: "canListAuditLogEntries" },
+        ],
+      },
       {
         kind: "section",
         key: "registries",

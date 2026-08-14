@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,18 +21,16 @@
 import { useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
-import type { AuditLogSettingsPageQuery } from "#/__generated__/iam/AuditLogSettingsPageQuery.graphql";
+import type { SAMLSSOPageQuery } from "#/__generated__/iam/SAMLSSOPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import {
-  AuditLogSettingsPage,
-  auditLogSettingsPageQuery,
-} from "#/pages/iam/organizations/settings/AuditLogSettingsPage";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-function AuditLogSettingsPageQueryLoader() {
+import { SAMLSSOPage, samlSSOPageQuery } from "./SAMLSSOPage";
+
+function SAMLSSOPageQueryLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<AuditLogSettingsPageQuery>(
-    auditLogSettingsPageQuery,
+  const [queryRef, loadQuery] = useQueryLoader<SAMLSSOPageQuery>(
+    samlSSOPageQuery,
   );
 
   useEffect(() => {
@@ -45,13 +43,13 @@ function AuditLogSettingsPageQueryLoader() {
     return null;
   }
 
-  return <AuditLogSettingsPage queryRef={queryRef} />;
+  return <SAMLSSOPage queryRef={queryRef} />;
 }
 
-export default function AuditLogSettingsPageLoader() {
+export default function SAMLSSOPageLoader() {
   return (
     <IAMRelayProvider>
-      <AuditLogSettingsPageQueryLoader />
+      <SAMLSSOPageQueryLoader />
     </IAMRelayProvider>
   );
 }
