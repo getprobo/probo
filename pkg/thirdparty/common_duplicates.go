@@ -21,6 +21,7 @@
 package thirdparty
 
 import (
+	"math"
 	"regexp"
 	"sort"
 	"strings"
@@ -149,7 +150,9 @@ func normalizeCatalogName(name string) string {
 //
 // Pure function: deterministic on its inputs, no I/O.
 func FindDuplicates(entries []*CatalogEntry, minScore float64) []DuplicateCluster {
-	if minScore <= 0 {
+	// NaN fails every comparison, so `score < minScore` would be false for
+	// zero-score pairs and report them as duplicates. Treated as unset.
+	if math.IsNaN(minScore) || minScore <= 0 {
 		minScore = DefaultDuplicateMinScore
 	}
 
@@ -226,20 +229,26 @@ func scorePairs(items []normalized, minScore float64) []DuplicatePair {
 
 	buckets := make(map[string][]int)
 
-	addBucket := func(key string, idx int) {
-		if key == "" {
+	// value is the part that may be empty; key carries a prefix so the three
+	// bucket kinds cannot collide. Guarding on value matters: an empty
+	// normalized name or slug is shared by every such row, so bucketing them
+	// together would compare them all pairwise and find nothing.
+	addBucket := func(kind, value string, idx int) {
+		if value == "" {
 			return
 		}
+
+		key := kind + ":" + value
 
 		buckets[key] = append(buckets[key], idx)
 	}
 
 	for i, it := range items {
-		addBucket("name:"+it.normName, i)
-		addBucket("slug:"+it.normSlug, i)
+		addBucket("name", it.normName, i)
+		addBucket("slug", it.normSlug, i)
 
 		for d := range it.domains {
-			addBucket("domain:"+d, i)
+			addBucket("domain", d, i)
 		}
 	}
 

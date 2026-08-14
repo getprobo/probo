@@ -183,7 +183,9 @@ func newCmdMerge(f *cmdutil.Factory) *cobra.Command {
 			}
 		}
 
-		if flagReenrichWinner {
+		// Only when something actually merged: re-arming after a total failure
+		// would queue expensive agent work for a winner that absorbed nothing.
+		if flagReenrichWinner && failed < len(losers) {
 			var requeued int64
 
 			if err := pgClient.WithTx(

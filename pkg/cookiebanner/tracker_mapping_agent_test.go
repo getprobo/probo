@@ -467,7 +467,7 @@ func TestRejectVendorAttribution(t *testing.T) {
 
 				got := rejectVendorAttribution(
 					confident(tt.mutate),
-					attributionContext{Pattern: "_x", SiteOrigin: tt.siteOrigin},
+					attributionContext{SiteOrigin: tt.siteOrigin},
 				)
 
 				assert.Equal(t, tt.expected, got)
@@ -545,7 +545,7 @@ func TestRejectVendorAttribution_TerminalVerdictOutranksVendor(t *testing.T) {
 		assert.Equal(
 			t,
 			attributionAccepted,
-			rejectVendorAttribution(defensible, attributionContext{Pattern: "_x"}),
+			rejectVendorAttribution(defensible, attributionContext{}),
 		)
 	})
 
@@ -562,7 +562,7 @@ func TestRejectVendorAttribution_TerminalVerdictOutranksVendor(t *testing.T) {
 			assert.Equal(
 				t,
 				attributionRejectedTerminalVerdict,
-				rejectVendorAttribution(r, attributionContext{Pattern: "_x"}),
+				rejectVendorAttribution(r, attributionContext{}),
 				"a terminal verdict must stop the vendor being recorded",
 			)
 		})

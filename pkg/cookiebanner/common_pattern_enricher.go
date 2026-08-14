@@ -445,7 +445,7 @@ func interpretEnrichmentAttribution(
 ) (*agentIdentification, attributionRejection) {
 	out.ThirdPartyName = strings.TrimSpace(out.ThirdPartyName)
 
-	rejection := rejectVendorAttribution(out, attributionContext{Pattern: pattern})
+	rejection := rejectVendorAttribution(out, attributionContext{})
 	if rejection == attributionAccepted {
 		return &agentIdentification{result: out}, attributionAccepted
 	}

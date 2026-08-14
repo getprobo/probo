@@ -856,7 +856,7 @@ func (h *trackerMappingHandler) vendorAttributionRejected(
 	identification TrackerMappingAgentResult,
 	siteOrigin string,
 ) bool {
-	actx := attributionContext{Pattern: tp.Pattern}
+	var actx attributionContext
 	if siteOrigin != "" {
 		actx.SiteOrigin = &siteOrigin
 	}

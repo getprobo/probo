@@ -22,6 +22,7 @@ package thirdparty
 
 import (
 	"encoding/json"
+	"math"
 	"testing"
 	"time"
 
@@ -436,8 +437,29 @@ func TestFindDuplicates_EmptyAndNilInputs(t *testing.T) {
 func TestFindDuplicates_BlankNamesDoNotCluster(t *testing.T) {
 	t.Parallel()
 
-	a := catalogEntry("!!!")
-	b := catalogEntry("???")
+	// Several rows whose names normalize to nothing. They must not bucket
+	// together: a shared empty key would compare them all pairwise and, worse,
+	// report them as duplicates of each other.
+	entries := []*CatalogEntry{
+		catalogEntry("!!!"),
+		catalogEntry("???"),
+		catalogEntry("---"),
+		catalogEntry("***"),
+	}
 
-	assert.Empty(t, FindDuplicates([]*CatalogEntry{a, b}, 0))
+	assert.Empty(t, FindDuplicates(entries, 0))
+}
+
+// TestFindDuplicates_RejectsNaNThreshold pins that a NaN threshold falls back
+// to the default. Every comparison against NaN is false, so `score < minScore`
+// would admit zero-score pairs and report unrelated vendors as duplicates.
+func TestFindDuplicates_RejectsNaNThreshold(t *testing.T) {
+	t.Parallel()
+
+	unrelated := []*CatalogEntry{
+		catalogEntry("Hotjar", "hotjar.com"),
+		catalogEntry("Mixpanel", "mixpanel.com"),
+	}
+
+	assert.Empty(t, FindDuplicates(unrelated, math.NaN()))
 }

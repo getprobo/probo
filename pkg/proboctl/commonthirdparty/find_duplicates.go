@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -96,8 +97,21 @@ func newCmdFindDuplicates(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
-		if flagMinScore < 0 || flagMinScore > 1 {
-			return fmt.Errorf("invalid --min-score value %v: must be between 0 and 1", flagMinScore)
+		// Bounded to the range the scoring actually uses. Below the floor
+		// nothing scores lower, so a smaller value only misleads; and NaN
+		// would pass every comparison in the threshold check, turning
+		// zero-score pairs into clusters.
+		if math.IsNaN(flagMinScore) || math.IsInf(flagMinScore, 0) {
+			return fmt.Errorf("invalid --min-score value %v: must be a finite number", flagMinScore)
+		}
+
+		if flagMinScore < thirdparty.DuplicateScoreBrandPrefix || flagMinScore > thirdparty.DuplicateScoreExactName {
+			return fmt.Errorf(
+				"invalid --min-score value %v: must be between %.2f and %.2f",
+				flagMinScore,
+				thirdparty.DuplicateScoreBrandPrefix,
+				thirdparty.DuplicateScoreExactName,
+			)
 		}
 
 		filter := coredata.NewCommonThirdPartyFilter(nil)

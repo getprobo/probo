@@ -185,19 +185,33 @@ func PreviewMergeCatalog(
 
 	result.TrackerPatternsRequeued = result.TrackerPatternsRepointed
 
-	// The relink runs after the catalog patterns move, so predicting it means
-	// counting what will resolve to the winner once they have: the loser's
-	// patterns plus the winner's own, per organization managing the winner.
+	// The relink runs after the catalog patterns and the organization third
+	// parties have moved, so predicting it means counting what will resolve to
+	// the winner once they have: the loser's patterns plus the winner's own,
+	// per organization that will manage the winner by then.
+	//
+	// That set spans both catalog ids. An organization linking only the loser
+	// is relinked too, because the merge repoints its third party onto the
+	// winner first — counting only the winner's organizations under-reported
+	// those to zero.
 	var parties coredata.ThirdParties
 
-	links, err := parties.LoadOrganizationLinksByCommonThirdPartyID(ctx, conn, coredata.NewNoScope(), winnerID)
-	if err != nil {
-		return result, err
+	organizations := map[gid.GID]struct{}{}
+
+	for _, catalogID := range []gid.GID{winnerID, loserID} {
+		links, err := parties.LoadOrganizationLinksByCommonThirdPartyID(ctx, conn, coredata.NewNoScope(), catalogID)
+		if err != nil {
+			return result, err
+		}
+
+		for _, link := range links {
+			organizations[link.OrganizationID] = struct{}{}
+		}
 	}
 
-	for _, link := range links {
+	for organizationID := range organizations {
 		for _, catalogID := range []gid.GID{winnerID, loserID} {
-			count, err := coredata.CountUnlinkedOrgPatterns(ctx, conn, link.OrganizationID, catalogID)
+			count, err := coredata.CountUnlinkedOrgPatterns(ctx, conn, organizationID, catalogID)
 			if err != nil {
 				return result, err
 			}

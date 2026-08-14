@@ -81,6 +81,12 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 			return fmt.Errorf("invalid --older-than value %s: must not be negative", flagOlderThan)
 		}
 
+		// A negative limit would fall through the cap below and delete every
+		// candidate, the opposite of what a maximum means.
+		if flagLimit < 0 {
+			return fmt.Errorf("invalid --limit value %d: must not be negative (0 means no limit)", flagLimit)
+		}
+
 		pgClient, err := f.PgClient()
 		if err != nil {
 			return err

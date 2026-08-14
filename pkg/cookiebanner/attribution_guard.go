@@ -25,9 +25,6 @@ import "strings"
 // attributionContext is the per-call context the guards need beyond the
 // agent result.
 type attributionContext struct {
-	// Pattern is the artifact under judgement, for log context only.
-	Pattern string
-
 	// SiteOrigin is the scanned site's origin, or nil when the artifact
 	// belongs to no site — a catalog pattern — which makes the scanned-site
 	// backstop inapplicable rather than comparing against an empty string.

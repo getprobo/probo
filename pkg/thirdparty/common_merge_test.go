@@ -406,9 +406,14 @@ func seedOrgThirdParty(
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	organizationID := seedMergeTestOrganization(t, ctx, client)
+	// Only mint an organization when the caller did not supply one, so reusing
+	// an organization does not leave a throwaway org and tenant behind.
+	var organizationID gid.GID
+
 	if orgID != nil {
 		organizationID = *orgID
+	} else {
+		organizationID = seedMergeTestOrganization(t, ctx, client)
 	}
 
 	tenantID := organizationID.TenantID()
@@ -748,6 +753,8 @@ func TestMergeCatalog_AdoptsLoserLogoOnlyWhenWinnerHasNone(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("adopts when the winner has none", func(t *testing.T) {
+		t.Parallel()
+
 		winner := seedCatalogParty(t, ctx, client)
 		loser := seedCatalogParty(t, ctx, client)
 
@@ -761,6 +768,8 @@ func TestMergeCatalog_AdoptsLoserLogoOnlyWhenWinnerHasNone(t *testing.T) {
 	})
 
 	t.Run("keeps the winner's own logo", func(t *testing.T) {
+		t.Parallel()
+
 		winner := seedCatalogParty(t, ctx, client)
 		loser := seedCatalogParty(t, ctx, client)
 
@@ -955,7 +964,7 @@ func TestPreviewMergeCatalog_MatchesApply(t *testing.T) {
 
 	orgID, _ := seedOrgThirdParty(t, ctx, client, nil, winner.ID)
 	seedOrgThirdParty(t, ctx, client, &orgID, loser.ID)
-	seedOrgThirdParty(t, ctx, client, nil, loser.ID)
+	loserOnlyOrgID, _ := seedOrgThirdParty(t, ctx, client, nil, loser.ID)
 
 	// Unlinked organization patterns on both sides of the merge, so the
 	// preview's projection of the relink is actually exercised: one resolving
@@ -963,6 +972,11 @@ func TestPreviewMergeCatalog_MatchesApply(t *testing.T) {
 	// through the winner.
 	seedOrgTrackerPattern(t, ctx, client, orgID, loserPattern.ID)
 	seedOrgTrackerPattern(t, ctx, client, orgID, winnerPattern.ID)
+
+	// And one in an organization that links only the loser. The merge repoints
+	// its third party onto the winner and then relinks this pattern, so a
+	// preview that only looked at the winner's organizations reported zero.
+	seedOrgTrackerPattern(t, ctx, client, loserOnlyOrgID, loserPattern.ID)
 
 	loserLogo := seedFile(t, ctx, client)
 	setCommonThirdPartyLogo(t, ctx, client, loser.ID, loserLogo)

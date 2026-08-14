@@ -29,12 +29,16 @@ import (
 	"github.com/spf13/cobra"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 	"go.probo.inc/probo/pkg/slug"
 )
 
 func newCmdRename(f *cmdutil.Factory) *cobra.Command {
-	var flagName string
+	var (
+		flagName     string
+		flagReenrich bool
+	)
 
 	cmd := &cobra.Command{
 		Use:   "rename <slug-or-gid> --name <new name>",
@@ -49,6 +53,7 @@ func newCmdRename(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "The new display name")
+	cmd.Flags().BoolVar(&flagReenrich, "reenrich", false, "Re-arm enrichment so the profile is re-resolved from the new name")
 
 	_ = cmd.MarkFlagRequired("name")
 
@@ -84,6 +89,34 @@ func newCmdRename(f *cmdutil.Factory) *cobra.Command {
 		out := f.IOStreams.Out
 
 		_, _ = fmt.Fprintf(out, "Renamed %q to %q (slug %s unchanged).\n", party.Name, name, party.Slug)
+
+		// The enrichment worker resolved this row's profile from its old name,
+		// so a correction leaves URLs, address and logo describing the wrong
+		// company until the row is re-enriched.
+		if flagReenrich {
+			var requeued int64
+
+			if err := pgClient.WithTx(
+				ctx,
+				func(ctx context.Context, tx pg.Tx) error {
+					var parties coredata.CommonThirdParties
+
+					var err error
+					requeued, err = parties.RequestEnrichmentByIDs(ctx, tx, []gid.GID{party.ID})
+
+					return err
+				},
+			); err != nil {
+				return fmt.Errorf("cannot enqueue enrichment: %w", err)
+			}
+
+			_, _ = fmt.Fprintf(out, "Queued %d common third party(ies) for the enrichment worker.\n", requeued)
+		} else if len(party.Enrichment) > 0 {
+			_, _ = fmt.Fprintf(
+				f.IOStreams.ErrOut,
+				"note: this row was enriched under its old name, so its profile may describe the wrong company; pass --reenrich to re-resolve it.\n",
+			)
+		}
 
 		if expected := slug.Make(name); expected != party.Slug {
 			_, _ = fmt.Fprintf(
