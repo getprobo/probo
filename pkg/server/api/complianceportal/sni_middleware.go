@@ -115,7 +115,8 @@ func NewDomainMiddleware(
 					return
 				}
 
-				if canonicalHost != "" && canonicalHost != host {
+				canonicalHost, ok := normalizeCompliancePortalHost(canonicalHost)
+				if canonicalHost != "" && ok && canonicalHost != host {
 					target := &url.URL{
 						Scheme:   "https",
 						Host:     canonicalHost,

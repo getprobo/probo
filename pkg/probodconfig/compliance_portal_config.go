@@ -33,6 +33,8 @@ func ParseCompliancePortalTLSMode(value string) (CompliancePortalTLSMode, error)
 	mode := CompliancePortalTLSMode(value)
 
 	switch mode {
+	case "":
+		return CompliancePortalTLSModeDirect, nil
 	case CompliancePortalTLSModeDirect, CompliancePortalTLSModeExternal:
 		return mode, nil
 	default:
