@@ -39,6 +39,7 @@ const fragment = graphql`
     canConfigureSlack: permission(action: "core:connector:initiate")
     slackbotNotificationChannel {
       channelId
+      channelName
     }
     organization {
       id
@@ -160,9 +161,20 @@ export function CompliancePortalSlackSection({
 
   const isInstalled = compliancePortal.organization.slackbotInstallation?.active;
   const firstPage = compliancePortal.organization.slackbotChannels;
-  const channels = extraChannels.length > 0
+  const listedChannels = extraChannels.length > 0
     ? [...firstPage.channels, ...extraChannels]
     : firstPage.channels;
+  const configuredChannel = compliancePortal.slackbotNotificationChannel;
+  const channels = configuredChannel
+    && !listedChannels.some(channel => channel.id === configuredChannel.channelId)
+    ? [
+        {
+          id: configuredChannel.channelId,
+          name: configuredChannel.channelName,
+        },
+        ...listedChannels,
+      ]
+    : listedChannels;
   const hasChannels = channels.length > 0;
   const loadMoreCursor = extraChannels.length > 0
     ? nextCursor
@@ -287,6 +299,14 @@ export function CompliancePortalSlackSection({
                         {isLoadingMore
                           ? t("slackSection.actions.loadingMore")
                           : t("slackSection.actions.loadMore")}
+                      </Button>
+                    )}
+                    {listedChannels.length === 0 && (
+                      <Button
+                        variant="secondary"
+                        onClick={refreshChannels}
+                      >
+                        {t("slackSection.actions.refresh")}
                       </Button>
                     )}
                   </>

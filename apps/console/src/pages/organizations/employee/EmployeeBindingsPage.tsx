@@ -74,7 +74,7 @@ export function EmployeeBindingsPage({ queryRef }: EmployeeBindingsPageProps) {
     EmployeeBindingsPage_viewer$key
   >(employeeBindingsPageViewerFragment, data.viewer);
 
-  const binding = viewerData.probotIdentityBindings[0];
+  const bindings = viewerData.probotIdentityBindings;
 
   const handleBindingDeleted = () => {
     startTransition(() => {
@@ -82,7 +82,7 @@ export function EmployeeBindingsPage({ queryRef }: EmployeeBindingsPageProps) {
     });
   };
 
-  if (!binding) {
+  if (bindings.length === 0) {
     return (
       <Card padded>
         <div className="flex items-center gap-3">
@@ -103,9 +103,14 @@ export function EmployeeBindingsPage({ queryRef }: EmployeeBindingsPageProps) {
   }
 
   return (
-    <EmployeeBindingListItem
-      bindingKey={binding}
-      onDeleted={handleBindingDeleted}
-    />
+    <div className="space-y-3">
+      {bindings.map(binding => (
+        <EmployeeBindingListItem
+          key={binding.id}
+          bindingKey={binding}
+          onDeleted={handleBindingDeleted}
+        />
+      ))}
+    </div>
   );
 }
