@@ -491,28 +491,10 @@ jobs:
           retention-days: 30
 
   test-e2e:
-    name: "${{ matrix.name }}"
+    name: "test-e2e"
     if: needs.changes.outputs.e2e == 'true'
     needs: [changes, build]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: "test-e2e"
-            build_target: "bin/probod"
-            run_target: "test-e2e-run"
-            binary: "bin/probod"
-            junit_file: "junit-e2e.xml"
-            artifact_name: "junit-e2e-results"
-            coverage: false
-          - name: "test-e2e-coverage"
-            build_target: "bin/probod-coverage"
-            run_target: "test-e2e-coverage-run"
-            binary: "bin/probod-coverage"
-            junit_file: "junit-e2e-coverage.xml"
-            artifact_name: "junit-e2e-coverage-results"
-            coverage: true
     permissions:
       contents: "read"
     steps:
@@ -524,12 +506,10 @@ jobs:
         with:
           node: "false"
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
-        if: "${{ !matrix.coverage }}"
         with:
           name: "probod-ci"
           path: "bin"
       - name: "Prepare probod"
-        if: "${{ !matrix.coverage }}"
         run: "chmod +x bin/probod"
       - name: "Configure Docker image source"
         # Pull requests from forks don't get repository secrets, so
@@ -573,9 +553,6 @@ jobs:
           docker compose pull
           mkdir -p /tmp/docker-images
           docker save $(docker compose config --images) -o /tmp/docker-images/images.tar
-      - name: "Build probod"
-        if: "${{ matrix.coverage }}"
-        run: "make ${{ matrix.build_target }}"
       - name: "Start stack"
         run: "make stack-up"
       - run: "make stack-ps"
@@ -583,40 +560,19 @@ jobs:
         env:
           PROBO_E2E_ARTIFACT_DIR: "${{ github.workspace }}/e2e-artifacts"
           GOTESTSUM_FORMAT: "testname"
-          GOTESTSUM_JUNITFILE: "${{ matrix.junit_file }}"
+          GOTESTSUM_JUNITFILE: "junit-e2e.xml"
         run: |
           PROBOD_ACME_ROOT_CA="$(cat compose/step-ca/certs/root_ca.crt)" \
-            make "${{ matrix.run_target }}" \
-              E2E_BINARY="${{ github.workspace }}/${{ matrix.binary }}" \
+            make test-e2e-run \
+              E2E_BINARY="${{ github.workspace }}/bin/probod" \
               E2E_TEST_FLAGS="-parallel=8"
-      - name: "Report e2e coverage"
-        if: "${{ always() && matrix.coverage }}"
-        run: |
-          if [ -f coverage-e2e.txt ]; then
-            full_coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e.txt)"
-            core_coverage="$(awk '$1 == "total:" { print $3 }' coverage-e2e-core.txt)"
-            {
-              echo "### E2E coverage"
-              echo "- Full probod: ${full_coverage}"
-              echo "- Core product: ${core_coverage}"
-            } >> "${GITHUB_STEP_SUMMARY}"
-          else
-            echo "### E2E application coverage unavailable" >> "${GITHUB_STEP_SUMMARY}"
-          fi
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: "always()"
         continue-on-error: true
         with:
-          name: "${{ matrix.artifact_name }}"
+          name: "junit-e2e-results"
           path: |
-            ${{ matrix.junit_file }}
+            junit-e2e.xml
             e2e-artifacts
-            coverage-e2e.out
-            coverage-e2e.txt
-            coverage-e2e.html
-            coverage-e2e-core.out
-            coverage-e2e-core.txt
-            coverage-e2e-core.html
-            coverage-e2e-packages.txt
           retention-days: 30
