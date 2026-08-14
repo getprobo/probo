@@ -21,8 +21,6 @@
 package slack_v1
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
@@ -32,35 +30,37 @@ import (
 func NewMux(
 	logger *log.Logger,
 	slackSvc *slack.Service,
-	inbox slackInteractiveCommandInbox,
-	eventsHandler http.Handler,
+	inbox *slackchannel.InteractiveCommandInbox,
+	slackbot *slackchannel.Service,
 	installations *slackchannel.InstallationService,
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	logger.Info("Registering Slack interactive endpoint")
+	r.Group(
+		func(r chi.Router) {
+			r.Use(
+				newSignatureMiddleware(
+					logger,
+					interactiveSigningSecrets(slackSvc, installations)...,
+				),
+			)
+			r.Post("/interactive", SlackHandler(inbox, logger))
+		},
+	)
 
-	r.Post("/interactive", SlackHandler(
-		inbox,
-		interactiveSigningSecrets(slackSvc, installations),
-		logger,
-	))
-
-	var slashCommander slackSlashCommander
-	if handler, ok := eventsHandler.(*slackchannel.Handler); ok && handler != nil {
-		slashCommander = handler
-	}
-
-	logger.Info("Registering Slack slash command endpoint")
-	r.Post("/commands", SlackCommandHandler(
-		slashCommander,
-		slackbotSigningSecrets(installations),
-		logger,
-	))
-
-	if eventsHandler != nil {
-		logger.Info("Registering Slack events endpoint")
-		r.Post("/events", eventsHandler.ServeHTTP)
+	if slackbot != nil {
+		r.Group(
+			func(r chi.Router) {
+				r.Use(
+					newSignatureMiddleware(
+						logger,
+						slackbotSigningSecret(installations),
+					),
+				)
+				r.Post("/commands", SlackCommandHandler(slackbot))
+				r.Post("/events", SlackEventHandler(slackbot, logger))
+			},
+		)
 	}
 
 	return r
@@ -74,6 +74,7 @@ func interactiveSigningSecrets(
 	if installations != nil {
 		secrets = append(secrets, installations.SigningSecret())
 	}
+
 	if slackSvc != nil {
 		secrets = append(secrets, slackSvc.GetSlackSigningSecret())
 	}
@@ -81,10 +82,10 @@ func interactiveSigningSecrets(
 	return secrets
 }
 
-func slackbotSigningSecrets(installations *slackchannel.InstallationService) []string {
+func slackbotSigningSecret(installations *slackchannel.InstallationService) string {
 	if installations == nil {
-		return nil
+		return ""
 	}
 
-	return []string{installations.SigningSecret()}
+	return installations.SigningSecret()
 }

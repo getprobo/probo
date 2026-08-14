@@ -73,7 +73,7 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 					return err
 				}
 
-				_, err := execution.UpsertConversationalBySourceSession(ctx, tx, scope)
+				_, err := execution.UpsertBySourceSession(ctx, tx, scope)
 
 				return err
 			},

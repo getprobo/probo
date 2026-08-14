@@ -40,7 +40,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 	t.Parallel()
 
 	pgClient, scope, organizationID := executionIngressDatabase(t)
-	handler := &Handler{pg: pgClient}
+	handler := &Service{pg: pgClient}
 	identityID := gid.New(scope.GetTenantID(), coredata.IdentityEntityType)
 	event := EventBody{
 		Type:        EventTypeAppMention,
@@ -171,7 +171,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 		),
 	)
 	assert.Equal(t, 1, executionCount)
-	assert.Equal(t, coredata.AgentExecutionStatusPending, status)
+	assert.Equal(t, coredata.AgentExecutionStatusIdle, status)
 	assert.Equal(t, 1, inputCount)
 	require.NotNil(t, storedIdentity)
 	assert.Equal(t, identityID.String(), *storedIdentity)
@@ -218,7 +218,7 @@ func TestExecutionIngressReusesThreadSessionAndCopiesSubjectContext(t *testing.T
 		),
 	)
 
-	handler := &Handler{pg: pgClient}
+	handler := &Service{pg: pgClient}
 	aliceID := gid.New(scope.GetTenantID(), coredata.IdentityEntityType)
 	bobID := gid.New(scope.GetTenantID(), coredata.IdentityEntityType)
 	transcript := "Thread:\n<@U1>: we should grant it\n<@U2>: @probot grant it"
@@ -359,7 +359,7 @@ func TestExecutionIngressRoutesAnchoredReplyWithoutChangingDomainSession(t *test
 		pgClient.WithTx(
 			t.Context(),
 			func(ctx context.Context, tx pg.Tx) error {
-				if _, err := execution.UpsertConversationalBySourceSession(ctx, tx, scope); err != nil {
+				if _, err := execution.UpsertBySourceSession(ctx, tx, scope); err != nil {
 					return err
 				}
 
@@ -381,7 +381,7 @@ func TestExecutionIngressRoutesAnchoredReplyWithoutChangingDomainSession(t *test
 	)
 
 	domainSessionKey := *execution.SessionKey
-	handler := &Handler{pg: pgClient}
+	handler := &Service{pg: pgClient}
 	require.NoError(
 		t,
 		handler.enqueueExecutionInput(

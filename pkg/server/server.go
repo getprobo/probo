@@ -78,7 +78,7 @@ type Config struct {
 	Slack                   *slack.Service
 	BotDeliveryDestinations api.BotDeliveryDestinations
 	ComplianceMessages      api.ComplianceMessages
-	SlackbotEvents          http.Handler
+	Slackbot                *slackchannel.Service
 	SlackInteractiveInbox   *slackchannel.InteractiveCommandInbox
 	ProbotIdentityBindings  *identitybinding.Service
 	SlackbotInstallations   *slackchannel.InstallationService
@@ -129,7 +129,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Slack:                   cfg.Slack,
 		BotDeliveryDestinations: cfg.BotDeliveryDestinations,
 		ComplianceMessages:      cfg.ComplianceMessages,
-		SlackbotEvents:          cfg.SlackbotEvents,
+		Slackbot:                cfg.Slackbot,
 		SlackInteractiveInbox:   cfg.SlackInteractiveInbox,
 		ProbotIdentityBindings:  cfg.ProbotIdentityBindings,
 		SlackbotInstallations:   cfg.SlackbotInstallations,

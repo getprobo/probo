@@ -224,10 +224,10 @@ func (h *retentionHandler) Run(ctx context.Context) error {
 			name: "agent_executions",
 			err:  "cannot clean agent executions and anchors",
 			run: func(ctx context.Context, tx pg.Tx) (int64, error) {
-				// Conversational executions own their provider anchors.
+				// Agent executions own their provider anchors.
 				// Deleting an idle/dead execution cascades its anchors
 				// and remaining inputs.
-				return coredata.DeleteRetiredConversationalAgentExecutionsBefore(
+				return coredata.DeleteRetiredAgentExecutionsBefore(
 					ctx,
 					tx,
 					deadLetterBefore,

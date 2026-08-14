@@ -56,6 +56,11 @@ type (
 		} `json:"container"`
 	}
 
+	InteractiveResponse struct {
+		Success bool   `json:"success"`
+		Message string `json:"message,omitempty"`
+	}
+
 	InteractiveCommandInbox struct {
 		pg            *pg.Client
 		encryptionKey cipher.EncryptionKey
@@ -72,7 +77,7 @@ func NewInteractiveCommandInbox(
 	}
 }
 
-func DecodeInteractivePayload(raw []byte) (InteractivePayload, error) {
+func decodeInteractivePayload(raw []byte) (InteractivePayload, error) {
 	var payload InteractivePayload
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return InteractivePayload{}, fmt.Errorf("cannot decode Slack interactive payload: %w", err)

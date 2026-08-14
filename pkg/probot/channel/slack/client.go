@@ -185,9 +185,13 @@ func NewClient(botToken string, apiBaseURL string, logger *log.Logger) *Client {
 	client := httpclient.DefaultPooledClient(httpClientOpts...)
 	client.Timeout = slackHTTPTimeout
 
+	return newAPIClient(botToken, apiBaseURL, client)
+}
+
+func newAPIClient(botToken string, apiBaseURL string, httpClient *http.Client) *Client {
 	return &Client{
 		token:      botToken,
-		httpClient: client,
+		httpClient: httpClient,
 		apiBaseURL: apiBaseURL,
 	}
 }

@@ -25,35 +25,18 @@ import (
 	"encoding/json"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 )
-
-type recordingToolQueue struct {
-	keys     []string
-	kinds    []coredata.SlackDeliveryOperationKind
-	payloads []map[string]any
-}
-
-func (q *recordingToolQueue) Queue(
-	_ context.Context,
-	_ gid.GID,
-	operationKey string,
-	kind coredata.SlackDeliveryOperationKind,
-	payload map[string]any,
-) (*coredata.SlackDeliveryOperation, bool, error) {
-	q.keys = append(q.keys, operationKey)
-	q.kinds = append(q.kinds, kind)
-	q.payloads = append(q.payloads, payload)
-
-	return &coredata.SlackDeliveryOperation{}, true, nil
-}
 
 func TestTools_OmitChannelFromLLMParams(t *testing.T) {
 	t.Parallel()
@@ -98,58 +81,57 @@ func TestTools_ExposeGenericSendMessageAndSlackReaction(t *testing.T) {
 func TestTools_SendMessageRequiresToolCallID(t *testing.T) {
 	t.Parallel()
 
-	queue := &recordingToolQueue{}
+	pgClient, organizationID := toolsDatabase(t)
+	queue := slackchannel.NewDeliveryService(pgClient)
 	tool := sendMessageTool(t, queue)
-	ctx := agent.WithRunContext(
-		t.Context(),
-		trustedSlackRunContext(),
-	)
+	rc := trustedSlackRunContext(organizationID)
+	ctx := agent.WithRunContext(t.Context(), rc)
 
 	result, err := tool.Execute(ctx, `{"text":"hello"}`)
 	require.NoError(t, err)
 	assert.True(t, result.IsError)
 	assert.Contains(t, result.Content, "cannot queue message without a stable tool call ID")
-	assert.Empty(t, queue.keys)
+	assert.Empty(t, loadToolOperationKeys(t, pgClient, organizationID))
 }
 
 func TestTools_SendMessageOperationKeyIncludesToolCallID(t *testing.T) {
 	t.Parallel()
 
-	queue := &recordingToolQueue{}
+	pgClient, organizationID := toolsDatabase(t)
+	queue := slackchannel.NewDeliveryService(pgClient)
 	tool := sendMessageTool(t, queue)
-	rc := trustedSlackRunContext()
-	ctx := agent.WithToolCallID(
-		agent.WithRunContext(t.Context(), rc),
-		"call-1",
-	)
+	rc := trustedSlackRunContext(organizationID)
 
-	result, err := tool.Execute(ctx, `{"text":"hello"}`)
+	result, err := tool.Execute(
+		agent.WithToolCallID(agent.WithRunContext(t.Context(), rc), "call-1"),
+		`{"text":"hello"}`,
+	)
 	require.NoError(t, err)
 	assert.False(t, result.IsError)
-	require.Len(t, queue.keys, 1)
-	assert.Equal(t, coredata.SlackDeliveryOperationKindPostMessage, queue.kinds[0])
-	assert.Equal(t, rc.MessageAnchor.ConversationID, queue.payloads[0]["channel"])
 
-	ctx = agent.WithToolCallID(
-		agent.WithRunContext(t.Context(), rc),
-		"call-1",
-	)
-	_, err = tool.Execute(ctx, `{"text":"hello again"}`)
-	require.NoError(t, err)
-	require.Len(t, queue.keys, 2)
-	assert.Equal(t, queue.keys[0], queue.keys[1])
+	keys := loadToolOperationKeys(t, pgClient, organizationID)
+	require.Len(t, keys, 1)
+	assert.Equal(t, rc.MessageAnchor.ConversationID, loadToolPayload(t, pgClient, organizationID, keys[0])["channel"])
 
-	ctx = agent.WithToolCallID(
-		agent.WithRunContext(t.Context(), rc),
-		"call-2",
+	_, err = tool.Execute(
+		agent.WithToolCallID(agent.WithRunContext(t.Context(), rc), "call-1"),
+		`{"text":"hello again"}`,
 	)
-	_, err = tool.Execute(ctx, `{"text":"other call"}`)
 	require.NoError(t, err)
-	require.Len(t, queue.keys, 3)
-	assert.NotEqual(t, queue.keys[0], queue.keys[2])
+	keys = loadToolOperationKeys(t, pgClient, organizationID)
+	require.Len(t, keys, 1)
+
+	_, err = tool.Execute(
+		agent.WithToolCallID(agent.WithRunContext(t.Context(), rc), "call-2"),
+		`{"text":"other call"}`,
+	)
+	require.NoError(t, err)
+	keys = loadToolOperationKeys(t, pgClient, organizationID)
+	require.Len(t, keys, 2)
+	assert.NotEqual(t, keys[0], keys[1])
 }
 
-func sendMessageTool(t *testing.T, queue *recordingToolQueue) agent.Tool {
+func sendMessageTool(t *testing.T, queue *slackchannel.DeliveryService) agent.Tool {
 	t.Helper()
 
 	for _, tool := range slackchannel.Tools(queue) {
@@ -163,15 +145,133 @@ func sendMessageTool(t *testing.T, queue *recordingToolQueue) agent.Tool {
 	return nil
 }
 
-func trustedSlackRunContext() *slackchannel.RunContext {
-	tenantID := gid.NewTenantID()
-
-	return &slackchannel.RunContext{
-		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
+func trustedSlackRunContext(organizationID gid.GID) *probot.RunContext {
+	return &probot.RunContext{
+		OrganizationID: organizationID,
 		MessageAnchor: probot.MessageAnchor{
 			ConversationID: "C123",
 			MessageID:      "111.222",
 		},
 		CurrentMessageID: "111.222",
 	}
+}
+
+func toolsDatabase(t *testing.T) (*pg.Client, gid.GID) {
+	t.Helper()
+
+	pgClient := test.PGClient(t)
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	now := time.Now()
+
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				_, err := conn.Exec(
+					ctx,
+					`INSERT INTO organizations
+					 (id, tenant_id, name, created_at, updated_at)
+					 VALUES ($1, $2, $3, $4, $5)`,
+					organizationID,
+					tenantID,
+					"slack-tools-"+organizationID.String(),
+					now,
+					now,
+				)
+
+				return err
+			},
+		),
+	)
+	t.Cleanup(
+		func() {
+			_ = pgClient.WithConn(
+				context.Background(),
+				func(ctx context.Context, conn pg.Querier) error {
+					_, err := conn.Exec(
+						ctx,
+						`DELETE FROM organizations WHERE id = $1`,
+						organizationID,
+					)
+
+					return err
+				},
+			)
+		},
+	)
+
+	return pgClient, organizationID
+}
+
+func loadToolOperationKeys(
+	t *testing.T,
+	pgClient *pg.Client,
+	organizationID gid.GID,
+) []string {
+	t.Helper()
+
+	var keys []string
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				rows, err := conn.Query(
+					ctx,
+					`SELECT operation_key
+					 FROM slack_delivery_operations
+					 WHERE organization_id = $1
+					 ORDER BY created_at ASC, id ASC`,
+					organizationID,
+				)
+				if err != nil {
+					return err
+				}
+				defer rows.Close()
+
+				for rows.Next() {
+					var key string
+					if err := rows.Scan(&key); err != nil {
+						return err
+					}
+					keys = append(keys, key)
+				}
+
+				return rows.Err()
+			},
+		),
+	)
+
+	return keys
+}
+
+func loadToolPayload(
+	t *testing.T,
+	pgClient *pg.Client,
+	organizationID gid.GID,
+	operationKey string,
+) map[string]any {
+	t.Helper()
+
+	var payload map[string]any
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				return conn.QueryRow(
+					ctx,
+					`SELECT payload
+					 FROM slack_delivery_operations
+					 WHERE organization_id = $1 AND operation_key = $2`,
+					organizationID,
+					operationKey,
+				).Scan(&payload)
+			},
+		),
+	)
+
+	return payload
 }

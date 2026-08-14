@@ -23,7 +23,6 @@ package slack
 import (
 	"context"
 	"errors"
-	"net/url"
 	"strings"
 
 	"go.gearno.de/kit/log"
@@ -48,28 +47,12 @@ type (
 		ResponseURL string
 	}
 
-	bindPromptStore interface {
-		RememberResponseURL(ctx context.Context, teamID, userID, responseURL string) error
-	}
-
 	SlashCommandResponse struct {
 		ResponseType string `json:"response_type"`
 		Text         string `json:"text"`
 		Blocks       []any  `json:"blocks,omitempty"`
 	}
 )
-
-func ParseSlashCommand(form url.Values) SlashCommand {
-	return SlashCommand{
-		Command:     strings.TrimSpace(form.Get("command")),
-		Text:        strings.TrimSpace(form.Get("text")),
-		UserID:      strings.TrimSpace(form.Get("user_id")),
-		UserName:    strings.TrimSpace(form.Get("user_name")),
-		TeamID:      strings.TrimSpace(form.Get("team_id")),
-		TeamDomain:  strings.TrimSpace(form.Get("team_domain")),
-		ResponseURL: strings.TrimSpace(form.Get("response_url")),
-	}
-}
 
 func ephemeralSlashResponse(text string, blocks []any) SlashCommandResponse {
 	return SlashCommandResponse{
@@ -79,7 +62,7 @@ func ephemeralSlashResponse(text string, blocks []any) SlashCommandResponse {
 	}
 }
 
-func (h *Handler) HandleSlashCommand(
+func (h *Service) HandleSlashCommand(
 	ctx context.Context,
 	cmd SlashCommand,
 ) SlashCommandResponse {

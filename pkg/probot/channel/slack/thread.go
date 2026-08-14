@@ -34,6 +34,10 @@ type threadCollector interface {
 	ListThreadReplies(ctx context.Context, channel string, threadTS string) ([]ThreadReply, error)
 }
 
+var (
+	_ threadCollector = (*Client)(nil)
+)
+
 func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
 	filtered := make([]ThreadReply, 0, len(replies))
 	for _, reply := range replies {
@@ -93,9 +97,9 @@ func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
 	return strings.TrimSpace(builder.String())
 }
 
-func (h *Handler) collectThreadTranscript(
+func (h *Service) collectThreadTranscript(
 	ctx context.Context,
-	slackClient slackMessenger,
+	slackClient *Client,
 	event EventBody,
 	botUserID string,
 ) string {
@@ -105,12 +109,11 @@ func (h *Handler) collectThreadTranscript(
 	}
 
 	target := replyTargetFor(event)
-	collector, ok := slackClient.(threadCollector)
-	if !ok || target.channel == "" || target.threadTS == "" {
+	if slackClient == nil || target.channel == "" || target.threadTS == "" {
 		return fallback
 	}
 
-	replies, err := collector.ListThreadReplies(ctx, target.channel, target.threadTS)
+	replies, err := slackClient.ListThreadReplies(ctx, target.channel, target.threadTS)
 	if err != nil && len(replies) == 0 {
 		if isThreadCollectionFallbackError(err) {
 			h.logger.WarnCtx(

@@ -21,8 +21,7 @@
 package slack_v1
 
 import (
-	"bytes"
-	"context"
+	"encoding/json"
 	"io"
 	"mime"
 	"net/http"
@@ -33,20 +32,8 @@ import (
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 )
 
-type (
-	slackInteractiveCommandInbox interface {
-		Enqueue(ctx context.Context, verifiedPayload []byte) (bool, error)
-	}
-
-	SlackInteractiveResponse struct {
-		Success bool   `json:"success"`
-		Message string `json:"message,omitempty"`
-	}
-)
-
 func SlackHandler(
-	inbox slackInteractiveCommandInbox,
-	signingSecrets []string,
+	inbox *slackchannel.InteractiveCommandInbox,
 	logger *log.Logger,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -54,65 +41,85 @@ func SlackHandler(
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "cannot read request body")
-			return
-		}
-
-		timestamp := r.Header.Get("X-Slack-Request-Timestamp")
-
-		signature := r.Header.Get("X-Slack-Signature")
-		if timestamp == "" || signature == "" {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "missing Slack signature headers")
-			return
-		}
-
-		if err := slackchannel.VerifyAnySignature(
-			timestamp,
-			signature,
-			body,
-			signingSecrets...,
-		); err != nil {
-			logger.ErrorCtx(ctx, "invalid Slack signature", log.Error(err))
-			renderSlackInteractiveError(w, http.StatusUnauthorized, "invalid Slack signature")
+			httpserver.RenderJSON(
+				w,
+				http.StatusBadRequest,
+				slackchannel.InteractiveResponse{
+					Success: false,
+					Message: "cannot read request body",
+				},
+			)
 
 			return
 		}
 
 		mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 		if err != nil || mediaType != "application/x-www-form-urlencoded" {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "unsupported content type")
+			httpserver.RenderJSON(
+				w,
+				http.StatusBadRequest,
+				slackchannel.InteractiveResponse{
+					Success: false,
+					Message: "unsupported content type",
+				},
+			)
+
 			return
 		}
 
 		form, err := url.ParseQuery(string(body))
 		if err != nil {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "cannot parse form")
+			httpserver.RenderJSON(
+				w,
+				http.StatusBadRequest,
+				slackchannel.InteractiveResponse{
+					Success: false,
+					Message: "cannot parse form",
+				},
+			)
+
 			return
 		}
 
 		rawPayload := []byte(form.Get("payload"))
-		if len(bytes.TrimSpace(rawPayload)) == 0 {
-			renderSlackInteractiveError(w, http.StatusBadRequest, "empty payload field")
+		var payload slackchannel.InteractivePayload
+		if err := json.Unmarshal(rawPayload, &payload); err != nil {
+			httpserver.RenderJSON(
+				w,
+				http.StatusBadRequest,
+				slackchannel.InteractiveResponse{
+					Success: false,
+					Message: "cannot parse Slack payload",
+				},
+			)
+
 			return
 		}
 
-		if _, err := slackchannel.DecodeInteractivePayload(rawPayload); err != nil {
-			logger.ErrorCtx(ctx, "cannot validate Slack interactive payload", log.Error(err))
-			renderSlackInteractiveError(w, http.StatusBadRequest, "cannot parse Slack payload")
-
-			return
-		}
-
-		if inbox == nil {
-			logger.ErrorCtx(ctx, "Slack interactive command inbox is unavailable")
-			renderSlackInteractiveError(w, http.StatusServiceUnavailable, "interactive commands unavailable")
+		if payload.Team.ID == "" || payload.User.ID == "" {
+			httpserver.RenderJSON(
+				w,
+				http.StatusBadRequest,
+				slackchannel.InteractiveResponse{
+					Success: false,
+					Message: "cannot parse Slack payload",
+				},
+			)
 
 			return
 		}
 
 		if _, err := inbox.Enqueue(ctx, rawPayload); err != nil {
 			logger.ErrorCtx(ctx, "cannot persist Slack interactive command", log.Error(err))
-			renderSlackInteractiveError(w, http.StatusServiceUnavailable, "cannot accept interactive command")
+
+			httpserver.RenderJSON(
+				w,
+				http.StatusServiceUnavailable,
+				slackchannel.InteractiveResponse{
+					Success: false,
+					Message: "cannot accept interactive command",
+				},
+			)
 
 			return
 		}
@@ -120,18 +127,7 @@ func SlackHandler(
 		httpserver.RenderJSON(
 			w,
 			http.StatusOK,
-			SlackInteractiveResponse{Success: true},
+			slackchannel.InteractiveResponse{Success: true},
 		)
 	}
-}
-
-func renderSlackInteractiveError(w http.ResponseWriter, status int, message string) {
-	httpserver.RenderJSON(
-		w,
-		status,
-		SlackInteractiveResponse{
-			Success: false,
-			Message: message,
-		},
-	)
 }

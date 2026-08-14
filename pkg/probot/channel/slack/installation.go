@@ -211,10 +211,10 @@ func (s *InstallationService) ClientByOrganizationID(
 		return nil, nil, fmt.Errorf("cannot load usable Slack credentials: %w", err)
 	}
 
-	return NewClient(
+	return newAPIClient(
 		credentials.AccessToken,
 		s.cfg.APIBaseURL,
-		s.logger,
+		s.httpClient,
 	), installation, nil
 }
 

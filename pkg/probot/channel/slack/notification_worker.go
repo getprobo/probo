@@ -32,7 +32,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -47,21 +46,13 @@ type (
 		) error
 	}
 
-	notificationClientProvider interface {
-		ClientByOrganizationID(
-			ctx context.Context,
-			scope coredata.Scoper,
-			organizationID gid.GID,
-		) (*Client, *coredata.SlackbotInstallation, error)
-	}
-
 	permanentDeliveryError struct {
 		err error
 	}
 
 	notificationHandler struct {
 		pg            *pg.Client
-		installations notificationClientProvider
+		installations *InstallationService
 		successHook   DeliverySuccessHook
 		logger        *log.Logger
 		staleAfter    time.Duration

@@ -35,7 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 )
 
-func (impl *Implm) buildSlackbotHandler(
+func (impl *Implm) buildSlackbot(
 	pgClient *pg.Client,
 	bindings identitybinding.Gate,
 	installations *slackchannel.InstallationService,
@@ -43,7 +43,7 @@ func (impl *Implm) buildSlackbotHandler(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) (*slackchannel.Handler, *agent.Agent, error) {
+) (*slackchannel.Service, *agent.Agent, error) {
 	if !impl.cfg.Slackbot.Enabled {
 		return nil, nil, nil
 	}
@@ -70,16 +70,15 @@ func (impl *Implm) buildSlackbotHandler(
 		agent.WithModel(agentCfg.ModelName),
 	)
 
-	handler := slackchannel.NewHandler(
-		signingSecret,
+	slackbot := slackchannel.NewService(
 		bindings,
 		installations,
 		pgClient,
 		l.Named("slackbot"),
 	)
-	handler.SetBindPrompts(bindPrompts)
+	slackbot.SetBindPrompts(bindPrompts)
 
-	return handler, rootAgent, nil
+	return slackbot, rootAgent, nil
 }
 
 func (impl *Implm) buildSlackbotInstallationService(

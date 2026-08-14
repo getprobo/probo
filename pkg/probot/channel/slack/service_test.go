@@ -21,15 +21,13 @@
 package slack
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/http/httptest"
 	"strconv"
 	"sync"
 	"testing"
@@ -61,67 +59,24 @@ func testLogger(t *testing.T) *log.Logger {
 	return log.NewLogger()
 }
 
-func TestHandler_URLVerification(t *testing.T) {
-	t.Parallel()
-
-	secret := "test-signing-secret"
-	body := []byte(`{"type":"url_verification","challenge":"challenge-token"}`)
-	ts, sig := signRequest(secret, body, time.Now().Unix())
-
-	handler := NewHandler(secret, nil, nil, nil, testLogger(t))
-
-	req := httptest.NewRequest(http.MethodPost, "/events", io.NopCloser(bytes.NewReader(body)))
-	req.Header.Set("X-Slack-Request-Timestamp", ts)
-	req.Header.Set("X-Slack-Signature", sig)
-
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Contains(t, rec.Body.String(), "challenge-token")
-}
-
-func TestHandler_InvalidSignature(t *testing.T) {
-	t.Parallel()
-
-	body := []byte(`{"type":"event_callback","event_id":"E1","event":{"type":"app_mention","text":"hi"}}`)
-	handler := NewHandler("secret", nil, nil, nil, testLogger(t))
-
-	req := httptest.NewRequest(http.MethodPost, "/events", io.NopCloser(bytes.NewReader(body)))
-	req.Header.Set("X-Slack-Request-Timestamp", strconv.FormatInt(time.Now().Unix(), 10))
-	req.Header.Set("X-Slack-Signature", "v0=deadbeef")
-
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rec.Code)
-}
-
-func TestHandler_EventCallbackAck(t *testing.T) {
+func TestService_EnqueueEvent(t *testing.T) {
 	t.Parallel()
 
 	slackEventTestMu.Lock()
 	t.Cleanup(slackEventTestMu.Unlock)
 
-	secret := "test-signing-secret"
 	eventID := "E-handler-" + gid.New(gid.NilTenant, coredata.SlackbotEventEntityType).String()
 	body := []byte(fmt.Sprintf(
 		`{"type":"event_callback","event_id":%q,"event":{"type":"message","channel_type":"channel","text":"hi","channel":"C1","ts":"1.1"}}`,
 		eventID,
 	))
-	ts, sig := signRequest(secret, body, time.Now().Unix())
 
 	pgClient := test.PGClient(t)
-	handler := NewHandler(secret, nil, nil, pgClient, testLogger(t))
+	handler := NewService(nil, nil, pgClient, testLogger(t))
 
-	req := httptest.NewRequest(http.MethodPost, "/events", io.NopCloser(bytes.NewReader(body)))
-	req.Header.Set("X-Slack-Request-Timestamp", ts)
-	req.Header.Set("X-Slack-Signature", sig)
-
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	assert.Equal(t, http.StatusOK, rec.Code)
+	var envelope Envelope
+	require.NoError(t, json.Unmarshal(body, &envelope))
+	require.NoError(t, handler.EnqueueEvent(t.Context(), envelope))
 
 	var persisted coredata.SlackbotEvent
 
@@ -137,13 +92,7 @@ func TestHandler_EventCallbackAck(t *testing.T) {
 	assert.JSONEq(t, string(body), string(persisted.Envelope))
 	assert.Equal(t, 0, persisted.AttemptCount)
 
-	retryReq := httptest.NewRequest(http.MethodPost, "/events", bytes.NewReader(body))
-	retryReq.Header.Set("X-Slack-Request-Timestamp", ts)
-	retryReq.Header.Set("X-Slack-Signature", sig)
-
-	retryRec := httptest.NewRecorder()
-	handler.ServeHTTP(retryRec, retryReq)
-	assert.Equal(t, http.StatusOK, retryRec.Code)
+	require.NoError(t, handler.EnqueueEvent(t.Context(), envelope))
 
 	require.NoError(
 		t,
@@ -156,28 +105,36 @@ func TestHandler_EventCallbackAck(t *testing.T) {
 	)
 }
 
-func TestHandler_MalformedEventCallbacks(t *testing.T) {
+func TestService_EnqueueEventRejectsInvalidEnvelopes(t *testing.T) {
 	t.Parallel()
 
+	handler := NewService(nil, nil, nil, testLogger(t))
+
 	tests := []struct {
-		name string
-		body []byte
+		name     string
+		envelope Envelope
+		want     string
 	}{
 		{
-			name: "malformed json",
-			body: []byte(`{"type":`),
+			name:     "unsupported type",
+			envelope: Envelope{Type: "other"},
+			want:     "unsupported event envelope",
 		},
 		{
 			name: "missing event id",
-			body: []byte(`{"type":"event_callback","event":{"type":"message"}}`),
+			envelope: Envelope{
+				Type:  EnvelopeTypeEventCallback,
+				Event: &EventBody{Type: EventTypeMessage},
+			},
+			want: "missing event_id",
 		},
 		{
 			name: "missing event body",
-			body: []byte(`{"type":"event_callback","event_id":"E-missing-body"}`),
-		},
-		{
-			name: "unknown envelope",
-			body: []byte(`{"type":"other"}`),
+			envelope: Envelope{
+				Type:    EnvelopeTypeEventCallback,
+				EventID: "E-missing-body",
+			},
+			want: "missing event",
 		},
 	}
 
@@ -187,18 +144,11 @@ func TestHandler_MalformedEventCallbacks(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				secret := "test-signing-secret"
-				ts, sig := signRequest(secret, tt.body, time.Now().Unix())
-				handler := NewHandler(secret, nil, nil, nil, testLogger(t))
-				req := httptest.NewRequest(http.MethodPost, "/events", bytes.NewReader(tt.body))
-				req.Header.Set("X-Slack-Request-Timestamp", ts)
-				req.Header.Set("X-Slack-Signature", sig)
-
-				rec := httptest.NewRecorder()
-
-				handler.ServeHTTP(rec, req)
-
-				assert.Equal(t, http.StatusBadRequest, rec.Code)
+				err := handler.EnqueueEvent(t.Context(), tt.envelope)
+				require.Error(t, err)
+				_, ok := errors.AsType[*InvalidEnvelopeError](err)
+				require.True(t, ok)
+				assert.Equal(t, tt.want, err.Error())
 			},
 		)
 	}
@@ -276,44 +226,6 @@ func TestShouldHandleConversationEvent(t *testing.T) {
 	}
 }
 
-func TestDispatchIgnoresChannelReactionsAndEdits(t *testing.T) {
-	t.Parallel()
-
-	handler := &Handler{}
-
-	require.NoError(
-		t,
-		handler.dispatch(
-			t.Context(),
-			"E-reaction",
-			"T1",
-			&EventBody{
-				Type:        EventTypeReactionAdded,
-				ChannelType: ChannelTypeChannel,
-				User:        "U1",
-				Channel:     "C1",
-				TS:          "1.0",
-			},
-		),
-	)
-	require.NoError(
-		t,
-		handler.dispatch(
-			t.Context(),
-			"E-edit",
-			"T1",
-			&EventBody{
-				Type:        EventTypeMessage,
-				Subtype:     EventSubtypeMessageChanged,
-				ChannelType: ChannelTypeChannel,
-				User:        "U1",
-				Channel:     "C1",
-				TS:          "1.0",
-			},
-		),
-	)
-}
-
 func TestReplyTargetFor(t *testing.T) {
 	t.Parallel()
 
@@ -332,14 +244,6 @@ func TestReplyTargetFor(t *testing.T) {
 		replyTarget{channel: "D1", threadTS: ""},
 		replyTargetFor(EventBody{Channel: "D1", ChannelType: ChannelTypeIM, TS: "111.000", ThreadTS: "222.000"}),
 	)
-}
-
-func TestAssistantStatusThreadTS(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "222.000", assistantStatusThreadTS("222.000", "111.000"))
-	assert.Equal(t, "111.000", assistantStatusThreadTS("", "111.000"))
-	assert.Equal(t, "", assistantStatusThreadTS("", ""))
 }
 
 func TestVerifySignature(t *testing.T) {

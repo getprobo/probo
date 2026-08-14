@@ -858,7 +858,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot register compliance Probot capability: %w", err)
 	}
 
-	slackbotHandler, probotAgent, err := impl.buildSlackbotHandler(
+	slackbot, probotAgent, err := impl.buildSlackbot(
 		pgClient,
 		probotIdentityBindings,
 		slackbotInstallations,
@@ -868,7 +868,7 @@ func (impl *Implm) Run(
 		r,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot build slackbot handler: %w", err)
+		return fmt.Errorf("cannot build slackbot: %w", err)
 	}
 
 	probotProfiles := probot.NewAgentProfileRegistry()
@@ -916,7 +916,7 @@ func (impl *Implm) Run(
 			Slack:                   slackService,
 			BotDeliveryDestinations: slackMessages,
 			ComplianceMessages:      complianceMessages,
-			SlackbotEvents:          slackbotHandler,
+			Slackbot:                slackbot,
 			SlackInteractiveInbox:   slackInteractiveInbox,
 			ProbotIdentityBindings:  probotIdentityBindings,
 			SlackbotInstallations:   slackbotInstallations,
@@ -1073,12 +1073,12 @@ func (impl *Implm) Run(
 	stopSlackDeliveryWorker := func() {}
 
 	if impl.cfg.Slackbot.Enabled &&
-		slackbotHandler != nil &&
+		slackbot != nil &&
 		slackbotInstallations != nil &&
 		slackMessages != nil {
 		slackbotEventWorker := slackchannel.NewEventWorker(
 			pgClient,
-			slackbotHandler,
+			slackbot,
 			l.Named("slackbot-event-worker"),
 			worker.WithInterval(time.Second),
 			worker.WithMaxConcurrency(4),

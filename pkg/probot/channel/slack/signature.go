@@ -50,28 +50,17 @@ func VerifyAnySignature(
 		return fmt.Errorf("request timestamp too old")
 	}
 
-	matched := false
-	seen := make(map[string]struct{}, len(signingSecrets))
 	for _, signingSecret := range signingSecrets {
 		if signingSecret == "" {
 			continue
 		}
-		if _, ok := seen[signingSecret]; ok {
-			continue
-		}
-		seen[signingSecret] = struct{}{}
 
 		if signatureMatches(signingSecret, timestamp, signature, body) {
-			matched = true
-			break
+			return nil
 		}
 	}
 
-	if !matched {
-		return fmt.Errorf("signature mismatch")
-	}
-
-	return nil
+	return fmt.Errorf("signature mismatch")
 }
 
 func signatureMatches(signingSecret, timestamp, signature string, body []byte) bool {

@@ -21,29 +21,17 @@
 package slack_v1
 
 import (
-	"context"
 	"io"
 	"mime"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 )
 
-type slackSlashCommander interface {
-	HandleSlashCommand(
-		ctx context.Context,
-		cmd slackchannel.SlashCommand,
-	) slackchannel.SlashCommandResponse
-}
-
-func SlackCommandHandler(
-	commander slackSlashCommander,
-	signingSecrets []string,
-	logger *log.Logger,
-) http.HandlerFunc {
+func SlackCommandHandler(slackbot *slackchannel.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -52,34 +40,12 @@ func SlackCommandHandler(
 			httpserver.RenderJSON(
 				w,
 				http.StatusOK,
-				ephemeralCommandError("cannot read request body"),
+				slackchannel.SlashCommandResponse{
+					ResponseType: slackchannel.SlashResponseTypeEphemeral,
+					Text:         "cannot read request body",
+				},
 			)
-			return
-		}
 
-		timestamp := r.Header.Get("X-Slack-Request-Timestamp")
-		signature := r.Header.Get("X-Slack-Signature")
-		if timestamp == "" || signature == "" {
-			httpserver.RenderJSON(
-				w,
-				http.StatusBadRequest,
-				ephemeralCommandError("missing Slack signature headers"),
-			)
-			return
-		}
-
-		if err := slackchannel.VerifyAnySignature(
-			timestamp,
-			signature,
-			body,
-			signingSecrets...,
-		); err != nil {
-			logger.ErrorCtx(ctx, "invalid Slack slash command signature", log.Error(err))
-			httpserver.RenderJSON(
-				w,
-				http.StatusUnauthorized,
-				ephemeralCommandError("invalid Slack signature"),
-			)
 			return
 		}
 
@@ -88,8 +54,12 @@ func SlackCommandHandler(
 			httpserver.RenderJSON(
 				w,
 				http.StatusOK,
-				ephemeralCommandError("unsupported content type"),
+				slackchannel.SlashCommandResponse{
+					ResponseType: slackchannel.SlashResponseTypeEphemeral,
+					Text:         "unsupported content type",
+				},
 			)
+
 			return
 		}
 
@@ -98,31 +68,29 @@ func SlackCommandHandler(
 			httpserver.RenderJSON(
 				w,
 				http.StatusOK,
-				ephemeralCommandError("cannot parse form"),
+				slackchannel.SlashCommandResponse{
+					ResponseType: slackchannel.SlashResponseTypeEphemeral,
+					Text:         "cannot parse form",
+				},
 			)
+
 			return
 		}
 
-		if commander == nil {
-			httpserver.RenderJSON(
-				w,
-				http.StatusOK,
-				ephemeralCommandError("Probot is not available in this workspace."),
-			)
-			return
+		command := slackchannel.SlashCommand{
+			Command:     strings.TrimSpace(form.Get("command")),
+			Text:        strings.TrimSpace(form.Get("text")),
+			UserID:      strings.TrimSpace(form.Get("user_id")),
+			UserName:    strings.TrimSpace(form.Get("user_name")),
+			TeamID:      strings.TrimSpace(form.Get("team_id")),
+			TeamDomain:  strings.TrimSpace(form.Get("team_domain")),
+			ResponseURL: strings.TrimSpace(form.Get("response_url")),
 		}
 
 		httpserver.RenderJSON(
 			w,
 			http.StatusOK,
-			commander.HandleSlashCommand(ctx, slackchannel.ParseSlashCommand(form)),
+			slackbot.HandleSlashCommand(ctx, command),
 		)
-	}
-}
-
-func ephemeralCommandError(text string) slackchannel.SlashCommandResponse {
-	return slackchannel.SlashCommandResponse{
-		ResponseType: slackchannel.SlashResponseTypeEphemeral,
-		Text:         text,
 	}
 }

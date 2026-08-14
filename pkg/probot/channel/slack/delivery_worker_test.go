@@ -22,7 +22,9 @@ package slack
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -33,35 +35,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
-
-type recordingOperationClient struct {
-	clientMsgIDs []string
-	reactionErr  error
-	reactions    int
-}
-
-func (c *recordingOperationClient) CreateMessage(
-	_ context.Context,
-	_ string,
-	_ string,
-	_ string,
-	clientMsgID string,
-) (*MessageRef, error) {
-	c.clientMsgIDs = append(c.clientMsgIDs, clientMsgID)
-
-	return &MessageRef{Channel: "C123", TS: "123.456"}, nil
-}
-
-func (c *recordingOperationClient) AddReaction(
-	context.Context,
-	string,
-	string,
-	string,
-) error {
-	c.reactions++
-
-	return c.reactionErr
-}
 
 func TestDeliveryService_DuplicateOperationKeyReturnsOriginal(t *testing.T) {
 	t.Parallel()
@@ -155,12 +128,30 @@ func TestDeliveryOperationHandler_RetryAndDeadLetter(t *testing.T) {
 func TestDeliveryOperationHandler_PostUsesStableClientMsgID(t *testing.T) {
 	t.Parallel()
 
-	client := &recordingOperationClient{}
+	var clientMsgIDs []string
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/api/chat.postMessage", r.URL.Path)
+
+				var body map[string]any
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+				clientID, _ := body["client_msg_id"].(string)
+				clientMsgIDs = append(clientMsgIDs, clientID)
+
+				_, err := w.Write([]byte(`{"ok":true,"channel":"C123","ts":"123.456"}`))
+				require.NoError(t, err)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	client := newTestClient(server.URL + "/api")
 	handler := &deliveryOperationHandler{
 		client: func(
 			context.Context,
 			*coredata.SlackDeliveryOperation,
-		) (operationSlackClient, error) {
+		) (*Client, error) {
 			return client, nil
 		},
 	}
@@ -182,21 +173,32 @@ func TestDeliveryOperationHandler_PostUsesStableClientMsgID(t *testing.T) {
 			"04a8d30f-8f4d-4f41-9b36-6440cb9821d7",
 			"04a8d30f-8f4d-4f41-9b36-6440cb9821d7",
 		},
-		client.clientMsgIDs,
+		clientMsgIDs,
 	)
 }
 
 func TestDeliveryOperationHandler_AlreadyReactedIsSuccess(t *testing.T) {
 	t.Parallel()
 
-	client := &recordingOperationClient{
-		reactionErr: &APIError{StatusCode: http.StatusOK, Code: "already_reacted"},
-	}
+	var reactions int
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/api/reactions.add", r.URL.Path)
+				reactions++
+				_, err := w.Write([]byte(`{"ok":false,"error":"already_reacted"}`))
+				require.NoError(t, err)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	client := newTestClient(server.URL + "/api")
 	handler := &deliveryOperationHandler{
 		client: func(
 			context.Context,
 			*coredata.SlackDeliveryOperation,
-		) (operationSlackClient, error) {
+		) (*Client, error) {
 			return client, nil
 		},
 	}
@@ -210,7 +212,7 @@ func TestDeliveryOperationHandler_AlreadyReactedIsSuccess(t *testing.T) {
 	}
 
 	require.NoError(t, handler.deliverOperation(t.Context(), operation))
-	assert.Equal(t, 1, client.reactions)
+	assert.Equal(t, 1, reactions)
 }
 
 func loadDeliveryOperation(

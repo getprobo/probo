@@ -44,34 +44,12 @@ type (
 		ExternalUserID string `json:"external_user_id,omitempty"`
 	}
 
-	executionInstallationLookup interface {
-		GetByOrganizationID(
-			ctx context.Context,
-			scope coredata.Scoper,
-			organizationID gid.GID,
-		) (*coredata.SlackbotInstallation, error)
-		GetByTeamID(ctx context.Context, teamID string) (*coredata.SlackbotInstallation, error)
-		ClientByOrganizationID(
-			ctx context.Context,
-			scope coredata.Scoper,
-			organizationID gid.GID,
-		) (*Client, *coredata.SlackbotInstallation, error)
-		ClientByTeamID(
-			ctx context.Context,
-			teamID string,
-		) (*Client, *coredata.SlackbotInstallation, error)
-	}
-
-	executionProfileLookup interface {
-		Agent(name string) (*agent.Agent, error)
-	}
-
 	ExecutionAdapter struct {
-		installations executionInstallationLookup
+		installations *InstallationService
 		bindings      identitybinding.Gate
-		profiles      executionProfileLookup
+		profiles      *probot.AgentProfileRegistry
 		capabilities  *probot.CapabilityRegistry
-		deliveries    toolDeliveryQueue
+		deliveries    *DeliveryService
 		logger        *log.Logger
 	}
 )
@@ -81,11 +59,11 @@ var (
 )
 
 func NewExecutionAdapter(
-	installations executionInstallationLookup,
+	installations *InstallationService,
 	bindings identitybinding.Gate,
-	profiles executionProfileLookup,
+	profiles *probot.AgentProfileRegistry,
 	capabilities *probot.CapabilityRegistry,
-	deliveries toolDeliveryQueue,
+	deliveries *DeliveryService,
 	logger *log.Logger,
 ) *ExecutionAdapter {
 	return &ExecutionAdapter{

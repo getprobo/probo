@@ -21,18 +21,54 @@
 package slack_v1
 
 import (
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 )
 
-func TestSlackInteractiveDefersAuthorizationToWorker(t *testing.T) {
+func TestSlackEventReturnsURLVerificationChallenge(t *testing.T) {
 	t.Parallel()
 
-	inbox := &fakeInteractiveInbox{inserted: true}
-	response := performSlackAction(t, inbox)
+	body := `{"type":"url_verification","challenge":"challenge-token"}`
+	response := performSlackEvent(t, body)
 
 	assert.Equal(t, http.StatusOK, response.Code)
-	assert.Len(t, inbox.payloads, 1)
+
+	var payload map[string]string
+	require.NoError(t, json.Unmarshal(response.Body.Bytes(), &payload))
+	assert.Equal(t, "challenge-token", payload["challenge"])
+}
+
+func TestSlackEventRejectsMalformedJSON(t *testing.T) {
+	t.Parallel()
+
+	response := performSlackEvent(t, `{"type":`)
+
+	assert.Equal(t, http.StatusBadRequest, response.Code)
+}
+
+func performSlackEvent(
+	t *testing.T,
+	body string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/slack/v1/events",
+		strings.NewReader(body),
+	)
+
+	response := httptest.NewRecorder()
+	slackbot := slackchannel.NewService(nil, nil, nil, log.NewLogger())
+	SlackEventHandler(slackbot, log.NewLogger()).ServeHTTP(response, req)
+
+	return response
 }

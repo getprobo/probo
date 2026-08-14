@@ -36,7 +36,7 @@ import (
 
 const defaultAgentProfile = "probot"
 
-func (h *Handler) enqueueExecutionInput(
+func (h *Service) enqueueExecutionInput(
 	ctx context.Context,
 	eventID string,
 	installationTeamID string,
@@ -143,7 +143,7 @@ func (h *Handler) enqueueExecutionInput(
 					CreatedAt:         now,
 					UpdatedAt:         now,
 				}
-				if _, err := execution.UpsertConversationalBySourceSession(
+				if _, err := execution.UpsertBySourceSession(
 					ctx,
 					tx,
 					scope,

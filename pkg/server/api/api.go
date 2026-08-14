@@ -85,7 +85,7 @@ type (
 		Slack                   *slack.Service
 		BotDeliveryDestinations BotDeliveryDestinations
 		ComplianceMessages      ComplianceMessages
-		SlackbotEvents          http.Handler
+		Slackbot                *slackchannel.Service
 		SlackInteractiveInbox   *slackchannel.InteractiveCommandInbox
 		ProbotIdentityBindings  *identitybinding.Service
 		SlackbotInstallations   *slackchannel.InstallationService
@@ -277,7 +277,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("slack.v1"),
 			cfg.Slack,
 			cfg.SlackInteractiveInbox,
-			cfg.SlackbotEvents,
+			cfg.Slackbot,
 			cfg.SlackbotInstallations,
 		),
 		connectHandler: connect_v1.NewMux(

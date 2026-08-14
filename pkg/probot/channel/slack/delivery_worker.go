@@ -35,21 +35,10 @@ import (
 type (
 	operationDeliveryFunc func(context.Context, *coredata.SlackDeliveryOperation) error
 
-	operationSlackClient interface {
-		CreateMessage(
-			ctx context.Context,
-			channel string,
-			text string,
-			threadTS string,
-			clientMsgID string,
-		) (*MessageRef, error)
-		AddReaction(ctx context.Context, channel, name, timestamp string) error
-	}
-
 	operationClientResolver func(
 		context.Context,
 		*coredata.SlackDeliveryOperation,
-	) (operationSlackClient, error)
+	) (*Client, error)
 
 	deliveryOperationHandler struct {
 		pg         *pg.Client
@@ -94,7 +83,7 @@ func NewDeliveryWorker(
 		client: func(
 			ctx context.Context,
 			operation *coredata.SlackDeliveryOperation,
-		) (operationSlackClient, error) {
+		) (*Client, error) {
 			if installations == nil {
 				return nil, &permanentDeliveryError{
 					err: fmt.Errorf("slack installation service is unavailable"),

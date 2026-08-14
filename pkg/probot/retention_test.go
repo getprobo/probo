@@ -181,7 +181,7 @@ func TestRetentionHandlerPreservesReceiptsBeyondReplayState(t *testing.T) {
 					return err
 				}
 
-				if _, err := execution.UpsertConversationalBySourceSession(ctx, tx, scope); err != nil {
+				if _, err := execution.UpsertBySourceSession(ctx, tx, scope); err != nil {
 					return err
 				}
 

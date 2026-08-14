@@ -209,7 +209,7 @@ func (h *interactiveCommandHandler) dispatch(
 		return permanentInteractiveCommand(fmt.Errorf("cannot decrypt command payload: %w", err))
 	}
 
-	payload, err := DecodeInteractivePayload(raw)
+	payload, err := decodeInteractivePayload(raw)
 	if err != nil {
 		return permanentInteractiveCommand(err)
 	}

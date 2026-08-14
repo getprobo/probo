@@ -28,20 +28,10 @@ import (
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/probot"
 )
 
 type (
-	toolDeliveryQueue interface {
-		Queue(
-			ctx context.Context,
-			organizationID gid.GID,
-			operationKey string,
-			kind coredata.SlackDeliveryOperationKind,
-			payload map[string]any,
-		) (*coredata.SlackDeliveryOperation, bool, error)
-	}
-
 	sendMessageParams struct {
 		Text string `json:"text" jsonschema_description:"Plain-text message to send in the current conversation"`
 	}
@@ -51,13 +41,13 @@ type (
 	}
 )
 
-func Tools(queue toolDeliveryQueue) []agent.Tool {
+func Tools(queue *DeliveryService) []agent.Tool {
 	return []agent.Tool{
 		agent.FunctionTool(
 			"send_message",
 			"Send a concise plain-text user-visible reply in the current trusted Slack conversation. Do not use Slack-specific markup or invent channel or thread IDs.",
 			func(ctx context.Context, p sendMessageParams) (agent.ToolResult, error) {
-				rc := agent.RunContextFrom[*RunContext](ctx)
+				rc := agent.RunContextFrom[*probot.RunContext](ctx)
 				if rc.MessageAnchor.ConversationID == "" {
 					return agent.ResultError("cannot queue message without a trusted Slack conversation"), nil
 				}
@@ -92,7 +82,7 @@ func Tools(queue toolDeliveryQueue) []agent.Tool {
 			"add_reaction",
 			"Add an emoji reaction to the current trusted Slack message. Never invent channel or message IDs.",
 			func(ctx context.Context, p addReactionParams) (agent.ToolResult, error) {
-				rc := agent.RunContextFrom[*RunContext](ctx)
+				rc := agent.RunContextFrom[*probot.RunContext](ctx)
 				if rc.MessageAnchor.ConversationID == "" || rc.CurrentMessageID == "" {
 					return agent.ResultError("cannot queue reaction without a trusted current Slack message"), nil
 				}
@@ -123,7 +113,7 @@ func Tools(queue toolDeliveryQueue) []agent.Tool {
 	}
 }
 
-func toolOperationKey(ctx context.Context, rc *RunContext, toolName string) (string, bool) {
+func toolOperationKey(ctx context.Context, rc *probot.RunContext, toolName string) (string, bool) {
 	toolCallID, ok := agent.ToolCallIDFrom(ctx)
 	if !ok {
 		return "", false

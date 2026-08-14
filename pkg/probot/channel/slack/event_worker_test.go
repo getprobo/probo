@@ -46,11 +46,6 @@ type (
 	eventWorkerFixture struct {
 		pg *pg.Client
 	}
-
-	recordingInstallationResolver struct {
-		disabledTeamIDs []string
-		err             error
-	}
 )
 
 func (p *recordingEventProcessor) ProcessEvent(context.Context, Envelope) error {
@@ -63,19 +58,6 @@ func (p *recordingEventProcessor) ProcessEvent(context.Context, Envelope) error 
 	p.errs = p.errs[1:]
 
 	return err
-}
-
-func (r *recordingInstallationResolver) ClientByTeamID(
-	context.Context,
-	string,
-) (*Client, *coredata.SlackbotInstallation, error) {
-	return nil, nil, ErrSlackbotNotInstalled
-}
-
-func (r *recordingInstallationResolver) DisableByTeamID(_ context.Context, teamID string) error {
-	r.disabledTeamIDs = append(r.disabledTeamIDs, teamID)
-
-	return r.err
 }
 
 func newEventWorkerFixture(t *testing.T) eventWorkerFixture {
@@ -279,21 +261,34 @@ func TestEventWorkerHandler_RecoversStaleClaim(t *testing.T) {
 	assert.NotNil(t, recovered.LastError)
 }
 
-func TestHandler_ProcessEvent_DisablesUninstalledWorkspace(t *testing.T) {
+func TestService_ProcessEvent_DisablesUninstalledWorkspace(t *testing.T) {
 	t.Parallel()
 
-	installations := &recordingInstallationResolver{}
-	handler := &Handler{installations: installations}
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	installations := newTestInstallationService(t, pgClient, "")
+	handler := &Service{installations: installations}
 	envelope := Envelope{
 		Type:    EnvelopeTypeEventCallback,
-		EventID: "E-uninstall",
-		TeamID:  "T-uninstall",
+		EventID: "E-uninstall-" + organizationID.String(),
+		TeamID:  teamID,
 		Event:   &EventBody{Type: EventTypeAppUninstalled},
 	}
 
 	require.NoError(t, handler.ProcessEvent(t.Context(), envelope))
-	assert.Equal(t, []string{"T-uninstall"}, installations.disabledTeamIDs)
+	loaded, err := installations.GetByOrganizationID(
+		t.Context(),
+		coredata.NewScopeFromObjectID(organizationID),
+		organizationID,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.SlackbotInstallationStatusDisabled, loaded.Status)
 
 	require.NoError(t, handler.ProcessEvent(t.Context(), envelope))
-	assert.Equal(t, []string{"T-uninstall", "T-uninstall"}, installations.disabledTeamIDs)
+	loaded, err = installations.GetByOrganizationID(
+		t.Context(),
+		coredata.NewScopeFromObjectID(organizationID),
+		organizationID,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.SlackbotInstallationStatusDisabled, loaded.Status)
 }

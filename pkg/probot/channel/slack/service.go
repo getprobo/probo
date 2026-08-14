@@ -26,8 +26,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -39,27 +37,10 @@ import (
 )
 
 type (
-	slackMessenger interface {
-		CreateMessage(
-			ctx context.Context,
-			channel string,
-			text string,
-			threadTS string,
-			clientMsgID string,
-		) (*MessageRef, error)
-	}
-
-	installationClientResolver interface {
-		ClientByTeamID(ctx context.Context, teamID string) (*Client, *coredata.SlackbotInstallation, error)
-		DisableByTeamID(ctx context.Context, teamID string) error
-	}
-
-	Handler struct {
-		signingSecret string
-		client        slackMessenger
-		installations installationClientResolver
+	Service struct {
+		installations *InstallationService
 		bindings      identitybinding.Gate
-		bindPrompts   bindPromptStore
+		bindPrompts   *BindPromptService
 		pg            *pg.Client
 		logger        *log.Logger
 	}
@@ -68,19 +49,49 @@ type (
 		channel  string
 		threadTS string
 	}
+
+	InvalidEnvelopeError struct {
+		err error
+	}
 )
 
 var mentionRE = regexp.MustCompile(`<@[A-Z0-9]+>`)
 
-func NewHandler(
-	signingSecret string,
+func (e *InvalidEnvelopeError) Error() string {
+	return e.err.Error()
+}
+
+func (e *InvalidEnvelopeError) Unwrap() error {
+	return e.err
+}
+
+func invalidEnvelope(msg string) error {
+	return &InvalidEnvelopeError{err: errors.New(msg)}
+}
+
+func validateEventCallback(envelope Envelope) error {
+	if envelope.Type != EnvelopeTypeEventCallback {
+		return invalidEnvelope("unsupported event envelope")
+	}
+
+	if strings.TrimSpace(envelope.EventID) == "" {
+		return invalidEnvelope("missing event_id")
+	}
+
+	if envelope.Event == nil || envelope.Event.Type == "" {
+		return invalidEnvelope("missing event")
+	}
+
+	return nil
+}
+
+func NewService(
 	bindings identitybinding.Gate,
-	installations installationClientResolver,
+	installations *InstallationService,
 	pgClient *pg.Client,
 	l *log.Logger,
-) *Handler {
-	return &Handler{
-		signingSecret: signingSecret,
+) *Service {
+	return &Service{
 		installations: installations,
 		bindings:      bindings,
 		pg:            pgClient,
@@ -88,20 +99,16 @@ func NewHandler(
 	}
 }
 
-func (h *Handler) SetBindPrompts(store bindPromptStore) {
+func (h *Service) SetBindPrompts(store *BindPromptService) {
 	h.bindPrompts = store
 }
 
-func (h *Handler) clientForTeam(
+func (h *Service) clientForTeam(
 	ctx context.Context,
 	teamID string,
-) (slackMessenger, gid.GID, string, error) {
+) (*Client, gid.GID, string, error) {
 	if h.installations == nil {
-		if h.client == nil {
-			return nil, gid.Nil, "", ErrSlackbotNotInstalled
-		}
-
-		return h.client, gid.Nil, "", nil
+		return nil, gid.Nil, "", ErrSlackbotNotInstalled
 	}
 
 	client, installation, err := h.installations.ClientByTeamID(ctx, teamID)
@@ -116,75 +123,24 @@ func (h *Handler) clientForTeam(
 	return client, installation.OrganizationID, installation.BotUserID, nil
 }
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		h.logger.WarnCtx(r.Context(), "cannot read request body", log.Error(err))
-		http.Error(w, "cannot read body", http.StatusBadRequest)
-
-		return
-	}
-
-	timestamp := r.Header.Get("X-Slack-Request-Timestamp")
-	signature := r.Header.Get("X-Slack-Signature")
-
-	if err := VerifySignature(h.signingSecret, timestamp, signature, body); err != nil {
-		h.logger.WarnCtx(r.Context(), "invalid slack signature", log.Error(err))
-		http.Error(w, "invalid signature", http.StatusUnauthorized)
-
-		return
-	}
-
-	var envelope Envelope
-	if err := json.Unmarshal(body, &envelope); err != nil {
-		h.logger.WarnCtx(r.Context(), "cannot decode slack event", log.Error(err))
-		http.Error(w, "invalid json", http.StatusBadRequest)
-
-		return
-	}
-
-	if envelope.Type == EnvelopeTypeURLVerification {
-		if envelope.Challenge == "" {
-			http.Error(w, "missing challenge", http.StatusBadRequest)
-
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]string{"challenge": envelope.Challenge})
-
-		return
-	}
-
-	if envelope.Type != EnvelopeTypeEventCallback {
-		http.Error(w, "unsupported event envelope", http.StatusBadRequest)
-
-		return
-	}
-
-	if strings.TrimSpace(envelope.EventID) == "" {
-		http.Error(w, "missing event_id", http.StatusBadRequest)
-
-		return
-	}
-
-	if envelope.Event == nil || envelope.Event.Type == "" {
-		http.Error(w, "missing event", http.StatusBadRequest)
-
-		return
+func (h *Service) EnqueueEvent(ctx context.Context, envelope Envelope) error {
+	if err := validateEventCallback(envelope); err != nil {
+		return err
 	}
 
 	if h.pg == nil {
-		h.logger.ErrorCtx(r.Context(), "Slackbot event inbox is unavailable")
-		http.Error(w, "event inbox unavailable", http.StatusInternalServerError)
-
-		return
+		return fmt.Errorf("cannot enqueue Slack event: inbox unavailable")
 	}
 
-	event := coredata.NewSlackbotEvent(envelope.EventID, json.RawMessage(body))
+	rawBody, err := json.Marshal(envelope)
+	if err != nil {
+		return fmt.Errorf("cannot encode Slack event: %w", err)
+	}
+
+	event := coredata.NewSlackbotEvent(envelope.EventID, rawBody)
 
 	err = h.pg.WithConn(
-		r.Context(),
+		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			_, err := event.Insert(ctx, conn)
 			if err != nil {
@@ -195,37 +151,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.ErrorCtx(
-			r.Context(),
-			"cannot persist Slackbot event before acknowledgement",
-			log.String("event_id", envelope.EventID),
-			log.Error(err),
-		)
-		http.Error(w, "cannot persist event", http.StatusInternalServerError)
-
-		return
+		return fmt.Errorf("cannot persist Slack event: %w", err)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
-func (h *Handler) ProcessEvent(ctx context.Context, envelope Envelope) error {
-	if envelope.Type != EnvelopeTypeEventCallback {
-		return &permanentEventError{
-			err: fmt.Errorf("unexpected Slack envelope type %q", envelope.Type),
-		}
-	}
-
-	if envelope.EventID == "" {
-		return &permanentEventError{
-			err: fmt.Errorf("slack event has no event ID"),
-		}
-	}
-
-	if envelope.Event == nil || envelope.Event.Type == "" {
-		return &permanentEventError{
-			err: fmt.Errorf("slack event has no event body"),
-		}
+func (h *Service) ProcessEvent(ctx context.Context, envelope Envelope) error {
+	if err := validateEventCallback(envelope); err != nil {
+		return &permanentEventError{err: err}
 	}
 
 	return h.dispatch(
@@ -236,7 +170,7 @@ func (h *Handler) ProcessEvent(ctx context.Context, envelope Envelope) error {
 	)
 }
 
-func (h *Handler) dispatch(ctx context.Context, eventID, teamID string, event *EventBody) error {
+func (h *Service) dispatch(ctx context.Context, eventID, teamID string, event *EventBody) error {
 	if event.Type == EventTypeAppUninstalled ||
 		event.Type == EventTypeTokensRevoked {
 		if teamID == "" {
@@ -284,7 +218,7 @@ func shouldHandleConversationEvent(event *EventBody) bool {
 			(event.Type == EventTypeMessage && event.ChannelType == ChannelTypeIM))
 }
 
-func (h *Handler) handleEditedMessage(
+func (h *Service) handleEditedMessage(
 	ctx context.Context,
 	eventID, teamID string,
 	event *EventBody,
@@ -326,7 +260,7 @@ func (h *Handler) handleEditedMessage(
 	)
 }
 
-func (h *Handler) handleInteraction(
+func (h *Service) handleInteraction(
 	ctx context.Context,
 	eventID, teamID string,
 	event *EventBody,
@@ -379,10 +313,10 @@ func (h *Handler) handleInteraction(
 	)
 }
 
-func (h *Handler) handleUnboundInteraction(
+func (h *Service) handleUnboundInteraction(
 	ctx context.Context,
 	eventID string,
-	slackClient slackMessenger,
+	slackClient *Client,
 	target replyTarget,
 ) error {
 	claimed, err := isEventIDClaimed(ctx, h.pg, eventID)
@@ -410,7 +344,7 @@ func (h *Handler) handleUnboundInteraction(
 	return nil
 }
 
-func (h *Handler) handleBoundInteraction(
+func (h *Service) handleBoundInteraction(
 	ctx context.Context,
 	eventID string,
 	teamID string,
@@ -418,7 +352,7 @@ func (h *Handler) handleBoundInteraction(
 	organizationID gid.GID,
 	botUserID string,
 	identityID gid.GID,
-	slackClient slackMessenger,
+	slackClient *Client,
 	event *EventBody,
 ) error {
 	userText := h.collectThreadTranscript(ctx, slackClient, *event, botUserID)
@@ -444,20 +378,19 @@ func (h *Handler) handleBoundInteraction(
 	return nil
 }
 
-func (h *Handler) sendAssistantWorkingStatus(
+func (h *Service) sendAssistantWorkingStatus(
 	ctx context.Context,
-	slackClient slackMessenger,
+	slackClient *Client,
 	event EventBody,
 ) {
-	setter, ok := slackClient.(assistantStatusSetter)
-	if !ok {
+	if slackClient == nil {
 		return
 	}
 
 	setAssistantWorkingStatus(
 		ctx,
 		h.logger,
-		setter,
+		slackClient,
 		event.Channel,
 		assistantStatusThreadTS(event.ThreadTS, event.TS),
 	)
@@ -481,9 +414,9 @@ func replyTargetFor(payload EventBody) replyTarget {
 	}
 }
 
-func (h *Handler) postBindRequired(
+func (h *Service) postBindRequired(
 	ctx context.Context,
-	slackClient slackMessenger,
+	slackClient *Client,
 	target replyTarget,
 	eventID string,
 ) error {

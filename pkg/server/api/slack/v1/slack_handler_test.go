@@ -22,67 +22,73 @@ package slack_v1
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 )
-
-const testSigningSecret = "slack-signing-secret"
-
-type fakeInteractiveInbox struct {
-	payloads [][]byte
-	inserted bool
-	err      error
-}
-
-func (f *fakeInteractiveInbox) Enqueue(
-	_ context.Context,
-	payload []byte,
-) (bool, error) {
-	f.payloads = append(f.payloads, append([]byte(nil), payload...))
-
-	return f.inserted, f.err
-}
 
 func TestSlackInteractiveAcknowledgesAfterDurableInsert(t *testing.T) {
 	t.Parallel()
 
-	inbox := &fakeInteractiveInbox{inserted: true}
-	response := performSlackAction(t, inbox)
+	inbox := newInteractiveInbox(t)
+	rawPayload := uniqueInteractivePayload(t)
+	response := performSlackAction(t, inbox, rawPayload)
 
 	assert.Equal(t, http.StatusOK, response.Code)
-	require.Len(t, inbox.payloads, 1)
-	assert.Contains(t, string(inbox.payloads[0]), `"action_id":"accept_all"`)
+	assert.JSONEq(t, `{"success":true}`, response.Body.String())
+
+	command := loadInteractiveCommand(t, inbox, rawPayload)
+	assert.Nil(t, command.ProcessedAt)
+	assert.Nil(t, command.DeadLetteredAt)
 }
 
 func TestSlackInteractiveAcknowledgesDuplicate(t *testing.T) {
 	t.Parallel()
 
-	inbox := &fakeInteractiveInbox{inserted: false}
-	response := performSlackAction(t, inbox)
+	inbox := newInteractiveInbox(t)
+	rawPayload := uniqueInteractivePayload(t)
+	first := performSlackAction(t, inbox, rawPayload)
+	second := performSlackAction(t, inbox, rawPayload)
 
-	assert.Equal(t, http.StatusOK, response.Code)
-	require.Len(t, inbox.payloads, 1)
+	assert.Equal(t, http.StatusOK, first.Code)
+	assert.Equal(t, http.StatusOK, second.Code)
+	assert.JSONEq(t, `{"success":true}`, second.Body.String())
+}
+
+func TestSlackInteractiveRejectsMalformedPayload(t *testing.T) {
+	t.Parallel()
+
+	response := performSlackAction(t, newInteractiveInbox(t), `{"user":{"id":"U123"}}`)
+
+	assert.Equal(t, http.StatusBadRequest, response.Code)
+	assert.Contains(t, response.Body.String(), "cannot parse Slack payload")
 }
 
 func performSlackAction(
 	t *testing.T,
-	inbox slackInteractiveCommandInbox,
+	inbox *slackchannel.InteractiveCommandInbox,
+	rawPayload string,
 ) *httptest.ResponseRecorder {
 	t.Helper()
 
-	rawPayload := `{"team":{"id":"T123"},"user":{"id":"U123"},"container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"accept_all","action_ts":"123.789","value":"message-id"}]}`
+	digest := sha256.Sum256([]byte(rawPayload))
+	t.Cleanup(func() { deleteInteractiveCommand(t, test.PGClient(t), digest[:]) })
+
 	body := url.Values{"payload": []string{rawPayload}}.Encode()
 	req := httptest.NewRequest(
 		http.MethodPost,
@@ -91,55 +97,89 @@ func performSlackAction(
 	)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	mac := hmac.New(sha256.New, []byte(testSigningSecret))
-	_, err := mac.Write([]byte("v0:" + timestamp + ":" + body))
-	require.NoError(t, err)
-	req.Header.Set("X-Slack-Request-Timestamp", timestamp)
-	req.Header.Set("X-Slack-Signature", "v0="+hex.EncodeToString(mac.Sum(nil)))
-
 	response := httptest.NewRecorder()
-	SlackHandler(
-		inbox,
-		[]string{testSigningSecret},
-		log.NewLogger(),
-	).ServeHTTP(response, req)
+	SlackHandler(inbox, log.NewLogger()).ServeHTTP(response, req)
 
 	return response
 }
 
-func TestSlackInteractiveAcceptsLegacySigningSecret(t *testing.T) {
-	t.Parallel()
+func newInteractiveInbox(t *testing.T) *slackchannel.InteractiveCommandInbox {
+	t.Helper()
 
-	const (
-		slackbotSecret = "slackbot-signing-secret"
-		legacySecret   = "legacy-signing-secret"
+	client := test.PGClient(t)
+	if !interactiveCommandsAvailable(t, client) {
+		t.Skip("slackbot_interactive_commands is unavailable in the test database")
+	}
+
+	return slackchannel.NewInteractiveCommandInbox(
+		client,
+		cipher.EncryptionKey{1, 2, 3},
+	)
+}
+
+func uniqueInteractivePayload(t *testing.T) string {
+	t.Helper()
+
+	id := gid.New(gid.NilTenant, coredata.SlackbotInteractiveCommandEntityType)
+
+	return fmt.Sprintf(
+		`{"team":{"id":"T-%s"},"user":{"id":"U123"},"container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"accept_all","action_ts":"123.789","value":"message-id"}]}`,
+		id,
+	)
+}
+
+func loadInteractiveCommand(
+	t *testing.T,
+	inbox *slackchannel.InteractiveCommandInbox,
+	rawPayload string,
+) coredata.SlackbotInteractiveCommand {
+	t.Helper()
+
+	digest := sha256.Sum256([]byte(rawPayload))
+	client := test.PGClient(t)
+
+	var command coredata.SlackbotInteractiveCommand
+	require.NoError(
+		t,
+		client.WithConn(
+			context.Background(),
+			func(ctx context.Context, conn pg.Querier) error {
+				return command.LoadByRequestDigest(ctx, conn, digest[:])
+			},
+		),
 	)
 
-	rawPayload := `{"team":{"id":"T123"},"user":{"id":"U123"},"container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"accept_all","action_ts":"123.789","value":"message-id"}]}`
-	body := url.Values{"payload": []string{rawPayload}}.Encode()
-	req := httptest.NewRequest(
-		http.MethodPost,
-		"/api/slack/v1/interactive",
-		strings.NewReader(body),
+	return command
+}
+
+func deleteInteractiveCommand(t *testing.T, client *pg.Client, digest []byte) {
+	t.Helper()
+
+	_ = client.WithConn(
+		context.Background(),
+		func(ctx context.Context, conn pg.Querier) error {
+			_, err := conn.Exec(
+				ctx,
+				`DELETE FROM slackbot_interactive_commands WHERE request_digest = $1`,
+				digest,
+			)
+
+			return err
+		},
 	)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+}
 
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	mac := hmac.New(sha256.New, []byte(legacySecret))
-	_, err := mac.Write([]byte("v0:" + timestamp + ":" + body))
-	require.NoError(t, err)
-	req.Header.Set("X-Slack-Request-Timestamp", timestamp)
-	req.Header.Set("X-Slack-Signature", "v0="+hex.EncodeToString(mac.Sum(nil)))
+func interactiveCommandsAvailable(t *testing.T, client *pg.Client) bool {
+	t.Helper()
 
-	inbox := &fakeInteractiveInbox{inserted: true}
-	response := httptest.NewRecorder()
-	SlackHandler(
-		inbox,
-		[]string{slackbotSecret, legacySecret},
-		log.NewLogger(),
-	).ServeHTTP(response, req)
+	err := client.WithConn(
+		context.Background(),
+		func(ctx context.Context, conn pg.Querier) error {
+			var command coredata.SlackbotInteractiveCommand
 
-	assert.Equal(t, http.StatusOK, response.Code)
-	require.Len(t, inbox.payloads, 1)
+			return command.LoadByRequestDigest(ctx, conn, []byte("missing"))
+		},
+	)
+
+	return err == nil || errors.Is(err, coredata.ErrResourceNotFound)
 }

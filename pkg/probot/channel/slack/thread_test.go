@@ -21,38 +21,15 @@
 package slack
 
 import (
-	"context"
-	"errors"
-	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 )
-
-type fakeThreadClient struct {
-	replies []ThreadReply
-	err     error
-}
-
-func (f *fakeThreadClient) CreateMessage(
-	context.Context,
-	string,
-	string,
-	string,
-	string,
-) (*MessageRef, error) {
-	return nil, nil
-}
-
-func (f *fakeThreadClient) ListThreadReplies(
-	context.Context,
-	string,
-	string,
-) ([]ThreadReply, error) {
-	return f.replies, f.err
-}
 
 func TestFormatThreadTranscript(t *testing.T) {
 	t.Parallel()
@@ -118,18 +95,32 @@ func TestFormatThreadTranscript(t *testing.T) {
 func TestCollectThreadTranscript_KeepsPartialRepliesOnLaterPageError(t *testing.T) {
 	t.Parallel()
 
-	handler := &Handler{
-		logger: log.NewLogger(log.WithOutput(io.Discard)),
-	}
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				require.Equal(t, "/api/conversations.replies", r.URL.Path)
+				if r.URL.Query().Get("cursor") == "" {
+					_, err := w.Write(
+						[]byte(
+							`{"ok":true,"messages":[{"user":"U1","text":"root","ts":"111.000"},{"user":"U2","text":"reply","ts":"111.001"}],"response_metadata":{"next_cursor":"page-2"}}`,
+						),
+					)
+					require.NoError(t, err)
+
+					return
+				}
+
+				_, err := w.Write([]byte(`{"ok":false,"error":"ratelimited"}`))
+				require.NoError(t, err)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	handler := &Service{logger: log.NewLogger()}
 	transcript := handler.collectThreadTranscript(
 		t.Context(),
-		&fakeThreadClient{
-			replies: []ThreadReply{
-				{User: "U1", Text: "root"},
-				{User: "U2", Text: "reply"},
-			},
-			err: &APIError{Code: "ratelimited"},
-		},
+		newTestClient(server.URL+"/api"),
 		EventBody{
 			Type:        EventTypeAppMention,
 			Text:        "<@BOT> ping",
@@ -148,12 +139,21 @@ func TestCollectThreadTranscript_KeepsPartialRepliesOnLaterPageError(t *testing.
 func TestCollectThreadTranscript_FallsBackWhenNoRepliesCollected(t *testing.T) {
 	t.Parallel()
 
-	handler := &Handler{
-		logger: log.NewLogger(log.WithOutput(io.Discard)),
-	}
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, err := w.Write([]byte(`{"ok":false,"error":"internal_error"}`))
+				require.NoError(t, err)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	handler := &Service{logger: log.NewLogger()}
 	transcript := handler.collectThreadTranscript(
 		t.Context(),
-		&fakeThreadClient{err: errors.New("network")},
+		newTestClient(server.URL+"/api"),
 		EventBody{
 			Type:        EventTypeAppMention,
 			Text:        "<@BOT> ping",

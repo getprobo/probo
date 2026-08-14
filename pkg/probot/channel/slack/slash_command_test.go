@@ -22,42 +22,21 @@ package slack
 
 import (
 	"context"
-	"net/url"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 )
 
-func TestParseSlashCommand(t *testing.T) {
-	t.Parallel()
-
-	cmd := ParseSlashCommand(
-		url.Values{
-			"command":      []string{" /probot "},
-			"text":         []string{" bind "},
-			"user_id":      []string{"U123"},
-			"user_name":    []string{" ada "},
-			"team_id":      []string{"T123"},
-			"team_domain":  []string{" acme "},
-			"response_url": []string{" https://hooks.slack.com/commands/T123/1/abc "},
-		},
-	)
-
-	assert.Equal(t, SlashCommandName, cmd.Command)
-	assert.Equal(t, "bind", cmd.Text)
-	assert.Equal(t, "U123", cmd.UserID)
-	assert.Equal(t, "ada", cmd.UserName)
-	assert.Equal(t, "T123", cmd.TeamID)
-	assert.Equal(t, "acme", cmd.TeamDomain)
-	assert.Equal(t, "https://hooks.slack.com/commands/T123/1/abc", cmd.ResponseURL)
-}
-
-func TestHandler_HandleSlashCommand(t *testing.T) {
+func TestService_HandleSlashCommand(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -69,7 +48,7 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 			t.Parallel()
 
 			bindings := &stubBindingGate{bindURL: bindURL}
-			handler := &Handler{bindings: bindings, logger: log.NewLogger()}
+			handler := &Service{bindings: bindings, logger: log.NewLogger()}
 			response := handler.HandleSlashCommand(
 				ctx,
 				SlashCommand{
@@ -106,7 +85,7 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 			t.Parallel()
 
 			bindings := &stubBindingGate{bindURL: bindURL}
-			handler := &Handler{bindings: bindings, logger: log.NewLogger()}
+			handler := &Service{bindings: bindings, logger: log.NewLogger()}
 			response := handler.HandleSlashCommand(
 				ctx,
 				SlashCommand{
@@ -133,7 +112,7 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 				},
 				bindURL: bindURL,
 			}
-			handler := &Handler{bindings: bindings, logger: log.NewLogger()}
+			handler := &Service{bindings: bindings, logger: log.NewLogger()}
 			response := handler.HandleSlashCommand(
 				ctx,
 				SlashCommand{
@@ -157,7 +136,7 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 			t.Parallel()
 
 			bindings := &stubBindingGate{bindURL: bindURL}
-			handler := &Handler{bindings: bindings, logger: log.NewLogger()}
+			handler := &Service{bindings: bindings, logger: log.NewLogger()}
 			response := handler.HandleSlashCommand(
 				ctx,
 				SlashCommand{
@@ -181,7 +160,7 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 			t.Parallel()
 
 			bindings := &stubBindingGate{bindURL: bindURL}
-			handler := &Handler{bindings: bindings, logger: log.NewLogger()}
+			handler := &Service{bindings: bindings, logger: log.NewLogger()}
 			response := handler.HandleSlashCommand(
 				ctx,
 				SlashCommand{
@@ -203,9 +182,9 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 			t.Parallel()
 
 			bindings := &stubBindingGate{bindURL: bindURL}
-			handler := &Handler{
+			handler := &Service{
 				bindings:      bindings,
-				installations: stubMissingInstallations{},
+				installations: newTestInstallationService(t, test.PGClient(t), ""),
 				logger:        log.NewLogger(),
 			}
 			response := handler.HandleSlashCommand(
@@ -214,7 +193,7 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 					Command: SlashCommandName,
 					Text:    "bind",
 					UserID:  "U456",
-					TeamID:  "T789",
+					TeamID:  uniqueSlackTeamID(t),
 				},
 			)
 
@@ -229,60 +208,62 @@ func TestHandler_HandleSlashCommand(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
+			pgClient := test.PGClient(t)
 			bindings := &stubBindingGate{bindURL: bindURL}
-			prompts := &recordingBindPromptStore{}
-			handler := &Handler{
+			prompts := NewBindPromptService(pgClient, testEncryptionKey(), log.NewLogger())
+			handler := &Service{
 				bindings:    bindings,
 				bindPrompts: prompts,
 				logger:      log.NewLogger(),
 			}
+			teamID := uniqueSlackTeamID(t)
+			userID := "U-" + gid.New(gid.NilTenant, coredata.IdentityEntityType).String()
+			responseURL := "https://hooks.slack.com/commands/" + teamID + "/1/abc"
+			t.Cleanup(
+				func() {
+					_ = pgClient.WithConn(
+						context.Background(),
+						func(ctx context.Context, conn pg.Querier) error {
+							_, err := conn.Exec(
+								ctx,
+								`DELETE FROM slackbot_bind_callbacks WHERE team_id = $1 AND user_id = $2`,
+								teamID,
+								userID,
+							)
+
+							return err
+						},
+					)
+				},
+			)
 			response := handler.HandleSlashCommand(
 				ctx,
 				SlashCommand{
 					Command:     SlashCommandName,
 					Text:        "bind",
-					UserID:      "U456",
-					TeamID:      "T789",
-					ResponseURL: "https://hooks.slack.com/commands/T789/1/abc",
+					UserID:      userID,
+					TeamID:      teamID,
+					ResponseURL: responseURL,
 				},
 			)
 
 			assert.Equal(t, SlashResponseTypeEphemeral, response.ResponseType)
-			assert.Equal(t, "T789", prompts.teamID)
-			assert.Equal(t, "U456", prompts.userID)
-			assert.Equal(t, "https://hooks.slack.com/commands/T789/1/abc", prompts.responseURL)
+
+			var callback coredata.SlackbotBindCallback
+			err := pgClient.WithConn(
+				ctx,
+				func(ctx context.Context, conn pg.Querier) error {
+					return callback.LoadByTeamAndUser(ctx, conn, teamID, userID)
+				},
+			)
+			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+				t.Skipf("slackbot_bind_callbacks is unavailable in the test database: %v", err)
+			}
+			require.NoError(t, err)
+
+			storedURL, err := cipher.Decrypt(callback.EncryptedResponseURL, testEncryptionKey())
+			require.NoError(t, err)
+			assert.Equal(t, responseURL, string(storedURL))
 		},
 	)
-}
-
-type recordingBindPromptStore struct {
-	teamID      string
-	userID      string
-	responseURL string
-}
-
-func (s *recordingBindPromptStore) RememberResponseURL(
-	_ context.Context,
-	teamID string,
-	userID string,
-	responseURL string,
-) error {
-	s.teamID = teamID
-	s.userID = userID
-	s.responseURL = responseURL
-
-	return nil
-}
-
-type stubMissingInstallations struct{}
-
-func (stubMissingInstallations) ClientByTeamID(
-	context.Context,
-	string,
-) (*Client, *coredata.SlackbotInstallation, error) {
-	return nil, nil, ErrSlackbotNotInstalled
-}
-
-func (stubMissingInstallations) DisableByTeamID(context.Context, string) error {
-	return nil
 }

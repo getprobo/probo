@@ -23,7 +23,6 @@ package slack
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,73 +30,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 )
 
-type (
-	fakeExecutionInstallations struct {
-		installation *coredata.SlackbotInstallation
-		teamID       string
-		client       *Client
-		clientErr    error
-	}
-
-	fakeExecutionBindings struct {
-		subject identitybinding.Subject
-		binding *identitybinding.Binding
-		lookups int
-	}
-
-	fakeExecutionProfiles struct {
-		agent *agent.Agent
-	}
-
-	fakeExecutionDeliveries struct{}
-)
-
-func (f *fakeExecutionInstallations) GetByOrganizationID(
-	context.Context,
-	coredata.Scoper,
-	gid.GID,
-) (*coredata.SlackbotInstallation, error) {
-	return f.installation, nil
-}
-
-func (f *fakeExecutionInstallations) GetByTeamID(
-	_ context.Context,
-	teamID string,
-) (*coredata.SlackbotInstallation, error) {
-	f.teamID = teamID
-	return f.installation, nil
-}
-
-func (f *fakeExecutionInstallations) ClientByOrganizationID(
-	context.Context,
-	coredata.Scoper,
-	gid.GID,
-) (*Client, *coredata.SlackbotInstallation, error) {
-	if f.clientErr != nil {
-		return nil, nil, f.clientErr
-	}
-
-	return f.client, f.installation, nil
-}
-
-func (f *fakeExecutionInstallations) ClientByTeamID(
-	_ context.Context,
-	teamID string,
-) (*Client, *coredata.SlackbotInstallation, error) {
-	f.teamID = teamID
-	if f.clientErr != nil {
-		return nil, nil, f.clientErr
-	}
-
-	return f.client, f.installation, nil
+type fakeExecutionBindings struct {
+	subject identitybinding.Subject
+	binding *identitybinding.Binding
+	lookups int
 }
 
 func (f *fakeExecutionBindings) Lookup(
@@ -118,30 +64,15 @@ func (*fakeExecutionBindings) BindURL(
 	return "", nil
 }
 
-func (f *fakeExecutionProfiles) Agent(string) (*agent.Agent, error) {
-	return f.agent, nil
-}
-
-func (*fakeExecutionDeliveries) Queue(
-	context.Context,
-	gid.GID,
-	string,
-	coredata.SlackDeliveryOperationKind,
-	map[string]any,
-) (*coredata.SlackDeliveryOperation, bool, error) {
-	return nil, true, nil
-}
-
 func TestExecutionAdapterPreparesTrustedInboundSlackRun(t *testing.T) {
 	t.Parallel()
 
-	tenantID := gid.NewTenantID()
-	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
-	identityID := gid.New(tenantID, coredata.IdentityEntityType)
-	executionID := gid.New(tenantID, coredata.AgentExecutionEntityType)
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	identityID := gid.New(organizationID.TenantID(), coredata.IdentityEntityType)
+	executionID := gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType)
 	coordinates, err := json.Marshal(
 		ExecutionSourceCoordinates{
-			TeamID:         "T123",
+			TeamID:         teamID,
 			ChannelID:      "C123",
 			ThreadTS:       "123.000",
 			MessageTS:      "123.456",
@@ -158,23 +89,10 @@ func TestExecutionAdapterPreparesTrustedInboundSlackRun(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	installations := &fakeExecutionInstallations{
-		installation: &coredata.SlackbotInstallation{
-			OrganizationID: organizationID,
-			Status:         coredata.SlackbotInstallationStatusActive,
-		},
-	}
 	bindings := &fakeExecutionBindings{
 		binding: &identitybinding.Binding{IdentityID: identityID},
 	}
-	adapter := NewExecutionAdapter(
-		installations,
-		bindings,
-		&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-		probot.NewCapabilityRegistry(),
-		&fakeExecutionDeliveries{},
-		log.NewLogger(),
-	)
+	adapter := newExecutionAdapter(t, pgClient, "", bindings)
 
 	preparedCtx, _, err := adapter.Prepare(
 		t.Context(),
@@ -197,7 +115,6 @@ func TestExecutionAdapterPreparesTrustedInboundSlackRun(t *testing.T) {
 	assert.Equal(t, "123.000", runContext.MessageAnchor.MessageID)
 	assert.Equal(t, "123.456", runContext.CurrentMessageID)
 	assert.Equal(t, "value", runContext.Attributes["trusted"])
-	assert.Equal(t, "T123", installations.teamID)
 	assert.Equal(t, "U123", bindings.subject.ExternalUserID)
 
 	_, _, err = adapter.Prepare(
@@ -219,11 +136,10 @@ func TestExecutionAdapterPreparesTrustedInboundSlackRun(t *testing.T) {
 func TestExecutionAdapterPreparesUnboundDirectSlackRun(t *testing.T) {
 	t.Parallel()
 
-	tenantID := gid.NewTenantID()
-	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
 	coordinates, err := json.Marshal(
 		ExecutionSourceCoordinates{
-			TeamID:         "T123",
+			TeamID:         teamID,
 			ChannelID:      "D123",
 			MessageTS:      "123.456",
 			ExternalUserID: "U123",
@@ -231,28 +147,21 @@ func TestExecutionAdapterPreparesUnboundDirectSlackRun(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	adapter := NewExecutionAdapter(
-		&fakeExecutionInstallations{
-			installation: &coredata.SlackbotInstallation{
-				OrganizationID: organizationID,
-				Status:         coredata.SlackbotInstallationStatusActive,
-			},
-		},
+	adapter := newExecutionAdapter(
+		t,
+		pgClient,
+		"",
 		&fakeExecutionBindings{
 			binding: &identitybinding.Binding{
-				IdentityID: gid.New(tenantID, coredata.IdentityEntityType),
+				IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
 			},
 		},
-		&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-		probot.NewCapabilityRegistry(),
-		&fakeExecutionDeliveries{},
-		log.NewLogger(),
 	)
 
 	preparedCtx, _, err := adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
+			ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -285,12 +194,11 @@ func TestExecutionAdapterRejectsMalformedTrustedContext(t *testing.T) {
 func TestExecutionAdapterUsesInputIdentityWithoutBindingLookup(t *testing.T) {
 	t.Parallel()
 
-	tenantID := gid.NewTenantID()
-	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
-	inputIdentityID := gid.New(tenantID, coredata.IdentityEntityType)
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	inputIdentityID := gid.New(organizationID.TenantID(), coredata.IdentityEntityType)
 	coordinates, err := json.Marshal(
 		ExecutionSourceCoordinates{
-			TeamID:         "T123",
+			TeamID:         teamID,
 			ChannelID:      "C123",
 			ThreadTS:       "123.000",
 			MessageTS:      "123.456",
@@ -301,27 +209,15 @@ func TestExecutionAdapterUsesInputIdentityWithoutBindingLookup(t *testing.T) {
 
 	bindings := &fakeExecutionBindings{
 		binding: &identitybinding.Binding{
-			IdentityID: gid.New(tenantID, coredata.IdentityEntityType),
+			IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
 		},
 	}
-	adapter := NewExecutionAdapter(
-		&fakeExecutionInstallations{
-			installation: &coredata.SlackbotInstallation{
-				OrganizationID: organizationID,
-				Status:         coredata.SlackbotInstallationStatusActive,
-			},
-		},
-		bindings,
-		&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-		probot.NewCapabilityRegistry(),
-		&fakeExecutionDeliveries{},
-		log.NewLogger(),
-	)
+	adapter := newExecutionAdapter(t, pgClient, "", bindings)
 
 	preparedCtx, _, err := adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
+			ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -341,11 +237,10 @@ func TestExecutionAdapterPrepare_RefreshesAssistantStatus(t *testing.T) {
 
 	var got []map[string]any
 	server := capturingAssistantStatusServer(t, &got)
-	tenantID := gid.NewTenantID()
-	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
 	coordinates, err := json.Marshal(
 		ExecutionSourceCoordinates{
-			TeamID:         "T123",
+			TeamID:         teamID,
 			ChannelID:      "C123",
 			ThreadTS:       "123.000",
 			MessageTS:      "123.456",
@@ -354,29 +249,21 @@ func TestExecutionAdapterPrepare_RefreshesAssistantStatus(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	adapter := NewExecutionAdapter(
-		&fakeExecutionInstallations{
-			installation: &coredata.SlackbotInstallation{
-				OrganizationID: organizationID,
-				Status:         coredata.SlackbotInstallationStatusActive,
-			},
-			client: newTestClient(server.URL + "/api"),
-		},
+	adapter := newExecutionAdapter(
+		t,
+		pgClient,
+		server.URL+"/api",
 		&fakeExecutionBindings{
 			binding: &identitybinding.Binding{
-				IdentityID: gid.New(tenantID, coredata.IdentityEntityType),
+				IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
 			},
 		},
-		&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-		probot.NewCapabilityRegistry(),
-		&fakeExecutionDeliveries{},
-		log.NewLogger(),
 	)
 
 	_, _, err = adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
+			ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -407,11 +294,10 @@ func TestExecutionAdapterPrepare_UsesMessageTSWhenThreadTSEmpty(t *testing.T) {
 
 	var got []map[string]any
 	server := capturingAssistantStatusServer(t, &got)
-	tenantID := gid.NewTenantID()
-	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
 	coordinates, err := json.Marshal(
 		ExecutionSourceCoordinates{
-			TeamID:         "T123",
+			TeamID:         teamID,
 			ChannelID:      "D123",
 			MessageTS:      "123.456",
 			ExternalUserID: "U123",
@@ -419,29 +305,21 @@ func TestExecutionAdapterPrepare_UsesMessageTSWhenThreadTSEmpty(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	adapter := NewExecutionAdapter(
-		&fakeExecutionInstallations{
-			installation: &coredata.SlackbotInstallation{
-				OrganizationID: organizationID,
-				Status:         coredata.SlackbotInstallationStatusActive,
-			},
-			client: newTestClient(server.URL + "/api"),
-		},
+	adapter := newExecutionAdapter(
+		t,
+		pgClient,
+		server.URL+"/api",
 		&fakeExecutionBindings{
 			binding: &identitybinding.Binding{
-				IdentityID: gid.New(tenantID, coredata.IdentityEntityType),
+				IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
 			},
 		},
-		&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-		probot.NewCapabilityRegistry(),
-		&fakeExecutionDeliveries{},
-		log.NewLogger(),
 	)
 
 	_, _, err = adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
+			ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -460,28 +338,19 @@ func TestExecutionAdapterPrepare_SkipsAssistantStatusWithoutCoordinates(t *testi
 
 	var got []map[string]any
 	server := capturingAssistantStatusServer(t, &got)
-	tenantID := gid.NewTenantID()
-	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	pgClient, organizationID, _ := executionAdapterDatabase(t)
 
-	adapter := NewExecutionAdapter(
-		&fakeExecutionInstallations{
-			installation: &coredata.SlackbotInstallation{
-				OrganizationID: organizationID,
-				Status:         coredata.SlackbotInstallationStatusActive,
-			},
-			client: newTestClient(server.URL + "/api"),
-		},
+	adapter := newExecutionAdapter(
+		t,
+		pgClient,
+		server.URL+"/api",
 		&fakeExecutionBindings{},
-		&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-		probot.NewCapabilityRegistry(),
-		&fakeExecutionDeliveries{},
-		log.NewLogger(),
 	)
 
 	_, _, err := adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:             gid.New(tenantID, coredata.AgentExecutionEntityType),
+			ID:             gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 			OrganizationID: organizationID,
 			StartAgentName: "probot",
 		},
@@ -497,8 +366,7 @@ func TestExecutionAdapterPrepare_RefreshesAssistantStatusByOrganization(t *testi
 
 	var got []map[string]any
 	server := capturingAssistantStatusServer(t, &got)
-	tenantID := gid.NewTenantID()
-	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	pgClient, organizationID, _ := executionAdapterDatabase(t)
 	coordinates, err := json.Marshal(
 		ExecutionSourceCoordinates{
 			ChannelID: "C123",
@@ -507,25 +375,17 @@ func TestExecutionAdapterPrepare_RefreshesAssistantStatusByOrganization(t *testi
 	)
 	require.NoError(t, err)
 
-	adapter := NewExecutionAdapter(
-		&fakeExecutionInstallations{
-			installation: &coredata.SlackbotInstallation{
-				OrganizationID: organizationID,
-				Status:         coredata.SlackbotInstallationStatusActive,
-			},
-			client: newTestClient(server.URL + "/api"),
-		},
+	adapter := newExecutionAdapter(
+		t,
+		pgClient,
+		server.URL+"/api",
 		&fakeExecutionBindings{},
-		&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-		probot.NewCapabilityRegistry(),
-		&fakeExecutionDeliveries{},
-		log.NewLogger(),
 	)
 
 	_, _, err = adapter.Prepare(
 		t.Context(),
 		&coredata.AgentExecution{
-			ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
+			ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 			OrganizationID:    organizationID,
 			StartAgentName:    "probot",
 			SourceCoordinates: coordinates,
@@ -547,11 +407,19 @@ func TestExecutionAdapterPrepare_AssistantStatusErrorsDoNotFailPrepare(t *testin
 		func(t *testing.T) {
 			t.Parallel()
 
-			tenantID := gid.NewTenantID()
-			organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+			pgClient, _, organizationID := executionIngressDatabase(t)
+			teamID := uniqueSlackTeamID(t)
+			insertInstallationWithKey(
+				t,
+				pgClient,
+				organizationID,
+				teamID,
+				"UBOT",
+				cipher.EncryptionKey{9, 9, 9},
+			)
 			coordinates, err := json.Marshal(
 				ExecutionSourceCoordinates{
-					TeamID:         "T123",
+					TeamID:         teamID,
 					ChannelID:      "C123",
 					ThreadTS:       "123.000",
 					MessageTS:      "123.456",
@@ -561,28 +429,22 @@ func TestExecutionAdapterPrepare_AssistantStatusErrorsDoNotFailPrepare(t *testin
 			require.NoError(t, err)
 
 			adapter := NewExecutionAdapter(
-				&fakeExecutionInstallations{
-					installation: &coredata.SlackbotInstallation{
-						OrganizationID: organizationID,
-						Status:         coredata.SlackbotInstallationStatusActive,
-					},
-					clientErr: errors.New("cannot load Slack client"),
-				},
+				newTestInstallationService(t, pgClient, ""),
 				&fakeExecutionBindings{
 					binding: &identitybinding.Binding{
-						IdentityID: gid.New(tenantID, coredata.IdentityEntityType),
+						IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
 					},
 				},
-				&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
+				newTestAgentProfiles(t),
 				probot.NewCapabilityRegistry(),
-				&fakeExecutionDeliveries{},
+				NewDeliveryService(pgClient),
 				log.NewLogger(),
 			)
 
 			_, _, err = adapter.Prepare(
 				t.Context(),
 				&coredata.AgentExecution{
-					ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
+					ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 					OrganizationID:    organizationID,
 					StartAgentName:    "probot",
 					SourceCoordinates: coordinates,
@@ -611,11 +473,10 @@ func TestExecutionAdapterPrepare_AssistantStatusErrorsDoNotFailPrepare(t *testin
 			)
 			t.Cleanup(server.Close)
 
-			tenantID := gid.NewTenantID()
-			organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+			pgClient, organizationID, teamID := executionAdapterDatabase(t)
 			coordinates, err := json.Marshal(
 				ExecutionSourceCoordinates{
-					TeamID:         "T123",
+					TeamID:         teamID,
 					ChannelID:      "C123",
 					ThreadTS:       "123.000",
 					MessageTS:      "123.456",
@@ -624,29 +485,21 @@ func TestExecutionAdapterPrepare_AssistantStatusErrorsDoNotFailPrepare(t *testin
 			)
 			require.NoError(t, err)
 
-			adapter := NewExecutionAdapter(
-				&fakeExecutionInstallations{
-					installation: &coredata.SlackbotInstallation{
-						OrganizationID: organizationID,
-						Status:         coredata.SlackbotInstallationStatusActive,
-					},
-					client: newTestClient(server.URL + "/api"),
-				},
+			adapter := newExecutionAdapter(
+				t,
+				pgClient,
+				server.URL+"/api",
 				&fakeExecutionBindings{
 					binding: &identitybinding.Binding{
-						IdentityID: gid.New(tenantID, coredata.IdentityEntityType),
+						IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
 					},
 				},
-				&fakeExecutionProfiles{agent: agent.New("Probot", nil)},
-				probot.NewCapabilityRegistry(),
-				&fakeExecutionDeliveries{},
-				log.NewLogger(),
 			)
 
 			_, _, err = adapter.Prepare(
 				t.Context(),
 				&coredata.AgentExecution{
-					ID:                gid.New(tenantID, coredata.AgentExecutionEntityType),
+					ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
 					OrganizationID:    organizationID,
 					StartAgentName:    "probot",
 					SourceCoordinates: coordinates,
@@ -656,6 +509,34 @@ func TestExecutionAdapterPrepare_AssistantStatusErrorsDoNotFailPrepare(t *testin
 			)
 			require.NoError(t, err)
 		},
+	)
+}
+
+func executionAdapterDatabase(t *testing.T) (*pg.Client, gid.GID, string) {
+	t.Helper()
+
+	pgClient, _, organizationID := executionIngressDatabase(t)
+	teamID := uniqueSlackTeamID(t)
+	insertActiveInstallation(t, pgClient, organizationID, teamID, "UBOT")
+
+	return pgClient, organizationID, teamID
+}
+
+func newExecutionAdapter(
+	t *testing.T,
+	pgClient *pg.Client,
+	apiBaseURL string,
+	bindings identitybinding.Gate,
+) *ExecutionAdapter {
+	t.Helper()
+
+	return NewExecutionAdapter(
+		newTestInstallationService(t, pgClient, apiBaseURL),
+		bindings,
+		newTestAgentProfiles(t),
+		probot.NewCapabilityRegistry(),
+		NewDeliveryService(pgClient),
+		log.NewLogger(),
 	)
 }
 
