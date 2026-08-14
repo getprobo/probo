@@ -6242,6 +6242,10 @@
         "title": "Confidentialité",
         "description": "Vérifier les données collectées"
       },
+      "download": {
+        "title": "Télécharger",
+        "description": "Installer l’agent de bureau"
+      },
       "organization": {
         "description": "Choisir l’espace de travail de destination"
       },
@@ -6258,6 +6262,11 @@
       "title": "Avant de commencer",
       "description": "Probo collecte les métadonnées d’appareil suivantes à des fins d’inventaire et de rapport de posture :"
     },
+    "download": {
+      "title": "Télécharger l’agent Probo",
+      "description": "Téléchargez l’agent Probo depuis <a>pro.bo/install</a>.",
+      "alreadyInstalled": "Cette étape n’est pas nécessaire si l’agent est déjà installé sur cet appareil."
+    },
     "privacy": {
       "identity": "Identité de l’appareil : UUID matériel, nom d’hôte et numéro de série (si disponible).",
       "systemDetails": "Détails système : plateforme, version du système d’exploitation et version de l’agent Probo.",
@@ -6269,7 +6278,7 @@
     },
     "openAgent": {
       "title": "Ouvrir l’agent Probo",
-      "description": "Ouvrez l’agent de bureau pour terminer la configuration, puis laissez cette page ouverte jusqu’à confirmation de l’enrôlement."
+      "description": "Cliquez sur « {{action}} » pour terminer la configuration, puis laissez cette page ouverte jusqu’à confirmation de l’enrôlement."
     },
     "actions": {
       "backToOrganizations": "Retour aux organisations",

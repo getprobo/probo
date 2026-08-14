@@ -6238,6 +6238,10 @@
         "title": "Privacy",
         "description": "Verzamelde gegevens bekijken"
       },
+      "download": {
+        "title": "Downloaden",
+        "description": "Installeer de desktopagent"
+      },
       "organization": {
         "description": "Kies bestemmingswerkruimte"
       },
@@ -6254,6 +6258,11 @@
       "title": "Voordat u begint",
       "description": "Probo verzamelt de volgende apparaatmetadata voor inventarisatie- en postuurrapportage:"
     },
+    "download": {
+      "title": "Download de Probo-agent",
+      "description": "Download de Probo-agent van <a>pro.bo/install</a>.",
+      "alreadyInstalled": "Deze stap is niet nodig als de agent al op dit apparaat is geïnstalleerd."
+    },
     "privacy": {
       "identity": "Apparaatidentiteit: hardware-UUID, hostnaam en serienummer (indien beschikbaar).",
       "systemDetails": "Systeemdetails: platform, OS-versie en versie van de Probo agent.",
@@ -6265,7 +6274,7 @@
     },
     "openAgent": {
       "title": "Open de Probo agent",
-      "description": "Open de desktopagent om de installatie af te ronden en houd deze pagina open totdat de registratie is bevestigd."
+      "description": "Klik op '{{action}}' om de installatie af te ronden en houd deze pagina open totdat de registratie is bevestigd."
     },
     "actions": {
       "backToOrganizations": "Terug naar organisaties",
