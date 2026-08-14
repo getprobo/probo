@@ -169,7 +169,6 @@
     },
     "actions": {
       "uploading": "Uploading...",
-      "updating": "Updating...",
       "noLogo": "No logo",
       "uploadLogo": "Upload logo",
       "uploadDarkLogo": "Upload dark logo",
@@ -806,9 +805,6 @@
     "description": "Manage subprocessor assessments and third-party risk information"
   },
   "updatesPage": {
-    "messages": {
-      "updated": "Mailing list updated successfully"
-    },
     "errors": {
       "update": "Failed to update mailing list"
     },
@@ -823,7 +819,6 @@
       "subscribers": "Subscribers"
     },
     "actions": {
-      "save": "Save",
       "addUpdate": "Add update",
       "addSubscriber": "Add subscriber"
     }

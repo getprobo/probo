@@ -169,7 +169,6 @@
     },
     "actions": {
       "uploading": "Téléversement...",
-      "updating": "Mise à jour...",
       "noLogo": "Aucun logo",
       "uploadLogo": "Téléverser le logo",
       "uploadDarkLogo": "Téléverser le logo sombre",
@@ -806,9 +805,6 @@
     "description": "Gérez les évaluations des sous-traitants et les informations de risque tiers"
   },
   "updatesPage": {
-    "messages": {
-      "updated": "Liste de diffusion mise à jour avec succès"
-    },
     "errors": {
       "update": "Échec de la mise à jour de la liste de diffusion"
     },
@@ -823,7 +819,6 @@
       "subscribers": "Abonnés"
     },
     "actions": {
-      "save": "Enregistrer",
       "addUpdate": "Ajouter une mise à jour",
       "addSubscriber": "Ajouter un abonné"
     }

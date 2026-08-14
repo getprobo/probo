@@ -54,11 +54,9 @@ export function CompliancePortalBrandingPage({ queryRef }: CompliancePortalBrand
 
   return (
     <div className="space-y-8">
+      <CompliancePortalProfileSection compliancePortalRef={compliancePortal} />
       {compliancePortal.canListCustomLinks && (
-        <>
-          <CompliancePortalProfileSection compliancePortalRef={compliancePortal} />
-          <CompliancePortalCustomLinksSection compliancePortalRef={compliancePortal} />
-        </>
+        <CompliancePortalCustomLinksSection compliancePortalRef={compliancePortal} />
       )}
     </div>
   );

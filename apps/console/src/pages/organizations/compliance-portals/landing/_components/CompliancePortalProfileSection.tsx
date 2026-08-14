@@ -9,18 +9,18 @@
 // AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
 // INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// OTHER TORTIOUS ACTION, ARISING FROM, OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Button, Card, Field, Label, Spinner, Textarea } from "@probo/ui";
+import { Card, Field } from "@probo/ui";
+import type { FocusEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalProfileSection_compliancePortalFragment$key } from "#/__generated__/core/CompliancePortalProfileSection_compliancePortalFragment.graphql";
-import { useUpdateCompliancePortalMutation } from "#/hooks/graph/CompliancePortalGraph";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
+import type { CompliancePortalProfileSection_updateMutation } from "#/__generated__/core/CompliancePortalProfileSection_updateMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import { CompliancePortalVisualIdentitySection } from "./CompliancePortalVisualIdentitySection";
 
@@ -37,98 +37,140 @@ const compliancePortalFragment = graphql`
   }
 `;
 
-const profileSchema = z.object({
-  entityName: z.string().min(1),
-  description: z.string().optional(),
-  websiteUrl: z.string().optional(),
-  email: z.string().optional(),
-  headquarterAddress: z.string().optional(),
-});
+const updateMutation = graphql`
+  mutation CompliancePortalProfileSection_updateMutation($input: UpdateCompliancePortalInput!) {
+    updateCompliancePortal(input: $input) {
+      compliancePortal {
+        id
+        entityName
+        description
+        websiteUrl
+        email
+        headquarterAddress
+      }
+    }
+  }
+`;
 
-type ProfileFormData = z.infer<typeof profileSchema>;
+type OptionalProfileField = "description" | "websiteUrl" | "email" | "headquarterAddress";
 
-export function CompliancePortalProfileSection(props: {
+function normalizeOptional(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export function CompliancePortalProfileSection({
+  compliancePortalRef,
+}: {
   compliancePortalRef: CompliancePortalProfileSection_compliancePortalFragment$key;
 }) {
   const { t } = useTranslation("organizations/compliance-portals");
 
   const compliancePortal = useFragment(
     compliancePortalFragment,
-    props.compliancePortalRef,
+    compliancePortalRef,
   );
   const { canUpdate } = compliancePortal;
 
-  const [updateCompliancePortal, isUpdating] = useUpdateCompliancePortalMutation();
-
-  const { formState, handleSubmit, register } = useFormWithSchema(profileSchema, {
-    defaultValues: {
-      entityName: compliancePortal.entityName,
-      description: compliancePortal.description || "",
-      websiteUrl: compliancePortal.websiteUrl || "",
-      email: compliancePortal.email || "",
-      headquarterAddress: compliancePortal.headquarterAddress || "",
+  const [updateCompliancePortal] = useMutation<CompliancePortalProfileSection_updateMutation>(
+    updateMutation,
+    {
+      errorToast: t("brandPage.errors.update"),
     },
-  });
+  );
 
-  const readOnly = formState.isSubmitting || !canUpdate;
-
-  const onSubmit = handleSubmit(async (data: ProfileFormData) => {
-    await updateCompliancePortal({
+  function patch(
+    field: "entityName" | OptionalProfileField,
+    value: string | null,
+  ) {
+    void updateCompliancePortal({
       variables: {
         input: {
           compliancePortalId: compliancePortal.id,
-          entityName: data.entityName,
-          description: data.description || null,
-          websiteUrl: data.websiteUrl || null,
-          email: data.email || null,
-          headquarterAddress: data.headquarterAddress || null,
+          [field]: value,
         },
       },
     });
-  });
+  }
+
+  function handleEntityNameBlur(event: FocusEvent<HTMLInputElement>) {
+    const next = event.currentTarget.value.trim();
+    const current = compliancePortal.entityName;
+    if (next.length === 0) {
+      event.currentTarget.value = current;
+      return;
+    }
+    if (next === current) {
+      return;
+    }
+    patch("entityName", next);
+  }
+
+  function optionalBlurHandler(
+    field: OptionalProfileField,
+    current: string | null | undefined,
+  ) {
+    return (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const next = normalizeOptional(event.currentTarget.value);
+      if (next === normalizeOptional(current)) {
+        return;
+      }
+      patch(field, next);
+    };
+  }
+
+  const entityName = compliancePortal.entityName;
+  const description = normalizeOptional(compliancePortal.description) ?? "";
+  const websiteUrl = normalizeOptional(compliancePortal.websiteUrl) ?? "";
+  const email = normalizeOptional(compliancePortal.email) ?? "";
+  const headquarterAddress = normalizeOptional(compliancePortal.headquarterAddress) ?? "";
 
   return (
-    <form onSubmit={e => void onSubmit(e)} className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-medium">{t("brandPage.profile.title")}</h2>
-          <p className="text-sm text-txt-tertiary">
-            {t("brandPage.profile.description")}
-          </p>
-        </div>
-        {formState.isSubmitting && <Spinner />}
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-base font-medium">{t("brandPage.profile.title")}</h2>
+        <p className="text-sm text-txt-tertiary">
+          {t("brandPage.profile.description")}
+        </p>
       </div>
       <Card padded className="space-y-4">
         <Field
-          {...register("entityName")}
-          readOnly={readOnly}
+          key={entityName}
+          defaultValue={entityName}
+          onBlur={handleEntityNameBlur}
+          readOnly={!canUpdate}
           name="entityName"
           label={t("brandPage.profile.fields.entityName")}
           placeholder={t("brandPage.profile.fields.entityNamePlaceholder")}
         />
-        <div>
-          <Label>{t("brandPage.profile.fields.description")}</Label>
-          <Textarea
-            {...register("description")}
-            readOnly={readOnly}
-            name="description"
-            placeholder={t("brandPage.profile.fields.descriptionPlaceholder")}
-            rows={3}
-          />
-        </div>
+        <Field
+          key={description}
+          defaultValue={description}
+          onBlur={optionalBlurHandler("description", compliancePortal.description)}
+          readOnly={!canUpdate}
+          name="description"
+          type="textarea"
+          label={t("brandPage.profile.fields.description")}
+          placeholder={t("brandPage.profile.fields.descriptionPlaceholder")}
+          rows={3}
+        />
         <CompliancePortalVisualIdentitySection compliancePortalRef={compliancePortal} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field
-            {...register("websiteUrl")}
-            readOnly={readOnly}
+            key={websiteUrl}
+            defaultValue={websiteUrl}
+            onBlur={optionalBlurHandler("websiteUrl", compliancePortal.websiteUrl)}
+            readOnly={!canUpdate}
             name="websiteUrl"
             type="url"
             label={t("brandPage.profile.fields.websiteUrl")}
             placeholder={t("externalUrls.fields.urlPlaceholder")}
           />
           <Field
-            {...register("email")}
-            readOnly={readOnly}
+            key={email}
+            defaultValue={email}
+            onBlur={optionalBlurHandler("email", compliancePortal.email)}
+            readOnly={!canUpdate}
             name="email"
             type="email"
             label={t("brandPage.profile.fields.email")}
@@ -136,23 +178,18 @@ export function CompliancePortalProfileSection(props: {
           />
         </div>
         <Field
-          {...register("headquarterAddress")}
-          readOnly={readOnly}
+          key={headquarterAddress}
+          defaultValue={headquarterAddress}
+          onBlur={optionalBlurHandler(
+            "headquarterAddress",
+            compliancePortal.headquarterAddress,
+          )}
+          readOnly={!canUpdate}
           name="headquarterAddress"
           label={t("brandPage.profile.fields.address")}
           placeholder={t("brandPage.profile.fields.addressPlaceholder")}
         />
-
-        {formState.isDirty && canUpdate && (
-          <div className="flex justify-end pt-6">
-            <Button type="submit" disabled={formState.isSubmitting || isUpdating}>
-              {formState.isSubmitting || isUpdating
-                ? t("brandPage.actions.updating")
-                : t("externalUrls.actions.save")}
-            </Button>
-          </div>
-        )}
       </Card>
-    </form>
+    </div>
   );
 }

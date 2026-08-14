@@ -169,7 +169,6 @@
     },
     "actions": {
       "uploading": "Uploaden...",
-      "updating": "Bijwerken...",
       "noLogo": "Geen logo",
       "uploadLogo": "Logo uploaden",
       "uploadDarkLogo": "Donker logo uploaden",
@@ -806,9 +805,6 @@
     "description": "Beheer beoordelingen van subverwerkers en informatie over risico's van derden"
   },
   "updatesPage": {
-    "messages": {
-      "updated": "Mailinglijst succesvol bijgewerkt"
-    },
     "errors": {
       "update": "Bijwerken van mailinglijst mislukt"
     },
@@ -823,7 +819,6 @@
       "subscribers": "Abonnees"
     },
     "actions": {
-      "save": "Opslaan",
       "addUpdate": "Update toevoegen",
       "addSubscriber": "Abonnee toevoegen"
     }

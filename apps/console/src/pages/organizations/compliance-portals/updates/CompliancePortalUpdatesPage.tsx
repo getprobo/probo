@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, Field, IconPlusLarge, Spinner, TabItem, Tabs, useDialogRef } from "@probo/ui";
+import { Button, Card, Field, IconPlusLarge, TabItem, Tabs, useDialogRef } from "@probo/ui";
+import type { FocusEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -95,36 +96,32 @@ export function CompliancePortalUpdatesPage(props: {
     ? ConnectionHandler.getConnectionID(mailingListId, "CompliancePortalUpdatesList_updates")
     : null;
 
-  const [replyTo, setReplyTo] = useState(mailingList?.replyTo ?? "");
-  // This page stays mounted across portal switches, so re-seed the field when it
-  // starts editing a different mailing list — otherwise saving without touching
-  // the input overwrites the newly selected portal's reply-to.
-  const [editedMailingListId, setEditedMailingListId] = useState(mailingListId);
-  if (editedMailingListId !== mailingListId) {
-    setEditedMailingListId(mailingListId);
-    setReplyTo(mailingList?.replyTo ?? "");
-  }
-
-  const [updateMailingList, isUpdating]
+  const [updateMailingList]
     = useMutation<CompliancePortalUpdatesPage_updateMailingListMutation>(
       updateMailingListMutation,
       {
-        successMessage: t("updatesPage.messages.updated"),
         errorToast: t("updatesPage.errors.update"),
       },
     );
 
-  const handleSaveReplyTo = () => {
-    if (!mailingListId) return;
+  function handleReplyToBlur(event: FocusEvent<HTMLInputElement>) {
+    if (!mailingListId) {
+      return;
+    }
+    const next = event.currentTarget.value.trim() || null;
+    const current = mailingList?.replyTo || null;
+    if (next === current) {
+      return;
+    }
     void updateMailingList({
       variables: {
         input: {
           id: mailingListId,
-          replyTo: replyTo.trim() || null,
+          replyTo: next,
         },
       },
     });
-  };
+  }
 
   const handleEditUpdate = (update: UpdateNode) => {
     setSelectedUpdate({ ...update });
@@ -141,25 +138,14 @@ export function CompliancePortalUpdatesPage(props: {
               {t("updatesPage.settings.description")}
             </p>
           </div>
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <Field
-                label={t("updatesPage.settings.replyTo")}
-                type="email"
-                placeholder={t("updatesPage.settings.replyToPlaceholder")}
-                value={replyTo}
-                onChange={e => setReplyTo(e.target.value)}
-              />
-            </div>
-            <Button
-              onClick={handleSaveReplyTo}
-              disabled={isUpdating}
-              className="shrink-0"
-            >
-              {isUpdating && <Spinner />}
-              {t("updatesPage.actions.save")}
-            </Button>
-          </div>
+          <Field
+            key={`${mailingListId}:${mailingList?.replyTo ?? ""}`}
+            label={t("updatesPage.settings.replyTo")}
+            type="email"
+            placeholder={t("updatesPage.settings.replyToPlaceholder")}
+            defaultValue={mailingList?.replyTo ?? ""}
+            onBlur={handleReplyToBlur}
+          />
         </Card>
       )}
 
