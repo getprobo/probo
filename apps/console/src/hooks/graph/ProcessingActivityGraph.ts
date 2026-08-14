@@ -44,33 +44,55 @@ export const processingActivitiesQuery = graphql`
         canPublishProcessingActivities: permission(
           action: "core:processing-activity:publish"
         )
-        canPublishDataProtectionImpactAssessments: permission(
-          action: "core:data-protection-impact-assessment:publish"
-        )
-        canPublishTransferImpactAssessments: permission(
-          action: "core:transfer-impact-assessment:publish"
-        )
         processingActivitiesDocument {
           id
           defaultApprovers {
             id
           }
         }
+        ...ProcessingActivitiesPageFragment
+      }
+    }
+  }
+`;
+
+export const dataProtectionImpactAssessmentsQuery = graphql`
+  query ProcessingActivityGraphDPIAListQuery(
+    $organizationId: ID!
+  ) {
+    node(id: $organizationId) {
+      ... on Organization {
+        canPublishDataProtectionImpactAssessments: permission(
+          action: "core:data-protection-impact-assessment:publish"
+        )
         dataProtectionImpactAssessmentsDocument {
           id
           defaultApprovers {
             id
           }
         }
+        ...DataProtectionImpactAssessmentsPageFragment
+      }
+    }
+  }
+`;
+
+export const transferImpactAssessmentsQuery = graphql`
+  query ProcessingActivityGraphTIAListQuery(
+    $organizationId: ID!
+  ) {
+    node(id: $organizationId) {
+      ... on Organization {
+        canPublishTransferImpactAssessments: permission(
+          action: "core:transfer-impact-assessment:publish"
+        )
         transferImpactAssessmentsDocument {
           id
           defaultApprovers {
             id
           }
         }
-        ...ProcessingActivitiesPageFragment
-        ...ProcessingActivitiesPageDPIAFragment
-        ...ProcessingActivitiesPageTIAFragment
+        ...TransferImpactAssessmentsPageFragment
       }
     }
   }

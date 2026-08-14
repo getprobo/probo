@@ -2451,6 +2451,8 @@
     "obligations": "Verplichtingen",
     "registries": "Registers",
     "processingActivities": "Verwerkingsactiviteiten",
+    "dataProtectionImpactAssessments": "DPIAs",
+    "transferImpactAssessments": "TIAs",
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Rechtenverzoeken",
     "campaigns": "Campagnes",
@@ -4572,11 +4574,6 @@
   "processingActivitiesPage": {
     "title": "Verwerkingsactiviteiten",
     "description": "Beheer uw verwerkingsactiviteiten onder de GDPR",
-    "tabs": {
-      "activities": "Verwerkingsactiviteiten",
-      "dpia": "Gegevensbeschermingseffectbeoordelingen",
-      "tia": "Transferimpactbeoordelingen"
-    },
     "actions": {
       "add": "Verwerkingsactiviteit toevoegen",
       "document": "Document",
@@ -4592,27 +4589,56 @@
       "lawfulBasis": "Rechtsgrondslag",
       "location": "Locatie",
       "internationalTransfers": "Internationale overdrachten",
-      "actions": "Acties",
-      "processingActivity": "Verwerkingsactiviteit",
-      "description": "Beschrijving",
-      "potentialRisk": "Potentieel risico",
-      "residualRisk": "Restrisico",
-      "dataSubjects": "Betrokkenen",
-      "transfer": "Overdragen",
-      "localLawRisk": "Risico lokale wetgeving"
+      "actions": "Acties"
     },
     "empty": {
-      "activitiesTitle": "Nog geen verwerkingsactiviteiten",
-      "activitiesDescription": "Maak uw eerste verwerkingsactiviteit aan om te beginnen met GDPR-compliance.",
-      "dpiaTitle": "Nog geen gegevensbeschermingseffectbeoordelingen",
-      "dpiaDescription": "DPIA's worden aangemaakt binnen individuele verwerkingsactiviteiten.",
-      "tiaTitle": "Nog geen transferimpactbeoordelingen",
-      "tiaDescription": "TIA's worden aangemaakt binnen individuele verwerkingsactiviteiten."
+      "title": "Nog geen verwerkingsactiviteiten",
+      "description": "Maak uw eerste verwerkingsactiviteit aan om te beginnen met GDPR-compliance."
     },
     "deleteConfirmation": "Hiermee wordt de verwerkingsactiviteit {{name}} permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "answers": {
       "yes": "Ja",
       "no": "Nee"
+    }
+  },
+  "dataProtectionImpactAssessmentsPage": {
+    "title": "Gegevensbeschermingseffectbeoordelingen",
+    "description": "Bekijk gegevensbeschermingseffectbeoordelingen van uw verwerkingsactiviteiten",
+    "actions": {
+      "document": "Document",
+      "publish": "Publiceren",
+      "loading": "Laden...",
+      "loadMore": "Meer laden"
+    },
+    "columns": {
+      "processingActivity": "Verwerkingsactiviteit",
+      "description": "Beschrijving",
+      "potentialRisk": "Potentieel risico",
+      "residualRisk": "Restrisico"
+    },
+    "empty": {
+      "title": "Nog geen gegevensbeschermingseffectbeoordelingen",
+      "description": "DPIA's worden aangemaakt binnen individuele verwerkingsactiviteiten."
+    }
+  },
+  "transferImpactAssessmentsPage": {
+    "title": "Transferimpactbeoordelingen",
+    "description": "Bekijk transferimpactbeoordelingen van uw verwerkingsactiviteiten",
+    "actions": {
+      "document": "Document",
+      "publish": "Publiceren",
+      "loading": "Laden...",
+      "loadMore": "Meer laden"
+    },
+    "columns": {
+      "processingActivity": "Verwerkingsactiviteit",
+      "dataSubjects": "Betrokkenen",
+      "transfer": "Overdragen",
+      "localLawRisk": "Risico lokale wetgeving"
+    },
+    "empty": {
+      "title": "Nog geen transferimpactbeoordelingen",
+      "description": "TIA's worden aangemaakt binnen individuele verwerkingsactiviteiten."
     }
   },
   "processingActivityDetailsPage": {

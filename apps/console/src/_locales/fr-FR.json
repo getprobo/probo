@@ -2451,6 +2451,8 @@
     "obligations": "Obligations",
     "registries": "Registres",
     "processingActivities": "Activités de traitement",
+    "dataProtectionImpactAssessments": "DPIAs",
+    "transferImpactAssessments": "TIAs",
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Demandes d’exercice de droits",
     "campaigns": "Campagnes",
@@ -4572,11 +4574,6 @@
   "processingActivitiesPage": {
     "title": "Activités de traitement",
     "description": "Gérez les activités de traitement de votre organisation dans le cadre du RGPD",
-    "tabs": {
-      "activities": "Activités de traitement",
-      "dpia": "Analyses d’impact relatives à la protection des données",
-      "tia": "Analyses d’impact des transferts"
-    },
     "actions": {
       "add": "Ajouter une activité de traitement",
       "document": "Document",
@@ -4592,27 +4589,56 @@
       "lawfulBasis": "Base légale",
       "location": "Emplacement",
       "internationalTransfers": "Transferts internationaux",
-      "actions": "Actions",
-      "processingActivity": "Activité de traitement",
-      "description": "Description",
-      "potentialRisk": "Risque potentiel",
-      "residualRisk": "Risque résiduel",
-      "dataSubjects": "Personnes concernées",
-      "transfer": "Transfert",
-      "localLawRisk": "Risque lié au droit local"
+      "actions": "Actions"
     },
     "empty": {
-      "activitiesTitle": "Aucune activité de traitement pour le moment",
-      "activitiesDescription": "Créez votre première activité de traitement pour commencer votre conformité au RGPD.",
-      "dpiaTitle": "Aucune analyse d’impact relative à la protection des données pour le moment",
-      "dpiaDescription": "Les AIPD sont créées depuis chaque activité de traitement.",
-      "tiaTitle": "Aucune analyse d’impact des transferts pour le moment",
-      "tiaDescription": "Les analyses d’impact des transferts sont créées depuis chaque activité de traitement."
+      "title": "Aucune activité de traitement pour le moment",
+      "description": "Créez votre première activité de traitement pour commencer votre conformité au RGPD."
     },
     "deleteConfirmation": "Cette action supprimera définitivement l’activité de traitement {{name}}. Cette action est irréversible.",
     "answers": {
       "yes": "Oui",
       "no": "Non"
+    }
+  },
+  "dataProtectionImpactAssessmentsPage": {
+    "title": "Analyses d’impact relatives à la protection des données",
+    "description": "Consultez les analyses d’impact relatives à la protection des données de vos activités de traitement",
+    "actions": {
+      "document": "Document",
+      "publish": "Publier",
+      "loading": "Chargement...",
+      "loadMore": "Charger plus"
+    },
+    "columns": {
+      "processingActivity": "Activité de traitement",
+      "description": "Description",
+      "potentialRisk": "Risque potentiel",
+      "residualRisk": "Risque résiduel"
+    },
+    "empty": {
+      "title": "Aucune analyse d’impact relative à la protection des données pour le moment",
+      "description": "Les AIPD sont créées depuis chaque activité de traitement."
+    }
+  },
+  "transferImpactAssessmentsPage": {
+    "title": "Analyses d’impact des transferts",
+    "description": "Consultez les analyses d’impact des transferts de vos activités de traitement",
+    "actions": {
+      "document": "Document",
+      "publish": "Publier",
+      "loading": "Chargement...",
+      "loadMore": "Charger plus"
+    },
+    "columns": {
+      "processingActivity": "Activité de traitement",
+      "dataSubjects": "Personnes concernées",
+      "transfer": "Transfert",
+      "localLawRisk": "Risque lié au droit local"
+    },
+    "empty": {
+      "title": "Aucune analyse d’impact des transferts pour le moment",
+      "description": "Les analyses d’impact des transferts sont créées depuis chaque activité de traitement."
     }
   },
   "processingActivityDetailsPage": {

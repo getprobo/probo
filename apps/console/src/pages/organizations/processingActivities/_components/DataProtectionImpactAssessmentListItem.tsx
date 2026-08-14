@@ -1,0 +1,97 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { Badge, Td, Tr } from "@probo/ui";
+import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
+
+import type { DataProtectionImpactAssessmentListItem_dataProtectionImpactAssessment$key } from "#/__generated__/core/DataProtectionImpactAssessmentListItem_dataProtectionImpactAssessment.graphql";
+import { getResidualRiskLabel } from "#/components/form/ProcessingActivityEnumOptions";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+const dataProtectionImpactAssessmentListItemFragment = graphql`
+  fragment DataProtectionImpactAssessmentListItem_dataProtectionImpactAssessment on DataProtectionImpactAssessment {
+    id
+    description
+    potentialRisk
+    residualRisk
+    processingActivity {
+      id
+      name
+    }
+  }
+`;
+
+interface DataProtectionImpactAssessmentListItemProps {
+  dataProtectionImpactAssessmentKey: DataProtectionImpactAssessmentListItem_dataProtectionImpactAssessment$key;
+}
+
+export function DataProtectionImpactAssessmentListItem({
+  dataProtectionImpactAssessmentKey,
+}: DataProtectionImpactAssessmentListItemProps) {
+  const organizationId = useOrganizationId();
+  const { t } = useTranslation();
+  const dpia = useFragment(
+    dataProtectionImpactAssessmentListItemFragment,
+    dataProtectionImpactAssessmentKey,
+  );
+
+  const activityUrl
+    = `/organizations/${organizationId}/privacy/processing-activities/${dpia.processingActivity.id}#dpia`;
+
+  return (
+    <Tr to={activityUrl}>
+      <Td>
+        <span className="font-semibold">
+          {dpia.processingActivity.name}
+        </span>
+      </Td>
+      <Td>
+        <span className="text-sm text-txt-secondary line-clamp-2">
+          {dpia.description || "-"}
+        </span>
+      </Td>
+      <Td>
+        <span className="text-sm text-txt-secondary line-clamp-2">
+          {dpia.potentialRisk || "-"}
+        </span>
+      </Td>
+      <Td>
+        {dpia.residualRisk
+          ? (
+              <Badge
+                variant={
+                  dpia.residualRisk === "LOW"
+                    ? "success"
+                    : dpia.residualRisk === "MEDIUM"
+                      ? "warning"
+                      : "danger"
+                }
+              >
+                {getResidualRiskLabel(dpia.residualRisk, t)}
+              </Badge>
+            )
+          : (
+              "-"
+            )}
+      </Td>
+    </Tr>
+  );
+}

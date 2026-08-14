@@ -2450,6 +2450,8 @@
     "obligations": "Obligations",
     "registries": "Registries",
     "processingActivities": "Processing Activities",
+    "dataProtectionImpactAssessments": "DPIAs",
+    "transferImpactAssessments": "TIAs",
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Rights Requests",
     "campaigns": "Campaigns",
@@ -4572,11 +4574,6 @@
   "processingActivitiesPage": {
     "title": "Processing Activities",
     "description": "Manage your processing activities under GDPR",
-    "tabs": {
-      "activities": "Processing Activities",
-      "dpia": "Data Protection Impact Assessments",
-      "tia": "Transfer Impact Assessments"
-    },
     "actions": {
       "add": "Add processing activity",
       "document": "Document",
@@ -4592,27 +4589,56 @@
       "lawfulBasis": "Lawful Basis",
       "location": "Location",
       "internationalTransfers": "International Transfers",
-      "actions": "Actions",
-      "processingActivity": "Processing Activity",
-      "description": "Description",
-      "potentialRisk": "Potential Risk",
-      "residualRisk": "Residual Risk",
-      "dataSubjects": "Data Subjects",
-      "transfer": "Transfer",
-      "localLawRisk": "Local Law Risk"
+      "actions": "Actions"
     },
     "empty": {
-      "activitiesTitle": "No processing activities yet",
-      "activitiesDescription": "Create your first processing activity to get started with GDPR compliance.",
-      "dpiaTitle": "No Data Protection Impact Assessments yet",
-      "dpiaDescription": "DPIAs are created from within individual processing activities.",
-      "tiaTitle": "No Transfer Impact Assessments yet",
-      "tiaDescription": "TIAs are created from within individual processing activities."
+      "title": "No processing activities yet",
+      "description": "Create your first processing activity to get started with GDPR compliance."
     },
     "deleteConfirmation": "This will permanently delete the processing activity {{name}}. This action cannot be undone.",
     "answers": {
       "yes": "Yes",
       "no": "No"
+    }
+  },
+  "dataProtectionImpactAssessmentsPage": {
+    "title": "Data Protection Impact Assessments",
+    "description": "Review data protection impact assessments across your processing activities",
+    "actions": {
+      "document": "Document",
+      "publish": "Publish",
+      "loading": "Loading...",
+      "loadMore": "Load more"
+    },
+    "columns": {
+      "processingActivity": "Processing Activity",
+      "description": "Description",
+      "potentialRisk": "Potential Risk",
+      "residualRisk": "Residual Risk"
+    },
+    "empty": {
+      "title": "No Data Protection Impact Assessments yet",
+      "description": "DPIAs are created from within individual processing activities."
+    }
+  },
+  "transferImpactAssessmentsPage": {
+    "title": "Transfer Impact Assessments",
+    "description": "Review transfer impact assessments across your processing activities",
+    "actions": {
+      "document": "Document",
+      "publish": "Publish",
+      "loading": "Loading...",
+      "loadMore": "Load more"
+    },
+    "columns": {
+      "processingActivity": "Processing Activity",
+      "dataSubjects": "Data Subjects",
+      "transfer": "Transfer",
+      "localLawRisk": "Local Law Risk"
+    },
+    "empty": {
+      "title": "No Transfer Impact Assessments yet",
+      "description": "TIAs are created from within individual processing activities."
     }
   },
   "processingActivityDetailsPage": {

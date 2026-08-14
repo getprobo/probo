@@ -62,6 +62,8 @@ export type NavPermission
     | "canListAiSystems"
     | "canListObligations"
     | "canListProcessingActivities"
+    | "canListDataProtectionImpactAssessments"
+    | "canListTransferImpactAssessments"
     | "canListStatementsOfApplicability"
     | "canListRightsRequests"
     | "canListAccessReviewCampaigns"
@@ -156,6 +158,16 @@ export const NAV_GROUPS: NavGroup[] = [
         path: "processing-activities",
         labelKey: "nav.processingActivities",
         permission: "canListProcessingActivities",
+      },
+      {
+        path: "dpias",
+        labelKey: "nav.dataProtectionImpactAssessments",
+        permission: "canListDataProtectionImpactAssessments",
+      },
+      {
+        path: "tias",
+        labelKey: "nav.transferImpactAssessments",
+        permission: "canListTransferImpactAssessments",
       },
       { path: "cookie-banners", kind: "switcher", labelKey: "nav.cookieBanners", permission: "canListCookieBanners" },
     ],

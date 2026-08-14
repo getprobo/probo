@@ -56,6 +56,8 @@ const navPanelFragment = graphql`
     canListAiSystems: permission(action: "core:ai-system:list")
     canListObligations: permission(action: "core:obligation:list")
     canListProcessingActivities: permission(action: "core:processing-activity:list")
+    canListDataProtectionImpactAssessments: permission(action: "core:data-protection-impact-assessment:list")
+    canListTransferImpactAssessments: permission(action: "core:transfer-impact-assessment:list")
     canListStatementsOfApplicability: permission(action: "core:statement-of-applicability:list")
     canListRightsRequests: permission(action: "core:rights-request:list")
     canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
