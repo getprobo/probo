@@ -748,13 +748,19 @@ ORDER BY name ASC
 	return ids, nil
 }
 
-// LoadAllUnreferencedIDs returns catalog entries that nothing points at:
-// no catalog tracker pattern, no organization third party in any tenant,
-// and no owned domain.
+// LoadAllUnreferencedIDs returns catalog entries that nothing points at: no
+// catalog tracker pattern and no organization third party in any tenant.
 //
 // These are the leftovers of a bad attribution — an entry created for a
 // vendor that turned out not to exist, which nothing ever linked. They are
 // not duplicates of anything, so merging cannot clean them up.
+//
+// Owned domains deliberately do not count as a reference. A domain is not
+// something pointing at the vendor, it is part of the vendor's own record:
+// enrichment output that means nothing once the entry is gone, and the
+// foreign key cascades it away with the row. Treating it as a reference only
+// stranded the entries most worth deleting, since an enriched entry usually
+// has one.
 //
 // createdBefore excludes entries still in flight: an entry is created
 // before the enrichment worker fills it in and before the pattern that
@@ -782,10 +788,6 @@ WHERE
     AND NOT EXISTS (
         SELECT 1 FROM third_parties AS tp
         WHERE tp.common_third_party_id = ctp.id
-    )
-    AND NOT EXISTS (
-        SELECT 1 FROM common_third_party_domains AS d
-        WHERE d.common_third_party_id = ctp.id
     )
 ORDER BY
     ctp.created_at ASC,

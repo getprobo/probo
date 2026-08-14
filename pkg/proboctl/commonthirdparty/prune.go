@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 	seed "go.probo.inc/probo/pkg/proboctl/seed/common-third-parties"
 )
@@ -52,7 +53,10 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 		Use:   "prune",
 		Short: "Delete catalog entries that nothing references",
 		Long: "Delete catalog entries with no catalog tracker pattern, no organization " +
-			"third party in any tenant, and no owned domain.\n\n" +
+			"third party in any tenant.\n\n" +
+			"Owned domains are deleted with the entry. A domain is part of the " +
+			"entry's own record rather than something referencing it, so it " +
+			"carries no meaning once the entry is gone.\n\n" +
 			"These are the leftovers of a bad attribution: an entry created for a " +
 			"vendor that nothing ever linked. They are not duplicates of anything, so " +
 			"`merge` cannot clean them up.\n\n" +
@@ -90,7 +94,10 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 		out := f.IOStreams.Out
 		errOut := f.IOStreams.ErrOut
 
-		var candidates []coredata.CommonThirdParty
+		var (
+			candidates   []coredata.CommonThirdParty
+			domainCounts = map[gid.GID]int{}
+		)
 
 		if err := pgClient.WithConn(
 			ctx,
@@ -122,6 +129,19 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 					candidates = append(candidates, party)
 				}
 
+				// Reported in the preview so deleting a row's domains with it
+				// is visible rather than a silent side effect.
+				var domains coredata.CommonThirdPartyDomains
+
+				byParty, err := domains.LoadAllGroupedByCommonThirdPartyID(ctx, conn)
+				if err != nil {
+					return err
+				}
+
+				for id, list := range byParty {
+					domainCounts[id] = len(list)
+				}
+
 				return nil
 			},
 		); err != nil {
@@ -146,7 +166,7 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 
 		if flagDryRun {
 			_, _ = fmt.Fprintf(out, "Would delete %d unreferenced common third party(ies):\n", len(candidates))
-			printPruneSample(out, candidates)
+			printPruneSample(out, candidates, domainCounts)
 
 			return nil
 		}
@@ -188,7 +208,7 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func printPruneSample(out io.Writer, parties []coredata.CommonThirdParty) {
+func printPruneSample(out io.Writer, parties []coredata.CommonThirdParty, domainCounts map[gid.GID]int) {
 	const sampleSize = 10
 
 	for i, party := range parties {
@@ -199,10 +219,11 @@ func printPruneSample(out io.Writer, parties []coredata.CommonThirdParty) {
 
 		_, _ = fmt.Fprintf(
 			out,
-			"  %s (%s) created=%s\n",
+			"  %s (%s) created=%s domains=%d\n",
 			party.Name,
 			party.Slug,
 			party.CreatedAt.Format("2006-01-02 15:04:05"),
+			domainCounts[party.ID],
 		)
 	}
 }

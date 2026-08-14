@@ -101,3 +101,56 @@ func TestCommonThirdPartyUpsert_SyncsReceiverToWrittenRow(t *testing.T) {
 	assert.NotEqual(t, decoy.ID, reseeded.ID, "receiver must not pick up the same-named decoy row")
 	assert.Equal(t, existing.Slug, reseeded.Slug)
 }
+
+// TestLoadAllUnreferencedIDs_DomainsDoNotProtectAnEntry pins that an owned
+// domain does not shield a catalog entry from pruning.
+//
+// A domain is part of the entry's own record, not something referencing it: it
+// is enrichment output that means nothing once the entry is gone, and the
+// foreign key cascades it away with the row. Counting it as a reference
+// stranded exactly the entries most worth deleting, because an enriched entry
+// almost always has one.
+func TestLoadAllUnreferencedIDs_DomainsDoNotProtectAnEntry(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	withDomain := seedCommonThirdParty(t, ctx, client)
+
+	domain := coredata.CommonThirdPartyDomain{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
+		CommonThirdPartyID: withDomain.ID,
+		Domain:             "owned-" + withDomain.Slug + ".example",
+		CreatedAt:          withDomain.CreatedAt,
+		UpdatedAt:          withDomain.CreatedAt,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return domain.Insert(ctx, tx)
+	}))
+
+	// Back-date past the in-flight window so the age guard does not hide it.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`UPDATE common_third_parties SET created_at = NOW() - interval '48 hours' WHERE id = $1`,
+			withDomain.ID,
+		)
+
+		return err
+	}))
+
+	var ids []gid.GID
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		var parties coredata.CommonThirdParties
+
+		var err error
+		ids, err = parties.LoadAllUnreferencedIDs(ctx, conn, time.Now().Add(-time.Hour), false)
+
+		return err
+	}))
+
+	assert.Contains(t, ids, withDomain.ID, "a domain must not protect an otherwise unreferenced entry")
+}
