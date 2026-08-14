@@ -1,7 +1,7 @@
 enum AgentExecutionStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatus") {
-    PENDING
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusPending")
+    IDLE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusIdle")
     RUNNING
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusRunning")
     SUSPENDED
@@ -10,8 +10,6 @@ enum AgentExecutionStatus
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusAwaitingApproval"
         )
-    COMPLETED
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusCompleted")
     FAILED
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.AgentExecutionStatusFailed")
 }

@@ -45,8 +45,6 @@ type (
 		StartAgentName        string               `db:"start_agent_name"`
 		Status                AgentExecutionStatus `db:"status"`
 		Checkpoint            json.RawMessage      `db:"checkpoint"`
-		InputMessages         json.RawMessage      `db:"input_messages"`
-		Result                json.RawMessage      `db:"result"`
 		ErrorMessage          *string              `db:"error_message"`
 		StartedAt             *time.Time           `db:"started_at"`
 		Source                *string              `db:"source"`
@@ -73,11 +71,10 @@ const (
 	AgentExecutionDefaultMaxAttempts = 5
 	AgentExecutionStaleLeaseError    = "agent execution processing lease expired"
 
-	AgentExecutionStatusPending          AgentExecutionStatus = "PENDING"
+	AgentExecutionStatusIdle             AgentExecutionStatus = "IDLE"
 	AgentExecutionStatusRunning          AgentExecutionStatus = "RUNNING"
 	AgentExecutionStatusSuspended        AgentExecutionStatus = "SUSPENDED"
 	AgentExecutionStatusAwaitingApproval AgentExecutionStatus = "AWAITING_APPROVAL"
-	AgentExecutionStatusCompleted        AgentExecutionStatus = "COMPLETED"
 	AgentExecutionStatusFailed           AgentExecutionStatus = "FAILED"
 )
 
@@ -89,11 +86,10 @@ var (
 
 func AgentExecutionStatuses() []AgentExecutionStatus {
 	return []AgentExecutionStatus{
-		AgentExecutionStatusPending,
+		AgentExecutionStatusIdle,
 		AgentExecutionStatusRunning,
 		AgentExecutionStatusSuspended,
 		AgentExecutionStatusAwaitingApproval,
-		AgentExecutionStatusCompleted,
 		AgentExecutionStatusFailed,
 	}
 }
@@ -101,11 +97,10 @@ func AgentExecutionStatuses() []AgentExecutionStatus {
 func (v AgentExecutionStatus) IsValid() bool {
 	switch v {
 	case
-		AgentExecutionStatusPending,
+		AgentExecutionStatusIdle,
 		AgentExecutionStatusRunning,
 		AgentExecutionStatusSuspended,
 		AgentExecutionStatusAwaitingApproval,
-		AgentExecutionStatusCompleted,
 		AgentExecutionStatusFailed:
 		return true
 	}
@@ -193,8 +188,6 @@ SELECT
 	start_agent_name,
 	status,
 	checkpoint,
-	input_messages,
-	result,
 	error_message,
 	started_at,
 	source,
@@ -242,8 +235,6 @@ SELECT
 	start_agent_name,
 	status,
 	checkpoint,
-	input_messages,
-	result,
 	error_message,
 	started_at,
 	source,
@@ -331,7 +322,6 @@ INSERT INTO agent_executions (
 	organization_id,
 	start_agent_name,
 	status,
-	input_messages,
 	session_messages,
 	processing_input_ids,
 	attempt_count,
@@ -344,7 +334,6 @@ INSERT INTO agent_executions (
 	@organization_id,
 	@start_agent_name,
 	@status,
-	@input_messages,
 	@session_messages,
 	@processing_input_ids,
 	@attempt_count,
@@ -358,8 +347,6 @@ RETURNING
 	start_agent_name,
 	status,
 	checkpoint,
-	input_messages,
-	result,
 	error_message,
 	started_at,
 	source,
@@ -379,20 +366,12 @@ RETURNING
 	updated_at;
 `
 
-	sessionMessages := e.SessionMessages
-	if sessionMessages == nil {
-		sessionMessages = e.InputMessages
-	}
-
-	if e.InputMessages == nil {
-		e.InputMessages = json.RawMessage("[]")
-		if sessionMessages == nil {
-			sessionMessages = e.InputMessages
-		}
+	if e.SessionMessages == nil {
+		e.SessionMessages = json.RawMessage("[]")
 	}
 
 	if e.MaxAttempts <= 0 {
-		e.MaxAttempts = 1
+		e.MaxAttempts = AgentExecutionDefaultMaxAttempts
 	}
 
 	args := pgx.StrictNamedArgs{
@@ -401,8 +380,7 @@ RETURNING
 		"organization_id":      e.OrganizationID.String(),
 		"start_agent_name":     e.StartAgentName,
 		"status":               e.Status,
-		"input_messages":       e.InputMessages,
-		"session_messages":     sessionMessages,
+		"session_messages":     e.SessionMessages,
 		"processing_input_ids": []string{},
 		"attempt_count":        e.AttemptCount,
 		"max_attempts":         e.MaxAttempts,
@@ -455,17 +433,17 @@ WHERE
 	return nil
 }
 
-func (e *AgentExecution) UpsertConversationalBySourceSession(
+func (e *AgentExecution) UpsertBySourceSession(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 ) (inserted bool, err error) {
 	if e.Source == nil || *e.Source == "" {
-		return false, fmt.Errorf("cannot upsert conversational agent execution: source is required")
+		return false, fmt.Errorf("cannot upsert agent execution: source is required")
 	}
 
 	if e.SessionKey == nil || *e.SessionKey == "" {
-		return false, fmt.Errorf("cannot upsert conversational agent execution: session key is required")
+		return false, fmt.Errorf("cannot upsert agent execution: session key is required")
 	}
 
 	q := `
@@ -475,7 +453,6 @@ INSERT INTO agent_executions (
 	organization_id,
 	start_agent_name,
 	status,
-	input_messages,
 	source,
 	session_key,
 	source_coordinates,
@@ -492,7 +469,6 @@ INSERT INTO agent_executions (
 	@organization_id,
 	@start_agent_name,
 	@status,
-	@input_messages,
 	@source,
 	@session_key,
 	@source_coordinates,
@@ -517,8 +493,6 @@ RETURNING
 	start_agent_name,
 	status,
 	checkpoint,
-	input_messages,
-	result,
 	error_message,
 	started_at,
 	source,
@@ -542,10 +516,6 @@ RETURNING
 		e.MaxAttempts = AgentExecutionDefaultMaxAttempts
 	}
 
-	if e.InputMessages == nil {
-		e.InputMessages = json.RawMessage("[]")
-	}
-
 	if e.SessionMessages == nil {
 		e.SessionMessages = json.RawMessage("[]")
 	}
@@ -556,8 +526,7 @@ RETURNING
 		"tenant_id":            scope.GetTenantID(),
 		"organization_id":      e.OrganizationID,
 		"start_agent_name":     e.StartAgentName,
-		"status":               AgentExecutionStatusPending,
-		"input_messages":       e.InputMessages,
+		"status":               AgentExecutionStatusIdle,
 		"source":               e.Source,
 		"session_key":          e.SessionKey,
 		"source_coordinates":   e.SourceCoordinates,
@@ -572,12 +541,12 @@ RETURNING
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return false, fmt.Errorf("cannot upsert conversational agent execution: %w", err)
+		return false, fmt.Errorf("cannot upsert agent execution: %w", err)
 	}
 
 	execution, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AgentExecution])
 	if err != nil {
-		return false, fmt.Errorf("cannot collect conversational agent execution: %w", err)
+		return false, fmt.Errorf("cannot collect agent execution: %w", err)
 	}
 
 	*e = execution
@@ -598,8 +567,6 @@ SELECT
 	start_agent_name,
 	status,
 	checkpoint,
-	input_messages,
-	result,
 	error_message,
 	started_at,
 	source,
@@ -681,7 +648,7 @@ WITH candidate AS (
 	SELECT id
 	FROM agent_executions
 	WHERE
-		status = @pending_status
+		status IN (@idle_status, @suspended_status)
 		AND processing_owner_token IS NULL
 		AND dead_lettered_at IS NULL
 		AND attempt_count < max_attempts
@@ -722,8 +689,6 @@ RETURNING
 	start_agent_name,
 	status,
 	checkpoint,
-	input_messages,
-	result,
 	error_message,
 	started_at,
 	source,
@@ -744,10 +709,11 @@ RETURNING
 `
 
 	args := pgx.StrictNamedArgs{
-		"pending_status": AgentExecutionStatusPending,
-		"running_status": AgentExecutionStatusRunning,
-		"now":            now,
-		"owner_token":    ownerToken,
+		"idle_status":      AgentExecutionStatusIdle,
+		"suspended_status": AgentExecutionStatusSuspended,
+		"running_status":   AgentExecutionStatusRunning,
+		"now":              now,
+		"owner_token":      ownerToken,
 	}
 
 	return e.loadExactlyOne(ctx, conn, q, args)
@@ -934,7 +900,7 @@ WHERE
 	return nil
 }
 
-func (e *AgentExecution) CommitConversationalSuccess(
+func (e *AgentExecution) CommitSuccess(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -964,7 +930,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
 		"id":               e.ID,
-		"status":           AgentExecutionStatusPending,
+		"status":           AgentExecutionStatusIdle,
 		"session_messages": e.SessionMessages,
 		"owner_token":      ownerToken,
 		"now":              now,
@@ -973,14 +939,14 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot commit conversational agent execution: %w", err)
+		return fmt.Errorf("cannot commit agent execution: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
 
-	e.Status = AgentExecutionStatusPending
+	e.Status = AgentExecutionStatusIdle
 	e.Checkpoint = nil
 	e.ProcessingInputIDs = nil
 	e.StartedAt = nil
@@ -1047,7 +1013,7 @@ func (e *AgentExecution) Release(
 		conn,
 		scope,
 		ownerToken,
-		AgentExecutionStatusPending,
+		AgentExecutionStatusIdle,
 		now,
 	)
 }
@@ -1137,7 +1103,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":              e.ID,
 		"owner_token":     ownerToken,
-		"status":          AgentExecutionStatusPending,
+		"status":          AgentExecutionStatusIdle,
 		"next_attempt_at": nextAttemptAt,
 		"last_error":      lastError,
 		"now":             now,
@@ -1153,7 +1119,7 @@ WHERE
 		return ErrResourceNotFound
 	}
 
-	e.Status = AgentExecutionStatusPending
+	e.Status = AgentExecutionStatusIdle
 	e.StartedAt = nil
 	e.ProcessingOwnerToken = nil
 	e.ProcessingHeartbeatAt = nil
@@ -1235,7 +1201,8 @@ UPDATE agent_executions
 SET
 	status = CASE
 		WHEN attempt_count >= max_attempts THEN @failed_status
-		ELSE @pending_status
+		WHEN checkpoint IS NOT NULL THEN @suspended_status
+		ELSE @idle_status
 	END,
 	started_at = NULL,
 	processing_owner_token = NULL,
@@ -1264,11 +1231,12 @@ WHERE
 `
 
 	args := pgx.StrictNamedArgs{
-		"failed_status":  AgentExecutionStatusFailed,
-		"pending_status": AgentExecutionStatusPending,
-		"now":            now,
-		"last_error":     AgentExecutionStaleLeaseError,
-		"stale_before":   now.Add(-staleAfter),
+		"failed_status":    AgentExecutionStatusFailed,
+		"idle_status":      AgentExecutionStatusIdle,
+		"suspended_status": AgentExecutionStatusSuspended,
+		"now":              now,
+		"last_error":       AgentExecutionStaleLeaseError,
+		"stale_before":     now.Add(-staleAfter),
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
@@ -1278,7 +1246,7 @@ WHERE
 	return nil
 }
 
-func DeleteRetiredConversationalAgentExecutionsBefore(
+func DeleteRetiredAgentExecutionsBefore(
 	ctx context.Context,
 	conn pg.Querier,
 	idleBefore time.Time,
@@ -1324,7 +1292,7 @@ WHERE id IN (SELECT id FROM doomed)
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("cannot delete retired conversational agent executions: %w", err)
+		return 0, fmt.Errorf("cannot delete retired agent executions: %w", err)
 	}
 
 	return result.RowsAffected(), nil

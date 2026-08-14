@@ -61,10 +61,10 @@ type (
 )
 
 const (
-	errorMessageMaxLen           = 512
-	maxCheckpointBytes           = 10 * 1024 * 1024
-	leaseLostErrorString         = "agent execution lease lost"
-	conversationalUserInputBatch = 1
+	errorMessageMaxLen   = 512
+	maxCheckpointBytes   = 10 * 1024 * 1024
+	leaseLostErrorString = "agent execution lease lost"
+	userInputBatch       = 1
 )
 
 var (
@@ -77,40 +77,34 @@ var (
 )
 
 func (h *handler) Claim(ctx context.Context) (coredata.AgentExecution, error) {
-	ownerToken, err := uuid.NewV7()
-	if err != nil {
-		return coredata.AgentExecution{}, fmt.Errorf("cannot generate agent execution owner token: %w", err)
-	}
-
 	var execution coredata.AgentExecution
 
-	err = h.pg.WithTx(
+	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return execution.ClaimNextForUpdateSkipLocked(
+			if err := execution.ClaimNextForUpdateSkipLocked(
 				ctx,
 				tx,
 				h.now(),
-				ownerToken.String(),
-			)
+				uuid.MustNewV7().String(),
+			); err != nil {
+				return fmt.Errorf("cannot claim agent execution: %w", err)
+			}
+
+			return nil
 		},
-	)
-	if err != nil {
+	); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.AgentExecution{}, worker.ErrNoTask
 		}
 
-		return coredata.AgentExecution{}, fmt.Errorf("cannot claim agent execution: %w", err)
+		return coredata.AgentExecution{}, err
 	}
 
 	return execution, nil
 }
 
 func (h *handler) Process(ctx context.Context, execution coredata.AgentExecution) error {
-	if execution.ProcessingOwnerToken == nil || *execution.ProcessingOwnerToken == "" {
-		return fmt.Errorf("claimed agent execution has no owner token")
-	}
-
 	ownerToken := *execution.ProcessingOwnerToken
 
 	runCtx, cancelRun := context.WithCancelCause(ctx)
@@ -258,7 +252,7 @@ func (h *handler) processConversation(
 			execution,
 			nil,
 			ownerToken,
-			errors.New("cannot process conversational execution without pending inputs"),
+			errors.New("cannot process agent execution without pending inputs"),
 		)
 	}
 
@@ -270,7 +264,7 @@ func (h *handler) processConversation(
 			execution,
 			inputs,
 			ownerToken,
-			fmt.Errorf("conversational execution received non-user input %q", inputs[0].Purpose),
+			fmt.Errorf("agent execution received non-user input %q", inputs[0].Purpose),
 		)
 	}
 
@@ -309,13 +303,22 @@ func (h *handler) processConversation(
 		return cause
 	}
 
-	if isSuspended(runErr) || isInterrupted(runErr) {
-		status := coredata.AgentExecutionStatusPending
-		if isInterrupted(runErr) {
-			status = coredata.AgentExecutionStatusAwaitingApproval
-		}
+	if _, ok := errors.AsType[*agent.InterruptedError](runErr); ok {
+		return h.releaseResting(
+			commitCtx,
+			execution,
+			ownerToken,
+			coredata.AgentExecutionStatusAwaitingApproval,
+		)
+	}
 
-		return h.releaseResting(commitCtx, execution, ownerToken, status)
+	if _, ok := errors.AsType[*agent.SuspendedError](runErr); ok {
+		return h.releaseResting(
+			commitCtx,
+			execution,
+			ownerToken,
+			coredata.AgentExecutionStatusSuspended,
+		)
 	}
 
 	if runErr != nil {
@@ -339,7 +342,7 @@ func (h *handler) processConversation(
 			execution,
 			inputs,
 			ownerToken,
-			fmt.Errorf("cannot marshal conversational session messages: %w", err),
+			fmt.Errorf("cannot marshal session messages: %w", err),
 		)
 	}
 
@@ -353,15 +356,15 @@ func (h *handler) processConversation(
 			scope := coredata.NewScopeFromObjectID(execution.ID)
 			for _, input := range inputs {
 				if err := input.MarkProcessed(ctx, tx, scope, ownerToken, now); err != nil {
-					return fmt.Errorf("cannot mark conversational input processed: %w", err)
+					return fmt.Errorf("cannot mark input processed: %w", err)
 				}
 			}
 
-			return execution.CommitConversationalSuccess(ctx, tx, scope, ownerToken, now)
+			return execution.CommitSuccess(ctx, tx, scope, ownerToken, now)
 		},
 	)
 	if err != nil {
-		return h.mapLeaseWriteError("cannot commit conversational agent execution", err)
+		return h.mapLeaseWriteError("cannot commit agent execution", err)
 	}
 
 	return nil
@@ -415,9 +418,9 @@ func (h *handler) loadConversationInputs(
 					execution.ID,
 					ownerToken,
 					execution.ProcessingInputIDs,
-					conversationalUserInputBatch,
+					userInputBatch,
 				); err != nil {
-					return fmt.Errorf("cannot load claimed conversational inputs: %w", err)
+					return fmt.Errorf("cannot load claimed inputs: %w", err)
 				}
 
 				if len(inputs) > 0 {
@@ -431,7 +434,7 @@ func (h *handler) loadConversationInputs(
 					ownerToken,
 					h.now(),
 				); err != nil {
-					return fmt.Errorf("cannot clear stale conversational input ids: %w", err)
+					return fmt.Errorf("cannot clear stale input ids: %w", err)
 				}
 			}
 
@@ -442,13 +445,13 @@ func (h *handler) loadConversationInputs(
 				execution.ID,
 				ownerToken,
 				h.now(),
-				conversationalUserInputBatch,
+				userInputBatch,
 			); err != nil {
-				return fmt.Errorf("cannot load pending conversational inputs: %w", err)
+				return fmt.Errorf("cannot load pending inputs: %w", err)
 			}
 
 			if len(inputs) == 0 {
-				return errors.New("cannot process conversational execution without pending inputs")
+				return errors.New("cannot process agent execution without pending inputs")
 			}
 
 			inputIDs := make([]string, len(inputs))
@@ -467,7 +470,7 @@ func (h *handler) loadConversationInputs(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot prepare conversational input batch: %w", err)
+		return nil, fmt.Errorf("cannot prepare input batch: %w", err)
 	}
 
 	return inputs, nil
@@ -506,7 +509,7 @@ func (h *handler) handleFailure(
 			func(ctx context.Context, tx pg.Tx) error {
 				for _, input := range inputs {
 					if err := input.DeadLetter(ctx, tx, scope, ownerToken, message, now); err != nil {
-						return fmt.Errorf("cannot dead-letter conversational input: %w", err)
+						return fmt.Errorf("cannot dead-letter input: %w", err)
 					}
 				}
 
@@ -528,7 +531,7 @@ func (h *handler) handleFailure(
 						nextAttemptAt,
 						now,
 					); err != nil {
-						return fmt.Errorf("cannot record conversational input failure: %w", err)
+						return fmt.Errorf("cannot record input failure: %w", err)
 					}
 				}
 
@@ -708,7 +711,7 @@ func decodeConversationMessages(
 	var messages []llm.Message
 	if len(sessionMessages) > 0 {
 		if err := json.Unmarshal(sessionMessages, &messages); err != nil {
-			return nil, fmt.Errorf("cannot unmarshal conversational session messages: %w", err)
+			return nil, fmt.Errorf("cannot unmarshal session messages: %w", err)
 		}
 	}
 
@@ -719,7 +722,7 @@ func decodeConversationMessages(
 
 		var message llm.Message
 		if err := json.Unmarshal(input.Message, &message); err != nil {
-			return nil, fmt.Errorf("cannot unmarshal conversational input %s: %w", input.ID, err)
+			return nil, fmt.Errorf("cannot unmarshal input %s: %w", input.ID, err)
 		}
 
 		messages = append(messages, message)
@@ -727,22 +730,10 @@ func decodeConversationMessages(
 
 	data, err := json.Marshal(messages)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal conversational input messages: %w", err)
+		return nil, fmt.Errorf("cannot marshal input messages: %w", err)
 	}
 
 	return data, nil
-}
-
-func isSuspended(err error) bool {
-	_, ok := errors.AsType[*agent.SuspendedError](err)
-
-	return ok
-}
-
-func isInterrupted(err error) bool {
-	_, ok := errors.AsType[*agent.InterruptedError](err)
-
-	return ok
 }
 
 func sanitizeError(err error) string {

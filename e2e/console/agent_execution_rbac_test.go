@@ -35,7 +35,7 @@ func TestAgentExecution_RBAC(t *testing.T) {
 
 	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "compliance-agent",
-		status:    coredata.AgentExecutionStatusCompleted,
+		status:    coredata.AgentExecutionStatusIdle,
 	})
 
 	const getQuery = `

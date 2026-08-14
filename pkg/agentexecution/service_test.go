@@ -38,11 +38,10 @@ func TestService_Get(t *testing.T) {
 	client := test.PGClient(t)
 	svc := agentexecution.NewService(client)
 
-	run := insertPendingExecution(
+	run := insertIdleExecution(
 		t,
 		client,
 		"service-get-agent",
-		nil,
 	)
 
 	got, err := svc.Get(context.Background(), coredata.NewNoScope(), run.ID)
@@ -62,8 +61,8 @@ func TestService_ListForOrganizationID(t *testing.T) {
 
 	orgID := insertTestOrganization(t, client)
 
-	runA := insertPendingExecutionInOrg(t, client, orgID, "service-list-agent-a", nil)
-	runB := insertPendingExecutionInOrg(t, client, orgID, "service-list-agent-b", nil)
+	runA := insertIdleExecutionInOrg(t, client, orgID, "service-list-agent-a")
+	runB := insertIdleExecutionInOrg(t, client, orgID, "service-list-agent-b")
 
 	cursor := page.NewCursor(
 		10,
@@ -92,8 +91,8 @@ func TestService_SubmitApproval_NotAwaitingApproval(t *testing.T) {
 	client := test.PGClient(t)
 	svc := agentexecution.NewService(client)
 
-	// A freshly inserted run is PENDING, not AWAITING_APPROVAL.
-	run := insertPendingExecution(t, client, "service-approval-agent", nil)
+	// A freshly inserted run is IDLE, not AWAITING_APPROVAL.
+	run := insertIdleExecution(t, client, "service-approval-agent")
 
 	_, err := svc.SubmitApproval(
 		context.Background(),
@@ -110,9 +109,9 @@ func TestService_CountForOrganizationID(t *testing.T) {
 	svc := agentexecution.NewService(client)
 
 	orgID := insertTestOrganization(t, client)
-	_ = insertPendingExecutionInOrg(t, client, orgID, "service-count-agent-a", nil)
-	_ = insertPendingExecutionInOrg(t, client, orgID, "service-count-agent-b", nil)
-	_ = insertPendingExecutionInOrg(t, client, orgID, "service-count-agent-c", nil)
+	_ = insertIdleExecutionInOrg(t, client, orgID, "service-count-agent-a")
+	_ = insertIdleExecutionInOrg(t, client, orgID, "service-count-agent-b")
+	_ = insertIdleExecutionInOrg(t, client, orgID, "service-count-agent-c")
 
 	count, err := svc.CountForOrganizationID(context.Background(), coredata.NewNoScope(), orgID)
 	require.NoError(t, err)

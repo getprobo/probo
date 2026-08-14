@@ -34,7 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
+func TestAgentExecution_QueueLifecycle(t *testing.T) {
 	ctx := t.Context()
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
@@ -99,7 +99,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 			func(ctx context.Context, tx pg.Tx) error {
 				var err error
 
-				inserted, err = execution.UpsertConversationalBySourceSession(ctx, tx, scope)
+				inserted, err = execution.UpsertBySourceSession(ctx, tx, scope)
 
 				return err
 			},
@@ -128,7 +128,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 			func(ctx context.Context, tx pg.Tx) error {
 				var err error
 
-				inserted, err = duplicate.UpsertConversationalBySourceSession(ctx, tx, scope)
+				inserted, err = duplicate.UpsertBySourceSession(ctx, tx, scope)
 
 				return err
 			},
@@ -281,7 +281,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 			},
 		),
 	)
-	assert.Equal(t, coredata.AgentExecutionStatusPending, persistedExecution.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusIdle, persistedExecution.Status)
 	assert.Nil(t, persistedExecution.ProcessingOwnerToken)
 	assert.Equal(t, 0, persistedExecution.AttemptCount)
 
@@ -348,7 +348,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 			},
 		),
 	)
-	assert.Equal(t, coredata.AgentExecutionStatusPending, persistedExecution.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusIdle, persistedExecution.Status)
 	assert.Nil(t, persistedExecution.ProcessingOwnerToken)
 	require.NotNil(t, persistedExecution.LastError)
 	assert.Equal(t, "agent execution processing lease expired", *persistedExecution.LastError)
@@ -357,7 +357,7 @@ func TestAgentExecution_ConversationalQueueLifecycle(t *testing.T) {
 func TestAgentInput_NullSourceEventIDsRemainDistinct(t *testing.T) {
 	ctx := t.Context()
 	client := test.PGClient(t)
-	run := insertPendingExecution(t, client, "test-agent", nil)
+	run := insertIdleExecution(t, client, "test-agent")
 	scope := coredata.NewScope(run.ID.TenantID())
 	now := time.Now().UTC()
 

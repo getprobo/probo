@@ -61,7 +61,7 @@ func (p *recordingIdentityPreparer) Prepare(
 func TestScheduler_PreparesEachUserInputWithItsIdentity(t *testing.T) {
 	client := test.PGClient(t)
 	organizationID := insertTestOrganization(t, client)
-	execution := insertConversationalExecution(
+	execution := insertExecution(
 		t,
 		client,
 		organizationID,
@@ -128,7 +128,7 @@ func TestScheduler_PreparesEachUserInputWithItsIdentity(t *testing.T) {
 func TestScheduler_ConversationalTurnsProcessOneInputAtATime(t *testing.T) {
 	client := test.PGClient(t)
 	organizationID := insertTestOrganization(t, client)
-	execution := insertConversationalExecution(
+	execution := insertExecution(
 		t,
 		client,
 		organizationID,
@@ -178,8 +178,7 @@ func TestScheduler_ConversationalTurnsProcessOneInputAtATime(t *testing.T) {
 	)
 
 	persisted := loadAgentExecution(t, client, execution.ID)
-	assert.Equal(t, coredata.AgentExecutionStatusPending, persisted.Status)
-	assert.Nil(t, persisted.Result, "conversational final messages must not enter the API result field")
+	assert.Equal(t, coredata.AgentExecutionStatusIdle, persisted.Status)
 	assert.Nil(t, persisted.Checkpoint)
 	assert.Empty(t, persisted.ProcessingInputIDs)
 
@@ -197,7 +196,7 @@ func TestScheduler_ConversationalTurnsProcessOneInputAtATime(t *testing.T) {
 func TestScheduler_HeartbeatPreventsStaleRecovery(t *testing.T) {
 	client := test.PGClient(t)
 	organizationID := insertTestOrganization(t, client)
-	execution := insertConversationalExecution(
+	execution := insertExecution(
 		t,
 		client,
 		organizationID,
@@ -286,7 +285,7 @@ func TestScheduler_HeartbeatPreventsStaleRecovery(t *testing.T) {
 func TestScheduler_ConversationalFailuresRetryThenDeadLetter(t *testing.T) {
 	client := test.PGClient(t)
 	organizationID := insertTestOrganization(t, client)
-	execution := insertConversationalExecution(
+	execution := insertExecution(
 		t,
 		client,
 		organizationID,
@@ -331,7 +330,7 @@ func TestScheduler_ConversationalFailuresRetryThenDeadLetter(t *testing.T) {
 func TestScheduler_StaleProcessingInputIDsFallThroughToPendingInput(t *testing.T) {
 	client := test.PGClient(t)
 	organizationID := insertTestOrganization(t, client)
-	execution := insertConversationalExecution(
+	execution := insertExecution(
 		t,
 		client,
 		organizationID,
@@ -364,7 +363,7 @@ func TestScheduler_StaleProcessingInputIDsFallThroughToPendingInput(t *testing.T
 					ctx,
 					`UPDATE agent_executions
 					 SET processing_input_ids = ARRAY[$2]::text[],
-					     status = 'PENDING',
+					     status = 'IDLE',
 					     processing_owner_token = NULL,
 					     processing_heartbeat_at = NULL,
 					     updated_at = $3
@@ -411,7 +410,7 @@ func TestScheduler_StaleProcessingInputIDsFallThroughToPendingInput(t *testing.T
 func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 	client := test.PGClient(t)
 	organizationID := insertTestOrganization(t, client)
-	execution := insertConversationalExecution(
+	execution := insertExecution(
 		t,
 		client,
 		organizationID,
@@ -484,7 +483,7 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 		func() bool {
 			persisted := loadAgentExecution(t, client, execution.ID)
 
-			return persisted.Status == coredata.AgentExecutionStatusPending &&
+			return persisted.Status == coredata.AgentExecutionStatusSuspended &&
 				persisted.Checkpoint != nil &&
 				persisted.ProcessingOwnerToken == nil
 		},
@@ -515,5 +514,5 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 
 	persisted := loadAgentExecution(t, client, execution.ID)
 	assert.Nil(t, persisted.Checkpoint)
-	assert.Equal(t, coredata.AgentExecutionStatusPending, persisted.Status)
+	assert.Equal(t, coredata.AgentExecutionStatusIdle, persisted.Status)
 }

@@ -60,7 +60,7 @@ func seedAgentExecution(t *testing.T, organizationID gid.GID, seed agentExecutio
 	}
 
 	if seed.status == "" {
-		seed.status = coredata.AgentExecutionStatusPending
+		seed.status = coredata.AgentExecutionStatusIdle
 	}
 
 	if seed.createdAt.IsZero() {
@@ -77,13 +77,13 @@ func seedAgentExecution(t *testing.T, organizationID gid.GID, seed agentExecutio
 	_, err := conn.Exec(ctx, `
 		INSERT INTO agent_executions (
 			id, tenant_id, organization_id, start_agent_name, status,
-			input_messages, checkpoint, error_message, started_at,
+			checkpoint, error_message, started_at,
 			session_messages, processing_input_ids,
 			attempt_count, max_attempts,
 			created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9,
-			$6::jsonb, $10, $11, $12, $13, $13
+			$1, $2, $3, $4, $5, $6::jsonb, $7, $8,
+			'[]'::jsonb, $9, $10, $11, $12, $12
 		)
 	`,
 		id,
@@ -91,7 +91,6 @@ func seedAgentExecution(t *testing.T, organizationID gid.GID, seed agentExecutio
 		organizationID,
 		seed.agentName,
 		seed.status,
-		"[]",
 		checkpoint,
 		seed.errorMessage,
 		seed.startedAt,
@@ -177,9 +176,9 @@ func TestAgentExecution_List(t *testing.T) {
 	errMsg := "boom"
 	startedAt := time.Now().UTC().Add(-time.Minute)
 
-	completedID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
+	pendingID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "compliance-agent",
-		status:    coredata.AgentExecutionStatusCompleted,
+		status:    coredata.AgentExecutionStatusIdle,
 		startedAt: &startedAt,
 	})
 	failedID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
@@ -207,14 +206,14 @@ func TestAgentExecution_List(t *testing.T) {
 		byID[edge.Node.ID] = edge.Node
 	}
 
-	completed, ok := byID[completedID.String()]
-	require.True(t, ok, "completed run not returned in list")
-	assert.Equal(t, "compliance-agent", completed.AgentName)
-	assert.Equal(t, "COMPLETED", completed.Status)
-	assert.Nil(t, completed.ErrorMessage)
-	assert.NotNil(t, completed.StartedAt)
-	assert.NotEmpty(t, completed.CreatedAt)
-	assert.NotEmpty(t, completed.UpdatedAt)
+	pending, ok := byID[pendingID.String()]
+	require.True(t, ok, "pending run not returned in list")
+	assert.Equal(t, "compliance-agent", pending.AgentName)
+	assert.Equal(t, "IDLE", pending.Status)
+	assert.Nil(t, pending.ErrorMessage)
+	assert.NotNil(t, pending.StartedAt)
+	assert.NotEmpty(t, pending.CreatedAt)
+	assert.NotEmpty(t, pending.UpdatedAt)
 
 	failed, ok := byID[failedID.String()]
 	require.True(t, ok, "failed run not returned in list")
@@ -486,7 +485,7 @@ func TestAgentExecution_SubmitApproval(t *testing.T) {
 
 	// A submitted decision requeues the run so a worker resumes it.
 	assert.Equal(t, runID.String(), result.SubmitAgentExecutionApproval.AgentExecution.ID)
-	assert.Equal(t, "PENDING", result.SubmitAgentExecutionApproval.AgentExecution.Status)
+	assert.Equal(t, "IDLE", result.SubmitAgentExecutionApproval.AgentExecution.Status)
 }
 
 func TestAgentExecution_SubmitApproval_NotAwaiting(t *testing.T) {
@@ -495,7 +494,7 @@ func TestAgentExecution_SubmitApproval_NotAwaiting(t *testing.T) {
 
 	runID := seedAgentExecution(t, owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "approval-agent",
-		status:    coredata.AgentExecutionStatusCompleted,
+		status:    coredata.AgentExecutionStatusIdle,
 	})
 
 	var result submitAgentExecutionApprovalResult

@@ -96,7 +96,7 @@ func (s *Service) ListForOrganizationID(
 }
 
 // SubmitApproval records human approval decisions for a run parked in
-// AWAITING_APPROVAL and requeues it to PENDING so a worker resumes it.
+// AWAITING_APPROVAL and requeues it to IDLE so a worker resumes it.
 // decisions is keyed by pending tool-call ID and must cover exactly the
 // run's pending approvals (a missing decision would be treated as an
 // implicit denial on resume, so partial submissions are rejected). The
@@ -138,7 +138,7 @@ func (s *Service) SubmitApproval(
 			}
 
 			run.Checkpoint = checkpoint
-			run.Status = coredata.AgentExecutionStatusPending
+			run.Status = coredata.AgentExecutionStatusIdle
 			run.StartedAt = nil
 			run.UpdatedAt = time.Now()
 

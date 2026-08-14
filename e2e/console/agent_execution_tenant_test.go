@@ -37,7 +37,7 @@ func TestAgentExecution_TenantIsolation(t *testing.T) {
 
 	runID := seedAgentExecution(t, org1Owner.GetOrganizationID(), agentExecutionSeed{
 		agentName: "compliance-agent",
-		status:    coredata.AgentExecutionStatusCompleted,
+		status:    coredata.AgentExecutionStatusIdle,
 	})
 
 	t.Run("other org cannot fetch the run by id", func(t *testing.T) {

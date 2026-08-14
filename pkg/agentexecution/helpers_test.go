@@ -178,46 +178,40 @@ func insertTestOrganization(t *testing.T, client *pg.Client) gid.GID {
 	return orgID
 }
 
-func insertPendingExecution(
+func insertIdleExecution(
 	t *testing.T,
 	client *pg.Client,
 	agentName string,
-	inputMessages []llm.Message,
 ) coredata.AgentExecution {
 	t.Helper()
 
 	orgID := insertTestOrganization(t, client)
 
-	return insertPendingExecutionInOrg(t, client, orgID, agentName, inputMessages)
+	return insertIdleExecutionInOrg(t, client, orgID, agentName)
 }
 
-func insertPendingExecutionInOrg(
+func insertIdleExecutionInOrg(
 	t *testing.T,
 	client *pg.Client,
 	organizationID gid.GID,
 	agentName string,
-	inputMessages []llm.Message,
 ) coredata.AgentExecution {
 	t.Helper()
 
 	runID := gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType)
-
-	inputJSON, err := json.Marshal(inputMessages)
-	require.NoError(t, err)
-
 	now := time.Now()
 
 	run := coredata.AgentExecution{
-		ID:             runID,
-		OrganizationID: organizationID,
-		StartAgentName: agentName,
-		Status:         coredata.AgentExecutionStatusPending,
-		InputMessages:  inputJSON,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:              runID,
+		OrganizationID:  organizationID,
+		StartAgentName:  agentName,
+		Status:          coredata.AgentExecutionStatusIdle,
+		SessionMessages: json.RawMessage("[]"),
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
-	err = client.WithTx(
+	err := client.WithTx(
 		context.Background(),
 		func(ctx context.Context, tx pg.Tx) error {
 			return run.Insert(ctx, tx, coredata.NewScope(organizationID.TenantID()))
@@ -251,7 +245,7 @@ func tryLoadAgentExecution(client *pg.Client, id gid.GID) (coredata.AgentExecuti
 	return run, err
 }
 
-func resetExecutionToPending(t *testing.T, client *pg.Client, runID gid.GID) {
+func resetExecutionToIdle(t *testing.T, client *pg.Client, runID gid.GID) {
 	t.Helper()
 
 	err := client.WithConn(
@@ -260,7 +254,7 @@ func resetExecutionToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 			_, err := conn.Exec(
 				ctx,
 				`UPDATE agent_executions
-				 SET status = 'PENDING',
+				 SET status = 'IDLE',
 				     started_at = NULL,
 				     processing_owner_token = NULL,
 				     processing_heartbeat_at = NULL,
@@ -292,7 +286,7 @@ func insertPendingTurn(
 	t.Helper()
 
 	orgID := insertTestOrganization(t, client)
-	execution := insertConversationalExecution(
+	execution := insertExecution(
 		t,
 		client,
 		orgID,
@@ -329,11 +323,11 @@ func conversationSettled(client *pg.Client, executionID, inputID gid.GID) bool {
 	)
 
 	return err == nil &&
-		execution.Status == coredata.AgentExecutionStatusPending &&
+		execution.Status == coredata.AgentExecutionStatusIdle &&
 		execution.Checkpoint == nil
 }
 
-func insertConversationalExecution(
+func insertExecution(
 	t *testing.T,
 	client *pg.Client,
 	organizationID gid.GID,
@@ -362,7 +356,7 @@ func insertConversationalExecution(
 		client.WithTx(
 			context.Background(),
 			func(ctx context.Context, tx pg.Tx) error {
-				_, err := execution.UpsertConversationalBySourceSession(
+				_, err := execution.UpsertBySourceSession(
 					ctx,
 					tx,
 					coredata.NewScope(organizationID.TenantID()),
