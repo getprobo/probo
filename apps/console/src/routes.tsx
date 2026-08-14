@@ -339,14 +339,6 @@ const routes = [
             path: "risk-management",
             children: [...dataRoutes, ...assetRoutes, ...riskRoutes],
           },
-          {
-            path: "registries",
-            children: [
-              ...businessFunctionRoutes,
-              ...aiSystemRoutes,
-              ...obligationRoutes,
-            ],
-          },
 
           {
             path: "access-reviews",
@@ -361,6 +353,9 @@ const routes = [
             children: [
               ...contextRoutes,
               ...peopleRoutes,
+              ...businessFunctionRoutes,
+              ...aiSystemRoutes,
+              ...obligationRoutes,
               // Pathless, so the organization pages sit at settings/general
               // rather than settings/settings/general while still sharing the
               // tab chrome.

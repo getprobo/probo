@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import {
-  BooksIcon,
   GearIcon,
   type Icon,
   KeyIcon,
@@ -75,7 +74,7 @@ export type NavPermission
  * One panel/rail entry. `kind: "switcher"` is a labelled control rather than
  * a link; `path` is still the URL prefix and the lazy-registry key.
  */
-export type NavItem = {
+export type NavLinkItem = {
   /** Path relative to the group segment, e.g. "frameworks". */
   path: string;
   labelKey: string;
@@ -84,6 +83,16 @@ export type NavItem = {
   | { kind?: "link" }
   | { kind: "switcher" }
 );
+
+/** A labelled cluster of links inside a product panel. */
+export type NavSection = {
+  kind: "section";
+  key: string;
+  labelKey: string;
+  items: NavLinkItem[];
+};
+
+export type NavItem = NavLinkItem | NavSection;
 
 export interface NavGroup {
   /** Stable id; also the i18n key suffix and the React key. */
@@ -158,20 +167,6 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    key: "registries",
-    segment: "registries",
-    icon: BooksIcon,
-    items: [
-      {
-        path: "business-functions",
-        labelKey: "nav.businessFunctions",
-        permission: "canListBusinessFunctions",
-      },
-      { path: "ai-systems", labelKey: "nav.aiSystems", permission: "canListAiSystems" },
-      { path: "obligations", labelKey: "nav.obligations", permission: "canListObligations" },
-    ],
-  },
-  {
     key: "compliancePortal",
     segment: null,
     icon: ShieldIcon,
@@ -206,11 +201,25 @@ export const NAV_GROUPS: NavGroup[] = [
     segment: "settings",
     icon: GearIcon,
     items: [
-      { path: "context", labelKey: "nav.context", permission: "canGetContext" },
-      { path: "people", labelKey: "nav.people", permission: "canListMembers" },
       // The organization pages keep their own tab bar, so the panel links to
       // the first tab rather than repeating every tab as a panel entry.
       { path: "general", labelKey: "nav.organization", permission: "canUpdateOrganization" },
+      { path: "context", labelKey: "nav.context", permission: "canGetContext" },
+      { path: "people", labelKey: "nav.people", permission: "canListMembers" },
+      {
+        kind: "section",
+        key: "registries",
+        labelKey: "nav.registries",
+        items: [
+          {
+            path: "business-functions",
+            labelKey: "nav.businessFunctions",
+            permission: "canListBusinessFunctions",
+          },
+          { path: "ai-systems", labelKey: "nav.aiSystems", permission: "canListAiSystems" },
+          { path: "obligations", labelKey: "nav.obligations", permission: "canListObligations" },
+        ],
+      },
     ],
   },
 ];
@@ -221,6 +230,23 @@ export const NAV_GROUPS: NavGroup[] = [
  */
 export type NavPermissions = { readonly [K in NavPermission]: boolean };
 
+function visibleNavItems(items: NavItem[], permissions: NavPermissions): NavItem[] {
+  const visible: NavItem[] = [];
+  for (const item of items) {
+    if (item.kind === "section") {
+      const sectionItems = item.items.filter(child => permissions[child.permission]);
+      if (sectionItems.length > 0) {
+        visible.push({ ...item, items: sectionItems });
+      }
+      continue;
+    }
+    if (permissions[item.permission]) {
+      visible.push(item);
+    }
+  }
+  return visible;
+}
+
 /**
  * The table reduced to what this viewer may see. A group whose every item is
  * denied disappears from the rail rather than leading to an empty panel.
@@ -228,7 +254,7 @@ export type NavPermissions = { readonly [K in NavPermission]: boolean };
 export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
   const groups: NavGroup[] = [];
   for (const group of NAV_GROUPS) {
-    const items = group.items.filter(item => permissions[item.permission]);
+    const items = visibleNavItems(group.items, permissions);
     if (items.length > 0) {
       groups.push({ ...group, items });
     }
@@ -236,25 +262,38 @@ export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
   return groups;
 }
 
-/** Path of an item relative to the organization root. */
-export function navItemPath(group: NavGroup, item: NavItem): string {
+/** Path of a link relative to the organization root. */
+export function navItemPath(group: NavGroup, item: NavLinkItem): string {
   return group.segment == null ? item.path : `${group.segment}/${item.path}`;
 }
 
-/** Absolute href of an item. */
-export function navItemHref(organizationId: string, group: NavGroup, item: NavItem): string {
+/** Absolute href of a link. */
+export function navItemHref(organizationId: string, group: NavGroup, item: NavLinkItem): string {
   return `/organizations/${organizationId}/${navItemPath(group, item)}`;
+}
+
+function navLinkItems(group: NavGroup): NavLinkItem[] {
+  const links: NavLinkItem[] = [];
+  for (const item of group.items) {
+    if (item.kind === "section") {
+      links.push(...item.items);
+    } else {
+      links.push(item);
+    }
+  }
+  return links;
 }
 
 /**
  * The rail target for a product. Switchers have no index route, so the first
  * link wins; a switcher-only group falls back to its first item.
  */
-export function navGroupLandingItem(group: NavGroup): NavItem {
-  for (const item of group.items) {
+export function navGroupLandingItem(group: NavGroup): NavLinkItem {
+  for (const item of navLinkItems(group)) {
     if (item.kind !== "switcher") {
       return item;
     }
   }
-  return group.items[0];
+  const first = group.items[0];
+  return first.kind === "section" ? first.items[0] : first;
 }

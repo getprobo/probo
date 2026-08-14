@@ -258,7 +258,7 @@ export function BusinessFunctionDetailsPage({
           description: t("businessFunctionDetailsPage.messages.deleted"),
           variant: "success",
         });
-        void navigate(`/organizations/${organizationId}/registries/business-functions`);
+        void navigate(`/organizations/${organizationId}/settings/business-functions`);
       },
       {
         message: t("businessFunctionDetailsPage.deleteConfirmation", {
@@ -318,7 +318,7 @@ export function BusinessFunctionDetailsPage({
     });
   });
 
-  const breadcrumbListUrl = `/organizations/${organizationId}/registries/business-functions`;
+  const breadcrumbListUrl = `/organizations/${organizationId}/settings/business-functions`;
 
   return (
     <div className="space-y-6">

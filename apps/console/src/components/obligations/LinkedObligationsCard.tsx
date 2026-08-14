@@ -216,7 +216,7 @@ function ObligationRow(props: {
     props.onClick(obligation.id);
   };
 
-  const detailsUrl = `/organizations/${organizationId}/registries/obligations/${obligation.id}`;
+  const detailsUrl = `/organizations/${organizationId}/settings/obligations/${obligation.id}`;
 
   return (
     <Tr to={detailsUrl}>

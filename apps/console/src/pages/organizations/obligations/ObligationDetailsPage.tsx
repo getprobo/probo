@@ -160,7 +160,7 @@ export default function ObligationDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbObligationsUrl = `/organizations/${organizationId}/registries/obligations`;
+  const breadcrumbObligationsUrl = `/organizations/${organizationId}/settings/obligations`;
 
   return (
     <div className="space-y-6">

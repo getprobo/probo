@@ -28,8 +28,8 @@ export type NavPanelGroupProps = PropsWithChildren<{
 }>;
 
 /**
- * A labelled cluster in the product panel: a group heading and whatever sits
- * under it (today a switcher; later more than one control if needed).
+ * A labelled cluster in the product panel: a group heading and the links or
+ * switcher that sit under it.
  */
 export function NavPanelGroup({ label, children }: NavPanelGroupProps) {
   const slots = navPanel();

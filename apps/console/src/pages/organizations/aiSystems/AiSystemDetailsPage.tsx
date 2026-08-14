@@ -217,7 +217,7 @@ export function AiSystemDetailsPage({ queryRef }: AiSystemDetailsPageProps) {
           description: t(`${prefix}.messages.deleted`),
           variant: "success",
         });
-        void navigate(`/organizations/${organizationId}/registries/ai-systems`);
+        void navigate(`/organizations/${organizationId}/settings/ai-systems`);
       },
       {
         message: t(`${prefix}.deleteConfirmation`, {
@@ -309,7 +309,7 @@ export function AiSystemDetailsPage({ queryRef }: AiSystemDetailsPageProps) {
         items={[
           {
             label: t(`${prefix}.breadcrumb.aiSystems`),
-            to: `/organizations/${organizationId}/registries/ai-systems`,
+            to: `/organizations/${organizationId}/settings/ai-systems`,
           },
           {
             label: aiSystem.name || t(`${prefix}.breadcrumb.unknown`),

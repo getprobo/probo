@@ -2424,7 +2424,6 @@
       "tprm": "Gestion des tiers",
       "itam": "Parc informatique",
       "riskManagement": "Gestion des risques",
-      "registries": "Registres",
       "compliancePortal": "Portail de conformité",
       "accessReview": "Revue d’accès",
       "settings": "Paramètres"
@@ -2446,6 +2445,7 @@
     "businessFunctions": "Fonctions métier",
     "aiSystems": "Systèmes d'IA",
     "obligations": "Obligations",
+    "registries": "Registres",
     "processingActivities": "Activités de traitement",
     "statementsOfApplicability": "Déclarations d’applicabilité",
     "rightsRequests": "Demandes d’exercice de droits",

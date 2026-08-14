@@ -96,6 +96,20 @@ export function NavPanel({ organizationKey }: NavPanelProps) {
           </Text>
           <div className={slots.list()}>
             {activeGroup.items.map((item) => {
+              if (item.kind === "section") {
+                return (
+                  <NavPanelGroup key={item.key} label={t(item.labelKey)}>
+                    {item.items.map(child => (
+                      <NavPanelItem
+                        key={child.path}
+                        label={t(child.labelKey)}
+                        to={navItemHref(organizationId, activeGroup, child)}
+                      />
+                    ))}
+                  </NavPanelGroup>
+                );
+              }
+
               if (item.kind === "switcher") {
                 const Switcher = navPanelSwitcher(item.path);
                 const switcher = (

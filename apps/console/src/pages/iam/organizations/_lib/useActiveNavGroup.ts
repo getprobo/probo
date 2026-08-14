@@ -34,7 +34,11 @@ import { type NavGroup, navItemPath } from "./navigation";
 function navGroupPatterns(group: NavGroup): string[] {
   const prefixes = group.segment != null
     ? [group.segment]
-    : group.items.map(item => navItemPath(group, item));
+    : group.items.flatMap(item =>
+        item.kind === "section"
+          ? item.items.map(child => navItemPath(group, child))
+          : [navItemPath(group, item)],
+      );
 
   return prefixes.map(prefix => `/organizations/:organizationId/${prefix}`);
 }
