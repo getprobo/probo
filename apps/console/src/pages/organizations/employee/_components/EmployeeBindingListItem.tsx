@@ -33,6 +33,8 @@ const employeeBindingListItemFragment = graphql`
     provider
     externalTenantId
     externalUserId
+    externalTenantName
+    externalUserName
   }
 `;
 
@@ -101,8 +103,9 @@ export function EmployeeBindingListItem({
           </h3>
           <p className="text-sm text-txt-tertiary break-all">
             {t("employeeBindingsPage.connectedDescription", {
-              workspace: binding.externalTenantId,
-              account: binding.externalUserId,
+              workspace:
+                binding.externalTenantName || binding.externalTenantId,
+              account: binding.externalUserName || binding.externalUserId,
             })}
           </p>
         </div>

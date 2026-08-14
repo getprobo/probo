@@ -343,12 +343,14 @@ func (s *Service) Confirm(
 				gid.NilTenant,
 				coredata.ProbotIdentityBindingEntityType,
 			),
-			Provider:         challenge.Provider,
-			ExternalTenantID: challenge.ExternalTenantID,
-			ExternalUserID:   challenge.ExternalUserID,
-			IdentityID:       identityID,
-			CreatedAt:        now,
-			UpdatedAt:        now,
+			Provider:           challenge.Provider,
+			ExternalTenantID:   challenge.ExternalTenantID,
+			ExternalUserID:     challenge.ExternalUserID,
+			ExternalTenantName: challenge.ExternalTenantName,
+			ExternalUserName:   challenge.ExternalUserName,
+			IdentityID:         identityID,
+			CreatedAt:          now,
+			UpdatedAt:          now,
 		}
 		if err := binding.Insert(ctx, tx); err != nil {
 			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
@@ -373,9 +375,11 @@ func (s *Service) Confirm(
 		_ = s.confirmed.BindingConfirmed(
 			ctx,
 			Subject{
-				Provider:         binding.Provider,
-				ExternalTenantID: binding.ExternalTenantID,
-				ExternalUserID:   binding.ExternalUserID,
+				Provider:           binding.Provider,
+				ExternalTenantID:   binding.ExternalTenantID,
+				ExternalUserID:     binding.ExternalUserID,
+				ExternalTenantName: binding.ExternalTenantName,
+				ExternalUserName:   binding.ExternalUserName,
 			},
 		)
 	}

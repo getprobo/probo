@@ -32,6 +32,8 @@ type ProbotIdentityBinding {
     provider: String!
     externalTenantId: String!
     externalUserId: String!
+    externalTenantName: String!
+    externalUserName: String!
     createdAt: Datetime!
     updatedAt: Datetime!
 }

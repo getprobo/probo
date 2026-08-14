@@ -29,12 +29,14 @@ import (
 
 type (
 	ProbotIdentityBinding struct {
-		ID               gid.GID   `json:"id"`
-		Provider         string    `json:"provider"`
-		ExternalTenantID string    `json:"externalTenantId"`
-		ExternalUserID   string    `json:"externalUserId"`
-		CreatedAt        time.Time `json:"createdAt"`
-		UpdatedAt        time.Time `json:"updatedAt"`
+		ID                 gid.GID   `json:"id"`
+		Provider           string    `json:"provider"`
+		ExternalTenantID   string    `json:"externalTenantId"`
+		ExternalUserID     string    `json:"externalUserId"`
+		ExternalTenantName string    `json:"externalTenantName"`
+		ExternalUserName   string    `json:"externalUserName"`
+		CreatedAt          time.Time `json:"createdAt"`
+		UpdatedAt          time.Time `json:"updatedAt"`
 	}
 
 	ProbotIdentityBindPreview struct {
@@ -50,12 +52,14 @@ func NewProbotIdentityBinding(
 	binding *identitybinding.Binding,
 ) *ProbotIdentityBinding {
 	return &ProbotIdentityBinding{
-		ID:               binding.ID,
-		Provider:         binding.Provider,
-		ExternalTenantID: binding.ExternalTenantID,
-		ExternalUserID:   binding.ExternalUserID,
-		CreatedAt:        binding.CreatedAt,
-		UpdatedAt:        binding.UpdatedAt,
+		ID:                 binding.ID,
+		Provider:           binding.Provider,
+		ExternalTenantID:   binding.ExternalTenantID,
+		ExternalUserID:     binding.ExternalUserID,
+		ExternalTenantName: binding.ExternalTenantName,
+		ExternalUserName:   binding.ExternalUserName,
+		CreatedAt:          binding.CreatedAt,
+		UpdatedAt:          binding.UpdatedAt,
 	}
 }
 

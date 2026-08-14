@@ -173,10 +173,14 @@ func TestServiceBindingLifecycle(t *testing.T) {
 	assert.Equal(t, subject.Provider, binding.Provider)
 	assert.Equal(t, subject.ExternalTenantID, binding.ExternalTenantID)
 	assert.Equal(t, subject.ExternalUserID, binding.ExternalUserID)
+	assert.Equal(t, subject.ExternalTenantName, binding.ExternalTenantName)
+	assert.Equal(t, subject.ExternalUserName, binding.ExternalUserName)
 
 	loaded, err := service.Lookup(ctx, subject)
 	require.NoError(t, err)
 	assert.Equal(t, binding.ID, loaded.ID)
+	assert.Equal(t, subject.ExternalTenantName, loaded.ExternalTenantName)
+	assert.Equal(t, subject.ExternalUserName, loaded.ExternalUserName)
 
 	_, err = service.Preview(ctx, token)
 	require.ErrorIs(t, err, ErrChallengeAlreadyUsed)

@@ -36,13 +36,15 @@ import (
 // The table is unscoped because lookup happens before tenant resolution.
 type (
 	ProbotIdentityBinding struct {
-		ID               gid.GID   `db:"id"`
-		Provider         string    `db:"provider"`
-		ExternalTenantID string    `db:"external_tenant_id"`
-		ExternalUserID   string    `db:"external_user_id"`
-		IdentityID       gid.GID   `db:"identity_id"`
-		CreatedAt        time.Time `db:"created_at"`
-		UpdatedAt        time.Time `db:"updated_at"`
+		ID                 gid.GID   `db:"id"`
+		Provider           string    `db:"provider"`
+		ExternalTenantID   string    `db:"external_tenant_id"`
+		ExternalUserID     string    `db:"external_user_id"`
+		ExternalTenantName string    `db:"external_tenant_name"`
+		ExternalUserName   string    `db:"external_user_name"`
+		IdentityID         gid.GID   `db:"identity_id"`
+		CreatedAt          time.Time `db:"created_at"`
+		UpdatedAt          time.Time `db:"updated_at"`
 	}
 
 	ProbotIdentityBindings []*ProbotIdentityBinding
@@ -53,6 +55,8 @@ const probotIdentityBindingColumns = `
     provider,
     external_tenant_id,
     external_user_id,
+    external_tenant_name,
+    external_user_name,
     identity_id,
     created_at,
     updated_at
@@ -206,6 +210,8 @@ INSERT INTO probot_identity_bindings (
     @provider,
     @external_tenant_id,
     @external_user_id,
+    @external_tenant_name,
+    @external_user_name,
     @identity_id,
     @created_at,
     @updated_at
@@ -213,13 +219,15 @@ INSERT INTO probot_identity_bindings (
 `
 
 	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{
-		"id":                 b.ID,
-		"provider":           b.Provider,
-		"external_tenant_id": b.ExternalTenantID,
-		"external_user_id":   b.ExternalUserID,
-		"identity_id":        b.IdentityID,
-		"created_at":         b.CreatedAt,
-		"updated_at":         b.UpdatedAt,
+		"id":                   b.ID,
+		"provider":             b.Provider,
+		"external_tenant_id":   b.ExternalTenantID,
+		"external_user_id":     b.ExternalUserID,
+		"external_tenant_name": b.ExternalTenantName,
+		"external_user_name":   b.ExternalUserName,
+		"identity_id":          b.IdentityID,
+		"created_at":           b.CreatedAt,
+		"updated_at":           b.UpdatedAt,
 	})
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok &&
