@@ -38,7 +38,7 @@ export const cookieBannerSwitcher = tv({
     itemOrigin: "truncate group-data-highlighted:text-white",
     itemCheck: "size-4 shrink-0",
     trigger: [
-      "flex w-full min-w-0 items-center gap-2 rounded-2 px-3 py-2",
+      "flex h-9 w-full min-w-0 items-center gap-2 rounded-2 px-3",
       "cursor-pointer outline-none transition-colors select-none",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     ],

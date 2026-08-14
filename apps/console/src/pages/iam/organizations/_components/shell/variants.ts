@@ -183,9 +183,9 @@ export const navPanel = tv({
     item: "w-full justify-start",
     group: "mt-3 flex w-full flex-col gap-1 first:mt-0",
     groupLabel: "px-3",
-    // Matches Button size 2 (h-8 rounded-2) at full panel width while a
-    // lazy switcher chunk loads. Not ButtonSkeleton: that one is a fixed
+    // Matches the switcher trigger (h-9 rounded-2) at full panel width
+    // while a lazy chunk loads. Not ButtonSkeleton: that one is a fixed
     // w-24, and lite tv will not merge a w-full override.
-    groupFallback: "block h-8 w-full animate-pulse rounded-2 bg-sand-3",
+    groupFallback: "block h-9 w-full animate-pulse rounded-2 bg-sand-3",
   },
 });
