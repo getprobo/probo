@@ -50,7 +50,6 @@ type (
 		Source                *string              `db:"source"`
 		SessionKey            *string              `db:"session_key"`
 		SourceCoordinates     json.RawMessage      `db:"source_coordinates"`
-		TrustedContext        json.RawMessage      `db:"trusted_context"`
 		SessionMessages       json.RawMessage      `db:"session_messages"`
 		ProcessingOwnerToken  *string              `db:"processing_owner_token"`
 		ProcessingHeartbeatAt *time.Time           `db:"processing_heartbeat_at"`
@@ -193,7 +192,6 @@ SELECT
 	source,
 	session_key,
 	source_coordinates,
-	trusted_context,
 	session_messages,
 	processing_owner_token,
 	processing_heartbeat_at,
@@ -240,7 +238,6 @@ SELECT
 	source,
 	session_key,
 	source_coordinates,
-	trusted_context,
 	session_messages,
 	processing_owner_token,
 	processing_heartbeat_at,
@@ -352,7 +349,6 @@ RETURNING
 	source,
 	session_key,
 	source_coordinates,
-	trusted_context,
 	session_messages,
 	processing_owner_token,
 	processing_heartbeat_at,
@@ -456,7 +452,6 @@ INSERT INTO agent_executions (
 	source,
 	session_key,
 	source_coordinates,
-	trusted_context,
 	session_messages,
 	processing_input_ids,
 	attempt_count,
@@ -472,7 +467,6 @@ INSERT INTO agent_executions (
 	@source,
 	@session_key,
 	@source_coordinates,
-	@trusted_context,
 	@session_messages,
 	@processing_input_ids,
 	@attempt_count,
@@ -485,7 +479,6 @@ ON CONFLICT (tenant_id, organization_id, source, session_key)
 DO UPDATE SET
 	start_agent_name = EXCLUDED.start_agent_name,
 	source_coordinates = EXCLUDED.source_coordinates,
-	trusted_context = COALESCE(EXCLUDED.trusted_context, agent_executions.trusted_context),
 	updated_at = EXCLUDED.updated_at
 RETURNING
 	id,
@@ -498,7 +491,6 @@ RETURNING
 	source,
 	session_key,
 	source_coordinates,
-	trusted_context,
 	session_messages,
 	processing_owner_token,
 	processing_heartbeat_at,
@@ -530,7 +522,6 @@ RETURNING
 		"source":               e.Source,
 		"session_key":          e.SessionKey,
 		"source_coordinates":   e.SourceCoordinates,
-		"trusted_context":      e.TrustedContext,
 		"session_messages":     e.SessionMessages,
 		"processing_input_ids": []string{},
 		"attempt_count":        e.AttemptCount,
@@ -572,7 +563,6 @@ SELECT
 	source,
 	session_key,
 	source_coordinates,
-	trusted_context,
 	session_messages,
 	processing_owner_token,
 	processing_heartbeat_at,
@@ -694,7 +684,6 @@ RETURNING
 	source,
 	session_key,
 	source_coordinates,
-	trusted_context,
 	session_messages,
 	processing_owner_token,
 	processing_heartbeat_at,
@@ -730,7 +719,6 @@ func (e *AgentExecution) UpdateSessionState(
 UPDATE agent_executions
 SET
 	checkpoint = @checkpoint,
-	trusted_context = @trusted_context,
 	session_messages = @session_messages,
 	processing_heartbeat_at = @now,
 	updated_at = @now
@@ -744,7 +732,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":               e.ID,
 		"checkpoint":       e.Checkpoint,
-		"trusted_context":  e.TrustedContext,
 		"session_messages": e.SessionMessages,
 		"owner_token":      ownerToken,
 		"now":              now,

@@ -38,22 +38,23 @@ type (
 	AgentInputPurpose string
 
 	AgentInput struct {
-		ID               gid.GID           `db:"id"`
-		OrganizationID   gid.GID           `db:"organization_id"`
-		AgentExecutionID gid.GID           `db:"agent_execution_id"`
-		Source           string            `db:"source"`
-		SourceEventID    *string           `db:"source_event_id"`
-		Purpose          AgentInputPurpose `db:"purpose"`
-		IdentityID       *gid.GID          `db:"identity_id"`
-		Message          json.RawMessage   `db:"message"`
-		ProcessedAt      *time.Time        `db:"processed_at"`
-		AttemptCount     int               `db:"attempt_count"`
-		MaxAttempts      int               `db:"max_attempts"`
-		NextAttemptAt    *time.Time        `db:"next_attempt_at"`
-		LastError        *string           `db:"last_error"`
-		DeadLetteredAt   *time.Time        `db:"dead_lettered_at"`
-		CreatedAt        time.Time         `db:"created_at"`
-		UpdatedAt        time.Time         `db:"updated_at"`
+		ID                gid.GID           `db:"id"`
+		OrganizationID    gid.GID           `db:"organization_id"`
+		AgentExecutionID  gid.GID           `db:"agent_execution_id"`
+		Source            string            `db:"source"`
+		SourceEventID     *string           `db:"source_event_id"`
+		Purpose           AgentInputPurpose `db:"purpose"`
+		IdentityID        *gid.GID          `db:"identity_id"`
+		Message           json.RawMessage   `db:"message"`
+		SourceCoordinates json.RawMessage   `db:"source_coordinates"`
+		ProcessedAt       *time.Time        `db:"processed_at"`
+		AttemptCount      int               `db:"attempt_count"`
+		MaxAttempts       int               `db:"max_attempts"`
+		NextAttemptAt     *time.Time        `db:"next_attempt_at"`
+		LastError         *string           `db:"last_error"`
+		DeadLetteredAt    *time.Time        `db:"dead_lettered_at"`
+		CreatedAt         time.Time         `db:"created_at"`
+		UpdatedAt         time.Time         `db:"updated_at"`
 	}
 
 	AgentInputs []*AgentInput
@@ -121,6 +122,7 @@ INSERT INTO agent_inputs (
 	purpose,
 	identity_id,
 	message,
+	source_coordinates,
 	processed_at,
 	attempt_count,
 	max_attempts,
@@ -139,6 +141,7 @@ INSERT INTO agent_inputs (
 	@purpose,
 	@identity_id,
 	@message,
+	@source_coordinates,
 	@processed_at,
 	@attempt_count,
 	@max_attempts,
@@ -165,6 +168,7 @@ RETURNING
 	purpose,
 	identity_id,
 	message,
+	source_coordinates,
 	processed_at,
 	attempt_count,
 	max_attempts,
@@ -198,6 +202,7 @@ RETURNING
 		"purpose":            i.Purpose,
 		"identity_id":        i.IdentityID,
 		"message":            i.Message,
+		"source_coordinates": i.SourceCoordinates,
 		"processed_at":       i.ProcessedAt,
 		"attempt_count":      i.AttemptCount,
 		"max_attempts":       i.MaxAttempts,
@@ -243,6 +248,7 @@ SELECT
 	purpose,
 	identity_id,
 	message,
+	source_coordinates,
 	processed_at,
 	attempt_count,
 	max_attempts,
@@ -335,6 +341,7 @@ SELECT
 	purpose,
 	identity_id,
 	message,
+	source_coordinates,
 	processed_at,
 	attempt_count,
 	max_attempts,
@@ -405,6 +412,7 @@ SELECT
 	purpose,
 	identity_id,
 	message,
+	source_coordinates,
 	processed_at,
 	attempt_count,
 	max_attempts,

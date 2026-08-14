@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
@@ -36,7 +35,7 @@ import (
 
 const defaultAgentProfile = "probot"
 
-func (h *Service) enqueueExecutionInput(
+func (s *Service) enqueueExecutionInput(
 	ctx context.Context,
 	eventID string,
 	installationTeamID string,
@@ -75,7 +74,7 @@ func (h *Service) enqueueExecutionInput(
 	scope := coredata.NewScopeFromObjectID(organizationID)
 	now := time.Now()
 
-	return h.pg.WithTx(
+	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			exists, err := coredata.AgentInputExistsBySourceEventID(
@@ -117,17 +116,6 @@ func (h *Service) enqueueExecutionInput(
 					return fmt.Errorf("cannot build Slack execution session ID")
 				}
 
-				trustedContext, err := loadThreadTrustedContext(
-					ctx,
-					tx,
-					scope,
-					organizationID,
-					target,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot load Slack thread trusted context: %w", err)
-				}
-
 				source := ProviderName
 
 				execution = &coredata.AgentExecution{
@@ -137,7 +125,6 @@ func (h *Service) enqueueExecutionInput(
 					Source:            &source,
 					SessionKey:        &sessionID,
 					SourceCoordinates: coordinates,
-					TrustedContext:    trustedContext,
 					SessionMessages:   json.RawMessage("[]"),
 					MaxAttempts:       coredata.AgentExecutionDefaultMaxAttempts,
 					CreatedAt:         now,
@@ -161,17 +148,18 @@ func (h *Service) enqueueExecutionInput(
 			}
 
 			input := &coredata.AgentInput{
-				ID:               gid.New(scope.GetTenantID(), coredata.AgentInputEntityType),
-				OrganizationID:   organizationID,
-				AgentExecutionID: execution.ID,
-				Source:           ProviderName,
-				SourceEventID:    &eventID,
-				Purpose:          coredata.AgentInputPurposeUser,
-				IdentityID:       new(identityID),
-				Message:          message,
-				MaxAttempts:      coredata.AgentInputDefaultMaxAttempts,
-				CreatedAt:        now,
-				UpdatedAt:        now,
+				ID:                gid.New(scope.GetTenantID(), coredata.AgentInputEntityType),
+				OrganizationID:    organizationID,
+				AgentExecutionID:  execution.ID,
+				Source:            ProviderName,
+				SourceEventID:     &eventID,
+				Purpose:           coredata.AgentInputPurposeUser,
+				IdentityID:        new(identityID),
+				Message:           message,
+				SourceCoordinates: coordinates,
+				MaxAttempts:       coredata.AgentInputDefaultMaxAttempts,
+				CreatedAt:         now,
+				UpdatedAt:         now,
 			}
 			if _, err := input.EnqueueIdempotently(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot enqueue Slack agent input: %w", err)
@@ -180,59 +168,6 @@ func (h *Service) enqueueExecutionInput(
 			return nil
 		},
 	)
-}
-
-func loadThreadTrustedContext(
-	ctx context.Context,
-	tx pg.Tx,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-	target replyTarget,
-) (json.RawMessage, error) {
-	if target.channel == "" || target.threadTS == "" {
-		return nil, nil
-	}
-
-	var subject coredata.BotThreadSubject
-
-	err := subject.LoadByProviderCoordinates(
-		ctx,
-		tx,
-		scope,
-		organizationID,
-		ProviderName,
-		target.channel,
-		target.threadTS,
-	)
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return nil, nil
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("cannot load Slack thread subject: %w", err)
-	}
-
-	var attributes map[string]any
-	if len(subject.Attributes) > 0 {
-		if err := json.Unmarshal(subject.Attributes, &attributes); err != nil {
-			return nil, fmt.Errorf("cannot decode Slack thread subject attributes: %w", err)
-		}
-	}
-
-	trusted, err := json.Marshal(
-		bot.ConversationTrustedContext{
-			Capability:       subject.Capability,
-			MessageType:      subject.MessageType,
-			Attributes:       attributes,
-			SubjectNamespace: subject.SubjectNamespace,
-			SubjectKey:       subject.SubjectKey,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot encode Slack thread trusted context: %w", err)
-	}
-
-	return trusted, nil
 }
 
 func loadAnchoredExecution(

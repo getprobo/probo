@@ -30,7 +30,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
-	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
@@ -183,7 +182,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 	assert.NotContains(t, message.Text(), "U123")
 }
 
-func TestExecutionIngressReusesThreadSessionAndCopiesSubjectContext(t *testing.T) {
+func TestExecutionIngressReusesThreadSessionAndStoresPerInputCoordinates(t *testing.T) {
 	t.Parallel()
 
 	pgClient, scope, organizationID := executionIngressDatabase(t)
@@ -271,9 +270,29 @@ func TestExecutionIngressReusesThreadSessionAndCopiesSubjectContext(t *testing.T
 	var (
 		executionCount int
 		inputCount     int
-		trustedRaw     []byte
+		aliceCoordsRaw []byte
+		bobCoordsRaw   []byte
 	)
 
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				return conn.QueryRow(
+					ctx,
+					`SELECT count(*)
+					 FROM agent_executions
+					 WHERE tenant_id = $1 AND organization_id = $2
+					   AND source = $3 AND session_key = $4`,
+					scope.GetTenantID(),
+					organizationID,
+					ProviderName,
+					sessionID,
+				).Scan(&executionCount)
+			},
+		),
+	)
 	require.NoError(
 		t,
 		pgClient.WithConn(
@@ -282,57 +301,54 @@ func TestExecutionIngressReusesThreadSessionAndCopiesSubjectContext(t *testing.T
 				if err := conn.QueryRow(
 					ctx,
 					`SELECT count(*)
-					 FROM agent_executions
-					 WHERE tenant_id = $1 AND organization_id = $2
-					   AND source = $3 AND session_key = $4`,
-					scope.GetTenantID(),
-					organizationID,
-					ProviderName,
-					sessionID,
-				).Scan(&executionCount); err != nil {
-					return err
-				}
-
-				return conn.QueryRow(
-					ctx,
-					`SELECT trusted_context
-					 FROM agent_executions
-					 WHERE tenant_id = $1 AND organization_id = $2
-					   AND source = $3 AND session_key = $4`,
-					scope.GetTenantID(),
-					organizationID,
-					ProviderName,
-					sessionID,
-				).Scan(&trustedRaw)
-			},
-		),
-	)
-	require.NoError(
-		t,
-		pgClient.WithConn(
-			t.Context(),
-			func(ctx context.Context, conn pg.Querier) error {
-				return conn.QueryRow(
-					ctx,
-					`SELECT count(*)
 					 FROM agent_inputs
 					 WHERE tenant_id = $1 AND organization_id = $2
 					   AND source = $3`,
 					scope.GetTenantID(),
 					organizationID,
 					ProviderName,
-				).Scan(&inputCount)
+				).Scan(&inputCount); err != nil {
+					return err
+				}
+
+				if err := conn.QueryRow(
+					ctx,
+					`SELECT source_coordinates
+					 FROM agent_inputs
+					 WHERE tenant_id = $1 AND organization_id = $2
+					   AND source = $3 AND source_event_id = $4`,
+					scope.GetTenantID(),
+					organizationID,
+					ProviderName,
+					"E-alice",
+				).Scan(&aliceCoordsRaw); err != nil {
+					return err
+				}
+
+				return conn.QueryRow(
+					ctx,
+					`SELECT source_coordinates
+					 FROM agent_inputs
+					 WHERE tenant_id = $1 AND organization_id = $2
+					   AND source = $3 AND source_event_id = $4`,
+					scope.GetTenantID(),
+					organizationID,
+					ProviderName,
+					"E-bob",
+				).Scan(&bobCoordsRaw)
 			},
 		),
 	)
 	assert.Equal(t, 1, executionCount)
 	assert.Equal(t, 2, inputCount)
 
-	var trusted bot.ConversationTrustedContext
-	require.NoError(t, json.Unmarshal(trustedRaw, &trusted))
-	assert.Equal(t, "test", trusted.Capability)
-	assert.Equal(t, "TEST", trusted.MessageType)
-	assert.Equal(t, accessID.String(), trusted.Attributes["access_id"])
+	var aliceCoords ExecutionSourceCoordinates
+	require.NoError(t, json.Unmarshal(aliceCoordsRaw, &aliceCoords))
+	assert.Equal(t, "901.000", aliceCoords.MessageTS)
+
+	var bobCoords ExecutionSourceCoordinates
+	require.NoError(t, json.Unmarshal(bobCoordsRaw, &bobCoords))
+	assert.Equal(t, "902.000", bobCoords.MessageTS)
 }
 
 func TestExecutionIngressRoutesAnchoredReplyWithoutChangingDomainSession(t *testing.T) {

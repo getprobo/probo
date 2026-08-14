@@ -553,7 +553,7 @@ func TestCapability_ToolsUseTrustedRunContext(t *testing.T) {
 	}
 }
 
-func TestCapability_RefreshesFromTrustedContextWithoutActor(t *testing.T) {
+func TestCapability_RefreshesFromRunContextWithoutActor(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()

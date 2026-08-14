@@ -53,14 +53,6 @@ type (
 		EventKey         string
 		Purpose          coredata.BotMessagePurpose
 	}
-
-	ConversationTrustedContext struct {
-		Capability       string         `json:"capability"`
-		MessageType      string         `json:"message_type"`
-		Attributes       map[string]any `json:"attributes"`
-		SubjectNamespace string         `json:"subject_namespace"`
-		SubjectKey       string         `json:"subject_key"`
-	}
 )
 
 func NewService(config ServiceConfig) *Service {

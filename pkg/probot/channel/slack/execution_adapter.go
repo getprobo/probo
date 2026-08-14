@@ -23,11 +23,12 @@ package slack
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probot"
@@ -44,7 +45,14 @@ type (
 		ExternalUserID string `json:"external_user_id,omitempty"`
 	}
 
+	threadSubject struct {
+		Capability  string
+		MessageType string
+		Attributes  map[string]any
+	}
+
 	ExecutionAdapter struct {
+		pg            *pg.Client
 		installations *InstallationService
 		bindings      identitybinding.Gate
 		profiles      *probot.AgentProfileRegistry
@@ -59,6 +67,7 @@ var (
 )
 
 func NewExecutionAdapter(
+	pgClient *pg.Client,
 	installations *InstallationService,
 	bindings identitybinding.Gate,
 	profiles *probot.AgentProfileRegistry,
@@ -67,6 +76,7 @@ func NewExecutionAdapter(
 	logger *log.Logger,
 ) *ExecutionAdapter {
 	return &ExecutionAdapter{
+		pg:            pgClient,
 		installations: installations,
 		bindings:      bindings,
 		profiles:      profiles,
@@ -80,28 +90,23 @@ func (a *ExecutionAdapter) Provider() string {
 	return ProviderName
 }
 
+// Prepare hydrates run context from the live BotThreadSubject and this
+// input's turn coordinates. It runs on every Process batch, including
+// checkpoint resume, so late subject binding can enable capability tools.
 func (a *ExecutionAdapter) Prepare(
 	ctx context.Context,
 	execution *coredata.AgentExecution,
 	_ agent.AgentRegistry,
 	input *coredata.AgentInput,
 ) (context.Context, agent.AgentRegistry, error) {
-	var trusted bot.ConversationTrustedContext
-	if len(execution.TrustedContext) > 0 {
-		if err := json.Unmarshal(execution.TrustedContext, &trusted); err != nil {
-			return nil, nil, fmt.Errorf("cannot decode Slack execution trusted context: %w", err)
-		}
-
-		if (trusted.Capability == "") != (trusted.MessageType == "") {
-			return nil, nil, fmt.Errorf("slack execution trusted capability context is incomplete")
-		}
+	coordinates, err := decodeExecutionCoordinates(execution.SourceCoordinates)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	var coordinates ExecutionSourceCoordinates
-	if len(execution.SourceCoordinates) > 0 {
-		if err := json.Unmarshal(execution.SourceCoordinates, &coordinates); err != nil {
-			return nil, nil, fmt.Errorf("cannot decode Slack execution source coordinates: %w", err)
-		}
+	turn, err := turnCoordinates(coordinates, input)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	installation, identityID, err := a.resolveTrust(ctx, execution, coordinates, input)
@@ -113,77 +118,124 @@ func (a *ExecutionAdapter) Prepare(
 		return nil, nil, fmt.Errorf("slack installation does not belong to execution organization")
 	}
 
-	base, err := a.profiles.Agent(execution.StartAgentName)
+	subject, err := a.loadThreadSubject(ctx, execution.OrganizationID, turn)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot resolve Slack execution agent profile: %w", err)
+		return nil, nil, err
 	}
 
-	tools := []agent.Tool{}
-	if trusted.MessageType != "" {
-		tools = append(tools, a.capabilities.ToolsForMessageType(trusted.MessageType)...)
+	runContext := hydrateRunContext(execution, turn, identityID, subject)
+	registry, err := a.registryForRun(execution.OrganizationID, execution.StartAgentName, turn, subject)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	if coordinates.ChannelID != "" {
-		tools = append(tools, Tools(a.deliveries)...)
-	}
+	return agent.WithRunContext(ctx, runContext), registry, nil
+}
 
-	prepared := base.Clone(agent.WithTools(tools...))
-	runContext := &probot.RunContext{
+func hydrateRunContext(
+	execution *coredata.AgentExecution,
+	turn ExecutionSourceCoordinates,
+	identityID gid.GID,
+	subject threadSubject,
+) *probot.RunContext {
+	return &probot.RunContext{
 		OrganizationID: execution.OrganizationID,
 		ExecutionID:    execution.ID,
 		MessageAnchor: probot.MessageAnchor{
-			ConversationID: coordinates.ChannelID,
-			MessageID:      coordinates.ThreadTS,
+			ConversationID: turn.ChannelID,
+			MessageID:      turn.ThreadTS,
 		},
-		CurrentMessageID: coordinates.MessageTS,
+		CurrentMessageID: turn.MessageTS,
 		IdentityID:       identityID,
-		Capability:       trusted.Capability,
-		MessageType:      trusted.MessageType,
-		Attributes:       cloneNotificationData(trusted.Attributes),
+		Capability:       subject.Capability,
+		MessageType:      subject.MessageType,
+		Attributes:       cloneNotificationData(subject.Attributes),
 	}
-
-	a.refreshAssistantStatus(ctx, coordinates, execution.OrganizationID)
-
-	return agent.WithRunContext(ctx, runContext),
-		probot.NewStaticAgentRegistry(execution.StartAgentName, prepared),
-		nil
 }
 
-func (a *ExecutionAdapter) refreshAssistantStatus(
-	ctx context.Context,
-	coordinates ExecutionSourceCoordinates,
+func (a *ExecutionAdapter) registryForRun(
 	organizationID gid.GID,
-) {
-	threadTS := assistantStatusThreadTS(coordinates.ThreadTS, coordinates.MessageTS)
-	if coordinates.ChannelID == "" || threadTS == "" || a.installations == nil {
-		return
+	startAgentName string,
+	turn ExecutionSourceCoordinates,
+	subject threadSubject,
+) (agent.AgentRegistry, error) {
+	base, err := a.profiles.Agent(startAgentName)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve Slack execution agent profile: %w", err)
 	}
 
-	var (
-		client *Client
-		err    error
-	)
-	if coordinates.TeamID != "" {
-		client, _, err = a.installations.ClientByTeamID(ctx, coordinates.TeamID)
-	} else {
-		client, _, err = a.installations.ClientByOrganizationID(
-			ctx,
-			coredata.NewScopeFromObjectID(organizationID),
-			organizationID,
+	tools := []agent.Tool{}
+	if subject.MessageType != "" {
+		tools = append(tools, a.capabilities.ToolsForMessageType(subject.MessageType)...)
+	}
+
+	if turn.ChannelID != "" {
+		tools = append(
+			tools,
+			Tools(
+				a.deliveries,
+				TurnBinding{
+					OrganizationID: organizationID,
+					ChannelID:      turn.ChannelID,
+					ThreadTS:       turn.ThreadTS,
+					MessageTS:      turn.MessageTS,
+				},
+			)...,
 		)
 	}
 
+	return probot.NewStaticAgentRegistry(startAgentName, base.Clone(agent.WithTools(tools...))), nil
+}
+
+func (a *ExecutionAdapter) loadThreadSubject(
+	ctx context.Context,
+	organizationID gid.GID,
+	turn ExecutionSourceCoordinates,
+) (threadSubject, error) {
+	if a.pg == nil || turn.ChannelID == "" || turn.ThreadTS == "" {
+		return threadSubject{}, nil
+	}
+
+	var subject coredata.BotThreadSubject
+
+	err := a.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return subject.LoadByProviderCoordinates(
+				ctx,
+				conn,
+				coredata.NewScopeFromObjectID(organizationID),
+				organizationID,
+				ProviderName,
+				turn.ChannelID,
+				turn.ThreadTS,
+			)
+		},
+	)
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return threadSubject{}, nil
+	}
+
 	if err != nil {
-		logAssistantStatusError(ctx, a.logger, err)
-
-		return
+		return threadSubject{}, fmt.Errorf("cannot load Slack thread subject: %w", err)
 	}
 
-	if client == nil {
-		return
+	if (subject.Capability == "") != (subject.MessageType == "") {
+		return threadSubject{}, fmt.Errorf("slack thread subject capability context is incomplete")
 	}
 
-	setAssistantWorkingStatus(ctx, a.logger, client, coordinates.ChannelID, threadTS)
+	var attributes map[string]any
+	if len(subject.Attributes) > 0 {
+		if err := json.Unmarshal(subject.Attributes, &attributes); err != nil {
+			return threadSubject{}, fmt.Errorf("cannot decode Slack thread subject attributes: %w", err)
+		}
+	}
+
+	return threadSubject{
+		Capability:  subject.Capability,
+		MessageType: subject.MessageType,
+		Attributes:  attributes,
+	}, nil
 }
 
 func (a *ExecutionAdapter) resolveTrust(
@@ -239,6 +291,48 @@ func (a *ExecutionAdapter) resolveTrust(
 	}
 
 	return installation, binding.IdentityID, nil
+}
+
+func decodeExecutionCoordinates(raw json.RawMessage) (ExecutionSourceCoordinates, error) {
+	if len(raw) == 0 {
+		return ExecutionSourceCoordinates{}, nil
+	}
+
+	var coordinates ExecutionSourceCoordinates
+	if err := json.Unmarshal(raw, &coordinates); err != nil {
+		return ExecutionSourceCoordinates{}, fmt.Errorf("cannot decode Slack source coordinates: %w", err)
+	}
+
+	return coordinates, nil
+}
+
+func turnCoordinates(
+	executionCoords ExecutionSourceCoordinates,
+	input *coredata.AgentInput,
+) (ExecutionSourceCoordinates, error) {
+	turn := executionCoords
+	if input == nil || len(input.SourceCoordinates) == 0 {
+		return turn, nil
+	}
+
+	inputCoords, err := decodeExecutionCoordinates(input.SourceCoordinates)
+	if err != nil {
+		return ExecutionSourceCoordinates{}, fmt.Errorf("cannot decode Slack input source coordinates: %w", err)
+	}
+
+	if inputCoords.ChannelID != "" {
+		turn.ChannelID = inputCoords.ChannelID
+	}
+
+	if inputCoords.ThreadTS != "" {
+		turn.ThreadTS = inputCoords.ThreadTS
+	}
+
+	if inputCoords.MessageTS != "" {
+		turn.MessageTS = inputCoords.MessageTS
+	}
+
+	return turn, nil
 }
 
 func identityIDFromInput(input *coredata.AgentInput) gid.GID {

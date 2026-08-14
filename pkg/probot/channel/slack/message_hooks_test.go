@@ -58,7 +58,6 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 		Source:            &source,
 		SessionKey:        &sessionKey,
 		SourceCoordinates: []byte(`{"workspace":"opaque"}`),
-		TrustedContext:    []byte(`{"organization":"trusted"}`),
 		SessionMessages:   []byte(`[]`),
 		CreatedAt:         now,
 		UpdatedAt:         now,

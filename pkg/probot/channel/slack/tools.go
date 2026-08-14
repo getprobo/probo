@@ -28,10 +28,17 @@ import (
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/bot"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/probot"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
+	TurnBinding struct {
+		OrganizationID gid.GID
+		ChannelID      string
+		ThreadTS       string
+		MessageTS      string
+	}
+
 	sendMessageParams struct {
 		Text string `json:"text" jsonschema_description:"Plain-text message to send in the current conversation"`
 	}
@@ -41,18 +48,17 @@ type (
 	}
 )
 
-func Tools(queue *DeliveryService) []agent.Tool {
+func Tools(queue *DeliveryService, turn TurnBinding) []agent.Tool {
 	return []agent.Tool{
 		agent.FunctionTool(
 			"send_message",
 			"Send a concise plain-text user-visible reply in the current trusted Slack conversation. Do not use Slack-specific markup or invent channel or thread IDs.",
 			func(ctx context.Context, p sendMessageParams) (agent.ToolResult, error) {
-				rc := agent.RunContextFrom[*probot.RunContext](ctx)
-				if rc.MessageAnchor.ConversationID == "" {
+				if turn.ChannelID == "" {
 					return agent.ResultError("cannot queue message without a trusted Slack conversation"), nil
 				}
 
-				operationKey, ok := toolOperationKey(ctx, rc, "send_message")
+				operationKey, ok := toolOperationKey(ctx, turn, "send_message")
 				if !ok {
 					return agent.ResultError("cannot queue message without a stable tool call ID"), nil
 				}
@@ -62,13 +68,13 @@ func Tools(queue *DeliveryService) []agent.Tool {
 
 				_, _, err := queue.Queue(
 					ctx,
-					rc.OrganizationID,
+					turn.OrganizationID,
 					operationKey,
 					coredata.SlackDeliveryOperationKindPostMessage,
 					map[string]any{
-						"channel":   rc.MessageAnchor.ConversationID,
+						"channel":   turn.ChannelID,
 						"text":      body["text"],
-						"thread_ts": rc.MessageAnchor.MessageID,
+						"thread_ts": turn.ThreadTS,
 					},
 				)
 				if err != nil {
@@ -82,25 +88,24 @@ func Tools(queue *DeliveryService) []agent.Tool {
 			"add_reaction",
 			"Add an emoji reaction to the current trusted Slack message. Never invent channel or message IDs.",
 			func(ctx context.Context, p addReactionParams) (agent.ToolResult, error) {
-				rc := agent.RunContextFrom[*probot.RunContext](ctx)
-				if rc.MessageAnchor.ConversationID == "" || rc.CurrentMessageID == "" {
+				if turn.ChannelID == "" || turn.MessageTS == "" {
 					return agent.ResultError("cannot queue reaction without a trusted current Slack message"), nil
 				}
 
-				operationKey, ok := toolOperationKey(ctx, rc, "add_reaction")
+				operationKey, ok := toolOperationKey(ctx, turn, "add_reaction")
 				if !ok {
 					return agent.ResultError("cannot queue reaction without a stable tool call ID"), nil
 				}
 
 				_, _, err := queue.Queue(
 					ctx,
-					rc.OrganizationID,
+					turn.OrganizationID,
 					operationKey,
 					coredata.SlackDeliveryOperationKindAddReaction,
 					map[string]any{
-						"channel":   rc.MessageAnchor.ConversationID,
+						"channel":   turn.ChannelID,
 						"reaction":  p.Reaction,
-						"timestamp": rc.CurrentMessageID,
+						"timestamp": turn.MessageTS,
 					},
 				)
 				if err != nil {
@@ -113,7 +118,7 @@ func Tools(queue *DeliveryService) []agent.Tool {
 	}
 }
 
-func toolOperationKey(ctx context.Context, rc *probot.RunContext, toolName string) (string, bool) {
+func toolOperationKey(ctx context.Context, turn TurnBinding, toolName string) (string, bool) {
 	toolCallID, ok := agent.ToolCallIDFrom(ctx)
 	if !ok {
 		return "", false
@@ -123,10 +128,10 @@ func toolOperationKey(ctx context.Context, rc *probot.RunContext, toolName strin
 		fmt.Appendf(
 			nil,
 			"%s\x00%s\x00%s\x00%s\x00%s\x00%s",
-			rc.OrganizationID.String(),
-			rc.MessageAnchor.ConversationID,
-			rc.MessageAnchor.MessageID,
-			rc.CurrentMessageID,
+			turn.OrganizationID.String(),
+			turn.ChannelID,
+			turn.ThreadTS,
+			turn.MessageTS,
 			toolName,
 			toolCallID,
 		),

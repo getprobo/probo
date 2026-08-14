@@ -881,6 +881,7 @@ func (impl *Implm) Run(
 
 		if err := probotAdapters.Register(
 			slackchannel.NewExecutionAdapter(
+				pgClient,
 				slackbotInstallations,
 				probotIdentityBindings,
 				probotProfiles,
