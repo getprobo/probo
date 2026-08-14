@@ -4,13 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.260.0] - 2026-08-14
+
 ### Added
 
 - MCP `listRiskMeasures` tool to list measures linked to a risk (reverse of `listMeasureRisks`), so callers can discover links to unlink before `deleteRisk`.
+- Explicit likelihood/impact matrix size (3×3, 4×4, or 5×5) on risk analyses, across GraphQL, MCP, and the console
+- Device enrollment now has a dedicated "Download the Probo agent" step linking to pro.bo/install before organization selection, skippable when the agent is already installed
+
+### Changed
+
+- OAuth consent and token screens now translate scope labels instead of showing raw English strings
+- Devices list shows the last reported agent version, and the Windows OS version column now shows the short numeric version instead of the full localized banner
 
 ### Fixed
 
 - Deleting a risk that still has linked measures, documents, or other references now returns a clear "resource is in use" error instead of an opaque internal error.
+- Linking a measure to an existing task is no longer silently dropped on update
 
 ## [0.259.0] - 2026-08-13
 
