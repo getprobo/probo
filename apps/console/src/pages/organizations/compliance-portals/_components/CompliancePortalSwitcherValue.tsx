@@ -22,7 +22,10 @@ import { graphql, useLazyLoadQuery } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CompliancePortalSwitcherValueQuery } from "#/__generated__/core/CompliancePortalSwitcherValueQuery.graphql";
-import { NavPanelSwitcherValue } from "#/pages/organizations/_components/NavPanelSwitcher";
+import {
+  NavPanelSwitcherValue,
+  NavPanelSwitcherValueSkeleton,
+} from "#/pages/organizations/_components/NavPanelSwitcher";
 
 const compliancePortalSwitcherValueQuery = graphql`
   query CompliancePortalSwitcherValueQuery($compliancePortalId: ID!) {
@@ -35,17 +38,14 @@ const compliancePortalSwitcherValueQuery = graphql`
   }
 `;
 
-export interface CompliancePortalSwitcherValueProps {
-  fallback: string;
-}
-
 /**
- * The entity name of the portal the URL is on, or the default trigger label.
+ * The entity name of the portal the URL is on.
  *
  * Mounted only when `:compliancePortalId` is present. The create form uses
- * "New Portal" in the trigger itself.
+ * "New Portal" in the trigger itself; the index pulses until a portal is
+ * chosen.
  */
-export function CompliancePortalSwitcherValue({ fallback }: CompliancePortalSwitcherValueProps) {
+export function CompliancePortalSwitcherValue() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const data = useLazyLoadQuery<CompliancePortalSwitcherValueQuery>(
     compliancePortalSwitcherValueQuery,
@@ -53,7 +53,7 @@ export function CompliancePortalSwitcherValue({ fallback }: CompliancePortalSwit
     { fetchPolicy: "store-or-network" },
   );
   if (data.node?.__typename !== "CompliancePortal") {
-    return fallback;
+    return <NavPanelSwitcherValueSkeleton />;
   }
   return <NavPanelSwitcherValue>{data.node.entityName}</NavPanelSwitcherValue>;
 }

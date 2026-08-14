@@ -77,7 +77,6 @@ function CompliancePortalSwitcherInner() {
 
   const prefix = `/organizations/${organizationId}/compliance-portals/`;
   const isNew = pathname === `${prefix}new`;
-  const selectLabel = t("nav.compliancePortalSwitcher.select");
   const newLabel = t("nav.compliancePortalSwitcher.new");
   const slots = navPanelSwitcher();
 
@@ -91,16 +90,14 @@ function CompliancePortalSwitcherInner() {
     <NavPanelSwitcher
       active={isNew}
       onOpenChange={handleOpenChange}
-      value={compliancePortalId != null
-        ? (
-            <Suspense fallback={<NavPanelSwitcherValueSkeleton />}>
-              <CompliancePortalSwitcherValue fallback={selectLabel} />
-            </Suspense>
-          )
+      value={isNew
+        ? <NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>
         : (
-            <NavPanelSwitcherValue>
-              {isNew ? newLabel : selectLabel}
-            </NavPanelSwitcherValue>
+            <Suspense fallback={<NavPanelSwitcherValueSkeleton />}>
+              {compliancePortalId != null
+                ? <CompliancePortalSwitcherValue />
+                : <NavPanelSwitcherValueSkeleton />}
+            </Suspense>
           )}
     >
       {queryRef != null && (
