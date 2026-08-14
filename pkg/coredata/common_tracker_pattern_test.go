@@ -492,6 +492,62 @@ func TestCommonTrackerPattern_Upsert_RoundTripsAttribution(t *testing.T) {
 // TestCommonTrackerPattern_Upsert_PreservesFirstPartyVerdict pins the
 // terminal contract: once a row is FIRST_PARTY, an automated upsert that
 // carries a vendor neither flips the verdict nor attaches the vendor.
+// TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor pins the
+// other direction of the terminal-row invariant.
+//
+// The existing-attribution guard only stops a terminal row from gaining a
+// vendor. An upsert can also *introduce* a terminal verdict, and if it carries
+// a vendor of its own the row would end up both terminal and attributed —
+// which the organization-scoped lookup then reads as vendor-attributed.
+func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
+
+			party := seedCommonThirdParty(t, ctx, client)
+
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			pattern := "incoming_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+
+			existing := coredata.CommonTrackerPattern{
+				ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType: coredata.TrackerTypeCookie,
+				Pattern:     pattern,
+				MatchType:   coredata.TrackerPatternMatchTypeExact,
+				Confidence:  0.5,
+				Attribution: coredata.CommonTrackerPatternAttributionUndetermined,
+				CreatedAt:   now,
+				UpdatedAt:   now,
+			}
+			insertCommonTrackerPattern(t, ctx, client, existing)
+
+			// The incoming row settles the artifact but still names a vendor.
+			incoming := existing
+			incoming.ID = gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType)
+			incoming.CommonThirdPartyID = &party.ID
+			incoming.Attribution = verdict
+			incoming.UpdatedAt = now.Add(time.Minute)
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				_, err := incoming.Upsert(ctx, tx)
+				return err
+			}))
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, existing.ID)
+			assert.Equal(t, verdict, reloaded.Attribution)
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal verdict must not persist alongside a vendor")
+		})
+	}
+}
+
 func TestCommonTrackerPattern_Upsert_PreservesTerminalVerdict(t *testing.T) {
 	t.Parallel()
 

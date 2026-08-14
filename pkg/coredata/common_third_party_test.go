@@ -155,3 +155,68 @@ func TestLoadAllUnreferencedIDs_DomainsDoNotProtectAnEntry(t *testing.T) {
 
 	assert.Contains(t, ids, withDomain.ID, "a domain must not protect an otherwise unreferenced entry")
 }
+
+// TestDeleteIfUnreferenced_RefusesOnceReferenced pins the guard that closes the
+// prune race. Candidate selection and deletion are separate statements, so an
+// entry can gain a reference in between; deleting it anyway would clear that
+// brand-new link through ON DELETE SET NULL.
+func TestDeleteIfUnreferenced_RefusesOnceReferenced(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	t.Run("deletes while unreferenced", func(t *testing.T) {
+		t.Parallel()
+
+		party := seedCommonThirdParty(t, ctx, client)
+
+		var gone bool
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			var err error
+			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
+
+			return err
+		}))
+
+		assert.True(t, gone)
+	})
+
+	t.Run("refuses once a pattern references it", func(t *testing.T) {
+		t.Parallel()
+
+		party := seedCommonThirdParty(t, ctx, client)
+
+		// Stands in for a reference created after the candidate selection.
+		now := time.Now().UTC().Truncate(time.Microsecond)
+		insertCommonTrackerPattern(t, ctx, client, coredata.CommonTrackerPattern{
+			ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+			CommonThirdPartyID: &party.ID,
+			TrackerType:        coredata.TrackerTypeCookie,
+			Pattern:            "race_" + party.Slug,
+			MatchType:          coredata.TrackerPatternMatchTypeExact,
+			Confidence:         0.9,
+			Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		})
+
+		var gone bool
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			var err error
+			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
+
+			return err
+		}))
+
+		assert.False(t, gone, "must not delete an entry that gained a reference")
+
+		var still coredata.CommonThirdParty
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return still.LoadByID(ctx, conn, party.ID)
+		}))
+	})
+}

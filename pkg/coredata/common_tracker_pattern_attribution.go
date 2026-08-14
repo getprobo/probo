@@ -61,13 +61,8 @@ const (
 	CommonTrackerPatternAttributionNotAttributable CommonTrackerPatternAttribution = "NOT_ATTRIBUTABLE"
 )
 
-// IsTerminal reports whether the verdict settles the question of who set the
-// artifact, so the mapping pipeline stops probing it. Callers must use this
-// rather than testing for FIRST_PARTY, which would silently keep re-probing
-// every other terminal verdict.
-// terminalAttributions lists the verdicts that settle attribution, for SQL
-// that must treat them as a set. Kept beside IsTerminal so the two cannot
-// disagree about which verdicts are terminal.
+// terminalAttributions lists the verdicts that settle attribution, for SQL that
+// must treat them as a set. Kept beside IsTerminal so the two cannot disagree.
 //
 // Returns strings because pgx has no encode plan for a slice of the enum type;
 // the column accepts the text form.
@@ -78,6 +73,10 @@ func terminalAttributions() []string {
 	}
 }
 
+// IsTerminal reports whether the verdict settles the question of who set the
+// artifact, so the mapping pipeline stops probing it. Use this rather than
+// comparing against FIRST_PARTY, which would silently keep re-probing every
+// other terminal verdict.
 func (v CommonTrackerPatternAttribution) IsTerminal() bool {
 	switch v {
 	case CommonTrackerPatternAttributionFirstParty,

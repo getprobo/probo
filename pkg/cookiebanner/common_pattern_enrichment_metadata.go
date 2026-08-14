@@ -23,6 +23,8 @@ package cookiebanner
 import (
 	"strings"
 	"time"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 // Per-field outcomes recorded in the common tracker pattern enrichment
@@ -34,12 +36,15 @@ const (
 	commonPatternFieldStatusNotFound = "not_found"
 	commonPatternFieldStatusExternal = "exists_external"
 
-	// commonPatternFieldStatusFirstParty records that the artifact was
-	// determined to have no third party behind it. It is a definitive
-	// answer, not a missing one, so it counts as resolved: a first-party
-	// row would otherwise report no_result forever despite the question
-	// being settled.
-	commonPatternFieldStatusFirstParty = "first_party"
+	// commonPatternFieldStatusTerminal records that the artifact was
+	// determined to have no third party behind it, whichever terminal verdict
+	// applied. It is a definitive answer, not a missing one, so it counts as
+	// resolved: such a row would otherwise report no_result forever despite
+	// the question being settled.
+	//
+	// The wire value stays "first_party" so payloads already written keep
+	// parsing; the verdict itself is recorded in the attribution block.
+	commonPatternFieldStatusTerminal = "first_party"
 
 	// Run-level status recorded at the top of the enrichment payload.
 	commonPatternStatusDone     = "done"
@@ -68,10 +73,15 @@ type (
 		Confidence     float64 `json:"confidence"`
 		Linked         bool    `json:"linked"`
 
-		// FirstParty records a terminal verdict that the artifact has no
-		// third party behind it, so the decision stays auditable from the
-		// payload after the vendor link has been cleared.
+		// FirstParty records that the artifact has no third party behind it,
+		// so the decision stays auditable from the payload after the vendor
+		// link has been cleared. Kept for payloads already written; read
+		// TerminalVerdict for which verdict applied.
 		FirstParty bool `json:"first_party,omitempty"`
+
+		// TerminalVerdict names the verdict recorded, so a browser extension
+		// is not represented as the site operator's own code.
+		TerminalVerdict string `json:"terminal_verdict,omitempty"`
 	}
 
 	// CommonPatternEnrichmentMetadata is the full payload stored in the
@@ -147,22 +157,27 @@ func buildCommonPatternEnrichmentMetadata(
 	return meta
 }
 
-// buildCommonPatternFirstPartyMetadata assembles the provenance for a run
-// that ended in a terminal first-party verdict. Both enrichment targets
-// are recorded as first_party rather than not_found: the artifact has no
-// vendor to name and therefore no vendor-informed description to write, so
-// the run resolved both questions rather than failing at them.
-func buildCommonPatternFirstPartyMetadata(
+// buildCommonPatternTerminalMetadata assembles the provenance for a run that
+// ended in a terminal verdict. Both enrichment targets are recorded as
+// resolved rather than not_found: the artifact has no vendor to name and
+// therefore no vendor-informed description to write, so the run answered both
+// questions rather than failing at them.
+//
+// The verdict is recorded explicitly, because "no third party" covers both the
+// operator's own code and software the visitor installed, and a register that
+// conflates them is wrong about who is responsible.
+func buildCommonPatternTerminalMetadata(
 	model string,
+	verdict coredata.CommonTrackerPatternAttribution,
 	now time.Time,
 ) CommonPatternEnrichmentMetadata {
 	fields := map[string]CommonPatternFieldMeta{
 		commonPatternFieldDescription: {
-			Status:    commonPatternFieldStatusFirstParty,
+			Status:    commonPatternFieldStatusTerminal,
 			UpdatedAt: now,
 		},
 		commonPatternFieldThirdParty: {
-			Status:    commonPatternFieldStatusFirstParty,
+			Status:    commonPatternFieldStatusTerminal,
 			UpdatedAt: now,
 		},
 	}
@@ -172,7 +187,10 @@ func buildCommonPatternFirstPartyMetadata(
 		AttemptedAt: now,
 		Status:      commonPatternRunStatus(fields),
 		Fields:      fields,
-		Attribution: &CommonPatternAttributionMeta{FirstParty: true},
+		Attribution: &CommonPatternAttributionMeta{
+			FirstParty:      true,
+			TerminalVerdict: string(verdict),
+		},
 	}
 }
 
@@ -205,7 +223,7 @@ func commonPatternFieldResolved(status string) bool {
 	switch status {
 	case commonPatternFieldStatusFound,
 		commonPatternFieldStatusExternal,
-		commonPatternFieldStatusFirstParty:
+		commonPatternFieldStatusTerminal:
 		return true
 	default:
 		return false

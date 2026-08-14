@@ -97,24 +97,24 @@ func TestInterpretEnrichmentAttribution(t *testing.T) {
 			expectedRejection: attributionRejectedNoEvidence,
 		},
 		{
-			name: "no evidence but first-party yields the terminal verdict",
+			name: "a terminal flag outranks a missing evidence source",
 			mutate: func(r *TrackerMappingAgentResult) {
 				r.ThirdPartyName = "Acme"
 				r.EvidenceSource = evidenceSourceNone
 				r.IsFirstParty = true
 			},
 			expectFirstParty:  true,
-			expectedRejection: attributionRejectedNoEvidence,
+			expectedRejection: attributionRejectedTerminalVerdict,
 		},
 		{
-			name: "rejected name with a first-party verdict is terminal",
+			name: "a terminal flag outranks the name guards",
 			mutate: func(r *TrackerMappingAgentResult) {
 				r.ThirdPartyName = "Cookiepedia"
 				r.ThirdPartyConfidence = 0.95
 				r.IsFirstParty = true
 			},
 			expectFirstParty:  true,
-			expectedRejection: attributionRejectedAggregator,
+			expectedRejection: attributionRejectedTerminalVerdict,
 		},
 		{
 			name: "rejected name without a first-party verdict yields nothing",
@@ -309,29 +309,39 @@ func seedEnricherCommonThirdParty(
 	return party
 }
 
-// TestBuildCommonPatternFirstPartyMetadata pins that a first-party verdict
-// reads as a fully resolved run. Both enrichment targets are settled — the
-// artifact has no vendor to name and so no vendor-informed description to
-// write — so reporting no_result would misrepresent a definitive answer as
-// a failed one.
-func TestBuildCommonPatternFirstPartyMetadata(t *testing.T) {
+// TestBuildCommonPatternTerminalMetadata pins that a terminal verdict reads as
+// a fully resolved run, and that the payload records which verdict applied.
+// Both enrichment targets are settled — the artifact has no vendor to name and
+// so no vendor-informed description to write — so reporting no_result would
+// misrepresent a definitive answer as a failed one. And flattening the verdict
+// to "first party" would claim an extension is the operator's own code.
+func TestBuildCommonPatternTerminalMetadata(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	meta := buildCommonPatternFirstPartyMetadata("model-x", now)
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
 
-	assert.Equal(t, commonPatternStatusDone, meta.Status)
-	assert.Equal(t, "model-x", meta.Model)
+			meta := buildCommonPatternTerminalMetadata("model-x", verdict, now)
 
-	require.NotNil(t, meta.Attribution)
-	assert.True(t, meta.Attribution.FirstParty)
-	assert.Empty(t, meta.Attribution.ThirdPartyName)
+			assert.Equal(t, commonPatternStatusDone, meta.Status)
+			assert.Equal(t, "model-x", meta.Model)
 
-	require.Len(t, meta.Fields, 2)
+			require.NotNil(t, meta.Attribution)
+			assert.Equal(t, string(verdict), meta.Attribution.TerminalVerdict)
+			assert.Empty(t, meta.Attribution.ThirdPartyName)
 
-	for _, field := range []string{commonPatternFieldDescription, commonPatternFieldThirdParty} {
-		assert.Equal(t, commonPatternFieldStatusFirstParty, meta.Fields[field].Status, field)
-		assert.True(t, commonPatternFieldResolved(meta.Fields[field].Status), field)
+			require.Len(t, meta.Fields, 2)
+
+			for _, field := range []string{commonPatternFieldDescription, commonPatternFieldThirdParty} {
+				assert.Equal(t, commonPatternFieldStatusTerminal, meta.Fields[field].Status, field)
+				assert.True(t, commonPatternFieldResolved(meta.Fields[field].Status), field)
+			}
+		})
 	}
 }

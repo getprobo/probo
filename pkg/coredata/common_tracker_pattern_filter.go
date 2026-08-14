@@ -199,7 +199,12 @@ func (f *CommonTrackerPatternFilter) SQLFragment() string {
 	AND
 	CASE
 		WHEN @filter_pattern_keyword::text IS NOT NULL AND @filter_pattern_keyword::text != '' THEN
-			pattern ILIKE '%' || @filter_pattern_keyword || '%'
+			-- Escaped so the value is the literal substring the flag documents.
+			-- Unescaped, a bare '%' would match the whole table, which on a
+			-- terminal bulk action means marking the entire catalog.
+			pattern ILIKE '%' || replace(replace(replace(
+				@filter_pattern_keyword, '\', '\\'), '%', '\%'), '_', '\_') || '%'
+			ESCAPE '\'
 		ELSE TRUE
 	END
 	AND

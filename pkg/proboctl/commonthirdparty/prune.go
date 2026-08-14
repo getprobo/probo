@@ -178,18 +178,44 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 			)
 		}
 
-		var deleted int
+		var (
+			deleted int
+			skipped int
+			failed  int
+		)
 
 		// One transaction per row so a single failure does not roll back the
-		// rows already pruned.
+		// rows already pruned. The delete re-checks the reference predicates,
+		// so an entry that gained a pattern or an organization link since the
+		// selection above is left alone rather than unlinking it.
 		for _, party := range candidates {
+			var gone bool
+
 			if err := pgClient.WithTx(
 				ctx,
 				func(ctx context.Context, tx pg.Tx) error {
-					return coredata.CommonThirdParty{}.Delete(ctx, tx, party.ID)
+					var err error
+					gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
+
+					return err
 				},
 			); err != nil {
+				failed++
+
 				_, _ = fmt.Fprintf(errOut, "error: cannot delete %q: %v\n", party.Slug, err)
+
+				continue
+			}
+
+			if !gone {
+				skipped++
+
+				_, _ = fmt.Fprintf(
+					errOut,
+					"skipped %q: it gained a reference since the selection\n",
+					party.Slug,
+				)
+
 				continue
 			}
 
@@ -198,8 +224,12 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 
 		_, _ = fmt.Fprintf(out, "Deleted %d unreferenced common third party(ies).\n", deleted)
 
-		if deleted != len(candidates) {
-			return fmt.Errorf("%d of %d deletion(s) failed", len(candidates)-deleted, len(candidates))
+		if skipped > 0 {
+			_, _ = fmt.Fprintf(out, "Skipped %d that gained a reference.\n", skipped)
+		}
+
+		if failed > 0 {
+			return fmt.Errorf("%d of %d deletion(s) failed", failed, len(candidates))
 		}
 
 		return nil

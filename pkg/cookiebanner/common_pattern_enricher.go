@@ -245,7 +245,12 @@ func (e *CommonPatternEnricher) persistFirstPartyVerdict(
 	cp coredata.CommonTrackerPattern,
 	attribution *agentIdentification,
 ) error {
-	meta := buildCommonPatternFirstPartyMetadata(e.enrichmentCfg.Model, time.Now())
+	verdict := attribution.terminalVerdict
+	if verdict == "" {
+		verdict = coredata.CommonTrackerPatternAttributionFirstParty
+	}
+
+	meta := buildCommonPatternTerminalMetadata(e.enrichmentCfg.Model, verdict, time.Now())
 
 	payload, err := json.Marshal(meta)
 	if err != nil {
@@ -258,11 +263,6 @@ func (e *CommonPatternEnricher) persistFirstPartyVerdict(
 			ids := []gid.GID{cp.ID}
 
 			var patterns coredata.CommonTrackerPatterns
-
-			verdict := attribution.terminalVerdict
-			if verdict == "" {
-				verdict = coredata.CommonTrackerPatternAttributionFirstParty
-			}
 
 			if _, err := patterns.SetAttributionByIDs(
 				ctx,

@@ -45,6 +45,11 @@ const (
 	attributionRejectedNoEvidence  attributionRejection = "no_concrete_evidence"
 	attributionRejectedScannedSite attributionRejection = "scanned_site_as_third_party"
 	attributionRejectedAggregator  attributionRejection = "cookie_database_aggregator"
+
+	// attributionRejectedTerminalVerdict is returned when the agent named a
+	// vendor but also declared the artifact terminal. The terminal verdict
+	// wins, so the vendor must not be recorded.
+	attributionRejectedTerminalVerdict attributionRejection = "terminal_verdict"
 )
 
 // rejectVendorAttribution is the single acceptance bar for creating a common
@@ -52,11 +57,16 @@ const (
 // enricher call it, so an attribution one would discard can no longer enter
 // the global catalog through the other.
 //
-// Every rejection leaves the artifact undetermined rather than terminal. These
+// Most rejections leave the artifact undetermined rather than terminal. Those
 // guards judge the proposed NAME, not the artifact, so a wrong name on a
 // genuine vendor pattern must fall through for a later attempt: a terminal
-// verdict would suppress the real vendor permanently. Callers that also got an
-// explicit terminal verdict from the agent record it themselves.
+// verdict would suppress the real vendor permanently.
+//
+// The exception is an agent that names a vendor *and* declares the artifact
+// terminal. The vendor is rejected there so callers reach their terminal
+// branch, which is what records the verdict. Accepting the vendor instead
+// would persist a THIRD_PARTY row for an artifact the agent said has no third
+// party, leaving the row both attributed and terminal.
 //
 // No I/O and no logging: callers log with their own context.
 func rejectVendorAttribution(
@@ -65,6 +75,14 @@ func rejectVendorAttribution(
 ) attributionRejection {
 	// Trimmed here so both call sites agree on what an empty name is: the
 	// mapping worker forwards the agent's output verbatim.
+	// A terminal verdict settles the artifact, so it outranks any vendor the
+	// same response proposed. Checked first: every guard below only decides
+	// whether a vendor is defensible, which is moot once there is no third
+	// party to attribute.
+	if terminalVerdictFor(identification) != "" {
+		return attributionRejectedTerminalVerdict
+	}
+
 	name := strings.TrimSpace(identification.ThirdPartyName)
 
 	if name == "" || identification.ThirdPartyConfidence < agentThirdPartyConfidenceThreshold {

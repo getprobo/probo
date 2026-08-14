@@ -289,7 +289,8 @@ INSERT INTO common_tracker_patterns (
 ON CONFLICT (tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO UPDATE
 SET
     common_third_party_id = CASE
-        WHEN common_tracker_patterns.attribution = ANY(@terminal_attributions) THEN NULL
+        WHEN common_tracker_patterns.attribution = ANY(@terminal_attributions)
+          OR EXCLUDED.attribution = ANY(@terminal_attributions) THEN NULL
         ELSE EXCLUDED.common_third_party_id
     END,
     match_type            = EXCLUDED.match_type,

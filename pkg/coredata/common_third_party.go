@@ -812,6 +812,46 @@ ORDER BY
 	return ids, nil
 }
 
+// DeleteIfUnreferenced deletes a catalog entry only while nothing references
+// it, reporting whether it did.
+//
+// The predicates repeat LoadAllUnreferencedIDs deliberately. Selecting
+// candidates and deleting them are separate statements, so a tracker pattern or
+// an organization third party can start referencing an entry in between — and a
+// plain delete would then clear that new link through ON DELETE SET NULL,
+// silently unlinking a row somebody just created. Re-checking inside the delete
+// closes that window: the statement is atomic, so a concurrent insert either
+// lands first and the delete matches nothing, or lands after and its link
+// survives.
+func (t CommonThirdParty) DeleteIfUnreferenced(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+) (bool, error) {
+	q := `
+DELETE FROM common_third_parties AS ctp
+WHERE
+    ctp.id = @id
+    AND NOT EXISTS (
+        SELECT 1 FROM common_tracker_patterns AS p
+        WHERE p.common_third_party_id = ctp.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM third_parties AS tp
+        WHERE tp.common_third_party_id = ctp.id
+    )
+`
+
+	args := pgx.StrictNamedArgs{"id": id}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot delete unreferenced common third party: %w", err)
+	}
+
+	return result.RowsAffected() > 0, nil
+}
+
 // UpdateName renames a catalog entry, leaving its slug alone.
 //
 // The slug is the identity key that dedup and the seed both match on, so a

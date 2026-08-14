@@ -31,9 +31,9 @@
 -- from the global catalog, which is the large majority of the table.
 --
 -- IF NOT EXISTS so this is a no-op where the index was already built by hand.
--- third_parties is large and CREATE INDEX takes ACCESS EXCLUSIVE, so an
--- operator may create it CONCURRENTLY ahead of the deploy to avoid blocking
--- writes. CONCURRENTLY cannot be used here: the migration runner wraps each
+-- third_parties is large and CREATE INDEX takes a SHARE lock, which blocks
+-- writes for the duration while still allowing reads, so an operator may
+-- create it CONCURRENTLY ahead of the deploy. CONCURRENTLY cannot be used here: the migration runner wraps each
 -- file in a transaction, and CONCURRENTLY is not allowed inside one.
 CREATE INDEX IF NOT EXISTS third_parties_common_third_party_id_idx
     ON third_parties (common_third_party_id)

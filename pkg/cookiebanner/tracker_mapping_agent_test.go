@@ -522,6 +522,53 @@ func TestBuildAgentPrompt(t *testing.T) {
 // persists. NOT_ATTRIBUTABLE must win over FIRST_PARTY: an extension key
 // egresses nothing to a vendor and so satisfies the first-party test too, but
 // the operator did not write it and recording it as theirs would be false.
+// TestRejectVendorAttribution_TerminalVerdictOutranksVendor pins the ordering
+// that decides which of two contradictory agent answers wins.
+//
+// An agent can name a defensible vendor and flag the artifact terminal in the
+// same response. Accepting the vendor there wrote a THIRD_PARTY row for an
+// artifact the agent said had no third party, so the terminal verdict was
+// silently discarded and the row was both attributed and settled.
+func TestRejectVendorAttribution_TerminalVerdictOutranksVendor(t *testing.T) {
+	t.Parallel()
+
+	defensible := TrackerMappingAgentResult{
+		ThirdPartyName:       "PostHog",
+		Category:             coredata.ThirdPartyCategoryAnalytics,
+		ThirdPartyConfidence: 0.95,
+		EvidenceSource:       evidenceSourceNamingConvention,
+	}
+
+	t.Run("accepted when no terminal flag is set", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(
+			t,
+			attributionAccepted,
+			rejectVendorAttribution(defensible, attributionContext{Pattern: "_x"}),
+		)
+	})
+
+	for name, mutate := range map[string]func(*TrackerMappingAgentResult){
+		"first party":      func(r *TrackerMappingAgentResult) { r.IsFirstParty = true },
+		"not attributable": func(r *TrackerMappingAgentResult) { r.IsNotAttributable = true },
+	} {
+		t.Run("rejected alongside "+name, func(t *testing.T) {
+			t.Parallel()
+
+			r := defensible
+			mutate(&r)
+
+			assert.Equal(
+				t,
+				attributionRejectedTerminalVerdict,
+				rejectVendorAttribution(r, attributionContext{Pattern: "_x"}),
+				"a terminal verdict must stop the vendor being recorded",
+			)
+		})
+	}
+}
+
 func TestTerminalVerdictFor(t *testing.T) {
 	t.Parallel()
 
