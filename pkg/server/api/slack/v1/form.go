@@ -21,45 +21,34 @@
 package slack_v1
 
 import (
+	"errors"
+	"io"
+	"mime"
 	"net/http"
-	"strings"
-
-	"go.gearno.de/kit/httpserver"
-	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"net/url"
 )
 
-func SlackCommandHandler(slackbot *slackchannel.Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+var (
+	errSlackFormReadBody    = errors.New("cannot read request body")
+	errSlackFormContentType = errors.New("unsupported content type")
+	errSlackFormParse       = errors.New("cannot parse form")
+)
 
-		form, err := parseSlackForm(r)
-		if err != nil {
-			httpserver.RenderJSON(
-				w,
-				http.StatusOK,
-				slackchannel.SlashCommandResponse{
-					ResponseType: slackchannel.SlashResponseTypeEphemeral,
-					Text:         err.Error(),
-				},
-			)
-
-			return
-		}
-
-		command := slackchannel.SlashCommand{
-			Command:     strings.TrimSpace(form.Get("command")),
-			Text:        strings.TrimSpace(form.Get("text")),
-			UserID:      strings.TrimSpace(form.Get("user_id")),
-			UserName:    strings.TrimSpace(form.Get("user_name")),
-			TeamID:      strings.TrimSpace(form.Get("team_id")),
-			TeamDomain:  strings.TrimSpace(form.Get("team_domain")),
-			ResponseURL: strings.TrimSpace(form.Get("response_url")),
-		}
-
-		httpserver.RenderJSON(
-			w,
-			http.StatusOK,
-			slackbot.HandleSlashCommand(ctx, command),
-		)
+func parseSlackForm(r *http.Request) (url.Values, error) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, errSlackFormReadBody
 	}
+
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || mediaType != "application/x-www-form-urlencoded" {
+		return nil, errSlackFormContentType
+	}
+
+	form, err := url.ParseQuery(string(body))
+	if err != nil {
+		return nil, errSlackFormParse
+	}
+
+	return form, nil
 }

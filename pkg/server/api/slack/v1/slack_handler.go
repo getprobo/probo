@@ -21,11 +21,7 @@
 package slack_v1
 
 import (
-	"encoding/json"
-	"io"
-	"mime"
 	"net/http"
-	"net/url"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -39,42 +35,14 @@ func SlackHandler(
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		body, err := io.ReadAll(r.Body)
+		form, err := parseSlackForm(r)
 		if err != nil {
 			httpserver.RenderJSON(
 				w,
 				http.StatusBadRequest,
 				slackchannel.InteractiveResponse{
 					Success: false,
-					Message: "cannot read request body",
-				},
-			)
-
-			return
-		}
-
-		mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-		if err != nil || mediaType != "application/x-www-form-urlencoded" {
-			httpserver.RenderJSON(
-				w,
-				http.StatusBadRequest,
-				slackchannel.InteractiveResponse{
-					Success: false,
-					Message: "unsupported content type",
-				},
-			)
-
-			return
-		}
-
-		form, err := url.ParseQuery(string(body))
-		if err != nil {
-			httpserver.RenderJSON(
-				w,
-				http.StatusBadRequest,
-				slackchannel.InteractiveResponse{
-					Success: false,
-					Message: "cannot parse form",
+					Message: err.Error(),
 				},
 			)
 
@@ -82,21 +50,7 @@ func SlackHandler(
 		}
 
 		rawPayload := []byte(form.Get("payload"))
-		var payload slackchannel.InteractivePayload
-		if err := json.Unmarshal(rawPayload, &payload); err != nil {
-			httpserver.RenderJSON(
-				w,
-				http.StatusBadRequest,
-				slackchannel.InteractiveResponse{
-					Success: false,
-					Message: "cannot parse Slack payload",
-				},
-			)
-
-			return
-		}
-
-		if payload.Team.ID == "" || payload.User.ID == "" {
+		if _, err := slackchannel.DecodeInteractivePayload(rawPayload); err != nil {
 			httpserver.RenderJSON(
 				w,
 				http.StatusBadRequest,
