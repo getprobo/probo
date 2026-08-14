@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { graphql, useFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { CookieBannerSwitcherListItem_cookieBanner$key } from "#/__generated__/core/CookieBannerSwitcherListItem_cookieBanner.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -35,14 +34,17 @@ const cookieBannerSwitcherListItemFragment = graphql`
 
 export interface CookieBannerSwitcherListItemProps {
   cookieBannerKey: CookieBannerSwitcherListItem_cookieBanner$key;
+  selected: boolean;
 }
 
 /**
  * One cookie banner in the privacy-panel switcher.
  */
-export function CookieBannerSwitcherListItem({ cookieBannerKey }: CookieBannerSwitcherListItemProps) {
+export function CookieBannerSwitcherListItem({
+  cookieBannerKey,
+  selected,
+}: CookieBannerSwitcherListItemProps) {
   const organizationId = useOrganizationId();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const cookieBanner = useFragment(cookieBannerSwitcherListItemFragment, cookieBannerKey);
 
   return (
@@ -50,7 +52,7 @@ export function CookieBannerSwitcherListItem({ cookieBannerKey }: CookieBannerSw
       to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBanner.id}/configure`}
       name={cookieBanner.name}
       detail={cookieBanner.origin}
-      selected={cookieBannerId === cookieBanner.id}
+      selected={selected}
     />
   );
 }

@@ -19,26 +19,23 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
 
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
 
+export interface CookieBannerNavItemsProps {
+  cookieBannerId: string;
+}
+
 /**
- * Configure, Discovery, and Trail for the banner in the URL.
+ * Configure, Discovery, and Trail for the selected banner.
  *
- * Hidden until a banner is selected: these paths need an id, and the create
- * page is not one of the three sections.
+ * Hidden until a banner is selected (URL or newest default): these paths
+ * need an id, and the create page is not one of the three sections.
  */
-export function CookieBannerNavItems() {
+export function CookieBannerNavItems({ cookieBannerId }: CookieBannerNavItemsProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-
-  if (cookieBannerId == null) {
-    return null;
-  }
-
   const prefix = `/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}`;
 
   return (

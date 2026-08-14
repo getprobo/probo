@@ -24,7 +24,7 @@ import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Link } from "react-router";
+import { Link, useLocation, useParams } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -77,7 +77,12 @@ export function CookieBannerSwitcherMenu({ queryRef }: CookieBannerSwitcherMenuP
   }
 
   const banners = organization.cookieBanners.edges.map(edge => edge.node);
-  const newBannerHref = `/organizations/${organizationId}/privacy/cookie-banners/new`;
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
+  const { pathname } = useLocation();
+  const prefix = `/organizations/${organizationId}/privacy/cookie-banners/`;
+  const isNew = pathname === `${prefix}new`;
+  const selectedId = cookieBannerId ?? (isNew ? null : banners[0]?.id);
+  const newBannerHref = `${prefix}new`;
 
   return (
     <>
@@ -89,7 +94,11 @@ export function CookieBannerSwitcherMenu({ queryRef }: CookieBannerSwitcherMenuP
               </Text>
             )
           : banners.map(banner => (
-              <CookieBannerSwitcherListItem key={banner.id} cookieBannerKey={banner} />
+              <CookieBannerSwitcherListItem
+                key={banner.id}
+                cookieBannerKey={banner}
+                selected={selectedId === banner.id}
+              />
             ))}
       </div>
       {organization.canCreateCookieBanner && (

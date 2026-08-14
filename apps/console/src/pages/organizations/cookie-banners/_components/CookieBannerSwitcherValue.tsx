@@ -18,42 +18,72 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router";
+import { graphql, useFragment } from "react-relay";
 
-import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
+import type { CookieBannerSwitcherValue_cookieBanner$key } from "#/__generated__/core/CookieBannerSwitcherValue_cookieBanner.graphql";
+import type { CookieBannerSwitcherValueQuery$data } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
 import { NavPanelSwitcherValue } from "#/pages/organizations/_components/NavPanelSwitcher";
 
-const cookieBannerSwitcherValueQuery = graphql`
-  query CookieBannerSwitcherValueQuery($cookieBannerId: ID!) {
-    node(id: $cookieBannerId) {
+export const cookieBannerSwitcherValueQuery = graphql`
+  query CookieBannerSwitcherValueQuery(
+    $organizationId: ID!
+    $cookieBannerId: ID!
+    $hasCookieBannerId: Boolean!
+  ) {
+    selected: node(id: $cookieBannerId) @include(if: $hasCookieBannerId) {
       __typename
       ... on CookieBanner {
-        name
+        id
+        ...CookieBannerSwitcherValue_cookieBanner
+      }
+    }
+    organization: node(id: $organizationId) @skip(if: $hasCookieBannerId) {
+      __typename
+      ... on Organization {
+        cookieBanners(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
+          @required(action: THROW) {
+          edges {
+            node {
+              id
+              ...CookieBannerSwitcherValue_cookieBanner
+            }
+          }
+        }
       }
     }
   }
 `;
 
+const cookieBannerSwitcherValueFragment = graphql`
+  fragment CookieBannerSwitcherValue_cookieBanner on CookieBanner {
+    name
+  }
+`;
+
 export interface CookieBannerSwitcherValueProps {
-  fallback: string;
+  cookieBannerKey: CookieBannerSwitcherValue_cookieBanner$key;
 }
 
 /**
- * The name of the banner the URL is on, or the default trigger label.
- *
- * Mounted only when `:cookieBannerId` is present. Other privacy pages keep
- * "Select Banner"; the create form uses "New Banner" in the trigger itself.
+ * The name of the banner the switcher treats as selected: the URL id when
+ * present, otherwise the newest banner. Does not navigate.
  */
-export function CookieBannerSwitcherValue({ fallback }: CookieBannerSwitcherValueProps) {
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const data = useLazyLoadQuery<CookieBannerSwitcherValueQuery>(
-    cookieBannerSwitcherValueQuery,
-    { cookieBannerId: cookieBannerId ?? "" },
-    { fetchPolicy: "store-or-network" },
-  );
-  if (data.node?.__typename !== "CookieBanner") {
-    return fallback;
+export function CookieBannerSwitcherValue({ cookieBannerKey }: CookieBannerSwitcherValueProps) {
+  const cookieBanner = useFragment(cookieBannerSwitcherValueFragment, cookieBannerKey);
+  return <NavPanelSwitcherValue>{cookieBanner.name}</NavPanelSwitcherValue>;
+}
+
+export function cookieBannerFromSwitcherValueQuery(
+  data: CookieBannerSwitcherValueQuery$data,
+) {
+  if (data.selected != null) {
+    return data.selected.__typename === "CookieBanner" ? data.selected : null;
   }
-  return <NavPanelSwitcherValue>{data.node.name}</NavPanelSwitcherValue>;
+  if (data.organization == null) {
+    return null;
+  }
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for node");
+  }
+  return data.organization.cookieBanners.edges[0]?.node ?? null;
 }

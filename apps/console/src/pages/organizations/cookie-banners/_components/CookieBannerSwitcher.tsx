@@ -19,12 +19,13 @@
 // SOFTWARE.
 
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense, useCallback } from "react";
+import { type ReactNode, Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryLoader } from "react-relay";
+import { useLazyLoadQuery, useQueryLoader } from "react-relay";
 import { useLocation, useParams } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
+import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   navPanelSwitcher,
@@ -39,29 +40,21 @@ import {
   CookieBannerSwitcherMenu,
   cookieBannerSwitcherMenuQuery,
 } from "./CookieBannerSwitcherMenu";
-import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
+import {
+  cookieBannerFromSwitcherValueQuery,
+  CookieBannerSwitcherValue,
+  cookieBannerSwitcherValueQuery,
+} from "./CookieBannerSwitcherValue";
 
 /**
  * Privacy-panel control that picks a cookie banner instead of linking to a
  * list.
- *
- * Lives next to the cookie-banner routes (not in the IAM shell) so Relay
- * compiles the query against the core schema. The list is fetched on open:
- * the panel is visible for every privacy page, and most of those visits never
- * open this menu. The selected banner's name is a separate query so the
- * trigger can show it without loading the list. CoreRelayProvider is local
- * because the surrounding chrome runs on the IAM environment. The group label
- * around this control belongs to NavPanelGroup. Configure, Discovery, and
- * Trail hang off the same group once a banner is in the URL.
  */
 export function CookieBannerSwitcher() {
   return (
-    <>
-      <CoreRelayProvider>
-        <CookieBannerSwitcherInner />
-      </CoreRelayProvider>
-      <CookieBannerNavItems />
-    </>
+    <CoreRelayProvider>
+      <CookieBannerSwitcherInner />
+    </CoreRelayProvider>
   );
 }
 
@@ -69,7 +62,6 @@ function CookieBannerSwitcherInner() {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerSwitcherMenuQuery>(
     cookieBannerSwitcherMenuQuery,
   );
@@ -86,23 +78,8 @@ function CookieBannerSwitcherInner() {
     }
   }, [loadQuery, organizationId]);
 
-  return (
-    <NavPanelSwitcher
-      active={isNew}
-      onOpenChange={handleOpenChange}
-      value={cookieBannerId != null
-        ? (
-            <Suspense fallback={<NavPanelSwitcherValueSkeleton />}>
-              <CookieBannerSwitcherValue fallback={selectLabel} />
-            </Suspense>
-          )
-        : (
-            <NavPanelSwitcherValue>
-              {isNew ? newLabel : selectLabel}
-            </NavPanelSwitcherValue>
-          )}
-    >
-      {queryRef != null && (
+  const menu = queryRef != null
+    ? (
         <Suspense
           fallback={(
             <Text size={2} color="faint" className={slots.empty()}>
@@ -112,7 +89,79 @@ function CookieBannerSwitcherInner() {
         >
           <CookieBannerSwitcherMenu queryRef={queryRef} />
         </Suspense>
+      )
+    : null;
+
+  if (isNew) {
+    return (
+      <NavPanelSwitcher
+        active
+        onOpenChange={handleOpenChange}
+        value={<NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>}
+      >
+        {menu}
+      </NavPanelSwitcher>
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={(
+        <NavPanelSwitcher
+          active={false}
+          onOpenChange={handleOpenChange}
+          value={<NavPanelSwitcherValueSkeleton />}
+        >
+          {menu}
+        </NavPanelSwitcher>
       )}
-    </NavPanelSwitcher>
+    >
+      <CookieBannerSwitcherSelected
+        fallback={selectLabel}
+        onOpenChange={handleOpenChange}
+      >
+        {menu}
+      </CookieBannerSwitcherSelected>
+    </Suspense>
+  );
+}
+
+interface CookieBannerSwitcherSelectedProps {
+  fallback: string;
+  onOpenChange: (open: boolean) => void;
+  children?: ReactNode;
+}
+
+function CookieBannerSwitcherSelected({
+  fallback,
+  onOpenChange,
+  children,
+}: CookieBannerSwitcherSelectedProps) {
+  const organizationId = useOrganizationId();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
+  const data = useLazyLoadQuery<CookieBannerSwitcherValueQuery>(
+    cookieBannerSwitcherValueQuery,
+    {
+      organizationId,
+      cookieBannerId: cookieBannerId ?? "",
+      hasCookieBannerId: cookieBannerId != null,
+    },
+    { fetchPolicy: "store-or-network" },
+  );
+  const banner = cookieBannerFromSwitcherValueQuery(data);
+
+  return (
+    <>
+      <NavPanelSwitcher
+        active={false}
+        onOpenChange={onOpenChange}
+        value={banner != null
+          ? <CookieBannerSwitcherValue cookieBannerKey={banner} />
+          : <NavPanelSwitcherValue>{fallback}</NavPanelSwitcherValue>}
+      >
+        {children}
+      </NavPanelSwitcher>
+      {banner != null && <CookieBannerNavItems cookieBannerId={banner.id} />}
+    </>
   );
 }
