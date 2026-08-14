@@ -21,9 +21,6 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import type { ComponentProps } from "react";
 
-// The element the tooltip describes. Compose an existing component via
-// `render` (e.g. an IconButton or a router Link) rather than nesting one
-// inside, so the trigger stays a single interactive element.
 export type TooltipTriggerProps = ComponentProps<typeof BaseTooltip.Trigger>;
 
 export function TooltipTrigger(props: TooltipTriggerProps) {

@@ -36,12 +36,6 @@ export interface OrganizationSwitcherInvitingItemProps {
   organizationKey: OrganizationSwitcherInvitingItem_organization$key;
 }
 
-/**
- * An organization that has invited you but that you have not joined.
- *
- * Disabled rather than hidden: it explains why an organization a colleague
- * mentioned is not in the list yet. Accepting happens over email.
- */
 export function OrganizationSwitcherInvitingItem(props: OrganizationSwitcherInvitingItemProps) {
   const { organizationKey } = props;
 

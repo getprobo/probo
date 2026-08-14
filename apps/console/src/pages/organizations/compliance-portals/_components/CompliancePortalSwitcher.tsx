@@ -41,20 +41,6 @@ import {
 } from "./CompliancePortalSwitcherMenu";
 import { CompliancePortalSwitcherRow } from "./CompliancePortalSwitcherRow";
 
-/**
- * Product-panel control that picks a compliance portal instead of linking to
- * a list.
- *
- * Lives next to the compliance-portal routes (not in the IAM shell) so Relay
- * compiles the query against the core schema. The list is fetched on open:
- * the panel is visible for every page in this product, and most of those
- * visits never open this menu. The selected portal (name + public URL) is a
- * separate query so the trigger row can render without loading the list.
- * CoreRelayProvider is local because the surrounding chrome runs on the IAM
- * environment. This product has no sibling panel entries, so NavPanel
- * skips the group heading and the product title is enough. Settings and
- * Pages hang off the same column once a portal is in the URL.
- */
 export function CompliancePortalSwitcher() {
   return (
     <CoreRelayProvider>

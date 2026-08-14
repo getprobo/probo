@@ -29,13 +29,6 @@ export interface NavPanelItemProps {
   exact?: boolean;
 }
 
-/**
- * One entry of the active product.
- *
- * Active state covers descendants, so a detail page keeps its list highlighted
- * (`/governance/frameworks/:id` still marks Frameworks). `exact` opts out when
- * a sibling switcher owns those descendant URLs.
- */
 export function NavPanelItem({ label, to, exact }: NavPanelItemProps) {
   const { pathname } = useLocation();
   const active = exact
@@ -47,12 +40,6 @@ export function NavPanelItem({ label, to, exact }: NavPanelItemProps) {
   return (
     <ButtonLink
       to={to}
-      // Gold only once selected. Colouring every entry would spend the accent
-      // on the list rather than on the one entry worth pointing at.
-      //
-      // Soft rather than ghost while selected: ghost-active lands on gold-3,
-      // the same weight as the neutral hover, so selection would not read as
-      // the stronger state. Soft-active lands a step above it.
       variant={active ? "soft" : "ghost"}
       color={active ? "gold" : "neutral"}
       size={2}

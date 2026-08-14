@@ -21,9 +21,6 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import type { ComponentProps } from "react";
 
-// Shares open/close timing across the tooltips beneath it. Without it, every
-// tooltip in a row of icons re-serves the full delay; with it, the first one
-// pays the delay and the rest follow instantly while the pointer keeps moving.
 export type TooltipProviderProps = ComponentProps<typeof BaseTooltip.Provider>;
 
 export function TooltipProvider(props: TooltipProviderProps) {

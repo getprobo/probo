@@ -39,10 +39,6 @@ export interface TopBarProps {
   organizationKey: TopBar_organization$key;
 }
 
-/**
- * Account-level chrome: the logo, which organization you are in, and who you
- * are signed in as. Product navigation lives in the rail below it.
- */
 export function TopBar({ organizationKey }: TopBarProps) {
   const organization = useFragment(topBarFragment, organizationKey);
 

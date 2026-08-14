@@ -41,9 +41,6 @@ export interface ThirdPartySwitcherListItemProps {
   thirdPartyKey: ThirdPartySwitcherListItem_thirdParty$key;
 }
 
-/**
- * One third party in the TPRM-panel switcher.
- */
 export function ThirdPartySwitcherListItem({ thirdPartyKey }: ThirdPartySwitcherListItemProps) {
   const organizationId = useOrganizationId();
   const { thirdPartyId } = useParams<{ thirdPartyId: string }>();

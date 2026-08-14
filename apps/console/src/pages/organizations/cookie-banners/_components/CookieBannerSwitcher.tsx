@@ -48,10 +48,6 @@ import {
   cookieBannerSwitcherValueQuery,
 } from "./CookieBannerSwitcherValue";
 
-/**
- * Privacy-panel control that picks a cookie banner instead of linking to a
- * list.
- */
 export function CookieBannerSwitcher() {
   return (
     <CoreRelayProvider>

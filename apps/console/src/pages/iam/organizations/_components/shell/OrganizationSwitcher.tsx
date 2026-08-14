@@ -51,19 +51,10 @@ const organizationSwitcherFragment = graphql`
 `;
 
 export interface OrganizationSwitcherProps {
-  // "rail" is a full-width row matching the nav items, avatar first and the
-  // name revealed as the rail opens; "bar" is the pill the employee portal's
-  // top bar uses.
   variant?: "bar" | "rail";
   organizationKey: OrganizationSwitcher_organization$key;
 }
 
-/**
- * Names the current organization and switches to another.
- *
- * The list is only fetched when the menu opens: most sessions never switch, and
- * the query walks every organization the viewer belongs to.
- */
 export function OrganizationSwitcher({ variant = "bar", organizationKey }: OrganizationSwitcherProps) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -88,10 +79,6 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
     ? (
         <button type="button" className={railSlots.item()}>
           <span className={railSlots.icon()}>
-            {/* One step below the 40px icon box, so the row's hover reads as a
-                ring around the mark rather than stopping at its edge. Solid
-                gold so an organization with no logo still shows a mark rather
-                than faint text. */}
             <Avatar
               size={2}
               variant="solid"
@@ -104,7 +91,6 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
           <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
             {organization.name}
           </Text>
-          {/* Points down, matching where the menu opens. */}
           <CaretDownIcon className={railSlots.caret()} />
         </button>
       )
@@ -120,8 +106,6 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
   return (
     <Dropdown onOpenChange={handleOpenChange}>
       <DropdownTrigger render={trigger} />
-      {/* Drops below the trigger in both presentations. In the rail that puts
-          it just inside the left edge, offset by the rail's own padding. */}
       <DropdownPopup side="bottom" align="start" className={slots.popup()}>
         <div className={slots.search()}>
           <TextField
@@ -131,8 +115,8 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
             placeholder={t("membershipsDropdown.searchPlaceholder")}
             value={search}
             onValueChange={setSearch}
-            // The menu treats typing as type-ahead navigation; without this the
-            // search box would lose most of what is typed into it.
+            // The menu treats typing as type-ahead navigation, which would
+            // otherwise swallow most of what is typed into the search box.
             onKeyDown={(event) => { event.stopPropagation(); }}
           />
         </div>

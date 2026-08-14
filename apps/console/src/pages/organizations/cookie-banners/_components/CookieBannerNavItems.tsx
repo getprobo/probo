@@ -27,12 +27,6 @@ export interface CookieBannerNavItemsProps {
   cookieBannerId: string;
 }
 
-/**
- * Configure, Discovery, and Trail for the selected banner.
- *
- * Hidden until a banner is selected (URL or newest default): these paths
- * need an id, and the create page is not one of the three sections.
- */
 export function CookieBannerNavItems({ cookieBannerId }: CookieBannerNavItemsProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();

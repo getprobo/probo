@@ -21,12 +21,6 @@
 import { lazy } from "@probo/react-lazy";
 import type { ComponentType } from "react";
 
-/**
- * Feature switchers, loaded only when the active panel renders that item.
- *
- * Keep this as lazy() loaders, never static imports: the organization layout
- * must not pull cookie-banner (or later) Relay artifacts into the shell chunk.
- */
 export const navPanelSwitchers = {
   "cookie-banners": lazy(async () => {
     const { CookieBannerSwitcher } = await import(

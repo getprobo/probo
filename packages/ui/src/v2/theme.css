@@ -22,21 +22,12 @@
 /*
  * v2 theme entry — standalone
  *
- * Standalone Tailwind v4 theme for the v2 UI kit. An app opts in by importing
- * this file instead of the v1 theme.css. It is the resets plus the tokens:
+ * Standalone Tailwind v4 theme for the v2 UI kit: the namespace resets plus
+ * the token layers. The reset must come first, since it clears each namespace
+ * before the layers register into it. An app that cannot take the resets —
+ * because it still has pages on another kit — imports ./theme-tokens.css.
  *
- *   theme/reset.css    wipes the Tailwind namespaces the v2 scales replace,
- *                      so the kit's scales are the only ones available
- *   theme-tokens.css   registers the scales themselves (colors, typography,
- *                      radius, shadows, z-index)
- *
- * The reset must come first: it clears each namespace before the layers
- * register into it.
- *
- * An app that cannot take the resets — because it still has pages on another
- * kit — imports ./theme-tokens.css directly instead of this file. See that
- * file for the trade-offs.
- *
+ * Spacing intentionally stays on Tailwind's native scale (not tokenized).
  * See contrib/claude/v2-tokens.md for the full usage guide.
  */
 @import "./theme/reset.css";

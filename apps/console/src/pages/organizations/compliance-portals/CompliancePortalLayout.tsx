@@ -80,8 +80,6 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
   if (compliancePortal.__typename !== "CompliancePortal" || sectionData == null) {
     throw new Error("invalid type for node");
   }
-  // Guards the nested routes too: a portal reached under another organization's
-  // URL would mix that organization's navigation with this portal's settings.
   if (compliancePortal.organization.id !== organizationId) {
     throw new Error("compliance portal does not belong to this organization");
   }

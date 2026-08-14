@@ -58,32 +58,16 @@ export const organizationLayoutQuery = graphql`
 `;
 
 export interface OrganizationLayoutProps {
-  // The employee portal reuses this layout but has no products to navigate.
-  // It falls back to the top bar, which is the only place its occupants can
-  // switch organization or sign out.
   hideNavigation?: boolean;
   queryRef: PreloadedQuery<OrganizationLayoutQuery>;
 }
 
-/**
- * Chrome for the organization area: the rail, the panel of the active product,
- * and the page. The rail carries the organization and the account as its first
- * and last rows, so there is no top bar — except in the employee portal, which
- * has no rail to put them in.
- *
- * The frame owns the viewport — the page scrolls inside `content` rather than
- * on the document, which is what holds the chrome in place without any of it
- * being `position: fixed`.
- */
 export function OrganizationLayout({ hideNavigation = false, queryRef }: OrganizationLayoutProps) {
   const { organization, viewer } = usePreloadedQuery<OrganizationLayoutQuery>(
     organizationLayoutQuery,
     queryRef,
   );
 
-  // A v1 Drawer reports itself through this context so the page can make room
-  // for it. The v1 Layout used to host it; this layout takes that over for the
-  // pages that still render one.
   const [hasDrawer, setDrawer] = useState(false);
   const drawerContext = useMemo(() => ({ setDrawer }), []);
 

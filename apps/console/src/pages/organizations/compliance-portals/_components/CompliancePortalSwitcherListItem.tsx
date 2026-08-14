@@ -37,9 +37,6 @@ export interface CompliancePortalSwitcherListItemProps {
   compliancePortalKey: CompliancePortalSwitcherListItem_compliancePortal$key;
 }
 
-/**
- * One compliance portal in the product-panel switcher.
- */
 export function CompliancePortalSwitcherListItem({
   compliancePortalKey,
 }: CompliancePortalSwitcherListItemProps) {

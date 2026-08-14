@@ -58,12 +58,6 @@ export interface CookieBannerSwitcherMenuProps {
   selectedId: string | null;
 }
 
-/**
- * The banner list and the create action that closes the switcher.
- *
- * Create sits last and outside the scrolling list so it stays reachable when
- * the organization has many banners.
- */
 export function CookieBannerSwitcherMenu({ queryRef, selectedId }: CookieBannerSwitcherMenuProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();

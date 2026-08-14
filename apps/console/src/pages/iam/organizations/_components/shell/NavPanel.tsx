@@ -33,9 +33,8 @@ import { NavPanelItem } from "./NavPanelItem";
 import { navPanelSwitcher } from "./navPanelSwitchers";
 import { navPanel } from "./variants";
 
-// Every permission below is read, but through the `permission` key on each
-// entry of the nav table rather than by name here, which the rule cannot
-// follow. See visibleNavGroups in _lib/navigation.ts.
+// Read through the `permission` key on each nav table entry rather than by
+// name here, which the rule cannot follow. See visibleNavGroups.
 /* eslint-disable relay/unused-fields */
 const navPanelFragment = graphql`
   fragment NavPanel_organization on Organization {
@@ -75,13 +74,6 @@ export interface NavPanelProps {
   organizationKey: NavPanel_organization$key;
 }
 
-/**
- * The entries of whichever product the rail has selected.
- *
- * The column stays in place even for a product with a single entry: a panel
- * that appeared and vanished between products would shift the page under the
- * pointer on every move along the rail.
- */
 export function NavPanel({ organizationKey }: NavPanelProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
@@ -122,10 +114,6 @@ export function NavPanel({ organizationKey }: NavPanelProps) {
                     <Switcher />
                   </Suspense>
                 );
-                // A sole switcher already sits under the product title; a
-                // heading: false switcher sits under a sibling that names the
-                // resource. The path is shared with that sibling, so the key
-                // has to mark this branch.
                 if (activeGroup.items.length === 1 || item.heading === false) {
                   return <Fragment key={`switcher:${item.path}`}>{switcher}</Fragment>;
                 }

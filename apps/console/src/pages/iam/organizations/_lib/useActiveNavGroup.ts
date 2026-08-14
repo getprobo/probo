@@ -23,14 +23,6 @@ import { matchPath, useLocation } from "react-router";
 
 import { type NavGroup, navItemPath } from "./navigation";
 
-/**
- * URL prefixes that put a pathname inside a product.
- *
- * A group with a segment owns everything below it, which is one pattern and
- * covers routes the nav table does not enumerate: `settings/webhooks` has no
- * entry of its own but still belongs to Settings. A group with no segment is
- * identified by its entries' paths instead.
- */
 function navGroupPatterns(group: NavGroup): string[] {
   const prefixes = group.segment != null
     ? [group.segment]
@@ -43,15 +35,6 @@ function navGroupPatterns(group: NavGroup): string[] {
   return prefixes.map(prefix => `/organizations/:organizationId/${prefix}`);
 }
 
-/**
- * The product the current URL belongs to, or null outside the nav (a path the
- * viewer has no permission for, or one under no group at all).
- *
- * Every group owns a distinct first segment, so at most one can match and the
- * first hit is the answer — no ranking needed. `end: false` makes each pattern
- * a prefix match that still respects segment boundaries, so `data` does not
- * swallow a hypothetical `database`.
- */
 export function useActiveNavGroup(groups: NavGroup[]): NavGroup | null {
   const { pathname } = useLocation();
 

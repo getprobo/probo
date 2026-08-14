@@ -198,11 +198,6 @@
     --color-sky-12: var(--sky-12);
 }
 
-/* The `.dark` class is the source of truth, including when the user overrides
- * the OS from the in-tab toggle. `color-scheme: light dark` on a meta tag
- * follows prefers-color-scheme and would leave CanvasText black after that
- * override. Pinning the scheme to the class keeps native controls, scrollbars,
- * and unstyled text in step with the tokens. */
 @layer base {
     html {
         color-scheme: light;

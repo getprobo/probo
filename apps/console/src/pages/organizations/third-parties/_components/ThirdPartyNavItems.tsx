@@ -31,12 +31,6 @@ import {
   thirdPartyHref,
 } from "../_lib/thirdPartySections";
 
-/**
- * Profile, Services, and Supply chain, then Compliance and Risk clusters,
- * for the third party in the URL.
- *
- * Hidden until a third party is selected: these paths need an id.
- */
 export function ThirdPartyNavItems() {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();

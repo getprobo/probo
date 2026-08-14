@@ -37,9 +37,6 @@ export interface CookieBannerSwitcherListItemProps {
   selected: boolean;
 }
 
-/**
- * One cookie banner in the privacy-panel switcher.
- */
 export function CookieBannerSwitcherListItem({
   cookieBannerKey,
   selected,

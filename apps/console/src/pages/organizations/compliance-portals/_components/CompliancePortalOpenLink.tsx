@@ -37,12 +37,6 @@ export interface CompliancePortalOpenLinkProps {
   compliancePortalKey: CompliancePortalOpenLink_compliancePortal$key;
 }
 
-/**
- * Icon that opens the selected portal in a new tab.
- *
- * Hidden while that portal is inactive or has no public URL — the same gate
- * as the page-header Open button.
- */
 export function CompliancePortalOpenLink({
   compliancePortalKey,
 }: CompliancePortalOpenLinkProps) {

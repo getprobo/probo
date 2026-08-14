@@ -34,12 +34,6 @@ export interface NavPanelSwitcherListItemProps {
   selected: boolean;
 }
 
-/**
- * One entity in a product-panel switcher.
- *
- * Name and optional detail stack because a single truncated line cannot tell
- * two similar entities apart. The check marks the entity the URL is on.
- */
 export function NavPanelSwitcherListItem({
   to,
   name,

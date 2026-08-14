@@ -20,10 +20,6 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Small label surface shown on hover or focus. Unlike PopoverPopup this is a
-// high-contrast chip rather than a panel: it inverts against the page so a
-// one-line label reads instantly over any background.
-
 export const tooltipPopup = tv({
   base: [
     "origin-(--transform-origin) rounded-2 bg-sand-12 px-2 py-1 text-1 text-sand-1 shadow-3 outline-none select-none",

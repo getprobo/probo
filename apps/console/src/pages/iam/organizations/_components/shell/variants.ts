@@ -20,23 +20,14 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// The organization frame, shared by OrganizationLayout and its skeleton so the
-// loading state matches the loaded one.
-//
-// The frame owns the viewport: the page scrolls inside `content` rather than on
-// the document, which is what keeps the top bar and both nav columns in place
-// without any of them being `position: fixed`.
 export const organizationLayout = tv({
   slots: {
     root: "flex h-dvh flex-col bg-sand-2",
     body: "flex min-h-0 flex-1",
     content: "min-w-0 flex-1 overflow-y-auto transition-[padding] duration-300",
-    // Preserves the page metrics the v1 Layout established, so pages that have
-    // not been converted yet keep their current measure and rhythm.
     contentInner: "mx-auto w-full max-w-[1200px] px-8 py-12",
   },
   variants: {
-    // A v1 Drawer is open; reserve its width instead of letting it overlap.
     hasDrawer: {
       true: { content: "pr-105" },
     },
@@ -45,9 +36,6 @@ export const organizationLayout = tv({
 
 export const topBar = tv({
   slots: {
-    // sand-a3 is the kit's divider weight (Separator, Tabs, List rows). The
-    // solid sand-6 is for outlining a contained surface like a Card, and reads
-    // far too heavy for chrome that only needs regions told apart.
     bar: "flex h-14 shrink-0 items-center gap-3 border-b border-sand-a3 bg-sand-1 px-4",
     brand: "flex shrink-0 items-center",
     logo: "h-5 w-12 text-sand-12",
@@ -56,7 +44,6 @@ export const topBar = tv({
   },
 });
 
-// Rounded pill naming the current organization, opening the switcher.
 export const organizationSwitcher = tv({
   slots: {
     trigger: [
@@ -67,13 +54,10 @@ export const organizationSwitcher = tv({
     ],
     popup: "w-72 p-0",
     search: "p-2",
-    // Bounded so a viewer in many organizations gets a scrolling list rather
-    // than a menu taller than the viewport.
     list: "max-h-96 overflow-y-auto px-1 pb-1",
   },
 });
 
-// Rounded pill that opens the authenticated user menu.
 export const viewerMembershipMenuTrigger = tv({
   base: [
     "flex h-8 items-center gap-2 rounded-full py-1 pr-2.5 pl-1",
@@ -83,16 +67,10 @@ export const viewerMembershipMenuTrigger = tv({
   ],
 });
 
-// The product rail, which widens on hover to name its icons.
-//
-// It expands as an overlay rather than in flow: `root` holds the collapsed
-// width in the flex row and the rail itself is absolute inside it, so opening
-// it cannot shove the panel and the page sideways every time the pointer
-// brushes past. `overflow-hidden` is what hides the labels while it is narrow;
-// it clips vertically too, which is fine at nine products but would want
-// `overflow-y-auto` if the rail ever outgrew a short viewport.
 export const navRail = tv({
   slots: {
+    // `root` holds the collapsed width in the flex row and the rail is absolute
+    // inside it, so expanding overlays the panel instead of shoving the page.
     root: "relative w-14 shrink-0",
     rail: [
       "group absolute inset-y-0 left-0 z-2 flex w-14 flex-col gap-1 overflow-hidden",
@@ -100,18 +78,11 @@ export const navRail = tv({
       "transition-[width,box-shadow,border-color] duration-150 ease-out",
     ],
     item: [
-      // The gap sits between the icon box and the label, so it spaces the two
-      // without moving the icon off the collapsed rail's centre line.
       "flex h-10 w-full cursor-pointer items-center gap-2 rounded-3 text-sand-11 outline-none transition-colors",
-      // Step 3 so a passing hover stays lighter than the selected item below.
       "hover:bg-sand-3 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
     ],
-    // Takes the space between the organization row and help, so help and the
-    // account row sit at the bottom whatever the product count.
     items: "flex min-h-0 flex-1 flex-col gap-1",
-    // A 40px box inside 8px of padding puts the icon's centre on the collapsed
-    // rail's centre line, so widening the rail does not shift it.
     icon: "flex size-10 shrink-0 items-center justify-center",
     label: [
       "min-w-0 flex-1 truncate pr-2 text-left opacity-0",
@@ -119,9 +90,6 @@ export const navRail = tv({
       "group-hover:opacity-100 group-has-focus-visible:opacity-100",
       "group-has-data-popup-open:opacity-100",
     ],
-    // Only the rows that open a menu carry one; it points the way the menu will
-    // open, and fades with the label so a collapsed rail stays a clean column
-    // of icons.
     caret: [
       "mr-2 size-4 shrink-0 text-sand-11 opacity-0",
       "transition-opacity duration-150 ease-out",
@@ -130,32 +98,12 @@ export const navRail = tv({
     ],
   },
   variants: {
-    // Gold marks the product you are in. It is the only accent in the chrome,
-    // so across nine near-identical icons it is unambiguous.
-    //
-    // Step 4, not 3: selection has to outweigh hover, and a hover one step
-    // above it would read as the heavier state despite being transient. The
-    // panel matches by switching ButtonLink to its soft variant when active.
     active: {
       true: { item: "bg-gold-4 text-gold-12" },
     },
-    // Off for the skeleton, which would otherwise open onto nothing.
-    //
-    // Every v2 shadow opens with a 1px sand-a3 ring, which lands just outside
-    // the border box and so doubles up with the border on the right edge. The
-    // border hands over to the ring while expanded, keeping the edge 1px.
-    //
-    // The third trigger is a menu being open inside the rail. Its popup is
-    // portaled out, so the pointer moving onto it ends :hover and focus lands
-    // outside the rail's subtree -- without this the rail would collapse from
-    // under the menu the user just opened. Base UI marks the open trigger with
-    // data-popup-open.
-    // Keyboard focus rather than focus-within: closing a menu restores focus to
-    // its trigger, which lives in the rail, so focus-within would reopen the
-    // rail the moment a click outside collapsed it and leave it stuck open
-    // until the next click elsewhere. :focus-visible does not match focus
-    // restored after a pointer interaction, so the mouse path settles closed
-    // while tabbing still opens the rail.
+    // data-popup-open keeps the rail open while a menu portaled out of it has
+    // focus. focus-visible rather than focus-within: closing a menu restores
+    // focus to its in-rail trigger, which would leave the rail stuck open.
     expandable: {
       true: {
         rail: [
@@ -174,18 +122,11 @@ export const navRail = tv({
 export const navPanel = tv({
   slots: {
     panel: "flex w-56 shrink-0 flex-col gap-1 border-r border-sand-a3 bg-sand-1 px-3 py-4",
-    // Inset less than group labels and item text so the product name sits
-    // as a column heading rather than lining up with the entries.
     title: "px-1 pb-2",
     list: "flex flex-col gap-0.5",
-    // Nav entries read as a list, so they fill the column and align left
-    // rather than sitting as centred pills like a row of buttons would.
     item: "w-full justify-start",
     group: "mt-3 flex w-full flex-col gap-1 first:mt-0",
     groupLabel: "px-3",
-    // Matches the switcher trigger (h-9 rounded-2) at full panel width
-    // while a lazy chunk loads. Not ButtonSkeleton: that one is a fixed
-    // w-24, and lite tv will not merge a w-full override.
     groupFallback: "mt-2 mb-2 block h-9 w-full animate-pulse rounded-2 bg-sand-3 first:mt-0 last:mb-0",
   },
 });

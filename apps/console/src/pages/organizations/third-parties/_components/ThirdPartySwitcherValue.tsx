@@ -42,12 +42,6 @@ export interface ThirdPartySwitcherValueProps {
   fallback: string;
 }
 
-/**
- * The name of the third party the URL is on, or the default trigger label.
- *
- * Mounted only when `:thirdPartyId` is present. The list page keeps
- * "Select Third Party".
- */
 export function ThirdPartySwitcherValue({ fallback }: ThirdPartySwitcherValueProps) {
   const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
   const data = useLazyLoadQuery<ThirdPartySwitcherValueQuery>(

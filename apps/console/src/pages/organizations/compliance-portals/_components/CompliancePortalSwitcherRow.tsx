@@ -49,10 +49,6 @@ export interface CompliancePortalSwitcherRowProps {
   children?: ReactNode;
 }
 
-/**
- * Selected-portal chrome: the switcher trigger and the open-in-new-tab
- * control share one query because they sit on the same row.
- */
 export function CompliancePortalSwitcherRow({
   onOpenChange,
   children,

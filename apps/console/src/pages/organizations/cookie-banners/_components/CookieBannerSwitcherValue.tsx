@@ -64,10 +64,6 @@ export interface CookieBannerSwitcherValueProps {
   cookieBannerKey: CookieBannerSwitcherValue_cookieBanner$key;
 }
 
-/**
- * The name of the banner the switcher treats as selected: the URL or
- * remembered id when present, otherwise the newest banner. Does not navigate.
- */
 export function CookieBannerSwitcherValue({ cookieBannerKey }: CookieBannerSwitcherValueProps) {
   const cookieBanner = useFragment(cookieBannerSwitcherValueFragment, cookieBannerKey);
   return <NavPanelSwitcherValue>{cookieBanner.name}</NavPanelSwitcherValue>;

@@ -68,8 +68,6 @@ export function subscribeDisplayMode(listener: Listener): () => void {
   };
 }
 
-// Explicit rather than a module-scope side effect: importing anything from
-// @probo/hooks must not touch document. Each app calls this from main.tsx.
 export function initDisplayMode(): void {
   if (typeof window === "undefined" || !window.matchMedia) {
     return;

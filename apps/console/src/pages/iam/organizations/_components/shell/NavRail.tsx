@@ -34,9 +34,8 @@ import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { navRail } from "./variants";
 import { ViewerMembershipMenu } from "./ViewerMembershipMenu";
 
-// Every permission below is read, but through the `permission` key on each
-// entry of the nav table rather than by name here, which the rule cannot
-// follow. See visibleNavGroups in _lib/navigation.ts.
+// Read through the `permission` key on each nav table entry rather than by
+// name here, which the rule cannot follow. See visibleNavGroups.
 /* eslint-disable relay/unused-fields */
 const navRailFragment = graphql`
   fragment NavRail_organization on Organization {
@@ -79,15 +78,6 @@ export interface NavRailProps {
   organizationKey: NavRail_organization$key;
 }
 
-/**
- * The whole chrome for an organization: which organization you are in, the
- * products, display mode, help, and who you are signed in as, all naming
- * themselves when the rail is hovered or focused.
- *
- * Each product icon links to the first link of its product (switchers have no
- * index route), so the rail alone is enough to move around; the panel beside
- * it then offers the rest.
- */
 export function NavRail({ organizationKey }: NavRailProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();

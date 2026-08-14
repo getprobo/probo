@@ -61,13 +61,6 @@ export interface ThirdPartySwitcherMenuProps {
   onCreate: (connectionId: string) => void;
 }
 
-/**
- * The third-party list and the create action that closes the switcher.
- *
- * Create sits last and outside the scrolling list so it stays reachable when
- * the organization has many third parties. It reports the connection id
- * upward so the dialog can live outside the menu.
- */
 export function ThirdPartySwitcherMenu({ queryRef, onCreate }: ThirdPartySwitcherMenuProps) {
   const { t } = useTranslation();
   const slots = navPanelSwitcher();

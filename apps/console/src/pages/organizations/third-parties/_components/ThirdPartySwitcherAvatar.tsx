@@ -26,12 +26,6 @@ export interface ThirdPartySwitcherAvatarProps {
   websiteUrl: string | null | undefined;
 }
 
-/**
- * Favicon (or initial) for a third party in the TPRM-panel switcher.
- *
- * Same source as the list row: Google's favicon service keyed off the site
- * hostname, falling back to the first letter when there is no URL.
- */
 export function ThirdPartySwitcherAvatar({ name, websiteUrl }: ThirdPartySwitcherAvatarProps) {
   return (
     <Avatar

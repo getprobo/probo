@@ -27,14 +27,11 @@ export type TooltipPopupProps
   = & Omit<ComponentProps<typeof BaseTooltip.Popup>, "className">
     & {
       className?: string;
-      // Positioner placement passthrough.
       side?: ComponentProps<typeof BaseTooltip.Positioner>["side"];
       align?: ComponentProps<typeof BaseTooltip.Positioner>["align"];
       sideOffset?: ComponentProps<typeof BaseTooltip.Positioner>["sideOffset"];
     };
 
-// Portal + positioner + styled popup. Holds a short label; for anything richer
-// than a line of text use a Popover, which is focusable and hoverable.
 export function TooltipPopup(props: TooltipPopupProps) {
   const {
     className, children,

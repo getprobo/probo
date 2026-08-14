@@ -31,20 +31,11 @@ import {
   WarningIcon,
 } from "@phosphor-icons/react";
 
-/**
- * The console navigation, as one table.
- *
- * This is the single source of truth for three things that must not drift
- * apart: the icon rail, the panel beside it, and the product segment each
- * feature route is nested under in routes.tsx. Moving a feature between
- * products is an edit here plus the matching move in the route tree.
- */
+// Single source of truth for the icon rail, the panel beside it, and the
+// product segment each feature route is nested under in routes.tsx. Moving a
+// feature between products is an edit here plus the matching move in the
+// route tree.
 
-/**
- * Permission aliases requested by the nav fragments. Each maps to a
- * `permission(action:)` field on Organization; an item is hidden when its
- * alias resolves false, and a group disappears once all of its items do.
- */
 export type NavPermission
   = | "canGetContext"
     | "canListTasks"
@@ -76,25 +67,18 @@ export type NavPermission
     | "canListWebhookSubscriptions"
     | "canUpdateOrganization";
 
-/**
- * One panel/rail entry. `kind: "switcher"` is a labelled control rather than
- * a link; `path` is still the URL prefix and the lazy-registry key.
- *
- * `exact` keeps a list link from staying gold on a detail URL the switcher
- * owns. `heading: false` skips the group label when a switcher sits under a
- * sibling link that already names the resource.
- */
 export type NavLinkItem = {
-  /** Path relative to the group segment, e.g. "frameworks". */
   path: string;
   labelKey: string;
   permission: NavPermission;
 } & (
+  // `exact` keeps a list link from staying active on a detail URL a sibling
+  // switcher owns; `heading: false` drops the group label when that sibling
+  // already names the resource.
   | { kind?: "link"; exact?: boolean }
   | { kind: "switcher"; heading?: boolean }
 );
 
-/** A labelled cluster of links inside a product panel. */
 export type NavSection = {
   kind: "section";
   key: string;
@@ -105,13 +89,7 @@ export type NavSection = {
 export type NavItem = NavLinkItem | NavSection;
 
 export interface NavGroup {
-  /** Stable id; also the i18n key suffix and the React key. */
   key: string;
-  /**
-   * URL segment the group's routes are nested under, or null when the product
-   * is a single route that already names itself (compliance portals) and would
-   * only gain a redundant level.
-   */
   segment: string | null;
   icon: Icon;
   items: NavItem[];
@@ -269,10 +247,6 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-/**
- * The permission aliases as the nav fragments resolve them. Both NavRail and
- * NavPanel request the same set, so either fragment's data satisfies this.
- */
 export type NavPermissions = { readonly [K in NavPermission]: boolean };
 
 function visibleNavItems(items: NavItem[], permissions: NavPermissions): NavItem[] {
@@ -292,10 +266,6 @@ function visibleNavItems(items: NavItem[], permissions: NavPermissions): NavItem
   return visible;
 }
 
-/**
- * The table reduced to what this viewer may see. A group whose every item is
- * denied disappears from the rail rather than leading to an empty panel.
- */
 export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
   const groups: NavGroup[] = [];
   for (const group of NAV_GROUPS) {
@@ -307,12 +277,10 @@ export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
   return groups;
 }
 
-/** Path of a link relative to the organization root. */
 export function navItemPath(group: NavGroup, item: NavLinkItem): string {
   return group.segment == null ? item.path : `${group.segment}/${item.path}`;
 }
 
-/** Absolute href of a link. */
 export function navItemHref(organizationId: string, group: NavGroup, item: NavLinkItem): string {
   return `/organizations/${organizationId}/${navItemPath(group, item)}`;
 }
@@ -329,10 +297,6 @@ function navLinkItems(group: NavGroup): NavLinkItem[] {
   return links;
 }
 
-/**
- * The rail target for a product. Switchers have no index route, so the first
- * link wins; a switcher-only group falls back to its first item.
- */
 export function navGroupLandingItem(group: NavGroup): NavLinkItem {
   for (const item of navLinkItems(group)) {
     if (item.kind !== "switcher") {

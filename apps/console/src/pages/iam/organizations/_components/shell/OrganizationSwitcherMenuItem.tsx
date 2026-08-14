@@ -48,8 +48,6 @@ const organizationFragment = graphql`
   }
 `;
 
-// Whether picking this organization will drop you straight in or prompt you to
-// authenticate again.
 const SESSION_STATES = {
   active: { Icon: CheckIcon, className: "text-green-11", labelKey: "organizationSwitcher.sessionActive" },
   expired: { Icon: ClockIcon, className: "text-amber-11", labelKey: "organizationSwitcher.sessionExpired" },
@@ -61,12 +59,6 @@ export interface OrganizationSwitcherMenuItemProps {
   organizationKey: OrganizationSwitcherMenuItem_organization$key;
 }
 
-/**
- * One organization you belong to.
- *
- * The trailing icon is the session state: signed in, signed in but expired, or
- * not yet assumed — which is what tells you whether picking it will prompt.
- */
 export function OrganizationSwitcherMenuItem(props: OrganizationSwitcherMenuItemProps) {
   const { membershipKey, organizationKey } = props;
 

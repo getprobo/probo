@@ -66,12 +66,6 @@ export interface OrganizationSwitcherMenuProps {
   queryRef: PreloadedQuery<OrganizationSwitcherMenuQuery>;
 }
 
-/**
- * The organization list, filtered by the search box above it.
- *
- * Filtering is client-side because the whole list is already loaded: someone
- * belongs to a handful of organizations, not a paginated set.
- */
 export function OrganizationSwitcherMenu({ search, queryRef }: OrganizationSwitcherMenuProps) {
   const { t } = useTranslation();
 

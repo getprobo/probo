@@ -22,11 +22,6 @@ import { graphql } from "relay-runtime";
 
 import type { compliancePortalSections_compliancePortal$data } from "#/__generated__/core/compliancePortalSections_compliancePortal.graphql";
 
-/**
- * Permission aliases the portal panel and the portal layout both read. The
- * nav items and the index redirect share this table so a new section cannot
- * appear in one place and not the other.
- */
 export const compliancePortalSectionsFragment = graphql`
   fragment compliancePortalSections_compliancePortal on CompliancePortal {
     canUpdatePortal: permission(action: "compliance-portal:portal:update")

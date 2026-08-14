@@ -25,12 +25,6 @@ import { Outlet, useParams } from "react-router";
 
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-/**
- * Trackers and Resources for the selected banner.
- *
- * The parent layout owns the page header; this route only splits those two
- * tabs so the Privacy panel can link at Discovery rather than at each tab.
- */
 export default function CookieBannerDiscoveryLayout() {
   const { t } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();

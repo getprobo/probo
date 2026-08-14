@@ -55,8 +55,6 @@ export function Sides() {
   );
 }
 
-// An icon rail: the provider is what makes moving between icons feel
-// instantaneous instead of re-serving the open delay on every one.
 export function IconRail() {
   const items = [
     { label: "Home", icon: <HouseIcon /> },

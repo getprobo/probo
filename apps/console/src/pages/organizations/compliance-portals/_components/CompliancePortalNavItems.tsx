@@ -47,12 +47,6 @@ const compliancePortalNavItemsQuery = graphql`
   }
 `;
 
-/**
- * Settings and Pages clusters for the portal in the URL.
- *
- * Hidden until a portal is selected: these paths need an id, and the create
- * page is not one of the sections.
- */
 export function CompliancePortalNavItems() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
 

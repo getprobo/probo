@@ -23,8 +23,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { navPanel, navRail, organizationLayout } from "./_components/shell/variants";
 import { NAV_GROUPS } from "./_lib/navigation";
 
-// Width per panel entry, sized to the English labels of the widest product
-// (Governance) so the placeholder column reads like the real one.
+// Widths track the English labels of the widest product (Governance).
 // See .cursor/rules/skeleton-width-sync.mdc.
 const PANEL_ITEMS = [
   { key: "frameworks", width: "w-24" },
@@ -36,18 +35,8 @@ const PANEL_ITEMS = [
   { key: "statementsOfApplicability", width: "w-44" },
 ] as const;
 
-/**
- * Loading placeholder paired with OrganizationLayout. Shares its layout slots
- * and imports neither Relay nor Base UI, so it renders immediately.
- *
- * The rail shows the real icon count rather than a guess, since the number of
- * products does not depend on the query.
- */
 export function OrganizationLayoutSkeleton() {
   const layoutSlots = organizationLayout();
-  // Not expandable: opening the rail while loading would reveal an empty
-  // column. The root wrapper is still required, since the rail positions
-  // against it.
   const railSlots = navRail({ expandable: false });
   const panelSlots = navPanel();
 
@@ -56,7 +45,6 @@ export function OrganizationLayoutSkeleton() {
       <div className={layoutSlots.body()}>
         <div className={railSlots.root()}>
           <div className={railSlots.rail()}>
-            {/* Organization, products, display mode, help, account. */}
             <div className={railSlots.icon()}>
               <div className="size-8 animate-pulse rounded-2 bg-sand-3" />
             </div>

@@ -18,11 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-/**
- * The third-party panel and the index redirect share this table so a new
- * section cannot appear in one place and not the other.
- */
-
 export type ThirdPartySectionId
   = | "profile"
     | "services"

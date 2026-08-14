@@ -57,12 +57,6 @@ export interface CompliancePortalSwitcherMenuProps {
   queryRef: PreloadedQuery<CompliancePortalSwitcherMenuQuery>;
 }
 
-/**
- * The portal list and the create action that closes the switcher.
- *
- * Create sits last and outside the scrolling list so it stays reachable when
- * the organization has many portals.
- */
 export function CompliancePortalSwitcherMenu({ queryRef }: CompliancePortalSwitcherMenuProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();

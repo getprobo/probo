@@ -28,9 +28,6 @@ type NavRailItemBase = {
   icon: Icon;
   label: string;
   active?: boolean;
-  // Products stay duotone so they read as a set. Help is a utility, not a
-  // product, so it passes regular and keeps the column from looking like
-  // another destination.
   weight?: IconWeight;
 };
 
@@ -41,15 +38,6 @@ type NavRailItemAction
 
 export type NavRailItemProps = NavRailItemBase & NavRailItemAction;
 
-/**
- * One row in the rail: an icon, and a label that fades in once the rail
- * opens. Product entries pass `to`; Help passes `href` because it is a
- * mailto, not a route; the display-mode toggle passes `onClick`.
- *
- * The label is always in the DOM rather than swapped in on hover, so it names
- * the control for assistive technology even while it is visually hidden. That
- * is why there is no `aria-label` here.
- */
 export function NavRailItem({
   icon: IconComponent,
   label,
@@ -61,9 +49,6 @@ export function NavRailItem({
   const body = (
     <>
       <span className={slots.icon()}>
-        {/* Duotone rather than outlined or filled: at 20px in a narrow column
-            thin strokes go muddy, but a flat fill loses the interior detail
-            that tells the products apart. */}
         <IconComponent size={20} weight={weight} aria-hidden />
       </span>
       <Text size={2} className={slots.label()}>

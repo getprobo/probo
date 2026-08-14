@@ -46,10 +46,6 @@ interface CompliancePortalsIndexPageProps {
   queryRef: PreloadedQuery<CompliancePortalsIndexPageQuery>;
 }
 
-/**
- * The rail and role landings hit /compliance-portals. Send them to the newest
- * portal when one exists; otherwise the create form.
- */
 export function CompliancePortalsIndexPage({ queryRef }: CompliancePortalsIndexPageProps) {
   const { organization } = usePreloadedQuery<CompliancePortalsIndexPageQuery>(
     compliancePortalsIndexPageQuery,

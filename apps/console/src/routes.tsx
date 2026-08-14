@@ -303,12 +303,9 @@ const routes = [
             },
           },
 
-          // Features are grouped under a product segment, mirroring the rail in
-          // the navigation. The segments live here rather than in the page tree
-          // (no pages/governance/ folder): the grouping is expected to move as
-          // products evolve, and reparenting a route array is cheaper than
-          // moving folders. The table in _lib/navigation.ts must agree with
-          // these segments — it is what builds the links.
+          // Features are grouped under a product segment, mirroring the rail.
+          // NAV_GROUPS in _lib/navigation.ts must agree with these segments —
+          // it is what builds the links.
           {
             path: "governance",
             children: [
@@ -390,8 +387,6 @@ const routes = [
               ...obligationRoutes,
             ],
           },
-          // Compliance portals already name their product, so an extra
-          // segment would only repeat it.
           ...compliancePortalRoutes,
 
           {

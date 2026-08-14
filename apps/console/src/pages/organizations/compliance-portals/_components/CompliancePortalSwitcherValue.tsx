@@ -33,9 +33,6 @@ export interface CompliancePortalSwitcherValueProps {
   compliancePortalKey: CompliancePortalSwitcherValue_compliancePortal$key;
 }
 
-/**
- * The entity name of the portal the URL is on.
- */
 export function CompliancePortalSwitcherValue({
   compliancePortalKey,
 }: CompliancePortalSwitcherValueProps) {

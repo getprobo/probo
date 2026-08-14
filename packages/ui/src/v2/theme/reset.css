@@ -19,25 +19,14 @@
  * SOFTWARE.
  */
 
-/* ---------------------------------------------------------------------------
+/*
  * Namespace resets — v2-only
  *
- * Wiping a Tailwind namespace to `initial` removes its defaults so a pure v2
- * build exposes nothing but the numeric Radix scales: no bg-slate-500, no
- * text-sm, no rounded-lg, no shadow-md, no z-10.
- *
- * These resets live apart from the token layers on purpose. They are the only
- * part of the v2 theme that is destructive, so an app that needs the v2 tokens
- * *alongside* another token set (the console, mid-migration) imports
- * ../theme-tokens.css and skips this file. Keeping the resets inline in each
- * layer would make that impossible, since `--color-*: initial` in colors.css
- * would wipe the tokens the other kit registered earlier in the build.
- *
- * A namespace reset only affects its own namespace, and this file is imported
- * before every layer, so each reset still precedes the definitions it guards.
- *
- * See contrib/claude/v2-tokens.md for the full usage guide.
- * ------------------------------------------------------------------------- */
+ * Wiping a namespace to `initial` leaves the numeric Radix scales as the only
+ * ones available. This is the only destructive part of the v2 theme, so it is
+ * kept out of the token layers: an app that needs the v2 tokens alongside
+ * another kit imports ../theme-tokens.css and skips this file.
+ */
 @theme {
     --color-*: initial;
     --text-*: initial;

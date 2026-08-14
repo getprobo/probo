@@ -45,19 +45,6 @@ import {
 } from "./ThirdPartySwitcherMenu";
 import { ThirdPartySwitcherValue } from "./ThirdPartySwitcherValue";
 
-/**
- * TPRM-panel control that picks a third party instead of only linking to the
- * list.
- *
- * Lives next to the third-party routes (not in the IAM shell) so Relay
- * compiles the query against the core schema. The list is fetched on open:
- * the panel is visible for every TPRM page, and most of those visits never
- * open this menu. The selected third party's name is a separate query so the
- * trigger can show it without loading the list. CoreRelayProvider is local
- * because the surrounding chrome runs on the IAM environment. The create
- * dialog is owned here so it survives the menu closing. Section links hang
- * off the same column once a third party is in the URL.
- */
 export function ThirdPartySwitcher() {
   return (
     <CoreRelayProvider>

@@ -21,11 +21,6 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import type { ComponentProps } from "react";
 
-// Root of the tooltip. Controlled the same way as Base UI's Tooltip:
-// `open` / `onOpenChange`, or left uncontrolled. See contrib/claude/ui.md.
-//
-// Wrap a group of tooltips in TooltipProvider so that, once one has opened,
-// moving to a sibling shows it immediately instead of waiting out the delay.
 export type TooltipProps = ComponentProps<typeof BaseTooltip.Root>;
 
 export function Tooltip(props: TooltipProps) {

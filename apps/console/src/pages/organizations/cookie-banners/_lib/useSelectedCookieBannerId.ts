@@ -21,14 +21,6 @@
 import { useState } from "react";
 import { useParams } from "react-router";
 
-/**
- * The banner the privacy-panel switcher treats as selected.
- *
- * The URL wins while you are on a banner route. Leaving for Rights Requests
- * (or any other privacy page) drops that param; the switcher stays mounted
- * in the panel, so the last id is kept in state. First visit with nothing
- * remembered falls through to the newest-banner query.
- */
 export function useSelectedCookieBannerId(): string | null {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const [rememberedId, setRememberedId] = useState<string | null>(

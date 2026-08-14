@@ -74,14 +74,10 @@ const signOutMutation = graphql`
 `;
 
 export interface ViewerMembershipMenuProps {
-  // "rail" is a full-width row matching the nav items, avatar first and the
-  // name revealed as the rail opens; "bar" is the pill the employee portal's
-  // top bar uses.
   variant?: "bar" | "rail";
   organizationKey: ViewerMembershipMenu_organization$key;
 }
 
-/** Who you are signed in as, and the account-level actions. */
 export function ViewerMembershipMenu({ variant = "bar", organizationKey }: ViewerMembershipMenuProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
@@ -96,7 +92,6 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
   } = useFragment(viewerMembershipMenuFragment, organizationKey);
   const [signOut, isSigningOut] = useMutation<ViewerMembershipMenuSignOutMutation>(signOutMutation);
 
-  // Someone invited but not yet onboarded may have no name yet.
   const displayName = fullName.trim() || email;
 
   const handleSignOut = () => {
@@ -132,8 +127,6 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
     ? (
         <button type="button" className={railSlots.item()}>
           <span className={railSlots.icon()}>
-            {/* A person reads as a round avatar, against the organization's
-                squared one at the top of the rail. */}
             <Avatar
               size={2}
               variant="soft"
@@ -145,7 +138,6 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
           <Text size={2} weight="medium" color="neutral" highContrast className={railSlots.label()}>
             {displayName}
           </Text>
-          {/* Points right, matching where the menu opens. */}
           <CaretRightIcon className={railSlots.caret()} />
         </button>
       )
@@ -162,10 +154,6 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
   return (
     <Dropdown>
       <DropdownTrigger render={trigger} />
-      {/* Anchored to the side in the rail so the menu clears it rather than
-          covering the column it was opened from. The offset is measured from
-          the trigger, which sits inside the rail's 8px padding, so it takes
-          that plus a gap to clear the rail's edge. */}
       <DropdownPopup
         side={isRail ? "right" : "bottom"}
         sideOffset={isRail ? 12 : 4}
