@@ -587,17 +587,21 @@ func (h *handler) releaseResting(
 }
 
 func (h *handler) retryDelay(attempt int) time.Duration {
-	delay := h.retryBase
-	for idx := 1; idx < attempt && delay < h.retryMax; idx++ {
-		if delay > h.retryMax/2 {
-			return h.retryMax
+	return exponentialRetryDelay(attempt, h.retryBase, h.retryMax)
+}
+
+func exponentialRetryDelay(attempt int, base, max time.Duration) time.Duration {
+	delay := base
+	for idx := 1; idx < attempt && delay < max; idx++ {
+		if delay > max/2 {
+			return max
 		}
 
 		delay *= 2
 	}
 
-	if delay > h.retryMax {
-		return h.retryMax
+	if delay > max {
+		return max
 	}
 
 	return delay

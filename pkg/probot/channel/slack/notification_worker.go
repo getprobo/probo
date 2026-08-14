@@ -46,10 +46,6 @@ type (
 		) error
 	}
 
-	permanentDeliveryError struct {
-		err error
-	}
-
 	notificationHandler struct {
 		pg            *pg.Client
 		installations *InstallationService
@@ -72,14 +68,6 @@ var (
 	_ worker.Handler[coredata.SlackbotMessage] = (*notificationHandler)(nil)
 	_ worker.StaleRecoverer                    = (*notificationHandler)(nil)
 )
-
-func (e *permanentDeliveryError) Error() string {
-	return e.err.Error()
-}
-
-func (e *permanentDeliveryError) Unwrap() error {
-	return e.err
-}
 
 func NewNotificationWorker(
 	pgClient *pg.Client,
@@ -293,9 +281,7 @@ func (h *notificationHandler) deliverInitial(
 	message *coredata.SlackbotMessage,
 ) error {
 	if message.ChannelID == nil || *message.ChannelID == "" {
-		return &permanentDeliveryError{
-			err: fmt.Errorf("slackbot message has no channel ID"),
-		}
+		return permanent(fmt.Errorf("slackbot message has no channel ID"))
 	}
 
 	client, err := h.clientForMessage(ctx, message)
@@ -328,9 +314,7 @@ func (h *notificationHandler) deliverRevision(
 ) error {
 	if message.ChannelID == nil || *message.ChannelID == "" ||
 		message.MessageTS == nil || *message.MessageTS == "" {
-		return &permanentDeliveryError{
-			err: fmt.Errorf("slackbot message revision has no delivery reference"),
-		}
+		return permanent(fmt.Errorf("slackbot message revision has no delivery reference"))
 	}
 
 	client, err := h.clientForMessage(ctx, message)
@@ -357,9 +341,7 @@ func (h *notificationHandler) clientForMessage(
 	message *coredata.SlackbotMessage,
 ) (*Client, error) {
 	if h.installations == nil {
-		return nil, &permanentDeliveryError{
-			err: fmt.Errorf("slackbot installation service is unavailable"),
-		}
+		return nil, permanent(fmt.Errorf("slackbot installation service is unavailable"))
 	}
 
 	client, installation, err := h.installations.ClientByOrganizationID(
@@ -372,9 +354,7 @@ func (h *notificationHandler) clientForMessage(
 	}
 
 	if installation.OrganizationID != message.OrganizationID {
-		return nil, &permanentDeliveryError{
-			err: fmt.Errorf("slackbot installation organization mismatch"),
-		}
+		return nil, permanent(fmt.Errorf("slackbot installation organization mismatch"))
 	}
 
 	return client, nil
@@ -392,7 +372,7 @@ func (h *notificationHandler) retryDelay(attempt int, err error) time.Duration {
 }
 
 func isTransientDeliveryError(err error) bool {
-	if _, ok := errors.AsType[*permanentDeliveryError](err); ok {
+	if isPermanent(err) {
 		return false
 	}
 

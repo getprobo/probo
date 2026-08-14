@@ -97,7 +97,7 @@ func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
 	return strings.TrimSpace(builder.String())
 }
 
-func (h *Service) collectThreadTranscript(
+func (s *Service) collectThreadTranscript(
 	ctx context.Context,
 	slackClient *Client,
 	event EventBody,
@@ -116,7 +116,7 @@ func (h *Service) collectThreadTranscript(
 	replies, err := slackClient.ListThreadReplies(ctx, target.channel, target.threadTS)
 	if err != nil && len(replies) == 0 {
 		if isThreadCollectionFallbackError(err) {
-			h.logger.WarnCtx(
+			s.logger.WarnCtx(
 				ctx,
 				"cannot collect Slack thread replies; using mention text",
 				log.String("error_code", slackAPIErrorCode(err)),
@@ -125,7 +125,7 @@ func (h *Service) collectThreadTranscript(
 			return fallback
 		}
 
-		h.logger.WarnCtx(
+		s.logger.WarnCtx(
 			ctx,
 			"cannot collect Slack thread replies; using mention text",
 			log.Error(err),
@@ -135,7 +135,7 @@ func (h *Service) collectThreadTranscript(
 	}
 
 	if err != nil {
-		h.logger.WarnCtx(
+		s.logger.WarnCtx(
 			ctx,
 			"cannot collect remaining Slack thread replies; using collected messages",
 			log.String("error_code", slackAPIErrorCode(err)),

@@ -65,10 +65,6 @@ type (
 		retryMax      time.Duration
 		now           func() time.Time
 	}
-
-	permanentInteractiveCommandError struct {
-		err error
-	}
 )
 
 const (
@@ -82,14 +78,6 @@ var (
 	_ worker.Handler[coredata.SlackbotInteractiveCommand] = (*interactiveCommandHandler)(nil)
 	_ worker.StaleRecoverer                               = (*interactiveCommandHandler)(nil)
 )
-
-func (e *permanentInteractiveCommandError) Error() string {
-	return e.err.Error()
-}
-
-func (e *permanentInteractiveCommandError) Unwrap() error {
-	return e.err
-}
 
 func NewInteractiveCommandWorker(
 	pgClient *pg.Client,
@@ -206,12 +194,12 @@ func (h *interactiveCommandHandler) dispatch(
 ) error {
 	raw, err := cipher.Decrypt(command.EncryptedPayload, h.encryptionKey)
 	if err != nil {
-		return permanentInteractiveCommand(fmt.Errorf("cannot decrypt command payload: %w", err))
+		return permanent(fmt.Errorf("cannot decrypt command payload: %w", err))
 	}
 
-	payload, err := decodeInteractivePayload(raw)
+	payload, err := DecodeInteractivePayload(raw)
 	if err != nil {
-		return permanentInteractiveCommand(err)
+		return permanent(err)
 	}
 
 	if len(payload.Actions) == 0 {
@@ -227,7 +215,7 @@ func (h *interactiveCommandHandler) dispatch(
 		action.ActionTS == "" ||
 		payload.Container.ChannelID == "" ||
 		payload.Container.MessageTS == "" {
-		return permanentInteractiveCommand(fmt.Errorf("slack interactive command is incomplete"))
+		return permanent(fmt.Errorf("slack interactive command is incomplete"))
 	}
 
 	if h.installations == nil || h.bindings == nil || h.messages == nil || h.capabilities == nil {
@@ -238,7 +226,7 @@ func (h *interactiveCommandHandler) dispatch(
 	if err != nil {
 		if errors.Is(err, ErrSlackbotNotInstalled) ||
 			errors.Is(err, coredata.ErrResourceNotFound) {
-			return permanentInteractiveCommand(fmt.Errorf("slack installation is unavailable: %w", err))
+			return permanent(fmt.Errorf("slack installation is unavailable: %w", err))
 		}
 
 		return fmt.Errorf("cannot reload Slack installation: %w", err)
@@ -257,7 +245,7 @@ func (h *interactiveCommandHandler) dispatch(
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return permanentInteractiveCommand(fmt.Errorf("slack identity binding was revoked: %w", err))
+			return permanent(fmt.Errorf("slack identity binding was revoked: %w", err))
 		}
 
 		return fmt.Errorf("cannot recheck Slack identity binding: %w", err)
@@ -271,14 +259,14 @@ func (h *interactiveCommandHandler) dispatch(
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return permanentInteractiveCommand(fmt.Errorf("delivered Slack message is unavailable: %w", err))
+			return permanent(fmt.Errorf("delivered Slack message is unavailable: %w", err))
 		}
 
 		return fmt.Errorf("cannot resolve delivered Slack message: %w", err)
 	}
 
 	if delivered.Message.OrganizationID != installation.OrganizationID {
-		return permanentInteractiveCommand(fmt.Errorf("slack workspace does not own delivered message"))
+		return permanent(fmt.Errorf("slack workspace does not own delivered message"))
 	}
 
 	attributes := make(map[string]any, len(delivered.Message.Attributes))
@@ -302,7 +290,7 @@ func (h *interactiveCommandHandler) dispatch(
 	}
 	probotAction, err = h.capabilities.NormalizeActionAlias(probotAction)
 	if err != nil {
-		return permanentInteractiveCommand(
+		return permanent(
 			fmt.Errorf("cannot normalize Slack interactive action: %w", err),
 		)
 	}
@@ -312,7 +300,7 @@ func (h *interactiveCommandHandler) dispatch(
 		if errors.Is(err, probot.ErrCapabilityForbidden) ||
 			errors.Is(err, probot.ErrCapabilityInvalidInput) ||
 			errors.Is(err, probot.ErrCapabilityNotFound) {
-			return permanentInteractiveCommand(err)
+			return permanent(err)
 		}
 
 		return fmt.Errorf("cannot dispatch Slack capability action: %w", err)
@@ -341,17 +329,7 @@ func (h *interactiveCommandHandler) RecoverStale(ctx context.Context) error {
 }
 
 func (h *interactiveCommandHandler) retryDelay(attempt int) time.Duration {
-	return exponentialRetryDelay(attempt, h.retryBase, h.retryMax)
-}
-
-func permanentInteractiveCommand(err error) error {
-	return &permanentInteractiveCommandError{err: err}
-}
-
-func isPermanentInteractiveCommandError(err error) bool {
-	_, ok := errors.AsType[*permanentInteractiveCommandError](err)
-
-	return ok
+	return probot.ExponentialRetryDelay(attempt, h.retryBase, h.retryMax)
 }
 
 func applyInteractiveCommandOutcome(
@@ -373,7 +351,7 @@ func applyInteractiveCommandOutcome(
 	}
 
 	command.LastError = new(processingErr.Error())
-	if isPermanentInteractiveCommandError(processingErr) ||
+	if isPermanent(processingErr) ||
 		command.AttemptCount >= command.MaxAttempts {
 		command.AttemptCount = command.MaxAttempts
 		command.NextAttemptAt = nil

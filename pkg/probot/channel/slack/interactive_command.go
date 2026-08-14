@@ -77,7 +77,7 @@ func NewInteractiveCommandInbox(
 	}
 }
 
-func decodeInteractivePayload(raw []byte) (InteractivePayload, error) {
+func DecodeInteractivePayload(raw []byte) (InteractivePayload, error) {
 	var payload InteractivePayload
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return InteractivePayload{}, fmt.Errorf("cannot decode Slack interactive payload: %w", err)

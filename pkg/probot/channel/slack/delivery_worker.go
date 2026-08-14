@@ -85,9 +85,7 @@ func NewDeliveryWorker(
 			operation *coredata.SlackDeliveryOperation,
 		) (*Client, error) {
 			if installations == nil {
-				return nil, &permanentDeliveryError{
-					err: fmt.Errorf("slack installation service is unavailable"),
-				}
+				return nil, permanent(fmt.Errorf("slack installation service is unavailable"))
 			}
 
 			client, installation, err := installations.ClientByOrganizationID(
@@ -100,9 +98,7 @@ func NewDeliveryWorker(
 			}
 
 			if installation.OrganizationID != operation.OrganizationID {
-				return nil, &permanentDeliveryError{
-					err: fmt.Errorf("slack installation organization mismatch"),
-				}
+				return nil, permanent(fmt.Errorf("slack installation organization mismatch"))
 			}
 
 			return client, nil
@@ -235,7 +231,7 @@ func (h *deliveryOperationHandler) deliverOperation(
 	case coredata.SlackDeliveryOperationKindPostMessage:
 		channel, text, threadTS, ok := postMessageOperationPayload(operation.Payload)
 		if !ok || operation.ClientMsgID == nil {
-			return &permanentDeliveryError{err: fmt.Errorf("invalid post message operation payload")}
+			return permanent(fmt.Errorf("invalid post message operation payload"))
 		}
 
 		_, err := client.CreateMessage(ctx, channel, text, threadTS, *operation.ClientMsgID)
@@ -245,7 +241,7 @@ func (h *deliveryOperationHandler) deliverOperation(
 	case coredata.SlackDeliveryOperationKindAddReaction:
 		channel, reaction, timestamp, ok := reactionOperationPayload(operation.Payload)
 		if !ok {
-			return &permanentDeliveryError{err: fmt.Errorf("invalid reaction operation payload")}
+			return permanent(fmt.Errorf("invalid reaction operation payload"))
 		}
 
 		err := client.AddReaction(ctx, channel, reaction, timestamp)
@@ -257,7 +253,7 @@ func (h *deliveryOperationHandler) deliverOperation(
 			return fmt.Errorf("cannot deliver Slack reaction operation: %w", err)
 		}
 	default:
-		return &permanentDeliveryError{err: fmt.Errorf("unsupported Slack delivery operation kind")}
+		return permanent(fmt.Errorf("unsupported Slack delivery operation kind"))
 	}
 
 	return nil

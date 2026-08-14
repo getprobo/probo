@@ -18,23 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probot
+package slack
 
-import "time"
+import "errors"
 
-func ExponentialRetryDelay(attempt int, base, max time.Duration) time.Duration {
-	delay := base
-	for idx := 1; idx < attempt && delay < max; idx++ {
-		if delay > max/2 {
-			return max
-		}
+type permanentError struct {
+	err error
+}
 
-		delay *= 2
-	}
+func (e *permanentError) Error() string {
+	return e.err.Error()
+}
 
-	if delay > max {
-		return max
-	}
+func (e *permanentError) Unwrap() error {
+	return e.err
+}
 
-	return delay
+func permanent(err error) error {
+	return &permanentError{err: err}
+}
+
+func isPermanent(err error) bool {
+	_, ok := errors.AsType[*permanentError](err)
+
+	return ok
 }

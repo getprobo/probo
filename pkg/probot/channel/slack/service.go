@@ -99,19 +99,19 @@ func NewService(
 	}
 }
 
-func (h *Service) SetBindPrompts(store *BindPromptService) {
-	h.bindPrompts = store
+func (s *Service) SetBindPrompts(store *BindPromptService) {
+	s.bindPrompts = store
 }
 
-func (h *Service) clientForTeam(
+func (s *Service) clientForTeam(
 	ctx context.Context,
 	teamID string,
 ) (*Client, gid.GID, string, error) {
-	if h.installations == nil {
+	if s.installations == nil {
 		return nil, gid.Nil, "", ErrSlackbotNotInstalled
 	}
 
-	client, installation, err := h.installations.ClientByTeamID(ctx, teamID)
+	client, installation, err := s.installations.ClientByTeamID(ctx, teamID)
 	if err != nil {
 		return nil, gid.Nil, "", err
 	}
@@ -123,12 +123,12 @@ func (h *Service) clientForTeam(
 	return client, installation.OrganizationID, installation.BotUserID, nil
 }
 
-func (h *Service) EnqueueEvent(ctx context.Context, envelope Envelope) error {
+func (s *Service) EnqueueEvent(ctx context.Context, envelope Envelope) error {
 	if err := validateEventCallback(envelope); err != nil {
 		return err
 	}
 
-	if h.pg == nil {
+	if s.pg == nil {
 		return fmt.Errorf("cannot enqueue Slack event: inbox unavailable")
 	}
 
@@ -139,7 +139,7 @@ func (h *Service) EnqueueEvent(ctx context.Context, envelope Envelope) error {
 
 	event := coredata.NewSlackbotEvent(envelope.EventID, rawBody)
 
-	err = h.pg.WithConn(
+	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			_, err := event.Insert(ctx, conn)
@@ -157,12 +157,12 @@ func (h *Service) EnqueueEvent(ctx context.Context, envelope Envelope) error {
 	return nil
 }
 
-func (h *Service) ProcessEvent(ctx context.Context, envelope Envelope) error {
+func (s *Service) ProcessEvent(ctx context.Context, envelope Envelope) error {
 	if err := validateEventCallback(envelope); err != nil {
-		return &permanentEventError{err: err}
+		return permanent(err)
 	}
 
-	return h.dispatch(
+	return s.dispatch(
 		ctx,
 		envelope.EventID,
 		envelope.InstallationTeamID(),
@@ -170,20 +170,18 @@ func (h *Service) ProcessEvent(ctx context.Context, envelope Envelope) error {
 	)
 }
 
-func (h *Service) dispatch(ctx context.Context, eventID, teamID string, event *EventBody) error {
+func (s *Service) dispatch(ctx context.Context, eventID, teamID string, event *EventBody) error {
 	if event.Type == EventTypeAppUninstalled ||
 		event.Type == EventTypeTokensRevoked {
 		if teamID == "" {
-			return &permanentEventError{
-				err: fmt.Errorf("slack uninstall event has no team ID"),
-			}
+			return permanent(fmt.Errorf("slack uninstall event has no team ID"))
 		}
 
-		if h.installations == nil {
+		if s.installations == nil {
 			return nil
 		}
 
-		if err := h.installations.DisableByTeamID(ctx, teamID); err != nil {
+		if err := s.installations.DisableByTeamID(ctx, teamID); err != nil {
 			return fmt.Errorf("cannot disable revoked Slack installation: %w", err)
 		}
 
@@ -196,7 +194,7 @@ func (h *Service) dispatch(ctx context.Context, eventID, teamID string, event *E
 
 	if event.Subtype == EventSubtypeMessageChanged {
 		if event.ChannelType == ChannelTypeIM {
-			return h.handleEditedMessage(ctx, eventID, teamID, event)
+			return s.handleEditedMessage(ctx, eventID, teamID, event)
 		}
 
 		return nil
@@ -205,7 +203,7 @@ func (h *Service) dispatch(ctx context.Context, eventID, teamID string, event *E
 	switch event.Type {
 	case EventTypeAppMention, EventTypeMessage:
 		if shouldHandleConversationEvent(event) {
-			return h.handleInteraction(ctx, eventID, teamID, event)
+			return s.handleInteraction(ctx, eventID, teamID, event)
 		}
 	}
 
@@ -218,7 +216,7 @@ func shouldHandleConversationEvent(event *EventBody) bool {
 			(event.Type == EventTypeMessage && event.ChannelType == ChannelTypeIM))
 }
 
-func (h *Service) handleEditedMessage(
+func (s *Service) handleEditedMessage(
 	ctx context.Context,
 	eventID, teamID string,
 	event *EventBody,
@@ -243,7 +241,7 @@ func (h *Service) handleEditedMessage(
 		newText,
 	)
 
-	return h.handleInteraction(
+	return s.handleInteraction(
 		ctx,
 		eventID,
 		teamID,
@@ -260,7 +258,7 @@ func (h *Service) handleEditedMessage(
 	)
 }
 
-func (h *Service) handleInteraction(
+func (s *Service) handleInteraction(
 	ctx context.Context,
 	eventID, teamID string,
 	event *EventBody,
@@ -271,28 +269,26 @@ func (h *Service) handleInteraction(
 	}
 
 	if teamID == "" || event.User == "" {
-		return &permanentEventError{
-			err: fmt.Errorf("slack %s event is missing team or user", event.Type),
-		}
+		return permanent(fmt.Errorf("slack %s event is missing team or user", event.Type))
 	}
 
 	target := replyTargetFor(*event)
 	actorTeamID := event.ActorTeamID(teamID)
 
-	slackClient, organizationID, botUserID, err := h.clientForTeam(ctx, teamID)
+	slackClient, organizationID, botUserID, err := s.clientForTeam(ctx, teamID)
 	if err != nil {
 		return fmt.Errorf("cannot resolve Slack installation: %w", err)
 	}
 
 	subject := IdentitySubject(actorTeamID, event.User)
 
-	binding, err := h.bindings.Lookup(ctx, subject)
+	binding, err := s.bindings.Lookup(ctx, subject)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot lookup Slack identity binding: %w", err)
 	}
 
 	if binding == nil {
-		return h.handleUnboundInteraction(
+		return s.handleUnboundInteraction(
 			ctx,
 			eventID,
 			slackClient,
@@ -300,7 +296,7 @@ func (h *Service) handleInteraction(
 		)
 	}
 
-	return h.handleBoundInteraction(
+	return s.handleBoundInteraction(
 		ctx,
 		eventID,
 		teamID,
@@ -313,13 +309,13 @@ func (h *Service) handleInteraction(
 	)
 }
 
-func (h *Service) handleUnboundInteraction(
+func (s *Service) handleUnboundInteraction(
 	ctx context.Context,
 	eventID string,
 	slackClient *Client,
 	target replyTarget,
 ) error {
-	claimed, err := isEventIDClaimed(ctx, h.pg, eventID)
+	claimed, err := isEventIDClaimed(ctx, s.pg, eventID)
 	if err != nil {
 		return fmt.Errorf("cannot check Slack bind CTA delivery: %w", err)
 	}
@@ -328,7 +324,7 @@ func (h *Service) handleUnboundInteraction(
 		return nil
 	}
 
-	if err := h.postBindRequired(
+	if err := s.postBindRequired(
 		ctx,
 		slackClient,
 		target,
@@ -337,14 +333,14 @@ func (h *Service) handleUnboundInteraction(
 		return fmt.Errorf("cannot post Slack bind CTA: %w", err)
 	}
 
-	if _, err := claimEventID(ctx, h.pg, eventID); err != nil {
+	if _, err := claimEventID(ctx, s.pg, eventID); err != nil {
 		return fmt.Errorf("cannot mark Slack bind CTA delivered: %w", err)
 	}
 
 	return nil
 }
 
-func (h *Service) handleBoundInteraction(
+func (s *Service) handleBoundInteraction(
 	ctx context.Context,
 	eventID string,
 	teamID string,
@@ -355,14 +351,22 @@ func (h *Service) handleBoundInteraction(
 	slackClient *Client,
 	event *EventBody,
 ) error {
-	userText := h.collectThreadTranscript(ctx, slackClient, *event, botUserID)
+	userText := s.collectThreadTranscript(ctx, slackClient, *event, botUserID)
 	if userText == "" {
 		return nil
 	}
 
-	h.sendAssistantWorkingStatus(ctx, slackClient, *event)
+	if slackClient != nil {
+		setAssistantWorkingStatus(
+			ctx,
+			s.logger,
+			slackClient,
+			event.Channel,
+			assistantStatusThreadTS(event.ThreadTS, event.TS),
+		)
+	}
 
-	if err := h.enqueueExecutionInput(
+	if err := s.enqueueExecutionInput(
 		ctx,
 		eventID,
 		teamID,
@@ -376,24 +380,6 @@ func (h *Service) handleBoundInteraction(
 	}
 
 	return nil
-}
-
-func (h *Service) sendAssistantWorkingStatus(
-	ctx context.Context,
-	slackClient *Client,
-	event EventBody,
-) {
-	if slackClient == nil {
-		return
-	}
-
-	setAssistantWorkingStatus(
-		ctx,
-		h.logger,
-		slackClient,
-		event.Channel,
-		assistantStatusThreadTS(event.ThreadTS, event.TS),
-	)
 }
 
 // replyTargetFor derives the conversation destination from a Slack event.
@@ -414,7 +400,7 @@ func replyTargetFor(payload EventBody) replyTarget {
 	}
 }
 
-func (h *Service) postBindRequired(
+func (s *Service) postBindRequired(
 	ctx context.Context,
 	slackClient *Client,
 	target replyTarget,

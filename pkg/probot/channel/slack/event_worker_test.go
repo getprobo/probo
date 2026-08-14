@@ -204,7 +204,7 @@ func TestEventWorkerHandler_DeadLettersPermanentFailure(t *testing.T) {
 	queued := fixture.queue(t, 5)
 	processor := &recordingEventProcessor{
 		errs: []error{
-			&permanentEventError{err: errors.New("malformed event")},
+			permanent(errors.New("malformed event")),
 		},
 	}
 	handler := newTestEventWorkerHandler(fixture, processor)

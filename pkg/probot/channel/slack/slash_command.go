@@ -62,7 +62,7 @@ func ephemeralSlashResponse(text string, blocks []any) SlashCommandResponse {
 	}
 }
 
-func (h *Service) HandleSlashCommand(
+func (s *Service) HandleSlashCommand(
 	ctx context.Context,
 	cmd SlashCommand,
 ) SlashCommandResponse {
@@ -80,19 +80,19 @@ func (h *Service) HandleSlashCommand(
 	}
 
 	var organizationID gid.GID
-	if h.installations != nil {
+	if s.installations != nil {
 		var err error
-		if _, organizationID, _, err = h.clientForTeam(ctx, cmd.TeamID); err != nil {
+		if _, organizationID, _, err = s.clientForTeam(ctx, cmd.TeamID); err != nil {
 			return ephemeralSlashResponse(bindSlashUnavailableText, nil)
 		}
 	}
 
-	if h.bindings == nil {
+	if s.bindings == nil {
 		return ephemeralSlashResponse(bindSlashUnavailableText, nil)
 	}
 
 	subject := identitySubjectFromSlashCommand(cmd)
-	binding, err := h.bindings.Lookup(ctx, subject)
+	binding, err := s.bindings.Lookup(ctx, subject)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return ephemeralSlashResponse(bindSlashFailedText, nil)
 	}
@@ -100,19 +100,19 @@ func (h *Service) HandleSlashCommand(
 		return ephemeralSlashResponse(bindSlashAlreadyLinkedText, nil)
 	}
 
-	bindURL, err := h.bindings.BindURL(ctx, subject, organizationID)
+	bindURL, err := s.bindings.BindURL(ctx, subject, organizationID)
 	if err != nil {
 		return ephemeralSlashResponse(bindSlashFailedText, nil)
 	}
 
-	if h.bindPrompts != nil && cmd.ResponseURL != "" {
-		if err := h.bindPrompts.RememberResponseURL(
+	if s.bindPrompts != nil && cmd.ResponseURL != "" {
+		if err := s.bindPrompts.RememberResponseURL(
 			ctx,
 			cmd.TeamID,
 			cmd.UserID,
 			cmd.ResponseURL,
-		); err != nil && h.logger != nil {
-			h.logger.ErrorCtx(ctx, "cannot remember Slack bind prompt", log.Error(err))
+		); err != nil && s.logger != nil {
+			s.logger.ErrorCtx(ctx, "cannot remember Slack bind prompt", log.Error(err))
 		}
 	}
 

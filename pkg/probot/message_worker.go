@@ -256,7 +256,7 @@ func (h *messageWorkerHandler) RecoverStale(ctx context.Context) error {
 }
 
 func (h *messageWorkerHandler) retryDelay(attempt int) time.Duration {
-	return exponentialRetryDelay(attempt, h.retryBase, h.retryMax)
+	return ExponentialRetryDelay(attempt, h.retryBase, h.retryMax)
 }
 
 func isPermanentMessageError(err error) bool {

@@ -23,27 +23,12 @@ package slack
 import (
 	"errors"
 	"time"
+
+	"go.probo.inc/probo/pkg/probot"
 )
 
-func exponentialRetryDelay(attempt int, base, max time.Duration) time.Duration {
-	delay := base
-	for idx := 1; idx < attempt && delay < max; idx++ {
-		if delay > max/2 {
-			return max
-		}
-
-		delay *= 2
-	}
-
-	if delay > max {
-		return max
-	}
-
-	return delay
-}
-
 func slackAPIRetryDelay(attempt int, base, max time.Duration, err error) time.Duration {
-	delay := exponentialRetryDelay(attempt, base, max)
+	delay := probot.ExponentialRetryDelay(attempt, base, max)
 	if apiErr, ok := errors.AsType[*APIError](err); ok && apiErr.RetryAfter > delay {
 		delay = apiErr.RetryAfter
 	}

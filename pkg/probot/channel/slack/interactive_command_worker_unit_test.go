@@ -142,7 +142,7 @@ func TestInteractiveCommandDeadLettersRevokedBinding(t *testing.T) {
 
 	err := h.dispatch(t.Context(), &command)
 	require.Error(t, err)
-	assert.True(t, isPermanentInteractiveCommandError(err))
+	assert.True(t, isPermanent(err))
 	assert.Equal(t, &organizationID, command.OrganizationID)
 }
 
@@ -181,7 +181,7 @@ func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
 
 	err := h.dispatch(t.Context(), &command)
 	require.Error(t, err)
-	assert.True(t, isPermanentInteractiveCommandError(err))
+	assert.True(t, isPermanent(err))
 	assert.ErrorIs(t, err, probot.ErrCapabilityForbidden)
 }
 

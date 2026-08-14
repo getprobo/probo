@@ -31,15 +31,12 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/probot"
 )
 
 type (
 	EventProcessor interface {
 		ProcessEvent(ctx context.Context, envelope Envelope) error
-	}
-
-	permanentEventError struct {
-		err error
 	}
 
 	eventWorkerHandler struct {
@@ -63,14 +60,6 @@ var (
 	_ worker.Handler[coredata.SlackbotEvent] = (*eventWorkerHandler)(nil)
 	_ worker.StaleRecoverer                  = (*eventWorkerHandler)(nil)
 )
-
-func (e *permanentEventError) Error() string {
-	return e.err.Error()
-}
-
-func (e *permanentEventError) Unwrap() error {
-	return e.err
-}
 
 func NewEventWorker(
 	pgClient *pg.Client,
@@ -131,13 +120,9 @@ func (h *eventWorkerHandler) Process(ctx context.Context, event coredata.Slackbo
 
 	err := json.Unmarshal(event.Envelope, &envelope)
 	if err != nil {
-		err = &permanentEventError{
-			err: fmt.Errorf("cannot decode persisted Slackbot event: %w", err),
-		}
+		err = permanent(fmt.Errorf("cannot decode persisted Slackbot event: %w", err))
 	} else if h.processor == nil {
-		err = &permanentEventError{
-			err: fmt.Errorf("slackbot event processor is unavailable"),
-		}
+		err = permanent(fmt.Errorf("slackbot event processor is unavailable"))
 	} else {
 		err = h.processor.ProcessEvent(ctx, envelope)
 	}
@@ -161,7 +146,7 @@ func (h *eventWorkerHandler) Process(ctx context.Context, event coredata.Slackbo
 			}
 
 			event.LastError = new(processingErr.Error())
-			if isPermanentEventError(processingErr) {
+			if isPermanent(processingErr) {
 				event.AttemptCount = event.MaxAttempts
 				event.NextAttemptAt = nil
 				event.DeadLetteredAt = &now
@@ -217,11 +202,5 @@ func (h *eventWorkerHandler) RecoverStale(ctx context.Context) error {
 }
 
 func (h *eventWorkerHandler) retryDelay(attempt int) time.Duration {
-	return exponentialRetryDelay(attempt, h.retryBase, h.retryMax)
-}
-
-func isPermanentEventError(err error) bool {
-	_, ok := errors.AsType[*permanentEventError](err)
-
-	return ok
+	return probot.ExponentialRetryDelay(attempt, h.retryBase, h.retryMax)
 }
