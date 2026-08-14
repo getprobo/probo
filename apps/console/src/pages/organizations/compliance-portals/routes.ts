@@ -44,22 +44,6 @@ export const compliancePortalRoutes = [
     Component: lazy(() => import("#/pages/organizations/compliance-portals/NewCompliancePortalPage")),
   },
   {
-    path: "compliance-page",
-    loader: redirectTo("compliance-portals"),
-  },
-  {
-    path: "compliance-page/*",
-    loader: redirectTo("../compliance-portals"),
-  },
-  {
-    path: "compliance-pages",
-    loader: redirectTo("compliance-portals"),
-  },
-  {
-    path: "compliance-pages/*",
-    loader: redirectTo("../compliance-portals"),
-  },
-  {
     path: "compliance-portals/:compliancePortalId",
     Fallback: PageSkeleton,
     Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalLayoutLoader")),
