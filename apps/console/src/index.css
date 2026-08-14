@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Pin dark mode to `.dark` before either kit is imported: v1 writes
+ * `@variant dark` (defaults to prefers-color-scheme) while the v2 Radix
+ * scales flip on the class. Declaring the variant first keeps them in step.
+ * initDisplayMode (and the FOUC guard) set the class from the OS preference,
+ * with an in-tab override from the rail. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Both kits in one build, mid-migration.
  *
  * theme.css registers the v1 semantic tokens (txt-primary, level-0, …) and
@@ -20,12 +27,15 @@
 @source "../../../packages/ui/src";
 @source "../../../packages/helpers/src";
 
-/* The two kits disagree on how dark mode is triggered: v1 writes `@variant
- * dark` (which defaults to prefers-color-scheme) while the v2 Radix scales
- * flip on a `.dark` class. Left alone, an OS-dark visitor would get v1 dark
- * chrome around v2 light components. Pinning both to the class keeps them in
- * step; the console never sets it, so both stay light. */
-@custom-variant dark (&:where(.dark, .dark *));
+/* The v1 Layout used to wrap every page in text-txt-primary. The new shell
+ * only paints a background, so headings with no color class (PageHeader,
+ * empty states) inherited CanvasText and stayed black in dark mode. Restore
+ * the token as the document default; v2 chrome sets its own sand-12. */
+@layer base {
+  body {
+    @apply text-txt-primary;
+  }
+}
 
 /* Hide scrollbar utility */
 .scrollbar-hide {

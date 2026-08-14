@@ -102,7 +102,7 @@ export const navRail = tv({
     item: [
       // The gap sits between the icon box and the label, so it spaces the two
       // without moving the icon off the collapsed rail's centre line.
-      "flex h-10 w-full items-center gap-2 rounded-3 text-sand-11 outline-none transition-colors",
+      "flex h-10 w-full cursor-pointer items-center gap-2 rounded-3 text-sand-11 outline-none transition-colors",
       // Step 3 so a passing hover stays lighter than the selected item below.
       "hover:bg-sand-3 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",

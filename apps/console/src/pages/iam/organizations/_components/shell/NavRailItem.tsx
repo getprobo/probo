@@ -34,18 +34,21 @@ type NavRailItemBase = {
   weight?: IconWeight;
 };
 
-export type NavRailItemProps =
-  | (NavRailItemBase & { to: string; href?: never })
-  | (NavRailItemBase & { href: string; to?: never });
+type NavRailItemAction
+  = { to: string; href?: never; onClick?: never }
+    | { href: string; to?: never; onClick?: never }
+    | { onClick: () => void; to?: never; href?: never };
+
+export type NavRailItemProps = NavRailItemBase & NavRailItemAction;
 
 /**
  * One row in the rail: an icon, and a label that fades in once the rail
  * opens. Product entries pass `to`; Help passes `href` because it is a
- * mailto, not a route.
+ * mailto, not a route; the display-mode toggle passes `onClick`.
  *
  * The label is always in the DOM rather than swapped in on hover, so it names
- * the link for assistive technology even while it is visually hidden. That is
- * why there is no `aria-label` here.
+ * the control for assistive technology even while it is visually hidden. That
+ * is why there is no `aria-label` here.
  */
 export function NavRailItem({
   icon: IconComponent,
@@ -68,6 +71,14 @@ export function NavRailItem({
       </Text>
     </>
   );
+
+  if ("onClick" in rest) {
+    return (
+      <button type="button" className={slots.item()} onClick={rest.onClick}>
+        {body}
+      </button>
+    );
+  }
 
   if ("href" in rest) {
     return <a href={rest.href} className={slots.item()}>{body}</a>;

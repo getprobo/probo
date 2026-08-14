@@ -28,6 +28,7 @@ import {
   SunIcon,
   UserIcon,
 } from "@phosphor-icons/react";
+import { useDisplayMode } from "@probo/hooks";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
@@ -44,7 +45,6 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { useSignOut } from "#/lib/auth/useSignOut";
-import { useDisplayMode } from "#/lib/displayMode/useDisplayMode";
 import {
   URL_LOCALE_LABELS,
   URL_LOCALES,

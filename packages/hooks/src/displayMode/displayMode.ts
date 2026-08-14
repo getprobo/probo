@@ -25,6 +25,7 @@ type Listener = () => void;
 // Tab-scoped override. Null means follow the OS preference. Never persisted.
 let override: DisplayMode | null = null;
 const listeners = new Set<Listener>();
+let initialized = false;
 
 function getSystemDisplayMode(): DisplayMode {
   if (typeof window === "undefined" || !window.matchMedia) {
@@ -67,12 +68,19 @@ export function subscribeDisplayMode(listener: Listener): () => void {
   };
 }
 
-function initDisplayMode(): void {
+// Explicit rather than a module-scope side effect: importing anything from
+// @probo/hooks must not touch document. Each app calls this from main.tsx.
+export function initDisplayMode(): void {
   if (typeof window === "undefined" || !window.matchMedia) {
     return;
   }
 
   applyDisplayMode(getDisplayMode());
+
+  if (initialized) {
+    return;
+  }
+  initialized = true;
 
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   mediaQuery.addEventListener("change", () => {
@@ -83,5 +91,3 @@ function initDisplayMode(): void {
     notify();
   });
 }
-
-initDisplayMode();

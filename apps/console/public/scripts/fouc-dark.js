@@ -18,34 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useEffect, useState } from "react";
-
-export function useSystemTheme(): "light" | "dark" {
-  const getSystemTheme = () => {
-    if (typeof window !== "undefined" && window.matchMedia) {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light" as const;
-    }
-    return "light" as const;
-  };
-
-  const [theme, setTheme] = useState<"light" | "dark">(getSystemTheme());
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (event: MediaQueryListEvent) => {
-      setTheme(event.matches ? "dark" : "light");
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleChange);
-    };
-  }, []);
-
-  return theme;
-};
+// FOUC guard: apply the OS preference before JS bundles load. Runtime
+// overrides (and further system-preference changes) are owned by
+// @probo/hooks initDisplayMode once the app boots.
+(function () {
+  if (!window.matchMedia) return;
+  document.documentElement.classList.toggle(
+    "dark",
+    window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+})();

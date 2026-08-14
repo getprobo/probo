@@ -20,7 +20,7 @@
 
 // FOUC guard: apply the OS preference before JS bundles load. Runtime
 // overrides (and further system-preference changes) are owned by
-// src/lib/displayMode/displayMode.ts once the app boots.
+// @probo/hooks initDisplayMode once the app boots.
 (function () {
   if (!window.matchMedia) return;
   document.documentElement.classList.toggle(

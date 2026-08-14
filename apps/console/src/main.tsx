@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { initDisplayMode } from "@probo/hooks";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 
@@ -25,6 +26,8 @@ import "./index.css";
 
 import { App } from "./App";
 import "./lib/i18n/i18n";
+
+initDisplayMode();
 
 const queryClient = new QueryClient({
   defaultOptions: {

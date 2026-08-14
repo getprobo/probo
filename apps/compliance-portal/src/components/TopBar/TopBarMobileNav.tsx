@@ -28,6 +28,7 @@ import {
   SunIcon,
   XIcon,
 } from "@phosphor-icons/react";
+import { useDisplayMode } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Drawer } from "@probo/ui/src/v2/Drawer/Drawer";
@@ -47,7 +48,6 @@ import { useLocation } from "react-router";
 
 import { getSafeContinueUrl, redirectToInitiate } from "#/lib/auth/continueUrl";
 import { useSignOut } from "#/lib/auth/useSignOut";
-import { useDisplayMode } from "#/lib/displayMode/useDisplayMode";
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
 import { useSubscribeDialog } from "#/lib/mailingList/subscribeDialogContext";
 

@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { LifebuoyIcon } from "@phosphor-icons/react";
+import { LifebuoyIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
+import { useDisplayMode } from "@probo/hooks";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -80,8 +81,8 @@ export interface NavRailProps {
 
 /**
  * The whole chrome for an organization: which organization you are in, the
- * products, help, and who you are signed in as, all naming themselves when
- * the rail is hovered or focused.
+ * products, display mode, help, and who you are signed in as, all naming
+ * themselves when the rail is hovered or focused.
  *
  * Each product icon links to the first link of its product (switchers have no
  * index route), so the rail alone is enough to move around; the panel beside
@@ -91,6 +92,7 @@ export function NavRail({ organizationKey }: NavRailProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const organization = useFragment(navRailFragment, organizationKey);
+  const { displayMode, toggleDisplayMode } = useDisplayMode();
 
   const groups = useMemo(() => visibleNavGroups(organization), [organization]);
   const activeGroup = useActiveNavGroup(groups);
@@ -114,6 +116,16 @@ export function NavRail({ organizationKey }: NavRailProps) {
           ))}
         </div>
 
+        <NavRailItem
+          icon={displayMode === "dark" ? SunIcon : MoonIcon}
+          label={
+            displayMode === "dark"
+              ? t("nav.switchToLightMode")
+              : t("nav.switchToDarkMode")
+          }
+          onClick={toggleDisplayMode}
+          weight="regular"
+        />
         <NavRailItem
           icon={LifebuoyIcon}
           label={t("nav.help")}

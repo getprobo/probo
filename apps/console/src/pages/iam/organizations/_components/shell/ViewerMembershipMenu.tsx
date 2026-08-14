@@ -23,11 +23,14 @@ import {
   CaretRightIcon,
   FileTextIcon,
   KeyIcon,
+  MoonIcon,
   QuestionIcon,
   SignOutIcon,
+  SunIcon,
   UserIcon,
 } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
+import { useDisplayMode } from "@probo/hooks";
 import { useToast } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
@@ -83,6 +86,7 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { toast } = useToast();
+  const { displayMode, toggleDisplayMode } = useDisplayMode();
 
   const {
     viewer: {
@@ -195,9 +199,19 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
           {t("viewerMembershipDropdown.actions.employeePortal")}
         </DropdownItem>
         {!isRail && (
-          <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
-            {t("viewerMembershipDropdown.actions.help")}
-          </DropdownItem>
+          <>
+            <DropdownItem
+              iconStart={displayMode === "dark" ? <SunIcon /> : <MoonIcon />}
+              onClick={toggleDisplayMode}
+            >
+              {displayMode === "dark"
+                ? t("viewerMembershipDropdown.actions.switchToLightMode")
+                : t("viewerMembershipDropdown.actions.switchToDarkMode")}
+            </DropdownItem>
+            <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
+              {t("viewerMembershipDropdown.actions.help")}
+            </DropdownItem>
+          </>
         )}
         <DropdownSeparator />
         <DropdownItem

@@ -42,14 +42,14 @@ export const navPanelSwitcher = tv({
     itemBody: "flex min-w-0 flex-1 flex-col gap-0.5",
     itemName: "truncate group-data-highlighted:text-white",
     itemOrigin: "truncate group-data-highlighted:text-white",
-    itemCheck: "size-4 shrink-0",
+    itemCheck: "size-4 shrink-0 text-sand-12",
     trigger: [
       "flex h-9 w-full min-w-0 items-center gap-2 rounded-2 px-3",
       "cursor-pointer outline-none transition-colors select-none",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     ],
     value: "flex min-w-0 flex-1 items-center gap-2 text-left",
-    valueCaret: "size-4 shrink-0",
+    valueCaret: "size-4 shrink-0 text-sand-11",
     // Selected siblings use a gold fill that otherwise kisses this outlined
     // trigger. Collapse when this is the first or last child so a sole
     // switcher does not drop away from the product title or leave a hole

@@ -2403,6 +2403,8 @@
   "nav": {
     "products": "Products",
     "help": "Help",
+    "switchToDarkMode": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode",
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",
@@ -2499,6 +2501,8 @@
       "apiKeys": "API Keys",
       "oauthTokens": "OAuth tokens",
       "employeePortal": "Employee Portal",
+      "switchToDarkMode": "Switch to dark mode",
+      "switchToLightMode": "Switch to light mode",
       "help": "Help",
       "logout": "Logout"
     }

@@ -29,7 +29,7 @@ export function PageHeader({ title, description, children }: Props) {
   return (
     <div className="flex justify-between items-start w-full">
       <div className=" space-y-1">
-        <h1 className="text-2xl flex gap-4 font-semibold items-center">
+        <h1 className="text-2xl flex gap-4 font-semibold items-center text-txt-primary">
           {title}
         </h1>
         {description && (
