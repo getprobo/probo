@@ -56,7 +56,7 @@ export function OrganizationLayoutSkeleton() {
       <div className={layoutSlots.body()}>
         <div className={railSlots.root()}>
           <div className={railSlots.rail()}>
-            {/* Organization, products, account — the rail's three regions. */}
+            {/* Organization, products, help, account. */}
             <div className={railSlots.icon()}>
               <div className="size-8 animate-pulse rounded-2 bg-sand-3" />
             </div>
@@ -65,6 +65,7 @@ export function OrganizationLayoutSkeleton() {
                 <div key={group.key} className="size-10 animate-pulse rounded-3 bg-sand-3" />
               ))}
             </div>
+            <div className="size-10 animate-pulse rounded-3 bg-sand-3" />
             <div className={railSlots.icon()}>
               <div className="size-8 animate-pulse rounded-full bg-sand-3" />
             </div>

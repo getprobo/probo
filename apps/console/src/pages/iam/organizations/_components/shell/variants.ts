@@ -107,8 +107,8 @@ export const navRail = tv({
       "hover:bg-sand-3 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
     ],
-    // Takes the space between the organization row and the account row, so the
-    // account row sits at the bottom whatever the product count.
+    // Takes the space between the organization row and help, so help and the
+    // account row sit at the bottom whatever the product count.
     items: "flex min-h-0 flex-1 flex-col gap-1",
     // A 40px box inside 8px of padding puts the icon's centre on the collapsed
     // rail's centre line, so widening the rail does not shift it.

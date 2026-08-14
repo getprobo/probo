@@ -18,41 +18,60 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Icon } from "@phosphor-icons/react";
+import type { Icon, IconWeight } from "@phosphor-icons/react";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Link } from "react-router";
 
 import { navRail } from "./variants";
 
-export interface NavRailItemProps {
+type NavRailItemBase = {
   icon: Icon;
   label: string;
-  to: string;
-  active: boolean;
-}
+  active?: boolean;
+  // Products stay duotone so they read as a set. Help is a utility, not a
+  // product, so it passes regular and keeps the column from looking like
+  // another destination.
+  weight?: IconWeight;
+};
+
+export type NavRailItemProps =
+  | (NavRailItemBase & { to: string; href?: never })
+  | (NavRailItemBase & { href: string; to?: never });
 
 /**
- * One product in the rail: an icon, and a label that fades in once the rail
- * opens.
+ * One row in the rail: an icon, and a label that fades in once the rail
+ * opens. Product entries pass `to`; Help passes `href` because it is a
+ * mailto, not a route.
  *
  * The label is always in the DOM rather than swapped in on hover, so it names
  * the link for assistive technology even while it is visually hidden. That is
  * why there is no `aria-label` here.
  */
-export function NavRailItem({ icon: IconComponent, label, to, active }: NavRailItemProps) {
+export function NavRailItem({
+  icon: IconComponent,
+  label,
+  active = false,
+  weight = "duotone",
+  ...rest
+}: NavRailItemProps) {
   const slots = navRail({ active });
-
-  return (
-    <Link to={to} className={slots.item()}>
+  const body = (
+    <>
       <span className={slots.icon()}>
         {/* Duotone rather than outlined or filled: at 20px in a narrow column
             thin strokes go muddy, but a flat fill loses the interior detail
             that tells the products apart. */}
-        <IconComponent size={20} weight="duotone" aria-hidden />
+        <IconComponent size={20} weight={weight} aria-hidden />
       </span>
       <Text size={2} className={slots.label()}>
         {label}
       </Text>
-    </Link>
+    </>
   );
+
+  if ("href" in rest) {
+    return <a href={rest.href} className={slots.item()}>{body}</a>;
+  }
+
+  return <Link to={rest.to} className={slots.item()}>{body}</Link>;
 }

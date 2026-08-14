@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { LifebuoyIcon } from "@phosphor-icons/react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -79,8 +80,8 @@ export interface NavRailProps {
 
 /**
  * The whole chrome for an organization: which organization you are in, the
- * products, and who you are signed in as, all naming themselves when the rail
- * is hovered or focused.
+ * products, help, and who you are signed in as, all naming themselves when
+ * the rail is hovered or focused.
  *
  * Each product icon links to the first link of its product (switchers have no
  * index route), so the rail alone is enough to move around; the panel beside
@@ -113,6 +114,12 @@ export function NavRail({ organizationKey }: NavRailProps) {
           ))}
         </div>
 
+        <NavRailItem
+          icon={LifebuoyIcon}
+          label={t("nav.help")}
+          href="mailto:support@probo.com"
+          weight="regular"
+        />
         <ViewerMembershipMenu variant="rail" organizationKey={organization} />
       </nav>
     </div>

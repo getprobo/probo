@@ -194,9 +194,11 @@ export function ViewerMembershipMenu({ variant = "bar", organizationKey }: Viewe
         >
           {t("viewerMembershipDropdown.actions.employeePortal")}
         </DropdownItem>
-        <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
-          {t("viewerMembershipDropdown.actions.help")}
-        </DropdownItem>
+        {!isRail && (
+          <DropdownItem iconStart={<QuestionIcon />} render={<a href="mailto:support@probo.com" />}>
+            {t("viewerMembershipDropdown.actions.help")}
+          </DropdownItem>
+        )}
         <DropdownSeparator />
         <DropdownItem
           color="error"
