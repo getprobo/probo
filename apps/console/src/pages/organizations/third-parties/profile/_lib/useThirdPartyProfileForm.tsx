@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,74 +23,53 @@ import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { useThirdPartyFormFragment$key } from "#/__generated__/core/useThirdPartyFormFragment.graphql";
+import type { useThirdPartyProfileFormFragment$key } from "#/__generated__/core/useThirdPartyProfileFormFragment.graphql";
+import { useFormWithSchema } from "#/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { z } from "#/lib/zod";
-
-import { useFormWithSchema } from "../useFormWithSchema";
-import { useMutationWithToasts } from "../useMutationWithToasts";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional().nullable(),
   category: z.string().nullish(),
-  statusPageUrl: z.string().optional().nullable(),
-  termsOfServiceUrl: z.string().optional().nullable(),
-  privacyPolicyUrl: z.string().optional().nullable(),
-  serviceLevelAgreementUrl: z.string().optional().nullable(),
-  dataProcessingAgreementUrl: z.string().optional().nullable(),
   websiteUrl: z.string().optional().nullable(),
   legalName: z.string().optional().nullable(),
   headquarterAddress: z.string().optional().nullable(),
-  certifications: z.array(z.string()),
   countries: z.array(z.string()),
-  securityPageUrl: z.string().optional().nullable(),
-  trustPageUrl: z.string().optional().nullable(),
-  administratorIds: z.array(z.string()),
 });
 
-const thirdPartyFormFragment = graphql`
-  fragment useThirdPartyFormFragment on ThirdParty {
+const thirdPartyProfileFormFragment = graphql`
+  fragment useThirdPartyProfileFormFragment on ThirdParty {
     id
     name
     description
     category
-    statusPageUrl
-    termsOfServiceUrl
-    privacyPolicyUrl
-    serviceLevelAgreementUrl
-    dataProcessingAgreementUrl
     websiteUrl
     legalName
     headquarterAddress
-    certifications
     countries
-    securityPageUrl
-    trustPageUrl
-    administrators {
-      id
-      fullName
-      emailAddress
-    }
   }
 `;
 
-const thirdPartyUpdateQuery = graphql`
-  mutation useThirdPartyFormMutation($input: UpdateThirdPartyInput!) {
+const thirdPartyProfileUpdateMutation = graphql`
+  mutation useThirdPartyProfileFormMutation($input: UpdateThirdPartyInput!) {
     updateThirdParty(input: $input) {
       thirdParty {
-        ...useThirdPartyFormFragment
+        ...useThirdPartyProfileFormFragment
       }
     }
   }
 `;
 
-export function useThirdPartyForm(thirdPartyKey: useThirdPartyFormFragment$key) {
-  const thirdParty = useFragment(thirdPartyFormFragment, thirdPartyKey);
+export function useThirdPartyProfileForm(
+  thirdPartyKey: useThirdPartyProfileFormFragment$key,
+) {
+  const thirdParty = useFragment(thirdPartyProfileFormFragment, thirdPartyKey);
   const { t } = useTranslation();
 
-  const [mutate] = useMutationWithToasts(thirdPartyUpdateQuery, {
-    successMessage: t("thirdPartyForm.messages.updated"),
-    errorMessage: t("thirdPartyForm.messages.updateError"),
+  const [mutate] = useMutationWithToasts(thirdPartyProfileUpdateMutation, {
+    successMessage: t("thirdPartyProfilePage.messages.updated"),
+    errorMessage: t("thirdPartyProfilePage.messages.updateError"),
   });
 
   const defaultValues = useMemo(
@@ -98,19 +77,10 @@ export function useThirdPartyForm(thirdPartyKey: useThirdPartyFormFragment$key) 
       name: thirdParty.name,
       description: thirdParty.description || null,
       category: thirdParty.category || null,
-      statusPageUrl: thirdParty.statusPageUrl || null,
-      termsOfServiceUrl: thirdParty.termsOfServiceUrl || null,
-      privacyPolicyUrl: thirdParty.privacyPolicyUrl || null,
-      serviceLevelAgreementUrl: thirdParty.serviceLevelAgreementUrl || null,
-      dataProcessingAgreementUrl: thirdParty.dataProcessingAgreementUrl || null,
       websiteUrl: thirdParty.websiteUrl || null,
       legalName: thirdParty.legalName || null,
       headquarterAddress: thirdParty.headquarterAddress || null,
-      certifications: [...(thirdParty.certifications ?? [])],
       countries: [...(thirdParty.countries ?? [])],
-      securityPageUrl: thirdParty.securityPageUrl || null,
-      trustPageUrl: thirdParty.trustPageUrl || null,
-      administratorIds: thirdParty.administrators.map(a => a.id),
     }),
     [thirdParty],
   );
@@ -124,16 +94,13 @@ export function useThirdPartyForm(thirdPartyKey: useThirdPartyFormFragment$key) 
       variables: {
         input: {
           id: thirdParty.id,
-          ...data,
+          name: data.name,
+          category: data.category,
+          countries: data.countries,
           description: data.description || null,
-          statusPageUrl: data.statusPageUrl || null,
-          termsOfServiceUrl: data.termsOfServiceUrl || null,
-          privacyPolicyUrl: data.privacyPolicyUrl || null,
-          serviceLevelAgreementUrl: data.serviceLevelAgreementUrl || null,
-          dataProcessingAgreementUrl: data.dataProcessingAgreementUrl || null,
           websiteUrl: data.websiteUrl || null,
-          securityPageUrl: data.securityPageUrl || null,
-          trustPageUrl: data.trustPageUrl || null,
+          legalName: data.legalName || null,
+          headquarterAddress: data.headquarterAddress || null,
         },
       },
     }).then(() => {
@@ -148,6 +115,5 @@ export function useThirdPartyForm(thirdPartyKey: useThirdPartyFormFragment$key) 
   return {
     ...form,
     handleSubmit,
-    administrators: thirdParty.administrators,
   };
 }

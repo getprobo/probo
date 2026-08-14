@@ -1436,12 +1436,6 @@
       "update": "Mettre à jour la référence"
     }
   },
-  "thirdPartyForm": {
-    "messages": {
-      "updated": "Tiers mis à jour avec succès.",
-      "updateError": "Échec de la mise à jour du tiers"
-    }
-  },
   "assetGraph": {
     "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
     "errors": {
@@ -6213,6 +6207,10 @@
     },
     "actions": {
       "update": "Mettre à jour le tiers"
+    },
+    "messages": {
+      "updated": "Tiers mis à jour avec succès.",
+      "updateError": "Échec de la mise à jour du tiers"
     }
   },
   "thirdPartyStakeholdersPage": {

@@ -1436,12 +1436,6 @@
       "update": "Update Reference"
     }
   },
-  "thirdPartyForm": {
-    "messages": {
-      "updated": "Third party updated successfully.",
-      "updateError": "Failed to update third party"
-    }
-  },
   "assetGraph": {
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
     "errors": {
@@ -6213,6 +6207,10 @@
     },
     "actions": {
       "update": "Update third party"
+    },
+    "messages": {
+      "updated": "Third party updated successfully.",
+      "updateError": "Failed to update third party"
     }
   },
   "thirdPartyStakeholdersPage": {

@@ -30,10 +30,11 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartyProfilePageQuery } from "#/__generated__/core/ThirdPartyProfilePageQuery.graphql";
-import type { ThirdPartyCategory } from "#/__generated__/core/useThirdPartyFormFragment.graphql";
+import type { ThirdPartyCategory } from "#/__generated__/core/useThirdPartyProfileFormFragment.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { CountriesField } from "#/components/form/CountriesField";
-import { useThirdPartyForm } from "#/hooks/forms/useThirdPartyForm";
+
+import { useThirdPartyProfileForm } from "./_lib/useThirdPartyProfileForm";
 
 export const thirdPartyProfilePageQuery = graphql`
   query ThirdPartyProfilePageQuery($thirdPartyId: ID!) {
@@ -42,7 +43,7 @@ export const thirdPartyProfilePageQuery = graphql`
       ... on ThirdParty {
         name
         canUpdate: permission(action: "core:thirdParty:update")
-        ...useThirdPartyFormFragment
+        ...useThirdPartyProfileFormFragment
       }
     }
   }
@@ -96,7 +97,7 @@ export function ThirdPartyProfilePage({ queryRef }: ThirdPartyProfilePageProps) 
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useThirdPartyForm(thirdParty);
+  } = useThirdPartyProfileForm(thirdParty);
 
   usePageTitle(t("thirdPartyProfilePage.pageTitle", { name: thirdParty.name }));
 

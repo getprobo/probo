@@ -1436,12 +1436,6 @@
       "update": "Referentie bijwerken"
     }
   },
-  "thirdPartyForm": {
-    "messages": {
-      "updated": "Derde partij succesvol bijgewerkt.",
-      "updateError": "Bijwerken van derde partij mislukt"
-    }
-  },
   "assetGraph": {
     "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "errors": {
@@ -6213,6 +6207,10 @@
     },
     "actions": {
       "update": "Derde partij bijwerken"
+    },
+    "messages": {
+      "updated": "Derde partij succesvol bijgewerkt.",
+      "updateError": "Bijwerken van derde partij mislukt"
     }
   },
   "thirdPartyStakeholdersPage": {

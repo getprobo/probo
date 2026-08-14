@@ -43,9 +43,21 @@ const vetMutation = graphql`
       thirdParty {
         id
         name
+        description
+        category
+        legalName
+        headquarterAddress
         websiteUrl
+        countries
+        certifications
+        statusPageUrl
+        termsOfServiceUrl
+        privacyPolicyUrl
+        serviceLevelAgreementUrl
+        dataProcessingAgreementUrl
+        securityPageUrl
+        trustPageUrl
         vettingStatus
-        ...useThirdPartyFormFragment
         ...ThirdPartyAssurancePageFragment
         ...ThirdPartyRiskAssessmentPageFragment
       }
