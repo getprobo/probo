@@ -110,6 +110,10 @@ probo:
     # Set to "external" when an external L7 proxy terminates TLS and forwards
     # requests privately to service.httpPort. Probo's HTTPS port and all
     # bundled HAProxy TCP passthrough are disabled in this mode.
+    # External mode also disables Probo ACME issuance and renewal. Preserve the
+    # requested Host and overwrite X-Forwarded-Proto at the proxy. Route
+    # {slug}.<baseDomain> or a domain already stored in Probo.
+    # Creating custom domains is unsupported and leaves them pending.
     tlsMode: "direct"
 
   # CORS configuration - add all domains that will access the API
@@ -276,7 +280,7 @@ probo:
     exportTimeout: 30
     maxQueueSize: 10000
 
-  # Custom domains with Let's Encrypt (optional)
+  # Custom domains with Let's Encrypt (optional, direct TLS mode only)
   customDomains:
     enabled: true
     renewalInterval: 86400  # 24 hours
