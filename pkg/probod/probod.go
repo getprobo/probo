@@ -561,35 +561,41 @@ func (impl *Implm) Run(
 		Register(resourcealias.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings)
 
-	var accountKey crypto.Signer
-	if impl.cfg.CustomDomains.ACME.AccountKey != "" {
-		accountKey, err = pemutil.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
+	var acmeService *certmanager.ACMEService
+
+	if impl.cfg.CompliancePortal.TLSMode.IsExternal() {
+		l.Info("custom domains and ACME are disabled in external compliance portal TLS mode")
+	} else {
+		var accountKey crypto.Signer
+		if impl.cfg.CustomDomains.ACME.AccountKey != "" {
+			accountKey, err = pemutil.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
+			if err != nil {
+				return fmt.Errorf("cannot decode ACME account key: %w", err)
+			}
+
+			l.Info("using configured ACME account key")
+		}
+
+		var rootCAs *x509.CertPool
+		if impl.cfg.CustomDomains.ACME.RootCA != "" {
+			rootCAs = x509.NewCertPool()
+			if !rootCAs.AppendCertsFromPEM([]byte(impl.cfg.CustomDomains.ACME.RootCA)) {
+				return fmt.Errorf("cannot parse ACME root CA certificate")
+			}
+		}
+
+		acmeService, err = certmanager.NewACMEService(
+			impl.cfg.CustomDomains.ACME.Email,
+			keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
+			impl.cfg.CustomDomains.ACME.Directory,
+			accountKey,
+			rootCAs,
+			l,
+			r,
+		)
 		if err != nil {
-			return fmt.Errorf("cannot decode ACME account key: %w", err)
+			return fmt.Errorf("cannot initialize ACME service: %w", err)
 		}
-
-		l.Info("using configured ACME account key")
-	}
-
-	var rootCAs *x509.CertPool
-	if impl.cfg.CustomDomains.ACME.RootCA != "" {
-		rootCAs = x509.NewCertPool()
-		if !rootCAs.AppendCertsFromPEM([]byte(impl.cfg.CustomDomains.ACME.RootCA)) {
-			return fmt.Errorf("cannot parse ACME root CA certificate")
-		}
-	}
-
-	acmeService, err := certmanager.NewACMEService(
-		impl.cfg.CustomDomains.ACME.Email,
-		keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
-		impl.cfg.CustomDomains.ACME.Directory,
-		accountKey,
-		rootCAs,
-		l,
-		r,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot initialize ACME service: %w", err)
 	}
 
 	customDomainRenewalInterval := time.Duration(impl.cfg.CustomDomains.RenewalInterval) * time.Second
@@ -1047,15 +1053,19 @@ func (impl *Implm) Run(
 		},
 	)
 
-	certManagerServiceCtx, stopCertManagerService := context.WithCancel(context.Background())
+	stopCertManagerService := func() {}
+	if !impl.cfg.CompliancePortal.TLSMode.IsExternal() {
+		certManagerServiceCtx, stop := context.WithCancel(context.Background())
+		stopCertManagerService = stop
 
-	wg.Go(
-		func() {
-			if err := certManagerService.Run(certManagerServiceCtx); err != nil {
-				cancel(fmt.Errorf("certificate manager service crashed: %w", err))
-			}
-		},
-	)
+		wg.Go(
+			func() {
+				if err := certManagerService.Run(certManagerServiceCtx); err != nil {
+					cancel(fmt.Errorf("certificate manager service crashed: %w", err))
+				}
+			},
+		)
+	}
 
 	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l)
 	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
@@ -1448,14 +1458,9 @@ func (impl *Implm) runCompliancePortalServer(
 	span.AddEvent("Trust center services starting")
 
 	if impl.cfg.CompliancePortal.TLSMode.IsExternal() {
-		acmeHandler := certmanager.NewACMEChallengeHandler(
-			pgClient,
-			l.Named("acme_handler"),
-		)
-
 		externalServer := httpserver.NewServer(
 			impl.cfg.CompliancePortal.HTTPAddr,
-			acmeHandler.Handle(trustRouter),
+			trustRouter,
 			httpserver.WithLogger(l),
 			httpserver.WithRegisterer(r),
 			httpserver.WithTracerProvider(tp),

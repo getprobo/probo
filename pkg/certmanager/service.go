@@ -54,6 +54,9 @@ type (
 	}
 )
 
+// NewService creates a certificate manager. When acmeService is nil, the
+// service remains available for certificate data access without running
+// lifecycle workers.
 func NewService(
 	pgClient *pg.Client,
 	acmeService *ACMEService,
@@ -61,6 +64,17 @@ func NewService(
 	cfg Config,
 	logger *log.Logger,
 ) *Service {
+	service := &Service{
+		pg:            pgClient,
+		acmeService:   acmeService,
+		encryptionKey: encryptionKey,
+		logger:        logger,
+	}
+
+	if acmeService == nil {
+		return service
+	}
+
 	provisionInterval := cfg.ProvisionInterval
 	if provisionInterval <= 0 {
 		provisionInterval = 30 * time.Second
@@ -71,38 +85,38 @@ func NewService(
 		renewalInterval = time.Hour
 	}
 
-	return &Service{
-		pg:            pgClient,
-		acmeService:   acmeService,
-		encryptionKey: encryptionKey,
-		logger:        logger,
-		beginChallengeWorker: NewBeginChallengeWorker(
-			pgClient,
-			acmeService,
-			cfg.CnameTarget,
-			cfg.CAAIssuerDomain,
-			cfg.ResolverAddr,
-			cfg.ManagedBaseDomain,
-			logger.Named("begin-challenge-worker"),
-			worker.WithInterval(provisionInterval),
-		),
-		pollOrderWorker: NewPollOrderWorker(
-			pgClient,
-			acmeService,
-			encryptionKey,
-			logger.Named("poll-order-worker"),
-			worker.WithInterval(provisionInterval),
-		),
-		renewWorker: NewRenewWorker(
-			pgClient,
-			encryptionKey,
-			logger.Named("renew-worker"),
-			worker.WithInterval(renewalInterval),
-		),
-	}
+	service.beginChallengeWorker = NewBeginChallengeWorker(
+		pgClient,
+		acmeService,
+		cfg.CnameTarget,
+		cfg.CAAIssuerDomain,
+		cfg.ResolverAddr,
+		cfg.ManagedBaseDomain,
+		logger.Named("begin-challenge-worker"),
+		worker.WithInterval(provisionInterval),
+	)
+	service.pollOrderWorker = NewPollOrderWorker(
+		pgClient,
+		acmeService,
+		encryptionKey,
+		logger.Named("poll-order-worker"),
+		worker.WithInterval(provisionInterval),
+	)
+	service.renewWorker = NewRenewWorker(
+		pgClient,
+		encryptionKey,
+		logger.Named("renew-worker"),
+		worker.WithInterval(renewalInterval),
+	)
+
+	return service
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	if s.acmeService == nil {
+		return errors.New("cannot run certificate manager service without ACME")
+	}
+
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(
@@ -128,7 +142,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 // EnsureCertificate returns the certificate for the given hostname, creating a
 // pending one within the given transaction when it does not exist yet. The
-// certificate lifecycle is then driven asynchronously by the provision worker.
+// certificate lifecycle is driven asynchronously when lifecycle workers run.
 func (s *Service) EnsureCertificate(
 	ctx context.Context,
 	tx pg.Tx,
