@@ -446,7 +446,7 @@ spec:
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.maxAttempts | quote }}
             {{- end }}
             # Custom Domains
-            {{- if .Values.probo.customDomains.enabled }}
+            {{- if and .Values.probo.customDomains.enabled (ne .Values.probo.trustCenter.tlsMode "external") }}
             - name: PROBOD_CUSTOM_DOMAINS_RENEWAL_INTERVAL
               value: {{ .Values.probo.customDomains.renewalInterval | quote }}
             - name: PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL
