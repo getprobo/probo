@@ -81,6 +81,7 @@ func (s *Service) HandleSlashCommand(
 	}
 
 	var organizationID gid.GID
+
 	if s.installations != nil {
 		var err error
 		if _, organizationID, _, err = s.clientForTeam(ctx, cmd.TeamID); err != nil {
@@ -93,10 +94,12 @@ func (s *Service) HandleSlashCommand(
 	}
 
 	subject := identitySubjectFromSlashCommand(cmd)
+
 	binding, err := s.bindings.Lookup(ctx, subject)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return ephemeralSlashResponse(bindSlashFailedText, nil)
 	}
+
 	if binding != nil {
 		return ephemeralSlashResponse(bindSlashAlreadyLinkedText, nil)
 	}
@@ -122,6 +125,7 @@ func (s *Service) HandleSlashCommand(
 
 func identitySubjectFromSlashCommand(cmd SlashCommand) identitybinding.Subject {
 	subject := IdentitySubject(cmd.TeamID, cmd.UserID)
+
 	subject.ExternalTenantName = cmd.TeamDomain
 	if cmd.UserName != "" {
 		subject.ExternalUserName = "@" + strings.TrimPrefix(cmd.UserName, "@")

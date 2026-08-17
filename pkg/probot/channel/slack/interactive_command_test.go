@@ -42,6 +42,7 @@ func TestInteractiveCommandInbox_RequeuesDeadLetteredDigest(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+
 	client := test.PGClient(t)
 	if !interactiveCommandsAvailable(t, client) {
 		t.Skip("slackbot_interactive_commands is unavailable in the test database")
@@ -51,6 +52,7 @@ func TestInteractiveCommandInbox_RequeuesDeadLetteredDigest(t *testing.T) {
 	inbox := slackchannel.NewInteractiveCommandInbox(client, key)
 	payload := uniqueInteractivePayload(t)
 	digest := sha256.Sum256(payload)
+
 	t.Cleanup(func() { deleteInteractiveCommand(t, client, digest[:]) })
 
 	inserted, err := inbox.Enqueue(ctx, payload)
@@ -96,6 +98,7 @@ func TestInteractiveCommandInbox_DoesNotResetProcessedDigest(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+
 	client := test.PGClient(t)
 	if !interactiveCommandsAvailable(t, client) {
 		t.Skip("slackbot_interactive_commands is unavailable in the test database")
@@ -105,6 +108,7 @@ func TestInteractiveCommandInbox_DoesNotResetProcessedDigest(t *testing.T) {
 	inbox := slackchannel.NewInteractiveCommandInbox(client, key)
 	payload := uniqueInteractivePayload(t)
 	digest := sha256.Sum256(payload)
+
 	t.Cleanup(func() { deleteInteractiveCommand(t, client, digest[:]) })
 
 	inserted, err := inbox.Enqueue(ctx, payload)
@@ -112,6 +116,7 @@ func TestInteractiveCommandInbox_DoesNotResetProcessedDigest(t *testing.T) {
 	assert.True(t, inserted)
 
 	processedAt := time.Now().UTC().Truncate(time.Microsecond)
+
 	require.NoError(
 		t,
 		client.WithConn(
@@ -161,6 +166,7 @@ func loadInteractiveCommand(
 	t.Helper()
 
 	var command coredata.SlackbotInteractiveCommand
+
 	require.NoError(
 		t,
 		client.WithConn(

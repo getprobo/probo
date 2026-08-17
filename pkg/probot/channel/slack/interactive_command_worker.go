@@ -283,6 +283,7 @@ func (h *interactiveCommandHandler) dispatch(
 			Attributes:     attributes,
 		},
 	}
+
 	probotAction, err = h.capabilities.NormalizeActionAlias(probotAction)
 	if err != nil {
 		h.replyInteractiveFailure(ctx, payload.ResponseURL, interactiveFailedText)

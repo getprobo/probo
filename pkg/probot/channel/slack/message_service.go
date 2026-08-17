@@ -115,6 +115,7 @@ func (s *MessageService) updateOutbound(
 	delivery probot.OutboundDelivery,
 ) error {
 	scope := coredata.NewScopeFromObjectID(delivery.OrganizationID)
+
 	var subject coredata.BotThreadSubject
 
 	err := s.pg.WithConn(
@@ -189,6 +190,7 @@ func (s *MessageService) queue(
 	}
 
 	scope := coredata.NewScopeFromObjectID(delivery.OrganizationID)
+
 	destination, err := s.GetDestination(
 		ctx,
 		scope,
@@ -198,6 +200,7 @@ func (s *MessageService) queue(
 		(!errors.Is(err, ErrSlackbotChannelNotFound) || s.legacy == nil || !requireVerified) {
 		return fmt.Errorf("cannot load Slack delivery destination: %w", err)
 	}
+
 	if err == nil && requireVerified && destination.VerifiedAt == nil && s.legacy == nil {
 		return ErrNoDeliveryDestination
 	}
@@ -205,18 +208,22 @@ func (s *MessageService) queue(
 	metadata := cloneNotificationData(result.Message.Attributes)
 	metadata[deliveryMessageTypeMetadata] = result.Message.Type
 	metadata[deliveryTargetNamespaceMetadata] = result.DeliveryTarget.Namespace
+
 	metadata[deliveryTargetKeyMetadata] = result.DeliveryTarget.Key
 	if delivery.SubjectNamespace != "" {
 		metadata[deliverySubjectNamespaceMetadata] = delivery.SubjectNamespace
 	}
+
 	if delivery.SubjectKey != "" {
 		metadata[deliverySubjectKeyMetadata] = delivery.SubjectKey
 	}
+
 	if delivery.Capability != "" {
 		metadata[deliveryCapabilityMetadata] = delivery.Capability
 	}
 
 	var sourceEventID *string
+
 	if delivery.SourceEventID != "" {
 		source := delivery.SourceEventID
 		sourceEventID = &source
@@ -239,6 +246,7 @@ func (s *MessageService) queueModern(
 	sourceEventID *string,
 ) error {
 	result := delivery.Result
+
 	_, err := s.modern.Queue(
 		ctx,
 		scope,
@@ -279,6 +287,7 @@ func (s *MessageService) queueLegacy(
 	}
 
 	result := delivery.Result
+
 	_, err := s.legacy.Queue(
 		ctx,
 		scope,
@@ -312,6 +321,7 @@ func (s *MessageService) GetDestination(
 	target probot.DeliveryTarget,
 ) (*coredata.BotDeliveryDestination, error) {
 	var destination coredata.BotDeliveryDestination
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -328,6 +338,7 @@ func (s *MessageService) GetDestination(
 	if errors.Is(err, coredata.ErrResourceNotFound) {
 		return nil, ErrSlackbotChannelNotFound
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot load Slack delivery destination: %w", err)
 	}
@@ -389,6 +400,7 @@ func (s *MessageService) ClearDestination(
 	if errors.Is(err, ErrSlackbotChannelNotFound) {
 		return nil
 	}
+
 	if err != nil {
 		return fmt.Errorf("cannot load Slack delivery destination: %w", err)
 	}

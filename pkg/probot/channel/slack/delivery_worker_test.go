@@ -129,6 +129,7 @@ func TestDeliveryOperationHandler_PostUsesStableClientMsgID(t *testing.T) {
 	t.Parallel()
 
 	var clientMsgIDs []string
+
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -181,10 +182,12 @@ func TestDeliveryOperationHandler_AlreadyReactedIsSuccess(t *testing.T) {
 	t.Parallel()
 
 	var reactions int
+
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/reactions.add", r.URL.Path)
+
 				reactions++
 				_, err := w.Write([]byte(`{"ok":false,"error":"already_reacted"}`))
 				require.NoError(t, err)

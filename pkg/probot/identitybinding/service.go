@@ -107,6 +107,7 @@ func (s Subject) Validate() error {
 
 func clipDisplayName(value string) string {
 	value = strings.TrimSpace(value)
+
 	runes := []rune(value)
 	if len(runes) > displayNameMaxRunes {
 		return string(runes[:displayNameMaxRunes])

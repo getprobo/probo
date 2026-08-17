@@ -53,6 +53,7 @@ func loadResources(
 			if err := batch.LoadByCompliancePortalAccessID(ctx, conn, scope, accessID, cursor); err != nil {
 				return nil, fmt.Errorf("cannot load compliance portal resource accesses: %w", err)
 			}
+
 			return batch, nil
 		},
 	)
@@ -66,8 +67,10 @@ func loadResources(
 			if err := document.LoadByID(ctx, conn, scope, *access.DocumentID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
+
 			if document.CurrentPublishedMajor != nil {
 				var link coredata.CompliancePortalDocument
+
 				err := link.LoadByCompliancePortalIDAndDocumentID(
 					ctx,
 					conn,
@@ -78,6 +81,7 @@ func loadResources(
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return nil, nil, nil, fmt.Errorf("cannot load compliance portal document: %w", err)
 				}
+
 				if err == nil && link.Visibility != coredata.CompliancePortalVisibilityNone {
 					documents = append(
 						documents,
@@ -96,14 +100,17 @@ func loadResources(
 			if err := audit.LoadByReportFileID(ctx, conn, scope, *access.ReportFileID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
 			}
+
 			var framework coredata.Framework
 			if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
 			}
+
 			title := framework.Name
 			if audit.Name != nil && *audit.Name != "" {
 				title += " - " + *audit.Name
 			}
+
 			reports = append(
 				reports,
 				messageReport{
@@ -120,6 +127,7 @@ func loadResources(
 			if err := file.LoadByID(ctx, conn, scope, *access.CompliancePortalFileID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load compliance portal file: %w", err)
 			}
+
 			files = append(
 				files,
 				messageFile{

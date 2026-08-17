@@ -242,6 +242,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 			teamID := uniqueSlackTeamID(t)
 			userID := "U-" + gid.New(gid.NilTenant, coredata.IdentityEntityType).String()
 			responseURL := "https://hooks.slack.com/commands/" + teamID + "/1/abc"
+
 			t.Cleanup(
 				func() {
 					_ = pgClient.WithConn(
@@ -259,6 +260,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 					)
 				},
 			)
+
 			response := handler.HandleSlashCommand(
 				ctx,
 				SlashCommand{
@@ -273,6 +275,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 			assert.Equal(t, SlashResponseTypeEphemeral, response.ResponseType)
 
 			var callback coredata.SlackbotBindCallback
+
 			err := pgClient.WithConn(
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
@@ -282,6 +285,7 @@ func TestService_HandleSlashCommand(t *testing.T) {
 			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				t.Skipf("slackbot_bind_callbacks is unavailable in the test database: %v", err)
 			}
+
 			require.NoError(t, err)
 
 			storedURL, err := cipher.Decrypt(callback.EncryptedResponseURL, testEncryptionKey())

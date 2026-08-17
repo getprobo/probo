@@ -89,6 +89,7 @@ func (s *Service) EnqueueMessage(
 	}
 
 	now := s.now()
+
 	message := &coredata.BotMessage{
 		ID:               gid.New(scope.GetTenantID(), coredata.BotMessageEntityType),
 		OrganizationID:   params.OrganizationID,

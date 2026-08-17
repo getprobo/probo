@@ -478,8 +478,10 @@ func TestNotificationService_QueueReloadsOnSourceEventRace(t *testing.T) {
 	}
 
 	wg.Add(2)
+
 	go queue(&first, &err1)
 	go queue(&second, &err2)
+
 	wg.Wait()
 
 	require.NoError(t, err1)

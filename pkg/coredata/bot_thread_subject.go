@@ -112,6 +112,7 @@ RETURNING
 	}
 
 	originalID := s.ID
+
 	rows, err := conn.Query(
 		ctx,
 		q,

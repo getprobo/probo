@@ -124,6 +124,7 @@ func (a *ExecutionAdapter) Prepare(
 	}
 
 	runContext := hydrateRunContext(execution, turn, identityID, subject)
+
 	registry, err := a.registryForRun(execution.OrganizationID, execution.StartAgentName, turn, subject)
 	if err != nil {
 		return nil, nil, err

@@ -107,6 +107,7 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 	)
 
 	var subject coredata.BotThreadSubject
+
 	require.NoError(
 		t,
 		pgClient.WithConn(
@@ -128,6 +129,7 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 	assert.Equal(t, "compliance_access", subject.Capability)
 
 	var anchor coredata.AgentExecutionAnchor
+
 	require.NoError(
 		t,
 		pgClient.WithConn(
@@ -148,6 +150,7 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 	assert.Equal(t, execution.ID, anchor.AgentExecutionID)
 
 	var destination coredata.BotDeliveryDestination
+
 	require.NoError(
 		t,
 		pgClient.WithConn(

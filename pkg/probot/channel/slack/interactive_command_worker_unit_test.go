@@ -174,6 +174,7 @@ func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
 	command, key := encryptedInteractiveCommand(t)
 	registry := probot.NewCapabilityRegistry()
 	require.NoError(t, registry.Register(forbiddenActionCapability{}))
+
 	replies := &recordingReplyPoster{}
 	h := &interactiveCommandHandler{
 		encryptionKey: key,

@@ -80,12 +80,16 @@ func TestSignatureMiddleware_AcceptsMatchingSecret(t *testing.T) {
 	t.Parallel()
 
 	const body = "payload"
+
 	var got []byte
+
 	handler := http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			body, err := io.ReadAll(r.Body)
 			require.NoError(t, err)
+
 			got = body
+
 			w.WriteHeader(http.StatusOK)
 		},
 	)

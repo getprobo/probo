@@ -394,7 +394,6 @@ func TestServiceConcurrentConfirmationCreatesOneBinding(t *testing.T) {
 	errs := make(chan error, workers)
 	for range workers {
 		wg.Go(func() {
-
 			binding, err := service.Confirm(ctx, identityID, token)
 			if err != nil {
 				errs <- err
@@ -415,9 +414,11 @@ func TestServiceConcurrentConfirmationCreatesOneBinding(t *testing.T) {
 	}
 
 	var firstID gid.GID
+
 	successes := 0
 	for id := range ids {
 		successes++
+
 		if firstID == (gid.GID{}) {
 			firstID = id
 		}

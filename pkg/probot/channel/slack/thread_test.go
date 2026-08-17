@@ -80,6 +80,7 @@ func TestFormatThreadTranscript(t *testing.T) {
 			t.Parallel()
 
 			replies := make([]ThreadReply, 0, threadTranscriptMaxMessages+5)
+
 			replies = append(replies, ThreadReply{User: "UROOT", Text: "root"})
 			for range threadTranscriptMaxMessages + 3 {
 				replies = append(replies, ThreadReply{User: "U1", Text: "later"})
@@ -99,6 +100,7 @@ func TestCollectThreadTranscript_KeepsPartialRepliesOnLaterPageError(t *testing.
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				require.Equal(t, "/api/conversations.replies", r.URL.Path)
+
 				if r.URL.Query().Get("cursor") == "" {
 					_, err := w.Write(
 						[]byte(

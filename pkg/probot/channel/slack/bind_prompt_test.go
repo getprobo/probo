@@ -78,11 +78,13 @@ func TestBindPromptService_BindingConfirmedReplacesEphemeral(t *testing.T) {
 	service.httpClient = &http.Client{
 		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			postedURL = req.URL.String()
-			defer req.Body.Close()
+			defer func() { _ = req.Body.Close() }()
+
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
 				return nil, err
 			}
+
 			if err := json.Unmarshal(body, &postedBody); err != nil {
 				return nil, err
 			}
@@ -96,6 +98,7 @@ func TestBindPromptService_BindingConfirmedReplacesEphemeral(t *testing.T) {
 	}
 
 	responseURL := "https://hooks.slack.com/commands/T-BIND/1/token"
+
 	err := service.RememberResponseURL(ctx, "T-BIND", "U-BIND", responseURL)
 	if err != nil {
 		t.Skipf("slackbot_bind_callbacks is unavailable in the test database: %v", err)

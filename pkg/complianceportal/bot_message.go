@@ -132,6 +132,7 @@ func (r *Renderer) RenderMessage(
 	}
 
 	groups := make([]bot.GroupIntent, 0, 3)
+
 	for _, group := range []bot.GroupIntent{
 		{ID: "documents", Title: groupTitle("Documents", documents), Items: documents},
 		{ID: "reports", Title: groupTitle("Audit reports", reports), Items: reports},

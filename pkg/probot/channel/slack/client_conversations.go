@@ -143,6 +143,7 @@ func (c *Client) ListThreadReplies(
 	}
 
 	var replies []ThreadReply
+
 	cursor := ""
 
 	for {
@@ -186,6 +187,7 @@ func (c *Client) listThreadRepliesPage(
 	query.Set("channel", channel)
 	query.Set("ts", threadTS)
 	query.Set("limit", strconv.Itoa(threadRepliesPageSize))
+
 	if cursor != "" {
 		query.Set("cursor", cursor)
 	}

@@ -107,6 +107,7 @@ func TestScheduler_PreparesEachUserInputWithItsIdentity(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	go func() { _ = runWorker.Run(ctx) }()
 
 	require.Eventually(
@@ -392,6 +393,7 @@ func TestScheduler_StaleProcessingInputIDsFallThroughToPendingInput(t *testing.T
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	go func() { _ = runWorker.Run(ctx) }()
 
 	require.Eventually(

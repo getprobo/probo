@@ -259,6 +259,7 @@ func TestClientListThreadReplies_PaginatesAcrossPages(t *testing.T) {
 	t.Parallel()
 
 	var requests int
+
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -267,6 +268,7 @@ func TestClientListThreadReplies_PaginatesAcrossPages(t *testing.T) {
 				assert.Equal(t, "200", r.URL.Query().Get("limit"))
 
 				requests++
+
 				switch r.URL.Query().Get("cursor") {
 				case "":
 					_, err := w.Write(

@@ -56,11 +56,12 @@ func TestPostInteractiveEphemeral_PostsWithoutReplacing(t *testing.T) {
 		postedURL  string
 		postedBody map[string]any
 	)
+
 	client := &http.Client{
 		Transport: roundTripFunc(
 			func(req *http.Request) (*http.Response, error) {
 				postedURL = req.URL.String()
-				defer req.Body.Close()
+				defer func() { _ = req.Body.Close() }()
 
 				body, err := io.ReadAll(req.Body)
 				if err != nil {

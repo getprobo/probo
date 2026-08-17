@@ -452,12 +452,14 @@ func TestCapability_ManageToolRequiresToolCallID(t *testing.T) {
 	)
 
 	var manageTool agent.Tool
+
 	for _, tool := range capability.Tools() {
 		if tool.Name() == "manage_compliance_access_request" {
 			manageTool = tool
 			break
 		}
 	}
+
 	require.NotNil(t, manageTool)
 
 	ctx := agent.WithRunContext(

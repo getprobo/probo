@@ -166,6 +166,7 @@ func (s *Service) BuildOutboundMessage(
 	}
 
 	message := s.accessRequestMessage(state)
+
 	intent, err := s.renderer.RenderMessage(ctx, message)
 	if err != nil {
 		return probot.OutboundMessage{}, fmt.Errorf("cannot render access request intent: %w", err)
@@ -233,6 +234,7 @@ func (s *Service) ResolveCompliancePortalAccessID(
 	}
 
 	var accessID gid.GID
+
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -253,6 +255,7 @@ func (s *Service) ResolveCompliancePortalAccessID(
 			}
 
 			accessID = access.ID
+
 			return nil
 		},
 	)
@@ -271,6 +274,7 @@ func (s *Service) ResolveCompliancePortalID(
 ) (gid.GID, error) {
 	if portalID, ok := gidFromMetadata(metadata, "compliance_portal_id"); ok {
 		var compliancePortal coredata.CompliancePortal
+
 		err := s.pg.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
@@ -288,14 +292,17 @@ func (s *Service) ResolveCompliancePortalID(
 		portalCount int
 		portals     coredata.CompliancePortals
 	)
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
+
 			portalCount, err = portals.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count compliance portals: %w", err)
 			}
+
 			if portalCount != 1 {
 				return nil
 			}
@@ -309,15 +316,18 @@ func (s *Service) ResolveCompliancePortalID(
 					Direction: page.OrderDirectionAsc,
 				},
 			)
+
 			return portals.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
 		},
 	)
 	if err != nil {
 		return gid.Nil, err
 	}
+
 	if portalCount != 1 {
 		return gid.Nil, errCompliancePortalMetadataAmbiguous
 	}
+
 	if len(portals) != 1 {
 		return gid.Nil, fmt.Errorf("cannot resolve compliance portal: expected one portal, found %d", len(portals))
 	}
@@ -347,13 +357,16 @@ func (s *Service) UpdateAccessRequest(
 	}
 
 	var access coredata.CompliancePortalAccess
+
 	var identity coredata.Identity
+
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := identity.LoadByEmail(ctx, conn, requesterEmail); err != nil {
 				return fmt.Errorf("cannot load requester identity: %w", err)
 			}
+
 			if err := access.LoadByCompliancePortalIDAndIdentityID(
 				ctx,
 				conn,
@@ -363,6 +376,7 @@ func (s *Service) UpdateAccessRequest(
 			); err != nil {
 				return fmt.Errorf("cannot load compliance portal access: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -381,6 +395,7 @@ func (s *Service) UpdateAccessRequest(
 
 	message := s.accessRequestMessage(state)
 	message.ID = delivered.Message.ID
+
 	intent, err := s.renderer.RenderMessage(ctx, message)
 	if err != nil {
 		return fmt.Errorf("cannot render updated access request: %w", err)
@@ -395,7 +410,9 @@ func (s *Service) QueueWelcome(
 	compliancePortalID gid.GID,
 ) error {
 	scope := coredata.NewScopeFromObjectID(compliancePortalID)
+
 	var compliancePortal coredata.CompliancePortal
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -470,9 +487,11 @@ func (s *Service) loadAccessRequestState(
 			if err := state.Access.LoadByID(ctx, conn, scope, accessID); err != nil {
 				return fmt.Errorf("cannot load compliance portal access: %w", err)
 			}
+
 			if err := state.Identity.LoadByID(ctx, conn, state.Access.IdentityID); err != nil {
 				return fmt.Errorf("cannot load requester identity: %w", err)
 			}
+
 			if err := state.Portal.LoadByID(
 				ctx,
 				conn,
@@ -481,11 +500,13 @@ func (s *Service) loadAccessRequestState(
 			); err != nil {
 				return fmt.Errorf("cannot load compliance portal: %w", err)
 			}
+
 			if state.Portal.OrganizationID != organizationID {
 				return fmt.Errorf("compliance portal access does not belong to trusted organization")
 			}
 
 			var err error
+
 			state.Documents, state.Reports, state.Files, err =
 				loadResources(ctx, conn, scope, state.Portal.ID, state.Access.ID)
 			if err != nil {
@@ -540,16 +561,20 @@ func gidFromMetadata(metadata map[string]any, key string) (gid.GID, bool) {
 	if !ok {
 		return gid.Nil, false
 	}
+
 	raw, ok := value.(string)
 	if !ok {
 		return gid.Nil, false
 	}
+
 	id, err := gid.ParseGID(raw)
+
 	return id, err == nil
 }
 
 func extractIDsFromMetadata(metadata map[string]any, fieldName string) []gid.GID {
 	ids := []gid.GID{}
+
 	items, ok := metadata[fieldName].([]any)
 	if !ok {
 		return ids
@@ -560,10 +585,12 @@ func extractIDsFromMetadata(metadata map[string]any, fieldName string) []gid.GID
 		if !ok {
 			continue
 		}
+
 		rawID, ok := item["ID"].(string)
 		if !ok {
 			continue
 		}
+
 		id, err := gid.ParseGID(rawID)
 		if err == nil {
 			ids = append(ids, id)

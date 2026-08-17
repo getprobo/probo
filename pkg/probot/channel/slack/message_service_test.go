@@ -240,10 +240,12 @@ func TestMessageService_QueueRoutesModernAndLegacy(t *testing.T) {
 				pgClient, scope, organizationID := newQueueTestOrganization(t)
 				modern := &recordingModernQueue{}
 				legacy := &recordingLegacyQueue{}
+
 				service := NewMessageService(pgClient, nil, nil, nil, log.NewLogger())
 				if tc.modern {
 					service.modern = modern
 				}
+
 				if tc.legacy {
 					service.legacy = legacy
 				}
@@ -279,12 +281,14 @@ func TestMessageService_QueueRoutesModernAndLegacy(t *testing.T) {
 
 				if tc.wantErr != nil {
 					require.Error(t, err)
+
 					if errors.Is(tc.wantErr, ErrNoDeliveryDestination) ||
 						errors.Is(tc.wantErr, ErrSlackbotChannelNotFound) {
 						assert.ErrorIs(t, err, tc.wantErr)
 					} else {
 						assert.ErrorContains(t, err, tc.wantErr.Error())
 					}
+
 					assert.Empty(t, modern.requests)
 					assert.Empty(t, legacy.requests)
 
@@ -387,6 +391,7 @@ func insertQueueDestination(
 		target.Key,
 	)
 	destination.ExternalDestinationID = "C-modern"
+
 	if verified {
 		now := time.Now()
 		destination.VerifiedAt = &now

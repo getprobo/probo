@@ -165,6 +165,7 @@ func loadSlackDeliveryOperation(
 	t.Helper()
 
 	scope := coredata.NewScope(operation.ID.TenantID())
+
 	var persisted coredata.SlackDeliveryOperation
 
 	require.NoError(

@@ -67,6 +67,7 @@ func TestTools_ExposeGenericSendMessageAndSlackReaction(t *testing.T) {
 	t.Parallel()
 
 	tools := slackchannel.Tools(nil, slackchannel.TurnBinding{})
+
 	names := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		names = append(names, tool.Name())
@@ -260,6 +261,7 @@ func loadToolOperationKeys(
 	t.Helper()
 
 	var keys []string
+
 	require.NoError(
 		t,
 		pgClient.WithConn(
@@ -283,6 +285,7 @@ func loadToolOperationKeys(
 					if err := rows.Scan(&key); err != nil {
 						return err
 					}
+
 					keys = append(keys, key)
 				}
 
@@ -303,6 +306,7 @@ func loadToolPayload(
 	t.Helper()
 
 	var payload map[string]any
+
 	require.NoError(
 		t,
 		pgClient.WithConn(

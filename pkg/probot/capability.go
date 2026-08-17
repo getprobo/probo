@@ -320,6 +320,7 @@ func (r *CapabilityRegistry) NormalizeActionAlias(action Action) (Action, error)
 	r.mu.RLock()
 	contributor, ok := r.byMessageType[action.Message.Type].(ActionAliasContributor)
 	r.mu.RUnlock()
+
 	if !ok {
 		return action, nil
 	}

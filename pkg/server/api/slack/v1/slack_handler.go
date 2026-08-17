@@ -51,6 +51,7 @@ func SlackHandler(
 		}
 
 		rawPayload := []byte(form.Get("payload"))
+
 		payload, err := slackchannel.DecodeInteractivePayload(rawPayload)
 		if err != nil {
 			httpserver.RenderJSON(
@@ -83,7 +84,6 @@ func SlackHandler(
 			}
 
 			if !bound {
-
 				if payload.ResponseURL != "" {
 					err := slackbot.ReplyInteractiveEphemeral(
 						ctx,

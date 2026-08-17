@@ -54,6 +54,7 @@ func (s *MessageService) OnSlackbotDeliverySuccess(
 	}
 
 	namespace, namespaceOK := message.Metadata[deliveryTargetNamespaceMetadata].(string)
+
 	key, keyOK := message.Metadata[deliveryTargetKeyMetadata].(string)
 	if !namespaceOK || !keyOK {
 		return nil
@@ -66,6 +67,7 @@ func (s *MessageService) OnSlackbotDeliverySuccess(
 
 	now := time.Now()
 	destination.VerifiedAt = &now
+
 	destination.UpdatedAt = now
 	if err := destination.MarkVerified(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot verify delivered bot destination: %w", err)
@@ -86,6 +88,7 @@ func bindThreadSubject(
 
 	namespace, namespaceOK := message.Metadata[deliverySubjectNamespaceMetadata].(string)
 	key, keyOK := message.Metadata[deliverySubjectKeyMetadata].(string)
+
 	capability, capabilityOK := message.Metadata[deliveryCapabilityMetadata].(string)
 	if !namespaceOK || namespace == "" || !keyOK || key == "" || !capabilityOK || capability == "" {
 		return nil
@@ -111,6 +114,7 @@ func bindThreadSubject(
 	}
 
 	now := time.Now()
+
 	subject := &coredata.BotThreadSubject{
 		ID:                     gid.New(scope.GetTenantID(), coredata.BotThreadSubjectEntityType),
 		OrganizationID:         message.OrganizationID,
@@ -140,6 +144,7 @@ func bindExecutionAnchor(
 	message *coredata.SlackbotMessage,
 ) error {
 	now := time.Now()
+
 	anchor := &coredata.AgentExecutionAnchor{
 		ID:                     gid.New(scope.GetTenantID(), coredata.AgentExecutionAnchorEntityType),
 		OrganizationID:         message.OrganizationID,
@@ -165,6 +170,7 @@ func bindExecutionAnchor(
 			return fmt.Errorf("cannot decode delivered execution coordinates: %w", err)
 		}
 	}
+
 	coordinates.ChannelID = *message.ChannelID
 	coordinates.ThreadTS = *message.MessageTS
 
@@ -172,6 +178,7 @@ func bindExecutionAnchor(
 	if err != nil {
 		return fmt.Errorf("cannot encode delivered execution coordinates: %w", err)
 	}
+
 	if err := execution.UpdateSourceCoordinates(ctx, tx, scope, encoded, now); err != nil {
 		return fmt.Errorf("cannot update delivered execution coordinates: %w", err)
 	}

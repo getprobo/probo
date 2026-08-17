@@ -827,6 +827,7 @@ func (impl *Implm) Run(
 		l.Named("slackbot.bind-prompts"),
 	)
 	probotIdentityBindings.SetBindingConfirmedHandler(slackBindPrompts)
+
 	slackbotNotifications := slackchannel.NewNotificationService(pgClient)
 	slackInteractiveInbox := slackchannel.NewInteractiveCommandInbox(
 		pgClient,
@@ -842,6 +843,7 @@ func (impl *Implm) Run(
 		slackService,
 		l.Named("slack-messages"),
 	)
+
 	complianceMessages := compliancecapability.NewService(
 		pgClient,
 		complianceRenderer,

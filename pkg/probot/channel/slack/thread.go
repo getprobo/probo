@@ -78,11 +78,13 @@ func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
 
 	var builder strings.Builder
 	builder.WriteString("Thread:\n")
+
 	for _, reply := range filtered {
 		speaker := reply.User
 		if speaker == "" && reply.BotID != "" {
 			speaker = botUserID
 		}
+
 		if speaker == "" {
 			speaker = "unknown"
 		}

@@ -51,6 +51,7 @@ func (s *MessageService) GetInitialByChannelAndTS(
 			if err == nil {
 				return modernMessage(message), nil
 			}
+
 			if !errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, fmt.Errorf("cannot load Slack message: %w", err)
 			}
@@ -59,6 +60,7 @@ func (s *MessageService) GetInitialByChannelAndTS(
 		if s.legacy == nil {
 			return nil, coredata.ErrResourceNotFound
 		}
+
 		message, err := s.legacy.GetInitialByOrganizationIDChannelAndTS(
 			ctx,
 			scope,
@@ -76,6 +78,7 @@ func (s *MessageService) GetInitialByChannelAndTS(
 	if s.legacy == nil {
 		return nil, coredata.ErrResourceNotFound
 	}
+
 	if s.logger != nil {
 		s.logger.WarnCtx(
 			ctx,
@@ -121,12 +124,14 @@ func (s *MessageService) GetMessage(
 		if err != nil {
 			return nil, err
 		}
+
 		return modernMessage(message), nil
 	case coredata.SlackMessageEntityType:
 		message, err := s.legacy.GetByID(ctx, scope, messageID)
 		if err != nil {
 			return nil, err
 		}
+
 		return legacyMessage(message), nil
 	default:
 		return nil, fmt.Errorf("unsupported message entity type %d", messageID.EntityType())
@@ -140,6 +145,7 @@ func (s *MessageService) UpdateMessage(
 	intent bot.MessageIntent,
 ) error {
 	scope := coredata.NewScopeFromObjectID(message.OrganizationID)
+
 	delivered, err := s.GetMessage(ctx, scope, messageID)
 	if err != nil {
 		return fmt.Errorf("cannot load message for update: %w", err)
@@ -156,6 +162,7 @@ func (s *MessageService) UpdateMessage(
 		if err != nil {
 			return fmt.Errorf("cannot queue Slack message revision: %w", err)
 		}
+
 		s.logNotificationRoute(
 			ctx,
 			BackendSlackbot,
@@ -163,6 +170,7 @@ func (s *MessageService) UpdateMessage(
 			message.Type,
 			"",
 		)
+
 		return nil
 	}
 

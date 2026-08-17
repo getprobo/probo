@@ -320,6 +320,7 @@ func TestInstallationComplete_PersistsInstallationOnOAuthSuccess(t *testing.T) {
 
 	claim := coredata.NewSlackbotInstallStateClaim(organization.ID, state)
 	claimed := false
+
 	require.NoError(
 		t,
 		pgClient.WithTx(
@@ -401,6 +402,7 @@ func TestInstallationUninstall_RemovesIdentityBindings(t *testing.T) {
 
 	baseURL, err := baseurl.Parse("https://console.example.com")
 	require.NoError(t, err)
+
 	bindings := identitybinding.NewService(pgClient, baseURL)
 
 	identityID := seedUninstallIdentity(t, ctx, pgClient)
@@ -483,6 +485,7 @@ func TestInstallationUninstall_RemovesIdentityBindings(t *testing.T) {
 	assert.Equal(t, otherBinding.ID, loaded.ID)
 
 	var removed coredata.SlackbotBindCallback
+
 	err = pgClient.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -492,6 +495,7 @@ func TestInstallationUninstall_RemovesIdentityBindings(t *testing.T) {
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
 	var kept coredata.SlackbotBindCallback
+
 	require.NoError(
 		t,
 		pgClient.WithConn(

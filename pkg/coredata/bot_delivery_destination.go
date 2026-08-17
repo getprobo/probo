@@ -220,6 +220,7 @@ WHERE %s
 	if err != nil {
 		return fmt.Errorf("cannot verify bot delivery destination: %w", err)
 	}
+
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}

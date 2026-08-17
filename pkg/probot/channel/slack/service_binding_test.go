@@ -146,6 +146,7 @@ func TestService_HandleInteraction_BindCTARetriesWithStableClientID(t *testing.T
 	t.Parallel()
 
 	var attempts int
+
 	slackAPI := newRecordingSlackAPI(
 		t,
 		func(w http.ResponseWriter, _ map[string]any) bool {
@@ -442,10 +443,12 @@ func newRecordingSlackAPI(
 				switch r.URL.Path {
 				case "/api/chat.postMessage":
 					api.mu.Lock()
+
 					api.posts = append(api.posts, decoded)
 					if clientID, ok := decoded["client_msg_id"].(string); ok {
 						api.clientIDs = append(api.clientIDs, clientID)
 					}
+
 					api.mu.Unlock()
 
 					if failPost != nil && failPost(w, decoded) {
@@ -465,6 +468,7 @@ func newRecordingSlackAPI(
 					api.mu.Lock()
 					api.statuses = append(api.statuses, decoded)
 					api.mu.Unlock()
+
 					_, err := w.Write([]byte(`{"ok":true}`))
 					require.NoError(t, err)
 				case "/api/conversations.replies":

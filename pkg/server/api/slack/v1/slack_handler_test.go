@@ -182,6 +182,7 @@ func performSlackAction(
 	t.Helper()
 
 	digest := sha256.Sum256([]byte(rawPayload))
+
 	t.Cleanup(func() { deleteInteractiveCommand(t, test.PGClient(t), digest[:]) })
 
 	body := url.Values{"payload": []string{rawPayload}}.Encode()
@@ -234,6 +235,7 @@ func loadInteractiveCommand(
 	client := test.PGClient(t)
 
 	var command coredata.SlackbotInteractiveCommand
+
 	require.NoError(
 		t,
 		client.WithConn(
@@ -254,6 +256,7 @@ func assertNoInteractiveCommand(t *testing.T, rawPayload string) {
 	client := test.PGClient(t)
 
 	var command coredata.SlackbotInteractiveCommand
+
 	err := client.WithConn(
 		context.Background(),
 		func(ctx context.Context, conn pg.Querier) error {

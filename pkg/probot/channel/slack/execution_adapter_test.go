@@ -322,6 +322,7 @@ func insertThreadSubject(
 
 	raw, err := json.Marshal(attributes)
 	require.NoError(t, err)
+
 	now := time.Now()
 	scope := coredata.NewScopeFromObjectID(organizationID)
 
