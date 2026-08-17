@@ -106,7 +106,7 @@ export function NavPanelSwitcherValue({ children }: NavPanelSwitcherValueProps) 
   const slots = navPanelSwitcher();
 
   return (
-    <Text size={2} weight="medium" className={`${slots.itemName()} text-current`}>
+    <Text size={2} weight="medium" color="current" className={slots.itemName()}>
       {children}
     </Text>
   );

@@ -42,9 +42,10 @@ import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
 
 export interface CookieBannerSwitcherProps {
   queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery> | null;
+  selectedId: string | null;
 }
 
-export function CookieBannerSwitcher({ queryRef }: CookieBannerSwitcherProps) {
+export function CookieBannerSwitcher({ queryRef, selectedId }: CookieBannerSwitcherProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
@@ -73,7 +74,7 @@ export function CookieBannerSwitcher({ queryRef }: CookieBannerSwitcherProps) {
             </Text>
           )}
         >
-          <CookieBannerSwitcherMenu queryRef={menuQueryRef} />
+          <CookieBannerSwitcherMenu queryRef={menuQueryRef} selectedId={selectedId} />
         </Suspense>
       )
     : null;

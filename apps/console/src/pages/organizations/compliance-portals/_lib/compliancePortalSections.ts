@@ -26,6 +26,7 @@ export const compliancePortalSectionsFragment = graphql`
   fragment compliancePortalSections_compliancePortal on CompliancePortal {
     canUpdatePortal: permission(action: "compliance-portal:portal:update")
     canGetCustomDomain: permission(action: "compliance-portal:custom-domain:get")
+    canGetNDA: permission(action: "compliance-portal:portal:get-nda")
     canListAccesses: permission(action: "compliance-portal:portal-access:list")
     canListCustomLinks: permission(action: "compliance-portal:compliance-custom-link:list")
     canListCommitmentGroups: permission(action: "compliance-portal:commitment-group:list")
@@ -64,6 +65,7 @@ export type CompliancePortalSectionGroup = "settings" | "pages";
 export interface CompliancePortalSectionPermissions {
   canUpdatePortal: boolean;
   canGetCustomDomain: boolean;
+  canGetNDA: boolean;
   canListAccesses: boolean;
   canConnectSlack: boolean;
   canListSlackConnections: boolean;
@@ -102,7 +104,7 @@ export const COMPLIANCE_PORTAL_SECTIONS: CompliancePortalSection[] = [
     path: "permissions",
     labelKey: "nav.compliancePortalsPermissions",
     group: "settings",
-    isVisible: permissions => permissions.canListAccesses,
+    isVisible: permissions => permissions.canGetNDA || permissions.canListAccesses,
   },
   {
     id: "integrations",
@@ -167,6 +169,7 @@ export function sectionPermissionsFrom(
   return {
     canUpdatePortal: data.canUpdatePortal,
     canGetCustomDomain: data.canGetCustomDomain,
+    canGetNDA: data.canGetNDA,
     canListAccesses: data.canListAccesses,
     canConnectSlack: data.organization.canConnectSlack,
     canListSlackConnections: data.organization.canListSlackConnections,

@@ -40,7 +40,7 @@ import {
 } from "@probo/ui";
 import { clsx } from "clsx";
 import type { ComponentProps, FocusEvent } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
@@ -141,6 +141,7 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
     readonly string[] | null
   >(null);
   const [pendingUrls, setPendingUrls] = useState<Partial<Record<UrlFieldName, string | null>>>({});
+  const urlSavesRef = useRef<Partial<Record<UrlFieldName, Promise<void>>>>({});
   const certificationsValue = pendingCertifications ?? thirdParty.certifications;
 
   const { data: reportsData, refetch, ...pagination } = usePaginationFragment<
@@ -216,19 +217,29 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
       return;
     }
     setPendingUrls(prev => ({ ...prev, [field]: next }));
-    void update(thirdParty.id, field, next)
+    const previous = urlSavesRef.current[field] ?? Promise.resolve();
+    const save = previous
+      .catch(() => undefined)
+      .then(() => update(thirdParty.id, field, next))
       .then(() => {
         setPendingUrls((prev) => {
+          if (prev[field] !== next) {
+            return prev;
+          }
           const { [field]: _cleared, ...rest } = prev;
           return rest;
         });
       })
       .catch(() => {
         setPendingUrls((prev) => {
+          if (prev[field] !== next) {
+            return prev;
+          }
           const { [field]: _cleared, ...rest } = prev;
           return rest;
         });
       });
+    urlSavesRef.current[field] = save;
   }
 
   return (
@@ -274,7 +285,7 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
                   className="p-4 focus:bg-tertiary-pressed outline-none"
                   id={url.name}
                   defaultValue={savedValue}
-                  onBlur={event => handleUrlBlur(url.name, url.value, event)}
+                  onBlur={event => handleUrlBlur(url.name, savedValue, event)}
                   type="text"
                   placeholder="https://..."
                   variant="ghost"

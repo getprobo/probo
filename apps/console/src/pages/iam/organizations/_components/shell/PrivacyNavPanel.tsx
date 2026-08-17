@@ -150,7 +150,7 @@ function CookieBannerNavSection() {
   if (isNew) {
     return (
       <Suspense fallback={fallback}>
-        <CookieBannerSwitcher queryRef={null} />
+        <CookieBannerSwitcher queryRef={null} selectedId={selectedId} />
       </Suspense>
     );
   }
@@ -162,7 +162,7 @@ function CookieBannerNavSection() {
   return (
     <>
       <Suspense fallback={fallback}>
-        <CookieBannerSwitcher queryRef={queryRef} />
+        <CookieBannerSwitcher queryRef={queryRef} selectedId={selectedId} />
       </Suspense>
       <Suspense fallback={null}>
         <CookieBannerNavItems queryRef={queryRef} />

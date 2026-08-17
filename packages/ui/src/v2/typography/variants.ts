@@ -53,9 +53,11 @@ const typographyVariants = {
   // Hue only; the resolved text step comes from the color × highContrast
   // compound variants below (step 11 low-contrast, step 12 high-contrast).
   // `faint` is a de-emphasized neutral (sand alpha 8) for fine-print metadata.
+  // `current` emits no color class so the text inherits from its parent.
   color: {
     neutral: "",
     faint: "",
+    current: "",
     gold: "",
     red: "",
     green: "",

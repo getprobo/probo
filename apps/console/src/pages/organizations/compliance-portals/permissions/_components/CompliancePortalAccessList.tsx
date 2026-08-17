@@ -20,13 +20,25 @@
 
 import { Button, IconChevronDown, Spinner, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useTranslation } from "react-i18next";
-import { usePaginationFragment } from "react-relay";
-import { graphql } from "relay-runtime";
+import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { useParams } from "react-router";
 
 import type { CompliancePortalAccessListFragment$key } from "#/__generated__/core/CompliancePortalAccessListFragment.graphql";
 import type { CompliancePortalAccessListQuery } from "#/__generated__/core/CompliancePortalAccessListQuery.graphql";
+import type { CompliancePortalAccessListRootQuery } from "#/__generated__/core/CompliancePortalAccessListRootQuery.graphql";
 
 import { CompliancePortalAccessListItem } from "./CompliancePortalAccessListItem";
+
+const accessListQuery = graphql`
+  query CompliancePortalAccessListRootQuery($compliancePortalId: ID!) {
+    node(id: $compliancePortalId) {
+      __typename
+      ... on CompliancePortal {
+        ...CompliancePortalAccessListFragment
+      }
+    }
+  }
+`;
 
 const fragment = graphql`
   fragment CompliancePortalAccessListFragment on CompliancePortal
@@ -57,22 +69,28 @@ const fragment = graphql`
   }
 `;
 
-export function CompliancePortalAccessList(props: {
-  fragmentRef: CompliancePortalAccessListFragment$key;
-}) {
-  const { fragmentRef } = props;
-
+export function CompliancePortalAccessList() {
   const { t } = useTranslation("organizations/compliance-portals");
-
+  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
+  const { node } = useLazyLoadQuery<CompliancePortalAccessListRootQuery>(
+    accessListQuery,
+    { compliancePortalId: compliancePortalId ?? "" },
+  );
+  const portalKey = node?.__typename === "CompliancePortal" ? node : null;
   const {
-    data: { accesses },
+    data,
     hasNext,
     loadNext,
     isLoadingNext,
   } = usePaginationFragment<CompliancePortalAccessListQuery, CompliancePortalAccessListFragment$key>(
     fragment,
-    fragmentRef,
+    portalKey,
   );
+  if (compliancePortalId == null || data == null) {
+    throw new Error("invalid type for node");
+  }
+
+  const { accesses } = data;
 
   return accesses.edges.length === 0
     ? (

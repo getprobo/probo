@@ -18,11 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalPermissionsPageQuery } from "#/__generated__/core/CompliancePortalPermissionsPageQuery.graphql";
+import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
@@ -35,7 +37,6 @@ export const compliancePortalPermissionsPageQuery = graphql`
         canGetNDA: permission(action: "compliance-portal:portal:get-nda")
         canListAccesses: permission(action: "compliance-portal:portal-access:list")
         ...CompliancePortalNDASectionFragment
-        ...CompliancePortalAccessListFragment
       }
     }
   }
@@ -72,7 +73,9 @@ export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPe
               {t("accessPage.description")}
             </p>
           </div>
-          <CompliancePortalAccessList fragmentRef={compliancePortal} />
+          <Suspense fallback={<LinkCardSkeleton />}>
+            <CompliancePortalAccessList />
+          </Suspense>
         </div>
       )}
     </div>
