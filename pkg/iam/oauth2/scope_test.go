@@ -28,6 +28,84 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
+func TestIsIdentityOnlyScopes(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"accepts openid profile email",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(
+				t,
+				oauth2.IsIdentityOnlyScopes(
+					coredata.OAuth2Scopes{
+						oauth2.ScopeOpenID,
+						oauth2.ScopeProfile,
+						oauth2.ScopeEmail,
+					},
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"accepts openid alone",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(
+				t,
+				oauth2.IsIdentityOnlyScopes(coredata.OAuth2Scopes{oauth2.ScopeOpenID}),
+			)
+		},
+	)
+
+	t.Run(
+		"rejects empty scopes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(t, oauth2.IsIdentityOnlyScopes(nil))
+			assert.False(t, oauth2.IsIdentityOnlyScopes(coredata.OAuth2Scopes{}))
+		},
+	)
+
+	t.Run(
+		"rejects offline_access",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(
+				t,
+				oauth2.IsIdentityOnlyScopes(
+					coredata.OAuth2Scopes{
+						oauth2.ScopeOpenID,
+						oauth2.ScopeOfflineAccess,
+					},
+				),
+			)
+		},
+	)
+
+	t.Run(
+		"rejects write scopes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(
+				t,
+				oauth2.IsIdentityOnlyScopes(
+					coredata.OAuth2Scopes{
+						oauth2.ScopeOpenID,
+						coredata.OAuth2Scope("v1:example:write"),
+					},
+				),
+			)
+		},
+	)
+}
+
 func TestIsValid(t *testing.T) {
 	t.Parallel()
 

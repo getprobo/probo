@@ -1538,12 +1538,14 @@ func (s *Service) Authorize(
 			if client.TokenEndpointAuthMethod == coredata.OAuth2ClientTokenEndpointAuthMethodNone {
 				// RFC 6819 §5.2.3.2 / §5.2.4.1: public clients must always
 				// require explicit user consent since they cannot be strongly
-				// authenticated.
+				// authenticated. The only exception is verified compliance
+				// portal CIMD clients requesting identity scopes only
+				// (openid/profile/email) — matching VisitorOAuthScope.
 				allowance, allowanceErr := s.cimdAllowance(ctx, client.ExternalClientID)
 				if allowanceErr != nil {
 					s.logger.WarnCtx(ctx, "cannot check cimd client allowance", log.Error(allowanceErr))
 				} else {
-					skipConsent = allowance.SkipsConsent()
+					skipConsent = allowance.SkipsConsent() && IsIdentityOnlyScopes(requestedScopes)
 				}
 			} else {
 				var existingConsent coredata.OAuth2Consent
