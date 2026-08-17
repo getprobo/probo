@@ -21,6 +21,7 @@
 package slack
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -71,6 +72,28 @@ func TestFormatThreadTranscript(t *testing.T) {
 
 			transcript := formatThreadTranscript(replies, "")
 			assert.Equal(t, 51, strings.Count(transcript, "<@"))
+		},
+	)
+
+	t.Run(
+		"keeps user-less bot messages",
+		func(t *testing.T) {
+			t.Parallel()
+
+			transcript := formatThreadTranscript(
+				[]ThreadReply{
+					{User: "U1", Text: "hello", TS: "1.000"},
+					{BotID: "BPROBOT", Text: "Access request", TS: "2.000"},
+					{BotID: "BOTHER", User: "UOTHER", Text: "ignore me", TS: "3.000"},
+				},
+				"UBOT",
+			)
+
+			assert.Equal(
+				t,
+				"Thread:\n<@U1>: hello\n<@UBOT>: Access request",
+				transcript,
+			)
 		},
 	)
 
@@ -168,4 +191,82 @@ func TestCollectThreadTranscript_FallsBackWhenNoRepliesCollected(t *testing.T) {
 	)
 
 	assert.Equal(t, "ping", transcript)
+}
+
+func TestCollectThreadTranscript_AppendsTriggeringEventWhenMissing(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				require.Equal(t, "/api/conversations.replies", r.URL.Path)
+
+				_, err := w.Write(
+					[]byte(
+						`{"ok":true,"messages":[{"user":"U1","text":"root","ts":"111.000"},{"user":"U2","text":"reply","ts":"111.001"}]}`,
+					),
+				)
+				require.NoError(t, err)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	handler := &Service{logger: log.NewLogger()}
+	transcript := handler.collectThreadTranscript(
+		t.Context(),
+		newTestClient(server.URL+"/api"),
+		EventBody{
+			Type:        EventTypeAppMention,
+			User:        "U1",
+			Text:        "<@BOT> grant this",
+			Channel:     "C123",
+			TS:          "111.999",
+			ThreadTS:    "111.000",
+			ChannelType: ChannelTypeChannel,
+		},
+		"UBOT",
+	)
+
+	assert.Equal(
+		t,
+		"Thread:\n<@U1>: root\n<@U2>: reply\n<@U1>: grant this",
+		transcript,
+	)
+}
+
+func TestAppendTriggeringEventIfMissing_AppendsTruncatedLongThreadEvent(t *testing.T) {
+	t.Parallel()
+
+	replies := make([]ThreadReply, 0, threadTranscriptMaxMessages+5)
+	replies = append(replies, ThreadReply{User: "UROOT", Text: "root", TS: "0.000"})
+	for i := range threadTranscriptMaxMessages + 3 {
+		replies = append(
+			replies,
+			ThreadReply{
+				User: "U1",
+				Text: "later",
+				TS:   fmt.Sprintf("%d.000", i+1),
+			},
+		)
+	}
+
+	eventTS := "2.000"
+	kept := keptThreadReplies(replies, "UBOT")
+	assert.False(t, threadReplyHasTS(kept, eventTS))
+
+	transcript := appendTriggeringEventIfMissing(
+		formatKeptThreadTranscript(kept, "UBOT"),
+		kept,
+		EventBody{
+			User: "U1",
+			Text: "<@BOT> grant this",
+			TS:   eventTS,
+		},
+		"UBOT",
+	)
+
+	assert.Contains(t, transcript, "<@UROOT>: root")
+	assert.Contains(t, transcript, "<@U1>: grant this")
+	assert.Equal(t, threadTranscriptMaxMessages+1, strings.Count(transcript, "<@"))
 }

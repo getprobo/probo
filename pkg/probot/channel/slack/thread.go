@@ -39,6 +39,10 @@ var (
 )
 
 func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
+	return formatKeptThreadTranscript(keptThreadReplies(replies, botUserID), botUserID)
+}
+
+func keptThreadReplies(replies []ThreadReply, botUserID string) []ThreadReply {
 	filtered := make([]ThreadReply, 0, len(replies))
 	for _, reply := range replies {
 		if reply.Subtype == "message_deleted" {
@@ -50,7 +54,7 @@ func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
 			continue
 		}
 
-		if reply.BotID != "" && reply.User != botUserID {
+		if reply.BotID != "" && reply.User != "" && reply.User != botUserID {
 			continue
 		}
 
@@ -65,10 +69,6 @@ func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
 		)
 	}
 
-	if len(filtered) == 0 {
-		return ""
-	}
-
 	if len(filtered) > threadTranscriptMaxMessages {
 		kept := make([]ThreadReply, 0, threadTranscriptMaxMessages)
 		kept = append(kept, filtered[0])
@@ -76,27 +76,75 @@ func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
 		filtered = kept
 	}
 
+	return filtered
+}
+
+func formatKeptThreadTranscript(filtered []ThreadReply, botUserID string) string {
+	if len(filtered) == 0 {
+		return ""
+	}
+
 	var builder strings.Builder
 	builder.WriteString("Thread:\n")
 
 	for _, reply := range filtered {
-		speaker := reply.User
-		if speaker == "" && reply.BotID != "" {
-			speaker = botUserID
-		}
-
-		if speaker == "" {
-			speaker = "unknown"
-		}
-
-		builder.WriteString("<@")
-		builder.WriteString(speaker)
-		builder.WriteString(">: ")
-		builder.WriteString(reply.Text)
-		builder.WriteString("\n")
+		appendTranscriptLine(&builder, threadSpeaker(reply.User, reply.BotID, botUserID), reply.Text)
 	}
 
 	return strings.TrimSpace(builder.String())
+}
+
+func threadSpeaker(user, botID, botUserID string) string {
+	speaker := user
+	if speaker == "" && botID != "" {
+		speaker = botUserID
+	}
+
+	if speaker == "" {
+		speaker = "unknown"
+	}
+
+	return speaker
+}
+
+func appendTranscriptLine(builder *strings.Builder, speaker, text string) {
+	builder.WriteString("<@")
+	builder.WriteString(speaker)
+	builder.WriteString(">: ")
+	builder.WriteString(text)
+	builder.WriteString("\n")
+}
+
+func threadReplyHasTS(replies []ThreadReply, ts string) bool {
+	if ts == "" {
+		return false
+	}
+
+	for _, reply := range replies {
+		if reply.TS == ts {
+			return true
+		}
+	}
+
+	return false
+}
+
+func appendTriggeringEventIfMissing(
+	transcript string,
+	kept []ThreadReply,
+	event EventBody,
+	botUserID string,
+) string {
+	fallback := cleanText(event.Text)
+	if transcript == "" {
+		return fallback
+	}
+
+	if threadReplyHasTS(kept, event.TS) || fallback == "" {
+		return transcript
+	}
+
+	return transcript + "\n<@" + threadSpeaker(event.User, event.BotID, botUserID) + ">: " + fallback
 }
 
 func (s *Service) collectThreadTranscript(
@@ -144,12 +192,10 @@ func (s *Service) collectThreadTranscript(
 		)
 	}
 
-	transcript := formatThreadTranscript(replies, botUserID)
-	if transcript == "" {
-		return fallback
-	}
+	kept := keptThreadReplies(replies, botUserID)
+	transcript := formatKeptThreadTranscript(kept, botUserID)
 
-	return transcript
+	return appendTriggeringEventIfMissing(transcript, kept, event, botUserID)
 }
 
 func isThreadCollectionFallbackError(err error) bool {
