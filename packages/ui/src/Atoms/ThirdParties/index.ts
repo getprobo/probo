@@ -1,6 +1,7 @@
 export { Anthropic } from "./Anthropic";
 export { Apollo } from "./Apollo";
 export { Asana } from "./Asana";
+export { Authentik } from "./Authentik";
 export { BetterStack } from "./BetterStack";
 export { Bitbucket } from "./Bitbucket";
 export { Brevo } from "./Brevo";

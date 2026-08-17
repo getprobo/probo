@@ -217,6 +217,17 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: *input.SignozBaseURL})
+	case coredata.ConnectorProviderAuthentik:
+		if input.AuthentikBaseURL == nil || *input.AuthentikBaseURL == "" {
+			return nil, fmt.Errorf("cannot create authentik connector: authentikBaseUrl is required")
+		}
+
+		u, err := url.Parse(*input.AuthentikBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create authentik connector: authentikBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.AuthentikConnectorSettings{BaseURL: *input.AuthentikBaseURL})
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordScimBridgeURL == nil || *input.OnePasswordScimBridgeURL == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL is required")

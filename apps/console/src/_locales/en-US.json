@@ -1567,7 +1567,7 @@
     "actions": { "back": "Back", "create": "Create" }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV", "googleWorkspace": "Google Workspace", "microsoft365": "Microsoft 365", "linear": "Linear", "slack": "Slack", "metabase": "Metabase", "signoz": "SigNoz", "cursor": "Cursor", "github": "GitHub", "cloudflare": "Cloudflare" },
+    "sources": { "csv": "CSV", "googleWorkspace": "Google Workspace", "microsoft365": "Microsoft 365", "linear": "Linear", "slack": "Slack", "metabase": "Metabase", "signoz": "SigNoz", "cursor": "Cursor", "github": "GitHub", "cloudflare": "Cloudflare", "authentik": "authentik" },
     "errors": { "delete": "Failed to delete access source", "configure": "Failed to configure source" },
     "messages": { "error": "Error", "success": "Success", "organizationUpdated": "Organization updated." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",

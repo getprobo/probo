@@ -2990,7 +2990,8 @@
       "signoz": "SigNoz",
       "cursor": "Cursor",
       "github": "GitHub",
-      "cloudflare": "Cloudflare"
+      "cloudflare": "Cloudflare",
+      "authentik": "authentik"
     },
     "errors": {
       "delete": "Échec de la suppression de la source d’accès",

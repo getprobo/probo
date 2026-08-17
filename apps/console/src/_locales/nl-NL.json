@@ -2990,7 +2990,8 @@
       "signoz": "SigNoz",
       "cursor": "Cursor",
       "github": "GitHub",
-      "cloudflare": "Cloudflare"
+      "cloudflare": "Cloudflare",
+      "authentik": "authentik"
     },
     "errors": {
       "delete": "Verwijderen van toegangsbron mislukt",
