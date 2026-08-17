@@ -761,11 +761,8 @@ func (impl *Implm) Run(
 	iamService.OAuth2ServerService.SetCIMDAllow(
 		func(ctx context.Context, clientIDURL string) (oauth2.CIMDAllowance, error) {
 			host, ok := oauth2.CIMDClientIDHost(clientIDURL)
-			if ok {
-				_, err := visitorService.GetPortalByDomainName(ctx, host)
-				if err == nil {
-					return oauth2.CIMDAllowanceAllowedSkipConsent, nil
-				}
+			if ok && visitorService.IsVerifiedRedirectHost(ctx, host) {
+				return oauth2.CIMDAllowanceAllowedSkipConsent, nil
 			}
 
 			return staticCIMDAllow(ctx, clientIDURL)
