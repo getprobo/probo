@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Component, Suspense, useEffect, type ReactNode } from "react";
+import { Component, type ReactNode, Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useSearchParams } from "react-router";
 
