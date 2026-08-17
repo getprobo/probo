@@ -142,7 +142,10 @@ func CheckWhoisTool() agent.Tool {
 }
 
 func queryWhois(ctx context.Context, server, domain string) (string, error) {
-	dialer := net.Dialer{Timeout: 10 * time.Second}
+	dialer := net.Dialer{
+		Timeout: 10 * time.Second,
+		Control: netcheck.DialControl,
+	}
 
 	conn, err := dialer.DialContext(ctx, "tcp", server)
 	if err != nil {

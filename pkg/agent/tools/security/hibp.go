@@ -29,6 +29,7 @@ import (
 	"net/url"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
 )
 
@@ -61,12 +62,13 @@ type (
 )
 
 func CheckBreachesTool() agent.Tool {
+	client := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	client.Timeout = 10 * time.Second
+
 	return agent.FunctionTool(
 		"check_breaches",
 		"Check if a domain has been involved in known data breaches using the Have I Been Pwned API.",
 		func(ctx context.Context, p hibpParams) (agent.ToolResult, error) {
-			client := &http.Client{Timeout: 10 * time.Second}
-
 			hibpURL, err := url.Parse("https://haveibeenpwned.com/api/v3/breaches")
 			if err != nil {
 				return agent.ResultJSON(
