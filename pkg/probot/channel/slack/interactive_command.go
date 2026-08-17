@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/probot/identitybinding"
 )
 
 type (
@@ -88,6 +89,15 @@ func DecodeInteractivePayload(raw []byte) (InteractivePayload, error) {
 	}
 
 	return payload, nil
+}
+
+func (p InteractivePayload) ActorSubject() identitybinding.Subject {
+	actorTeamID := p.User.TeamID
+	if actorTeamID == "" {
+		actorTeamID = p.Team.ID
+	}
+
+	return IdentitySubject(actorTeamID, p.User.ID)
 }
 
 func (i *InteractiveCommandInbox) Enqueue(

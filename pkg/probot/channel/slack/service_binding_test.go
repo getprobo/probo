@@ -23,6 +23,7 @@ package slack
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -43,6 +44,7 @@ type stubBindingGate struct {
 	bindURL       string
 	lookupSubject identitybinding.Subject
 	bindSubject   identitybinding.Subject
+	lookupErr     error
 }
 
 func (s *stubBindingGate) Lookup(
@@ -50,6 +52,10 @@ func (s *stubBindingGate) Lookup(
 	subject identitybinding.Subject,
 ) (*identitybinding.Binding, error) {
 	s.lookupSubject = subject
+	if s.lookupErr != nil {
+		return nil, s.lookupErr
+	}
+
 	if s.binding == nil {
 		return nil, coredata.ErrResourceNotFound
 	}
@@ -266,6 +272,96 @@ func TestService_HandleInteraction_BoundMentionSetsAssistantStatus(t *testing.T)
 			"Drafting a reply…",
 		},
 		statuses[0]["loading_messages"],
+	)
+}
+
+func TestService_InteractiveActorBound(t *testing.T) {
+	t.Parallel()
+
+	payload := InteractivePayload{}
+	payload.Team.ID = "T789"
+	payload.User.ID = "U456"
+
+	t.Run(
+		"returns false when binding is missing",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bindings := &stubBindingGate{}
+			handler := NewService(bindings, nil, nil, log.NewLogger())
+
+			bound, err := handler.InteractiveActorBound(t.Context(), payload)
+			require.NoError(t, err)
+			assert.False(t, bound)
+			assert.Equal(t, IdentitySubject("T789", "U456"), bindings.lookupSubject)
+		},
+	)
+
+	t.Run(
+		"returns true when binding exists",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bindings := &stubBindingGate{
+				binding: &identitybinding.Binding{
+					IdentityID: gid.New(gid.NilTenant, coredata.IdentityEntityType),
+				},
+			}
+			handler := NewService(bindings, nil, nil, log.NewLogger())
+
+			bound, err := handler.InteractiveActorBound(t.Context(), payload)
+			require.NoError(t, err)
+			assert.True(t, bound)
+		},
+	)
+
+	t.Run(
+		"prefers the user team id",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bindings := &stubBindingGate{
+				binding: &identitybinding.Binding{
+					IdentityID: gid.New(gid.NilTenant, coredata.IdentityEntityType),
+				},
+			}
+			handler := NewService(bindings, nil, nil, log.NewLogger())
+			actorPayload := payload
+			actorPayload.User.TeamID = "T-actor"
+
+			bound, err := handler.InteractiveActorBound(t.Context(), actorPayload)
+			require.NoError(t, err)
+			assert.True(t, bound)
+			assert.Equal(t, IdentitySubject("T-actor", "U456"), bindings.lookupSubject)
+		},
+	)
+
+	t.Run(
+		"skips the gate when bindings are unavailable",
+		func(t *testing.T) {
+			t.Parallel()
+
+			handler := NewService(nil, nil, nil, log.NewLogger())
+
+			bound, err := handler.InteractiveActorBound(t.Context(), payload)
+			require.NoError(t, err)
+			assert.True(t, bound)
+		},
+	)
+
+	t.Run(
+		"returns lookup errors",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bindings := &stubBindingGate{lookupErr: errors.New("lookup failed")}
+			handler := NewService(bindings, nil, nil, log.NewLogger())
+
+			bound, err := handler.InteractiveActorBound(t.Context(), payload)
+			require.Error(t, err)
+			assert.False(t, bound)
+			assert.ErrorContains(t, err, "cannot lookup Slack identity binding")
+		},
 	)
 }
 

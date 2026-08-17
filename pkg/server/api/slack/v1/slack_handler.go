@@ -30,6 +30,7 @@ import (
 
 func SlackHandler(
 	inbox *slackchannel.InteractiveCommandInbox,
+	slackbot *slackchannel.Service,
 	logger *log.Logger,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +51,8 @@ func SlackHandler(
 		}
 
 		rawPayload := []byte(form.Get("payload"))
-		if _, err := slackchannel.DecodeInteractivePayload(rawPayload); err != nil {
+		payload, err := slackchannel.DecodeInteractivePayload(rawPayload)
+		if err != nil {
 			httpserver.RenderJSON(
 				w,
 				http.StatusBadRequest,
@@ -61,6 +63,54 @@ func SlackHandler(
 			)
 
 			return
+		}
+
+		if slackbot != nil {
+			bound, err := slackbot.InteractiveActorBound(ctx, payload)
+			if err != nil {
+				logger.ErrorCtx(ctx, "cannot lookup Slack identity binding", log.Error(err))
+
+				httpserver.RenderJSON(
+					w,
+					http.StatusServiceUnavailable,
+					slackchannel.InteractiveResponse{
+						Success: false,
+						Message: "cannot accept interactive command",
+					},
+				)
+
+				return
+			}
+
+			if !bound {
+
+				if payload.ResponseURL != "" {
+					err := slackbot.ReplyInteractiveEphemeral(
+						ctx,
+						payload.ResponseURL,
+						slackchannel.UnboundInteractiveResponse().Text,
+					)
+					if err == nil {
+						httpserver.RenderJSON(
+							w,
+							http.StatusOK,
+							slackchannel.InteractiveResponse{Success: true},
+						)
+
+						return
+					}
+
+					logger.ErrorCtx(ctx, "cannot post Slack bind prompt", log.Error(err))
+				}
+
+				httpserver.RenderJSON(
+					w,
+					http.StatusOK,
+					slackchannel.UnboundInteractiveResponse(),
+				)
+
+				return
+			}
 		}
 
 		if _, err := inbox.Enqueue(ctx, rawPayload); err != nil {

@@ -59,6 +59,7 @@ type (
 		bindings      identitybinding.Gate
 		messages      InteractiveMessageResolver
 		capabilities  *probot.CapabilityRegistry
+		replies       interactiveReplyPoster
 		logger        *log.Logger
 		staleAfter    time.Duration
 		retryBase     time.Duration
@@ -96,6 +97,7 @@ func NewInteractiveCommandWorker(
 		bindings:      bindings,
 		messages:      messages,
 		capabilities:  capabilities,
+		replies:       newResponseURLPoster(logger),
 		logger:        logger,
 		staleAfter:    defaultInteractiveCommandStaleAfter,
 		retryBase:     defaultInteractiveCommandRetryBase,
@@ -234,18 +236,12 @@ func (h *interactiveCommandHandler) dispatch(
 
 	command.OrganizationID = &installation.OrganizationID
 
-	actorTeamID := payload.User.TeamID
-	if actorTeamID == "" {
-		actorTeamID = payload.Team.ID
-	}
-
-	binding, err := h.bindings.Lookup(
-		ctx,
-		IdentitySubject(actorTeamID, payload.User.ID),
-	)
+	binding, err := h.bindings.Lookup(ctx, payload.ActorSubject())
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return permanent(fmt.Errorf("slack identity binding was revoked: %w", err))
+			h.replyInteractiveFailure(ctx, payload.ResponseURL, bindRequiredText)
+
+			return permanent(fmt.Errorf("slack identity binding is missing or revoked: %w", err))
 		}
 
 		return fmt.Errorf("cannot recheck Slack identity binding: %w", err)
@@ -290,6 +286,8 @@ func (h *interactiveCommandHandler) dispatch(
 	}
 	probotAction, err = h.capabilities.NormalizeActionAlias(probotAction)
 	if err != nil {
+		h.replyInteractiveFailure(ctx, payload.ResponseURL, interactiveFailedText)
+
 		return permanent(
 			fmt.Errorf("cannot normalize Slack interactive action: %w", err),
 		)
@@ -300,6 +298,12 @@ func (h *interactiveCommandHandler) dispatch(
 		if errors.Is(err, probot.ErrCapabilityForbidden) ||
 			errors.Is(err, probot.ErrCapabilityInvalidInput) ||
 			errors.Is(err, probot.ErrCapabilityNotFound) {
+			h.replyInteractiveFailure(
+				ctx,
+				payload.ResponseURL,
+				interactiveFailureText(err),
+			)
+
 			return permanent(err)
 		}
 
@@ -307,6 +311,28 @@ func (h *interactiveCommandHandler) dispatch(
 	}
 
 	return nil
+}
+
+func (h *interactiveCommandHandler) replyInteractiveFailure(
+	ctx context.Context,
+	responseURL string,
+	text string,
+) {
+	if h.replies == nil || responseURL == "" {
+		return
+	}
+
+	if err := h.replies.PostEphemeralReply(ctx, responseURL, text); err != nil && h.logger != nil {
+		h.logger.ErrorCtx(ctx, "cannot post Slack interactive error", log.Error(err))
+	}
+}
+
+func interactiveFailureText(err error) string {
+	if errors.Is(err, probot.ErrCapabilityForbidden) {
+		return interactiveForbiddenText
+	}
+
+	return interactiveFailedText
 }
 
 func (h *interactiveCommandHandler) RecoverStale(ctx context.Context) error {

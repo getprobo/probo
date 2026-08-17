@@ -26,9 +26,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 
+	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -43,6 +45,7 @@ type (
 		bindPrompts   *BindPromptService
 		pg            *pg.Client
 		logger        *log.Logger
+		httpClient    *http.Client
 	}
 
 	replyTarget struct {
@@ -96,11 +99,31 @@ func NewService(
 		bindings:      bindings,
 		pg:            pgClient,
 		logger:        l,
+		httpClient: httpclient.DefaultPooledClient(
+			httpclient.WithLogger(l),
+			httpclient.WithSSRFProtection(),
+		),
 	}
 }
 
 func (s *Service) SetBindPrompts(store *BindPromptService) {
 	s.bindPrompts = store
+}
+
+func (s *Service) InteractiveActorBound(
+	ctx context.Context,
+	payload InteractivePayload,
+) (bool, error) {
+	if s == nil || s.bindings == nil {
+		return true, nil
+	}
+
+	binding, err := s.bindings.Lookup(ctx, payload.ActorSubject())
+	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		return false, fmt.Errorf("cannot lookup Slack identity binding: %w", err)
+	}
+
+	return binding != nil, nil
 }
 
 func (s *Service) clientForTeam(

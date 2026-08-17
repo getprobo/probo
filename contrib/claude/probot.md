@@ -171,14 +171,20 @@ or, on failure:
 layers: the inbox makes acknowledgement durable, while the ledger prevents a
 replayed event from repeating committed event side effects.
 
-Interactive HTTP ingress stores only an encrypted payload and request digest
-in `slackbot_interactive_commands`, then acknowledges Slack. The worker
-decrypts after claim, reloads the current installation, binding, and
-organization-scoped message, and dispatches through the capability registry.
-Its states are the same pending/processing/processed or retry/dead-letter
-states as the event inbox. Invalid ciphertext, malformed or incomplete
-payloads, missing installations, revoked bindings, cross-workspace message
-lookups, forbidden actions, and unknown capabilities are terminal failures.
+Interactive HTTP ingress looks up the clicker's identity binding before
+enqueue. Unbound actors are not queued. Slack block actions ignore most HTTP
+response bodies, so the adapter posts an ephemeral `/probot login` prompt to
+the click `response_url` (`replace_original: false`) and acknowledges Slack.
+Bound traffic stores only an encrypted payload and request digest in
+`slackbot_interactive_commands`, then acknowledges Slack. The worker decrypts
+after claim, reloads the current installation, binding, and organization-scoped
+message, and dispatches through the capability registry. Forbidden or invalid
+actions also post an ephemeral error to the same `response_url` before
+dead-lettering. Its states are the same pending/processing/processed or
+retry/dead-letter states as the event inbox. Invalid ciphertext, malformed or
+incomplete payloads, missing installations, missing or revoked bindings,
+cross-workspace message lookups, forbidden actions, and unknown capabilities
+are terminal failures.
 
 Agent execution claims use a random owner token and a lease heartbeat. Every
 checkpoint, input transition, and terminal write is fenced by that token. On

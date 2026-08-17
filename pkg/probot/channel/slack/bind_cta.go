@@ -32,6 +32,9 @@ const (
 	bindSlashUnavailableText   = "Probot is not available in this workspace."
 	bindSlashFallbackText      = "Link your Probo account to use the Probo Slack assistant."
 	bindSlashFailedText        = "I couldn't create a link right now. Try `/probot login` again."
+
+	interactiveForbiddenText = "You don't have permission to do that."
+	interactiveFailedText    = "I couldn't complete that action."
 )
 
 func bindRequiredBlocks(bindURL string) []any {

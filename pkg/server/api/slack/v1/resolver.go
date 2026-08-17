@@ -44,7 +44,7 @@ func NewMux(
 					interactiveSigningSecrets(slackSvc, installations)...,
 				),
 			)
-			r.Post("/interactive", SlackHandler(inbox, logger))
+			r.Post("/interactive", SlackHandler(inbox, slackbot, logger))
 		},
 	)
 

@@ -53,6 +53,11 @@ type (
 		err     error
 	}
 
+	recordingReplyPoster struct {
+		url  string
+		text string
+	}
+
 	forbiddenActionCapability struct{}
 )
 
@@ -85,6 +90,17 @@ func (f fakeInteractiveMessageResolver) GetInitialByChannelAndTS(
 	string,
 ) (*bot.DeliveredMessage, error) {
 	return f.message, f.err
+}
+
+func (r *recordingReplyPoster) PostEphemeralReply(
+	_ context.Context,
+	responseURL string,
+	text string,
+) error {
+	r.url = responseURL
+	r.text = text
+
+	return nil
 }
 
 func (forbiddenActionCapability) Name() string {
@@ -127,6 +143,7 @@ func TestInteractiveCommandDeadLettersRevokedBinding(t *testing.T) {
 	tenantID := gid.NewTenantID()
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	command, key := encryptedInteractiveCommand(t)
+	replies := &recordingReplyPoster{}
 	h := &interactiveCommandHandler{
 		encryptionKey: key,
 		installations: fakeInteractiveInstallationResolver{
@@ -137,6 +154,7 @@ func TestInteractiveCommandDeadLettersRevokedBinding(t *testing.T) {
 		bindings:     fakeInteractiveBindingGate{err: coredata.ErrResourceNotFound},
 		messages:     fakeInteractiveMessageResolver{},
 		capabilities: probot.NewCapabilityRegistry(),
+		replies:      replies,
 		logger:       log.NewLogger(),
 	}
 
@@ -144,6 +162,8 @@ func TestInteractiveCommandDeadLettersRevokedBinding(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, isPermanent(err))
 	assert.Equal(t, &organizationID, command.OrganizationID)
+	assert.Equal(t, "https://hooks.slack.com/actions/T123/1/abc", replies.url)
+	assert.Equal(t, bindRequiredText, replies.text)
 }
 
 func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
@@ -154,6 +174,7 @@ func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
 	command, key := encryptedInteractiveCommand(t)
 	registry := probot.NewCapabilityRegistry()
 	require.NoError(t, registry.Register(forbiddenActionCapability{}))
+	replies := &recordingReplyPoster{}
 	h := &interactiveCommandHandler{
 		encryptionKey: key,
 		installations: fakeInteractiveInstallationResolver{
@@ -176,6 +197,7 @@ func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
 			},
 		},
 		capabilities: registry,
+		replies:      replies,
 		logger:       log.NewLogger(),
 	}
 
@@ -183,6 +205,8 @@ func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, isPermanent(err))
 	assert.ErrorIs(t, err, probot.ErrCapabilityForbidden)
+	assert.Equal(t, "https://hooks.slack.com/actions/T123/1/abc", replies.url)
+	assert.Equal(t, interactiveForbiddenText, replies.text)
 }
 
 func encryptedInteractiveCommand(
@@ -191,7 +215,7 @@ func encryptedInteractiveCommand(
 	t.Helper()
 
 	key := cipher.EncryptionKey{1, 2, 3}
-	raw := []byte(`{"team":{"id":"T123"},"user":{"id":"U123"},"container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"test.approve","action_ts":"123.789","value":"resource-id"}]}`)
+	raw := []byte(`{"team":{"id":"T123"},"user":{"id":"U123"},"response_url":"https://hooks.slack.com/actions/T123/1/abc","container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"test.approve","action_ts":"123.789","value":"resource-id"}]}`)
 	encrypted, err := cipher.Encrypt(raw, key)
 	require.NoError(t, err)
 
