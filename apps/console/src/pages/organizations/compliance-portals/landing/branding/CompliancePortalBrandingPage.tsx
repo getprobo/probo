@@ -31,7 +31,6 @@ export const compliancePortalBrandingPageQuery = graphql`
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
-        canListCustomLinks: permission(action: "compliance-portal:compliance-custom-link:list")
         ...CompliancePortalProfileSection_compliancePortalFragment
         ...CompliancePortalCustomLinksSection_compliancePortalFragment
       }
@@ -55,9 +54,7 @@ export function CompliancePortalBrandingPage({ queryRef }: CompliancePortalBrand
   return (
     <div className="space-y-8">
       <CompliancePortalProfileSection compliancePortalRef={compliancePortal} />
-      {compliancePortal.canListCustomLinks && (
-        <CompliancePortalCustomLinksSection compliancePortalRef={compliancePortal} />
-      )}
+      <CompliancePortalCustomLinksSection compliancePortalRef={compliancePortal} />
     </div>
   );
 }

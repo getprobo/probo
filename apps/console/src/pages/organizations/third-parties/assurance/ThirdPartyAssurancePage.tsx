@@ -315,6 +315,7 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
         <SortableTable
           {...pagination}
           refetch={refetch as ComponentProps<typeof SortableTable>["refetch"]}
+          initialOrder={{ field: "REPORT_DATE", direction: "DESC" }}
         >
           <Thead>
             <Tr>
