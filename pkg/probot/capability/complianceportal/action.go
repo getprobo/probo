@@ -152,6 +152,20 @@ func (c *Capability) execute(
 		)
 	}
 
+	// Re-render the originating notification from current domain state so Slack
+	// (and any other channel) shows the new statuses and controls in place.
+	if err := c.notifications.UpdateAccessRequest(
+		ctx,
+		scope,
+		action.Message.ID,
+		requesterEmail,
+	); err != nil {
+		return messaging.ActionResult{}, fmt.Errorf(
+			"cannot refresh compliance access request message: %w",
+			err,
+		)
+	}
+
 	message := "Access request denied"
 	if selection.decision == "approve" {
 		message = "Access request approved"
@@ -197,8 +211,32 @@ func (c *Capability) selectResources(
 	action messaging.Action,
 ) (actionSelection, error) {
 	decision := ""
+	resourceValue := action.Value
 
 	switch {
+	case action.ID == capabilityName+".review_item":
+		selected, resourceID, ok := strings.Cut(action.SelectedValue, "/")
+		if !ok || resourceID == "" {
+			return actionSelection{}, fmt.Errorf(
+				"%w: invalid selected review option",
+				messaging.ErrCapabilityInvalidInput,
+			)
+		}
+
+		switch selected {
+		case "approve":
+			decision = "approve"
+		case "reject":
+			decision = "deny"
+		default:
+			return actionSelection{}, fmt.Errorf(
+				"%w: unsupported review decision %q",
+				messaging.ErrCapabilityInvalidInput,
+				selected,
+			)
+		}
+
+		resourceValue = resourceID
 	case strings.HasPrefix(action.ID, capabilityName+".approve_"):
 		decision = "approve"
 	case strings.HasPrefix(action.ID, capabilityName+".deny_"):
@@ -239,7 +277,7 @@ func (c *Capability) selectResources(
 		}, nil
 	}
 
-	resourceID, err := gid.ParseGID(action.Value)
+	resourceID, err := gid.ParseGID(resourceValue)
 	if err != nil {
 		return actionSelection{}, fmt.Errorf(
 			"%w: invalid resource ID",

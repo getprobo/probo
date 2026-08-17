@@ -55,6 +55,8 @@ type (
 	}
 )
 
+const accessRequestHeadline = "New compliance portal access request"
+
 var _ bot.MessageRenderer = (*Renderer)(nil)
 
 func NewRenderer(baseURL string) *Renderer {
@@ -87,33 +89,7 @@ func (r *Renderer) RenderMessage(
 		requester = attributes.RequesterName + " <" + attributes.RequesterEmail + ">"
 	}
 
-	cards := []bot.CardIntent{{
-		ID:       "compliance-access-request",
-		Title:    "New Compliance Page Access Request",
-		Subtitle: "Requested by " + requester,
-		Body: fmt.Sprintf(
-			"%d document(s), %d audit report(s), and %d file(s) are awaiting review.",
-			len(attributes.Documents),
-			len(attributes.Reports),
-			len(attributes.Files),
-		),
-		Actions: []bot.ActionIntent{
-			{
-				ID:    AccessCapability + ".approve_all",
-				Label: "Approve all",
-				Style: bot.ActionStylePrimary,
-			},
-			{
-				ID:    AccessCapability + ".deny_all",
-				Label: "Deny all",
-				Style: bot.ActionStyleDanger,
-			},
-			{
-				Label: "Open in Probo",
-				URL:   requestURL,
-			},
-		},
-	}}
+	documents := make([]bot.ItemIntent, 0, len(attributes.Documents))
 	for _, resource := range attributes.Documents {
 		resourceURL, err := url.JoinPath(
 			r.baseURL,
@@ -126,9 +102,10 @@ func (r *Renderer) RenderMessage(
 			return bot.MessageIntent{}, fmt.Errorf("cannot build document URL: %w", err)
 		}
 
-		cards = append(cards, resourceCard("Document", resource.Title, resourceURL, resource))
+		documents = append(documents, resourceItem(resource.Title, resourceURL, resource))
 	}
 
+	reports := make([]bot.ItemIntent, 0, len(attributes.Reports))
 	for _, resource := range attributes.Reports {
 		resourceURL, err := url.JoinPath(
 			r.baseURL,
@@ -141,65 +118,108 @@ func (r *Renderer) RenderMessage(
 			return bot.MessageIntent{}, fmt.Errorf("cannot build audit URL: %w", err)
 		}
 
-		cards = append(cards, resourceCard("Audit report", resource.Title, resourceURL, resource))
+		reports = append(reports, resourceItem(resource.Title, resourceURL, resource))
 	}
 
+	files := make([]bot.ItemIntent, 0, len(attributes.Files))
 	for _, resource := range attributes.Files {
-		subtitle := "File"
+		label := resource.Name
 		if resource.Category != "" {
-			subtitle += " · " + resource.Category
+			label += " (" + resource.Category + ")"
 		}
 
-		cards = append(cards, resourceCard(subtitle, resource.Name, requestURL, resource))
+		files = append(files, resourceItem(label, requestURL, resource))
+	}
+
+	groups := make([]bot.GroupIntent, 0, 3)
+	for _, group := range []bot.GroupIntent{
+		{ID: "documents", Title: groupTitle("Documents", documents), Items: documents},
+		{ID: "reports", Title: groupTitle("Audit reports", reports), Items: reports},
+		{ID: "files", Title: groupTitle("Files", files), Items: files},
+	} {
+		if len(group.Items) > 0 {
+			groups = append(groups, group)
+		}
 	}
 
 	return bot.MessageIntent{
-		FallbackText: "New Compliance Page Access Request",
-		Cards:        cards,
+		FallbackText: accessRequestHeadline,
+		Headline:     "🔒 " + accessRequestHeadline,
+		Context:      "Requested by " + requester,
+		Actions: []bot.ActionIntent{
+			{
+				ID:    AccessCapability + ".approve_all",
+				Label: "Grant all",
+				Style: bot.ActionStylePrimary,
+			},
+			{
+				ID:    AccessCapability + ".deny_all",
+				Label: "Reject/revoke all",
+				Style: bot.ActionStyleDanger,
+			},
+			{
+				Label: "Open in Probo",
+				URL:   requestURL,
+			},
+		},
+		Groups: groups,
 	}, nil
 }
 
-func resourceCard(
-	subtitle string,
-	title string,
-	titleURL string,
+// resourceItem gives a status only to decided resources: on a pending row the
+// review menu already carries that meaning, and repeating it on every row of a
+// long request is noise.
+func resourceItem(
+	label string,
+	labelURL string,
 	resource MessageResource,
-) bot.CardIntent {
-	status := statusLabel(resource.Status)
-
-	card := bot.CardIntent{
-		ID:       resource.ID,
-		Title:    title,
-		TitleURL: titleURL,
-		Subtitle: subtitle,
-		Body:     "Status: " + status,
+) bot.ItemIntent {
+	item := bot.ItemIntent{
+		ID:    resource.ID,
+		Label: label,
+		URL:   labelURL,
 	}
-	if resource.Status == "REQUESTED" {
-		card.Actions = []bot.ActionIntent{
-			{
-				ID:    AccessCapability + ".approve_item",
-				Label: "Approve",
-				Style: bot.ActionStylePrimary,
-				Value: resource.ID,
-			},
-			{
-				ID:    AccessCapability + ".deny_item",
-				Label: "Deny",
-				Style: bot.ActionStyleDanger,
-				Value: resource.ID,
+
+	switch resource.Status {
+	case "GRANTED":
+		item.Status = statusLabel(resource.Status)
+		item.Action = &bot.ActionIntent{
+			ID:    AccessCapability + ".deny_item",
+			Label: "Revoke",
+			Style: bot.ActionStyleDanger,
+			Value: resource.ID,
+		}
+	case "REJECTED", "REVOKED":
+		item.Status = statusLabel(resource.Status)
+		item.Action = &bot.ActionIntent{
+			ID:    AccessCapability + ".approve_item",
+			Label: "Grant",
+			Style: bot.ActionStylePrimary,
+			Value: resource.ID,
+		}
+	default:
+		item.Action = &bot.ActionIntent{
+			ID: AccessCapability + ".review_item",
+			Options: []bot.ActionOptionIntent{
+				{Label: "Grant", Value: "approve/" + resource.ID},
+				{Label: "Reject", Value: "reject/" + resource.ID},
 			},
 		}
 	}
 
-	return card
+	return item
+}
+
+func groupTitle(name string, items []bot.ItemIntent) string {
+	return fmt.Sprintf("%s (%d)", name, len(items))
 }
 
 func statusLabel(status string) string {
 	switch status {
 	case "GRANTED":
-		return "Approved"
+		return "Granted"
 	case "REJECTED":
-		return "Denied"
+		return "Rejected"
 	case "REVOKED":
 		return "Revoked"
 	default:

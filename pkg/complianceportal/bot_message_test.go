@@ -54,7 +54,25 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	require.Len(t, intent.Cards, 2)
-	assert.Equal(t, AccessCapability+".approve_all", intent.Cards[0].Actions[0].ID)
-	assert.Equal(t, AccessCapability+".approve_item", intent.Cards[1].Actions[0].ID)
+	require.Len(t, intent.Actions, 3)
+	assert.Equal(t, AccessCapability+".approve_all", intent.Actions[0].ID)
+
+	require.Len(t, intent.Groups, 1)
+	assert.Equal(t, "Documents (1)", intent.Groups[0].Title)
+
+	require.Len(t, intent.Groups[0].Items, 1)
+	item := intent.Groups[0].Items[0]
+	assert.Equal(t, "Security policy", item.Label)
+	assert.Empty(t, item.Status)
+
+	require.NotNil(t, item.Action)
+	assert.Equal(t, AccessCapability+".review_item", item.Action.ID)
+	assert.Equal(
+		t,
+		[]bot.ActionOptionIntent{
+			{Label: "Grant", Value: "approve/" + item.ID},
+			{Label: "Reject", Value: "reject/" + item.ID},
+		},
+		item.Action.Options,
+	)
 }

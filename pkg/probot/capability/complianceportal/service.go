@@ -419,9 +419,8 @@ func (s *Service) QueueWelcome(
 	}
 
 	text := fmt.Sprintf(
-		"Access requests for %s will be delivered here. Manage requests at %s.",
+		"Access requests for %s will be delivered here.",
 		compliancePortal.EntityName,
-		accessURL,
 	)
 	message := bot.Message{
 		OrganizationID: organizationID,
@@ -439,7 +438,17 @@ func (s *Service) QueueWelcome(
 			Key:       compliancePortalID.String(),
 		},
 		message,
-		bot.MessageIntent{FallbackText: text},
+		bot.MessageIntent{
+			FallbackText: text + " Manage requests at " + accessURL + ".",
+			Headline:     "Access requests",
+			Body:         text,
+			Actions: []bot.ActionIntent{
+				{
+					Label: "Manage requests",
+					URL:   accessURL,
+				},
+			},
+		},
 	)
 }
 

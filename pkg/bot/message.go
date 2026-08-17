@@ -30,26 +30,46 @@ import (
 type (
 	ActionStyle string
 
+	// ActionIntent is a single control. When Options is set the control offers
+	// those choices instead of firing on click, and the chosen option value is
+	// reported back as the selected value.
 	ActionIntent struct {
-		ID    string
-		Label string
-		Style ActionStyle
-		Value string
-		URL   string
+		ID      string
+		Label   string
+		Style   ActionStyle
+		Value   string
+		URL     string
+		Options []ActionOptionIntent
 	}
 
-	CardIntent struct {
-		ID       string
-		Title    string
-		TitleURL string
-		Subtitle string
-		Body     string
-		Actions  []ActionIntent
+	ActionOptionIntent struct {
+		Label string
+		Value string
+	}
+
+	// ItemIntent is one row of a group: a label that may link to the resource,
+	// an optional state, and at most one control.
+	ItemIntent struct {
+		ID     string
+		Label  string
+		URL    string
+		Status string
+		Action *ActionIntent
+	}
+
+	GroupIntent struct {
+		ID    string
+		Title string
+		Items []ItemIntent
 	}
 
 	MessageIntent struct {
 		FallbackText string
-		Cards        []CardIntent
+		Headline     string
+		Context      string
+		Body         string
+		Actions      []ActionIntent
+		Groups       []GroupIntent
 	}
 
 	Message struct {

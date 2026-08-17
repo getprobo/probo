@@ -29,101 +29,252 @@ import (
 
 const (
 	messageBlockLimit = 50
-	cardActionLimit   = 5
-	cardTitleLimit    = 150
-	cardSubtitleLimit = 150
-	cardBodyLimit     = 200
+	actionLimit       = 5
+	headlineLimit     = 150
+	itemLabelLimit    = 150
+	labelLimit        = 75
+	fieldTextLimit    = 2000
+	textLimit         = 3000
 )
 
 func RenderMessageIntent(intent bot.MessageIntent) map[string]any {
-	cards := intent.Cards
-	if len(cards) > messageBlockLimit {
-		hiddenCount := len(cards) - messageBlockLimit + 1
-		visible := append([]bot.CardIntent(nil), cards[:messageBlockLimit-1]...)
-		cards = append(
-			visible,
-			bot.CardIntent{
-				ID:    "truncation-summary",
-				Title: "Additional resources not shown",
-				Body:  fmt.Sprintf("%d additional item(s) are available in Probo.", hiddenCount),
+	blocks := renderIntentHeader(intent)
+
+	itemCount := 0
+	for _, group := range intent.Groups {
+		itemCount += len(group.Items)
+	}
+
+	renderedCount := 0
+	truncated := false
+
+	for _, group := range intent.Groups {
+		if len(group.Items) == 0 {
+			continue
+		}
+
+		// A group costs a divider and a title before its first row, and one
+		// block stays free for the truncation notice.
+		if len(blocks)+4 > messageBlockLimit {
+			truncated = true
+
+			break
+		}
+
+		blocks = append(
+			blocks,
+			map[string]any{
+				"type":     "divider",
+				"block_id": blockID("divider", group.ID),
+			},
+			map[string]any{
+				"type":     "section",
+				"block_id": blockID("group", group.ID),
+				"text":     markdownText("*"+escapeSlackText(group.Title)+"*", textLimit),
+			},
+		)
+
+		for _, item := range group.Items {
+			if len(blocks)+2 > messageBlockLimit {
+				truncated = true
+
+				break
+			}
+
+			blocks = append(blocks, renderItemBlock(item))
+			renderedCount++
+		}
+
+		if truncated {
+			break
+		}
+	}
+
+	if truncated {
+		blocks = append(blocks, renderTruncationBlock(itemCount-renderedCount))
+	}
+
+	payload := map[string]any{"text": intent.FallbackText}
+	if len(blocks) > 0 {
+		payload["blocks"] = blocks
+	}
+
+	return payload
+}
+
+func renderIntentHeader(intent bot.MessageIntent) []any {
+	blocks := make([]any, 0, 4)
+	if intent.Headline != "" {
+		blocks = append(
+			blocks,
+			map[string]any{
+				"type":     "header",
+				"block_id": "headline",
+				"text": map[string]any{
+					"type": "plain_text",
+					"text": truncateText(intent.Headline, headlineLimit),
+				},
 			},
 		)
 	}
 
-	blocks := make([]any, 0, len(cards))
-	for _, card := range cards {
-		block := map[string]any{
-			"type":     "card",
-			"block_id": truncateText("card-"+card.ID, 255),
-			"title": rawTextObject(
-				renderCardTitle(card.Title, card.TitleURL),
-				cardTitleLimit,
+	if intent.Context != "" {
+		blocks = append(
+			blocks,
+			map[string]any{
+				"type":     "context",
+				"block_id": "context",
+				"elements": []any{
+					markdownText(escapeSlackText(intent.Context), textLimit),
+				},
+			},
+		)
+	}
+
+	if intent.Body != "" {
+		blocks = append(
+			blocks,
+			map[string]any{
+				"type":     "section",
+				"block_id": "body",
+				"text":     markdownText(escapeSlackText(intent.Body), textLimit),
+			},
+		)
+	}
+
+	if len(intent.Actions) > 0 {
+		blocks = append(
+			blocks,
+			map[string]any{
+				"type":     "actions",
+				"block_id": "actions",
+				"elements": renderActionElements(intent.Actions),
+			},
+		)
+	}
+
+	return blocks
+}
+
+func renderItemBlock(item bot.ItemIntent) map[string]any {
+	fields := []any{
+		markdownText(renderItemLabel(item), fieldTextLimit),
+	}
+	if item.Status != "" {
+		fields = append(fields, markdownText(escapeSlackText(item.Status), fieldTextLimit))
+	}
+
+	block := map[string]any{
+		"type":     "section",
+		"block_id": blockID("item", item.ID),
+		"fields":   fields,
+	}
+	if item.Action != nil {
+		block["accessory"] = renderActionElement(*item.Action)
+	}
+
+	return block
+}
+
+func renderActionElements(actions []bot.ActionIntent) []any {
+	actionCount := min(len(actions), actionLimit)
+
+	elements := make([]any, 0, actionCount)
+	for _, action := range actions[:actionCount] {
+		elements = append(elements, renderActionElement(action))
+	}
+
+	return elements
+}
+
+func renderActionElement(action bot.ActionIntent) map[string]any {
+	if len(action.Options) > 0 {
+		options := make([]any, 0, len(action.Options))
+		for _, option := range action.Options {
+			options = append(
+				options,
+				map[string]any{
+					"text":  plainText(option.Label, labelLimit),
+					"value": option.Value,
+				},
+			)
+		}
+
+		return map[string]any{
+			"type":      "overflow",
+			"action_id": action.ID,
+			"options":   options,
+		}
+	}
+
+	element := map[string]any{
+		"type": "button",
+		"text": plainText(action.Label, labelLimit),
+	}
+	if action.ID != "" {
+		element["action_id"] = action.ID
+	}
+
+	if action.Value != "" {
+		element["value"] = action.Value
+	}
+
+	if action.URL != "" {
+		element["url"] = action.URL
+	}
+
+	switch action.Style {
+	case bot.ActionStylePrimary:
+		element["style"] = "primary"
+	case bot.ActionStyleDanger:
+		element["style"] = "danger"
+	}
+
+	return element
+}
+
+func renderTruncationBlock(hiddenCount int) map[string]any {
+	noun := "items are"
+	if hiddenCount == 1 {
+		noun = "item is"
+	}
+
+	return map[string]any{
+		"type":     "context",
+		"block_id": "truncation",
+		"elements": []any{
+			markdownText(
+				fmt.Sprintf("%d more %s only listed in Probo.", hiddenCount, noun),
+				textLimit,
 			),
-		}
-		if card.Subtitle != "" {
-			block["subtitle"] = textObject(card.Subtitle, cardSubtitleLimit)
-		}
-
-		if card.Body != "" {
-			block["body"] = textObject(card.Body, cardBodyLimit)
-		}
-
-		if len(card.Actions) > 0 {
-			actionCount := min(len(card.Actions), cardActionLimit)
-
-			actions := make([]any, 0, actionCount)
-			for _, action := range card.Actions[:actionCount] {
-				element := map[string]any{
-					"type": "button",
-					"text": map[string]any{
-						"type":  "plain_text",
-						"text":  truncateText(action.Label, 150),
-						"emoji": false,
-					},
-				}
-				if action.ID != "" {
-					element["action_id"] = action.ID
-				}
-
-				if action.Value != "" {
-					element["value"] = action.Value
-				}
-
-				if action.URL != "" {
-					element["url"] = action.URL
-				}
-
-				switch action.Style {
-				case bot.ActionStylePrimary:
-					element["style"] = "primary"
-				case bot.ActionStyleDanger:
-					element["style"] = "danger"
-				}
-
-				actions = append(actions, element)
-			}
-
-			block["actions"] = actions
-		}
-
-		blocks = append(blocks, block)
-	}
-
-	return map[string]any{
-		"text":   intent.FallbackText,
-		"blocks": blocks,
+		},
 	}
 }
 
-func textObject(text string, limit int) map[string]any {
-	return map[string]any{
-		"type":     "mrkdwn",
-		"text":     escapeSlackText(truncateText(text, limit)),
-		"verbatim": false,
+func renderItemLabel(item bot.ItemIntent) string {
+	if item.URL == "" {
+		return escapeSlackText(truncateText(item.Label, itemLabelLimit))
 	}
+
+	available := fieldTextLimit - len([]rune(item.URL)) - 3
+	if available < 1 {
+		return escapeSlackText(truncateText(item.Label, itemLabelLimit))
+	}
+
+	available = min(available, itemLabelLimit)
+
+	return fmt.Sprintf(
+		"<%s|%s>",
+		item.URL,
+		escapeSlackText(truncateText(item.Label, available)),
+	)
 }
 
-func rawTextObject(text string, limit int) map[string]any {
+func blockID(prefix string, id string) string {
+	return truncateText(prefix+"-"+id, 255)
+}
+
+func markdownText(text string, limit int) map[string]any {
 	return map[string]any{
 		"type":     "mrkdwn",
 		"text":     truncateText(text, limit),
@@ -131,21 +282,12 @@ func rawTextObject(text string, limit int) map[string]any {
 	}
 }
 
-func renderCardTitle(title string, titleURL string) string {
-	if titleURL == "" {
-		return escapeSlackText(title)
+func plainText(text string, limit int) map[string]any {
+	return map[string]any{
+		"type":  "plain_text",
+		"text":  truncateText(text, limit),
+		"emoji": false,
 	}
-
-	available := cardTitleLimit - len([]rune(titleURL)) - 3
-	if available < 1 {
-		return escapeSlackText(truncateText(title, cardTitleLimit))
-	}
-
-	return fmt.Sprintf(
-		"<%s|%s>",
-		titleURL,
-		escapeSlackText(truncateText(title, available)),
-	)
 }
 
 func truncateText(text string, limit int) string {
