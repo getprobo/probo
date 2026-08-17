@@ -264,6 +264,13 @@ spec:
             - name: PROBOD_OPENAI_MAX_TOKENS
               value: {{ .Values.probo.openai.maxTokens | quote }}
             {{- end }}
+            {{- if .Values.probo.anthropic.apiKey }}
+            - name: PROBOD_ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: anthropic-api-key
+            {{- end }}
             # Agent Tools
             {{- if .Values.probo.agentTools.firecrawlApiKey }}
             - name: PROBOD_FIRECRAWL_API_KEY
@@ -471,6 +478,9 @@ spec:
             {{- if .Values.probo.slackbot.enabled }}
             {{- if eq .Values.probo.slackbot.provider "openai" }}
             {{- $_ := required "probo.openai.apiKey is required when Slackbot uses the OpenAI provider" .Values.probo.openai.apiKey }}
+            {{- end }}
+            {{- if eq .Values.probo.slackbot.provider "anthropic" }}
+            {{- $_ := required "probo.anthropic.apiKey is required when Slackbot uses the Anthropic provider" .Values.probo.anthropic.apiKey }}
             {{- end }}
             - name: PROBOD_SLACKBOT_ENABLED
               value: "true"

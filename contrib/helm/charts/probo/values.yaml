@@ -306,6 +306,10 @@ probo:
     modelName: "gpt-4o"
     maxTokens: 4096
 
+  # Anthropic integration (optional; required when slackbot.provider is anthropic)
+  anthropic:
+    apiKey: ""
+
   # Agent tools (optional, shared across agents)
   agentTools:
     # Firecrawl web search API key (used by tracker mapping and third-party vetter agents)

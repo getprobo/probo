@@ -190,6 +190,10 @@ probo:
     modelName: "gpt-4o"
     maxTokens: 4096
 
+  # Anthropic integration (required when slackbot.provider is anthropic)
+  # anthropic:
+  #   apiKey: "CHANGE_ME_ANTHROPIC_API_KEY"
+
   # Agent tools (optional, shared across agents)
   # agentTools:
   #   firecrawlApiKey: "CHANGE_ME_FIRECRAWL_API_KEY"
@@ -285,7 +289,7 @@ probo:
     signingSecret: ""
     clientId: ""
     clientSecret: ""
-    redirectUri: "https://app.example.com/api/console/v1/slackbot/install/complete"
+    redirectUri: "https://probo.example.com/api/console/v1/slackbot/install/complete"
     provider: "openai"
     modelName: "gpt-4o"
     temperature: "0.1"
