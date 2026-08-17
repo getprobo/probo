@@ -54,6 +54,7 @@ type (
 		OrganizationID   gid.GID
 		Purpose          coredata.BotMessagePurpose
 		SourceEventID    string
+		AgentExecutionID gid.GID
 		SubjectNamespace string
 		SubjectKey       string
 		Capability       string

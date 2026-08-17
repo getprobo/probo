@@ -129,6 +129,37 @@ func TestTools_SendMessageOperationKeyIncludesToolCallID(t *testing.T) {
 	assert.NotEqual(t, keys[0], keys[1])
 }
 
+func TestTools_SendMessageIncludesAgentExecutionID(t *testing.T) {
+	t.Parallel()
+
+	pgClient, organizationID := toolsDatabase(t)
+	queue := slackchannel.NewDeliveryService(pgClient)
+	executionID := gid.New(
+		coredata.NewScopeFromObjectID(organizationID).GetTenantID(),
+		coredata.AgentExecutionEntityType,
+	)
+	turn := slackchannel.TurnBinding{
+		OrganizationID: organizationID,
+		ExecutionID:    executionID,
+		ChannelID:      "C123",
+		ThreadTS:       "111.222",
+		MessageTS:      "111.222",
+	}
+	tool := sendMessageTool(t, queue, turn)
+
+	result, err := tool.Execute(
+		agent.WithToolCallID(t.Context(), "call-1"),
+		`{"text":"hello"}`,
+	)
+	require.NoError(t, err)
+	assert.False(t, result.IsError)
+
+	keys := loadToolOperationKeys(t, pgClient, organizationID)
+	require.Len(t, keys, 1)
+	payload := loadToolPayload(t, pgClient, organizationID, keys[0])
+	assert.Equal(t, executionID.String(), payload["agent_execution_id"])
+}
+
 func TestTools_AddReactionTargetsBoundMessageTS(t *testing.T) {
 	t.Parallel()
 

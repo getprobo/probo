@@ -34,6 +34,7 @@ import (
 type (
 	TurnBinding struct {
 		OrganizationID gid.GID
+		ExecutionID    gid.GID
 		ChannelID      string
 		ThreadTS       string
 		MessageTS      string
@@ -65,17 +66,21 @@ func Tools(queue *DeliveryService, turn TurnBinding) []agent.Tool {
 
 				intent := bot.MessageIntent{FallbackText: p.Text}
 				body := RenderMessageIntent(intent)
+				payload := map[string]any{
+					"channel":   turn.ChannelID,
+					"text":      body["text"],
+					"thread_ts": turn.ThreadTS,
+				}
+				if turn.ExecutionID != gid.Nil {
+					payload[deliveryAgentExecutionMetadata] = turn.ExecutionID.String()
+				}
 
 				_, _, err := queue.Queue(
 					ctx,
 					turn.OrganizationID,
 					operationKey,
 					coredata.SlackDeliveryOperationKindPostMessage,
-					map[string]any{
-						"channel":   turn.ChannelID,
-						"text":      body["text"],
-						"thread_ts": turn.ThreadTS,
-					},
+					payload,
 				)
 				if err != nil {
 					return agent.ResultErrorf("cannot queue message: %s", err), nil

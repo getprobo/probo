@@ -188,7 +188,7 @@ func TestExecutionAdapterRejectsMalformedSourceCoordinates(t *testing.T) {
 	assert.ErrorContains(t, err, "source coordinates")
 }
 
-func TestExecutionAdapterUsesInputIdentityWithoutBindingLookup(t *testing.T) {
+func TestExecutionAdapterUsesInputIdentityWhenTurnActorMatches(t *testing.T) {
 	t.Parallel()
 
 	pgClient, organizationID, teamID := executionAdapterDatabase(t)
@@ -205,9 +205,7 @@ func TestExecutionAdapterUsesInputIdentityWithoutBindingLookup(t *testing.T) {
 	require.NoError(t, err)
 
 	bindings := &fakeExecutionBindings{
-		binding: &identitybinding.Binding{
-			IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
-		},
+		binding: &identitybinding.Binding{IdentityID: inputIdentityID},
 	}
 	adapter := newExecutionAdapter(t, pgClient, "", bindings)
 
@@ -226,7 +224,113 @@ func TestExecutionAdapterUsesInputIdentityWithoutBindingLookup(t *testing.T) {
 
 	runContext := agent.RunContextFrom[*probot.RunContext](preparedCtx)
 	assert.Equal(t, inputIdentityID, runContext.IdentityID)
-	assert.Equal(t, 0, bindings.lookups)
+	assert.Equal(t, 1, bindings.lookups)
+	assert.Equal(t, "U123", bindings.subject.ExternalUserID)
+}
+
+func TestExecutionAdapterResolvesTrustFromInputActor(t *testing.T) {
+	t.Parallel()
+
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	identityID := gid.New(organizationID.TenantID(), coredata.IdentityEntityType)
+	executionCoords, err := json.Marshal(
+		ExecutionSourceCoordinates{
+			TeamID:         teamID,
+			ChannelID:      "C123",
+			ThreadTS:       "123.000",
+			MessageTS:      "123.456",
+			ExternalUserID: "U123",
+		},
+	)
+	require.NoError(t, err)
+	inputCoords, err := json.Marshal(
+		ExecutionSourceCoordinates{
+			ActorTeamID:    "TOTHER",
+			ChannelID:      "C123",
+			ThreadTS:       "123.000",
+			MessageTS:      "124.000",
+			ExternalUserID: "U999",
+		},
+	)
+	require.NoError(t, err)
+
+	bindings := &fakeExecutionBindings{
+		binding: &identitybinding.Binding{IdentityID: identityID},
+	}
+	adapter := newExecutionAdapter(t, pgClient, "", bindings)
+
+	preparedCtx, _, err := adapter.Prepare(
+		t.Context(),
+		&coredata.AgentExecution{
+			ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
+			OrganizationID:    organizationID,
+			StartAgentName:    "probot",
+			SourceCoordinates: executionCoords,
+		},
+		nil,
+		&coredata.AgentInput{SourceCoordinates: inputCoords},
+	)
+	require.NoError(t, err)
+
+	runContext := agent.RunContextFrom[*probot.RunContext](preparedCtx)
+	assert.Equal(t, identityID, runContext.IdentityID)
+	assert.Equal(t, 1, bindings.lookups)
+	assert.Equal(t, "U999", bindings.subject.ExternalUserID)
+	assert.Equal(t, "TOTHER", bindings.subject.ExternalTenantID)
+	assert.Equal(t, "124.000", runContext.CurrentMessageID)
+}
+
+func TestExecutionAdapterRejectsMismatchedInputIdentityAndTurnActor(t *testing.T) {
+	t.Parallel()
+
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	inputIdentityID := gid.New(organizationID.TenantID(), coredata.IdentityEntityType)
+	executionCoords, err := json.Marshal(
+		ExecutionSourceCoordinates{
+			TeamID:         teamID,
+			ChannelID:      "C123",
+			ThreadTS:       "123.000",
+			MessageTS:      "123.456",
+			ExternalUserID: "U123",
+		},
+	)
+	require.NoError(t, err)
+	inputCoords, err := json.Marshal(
+		ExecutionSourceCoordinates{
+			ChannelID:      "C123",
+			ThreadTS:       "123.000",
+			MessageTS:      "124.000",
+			ExternalUserID: "U999",
+		},
+	)
+	require.NoError(t, err)
+
+	adapter := newExecutionAdapter(
+		t,
+		pgClient,
+		"",
+		&fakeExecutionBindings{
+			binding: &identitybinding.Binding{
+				IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
+			},
+		},
+	)
+
+	_, _, err = adapter.Prepare(
+		t.Context(),
+		&coredata.AgentExecution{
+			ID:                gid.New(organizationID.TenantID(), coredata.AgentExecutionEntityType),
+			OrganizationID:    organizationID,
+			StartAgentName:    "probot",
+			SourceCoordinates: executionCoords,
+		},
+		nil,
+		&coredata.AgentInput{
+			IdentityID:        &inputIdentityID,
+			SourceCoordinates: inputCoords,
+		},
+	)
+	assert.ErrorContains(t, err, "does not match turn actor")
 }
 
 func TestExecutionAdapterBindsReactionToInputMessageTS(t *testing.T) {

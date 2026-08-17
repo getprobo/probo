@@ -109,7 +109,7 @@ func (a *ExecutionAdapter) Prepare(
 		return nil, nil, err
 	}
 
-	installation, identityID, err := a.resolveTrust(ctx, execution, coordinates, input)
+	installation, identityID, err := a.resolveTrust(ctx, execution, turn, input)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -125,7 +125,13 @@ func (a *ExecutionAdapter) Prepare(
 
 	runContext := hydrateRunContext(execution, turn, identityID, subject)
 
-	registry, err := a.registryForRun(execution.OrganizationID, execution.StartAgentName, turn, subject)
+	registry, err := a.registryForRun(
+		execution.OrganizationID,
+		execution.ID,
+		execution.StartAgentName,
+		turn,
+		subject,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -156,6 +162,7 @@ func hydrateRunContext(
 
 func (a *ExecutionAdapter) registryForRun(
 	organizationID gid.GID,
+	executionID gid.GID,
 	startAgentName string,
 	turn ExecutionSourceCoordinates,
 	subject threadSubject,
@@ -177,6 +184,7 @@ func (a *ExecutionAdapter) registryForRun(
 				a.deliveries,
 				TurnBinding{
 					OrganizationID: organizationID,
+					ExecutionID:    executionID,
 					ChannelID:      turn.ChannelID,
 					ThreadTS:       turn.ThreadTS,
 					MessageTS:      turn.MessageTS,
@@ -245,6 +253,8 @@ func (a *ExecutionAdapter) resolveTrust(
 	coordinates ExecutionSourceCoordinates,
 	input *coredata.AgentInput,
 ) (*coredata.SlackbotInstallation, gid.GID, error) {
+	inputIdentityID := identityIDFromInput(input)
+
 	if coordinates.TeamID == "" && coordinates.ExternalUserID == "" {
 		installation, err := a.installations.GetByOrganizationID(
 			ctx,
@@ -259,7 +269,7 @@ func (a *ExecutionAdapter) resolveTrust(
 			return nil, gid.Nil, ErrSlackbotNotInstalled
 		}
 
-		return installation, identityIDFromInput(input), nil
+		return installation, inputIdentityID, nil
 	}
 
 	if coordinates.TeamID == "" || coordinates.ChannelID == "" || coordinates.MessageTS == "" {
@@ -271,11 +281,11 @@ func (a *ExecutionAdapter) resolveTrust(
 		return nil, gid.Nil, fmt.Errorf("cannot revalidate inbound Slack installation: %w", err)
 	}
 
-	if identityID := identityIDFromInput(input); identityID != gid.Nil {
-		return installation, identityID, nil
-	}
-
 	if coordinates.ExternalUserID == "" {
+		if inputIdentityID != gid.Nil {
+			return installation, inputIdentityID, nil
+		}
+
 		return nil, gid.Nil, fmt.Errorf("inbound Slack execution coordinates are incomplete")
 	}
 
@@ -289,6 +299,14 @@ func (a *ExecutionAdapter) resolveTrust(
 	)
 	if err != nil {
 		return nil, gid.Nil, fmt.Errorf("cannot revalidate inbound Slack identity binding: %w", err)
+	}
+
+	if inputIdentityID != gid.Nil && inputIdentityID != binding.IdentityID {
+		return nil, gid.Nil, fmt.Errorf("slack input identity does not match turn actor")
+	}
+
+	if inputIdentityID != gid.Nil {
+		return installation, inputIdentityID, nil
 	}
 
 	return installation, binding.IdentityID, nil
@@ -331,6 +349,18 @@ func turnCoordinates(
 
 	if inputCoords.MessageTS != "" {
 		turn.MessageTS = inputCoords.MessageTS
+	}
+
+	if inputCoords.TeamID != "" {
+		turn.TeamID = inputCoords.TeamID
+	}
+
+	if inputCoords.ActorTeamID != "" {
+		turn.ActorTeamID = inputCoords.ActorTeamID
+	}
+
+	if inputCoords.ExternalUserID != "" {
+		turn.ExternalUserID = inputCoords.ExternalUserID
 	}
 
 	return turn, nil
