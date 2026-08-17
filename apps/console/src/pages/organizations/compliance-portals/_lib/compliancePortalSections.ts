@@ -44,7 +44,6 @@ export const compliancePortalSectionsFragment = graphql`
       action: "compliance-portal:mailing-list-update:list"
     )
     organization @required(action: THROW) {
-      canConnectSlack: permission(action: "core:connector:initiate")
       canListSlackConnections: permission(action: "core:slack-connection:list")
     }
   }
@@ -67,7 +66,6 @@ export interface CompliancePortalSectionPermissions {
   canGetCustomDomain: boolean;
   canGetNDA: boolean;
   canListAccesses: boolean;
-  canConnectSlack: boolean;
   canListSlackConnections: boolean;
   canListCustomLinks: boolean;
   canListCommitmentGroups: boolean;
@@ -112,8 +110,9 @@ export const COMPLIANCE_PORTAL_SECTIONS: CompliancePortalSection[] = [
     path: "integrations",
     labelKey: "nav.compliancePortalsIntegrations",
     group: "settings",
-    isVisible: permissions =>
-      permissions.canConnectSlack && permissions.canListSlackConnections,
+    // The page lists existing connections read-only, so connect permission only
+    // gates its connect controls.
+    isVisible: permissions => permissions.canListSlackConnections,
   },
   {
     id: "landing",
@@ -172,7 +171,6 @@ export function sectionPermissionsFrom(
     canGetCustomDomain: data.canGetCustomDomain,
     canGetNDA: data.canGetNDA,
     canListAccesses: data.canListAccesses,
-    canConnectSlack: data.organization.canConnectSlack,
     canListSlackConnections: data.organization.canListSlackConnections,
     canListCustomLinks: data.canListCustomLinks,
     canListCommitmentGroups: data.canListCommitmentGroups,

@@ -96,7 +96,13 @@ export function CookieBannerSwitcherMenu({ queryRef, selectedId }: CookieBannerS
   }
 
   const banners = data.cookieBanners.edges.map(edge => edge.node);
-  const checkedId = selectedId ?? banners[0]?.id;
+  // The switcher value falls back to the most recent banner when the selection
+  // is stale, so the check mark has to follow. A selection missing from the
+  // loaded pages only counts as stale once the whole list is loaded.
+  const isSelectionLoaded = banners.some(banner => banner.id === selectedId);
+  const checkedId = selectedId != null && (isSelectionLoaded || hasNext)
+    ? selectedId
+    : banners[0]?.id;
   const newBannerHref = `${cookieBannersBasePath(organizationId)}/new`;
 
   return (

@@ -14,6 +14,7 @@
 
 import { Card, Field, useToast } from "@probo/ui";
 import type { FocusEvent } from "react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -81,18 +82,26 @@ export function CompliancePortalProfileSection({
     },
   );
 
+  // The mutation rewrites the whole portal record, so overlapping saves would
+  // let an in-flight one discard a field another blur just changed.
+  const pendingSaveRef = useRef<Promise<unknown>>(Promise.resolve());
+
   function patch(
     field: "entityName" | OptionalProfileField,
     value: string | null,
   ) {
-    void updateCompliancePortal({
-      variables: {
-        input: {
-          compliancePortalId: compliancePortal.id,
-          [field]: value,
-        },
-      },
-    });
+    pendingSaveRef.current = pendingSaveRef.current
+      .catch(() => undefined)
+      .then(() =>
+        updateCompliancePortal({
+          variables: {
+            input: {
+              compliancePortalId: compliancePortal.id,
+              [field]: value,
+            },
+          },
+        }),
+      );
   }
 
   function handleEntityNameBlur(event: FocusEvent<HTMLInputElement>) {
@@ -124,27 +133,26 @@ export function CompliancePortalProfileSection({
     },
   };
 
-  function optionalBlurHandler(
+  function handleOptionalBlur(
     field: OptionalProfileField,
     current: string | null | undefined,
+    event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
-    return (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const next = normalizeOptional(event.currentTarget.value);
-      if (next === normalizeOptional(current)) {
-        return;
-      }
-      const validation = fieldSchemas[field];
-      if (validation != null && next != null && !validation.schema.safeParse(next).success) {
-        event.currentTarget.value = current ?? "";
-        toast({
-          title: validation.message,
-          description: "",
-          variant: "error",
-        });
-        return;
-      }
-      patch(field, next);
-    };
+    const next = normalizeOptional(event.currentTarget.value);
+    if (next === normalizeOptional(current)) {
+      return;
+    }
+    const validation = fieldSchemas[field];
+    if (validation != null && next != null && !validation.schema.safeParse(next).success) {
+      event.currentTarget.value = current ?? "";
+      toast({
+        title: validation.message,
+        description: "",
+        variant: "error",
+      });
+      return;
+    }
+    patch(field, next);
   }
 
   const entityName = compliancePortal.entityName;
@@ -174,7 +182,8 @@ export function CompliancePortalProfileSection({
         <Field
           key={description}
           defaultValue={description}
-          onBlur={optionalBlurHandler("description", compliancePortal.description)}
+          onBlur={event =>
+            handleOptionalBlur("description", compliancePortal.description, event)}
           readOnly={!canUpdate}
           name="description"
           type="textarea"
@@ -187,7 +196,8 @@ export function CompliancePortalProfileSection({
           <Field
             key={websiteUrl}
             defaultValue={websiteUrl}
-            onBlur={optionalBlurHandler("websiteUrl", compliancePortal.websiteUrl)}
+            onBlur={event =>
+              handleOptionalBlur("websiteUrl", compliancePortal.websiteUrl, event)}
             readOnly={!canUpdate}
             name="websiteUrl"
             type="url"
@@ -197,7 +207,7 @@ export function CompliancePortalProfileSection({
           <Field
             key={email}
             defaultValue={email}
-            onBlur={optionalBlurHandler("email", compliancePortal.email)}
+            onBlur={event => handleOptionalBlur("email", compliancePortal.email, event)}
             readOnly={!canUpdate}
             name="email"
             type="email"
@@ -208,10 +218,12 @@ export function CompliancePortalProfileSection({
         <Field
           key={headquarterAddress}
           defaultValue={headquarterAddress}
-          onBlur={optionalBlurHandler(
-            "headquarterAddress",
-            compliancePortal.headquarterAddress,
-          )}
+          onBlur={(event: FocusEvent<HTMLInputElement>) =>
+            handleOptionalBlur(
+              "headquarterAddress",
+              compliancePortal.headquarterAddress,
+              event,
+            )}
           readOnly={!canUpdate}
           name="headquarterAddress"
           label={t("brandPage.profile.fields.address")}

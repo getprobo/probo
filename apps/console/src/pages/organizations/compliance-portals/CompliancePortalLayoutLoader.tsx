@@ -37,13 +37,21 @@ export default function CompliancePortalLayoutLoader() {
     }
   }, [loadQuery, compliancePortalId]);
 
-  if (!queryRef) {
+  // loadQuery runs in an effect, so right after a portal-to-portal navigation
+  // the ref still describes the previous portal. Rendering it would resolve the
+  // landing redirect from the old portal's permissions.
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.compliancePortalId === compliancePortalId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <PageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <CompliancePortalLayout queryRef={queryRef} />
+    <Suspense key={compliancePortalId} fallback={<PageSkeleton />}>
+      <CompliancePortalLayout queryRef={currentQueryRef} />
     </Suspense>
   );
 }

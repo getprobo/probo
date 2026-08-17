@@ -39,7 +39,7 @@ export const navPanelSwitcher = tv({
     itemBody: "flex min-w-0 flex-1 flex-col gap-0.5",
     itemName: "truncate group-data-highlighted:text-white",
     itemOrigin: "truncate group-data-highlighted:text-white",
-    itemCheck: "size-4 shrink-0 text-sand-12",
+    itemCheck: "size-4 shrink-0 text-sand-12 group-data-highlighted:text-white",
     more: "w-full justify-start",
     trigger: [
       "flex h-9 w-full min-w-0 items-center gap-2 rounded-2 px-3",

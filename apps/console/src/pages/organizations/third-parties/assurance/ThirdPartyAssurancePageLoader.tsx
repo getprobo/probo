@@ -38,13 +38,21 @@ export default function ThirdPartyAssurancePageLoader() {
     }
   }, [loadQuery, thirdPartyId]);
 
-  if (!queryRef) {
+  // loadQuery runs in an effect, so right after a third-party switch the ref
+  // still describes the previous one. Falling back to the skeleton also
+  // unmounts the page, dropping autosaves pending on the previous record.
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.thirdPartyId === thirdPartyId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <LinkCardSkeleton />;
   }
 
   return (
     <Suspense fallback={<LinkCardSkeleton />}>
-      <ThirdPartyAssurancePage queryRef={queryRef} />
+      <ThirdPartyAssurancePage queryRef={currentQueryRef} />
     </Suspense>
   );
 }

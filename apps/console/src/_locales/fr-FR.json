@@ -2447,6 +2447,7 @@
     },
     "compliancePortalSwitcher": {
       "label": "Portail de conformité",
+      "select": "Sélectionner un portail",
       "new": "Nouveau portail",
       "create": "Nouveau portail",
       "empty": "Aucun portail de conformité",

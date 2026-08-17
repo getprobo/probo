@@ -91,7 +91,12 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
 
   const isPortalRoot = pathname === portalBase || pathname === `${portalBase}/`;
 
-  if (isPortalRoot && landingSection != null) {
+  if (isPortalRoot) {
+    // Without a single readable section there is nothing to land on, and every
+    // child route would reject the user anyway.
+    if (landingSection == null) {
+      throw new NotFoundError("Compliance portal not found");
+    }
     return <Navigate to={`${portalBase}/${landingSection.path}`} replace />;
   }
 

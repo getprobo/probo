@@ -142,7 +142,12 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
         <DropdownSeparator />
         <DropdownItem
           iconStart={<PlusIcon />}
-          render={<Link to="/organizations/new" state={{ from: location.pathname }} />}
+          render={(
+            <Link
+              to="/organizations/new"
+              state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+            />
+          )}
         >
           {t("membershipsDropdown.addOrganization")}
         </DropdownItem>

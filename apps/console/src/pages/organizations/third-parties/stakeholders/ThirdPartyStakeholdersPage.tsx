@@ -107,6 +107,11 @@ interface AdministratorsFormValues {
   administratorIds: string[];
 }
 
+interface ContactsOrder {
+  direction: "ASC" | "DESC";
+  field: "FULL_NAME" | "EMAIL" | "CREATED_AT";
+}
+
 export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersPageProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
@@ -133,20 +138,31 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
     values: { administratorIds },
   });
 
+  const [contactsOrder, setContactsOrder] = useState<ContactsOrder>({
+    direction: "DESC",
+    field: "CREATED_AT",
+  });
+
   const refetch = ({
     order,
   }: {
     order: { direction: string; field: string };
   }) => {
-    pagination.refetch(
-      {
-        order: {
-          direction: order.direction as "ASC" | "DESC",
-          field: order.field as "FULL_NAME" | "EMAIL" | "CREATED_AT",
-        },
-      },
-      { fetchPolicy: "network-only" },
-    );
+    const nextOrder: ContactsOrder = {
+      direction: order.direction as ContactsOrder["direction"],
+      field: order.field as ContactsOrder["field"],
+    };
+    setContactsOrder(nextOrder);
+    pagination.refetch({ order: nextOrder }, { fetchPolicy: "network-only" });
+  };
+
+  // Creates prepend their edge and edits patch the row in place, which only
+  // lands in the right spot under the default creation ordering.
+  const handleContactSaved = () => {
+    if (contactsOrder.field === "CREATED_AT") {
+      return;
+    }
+    pagination.refetch({ order: contactsOrder }, { fetchPolicy: "network-only" });
   };
 
   const connectionId = data.contacts.__id;
@@ -200,7 +216,11 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
             {t("thirdPartyStakeholdersPage.sections.contacts")}
           </h2>
           {data.canCreateContact && (
-            <CreateContactDialog thirdPartyId={data.id} connectionId={connectionId}>
+            <CreateContactDialog
+              thirdPartyId={data.id}
+              connectionId={connectionId}
+              onCreated={handleContactSaved}
+            >
               <Button icon={IconPlusLarge}>{t("thirdPartyStakeholdersPage.actions.addContact")}</Button>
             </CreateContactDialog>
           )}
@@ -233,6 +253,7 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
         <EditContactDialog
           contactKey={editingContact}
           onClose={() => setEditingContact(null)}
+          onSaved={handleContactSaved}
         />
       )}
     </div>

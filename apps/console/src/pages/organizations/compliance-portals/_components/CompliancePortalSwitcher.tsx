@@ -56,6 +56,7 @@ export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherP
   const prefix = `/organizations/${organizationId}/compliance-portals/`;
   const isNew = pathname === `${prefix}new`;
   const newLabel = t("nav.compliancePortalSwitcher.new");
+  const selectLabel = t("nav.compliancePortalSwitcher.select");
   const triggerLabel = t("nav.compliancePortalSwitcher.label");
   const slots = navPanelSwitcher();
 
@@ -132,9 +133,7 @@ export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherP
           active={isNew}
           label={triggerLabel}
           onOpenChange={handleOpenChange}
-          value={isNew
-            ? <NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>
-            : <NavPanelSwitcherValueSkeleton />}
+          value={<NavPanelSwitcherValue>{isNew ? newLabel : selectLabel}</NavPanelSwitcherValue>}
         >
           {menu}
         </NavPanelSwitcher>

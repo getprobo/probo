@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { lazy } from "@probo/react-lazy";
-import { startTransition, Suspense, useEffect } from "react";
+import { startTransition, Suspense, useEffect, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation } from "react-router";
@@ -124,6 +125,11 @@ function CookieBannerNavSection() {
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
   const selectedId = useSelectedCookieBannerId();
+  // `Query.node` is non-null, so looking up a banner that was deleted or moved
+  // out of reach fails the whole query instead of returning null. Dropping the
+  // remembered id once it fails lets the organization fallback take over.
+  const [unresolvableId, setUnresolvableId] = useState<string | null>(null);
+  const resolvedId = selectedId != null && selectedId !== unresolvableId ? selectedId : null;
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
   );
@@ -139,13 +145,13 @@ function CookieBannerNavSection() {
       loadQuery(
         {
           organizationId,
-          cookieBannerId: selectedId ?? "",
-          hasCookieBannerId: selectedId != null,
+          cookieBannerId: resolvedId ?? "",
+          hasCookieBannerId: resolvedId != null,
         },
         { fetchPolicy: "store-or-network" },
       );
     });
-  }, [isNew, loadQuery, organizationId, selectedId]);
+  }, [isNew, loadQuery, organizationId, resolvedId]);
 
   if (isNew) {
     return (
@@ -160,7 +166,7 @@ function CookieBannerNavSection() {
   // old name in the switcher and point the nav items at the old banner.
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
-    && queryRef.variables.cookieBannerId === (selectedId ?? "")
+    && queryRef.variables.cookieBannerId === (resolvedId ?? "")
     ? queryRef
     : null;
 
@@ -168,14 +174,30 @@ function CookieBannerNavSection() {
     return fallback;
   }
 
-  return (
+  const section = (
     <>
       <Suspense fallback={fallback}>
-        <CookieBannerSwitcher queryRef={currentQueryRef} selectedId={selectedId} />
+        <CookieBannerSwitcher queryRef={currentQueryRef} selectedId={resolvedId} />
       </Suspense>
       <Suspense fallback={null}>
         <CookieBannerNavItems queryRef={currentQueryRef} />
       </Suspense>
     </>
+  );
+
+  if (resolvedId == null) {
+    return section;
+  }
+
+  return (
+    <ErrorBoundary
+      key={resolvedId}
+      fallbackRender={() => fallback}
+      onError={() => {
+        setUnresolvableId(resolvedId);
+      }}
+    >
+      {section}
+    </ErrorBoundary>
   );
 }
