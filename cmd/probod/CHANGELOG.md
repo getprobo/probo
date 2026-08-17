@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.261.0] - 2026-08-17
+
+### Added
+
+- Compliance portals can now run behind an externally terminated TLS load balancer, keeping strict domain routing and HTTP redirects while skipping ACME setup and avoiding dead HTTPS ports in that mode
+
+### Fixed
+
+- CIMD clients skipping consent now require both a verified custom domain host and identity-only scopes (`openid`/`profile`/`email`), closing a gap that could grant broader API access without a consent screen
+- Agent netcheck now blocks NAT64, 6to4, Teredo, and CGNAT address ranges, closing an IPv6 SSRF gap in the agent tool guard
+
 ## [0.260.0] - 2026-08-14
 
 ### Added
