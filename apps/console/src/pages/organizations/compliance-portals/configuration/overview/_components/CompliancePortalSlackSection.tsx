@@ -290,17 +290,6 @@ export function CompliancePortalSlackSection({
                     <p className="text-xs text-txt-tertiary">
                       {t("slackSection.channel.help")}
                     </p>
-                    {loadMoreCursor && (
-                      <Button
-                        variant="secondary"
-                        onClick={loadMoreChannels}
-                        disabled={isLoadingMore}
-                      >
-                        {isLoadingMore
-                          ? t("slackSection.actions.loadingMore")
-                          : t("slackSection.actions.loadMore")}
-                      </Button>
-                    )}
                     {listedChannels.length === 0 && (
                       <Button
                         variant="secondary"
@@ -329,6 +318,17 @@ export function CompliancePortalSlackSection({
                     </Button>
                   </div>
                 )}
+            {loadMoreCursor && (
+              <Button
+                variant="secondary"
+                onClick={loadMoreChannels}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore
+                  ? t("slackSection.actions.loadingMore")
+                  : t("slackSection.actions.loadMore")}
+              </Button>
+            )}
           </div>
         )}
       </Card>
