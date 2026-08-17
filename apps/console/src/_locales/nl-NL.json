@@ -2447,7 +2447,6 @@
     },
     "compliancePortalSwitcher": {
       "label": "Complianceportaal",
-      "select": "Portaal selecteren",
       "new": "Nieuw portaal",
       "create": "Nieuw portaal",
       "empty": "Geen complianceportalen",

@@ -1537,7 +1537,6 @@
     },
     "compliancePortalSwitcher": {
       "label": "Compliance portal",
-      "select": "Select Portal",
       "new": "New Portal",
       "create": "New Portal",
       "empty": "No compliance portals",
