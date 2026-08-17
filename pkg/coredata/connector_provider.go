@@ -230,7 +230,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderSquare,
 		ConnectorProviderGoogleAnalytics,
 		ConnectorProviderUpCloud,
-		ConnectorProviderFront:
+		ConnectorProviderFront,
 		ConnectorProviderNuki:
 		return true
 	}
