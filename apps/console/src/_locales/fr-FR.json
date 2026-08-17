@@ -1976,6 +1976,54 @@
       "allow": "Autoriser"
     }
   },
+  "oauthScopes": {
+    "api": {
+      "v1:access-review:read": "Consulter les revues d’accès",
+      "v1:access-review": "Gérer les revues d’accès",
+      "v1:agent:read": "Consulter les agents",
+      "v1:agent": "Gérer les agents",
+      "v1:ai-system:read": "Consulter les systèmes d'IA",
+      "v1:ai-system": "Gérer les systèmes d'IA",
+      "v1:asset:read": "Consulter les actifs",
+      "v1:asset": "Gérer les actifs",
+      "v1:audit:read": "Consulter les audits",
+      "v1:audit": "Gérer les audits",
+      "v1:business-function:read": "Consulter les fonctions métier",
+      "v1:business-function": "Gérer les fonctions métier",
+      "v1:common-third-party:read": "Consulter les tiers communs",
+      "v1:common-third-party": "Gérer les tiers communs",
+      "v1:compliance-page:read": "Consulter les portails de conformité",
+      "v1:compliance-page": "Gérer les portails de conformité",
+      "v1:connector:read": "Consulter les connecteurs",
+      "v1:connector": "Gérer les connecteurs",
+      "v1:control:read": "Consulter les contrôles",
+      "v1:control": "Gérer les contrôles",
+      "v1:datum:read": "Consulter les données",
+      "v1:datum": "Gérer les données",
+      "v1:document:read": "Consulter les documents",
+      "v1:document": "Gérer les documents",
+      "v1:iam:read": "Consulter les paramètres IAM",
+      "v1:iam": "Gérer les paramètres IAM",
+      "v1:itam:read": "Consulter les appareils",
+      "v1:itam": "Gérer les appareils",
+      "v1:org:read": "Consulter l’organisation",
+      "v1:org": "Gérer l’organisation",
+      "v1:privacy:read": "Consulter les paramètres de confidentialité",
+      "v1:privacy": "Gérer les paramètres de confidentialité",
+      "v1:resource-alias:read": "Consulter les alias de ressources",
+      "v1:resource-alias": "Gérer les alias de ressources",
+      "v1:risk:read": "Consulter les risques",
+      "v1:risk": "Gérer les risques",
+      "v1:slack-connection:read": "Consulter les connexions Slack",
+      "v1:slack-connection": "Gérer les connexions Slack",
+      "v1:task:read": "Consulter les tâches",
+      "v1:task": "Gérer les tâches",
+      "v1:third-party:read": "Consulter les tiers",
+      "v1:third-party": "Gérer les tiers",
+      "v1:webhook:read": "Consulter les webhooks",
+      "v1:webhook": "Gérer les webhooks"
+    }
+  },
   "createPasswordPage": {
     "pageTitle": "Créer un mot de passe",
     "title": "Créer un mot de passe",
@@ -6194,6 +6242,10 @@
         "title": "Confidentialité",
         "description": "Vérifier les données collectées"
       },
+      "download": {
+        "title": "Télécharger",
+        "description": "Installer l’agent de bureau"
+      },
       "organization": {
         "description": "Choisir l’espace de travail de destination"
       },
@@ -6210,6 +6262,11 @@
       "title": "Avant de commencer",
       "description": "Probo collecte les métadonnées d’appareil suivantes à des fins d’inventaire et de rapport de posture :"
     },
+    "download": {
+      "title": "Télécharger l’agent Probo",
+      "description": "Téléchargez l’agent Probo depuis <a>pro.bo/install</a>.",
+      "alreadyInstalled": "Cette étape n’est pas nécessaire si l’agent est déjà installé sur cet appareil."
+    },
     "privacy": {
       "identity": "Identité de l’appareil : UUID matériel, nom d’hôte et numéro de série (si disponible).",
       "systemDetails": "Détails système : plateforme, version du système d’exploitation et version de l’agent Probo.",
@@ -6221,7 +6278,7 @@
     },
     "openAgent": {
       "title": "Ouvrir l’agent Probo",
-      "description": "Ouvrez l’agent de bureau pour terminer la configuration, puis laissez cette page ouverte jusqu’à confirmation de l’enrôlement."
+      "description": "Cliquez sur « {{action}} » pour terminer la configuration, puis laissez cette page ouverte jusqu’à confirmation de l’enrôlement."
     },
     "actions": {
       "backToOrganizations": "Retour aux organisations",

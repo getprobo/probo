@@ -1976,6 +1976,54 @@
       "allow": "Toestaan"
     }
   },
+  "oauthScopes": {
+    "api": {
+      "v1:access-review:read": "Toegangsbeoordelingen bekijken",
+      "v1:access-review": "Toegangsbeoordelingen beheren",
+      "v1:agent:read": "Agents bekijken",
+      "v1:agent": "Agents beheren",
+      "v1:ai-system:read": "AI-systemen bekijken",
+      "v1:ai-system": "AI-systemen beheren",
+      "v1:asset:read": "Assets bekijken",
+      "v1:asset": "Assets beheren",
+      "v1:audit:read": "Audits bekijken",
+      "v1:audit": "Audits beheren",
+      "v1:business-function:read": "Bedrijfsfuncties bekijken",
+      "v1:business-function": "Bedrijfsfuncties beheren",
+      "v1:common-third-party:read": "Gemeenschappelijke derde partijen bekijken",
+      "v1:common-third-party": "Gemeenschappelijke derde partijen beheren",
+      "v1:compliance-page:read": "Compliancepagina's bekijken",
+      "v1:compliance-page": "Compliancepagina's beheren",
+      "v1:connector:read": "Connectors bekijken",
+      "v1:connector": "Connectors beheren",
+      "v1:control:read": "Controls bekijken",
+      "v1:control": "Controls beheren",
+      "v1:datum:read": "Gegevens bekijken",
+      "v1:datum": "Gegevens beheren",
+      "v1:document:read": "Documenten bekijken",
+      "v1:document": "Documenten beheren",
+      "v1:iam:read": "IAM-instellingen bekijken",
+      "v1:iam": "IAM-instellingen beheren",
+      "v1:itam:read": "Apparaten bekijken",
+      "v1:itam": "Apparaten beheren",
+      "v1:org:read": "Organisatie bekijken",
+      "v1:org": "Organisatie beheren",
+      "v1:privacy:read": "Privacy-instellingen bekijken",
+      "v1:privacy": "Privacy-instellingen beheren",
+      "v1:resource-alias:read": "Resource-aliassen bekijken",
+      "v1:resource-alias": "Resource-aliassen beheren",
+      "v1:risk:read": "Risico's bekijken",
+      "v1:risk": "Risico's beheren",
+      "v1:slack-connection:read": "Slack-verbindingen bekijken",
+      "v1:slack-connection": "Slack-verbindingen beheren",
+      "v1:task:read": "Taken bekijken",
+      "v1:task": "Taken beheren",
+      "v1:third-party:read": "Derde partijen bekijken",
+      "v1:third-party": "Derde partijen beheren",
+      "v1:webhook:read": "Webhooks bekijken",
+      "v1:webhook": "Webhooks beheren"
+    }
+  },
   "createPasswordPage": {
     "pageTitle": "Wachtwoord aanmaken",
     "title": "Maak een wachtwoord aan",
@@ -6190,6 +6238,10 @@
         "title": "Privacy",
         "description": "Verzamelde gegevens bekijken"
       },
+      "download": {
+        "title": "Downloaden",
+        "description": "Installeer de desktopagent"
+      },
       "organization": {
         "description": "Kies bestemmingswerkruimte"
       },
@@ -6206,6 +6258,11 @@
       "title": "Voordat u begint",
       "description": "Probo verzamelt de volgende apparaatmetadata voor inventarisatie- en postuurrapportage:"
     },
+    "download": {
+      "title": "Download de Probo-agent",
+      "description": "Download de Probo-agent van <a>pro.bo/install</a>.",
+      "alreadyInstalled": "Deze stap is niet nodig als de agent al op dit apparaat is geïnstalleerd."
+    },
     "privacy": {
       "identity": "Apparaatidentiteit: hardware-UUID, hostnaam en serienummer (indien beschikbaar).",
       "systemDetails": "Systeemdetails: platform, OS-versie en versie van de Probo agent.",
@@ -6217,7 +6274,7 @@
     },
     "openAgent": {
       "title": "Open de Probo agent",
-      "description": "Open de desktopagent om de installatie af te ronden en houd deze pagina open totdat de registratie is bevestigd."
+      "description": "Klik op '{{action}}' om de installatie af te ronden en houd deze pagina open totdat de registratie is bevestigd."
     },
     "actions": {
       "backToOrganizations": "Terug naar organisaties",

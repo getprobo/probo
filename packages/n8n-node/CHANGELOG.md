@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.220.0] - 2026-08-14
+
+### Added
+
+- `Matrix Size` (`3×3`, `4×4`, `5×5`) option on Risk Analysis `Create` and `Update`, returned on `Get` / `Get Many`, so the likelihood/impact matrix size is explicit per analysis
+
+### Fixed
+
+- `Probo Trigger` no longer advertises itself as usable as an AI tool, which n8n could not honor for a trigger node
+
 ## [0.219.0] - 2026-08-13
 
 ### Added

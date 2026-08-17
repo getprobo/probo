@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { LaptopIcon } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, LaptopIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button, Card } from "@probo/ui";
-import { useCallback, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
@@ -80,7 +80,7 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
   const [manualOrganizationId, setManualOrganizationId] = useState<string | null>(
     null,
   );
-  const [step, setStep] = useState<"intro" | "organization" | "enroll">("intro");
+  const [step, setStep] = useState<"intro" | "download" | "organization" | "enroll">("intro");
   const [enrollmentSession, setEnrollmentSession] = useState<EnrollmentSession | null>(
     null,
   );
@@ -90,8 +90,9 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
   }, []);
   const stepIndexByName = {
     intro: 1,
-    organization: 2,
-    enroll: 3,
+    download: 2,
+    organization: 3,
+    enroll: 4,
   } as const;
 
   const selectedOrganizationId = useMemo(() => {
@@ -126,6 +127,11 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
       key: "intro",
       title: t("deviceEnrollment.steps.privacy.title"),
       description: t("deviceEnrollment.steps.privacy.description"),
+    },
+    {
+      key: "download",
+      title: t("deviceEnrollment.steps.download.title"),
+      description: t("deviceEnrollment.steps.download.description"),
     },
     {
       key: "organization",
@@ -239,8 +245,35 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                         <li>{t("deviceEnrollment.privacy.activitySignals")}</li>
                       </ul>
                       <div className="flex flex-wrap gap-3 pt-2">
+                        <Button onClick={() => setStep("download")}>
+                          {t("common.actions.continue")}
+                        </Button>
+                      </div>
+                    </section>
+                  )}
+
+                  {step === "download" && (
+                    <section className="space-y-5">
+                      <header className="space-y-2">
+                        <h1 className="text-2xl font-semibold tracking-tight">{t("deviceEnrollment.download.title")}</h1>
+                        <p className="text-sm leading-6 text-txt-secondary">
+                          <Trans
+                            i18nKey="deviceEnrollment.download.description"
+                            components={{
+                              a: <AgentInstallLink />,
+                            }}
+                          />
+                        </p>
+                        <p className="text-xs leading-5 text-txt-tertiary">
+                          {t("deviceEnrollment.download.alreadyInstalled")}
+                        </p>
+                      </header>
+                      <div className="flex flex-wrap gap-3">
                         <Button onClick={() => setStep("organization")}>
                           {t("common.actions.continue")}
+                        </Button>
+                        <Button variant="secondary" onClick={() => setStep("intro")}>
+                          {t("common.actions.back")}
                         </Button>
                       </div>
                     </section>
@@ -269,7 +302,7 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                         >
                           {t("common.actions.continue")}
                         </Button>
-                        <Button variant="secondary" onClick={() => setStep("intro")}>
+                        <Button variant="secondary" onClick={() => setStep("download")}>
                           {t("common.actions.back")}
                         </Button>
                       </div>
@@ -281,24 +314,26 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
                       <header className="space-y-2">
                         <h1 className="text-2xl font-semibold tracking-tight">{t("deviceEnrollment.openAgent.title")}</h1>
                         <p className="text-sm leading-6 text-txt-secondary">
-                          {t("deviceEnrollment.openAgent.description")}
+                          {t("deviceEnrollment.openAgent.description", {
+                            action: t("deviceEnrollment.actions.openAgent"),
+                          })}
                         </p>
                       </header>
-                      <CoreRelayProvider>
-                        <EnrollDeviceButton
-                          organizationId={selectedOrganizationId}
-                          session={activeEnrollmentSession}
-                          onSessionCreated={setEnrollmentSession}
-                          onComplete={handleEnrollmentComplete}
-                        />
-                      </CoreRelayProvider>
-                      {!isEnrollmentComplete && (
-                        <div>
+                      <div className="flex flex-wrap gap-3">
+                        <CoreRelayProvider>
+                          <EnrollDeviceButton
+                            organizationId={selectedOrganizationId}
+                            session={activeEnrollmentSession}
+                            onSessionCreated={setEnrollmentSession}
+                            onComplete={handleEnrollmentComplete}
+                          />
+                        </CoreRelayProvider>
+                        {!isEnrollmentComplete && (
                           <Button variant="secondary" onClick={() => setStep("organization")}>
                             {t("common.actions.back")}
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </section>
                   )}
                 </section>
@@ -306,5 +341,19 @@ export function EnrollDevicePage({ queryRef }: EnrollDevicePageProps) {
             </Card>
           )}
     </div>
+  );
+}
+
+function AgentInstallLink({ children }: { children?: ReactNode }) {
+  return (
+    <a
+      href="https://pro.bo/install"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-txt-primary underline hover:no-underline"
+    >
+      {children}
+      <ArrowSquareOutIcon size={14} weight="bold" className="shrink-0" aria-hidden />
+    </a>
   );
 }

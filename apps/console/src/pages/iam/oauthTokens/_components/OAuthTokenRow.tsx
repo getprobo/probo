@@ -37,7 +37,7 @@ import { ConnectionHandler, graphql, useFragment, useMutation } from "react-rela
 import type { OAuthTokenRowFragment$key } from "#/__generated__/iam/OAuthTokenRowFragment.graphql";
 import type { OAuthTokenRowRevokeMutation } from "#/__generated__/iam/OAuthTokenRowRevokeMutation.graphql";
 
-import { formatApiScopeLabel } from "./scopeLabels";
+import { formatAPIScopeLabel } from "./scopeLabels";
 
 const VISIBLE_SCOPE_COUNT = 3;
 
@@ -121,7 +121,7 @@ export function OAuthTokenRow(props: {
         <div className="flex flex-wrap gap-1">
           {visibleScopes.map(scope => (
             <Badge key={scope} variant="neutral" className="text-xs">
-              {formatApiScopeLabel(scope)}
+              {formatAPIScopeLabel(scope, t)}
             </Badge>
           ))}
           {hiddenScopes.length > 0 && (
@@ -143,7 +143,7 @@ export function OAuthTokenRow(props: {
                   <div className="flex flex-wrap gap-1">
                     {hiddenScopes.map(scope => (
                       <Badge key={scope} variant="neutral" className="text-xs">
-                        {formatApiScopeLabel(scope)}
+                        {formatAPIScopeLabel(scope, t)}
                       </Badge>
                     ))}
                   </div>

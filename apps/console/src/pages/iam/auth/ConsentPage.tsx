@@ -39,7 +39,7 @@ import { graphql } from "relay-runtime";
 
 import type { ConsentPageMutation } from "#/__generated__/iam/ConsentPageMutation.graphql";
 import type { ConsentPageQuery } from "#/__generated__/iam/ConsentPageQuery.graphql";
-import { formatApiScopeLabel } from "#/pages/iam/oauthTokens/_components/scopeLabels";
+import { formatAPIScopeLabel } from "#/pages/iam/oauthTokens/_components/scopeLabels";
 
 export const consentPageQuery = graphql`
   query ConsentPageQuery($consentId: ID!) {
@@ -82,11 +82,6 @@ function scopeIcon(name: string): React.ReactNode {
   return scopeIcons[name] ?? <IconKey size={18} className="shrink-0 text-txt-tertiary" />;
 }
 
-function scopeLabel(name: string, translate: (key: string) => string): string {
-  const key = scopeLabels[name];
-  return key ? translate(key) : formatApiScopeLabel(name);
-}
-
 function isApiScope(scope: string): boolean {
   return scope.startsWith("v1:");
 }
@@ -106,33 +101,39 @@ function partitionScopes(scopes: readonly string[]) {
   return { oidcScopes, apiScopes };
 }
 
-function ConsentScopeRow(props: {
+function ConsentScopeRow({
+  scope,
+  nested,
+}: {
   scope: string;
-  translate: (label: string) => string;
   nested?: boolean;
 }) {
-  const translated = scopeLabel(props.scope, props.translate);
+  const { t } = useTranslation();
+  const key = scopeLabels[scope];
+  const translated = key ? t(key) : formatAPIScopeLabel(scope, t);
 
   return (
     <li
       className={
-        props.nested
+        nested
           ? "flex items-center gap-2.5 py-1.5 text-sm text-txt-secondary"
           : "flex items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary border border-border-mid rounded-lg"
       }
     >
-      {scopeIcon(props.scope)}
+      {scopeIcon(scope)}
       {translated}
     </li>
   );
 }
 
-function ConsentApiScopesAccordion(props: {
+function ConsentApiScopesAccordion({
+  scopes,
+  summaryLabel,
+}: {
   scopes: readonly string[];
-  translate: (label: string) => string;
   summaryLabel: string;
 }) {
-  if (props.scopes.length === 0) {
+  if (scopes.length === 0) {
     return null;
   }
 
@@ -140,18 +141,17 @@ function ConsentApiScopesAccordion(props: {
     <details className="group border border-border-mid rounded-lg">
       <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary select-none [&::-webkit-details-marker]:hidden">
         <IconKey size={18} className="shrink-0 text-txt-tertiary" />
-        <span className="min-w-0 flex-1 text-start">{props.summaryLabel}</span>
+        <span className="min-w-0 flex-1 text-start">{summaryLabel}</span>
         <IconChevronDown
           size={16}
           className="shrink-0 text-txt-tertiary transition-transform group-open:rotate-180"
         />
       </summary>
       <ul className="space-y-1 border-t border-border-mid px-3 py-2.5">
-        {props.scopes.map(scope => (
+        {scopes.map(scope => (
           <ConsentScopeRow
             key={scope}
             scope={scope}
-            translate={props.translate}
             nested
           />
         ))}
@@ -337,7 +337,6 @@ export default function ConsentPage(props: {
               <ConsentScopeRow
                 key={scope}
                 scope={scope}
-                translate={t}
               />
             ))}
           </ul>
@@ -345,7 +344,6 @@ export default function ConsentPage(props: {
 
         <ConsentApiScopesAccordion
           scopes={apiScopes}
-          translate={t}
           summaryLabel={apiScopesSummary}
         />
       </div>

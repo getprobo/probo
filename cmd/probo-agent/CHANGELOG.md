@@ -5,6 +5,13 @@ documented in this file.
 
 ## Unreleased
 
+## [0.6.1] - 2026-08-14
+
+### Changed
+
+- Re-released with an updated code-signing certificate; no functional
+  changes.
+
 ## [0.6.0] - 2026-08-13
 
 ### Added
