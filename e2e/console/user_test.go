@@ -21,14 +21,207 @@
 package console_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/internal/test"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
+
+// TestUser_CreateUserReusesOrphanProfile covers promoting a profile that exists
+// without a membership (compliance-portal visitors / historical SCIM orphans)
+// into a console member. createUser must reuse the existing profile instead of
+// failing on the identity+organization uniqueness constraint.
+func TestUser_CreateUserReusesOrphanProfile(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	email := factory.SafeEmail()
+	orgID := owner.GetOrganizationID()
+	tenantID := orgID.TenantID()
+	now := time.Now().UTC()
+
+	identityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
+	orphanProfileID := gid.New(tenantID, coredata.MembershipProfileEntityType)
+
+	err := test.PGClient(t).WithConn(
+		context.Background(),
+		func(ctx context.Context, conn pg.Querier) error {
+			_, err := conn.Exec(
+				ctx,
+				`
+				INSERT INTO identities (
+					id,
+					email_address,
+					full_name,
+					email_address_verified,
+					created_at,
+					updated_at
+				)
+				VALUES ($1, $2, $3, true, $4, $4)
+				`,
+				identityID.String(),
+				email,
+				"Portal Visitor",
+				now,
+			)
+			if err != nil {
+				return err
+			}
+
+			_, err = conn.Exec(
+				ctx,
+				`
+				INSERT INTO iam_membership_profiles (
+					tenant_id,
+					id,
+					identity_id,
+					organization_id,
+					source,
+					state,
+					full_name,
+					additional_email_addresses,
+					created_at,
+					updated_at
+				)
+				VALUES ($1, $2, $3, $4, 'MANUAL', 'ACTIVE', $5, '{}'::citext[], $6, $6)
+				`,
+				tenantID.String(),
+				orphanProfileID.String(),
+				identityID.String(),
+				orgID.String(),
+				"Portal Visitor",
+				now,
+			)
+
+			return err
+		},
+	)
+	require.NoError(t, err, "test setup: cannot seed orphan membership profile")
+
+	const profilesQuery = `
+		query($id: ID!, $query: String!) {
+			node(id: $id) {
+				... on Organization {
+					profiles(first: 10, filter: { query: $query }) {
+						edges {
+							node {
+								id
+								fullName
+								state
+								membership { role }
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	type profilesResult struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						ID         string `json:"id"`
+						FullName   string `json:"fullName"`
+						State      string `json:"state"`
+						Membership struct {
+							Role string `json:"role"`
+						} `json:"membership"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	var before profilesResult
+
+	err = owner.ExecuteConnect(profilesQuery, map[string]any{
+		"id":    orgID.String(),
+		"query": email,
+	}, &before)
+	require.NoError(t, err)
+	assert.Empty(t, before.Node.Profiles.Edges, "orphan profile must not appear in people list")
+
+	const createUserMutation = `
+		mutation($input: CreateUserInput!) {
+			createUser(input: $input) {
+				profileEdge {
+					node {
+						id
+						fullName
+						state
+						membership { role }
+					}
+				}
+			}
+		}
+	`
+
+	var createResult struct {
+		CreateUser struct {
+			ProfileEdge struct {
+				Node struct {
+					ID         string `json:"id"`
+					FullName   string `json:"fullName"`
+					State      string `json:"state"`
+					Membership struct {
+						Role string `json:"role"`
+					} `json:"membership"`
+				} `json:"node"`
+			} `json:"profileEdge"`
+		} `json:"createUser"`
+	}
+
+	err = owner.ExecuteConnect(createUserMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId":           orgID.String(),
+			"emailAddress":             email,
+			"fullName":                 "Promoted Console User",
+			"role":                     "EMPLOYEE",
+			"kind":                     "EMPLOYEE",
+			"additionalEmailAddresses": []string{},
+		},
+	}, &createResult)
+	require.NoError(t, err)
+
+	created := createResult.CreateUser.ProfileEdge.Node
+	assert.Equal(t, orphanProfileID.String(), created.ID, "createUser must reuse the existing profile")
+	assert.Equal(t, "Promoted Console User", created.FullName)
+	assert.Equal(t, "ACTIVE", created.State, "existing portal profile state must be preserved")
+	assert.Equal(t, "EMPLOYEE", created.Membership.Role)
+
+	var after profilesResult
+
+	err = owner.ExecuteConnect(profilesQuery, map[string]any{
+		"id":    orgID.String(),
+		"query": email,
+	}, &after)
+	require.NoError(t, err)
+	require.Len(t, after.Node.Profiles.Edges, 1)
+	assert.Equal(t, orphanProfileID.String(), after.Node.Profiles.Edges[0].Node.ID)
+	assert.Equal(t, "EMPLOYEE", after.Node.Profiles.Edges[0].Node.Membership.Role)
+
+	_, err = owner.DoConnect(createUserMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId":           orgID.String(),
+			"emailAddress":             email,
+			"fullName":                 "Duplicate Create",
+			"role":                     "VIEWER",
+			"kind":                     "EMPLOYEE",
+			"additionalEmailAddresses": []string{},
+		},
+	})
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+}
 
 // TestUser_AdminCannotCreateOwner is a non-regression test for the vertical
 // privilege escalation where an ADMIN could mint an OWNER membership via
