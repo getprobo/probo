@@ -305,7 +305,7 @@ func buildGrafanaProbeURL(conn *coredata.Connector, _ Endpoints) (string, error)
 		return "", fmt.Errorf("cannot read grafana connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeGrafanaBaseURL(s.BaseURL)
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -360,7 +360,7 @@ func buildLangfuseProbeURL(conn *coredata.Connector, _ Endpoints) (string, error
 		return "", fmt.Errorf("cannot read langfuse connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeLangfuseBaseURL(s.BaseURL)
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -379,7 +379,7 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 		return "", fmt.Errorf("cannot read signoz connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeSigNozBaseURL(s.BaseURL)
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -398,7 +398,7 @@ func buildAuthentikProbeURL(conn *coredata.Connector, _ Endpoints) (string, erro
 		return "", fmt.Errorf("cannot read authentik connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeInstanceBaseURL(s.BaseURL)
+	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}

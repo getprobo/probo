@@ -24,8 +24,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -48,7 +46,7 @@ func grafanaRegistration() *Registration {
 				return nil, fmt.Errorf("cannot read grafana connector settings: %w", err)
 			}
 
-			baseURL, err := normalizeGrafanaBaseURL(s.BaseURL)
+			baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 			if err != nil {
 				return nil, fmt.Errorf("cannot create grafana driver: %w", err)
 			}
@@ -62,7 +60,7 @@ func grafanaRegistration() *Registration {
 				return nil
 			}
 
-			baseURL, err := normalizeGrafanaBaseURL(s.BaseURL)
+			baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
 			if err != nil {
 				logger.ErrorCtx(ctx, "invalid grafana base url in connector settings", log.Error(err))
 				return nil
@@ -71,26 +69,4 @@ func grafanaRegistration() *Registration {
 			return drivers.NewGrafanaNameResolver(c, baseURL)
 		},
 	}
-}
-
-func normalizeGrafanaBaseURL(raw string) (string, error) {
-	baseURL := strings.TrimSpace(raw)
-	if baseURL == "" {
-		return "", fmt.Errorf("base_url is required")
-	}
-
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		return "", fmt.Errorf("base_url must be a valid URL: %w", err)
-	}
-
-	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return "", fmt.Errorf("base_url must be an http(s) URL")
-	}
-
-	u.Path = strings.TrimRight(u.Path, "/")
-	u.RawQuery = ""
-	u.Fragment = ""
-
-	return u.String(), nil
 }
