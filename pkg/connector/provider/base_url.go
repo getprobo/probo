@@ -26,11 +26,8 @@ import (
 	"strings"
 )
 
-// normalizeSelfHostedBaseURL validates the instance URL of a self-hosted
-// provider (authentik, Grafana, Langfuse, SigNoz) and strips the query,
-// fragment and trailing slash before any path is joined onto it. The host is
-// operator-supplied, so this runs on both the write path and at driver
-// construction.
+// normalizeSelfHostedBaseURL validates an operator-supplied instance URL and
+// strips the query, fragment and trailing slash before a path is joined onto it.
 func normalizeSelfHostedBaseURL(raw string) (string, error) {
 	baseURL := strings.TrimSpace(raw)
 	if baseURL == "" {
@@ -42,7 +39,7 @@ func normalizeSelfHostedBaseURL(raw string) (string, error) {
 		return "", fmt.Errorf("base_url must be a valid URL: %w", err)
 	}
 
-	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+	if (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
 		return "", fmt.Errorf("base_url must be an http(s) URL")
 	}
 
