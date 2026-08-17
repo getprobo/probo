@@ -20,21 +20,21 @@
 
 package tray
 
-import _ "embed"
+import (
+	_ "embed"
+	"image/color"
+)
 
 // Icons are embedded PNGs; systray does not accept SVG.
+//
+// icon_template.png is the macOS menu-bar silhouette (black + alpha) and
+// the source for tinted status menu icons on every platform.
 
-//go:embed icon.png
-var iconData []byte
-
-//go:embed iconTemplate.png
+//go:embed icon_template.png
 var iconTemplateData []byte
 
-//go:embed status_connected.png
-var statusConnectedIconData []byte
-
-//go:embed status_unavailable.png
-var statusUnavailableIconData []byte
-
-//go:embed status_enrollment.png
-var statusEnrollmentIconData []byte
+var (
+	statusConnectedColor   = color.RGBA{R: 52, G: 199, B: 89, A: 255}
+	statusEnrollmentColor  = color.RGBA{R: 255, G: 149, B: 0, A: 255}
+	statusUnavailableColor = color.RGBA{R: 255, G: 59, B: 48, A: 255}
+)

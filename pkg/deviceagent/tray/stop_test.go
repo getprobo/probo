@@ -18,67 +18,81 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package vetting
+package tray
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestParseCountryLocation(t *testing.T) {
+func TestShouldStopInteractiveAgentProcess(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		raw      string
-		expected coredata.CountryCode
+		name      string
+		baseName  string
+		pid       uint32
+		selfPID   uint32
+		sessionID uint32
+		want      bool
 	}{
-		{raw: "US", expected: coredata.CountryCodeUS},
-		{raw: "usa", expected: coredata.CountryCodeUS},
-		{raw: "United States", expected: coredata.CountryCodeUS},
-		{raw: "Seattle, Washington, USA", expected: coredata.CountryCodeUS},
-		{raw: "Global presence", expected: coredata.CountryCodeGlobal},
-		{raw: "EU", expected: coredata.CountryCodeEU},
-		{raw: "Germany", expected: coredata.CountryCodeDE},
+		{
+			name:      "tray in user session",
+			baseName:  "probo-agent.exe",
+			pid:       42,
+			selfPID:   1,
+			sessionID: 1,
+			want:      true,
+		},
+		{
+			name:      "service in session 0",
+			baseName:  "probo-agent.exe",
+			pid:       42,
+			selfPID:   1,
+			sessionID: 0,
+			want:      false,
+		},
+		{
+			name:      "skips current process",
+			baseName:  "probo-agent.exe",
+			pid:       7,
+			selfPID:   7,
+			sessionID: 1,
+			want:      false,
+		},
+		{
+			name:      "other executable",
+			baseName:  "notepad.exe",
+			pid:       42,
+			selfPID:   1,
+			sessionID: 1,
+			want:      false,
+		},
+		{
+			name:      "case insensitive exe name",
+			baseName:  "Probo-Agent.EXE",
+			pid:       42,
+			selfPID:   1,
+			sessionID: 2,
+			want:      true,
+		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.raw, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			code, ok := parseCountryLocation(tt.raw)
-			assert.True(t, ok)
-			assert.Equal(t, tt.expected, code)
-		})
+				got := shouldStopInteractiveAgentProcess(
+					tt.baseName,
+					tt.pid,
+					tt.selfPID,
+					tt.sessionID,
+				)
+				assert.Equal(t, tt.want, got)
+			},
+		)
 	}
-}
-
-func TestCountriesFromInfo(t *testing.T) {
-	t.Parallel()
-
-	countries := countriesFromInfo(ThirdPartyInfo{
-		HeadquarterAddress: "Seattle, Washington, USA",
-		DataLocations:      []string{"Germany", "EU"},
-	})
-
-	assert.Equal(
-		t,
-		coredata.CountryCodes{
-			coredata.CountryCodeDE,
-			coredata.CountryCodeEU,
-			coredata.CountryCodeUS,
-		},
-		countries,
-	)
-}
-
-func TestParseOptionalCountryCodes(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(
-		t,
-		coredata.CountryCodes{coredata.CountryCodeFR},
-		parseOptionalCountryCodes("France"),
-	)
 }

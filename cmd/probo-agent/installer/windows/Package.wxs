@@ -17,13 +17,17 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. -->
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix
+	xmlns="http://wixtoolset.org/schemas/v4/wxs"
+	xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+>
 	<!--
 		Builds the per-machine Probo Agent MSI.
 
 		Preprocessor variables (passed by build.ps1 via wix -d):
-		  Version   Product version, e.g. 0.3.0  → $(var.Version)
-		  AgentExe  Absolute path to probo-agent.exe → $(var.AgentExe)
+		  Version      Product version, e.g. 0.3.0  → $(var.Version)
+		  AgentExe     Absolute path to probo-agent.exe → $(var.AgentExe)
+		  ProductIcon  Absolute path to the generated product ICO → $(var.ProductIcon)
 	-->
 	<Package
 		Name="Probo Agent"
@@ -35,6 +39,13 @@ SOFTWARE. -->
 		<MajorUpgrade
 			DowngradeErrorMessage="A newer version of Probo Agent is already installed."
 		/>
+
+		<!-- Embed payload in the MSI so releases ship a single downloadable
+		     file. WiX defaults to an external cab{N}.cab beside the MSI. -->
+		<MediaTemplate EmbedCab="yes" />
+
+		<Icon Id="ProductIcon" SourceFile="$(var.ProductIcon)" />
+		<Property Id="ARPPRODUCTICON" Value="ProductIcon" />
 
 		<StandardDirectory Id="ProgramFiles64Folder">
 			<Directory Id="INSTALLFOLDER" Name="Probo" />
@@ -68,8 +79,50 @@ SOFTWARE. -->
 			</Component>
 		</ComponentGroup>
 
+		<!-- Tray auto-start is persisted and started by setup-tray
+		     (RegisterAutoStart), same as the macOS LaunchAgent plist.
+		     The MSI does not write the Run key itself.
+
+		     Deferred + Impersonate="no" is required so setup-tray runs as
+		     LocalSystem and can write HKLM. Immediate CAs (including any
+		     sequenced after InstallFinalize) run in the client process;
+		     Impersonate is ignored there, so a standard-user per-machine
+		     install with over-the-shoulder elevation would succeed without
+		     machine-wide tray autostart. -->
+		<CustomAction
+			Id="RegisterTray"
+			FileRef="ProboAgentExe"
+			ExeCommand="setup-tray"
+			Execute="deferred"
+			Impersonate="no"
+			Return="ignore"
+		/>
+		<CustomAction
+			Id="UnregisterTray"
+			FileRef="ProboAgentExe"
+			ExeCommand="setup-tray --unregister"
+			Execute="deferred"
+			Impersonate="no"
+			Return="ignore"
+		/>
+
+		<InstallExecuteSequence>
+			<Custom Action="RegisterTray" After="InstallFiles" Condition="NOT REMOVE" />
+			<Custom Action="UnregisterTray" Before="RemoveFiles" Condition="REMOVE=&quot;ALL&quot;" />
+		</InstallExecuteSequence>
+
 		<Feature Id="Main" Title="Probo Agent" Level="1">
 			<ComponentGroupRef Id="ProductComponents" />
 		</Feature>
+
+		<!-- Interactive installs get a license page (same MIT text as
+		     the macOS PKG) and a finish page with enroll next steps.
+		     msiexec /qn skips this UI. -->
+		<ui:WixUI Id="WixUI_Minimal" />
+		<WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+		<Property
+			Id="WIXUI_EXITDIALOGOPTIONALTEXT"
+			Value="Enroll this device in your browser, or click the Probo icon in the system tray.&#13;&#10;&#13;&#10;United States: https://us.probo.com/enroll&#13;&#10;European Union: https://eu.probo.com/enroll&#13;&#10;Self-hosted: https://&lt;your-host&gt;/enroll&#13;&#10;&#13;&#10;When enrollment succeeds, the icon shows Connected and the agent starts automatically.&#13;&#10;&#13;&#10;To uninstall, remove Probo Agent in Settings &gt; Apps."
+		/>
 	</Package>
 </Wix>

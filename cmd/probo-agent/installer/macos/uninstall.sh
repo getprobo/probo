@@ -20,8 +20,6 @@ DAEMON_PLIST="/Library/LaunchDaemons/com.probo.agent.plist"
 HELPER_LABEL="com.probo.agent.helper"
 HELPER_PLIST="/Library/LaunchDaemons/${HELPER_LABEL}.plist"
 HELPER_BINARY="/Library/PrivilegedHelperTools/${HELPER_LABEL}"
-TRAY_LABEL="com.probo.agent.tray"
-TRAY_PLIST="/Library/LaunchAgents/${TRAY_LABEL}.plist"
 PKG_ID="com.probo.agent"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
 
@@ -46,24 +44,6 @@ bootout_system_plist() {
     launchctl bootout system "${plist}" 2>/dev/null || true
     log "Booted out ${plist}"
   fi
-}
-
-bootout_tray_for_user() {
-  local username="$1"
-  local user_uid
-
-  if [ -z "${username}" ] \
-    || [ "${username}" = "root" ] \
-    || [ "${username}" = "loginwindow" ]; then
-    return 0
-  fi
-
-  user_uid="$(id -u "${username}" 2>/dev/null || true)"
-  if [ -z "${user_uid}" ]; then
-    return 0
-  fi
-
-  launchctl bootout "gui/${user_uid}/${TRAY_LABEL}" 2>/dev/null || true
 }
 
 unregister_apps() {
@@ -106,23 +86,13 @@ else
   log "Binary not found at ${BINARY}; skipping probo-agent uninstall"
 fi
 
-seen_users=" "
-for username in $(users 2>/dev/null || true); do
-  case "${seen_users}" in
-    *" ${username} "*) continue ;;
-  esac
-  seen_users="${seen_users}${username} "
-  bootout_tray_for_user "${username}"
-done
-bootout_tray_for_user "$(stat -f "%Su" /dev/console 2>/dev/null || true)"
-
 bootout_system_plist "${DAEMON_PLIST}"
 bootout_system_plist "${HELPER_PLIST}"
 
 kill_leftovers
 
-rm -f "${DAEMON_PLIST}" "${HELPER_PLIST}" "${HELPER_BINARY}" "${TRAY_PLIST}"
-log "Removed LaunchDaemon / LaunchAgent / helper files (if present)"
+rm -f "${DAEMON_PLIST}" "${HELPER_PLIST}" "${HELPER_BINARY}"
+log "Removed LaunchDaemon / helper files (if present)"
 
 unregister_apps
 rm -rf \

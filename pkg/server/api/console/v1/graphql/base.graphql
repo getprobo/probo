@@ -28,6 +28,18 @@ input PeriodInput {
     end: Datetime
 }
 
+type MatrixSize
+    @goModel(model: "go.probo.inc/probo/pkg/riskmanagement.MatrixSize") {
+    rows: Int!
+    cols: Int!
+}
+
+input MatrixSizeInput
+    @goModel(model: "go.probo.inc/probo/pkg/riskmanagement.MatrixSize") {
+    rows: Int!
+    cols: Int!
+}
+
 interface Node {
     id: ID!
 }

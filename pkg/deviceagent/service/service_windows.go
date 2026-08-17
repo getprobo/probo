@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // Install registers and starts the Windows service via sc.exe.
@@ -40,8 +41,20 @@ func Install(cfg Config) error {
 	name := DefaultWindowsName
 
 	// Remove any previous registration so install is idempotent
-	// (matches Darwin's bootout-before-bootstrap).
+	// (matches Darwin's bootout-before-bootstrap). sc delete is
+	// asynchronous; wait until the name is gone before create.
 	_ = Uninstall(cfg)
+	if err := waitUntilWindowsServiceGone(
+		func() (string, error) {
+			out, err := exec.Command("sc.exe", "query", name).CombinedOutput()
+
+			return string(out), err
+		},
+		15*time.Second,
+		time.Sleep,
+	); err != nil {
+		return err
+	}
 
 	bin := fmt.Sprintf(`"%s" run --dir "%s"`, cfg.ExePath, cfg.Dir)
 	if out, err := exec.Command(
@@ -58,7 +71,9 @@ func Install(cfg Config) error {
 		return fmt.Errorf("cannot run sc.exe create: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 
-	// Restart on failure.
+	// Restart on failure, including SERVICE_STOPPED with a nonzero
+	// Win32 exit code. Without failureflag, SCM only recovers from
+	// crashes that never report stopped.
 	if out, err := exec.Command(
 		"sc.exe",
 		"failure",
@@ -69,6 +84,15 @@ func Install(cfg Config) error {
 		"restart/1000/restart/1000/restart/1000",
 	).CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run sc.exe failure: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+
+	if out, err := exec.Command(
+		"sc.exe",
+		"failureflag",
+		name,
+		"1",
+	).CombinedOutput(); err != nil {
+		return fmt.Errorf("cannot run sc.exe failureflag: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 
 	if out, err := exec.Command("sc.exe", "start", name).CombinedOutput(); err != nil {

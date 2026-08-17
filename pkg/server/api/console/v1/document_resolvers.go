@@ -1325,29 +1325,6 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	}, nil
 }
 
-// GenerateDocumentChangelog is the resolver for the generateDocumentChangelog field.
-func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input types.GenerateDocumentChangelogInput) (*types.GenerateDocumentChangelogPayload, error) {
-	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentChangelogGenerate)
-	if err != nil {
-		return nil, err
-	}
-
-	changelog, err := r.probo.Documents.GenerateChangelog(ctx, scope, input.DocumentID)
-	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot generate document changelog", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.GenerateDocumentChangelogPayload{
-		Changelog: *changelog,
-	}, nil
-}
-
 // RequestSignature is the resolver for the requestSignature field.
 func (r *mutationResolver) RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error) {
 	scope, err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSignatureRequest)

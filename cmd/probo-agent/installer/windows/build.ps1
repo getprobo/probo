@@ -110,21 +110,93 @@ if (-not $wix) {
     throw "error: wix CLI not found on PATH (install with: dotnet tool install --global wix)"
 }
 
+function ConvertTo-LicenseRtf {
+    param([string]$LicensePath)
+
+    $text = Get-Content -LiteralPath $LicensePath -Raw
+    $escaped = $text.Replace('\', '\\').Replace('{', '\{').Replace('}', '\}')
+    $escaped = $escaped -replace "`r`n", "\par`r`n"
+    $escaped = $escaped -replace "(?<!\r)`n", "\par`n"
+    return "{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fswiss Helvetica;}}\fs18 $escaped\par}"
+}
+
+function Ensure-WixUiExtension {
+    $listed = & wix extension list -g 2>$null | Out-String
+    if ($listed -notmatch 'WixToolset\.UI\.wixext') {
+        Write-Host "Adding WixToolset.UI.wixext"
+        & wix extension add -g WixToolset.UI.wixext/6.0.2
+        if ($LASTEXITCODE -ne 0) {
+            throw "error: failed to add WixToolset.UI.wixext"
+        }
+    }
+}
+
+Ensure-WixUiExtension
+
+$LicenseSrc = Join-Path $RepoRoot "LICENSE"
+if (-not (Test-Path -LiteralPath $LicenseSrc)) {
+    throw "error: LICENSE missing at $LicenseSrc"
+}
+
+$LicenseRtf = Join-Path ([System.IO.Path]::GetTempPath()) "probo-agent-license-$PID.rtf"
+[System.IO.File]::WriteAllText($LicenseRtf, (ConvertTo-LicenseRtf -LicensePath $LicenseSrc))
+$LicenseRtfArg = $LicenseRtf.Replace('\', '/')
+
+$IconPng = Join-Path $RepoRoot "pkg\deviceagent\tray\icon_color.png"
+if (-not (Test-Path -LiteralPath $IconPng)) {
+    throw "error: color icon missing at $IconPng"
+}
+
+$ProductIcon = Join-Path ([System.IO.Path]::GetTempPath()) "probo-agent-icon-$PID.ico"
+$ProductIconArg = $ProductIcon.Replace('\', '/')
+
 Write-Host "Building MSI: binary=$Binary arch=$WixArch version=$Version output=$Output"
 
-& wix build `
-    -arch $WixArch `
-    -d "Version=$Version" `
-    -d "AgentExe=$Binary" `
-    -o $Output `
-    $PackageWxs
+try {
+    Push-Location $RepoRoot
+    try {
+        & go run ./cmd/probo-agent/installer/windows/mkicon `
+            -png $IconPng `
+            -ico $ProductIcon
+        if ($LASTEXITCODE -ne 0) {
+            throw "error: mkicon failed with exit code $LASTEXITCODE"
+        }
+    } finally {
+        Pop-Location
+    }
 
-if ($LASTEXITCODE -ne 0) {
-    throw "error: wix build failed with exit code $LASTEXITCODE"
+    & wix build `
+        -arch $WixArch `
+        -ext WixToolset.UI.wixext `
+        -d "Version=$Version" `
+        -d "AgentExe=$Binary" `
+        -d "LicenseRtf=$LicenseRtfArg" `
+        -d "ProductIcon=$ProductIconArg" `
+        -o $Output `
+        $PackageWxs
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "error: wix build failed with exit code $LASTEXITCODE"
+    }
+} finally {
+    Remove-Item -LiteralPath $LicenseRtf -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $ProductIcon -ErrorAction SilentlyContinue
 }
 
 if (-not (Test-Path -LiteralPath $Output)) {
     throw "error: expected MSI was not produced at $Output"
+}
+
+# Package.wxs sets MediaTemplate EmbedCab=yes; fail loudly if WiX still
+# emits a sidecar cabinet (users would need both files to install).
+$outputDir = Split-Path -Parent $Output
+if (-not $outputDir) {
+    $outputDir = (Get-Location).Path
+}
+$sidecarCabs = @(Get-ChildItem -LiteralPath $outputDir -Filter "*.cab" -File -ErrorAction SilentlyContinue)
+if ($sidecarCabs.Count -gt 0) {
+    $names = ($sidecarCabs | ForEach-Object { $_.Name }) -join ", "
+    throw "error: unexpected external cabinet(s) next to MSI ($names); expected EmbedCab=yes"
 }
 
 Write-Host "Wrote $Output"

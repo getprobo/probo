@@ -20,6 +20,10 @@
 
 package tray
 
+import "errors"
+
+var errTrayAlreadyRunning = errors.New("tray helper is already running")
+
 type Options struct {
 	RunDir    string
 	ExePath   string

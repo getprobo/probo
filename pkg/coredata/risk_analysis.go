@@ -42,6 +42,8 @@ type (
 		Description    *string    `db:"description"`
 		PeriodStart    *time.Time `db:"period_start"`
 		PeriodEnd      *time.Time `db:"period_end"`
+		MatrixRows     int        `db:"matrix_rows"`
+		MatrixCols     int        `db:"matrix_cols"`
 		CreatedAt      time.Time  `db:"created_at"`
 		UpdatedAt      time.Time  `db:"updated_at"`
 	}
@@ -139,6 +141,8 @@ SELECT
 	description,
 	period_start,
 	period_end,
+	matrix_rows,
+	matrix_cols,
 	created_at,
 	updated_at
 FROM risk_analyses
@@ -181,6 +185,8 @@ SELECT
 	description,
 	period_start,
 	period_end,
+	matrix_rows,
+	matrix_cols,
 	created_at,
 	updated_at
 FROM risk_analyses
@@ -226,6 +232,8 @@ INSERT INTO risk_analyses (
 	description,
 	period_start,
 	period_end,
+	matrix_rows,
+	matrix_cols,
 	created_at,
 	updated_at
 )
@@ -237,6 +245,8 @@ VALUES (
 	@description,
 	@period_start,
 	@period_end,
+	@matrix_rows,
+	@matrix_cols,
 	@created_at,
 	@updated_at
 )
@@ -250,6 +260,8 @@ VALUES (
 		"description":     ra.Description,
 		"period_start":    ra.PeriodStart,
 		"period_end":      ra.PeriodEnd,
+		"matrix_rows":     ra.MatrixRows,
+		"matrix_cols":     ra.MatrixCols,
 		"created_at":      ra.CreatedAt,
 		"updated_at":      ra.UpdatedAt,
 	}
@@ -274,6 +286,8 @@ SET
 	description = @description,
 	period_start = @period_start,
 	period_end = @period_end,
+	matrix_rows = @matrix_rows,
+	matrix_cols = @matrix_cols,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @id
@@ -286,6 +300,8 @@ WHERE %s
 		"description":  ra.Description,
 		"period_start": ra.PeriodStart,
 		"period_end":   ra.PeriodEnd,
+		"matrix_rows":  ra.MatrixRows,
+		"matrix_cols":  ra.MatrixCols,
 		"updated_at":   ra.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

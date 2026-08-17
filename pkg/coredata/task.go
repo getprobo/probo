@@ -585,7 +585,8 @@ SET
   time_estimate = @time_estimate,
   updated_at = @updated_at,
   assigned_to_profile_id = @assigned_to_profile_id,
-  deadline = @deadline
+  deadline = @deadline,
+  measure_id = @measure_id
 WHERE %s
     AND id = @task_id
 `
@@ -602,6 +603,7 @@ WHERE %s
 		"updated_at":             t.UpdatedAt,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
+		"measure_id":             t.MeasureID,
 	}
 
 	maps.Copy(args, scope.SQLArguments())

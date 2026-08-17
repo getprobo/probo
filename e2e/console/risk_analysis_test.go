@@ -40,8 +40,12 @@ func TestRiskAnalysis_Create(t *testing.T) {
 			CreateRiskAnalysis struct {
 				RiskAnalysisEdge struct {
 					Node struct {
-						ID   string `json:"id"`
-						Name string `json:"name"`
+						ID         string `json:"id"`
+						Name       string `json:"name"`
+						MatrixSize struct {
+							Rows int `json:"rows"`
+							Cols int `json:"cols"`
+						} `json:"matrixSize"`
 					} `json:"node"`
 				} `json:"riskAnalysisEdge"`
 			} `json:"createRiskAnalysis"`
@@ -50,19 +54,22 @@ func TestRiskAnalysis_Create(t *testing.T) {
 		err := owner.Execute(`
 			mutation($input: CreateRiskAnalysisInput!) {
 				createRiskAnalysis(input: $input) {
-					riskAnalysisEdge { node { id name } }
+					riskAnalysisEdge { node { id name matrixSize { rows cols } } }
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
 				"organizationId": owner.GetOrganizationID().String(),
 				"name":           "Platform Threat Model",
+				"matrixSize":     map[string]any{"rows": 5, "cols": 5},
 			},
 		}, &result)
 
 		require.NoError(t, err)
 		assert.NotEmpty(t, result.CreateRiskAnalysis.RiskAnalysisEdge.Node.ID)
 		assert.Equal(t, "Platform Threat Model", result.CreateRiskAnalysis.RiskAnalysisEdge.Node.Name)
+		assert.Equal(t, 5, result.CreateRiskAnalysis.RiskAnalysisEdge.Node.MatrixSize.Rows)
+		assert.Equal(t, 5, result.CreateRiskAnalysis.RiskAnalysisEdge.Node.MatrixSize.Cols)
 	})
 }
 
@@ -400,6 +407,10 @@ func TestRiskAnalysis_Update(t *testing.T) {
 				ID          string  `json:"id"`
 				Name        string  `json:"name"`
 				Description *string `json:"description"`
+				MatrixSize  struct {
+					Rows int `json:"rows"`
+					Cols int `json:"cols"`
+				} `json:"matrixSize"`
 			} `json:"riskAnalysis"`
 		} `json:"updateRiskAnalysis"`
 	}
@@ -407,7 +418,7 @@ func TestRiskAnalysis_Update(t *testing.T) {
 	err := owner.Execute(`
 		mutation($input: UpdateRiskAnalysisInput!) {
 			updateRiskAnalysis(input: $input) {
-				riskAnalysis { id name description }
+				riskAnalysis { id name description matrixSize { rows cols } }
 			}
 		}
 	`, map[string]any{
@@ -415,6 +426,7 @@ func TestRiskAnalysis_Update(t *testing.T) {
 			"id":          raID,
 			"name":        "Updated",
 			"description": "New description",
+			"matrixSize":  map[string]any{"rows": 3, "cols": 3},
 		},
 	}, &result)
 
@@ -422,6 +434,8 @@ func TestRiskAnalysis_Update(t *testing.T) {
 	assert.Equal(t, "Updated", result.UpdateRiskAnalysis.RiskAnalysis.Name)
 	require.NotNil(t, result.UpdateRiskAnalysis.RiskAnalysis.Description)
 	assert.Equal(t, "New description", *result.UpdateRiskAnalysis.RiskAnalysis.Description)
+	assert.Equal(t, 3, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Rows)
+	assert.Equal(t, 3, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Cols)
 }
 
 func TestRiskAnalysisDiagram_Update(t *testing.T) {

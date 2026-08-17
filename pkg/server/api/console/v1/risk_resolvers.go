@@ -110,7 +110,12 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 	}
 
 	if err := r.probo.Risks.Delete(ctx, scope, input.RiskID); err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

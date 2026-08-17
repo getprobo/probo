@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.15.0] - 2026-08-13
+
+### Added
+
+- Operators can disable resource detection per banner: the SDK skips `ResourceDetector` and the server ignores resources on the shared report endpoint, while cookies and storage keep reporting normally
+
 ## [0.14.0] - 2026-08-11
 
 ### Changed

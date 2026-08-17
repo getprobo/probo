@@ -49,8 +49,6 @@ func TestDocument_Bulk(t *testing.T) {
 	}{
 		{name: "ArchiveUnarchive", run: documentBulkArchiveUnarchive},
 		{name: "Export", run: documentBulkExport},
-		{name: "GenerateChangelogInitial", run: documentBulkGenerateChangelogInitial},
-		{name: "GenerateChangelogNoChanges", run: documentBulkGenerateChangelogNoChanges},
 		{name: "CancelSignatureRequest", run: documentBulkCancelSignatureRequest},
 		{name: "ArchiveViewerForbidden", run: documentBulkArchiveViewerForbidden},
 		{name: "ExportViewerForbidden", run: documentBulkExportViewerForbidden},
@@ -200,69 +198,6 @@ func documentBulkExport(t *testing.T, actors documentBulkActors) {
 	}, &result)
 	require.NoError(t, err)
 	assert.NotEmpty(t, result.BulkExportDocuments.ExportJobID)
-}
-
-const generateDocumentChangelogMutation = `
-	mutation($input: GenerateDocumentChangelogInput!) {
-		generateDocumentChangelog(input: $input) {
-			changelog
-		}
-	}
-`
-
-func documentBulkGenerateChangelogInitial(t *testing.T, actors documentBulkActors) {
-	owner := actors.owner.ForTest(t)
-
-	docID, _ := createTestDocument(t, owner)
-
-	var result struct {
-		GenerateDocumentChangelog struct {
-			Changelog string `json:"changelog"`
-		} `json:"generateDocumentChangelog"`
-	}
-
-	err := owner.Execute(generateDocumentChangelogMutation, map[string]any{
-		"input": map[string]any{
-			"documentId": docID,
-		},
-	}, &result)
-	require.NoError(t, err)
-	assert.Equal(t, "Initial version", result.GenerateDocumentChangelog.Changelog)
-}
-
-func documentBulkGenerateChangelogNoChanges(t *testing.T, actors documentBulkActors) {
-	owner := actors.owner.ForTest(t)
-
-	docID, _ := createTestDocument(t, owner)
-	approveTestDocument(t, owner, docID)
-
-	_, err := owner.Do(`
-		mutation($input: UpdateDocumentInput!) {
-			updateDocument(input: $input) {
-				documentVersion { id status }
-			}
-		}
-	`, map[string]any{
-		"input": map[string]any{
-			"id":             docID,
-			"classification": "CONFIDENTIAL",
-		},
-	})
-	require.NoError(t, err)
-
-	var result struct {
-		GenerateDocumentChangelog struct {
-			Changelog string `json:"changelog"`
-		} `json:"generateDocumentChangelog"`
-	}
-
-	err = owner.Execute(generateDocumentChangelogMutation, map[string]any{
-		"input": map[string]any{
-			"documentId": docID,
-		},
-	}, &result)
-	require.NoError(t, err)
-	assert.Equal(t, "No changes detected", result.GenerateDocumentChangelog.Changelog)
 }
 
 func firstDocumentVersionSignatureID(

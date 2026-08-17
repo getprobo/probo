@@ -40,6 +40,10 @@ mutation($input: UpdateRiskAnalysisInput!) {
         start
         end
       }
+      matrixSize {
+        rows
+        cols
+      }
       createdAt
       updatedAt
     }
@@ -57,6 +61,10 @@ type updateResponse struct {
 				Start *string `json:"start"`
 				End   *string `json:"end"`
 			} `json:"period"`
+			MatrixSize struct {
+				Rows int `json:"rows"`
+				Cols int `json:"cols"`
+			} `json:"matrixSize"`
 			CreatedAt string `json:"createdAt"`
 			UpdatedAt string `json:"updatedAt"`
 		} `json:"riskAnalysis"`
@@ -69,6 +77,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagDescription string
 		flagPeriodStart string
 		flagPeriodEnd   string
+		flagMatrixRows  int
+		flagMatrixCols  int
 	)
 
 	cmd := &cobra.Command{
@@ -119,6 +129,20 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["period"] = period
 			}
 
+			rowsChanged := cmd.Flags().Changed("matrix-rows")
+			colsChanged := cmd.Flags().Changed("matrix-cols")
+
+			if rowsChanged || colsChanged {
+				if !rowsChanged || !colsChanged {
+					return fmt.Errorf("both --matrix-rows and --matrix-cols are required")
+				}
+
+				input["matrixSize"] = map[string]any{
+					"rows": flagMatrixRows,
+					"cols": flagMatrixCols,
+				}
+			}
+
 			if len(input) == 1 {
 				return fmt.Errorf("at least one field must be specified for update")
 			}
@@ -152,6 +176,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description")
 	cmd.Flags().StringVar(&flagPeriodStart, "period-start", "", "Period start date (e.g. 2026-01-01)")
 	cmd.Flags().StringVar(&flagPeriodEnd, "period-end", "", "Period end date (e.g. 2026-12-31)")
+	cmd.Flags().IntVar(&flagMatrixRows, "matrix-rows", 0, "Matrix rows (3, 4, or 5)")
+	cmd.Flags().IntVar(&flagMatrixCols, "matrix-cols", 0, "Matrix cols (3, 4, or 5)")
 
 	return cmd
 }

@@ -99,7 +99,6 @@ func PersistAssessmentResult(
 					childNamePath,
 					linkSubThirdPartyParams{
 						Name:    sub.Name,
-						Country: sub.Country,
 						Purpose: sub.Purpose,
 					},
 				); err != nil {
@@ -662,33 +661,30 @@ func scoreToBusinessImpact(score int) coredata.BusinessImpact {
 	}
 }
 
-func saveParamsFromInfo(info ThirdPartyInfo) saveThirdPartyInfoParams {
-	return saveThirdPartyInfoParams{
-		saveThirdPartyInfoToolParams: saveThirdPartyInfoToolParams{
-			Name:                          info.Name,
-			Description:                   info.Description,
-			Category:                      info.Category,
-			HeadquarterAddress:            info.HeadquarterAddress,
-			LegalName:                     info.LegalName,
-			PrivacyPolicyURL:              info.PrivacyPolicyURL,
-			ServiceLevelAgreementURL:      info.ServiceLevelAgreementURL,
-			DataProcessingAgreementURL:    info.DataProcessingAgreementURL,
-			BusinessAssociateAgreementURL: info.BusinessAssociateAgreementURL,
-			SubprocessorsListURL:          info.SubprocessorsListURL,
-			SecurityPageURL:               info.SecurityPageURL,
-			TrustPageURL:                  info.TrustPageURL,
-			TermsOfServiceURL:             info.TermsOfServiceURL,
-			StatusPageURL:                 info.StatusPageURL,
-			Certifications:                info.Certifications,
-		},
-		Countries: countriesFromInfo(info),
+func saveParamsFromInfo(info ThirdPartyInfo) saveThirdPartyInfoToolParams {
+	return saveThirdPartyInfoToolParams{
+		Name:                          info.Name,
+		Description:                   info.Description,
+		Category:                      info.Category,
+		HeadquarterAddress:            info.HeadquarterAddress,
+		LegalName:                     info.LegalName,
+		PrivacyPolicyURL:              info.PrivacyPolicyURL,
+		ServiceLevelAgreementURL:      info.ServiceLevelAgreementURL,
+		DataProcessingAgreementURL:    info.DataProcessingAgreementURL,
+		BusinessAssociateAgreementURL: info.BusinessAssociateAgreementURL,
+		SubprocessorsListURL:          info.SubprocessorsListURL,
+		SecurityPageURL:               info.SecurityPageURL,
+		TrustPageURL:                  info.TrustPageURL,
+		TermsOfServiceURL:             info.TermsOfServiceURL,
+		StatusPageURL:                 info.StatusPageURL,
+		Certifications:                info.Certifications,
 	}
 }
 
 func applySaveParams(
 	thirdParty *coredata.ThirdParty,
 	websiteURL string,
-	p saveThirdPartyInfoParams,
+	p saveThirdPartyInfoToolParams,
 	nameSuffixPath []string,
 ) {
 	if p.Name != "" {
@@ -756,10 +752,6 @@ func applySaveParams(
 	if len(p.Certifications) > 0 {
 		thirdParty.Certifications = p.Certifications
 	}
-
-	if len(p.Countries) > 0 {
-		thirdParty.Countries = p.Countries
-	}
 }
 
 func linkSubThirdParty(
@@ -793,15 +785,6 @@ func linkSubThirdParty(
 	err := child.LoadByNameAndParentThirdPartyID(ctx, conn, scope, qualifiedName, pc.ThirdPartyID)
 	switch {
 	case err == nil:
-		if countries := parseOptionalCountryCodes(p.Country); len(countries) > 0 && len(child.Countries) == 0 {
-			child.Countries = countries
-			child.UpdatedAt = time.Now()
-
-			if err := child.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update child third party %q countries: %w", p.Name, err)
-			}
-		}
-
 		return nil
 	case !errors.Is(err, coredata.ErrResourceNotFound):
 		return fmt.Errorf("cannot find child third party %q: %w", p.Name, err)
@@ -832,10 +815,6 @@ func linkSubThirdParty(
 
 	if p.WebsiteURL != "" {
 		child.WebsiteURL = &p.WebsiteURL
-	}
-
-	if countries := parseOptionalCountryCodes(p.Country); len(countries) > 0 {
-		child.Countries = countries
 	}
 
 	if err := child.Insert(ctx, conn, scope); err != nil {

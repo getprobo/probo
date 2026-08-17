@@ -24,7 +24,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,13 +38,11 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
-	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
@@ -163,7 +160,7 @@ type (
 
 const (
 	documentContentMaxTextLength = 200_000
-	documentContentMaxJSONBytes  = 500_000
+	documentContentMaxJSONBytes  = 1 << 20 // 1 MiB
 )
 
 func (cdr *CreateDocumentRequest) Validate() error {
@@ -477,103 +474,6 @@ func (s *DocumentService) GetWithFilter(
 	}
 
 	return document, nil
-}
-
-func (s DocumentService) GenerateChangelog(
-	ctx context.Context, scope coredata.Scoper,
-	documentID gid.GID,
-) (*string, error) {
-	var changelog *string
-
-	draftVersion := &coredata.DocumentVersion{}
-	publishedVersion := &coredata.DocumentVersion{}
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := draftVersion.LoadLatestVersion(ctx, conn, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load draft version: %w", err)
-			}
-
-			if draftVersion.Status != coredata.DocumentVersionStatusDraft {
-				return fmt.Errorf("latest version is not a draft")
-			}
-
-			document := &coredata.Document{}
-			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
-			}
-
-			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
-			}
-
-			if document.CurrentPublishedMajor == nil {
-				initialVersionChangelog := "Initial version"
-				changelog = &initialVersionChangelog
-			} else {
-				if err := publishedVersion.LoadByDocumentIDAndVersion(ctx, conn, scope, documentID, *document.CurrentPublishedMajor, *document.CurrentPublishedMinor); err != nil {
-					return fmt.Errorf("cannot load published version: %w", err)
-				}
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if publishedVersion.Content == draftVersion.Content {
-		noDiffChangelog := "No changes detected"
-		changelog = &noDiffChangelog
-	}
-
-	if changelog == nil {
-		changelog, err = s.generateChangelog(ctx, scope, publishedVersion.Content, draftVersion.Content)
-		if err != nil {
-			return nil, fmt.Errorf("cannot generate changelog: %w", err)
-		}
-	}
-
-	return changelog, nil
-}
-
-//go:embed prompts/changelog_generator.txt
-var changelogGeneratorSystemPrompt string
-
-func (s DocumentService) generateChangelog(
-	ctx context.Context, scope coredata.Scoper,
-	oldContent, newContent string,
-) (*string, error) {
-	ag := agent.New(
-		"changelog_generator",
-		s.svc.llmClient,
-		agent.WithInstructions(changelogGeneratorSystemPrompt),
-		agent.WithModel(s.svc.llmConfig.Model),
-		agent.WithTemperature(s.svc.llmConfig.Temperature),
-		agent.WithMaxTokens(s.svc.llmConfig.MaxTokens),
-	)
-
-	result, err := ag.Run(
-		ctx,
-		[]llm.Message{
-			{
-				Role: llm.RoleUser,
-				Parts: []llm.Part{
-					llm.TextPart{Text: fmt.Sprintf("Old content: %s", oldContent)},
-					llm.TextPart{Text: fmt.Sprintf("New content: %s", newContent)},
-				},
-			},
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate changelog: %w", err)
-	}
-
-	text := result.FinalMessage().Text()
-
-	return &text, nil
 }
 
 func (s *DocumentService) PublishVersionWithDefaultApprovers(

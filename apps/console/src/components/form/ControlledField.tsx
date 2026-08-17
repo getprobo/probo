@@ -35,13 +35,15 @@ export function ControlledField<
 >({
   control,
   name,
+  rules,
   ...props
 }: Props<typeof Field, TFieldValues, TName>) {
   return (
     <Controller<TFieldValues, TName>
       control={control}
       name={name}
-      render={({ field }) => (
+      rules={rules}
+      render={({ field, fieldState }) => (
         <>
           <Field
             {...props}
@@ -49,6 +51,7 @@ export function ControlledField<
             // TODO : Find a better way to handle this case (comparing number and string for select create issues)
             value={field.value ? (field.value as readonly string[] | string | number).toString() : ""}
             onValueChange={field.onChange}
+            error={fieldState.error?.message ?? props.error}
           />
         </>
       )}

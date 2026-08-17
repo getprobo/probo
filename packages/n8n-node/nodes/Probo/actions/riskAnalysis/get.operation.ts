@@ -55,6 +55,10 @@ export async function execute(
 						start
 						end
 					}
+					matrixSize {
+						rows
+						cols
+					}
 					createdAt
 					updatedAt
 				}

@@ -22,8 +22,24 @@
 
 package tray
 
-import "fyne.io/systray"
+import (
+	_ "embed"
+
+	"fyne.io/systray"
+)
+
+// icon_color.png is the AppIcon / Windows tray / exe / MSI mark.
+// Corners must stay fully transparent so macOS .icns compositing
+// does not draw a square frame.
+
+//go:embed icon_color.png
+var iconColorData []byte
 
 func setTrayIcons() {
-	systray.SetIcon(iconData)
+	ico, err := PNGToMultiSizeICO(iconColorData, 16, 32)
+	if err != nil {
+		return
+	}
+
+	systray.SetIcon(ico)
 }

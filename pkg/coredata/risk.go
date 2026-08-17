@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -677,8 +678,17 @@ DELETE FROM risks WHERE %s AND id = @id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23503" || pgErr.Code == "23001" {
+				return ErrResourceInUse
+			}
+		}
 
-	return err
+		return fmt.Errorf("cannot delete risk: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Risks) CountByDocumentID(

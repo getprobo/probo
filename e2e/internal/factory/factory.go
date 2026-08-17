@@ -1633,6 +1633,10 @@ func CreateRiskAnalysis(c *testutil.Client, attrs ...Attrs) string {
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
 		"name":           a.getString("name", SafeName("Risk Analysis")),
+		"matrixSize": map[string]any{
+			"rows": a.getInt("matrixRows", 5),
+			"cols": a.getInt("matrixCols", 5),
+		},
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc

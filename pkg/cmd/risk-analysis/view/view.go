@@ -42,6 +42,10 @@ query($id: ID!) {
         start
         end
       }
+      matrixSize {
+        rows
+        cols
+      }
       createdAt
       updatedAt
     }
@@ -59,6 +63,10 @@ type viewResponse struct {
 			Start *string `json:"start"`
 			End   *string `json:"end"`
 		} `json:"period"`
+		MatrixSize struct {
+			Rows int `json:"rows"`
+			Cols int `json:"cols"`
+		} `json:"matrixSize"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
@@ -142,6 +150,8 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Period end:"), cmdutil.FormatTime(*r.Period.End))
 				}
 			}
+
+			_, _ = fmt.Fprintf(out, "%s%d×%d\n", label.Render("Matrix size:"), r.MatrixSize.Rows, r.MatrixSize.Cols)
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(r.CreatedAt))

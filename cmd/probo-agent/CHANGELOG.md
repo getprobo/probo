@@ -5,6 +5,55 @@ documented in this file.
 
 ## Unreleased
 
+## [0.6.1] - 2026-08-14
+
+### Changed
+
+- Re-released with an updated code-signing certificate; no functional
+  changes.
+
+## [0.6.0] - 2026-08-13
+
+### Added
+
+- Devices list now shows the agent's last reported version alongside OS
+  version, so rollouts can be tracked without opening each device.
+
+### Changed
+
+- Windows exe/MSI/tray icons are now generated from two shared master PNGs
+  (a color mark and a macOS menu-bar outline) instead of separate
+  per-platform rasters, so the icons can no longer drift out of sync.
+- Devices list now shows short Windows OS version strings (e.g.
+  `10.0.26200`) instead of the full localized `ver` banner, matching
+  Darwin.
+
+### Fixed
+
+- Windows service now speaks the SCM service protocol after enroll, fixing
+  the agent being stopped right after install (error 1053); the tray now
+  autostarts via an HKLM-persisted entry with a proper ICO instead of being
+  missing or blank.
+- macOS PKG postinstall now calls the same `setup-tray` path as the Windows
+  installer, fixing tray bootstrap being skipped on a PKG upgrade when the
+  LaunchAgent plist was already up to date.
+
+## [0.5.1] - 2026-08-12
+
+### Fixed
+
+- Windows MSI now embeds its cabinet instead of shipping it as a sidecar
+  file, fixing installs that paired a downloaded MSI with the wrong
+  arch's cabinet.
+
+## [0.5.0] - 2026-08-12
+
+### Added
+
+- Windows installs now ship an Authenticode-signed MSI (Azure Trusted
+  Signing) for initial install, alongside the existing zip archive used
+  for auto-update.
+
 ## [0.4.2] - 2026-07-30
 
 ### Fixed

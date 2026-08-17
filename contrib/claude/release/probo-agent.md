@@ -66,15 +66,23 @@ then the app bundle, optionally signs the product with
 profile; submits use `--keychain-profile` so the secret is not on
 `notarytool submit` argv).
 
-The Finder/Dock icon for `Probo Agent.app` comes from a single master
-PNG, `cmd/probo-agent/installer/macos/enroll-ui/Resources/icon-original.png`
-(Probo square mark). At PKG build time `build.sh` pads/resizes it with
+The Finder/Dock icon for `Probo Agent.app`, the Windows tray /
+`.exe` / MSI icon, and the macOS menu-bar outline all come from two
+committed PNGs in `pkg/deviceagent/tray/`:
+
+- `icon_color.png` — 1200px color mark (rounded square, transparent
+  corners). Feeds the macOS `AppIcon.icns` pipeline, the Windows tray
+  ICO at runtime, and `mkicon` (exe `.syso` + MSI `ARPPRODUCTICON`).
+- `icon_template.png` — 36px black+alpha outline. macOS menu bar
+  template icon, and the tinted status rows in the tray menu.
+
+At PKG build time `build.sh` pads/resizes `icon_color.png` with
 `sips`, compiles `AppIcon.icns` with `iconutil` under the build stage
 directory, and installs it into `Contents/Resources/`. `Info.plist`
 sets `CFBundleIconFile` to `AppIcon`. Do not commit generated
-`.icns` / iconset PNGs.
+`.icns` / iconset PNGs, `.ico`, or `rsrc_windows_*.syso`.
 
-The master PNG must have the rounded-square mark pre-baked with fully
+The color PNG must have the rounded-square mark pre-baked with fully
 transparent corners. macOS composites legacy `.icns` icons onto a light
 rounded plate, so any opaque pixel outside the rounded square renders as
 a visible square frame around the mark.
@@ -97,8 +105,8 @@ cmd/probo-agent/installer/macos/build.sh \
   --version "$(cat cmd/probo-agent/VERSION)"
 ```
 
-PKG postinstall always installs the global tray LaunchAgent, registers
-`probo://`, and installs the privileged helper
+PKG postinstall runs `probo-agent setup-tray` (LaunchAgent persist and
+start), registers `probo://`, and installs the privileged helper
 (`com.probo.agent.helper`) under `/Library/PrivilegedHelperTools` as
 root. The only admin authentication is the normal macOS Installer
 prompt for the PKG itself. The LaunchDaemon for `probo-agent run` is
@@ -158,7 +166,7 @@ Published assets per arch:
 
 | Artifact | Role |
 |----------|------|
-| `probo-agent_*_windows_*.msi` | Initial install (double-click or `msiexec /i … /qn`) |
+| `probo-agent_*_windows_*.msi` | Initial install (double-click or `msiexec /i … /qn`); self-contained (embedded CAB) |
 | `probo-agent_Windows_*.zip` | Auto-update only (unchanged updater contract) |
 
 Both the nested `probo-agent.exe` and the MSI are Authenticode-signed
@@ -169,12 +177,21 @@ with **Azure Trusted Signing** before upload. Local unsigned MSI builds
 # Requires: go, and `dotnet tool install --global wix`
 $Version = Get-Content cmd/probo-agent/VERSION -Raw
 $Version = $Version.Trim()
+go run ./cmd/probo-agent/installer/windows/mkicon `
+  -png ./pkg/deviceagent/tray/icon_color.png `
+  -syso ./cmd/probo-agent/rsrc_windows_amd64.syso `
+  -arch amd64
 go build -ldflags "-X 'main.version=$Version'" -o dist/probo-agent.exe ./cmd/probo-agent
 ./cmd/probo-agent/installer/windows/build.ps1 `
   -Binary dist/probo-agent.exe `
   -Version $Version `
   -Arch amd64
 ```
+
+`mkicon` must run before `go build` so the `.syso` is linked into the
+exe (Explorer, Task Manager). The MSI build runs `mkicon` again for
+`ARPPRODUCTICON` (Settings > Apps). Generated `.syso` files are
+gitignored.
 
 For per-user protocol registration without the MSI (dev machines),
 `cmd/probo-agent/installer/windows/register-protocol.ps1` still writes

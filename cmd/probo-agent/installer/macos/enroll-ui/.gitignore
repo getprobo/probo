@@ -5,8 +5,9 @@
 # Rendered by build.sh from *.tmpl (do not commit)
 Shared/*.generated.swift
 
-# Generated from Resources/icon-original.png (build staging preferred;
-# ignore if produced locally under enroll-ui).
+# Generated AppIcon artifacts (build staging preferred; ignore if
+# produced locally under enroll-ui). The color master lives in
+# pkg/deviceagent/tray/icon_color.png.
 Resources/AppIcon.icns
 Resources/AppIcon.iconset/
 Resources/icon-padded.png

@@ -72,6 +72,7 @@ func NewRiskAnalysis(ra *coredata.RiskAnalysis) *RiskAnalysis {
 		Name:        ra.Name,
 		Description: ra.Description,
 		Period:      NewPeriod(ra.PeriodStart, ra.PeriodEnd),
+		MatrixSize:  NewMatrixSize(ra.MatrixRows, ra.MatrixCols),
 		Organization: &Organization{
 			ID: ra.OrganizationID,
 		},

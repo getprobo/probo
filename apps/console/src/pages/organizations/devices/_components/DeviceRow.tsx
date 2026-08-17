@@ -49,6 +49,7 @@ const deviceRowFragment = graphql`
     hostname
     platform
     osVersion
+    agentVersion
     lastSeenAt
     owner {
       id
@@ -107,6 +108,7 @@ export function DeviceRow({
         </Td>
         <Td>{displayValue(device.platform, pendingLabel)}</Td>
         <Td>{displayValue(device.osVersion, pendingLabel)}</Td>
+        <Td>{displayValue(device.agentVersion, pendingLabel)}</Td>
         <Td>
           {device.lastSeenAt
             ? dateTimeFormat(i18n.language, device.lastSeenAt)

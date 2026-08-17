@@ -35,7 +35,7 @@ func collectOSVersion() string {
 
 	out, _ := runQuiet(ctx, "cmd", "/C", "ver")
 	if out != "" {
-		return out
+		return parseWindowsVerOutput(out)
 	}
 
 	out, _ = runQuiet(ctx, "uname", "-sr")

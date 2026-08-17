@@ -4,6 +4,21 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.217.0] - 2026-08-14
+
+### Added
+
+- `--matrix-rows` / `--matrix-cols` flags (required, 3, 4, or 5) on `prb risk-analysis create` and `update`, shown as a column on `list` and `view`, so the likelihood/impact matrix size is explicit per analysis
+
+## [0.216.0] - 2026-08-13
+
+### Added
+
+- `COMPLIANCE_PORTAL_MANAGER` and `COMPLIANCE_PORTAL_ACCESS_MANAGER` membership roles, filterable via `prb user list --role`, for delegating full compliance portal management or just visitor access approval without broader admin access
+- `prb aisystem` command group (`create`, `list`, `view`, `update`, `delete`, `publish`), for managing an organization's AI Systems register
+- `--period-start` and `--period-end` flags on `prb risk-analysis create` and `update`, shown as columns on `list` and `view`
+- `--resource-reporting-enabled` flag on `prb cookie-banner update`, to enable or disable resource detection on the banner
+
 ## [0.215.0] - 2026-08-11
 
 ### Changed

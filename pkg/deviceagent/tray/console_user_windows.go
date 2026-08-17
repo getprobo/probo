@@ -23,33 +23,12 @@
 package tray
 
 import (
-	"fmt"
-	"strings"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
 
 const invalidSessionID = 0xFFFFFFFF
-
-func currentInteractiveUserSID() (string, error) {
-	var lastErr error
-
-	for _, sessionID := range interactiveSessionCandidates() {
-		sid, err := sidFromSessionID(sessionID)
-		if err == nil {
-			return sid, nil
-		}
-
-		lastErr = err
-	}
-
-	if lastErr != nil {
-		return "", fmt.Errorf("no interactive user session available: %w", lastErr)
-	}
-
-	return "", fmt.Errorf("no interactive user session available")
-}
 
 func interactiveSessionCandidates() []uint32 {
 	candidates := make([]uint32, 0, 4)
@@ -112,80 +91,6 @@ func appendUniqueSessionID(ids []uint32, sessionID uint32) []uint32 {
 	return append(ids, sessionID)
 }
 
-func sidFromSessionID(sessionID uint32) (string, error) {
-	sid, err := sidFromSessionInformation(sessionID)
-	if err == nil {
-		return sid, nil
-	}
-
-	if isCurrentProcessLocalSystem() {
-		if sid, tokenErr := sidFromSessionUserToken(sessionID); tokenErr == nil {
-			return sid, nil
-		}
-	}
-
-	return "", err
-}
-
-func sidFromSessionInformation(sessionID uint32) (string, error) {
-	user, domain, err := sessionUserAndDomain(sessionID)
-	if err != nil {
-		return "", err
-	}
-
-	account := user
-	system := ""
-	if domain != "" {
-		account = domain + `\` + user
-	}
-
-	sid, _, _, err := windows.LookupSID(system, account)
-	if err != nil {
-		return "", fmt.Errorf("cannot lookup session %d user SID: %w", sessionID, err)
-	}
-
-	sidStr := sid.String()
-	if sidStr == "" {
-		return "", fmt.Errorf("session %d user SID is empty", sessionID)
-	}
-
-	if !isInteractiveUserSID(sidStr) {
-		return "", fmt.Errorf("session %d has no interactive user", sessionID)
-	}
-
-	return sidStr, nil
-}
-
-func sidFromSessionUserToken(sessionID uint32) (string, error) {
-	var token windows.Token
-
-	if err := windows.WTSQueryUserToken(sessionID, &token); err != nil {
-		return "", fmt.Errorf("cannot query session %d user token: %w", sessionID, err)
-	}
-
-	defer func() { _ = token.Close() }()
-
-	tu, err := token.GetTokenUser()
-	if err != nil {
-		return "", fmt.Errorf("cannot read session %d user: %w", sessionID, err)
-	}
-
-	if tu.User.Sid == nil {
-		return "", fmt.Errorf("session %d user SID is empty", sessionID)
-	}
-
-	sid := tu.User.Sid.String()
-	if sid == "" {
-		return "", fmt.Errorf("session %d user SID is empty", sessionID)
-	}
-
-	if !isInteractiveUserSID(sid) {
-		return "", fmt.Errorf("session %d has no interactive user", sessionID)
-	}
-
-	return sid, nil
-}
-
 func isCurrentProcessLocalSystem() bool {
 	token, err := windows.OpenCurrentProcessToken()
 	if err != nil {
@@ -205,9 +110,4 @@ func isCurrentProcessLocalSystem() bool {
 	}
 
 	return tu.User.Sid.Equals(systemSID)
-}
-
-func isInteractiveUserSID(sid string) bool {
-	return strings.HasPrefix(sid, "S-1-5-21-") ||
-		strings.HasPrefix(sid, "S-1-12-1-")
 }

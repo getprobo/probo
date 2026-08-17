@@ -145,6 +145,7 @@ export default function MeasureEvidencesTab() {
       <SortableTable {...pagination}>
         <Thead>
           <Tr>
+            <Th>{t("measureEvidencesTab.columns.name")}</Th>
             <Th>{t("measureEvidencesTab.columns.description")}</Th>
             <Th>{t("measureEvidencesTab.columns.fileType")}</Th>
             <Th>{t("measureEvidencesTab.columns.fileSize")}</Th>
@@ -164,7 +165,7 @@ export default function MeasureEvidencesTab() {
           ))}
           {pagination.data.canUploadEvidence && (
             <TrButton
-              colspan={5}
+              colspan={6}
               onClick={() => dialogRef.current?.open()}
               icon={IconPlusLarge}
             >
@@ -257,6 +258,7 @@ function EvidenceRow(props: {
         />
       )}
       <Tr to={evidenceUrl}>
+        <Td>{evidence.file?.fileName || "—"}</Td>
         <Td>
           <span className="text-txt-secondary text-sm line-clamp-2">
             {evidence.description || "—"}

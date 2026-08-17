@@ -656,6 +656,30 @@ components:
           format: date-time
           description: End of the period
 
+    MatrixSize:
+      type: object
+      required:
+        - rows
+        - cols
+      description: >
+        Likelihood/impact matrix dimensions. Valid sizes are exactly 3×3, 4×4,
+        or 5×5 — rows and cols must be equal, and each must be 3, 4, or 5.
+      properties:
+        rows:
+          type: integer
+          enum:
+            - 3
+            - 4
+            - 5
+          description: Number of likelihood rows (must equal cols; one of 3, 4, or 5)
+        cols:
+          type: integer
+          enum:
+            - 3
+            - 4
+            - 5
+          description: Number of impact columns (must equal rows; one of 3, 4, or 5)
+
     ListOrganizationsInput:
       type: object
       properties:
@@ -6504,6 +6528,37 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Obligation"
+
+    ListRiskMeasuresInput:
+      type: object
+      required:
+        - risk_id
+      properties:
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        size:
+          type: integer
+          description: Page size
+        order_by:
+          $ref: "#/components/schemas/MeasureOrderBy"
+          description: Measure order by
+
+    ListRiskMeasuresOutput:
+      type: object
+      required:
+        - measures
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        measures:
+          type: array
+          items:
+            $ref: "#/components/schemas/Measure"
 
     LinkRiskInput:
       type: object
@@ -13227,6 +13282,7 @@ components:
         - id
         - organization_id
         - name
+        - matrix_size
         - created_at
         - updated_at
       properties:
@@ -13243,6 +13299,9 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        matrix_size:
+          $ref: "#/components/schemas/MatrixSize"
+          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
         created_at:
           type: string
           format: date-time
@@ -13478,6 +13537,7 @@ components:
       required:
         - organization_id
         - name
+        - matrix_size
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -13491,6 +13551,9 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        matrix_size:
+          $ref: "#/components/schemas/MatrixSize"
+          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
 
     AddRiskAnalysisOutput:
       type: object
@@ -13518,6 +13581,9 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
+        matrix_size:
+          $ref: "#/components/schemas/MatrixSize"
+          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
 
     UpdateRiskAnalysisOutput:
       type: object
@@ -16249,6 +16315,18 @@ tools:
       $ref: "#/components/schemas/ListRiskObligationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListRiskObligationsOutput"
+  - name: listRiskMeasures
+    title: List Risk Measures
+    description: List measures linked to a risk
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskMeasuresInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskMeasuresOutput"
   - name: linkRisk
     title: Link Risk
     description: Link a risk to a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.

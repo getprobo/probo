@@ -269,9 +269,9 @@ function EnrollDeviceButtonContent(
   }
 
   return (
-    <div className="space-y-2">
+    <>
       {hasTimedOut && (
-        <p className="text-sm text-txt-secondary">
+        <p className="w-full text-sm text-txt-secondary">
           {t("deviceEnrollment.status.timedOut")}
         </p>
       )}
@@ -285,7 +285,7 @@ function EnrollDeviceButtonContent(
             ? t("common.actions.tryAgain")
             : t("deviceEnrollment.actions.openAgent")}
       </Button>
-    </div>
+    </>
   );
 }
 

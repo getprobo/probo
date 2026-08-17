@@ -79,12 +79,10 @@ func RegisterAutoStart(exePath string, runDir string) error {
 		return err
 	}
 
-	if current {
-		return nil
-	}
-
-	if err := writeTrayLaunchAgentPlist(exePath, runDir); err != nil {
-		return err
+	if !current {
+		if err := writeTrayLaunchAgentPlist(exePath, runDir); err != nil {
+			return err
+		}
 	}
 
 	uids := activeGUIUserUIDs()
@@ -164,7 +162,7 @@ func UnregisterAutoStart() error {
 
 // bootstrapTrayForUIDs best-effort loads the tray LaunchAgent into each
 // GUI session. Failures are warnings only: the plist is enough for the
-// next login (same policy as the macOS PKG postinstall script).
+// next login (same policy as Windows startTrayBestEffort).
 func bootstrapTrayForUIDs(uids []int) {
 	for _, uid := range uids {
 		target := fmt.Sprintf("gui/%d/%s", uid, trayLabel)

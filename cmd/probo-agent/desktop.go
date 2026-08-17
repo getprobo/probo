@@ -33,6 +33,7 @@ import (
 
 func registerPlatformCommands(root *cobra.Command) {
 	root.AddCommand(newTrayCmd())
+	root.AddCommand(newSetupTrayCmd())
 }
 
 func registerTrayAutoStart(exePath string, runDir string) error {
@@ -93,6 +94,42 @@ func newTrayCmd() *cobra.Command {
 		"server",
 		"",
 		"Probo console base URL; skips region picker when set (for local dev)",
+	)
+
+	return cmd
+}
+
+func newSetupTrayCmd() *cobra.Command {
+	var unregister bool
+
+	cmd := &cobra.Command{
+		Use:    "setup-tray",
+		Short:  "Register or unregister tray auto-start (used by the installer)",
+		Hidden: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			tray.DetachConsole()
+
+			if unregister {
+				return tray.UnregisterAutoStart()
+			}
+
+			exePath, err := os.Executable()
+			if err != nil {
+				return fmt.Errorf("cannot resolve current executable path: %w", err)
+			}
+
+			return registerTrayAutoStart(
+				exePath,
+				deviceagent.DefaultEnrollmentRunDir(),
+			)
+		},
+	}
+
+	cmd.Flags().BoolVar(
+		&unregister,
+		"unregister",
+		false,
+		"remove tray auto-start and stop the helper",
 	)
 
 	return cmd

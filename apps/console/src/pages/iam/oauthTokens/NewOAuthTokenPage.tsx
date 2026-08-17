@@ -46,7 +46,7 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { z } from "#/lib/zod";
 
 import { OAuthTokenCredentialsDialog } from "./_components/OAuthTokenCredentialsDialog";
-import { formatApiScopeLabel } from "./_components/scopeLabels";
+import { formatAPIScopeLabel } from "./_components/scopeLabels";
 
 const pageQuery = graphql`
   query NewOAuthTokenPageQuery {
@@ -259,7 +259,7 @@ export function NewOAuthTokenPage() {
                   />
                   <span className="min-w-0">
                     <span className="block font-medium">
-                      {formatApiScopeLabel(scope)}
+                      {formatAPIScopeLabel(scope, t)}
                     </span>
                     <span className="block text-sm text-txt-secondary break-all">
                       {scope}

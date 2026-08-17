@@ -80,7 +80,6 @@ export class ProboTrigger implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["events"].join(", ")}}',
 		description: 'Starts a workflow when Probo events occur',
-		usableAsTool: true,
 		defaults: {
 			name: 'Probo Trigger',
 		},

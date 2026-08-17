@@ -16,6 +16,7 @@ sbom-docker.json
 *.crt
 *.key
 *.tsbuildinfo
+cmd/probo-agent/rsrc_windows_*.syso
 compose/keycloak/probo-realm.json
 compose/step-ca/config/
 compose/step-ca/db/

@@ -18,14 +18,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package service
+package tray
 
-import "strings"
+import (
+	"bytes"
+	"fmt"
+	"image"
+	"image/color"
+	"image/png"
+)
 
-func isWindowsServiceMissing(out string) bool {
-	lower := strings.ToLower(out)
+func mustTintStatusIcon(templatePNG []byte, tint color.RGBA) []byte {
+	out, err := tintStatusIcon(templatePNG, tint, 16)
+	if err != nil {
+		return templatePNG
+	}
 
-	return strings.Contains(lower, "1060") ||
-		strings.Contains(lower, "does not exist as an installed service") ||
-		strings.Contains(lower, "specified service does not exist")
+	return out
+}
+
+func tintStatusIcon(templatePNG []byte, tint color.RGBA, size int) ([]byte, error) {
+	src, err := png.Decode(bytes.NewReader(templatePNG))
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode template png: %w", err)
+	}
+
+	b := src.Bounds()
+	tinted := image.NewNRGBA(b)
+
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			_, _, _, a := src.At(x, y).RGBA()
+			tinted.SetNRGBA(
+				x,
+				y,
+				color.NRGBA{
+					R: tint.R,
+					G: tint.G,
+					B: tint.B,
+					A: uint8(a >> 8),
+				},
+			)
+		}
+	}
+
+	if size == b.Dx() && size == b.Dy() {
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, tinted); err != nil {
+			return nil, fmt.Errorf("cannot encode tinted png: %w", err)
+		}
+
+		return buf.Bytes(), nil
+	}
+
+	return resizePNG(tinted, size)
 }

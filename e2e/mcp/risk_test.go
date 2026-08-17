@@ -121,3 +121,81 @@ func TestMCP_Risk_PermissionDenied(t *testing.T) {
 	})
 	assert.Contains(t, msg, "permission denied")
 }
+
+func TestMCP_Risk_ListMeasures(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	var riskResult struct {
+		Risk struct {
+			ID string `json:"id"`
+		} `json:"risk"`
+	}
+	mc.CallToolInto("addRisk", map[string]any{
+		"organization_id":     orgID,
+		"name":                factory.SafeName("Risk"),
+		"category":            "SECURITY",
+		"treatment":           "MITIGATED",
+		"inherent_likelihood": 2,
+		"inherent_impact":     2,
+	}, &riskResult)
+	require.NotEmpty(t, riskResult.Risk.ID)
+
+	var measureResult struct {
+		Measure struct {
+			ID string `json:"id"`
+		} `json:"measure"`
+	}
+	mc.CallToolInto("addMeasure", map[string]any{
+		"organization_id": orgID,
+		"name":            factory.SafeName("Measure"),
+		"category":        "POLICY",
+	}, &measureResult)
+	require.NotEmpty(t, measureResult.Measure.ID)
+
+	var emptyList struct {
+		Measures []struct {
+			ID string `json:"id"`
+		} `json:"measures"`
+	}
+	mc.CallToolInto("listRiskMeasures", map[string]any{
+		"risk_id": riskResult.Risk.ID,
+	}, &emptyList)
+	assert.Empty(t, emptyList.Measures)
+
+	mc.CallToolInto("linkMeasure", map[string]any{
+		"measure_id":  measureResult.Measure.ID,
+		"resource_id": riskResult.Risk.ID,
+	}, &struct{}{})
+
+	var linkedList struct {
+		Measures []struct {
+			ID string `json:"id"`
+		} `json:"measures"`
+	}
+	mc.CallToolInto("listRiskMeasures", map[string]any{
+		"risk_id": riskResult.Risk.ID,
+	}, &linkedList)
+	require.Len(t, linkedList.Measures, 1)
+	assert.Equal(t, measureResult.Measure.ID, linkedList.Measures[0].ID)
+
+	msg := mc.CallToolExpectToolError("deleteRisk", map[string]any{
+		"id": riskResult.Risk.ID,
+	})
+	assert.Equal(t, "resource is in use", msg)
+
+	mc.CallToolInto("unlinkMeasure", map[string]any{
+		"measure_id":  measureResult.Measure.ID,
+		"resource_id": riskResult.Risk.ID,
+	}, &struct{}{})
+
+	var deleteResult struct {
+		DeletedRiskID string `json:"deleted_risk_id"`
+	}
+	mc.CallToolInto("deleteRisk", map[string]any{
+		"id": riskResult.Risk.ID,
+	}, &deleteResult)
+	assert.Equal(t, riskResult.Risk.ID, deleteResult.DeletedRiskID)
+}

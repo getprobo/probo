@@ -28,6 +28,7 @@ import {
   Field,
   IconPlusLarge,
   Input,
+  Option,
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
@@ -35,7 +36,14 @@ import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
 import type { CreateRiskAnalysisDialogCreateMutation } from "#/__generated__/core/CreateRiskAnalysisDialogCreateMutation.graphql";
+import { ControlledField } from "#/components/form/ControlledField";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import {
+  matrixSizeFromOption,
+  type RiskAnalysisMatrixSizeOption,
+  riskAnalysisMatrixSizeOptions,
+} from "./matrixSize";
 
 const createMutation = graphql`
   mutation CreateRiskAnalysisDialogCreateMutation(
@@ -52,6 +60,10 @@ const createMutation = graphql`
             start
             end
           }
+          matrixSize {
+            rows
+            cols
+          }
           createdAt
         }
       }
@@ -64,6 +76,7 @@ type FormData = {
   description: string;
   periodStart: string;
   periodEnd: string;
+  matrixSize: RiskAnalysisMatrixSizeOption;
 };
 
 export function CreateRiskAnalysisDialog(props: {
@@ -73,7 +86,7 @@ export function CreateRiskAnalysisDialog(props: {
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const [createRiskAnalysis, isCreating] = useMutation<CreateRiskAnalysisDialogCreateMutation>(createMutation);
-  const { register, handleSubmit, reset, formState } = useForm<FormData>({
+  const { register, handleSubmit, reset, control, formState } = useForm<FormData>({
     defaultValues: {
       name: "",
       description: "",
@@ -99,6 +112,7 @@ export function CreateRiskAnalysisDialog(props: {
           name: data.name,
           description: data.description || null,
           period,
+          matrixSize: matrixSizeFromOption(data.matrixSize),
         },
         connections: [props.connectionId],
       },
@@ -140,6 +154,19 @@ export function CreateRiskAnalysisDialog(props: {
             rows={3}
             placeholder={t("createRiskAnalysisDialog.placeholders.description")}
           />
+          <ControlledField
+            control={control}
+            name="matrixSize"
+            type="select"
+            label={t("createRiskAnalysisDialog.fields.matrixSize")}
+            rules={{ required: t("createRiskAnalysisDialog.validation.matrixSizeRequired") }}
+          >
+            {riskAnalysisMatrixSizeOptions.map(size => (
+              <Option key={size.key} value={size.key}>
+                {t(`createRiskAnalysisDialog.matrixSizes.${size.key}`)}
+              </Option>
+            ))}
+          </ControlledField>
           <Field
             label={t("createRiskAnalysisDialog.fields.periodStart")}
             error={formState.errors.periodStart?.message}
