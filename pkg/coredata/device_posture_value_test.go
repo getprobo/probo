@@ -114,9 +114,43 @@ func TestParseDevicePostureValue_DiskEncryption(t *testing.T) {
 				wantKind: coredata.DevicePostureValueKindUnknown,
 			},
 			{
-				name:     "windows manage-bde missing does not surface the note",
+				name:     "windows Get-BitLockerVolume protection on",
 				checkKey: "DISK_ENCRYPTION",
-				evidence: map[string]any{"note": "manage-bde not found"},
+				evidence: map[string]any{
+					"backend": "Get-BitLockerVolume",
+					"volumes": map[string]any{"C:": "On"},
+				},
+				wantKind: coredata.DevicePostureValueKindOn,
+			},
+			{
+				name:     "windows Get-BitLockerVolume protection off at 100 percent",
+				checkKey: "DISK_ENCRYPTION",
+				evidence: map[string]any{
+					"backend":               "Get-BitLockerVolume",
+					"encryption_percentage": float64(100),
+					"volumes": map[string]any{
+						"C:": "Off",
+					},
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "windows Get-BitLockerVolume not available is off",
+				checkKey: "DISK_ENCRYPTION",
+				evidence: map[string]any{
+					"backend": "Get-BitLockerVolume",
+					"note":    "Get-BitLockerVolume not available",
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "windows Get-BitLockerVolume collection error is unknown",
+				checkKey: "DISK_ENCRYPTION",
+				evidence: map[string]any{
+					"backend": "Get-BitLockerVolume",
+					"error":   "exit status 1",
+					"stderr":  "Access is denied.",
+				},
 				wantKind: coredata.DevicePostureValueKindUnknown,
 			},
 			{
@@ -281,18 +315,33 @@ func TestParseDevicePostureValue_TimeSync(t *testing.T) {
 				wantKind: coredata.DevicePostureValueKindOff,
 			},
 			{
-				name:     "windows w32tm with a real source",
+				name:     "windows w32time service running with NTP",
 				checkKey: "TIME_SYNC",
 				evidence: map[string]any{
-					"raw": "Leap Indicator: 0(no warning)\nStratum: 4 (secondary reference)\nSource: time.windows.com,0x8\nPoll Interval: 10",
+					"backend":        "w32time",
+					"w32time_status": "Running",
+					"w32time_type":   "NTP",
+					"ntp_server":     "time.windows.com,0x8",
 				},
 				wantKind: coredata.DevicePostureValueKindOn,
 			},
 			{
-				name:     "windows w32tm falling back to the local clock",
+				name:     "windows w32time service stopped is off",
 				checkKey: "TIME_SYNC",
 				evidence: map[string]any{
-					"raw": "Leap Indicator: 3(not synchronized)\nStratum: 0 (unspecified)\nSource: Local CMOS Clock\nPoll Interval: 10",
+					"backend":        "w32time",
+					"w32time_status": "Stopped",
+					"w32time_type":   "NTP",
+				},
+				wantKind: coredata.DevicePostureValueKindOff,
+			},
+			{
+				name:     "windows w32time running with NoSync is off",
+				checkKey: "TIME_SYNC",
+				evidence: map[string]any{
+					"backend":        "w32time",
+					"w32time_status": "Running",
+					"w32time_type":   "NoSync",
 				},
 				wantKind: coredata.DevicePostureValueKindOff,
 			},
@@ -450,11 +499,16 @@ func TestParseDevicePostureValue_PasswordPolicy(t *testing.T) {
 				wantKind: coredata.DevicePostureValueKindNone,
 			},
 			{
-				name:     "windows net accounts minimum length",
-				checkKey: "PASSWORD_POLICY",
-				evidence: map[string]any{
-					"raw": "Force user logoff how long after time expires?:       Never\nMinimum password age (days):                    0\nMaximum password age (days):                    42\nMinimum password length:                        8\n",
-				},
+				name:       "windows min password length zero",
+				checkKey:   "PASSWORD_POLICY",
+				evidence:   map[string]any{"min_password_length": float64(0)},
+				wantKind:   coredata.DevicePostureValueKindMinPasswordLength,
+				wantNumber: new(0),
+			},
+			{
+				name:       "windows min password length eight",
+				checkKey:   "PASSWORD_POLICY",
+				evidence:   map[string]any{"min_password_length": float64(8)},
 				wantKind:   coredata.DevicePostureValueKindMinPasswordLength,
 				wantNumber: new(8),
 			},
@@ -804,18 +858,40 @@ func TestParseDevicePostureValue_AgreesWithAgentStatus(t *testing.T) {
 			agentStatus: coredata.DevicePostureStatusPass,
 		},
 		{
-			name:     "windows bitlocker fully encrypted",
+			name:     "windows bitlocker protection on",
 			checkKey: "DISK_ENCRYPTION",
 			evidence: map[string]any{
-				"raw": "Conversion Status: Fully Encrypted\n    Percentage Encrypted: 100%",
+				"backend": "Get-BitLockerVolume",
+				"volumes": map[string]any{"C:": "On"},
 			},
 			agentStatus: coredata.DevicePostureStatusPass,
 		},
 		{
-			name:     "windows bitlocker fully decrypted",
+			name:     "windows bitlocker protection off",
 			checkKey: "DISK_ENCRYPTION",
 			evidence: map[string]any{
-				"raw": "Conversion Status: Fully Decrypted\n    Percentage Encrypted: 0%",
+				"backend": "Get-BitLockerVolume",
+				"volumes": map[string]any{"C:": "Off"},
+			},
+			agentStatus: coredata.DevicePostureStatusFail,
+		},
+		{
+			name:     "windows w32time running NTP",
+			checkKey: "TIME_SYNC",
+			evidence: map[string]any{
+				"backend":        "w32time",
+				"w32time_status": "Running",
+				"w32time_type":   "NTP",
+			},
+			agentStatus: coredata.DevicePostureStatusPass,
+		},
+		{
+			name:     "windows w32time service stopped",
+			checkKey: "TIME_SYNC",
+			evidence: map[string]any{
+				"backend":        "w32time",
+				"w32time_status": "Stopped",
+				"w32time_type":   "NTP",
 			},
 			agentStatus: coredata.DevicePostureStatusFail,
 		},

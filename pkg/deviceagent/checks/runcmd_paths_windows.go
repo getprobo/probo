@@ -27,12 +27,9 @@ import (
 )
 
 var windowsCommandPaths = map[string][]string{
-	"manage-bde": {`%s\System32\manage-bde.exe`},
-	"net":        {`%s\System32\net.exe`},
 	"netsh":      {`%s\System32\netsh.exe`},
 	"powershell": {`%s\System32\WindowsPowerShell\v1.0\powershell.exe`},
 	"sc":         {`%s\System32\sc.exe`},
-	"w32tm":      {`%s\System32\w32tm.exe`},
 }
 
 func commandCandidates(cmd string) []string {

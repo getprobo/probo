@@ -22,6 +22,7 @@ package checks
 
 import (
 	"context"
+	"strconv"
 	"strings"
 )
 
@@ -44,21 +45,39 @@ func powershell(ctx context.Context, script string) CmdResult {
 }
 
 func windowsDiskEncryption(ctx context.Context) Result {
-	if !CommandExists("manage-bde.exe") && !CommandExists("manage-bde") {
-		return unknown(map[string]any{"note": "manage-bde not found"})
-	}
+	out := powershell(
+		ctx,
+		`(Get-BitLockerVolume | Where-Object { $_.VolumeType -eq 'OperatingSystem' } | `+
+			`Sort-Object MountPoint | `+
+			`ForEach-Object { "$($_.MountPoint)=$($_.ProtectionStatus)" }) -join ";"`,
+	)
 
-	out := RunCommand(ctx, "manage-bde", "-status")
-
-	ev := map[string]any{"raw": truncate(out.Stdout, 600)}
+	ev := map[string]any{"backend": "Get-BitLockerVolume"}
 	if out.Err != nil {
+		lower := strings.ToLower(out.Stderr + " " + errString(out.Err))
+		if strings.Contains(lower, "not recognized") ||
+			strings.Contains(lower, "not found") {
+			ev["note"] = "Get-BitLockerVolume not available"
+
+			return fail(ev)
+		}
+
+		ev["error"] = out.Err.Error()
+		ev["stderr"] = out.Stderr
+
 		return unknown(ev)
 	}
 
-	lower := strings.ToLower(out.Stdout)
-	if strings.Contains(lower, "percentage encrypted: 100") ||
-		strings.Contains(lower, "fully encrypted") ||
-		strings.Contains(lower, "protection on") {
+	volumes, allProtected := parseWindowsBitLockerVolumes(out.Stdout)
+
+	ev["volumes"] = volumes
+	if len(volumes) == 0 {
+		ev["note"] = "Get-BitLockerVolume not available"
+
+		return fail(ev)
+	}
+
+	if allProtected {
 		return pass(ev)
 	}
 
@@ -214,38 +233,6 @@ func windowsFirewall(ctx context.Context) Result {
 	return fail(ev)
 }
 
-// parseWindowsFirewallProfiles parses "Domain=True;Private=True;Public=True"
-// from Get-NetFirewallProfile output, returning per-profile state and
-// whether every profile is enabled.
-func parseWindowsFirewallProfiles(s string) (map[string]string, bool) {
-	profiles := map[string]string{}
-	allEnabled := true
-	any := false
-
-	for profile := range strings.SplitSeq(s, ";") {
-		parts := strings.SplitN(strings.TrimSpace(profile), "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		name := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-
-		if name == "" {
-			continue
-		}
-
-		profiles[name] = value
-		any = true
-
-		if !strings.EqualFold(value, "true") {
-			allEnabled = false
-		}
-	}
-
-	return profiles, any && allEnabled
-}
-
 // parseNetshFirewallStates extracts per-profile "State <ON|OFF>" lines
 // from `netsh advfirewall show allprofiles state`. It is whitespace- and
 // case-insensitive.
@@ -279,7 +266,12 @@ func parseNetshFirewallStates(s string) ([]string, bool) {
 }
 
 func windowsTimeSync(ctx context.Context) Result {
-	out := RunCommand(ctx, "w32tm", "/query", "/status")
+	out := powershell(
+		ctx,
+		`$s = Get-Service w32time; `+
+			`$p = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters'; `+
+			`"$($s.Status);$($p.Type);$($p.NtpServer)"`,
+	)
 	if out.Err != nil {
 		return unknown(
 			map[string]any{
@@ -289,11 +281,36 @@ func windowsTimeSync(ctx context.Context) Result {
 		)
 	}
 
-	ev := map[string]any{"raw": truncate(out.Stdout, 400)}
+	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 3)
 
-	lower := strings.ToLower(out.Stdout)
-	if strings.Contains(lower, "source:") && !strings.Contains(lower, "local cmos clock") {
+	var status, typ, ntpServer string
+	if len(parts) >= 1 {
+		status = strings.TrimSpace(parts[0])
+	}
+
+	if len(parts) >= 2 {
+		typ = strings.TrimSpace(parts[1])
+	}
+
+	if len(parts) >= 3 {
+		ntpServer = strings.TrimSpace(parts[2])
+	}
+
+	ev := map[string]any{
+		"backend":        "w32time",
+		"w32time_status": status,
+		"w32time_type":   typ,
+	}
+	if ntpServer != "" {
+		ev["ntp_server"] = ntpServer
+	}
+
+	if windowsTimeSyncOn(status, typ) {
 		return pass(ev)
+	}
+
+	if status == "" {
+		return unknown(ev)
 	}
 
 	return fail(ev)
@@ -381,7 +398,10 @@ func windowsAutoUpdate(ctx context.Context) Result {
 }
 
 func windowsPasswordPolicy(ctx context.Context) Result {
-	out := RunCommand(ctx, "net", "accounts")
+	out := powershell(
+		ctx,
+		`([ADSI]"WinNT://$env:COMPUTERNAME").InvokeGet('MinPasswordLength')`,
+	)
 	if out.Err != nil {
 		return unknown(
 			map[string]any{
@@ -391,10 +411,18 @@ func windowsPasswordPolicy(ctx context.Context) Result {
 		)
 	}
 
-	ev := map[string]any{"raw": truncate(out.Stdout, 400)}
+	minLen, err := strconv.Atoi(strings.TrimSpace(out.Stdout))
+	if err != nil {
+		return unknown(
+			map[string]any{
+				"error": "invalid MinPasswordLength",
+				"raw":   truncate(out.Stdout, 80),
+			},
+		)
+	}
 
-	lower := strings.ToLower(out.Stdout)
-	if strings.Contains(lower, "minimum password length") && !strings.Contains(lower, "length:                  0") {
+	ev := map[string]any{"min_password_length": minLen}
+	if minLen > 0 {
 		return pass(ev)
 	}
 

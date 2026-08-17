@@ -834,9 +834,9 @@ posture_evidence() {
       ;;
     WINDOWS:DISK_ENCRYPTION)
       case "$status" in
-        PASS) jq -nc '{raw:"Conversion Status: Fully Encrypted\n    Percentage Encrypted: 100%"}' ;;
-        FAIL) jq -nc '{raw:"Conversion Status: Fully Decrypted\n    Percentage Encrypted: 0%"}' ;;
-        *) jq -nc '{note:"manage-bde not found"}' ;;
+        PASS) jq -nc '{backend:"Get-BitLockerVolume",volumes:{ "C:":"On"}}' ;;
+        FAIL) jq -nc '{backend:"Get-BitLockerVolume",volumes:{ "C:":"Off"},encryption_percentage:100}' ;;
+        *) jq -nc '{note:"Get-BitLockerVolume not available"}' ;;
       esac
       ;;
     DARWIN:SCREEN_LOCK)
@@ -897,9 +897,9 @@ posture_evidence() {
       ;;
     WINDOWS:TIME_SYNC)
       case "$status" in
-        PASS) jq -nc '{raw:"Leap Indicator: 0(no warning)\nStratum: 4 (secondary reference)\nSource: time.windows.com,0x8\nPoll Interval: 10"}' ;;
-        FAIL) jq -nc '{raw:"Leap Indicator: 3(not synchronized)\nStratum: 0 (unspecified)\nSource: Local CMOS Clock\nPoll Interval: 10"}' ;;
-        *) jq -nc '{note:"w32tm unavailable"}' ;;
+        PASS) jq -nc '{backend:"w32time",w32time_status:"Running",w32time_type:"NTP",ntp_server:"time.windows.com,0x8"}' ;;
+        FAIL) jq -nc '{backend:"w32time",w32time_status:"Stopped",w32time_type:"NTP"}' ;;
+        *) jq -nc '{error:"exit status 0x80070426",stderr:""}' ;;
       esac
       ;;
     DARWIN:OS_VERSION)
@@ -957,9 +957,9 @@ posture_evidence() {
       ;;
     WINDOWS:PASSWORD_POLICY)
       case "$status" in
-        PASS) jq -nc '{raw:"Minimum password length:                        8\n"}' ;;
-        FAIL) jq -nc '{raw:"Minimum password length:                        0\n"}' ;;
-        *) jq -nc '{error:"net accounts failed"}' ;;
+        PASS) jq -nc '{min_password_length:8}' ;;
+        FAIL) jq -nc '{min_password_length:0}' ;;
+        *) jq -nc '{error:"MinPasswordLength unavailable"}' ;;
       esac
       ;;
     # REMOTE_LOGIN is inverted: PASS means remote access is Off / denied.

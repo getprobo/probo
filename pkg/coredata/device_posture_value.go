@@ -332,26 +332,6 @@ func firstNonEmptyString(values ...string) string {
 	return ""
 }
 
-// parseLabeledInt finds lines like "Minimum password length: 8".
-func parseLabeledInt(raw, label string) (int, bool) {
-	if raw == "" || label == "" {
-		return 0, false
-	}
-
-	lower := strings.ToLower(raw)
-	label = strings.ToLower(label)
-
-	idx := strings.Index(lower, label)
-	if idx < 0 {
-		return 0, false
-	}
-
-	rest := raw[idx+len(label):]
-	rest = strings.TrimLeft(rest, " \t.:")
-
-	return parseLeadingInt(rest)
-}
-
 // parseAssignedInt finds assignments like "minpasswordlen=8".
 func parseAssignedInt(raw, key string) (int, bool) {
 	if raw == "" || key == "" {

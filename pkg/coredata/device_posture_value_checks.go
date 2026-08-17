@@ -48,6 +48,10 @@ func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {
 		return parseLinuxDiskEncryptionValue(ev, present)
 	}
 
+	if backendOf(ev) == "get-bitlockervolume" {
+		return parseWindowsBitLockerValue(ev)
+	}
+
 	raw := lowerStringEvidence(ev, "raw")
 	switch {
 	case raw == "":
@@ -56,14 +60,6 @@ func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {
 		return onOffValue(true)
 	case strings.Contains(raw, "filevault is off"):
 		return onOffValue(false)
-	case strings.Contains(raw, "percentage encrypted: 100"),
-		strings.Contains(raw, "fully encrypted"),
-		strings.Contains(raw, "protection on"):
-		return onOffValue(true)
-	case strings.Contains(raw, "percentage encrypted: 0"),
-		strings.Contains(raw, "fully decrypted"),
-		strings.Contains(raw, "protection off"):
-		return onOffValue(false)
 	case strings.Contains(raw, "components"):
 		// FreeBSD geli prints a "Name Status Components" table with one row per
 		// encrypted provider; ACTIVE is the only status meaning attached.
@@ -71,6 +67,20 @@ func parseDiskEncryptionValue(ev map[string]any) DevicePostureValue {
 	}
 
 	return unknownValue()
+}
+
+func parseWindowsBitLockerValue(ev map[string]any) DevicePostureValue {
+	if stringEvidence(ev, "error") != "" {
+		return unknownValue()
+	}
+
+	allOn, any := allValuesMatch(stringMapEvidence(ev, "volumes"), "on")
+	if !any {
+		// No OS volumes, or the BitLocker cmdlet is missing (Home).
+		return onOffValue(false)
+	}
+
+	return onOffValue(allOn)
 }
 
 func parseLinuxDiskEncryptionValue(
@@ -333,6 +343,10 @@ func parseNetshFirewallValue(ev map[string]any) DevicePostureValue {
 }
 
 func parseTimeSyncValue(ev map[string]any) DevicePostureValue {
+	if status := stringEvidence(ev, "w32time_status"); status != "" {
+		return parseWindowsTimeSyncValue(status, stringEvidence(ev, "w32time_type"))
+	}
+
 	raw := lowerStringEvidence(ev, "raw")
 	switch {
 	case raw == "":
@@ -349,14 +363,22 @@ func parseTimeSyncValue(ev map[string]any) DevicePostureValue {
 		return onOffValue(false)
 	case strings.Contains(raw, "is running"):
 		return onOffValue(true)
-	case strings.Contains(raw, "local cmos clock"):
-		// Windows w32tm: the local clock is not a synchronisation source.
-		return onOffValue(false)
-	case strings.Contains(raw, "source:"):
-		return onOffValue(true)
 	}
 
 	return unknownValue()
+}
+
+func parseWindowsTimeSyncValue(status, typ string) DevicePostureValue {
+	if !strings.EqualFold(status, "Running") {
+		return onOffValue(false)
+	}
+
+	switch strings.ToUpper(strings.TrimSpace(typ)) {
+	case "NTP", "NT5DS", "ALLSYNC":
+		return onOffValue(true)
+	}
+
+	return onOffValue(false)
 }
 
 func parseAutoUpdateValue(ev map[string]any) DevicePostureValue {
@@ -428,20 +450,16 @@ func parsePasswordPolicyValue(ev map[string]any) DevicePostureValue {
 		return minPasswordLengthValue(minLen)
 	}
 
+	if minLen, ok := numberEvidence(ev, "min_password_length"); ok {
+		return minPasswordLengthValue(minLen)
+	}
+
 	if parseError := lowerStringEvidence(ev, "parse_error"); parseError != "" {
 		if strings.Contains(parseError, "not set") {
 			return noneValue()
 		}
 
 		return unknownValue()
-	}
-
-	// Windows `net accounts`.
-	if minLen, ok := parseLabeledInt(
-		stringEvidence(ev, "raw"),
-		"minimum password length",
-	); ok {
-		return minPasswordLengthValue(minLen)
 	}
 
 	// FreeBSD /etc/login.conf.
