@@ -23,8 +23,10 @@ package slack
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,4 +107,22 @@ func TestPostInteractiveEphemeral_SkipsEmptyURL(t *testing.T) {
 		t,
 		postInteractiveEphemeral(context.Background(), nil, "", bindRequiredText),
 	)
+}
+
+func TestSanitizeHTTPError_OmitsURL(t *testing.T) {
+	t.Parallel()
+
+	sanitized := sanitizeHTTPError(
+		&url.Error{
+			Op:  "Post",
+			URL: "https://hooks.slack.com/actions/T123/secret-token/abc",
+			Err: errors.New("connection refused"),
+		},
+	)
+
+	require.NotNil(t, sanitized)
+	assert.NotContains(t, sanitized.Error(), "secret-token")
+	assert.NotContains(t, sanitized.Error(), "hooks.slack.com")
+	assert.Contains(t, sanitized.Error(), "Post")
+	assert.Contains(t, sanitized.Error(), "connection refused")
 }

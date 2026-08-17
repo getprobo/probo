@@ -49,7 +49,7 @@ func TestSlackInteractiveAcknowledgesAfterDurableInsert(t *testing.T) {
 
 	inbox := newInteractiveInbox(t)
 	rawPayload := uniqueInteractivePayload(t)
-	response := performSlackAction(t, inbox, nil, rawPayload)
+	response := performSlackAction(t, inbox, boundInteractiveSlackbot(t), rawPayload)
 
 	assert.Equal(t, http.StatusOK, response.Code)
 	assert.JSONEq(t, `{"success":true}`, response.Body.String())
@@ -64,12 +64,25 @@ func TestSlackInteractiveAcknowledgesDuplicate(t *testing.T) {
 
 	inbox := newInteractiveInbox(t)
 	rawPayload := uniqueInteractivePayload(t)
-	first := performSlackAction(t, inbox, nil, rawPayload)
-	second := performSlackAction(t, inbox, nil, rawPayload)
+	slackbot := boundInteractiveSlackbot(t)
+	first := performSlackAction(t, inbox, slackbot, rawPayload)
+	second := performSlackAction(t, inbox, slackbot, rawPayload)
 
 	assert.Equal(t, http.StatusOK, first.Code)
 	assert.Equal(t, http.StatusOK, second.Code)
 	assert.JSONEq(t, `{"success":true}`, second.Body.String())
+}
+
+func TestSlackInteractiveRejectsNilSlackbot(t *testing.T) {
+	t.Parallel()
+
+	inbox := newInteractiveInbox(t)
+	rawPayload := uniqueInteractivePayload(t)
+	response := performSlackAction(t, inbox, nil, rawPayload)
+
+	assert.Equal(t, http.StatusServiceUnavailable, response.Code)
+	assert.Contains(t, response.Body.String(), "cannot accept interactive command")
+	assertNoInteractiveCommand(t, rawPayload)
 }
 
 func TestSlackInteractiveRejectsMalformedPayload(t *testing.T) {
@@ -102,14 +115,7 @@ func TestSlackInteractiveEnqueuesBoundActor(t *testing.T) {
 
 	inbox := newInteractiveInbox(t)
 	rawPayload := uniqueInteractivePayload(t)
-	slackbot := newInteractiveSlackbot(
-		t,
-		&stubInteractiveBindingGate{
-			binding: &identitybinding.Binding{
-				IdentityID: gid.New(gid.NilTenant, coredata.IdentityEntityType),
-			},
-		},
-	)
+	slackbot := boundInteractiveSlackbot(t)
 	response := performSlackAction(t, inbox, slackbot, rawPayload)
 
 	assert.Equal(t, http.StatusOK, response.Code)
@@ -162,6 +168,19 @@ func (s *stubInteractiveBindingGate) BindURL(
 	_ gid.GID,
 ) (string, error) {
 	return "", nil
+}
+
+func boundInteractiveSlackbot(t *testing.T) *slackchannel.Service {
+	t.Helper()
+
+	return newInteractiveSlackbot(
+		t,
+		&stubInteractiveBindingGate{
+			binding: &identitybinding.Binding{
+				IdentityID: gid.New(gid.NilTenant, coredata.IdentityEntityType),
+			},
+		},
+	)
 }
 
 func newInteractiveSlackbot(

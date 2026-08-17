@@ -24,8 +24,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
@@ -134,7 +136,7 @@ func postInteractiveEphemeral(
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot post Slack interactive reply: %w", err)
+		return fmt.Errorf("cannot post Slack interactive reply: %w", sanitizeHTTPError(err))
 	}
 
 	defer func() {
@@ -146,4 +148,20 @@ func postInteractiveEphemeral(
 	}
 
 	return nil
+}
+
+func sanitizeHTTPError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	urlErr, ok := errors.AsType[*url.Error](err)
+	if !ok {
+		return err
+	}
+
+	return &url.Error{
+		Op:  urlErr.Op,
+		Err: urlErr.Err,
+	}
 }

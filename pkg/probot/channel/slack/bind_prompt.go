@@ -205,7 +205,7 @@ func (s *BindPromptService) replaceEphemeral(
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot replace Slack bind prompt: %w", err)
+		return fmt.Errorf("cannot replace Slack bind prompt: %w", sanitizeHTTPError(err))
 	}
 
 	defer func() {
