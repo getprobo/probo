@@ -1606,7 +1606,7 @@
     "actions": { "addConfiguration": "Add Configuration" },
     "breadcrumb": { "settings": "SAML Settings", "configure": "Configure", "verifyDomain": "Verify Domain" }
   },
-  "scimSettingsPage": {
+  "scimPage": {
     "manualScim": { "title": "Manual SCIM", "description": "Configure SCIM manually if your identity provider is not listed above. This requires setting up the SCIM endpoint URL and bearer token in your identity provider." },
     "provisioningEventHistory": "Provisioning Event History",
     "export": {
