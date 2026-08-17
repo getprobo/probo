@@ -25,6 +25,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"time"
 
@@ -125,9 +126,7 @@ func StableEventKey(action string, components ...string) string {
 
 func cloneAttributes(attributes map[string]any) map[string]any {
 	cloned := make(map[string]any, len(attributes))
-	for key, value := range attributes {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, attributes)
 
 	return cloned
 }

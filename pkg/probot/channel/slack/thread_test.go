@@ -65,7 +65,7 @@ func TestFormatThreadTranscript(t *testing.T) {
 			t.Parallel()
 
 			replies := make([]ThreadReply, 0, 51)
-			for i := 0; i < 51; i++ {
+			for range 51 {
 				replies = append(replies, ThreadReply{User: "U1", Text: "msg"})
 			}
 
@@ -81,7 +81,7 @@ func TestFormatThreadTranscript(t *testing.T) {
 
 			replies := make([]ThreadReply, 0, threadTranscriptMaxMessages+5)
 			replies = append(replies, ThreadReply{User: "UROOT", Text: "root"})
-			for i := 0; i < threadTranscriptMaxMessages+3; i++ {
+			for range threadTranscriptMaxMessages + 3 {
 				replies = append(replies, ThreadReply{User: "U1", Text: "later"})
 			}
 

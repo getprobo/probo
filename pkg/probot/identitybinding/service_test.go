@@ -393,9 +393,7 @@ func TestServiceConcurrentConfirmationCreatesOneBinding(t *testing.T) {
 
 	errs := make(chan error, workers)
 	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			binding, err := service.Confirm(ctx, identityID, token)
 			if err != nil {
@@ -405,7 +403,7 @@ func TestServiceConcurrentConfirmationCreatesOneBinding(t *testing.T) {
 			}
 
 			ids <- binding.ID
-		}()
+		})
 	}
 
 	wg.Wait()

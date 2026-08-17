@@ -128,7 +128,6 @@ func TestClientMessageRequests(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
@@ -173,7 +172,6 @@ func TestClientListConversations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
@@ -383,7 +381,6 @@ func TestClientUninstallAppAlreadyGone(t *testing.T) {
 	t.Parallel()
 
 	for _, errorCode := range []string{"account_inactive", "invalid_auth", "token_revoked"} {
-		errorCode := errorCode
 		t.Run(
 			errorCode,
 			func(t *testing.T) {
@@ -456,7 +453,6 @@ func TestClientSlackAPIErrors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
@@ -494,7 +490,6 @@ func TestClientResponseErrors(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(
 			tt.name,
 			func(t *testing.T) {

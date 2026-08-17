@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -385,9 +386,7 @@ func validateDedup(dedupKey *string, dedupWindow *time.Duration) error {
 
 func cloneNotificationData(data map[string]any) map[string]any {
 	cloned := make(map[string]any, len(data))
-	for key, value := range data {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, data)
 
 	return cloned
 }

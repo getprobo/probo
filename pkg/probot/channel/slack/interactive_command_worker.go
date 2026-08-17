@@ -25,6 +25,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -266,9 +267,7 @@ func (h *interactiveCommandHandler) dispatch(
 	}
 
 	attributes := make(map[string]any, len(delivered.Message.Attributes))
-	for key, value := range delivered.Message.Attributes {
-		attributes[key] = value
-	}
+	maps.Copy(attributes, delivered.Message.Attributes)
 
 	probotAction := probot.Action{
 		ID:               action.ActionID,

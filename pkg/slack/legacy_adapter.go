@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -329,9 +330,7 @@ func validateDedup(key *string, window *time.Duration) error {
 
 func cloneData(data map[string]any) map[string]any {
 	cloned := make(map[string]any, len(data))
-	for key, value := range data {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, data)
 
 	return cloned
 }

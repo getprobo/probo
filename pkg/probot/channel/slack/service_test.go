@@ -66,10 +66,10 @@ func TestService_EnqueueEvent(t *testing.T) {
 	t.Cleanup(slackEventTestMu.Unlock)
 
 	eventID := "E-handler-" + gid.New(gid.NilTenant, coredata.SlackbotEventEntityType).String()
-	body := []byte(fmt.Sprintf(
+	body := fmt.Appendf(nil,
 		`{"type":"event_callback","event_id":%q,"event":{"type":"message","channel_type":"channel","text":"hi","channel":"C1","ts":"1.1"}}`,
 		eventID,
-	))
+	)
 
 	pgClient := test.PGClient(t)
 	handler := NewService(nil, nil, pgClient, testLogger(t))
