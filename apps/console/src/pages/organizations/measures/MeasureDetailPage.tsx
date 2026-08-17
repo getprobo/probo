@@ -143,7 +143,7 @@ export default function MeasureDetailPage(props: Props) {
   const data = usePreloadedQuery<MeasureDetailPageNodeQuery>(measureNodeQuery, props.queryRef);
   const measure = data.node;
   const { t } = useTranslation();
-  usePageTitle(measure.name);
+  usePageTitle(measure.name ?? "");
   const [deleteMeasure] = useDeleteMeasureMutation();
   const navigate = useNavigate();
   const confirm = useConfirm();

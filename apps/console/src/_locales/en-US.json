@@ -574,10 +574,6 @@
       "downloading": "Downloading..."
     }
   },
-  "auditSelectField": {
-    "placeholder": "Select an audit",
-    "none": "None"
-  },
   "controlMaturityLevelOptions": {
     "levels": {
       "NONE": "0 - None",
@@ -756,44 +752,6 @@
   "graphQLCell": { "searchPlaceholder": "Search" },
   "sortableDataTable": {
     "actions": { "showMore": "Show more" }
-  },
-  "linkedStatementsOfApplicabilityCard": {
-    "title": "Statements of Applicability",
-    "columns": {
-      "name": "Name",
-      "applicability": "Applicability",
-      "justification": "Justification"
-    },
-    "empty": "No statements of applicability linked",
-    "applicable": "Applicable",
-    "notApplicable": "Not Applicable",
-    "actions": {
-      "link": "Link statement of applicability",
-      "unlink": "Unlink",
-      "showMore": "Show {{count}} more"
-    }
-  },
-  "linkedStatementsOfApplicabilityDialog": {
-    "title": "Link Statement of Applicability",
-    "empty": {
-      "title": "No statements of applicability available",
-      "description": "Create a statement of applicability first to link it to this control"
-    },
-    "select": "Select a statement of applicability:",
-    "linked": "Linked",
-    "selected": "Selected:",
-    "applicable": "Applicable",
-    "justification": {
-      "label": "Justification (optional)",
-      "placeholder": "Add a justification..."
-    },
-    "actions": {
-      "back": "Back",
-      "change": "Change",
-      "close": "Close",
-      "link": "Link",
-      "unlink": "Unlink"
-    }
   },
   "taskFormDialog": {
     "breadcrumb": { "tasks": "Tasks", "edit": "Edit Task", "new": "New Task" },
@@ -2531,15 +2489,13 @@
     "actions": { "edit": "Edit", "delete": "Delete" },
     "details": "Details",
     "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at", "updatedAt": "Updated at" },
-    "matrixSizes": { "3x3": "3×3", "4x4": "4×4", "5x5": "5×5" },
     "diagrams": "Diagrams",
     "emptyDiagrams": "No diagrams yet. Create a diagram to start defining nodes, processes, and threats."
   },
   "riskAnalysesPage": {
     "title": "Risk Analyses",
     "description": "Manage risk analyses with diagrams, nodes, processes, threats, and scenarios.",
-    "columns": { "name": "Name", "description": "Description", "period": "Period", "matrixSize": "Matrix", "created": "Created" },
-    "matrixSizes": { "3x3": "3×3", "4x4": "4×4", "5x5": "5×5" }
+    "columns": { "name": "Name", "description": "Description", "period": "Period", "matrixSize": "Matrix", "created": "Created" }
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": { "boundaries": "Boundaries" },
@@ -2578,8 +2534,6 @@
     "matrixSizes": { "3x3": "3×3", "4x4": "4×4", "5x5": "5×5" },
     "validation": {
       "nameRequired": "This field is required",
-      "periodStartRequired": "This field is required",
-      "periodEndRequired": "This field is required",
       "periodEndBeforeStart": "Period end must be on or after period start",
       "matrixSizeRequired": "Matrix size is required"
     },
@@ -2767,15 +2721,6 @@
     "messages": { "updated": "Statement updated successfully." },
     "errors": { "update": "Failed to update statement" },
     "actions": { "save": "Save" }
-  },
-  "linkControlDialog": {
-    "breadcrumb": { "statementsOfApplicability": "Statements of Applicability", "addControls": "Add Controls" },
-    "applicability": { "notLinked": "Not Linked", "applicable": "Applicable", "notApplicable": "Not Applicable" },
-    "placeholders": { "justification": "Reason for non-applicability", "search": "Search controls..." },
-    "messages": { "updated": "Control updated successfully.", "removed": "Control removed successfully." },
-    "errors": { "update": "Failed to update control", "remove": "Failed to remove control" },
-    "empty": "No controls found",
-    "actions": { "save": "Save", "expand": "Expand", "collapse": "Collapse", "close": "Close" }
   },
   "publishStatementOfApplicabilityDialog": {
     "title": "Publish Statement of Applicability",

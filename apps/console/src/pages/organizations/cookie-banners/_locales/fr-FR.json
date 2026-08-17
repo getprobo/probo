@@ -206,7 +206,7 @@
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publishing": "Publication...", "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer" },
-    "tabs": { "display": "Affichage", "settings": "Paramètres", "translations": "Traductions", "trackers": "Traceurs", "resources": "Ressources", "consentRecords": "Enregistrements de consentement" }
+    "tabs": { "display": "Affichage", "settings": "Paramètres", "translations": "Traductions", "trackers": "Traceurs", "resources": "Ressources" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nouvelle bannière de cookies",

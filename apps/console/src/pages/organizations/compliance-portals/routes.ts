@@ -20,17 +20,9 @@
 
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
-import { redirect } from "react-router";
 
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-
-function redirectTo(to: string) {
-  return () => {
-    // eslint-disable-next-line @typescript-eslint/only-throw-error
-    throw redirect(to);
-  };
-}
 
 export const compliancePortalRoutes = [
   {

@@ -206,7 +206,7 @@
     "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publishing": "Publishing...", "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete" },
-    "tabs": { "display": "Display", "settings": "Settings", "translations": "Translations", "trackers": "Trackers", "resources": "Resources", "consentRecords": "Consent records" }
+    "tabs": { "display": "Display", "settings": "Settings", "translations": "Translations", "trackers": "Trackers", "resources": "Resources" }
   },
   "newCookieBannerPage": {
     "pageTitle": "New cookie banner",

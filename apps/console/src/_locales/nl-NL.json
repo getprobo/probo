@@ -1053,10 +1053,6 @@
       "downloading": "Downloaden..."
     }
   },
-  "auditSelectField": {
-    "placeholder": "Selecteer een audit",
-    "none": "Geen"
-  },
   "controlMaturityLevelOptions": {
     "levels": {
       "NONE": "0 - Geen",
@@ -1263,44 +1259,6 @@
   "sortableDataTable": {
     "actions": {
       "showMore": "Meer tonen"
-    }
-  },
-  "linkedStatementsOfApplicabilityCard": {
-    "title": "Verklaringen van toepasselijkheid",
-    "columns": {
-      "name": "Naam",
-      "applicability": "Toepasselijkheid",
-      "justification": "Rechtvaardiging"
-    },
-    "empty": "Geen verklaringen van toepasselijkheid gekoppeld",
-    "applicable": "Van toepassing",
-    "notApplicable": "Niet van toepassing",
-    "actions": {
-      "link": "Verklaring van toepasselijkheid koppelen",
-      "unlink": "Ontkoppelen",
-      "showMore": "{{count}} meer tonen"
-    }
-  },
-  "linkedStatementsOfApplicabilityDialog": {
-    "title": "Verklaring van toepasselijkheid koppelen",
-    "empty": {
-      "title": "Geen verklaringen van toepasselijkheid beschikbaar",
-      "description": "Maak eerst een verklaring van toepasselijkheid aan om deze aan deze control te koppelen"
-    },
-    "select": "Selecteer een verklaring van toepasselijkheid:",
-    "linked": "Gekoppeld",
-    "selected": "Geselecteerd:",
-    "applicable": "Van toepassing",
-    "justification": {
-      "label": "Rechtvaardiging (optioneel)",
-      "placeholder": "Voeg een rechtvaardiging toe..."
-    },
-    "actions": {
-      "back": "Terug",
-      "change": "Wijzigen",
-      "close": "Sluiten",
-      "link": "Koppelen",
-      "unlink": "Ontkoppelen"
     }
   },
   "taskFormDialog": {
@@ -4790,11 +4748,6 @@
       "createdAt": "Aangemaakt op",
       "updatedAt": "Bijgewerkt op"
     },
-    "matrixSizes": {
-      "3x3": "3×3",
-      "4x4": "4×4",
-      "5x5": "5×5"
-    },
     "diagrams": "Diagrammen",
     "emptyDiagrams": "Nog geen diagrammen. Maak een diagram aan om nodes, processen en dreigingen te definiëren."
   },
@@ -4807,11 +4760,6 @@
       "period": "Periode",
       "matrixSize": "Matrix",
       "created": "Aangemaakt"
-    },
-    "matrixSizes": {
-      "3x3": "3×3",
-      "4x4": "4×4",
-      "5x5": "5×5"
     }
   },
   "riskAnalysisBoundaryActions": {
@@ -4914,8 +4862,6 @@
     },
     "validation": {
       "nameRequired": "Dit veld is verplicht",
-      "periodStartRequired": "Dit veld is verplicht",
-      "periodEndRequired": "Dit veld is verplicht",
       "periodEndBeforeStart": "Periode eind moet op of na periode start liggen",
       "matrixSizeRequired": "Matrixgrootte is verplicht"
     },
@@ -5397,36 +5343,6 @@
     },
     "actions": {
       "save": "Opslaan"
-    }
-  },
-  "linkControlDialog": {
-    "breadcrumb": {
-      "statementsOfApplicability": "Verklaringen van toepasselijkheid",
-      "addControls": "Controls toevoegen"
-    },
-    "applicability": {
-      "notLinked": "Niet gekoppeld",
-      "applicable": "Van toepassing",
-      "notApplicable": "Niet van toepassing"
-    },
-    "placeholders": {
-      "justification": "Reden voor niet-toepasselijkheid",
-      "search": "Controls zoeken..."
-    },
-    "messages": {
-      "updated": "Control succesvol bijgewerkt.",
-      "removed": "Control succesvol verwijderd."
-    },
-    "errors": {
-      "update": "Bijwerken van control mislukt",
-      "remove": "Verwijderen van control mislukt"
-    },
-    "empty": "Geen controls gevonden",
-    "actions": {
-      "save": "Opslaan",
-      "expand": "Uitklappen",
-      "collapse": "Inklappen",
-      "close": "Sluiten"
     }
   },
   "publishStatementOfApplicabilityDialog": {

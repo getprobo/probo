@@ -206,7 +206,7 @@
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "status": { "active": "Actief", "inactive": "Inactief" },
     "actions": { "publishing": "Bezig met publiceren...", "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen" },
-    "tabs": { "display": "Weergave", "settings": "Instellingen", "translations": "Vertalingen", "trackers": "Trackers", "resources": "Resources", "consentRecords": "Toestemmingsregistraties" }
+    "tabs": { "display": "Weergave", "settings": "Instellingen", "translations": "Vertalingen", "trackers": "Trackers", "resources": "Resources" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nieuwe cookiebanner",
