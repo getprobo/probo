@@ -18,9 +18,24 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM agent_executions
+        WHERE status = 'RUNNING'
+            AND processing_owner_token IS NOT NULL
+    ) THEN
+        RAISE EXCEPTION
+            'cannot remap RUNNING agent executions that still hold a processing lease';
+    END IF;
+END $$;
+
 UPDATE agent_executions
-SET status = 'IDLE'
-WHERE status = 'PENDING';
+SET status = 'IDLE',
+    started_at = NULL
+WHERE status IN ('PENDING', 'RUNNING')
+    AND processing_owner_token IS NULL;
 
 ALTER TABLE agent_executions
     ALTER COLUMN status SET DEFAULT 'IDLE';

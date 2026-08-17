@@ -18,9 +18,8 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-DELETE FROM agent_runs
-WHERE execution_kind = 'ONE_SHOT';
-
+-- Preserve legacy execution history. execution_kind is dropped; surviving
+-- rows keep their inputs and anchors instead of being deleted as ONE_SHOT.
 ALTER TABLE agent_runs
     DROP COLUMN execution_kind;
 
