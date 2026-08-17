@@ -89,6 +89,7 @@ func TestAuthentikDriver(t *testing.T) {
 	assert.Equal(t, "support@example.com", records[5].Email)
 	assert.Equal(t, []string{"Support"}, records[5].Roles)
 
+	// The cassette puts the default brand on the second page.
 	name, err := NewAuthentikNameResolver(client, baseURL).ResolveInstanceName(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "Example Internal", name)
