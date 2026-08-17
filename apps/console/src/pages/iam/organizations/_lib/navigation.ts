@@ -31,10 +31,10 @@ import {
   WarningIcon,
 } from "@phosphor-icons/react";
 
-// Single source of truth for the icon rail, the panel beside it, and the
-// product segment each feature route is nested under in routes.tsx. Moving a
-// feature between products is an edit here plus the matching move in the
-// route tree.
+// Single source of truth for the icon rail and the product segment each
+// feature route is nested under in routes.tsx. Panel contents live in the
+// matching *NavPanel. Moving a feature between products is an edit here plus
+// the matching move in the route tree.
 
 export type NavPermission
   = | "canGetContext"
@@ -67,242 +67,142 @@ export type NavPermission
     | "canListWebhookSubscriptions"
     | "canUpdateOrganization";
 
-export type NavLinkItem = {
+export interface NavLanding {
   path: string;
-  labelKey: string;
   permission: NavPermission;
-} & (
-  // `exact` keeps a list link from staying active on a detail URL a sibling
-  // switcher owns; `heading: false` drops the group label when that sibling
-  // already names the resource.
-  | { kind?: "link"; exact?: boolean }
-  | { kind: "switcher"; heading?: boolean }
-);
+}
 
-export type NavSection = {
-  kind: "section";
-  key: string;
-  labelKey: string;
-  items: NavLinkItem[];
-};
-
-export type NavItem = NavLinkItem | NavSection;
-
-export interface NavGroup {
+interface NavGroupConfig {
   key: string;
   segment: string | null;
   icon: Icon;
-  items: NavItem[];
+  landings: readonly NavLanding[];
 }
 
-export const NAV_GROUPS: NavGroup[] = [
+export const NAV_GROUPS = [
   {
     key: "governance",
     segment: "governance",
     icon: ScalesIcon,
-    items: [
-      { path: "tasks", labelKey: "nav.tasks", permission: "canListTasks" },
-      { path: "measures", labelKey: "nav.measures", permission: "canListMeasures" },
-      { path: "frameworks", labelKey: "nav.frameworks", permission: "canListFrameworks" },
-      { path: "audits", labelKey: "nav.audits", permission: "canListAudits" },
-      { path: "findings", labelKey: "nav.findings", permission: "canListFindings" },
-      { path: "documents", labelKey: "nav.documents", permission: "canListDocuments" },
-      {
-        path: "statements-of-applicability",
-        labelKey: "nav.statementsOfApplicability",
-        permission: "canListStatementsOfApplicability",
-      },
+    landings: [
+      { path: "tasks", permission: "canListTasks" },
+      { path: "measures", permission: "canListMeasures" },
+      { path: "frameworks", permission: "canListFrameworks" },
+      { path: "audits", permission: "canListAudits" },
+      { path: "findings", permission: "canListFindings" },
+      { path: "documents", permission: "canListDocuments" },
+      { path: "statements-of-applicability", permission: "canListStatementsOfApplicability" },
     ],
   },
   {
     key: "riskManagement",
     segment: "risk-management",
     icon: WarningIcon,
-    items: [
-      { path: "risks", labelKey: "nav.risks", permission: "canListRisks" },
-      {
-        path: "risk-analyses",
-        labelKey: "nav.riskAnalyses",
-        permission: "canListRiskAnalyses",
-      },
+    landings: [
+      { path: "risks", permission: "canListRisks" },
+      { path: "risk-analyses", permission: "canListRiskAnalyses" },
     ],
   },
   {
     key: "tprm",
     segment: "tprm",
     icon: StorefrontIcon,
-    items: [
-      {
-        path: "third-parties",
-        labelKey: "nav.allThirdParties",
-        permission: "canListThirdParties",
-        exact: true,
-      },
-      {
-        path: "third-parties",
-        kind: "switcher",
-        heading: false,
-        labelKey: "nav.thirdParties",
-        permission: "canListThirdParties",
-      },
+    landings: [
+      { path: "third-parties", permission: "canListThirdParties" },
     ],
   },
   {
     key: "privacy",
     segment: "privacy",
     icon: LockIcon,
-    items: [
-      { path: "rights-requests", labelKey: "nav.rightsRequests", permission: "canListRightsRequests" },
-      {
-        path: "processing-activities",
-        labelKey: "nav.processingActivities",
-        permission: "canListProcessingActivities",
-      },
-      {
-        path: "dpias",
-        labelKey: "nav.dataProtectionImpactAssessments",
-        permission: "canListDataProtectionImpactAssessments",
-      },
-      {
-        path: "tias",
-        labelKey: "nav.transferImpactAssessments",
-        permission: "canListTransferImpactAssessments",
-      },
-      { path: "cookie-banners", kind: "switcher", labelKey: "nav.cookieBanners", permission: "canListCookieBanners" },
+    landings: [
+      { path: "rights-requests", permission: "canListRightsRequests" },
+      { path: "processing-activities", permission: "canListProcessingActivities" },
+      { path: "dpias", permission: "canListDataProtectionImpactAssessments" },
+      { path: "tias", permission: "canListTransferImpactAssessments" },
+      { path: "cookie-banners", permission: "canListCookieBanners" },
     ],
   },
   {
     key: "itam",
     segment: "itam",
     icon: LaptopIcon,
-    items: [
-      { path: "devices", labelKey: "nav.devices", permission: "canListDevices" },
+    landings: [
+      { path: "devices", permission: "canListDevices" },
     ],
   },
   {
     key: "registries",
     segment: "registries",
     icon: BooksIcon,
-    items: [
-      { path: "data", labelKey: "nav.data", permission: "canListData" },
-      { path: "assets", labelKey: "nav.assets", permission: "canListAssets" },
-      {
-        path: "business-functions",
-        labelKey: "nav.businessFunctions",
-        permission: "canListBusinessFunctions",
-      },
-      { path: "ai-systems", labelKey: "nav.aiSystems", permission: "canListAiSystems" },
-      { path: "obligations", labelKey: "nav.obligations", permission: "canListObligations" },
+    landings: [
+      { path: "data", permission: "canListData" },
+      { path: "assets", permission: "canListAssets" },
+      { path: "business-functions", permission: "canListBusinessFunctions" },
+      { path: "ai-systems", permission: "canListAiSystems" },
+      { path: "obligations", permission: "canListObligations" },
     ],
   },
   {
     key: "compliancePortal",
     segment: null,
     icon: ShieldIcon,
-    items: [
-      {
-        path: "compliance-portals",
-        kind: "switcher",
-        labelKey: "nav.compliancePortals",
-        permission: "canGetCompliancePortal",
-      },
+    landings: [
+      { path: "compliance-portals", permission: "canGetCompliancePortal" },
     ],
   },
   {
     key: "accessReview",
     segment: "access-reviews",
     icon: KeyIcon,
-    items: [
-      {
-        path: "campaigns",
-        labelKey: "nav.campaigns",
-        permission: "canListAccessReviewCampaigns",
-      },
-      {
-        path: "connections",
-        labelKey: "nav.connections",
-        permission: "canListAccessReviewSources",
-      },
+    landings: [
+      { path: "campaigns", permission: "canListAccessReviewCampaigns" },
+      { path: "connections", permission: "canListAccessReviewSources" },
     ],
   },
   {
     key: "settings",
     segment: "settings",
     icon: GearIcon,
-    items: [
-      { path: "general", labelKey: "nav.organization", permission: "canUpdateOrganization" },
-      { path: "context", labelKey: "nav.context", permission: "canGetContext" },
-      { path: "webhooks", labelKey: "nav.webhooks", permission: "canListWebhookSubscriptions" },
-      {
-        kind: "section",
-        key: "iam",
-        labelKey: "nav.iam",
-        items: [
-          { path: "people", labelKey: "nav.users", permission: "canListMembers" },
-          { path: "auth", labelKey: "nav.authProvisioning", permission: "canUpdateOrganization" },
-          { path: "audit-log", labelKey: "nav.auditLog", permission: "canListAuditLogEntries" },
-        ],
-      },
+    landings: [
+      { path: "general", permission: "canUpdateOrganization" },
+      { path: "context", permission: "canGetContext" },
+      { path: "webhooks", permission: "canListWebhookSubscriptions" },
+      { path: "people", permission: "canListMembers" },
+      { path: "auth", permission: "canUpdateOrganization" },
+      { path: "audit-log", permission: "canListAuditLogEntries" },
     ],
   },
-];
+] as const satisfies readonly NavGroupConfig[];
+
+export type NavGroup = (typeof NAV_GROUPS)[number];
+export type NavGroupKey = NavGroup["key"];
 
 export type NavPermissions = { readonly [K in NavPermission]: boolean };
 
-function visibleNavItems(items: NavItem[], permissions: NavPermissions): NavItem[] {
-  const visible: NavItem[] = [];
-  for (const item of items) {
-    if (item.kind === "section") {
-      const sectionItems = item.items.filter(child => permissions[child.permission]);
-      if (sectionItems.length > 0) {
-        visible.push({ ...item, items: sectionItems });
-      }
-      continue;
-    }
-    if (permissions[item.permission]) {
-      visible.push(item);
-    }
-  }
-  return visible;
-}
-
 export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
-  const groups: NavGroup[] = [];
-  for (const group of NAV_GROUPS) {
-    const items = visibleNavItems(group.items, permissions);
-    if (items.length > 0) {
-      groups.push({ ...group, items });
+  return NAV_GROUPS.filter(group =>
+    group.landings.some(landing => permissions[landing.permission]),
+  );
+}
+
+export function navLandingPath(group: NavGroup, path: string): string {
+  return group.segment == null ? path : `${group.segment}/${path}`;
+}
+
+export function navHref(organizationId: string, group: NavGroup, path: string): string {
+  return `/organizations/${organizationId}/${navLandingPath(group, path)}`;
+}
+
+export function navGroupHref(
+  organizationId: string,
+  group: NavGroup,
+  permissions: NavPermissions,
+): string {
+  for (const landing of group.landings) {
+    if (permissions[landing.permission]) {
+      return navHref(organizationId, group, landing.path);
     }
   }
-  return groups;
-}
-
-export function navItemPath(group: NavGroup, item: NavLinkItem): string {
-  return group.segment == null ? item.path : `${group.segment}/${item.path}`;
-}
-
-export function navItemHref(organizationId: string, group: NavGroup, item: NavLinkItem): string {
-  return `/organizations/${organizationId}/${navItemPath(group, item)}`;
-}
-
-function navLinkItems(group: NavGroup): NavLinkItem[] {
-  const links: NavLinkItem[] = [];
-  for (const item of group.items) {
-    if (item.kind === "section") {
-      links.push(...item.items);
-    } else {
-      links.push(item);
-    }
-  }
-  return links;
-}
-
-export function navGroupLandingItem(group: NavGroup): NavLinkItem {
-  for (const item of navLinkItems(group)) {
-    if (item.kind !== "switcher") {
-      return item;
-    }
-  }
-  const first = group.items[0];
-  return first.kind === "section" ? first.items[0] : first;
+  return navHref(organizationId, group, group.landings[0].path);
 }

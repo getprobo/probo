@@ -19,41 +19,44 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 
-import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
+import type { RiskManagementNavPanel_organization$key } from "#/__generated__/iam/RiskManagementNavPanel_organization.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
+import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
-import {
-  cookieBannerFromSwitcherValueQuery,
-  cookieBannerSwitcherValueQuery,
-} from "./CookieBannerSwitcherValue";
+import { NavPanelItem } from "./NavPanelItem";
+import type { NavPanelBodyProps } from "./navPanels";
 
-export interface CookieBannerNavItemsProps {
-  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
-}
+const riskManagementNavPanelFragment = graphql`
+  fragment RiskManagementNavPanel_organization on Organization {
+    canListRisks: permission(action: "core:risk:list")
+    canListRiskAnalyses: permission(action: "core:risk-analysis:list")
+  }
+`;
 
-export function CookieBannerNavItems({ queryRef }: CookieBannerNavItemsProps) {
+export function RiskManagementNavPanel({ organizationKey, group }: NavPanelBodyProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
-    cookieBannerSwitcherValueQuery,
-    queryRef,
+  const organization = useFragment<RiskManagementNavPanel_organization$key>(
+    riskManagementNavPanelFragment,
+    organizationKey,
   );
-  const banner = cookieBannerFromSwitcherValueQuery(data);
-
-  if (banner == null) {
-    return null;
-  }
-
-  const prefix = `/organizations/${organizationId}/privacy/cookie-banners/${banner.id}`;
 
   return (
     <>
-      <NavPanelItem label={t("nav.cookieBannersConfigure")} to={`${prefix}/configure`} />
-      <NavPanelItem label={t("nav.cookieBannersDiscovery")} to={`${prefix}/discovery`} />
-      <NavPanelItem label={t("nav.cookieBannersTrail")} to={`${prefix}/trail`} />
+      {organization.canListRisks && (
+        <NavPanelItem
+          label={t("nav.risks")}
+          to={navHref(organizationId, group, "risks")}
+        />
+      )}
+      {organization.canListRiskAnalyses && (
+        <NavPanelItem
+          label={t("nav.riskAnalyses")}
+          to={navHref(organizationId, group, "risk-analyses")}
+        />
+      )}
     </>
   );
 }

@@ -18,15 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartySwitcherValueQuery } from "#/__generated__/core/ThirdPartySwitcherValueQuery.graphql";
 import { NavPanelSwitcherValue } from "#/pages/organizations/_components/NavPanelSwitcher";
 
 import { ThirdPartySwitcherAvatar } from "./ThirdPartySwitcherAvatar";
 
-const thirdPartySwitcherValueQuery = graphql`
+export const thirdPartySwitcherValueQuery = graphql`
   query ThirdPartySwitcherValueQuery($thirdPartyId: ID!) {
     node(id: $thirdPartyId) {
       __typename
@@ -40,15 +39,11 @@ const thirdPartySwitcherValueQuery = graphql`
 
 export interface ThirdPartySwitcherValueProps {
   fallback: string;
+  queryRef: PreloadedQuery<ThirdPartySwitcherValueQuery>;
 }
 
-export function ThirdPartySwitcherValue({ fallback }: ThirdPartySwitcherValueProps) {
-  const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
-  const data = useLazyLoadQuery<ThirdPartySwitcherValueQuery>(
-    thirdPartySwitcherValueQuery,
-    { thirdPartyId: thirdPartyId ?? "" },
-    { fetchPolicy: "store-or-network" },
-  );
+export function ThirdPartySwitcherValue({ fallback, queryRef }: ThirdPartySwitcherValueProps) {
+  const data = usePreloadedQuery<ThirdPartySwitcherValueQuery>(thirdPartySwitcherValueQuery, queryRef);
   if (data.node?.__typename !== "ThirdParty") {
     return fallback;
   }

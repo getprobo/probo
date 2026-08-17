@@ -21,10 +21,11 @@
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryLoader } from "react-relay";
+import { type PreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation, useParams } from "react-router";
 
 import type { CompliancePortalSwitcherMenuQuery } from "#/__generated__/core/CompliancePortalSwitcherMenuQuery.graphql";
+import type { CompliancePortalSwitcherRowQuery } from "#/__generated__/core/CompliancePortalSwitcherRowQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   navPanelSwitcher,
@@ -32,30 +33,23 @@ import {
   NavPanelSwitcherValue,
   NavPanelSwitcherValueSkeleton,
 } from "#/pages/organizations/_components/NavPanelSwitcher";
-import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
-import { CompliancePortalNavItems } from "./CompliancePortalNavItems";
 import {
   CompliancePortalSwitcherMenu,
   compliancePortalSwitcherMenuQuery,
 } from "./CompliancePortalSwitcherMenu";
 import { CompliancePortalSwitcherRow } from "./CompliancePortalSwitcherRow";
 
-export function CompliancePortalSwitcher() {
-  return (
-    <CoreRelayProvider>
-      <CompliancePortalSwitcherInner />
-      <CompliancePortalNavItems />
-    </CoreRelayProvider>
-  );
+export interface CompliancePortalSwitcherProps {
+  queryRef: PreloadedQuery<CompliancePortalSwitcherRowQuery> | null;
 }
 
-function CompliancePortalSwitcherInner() {
+export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalSwitcherMenuQuery>(
+  const [menuQueryRef, loadMenuQuery] = useQueryLoader<CompliancePortalSwitcherMenuQuery>(
     compliancePortalSwitcherMenuQuery,
   );
 
@@ -66,11 +60,11 @@ function CompliancePortalSwitcherInner() {
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
-      loadQuery({ organizationId });
+      loadMenuQuery({ organizationId });
     }
-  }, [loadQuery, organizationId]);
+  }, [loadMenuQuery, organizationId]);
 
-  const menu = queryRef != null
+  const menu = menuQueryRef != null
     ? (
         <Suspense
           fallback={(
@@ -79,12 +73,28 @@ function CompliancePortalSwitcherInner() {
             </Text>
           )}
         >
-          <CompliancePortalSwitcherMenu queryRef={queryRef} />
+          <CompliancePortalSwitcherMenu queryRef={menuQueryRef} />
         </Suspense>
       )
     : null;
 
   if (compliancePortalId != null && !isNew) {
+    if (queryRef == null) {
+      return (
+        <div className={slots.row()}>
+          <div className={slots.rowTrigger()}>
+            <NavPanelSwitcher
+              active={false}
+              onOpenChange={handleOpenChange}
+              value={<NavPanelSwitcherValueSkeleton />}
+            >
+              {menu}
+            </NavPanelSwitcher>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={slots.row()}>
         <Suspense
@@ -100,7 +110,7 @@ function CompliancePortalSwitcherInner() {
             </div>
           )}
         >
-          <CompliancePortalSwitcherRow onOpenChange={handleOpenChange}>
+          <CompliancePortalSwitcherRow queryRef={queryRef} onOpenChange={handleOpenChange}>
             {menu}
           </CompliancePortalSwitcherRow>
         </Suspense>

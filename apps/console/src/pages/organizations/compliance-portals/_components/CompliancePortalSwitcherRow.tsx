@@ -19,8 +19,7 @@
 // SOFTWARE.
 
 import type { ReactNode } from "react";
-import { graphql, useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePortalSwitcherRowQuery } from "#/__generated__/core/CompliancePortalSwitcherRowQuery.graphql";
 import {
@@ -32,7 +31,7 @@ import {
 import { CompliancePortalOpenLink } from "./CompliancePortalOpenLink";
 import { CompliancePortalSwitcherValue } from "./CompliancePortalSwitcherValue";
 
-const compliancePortalSwitcherRowQuery = graphql`
+export const compliancePortalSwitcherRowQuery = graphql`
   query CompliancePortalSwitcherRowQuery($compliancePortalId: ID!) {
     node(id: $compliancePortalId) {
       __typename
@@ -45,20 +44,20 @@ const compliancePortalSwitcherRowQuery = graphql`
 `;
 
 export interface CompliancePortalSwitcherRowProps {
+  queryRef: PreloadedQuery<CompliancePortalSwitcherRowQuery>;
   onOpenChange: (open: boolean) => void;
   children?: ReactNode;
 }
 
 export function CompliancePortalSwitcherRow({
+  queryRef,
   onOpenChange,
   children,
 }: CompliancePortalSwitcherRowProps) {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const slots = navPanelSwitcher();
-  const data = useLazyLoadQuery<CompliancePortalSwitcherRowQuery>(
+  const data = usePreloadedQuery<CompliancePortalSwitcherRowQuery>(
     compliancePortalSwitcherRowQuery,
-    { compliancePortalId: compliancePortalId ?? "" },
-    { fetchPolicy: "store-or-network" },
+    queryRef,
   );
   const portal = data.node?.__typename === "CompliancePortal" ? data.node : null;
 

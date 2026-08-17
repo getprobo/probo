@@ -21,21 +21,17 @@
 import { useMemo } from "react";
 import { matchPath, useLocation } from "react-router";
 
-import { type NavGroup, navItemPath } from "./navigation";
+import { type NavGroup, navLandingPath } from "./navigation";
 
 function navGroupPatterns(group: NavGroup): string[] {
   const prefixes = group.segment != null
     ? [group.segment]
-    : group.items.flatMap(item =>
-        item.kind === "section"
-          ? item.items.map(child => navItemPath(group, child))
-          : [navItemPath(group, item)],
-      );
+    : group.landings.map(landing => navLandingPath(group, landing.path));
 
   return prefixes.map(prefix => `/organizations/:organizationId/${prefix}`);
 }
 
-export function useActiveNavGroup(groups: NavGroup[]): NavGroup | null {
+export function useActiveNavGroup(groups: readonly NavGroup[]): NavGroup | null {
   const { pathname } = useLocation();
 
   return useMemo(

@@ -19,41 +19,44 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 
-import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
+import type { AccessReviewNavPanel_organization$key } from "#/__generated__/iam/AccessReviewNavPanel_organization.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
+import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
-import {
-  cookieBannerFromSwitcherValueQuery,
-  cookieBannerSwitcherValueQuery,
-} from "./CookieBannerSwitcherValue";
+import { NavPanelItem } from "./NavPanelItem";
+import type { NavPanelBodyProps } from "./navPanels";
 
-export interface CookieBannerNavItemsProps {
-  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
-}
+const accessReviewNavPanelFragment = graphql`
+  fragment AccessReviewNavPanel_organization on Organization {
+    canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
+    canListAccessReviewSources: permission(action: "access-review:source:list")
+  }
+`;
 
-export function CookieBannerNavItems({ queryRef }: CookieBannerNavItemsProps) {
+export function AccessReviewNavPanel({ organizationKey, group }: NavPanelBodyProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
-    cookieBannerSwitcherValueQuery,
-    queryRef,
+  const organization = useFragment<AccessReviewNavPanel_organization$key>(
+    accessReviewNavPanelFragment,
+    organizationKey,
   );
-  const banner = cookieBannerFromSwitcherValueQuery(data);
-
-  if (banner == null) {
-    return null;
-  }
-
-  const prefix = `/organizations/${organizationId}/privacy/cookie-banners/${banner.id}`;
 
   return (
     <>
-      <NavPanelItem label={t("nav.cookieBannersConfigure")} to={`${prefix}/configure`} />
-      <NavPanelItem label={t("nav.cookieBannersDiscovery")} to={`${prefix}/discovery`} />
-      <NavPanelItem label={t("nav.cookieBannersTrail")} to={`${prefix}/trail`} />
+      {organization.canListAccessReviewCampaigns && (
+        <NavPanelItem
+          label={t("nav.campaigns")}
+          to={navHref(organizationId, group, "campaigns")}
+        />
+      )}
+      {organization.canListAccessReviewSources && (
+        <NavPanelItem
+          label={t("nav.connections")}
+          to={navHref(organizationId, group, "connections")}
+        />
+      )}
     </>
   );
 }

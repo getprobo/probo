@@ -18,9 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useLazyLoadQuery } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CompliancePortalNavItemsQuery } from "#/__generated__/core/CompliancePortalNavItemsQuery.graphql";
@@ -36,7 +35,7 @@ import {
   visibleCompliancePortalSections,
 } from "../_lib/compliancePortalSections";
 
-const compliancePortalNavItemsQuery = graphql`
+export const compliancePortalNavItemsQuery = graphql`
   query CompliancePortalNavItemsQuery($compliancePortalId: ID!) {
     compliancePortal: node(id: $compliancePortalId) {
       __typename
@@ -47,29 +46,17 @@ const compliancePortalNavItemsQuery = graphql`
   }
 `;
 
-export function CompliancePortalNavItems() {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-
-  if (compliancePortalId == null) {
-    return null;
-  }
-
-  return (
-    <Suspense fallback={null}>
-      <CompliancePortalNavItemsInner />
-    </Suspense>
-  );
+export interface CompliancePortalNavItemsProps {
+  queryRef: PreloadedQuery<CompliancePortalNavItemsQuery>;
 }
 
-function CompliancePortalNavItemsInner() {
+export function CompliancePortalNavItems({ queryRef }: CompliancePortalNavItemsProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-
-  const data = useLazyLoadQuery<CompliancePortalNavItemsQuery>(
+  const data = usePreloadedQuery<CompliancePortalNavItemsQuery>(
     compliancePortalNavItemsQuery,
-    { compliancePortalId: compliancePortalId ?? "" },
-    { fetchPolicy: "store-or-network" },
+    queryRef,
   );
   const portalKey = data.compliancePortal.__typename === "CompliancePortal"
     ? data.compliancePortal
@@ -78,7 +65,7 @@ function CompliancePortalNavItemsInner() {
     compliancePortalSectionsFragment,
     portalKey,
   );
-  if (sectionData == null) {
+  if (sectionData == null || compliancePortalId == null) {
     return null;
   }
   const permissions = sectionPermissionsFrom(sectionData);

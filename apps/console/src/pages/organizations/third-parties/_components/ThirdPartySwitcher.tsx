@@ -22,10 +22,11 @@ import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryLoader } from "react-relay";
+import { type PreloadedQuery, useQueryLoader } from "react-relay";
 import { useNavigate, useParams } from "react-router";
 
 import type { ThirdPartySwitcherMenuQuery } from "#/__generated__/core/ThirdPartySwitcherMenuQuery.graphql";
+import type { ThirdPartySwitcherValueQuery } from "#/__generated__/core/ThirdPartySwitcherValueQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   navPanelSwitcher,
@@ -33,33 +34,26 @@ import {
   NavPanelSwitcherValue,
   NavPanelSwitcherValueSkeleton,
 } from "#/pages/organizations/_components/NavPanelSwitcher";
-import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { thirdPartyHref } from "../_lib/thirdPartySections";
 
 import { CreateThirdPartyDialog } from "./CreateThirdPartyDialog";
-import { ThirdPartyNavItems } from "./ThirdPartyNavItems";
 import {
   ThirdPartySwitcherMenu,
   thirdPartySwitcherMenuQuery,
 } from "./ThirdPartySwitcherMenu";
 import { ThirdPartySwitcherValue } from "./ThirdPartySwitcherValue";
 
-export function ThirdPartySwitcher() {
-  return (
-    <CoreRelayProvider>
-      <ThirdPartySwitcherInner />
-      <ThirdPartyNavItems />
-    </CoreRelayProvider>
-  );
+export interface ThirdPartySwitcherProps {
+  queryRef: PreloadedQuery<ThirdPartySwitcherValueQuery> | null;
 }
 
-function ThirdPartySwitcherInner() {
+export function ThirdPartySwitcher({ queryRef }: ThirdPartySwitcherProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<ThirdPartySwitcherMenuQuery>(
+  const [menuQueryRef, loadMenuQuery] = useQueryLoader<ThirdPartySwitcherMenuQuery>(
     thirdPartySwitcherMenuQuery,
   );
   const [createConnection, setCreateConnection] = useState<string | null>(null);
@@ -69,39 +63,48 @@ function ThirdPartySwitcherInner() {
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
-      loadQuery({ organizationId });
+      loadMenuQuery({ organizationId });
     }
-  }, [loadQuery, organizationId]);
+  }, [loadMenuQuery, organizationId]);
 
   const handleCreated = useCallback((id: string) => {
     void navigate(thirdPartyHref(organizationId, id));
   }, [navigate, organizationId]);
+
+  const value = thirdPartyId != null && queryRef != null
+    ? (
+        <Suspense
+          fallback={(
+            <>
+              <AvatarSkeleton size={1} radius="small" />
+              <NavPanelSwitcherValueSkeleton />
+            </>
+          )}
+        >
+          <ThirdPartySwitcherValue fallback={selectLabel} queryRef={queryRef} />
+        </Suspense>
+      )
+    : thirdPartyId != null
+      ? (
+          <>
+            <AvatarSkeleton size={1} radius="small" />
+            <NavPanelSwitcherValueSkeleton />
+          </>
+        )
+      : (
+          <NavPanelSwitcherValue>
+            {selectLabel}
+          </NavPanelSwitcherValue>
+        );
 
   return (
     <>
       <NavPanelSwitcher
         active={false}
         onOpenChange={handleOpenChange}
-        value={thirdPartyId != null
-          ? (
-              <Suspense
-                fallback={(
-                  <>
-                    <AvatarSkeleton size={1} radius="small" />
-                    <NavPanelSwitcherValueSkeleton />
-                  </>
-                )}
-              >
-                <ThirdPartySwitcherValue fallback={selectLabel} />
-              </Suspense>
-            )
-          : (
-              <NavPanelSwitcherValue>
-                {selectLabel}
-              </NavPanelSwitcherValue>
-            )}
+        value={value}
       >
-        {queryRef != null && (
+        {menuQueryRef != null && (
           <Suspense
             fallback={(
               <Text size={2} color="faint" className={slots.empty()}>
@@ -110,7 +113,7 @@ function ThirdPartySwitcherInner() {
             )}
           >
             <ThirdPartySwitcherMenu
-              queryRef={queryRef}
+              queryRef={menuQueryRef}
               onCreate={setCreateConnection}
             />
           </Suspense>

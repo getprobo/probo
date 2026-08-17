@@ -26,7 +26,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { NavRail_organization$key } from "#/__generated__/iam/NavRail_organization.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { navGroupLandingItem, navItemHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
+import { navGroupHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
 import { NavRailItem } from "./NavRailItem";
@@ -100,7 +100,7 @@ export function NavRail({ organizationKey }: NavRailProps) {
               key={group.key}
               icon={group.icon}
               label={t(`nav.groups.${group.key}`)}
-              to={navItemHref(organizationId, group, navGroupLandingItem(group))}
+              to={navGroupHref(organizationId, group, organization)}
               active={group.key === activeGroup?.key}
             />
           ))}

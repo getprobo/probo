@@ -21,7 +21,7 @@
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ReactNode, Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useLazyLoadQuery, useQueryLoader } from "react-relay";
+import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
@@ -33,11 +33,9 @@ import {
   NavPanelSwitcherValue,
   NavPanelSwitcherValueSkeleton,
 } from "#/pages/organizations/_components/NavPanelSwitcher";
-import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { useSelectedCookieBannerId } from "../_lib/useSelectedCookieBannerId";
 
-import { CookieBannerNavItems } from "./CookieBannerNavItems";
 import {
   CookieBannerSwitcherMenu,
   cookieBannerSwitcherMenuQuery,
@@ -48,20 +46,16 @@ import {
   cookieBannerSwitcherValueQuery,
 } from "./CookieBannerSwitcherValue";
 
-export function CookieBannerSwitcher() {
-  return (
-    <CoreRelayProvider>
-      <CookieBannerSwitcherInner />
-    </CoreRelayProvider>
-  );
+export interface CookieBannerSwitcherProps {
+  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery> | null;
 }
 
-function CookieBannerSwitcherInner() {
+export function CookieBannerSwitcher({ queryRef }: CookieBannerSwitcherProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
   const selectedId = useSelectedCookieBannerId();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerSwitcherMenuQuery>(
+  const [menuQueryRef, loadMenuQuery] = useQueryLoader<CookieBannerSwitcherMenuQuery>(
     cookieBannerSwitcherMenuQuery,
   );
 
@@ -73,11 +67,11 @@ function CookieBannerSwitcherInner() {
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
-      loadQuery({ organizationId });
+      loadMenuQuery({ organizationId });
     }
-  }, [loadQuery, organizationId]);
+  }, [loadMenuQuery, organizationId]);
 
-  const menu = queryRef != null
+  const menu = menuQueryRef != null
     ? (
         <Suspense
           fallback={(
@@ -86,7 +80,7 @@ function CookieBannerSwitcherInner() {
             </Text>
           )}
         >
-          <CookieBannerSwitcherMenu queryRef={queryRef} selectedId={selectedId} />
+          <CookieBannerSwitcherMenu queryRef={menuQueryRef} selectedId={selectedId} />
         </Suspense>
       )
     : null;
@@ -97,6 +91,18 @@ function CookieBannerSwitcherInner() {
         active
         onOpenChange={handleOpenChange}
         value={<NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>}
+      >
+        {menu}
+      </NavPanelSwitcher>
+    );
+  }
+
+  if (queryRef == null) {
+    return (
+      <NavPanelSwitcher
+        active={false}
+        onOpenChange={handleOpenChange}
+        value={<NavPanelSwitcherValueSkeleton />}
       >
         {menu}
       </NavPanelSwitcher>
@@ -118,7 +124,7 @@ function CookieBannerSwitcherInner() {
       <CookieBannerSwitcherSelected
         fallback={selectLabel}
         onOpenChange={handleOpenChange}
-        selectedId={selectedId}
+        queryRef={queryRef}
       >
         {menu}
       </CookieBannerSwitcherSelected>
@@ -129,40 +135,31 @@ function CookieBannerSwitcherInner() {
 interface CookieBannerSwitcherSelectedProps {
   fallback: string;
   onOpenChange: (open: boolean) => void;
-  selectedId: string | null;
+  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
   children?: ReactNode;
 }
 
 function CookieBannerSwitcherSelected({
   fallback,
   onOpenChange,
-  selectedId,
+  queryRef,
   children,
 }: CookieBannerSwitcherSelectedProps) {
-  const organizationId = useOrganizationId();
-  const data = useLazyLoadQuery<CookieBannerSwitcherValueQuery>(
+  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
-    {
-      organizationId,
-      cookieBannerId: selectedId ?? "",
-      hasCookieBannerId: selectedId != null,
-    },
-    { fetchPolicy: "store-or-network" },
+    queryRef,
   );
   const banner = cookieBannerFromSwitcherValueQuery(data);
 
   return (
-    <>
-      <NavPanelSwitcher
-        active={false}
-        onOpenChange={onOpenChange}
-        value={banner != null
-          ? <CookieBannerSwitcherValue cookieBannerKey={banner} />
-          : <NavPanelSwitcherValue>{fallback}</NavPanelSwitcherValue>}
-      >
-        {children}
-      </NavPanelSwitcher>
-      {banner != null && <CookieBannerNavItems cookieBannerId={banner.id} />}
-    </>
+    <NavPanelSwitcher
+      active={false}
+      onOpenChange={onOpenChange}
+      value={banner != null
+        ? <CookieBannerSwitcherValue cookieBannerKey={banner} />
+        : <NavPanelSwitcherValue>{fallback}</NavPanelSwitcherValue>}
+    >
+      {children}
+    </NavPanelSwitcher>
   );
 }

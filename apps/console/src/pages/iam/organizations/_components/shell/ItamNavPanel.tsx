@@ -18,33 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { ComponentType } from "react";
+import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
-export const navPanelSwitchers = {
-  "cookie-banners": lazy(async () => {
-    const { CookieBannerSwitcher } = await import(
-      "#/pages/organizations/cookie-banners/_components/CookieBannerSwitcher"
-    );
-    return { default: CookieBannerSwitcher as ComponentType };
-  }),
-  "compliance-portals": lazy(async () => {
-    const { CompliancePortalSwitcher } = await import(
-      "#/pages/organizations/compliance-portals/_components/CompliancePortalSwitcher"
-    );
-    return { default: CompliancePortalSwitcher as ComponentType };
-  }),
-  "third-parties": lazy(async () => {
-    const { ThirdPartySwitcher } = await import(
-      "#/pages/organizations/third-parties/_components/ThirdPartySwitcher"
-    );
-    return { default: ThirdPartySwitcher as ComponentType };
-  }),
-} as const;
+import type { ItamNavPanel_organization$key } from "#/__generated__/iam/ItamNavPanel_organization.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
-export function navPanelSwitcher(path: string) {
-  if (!(path in navPanelSwitchers)) {
-    throw new Error(`missing nav panel switcher for ${path}`);
+import { NavPanelItem } from "./NavPanelItem";
+import type { NavPanelBodyProps } from "./navPanels";
+
+const itamNavPanelFragment = graphql`
+  fragment ItamNavPanel_organization on Organization {
+    canListDevices: permission(action: "itam:device:list")
   }
-  return navPanelSwitchers[path as keyof typeof navPanelSwitchers];
+`;
+
+export function ItamNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+  const { t } = useTranslation();
+  const organizationId = useOrganizationId();
+  const organization = useFragment<ItamNavPanel_organization$key>(
+    itamNavPanelFragment,
+    organizationKey,
+  );
+
+  if (!organization.canListDevices) {
+    return null;
+  }
+
+  return (
+    <NavPanelItem
+      label={t("nav.devices")}
+      to={navHref(organizationId, group, "devices")}
+    />
+  );
 }
