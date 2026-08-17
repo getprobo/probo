@@ -21,14 +21,25 @@
 package console_v1
 
 import (
-	"context"
+	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
-func currentViewer(ctx context.Context) *types.Viewer {
-	identity := authn.IdentityFromContext(ctx)
+func TestCurrentViewerUsesIdentityID(t *testing.T) {
+	t.Parallel()
 
-	return &types.Viewer{ID: identity.ID}
+	identityID := gid.New(gid.NewTenantID(), coredata.IdentityEntityType)
+	sessionID := gid.New(gid.NewTenantID(), coredata.SessionEntityType)
+	apiKeyID := gid.New(gid.NewTenantID(), coredata.PersonalAPIKeyEntityType)
+
+	ctx := authn.ContextWithIdentity(t.Context(), &coredata.Identity{ID: identityID})
+	ctx = authn.ContextWithSession(ctx, &coredata.Session{ID: sessionID})
+	ctx = authn.ContextWithAPIKey(ctx, &coredata.PersonalAPIKey{ID: apiKeyID})
+
+	viewer := currentViewer(ctx)
+	assert.Equal(t, identityID, viewer.ID)
 }
