@@ -201,6 +201,7 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 				ctx,
 				func(ctx context.Context, tx pg.Tx) error {
 					var err error
+
 					gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
 
 					return err

@@ -175,6 +175,7 @@ func TestDeleteIfUnreferenced_RefusesOnceReferenced(t *testing.T) {
 
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			var err error
+
 			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
 
 			return err
@@ -206,6 +207,7 @@ func TestDeleteIfUnreferenced_RefusesOnceReferenced(t *testing.T) {
 
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			var err error
+
 			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
 
 			return err

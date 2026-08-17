@@ -102,6 +102,7 @@ func newCmdRename(f *cmdutil.Factory) *cobra.Command {
 					var parties coredata.CommonThirdParties
 
 					var err error
+
 					requeued, err = parties.RequestEnrichmentByIDs(ctx, tx, []gid.GID{party.ID})
 
 					return err
