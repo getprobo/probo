@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -36,19 +37,20 @@ const SlackbotInteractiveCommandDefaultMaxAttempts = 5
 // SlackbotInteractiveCommand is the Slack interactive-command inbox.
 // OrganizationID is optional until the worker decrypts and resolves the payload.
 type SlackbotInteractiveCommand struct {
-	ID                  gid.GID    `db:"id"`
-	OrganizationID      *gid.GID   `db:"organization_id"`
-	RequestDigest       []byte     `db:"request_digest"`
-	EncryptedPayload    []byte     `db:"encrypted_payload"`
-	ProcessingStartedAt *time.Time `db:"processing_started_at"`
-	ProcessedAt         *time.Time `db:"processed_at"`
-	AttemptCount        int        `db:"attempt_count"`
-	MaxAttempts         int        `db:"max_attempts"`
-	NextAttemptAt       *time.Time `db:"next_attempt_at"`
-	LastError           *string    `db:"last_error"`
-	DeadLetteredAt      *time.Time `db:"dead_lettered_at"`
-	CreatedAt           time.Time  `db:"created_at"`
-	UpdatedAt           time.Time  `db:"updated_at"`
+	ID                   gid.GID    `db:"id"`
+	OrganizationID       *gid.GID   `db:"organization_id"`
+	RequestDigest        []byte     `db:"request_digest"`
+	EncryptedPayload     []byte     `db:"encrypted_payload"`
+	ProcessingOwnerToken *string    `db:"processing_owner_token"`
+	ProcessingStartedAt  *time.Time `db:"processing_started_at"`
+	ProcessedAt          *time.Time `db:"processed_at"`
+	AttemptCount         int        `db:"attempt_count"`
+	MaxAttempts          int        `db:"max_attempts"`
+	NextAttemptAt        *time.Time `db:"next_attempt_at"`
+	LastError            *string    `db:"last_error"`
+	DeadLetteredAt       *time.Time `db:"dead_lettered_at"`
+	CreatedAt            time.Time  `db:"created_at"`
+	UpdatedAt            time.Time  `db:"updated_at"`
 }
 
 func NewSlackbotInteractiveCommand(
@@ -71,11 +73,12 @@ func (c *SlackbotInteractiveCommand) Insert(ctx context.Context, conn pg.Querier
 	q := `
 INSERT INTO slackbot_interactive_commands (
 	id, tenant_id, organization_id, request_digest, encrypted_payload,
-	processing_started_at, processed_at, attempt_count, max_attempts,
-	next_attempt_at, last_error, dead_lettered_at, created_at, updated_at
+	processing_owner_token, processing_started_at, processed_at, attempt_count,
+	max_attempts, next_attempt_at, last_error, dead_lettered_at, created_at,
+	updated_at
 ) VALUES (
 	@id, NULL, NULL, @request_digest, @encrypted_payload,
-	@processing_started_at, @processed_at, @attempt_count, @max_attempts,
+	@processing_owner_token, @processing_started_at, @processed_at, @attempt_count, @max_attempts,
 	@next_attempt_at, @last_error, @dead_lettered_at, @created_at, @updated_at
 )
 ON CONFLICT (request_digest) DO NOTHING
@@ -85,18 +88,19 @@ ON CONFLICT (request_digest) DO NOTHING
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"id":                    c.ID,
-			"request_digest":        c.RequestDigest,
-			"encrypted_payload":     c.EncryptedPayload,
-			"processing_started_at": c.ProcessingStartedAt,
-			"processed_at":          c.ProcessedAt,
-			"attempt_count":         c.AttemptCount,
-			"max_attempts":          c.MaxAttempts,
-			"next_attempt_at":       c.NextAttemptAt,
-			"last_error":            c.LastError,
-			"dead_lettered_at":      c.DeadLetteredAt,
-			"created_at":            c.CreatedAt,
-			"updated_at":            c.UpdatedAt,
+			"id":                     c.ID,
+			"request_digest":         c.RequestDigest,
+			"encrypted_payload":      c.EncryptedPayload,
+			"processing_owner_token": c.ProcessingOwnerToken,
+			"processing_started_at":  c.ProcessingStartedAt,
+			"processed_at":           c.ProcessedAt,
+			"attempt_count":          c.AttemptCount,
+			"max_attempts":           c.MaxAttempts,
+			"next_attempt_at":        c.NextAttemptAt,
+			"last_error":             c.LastError,
+			"dead_lettered_at":       c.DeadLetteredAt,
+			"created_at":             c.CreatedAt,
+			"updated_at":             c.UpdatedAt,
 		},
 	)
 	if err != nil {
@@ -114,6 +118,7 @@ func (c *SlackbotInteractiveCommand) ResetDeadLetteredByRequestDigest(
 	q := `
 UPDATE slackbot_interactive_commands
 SET
+	processing_owner_token = NULL,
 	processing_started_at = NULL,
 	processed_at = NULL,
 	dead_lettered_at = NULL,
@@ -151,6 +156,7 @@ SELECT
 	organization_id,
 	request_digest,
 	encrypted_payload,
+	processing_owner_token,
 	processing_started_at,
 	processed_at,
 	attempt_count,
@@ -183,6 +189,7 @@ WITH candidate AS (
 	FROM slackbot_interactive_commands
 	WHERE processed_at IS NULL
 		AND processing_started_at IS NULL
+		AND processing_owner_token IS NULL
 		AND dead_lettered_at IS NULL
 		AND attempt_count < max_attempts
 		AND (next_attempt_at IS NULL OR next_attempt_at <= @now)
@@ -193,19 +200,28 @@ WITH candidate AS (
 UPDATE slackbot_interactive_commands command
 SET
 	attempt_count = command.attempt_count + 1,
+	processing_owner_token = @owner_token,
 	processing_started_at = @now,
 	updated_at = @now
 FROM candidate
 WHERE command.id = candidate.id
 RETURNING
 	command.id, command.organization_id, command.request_digest,
-	command.encrypted_payload, command.processing_started_at,
-	command.processed_at, command.attempt_count, command.max_attempts,
-	command.next_attempt_at, command.last_error, command.dead_lettered_at,
-	command.created_at, command.updated_at
+	command.encrypted_payload, command.processing_owner_token,
+	command.processing_started_at, command.processed_at, command.attempt_count,
+	command.max_attempts, command.next_attempt_at, command.last_error,
+	command.dead_lettered_at, command.created_at, command.updated_at
 `
 
-	return c.loadExactlyOne(ctx, conn, q, pgx.StrictNamedArgs{"now": now})
+	return c.loadExactlyOne(
+		ctx,
+		conn,
+		q,
+		pgx.StrictNamedArgs{
+			"now":         now,
+			"owner_token": uuid.MustNewV4().String(),
+		},
+	)
 }
 
 func (c *SlackbotInteractiveCommand) UpdateProcessingState(
@@ -219,11 +235,16 @@ func (c *SlackbotInteractiveCommand) UpdateProcessingState(
 		tenantID = &value
 	}
 
+	if c.ProcessingOwnerToken == nil || *c.ProcessingOwnerToken == "" {
+		panic("Slackbot interactive command processing update requires an owner token")
+	}
+
 	q := `
 UPDATE slackbot_interactive_commands
 SET
 	tenant_id = @tenant_id,
 	organization_id = @organization_id,
+	processing_owner_token = NULL,
 	processing_started_at = @processing_started_at,
 	processed_at = @processed_at,
 	next_attempt_at = @next_attempt_at,
@@ -231,21 +252,23 @@ SET
 	dead_lettered_at = @dead_lettered_at,
 	updated_at = @updated_at
 WHERE id = @id
+	AND processing_owner_token = @processing_owner_token
 `
 
 	result, err := conn.Exec(
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"id":                    c.ID,
-			"tenant_id":             tenantID,
-			"organization_id":       c.OrganizationID,
-			"processing_started_at": c.ProcessingStartedAt,
-			"processed_at":          c.ProcessedAt,
-			"next_attempt_at":       c.NextAttemptAt,
-			"last_error":            c.LastError,
-			"dead_lettered_at":      c.DeadLetteredAt,
-			"updated_at":            c.UpdatedAt,
+			"id":                     c.ID,
+			"tenant_id":              tenantID,
+			"organization_id":        c.OrganizationID,
+			"processing_owner_token": c.ProcessingOwnerToken,
+			"processing_started_at":  c.ProcessingStartedAt,
+			"processed_at":           c.ProcessedAt,
+			"next_attempt_at":        c.NextAttemptAt,
+			"last_error":             c.LastError,
+			"dead_lettered_at":       c.DeadLetteredAt,
+			"updated_at":             c.UpdatedAt,
 		},
 	)
 	if err != nil {
@@ -253,7 +276,7 @@ WHERE id = @id
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+		return ErrProcessingLeaseLost
 	}
 
 	return nil
@@ -268,6 +291,7 @@ func ResetStaleSlackbotInteractiveCommands(
 	q := `
 UPDATE slackbot_interactive_commands
 SET
+	processing_owner_token = NULL,
 	processing_started_at = NULL,
 	next_attempt_at = CASE
 		WHEN attempt_count >= max_attempts THEN NULL

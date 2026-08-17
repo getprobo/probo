@@ -69,6 +69,7 @@ func (d *BotDeliveryDestination) LoadByTarget(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
+	organizationID gid.GID,
 	provider string,
 	targetNamespace string,
 	targetKey string,
@@ -87,6 +88,7 @@ SELECT
 	updated_at
 FROM bot_delivery_destinations
 WHERE %s
+	AND organization_id = @organization_id
 	AND provider = @provider
 	AND target_namespace = @target_namespace
 	AND target_key = @target_key
@@ -94,6 +96,7 @@ LIMIT 1
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
+		"organization_id":  organizationID,
 		"provider":         provider,
 		"target_namespace": targetNamespace,
 		"target_key":       targetKey,
@@ -146,8 +149,7 @@ INSERT INTO bot_delivery_destinations (
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (provider, target_namespace, target_key) DO UPDATE SET
-	organization_id = EXCLUDED.organization_id,
+ON CONFLICT (tenant_id, organization_id, provider, target_namespace, target_key) DO UPDATE SET
 	external_destination_id = EXCLUDED.external_destination_id,
 	external_name = EXCLUDED.external_name,
 	verified_at = EXCLUDED.verified_at,

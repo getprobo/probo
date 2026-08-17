@@ -86,7 +86,8 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 		ChannelID:      &channelID,
 		MessageTS:      &messageTS,
 		Metadata: map[string]any{
-			deliverySourceEventMetadata:      execution.ID.String(),
+			deliverySourceEventMetadata:      gid.New(scope.GetTenantID(), coredata.BotMessageEntityType).String(),
+			deliveryAgentExecutionMetadata:   execution.ID.String(),
 			deliveryTargetNamespaceMetadata:  target.TargetNamespace,
 			deliveryTargetKeyMetadata:        target.TargetKey,
 			deliverySubjectNamespaceMetadata: "compliance_portal_access",
@@ -160,6 +161,7 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 					ctx,
 					conn,
 					scope,
+					organizationID,
 					ProviderName,
 					target.TargetNamespace,
 					target.TargetKey,
@@ -168,4 +170,108 @@ func TestMessageService_OnSlackbotDeliverySuccessBindsThreadAndAnchor(t *testing
 		),
 	)
 	require.NotNil(t, destination.VerifiedAt)
+}
+
+func TestMessageService_OnSlackbotDeliverySuccessMissingDestinationIsNonFatal(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	service := NewMessageService(pgClient, nil, nil, nil, log.NewLogger())
+	channelID := "C-missing-dest"
+	messageTS := "123.789"
+	message := &coredata.SlackbotMessage{
+		ID:             gid.New(scope.GetTenantID(), coredata.SlackbotMessageEntityType),
+		OrganizationID: organizationID,
+		MessageType:    "ACCESS_REQUEST",
+		ChannelID:      &channelID,
+		MessageTS:      &messageTS,
+		Metadata: map[string]any{
+			deliveryTargetNamespaceMetadata: "compliance_portal",
+			deliveryTargetKeyMetadata:       organizationID.String(),
+		},
+	}
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return service.OnSlackbotDeliverySuccess(ctx, tx, scope, message)
+			},
+		),
+	)
+}
+
+func TestMessageService_OnSlackbotDeliverySuccessIgnoresSourceEventIDForAnchor(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	service := NewMessageService(pgClient, nil, nil, nil, log.NewLogger())
+	source := "provider"
+	sessionKey := "source-event-session-" + organizationID.String()
+	now := time.Now().UTC()
+	execution := coredata.AgentExecution{
+		ID:                gid.New(scope.GetTenantID(), coredata.AgentExecutionEntityType),
+		OrganizationID:    organizationID,
+		StartAgentName:    "assistant",
+		Source:            &source,
+		SessionKey:        &sessionKey,
+		SourceCoordinates: []byte(`{"workspace":"opaque"}`),
+		SessionMessages:   []byte(`[]`),
+		CreatedAt:         now,
+		UpdatedAt:         now,
+	}
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				_, err := execution.UpsertBySourceSession(ctx, tx, scope)
+
+				return err
+			},
+		),
+	)
+
+	channelID := "C-source-only"
+	messageTS := "999.001"
+	message := &coredata.SlackbotMessage{
+		ID:             gid.New(scope.GetTenantID(), coredata.SlackbotMessageEntityType),
+		OrganizationID: organizationID,
+		MessageType:    "ACCESS_REQUEST",
+		ChannelID:      &channelID,
+		MessageTS:      &messageTS,
+		Metadata: map[string]any{
+			deliverySourceEventMetadata: execution.ID.String(),
+		},
+	}
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return service.OnSlackbotDeliverySuccess(ctx, tx, scope, message)
+			},
+		),
+	)
+
+	var anchor coredata.AgentExecutionAnchor
+
+	err := pgClient.WithConn(
+		t.Context(),
+		func(ctx context.Context, conn pg.Querier) error {
+			return anchor.LoadByProviderCoordinates(
+				ctx,
+				conn,
+				scope,
+				organizationID,
+				ProviderName,
+				channelID,
+				messageTS,
+			)
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }

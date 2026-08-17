@@ -268,10 +268,11 @@ func TestService_ProcessEvent_DisablesUninstalledWorkspace(t *testing.T) {
 	installations := newTestInstallationService(t, pgClient, "")
 	handler := &Service{installations: installations}
 	envelope := Envelope{
-		Type:    EnvelopeTypeEventCallback,
-		EventID: "E-uninstall-" + organizationID.String(),
-		TeamID:  teamID,
-		Event:   &EventBody{Type: EventTypeAppUninstalled},
+		Type:      EnvelopeTypeEventCallback,
+		EventID:   "E-uninstall-" + organizationID.String(),
+		TeamID:    teamID,
+		EventTime: time.Now().Add(time.Minute).Unix(),
+		Event:     &EventBody{Type: EventTypeAppUninstalled},
 	}
 
 	require.NoError(t, handler.ProcessEvent(t.Context(), envelope))
@@ -291,4 +292,25 @@ func TestService_ProcessEvent_DisablesUninstalledWorkspace(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, coredata.SlackbotInstallationStatusDisabled, loaded.Status)
+}
+
+func TestDisableByTeamID_IgnoresNewerInstall(t *testing.T) {
+	t.Parallel()
+
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	installations := newTestInstallationService(t, pgClient, "")
+	eventTime := time.Now().Add(-time.Hour)
+
+	require.NoError(
+		t,
+		installations.DisableByTeamID(t.Context(), teamID, &eventTime, nil),
+	)
+
+	loaded, err := installations.GetByOrganizationID(
+		t.Context(),
+		coredata.NewScopeFromObjectID(organizationID),
+		organizationID,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.SlackbotInstallationStatusActive, loaded.Status)
 }

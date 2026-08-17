@@ -160,6 +160,12 @@ func (h *messageWorkerHandler) Process(ctx context.Context, message coredata.Bot
 		},
 	)
 	if persistErr != nil {
+		if errors.Is(persistErr, coredata.ErrProcessingLeaseLost) {
+			logger.InfoCtx(ctx, "lost bot message processing lease")
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot persist bot message outcome: %w", persistErr)
 	}
 

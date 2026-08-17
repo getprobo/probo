@@ -166,6 +166,12 @@ func (h *interactiveCommandHandler) Process(
 		},
 	)
 	if persistErr != nil {
+		if errors.Is(persistErr, coredata.ErrProcessingLeaseLost) {
+			logger.InfoCtx(ctx, "lost Slack interactive command processing lease")
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot persist Slack interactive command outcome: %w", persistErr)
 	}
 
@@ -210,12 +216,11 @@ func (h *interactiveCommandHandler) dispatch(
 	}
 
 	action := payload.Actions[0]
-	if action.Value == "" && action.SelectedOption.Value == "" {
+	if action.ActionID == "" {
 		return nil
 	}
 
-	if action.ActionID == "" ||
-		action.ActionTS == "" ||
+	if action.ActionTS == "" ||
 		payload.Container.ChannelID == "" ||
 		payload.Container.MessageTS == "" {
 		return permanent(fmt.Errorf("slack interactive command is incomplete"))

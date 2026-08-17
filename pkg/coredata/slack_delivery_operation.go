@@ -38,21 +38,22 @@ type (
 	SlackDeliveryOperationKind string
 
 	SlackDeliveryOperation struct {
-		ID                  gid.GID                    `db:"id"`
-		OrganizationID      gid.GID                    `db:"organization_id"`
-		OperationKey        string                     `db:"operation_key"`
-		OperationKind       SlackDeliveryOperationKind `db:"operation_kind"`
-		Payload             map[string]any             `db:"payload"`
-		ClientMsgID         *string                    `db:"client_msg_id"`
-		ProcessingStartedAt *time.Time                 `db:"processing_started_at"`
-		CompletedAt         *time.Time                 `db:"completed_at"`
-		AttemptCount        int                        `db:"attempt_count"`
-		MaxAttempts         int                        `db:"max_attempts"`
-		NextAttemptAt       *time.Time                 `db:"next_attempt_at"`
-		LastError           *string                    `db:"last_error"`
-		DeadLetteredAt      *time.Time                 `db:"dead_lettered_at"`
-		CreatedAt           time.Time                  `db:"created_at"`
-		UpdatedAt           time.Time                  `db:"updated_at"`
+		ID                   gid.GID                    `db:"id"`
+		OrganizationID       gid.GID                    `db:"organization_id"`
+		OperationKey         string                     `db:"operation_key"`
+		OperationKind        SlackDeliveryOperationKind `db:"operation_kind"`
+		Payload              map[string]any             `db:"payload"`
+		ClientMsgID          *string                    `db:"client_msg_id"`
+		ProcessingOwnerToken *string                    `db:"processing_owner_token"`
+		ProcessingStartedAt  *time.Time                 `db:"processing_started_at"`
+		CompletedAt          *time.Time                 `db:"completed_at"`
+		AttemptCount         int                        `db:"attempt_count"`
+		MaxAttempts          int                        `db:"max_attempts"`
+		NextAttemptAt        *time.Time                 `db:"next_attempt_at"`
+		LastError            *string                    `db:"last_error"`
+		DeadLetteredAt       *time.Time                 `db:"dead_lettered_at"`
+		CreatedAt            time.Time                  `db:"created_at"`
+		UpdatedAt            time.Time                  `db:"updated_at"`
 	}
 )
 
@@ -128,21 +129,22 @@ func (o *SlackDeliveryOperation) Upsert(
 	q := `
 INSERT INTO slack_delivery_operations (
 	id, tenant_id, organization_id, operation_key, operation_kind, payload,
-	client_msg_id, processing_started_at, completed_at, attempt_count,
-	max_attempts, next_attempt_at, last_error, dead_lettered_at, created_at,
-	updated_at
+	client_msg_id, processing_owner_token, processing_started_at, completed_at,
+	attempt_count, max_attempts, next_attempt_at, last_error, dead_lettered_at,
+	created_at, updated_at
 ) VALUES (
 	@id, @tenant_id, @organization_id, @operation_key, @operation_kind, @payload,
-	@client_msg_id, @processing_started_at, @completed_at, @attempt_count,
-	@max_attempts, @next_attempt_at, @last_error, @dead_lettered_at, @created_at,
-	@updated_at
+	@client_msg_id, @processing_owner_token, @processing_started_at, @completed_at,
+	@attempt_count, @max_attempts, @next_attempt_at, @last_error, @dead_lettered_at,
+	@created_at, @updated_at
 )
 ON CONFLICT (organization_id, operation_key) DO UPDATE
 SET operation_key = slack_delivery_operations.operation_key
 RETURNING
 	id, organization_id, operation_key, operation_kind, payload, client_msg_id,
-	processing_started_at, completed_at, attempt_count, max_attempts,
-	next_attempt_at, last_error, dead_lettered_at, created_at, updated_at
+	processing_owner_token, processing_started_at, completed_at, attempt_count,
+	max_attempts, next_attempt_at, last_error, dead_lettered_at, created_at,
+	updated_at
 `
 	originalID := o.ID
 
@@ -150,22 +152,23 @@ RETURNING
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"id":                    o.ID,
-			"tenant_id":             scope.GetTenantID(),
-			"organization_id":       o.OrganizationID,
-			"operation_key":         o.OperationKey,
-			"operation_kind":        o.OperationKind,
-			"payload":               o.Payload,
-			"client_msg_id":         o.ClientMsgID,
-			"processing_started_at": o.ProcessingStartedAt,
-			"completed_at":          o.CompletedAt,
-			"attempt_count":         o.AttemptCount,
-			"max_attempts":          o.MaxAttempts,
-			"next_attempt_at":       o.NextAttemptAt,
-			"last_error":            o.LastError,
-			"dead_lettered_at":      o.DeadLetteredAt,
-			"created_at":            o.CreatedAt,
-			"updated_at":            o.UpdatedAt,
+			"id":                     o.ID,
+			"tenant_id":              scope.GetTenantID(),
+			"organization_id":        o.OrganizationID,
+			"operation_key":          o.OperationKey,
+			"operation_kind":         o.OperationKind,
+			"payload":                o.Payload,
+			"client_msg_id":          o.ClientMsgID,
+			"processing_owner_token": o.ProcessingOwnerToken,
+			"processing_started_at":  o.ProcessingStartedAt,
+			"completed_at":           o.CompletedAt,
+			"attempt_count":          o.AttemptCount,
+			"max_attempts":           o.MaxAttempts,
+			"next_attempt_at":        o.NextAttemptAt,
+			"last_error":             o.LastError,
+			"dead_lettered_at":       o.DeadLetteredAt,
+			"created_at":             o.CreatedAt,
+			"updated_at":             o.UpdatedAt,
 		},
 	)
 	if err != nil {
@@ -191,7 +194,7 @@ func (o *SlackDeliveryOperation) LoadByID(
 ) error {
 	q := `
 SELECT id, organization_id, operation_key, operation_kind, payload,
-	client_msg_id, processing_started_at, completed_at, attempt_count,
+	client_msg_id, processing_owner_token, processing_started_at, completed_at, attempt_count,
 	max_attempts, next_attempt_at, last_error, dead_lettered_at, created_at,
 	updated_at
 FROM slack_delivery_operations
@@ -217,6 +220,7 @@ WITH candidate AS (
 	WHERE completed_at IS NULL
 		AND dead_lettered_at IS NULL
 		AND processing_started_at IS NULL
+		AND processing_owner_token IS NULL
 		AND attempt_count < max_attempts
 		AND (next_attempt_at IS NULL OR next_attempt_at <= @now)
 	ORDER BY created_at ASC, id ASC
@@ -225,19 +229,28 @@ WITH candidate AS (
 )
 UPDATE slack_delivery_operations operation
 SET attempt_count = operation.attempt_count + 1,
+	processing_owner_token = @owner_token,
 	processing_started_at = @now,
 	updated_at = @now
 FROM candidate
 WHERE operation.id = candidate.id
 RETURNING operation.id, operation.organization_id, operation.operation_key,
 	operation.operation_kind, operation.payload, operation.client_msg_id,
-	operation.processing_started_at, operation.completed_at,
-	operation.attempt_count, operation.max_attempts, operation.next_attempt_at,
-	operation.last_error, operation.dead_lettered_at, operation.created_at,
-	operation.updated_at
+	operation.processing_owner_token, operation.processing_started_at,
+	operation.completed_at, operation.attempt_count, operation.max_attempts,
+	operation.next_attempt_at, operation.last_error, operation.dead_lettered_at,
+	operation.created_at, operation.updated_at
 `
 
-	return o.loadExactlyOne(ctx, conn, q, pgx.StrictNamedArgs{"now": now})
+	return o.loadExactlyOne(
+		ctx,
+		conn,
+		q,
+		pgx.StrictNamedArgs{
+			"now":         now,
+			"owner_token": uuid.MustNewV4().String(),
+		},
+	)
 }
 
 func (o *SlackDeliveryOperation) UpdateDeliveryState(
@@ -245,25 +258,32 @@ func (o *SlackDeliveryOperation) UpdateDeliveryState(
 	conn pg.Querier,
 	scope Scoper,
 ) error {
+	if o.ProcessingOwnerToken == nil || *o.ProcessingOwnerToken == "" {
+		panic("Slack delivery operation update requires an owner token")
+	}
+
 	q := `
 UPDATE slack_delivery_operations
-SET processing_started_at = @processing_started_at,
+SET processing_owner_token = NULL,
+	processing_started_at = @processing_started_at,
 	completed_at = @completed_at,
 	next_attempt_at = @next_attempt_at,
 	last_error = @last_error,
 	dead_lettered_at = @dead_lettered_at,
 	updated_at = @updated_at
 WHERE %s AND id = @id
+	AND processing_owner_token = @processing_owner_token
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
-		"id":                    o.ID,
-		"processing_started_at": o.ProcessingStartedAt,
-		"completed_at":          o.CompletedAt,
-		"next_attempt_at":       o.NextAttemptAt,
-		"last_error":            o.LastError,
-		"dead_lettered_at":      o.DeadLetteredAt,
-		"updated_at":            o.UpdatedAt,
+		"id":                     o.ID,
+		"processing_owner_token": o.ProcessingOwnerToken,
+		"processing_started_at":  o.ProcessingStartedAt,
+		"completed_at":           o.CompletedAt,
+		"next_attempt_at":        o.NextAttemptAt,
+		"last_error":             o.LastError,
+		"dead_lettered_at":       o.DeadLetteredAt,
+		"updated_at":             o.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -273,7 +293,7 @@ WHERE %s AND id = @id
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+		return ErrProcessingLeaseLost
 	}
 
 	return nil
@@ -287,7 +307,8 @@ func ResetStaleSlackDeliveryOperations(
 ) error {
 	q := `
 UPDATE slack_delivery_operations
-SET processing_started_at = NULL,
+SET processing_owner_token = NULL,
+	processing_started_at = NULL,
 	next_attempt_at = CASE
 		WHEN attempt_count >= max_attempts THEN NULL
 		ELSE @now::timestamptz

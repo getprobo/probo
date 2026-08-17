@@ -23,9 +23,11 @@ package slack
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -37,13 +39,21 @@ func (s *MessageService) OnSlackbotDeliverySuccess(
 	scope coredata.Scoper,
 	message *coredata.SlackbotMessage,
 ) error {
-	if source, ok := message.Metadata[deliverySourceEventMetadata].(string); ok {
-		executionID, err := gid.ParseGID(source)
+	if raw, ok := message.Metadata[deliveryAgentExecutionMetadata].(string); ok {
+		executionID, err := gid.ParseGID(raw)
 		if err == nil &&
 			executionID.EntityType() == coredata.AgentExecutionEntityType &&
 			message.ChannelID != nil &&
 			message.MessageTS != nil {
-			if err := bindExecutionAnchor(ctx, tx, scope, executionID, message); err != nil {
+			if err := bindExecutionAnchor(
+				ctx,
+				tx,
+				scope,
+				message.OrganizationID,
+				executionID,
+				*message.ChannelID,
+				*message.MessageTS,
+			); err != nil {
 				return fmt.Errorf("cannot bind Slack execution anchor: %w", err)
 			}
 		}
@@ -61,7 +71,28 @@ func (s *MessageService) OnSlackbotDeliverySuccess(
 	}
 
 	var destination coredata.BotDeliveryDestination
-	if err := destination.LoadByTarget(ctx, tx, scope, ProviderName, namespace, key); err != nil {
+	if err := destination.LoadByTarget(
+		ctx,
+		tx,
+		scope,
+		message.OrganizationID,
+		ProviderName,
+		namespace,
+		key,
+	); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			if s.logger != nil {
+				s.logger.InfoCtx(
+					ctx,
+					"skipping verification of missing bot destination",
+					log.String("organization_id", message.OrganizationID.String()),
+					log.String("target_namespace", namespace),
+				)
+			}
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot load delivered bot destination: %w", err)
 	}
 
@@ -104,6 +135,7 @@ func bindThreadSubject(
 	delete(attributes, deliveryTargetKeyMetadata)
 	delete(attributes, deliveryMessageTypeMetadata)
 	delete(attributes, deliverySourceEventMetadata)
+	delete(attributes, deliveryAgentExecutionMetadata)
 	delete(attributes, deliverySubjectNamespaceMetadata)
 	delete(attributes, deliverySubjectKeyMetadata)
 	delete(attributes, deliveryCapabilityMetadata)
@@ -138,29 +170,31 @@ func bindThreadSubject(
 
 func bindExecutionAnchor(
 	ctx context.Context,
-	tx pg.Tx,
+	conn pg.Querier,
 	scope coredata.Scoper,
+	organizationID gid.GID,
 	executionID gid.GID,
-	message *coredata.SlackbotMessage,
+	channelID string,
+	messageTS string,
 ) error {
 	now := time.Now()
 
 	anchor := &coredata.AgentExecutionAnchor{
 		ID:                     gid.New(scope.GetTenantID(), coredata.AgentExecutionAnchorEntityType),
-		OrganizationID:         message.OrganizationID,
+		OrganizationID:         organizationID,
 		AgentExecutionID:       executionID,
 		Provider:               ProviderName,
-		ExternalConversationID: *message.ChannelID,
-		ExternalMessageID:      *message.MessageTS,
+		ExternalConversationID: channelID,
+		ExternalMessageID:      messageTS,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
-	if _, err := anchor.Upsert(ctx, tx, scope); err != nil {
+	if _, err := anchor.Upsert(ctx, conn, scope); err != nil {
 		return fmt.Errorf("cannot bind delivered execution anchor: %w", err)
 	}
 
 	var execution coredata.AgentExecution
-	if err := execution.LoadByID(ctx, tx, scope, executionID); err != nil {
+	if err := execution.LoadByID(ctx, conn, scope, executionID); err != nil {
 		return fmt.Errorf("cannot load delivered execution: %w", err)
 	}
 
@@ -171,15 +205,15 @@ func bindExecutionAnchor(
 		}
 	}
 
-	coordinates.ChannelID = *message.ChannelID
-	coordinates.ThreadTS = *message.MessageTS
+	coordinates.ChannelID = channelID
+	coordinates.ThreadTS = messageTS
 
 	encoded, err := json.Marshal(coordinates)
 	if err != nil {
 		return fmt.Errorf("cannot encode delivered execution coordinates: %w", err)
 	}
 
-	if err := execution.UpdateSourceCoordinates(ctx, tx, scope, encoded, now); err != nil {
+	if err := execution.UpdateSourceCoordinates(ctx, conn, scope, encoded, now); err != nil {
 		return fmt.Errorf("cannot update delivered execution coordinates: %w", err)
 	}
 

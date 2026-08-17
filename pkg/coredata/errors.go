@@ -29,4 +29,5 @@ var (
 	ErrResourceAlreadyExists     = errors.New("resource already exists")
 	ErrResourceInUse             = errors.New("resource is in use")
 	ErrNoDocumentPDFJobAvailable = errors.New("no document PDF job available")
+	ErrProcessingLeaseLost       = errors.New("processing lease lost")
 )

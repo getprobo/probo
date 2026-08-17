@@ -66,9 +66,9 @@ import (
 
 type (
 	BotDeliveryDestinations interface {
-		GetDestination(ctx context.Context, scope coredata.Scoper, target probot.DeliveryTarget) (*coredata.BotDeliveryDestination, error)
+		GetDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget) (*coredata.BotDeliveryDestination, error)
 		SetDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget, externalDestinationID string) (*coredata.BotDeliveryDestination, error)
-		ClearDestination(ctx context.Context, scope coredata.Scoper, target probot.DeliveryTarget) error
+		ClearDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget) error
 	}
 
 	ComplianceMessages interface {

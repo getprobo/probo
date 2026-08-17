@@ -104,24 +104,16 @@ func TestDeliveryOperationHandler_RetryAndDeadLetter(t *testing.T) {
 	assert.WithinDuration(t, now.Add(time.Minute), *retried.NextAttemptAt, time.Microsecond)
 	assert.Nil(t, retried.DeadLetteredAt)
 
-	retried.MaxAttempts = retried.AttemptCount
+	retryAt := *retried.NextAttemptAt
+	handler.now = func() time.Time { return retryAt }
 
-	require.NoError(
-		t,
-		fixture.pg.WithConn(
-			t.Context(),
-			func(ctx context.Context, conn pg.Querier) error {
-				retried.ProcessingStartedAt = new(now)
-				retried.NextAttemptAt = nil
-
-				return retried.UpdateDeliveryState(ctx, conn, fixture.scope)
-			},
-		),
-	)
-	require.Error(t, handler.Process(t.Context(), *retried))
+	claimedAgain, err := handler.Claim(t.Context())
+	require.NoError(t, err)
+	claimedAgain.MaxAttempts = claimedAgain.AttemptCount
+	require.Error(t, handler.Process(t.Context(), claimedAgain))
 	dead := loadDeliveryOperation(t, fixture.pg, fixture.scope, operation.ID)
 	require.NotNil(t, dead.DeadLetteredAt)
-	assert.WithinDuration(t, now, *dead.DeadLetteredAt, time.Microsecond)
+	assert.WithinDuration(t, retryAt, *dead.DeadLetteredAt, time.Microsecond)
 	assert.Nil(t, dead.NextAttemptAt)
 }
 

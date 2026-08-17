@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -37,18 +38,19 @@ const SlackbotEventDefaultMaxAttempts = 5
 // SlackbotEvent is the Slack event inbox. Rows are unscoped because HTTP
 // ingress has not resolved an organization yet.
 type SlackbotEvent struct {
-	ID                  gid.GID         `db:"id"`
-	EventID             string          `db:"event_id"`
-	Envelope            json.RawMessage `db:"envelope"`
-	ProcessingStartedAt *time.Time      `db:"processing_started_at"`
-	ProcessedAt         *time.Time      `db:"processed_at"`
-	AttemptCount        int             `db:"attempt_count"`
-	MaxAttempts         int             `db:"max_attempts"`
-	NextAttemptAt       *time.Time      `db:"next_attempt_at"`
-	LastError           *string         `db:"last_error"`
-	DeadLetteredAt      *time.Time      `db:"dead_lettered_at"`
-	CreatedAt           time.Time       `db:"created_at"`
-	UpdatedAt           time.Time       `db:"updated_at"`
+	ID                   gid.GID         `db:"id"`
+	EventID              string          `db:"event_id"`
+	Envelope             json.RawMessage `db:"envelope"`
+	ProcessingOwnerToken *string         `db:"processing_owner_token"`
+	ProcessingStartedAt  *time.Time      `db:"processing_started_at"`
+	ProcessedAt          *time.Time      `db:"processed_at"`
+	AttemptCount         int             `db:"attempt_count"`
+	MaxAttempts          int             `db:"max_attempts"`
+	NextAttemptAt        *time.Time      `db:"next_attempt_at"`
+	LastError            *string         `db:"last_error"`
+	DeadLetteredAt       *time.Time      `db:"dead_lettered_at"`
+	CreatedAt            time.Time       `db:"created_at"`
+	UpdatedAt            time.Time       `db:"updated_at"`
 }
 
 func NewSlackbotEvent(eventID string, envelope json.RawMessage) *SlackbotEvent {
@@ -70,6 +72,7 @@ INSERT INTO slackbot_events (
 	id,
 	event_id,
 	envelope,
+	processing_owner_token,
 	processing_started_at,
 	processed_at,
 	attempt_count,
@@ -83,6 +86,7 @@ INSERT INTO slackbot_events (
 	@id,
 	@event_id,
 	@envelope,
+	@processing_owner_token,
 	@processing_started_at,
 	@processed_at,
 	@attempt_count,
@@ -100,18 +104,19 @@ ON CONFLICT (event_id) DO NOTHING
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"id":                    e.ID,
-			"event_id":              e.EventID,
-			"envelope":              e.Envelope,
-			"processing_started_at": e.ProcessingStartedAt,
-			"processed_at":          e.ProcessedAt,
-			"attempt_count":         e.AttemptCount,
-			"max_attempts":          e.MaxAttempts,
-			"next_attempt_at":       e.NextAttemptAt,
-			"last_error":            e.LastError,
-			"dead_lettered_at":      e.DeadLetteredAt,
-			"created_at":            e.CreatedAt,
-			"updated_at":            e.UpdatedAt,
+			"id":                     e.ID,
+			"event_id":               e.EventID,
+			"envelope":               e.Envelope,
+			"processing_owner_token": e.ProcessingOwnerToken,
+			"processing_started_at":  e.ProcessingStartedAt,
+			"processed_at":           e.ProcessedAt,
+			"attempt_count":          e.AttemptCount,
+			"max_attempts":           e.MaxAttempts,
+			"next_attempt_at":        e.NextAttemptAt,
+			"last_error":             e.LastError,
+			"dead_lettered_at":       e.DeadLetteredAt,
+			"created_at":             e.CreatedAt,
+			"updated_at":             e.UpdatedAt,
 		},
 	)
 	if err != nil {
@@ -131,6 +136,7 @@ SELECT
 	id,
 	event_id,
 	envelope,
+	processing_owner_token,
 	processing_started_at,
 	processed_at,
 	attempt_count,
@@ -159,6 +165,7 @@ WITH candidate AS (
 	FROM slackbot_events
 	WHERE processed_at IS NULL
 		AND processing_started_at IS NULL
+		AND processing_owner_token IS NULL
 		AND dead_lettered_at IS NULL
 		AND attempt_count < max_attempts
 		AND (next_attempt_at IS NULL OR next_attempt_at <= @now)
@@ -169,6 +176,7 @@ WITH candidate AS (
 UPDATE slackbot_events e
 SET
 	attempt_count = e.attempt_count + 1,
+	processing_owner_token = @owner_token,
 	processing_started_at = @now,
 	updated_at = @now
 FROM candidate
@@ -177,6 +185,7 @@ RETURNING
 	e.id,
 	e.event_id,
 	e.envelope,
+	e.processing_owner_token,
 	e.processing_started_at,
 	e.processed_at,
 	e.attempt_count,
@@ -188,13 +197,26 @@ RETURNING
 	e.updated_at
 `
 
-	return e.loadExactlyOne(ctx, conn, q, pgx.StrictNamedArgs{"now": now})
+	return e.loadExactlyOne(
+		ctx,
+		conn,
+		q,
+		pgx.StrictNamedArgs{
+			"now":         now,
+			"owner_token": uuid.MustNewV4().String(),
+		},
+	)
 }
 
 func (e *SlackbotEvent) UpdateProcessingState(ctx context.Context, conn pg.Querier) error {
+	if e.ProcessingOwnerToken == nil || *e.ProcessingOwnerToken == "" {
+		panic("Slackbot event processing update requires an owner token")
+	}
+
 	q := `
 UPDATE slackbot_events
 SET
+	processing_owner_token = NULL,
 	processing_started_at = @processing_started_at,
 	processed_at = @processed_at,
 	attempt_count = @attempt_count,
@@ -203,20 +225,22 @@ SET
 	dead_lettered_at = @dead_lettered_at,
 	updated_at = @updated_at
 WHERE id = @id
+	AND processing_owner_token = @processing_owner_token
 `
 
 	result, err := conn.Exec(
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"id":                    e.ID,
-			"processing_started_at": e.ProcessingStartedAt,
-			"processed_at":          e.ProcessedAt,
-			"attempt_count":         e.AttemptCount,
-			"next_attempt_at":       e.NextAttemptAt,
-			"last_error":            e.LastError,
-			"dead_lettered_at":      e.DeadLetteredAt,
-			"updated_at":            e.UpdatedAt,
+			"id":                     e.ID,
+			"processing_owner_token": e.ProcessingOwnerToken,
+			"processing_started_at":  e.ProcessingStartedAt,
+			"processed_at":           e.ProcessedAt,
+			"attempt_count":          e.AttemptCount,
+			"next_attempt_at":        e.NextAttemptAt,
+			"last_error":             e.LastError,
+			"dead_lettered_at":       e.DeadLetteredAt,
+			"updated_at":             e.UpdatedAt,
 		},
 	)
 	if err != nil {
@@ -224,7 +248,7 @@ WHERE id = @id
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+		return ErrProcessingLeaseLost
 	}
 
 	return nil
@@ -240,6 +264,7 @@ SELECT
 	id,
 	event_id,
 	envelope,
+	processing_owner_token,
 	processing_started_at,
 	processed_at,
 	attempt_count,
@@ -354,6 +379,7 @@ func ResetStaleProcessingSlackbotEvents(
 	q := `
 UPDATE slackbot_events
 SET
+	processing_owner_token = NULL,
 	processing_started_at = NULL,
 	next_attempt_at = CASE
 		WHEN attempt_count >= max_attempts THEN NULL

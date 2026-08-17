@@ -162,6 +162,12 @@ func (h *eventWorkerHandler) Process(ctx context.Context, event coredata.Slackbo
 		},
 	)
 	if persistErr != nil {
+		if errors.Is(persistErr, coredata.ErrProcessingLeaseLost) {
+			logger.InfoCtx(ctx, "lost Slackbot event processing lease")
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot persist Slackbot event outcome: %w", persistErr)
 	}
 

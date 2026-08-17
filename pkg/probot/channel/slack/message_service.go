@@ -39,6 +39,7 @@ const (
 	deliveryTargetKeyMetadata        = "delivery_target_key"
 	deliveryMessageTypeMetadata      = "probot_message_type"
 	deliverySourceEventMetadata      = coredata.SlackbotMessageMetadataSourceEventID
+	deliveryAgentExecutionMetadata   = "agent_execution_id"
 	deliverySubjectNamespaceMetadata = "bot_subject_namespace"
 	deliverySubjectKeyMetadata       = "bot_subject_key"
 	deliveryCapabilityMetadata       = "bot_capability"
@@ -149,10 +150,22 @@ func (s *MessageService) updateOutbound(
 		return fmt.Errorf("cannot load delivered bot message for update: %w", err)
 	}
 
+	message := delivery.Result.Message
+	attributes := cloneNotificationData(message.Attributes)
+	if delivery.SourceEventID != "" {
+		attributes[deliverySourceEventMetadata] = delivery.SourceEventID
+	}
+
+	if delivery.AgentExecutionID != gid.Nil {
+		attributes[deliveryAgentExecutionMetadata] = delivery.AgentExecutionID.String()
+	}
+
+	message.Attributes = attributes
+
 	return s.UpdateMessage(
 		ctx,
 		delivered.Message.ID,
-		delivery.Result.Message,
+		message,
 		delivery.Result.Intent,
 	)
 }
@@ -194,6 +207,7 @@ func (s *MessageService) queue(
 	destination, err := s.GetDestination(
 		ctx,
 		scope,
+		delivery.OrganizationID,
 		result.DeliveryTarget,
 	)
 	if err != nil &&
@@ -228,6 +242,10 @@ func (s *MessageService) queue(
 		source := delivery.SourceEventID
 		sourceEventID = &source
 		metadata[deliverySourceEventMetadata] = source
+	}
+
+	if delivery.AgentExecutionID != gid.Nil {
+		metadata[deliveryAgentExecutionMetadata] = delivery.AgentExecutionID.String()
 	}
 
 	if err == nil && (!requireVerified || destination.VerifiedAt != nil) && s.modern != nil {
@@ -318,6 +336,7 @@ func (s *MessageService) queueLegacy(
 func (s *MessageService) GetDestination(
 	ctx context.Context,
 	scope coredata.Scoper,
+	organizationID gid.GID,
 	target probot.DeliveryTarget,
 ) (*coredata.BotDeliveryDestination, error) {
 	var destination coredata.BotDeliveryDestination
@@ -329,6 +348,7 @@ func (s *MessageService) GetDestination(
 				ctx,
 				conn,
 				scope,
+				organizationID,
 				ProviderName,
 				target.Namespace,
 				target.Key,
@@ -394,9 +414,10 @@ func (s *MessageService) SetDestination(
 func (s *MessageService) ClearDestination(
 	ctx context.Context,
 	scope coredata.Scoper,
+	organizationID gid.GID,
 	target probot.DeliveryTarget,
 ) error {
-	destination, err := s.GetDestination(ctx, scope, target)
+	destination, err := s.GetDestination(ctx, scope, organizationID, target)
 	if errors.Is(err, ErrSlackbotChannelNotFound) {
 		return nil
 	}

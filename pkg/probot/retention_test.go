@@ -56,6 +56,10 @@ func TestRetentionHandlerDeletesExpiredCompletedRecords(t *testing.T) {
 					return err
 				}
 
+				if err := event.ClaimNextForUpdateSkipLocked(ctx, tx, now); err != nil {
+					return err
+				}
+
 				event.ProcessedAt = new(now.Add(-2 * time.Hour))
 
 				event.UpdatedAt = now.Add(-2 * time.Hour)
@@ -64,6 +68,10 @@ func TestRetentionHandlerDeletesExpiredCompletedRecords(t *testing.T) {
 				}
 
 				if _, err := command.Insert(ctx, tx); err != nil {
+					return err
+				}
+
+				if err := command.ClaimNextForUpdateSkipLocked(ctx, tx, now); err != nil {
 					return err
 				}
 

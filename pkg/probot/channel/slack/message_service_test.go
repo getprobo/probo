@@ -332,6 +332,7 @@ func newQueueTestOrganization(t *testing.T) (*pg.Client, coredata.Scoper, gid.GI
 				ctx,
 				conn,
 				scope,
+				organizationID,
 				ProviderName,
 				"missing",
 				"missing",
@@ -408,4 +409,76 @@ func insertQueueDestination(
 			},
 		),
 	)
+}
+
+func TestMessageService_GetMessageNilBackend(t *testing.T) {
+	t.Parallel()
+
+	service := NewMessageService(nil, nil, nil, nil, log.NewLogger())
+	scope := coredata.NewScope(gid.NewTenantID())
+
+	_, err := service.GetMessage(
+		t.Context(),
+		scope,
+		gid.New(scope.GetTenantID(), coredata.SlackbotMessageEntityType),
+	)
+	require.EqualError(t, err, "slackbot message backend is unavailable")
+
+	_, err = service.GetMessage(
+		t.Context(),
+		scope,
+		gid.New(scope.GetTenantID(), coredata.SlackMessageEntityType),
+	)
+	require.EqualError(t, err, "legacy Slack message backend is unavailable")
+}
+
+func TestBotDeliveryDestination_UpsertIsolatesOrganizations(t *testing.T) {
+	t.Parallel()
+
+	pgClient, firstScope, firstOrg := newQueueTestOrganization(t)
+	_, secondScope, secondOrg := newQueueTestOrganization(t)
+
+	target := probot.DeliveryTarget{
+		Namespace: "shared_namespace",
+		Key:       "shared-key",
+	}
+	insertQueueDestination(t, pgClient, firstScope, firstOrg, target, true)
+	insertQueueDestination(t, pgClient, secondScope, secondOrg, target, false)
+
+	var first, second coredata.BotDeliveryDestination
+
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				if err := first.LoadByTarget(
+					ctx,
+					conn,
+					firstScope,
+					firstOrg,
+					ProviderName,
+					target.Namespace,
+					target.Key,
+				); err != nil {
+					return err
+				}
+
+				return second.LoadByTarget(
+					ctx,
+					conn,
+					secondScope,
+					secondOrg,
+					ProviderName,
+					target.Namespace,
+					target.Key,
+				)
+			},
+		),
+	)
+	assert.Equal(t, firstOrg, first.OrganizationID)
+	assert.Equal(t, secondOrg, second.OrganizationID)
+	assert.NotEqual(t, first.ID, second.ID)
+	require.NotNil(t, first.VerifiedAt)
+	assert.Nil(t, second.VerifiedAt)
 }

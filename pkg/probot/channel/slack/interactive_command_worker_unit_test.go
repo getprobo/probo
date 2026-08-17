@@ -59,6 +59,10 @@ type (
 	}
 
 	forbiddenActionCapability struct{}
+
+	recordingActionCapability struct {
+		actions []probot.Action
+	}
 )
 
 func (f fakeInteractiveInstallationResolver) ClientByTeamID(
@@ -116,6 +120,23 @@ func (forbiddenActionCapability) HandleAction(
 	probot.Action,
 ) (probot.ActionResult, error) {
 	return probot.ActionResult{}, probot.ErrCapabilityForbidden
+}
+
+func (recordingActionCapability) Name() string {
+	return "recording"
+}
+
+func (recordingActionCapability) ActionPrefixes() []string {
+	return []string{"compliance_access."}
+}
+
+func (r *recordingActionCapability) HandleAction(
+	_ context.Context,
+	action probot.Action,
+) (probot.ActionResult, error) {
+	r.actions = append(r.actions, action)
+
+	return probot.ActionResult{Message: "ok"}, nil
 }
 
 func TestInteractiveCommandOutcomeRetriesThenDeadLetters(t *testing.T) {
@@ -210,14 +231,69 @@ func TestInteractiveCommandDeadLettersAuthorizationError(t *testing.T) {
 	assert.Equal(t, interactiveForbiddenText, replies.text)
 }
 
+func TestInteractiveCommandDispatchesApproveAllWithoutValue(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	command, key := encryptedInteractiveCommandWithPayload(
+		t,
+		`{"team":{"id":"T123"},"user":{"id":"U123"},"response_url":"https://hooks.slack.com/actions/T123/1/abc","container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"compliance_access.approve_all","action_ts":"123.789"}]}`,
+	)
+	recorder := &recordingActionCapability{}
+	registry := probot.NewCapabilityRegistry()
+	require.NoError(t, registry.Register(recorder))
+
+	h := &interactiveCommandHandler{
+		encryptionKey: key,
+		installations: fakeInteractiveInstallationResolver{
+			installation: &coredata.SlackbotInstallation{
+				OrganizationID: organizationID,
+			},
+		},
+		bindings: fakeInteractiveBindingGate{
+			binding: &identitybinding.Binding{
+				IdentityID: gid.New(gid.NilTenant, coredata.IdentityEntityType),
+			},
+		},
+		messages: fakeInteractiveMessageResolver{
+			message: &bot.DeliveredMessage{
+				Message: bot.Message{
+					ID:             gid.New(tenantID, coredata.SlackbotMessageEntityType),
+					OrganizationID: organizationID,
+					Type:           "test-message",
+				},
+			},
+		},
+		capabilities: registry,
+		logger:       log.NewLogger(),
+	}
+
+	require.NoError(t, h.dispatch(t.Context(), &command))
+	require.Len(t, recorder.actions, 1)
+	assert.Equal(t, "compliance_access.approve_all", recorder.actions[0].ID)
+	assert.Empty(t, recorder.actions[0].Value)
+}
+
 func encryptedInteractiveCommand(
 	t *testing.T,
 ) (coredata.SlackbotInteractiveCommand, cipher.EncryptionKey) {
 	t.Helper()
 
+	return encryptedInteractiveCommandWithPayload(
+		t,
+		`{"team":{"id":"T123"},"user":{"id":"U123"},"response_url":"https://hooks.slack.com/actions/T123/1/abc","container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"test.approve","action_ts":"123.789","value":"resource-id"}]}`,
+	)
+}
+
+func encryptedInteractiveCommandWithPayload(
+	t *testing.T,
+	raw string,
+) (coredata.SlackbotInteractiveCommand, cipher.EncryptionKey) {
+	t.Helper()
+
 	key := cipher.EncryptionKey{1, 2, 3}
-	raw := []byte(`{"team":{"id":"T123"},"user":{"id":"U123"},"response_url":"https://hooks.slack.com/actions/T123/1/abc","container":{"channel_id":"C123","message_ts":"123.456"},"actions":[{"action_id":"test.approve","action_ts":"123.789","value":"resource-id"}]}`)
-	encrypted, err := cipher.Encrypt(raw, key)
+	encrypted, err := cipher.Encrypt([]byte(raw), key)
 	require.NoError(t, err)
 
 	return coredata.SlackbotInteractiveCommand{

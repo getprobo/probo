@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -179,6 +180,12 @@ func (h *deliveryOperationHandler) Process(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrProcessingLeaseLost) {
+			logger.InfoCtx(ctx, "lost Slack delivery operation processing lease")
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot persist Slack delivery operation result: %w", err)
 	}
 
@@ -234,9 +241,13 @@ func (h *deliveryOperationHandler) deliverOperation(
 			return permanent(fmt.Errorf("invalid post message operation payload"))
 		}
 
-		_, err := client.CreateMessage(ctx, channel, text, threadTS, *operation.ClientMsgID)
+		ref, err := client.CreateMessage(ctx, channel, text, threadTS, *operation.ClientMsgID)
 		if err != nil {
 			return fmt.Errorf("cannot deliver Slack post message operation: %w", err)
+		}
+
+		if err := h.bindPostedExecution(ctx, operation, channel, threadTS, ref); err != nil {
+			return fmt.Errorf("cannot bind Slack execution after post: %w", err)
 		}
 	case coredata.SlackDeliveryOperationKindAddReaction:
 		channel, reaction, timestamp, ok := reactionOperationPayload(operation.Payload)
@@ -261,6 +272,54 @@ func (h *deliveryOperationHandler) deliverOperation(
 
 func (h *deliveryOperationHandler) retryDelay(attempt int, err error) time.Duration {
 	return slackAPIRetryDelay(attempt, h.retryBase, h.retryMax, err)
+}
+
+func (h *deliveryOperationHandler) bindPostedExecution(
+	ctx context.Context,
+	operation *coredata.SlackDeliveryOperation,
+	channel string,
+	threadTS string,
+	ref *MessageRef,
+) error {
+	if h.pg == nil || operation == nil || ref == nil {
+		return nil
+	}
+
+	raw, ok := operation.Payload[deliveryAgentExecutionMetadata].(string)
+	if !ok || raw == "" {
+		return nil
+	}
+
+	executionID, err := gid.ParseGID(raw)
+	if err != nil || executionID.EntityType() != coredata.AgentExecutionEntityType {
+		return nil
+	}
+
+	messageTS := ref.TS
+	if threadTS != "" {
+		messageTS = threadTS
+	}
+
+	if channel == "" || messageTS == "" {
+		return nil
+	}
+
+	scope := coredata.NewScopeFromObjectID(operation.OrganizationID)
+
+	return h.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			return bindExecutionAnchor(
+				ctx,
+				tx,
+				scope,
+				operation.OrganizationID,
+				executionID,
+				channel,
+				messageTS,
+			)
+		},
+	)
 }
 
 func postMessageOperationPayload(payload map[string]any) (string, string, string, bool) {

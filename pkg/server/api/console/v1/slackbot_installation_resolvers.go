@@ -43,41 +43,17 @@ func (r *mutationResolver) SetSlackbotNotificationChannel(ctx context.Context, i
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	target := probot.DeliveryTarget{
-		Namespace: "compliance_portal",
-		Key:       input.CompliancePortalID.String(),
-	}
-	destination, err := r.botDeliveryDestinations.SetDestination(
+	destination, err := applySlackbotNotificationChannel(
 		ctx,
+		r.botDeliveryDestinations,
+		r.complianceMessages,
 		scope,
 		compliancePortal.OrganizationID,
-		target,
+		input.CompliancePortalID,
 		input.ChannelID,
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot set Slackbot notification channel", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if err := r.complianceMessages.QueueWelcome(
-		ctx,
-		compliancePortal.OrganizationID,
-		input.CompliancePortalID,
-	); err != nil {
-		if clearErr := r.botDeliveryDestinations.ClearDestination(
-			ctx,
-			scope,
-			target,
-		); clearErr != nil {
-			r.logger.ErrorCtx(
-				ctx,
-				"cannot roll back Slackbot notification channel",
-				log.Error(clearErr),
-			)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot queue Slackbot welcome", log.Error(err))
-
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -104,9 +80,20 @@ func (r *mutationResolver) ClearSlackbotNotificationChannel(ctx context.Context,
 		return nil, err
 	}
 
+	compliancePortal, err := r.management.Get(
+		ctx,
+		scope,
+		input.CompliancePortalID,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
 	if err := r.botDeliveryDestinations.ClearDestination(
 		ctx,
 		scope,
+		compliancePortal.OrganizationID,
 		probot.DeliveryTarget{
 			Namespace: "compliance_portal",
 			Key:       input.CompliancePortalID.String(),

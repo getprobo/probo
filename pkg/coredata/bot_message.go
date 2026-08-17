@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -40,24 +41,25 @@ type (
 	BotMessagePurpose string
 
 	BotMessage struct {
-		ID                  gid.GID           `db:"id"`
-		OrganizationID      gid.GID           `db:"organization_id"`
-		Capability          string            `db:"capability"`
-		MessageType         string            `db:"message_type"`
-		Attributes          json.RawMessage   `db:"attributes"`
-		SubjectNamespace    string            `db:"subject_namespace"`
-		SubjectKey          string            `db:"subject_key"`
-		EventKey            string            `db:"event_key"`
-		Purpose             BotMessagePurpose `db:"purpose"`
-		ProcessingStartedAt *time.Time        `db:"processing_started_at"`
-		ProcessedAt         *time.Time        `db:"processed_at"`
-		AttemptCount        int               `db:"attempt_count"`
-		MaxAttempts         int               `db:"max_attempts"`
-		NextAttemptAt       *time.Time        `db:"next_attempt_at"`
-		LastError           *string           `db:"last_error"`
-		DeadLetteredAt      *time.Time        `db:"dead_lettered_at"`
-		CreatedAt           time.Time         `db:"created_at"`
-		UpdatedAt           time.Time         `db:"updated_at"`
+		ID                   gid.GID           `db:"id"`
+		OrganizationID       gid.GID           `db:"organization_id"`
+		Capability           string            `db:"capability"`
+		MessageType          string            `db:"message_type"`
+		Attributes           json.RawMessage   `db:"attributes"`
+		SubjectNamespace     string            `db:"subject_namespace"`
+		SubjectKey           string            `db:"subject_key"`
+		EventKey             string            `db:"event_key"`
+		Purpose              BotMessagePurpose `db:"purpose"`
+		ProcessingOwnerToken *string           `db:"processing_owner_token"`
+		ProcessingStartedAt  *time.Time        `db:"processing_started_at"`
+		ProcessedAt          *time.Time        `db:"processed_at"`
+		AttemptCount         int               `db:"attempt_count"`
+		MaxAttempts          int               `db:"max_attempts"`
+		NextAttemptAt        *time.Time        `db:"next_attempt_at"`
+		LastError            *string           `db:"last_error"`
+		DeadLetteredAt       *time.Time        `db:"dead_lettered_at"`
+		CreatedAt            time.Time         `db:"created_at"`
+		UpdatedAt            time.Time         `db:"updated_at"`
 	}
 )
 
@@ -124,6 +126,7 @@ INSERT INTO bot_messages (
 	subject_key,
 	event_key,
 	purpose,
+	processing_owner_token,
 	processing_started_at,
 	processed_at,
 	attempt_count,
@@ -144,6 +147,7 @@ INSERT INTO bot_messages (
 	@subject_key,
 	@event_key,
 	@purpose,
+	@processing_owner_token,
 	@processing_started_at,
 	@processed_at,
 	@attempt_count,
@@ -167,6 +171,7 @@ RETURNING
 	subject_key,
 	event_key,
 	purpose,
+	processing_owner_token,
 	processing_started_at,
 	processed_at,
 	attempt_count,
@@ -196,25 +201,26 @@ RETURNING
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"id":                    m.ID,
-			"tenant_id":             scope.GetTenantID(),
-			"organization_id":       m.OrganizationID,
-			"capability":            m.Capability,
-			"message_type":          m.MessageType,
-			"attributes":            m.Attributes,
-			"subject_namespace":     m.SubjectNamespace,
-			"subject_key":           m.SubjectKey,
-			"event_key":             m.EventKey,
-			"purpose":               m.Purpose,
-			"processing_started_at": m.ProcessingStartedAt,
-			"processed_at":          m.ProcessedAt,
-			"attempt_count":         m.AttemptCount,
-			"max_attempts":          m.MaxAttempts,
-			"next_attempt_at":       m.NextAttemptAt,
-			"last_error":            m.LastError,
-			"dead_lettered_at":      m.DeadLetteredAt,
-			"created_at":            m.CreatedAt,
-			"updated_at":            m.UpdatedAt,
+			"id":                     m.ID,
+			"tenant_id":              scope.GetTenantID(),
+			"organization_id":        m.OrganizationID,
+			"capability":             m.Capability,
+			"message_type":           m.MessageType,
+			"attributes":             m.Attributes,
+			"subject_namespace":      m.SubjectNamespace,
+			"subject_key":            m.SubjectKey,
+			"event_key":              m.EventKey,
+			"purpose":                m.Purpose,
+			"processing_owner_token": m.ProcessingOwnerToken,
+			"processing_started_at":  m.ProcessingStartedAt,
+			"processed_at":           m.ProcessedAt,
+			"attempt_count":          m.AttemptCount,
+			"max_attempts":           m.MaxAttempts,
+			"next_attempt_at":        m.NextAttemptAt,
+			"last_error":             m.LastError,
+			"dead_lettered_at":       m.DeadLetteredAt,
+			"created_at":             m.CreatedAt,
+			"updated_at":             m.UpdatedAt,
 		},
 	)
 	if err != nil {
@@ -242,6 +248,7 @@ WITH candidate AS (
 	FROM bot_messages
 	WHERE processed_at IS NULL
 		AND processing_started_at IS NULL
+		AND processing_owner_token IS NULL
 		AND dead_lettered_at IS NULL
 		AND attempt_count < max_attempts
 		AND (next_attempt_at IS NULL OR next_attempt_at <= @now)
@@ -252,6 +259,7 @@ WITH candidate AS (
 UPDATE bot_messages m
 SET
 	attempt_count = m.attempt_count + 1,
+	processing_owner_token = @owner_token,
 	processing_started_at = @now,
 	updated_at = @now
 FROM candidate
@@ -266,6 +274,7 @@ RETURNING
 	m.subject_key,
 	m.event_key,
 	m.purpose,
+	m.processing_owner_token,
 	m.processing_started_at,
 	m.processed_at,
 	m.attempt_count,
@@ -277,13 +286,26 @@ RETURNING
 	m.updated_at
 `
 
-	return m.loadExactlyOne(ctx, conn, q, pgx.StrictNamedArgs{"now": now})
+	return m.loadExactlyOne(
+		ctx,
+		conn,
+		q,
+		pgx.StrictNamedArgs{
+			"now":         now,
+			"owner_token": uuid.MustNewV4().String(),
+		},
+	)
 }
 
 func (m *BotMessage) UpdateProcessingState(ctx context.Context, conn pg.Querier) error {
+	if m.ProcessingOwnerToken == nil || *m.ProcessingOwnerToken == "" {
+		panic("bot message processing update requires an owner token")
+	}
+
 	q := `
 UPDATE bot_messages
 SET
+	processing_owner_token = NULL,
 	processing_started_at = @processing_started_at,
 	processed_at = @processed_at,
 	attempt_count = @attempt_count,
@@ -292,20 +314,22 @@ SET
 	dead_lettered_at = @dead_lettered_at,
 	updated_at = @updated_at
 WHERE id = @id
+	AND processing_owner_token = @processing_owner_token
 `
 
 	result, err := conn.Exec(
 		ctx,
 		q,
 		pgx.StrictNamedArgs{
-			"id":                    m.ID,
-			"processing_started_at": m.ProcessingStartedAt,
-			"processed_at":          m.ProcessedAt,
-			"attempt_count":         m.AttemptCount,
-			"next_attempt_at":       m.NextAttemptAt,
-			"last_error":            m.LastError,
-			"dead_lettered_at":      m.DeadLetteredAt,
-			"updated_at":            m.UpdatedAt,
+			"id":                     m.ID,
+			"processing_owner_token": m.ProcessingOwnerToken,
+			"processing_started_at":  m.ProcessingStartedAt,
+			"processed_at":           m.ProcessedAt,
+			"attempt_count":          m.AttemptCount,
+			"next_attempt_at":        m.NextAttemptAt,
+			"last_error":             m.LastError,
+			"dead_lettered_at":       m.DeadLetteredAt,
+			"updated_at":             m.UpdatedAt,
 		},
 	)
 	if err != nil {
@@ -313,7 +337,7 @@ WHERE id = @id
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+		return ErrProcessingLeaseLost
 	}
 
 	return nil
@@ -328,6 +352,7 @@ func ResetStaleProcessingBotMessages(
 	q := `
 UPDATE bot_messages
 SET
+	processing_owner_token = NULL,
 	processing_started_at = NULL,
 	next_attempt_at = CASE
 		WHEN attempt_count >= max_attempts THEN NULL
@@ -445,6 +470,7 @@ SELECT
 	subject_key,
 	event_key,
 	purpose,
+	processing_owner_token,
 	processing_started_at,
 	processed_at,
 	attempt_count,

@@ -14,6 +14,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -141,9 +142,15 @@ func (r *compliancePortalResolver) SlackbotNotificationChannel(ctx context.Conte
 		return nil, err
 	}
 
+	organizationID := gid.Nil
+	if obj.Organization != nil {
+		organizationID = obj.Organization.ID
+	}
+
 	destination, err := r.botDeliveryDestinations.GetDestination(
 		ctx,
 		scope,
+		organizationID,
 		probot.DeliveryTarget{
 			Namespace: "compliance_portal",
 			Key:       obj.ID.String(),
