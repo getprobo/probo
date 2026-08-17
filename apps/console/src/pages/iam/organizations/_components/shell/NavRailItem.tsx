@@ -66,8 +66,16 @@ export function NavRailItem({
   }
 
   if ("href" in rest) {
-    return <a href={rest.href} className={slots.item()}>{body}</a>;
+    return (
+      <a href={rest.href} className={slots.item()} aria-current={active ? "page" : undefined}>
+        {body}
+      </a>
+    );
   }
 
-  return <Link to={rest.to} className={slots.item()}>{body}</Link>;
+  return (
+    <Link to={rest.to} className={slots.item()} aria-current={active ? "page" : undefined}>
+      {body}
+    </Link>
+  );
 }

@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { SettingsNavPanel_organization$key } from "#/__generated__/iam/SettingsNavPanel_organization.graphql";
 import type { SettingsNavPanelQuery } from "#/__generated__/iam/SettingsNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -36,19 +35,13 @@ const settingsNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...SettingsNavPanel_organization
+        canUpdateOrganization: permission(action: "iam:organization:update")
+        canGetContext: permission(action: "core:organization-context:get")
+        canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
+        canListMembers: permission(action: "iam:membership:list")
+        canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
       }
     }
-  }
-`;
-
-const settingsNavPanelFragment = graphql`
-  fragment SettingsNavPanel_organization on Organization {
-    canUpdateOrganization: permission(action: "iam:organization:update")
-    canGetContext: permission(action: "core:organization-context:get")
-    canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
-    canListMembers: permission(action: "iam:membership:list")
-    canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
   }
 `;
 
@@ -68,13 +61,10 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<SettingsNavPanelQuery>(settingsNavPanelQuery, queryRef);
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<SettingsNavPanel_organization$key>(
-    settingsNavPanelFragment,
-    data.organization,
-  );
   const showIam = organization.canListMembers
     || organization.canUpdateOrganization
     || organization.canListAuditLogEntries;

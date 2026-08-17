@@ -21,7 +21,7 @@
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ReactNode, Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
+import { type PreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation } from "react-router";
 
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
@@ -34,17 +34,11 @@ import {
   NavPanelSwitcherValueSkeleton,
 } from "#/pages/organizations/_components/NavPanelSwitcher";
 
-import { useSelectedCookieBannerId } from "../_lib/useSelectedCookieBannerId";
-
 import {
   CookieBannerSwitcherMenu,
   cookieBannerSwitcherMenuQuery,
 } from "./CookieBannerSwitcherMenu";
-import {
-  cookieBannerFromSwitcherValueQuery,
-  CookieBannerSwitcherValue,
-  cookieBannerSwitcherValueQuery,
-} from "./CookieBannerSwitcherValue";
+import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
 
 export interface CookieBannerSwitcherProps {
   queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery> | null;
@@ -54,7 +48,6 @@ export function CookieBannerSwitcher({ queryRef }: CookieBannerSwitcherProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
-  const selectedId = useSelectedCookieBannerId();
   const [menuQueryRef, loadMenuQuery] = useQueryLoader<CookieBannerSwitcherMenuQuery>(
     cookieBannerSwitcherMenuQuery,
   );
@@ -80,7 +73,7 @@ export function CookieBannerSwitcher({ queryRef }: CookieBannerSwitcherProps) {
             </Text>
           )}
         >
-          <CookieBannerSwitcherMenu queryRef={menuQueryRef} selectedId={selectedId} />
+          <CookieBannerSwitcherMenu queryRef={menuQueryRef} />
         </Suspense>
       )
     : null;
@@ -145,19 +138,11 @@ function CookieBannerSwitcherSelected({
   queryRef,
   children,
 }: CookieBannerSwitcherSelectedProps) {
-  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
-    cookieBannerSwitcherValueQuery,
-    queryRef,
-  );
-  const banner = cookieBannerFromSwitcherValueQuery(data);
-
   return (
     <NavPanelSwitcher
       active={false}
       onOpenChange={onOpenChange}
-      value={banner != null
-        ? <CookieBannerSwitcherValue cookieBannerKey={banner} />
-        : <NavPanelSwitcherValue>{fallback}</NavPanelSwitcherValue>}
+      value={<CookieBannerSwitcherValue fallback={fallback} queryRef={queryRef} />}
     >
       {children}
     </NavPanelSwitcher>

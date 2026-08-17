@@ -27,6 +27,7 @@ export type TooltipPopupProps
   = & Omit<ComponentProps<typeof BaseTooltip.Popup>, "className">
     & {
       className?: string;
+      container?: ComponentProps<typeof BaseTooltip.Portal>["container"];
       side?: ComponentProps<typeof BaseTooltip.Positioner>["side"];
       align?: ComponentProps<typeof BaseTooltip.Positioner>["align"];
       sideOffset?: ComponentProps<typeof BaseTooltip.Positioner>["sideOffset"];
@@ -34,13 +35,13 @@ export type TooltipPopupProps
 
 export function TooltipPopup(props: TooltipPopupProps) {
   const {
-    className, children,
+    className, children, container,
     side = "top", align = "center", sideOffset = 6,
     ...popupProps
   } = props;
 
   return (
-    <BaseTooltip.Portal>
+    <BaseTooltip.Portal container={container}>
       {/* z-3 on the Positioner so the portaled root wins over in-page z-1. */}
       <BaseTooltip.Positioner className="z-3" side={side} align={align} sideOffset={sideOffset}>
         <BaseTooltip.Popup className={tooltipPopup({ className })} {...popupProps}>

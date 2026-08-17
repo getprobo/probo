@@ -120,7 +120,7 @@ func requestPortalAccessBotEnqueue(
 }
 
 const (
-	PortalAccessURLFormat = "https://%s/organizations/%s/compliance-page/access"
+	PortalAccessURLFormat = "https://%s/organizations/%s/compliance-portals/%s/permissions"
 )
 
 func (s *Service) RequestPortalAccess(

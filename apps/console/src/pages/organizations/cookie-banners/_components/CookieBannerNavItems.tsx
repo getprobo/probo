@@ -41,7 +41,7 @@ export function CookieBannerNavItems({ queryRef }: CookieBannerNavItemsProps) {
     cookieBannerSwitcherValueQuery,
     queryRef,
   );
-  const banner = cookieBannerFromSwitcherValueQuery(data);
+  const banner = cookieBannerFromSwitcherValueQuery(data, organizationId);
 
   if (banner == null) {
     return null;

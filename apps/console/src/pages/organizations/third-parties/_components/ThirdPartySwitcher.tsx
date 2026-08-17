@@ -63,7 +63,7 @@ export function ThirdPartySwitcher({ queryRef }: ThirdPartySwitcherProps) {
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
-      loadMenuQuery({ organizationId });
+      loadMenuQuery({ organizationId }, { fetchPolicy: "network-only" });
     }
   }, [loadMenuQuery, organizationId]);
 

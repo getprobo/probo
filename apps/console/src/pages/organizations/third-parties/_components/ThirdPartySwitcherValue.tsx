@@ -45,7 +45,7 @@ export interface ThirdPartySwitcherValueProps {
 export function ThirdPartySwitcherValue({ fallback, queryRef }: ThirdPartySwitcherValueProps) {
   const data = usePreloadedQuery<ThirdPartySwitcherValueQuery>(thirdPartySwitcherValueQuery, queryRef);
   if (data.node?.__typename !== "ThirdParty") {
-    return fallback;
+    return <NavPanelSwitcherValue>{fallback}</NavPanelSwitcherValue>;
   }
   return (
     <>

@@ -41,11 +41,11 @@ function EmployeeLayoutQueryLoader() {
   }, [organizationId, loadQuery]);
 
   if (!queryRef) {
-    return <OrganizationLayoutSkeleton />;
+    return <OrganizationLayoutSkeleton hideNavigation />;
   }
 
   return (
-    <Suspense fallback={<OrganizationLayoutSkeleton />}>
+    <Suspense fallback={<OrganizationLayoutSkeleton hideNavigation />}>
       <OrganizationLayout queryRef={queryRef} hideNavigation />
     </Suspense>
   );

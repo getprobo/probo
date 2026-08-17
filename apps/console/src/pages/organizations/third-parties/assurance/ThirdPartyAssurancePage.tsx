@@ -42,7 +42,7 @@ import { clsx } from "clsx";
 import type { ComponentProps, FocusEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, usePreloadedQuery, useRefetchableFragment } from "react-relay";
+import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartyAssurancePageFragment$key } from "#/__generated__/core/ThirdPartyAssurancePageFragment.graphql";
 import type { ThirdPartyAssurancePageQuery } from "#/__generated__/core/ThirdPartyAssurancePageQuery.graphql";
@@ -140,9 +140,10 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
   const [pendingCertifications, setPendingCertifications] = useState<
     readonly string[] | null
   >(null);
+  const [pendingUrls, setPendingUrls] = useState<Partial<Record<UrlFieldName, string | null>>>({});
   const certificationsValue = pendingCertifications ?? thirdParty.certifications;
 
-  const [reportsData, refetch] = useRefetchableFragment<
+  const { data: reportsData, refetch, ...pagination } = usePaginationFragment<
     ThirdPartyAssurancePageRefetchQuery,
     ThirdPartyAssurancePageFragment$key
   >(complianceReportsFragment, thirdParty);
@@ -214,7 +215,20 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
     if (next === normalizeUrl(current)) {
       return;
     }
-    void update(thirdParty.id, field, next);
+    setPendingUrls(prev => ({ ...prev, [field]: next }));
+    void update(thirdParty.id, field, next)
+      .then(() => {
+        setPendingUrls((prev) => {
+          const { [field]: _cleared, ...rest } = prev;
+          return rest;
+        });
+      })
+      .catch(() => {
+        setPendingUrls((prev) => {
+          const { [field]: _cleared, ...rest } = prev;
+          return rest;
+        });
+      });
   }
 
   return (
@@ -241,7 +255,9 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
         <h2 className="text-base font-medium">{t("thirdPartyAssurancePage.sections.links")}</h2>
         <Card className="divide-y divide-border-low">
           {urls.map((url) => {
-            const savedValue = normalizeUrl(url.value) ?? "";
+            const savedValue = pendingUrls[url.name] !== undefined
+              ? (normalizeUrl(pendingUrls[url.name]) ?? "")
+              : (normalizeUrl(url.value) ?? "");
             return (
               <div
                 key={url.name}
@@ -286,6 +302,7 @@ export function ThirdPartyAssurancePage({ queryRef }: ThirdPartyAssurancePagePro
         </div>
 
         <SortableTable
+          {...pagination}
           refetch={refetch as ComponentProps<typeof SortableTable>["refetch"]}
         >
           <Thead>
@@ -328,12 +345,17 @@ function Certifications(props: CertificationsProps) {
         [key, value.filter(c => props.value.includes(c))] as const,
     )
     .filter(([, certs]) => certs.length > 0);
-  categories.push([
-    "custom",
-    props.value.filter(c => !categorizedCertifications.includes(c)),
-  ]);
+  const customCertifications = props.value.filter(
+    c => !categorizedCertifications.includes(c),
+  );
+  if (customCertifications.length > 0) {
+    categories.push(["custom", customCertifications]);
+  }
 
   const addCertificate = (name: string) => {
+    if (props.value.includes(name)) {
+      return;
+    }
     setAnimateBadge(true);
     props.onValueChange([...props.value, name]);
   };

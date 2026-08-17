@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { RiskManagementNavPanel_organization$key } from "#/__generated__/iam/RiskManagementNavPanel_organization.graphql";
 import type { RiskManagementNavPanelQuery } from "#/__generated__/iam/RiskManagementNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -35,16 +34,10 @@ const riskManagementNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...RiskManagementNavPanel_organization
+        canListRisks: permission(action: "core:risk:list")
+        canListRiskAnalyses: permission(action: "core:risk-analysis:list")
       }
     }
-  }
-`;
-
-const riskManagementNavPanelFragment = graphql`
-  fragment RiskManagementNavPanel_organization on Organization {
-    canListRisks: permission(action: "core:risk:list")
-    canListRiskAnalyses: permission(action: "core:risk-analysis:list")
   }
 `;
 
@@ -67,13 +60,10 @@ function RiskManagementNavPanelInner({ queryRef, group }: RiskManagementNavPanel
     riskManagementNavPanelQuery,
     queryRef,
   );
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<RiskManagementNavPanel_organization$key>(
-    riskManagementNavPanelFragment,
-    data.organization,
-  );
 
   return (
     <>

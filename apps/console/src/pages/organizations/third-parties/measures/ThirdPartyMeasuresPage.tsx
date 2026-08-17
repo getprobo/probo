@@ -18,12 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { ThirdPartyMeasuresPageAttachMutation } from "#/__generated__/core/ThirdPartyMeasuresPageAttachMutation.graphql";
 import type { ThirdPartyMeasuresPageDetachMutation } from "#/__generated__/core/ThirdPartyMeasuresPageDetachMutation.graphql";
 import type { ThirdPartyMeasuresPageQuery } from "#/__generated__/core/ThirdPartyMeasuresPageQuery.graphql";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
+import { useMutation } from "#/lib/relay/useMutation";
 
 export const thirdPartyMeasuresPageQuery = graphql`
   query ThirdPartyMeasuresPageQuery($thirdPartyId: ID!) {

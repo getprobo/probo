@@ -29,11 +29,17 @@ export interface NavPanelItemProps {
   exact?: boolean;
 }
 
+function withoutTrailingSlash(path: string) {
+  return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+}
+
 export function NavPanelItem({ label, to, exact }: NavPanelItemProps) {
   const { pathname } = useLocation();
+  const path = withoutTrailingSlash(pathname);
+  const target = withoutTrailingSlash(to);
   const active = exact
-    ? pathname === to
-    : pathname === to || pathname.startsWith(`${to}/`);
+    ? path === target
+    : path === target || path.startsWith(`${target}/`);
 
   const slots = navPanel();
 

@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { RegistriesNavPanel_organization$key } from "#/__generated__/iam/RegistriesNavPanel_organization.graphql";
 import type { RegistriesNavPanelQuery } from "#/__generated__/iam/RegistriesNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -35,19 +34,13 @@ const registriesNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...RegistriesNavPanel_organization
+        canListData: permission(action: "core:datum:list")
+        canListAssets: permission(action: "core:asset:list")
+        canListBusinessFunctions: permission(action: "core:business-function:list")
+        canListAiSystems: permission(action: "core:ai-system:list")
+        canListObligations: permission(action: "core:obligation:list")
       }
     }
-  }
-`;
-
-const registriesNavPanelFragment = graphql`
-  fragment RegistriesNavPanel_organization on Organization {
-    canListData: permission(action: "core:datum:list")
-    canListAssets: permission(action: "core:asset:list")
-    canListBusinessFunctions: permission(action: "core:business-function:list")
-    canListAiSystems: permission(action: "core:ai-system:list")
-    canListObligations: permission(action: "core:obligation:list")
   }
 `;
 
@@ -67,13 +60,10 @@ function RegistriesNavPanelInner({ queryRef, group }: RegistriesNavPanelInnerPro
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<RegistriesNavPanelQuery>(registriesNavPanelQuery, queryRef);
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<RegistriesNavPanel_organization$key>(
-    registriesNavPanelFragment,
-    data.organization,
-  );
 
   return (
     <>

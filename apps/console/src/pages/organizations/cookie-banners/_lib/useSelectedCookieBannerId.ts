@@ -21,15 +21,18 @@
 import { useState } from "react";
 import { useParams } from "react-router";
 
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
 export function useSelectedCookieBannerId(): string | null {
+  const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const [rememberedId, setRememberedId] = useState<string | null>(
-    cookieBannerId ?? null,
+  const [rememberedByOrg, setRememberedByOrg] = useState<Record<string, string>>(
+    () => cookieBannerId != null ? { [organizationId]: cookieBannerId } : {},
   );
 
-  if (cookieBannerId != null && cookieBannerId !== rememberedId) {
-    setRememberedId(cookieBannerId);
+  if (cookieBannerId != null && rememberedByOrg[organizationId] !== cookieBannerId) {
+    setRememberedByOrg(prev => ({ ...prev, [organizationId]: cookieBannerId }));
   }
 
-  return cookieBannerId ?? rememberedId;
+  return cookieBannerId ?? rememberedByOrg[organizationId] ?? null;
 }

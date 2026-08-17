@@ -19,17 +19,41 @@
 // SOFTWARE.
 
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
-import { NAV_GROUPS } from "#/pages/iam/organizations/_lib/navigation";
+import type { NavPanel_organization$key } from "#/__generated__/iam/NavPanel_organization.graphql";
+import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
+import { visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
+import { navPermissionsFragment } from "#/pages/iam/organizations/_lib/navPermissions";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
 import { navPanels } from "./navPanels";
 import { navPanel } from "./variants";
 
-export function NavPanel() {
+const navPanelFragment = graphql`
+  fragment NavPanel_organization on Organization {
+    ...navPermissions_organization
+  }
+`;
+
+export interface NavPanelProps {
+  organizationKey: NavPanel_organization$key;
+}
+
+export function NavPanel({ organizationKey }: NavPanelProps) {
   const { t } = useTranslation();
-  const activeGroup = useActiveNavGroup(NAV_GROUPS);
+  const organization = useFragment<NavPanel_organization$key>(
+    navPanelFragment,
+    organizationKey,
+  );
+  const permissions = useFragment<navPermissions_organization$key>(
+    navPermissionsFragment,
+    organization,
+  );
+  const groups = useMemo(() => visibleNavGroups(permissions), [permissions]);
+  const activeGroup = useActiveNavGroup(groups);
   const slots = navPanel();
 
   if (activeGroup == null) {

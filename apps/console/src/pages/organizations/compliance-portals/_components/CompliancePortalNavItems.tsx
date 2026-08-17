@@ -58,7 +58,7 @@ export function CompliancePortalNavItems({ queryRef }: CompliancePortalNavItemsP
     compliancePortalNavItemsQuery,
     queryRef,
   );
-  const portalKey = data.compliancePortal.__typename === "CompliancePortal"
+  const portalKey = data.compliancePortal?.__typename === "CompliancePortal"
     ? data.compliancePortal
     : null;
   const sectionData = useFragment<compliancePortalSections_compliancePortal$key>(

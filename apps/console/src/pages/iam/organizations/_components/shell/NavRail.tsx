@@ -24,9 +24,11 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavRail_organization$key } from "#/__generated__/iam/NavRail_organization.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navGroupHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
+import { navPermissionsFragment } from "#/pages/iam/organizations/_lib/navPermissions";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
 import { NavRailItem } from "./NavRailItem";
@@ -34,43 +36,11 @@ import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { navRail } from "./variants";
 import { ViewerMembershipMenu } from "./ViewerMembershipMenu";
 
-// Read through the `permission` key on each nav table entry rather than by
-// name here, which the rule cannot follow. See visibleNavGroups.
-/* eslint-disable relay/unused-fields */
 const navRailFragment = graphql`
   fragment NavRail_organization on Organization {
     ...OrganizationSwitcher_organization
     ...ViewerMembershipMenu_organization
-
-    canGetContext: permission(action: "core:organization-context:get")
-    canListTasks: permission(action: "core:task:list")
-    canListMeasures: permission(action: "core:measure:list")
-    canListRisks: permission(action: "core:risk:list")
-    canListRiskAnalyses: permission(action: "core:risk-analysis:list")
-    canListFrameworks: permission(action: "core:framework:list")
-    canListMembers: permission(action: "iam:membership:list")
-    canListThirdParties: permission(action: "core:thirdParty:list")
-    canListDocuments: permission(action: "core:document:list")
-    canListAssets: permission(action: "core:asset:list")
-    canListDevices: permission(action: "itam:device:list")
-    canListData: permission(action: "core:datum:list")
-    canListAudits: permission(action: "core:audit:list")
-    canListFindings: permission(action: "core:finding:list")
-    canListBusinessFunctions: permission(action: "core:business-function:list")
-    canListAiSystems: permission(action: "core:ai-system:list")
-    canListObligations: permission(action: "core:obligation:list")
-    canListProcessingActivities: permission(action: "core:processing-activity:list")
-    canListDataProtectionImpactAssessments: permission(action: "core:data-protection-impact-assessment:list")
-    canListTransferImpactAssessments: permission(action: "core:transfer-impact-assessment:list")
-    canListStatementsOfApplicability: permission(action: "core:statement-of-applicability:list")
-    canListRightsRequests: permission(action: "core:rights-request:list")
-    canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
-    canListAccessReviewSources: permission(action: "access-review:source:list")
-    canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
-    canListCookieBanners: permission(action: "core:cookie-banner:list")
-    canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
-    canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
-    canUpdateOrganization: permission(action: "iam:organization:update")
+    ...navPermissions_organization
   }
 `;
 
@@ -84,7 +54,11 @@ export function NavRail({ organizationKey }: NavRailProps) {
   const organization = useFragment(navRailFragment, organizationKey);
   const { displayMode, toggleDisplayMode } = useDisplayMode();
 
-  const groups = useMemo(() => visibleNavGroups(organization), [organization]);
+  const permissions = useFragment<navPermissions_organization$key>(
+    navPermissionsFragment,
+    organization,
+  );
+  const groups = useMemo(() => visibleNavGroups(permissions), [permissions]);
   const activeGroup = useActiveNavGroup(groups);
 
   const slots = navRail();
@@ -100,7 +74,7 @@ export function NavRail({ organizationKey }: NavRailProps) {
               key={group.key}
               icon={group.icon}
               label={t(`nav.groups.${group.key}`)}
-              to={navGroupHref(organizationId, group, organization)}
+              to={navGroupHref(organizationId, group, permissions)}
               active={group.key === activeGroup?.key}
             />
           ))}

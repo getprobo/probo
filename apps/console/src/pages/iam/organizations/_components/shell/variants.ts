@@ -82,7 +82,7 @@ export const navRail = tv({
       "hover:bg-sand-3 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
     ],
-    items: "flex min-h-0 flex-1 flex-col gap-1",
+    items: "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto",
     icon: "flex size-10 shrink-0 items-center justify-center",
     label: [
       "min-w-0 flex-1 truncate pr-2 text-left opacity-0",

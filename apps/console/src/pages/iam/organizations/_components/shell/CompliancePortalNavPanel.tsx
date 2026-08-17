@@ -20,12 +20,11 @@
 
 import { lazy } from "@probo/react-lazy";
 import { startTransition, Suspense, useEffect } from "react";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery, useQueryLoader } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation, useParams } from "react-router";
 
 import type { CompliancePortalNavItemsQuery } from "#/__generated__/core/CompliancePortalNavItemsQuery.graphql";
 import type { CompliancePortalSwitcherRowQuery } from "#/__generated__/core/CompliancePortalSwitcherRowQuery.graphql";
-import type { CompliancePortalNavPanel_organization$key } from "#/__generated__/iam/CompliancePortalNavPanel_organization.graphql";
 import type { CompliancePortalNavPanelQuery } from "#/__generated__/iam/CompliancePortalNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
@@ -50,15 +49,9 @@ const compliancePortalNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...CompliancePortalNavPanel_organization
+        canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
       }
     }
-  }
-`;
-
-const compliancePortalNavPanelFragment = graphql`
-  fragment CompliancePortalNavPanel_organization on Organization {
-    canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
   }
 `;
 
@@ -79,13 +72,10 @@ function CompliancePortalNavPanelInner({ queryRef }: CompliancePortalNavPanelInn
     compliancePortalNavPanelQuery,
     queryRef,
   );
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<CompliancePortalNavPanel_organization$key>(
-    compliancePortalNavPanelFragment,
-    data.organization,
-  );
 
   if (!organization.canGetCompliancePortal) {
     return null;
@@ -130,14 +120,23 @@ function CompliancePortalNavSection() {
     });
   }, [compliancePortalId, hasPortal, loadItemsQuery, loadRowQuery]);
 
+  const rowRef
+    = rowQueryRef != null && rowQueryRef.variables.compliancePortalId === compliancePortalId
+      ? rowQueryRef
+      : null;
+  const itemsRef
+    = itemsQueryRef != null && itemsQueryRef.variables.compliancePortalId === compliancePortalId
+      ? itemsQueryRef
+      : null;
+
   return (
     <>
       <Suspense fallback={fallback}>
-        <CompliancePortalSwitcher queryRef={rowQueryRef ?? null} />
+        <CompliancePortalSwitcher queryRef={rowRef ?? null} />
       </Suspense>
-      {itemsQueryRef != null && (
+      {itemsRef != null && (
         <Suspense fallback={null}>
-          <CompliancePortalNavItems queryRef={itemsQueryRef} />
+          <CompliancePortalNavItems queryRef={itemsRef} />
         </Suspense>
       )}
     </>

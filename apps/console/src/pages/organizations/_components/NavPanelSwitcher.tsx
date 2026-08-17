@@ -43,10 +43,11 @@ export const navPanelSwitcher = tv({
     trigger: [
       "flex h-9 w-full min-w-0 items-center gap-2 rounded-2 px-3",
       "cursor-pointer outline-none transition-colors select-none",
+      "text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     ],
     value: "flex min-w-0 flex-1 items-center gap-2 text-left",
-    valueCaret: "size-4 shrink-0 text-sand-11",
+    valueCaret: "size-4 shrink-0 text-current",
     root: "mt-2 mb-2 first:mt-0 last:mb-0",
     row: "mt-2 mb-2 flex items-center gap-1 first:mt-0 last:mb-0",
     rowTrigger: "min-w-0 flex-1",
@@ -105,7 +106,7 @@ export function NavPanelSwitcherValue({ children }: NavPanelSwitcherValueProps) 
   const slots = navPanelSwitcher();
 
   return (
-    <Text size={2} weight="medium" color="neutral" highContrast className={slots.itemName()}>
+    <Text size={2} weight="medium" className={`${slots.itemName()} text-current`}>
       {children}
     </Text>
   );

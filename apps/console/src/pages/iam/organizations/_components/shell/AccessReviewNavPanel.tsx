@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { AccessReviewNavPanel_organization$key } from "#/__generated__/iam/AccessReviewNavPanel_organization.graphql";
 import type { AccessReviewNavPanelQuery } from "#/__generated__/iam/AccessReviewNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -35,16 +34,10 @@ const accessReviewNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...AccessReviewNavPanel_organization
+        canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
+        canListAccessReviewSources: permission(action: "access-review:source:list")
       }
     }
-  }
-`;
-
-const accessReviewNavPanelFragment = graphql`
-  fragment AccessReviewNavPanel_organization on Organization {
-    canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
-    canListAccessReviewSources: permission(action: "access-review:source:list")
   }
 `;
 
@@ -64,13 +57,10 @@ function AccessReviewNavPanelInner({ queryRef, group }: AccessReviewNavPanelInne
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<AccessReviewNavPanelQuery>(accessReviewNavPanelQuery, queryRef);
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<AccessReviewNavPanel_organization$key>(
-    accessReviewNavPanelFragment,
-    data.organization,
-  );
 
   return (
     <>

@@ -67,7 +67,7 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
-      loadQuery({});
+      loadQuery({}, { fetchPolicy: "network-only" });
     }
   }, [loadQuery]);
 
@@ -117,7 +117,11 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
             onValueChange={setSearch}
             // The menu treats typing as type-ahead navigation, which would
             // otherwise swallow most of what is typed into the search box.
-            onKeyDown={(event) => { event.stopPropagation(); }}
+            onKeyDown={(event) => {
+              if (event.key.length === 1 || event.key === "Backspace" || event.key === "Delete") {
+                event.stopPropagation();
+              }
+            }}
           />
         </div>
         <div className={slots.list()}>

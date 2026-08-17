@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { ItamNavPanel_organization$key } from "#/__generated__/iam/ItamNavPanel_organization.graphql";
 import type { ItamNavPanelQuery } from "#/__generated__/iam/ItamNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -35,15 +34,9 @@ const itamNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...ItamNavPanel_organization
+        canListDevices: permission(action: "itam:device:list")
       }
     }
-  }
-`;
-
-const itamNavPanelFragment = graphql`
-  fragment ItamNavPanel_organization on Organization {
-    canListDevices: permission(action: "itam:device:list")
   }
 `;
 
@@ -63,13 +56,10 @@ function ItamNavPanelInner({ queryRef, group }: ItamNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<ItamNavPanelQuery>(itamNavPanelQuery, queryRef);
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<ItamNavPanel_organization$key>(
-    itamNavPanelFragment,
-    data.organization,
-  );
 
   if (!organization.canListDevices) {
     return null;

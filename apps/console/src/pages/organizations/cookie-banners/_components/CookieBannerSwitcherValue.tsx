@@ -18,10 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { CookieBannerSwitcherValue_cookieBanner$key } from "#/__generated__/core/CookieBannerSwitcherValue_cookieBanner.graphql";
-import type { CookieBannerSwitcherValueQuery$data } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
+import type {
+  CookieBannerSwitcherValueQuery$data,
+  CookieBannerSwitcherValueQuery,
+} from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelSwitcherValue } from "#/pages/organizations/_components/NavPanelSwitcher";
 
 export const cookieBannerSwitcherValueQuery = graphql`
@@ -34,7 +37,10 @@ export const cookieBannerSwitcherValueQuery = graphql`
       __typename
       ... on CookieBanner {
         id
-        ...CookieBannerSwitcherValue_cookieBanner
+        name
+        organization {
+          id
+        }
       }
     }
     organization: node(id: $organizationId) @skip(if: $hasCookieBannerId) {
@@ -45,7 +51,7 @@ export const cookieBannerSwitcherValueQuery = graphql`
           edges {
             node {
               id
-              ...CookieBannerSwitcherValue_cookieBanner
+              name
             }
           }
         }
@@ -54,26 +60,31 @@ export const cookieBannerSwitcherValueQuery = graphql`
   }
 `;
 
-const cookieBannerSwitcherValueFragment = graphql`
-  fragment CookieBannerSwitcherValue_cookieBanner on CookieBanner {
-    name
-  }
-`;
-
 export interface CookieBannerSwitcherValueProps {
-  cookieBannerKey: CookieBannerSwitcherValue_cookieBanner$key;
+  fallback: string;
+  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
 }
 
-export function CookieBannerSwitcherValue({ cookieBannerKey }: CookieBannerSwitcherValueProps) {
-  const cookieBanner = useFragment(cookieBannerSwitcherValueFragment, cookieBannerKey);
-  return <NavPanelSwitcherValue>{cookieBanner.name}</NavPanelSwitcherValue>;
+export function CookieBannerSwitcherValue({ fallback, queryRef }: CookieBannerSwitcherValueProps) {
+  const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
+    cookieBannerSwitcherValueQuery,
+    queryRef,
+  );
+  const banner = cookieBannerFromSwitcherValueQuery(data, organizationId);
+
+  return <NavPanelSwitcherValue>{banner?.name ?? fallback}</NavPanelSwitcherValue>;
 }
 
 export function cookieBannerFromSwitcherValueQuery(
   data: CookieBannerSwitcherValueQuery$data,
+  organizationId: string,
 ) {
   if (data.selected != null) {
-    return data.selected.__typename === "CookieBanner" ? data.selected : null;
+    if (data.selected.__typename !== "CookieBanner") {
+      return null;
+    }
+    return data.selected.organization?.id === organizationId ? data.selected : null;
   }
   if (data.organization == null) {
     return null;

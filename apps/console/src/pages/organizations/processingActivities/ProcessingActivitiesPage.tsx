@@ -71,7 +71,6 @@ const processingActivitiesPageFragment = graphql`
       edges {
         node {
           id
-          canUpdate: permission(action: "core:processing-activity:update")
           canDelete: permission(action: "core:processing-activity:delete")
           ...ProcessingActivityListItem_processingActivity
         }
@@ -123,7 +122,7 @@ export default function ProcessingActivitiesPage({
     = activitiesData.processingActivities?.edges?.map(edge => edge.node) ?? [];
 
   const hasAnyAction = activities.some(
-    ({ canUpdate, canDelete }) => canUpdate || canDelete,
+    ({ canDelete }) => canDelete,
   );
 
   const canPublishProcessingActivities

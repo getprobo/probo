@@ -120,7 +120,7 @@ export const NAV_GROUPS = [
       { path: "processing-activities", permission: "canListProcessingActivities" },
       { path: "dpias", permission: "canListDataProtectionImpactAssessments" },
       { path: "tias", permission: "canListTransferImpactAssessments" },
-      { path: "cookie-banners", permission: "canListCookieBanners" },
+      { path: "cookie-banners/new", permission: "canListCookieBanners" },
     ],
   },
   {

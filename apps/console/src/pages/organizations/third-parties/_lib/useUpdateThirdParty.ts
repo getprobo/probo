@@ -48,7 +48,16 @@ const updateThirdPartyMutation = graphql`
 `;
 
 type UpdateThirdPartyInput = useUpdateThirdPartyMutation["variables"]["input"];
-type PatchableField = Exclude<keyof UpdateThirdPartyInput, "id">;
+type PatchableField
+  = | "administratorIds"
+    | "certifications"
+    | "statusPageUrl"
+    | "termsOfServiceUrl"
+    | "privacyPolicyUrl"
+    | "serviceLevelAgreementUrl"
+    | "dataProcessingAgreementUrl"
+    | "securityPageUrl"
+    | "trustPageUrl";
 
 export function useUpdateThirdParty() {
   const [updateThirdParty, isUpdating] = useMutation<useUpdateThirdPartyMutation>(

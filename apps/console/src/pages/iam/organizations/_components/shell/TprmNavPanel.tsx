@@ -21,11 +21,10 @@
 import { lazy } from "@probo/react-lazy";
 import { startTransition, Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery, useQueryLoader } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { ThirdPartySwitcherValueQuery } from "#/__generated__/core/ThirdPartySwitcherValueQuery.graphql";
-import type { TprmNavPanel_organization$key } from "#/__generated__/iam/TprmNavPanel_organization.graphql";
 import type { TprmNavPanelQuery } from "#/__generated__/iam/TprmNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -50,15 +49,9 @@ const tprmNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...TprmNavPanel_organization
+        canListThirdParties: permission(action: "core:thirdParty:list")
       }
     }
-  }
-`;
-
-const tprmNavPanelFragment = graphql`
-  fragment TprmNavPanel_organization on Organization {
-    canListThirdParties: permission(action: "core:thirdParty:list")
   }
 `;
 
@@ -78,13 +71,10 @@ function TprmNavPanelInner({ queryRef, group }: TprmNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<TprmNavPanelQuery>(tprmNavPanelQuery, queryRef);
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<TprmNavPanel_organization$key>(
-    tprmNavPanelFragment,
-    data.organization,
-  );
 
   if (!organization.canListThirdParties) {
     return null;

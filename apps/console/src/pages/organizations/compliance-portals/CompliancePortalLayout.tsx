@@ -29,6 +29,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalLayoutQuery } from "#/__generated__/core/CompliancePortalLayoutQuery.graphql";
 import type { compliancePortalSections_compliancePortal$key } from "#/__generated__/core/compliancePortalSections_compliancePortal.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import {
   compliancePortalSectionsFragment,
@@ -70,18 +71,18 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
     compliancePortalLayoutQuery,
     queryRef,
   );
-  const portalKey = compliancePortal.__typename === "CompliancePortal"
+  const portalKey = compliancePortal?.__typename === "CompliancePortal"
     ? compliancePortal
     : null;
   const sectionData = useFragment<compliancePortalSections_compliancePortal$key>(
     compliancePortalSectionsFragment,
     portalKey,
   );
-  if (compliancePortal.__typename !== "CompliancePortal" || sectionData == null) {
-    throw new Error("invalid type for node");
+  if (compliancePortal?.__typename !== "CompliancePortal" || sectionData == null) {
+    throw new NotFoundError("Compliance portal not found");
   }
   if (compliancePortal.organization.id !== organizationId) {
-    throw new Error("compliance portal does not belong to this organization");
+    throw new NotFoundError("Compliance portal not found");
   }
 
   const portalBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}`;

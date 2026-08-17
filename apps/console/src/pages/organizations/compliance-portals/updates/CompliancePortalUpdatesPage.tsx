@@ -139,7 +139,7 @@ export function CompliancePortalUpdatesPage(props: {
             </p>
           </div>
           <Field
-            key={`${mailingListId}:${mailingList?.replyTo ?? ""}`}
+            key={mailingListId}
             label={t("updatesPage.settings.replyTo")}
             type="email"
             placeholder={t("updatesPage.settings.replyToPlaceholder")}

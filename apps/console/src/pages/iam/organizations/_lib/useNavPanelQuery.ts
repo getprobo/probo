@@ -41,5 +41,7 @@ export function useNavPanelQuery<
     });
   }, [loadQuery, organizationId]);
 
-  return queryRef ?? null;
+  return queryRef != null && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
 }

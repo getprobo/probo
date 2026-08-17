@@ -184,7 +184,7 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
             }))}
             placeholder={t("thirdPartyStakeholdersPage.placeholders.administrators")}
             onIdsChange={(ids) => {
-              void update(thirdParty.id, "administratorIds", ids);
+              void update(thirdParty.id, "administratorIds", ids).catch(() => undefined);
             }}
           />
         </Card>

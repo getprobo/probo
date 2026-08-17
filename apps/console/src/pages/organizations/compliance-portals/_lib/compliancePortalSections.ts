@@ -25,21 +25,26 @@ import type { compliancePortalSections_compliancePortal$data } from "#/__generat
 export const compliancePortalSectionsFragment = graphql`
   fragment compliancePortalSections_compliancePortal on CompliancePortal {
     canUpdatePortal: permission(action: "compliance-portal:portal:update")
-    canGetNDA: permission(action: "compliance-portal:portal:get-nda")
+    canGetCustomDomain: permission(action: "compliance-portal:custom-domain:get")
     canListAccesses: permission(action: "compliance-portal:portal-access:list")
     canListCustomLinks: permission(action: "compliance-portal:compliance-custom-link:list")
     canListCommitmentGroups: permission(action: "compliance-portal:commitment-group:list")
+    canListCommitments: permission(action: "compliance-portal:commitment:list")
     canListReferences: permission(action: "compliance-portal:portal-reference:list")
     canListFrameworks: permission(action: "compliance-portal:compliance-framework:list")
     canListAudits: permission(action: "core:audit:list")
     canListDocuments: permission(action: "core:document:list")
     canListFiles: permission(action: "compliance-portal:portal-file:list")
-    canGetThirdParty: permission(action: "core:thirdParty:get")
+    canListThirdParties: permission(action: "core:thirdParty:list")
     canListMailingListSubscribers: permission(
       action: "compliance-portal:mailing-list-subscriber:list"
     )
+    canListMailingListUpdates: permission(
+      action: "compliance-portal:mailing-list-update:list"
+    )
     organization @required(action: THROW) {
       canConnectSlack: permission(action: "core:connector:initiate")
+      canListSlackConnections: permission(action: "core:slack-connection:list")
     }
   }
 `;
@@ -58,18 +63,21 @@ export type CompliancePortalSectionGroup = "settings" | "pages";
 
 export interface CompliancePortalSectionPermissions {
   canUpdatePortal: boolean;
-  canGetNDA: boolean;
+  canGetCustomDomain: boolean;
   canListAccesses: boolean;
   canConnectSlack: boolean;
+  canListSlackConnections: boolean;
   canListCustomLinks: boolean;
   canListCommitmentGroups: boolean;
+  canListCommitments: boolean;
   canListReferences: boolean;
   canListFrameworks: boolean;
   canListAudits: boolean;
   canListDocuments: boolean;
   canListFiles: boolean;
-  canGetThirdParty: boolean;
+  canListThirdParties: boolean;
   canListMailingListSubscribers: boolean;
+  canListMailingListUpdates: boolean;
 }
 
 export interface CompliancePortalSection {
@@ -86,21 +94,23 @@ export const COMPLIANCE_PORTAL_SECTIONS: CompliancePortalSection[] = [
     path: "hosting",
     labelKey: "nav.compliancePortalsHosting",
     group: "settings",
-    isVisible: permissions => permissions.canUpdatePortal,
+    isVisible: permissions =>
+      permissions.canUpdatePortal && permissions.canGetCustomDomain,
   },
   {
     id: "permissions",
     path: "permissions",
     labelKey: "nav.compliancePortalsPermissions",
     group: "settings",
-    isVisible: permissions => permissions.canGetNDA || permissions.canListAccesses,
+    isVisible: permissions => permissions.canListAccesses,
   },
   {
     id: "integrations",
     path: "integrations",
     labelKey: "nav.compliancePortalsIntegrations",
     group: "settings",
-    isVisible: permissions => permissions.canConnectSlack,
+    isVisible: permissions =>
+      permissions.canConnectSlack && permissions.canListSlackConnections,
   },
   {
     id: "landing",
@@ -109,9 +119,12 @@ export const COMPLIANCE_PORTAL_SECTIONS: CompliancePortalSection[] = [
     group: "pages",
     isVisible: permissions =>
       permissions.canListCustomLinks
-      || permissions.canListCommitmentGroups
-      || permissions.canListReferences
-      || permissions.canListFrameworks,
+      || (
+        permissions.canListFrameworks
+        && permissions.canListCommitmentGroups
+        && permissions.canListCommitments
+        && permissions.canListReferences
+      ),
   },
   {
     id: "documents",
@@ -128,14 +141,16 @@ export const COMPLIANCE_PORTAL_SECTIONS: CompliancePortalSection[] = [
     path: "subprocessors",
     labelKey: "nav.compliancePortalsSubprocessors",
     group: "pages",
-    isVisible: permissions => permissions.canGetThirdParty,
+    isVisible: permissions => permissions.canListThirdParties,
   },
   {
     id: "updates",
     path: "updates",
     labelKey: "nav.compliancePortalsUpdates",
     group: "pages",
-    isVisible: permissions => permissions.canListMailingListSubscribers,
+    isVisible: permissions =>
+      permissions.canListMailingListSubscribers
+      && permissions.canListMailingListUpdates,
   },
   {
     id: "right-requests",
@@ -151,18 +166,21 @@ export function sectionPermissionsFrom(
 ): CompliancePortalSectionPermissions {
   return {
     canUpdatePortal: data.canUpdatePortal,
-    canGetNDA: data.canGetNDA,
+    canGetCustomDomain: data.canGetCustomDomain,
     canListAccesses: data.canListAccesses,
     canConnectSlack: data.organization.canConnectSlack,
+    canListSlackConnections: data.organization.canListSlackConnections,
     canListCustomLinks: data.canListCustomLinks,
     canListCommitmentGroups: data.canListCommitmentGroups,
+    canListCommitments: data.canListCommitments,
     canListReferences: data.canListReferences,
     canListFrameworks: data.canListFrameworks,
     canListAudits: data.canListAudits,
     canListDocuments: data.canListDocuments,
     canListFiles: data.canListFiles,
-    canGetThirdParty: data.canGetThirdParty,
+    canListThirdParties: data.canListThirdParties,
     canListMailingListSubscribers: data.canListMailingListSubscribers,
+    canListMailingListUpdates: data.canListMailingListUpdates,
   };
 }
 

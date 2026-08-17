@@ -21,11 +21,10 @@
 import { lazy } from "@probo/react-lazy";
 import { startTransition, Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery, useQueryLoader } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation } from "react-router";
 
 import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
-import type { PrivacyNavPanel_organization$key } from "#/__generated__/iam/PrivacyNavPanel_organization.graphql";
 import type { PrivacyNavPanelQuery } from "#/__generated__/iam/PrivacyNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -52,19 +51,13 @@ const privacyNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...PrivacyNavPanel_organization
+        canListRightsRequests: permission(action: "core:rights-request:list")
+        canListProcessingActivities: permission(action: "core:processing-activity:list")
+        canListDataProtectionImpactAssessments: permission(action: "core:data-protection-impact-assessment:list")
+        canListTransferImpactAssessments: permission(action: "core:transfer-impact-assessment:list")
+        canListCookieBanners: permission(action: "core:cookie-banner:list")
       }
     }
-  }
-`;
-
-const privacyNavPanelFragment = graphql`
-  fragment PrivacyNavPanel_organization on Organization {
-    canListRightsRequests: permission(action: "core:rights-request:list")
-    canListProcessingActivities: permission(action: "core:processing-activity:list")
-    canListDataProtectionImpactAssessments: permission(action: "core:data-protection-impact-assessment:list")
-    canListTransferImpactAssessments: permission(action: "core:transfer-impact-assessment:list")
-    canListCookieBanners: permission(action: "core:cookie-banner:list")
   }
 `;
 
@@ -84,13 +77,10 @@ function PrivacyNavPanelInner({ queryRef, group }: PrivacyNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<PrivacyNavPanelQuery>(privacyNavPanelQuery, queryRef);
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<PrivacyNavPanel_organization$key>(
-    privacyNavPanelFragment,
-    data.organization,
-  );
 
   return (
     <>

@@ -335,14 +335,14 @@ export function AuditLogPage(props: {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("auditLogPage.title")}>
+      <PageHeader
+        title={t("auditLogPage.title")}
+        description={t("auditLogPage.description")}
+      >
         {organization.canExportAuditLog && (
           <ExportAuditLogDialog organizationId={organization.id} />
         )}
       </PageHeader>
-      <p className="text-sm text-txt-tertiary">
-        {t("auditLogPage.description")}
-      </p>
 
       {entries.length === 0
         ? (

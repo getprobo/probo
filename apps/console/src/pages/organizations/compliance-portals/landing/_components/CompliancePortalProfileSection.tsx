@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING FROM, OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Card, Field } from "@probo/ui";
+import { Card, Field, useToast } from "@probo/ui";
 import type { FocusEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -21,6 +21,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalProfileSection_compliancePortalFragment$key } from "#/__generated__/core/CompliancePortalProfileSection_compliancePortalFragment.graphql";
 import type { CompliancePortalProfileSection_updateMutation } from "#/__generated__/core/CompliancePortalProfileSection_updateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { z } from "#/lib/zod";
 
 import { CompliancePortalVisualIdentitySection } from "./CompliancePortalVisualIdentitySection";
 
@@ -65,6 +66,7 @@ export function CompliancePortalProfileSection({
   compliancePortalRef: CompliancePortalProfileSection_compliancePortalFragment$key;
 }) {
   const { t } = useTranslation("organizations/compliance-portals");
+  const { toast } = useToast();
 
   const compliancePortal = useFragment(
     compliancePortalFragment,
@@ -113,6 +115,15 @@ export function CompliancePortalProfileSection({
     return (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const next = normalizeOptional(event.currentTarget.value);
       if (next === normalizeOptional(current)) {
+        return;
+      }
+      if (field === "websiteUrl" && next != null && !z.string().url().safeParse(next).success) {
+        event.currentTarget.value = current ?? "";
+        toast({
+          title: t("externalUrls.validation.urlInvalid"),
+          description: "",
+          variant: "error",
+        });
         return;
       }
       patch(field, next);

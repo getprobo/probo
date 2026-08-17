@@ -35,6 +35,7 @@ export const compliancePortalLandingLayoutQuery = graphql`
         canListCustomLinks: permission(action: "compliance-portal:compliance-custom-link:list")
         canListFrameworks: permission(action: "compliance-portal:compliance-framework:list")
         canListCommitmentGroups: permission(action: "compliance-portal:commitment-group:list")
+        canListCommitments: permission(action: "compliance-portal:commitment:list")
         canListReferences: permission(action: "compliance-portal:portal-reference:list")
       }
     }
@@ -63,8 +64,9 @@ export function CompliancePortalLandingLayout({ queryRef }: CompliancePortalLand
   const canBranding = compliancePortal.canListCustomLinks;
   const canContent
     = compliancePortal.canListFrameworks
-      || compliancePortal.canListCommitmentGroups
-      || compliancePortal.canListReferences;
+      && compliancePortal.canListCommitmentGroups
+      && compliancePortal.canListCommitments
+      && compliancePortal.canListReferences;
 
   if (pathname === landingBase && !canBranding && canContent) {
     return <Navigate to={`${landingBase}/content`} replace />;

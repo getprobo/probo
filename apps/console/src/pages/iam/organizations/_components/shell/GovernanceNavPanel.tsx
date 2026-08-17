@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { GovernanceNavPanel_organization$key } from "#/__generated__/iam/GovernanceNavPanel_organization.graphql";
 import type { GovernanceNavPanelQuery } from "#/__generated__/iam/GovernanceNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
@@ -35,21 +34,15 @@ const governanceNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...GovernanceNavPanel_organization
+        canListTasks: permission(action: "core:task:list")
+        canListMeasures: permission(action: "core:measure:list")
+        canListFrameworks: permission(action: "core:framework:list")
+        canListAudits: permission(action: "core:audit:list")
+        canListFindings: permission(action: "core:finding:list")
+        canListDocuments: permission(action: "core:document:list")
+        canListStatementsOfApplicability: permission(action: "core:statement-of-applicability:list")
       }
     }
-  }
-`;
-
-const governanceNavPanelFragment = graphql`
-  fragment GovernanceNavPanel_organization on Organization {
-    canListTasks: permission(action: "core:task:list")
-    canListMeasures: permission(action: "core:measure:list")
-    canListFrameworks: permission(action: "core:framework:list")
-    canListAudits: permission(action: "core:audit:list")
-    canListFindings: permission(action: "core:finding:list")
-    canListDocuments: permission(action: "core:document:list")
-    canListStatementsOfApplicability: permission(action: "core:statement-of-applicability:list")
   }
 `;
 
@@ -69,13 +62,10 @@ function GovernanceNavPanelInner({ queryRef, group }: GovernanceNavPanelInnerPro
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<GovernanceNavPanelQuery>(governanceNavPanelQuery, queryRef);
-  if (data.organization.__typename !== "Organization") {
+  const { organization } = data;
+  if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
-  const organization = useFragment<GovernanceNavPanel_organization$key>(
-    governanceNavPanelFragment,
-    data.organization,
-  );
 
   return (
     <>

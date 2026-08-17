@@ -26,6 +26,7 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePortalDocumentsLayoutQuery } from "#/__generated__/core/CompliancePortalDocumentsLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { NotFoundError } from "#/lib/relay/errors";
 
 export const compliancePortalDocumentsLayoutQuery = graphql`
   query CompliancePortalDocumentsLayoutQuery($compliancePortalId: ID!) {
@@ -67,6 +68,18 @@ export function CompliancePortalDocumentsLayout({ queryRef }: CompliancePortalDo
     if (compliancePortal.canListFiles) {
       return <Navigate to={`${documentsBase}/files`} replace />;
     }
+  }
+
+  const isAudits = pathname.startsWith(`${documentsBase}/audits`);
+  const isFiles = pathname.startsWith(`${documentsBase}/files`);
+  if (isAudits && !compliancePortal.canListAudits) {
+    throw new NotFoundError("Compliance portal documents not found");
+  }
+  if (isFiles && !compliancePortal.canListFiles) {
+    throw new NotFoundError("Compliance portal documents not found");
+  }
+  if (!isAudits && !isFiles && !compliancePortal.canListDocuments) {
+    throw new NotFoundError("Compliance portal documents not found");
   }
 
   return (
