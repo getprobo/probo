@@ -64,10 +64,18 @@ func (impl *Implm) buildSlackbot(
 		return nil, nil, fmt.Errorf("cannot resolve slackbot agent client: %w", err)
 	}
 
+	opts := []agent.Option{agent.WithModel(agentCfg.ModelName)}
+	if agentCfg.Temperature != nil {
+		opts = append(opts, agent.WithTemperature(*agentCfg.Temperature))
+	}
+	if agentCfg.MaxTokens != nil {
+		opts = append(opts, agent.WithMaxTokens(*agentCfg.MaxTokens))
+	}
+
 	rootAgent := probot.NewAgent(
 		llmClient,
 		l.Named("slackbot.agent"),
-		agent.WithModel(agentCfg.ModelName),
+		opts...,
 	)
 
 	slackbot := slackchannel.NewService(
