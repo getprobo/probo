@@ -56,6 +56,7 @@ export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherP
   const prefix = `/organizations/${organizationId}/compliance-portals/`;
   const isNew = pathname === `${prefix}new`;
   const newLabel = t("nav.compliancePortalSwitcher.new");
+  const triggerLabel = t("nav.compliancePortalSwitcher.label");
   const slots = navPanelSwitcher();
 
   const handleOpenChange = useCallback((open: boolean) => {
@@ -85,6 +86,7 @@ export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherP
           <div className={slots.rowTrigger()}>
             <NavPanelSwitcher
               active={false}
+              label={triggerLabel}
               onOpenChange={handleOpenChange}
               value={<NavPanelSwitcherValueSkeleton />}
             >
@@ -102,6 +104,7 @@ export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherP
             <div className={slots.rowTrigger()}>
               <NavPanelSwitcher
                 active={false}
+                label={triggerLabel}
                 onOpenChange={handleOpenChange}
                 value={<NavPanelSwitcherValueSkeleton />}
               >
@@ -110,7 +113,11 @@ export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherP
             </div>
           )}
         >
-          <CompliancePortalSwitcherRow queryRef={queryRef} onOpenChange={handleOpenChange}>
+          <CompliancePortalSwitcherRow
+            queryRef={queryRef}
+            label={triggerLabel}
+            onOpenChange={handleOpenChange}
+          >
             {menu}
           </CompliancePortalSwitcherRow>
         </Suspense>
@@ -123,6 +130,7 @@ export function CompliancePortalSwitcher({ queryRef }: CompliancePortalSwitcherP
       <div className={slots.rowTrigger()}>
         <NavPanelSwitcher
           active={isNew}
+          label={triggerLabel}
           onOpenChange={handleOpenChange}
           value={isNew
             ? <NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>

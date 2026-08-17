@@ -180,6 +180,14 @@ export type NavGroupKey = NavGroup["key"];
 
 export type NavPermissions = { readonly [K in NavPermission]: boolean };
 
+export function navGroupByKey(key: NavGroupKey): NavGroup {
+  const group = NAV_GROUPS.find(candidate => candidate.key === key);
+  if (group == null) {
+    throw new Error(`unknown nav group: ${key}`);
+  }
+  return group;
+}
+
 export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
   return NAV_GROUPS.filter(group =>
     group.landings.some(landing => permissions[landing.permission]),

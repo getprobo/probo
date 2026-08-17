@@ -71,7 +71,13 @@ export function ThirdPartySwitcher({ queryRef }: ThirdPartySwitcherProps) {
     void navigate(thirdPartyHref(organizationId, id));
   }, [navigate, organizationId]);
 
-  const value = thirdPartyId != null && queryRef != null
+  // The parent loads the query in an effect, so on a direct third-party to
+  // third-party navigation the ref still points at the previous one.
+  const currentQueryRef = queryRef?.variables.thirdPartyId === thirdPartyId
+    ? queryRef
+    : null;
+
+  const value = thirdPartyId != null && currentQueryRef != null
     ? (
         <Suspense
           fallback={(
@@ -81,7 +87,7 @@ export function ThirdPartySwitcher({ queryRef }: ThirdPartySwitcherProps) {
             </>
           )}
         >
-          <ThirdPartySwitcherValue fallback={selectLabel} queryRef={queryRef} />
+          <ThirdPartySwitcherValue fallback={selectLabel} queryRef={currentQueryRef} />
         </Suspense>
       )
     : thirdPartyId != null
@@ -101,6 +107,7 @@ export function ThirdPartySwitcher({ queryRef }: ThirdPartySwitcherProps) {
     <>
       <NavPanelSwitcher
         active={false}
+        label={t("nav.thirdPartySwitcher.label")}
         onOpenChange={handleOpenChange}
         value={value}
       >

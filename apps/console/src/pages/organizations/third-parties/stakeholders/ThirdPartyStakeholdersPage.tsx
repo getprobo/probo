@@ -129,7 +129,7 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
     () => thirdParty.administrators.map(administrator => administrator.id),
     [thirdParty.administrators],
   );
-  const { control } = useForm<AdministratorsFormValues>({
+  const { control, reset } = useForm<AdministratorsFormValues>({
     values: { administratorIds },
   });
 
@@ -184,7 +184,11 @@ export function ThirdPartyStakeholdersPage({ queryRef }: ThirdPartyStakeholdersP
             }))}
             placeholder={t("thirdPartyStakeholdersPage.placeholders.administrators")}
             onIdsChange={(ids) => {
-              void update(thirdParty.id, "administratorIds", ids).catch(() => undefined);
+              void update(thirdParty.id, "administratorIds", ids).catch(() => {
+                // The mutation already toasts; roll the selector back so it
+                // keeps showing what the server actually has.
+                reset({ administratorIds });
+              });
             }}
           />
         </Card>

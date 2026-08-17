@@ -199,6 +199,12 @@
     "profile": {
       "title": "Informations générales",
       "description": "Description et coordonnées affichées aux visiteurs.",
+      "errors": {
+        "update": "Échec de la mise à jour des informations du portail de conformité"
+      },
+      "validation": {
+        "emailInvalid": "Veuillez saisir une adresse e-mail valide"
+      },
       "fields": {
         "entityName": "Nom de l’entité",
         "entityNamePlaceholder": "Acme",

@@ -30,6 +30,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 import { CookieBannerNavItems } from "#/pages/organizations/cookie-banners/_components/CookieBannerNavItems";
 import { cookieBannerSwitcherValueQuery } from "#/pages/organizations/cookie-banners/_components/CookieBannerSwitcherValue";
+import { cookieBannersBasePath } from "#/pages/organizations/cookie-banners/_lib/cookieBannerPaths";
 import { useSelectedCookieBannerId } from "#/pages/organizations/cookie-banners/_lib/useSelectedCookieBannerId";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
@@ -127,8 +128,7 @@ function CookieBannerNavSection() {
     cookieBannerSwitcherValueQuery,
   );
   const slots = navPanel();
-  const prefix = `/organizations/${organizationId}/privacy/cookie-banners/`;
-  const isNew = pathname === `${prefix}new`;
+  const isNew = pathname === `${cookieBannersBasePath(organizationId)}/new`;
   const fallback = <span className={slots.groupFallback()} aria-hidden />;
 
   useEffect(() => {
@@ -155,17 +155,26 @@ function CookieBannerNavSection() {
     );
   }
 
-  if (queryRef == null) {
+  // loadQuery runs in an effect, so right after a banner-to-banner navigation
+  // the ref still describes the previous banner. Rendering it would flash the
+  // old name in the switcher and point the nav items at the old banner.
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    && queryRef.variables.cookieBannerId === (selectedId ?? "")
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return fallback;
   }
 
   return (
     <>
       <Suspense fallback={fallback}>
-        <CookieBannerSwitcher queryRef={queryRef} selectedId={selectedId} />
+        <CookieBannerSwitcher queryRef={currentQueryRef} selectedId={selectedId} />
       </Suspense>
       <Suspense fallback={null}>
-        <CookieBannerNavItems queryRef={queryRef} />
+        <CookieBannerNavItems queryRef={currentQueryRef} />
       </Suspense>
     </>
   );

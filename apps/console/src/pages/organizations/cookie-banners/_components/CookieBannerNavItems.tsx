@@ -25,6 +25,8 @@ import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/Cookie
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
 
+import { cookieBannerPath } from "../_lib/cookieBannerPaths";
+
 import {
   cookieBannerFromSwitcherValueQuery,
   cookieBannerSwitcherValueQuery,
@@ -47,13 +49,21 @@ export function CookieBannerNavItems({ queryRef }: CookieBannerNavItemsProps) {
     return null;
   }
 
-  const prefix = `/organizations/${organizationId}/privacy/cookie-banners/${banner.id}`;
+  const prefix = cookieBannerPath(organizationId, banner.id);
 
   return (
     <>
       <NavPanelItem label={t("nav.cookieBannersConfigure")} to={`${prefix}/configure`} />
-      <NavPanelItem label={t("nav.cookieBannersDiscovery")} to={`${prefix}/discovery`} />
-      <NavPanelItem label={t("nav.cookieBannersTrail")} to={`${prefix}/trail`} />
+      <NavPanelItem
+        label={t("nav.cookieBannersDiscovery")}
+        to={`${prefix}/discovery`}
+        alsoActiveFor={[`${prefix}/trackers`]}
+      />
+      <NavPanelItem
+        label={t("nav.cookieBannersTrail")}
+        to={`${prefix}/trail`}
+        alsoActiveFor={[`${prefix}/consent-records`]}
+      />
     </>
   );
 }

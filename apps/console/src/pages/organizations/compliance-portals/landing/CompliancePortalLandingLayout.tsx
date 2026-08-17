@@ -26,6 +26,7 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePortalLandingLayoutQuery } from "#/__generated__/core/CompliancePortalLandingLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { NotFoundError } from "#/lib/relay/errors";
 
 export const compliancePortalLandingLayoutQuery = graphql`
   query CompliancePortalLandingLayoutQuery($compliancePortalId: ID!) {
@@ -68,8 +69,13 @@ export function CompliancePortalLandingLayout({ queryRef }: CompliancePortalLand
       && compliancePortal.canListCommitments
       && compliancePortal.canListReferences;
 
-  if (pathname === landingBase && !canBranding && canContent) {
+  const isContent = pathname.startsWith(`${landingBase}/content`);
+
+  if (!isContent && !canBranding && canContent) {
     return <Navigate to={`${landingBase}/content`} replace />;
+  }
+  if (isContent ? !canContent : !canBranding) {
+    throw new NotFoundError("Compliance portal landing not found");
   }
 
   return (

@@ -34,6 +34,8 @@ import {
   NavPanelSwitcherValueSkeleton,
 } from "#/pages/organizations/_components/NavPanelSwitcher";
 
+import { cookieBannersBasePath } from "../_lib/cookieBannerPaths";
+
 import {
   CookieBannerSwitcherMenu,
   cookieBannerSwitcherMenuQuery,
@@ -53,10 +55,10 @@ export function CookieBannerSwitcher({ queryRef, selectedId }: CookieBannerSwitc
     cookieBannerSwitcherMenuQuery,
   );
 
-  const prefix = `/organizations/${organizationId}/privacy/cookie-banners/`;
-  const isNew = pathname === `${prefix}new`;
+  const isNew = pathname === `${cookieBannersBasePath(organizationId)}/new`;
   const selectLabel = t("nav.cookieBannerSwitcher.select");
   const newLabel = t("nav.cookieBannerSwitcher.new");
+  const triggerLabel = t("nav.cookieBannerSwitcher.label");
   const slots = navPanelSwitcher();
 
   const handleOpenChange = useCallback((open: boolean) => {
@@ -83,6 +85,7 @@ export function CookieBannerSwitcher({ queryRef, selectedId }: CookieBannerSwitc
     return (
       <NavPanelSwitcher
         active
+        label={triggerLabel}
         onOpenChange={handleOpenChange}
         value={<NavPanelSwitcherValue>{newLabel}</NavPanelSwitcherValue>}
       >
@@ -95,6 +98,7 @@ export function CookieBannerSwitcher({ queryRef, selectedId }: CookieBannerSwitc
     return (
       <NavPanelSwitcher
         active={false}
+        label={triggerLabel}
         onOpenChange={handleOpenChange}
         value={<NavPanelSwitcherValueSkeleton />}
       >
@@ -108,6 +112,7 @@ export function CookieBannerSwitcher({ queryRef, selectedId }: CookieBannerSwitc
       fallback={(
         <NavPanelSwitcher
           active={false}
+          label={triggerLabel}
           onOpenChange={handleOpenChange}
           value={<NavPanelSwitcherValueSkeleton />}
         >
@@ -117,6 +122,7 @@ export function CookieBannerSwitcher({ queryRef, selectedId }: CookieBannerSwitc
     >
       <CookieBannerSwitcherSelected
         fallback={selectLabel}
+        label={triggerLabel}
         onOpenChange={handleOpenChange}
         queryRef={queryRef}
       >
@@ -128,6 +134,7 @@ export function CookieBannerSwitcher({ queryRef, selectedId }: CookieBannerSwitc
 
 interface CookieBannerSwitcherSelectedProps {
   fallback: string;
+  label: string;
   onOpenChange: (open: boolean) => void;
   queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
   children?: ReactNode;
@@ -135,6 +142,7 @@ interface CookieBannerSwitcherSelectedProps {
 
 function CookieBannerSwitcherSelected({
   fallback,
+  label,
   onOpenChange,
   queryRef,
   children,
@@ -142,6 +150,7 @@ function CookieBannerSwitcherSelected({
   return (
     <NavPanelSwitcher
       active={false}
+      label={label}
       onOpenChange={onOpenChange}
       value={<CookieBannerSwitcherValue fallback={fallback} queryRef={queryRef} />}
     >

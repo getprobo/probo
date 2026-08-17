@@ -349,7 +349,9 @@ interface CertificationsProps {
 function Certifications(props: CertificationsProps) {
   const categorizedCertifications = Object.values(certifications).flat();
   const { t } = useTranslation();
-  const [animateBadge, setAnimateBadge] = useState(false);
+  // Only the badge that was just added animates in; `starting:` styles are
+  // entry-only, so a shared flag would tag every later-mounted badge.
+  const [addedCertification, setAddedCertification] = useState<string | null>(null);
   const categories = objectEntries(certifications)
     .map(
       ([key, value]) =>
@@ -367,12 +369,12 @@ function Certifications(props: CertificationsProps) {
     if (props.value.includes(name)) {
       return;
     }
-    setAnimateBadge(true);
+    setAddedCertification(name);
     props.onValueChange([...props.value, name]);
   };
 
   const removeCertificate = (name: string) => {
-    setAnimateBadge(true);
+    setAddedCertification(current => (current === name ? null : current));
     props.onValueChange(props.value.filter(v => v !== name));
   };
 
@@ -396,7 +398,7 @@ function Certifications(props: CertificationsProps) {
                         type="button"
                         className={clsx(
                           "hover:bg-subtle-hover cursor-pointer",
-                          animateBadge
+                          addedCertification === certification
                           && "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent",
                         )}
                       >

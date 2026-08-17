@@ -43,7 +43,7 @@ export const cookieBannerSwitcherValueQuery = graphql`
         }
       }
     }
-    organization: node(id: $organizationId) @skip(if: $hasCookieBannerId) {
+    organization: node(id: $organizationId) {
       __typename
       ... on Organization {
         cookieBanners(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
@@ -76,15 +76,17 @@ export function CookieBannerSwitcherValue({ fallback, queryRef }: CookieBannerSw
   return <NavPanelSwitcherValue>{banner?.name ?? fallback}</NavPanelSwitcherValue>;
 }
 
+// A remembered banner can be deleted or belong to another organization, in
+// which case the organization's most recent banner takes over.
 export function cookieBannerFromSwitcherValueQuery(
   data: CookieBannerSwitcherValueQuery$data,
   organizationId: string,
 ) {
-  if (data.selected != null) {
-    if (data.selected.__typename !== "CookieBanner") {
-      return null;
-    }
-    return data.selected.organization?.id === organizationId ? data.selected : null;
+  if (
+    data.selected?.__typename === "CookieBanner"
+    && data.selected.organization?.id === organizationId
+  ) {
+    return data.selected;
   }
   if (data.organization == null) {
     return null;

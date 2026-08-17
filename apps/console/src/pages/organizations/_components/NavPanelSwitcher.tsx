@@ -40,12 +40,14 @@ export const navPanelSwitcher = tv({
     itemName: "truncate group-data-highlighted:text-white",
     itemOrigin: "truncate group-data-highlighted:text-white",
     itemCheck: "size-4 shrink-0 text-sand-12",
+    more: "w-full justify-start",
     trigger: [
       "flex h-9 w-full min-w-0 items-center gap-2 rounded-2 px-3",
       "cursor-pointer outline-none transition-colors select-none",
       "text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     ],
+    triggerLabel: "sr-only",
     value: "flex min-w-0 flex-1 items-center gap-2 text-left",
     valueCaret: "size-4 shrink-0 text-current",
     root: "mt-2 mb-2 first:mt-0 last:mb-0",
@@ -71,12 +73,21 @@ export const navPanelSwitcher = tv({
 
 export interface NavPanelSwitcherProps {
   active: boolean;
+  // Names the trigger for assistive tech; the selected value alone is a
+  // skeleton while it loads, which would leave the button unnamed.
+  label: string;
   onOpenChange: (open: boolean) => void;
   value: ReactNode;
   children?: ReactNode;
 }
 
-export function NavPanelSwitcher({ active, onOpenChange, value, children }: NavPanelSwitcherProps) {
+export function NavPanelSwitcher({
+  active,
+  label,
+  onOpenChange,
+  value,
+  children,
+}: NavPanelSwitcherProps) {
   const slots = navPanelSwitcher({ outlined: !active, active });
 
   return (
@@ -85,6 +96,7 @@ export function NavPanelSwitcher({ active, onOpenChange, value, children }: NavP
         <DropdownTrigger
           render={(
             <button type="button" className={slots.trigger()}>
+              <span className={slots.triggerLabel()}>{label}</span>
               <span className={slots.value()}>{value}</span>
               <CaretDownIcon className={slots.valueCaret()} />
             </button>

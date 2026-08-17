@@ -1520,19 +1520,23 @@
     "cookieBannersTrail": "Trail",
     "organization": "Organization",
     "cookieBannerSwitcher": {
+      "label": "Cookie banner",
       "select": "Select Banner",
       "new": "New Banner",
       "create": "New cookie banner",
       "empty": "No cookie banners",
-      "loading": "Loading…"
+      "loading": "Loading…",
+      "showMore": "Show more"
     },
     "thirdPartySwitcher": {
+      "label": "Third party",
       "select": "Select Third Party",
       "create": "New Third Party",
       "empty": "No third parties",
       "loading": "Loading…"
     },
     "compliancePortalSwitcher": {
+      "label": "Compliance portal",
       "new": "New Portal",
       "create": "New Portal",
       "empty": "No compliance portals",

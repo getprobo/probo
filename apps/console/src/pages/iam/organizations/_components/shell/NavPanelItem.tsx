@@ -27,19 +27,23 @@ export interface NavPanelItemProps {
   label: string;
   to: string;
   exact?: boolean;
+  // Extra route prefixes that belong to this section but are not nested under
+  // `to` in the route tree, such as sibling detail pages.
+  alsoActiveFor?: readonly string[];
 }
 
 function withoutTrailingSlash(path: string) {
   return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
 }
 
-export function NavPanelItem({ label, to, exact }: NavPanelItemProps) {
+export function NavPanelItem({ label, to, exact, alsoActiveFor }: NavPanelItemProps) {
   const { pathname } = useLocation();
   const path = withoutTrailingSlash(pathname);
-  const target = withoutTrailingSlash(to);
-  const active = exact
-    ? path === target
-    : path === target || path.startsWith(`${target}/`);
+  const active = [to, ...alsoActiveFor ?? []]
+    .map(withoutTrailingSlash)
+    .some(target => exact
+      ? path === target
+      : path === target || path.startsWith(`${target}/`));
 
   const slots = navPanel();
 
@@ -50,6 +54,7 @@ export function NavPanelItem({ label, to, exact }: NavPanelItemProps) {
       color={active ? "gold" : "neutral"}
       size={2}
       active={active}
+      aria-current={active ? "page" : undefined}
       className={slots.item()}
     >
       {label}

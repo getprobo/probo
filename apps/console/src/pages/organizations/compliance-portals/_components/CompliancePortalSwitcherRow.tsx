@@ -45,12 +45,14 @@ export const compliancePortalSwitcherRowQuery = graphql`
 
 export interface CompliancePortalSwitcherRowProps {
   queryRef: PreloadedQuery<CompliancePortalSwitcherRowQuery>;
+  label: string;
   onOpenChange: (open: boolean) => void;
   children?: ReactNode;
 }
 
 export function CompliancePortalSwitcherRow({
   queryRef,
+  label,
   onOpenChange,
   children,
 }: CompliancePortalSwitcherRowProps) {
@@ -66,6 +68,7 @@ export function CompliancePortalSwitcherRow({
       <div className={slots.rowTrigger()}>
         <NavPanelSwitcher
           active={false}
+          label={label}
           onOpenChange={onOpenChange}
           value={portal != null
             ? <CompliancePortalSwitcherValue compliancePortalKey={portal} />

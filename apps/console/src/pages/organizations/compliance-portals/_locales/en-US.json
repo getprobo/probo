@@ -199,6 +199,12 @@
     "profile": {
       "title": "General information",
       "description": "Description and contact details shown to visitors.",
+      "errors": {
+        "update": "Failed to update compliance portal information"
+      },
+      "validation": {
+        "emailInvalid": "Please enter a valid email address"
+      },
       "fields": {
         "entityName": "Entity name",
         "entityNamePlaceholder": "Acme",

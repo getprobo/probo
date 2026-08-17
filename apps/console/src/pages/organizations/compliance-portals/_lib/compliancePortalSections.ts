@@ -96,8 +96,9 @@ export const COMPLIANCE_PORTAL_SECTIONS: CompliancePortalSection[] = [
     path: "hosting",
     labelKey: "nav.compliancePortalsHosting",
     group: "settings",
-    isVisible: permissions =>
-      permissions.canUpdatePortal && permissions.canGetCustomDomain,
+    // The page renders read-only without update permission, so reading the
+    // custom domain is enough to reach it.
+    isVisible: permissions => permissions.canGetCustomDomain,
   },
   {
     id: "permissions",

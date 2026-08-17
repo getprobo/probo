@@ -96,6 +96,8 @@
     "profile": {
       "title": "Algemene informatie",
       "description": "Beschrijving en contactgegevens die aan bezoekers worden getoond.",
+      "errors": { "update": "Bijwerken van de complianceportaalinformatie is mislukt" },
+      "validation": { "emailInvalid": "Voer een geldig e-mailadres in" },
       "fields": { "entityName": "Naam van de organisatie", "entityNamePlaceholder": "Acme", "description": "Beschrijving", "descriptionPlaceholder": "Korte beschrijving voor bezoekers", "websiteUrl": "Website-URL", "email": "E-mail", "emailPlaceholder": "contact@example.com", "address": "Adres hoofdkantoor", "addressPlaceholder": "Hoofdstraat 123, Stad, Land" }
     }
   },

@@ -68,7 +68,9 @@ export function OrganizationSwitcher({ variant = "bar", organizationKey }: Organ
   const handleOpenChange = useCallback((open: boolean) => {
     if (open) {
       loadQuery({}, { fetchPolicy: "network-only" });
+      return;
     }
+    setSearch("");
   }, [loadQuery]);
 
   const slots = organizationSwitcher();

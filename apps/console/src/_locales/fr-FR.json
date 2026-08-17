@@ -2430,19 +2430,23 @@
     "cookieBannersDiscovery": "Découverte",
     "cookieBannersTrail": "Journal",
     "cookieBannerSwitcher": {
+      "label": "Bannière de cookies",
       "select": "Sélectionner une bannière",
       "new": "Nouvelle bannière",
       "create": "Nouvelle bannière de cookies",
       "empty": "Aucune bannière de cookies",
-      "loading": "Chargement…"
+      "loading": "Chargement…",
+      "showMore": "Afficher plus"
     },
     "thirdPartySwitcher": {
+      "label": "Tiers",
       "select": "Sélectionner un tiers",
       "create": "Nouveau tiers",
       "empty": "Aucun tiers",
       "loading": "Chargement…"
     },
     "compliancePortalSwitcher": {
+      "label": "Portail de conformité",
       "new": "Nouveau portail",
       "create": "Nouveau portail",
       "empty": "Aucun portail de conformité",

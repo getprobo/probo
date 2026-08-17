@@ -18,17 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PlusIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
 import { Link } from "react-router";
 
+import type { CookieBannerSwitcherMenu_organization$key } from "#/__generated__/core/CookieBannerSwitcherMenu_organization.graphql";
 import type { CookieBannerSwitcherMenuQuery } from "#/__generated__/core/CookieBannerSwitcherMenuQuery.graphql";
+import type { CookieBannerSwitcherMenuRefetchQuery } from "#/__generated__/core/CookieBannerSwitcherMenuRefetchQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navPanelSwitcher } from "#/pages/organizations/_components/NavPanelSwitcher";
+
+import { cookieBannersBasePath } from "../_lib/cookieBannerPaths";
 
 import { CookieBannerSwitcherListItem } from "./CookieBannerSwitcherListItem";
 
@@ -36,17 +41,30 @@ export const cookieBannerSwitcherMenuQuery = graphql`
   query CookieBannerSwitcherMenuQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       __typename
-      ... on Organization {
-        canCreateCookieBanner: permission(action: "core:cookie-banner:create")
-        cookieBanners(first: 50, orderBy: { field: CREATED_AT, direction: DESC })
-          @connection(key: "CookieBannerSwitcherMenu_cookieBanners", filters: [])
-          @required(action: THROW) {
-          edges {
-            node {
-              id
-              ...CookieBannerSwitcherListItem_cookieBanner
-            }
-          }
+      ...CookieBannerSwitcherMenu_organization
+    }
+  }
+`;
+
+const cookieBannerSwitcherMenuFragment = graphql`
+  fragment CookieBannerSwitcherMenu_organization on Organization
+  @argumentDefinitions(
+    first: { type: Int, defaultValue: 50 }
+    after: { type: CursorKey, defaultValue: null }
+  )
+  @refetchable(queryName: "CookieBannerSwitcherMenuRefetchQuery") {
+    canCreateCookieBanner: permission(action: "core:cookie-banner:create")
+    cookieBanners(
+      first: $first
+      after: $after
+      orderBy: { field: CREATED_AT, direction: DESC }
+    )
+      @connection(key: "CookieBannerSwitcherMenu_cookieBanners", filters: [])
+      @required(action: THROW) {
+      edges {
+        node {
+          id
+          ...CookieBannerSwitcherListItem_cookieBanner
         }
       }
     }
@@ -67,13 +85,19 @@ export function CookieBannerSwitcherMenu({ queryRef, selectedId }: CookieBannerS
     cookieBannerSwitcherMenuQuery,
     queryRef,
   );
-  if (organization.__typename !== "Organization") {
+  const organizationKey: CookieBannerSwitcherMenu_organization$key | null
+    = organization.__typename === "Organization" ? organization : null;
+  const { data, hasNext, loadNext, isLoadingNext } = usePaginationFragment<
+    CookieBannerSwitcherMenuRefetchQuery,
+    CookieBannerSwitcherMenu_organization$key
+  >(cookieBannerSwitcherMenuFragment, organizationKey);
+  if (data == null) {
     throw new Error("invalid type for node");
   }
 
-  const banners = organization.cookieBanners.edges.map(edge => edge.node);
+  const banners = data.cookieBanners.edges.map(edge => edge.node);
   const checkedId = selectedId ?? banners[0]?.id;
-  const newBannerHref = `/organizations/${organizationId}/privacy/cookie-banners/new`;
+  const newBannerHref = `${cookieBannersBasePath(organizationId)}/new`;
 
   return (
     <>
@@ -91,8 +115,23 @@ export function CookieBannerSwitcherMenu({ queryRef, selectedId }: CookieBannerS
                 selected={checkedId === banner.id}
               />
             ))}
+        {hasNext && (
+          <Button
+            variant="ghost"
+            color="neutral"
+            size={2}
+            loading={isLoadingNext}
+            iconStart={<CaretDownIcon />}
+            className={slots.more()}
+            onClick={() => {
+              loadNext(50);
+            }}
+          >
+            {t("nav.cookieBannerSwitcher.showMore")}
+          </Button>
+        )}
       </div>
-      {organization.canCreateCookieBanner && (
+      {data.canCreateCookieBanner && (
         <>
           <DropdownSeparator />
           <DropdownItem

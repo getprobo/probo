@@ -2430,19 +2430,23 @@
     "cookieBannersDiscovery": "Ontdekking",
     "cookieBannersTrail": "Logboek",
     "cookieBannerSwitcher": {
+      "label": "Cookiebanner",
       "select": "Selecteer banner",
       "new": "Nieuwe banner",
       "create": "Nieuwe cookiebanner",
       "empty": "Geen cookiebanners",
-      "loading": "Laden…"
+      "loading": "Laden…",
+      "showMore": "Meer tonen"
     },
     "thirdPartySwitcher": {
+      "label": "Derde partij",
       "select": "Selecteer derde partij",
       "create": "Nieuwe derde partij",
       "empty": "Geen derde partijen",
       "loading": "Laden…"
     },
     "compliancePortalSwitcher": {
+      "label": "Complianceportaal",
       "new": "Nieuw portaal",
       "create": "Nieuw portaal",
       "empty": "Geen complianceportalen",

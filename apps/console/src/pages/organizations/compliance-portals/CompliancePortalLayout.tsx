@@ -89,7 +89,9 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
   const compliancePortalUrl = compliancePortal.publicUrl;
   const landingSection = firstVisibleSection(sectionPermissionsFrom(sectionData));
 
-  if (pathname === portalBase && landingSection != null) {
+  const isPortalRoot = pathname === portalBase || pathname === `${portalBase}/`;
+
+  if (isPortalRoot && landingSection != null) {
     return <Navigate to={`${portalBase}/${landingSection.path}`} replace />;
   }
 

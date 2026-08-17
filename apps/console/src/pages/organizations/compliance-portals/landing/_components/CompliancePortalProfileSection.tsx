@@ -77,7 +77,7 @@ export function CompliancePortalProfileSection({
   const [updateCompliancePortal] = useMutation<CompliancePortalProfileSection_updateMutation>(
     updateMutation,
     {
-      errorToast: t("brandPage.errors.update"),
+      errorToast: t("brandPage.profile.errors.update"),
     },
   );
 
@@ -108,6 +108,22 @@ export function CompliancePortalProfileSection({
     patch("entityName", next);
   }
 
+  // Blur-to-save never goes through form submission, so the browser's own
+  // url/email constraint validation never runs.
+  const fieldSchemas: Partial<Record<OptionalProfileField, {
+    schema: z.ZodString;
+    message: string;
+  }>> = {
+    websiteUrl: {
+      schema: z.string().url(),
+      message: t("externalUrls.validation.urlInvalid"),
+    },
+    email: {
+      schema: z.string().email(),
+      message: t("brandPage.profile.validation.emailInvalid"),
+    },
+  };
+
   function optionalBlurHandler(
     field: OptionalProfileField,
     current: string | null | undefined,
@@ -117,10 +133,11 @@ export function CompliancePortalProfileSection({
       if (next === normalizeOptional(current)) {
         return;
       }
-      if (field === "websiteUrl" && next != null && !z.string().url().safeParse(next).success) {
+      const validation = fieldSchemas[field];
+      if (validation != null && next != null && !validation.schema.safeParse(next).success) {
         event.currentTarget.value = current ?? "";
         toast({
-          title: t("externalUrls.validation.urlInvalid"),
+          title: validation.message,
           description: "",
           variant: "error",
         });
