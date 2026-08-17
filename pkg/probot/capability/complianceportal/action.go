@@ -285,6 +285,22 @@ func (c *Capability) selectResources(
 		)
 	}
 
+	documentIDs, reportIDs, fileIDs, err := c.notifications.GetMessageResourceIDs(
+		ctx,
+		scope,
+		action.Message.ID,
+	)
+	if err != nil {
+		return actionSelection{}, fmt.Errorf("cannot load requested resources: %w", err)
+	}
+
+	if !resourceIDOnMessage(resourceID, documentIDs, reportIDs, fileIDs) {
+		return actionSelection{}, fmt.Errorf(
+			"%w: resource is not attached to this access request",
+			messaging.ErrCapabilityInvalidInput,
+		)
+	}
+
 	selection := actionSelection{decision: decision}
 
 	switch resourceID.EntityType() {
@@ -303,4 +319,21 @@ func (c *Capability) selectResources(
 	}
 
 	return selection, nil
+}
+
+func resourceIDOnMessage(
+	resourceID gid.GID,
+	documentIDs []gid.GID,
+	reportIDs []gid.GID,
+	fileIDs []gid.GID,
+) bool {
+	for _, ids := range [][]gid.GID{documentIDs, reportIDs, fileIDs} {
+		for _, id := range ids {
+			if id == resourceID {
+				return true
+			}
+		}
+	}
+
+	return false
 }

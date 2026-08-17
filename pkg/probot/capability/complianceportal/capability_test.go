@@ -43,6 +43,8 @@ type (
 		message              bot.Message
 		renderer             *portal.Renderer
 		documentIDs          []gid.GID
+		reportIDs            []gid.GID
+		fileIDs              []gid.GID
 		resolvedAccessID     gid.GID
 		lookupOrganizationID gid.GID
 		lookupAnchor         messaging.MessageAnchor
@@ -98,7 +100,7 @@ func (f *fakeAccessService) GetMessageResourceIDs(
 	coredata.Scoper,
 	gid.GID,
 ) ([]gid.GID, []gid.GID, []gid.GID, error) {
-	return f.documentIDs, nil, nil, nil
+	return f.documentIDs, f.reportIDs, f.fileIDs, nil
 }
 
 func (f *fakeAccessService) ResolveCompliancePortalAccessID(
@@ -518,7 +520,10 @@ func TestCapability_HandlesReviewMenuSelection(t *testing.T) {
 				t.Parallel()
 
 				visitor := &fakeVisitor{}
-				notifications := &fakeAccessService{message: message}
+				notifications := &fakeAccessService{
+					message:     message,
+					documentIDs: []gid.GID{documentID},
+				}
 				capability := NewCapability(
 					notifications,
 					visitor,
@@ -646,6 +651,99 @@ func TestCapability_RejectsMalformedReviewMenuSelection(t *testing.T) {
 	require.ErrorIs(t, err, messaging.ErrCapabilityInvalidInput)
 	assert.Zero(t, visitor.grantCount)
 	assert.Zero(t, visitor.rejectCount)
+}
+
+func TestCapability_RejectsResourceIDNotOnMessage(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	attachedID := gid.New(tenantID, coredata.DocumentEntityType)
+	foreignID := gid.New(tenantID, coredata.DocumentEntityType)
+	message := bot.Message{
+		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
+		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
+		Type:           portal.AccessMessageType,
+		Attributes:     map[string]any{"requester_email": "requester@example.com"},
+	}
+	visitor := &fakeVisitor{}
+	capability := NewCapability(
+		&fakeAccessService{
+			message:     message,
+			documentIDs: []gid.GID{attachedID},
+		},
+		visitor,
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+	)
+
+	_, err := capability.HandleAction(
+		context.Background(),
+		messaging.Action{
+			ID:               "compliance_access.approve_item",
+			Value:            foreignID.String(),
+			DeduplicationKey: "foreign-resource",
+			ActorIdentityID:  gid.New(gid.NilTenant, coredata.IdentityEntityType),
+			Message:          message,
+		},
+	)
+	require.ErrorIs(t, err, messaging.ErrCapabilityInvalidInput)
+	assert.Zero(t, visitor.grantCount)
+}
+
+func TestCapability_ManageToolRejectsResourceIDNotOnMessage(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	attachedID := gid.New(tenantID, coredata.DocumentEntityType)
+	foreignID := gid.New(tenantID, coredata.DocumentEntityType)
+	message := bot.Message{
+		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
+		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
+		Type:           portal.AccessMessageType,
+		Attributes:     map[string]any{"requester_email": "requester@example.com"},
+	}
+	visitor := &fakeVisitor{}
+	capability := NewCapability(
+		&fakeAccessService{
+			message:     message,
+			documentIDs: []gid.GID{attachedID},
+		},
+		visitor,
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+	)
+
+	var manageTool agent.Tool
+
+	for _, tool := range capability.Tools() {
+		if tool.Name() == "manage_compliance_access_request" {
+			manageTool = tool
+			break
+		}
+	}
+
+	require.NotNil(t, manageTool)
+
+	ctx := agent.WithToolCallID(
+		agent.WithRunContext(
+			context.Background(),
+			&messaging.RunContext{
+				OrganizationID: message.OrganizationID,
+				MessageAnchor: messaging.MessageAnchor{
+					ConversationID: "C123",
+					MessageID:      "123.456",
+				},
+				IdentityID: gid.New(gid.NilTenant, coredata.IdentityEntityType),
+			},
+		),
+		"call-foreign-resource",
+	)
+	result, err := manageTool.Execute(
+		ctx,
+		`{"decision":"approve","resource_id":"`+foreignID.String()+`"}`,
+	)
+	require.NoError(t, err)
+	assert.True(t, result.IsError)
+	assert.Contains(t, result.Content, "not attached")
+	assert.Zero(t, visitor.grantCount)
 }
 
 func TestCapability_RenderMessageProducesChannelNeutralIntent(t *testing.T) {

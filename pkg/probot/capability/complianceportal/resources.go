@@ -96,47 +96,70 @@ func loadResources(
 		}
 
 		if access.ReportFileID != nil {
-			var audit coredata.Audit
-			if err := audit.LoadByReportFileID(ctx, conn, scope, *access.ReportFileID); err != nil {
-				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
-			}
-
-			var framework coredata.Framework
-			if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
-				return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
-			}
-
-			title := framework.Name
-			if audit.Name != nil && *audit.Name != "" {
-				title += " - " + *audit.Name
-			}
-
-			reports = append(
-				reports,
-				messageReport{
-					ID:      access.ReportFileID.String(),
-					Title:   title,
-					AuditID: audit.ID.String(),
-					Status:  access.Status.String(),
-				},
+			var portalAudit coredata.CompliancePortalAudit
+			err := portalAudit.LoadByCompliancePortalIDAndReportFileID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				*access.ReportFileID,
 			)
+			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, nil, nil, fmt.Errorf("cannot load compliance portal audit: %w", err)
+			}
+
+			if err == nil {
+				var audit coredata.Audit
+				if err := audit.LoadByID(ctx, conn, scope, portalAudit.AuditID); err != nil {
+					return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
+				}
+
+				var framework coredata.Framework
+				if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
+					return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
+				}
+
+				title := framework.Name
+				if audit.Name != nil && *audit.Name != "" {
+					title += " - " + *audit.Name
+				}
+
+				reports = append(
+					reports,
+					messageReport{
+						ID:      access.ReportFileID.String(),
+						Title:   title,
+						AuditID: audit.ID.String(),
+						Status:  access.Status.String(),
+					},
+				)
+			}
 		}
 
 		if access.CompliancePortalFileID != nil {
 			var file coredata.CompliancePortalFile
-			if err := file.LoadByID(ctx, conn, scope, *access.CompliancePortalFileID); err != nil {
+			err := file.LoadByCompliancePortalIDAndID(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				*access.CompliancePortalFileID,
+			)
+			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, nil, nil, fmt.Errorf("cannot load compliance portal file: %w", err)
 			}
 
-			files = append(
-				files,
-				messageFile{
-					ID:       access.CompliancePortalFileID.String(),
-					Name:     file.Name,
-					Category: file.Category,
-					Status:   access.Status.String(),
-				},
-			)
+			if err == nil {
+				files = append(
+					files,
+					messageFile{
+						ID:       access.CompliancePortalFileID.String(),
+						Name:     file.Name,
+						Category: file.Category,
+						Status:   access.Status.String(),
+					},
+				)
+			}
 		}
 	}
 
