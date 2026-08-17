@@ -38,8 +38,9 @@ import (
 )
 
 const (
-	tokenRefreshLeeway     = time.Minute
-	installStateStaleAfter = 5 * time.Minute
+	tokenRefreshLeeway        = time.Minute
+	installStateStaleAfter    = 5 * time.Minute
+	credentialPersistAttempts = 3
 )
 
 var (
@@ -264,8 +265,10 @@ func (s *InstallationService) Uninstall(
 		return fmt.Errorf("cannot load Slack installation for uninstall: %w", err)
 	}
 
+	installationID := installation.ID
+
 	if installation.Status == coredata.SlackbotInstallationStatusActive {
-		client, refreshedInstallation, err := s.ClientByOrganizationID(
+		client, _, err := s.ClientByOrganizationID(
 			ctx,
 			scope,
 			organizationID,
@@ -281,8 +284,6 @@ func (s *InstallationService) Uninstall(
 		); err != nil {
 			return fmt.Errorf("cannot uninstall Slack app: %w", err)
 		}
-
-		installation = refreshedInstallation
 	}
 
 	return s.pg.WithTx(
@@ -299,6 +300,10 @@ func (s *InstallationService) Uninstall(
 				}
 
 				return fmt.Errorf("cannot lock Slack installation for uninstall: %w", err)
+			}
+
+			if installation.ID != installationID {
+				return nil
 			}
 
 			if err := coredata.DeleteBotDeliveryDestinationsByProviderAndOrganizationID(
@@ -380,6 +385,8 @@ func (s *InstallationService) ListMemberConversations(
 func (s *InstallationService) DisableByTeamID(
 	ctx context.Context,
 	teamID string,
+	eventTime *time.Time,
+	botUserIDs []string,
 ) error {
 	var installation coredata.SlackbotInstallation
 
@@ -399,6 +406,14 @@ func (s *InstallationService) DisableByTeamID(
 				return fmt.Errorf("cannot load Slack installation by team: %w", err)
 			}
 
+			if eventTime != nil {
+				if !installation.UpdatedAt.Before(*eventTime) {
+					return nil
+				}
+			} else if !installationMatchesDisableIdentifiers(installation, botUserIDs) {
+				return nil
+			}
+
 			installation.Status = coredata.SlackbotInstallationStatusDisabled
 			installation.UpdatedAt = time.Now()
 
@@ -409,6 +424,23 @@ func (s *InstallationService) DisableByTeamID(
 			)
 		},
 	)
+}
+
+func installationMatchesDisableIdentifiers(
+	installation coredata.SlackbotInstallation,
+	botUserIDs []string,
+) bool {
+	if installation.BotUserID == "" {
+		return false
+	}
+
+	for _, botUserID := range botUserIDs {
+		if botUserID == installation.BotUserID {
+			return true
+		}
+	}
+
+	return false
 }
 
 func findMemberConversation(

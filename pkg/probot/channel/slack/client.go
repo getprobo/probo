@@ -242,7 +242,9 @@ func (c *Client) UninstallApp(
 		case "account_inactive", "invalid_auth", "token_revoked":
 			return nil
 		}
+	}
 
+	if !result.OK || resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return newAPIError(resp, result.Error)
 	}
 

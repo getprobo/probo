@@ -379,6 +379,30 @@ func TestClientUninstallApp(t *testing.T) {
 	)
 }
 
+func TestClientUninstallAppNon2xx(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, err := w.Write([]byte(`{"ok":true}`))
+				require.NoError(t, err)
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	err := newTestClient(server.URL+"/api").UninstallApp(
+		t.Context(),
+		"client-id",
+		"client-secret",
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "slack api returned HTTP status 500")
+	assert.NotContains(t, err.Error(), testBotToken)
+}
+
 func TestClientUninstallAppAlreadyGone(t *testing.T) {
 	t.Parallel()
 

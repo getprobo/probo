@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -64,41 +65,7 @@ func (s *InstallationService) loadUsableCredentials(
 				return fmt.Errorf("cannot decrypt Slack installation credentials: %w", err)
 			}
 
-			if installation.AccessTokenExpiresAt == nil ||
-				installation.AccessTokenExpiresAt.After(time.Now().Add(tokenRefreshLeeway)) {
-				return nil
-			}
-
-			if credentials.RefreshToken == nil {
-				return fmt.Errorf("slack installation access token expired without refresh token")
-			}
-
-			refreshed, err := s.refreshToken(ctx, *credentials.RefreshToken)
-			if err != nil {
-				return fmt.Errorf("cannot refresh Slack installation token: %w", err)
-			}
-
-			credentials.AccessToken = refreshed.AccessToken
-			if refreshed.RefreshToken != "" {
-				credentials.RefreshToken = new(refreshed.RefreshToken)
-			}
-
-			installation.Scopes = splitScopes(refreshed.Scope)
-			if refreshed.ExpiresIn > 0 {
-				installation.AccessTokenExpiresAt = new(
-					time.Now().Add(time.Duration(refreshed.ExpiresIn) * time.Second),
-				)
-			}
-
-			installation.UpdatedAt = time.Now()
-
-			return installation.UpdateCredentials(
-				ctx,
-				tx,
-				scope,
-				s.encryptionKey,
-				credentials,
-			)
+			return nil
 		},
 	)
 	if err != nil {
@@ -112,5 +79,156 @@ func (s *InstallationService) loadUsableCredentials(
 		)
 	}
 
-	return &installation, credentials, nil
+	if installation.AccessTokenExpiresAt == nil ||
+		installation.AccessTokenExpiresAt.After(time.Now().Add(tokenRefreshLeeway)) {
+		return &installation, credentials, nil
+	}
+
+	if credentials.RefreshToken == nil {
+		return nil, coredata.SlackbotInstallationCredentials{}, fmt.Errorf(
+			"slack installation access token expired without refresh token",
+		)
+	}
+
+	refreshed, err := s.refreshToken(ctx, *credentials.RefreshToken)
+	if err != nil {
+		return nil, coredata.SlackbotInstallationCredentials{}, fmt.Errorf(
+			"cannot refresh Slack installation token: %w",
+			err,
+		)
+	}
+
+	credentials.AccessToken = refreshed.AccessToken
+	if refreshed.RefreshToken != "" {
+		credentials.RefreshToken = new(refreshed.RefreshToken)
+	}
+
+	installation.Scopes = splitScopes(refreshed.Scope)
+	if refreshed.ExpiresIn > 0 {
+		installation.AccessTokenExpiresAt = new(
+			time.Now().Add(time.Duration(refreshed.ExpiresIn) * time.Second),
+		)
+	}
+
+	installation.UpdatedAt = time.Now()
+
+	var persistErr error
+	for range credentialPersistAttempts {
+		persistErr = s.persistInstallationCredentials(
+			ctx,
+			scope,
+			&installation,
+			credentials,
+		)
+		if persistErr == nil {
+			return &installation, credentials, nil
+		}
+	}
+
+	s.logger.ErrorCtx(
+		ctx,
+		"cannot persist refreshed Slack credentials, disabling installation",
+		log.Error(persistErr),
+		log.String("organization_id", organizationID.String()),
+	)
+
+	if disableErr := s.disableInstallation(
+		ctx,
+		scope,
+		&installation,
+	); disableErr != nil {
+		return nil, coredata.SlackbotInstallationCredentials{}, fmt.Errorf(
+			"cannot disable Slack installation after credential persist failure: %w",
+			disableErr,
+		)
+	}
+
+	return nil, coredata.SlackbotInstallationCredentials{}, fmt.Errorf(
+		"cannot persist refreshed Slack credentials: %w",
+		persistErr,
+	)
+}
+
+func (s *InstallationService) persistInstallationCredentials(
+	ctx context.Context,
+	scope coredata.Scoper,
+	installation *coredata.SlackbotInstallation,
+	credentials coredata.SlackbotInstallationCredentials,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var current coredata.SlackbotInstallation
+
+			if err := current.LoadByOrganizationIDForUpdate(
+				ctx,
+				tx,
+				scope,
+				installation.OrganizationID,
+			); err != nil {
+				return fmt.Errorf("cannot load Slack installation for credential persist: %w", err)
+			}
+
+			if current.ID != installation.ID {
+				return fmt.Errorf("cannot persist Slack credentials for replaced installation")
+			}
+
+			current.Scopes = installation.Scopes
+			current.AccessTokenExpiresAt = installation.AccessTokenExpiresAt
+			current.UpdatedAt = installation.UpdatedAt
+
+			if err := current.UpdateCredentials(
+				ctx,
+				tx,
+				scope,
+				s.encryptionKey,
+				credentials,
+			); err != nil {
+				return fmt.Errorf("cannot persist Slack installation credentials: %w", err)
+			}
+
+			*installation = current
+
+			return nil
+		},
+	)
+}
+
+func (s *InstallationService) disableInstallation(
+	ctx context.Context,
+	scope coredata.Scoper,
+	installation *coredata.SlackbotInstallation,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var current coredata.SlackbotInstallation
+
+			if err := current.LoadByOrganizationIDForUpdate(
+				ctx,
+				tx,
+				scope,
+				installation.OrganizationID,
+			); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load Slack installation to disable: %w", err)
+			}
+
+			if current.ID != installation.ID {
+				return nil
+			}
+
+			current.Status = coredata.SlackbotInstallationStatusDisabled
+			current.UpdatedAt = time.Now()
+
+			if err := current.UpdateStatus(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update Slack installation status: %w", err)
+			}
+
+			return nil
+		},
+	)
 }

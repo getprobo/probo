@@ -29,6 +29,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
@@ -189,11 +190,18 @@ func (s *Service) ProcessEvent(ctx context.Context, envelope Envelope) error {
 		ctx,
 		envelope.EventID,
 		envelope.InstallationTeamID(),
+		envelope.Time(),
 		envelope.Event,
 	)
 }
 
-func (s *Service) dispatch(ctx context.Context, eventID, teamID string, event *EventBody) error {
+func (s *Service) dispatch(
+	ctx context.Context,
+	eventID string,
+	teamID string,
+	eventTime *time.Time,
+	event *EventBody,
+) error {
 	if event.Type == EventTypeAppUninstalled ||
 		event.Type == EventTypeTokensRevoked {
 		if teamID == "" {
@@ -204,7 +212,12 @@ func (s *Service) dispatch(ctx context.Context, eventID, teamID string, event *E
 			return nil
 		}
 
-		if err := s.installations.DisableByTeamID(ctx, teamID); err != nil {
+		if err := s.installations.DisableByTeamID(
+			ctx,
+			teamID,
+			eventTime,
+			event.RevokedBotUserIDs(),
+		); err != nil {
 			return fmt.Errorf("cannot disable revoked Slack installation: %w", err)
 		}
 
