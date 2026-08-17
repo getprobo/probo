@@ -165,7 +165,7 @@ func NewWorker(
 	}
 
 	if cfg.heartbeatInterval >= cfg.staleAfter {
-		cfg.heartbeatInterval = cfg.staleAfter / 2
+		cfg.heartbeatInterval = max(cfg.staleAfter/2, time.Millisecond)
 	}
 
 	if cfg.retryMax < cfg.retryBase {

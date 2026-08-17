@@ -20,6 +20,10 @@
 
 package agentexecution
 
+import (
+	"context"
+)
+
 // ShutdownBroadcast returns the channel that closes once the worker has
 // broadcast graceful shutdown to all in-flight runs. It is compiled only
 // in test builds so external tests can synchronize tool release with
@@ -27,4 +31,8 @@ package agentexecution
 // worker's public API.
 func (w *Worker) ShutdownBroadcast() <-chan struct{} {
 	return w.handler.shutdownCh
+}
+
+func (w *Worker) RecoverStale(ctx context.Context) error {
+	return w.handler.RecoverStale(ctx)
 }

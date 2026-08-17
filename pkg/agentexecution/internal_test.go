@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.gearno.de/kit/log"
 )
 
 func TestSanitizeError(t *testing.T) {
@@ -97,6 +98,42 @@ func TestWorkerOptions(t *testing.T) {
 
 			WithWorkerMaxConcurrency(9)(&cfg)
 			assert.Equal(t, 9, cfg.maxConcurrency)
+		},
+	)
+}
+
+func TestNewWorker_HeartbeatIntervalFloor(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"halves stale after when heartbeat is not smaller",
+		func(t *testing.T) {
+			t.Parallel()
+
+			w := NewWorker(
+				nil,
+				nil,
+				log.NewLogger(),
+				WithWorkerHeartbeatInterval(2*time.Minute),
+				WithWorkerStaleAfter(2*time.Minute),
+			)
+			assert.Equal(t, time.Minute, w.handler.heartbeatInterval)
+		},
+	)
+
+	t.Run(
+		"floors heartbeat at one millisecond",
+		func(t *testing.T) {
+			t.Parallel()
+
+			w := NewWorker(
+				nil,
+				nil,
+				log.NewLogger(),
+				WithWorkerHeartbeatInterval(time.Nanosecond),
+				WithWorkerStaleAfter(time.Nanosecond),
+			)
+			assert.Equal(t, time.Millisecond, w.handler.heartbeatInterval)
 		},
 	)
 }

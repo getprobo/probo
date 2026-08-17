@@ -1177,12 +1177,51 @@ WHERE
 	return nil
 }
 
+func LockStaleAgentExecutionIDs(
+	ctx context.Context,
+	conn pg.Tx,
+	now time.Time,
+	staleAfter time.Duration,
+) ([]gid.GID, error) {
+	q := `
+SELECT id
+FROM agent_executions
+WHERE
+	processing_owner_token IS NOT NULL
+	AND processing_heartbeat_at <= @stale_before
+ORDER BY id ASC
+FOR UPDATE
+`
+
+	rows, err := conn.Query(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"stale_before": now.Add(-staleAfter),
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot lock stale agent executions: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect stale agent execution ids: %w", err)
+	}
+
+	return ids, nil
+}
+
 func ResetStaleAgentExecutionLeases(
 	ctx context.Context,
 	conn pg.Querier,
+	executionIDs []gid.GID,
 	now time.Time,
-	staleAfter time.Duration,
 ) error {
+	if len(executionIDs) == 0 {
+		return nil
+	}
+
 	q := `
 UPDATE agent_executions
 SET
@@ -1213,8 +1252,7 @@ SET
 	END,
 	updated_at = @now
 WHERE
-	processing_owner_token IS NOT NULL
-	AND processing_heartbeat_at <= @stale_before
+	id = ANY(@execution_ids::text[])
 `
 
 	args := pgx.StrictNamedArgs{
@@ -1223,7 +1261,7 @@ WHERE
 		"suspended_status": AgentExecutionStatusSuspended,
 		"now":              now,
 		"last_error":       AgentExecutionStaleLeaseError,
-		"stale_before":     now.Add(-staleAfter),
+		"execution_ids":    executionIDs,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {

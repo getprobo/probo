@@ -255,15 +255,20 @@ func TestScheduler_HeartbeatPreventsStaleRecovery(t *testing.T) {
 	time.Sleep(150 * time.Millisecond)
 	require.NoError(
 		t,
-		client.WithConn(
+		client.WithTx(
 			t.Context(),
-			func(ctx context.Context, conn pg.Querier) error {
-				return coredata.ResetStaleAgentExecutionLeases(
+			func(ctx context.Context, tx pg.Tx) error {
+				ids, err := coredata.LockStaleAgentExecutionIDs(
 					ctx,
-					conn,
+					tx,
 					time.Now(),
 					100*time.Millisecond,
 				)
+				if err != nil {
+					return err
+				}
+
+				return coredata.ResetStaleAgentExecutionLeases(ctx, tx, ids, time.Now())
 			},
 		),
 	)
@@ -517,4 +522,82 @@ func TestScheduler_ConversationalShutdownRestoresCheckpoint(t *testing.T) {
 	persisted := loadAgentExecution(t, client, execution.ID)
 	assert.Nil(t, persisted.Checkpoint)
 	assert.Equal(t, coredata.AgentExecutionStatusIdle, persisted.Status)
+}
+
+func TestRecoverStale_DeadLettersAllPendingInputsOnTerminalExecution(t *testing.T) {
+	client := test.PGClient(t)
+	organizationID := insertTestOrganization(t, client)
+	execution := insertExecution(
+		t,
+		client,
+		organizationID,
+		"stale-agent",
+		"provider",
+		"stale-all-pending",
+		1,
+	)
+	batchInput := enqueueAgentInput(t, client, execution, "batch-event", userMessage("batch"))
+	extraInput := enqueueAgentInput(t, client, execution, "extra-event", userMessage("extra"))
+	ownerToken := "stale-owner"
+	now := time.Now()
+
+	var claimed coredata.AgentExecution
+
+	require.NoError(
+		t,
+		client.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return claimed.ClaimNextForUpdateSkipLocked(ctx, tx, now, ownerToken)
+			},
+		),
+	)
+	require.Equal(t, execution.ID, claimed.ID)
+
+	require.NoError(
+		t,
+		client.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				if err := claimed.SetProcessingInputIDs(
+					ctx,
+					conn,
+					coredata.NewScope(organizationID.TenantID()),
+					ownerToken,
+					[]string{batchInput.ID.String()},
+					now,
+				); err != nil {
+					return err
+				}
+
+				_, err := conn.Exec(
+					ctx,
+					`UPDATE agent_executions SET processing_heartbeat_at = $2 WHERE id = $1`,
+					claimed.ID,
+					now.Add(-time.Minute),
+				)
+
+				return err
+			},
+		),
+	)
+
+	runWorker := newTestWorker(
+		client,
+		&simpleRegistry{agents: map[string]*agent.Agent{}},
+		agentexecution.WithWorkerStaleAfter(10*time.Second),
+	)
+	require.NoError(t, runWorker.RecoverStale(t.Context()))
+
+	loadedBatch := loadAgentInput(t, client, batchInput.ID)
+	loadedExtra := loadAgentInput(t, client, extraInput.ID)
+	require.NotNil(t, loadedBatch.DeadLetteredAt)
+	require.NotNil(t, loadedExtra.DeadLetteredAt)
+	assert.Nil(t, loadedBatch.ProcessedAt)
+	assert.Nil(t, loadedExtra.ProcessedAt)
+
+	loadedExecution := loadAgentExecution(t, client, execution.ID)
+	assert.Equal(t, coredata.AgentExecutionStatusFailed, loadedExecution.Status)
+	assert.Nil(t, loadedExecution.ProcessingOwnerToken)
+	assert.NotNil(t, loadedExecution.DeadLetteredAt)
 }

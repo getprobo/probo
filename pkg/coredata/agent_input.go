@@ -634,10 +634,14 @@ WHERE
 func DeadLetterAgentInputsForStaleExecutions(
 	ctx context.Context,
 	conn pg.Querier,
+	executionIDs []gid.GID,
 	now time.Time,
-	staleAfter time.Duration,
 	lastError string,
 ) error {
+	if len(executionIDs) == 0 {
+		return nil
+	}
+
 	q := `
 UPDATE agent_inputs
 SET
@@ -649,22 +653,20 @@ SET
 WHERE
 	processed_at IS NULL
 	AND dead_lettered_at IS NULL
+	AND agent_execution_id = ANY(@execution_ids::text[])
 	AND EXISTS (
 		SELECT 1
 		FROM agent_executions
 		WHERE
 			agent_executions.id = agent_inputs.agent_execution_id
-			AND agent_inputs.id = ANY(agent_executions.processing_input_ids)
-			AND agent_executions.processing_owner_token IS NOT NULL
-			AND agent_executions.processing_heartbeat_at <= @stale_before
 			AND agent_executions.attempt_count >= agent_executions.max_attempts
 	)
 `
 
 	args := pgx.StrictNamedArgs{
-		"now":          now,
-		"stale_before": now.Add(-staleAfter),
-		"last_error":   lastError,
+		"now":           now,
+		"last_error":    lastError,
+		"execution_ids": executionIDs,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {

@@ -158,17 +158,22 @@ func (h *handler) RecoverStale(ctx context.Context) error {
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			ids, err := coredata.LockStaleAgentExecutionIDs(ctx, tx, now, h.staleAfter)
+			if err != nil {
+				return fmt.Errorf("cannot recover stale agent executions: %w", err)
+			}
+
 			if err := coredata.DeadLetterAgentInputsForStaleExecutions(
 				ctx,
 				tx,
+				ids,
 				now,
-				h.staleAfter,
 				coredata.AgentExecutionStaleLeaseError,
 			); err != nil {
 				return fmt.Errorf("cannot recover stale agent execution inputs: %w", err)
 			}
 
-			return coredata.ResetStaleAgentExecutionLeases(ctx, tx, now, h.staleAfter)
+			return coredata.ResetStaleAgentExecutionLeases(ctx, tx, ids, now)
 		},
 	)
 }
