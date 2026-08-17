@@ -109,8 +109,12 @@ export default function ThirdPartyMeasuresPage(props: ThirdPartyMeasuresPageProp
     <LinkedMeasuresCard
       disabled={isLoading}
       measures={measures}
-      onAttach={attachMeasure}
-      onDetach={detachMeasure}
+      onAttach={(args) => {
+        void attachMeasure(args).catch(() => undefined);
+      }}
+      onDetach={(args) => {
+        void detachMeasure(args).catch(() => undefined);
+      }}
       params={{ thirdPartyId: thirdParty.id }}
       connectionId={connectionId}
       readOnly={readOnly}
