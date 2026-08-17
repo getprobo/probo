@@ -38,8 +38,9 @@ export function createDefaultIntegrations(
 
 // resolveGoogleConsentMode maps the `google-consent-mode` element attribute
 // (and the `data-google-consent-mode` script attribute) to the client option.
-// Only "off" and "false" disable the integration; absent or any other value
-// keeps the default behavior.
+// Only "off" and "false" (case-insensitive, whitespace-tolerant) disable the
+// integration; absent or any other value keeps the default behavior.
 export function resolveGoogleConsentMode(value: string | null): boolean {
-  return value !== "off" && value !== "false";
+  const normalized = value?.trim().toLowerCase();
+  return normalized !== "off" && normalized !== "false";
 }

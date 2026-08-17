@@ -129,8 +129,13 @@ If your site manages Consent Mode itself (for example through an existing GTM se
 <!-- Script tag -->
 <script src="..." data-banner-id="..." data-base-url="..." data-google-consent-mode="off"></script>
 
-<!-- Themed or headless components -->
+<!-- Themed component -->
 <probo-cookie-banner banner-id="..." base-url="..." google-consent-mode="off"></probo-cookie-banner>
+
+<!-- Headless root -->
+<probo-cookie-banner-root banner-id="..." base-url="..." google-consent-mode="off">
+  ...
+</probo-cookie-banner-root>
 ```
 
 Programmatic use of `CookieBannerClient` takes the same switch as an option: `googleConsentMode: false`. Disabling covers all of it — the eager deny-all default, the discovery-mode grant-all, and per-consent updates.

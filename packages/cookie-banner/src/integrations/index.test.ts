@@ -44,6 +44,12 @@ describe("resolveGoogleConsentMode", () => {
     expect(resolveGoogleConsentMode("false")).toBe(false);
   });
 
+  it("normalizes case and whitespace", () => {
+    expect(resolveGoogleConsentMode("OFF")).toBe(false);
+    expect(resolveGoogleConsentMode("False")).toBe(false);
+    expect(resolveGoogleConsentMode(" off ")).toBe(false);
+  });
+
   it("keeps the integration for any other value", () => {
     expect(resolveGoogleConsentMode("on")).toBe(true);
     expect(resolveGoogleConsentMode("true")).toBe(true);
