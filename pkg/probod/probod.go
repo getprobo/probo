@@ -1054,6 +1054,7 @@ func (impl *Implm) Run(
 	)
 
 	stopCertManagerService := func() {}
+
 	if !impl.cfg.CompliancePortal.TLSMode.IsExternal() {
 		certManagerServiceCtx, stop := context.WithCancel(context.Background())
 		stopCertManagerService = stop
