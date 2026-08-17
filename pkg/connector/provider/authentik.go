@@ -24,8 +24,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -51,7 +49,7 @@ func authentikRegistration() *Registration {
 				return nil, fmt.Errorf("cannot read authentik connector settings: %w", err)
 			}
 
-			baseURL, err := normalizeInstanceBaseURL(settings.BaseURL)
+			baseURL, err := normalizeSelfHostedBaseURL(settings.BaseURL)
 			if err != nil {
 				return nil, fmt.Errorf("cannot create authentik driver: %w", err)
 			}
@@ -65,7 +63,7 @@ func authentikRegistration() *Registration {
 				return nil
 			}
 
-			baseURL, err := normalizeInstanceBaseURL(settings.BaseURL)
+			baseURL, err := normalizeSelfHostedBaseURL(settings.BaseURL)
 			if err != nil {
 				logger.ErrorCtx(ctx, "invalid authentik base url in connector settings", log.Error(err))
 				return nil
@@ -74,29 +72,4 @@ func authentikRegistration() *Registration {
 			return drivers.NewAuthentikNameResolver(c, baseURL)
 		},
 	}
-}
-
-// normalizeInstanceBaseURL validates a self-hosted provider's instance URL and
-// strips the query, fragment and trailing slash before any path is joined onto
-// it.
-func normalizeInstanceBaseURL(raw string) (string, error) {
-	baseURL := strings.TrimSpace(raw)
-	if baseURL == "" {
-		return "", fmt.Errorf("base_url is required")
-	}
-
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		return "", fmt.Errorf("base_url must be a valid URL: %w", err)
-	}
-
-	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return "", fmt.Errorf("base_url must be an http(s) URL")
-	}
-
-	u.Path = strings.TrimRight(u.Path, "/")
-	u.RawQuery = ""
-	u.Fragment = ""
-
-	return u.String(), nil
 }
