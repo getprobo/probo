@@ -28,8 +28,8 @@ import {
   SunIcon,
   UserIcon,
 } from "@phosphor-icons/react";
-import { useDisplayMode } from "@probo/hooks";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";

@@ -28,9 +28,9 @@ import {
   SunIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { useDisplayMode } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
 import { Drawer } from "@probo/ui/src/v2/Drawer/Drawer";
 import { DrawerBody } from "@probo/ui/src/v2/Drawer/DrawerBody";
 import { DrawerClose } from "@probo/ui/src/v2/Drawer/DrawerClose";

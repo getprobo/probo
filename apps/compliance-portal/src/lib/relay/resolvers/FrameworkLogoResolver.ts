@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getDisplayMode, subscribeDisplayMode } from "@probo/hooks";
+import { getDisplayMode, subscribeDisplayMode } from "@probo/ui/src/v2/displayMode/displayMode";
 import { graphql } from "react-relay";
 import { type LiveState, readFragment } from "relay-runtime";
 

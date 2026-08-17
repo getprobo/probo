@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { LifebuoyIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
-import { useDisplayMode } from "@probo/hooks";
+import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";

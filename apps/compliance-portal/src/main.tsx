@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { initDisplayMode } from "@probo/hooks";
+import { initDisplayMode } from "@probo/ui/src/v2/displayMode/displayMode";
 import { createRoot } from "react-dom/client";
 
 import "./index.css";

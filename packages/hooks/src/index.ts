@@ -26,13 +26,4 @@ export { useStateWithRef } from "./useStateWithRef";
 export { useCleanup } from "./useCleanup";
 export { useCopy } from "./useCopy";
 export { useFavicon } from "./useFavicon";
-export {
-  type DisplayMode,
-  getDisplayMode,
-  initDisplayMode,
-  setDisplayMode,
-  subscribeDisplayMode,
-  toggleDisplayMode,
-} from "./displayMode/displayMode";
-export { useDisplayMode } from "./displayMode/useDisplayMode";
 
