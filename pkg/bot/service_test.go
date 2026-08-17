@@ -270,6 +270,37 @@ func TestEnqueueMessageDoesNotQueueWhenDisabled(t *testing.T) {
 	assert.Zero(t, count)
 }
 
+func TestEnqueueMessageRejectsOrganizationTenantMismatch(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, _ := botTestDatabase(t)
+	otherOrganizationID := gid.New(gid.NewTenantID(), coredata.OrganizationEntityType)
+
+	err := pgClient.WithTx(
+		t.Context(),
+		func(ctx context.Context, tx pg.Tx) error {
+			_, err := NewService(ServiceConfig{}).EnqueueMessage(
+				ctx,
+				tx,
+				scope,
+				MessageParams{
+					OrganizationID:   otherOrganizationID,
+					Capability:       "test",
+					MessageType:      "test",
+					SubjectNamespace: "test",
+					SubjectKey:       "test",
+					EventKey:         "created",
+					Purpose:          coredata.BotMessagePurposePost,
+				},
+			)
+
+			return err
+		},
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "organization tenant mismatch")
+}
+
 func TestStableEventKeyNormalizesComponentOrder(t *testing.T) {
 	t.Parallel()
 

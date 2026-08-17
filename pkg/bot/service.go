@@ -73,6 +73,10 @@ func (s *Service) EnqueueMessage(
 		return nil, nil
 	}
 
+	if params.OrganizationID.TenantID() != scope.GetTenantID() {
+		return nil, fmt.Errorf("cannot enqueue bot message: organization tenant mismatch")
+	}
+
 	if params.OrganizationID == gid.Nil ||
 		params.Capability == "" ||
 		params.MessageType == "" ||
