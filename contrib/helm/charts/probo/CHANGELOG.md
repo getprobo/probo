@@ -4,6 +4,12 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.16.0] - 2026-08-17
+
+### Added
+
+- Support for externally terminated portal TLS: skips ACME environment variables and account-key secret, and disables the HAProxy TCP map, when a chart deployment runs in external TLS mode
+
 ## [0.15.0] - 2026-08-10
 
 ### Changed
