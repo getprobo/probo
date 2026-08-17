@@ -19,14 +19,27 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
 import type { RiskManagementNavPanel_organization$key } from "#/__generated__/iam/RiskManagementNavPanel_organization.graphql";
+import type { RiskManagementNavPanelQuery } from "#/__generated__/iam/RiskManagementNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
+
+const riskManagementNavPanelQuery = graphql`
+  query RiskManagementNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...RiskManagementNavPanel_organization
+      }
+    }
+  }
+`;
 
 const riskManagementNavPanelFragment = graphql`
   fragment RiskManagementNavPanel_organization on Organization {
@@ -35,12 +48,31 @@ const riskManagementNavPanelFragment = graphql`
   }
 `;
 
-export function RiskManagementNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function RiskManagementNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<RiskManagementNavPanelQuery> query={riskManagementNavPanelQuery}>
+      {queryRef => <RiskManagementNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface RiskManagementNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<RiskManagementNavPanelQuery>;
+}
+
+function RiskManagementNavPanelInner({ queryRef, group }: RiskManagementNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<RiskManagementNavPanelQuery>(
+    riskManagementNavPanelQuery,
+    queryRef,
+  );
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<RiskManagementNavPanel_organization$key>(
     riskManagementNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   return (

@@ -20,7 +20,6 @@
 
 import type { ComponentType } from "react";
 
-import type { NavPanel_organization$data } from "#/__generated__/iam/NavPanel_organization.graphql";
 import type { NavGroup, NavGroupKey } from "#/pages/iam/organizations/_lib/navigation";
 
 import { AccessReviewNavPanel } from "./AccessReviewNavPanel";
@@ -34,7 +33,6 @@ import { SettingsNavPanel } from "./SettingsNavPanel";
 import { TprmNavPanel } from "./TprmNavPanel";
 
 export interface NavPanelBodyProps {
-  organizationKey: NavPanel_organization$data;
   group: NavGroup;
 }
 

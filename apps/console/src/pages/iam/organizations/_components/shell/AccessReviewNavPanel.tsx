@@ -19,14 +19,27 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
 import type { AccessReviewNavPanel_organization$key } from "#/__generated__/iam/AccessReviewNavPanel_organization.graphql";
+import type { AccessReviewNavPanelQuery } from "#/__generated__/iam/AccessReviewNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
+
+const accessReviewNavPanelQuery = graphql`
+  query AccessReviewNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...AccessReviewNavPanel_organization
+      }
+    }
+  }
+`;
 
 const accessReviewNavPanelFragment = graphql`
   fragment AccessReviewNavPanel_organization on Organization {
@@ -35,12 +48,28 @@ const accessReviewNavPanelFragment = graphql`
   }
 `;
 
-export function AccessReviewNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function AccessReviewNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<AccessReviewNavPanelQuery> query={accessReviewNavPanelQuery}>
+      {queryRef => <AccessReviewNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface AccessReviewNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<AccessReviewNavPanelQuery>;
+}
+
+function AccessReviewNavPanelInner({ queryRef, group }: AccessReviewNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<AccessReviewNavPanelQuery>(accessReviewNavPanelQuery, queryRef);
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<AccessReviewNavPanel_organization$key>(
     accessReviewNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   return (

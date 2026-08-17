@@ -21,11 +21,12 @@
 import { lazy } from "@probo/react-lazy";
 import { startTransition, Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useQueryLoader } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation } from "react-router";
 
 import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
 import type { PrivacyNavPanel_organization$key } from "#/__generated__/iam/PrivacyNavPanel_organization.graphql";
+import type { PrivacyNavPanelQuery } from "#/__generated__/iam/PrivacyNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 import { CookieBannerNavItems } from "#/pages/organizations/cookie-banners/_components/CookieBannerNavItems";
@@ -35,6 +36,7 @@ import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { NavPanelGroup } from "./NavPanelGroup";
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
 import { navPanel } from "./variants";
 
@@ -44,6 +46,17 @@ const CookieBannerSwitcher = lazy(async () => {
   );
   return { default: Component };
 });
+
+const privacyNavPanelQuery = graphql`
+  query PrivacyNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...PrivacyNavPanel_organization
+      }
+    }
+  }
+`;
 
 const privacyNavPanelFragment = graphql`
   fragment PrivacyNavPanel_organization on Organization {
@@ -55,12 +68,28 @@ const privacyNavPanelFragment = graphql`
   }
 `;
 
-export function PrivacyNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function PrivacyNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<PrivacyNavPanelQuery> query={privacyNavPanelQuery}>
+      {queryRef => <PrivacyNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface PrivacyNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<PrivacyNavPanelQuery>;
+}
+
+function PrivacyNavPanelInner({ queryRef, group }: PrivacyNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<PrivacyNavPanelQuery>(privacyNavPanelQuery, queryRef);
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<PrivacyNavPanel_organization$key>(
     privacyNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   return (

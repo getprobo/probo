@@ -42,7 +42,6 @@ export const organizationLayoutQuery = graphql`
       ... on Organization {
         ...TopBar_organization @include(if: $hideNavigation)
         ...NavRail_organization @skip(if: $hideNavigation)
-        ...NavPanel_organization @skip(if: $hideNavigation)
         viewer @required(action: THROW) {
           fullName
           membership @required(action: THROW) {
@@ -83,7 +82,7 @@ export function OrganizationLayout({ hideNavigation = false, queryRef }: Organiz
         {hideNavigation && <TopBar organizationKey={organization} />}
         <div className={slots.body()}>
           {!hideNavigation && <NavRail organizationKey={organization} />}
-          {!hideNavigation && <NavPanel organizationKey={organization} />}
+          {!hideNavigation && <NavPanel />}
           <main className={slots.content()}>
             <div className={slots.contentInner()}>
               <CoreRelayProvider>

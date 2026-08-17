@@ -21,11 +21,12 @@
 import { lazy } from "@probo/react-lazy";
 import { startTransition, Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useQueryLoader } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { ThirdPartySwitcherValueQuery } from "#/__generated__/core/ThirdPartySwitcherValueQuery.graphql";
 import type { TprmNavPanel_organization$key } from "#/__generated__/iam/TprmNavPanel_organization.graphql";
+import type { TprmNavPanelQuery } from "#/__generated__/iam/TprmNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 import { ThirdPartyNavItems } from "#/pages/organizations/third-parties/_components/ThirdPartyNavItems";
@@ -33,6 +34,7 @@ import { thirdPartySwitcherValueQuery } from "#/pages/organizations/third-partie
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
 import { navPanel } from "./variants";
 
@@ -43,18 +45,45 @@ const ThirdPartySwitcher = lazy(async () => {
   return { default: Component };
 });
 
+const tprmNavPanelQuery = graphql`
+  query TprmNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...TprmNavPanel_organization
+      }
+    }
+  }
+`;
+
 const tprmNavPanelFragment = graphql`
   fragment TprmNavPanel_organization on Organization {
     canListThirdParties: permission(action: "core:thirdParty:list")
   }
 `;
 
-export function TprmNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function TprmNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<TprmNavPanelQuery> query={tprmNavPanelQuery}>
+      {queryRef => <TprmNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface TprmNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<TprmNavPanelQuery>;
+}
+
+function TprmNavPanelInner({ queryRef, group }: TprmNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<TprmNavPanelQuery>(tprmNavPanelQuery, queryRef);
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<TprmNavPanel_organization$key>(
     tprmNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   if (!organization.canListThirdParties) {

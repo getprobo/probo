@@ -19,14 +19,27 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
 import type { GovernanceNavPanel_organization$key } from "#/__generated__/iam/GovernanceNavPanel_organization.graphql";
+import type { GovernanceNavPanelQuery } from "#/__generated__/iam/GovernanceNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
+
+const governanceNavPanelQuery = graphql`
+  query GovernanceNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...GovernanceNavPanel_organization
+      }
+    }
+  }
+`;
 
 const governanceNavPanelFragment = graphql`
   fragment GovernanceNavPanel_organization on Organization {
@@ -40,12 +53,28 @@ const governanceNavPanelFragment = graphql`
   }
 `;
 
-export function GovernanceNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function GovernanceNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<GovernanceNavPanelQuery> query={governanceNavPanelQuery}>
+      {queryRef => <GovernanceNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface GovernanceNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<GovernanceNavPanelQuery>;
+}
+
+function GovernanceNavPanelInner({ queryRef, group }: GovernanceNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<GovernanceNavPanelQuery>(governanceNavPanelQuery, queryRef);
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<GovernanceNavPanel_organization$key>(
     governanceNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   return (

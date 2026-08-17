@@ -19,14 +19,27 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
 import type { RegistriesNavPanel_organization$key } from "#/__generated__/iam/RegistriesNavPanel_organization.graphql";
+import type { RegistriesNavPanelQuery } from "#/__generated__/iam/RegistriesNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
+
+const registriesNavPanelQuery = graphql`
+  query RegistriesNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...RegistriesNavPanel_organization
+      }
+    }
+  }
+`;
 
 const registriesNavPanelFragment = graphql`
   fragment RegistriesNavPanel_organization on Organization {
@@ -38,12 +51,28 @@ const registriesNavPanelFragment = graphql`
   }
 `;
 
-export function RegistriesNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function RegistriesNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<RegistriesNavPanelQuery> query={registriesNavPanelQuery}>
+      {queryRef => <RegistriesNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface RegistriesNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<RegistriesNavPanelQuery>;
+}
+
+function RegistriesNavPanelInner({ queryRef, group }: RegistriesNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<RegistriesNavPanelQuery>(registriesNavPanelQuery, queryRef);
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<RegistriesNavPanel_organization$key>(
     registriesNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   return (

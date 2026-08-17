@@ -19,14 +19,27 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
 import type { ItamNavPanel_organization$key } from "#/__generated__/iam/ItamNavPanel_organization.graphql";
+import type { ItamNavPanelQuery } from "#/__generated__/iam/ItamNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
+
+const itamNavPanelQuery = graphql`
+  query ItamNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...ItamNavPanel_organization
+      }
+    }
+  }
+`;
 
 const itamNavPanelFragment = graphql`
   fragment ItamNavPanel_organization on Organization {
@@ -34,12 +47,28 @@ const itamNavPanelFragment = graphql`
   }
 `;
 
-export function ItamNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function ItamNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<ItamNavPanelQuery> query={itamNavPanelQuery}>
+      {queryRef => <ItamNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface ItamNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<ItamNavPanelQuery>;
+}
+
+function ItamNavPanelInner({ queryRef, group }: ItamNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<ItamNavPanelQuery>(itamNavPanelQuery, queryRef);
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<ItamNavPanel_organization$key>(
     itamNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   if (!organization.canListDevices) {

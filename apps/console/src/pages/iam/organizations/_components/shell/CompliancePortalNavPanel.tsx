@@ -20,12 +20,13 @@
 
 import { lazy } from "@probo/react-lazy";
 import { startTransition, Suspense, useEffect } from "react";
-import { graphql, useFragment, useQueryLoader } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation, useParams } from "react-router";
 
 import type { CompliancePortalNavItemsQuery } from "#/__generated__/core/CompliancePortalNavItemsQuery.graphql";
 import type { CompliancePortalSwitcherRowQuery } from "#/__generated__/core/CompliancePortalSwitcherRowQuery.graphql";
 import type { CompliancePortalNavPanel_organization$key } from "#/__generated__/iam/CompliancePortalNavPanel_organization.graphql";
+import type { CompliancePortalNavPanelQuery } from "#/__generated__/iam/CompliancePortalNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   CompliancePortalNavItems,
@@ -34,7 +35,7 @@ import {
 import { compliancePortalSwitcherRowQuery } from "#/pages/organizations/compliance-portals/_components/CompliancePortalSwitcherRow";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
-import type { NavPanelBodyProps } from "./navPanels";
+import { NavPanelQuery } from "./NavPanelQuery";
 import { navPanel } from "./variants";
 
 const CompliancePortalSwitcher = lazy(async () => {
@@ -44,16 +45,46 @@ const CompliancePortalSwitcher = lazy(async () => {
   return { default: Component };
 });
 
+const compliancePortalNavPanelQuery = graphql`
+  query CompliancePortalNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...CompliancePortalNavPanel_organization
+      }
+    }
+  }
+`;
+
 const compliancePortalNavPanelFragment = graphql`
   fragment CompliancePortalNavPanel_organization on Organization {
     canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
   }
 `;
 
-export function CompliancePortalNavPanel({ organizationKey }: NavPanelBodyProps) {
+export function CompliancePortalNavPanel() {
+  return (
+    <NavPanelQuery<CompliancePortalNavPanelQuery> query={compliancePortalNavPanelQuery}>
+      {queryRef => <CompliancePortalNavPanelInner queryRef={queryRef} />}
+    </NavPanelQuery>
+  );
+}
+
+interface CompliancePortalNavPanelInnerProps {
+  queryRef: PreloadedQuery<CompliancePortalNavPanelQuery>;
+}
+
+function CompliancePortalNavPanelInner({ queryRef }: CompliancePortalNavPanelInnerProps) {
+  const data = usePreloadedQuery<CompliancePortalNavPanelQuery>(
+    compliancePortalNavPanelQuery,
+    queryRef,
+  );
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<CompliancePortalNavPanel_organization$key>(
     compliancePortalNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
 
   if (!organization.canGetCompliancePortal) {

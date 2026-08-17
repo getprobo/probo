@@ -19,15 +19,28 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
 import type { SettingsNavPanel_organization$key } from "#/__generated__/iam/SettingsNavPanel_organization.graphql";
+import type { SettingsNavPanelQuery } from "#/__generated__/iam/SettingsNavPanelQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 import { NavPanelGroup } from "./NavPanelGroup";
 import { NavPanelItem } from "./NavPanelItem";
+import { NavPanelQuery } from "./NavPanelQuery";
 import type { NavPanelBodyProps } from "./navPanels";
+
+const settingsNavPanelQuery = graphql`
+  query SettingsNavPanelQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...SettingsNavPanel_organization
+      }
+    }
+  }
+`;
 
 const settingsNavPanelFragment = graphql`
   fragment SettingsNavPanel_organization on Organization {
@@ -39,12 +52,28 @@ const settingsNavPanelFragment = graphql`
   }
 `;
 
-export function SettingsNavPanel({ organizationKey, group }: NavPanelBodyProps) {
+export function SettingsNavPanel({ group }: NavPanelBodyProps) {
+  return (
+    <NavPanelQuery<SettingsNavPanelQuery> query={settingsNavPanelQuery}>
+      {queryRef => <SettingsNavPanelInner queryRef={queryRef} group={group} />}
+    </NavPanelQuery>
+  );
+}
+
+interface SettingsNavPanelInnerProps extends NavPanelBodyProps {
+  queryRef: PreloadedQuery<SettingsNavPanelQuery>;
+}
+
+function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<SettingsNavPanelQuery>(settingsNavPanelQuery, queryRef);
+  if (data.organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
   const organization = useFragment<SettingsNavPanel_organization$key>(
     settingsNavPanelFragment,
-    organizationKey,
+    data.organization,
   );
   const showIam = organization.canListMembers
     || organization.canUpdateOrganization

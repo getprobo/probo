@@ -18,34 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
+import { startTransition, useEffect } from "react";
+import { type PreloadedQuery, useQueryLoader } from "react-relay";
+import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
 
-import { NAV_GROUPS } from "#/pages/iam/organizations/_lib/navigation";
-import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { navPanels } from "./navPanels";
-import { navPanel } from "./variants";
+export function useNavPanelQuery<
+  TQuery extends OperationType & { variables: { organizationId: string } },
+>(
+  query: GraphQLTaggedNode,
+): PreloadedQuery<TQuery> | null {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery] = useQueryLoader<TQuery>(query);
 
-export function NavPanel() {
-  const { t } = useTranslation();
-  const activeGroup = useActiveNavGroup(NAV_GROUPS);
-  const slots = navPanel();
+  useEffect(() => {
+    startTransition(() => {
+      loadQuery(
+        { organizationId },
+        { fetchPolicy: "store-or-network" },
+      );
+    });
+  }, [loadQuery, organizationId]);
 
-  if (activeGroup == null) {
-    return <aside className={slots.panel()} />;
-  }
-
-  const Body = navPanels[activeGroup.key];
-
-  return (
-    <aside className={slots.panel()}>
-      <Text size={2} weight="medium" color="faint" className={slots.title()}>
-        {t(`nav.groups.${activeGroup.key}`)}
-      </Text>
-      <div className={slots.list()}>
-        <Body group={activeGroup} />
-      </div>
-    </aside>
-  );
+  return queryRef ?? null;
 }
