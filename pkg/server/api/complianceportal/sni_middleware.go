@@ -138,9 +138,11 @@ func NewDomainMiddleware(
 				Scheme: "https",
 			}).String()
 			ctx = ContextWithCompliancePortalBaseURL(ctx, baseURL)
+
 			if externallyTerminatedTLS && r.TLS == nil {
 				r.Host = host
 			}
+
 			r = r.WithContext(ctx)
 
 			if compliancePage.Active {

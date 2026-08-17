@@ -111,6 +111,7 @@ func TestCompliancePortalRequest(t *testing.T) {
 				t.Parallel()
 
 				req := httptest.NewRequest("GET", "http://internal/", nil)
+
 				req.Host = tt.host
 				if tt.serverName != "" {
 					req.TLS = &tls.ConnectionState{ServerName: tt.serverName}
