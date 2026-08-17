@@ -107,6 +107,36 @@ func newNotificationFixture(t *testing.T) notificationFixture {
 	}
 }
 
+func (f notificationFixture) seal(
+	t *testing.T,
+	messages ...*coredata.SlackbotMessage,
+) {
+	t.Helper()
+
+	now := time.Now()
+	require.NoError(
+		t,
+		f.client.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				for _, message := range messages {
+					if message == nil || message.SentAt != nil || message.Error != nil {
+						continue
+					}
+
+					message.SentAt = &now
+					message.UpdatedAt = now
+					if err := message.UpdateDeliveryState(ctx, tx, f.scope); err != nil {
+						return err
+					}
+				}
+
+				return nil
+			},
+		),
+	)
+}
+
 func deliverNotification(
 	t *testing.T,
 	ctx context.Context,
@@ -177,6 +207,7 @@ func TestNotificationService_QueueAndLookup(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
+	fixture.seal(t, initial)
 	assert.Equal(t, initial.ID, initial.InitialSlackbotMessageID)
 	assert.NotContains(t, metadata, coredata.SlackbotMessageMetadataDedupKey)
 
@@ -194,6 +225,7 @@ func TestNotificationService_QueueAndLookup(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
+	fixture.seal(t, deduplicated)
 	assert.NotEqual(t, initial.ID, deduplicated.ID)
 	assert.Equal(t, initial.ID, deduplicated.InitialSlackbotMessageID)
 
@@ -205,6 +237,7 @@ func TestNotificationService_QueueAndLookup(t *testing.T) {
 		map[string]any{"revision": true},
 	)
 	require.NoError(t, err)
+	fixture.seal(t, revision)
 	assert.Equal(t, initial.ID, revision.InitialSlackbotMessageID)
 	assert.Equal(t, initial.MessageType, revision.MessageType)
 	assert.Equal(t, initial.OrganizationID, revision.OrganizationID)
@@ -292,8 +325,10 @@ func TestNotificationService_QueueWithoutDedup(t *testing.T) {
 
 	first, err := fixture.service.Queue(ctx, fixture.scope, req)
 	require.NoError(t, err)
+	fixture.seal(t, first)
 	second, err := fixture.service.Queue(ctx, fixture.scope, req)
 	require.NoError(t, err)
+	fixture.seal(t, second)
 
 	assert.Equal(t, first.ID, first.InitialSlackbotMessageID)
 	assert.Equal(t, second.ID, second.InitialSlackbotMessageID)
@@ -320,6 +355,7 @@ func TestNotificationService_QueueIsIdempotentBySourceEvent(t *testing.T) {
 
 	first, err := fixture.service.Queue(ctx, fixture.scope, req)
 	require.NoError(t, err)
+	fixture.seal(t, first)
 
 	req.Body = map[string]any{"text": "retry"}
 	second, err := fixture.service.Queue(ctx, fixture.scope, req)
@@ -488,5 +524,109 @@ func TestNotificationService_QueueReloadsOnSourceEventRace(t *testing.T) {
 	require.NoError(t, err2)
 	require.NotNil(t, first)
 	require.NotNil(t, second)
+	fixture.seal(t, first, second)
 	assert.Equal(t, first.ID, second.ID)
+}
+
+func TestNotificationService_QueueSkipsDeadLetteredSourceEvent(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	fixture := newNotificationFixture(t)
+	sourceEventID := gid.New(
+		fixture.scope.GetTenantID(),
+		coredata.BotMessageEntityType,
+	).String()
+	req := slackchannel.QueueNotificationRequest{
+		OrganizationID: fixture.organizationID,
+		ChannelID:      "C-DEAD",
+		MessageType:    "GENERIC_NOTIFICATION",
+		Body:           map[string]any{"text": "first"},
+		Metadata:       map[string]any{},
+		SourceEventID:  &sourceEventID,
+	}
+
+	first, err := fixture.service.Queue(ctx, fixture.scope, req)
+	require.NoError(t, err)
+	fixture.seal(t, first)
+
+	failedChannel := "C-FAILED"
+	failedTS := "111.222"
+	first.Error = new("delivery failed")
+	first.ChannelID = &failedChannel
+	first.MessageTS = &failedTS
+	require.NoError(
+		t,
+		fixture.client.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				first.UpdatedAt = time.Now()
+
+				return first.UpdateDeliveryState(ctx, tx, fixture.scope)
+			},
+		),
+	)
+
+	req.Body = map[string]any{"text": "retry after dead letter"}
+	req.ChannelID = "C-RETRY"
+	second, err := fixture.service.Queue(ctx, fixture.scope, req)
+	require.NoError(t, err)
+	require.NotNil(t, second)
+	fixture.seal(t, second)
+	assert.NotEqual(t, first.ID, second.ID)
+	assert.Equal(t, "retry after dead letter", second.Body["text"])
+	require.NotNil(t, second.ChannelID)
+	assert.Equal(t, "C-RETRY", *second.ChannelID)
+	assert.Nil(t, second.MessageTS)
+	assert.Nil(t, second.Error)
+}
+
+func TestNotificationService_QueueRevisionIsIdempotentBySourceEvent(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	fixture := newNotificationFixture(t)
+	sourceEventID := gid.New(
+		fixture.scope.GetTenantID(),
+		coredata.BotMessageEntityType,
+	).String()
+
+	initial, err := fixture.service.Queue(
+		ctx,
+		fixture.scope,
+		slackchannel.QueueNotificationRequest{
+			OrganizationID: fixture.organizationID,
+			ChannelID:      "C-REV",
+			MessageType:    "GENERIC_NOTIFICATION",
+			Body:           map[string]any{"text": "initial"},
+			Metadata:       map[string]any{},
+		},
+	)
+	require.NoError(t, err)
+	fixture.seal(t, initial)
+
+	metadata := map[string]any{
+		coredata.SlackbotMessageMetadataSourceEventID: sourceEventID,
+	}
+	first, err := fixture.service.QueueRevision(
+		ctx,
+		fixture.scope,
+		initial.ID,
+		map[string]any{"text": "revision"},
+		metadata,
+	)
+	require.NoError(t, err)
+	fixture.seal(t, first)
+
+	second, err := fixture.service.QueueRevision(
+		ctx,
+		fixture.scope,
+		initial.ID,
+		map[string]any{"text": "revision retry"},
+		metadata,
+	)
+	require.NoError(t, err)
+	fixture.seal(t, second)
+	assert.Equal(t, first.ID, second.ID)
+	assert.Equal(t, "revision", second.Body["text"])
 }

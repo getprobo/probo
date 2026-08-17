@@ -22,6 +22,7 @@ package slack_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -209,4 +210,53 @@ func TestService_QueueIsIdempotentBySourceEvent(t *testing.T) {
 
 	assert.Equal(t, first.ID, second.ID)
 	assert.Equal(t, "first", second.Body["text"])
+}
+
+func TestService_QueueReloadsOnSourceEventRace(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	fixture := newLegacyLookupFixture(t)
+	service := slack.NewService(fixture.client, "", "", log.NewLogger())
+	sourceEventID := gid.New(
+		fixture.scope.GetTenantID(),
+		coredata.BotMessageEntityType,
+	).String()
+
+	var (
+		wg            sync.WaitGroup
+		first, second *coredata.SlackMessage
+		err1, err2    error
+	)
+
+	queue := func(message **coredata.SlackMessage, queueErr *error) {
+		defer wg.Done()
+
+		queued, err := service.Queue(
+			ctx,
+			fixture.scope,
+			slack.QueueRequest{
+				OrganizationID: fixture.organizationID,
+				MessageType:    coredata.SlackMessageTypeWelcome,
+				Body:           map[string]any{"text": "race"},
+				Metadata:       map[string]any{},
+				SourceEventID:  &sourceEventID,
+			},
+		)
+		*message = queued
+		*queueErr = err
+	}
+
+	wg.Add(2)
+
+	go queue(&first, &err1)
+	go queue(&second, &err2)
+
+	wg.Wait()
+
+	require.NoError(t, err1)
+	require.NoError(t, err2)
+	require.NotNil(t, first)
+	require.NotNil(t, second)
+	assert.Equal(t, first.ID, second.ID)
 }

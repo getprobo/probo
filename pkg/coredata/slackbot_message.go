@@ -570,6 +570,40 @@ WHERE %s
 	return nil
 }
 
+func (m *SlackbotMessage) UpdateMetadata(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE slackbot_messages
+SET
+	metadata = @metadata,
+	updated_at = @updated_at
+WHERE %s
+	AND id = @id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         m.ID,
+		"metadata":   m.Metadata,
+		"updated_at": m.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update Slackbot message metadata: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (m *SlackbotMessage) PropagateDeliveryReferenceToRevisions(
 	ctx context.Context,
 	conn pg.Tx,

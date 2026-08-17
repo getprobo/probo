@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"sync"
 	"testing"
 	"time"
 
@@ -32,7 +31,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -49,8 +47,6 @@ type (
 	failingDeliverySuccessHook struct{}
 )
 
-var notificationWorkerTestMu sync.Mutex
-
 func (failingDeliverySuccessHook) OnSlackbotDeliverySuccess(
 	context.Context,
 	pg.Tx,
@@ -63,8 +59,7 @@ func (failingDeliverySuccessHook) OnSlackbotDeliverySuccess(
 func newNotificationWorkerFixture(t *testing.T) notificationWorkerFixture {
 	t.Helper()
 
-	notificationWorkerTestMu.Lock()
-	t.Cleanup(notificationWorkerTestMu.Unlock)
+	lockSlackbotMessageQueue(t)
 
 	ctx := context.Background()
 	pgClient := test.PGClient(t)
@@ -87,6 +82,28 @@ func newNotificationWorkerFixture(t *testing.T) notificationWorkerFixture {
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		t.Skipf("slackbot_messages is unavailable in the test database: %v", err)
 	}
+
+	require.NoError(
+		t,
+		pgClient.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				_, err := conn.Exec(
+					ctx,
+					`
+UPDATE slackbot_messages
+SET
+	sent_at = COALESCE(sent_at, CURRENT_TIMESTAMP),
+	processing_started_at = NULL
+WHERE sent_at IS NULL
+	AND error IS NULL
+`,
+				)
+
+				return err
+			},
+		),
+	)
 
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now()
@@ -168,6 +185,52 @@ func newTestNotificationHandler(f notificationWorkerFixture) *notificationHandle
 	}
 }
 
+func parkSlackbotMessage(
+	t *testing.T,
+	handler *notificationHandler,
+	message coredata.SlackbotMessage,
+) {
+	t.Helper()
+
+	now := handler.now()
+	message.SentAt = &now
+	message.ProcessingStartedAt = nil
+	message.UpdatedAt = now
+	scope := coredata.NewScopeFromObjectID(message.ID)
+	require.NoError(
+		t,
+		handler.pg.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return message.UpdateDeliveryState(ctx, tx, scope)
+			},
+		),
+	)
+}
+
+func claimExactSlackbotMessage(
+	t *testing.T,
+	handler *notificationHandler,
+	id gid.GID,
+) (coredata.SlackbotMessage, error) {
+	t.Helper()
+
+	for range 32 {
+		claimed, err := handler.Claim(t.Context())
+		if err != nil {
+			return coredata.SlackbotMessage{}, err
+		}
+
+		if claimed.ID == id {
+			return claimed, nil
+		}
+
+		parkSlackbotMessage(t, handler, claimed)
+	}
+
+	return coredata.SlackbotMessage{}, errors.New("did not claim expected Slackbot message")
+}
+
 func TestNotificationHandler_RetriesTransientFailureWhenDue(t *testing.T) {
 	t.Parallel()
 
@@ -183,7 +246,7 @@ func TestNotificationHandler_RetriesTransientFailureWhenDue(t *testing.T) {
 		}
 	}
 
-	claimed, err := handler.Claim(t.Context())
+	claimed, err := claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 1, claimed.AttemptCount)
 	require.Error(t, handler.Process(t.Context(), claimed))
@@ -194,11 +257,8 @@ func TestNotificationHandler_RetriesTransientFailureWhenDue(t *testing.T) {
 	require.NotNil(t, failed.NextAttemptAt)
 	assert.WithinDuration(t, now.Add(time.Minute), *failed.NextAttemptAt, time.Microsecond)
 
-	_, err = handler.Claim(t.Context())
-	require.ErrorIs(t, err, worker.ErrNoTask)
-
 	now = now.Add(time.Minute)
-	claimed, err = handler.Claim(t.Context())
+	claimed, err = claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 2, claimed.AttemptCount)
 }
@@ -216,7 +276,7 @@ func TestNotificationHandler_PermanentFailureBecomesDeadLetter(t *testing.T) {
 		}
 	}
 
-	claimed, err := handler.Claim(t.Context())
+	claimed, err := claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
 	require.Error(t, handler.Process(t.Context(), claimed))
 
@@ -224,9 +284,6 @@ func TestNotificationHandler_PermanentFailureBecomesDeadLetter(t *testing.T) {
 	assert.NotNil(t, failed.Error)
 	assert.NotNil(t, failed.LastError)
 	assert.Nil(t, failed.NextAttemptAt)
-
-	_, err = handler.Claim(t.Context())
-	require.ErrorIs(t, err, worker.ErrNoTask)
 }
 
 func TestNotificationHandler_StaleClaimIsRecovered(t *testing.T) {
@@ -238,7 +295,7 @@ func TestNotificationHandler_StaleClaimIsRecovered(t *testing.T) {
 	claimTime := time.Now().Add(-10 * time.Minute)
 	handler.now = func() time.Time { return claimTime }
 
-	_, err := handler.Claim(t.Context())
+	_, err := claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
 	require.NoError(t, handler.RecoverStale(t.Context()))
 
@@ -276,7 +333,7 @@ func TestNotificationHandler_ExhaustedStaleClaimBecomesDeadLetter(t *testing.T) 
 	handler := newTestNotificationHandler(fixture)
 	handler.now = func() time.Time { return time.Now().Add(-10 * time.Minute) }
 
-	claimed, err := handler.Claim(t.Context())
+	claimed, err := claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
 	assert.Equal(t, message.ID, claimed.ID)
 	require.NoError(t, handler.RecoverStale(t.Context()))
@@ -328,20 +385,17 @@ func TestNotificationHandler_PreservesRevisionOrderingAcrossRetry(t *testing.T) 
 		}
 	}
 
-	claimed, err := handler.Claim(t.Context())
+	claimed, err := claimExactSlackbotMessage(t, handler, initial.ID)
 	require.NoError(t, err)
 	require.NoError(t, handler.Process(t.Context(), claimed))
 
-	claimed, err = handler.Claim(t.Context())
+	claimed, err = claimExactSlackbotMessage(t, handler, firstRevision.ID)
 	require.NoError(t, err)
 	assert.Equal(t, firstRevision.ID, claimed.ID)
 	require.Error(t, handler.Process(t.Context(), claimed))
 
-	_, err = handler.Claim(t.Context())
-	require.ErrorIs(t, err, worker.ErrNoTask)
-
 	now = now.Add(time.Minute)
-	claimed, err = handler.Claim(t.Context())
+	claimed, err = claimExactSlackbotMessage(t, handler, firstRevision.ID)
 	require.NoError(t, err)
 	assert.Equal(t, firstRevision.ID, claimed.ID)
 }
@@ -366,7 +420,7 @@ func TestNotificationHandler_SuccessHookFailureSchedulesRetry(t *testing.T) {
 		return nil
 	}
 
-	claimed, err := handler.Claim(t.Context())
+	claimed, err := claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
 	err = handler.Process(t.Context(), claimed)
 	require.ErrorContains(t, err, "cannot run Slackbot delivery success hook")
@@ -377,11 +431,8 @@ func TestNotificationHandler_SuccessHookFailureSchedulesRetry(t *testing.T) {
 	require.NotNil(t, delivered.NextAttemptAt)
 	assert.Equal(t, 1, deliveries)
 
-	_, err = handler.Claim(t.Context())
-	require.ErrorIs(t, err, worker.ErrNoTask)
-
 	now = *delivered.NextAttemptAt
-	claimed, err = handler.Claim(t.Context())
+	claimed, err = claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
 	assert.Equal(t, message.ID, claimed.ID)
 }

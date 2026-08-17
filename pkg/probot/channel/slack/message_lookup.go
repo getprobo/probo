@@ -120,6 +120,10 @@ func (s *MessageService) GetMessage(
 ) (*bot.DeliveredMessage, error) {
 	switch messageID.EntityType() {
 	case coredata.SlackbotMessageEntityType:
+		if s.modern == nil {
+			return nil, fmt.Errorf("slackbot message backend is unavailable")
+		}
+
 		message, err := s.modern.GetByID(ctx, scope, messageID)
 		if err != nil {
 			return nil, err
@@ -127,6 +131,10 @@ func (s *MessageService) GetMessage(
 
 		return modernMessage(message), nil
 	case coredata.SlackMessageEntityType:
+		if s.legacy == nil {
+			return nil, fmt.Errorf("legacy Slack message backend is unavailable")
+		}
+
 		message, err := s.legacy.GetByID(ctx, scope, messageID)
 		if err != nil {
 			return nil, err

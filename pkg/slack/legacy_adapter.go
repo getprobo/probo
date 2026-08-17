@@ -117,7 +117,26 @@ func (s *Service) Queue(
 				}
 			}
 
-			if err := message.Insert(ctx, tx, scope); err != nil {
+			if err := insertLegacyMessage(ctx, tx, scope, message); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) && req.SourceEventID != nil {
+					var existing coredata.SlackMessage
+					if loadErr := existing.LoadBySourceEventID(
+						ctx,
+						tx,
+						scope,
+						*req.SourceEventID,
+					); loadErr != nil {
+						return fmt.Errorf(
+							"cannot reload legacy Slack message after source event conflict: %w",
+							loadErr,
+						)
+					}
+
+					*message = existing
+
+					return nil
+				}
+
 				return fmt.Errorf("cannot queue legacy Slack message: %w", err)
 			}
 
@@ -310,6 +329,28 @@ func (s *Service) UpdateViaResponseURL(
 	}
 
 	return revision, nil
+}
+
+func insertLegacyMessage(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	message *coredata.SlackMessage,
+) error {
+	if _, err := tx.Exec(ctx, "SAVEPOINT slack_message_insert"); err != nil {
+		return fmt.Errorf("cannot create legacy Slack insert savepoint: %w", err)
+	}
+
+	err := message.Insert(ctx, tx, scope)
+	if err == nil {
+		return nil
+	}
+
+	if _, rbErr := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT slack_message_insert"); rbErr != nil {
+		return fmt.Errorf("cannot roll back legacy Slack insert savepoint: %w", rbErr)
+	}
+
+	return err
 }
 
 func validateDedup(key *string, window *time.Duration) error {

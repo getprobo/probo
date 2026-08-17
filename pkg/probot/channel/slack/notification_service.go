@@ -99,15 +99,13 @@ func (s *NotificationService) Queue(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if req.SourceEventID != nil {
-				var existing coredata.SlackbotMessage
-
-				err := existing.LoadBySourceEventID(ctx, tx, scope, *req.SourceEventID)
-				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load Slackbot message by source event: %w", err)
+				existing, err := reusableBySourceEventID(ctx, tx, scope, *req.SourceEventID)
+				if err != nil {
+					return err
 				}
 
-				if err == nil {
-					*message = existing
+				if existing != nil {
+					*message = *existing
 					return nil
 				}
 			}
@@ -136,7 +134,7 @@ func (s *NotificationService) Queue(
 				}
 			}
 
-			if err := message.Insert(ctx, tx, scope); err != nil {
+			if err := insertSlackbotMessage(ctx, tx, scope, message); err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) && req.SourceEventID != nil {
 					var existing coredata.SlackbotMessage
 					if loadErr := existing.LoadBySourceEventID(
@@ -186,18 +184,54 @@ func (s *NotificationService) QueueRevision(
 				return fmt.Errorf("cannot load Slackbot message for revision: %w", err)
 			}
 
+			revisionMetadata := cloneNotificationData(metadata)
+			if source, ok := revisionMetadata[coredata.SlackbotMessageMetadataSourceEventID].(string); ok &&
+				source != "" {
+				reusable, err := reusableBySourceEventID(ctx, tx, scope, source)
+				if err != nil {
+					return err
+				}
+
+				if reusable != nil {
+					revision = reusable
+					return nil
+				}
+			}
+
 			revision = coredata.NewSlackbotMessage(
 				scope,
 				existing.OrganizationID,
 				existing.MessageType,
 				cloneNotificationData(body),
-				cloneNotificationData(metadata),
+				revisionMetadata,
 			)
 			revision.ChannelID = existing.ChannelID
 			revision.MessageTS = existing.MessageTS
 			revision.InitialSlackbotMessageID = existing.InitialSlackbotMessageID
 
-			if err := revision.Insert(ctx, tx, scope); err != nil {
+			if err := insertSlackbotMessage(ctx, tx, scope, revision); err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					source, ok := revisionMetadata[coredata.SlackbotMessageMetadataSourceEventID].(string)
+					if ok && source != "" {
+						var conflicted coredata.SlackbotMessage
+						if loadErr := conflicted.LoadBySourceEventID(
+							ctx,
+							tx,
+							scope,
+							source,
+						); loadErr != nil {
+							return fmt.Errorf(
+								"cannot reload Slackbot revision after source event conflict: %w",
+								loadErr,
+							)
+						}
+
+						revision = &conflicted
+
+						return nil
+					}
+				}
+
 				return fmt.Errorf("cannot queue Slackbot message revision: %w", err)
 			}
 
@@ -366,6 +400,61 @@ func (s *NotificationService) ReleaseInteractiveAction(
 			return claim.Release(ctx, tx, scope, processingToken)
 		},
 	)
+}
+
+func insertSlackbotMessage(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	message *coredata.SlackbotMessage,
+) error {
+	if _, err := tx.Exec(ctx, "SAVEPOINT slackbot_message_insert"); err != nil {
+		return fmt.Errorf("cannot create Slackbot insert savepoint: %w", err)
+	}
+
+	err := message.Insert(ctx, tx, scope)
+	if err == nil {
+		return nil
+	}
+
+	if _, rbErr := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT slackbot_message_insert"); rbErr != nil {
+		return fmt.Errorf("cannot roll back Slackbot insert savepoint: %w", rbErr)
+	}
+
+	return err
+}
+
+func reusableBySourceEventID(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	sourceEventID string,
+) (*coredata.SlackbotMessage, error) {
+	var existing coredata.SlackbotMessage
+
+	err := existing.LoadBySourceEventID(ctx, tx, scope, sourceEventID)
+	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load Slackbot message by source event: %w", err)
+	}
+
+	if err != nil {
+		return nil, nil
+	}
+
+	if existing.Error == nil {
+		return &existing, nil
+	}
+
+	if existing.Metadata != nil {
+		delete(existing.Metadata, coredata.SlackbotMessageMetadataSourceEventID)
+	}
+
+	existing.UpdatedAt = time.Now()
+	if err := existing.UpdateMetadata(ctx, tx, scope); err != nil {
+		return nil, fmt.Errorf("cannot release dead-lettered Slackbot source event: %w", err)
+	}
+
+	return nil, nil
 }
 
 func validateDedup(dedupKey *string, dedupWindow *time.Duration) error {

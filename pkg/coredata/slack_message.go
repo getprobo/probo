@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -182,6 +183,12 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "slack_messages_source_event_id_unique" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot insert slack message: %w", err)
 	}
 
