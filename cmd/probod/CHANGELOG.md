@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.261.1] - 2026-08-17
+
+### Fixed
+
+- Updated Go dependencies to address a reported security vulnerability
+
 ## [0.261.0] - 2026-08-17
 
 ### Added
