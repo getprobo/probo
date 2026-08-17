@@ -42,7 +42,6 @@ func TestAuthentikRegistrationMetadata(t *testing.T) {
 
 	assert.Equal(t, "authentik", reg.DisplayName)
 	assert.True(t, reg.SupportsAPIKey)
-	// The API token is a plain bearer credential.
 	assert.Empty(t, reg.APIKeyHeader)
 	assert.Empty(t, reg.APIKeyAuthScheme)
 	assert.False(t, reg.APIKeyBasicAuth)
@@ -50,7 +49,6 @@ func TestAuthentikRegistrationMetadata(t *testing.T) {
 	require.Len(t, reg.APIKeyExtraSettings, 1)
 	assert.Equal(t, "baseUrl", reg.APIKeyExtraSettings[0].Key)
 	assert.True(t, reg.APIKeyExtraSettings[0].Required)
-	// Self-hosted: the host comes from settings, never from Endpoints.
 	assert.Empty(t, reg.Endpoints.APIBase)
 	assert.NotNil(t, reg.BuildProbeURL)
 	assert.NotNil(t, reg.NewNameResolver)
@@ -89,11 +87,12 @@ func TestAuthentikNewDriver(t *testing.T) {
 	})
 
 	for name, baseURL := range map[string]string{
-		"missing":     "",
-		"no scheme":   "authentik.example.com",
-		"bad scheme":  "ftp://authentik.example.com",
-		"no host":     "https://",
-		"unparseable": "https://authentik.example.com/%zz",
+		"missing":           "",
+		"no scheme":         "authentik.example.com",
+		"bad scheme":        "ftp://authentik.example.com",
+		"no host":           "https://",
+		"unparseable":       "https://authentik.example.com/%zz",
+		"port without host": "https://:443",
 	} {
 		t.Run("rejects "+name+" base_url", func(t *testing.T) {
 			t.Parallel()
