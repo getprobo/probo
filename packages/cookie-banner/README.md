@@ -119,12 +119,28 @@ Style the **host** for font size and color (not inner children). Host styles sti
 <probo-settings-link>Cookie settings</probo-settings-link>
 ```
 
+## Google Consent Mode
+
+The SDK ships with a Google Consent Mode v2 integration, enabled by default: it sends a deny-all `consent default` on load and `consent update` calls mapped from each category's consent types.
+
+If your site manages Consent Mode itself (for example through an existing GTM setup), disable the integration so the SDK never touches `gtag`/`dataLayer`:
+
+```html
+<!-- Script tag -->
+<script src="..." data-banner-id="..." data-base-url="..." data-google-consent-mode="off"></script>
+
+<!-- Themed or headless components -->
+<probo-cookie-banner banner-id="..." base-url="..." google-consent-mode="off"></probo-cookie-banner>
+```
+
+Programmatic use of `CookieBannerClient` takes the same switch as an option: `googleConsentMode: false`. Disabling covers all of it — the eager deny-all default, the discovery-mode grant-all, and per-consent updates.
+
 ## Key Features
 
 - **Multi-regulation compliance** — Supports opt-in (GDPR, ePrivacy) and opt-out (CCPA/CPRA) consent modes, Global Privacy Control (GPC) detection, and per-category cookie controls. Under CCPA the banner starts closed; the settings link (“Your Privacy Choices” + official icon) opens the Privacy Choices panel with sale/sharing opt-out and an SPI rights statement.
 - **Consent audit trail** — Every consent action is recorded server-side with anonymized IP, user agent, per-category choices, and a reference to the exact banner version the visitor saw.
 - **Third-party blocking** — Automatically prevents scripts, iframes, images, and other resources from loading until the visitor grants consent for the matching category.
-- **Built-in integrations** — Syncs consent state with Google Consent Mode v2 and PostHog automatically.
+- **Built-in integrations** — Syncs consent state with Google Consent Mode v2 automatically (can be disabled for sites that manage Consent Mode themselves).
 - **Multi-language support** — Built-in translations for English, French, German, and Spanish. The SDK auto-detects the visitor's language from the page or browser. The CCPA “Your Privacy Choices” link title stays in English (statutory label).
 - **Theming** — Match your brand with CSS custom properties for colors, fonts, border radius, and more. Supports dark mode.
 

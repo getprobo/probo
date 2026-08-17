@@ -61,9 +61,12 @@ export class ProboThemedBanner extends HTMLElement {
     const lang = this.getAttribute("lang");
     const langAttr = lang ? ` lang="${esc(lang)}"` : "";
 
+    const gcm = this.getAttribute("google-consent-mode");
+    const gcmAttr = gcm ? ` google-consent-mode="${esc(gcm)}"` : "";
+
     this.shadow.innerHTML = `
       <style>${THEMED_STYLES}</style>
-      <probo-cookie-banner-root banner-id="${esc(bannerId)}" base-url="${esc(baseUrl)}"${langAttr}></probo-cookie-banner-root>
+      <probo-cookie-banner-root banner-id="${esc(bannerId)}" base-url="${esc(baseUrl)}"${langAttr}${gcmAttr}></probo-cookie-banner-root>
     `;
 
     const root = this.shadow.querySelector("probo-cookie-banner-root") as ProboCookieBannerRoot;

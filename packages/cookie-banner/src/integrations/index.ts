@@ -24,8 +24,22 @@ export { GoogleConsentModeIntegration } from "./gcm";
 import type { ConsentIntegration } from "./integration";
 import { GoogleConsentModeIntegration } from "./gcm";
 
-export function createDefaultIntegrations(): ConsentIntegration[] {
+export function createDefaultIntegrations(
+  options?: { googleConsentMode?: boolean },
+): ConsentIntegration[] {
+  if (options?.googleConsentMode === false) {
+    return [];
+  }
+
   return [
     new GoogleConsentModeIntegration(),
   ];
+}
+
+// resolveGoogleConsentMode maps the `google-consent-mode` element attribute
+// (and the `data-google-consent-mode` script attribute) to the client option.
+// Only "off" and "false" disable the integration; absent or any other value
+// keeps the default behavior.
+export function resolveGoogleConsentMode(value: string | null): boolean {
+  return value !== "off" && value !== "false";
 }
