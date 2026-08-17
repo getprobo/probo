@@ -189,12 +189,14 @@ interactions:
         content_length: 0
         host: authentik.example.com
         form:
+            page:
+                - "1"
             page_size:
                 - "100"
         headers:
             Accept:
                 - application/json
-        url: https://authentik.example.com/api/v3/core/brands/?page_size=100
+        url: https://authentik.example.com/api/v3/core/brands/?page=1&page_size=100
         method: GET
       response:
         proto: HTTP/2.0
@@ -202,7 +204,37 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"pagination":{"next":0,"previous":0,"count":2,"current":1,"total_pages":1,"start_index":1,"end_index":2},"results":[{"brand_uuid":"00000000-0000-4000-8000-0000000000c1","domain":"legacy.example.com","branding_title":"Legacy Brand","default":false},{"brand_uuid":"00000000-0000-4000-8000-0000000000c2","domain":"authentik.example.com","branding_title":"Example Internal","default":true}]}'
+        body: '{"pagination":{"next":2,"previous":0,"count":2,"current":1,"total_pages":2,"start_index":1,"end_index":1},"results":[{"brand_uuid":"00000000-0000-4000-8000-0000000000c1","domain":"legacy.example.com","branding_title":"Legacy Brand","default":false}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page:
+                - "2"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/core/brands/?page=2&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":0,"previous":1,"count":2,"current":2,"total_pages":2,"start_index":2,"end_index":2},"results":[{"brand_uuid":"00000000-0000-4000-8000-0000000000c2","domain":"authentik.example.com","branding_title":"Example Internal","default":true}]}'
         headers:
             Content-Type:
                 - application/json

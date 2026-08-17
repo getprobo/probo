@@ -75,6 +75,11 @@ type (
 			PK int64 `json:"pk"`
 		} `json:"user"`
 	}
+
+	authentikBrand struct {
+		BrandingTitle string `json:"branding_title"`
+		Default       bool   `json:"default"`
+	}
 )
 
 const authentikPageSize = "100"
@@ -331,47 +336,19 @@ func NewAuthentikNameResolver(httpClient *http.Client, baseURL string) NameResol
 }
 
 func (r *authentikNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	base, err := url.Parse(r.baseURL)
+	brands, err := fetchAuthentikPages[authentikBrand](ctx, r.httpClient, r.baseURL, "core", "brands")
 	if err != nil {
-		return "", fmt.Errorf("cannot parse authentik base URL: %w", err)
-	}
+		var statusErr *authentikStatusError
+		if errors.As(err, &statusErr) {
+			return "", nil
+		}
 
-	endpoint := base.JoinPath("api", "v3", "core", "brands/")
-	endpoint.RawQuery = url.Values{"page_size": {authentikPageSize}}.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return "", fmt.Errorf("cannot create authentik brands request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-
-	httpResp, err := r.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute authentik brands request: %w", err)
-	}
-
-	defer func() {
-		_ = httpResp.Body.Close()
-	}()
-
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", nil
-	}
-
-	var page struct {
-		Results []struct {
-			BrandingTitle string `json:"branding_title"`
-			Default       bool   `json:"default"`
-		} `json:"results"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&page); err != nil {
-		return "", fmt.Errorf("cannot decode authentik brands response: %w", err)
+		return "", err
 	}
 
 	var fallback string
 
-	for _, brand := range page.Results {
+	for _, brand := range brands {
 		title := strings.TrimSpace(brand.BrandingTitle)
 		if title == "" {
 			continue
