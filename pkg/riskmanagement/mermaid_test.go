@@ -25,6 +25,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestWrapWords(t *testing.T) {
@@ -67,10 +70,10 @@ func TestWrapWords(t *testing.T) {
 			expected: "Supercalifragilisticexpialidocious",
 		},
 		{
-			name:     "non-ascii counted in bytes not runes",
-			input:    "café café café café café",
+			name:     "non-ascii counted in runes",
+			input:    "café café café café café café",
 			width:    28,
-			expected: "café café café café\ncafé",
+			expected: "café café café café café\ncafé",
 		},
 		{
 			name:     "non-positive width returns input",
@@ -91,7 +94,43 @@ func TestWrapWords(t *testing.T) {
 	}
 }
 
-func TestMermaidEdgeLabel(t *testing.T) {
+func TestEscapeMermaidLabel(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "ampersand uses html entity",
+			input:    "Hold secrets & signing keys",
+			expected: "Hold secrets &amp; signing keys",
+		},
+		{
+			name:     "angle brackets use html entities",
+			input:    "<conversation>",
+			expected: "&lt;conversation&gt;",
+		},
+		{
+			name:     "double quote uses mermaid entity",
+			input:    `say "hello"`,
+			expected: "say #quot;hello#quot;",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.expected, escapeMermaidLabel(tt.input))
+			},
+		)
+	}
+}
+
+func TestMermaidLabel(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -105,19 +144,49 @@ func TestMermaidEdgeLabel(t *testing.T) {
 			expected: "Store patient records",
 		},
 		{
-			name:     "long label uses br breaks",
+			name:     "long label uses mermaid newline breaks",
 			input:    "Store patient conversation records",
-			expected: "Store patient conversation<br>records",
+			expected: `Store patient conversation\nrecords`,
 		},
 		{
-			name:     "escapes html before inserting br",
+			name:     "wraps on visible text then escapes",
 			input:    "Store patient <conversation> records now",
-			expected: "Store patient<br>&lt;conversation&gt; records<br>now",
+			expected: `Store patient &lt;conversation&gt;\nrecords now`,
 		},
 		{
 			name:     "literal underscore is preserved",
 			input:    "Data_Processing pipeline stage one two",
-			expected: "Data_Processing pipeline<br>stage one two",
+			expected: `Data_Processing pipeline\nstage one two`,
+		},
+		{
+			name:     "ampersand keeps the existing html entity",
+			input:    "Hold secrets & signing keys",
+			expected: "Hold secrets &amp; signing keys",
+		},
+		{
+			name:     "threat-style label wraps at width",
+			input:    "Secret / signing-key leakage (liability)",
+			expected: `Secret / signing-key leakage\n(liability)`,
+		},
+		{
+			name:     "data node label wraps at width",
+			input:    "Credentials, secrets, JWT signing keys",
+			expected: `Credentials, secrets, JWT\nsigning keys`,
+		},
+		{
+			name:     "crlf becomes a space",
+			input:    "hello\r\nworld",
+			expected: "hello world",
+		},
+		{
+			name:     "bare lf becomes a space",
+			input:    "hello\nworld",
+			expected: "hello world",
+		},
+		{
+			name:     "bare cr becomes a space",
+			input:    "hello\rworld",
+			expected: "hello world",
 		},
 	}
 
@@ -126,8 +195,77 @@ func TestMermaidEdgeLabel(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
-				assert.Equal(t, tt.expected, mermaidEdgeLabel(tt.input))
+				assert.Equal(t, tt.expected, mermaidLabel(tt.input))
 			},
 		)
 	}
+}
+
+func TestMermaidLabelWidth_ThreatHexagon(t *testing.T) {
+	t.Parallel()
+
+	got := mermaidLabelWidth(
+		"Secret / signing-key leakage (liability)",
+		mermaidThreatLabelWrapWidth,
+	)
+
+	assert.Equal(t, `Secret / signing-key\nleakage (liability)`, got)
+}
+
+func TestBuildDiagramMermaidChart_WrapsLabels(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	sourceID := gid.New(tenantID, coredata.RiskAnalysisNodeEntityType)
+	targetID := gid.New(tenantID, coredata.RiskAnalysisNodeEntityType)
+	processID := gid.New(tenantID, coredata.RiskAnalysisProcessEntityType)
+
+	chart := buildDiagramMermaidChart(
+		coredata.RiskAnalysisNodes{
+			{
+				ID:       sourceID,
+				NodeType: coredata.RiskAnalysisNodeTypeAsset,
+				Name:     "DynamoDB (stage-scoped table)",
+			},
+			{
+				ID:       targetID,
+				NodeType: coredata.RiskAnalysisNodeTypeData,
+				Name:     "Credentials, secrets, JWT signing keys",
+			},
+		},
+		nil,
+		coredata.RiskAnalysisProcesses{
+			{
+				ID:           processID,
+				SourceNodeID: sourceID,
+				TargetNodeID: targetID,
+				Name:         "Hold secrets & signing keys",
+			},
+		},
+		coredata.RiskAnalysisThreats{
+			{
+				ProcessID: processID,
+				Name:      "Secret / signing-key leakage",
+				Category:  "liability",
+			},
+		},
+	)
+
+	require.NotEmpty(t, chart)
+	assert.Contains(t, chart, "flowchart LR")
+	assert.NotContains(t, chart, "htmlLabels:")
+	assert.NotContains(t, chart, "wrappingWidth:")
+	assert.Contains(t, chart, mermaidLabel("Credentials, secrets, JWT signing keys"))
+	assert.Contains(t, chart, mermaidLabel("Hold secrets & signing keys"))
+	assert.Contains(
+		t,
+		chart,
+		mermaidLabelWidth(
+			"Secret / signing-key leakage (liability)",
+			mermaidThreatLabelWrapWidth,
+		),
+	)
+	assert.Contains(t, chart, `\n`)
+	assert.NotContains(t, chart, "<br>")
+	assert.Contains(t, chart, "&amp;")
 }

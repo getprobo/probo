@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -203,7 +204,7 @@ func buildDiagramMermaidChart(
 
 	emitBoundary = func(bnd *coredata.RiskAnalysisBoundary, indent string) {
 		alias := boundaryAlias[bnd.ID]
-		fmt.Fprintf(&b, "%ssubgraph %s[\"%s\"]\n", indent, alias, escapeMermaidLabel(bnd.Name))
+		fmt.Fprintf(&b, "%ssubgraph %s[\"%s\"]\n", indent, alias, mermaidLabel(bnd.Name))
 
 		inner := indent + "  "
 		for _, child := range childBoundaries[bnd.ID] {
@@ -239,7 +240,7 @@ func buildDiagramMermaidChart(
 			continue
 		}
 
-		fmt.Fprintf(&b, "  %s -- \"%s\" --> %s\n", src, mermaidEdgeLabel(p.Name), dst)
+		fmt.Fprintf(&b, "  %s -- \"%s\" --> %s\n", src, mermaidLabel(p.Name), dst)
 	}
 
 	processTarget := make(map[gid.GID]gid.GID, len(processes))
@@ -259,7 +260,10 @@ func buildDiagramMermaidChart(
 		}
 
 		tid := fmt.Sprintf("t%d", i)
-		label := escapeMermaidLabel(fmt.Sprintf("%s (%s)", t.Name, t.Category))
+		label := mermaidLabelWidth(
+			fmt.Sprintf("%s (%s)", t.Name, t.Category),
+			mermaidThreatLabelWrapWidth,
+		)
 		fmt.Fprintf(&b, "  %s{{\"%s\"}}\n", tid, label)
 		fmt.Fprintf(&b, "  class %s nodeThreat\n", tid)
 		fmt.Fprintf(&b, "  %s -.-> %s\n", tid, targetAlias)
@@ -275,7 +279,7 @@ func buildDiagramMermaidChart(
 }
 
 func mermaidNodeShape(t coredata.RiskAnalysisNodeType, id, name string) string {
-	label := `"` + escapeMermaidLabel(name) + `"`
+	label := `"` + mermaidLabel(name) + `"`
 
 	switch t {
 	case coredata.RiskAnalysisNodeTypeEntity:
@@ -302,29 +306,56 @@ func mermaidNodeClass(t coredata.RiskAnalysisNodeType) string {
 	}
 }
 
-const mermaidEdgeLabelWrapWidth = 28
+const (
+	mermaidLabelWrapWidth       = 28
+	mermaidThreatLabelWrapWidth = 20
+)
 
-var mermaidLabelReplacer = strings.NewReplacer(
-	"&", "&amp;",
-	`"`, "#quot;",
-	"<", "&lt;",
-	">", "&gt;",
-	"\r\n", " ",
-	"\n", " ",
+var (
+	mermaidLabelReplacer = strings.NewReplacer(
+		"&", "&amp;",
+		`"`, "#quot;",
+		"<", "&lt;",
+		">", "&gt;",
+	)
+
+	mermaidLabelNewlineReplacer = strings.NewReplacer(
+		"\r\n", " ",
+		"\n", " ",
+		"\r", " ",
+	)
 )
 
 func escapeMermaidLabel(s string) string {
 	return mermaidLabelReplacer.Replace(s)
 }
 
-// mermaidEdgeLabel escapes a process name and inserts <br> breaks so long
-// edge labels wrap. Mermaid's wrappingWidth only applies to nodes, not edges.
-func mermaidEdgeLabel(s string) string {
-	return strings.ReplaceAll(wrapWords(escapeMermaidLabel(s), mermaidEdgeLabelWrapWidth), "\n", "<br>")
+// mermaidLabel inserts \n breaks so long text wraps. wrappingWidth only
+// reliably wraps markdown strings (`["`text`"]`); our quoted labels are
+// plain text. Mermaid 11 documents \n as the line break for those, and
+// converts it to <br /> when htmlLabels are enabled.
+func mermaidLabel(s string) string {
+	return mermaidLabelWidth(s, mermaidLabelWrapWidth)
+}
+
+func mermaidLabelWidth(s string, width int) string {
+	s = mermaidLabelNewlineReplacer.Replace(s)
+
+	var b strings.Builder
+
+	for i, line := range strings.Split(wrapWords(s, width), "\n") {
+		if i > 0 {
+			b.WriteString(`\n`)
+		}
+
+		b.WriteString(escapeMermaidLabel(line))
+	}
+
+	return b.String()
 }
 
 func wrapWords(s string, width int) string {
-	if width <= 0 || len(s) <= width {
+	if width <= 0 || utf8.RuneCountInString(s) <= width {
 		return s
 	}
 
@@ -339,7 +370,8 @@ func wrapWords(s string, width int) string {
 	)
 
 	for _, word := range words {
-		if lineLen > 0 && lineLen+1+len(word) > width {
+		wordLen := utf8.RuneCountInString(word)
+		if lineLen > 0 && lineLen+1+wordLen > width {
 			b.WriteByte('\n')
 
 			lineLen = 0
@@ -353,7 +385,7 @@ func wrapWords(s string, width int) string {
 
 		b.WriteString(word)
 
-		lineLen += len(word)
+		lineLen += wordLen
 	}
 
 	return b.String()
