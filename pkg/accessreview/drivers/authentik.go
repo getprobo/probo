@@ -139,12 +139,10 @@ func (d *AuthentikDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 	return records, nil
 }
 
-// listUsersWithFactor returns the primary keys of users holding a second
-// factor, and whether every factor kind was readable. The typed endpoints are
-// used because /authenticators/admin/all/ serializes no user. A missing stage
-// answers 404 and a token lacking the device permission answers 403; either
-// leaves a factor possibly unseen, so callers must not then report MFA as
-// disabled.
+// listUsersWithFactor returns the users holding a second factor, and whether
+// every factor kind was readable -- a missing stage answers 404 and a token
+// lacking the device permission 403, either of which hides a factor. The typed
+// endpoints are used because /authenticators/admin/all/ serializes no user.
 func (d *AuthentikDriver) listUsersWithFactor(ctx context.Context) (map[int64]bool, bool, error) {
 	usersWithFactor := make(map[int64]bool)
 	complete := true
@@ -305,7 +303,6 @@ func authentikMFAStatus(u authentikUser, usersWithFactor map[int64]bool, factors
 	return coredata.MFAStatusDisabled
 }
 
-// authentik grants permissions through both roles and groups.
 func authentikRoles(u authentikUser) []string {
 	roles := make([]string, 0, len(u.RolesObj)+len(u.GroupsObj))
 
@@ -318,9 +315,8 @@ func authentikRoles(u authentikUser) []string {
 	return roles
 }
 
-// authentikNameResolver resolves the instance name from the default brand's
-// branding title. A non-2xx yields no name rather than an error: a token may
-// list users without being able to read brands.
+// A non-2xx yields no name rather than an error: a token may list users
+// without being able to read brands.
 type authentikNameResolver struct {
 	httpClient *http.Client
 	baseURL    string
