@@ -1,0 +1,211 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page:
+                - "1"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/authenticators/admin/totp/?page=1&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":0,"previous":0,"count":1,"current":1,"total_pages":1,"start_index":1,"end_index":1},"results":[{"pk":11,"name":"authenticator","user":{"pk":1,"username":"admin","name":"Admin User","email":"admin@example.com","is_active":true}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page:
+                - "1"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/authenticators/admin/webauthn/?page=1&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":0,"previous":0,"count":1,"current":1,"total_pages":1,"start_index":1,"end_index":1},"results":[{"pk":21,"name":"passkey","aaguid":"00000000-0000-0000-0000-000000000000","created_on":"2026-03-01T09:00:00Z","device_type":null,"user":{"pk":5,"username":"contractor","name":"External Contractor","email":"contractor@example.com","is_active":true}}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page:
+                - "1"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/authenticators/admin/duo/?page=1&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":0,"previous":0,"count":0,"current":1,"total_pages":1,"start_index":0,"end_index":0},"results":[]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page:
+                - "1"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/authenticators/admin/sms/?page=1&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":0,"previous":0,"count":0,"current":1,"total_pages":1,"start_index":0,"end_index":0},"results":[]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page:
+                - "1"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/core/users/?page=1&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":2,"previous":0,"count":7,"current":1,"total_pages":2,"start_index":1,"end_index":6},"results":[{"pk":1,"uuid":"00000000-0000-4000-8000-000000000001","username":"admin","name":"Admin User","email":"admin@example.com","type":"internal","is_active":true,"is_superuser":true,"last_login":"2026-08-01T08:30:00.123456Z","date_joined":"2025-12-11T15:18:14.370038Z","groups_obj":[{"pk":"00000000-0000-4000-8000-0000000000a1","num_pk":1,"name":"authentik Admins","is_superuser":true}],"roles_obj":[]},{"pk":2,"uuid":"00000000-0000-4000-8000-000000000002","username":"engineer","name":"Engineer User","email":"engineer@example.com","type":"internal","is_active":true,"is_superuser":false,"last_login":"2026-08-02T11:00:00Z","date_joined":"2026-01-05T10:00:00Z","groups_obj":[{"pk":"00000000-0000-4000-8000-0000000000a2","num_pk":2,"name":"Engineering","is_superuser":false}],"roles_obj":[{"pk":"00000000-0000-4000-8000-0000000000b1","name":"Application Viewer"}]},{"pk":3,"uuid":"00000000-0000-4000-8000-000000000003","username":"leaver","name":"Former Employee","email":"leaver@example.com","type":"internal","is_active":false,"is_superuser":false,"last_login":"2026-04-01T07:00:00Z","date_joined":"2026-01-06T10:00:00Z","groups_obj":[],"roles_obj":[]},{"pk":4,"uuid":"00000000-0000-4000-8000-000000000004","username":"ak-outpost-proxy","name":"Proxy Outpost Service Account","email":"","type":"internal_service_account","is_active":true,"is_superuser":false,"last_login":null,"date_joined":"2026-01-07T10:00:00Z","groups_obj":[],"roles_obj":[]},{"pk":5,"uuid":"00000000-0000-4000-8000-000000000005","username":"contractor","name":"External Contractor","email":"contractor@example.com","type":"external","is_active":true,"is_superuser":false,"last_login":"2026-08-03T12:00:00Z","date_joined":"2026-02-01T10:00:00Z","groups_obj":[],"roles_obj":[]},{"pk":6,"uuid":"00000000-0000-4000-8000-000000000006","username":"","name":"Nameless","email":"","type":"internal","is_active":true,"is_superuser":false,"last_login":null,"date_joined":"2026-02-02T10:00:00Z","groups_obj":[],"roles_obj":[]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page:
+                - "2"
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/core/users/?page=2&page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":0,"previous":1,"count":7,"current":2,"total_pages":2,"start_index":7,"end_index":7},"results":[{"pk":7,"uuid":"00000000-0000-4000-8000-000000000007","username":"support","name":"Support User","email":"support@example.com","type":"internal","is_active":true,"is_superuser":false,"last_login":null,"date_joined":"2026-03-01T10:00:00Z","groups_obj":[{"pk":"00000000-0000-4000-8000-0000000000a3","num_pk":3,"name":"Support","is_superuser":false}],"roles_obj":[{"pk":"00000000-0000-4000-8000-0000000000b2","name":"Support"}]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: authentik.example.com
+        form:
+            page_size:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://authentik.example.com/api/v3/core/brands/?page_size=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"pagination":{"next":0,"previous":0,"count":2,"current":1,"total_pages":1,"start_index":1,"end_index":2},"results":[{"brand_uuid":"00000000-0000-4000-8000-0000000000c1","domain":"legacy.example.com","branding_title":"Legacy Brand","default":false},{"brand_uuid":"00000000-0000-4000-8000-0000000000c2","domain":"authentik.example.com","branding_title":"Example Internal","default":true}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms

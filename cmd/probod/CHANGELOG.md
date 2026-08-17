@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- authentik as an access review source, connected with an API-intent token and the instance URL. MFA status is derived from the instance's authenticator devices, and stays unknown rather than disabled when a device kind is unreadable
+
 ## [0.261.1] - 2026-08-17
 
 ### Fixed

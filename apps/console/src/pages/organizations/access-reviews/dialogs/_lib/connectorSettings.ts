@@ -56,6 +56,9 @@ export function mapAPIKeyExtraSettingToField(
     case "LANGFUSE":
       if (settingKey === "baseUrl") return "langfuseBaseUrl";
       break;
+    case "AUTHENTIK":
+      if (settingKey === "baseUrl") return "authentikBaseUrl";
+      break;
     case "ONE_PASSWORD":
       if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
       break;

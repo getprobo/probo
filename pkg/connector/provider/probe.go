@@ -392,6 +392,25 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 	return u.JoinPath("api", "v1", "user").String(), nil
 }
 
+func buildAuthentikProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) {
+	s, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read authentik connector settings: %w", err)
+	}
+
+	baseURL, err := normalizeInstanceBaseURL(s.BaseURL)
+	if err != nil {
+		return "", err
+	}
+
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse authentik base URL: %w", err)
+	}
+
+	return u.JoinPath("api", "v3", "core", "users", "me/").String(), nil
+}
+
 func buildPostHogProbeURL(conn *coredata.Connector) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
 	if err != nil {

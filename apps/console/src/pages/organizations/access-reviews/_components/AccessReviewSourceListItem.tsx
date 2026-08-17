@@ -187,6 +187,8 @@ function sourceLabel(
       return t("accessReviewSourceRow.sources.github");
     case "CLOUDFLARE":
       return t("accessReviewSourceRow.sources.cloudflare");
+    case "AUTHENTIK":
+      return t("accessReviewSourceRow.sources.authentik");
     default:
       return connectorProvider;
   }

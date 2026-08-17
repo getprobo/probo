@@ -222,6 +222,13 @@ type (
 	CloudflareConnectorSettings struct {
 		AccountID string `json:"account_id"`
 	}
+
+	// AuthentikConnectorSettings holds the base URL of the customer's
+	// authentik instance. Self-hosted, so there is no shared API host: the
+	// driver, name resolver and probe all join onto this origin.
+	AuthentikConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's
