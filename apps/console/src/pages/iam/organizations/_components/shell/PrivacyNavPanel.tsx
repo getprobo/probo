@@ -122,9 +122,17 @@ function PrivacyNavPanelInner({ queryRef, group }: PrivacyNavPanelInnerProps) {
   );
 }
 
-// A deleted or out-of-reach banner fails the same way on every attempt, so the
-// remembered id is dropped for good. A transport failure says nothing about the
-// banner, so the id survives it and the next attempt can still resolve it.
+interface DroppedBanner {
+  id: string;
+  // Route the lookup failed on. A retryable drop only holds here, so leaving
+  // the route gives the banner another chance.
+  pathname: string;
+  retryable: boolean;
+}
+
+// A deleted or out-of-reach banner fails the same way on every attempt, so its
+// drop is final. A transport failure says nothing about the banner, so that
+// drop is worth retrying.
 function isTransportFailure(error: unknown): boolean {
   return error instanceof InternalServerError || error instanceof TypeError;
 }
@@ -136,8 +144,16 @@ function CookieBannerNavSection() {
   // `Query.node` is non-null, so looking up a banner that was deleted or moved
   // out of reach fails the whole query instead of returning null. Dropping the
   // remembered id once it fails lets the organization fallback take over.
-  const [unresolvableId, setUnresolvableId] = useState<string | null>(null);
-  const resolvedId = selectedId != null && selectedId !== unresolvableId ? selectedId : null;
+  //
+  // Every failure drops the id, so the section always falls back to something
+  // usable instead of parking on an error boundary nothing would reset. A
+  // retryable drop then expires as soon as the route changes, which reloads
+  // the query and gives a banner lost to a blip its next attempt.
+  const [dropped, setDropped] = useState<DroppedBanner | null>(null);
+  const activeDrop = dropped != null && (!dropped.retryable || dropped.pathname === pathname)
+    ? dropped
+    : null;
+  const resolvedId = selectedId != null && selectedId !== activeDrop?.id ? selectedId : null;
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
   );
@@ -202,9 +218,11 @@ function CookieBannerNavSection() {
       key={resolvedId}
       fallbackRender={() => fallback}
       onError={(error) => {
-        if (!isTransportFailure(error)) {
-          setUnresolvableId(resolvedId);
-        }
+        setDropped({
+          id: resolvedId,
+          pathname,
+          retryable: isTransportFailure(error),
+        });
       }}
     >
       {section}
