@@ -157,8 +157,7 @@ func (d *AuthentikDriver) listUsersWithFactor(ctx context.Context) (map[int64]bo
 		}
 
 		if err != nil {
-			var statusErr *authentikStatusError
-			if errors.As(err, &statusErr) && (statusErr.code == http.StatusForbidden || statusErr.code == http.StatusNotFound) {
+			if e, ok := errors.AsType[*authentikStatusError](err); ok && (e.code == http.StatusForbidden || e.code == http.StatusNotFound) {
 				complete = false
 
 				continue
@@ -335,8 +334,7 @@ func NewAuthentikNameResolver(httpClient *http.Client, baseURL string) NameResol
 func (r *authentikNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
 	brands, err := fetchAuthentikPages[authentikBrand](ctx, r.httpClient, r.baseURL, "core", "brands")
 	if err != nil {
-		var statusErr *authentikStatusError
-		if errors.As(err, &statusErr) {
+		if _, ok := errors.AsType[*authentikStatusError](err); ok {
 			return "", nil
 		}
 
