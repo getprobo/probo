@@ -4,6 +4,18 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.17.0] - 2026-08-18
+
+### Added
+
+- Helm values for deploying the Probot Slack bot: Slack OAuth, signing
+  secret, and durable delivery worker wiring, plus the Anthropic API key
+  required when the Slackbot's LLM provider is set to Anthropic
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.262.0`
+
 ## [0.16.0] - 2026-08-17
 
 ### Added
