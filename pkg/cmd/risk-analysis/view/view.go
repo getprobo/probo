@@ -46,6 +46,12 @@ query($id: ID!) {
         rows
         cols
       }
+      matrixCells {
+        type
+        likelihood
+        impact
+        count
+      }
       createdAt
       updatedAt
     }
@@ -67,6 +73,12 @@ type viewResponse struct {
 			Rows int `json:"rows"`
 			Cols int `json:"cols"`
 		} `json:"matrixSize"`
+		MatrixCells []struct {
+			Type       string `json:"type"`
+			Likelihood int    `json:"likelihood"`
+			Impact     int    `json:"impact"`
+			Count      int    `json:"count"`
+		} `json:"matrixCells"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
@@ -152,6 +164,21 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%d×%d\n", label.Render("Matrix size:"), r.MatrixSize.Rows, r.MatrixSize.Cols)
+
+			if len(r.MatrixCells) > 0 {
+				_, _ = fmt.Fprintf(out, "%s%d occupied cells\n", label.Render("Matrix cells:"), len(r.MatrixCells))
+				for _, cell := range r.MatrixCells {
+					_, _ = fmt.Fprintf(
+						out,
+						"%s%s %d×%d (%d)\n",
+						label.Render(""),
+						cell.Type,
+						cell.Likelihood,
+						cell.Impact,
+						cell.Count,
+					)
+				}
+			}
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(r.CreatedAt))

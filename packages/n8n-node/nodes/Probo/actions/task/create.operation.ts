@@ -48,7 +48,6 @@ export const description: INodeProperties[] = [
 		},
 		default: '',
 		description: 'The ID of the measure this task belongs to',
-		required: true,
 	},
 	{
 		displayName: 'Name',
@@ -154,7 +153,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const measureId = this.getNodeParameter('measureId', itemIndex) as string;
+	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex, '') as string;
 	const priority = this.getNodeParameter('priority', itemIndex, '') as string;
@@ -185,8 +184,8 @@ export async function execute(
 	const variables = {
 		input: {
 			organizationId,
-			measureId,
 			name,
+			...(measureId && { measureId }),
 			...(description && { description }),
 			...(priority && { priority }),
 			...(timeEstimate && { timeEstimate }),

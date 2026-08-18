@@ -103,6 +103,15 @@ type Measure implements Node {
         orderBy: ThirdPartyOrder
     ): ThirdPartyConnection! @goField(forceResolver: true)
 
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+        filter: TreatmentPlanFilter
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 

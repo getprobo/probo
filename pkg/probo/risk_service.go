@@ -43,10 +43,10 @@ type (
 		Name               string
 		Description        *string
 		Category           string
-		Treatment          coredata.RiskTreatment
+		Treatment          *coredata.RiskTreatment
 		OwnerID            *gid.GID
-		InherentLikelihood int
-		InherentImpact     int
+		InherentLikelihood *int
+		InherentImpact     *int
 		ResidualLikelihood *int
 		ResidualImpact     *int
 		Note               *string
@@ -74,13 +74,15 @@ func (crr *CreateRiskRequest) Validate() error {
 	v.Check(crr.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(crr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(crr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
-	v.Check(crr.Treatment, "treatment", validator.Required(), validator.OneOfSlice(coredata.RiskTreatments()))
+	v.Check(crr.Treatment, "treatment", validator.OneOfSlice(coredata.RiskTreatments()))
 	v.Check(crr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(crr.InherentLikelihood, "inherent_likelihood", validator.Required(), validator.Min(1), validator.Max(5))
-	v.Check(crr.InherentImpact, "inherent_impact", validator.Required(), validator.Min(1), validator.Max(5))
+	v.Check(crr.InherentLikelihood, "inherent_likelihood", validator.Min(1), validator.Max(5))
+	v.Check(crr.InherentImpact, "inherent_impact", validator.Min(1), validator.Max(5))
 	v.Check(crr.ResidualLikelihood, "residual_likelihood", validator.Min(1), validator.Max(5))
 	v.Check(crr.ResidualImpact, "residual_impact", validator.Min(1), validator.Max(5))
 	v.Check(crr.Note, "note", validator.SafeText(TitleMaxLength))
+	requireScorePair(v, crr.InherentLikelihood, crr.InherentImpact, "inherent_likelihood", "inherent_impact")
+	requireScorePair(v, crr.ResidualLikelihood, crr.ResidualImpact, "residual_likelihood", "residual_impact")
 
 	return v.Error()
 }
@@ -101,6 +103,31 @@ func (urr *UpdateRiskRequest) Validate() error {
 	v.Check(urr.Note, "note", validator.SafeText(TitleMaxLength))
 
 	return v.Error()
+}
+
+func requireScorePair(v *validator.Validator, likelihood, impact *int, likelihoodField, impactField string) {
+	if (likelihood == nil) == (impact == nil) {
+		return
+	}
+
+	missing := likelihoodField
+	other := impactField
+
+	if likelihood != nil {
+		missing = impactField
+		other = likelihoodField
+	}
+
+	v.Check(
+		missing,
+		missing,
+		func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: fmt.Sprintf("must be set together with %s", other),
+			}
+		},
+	)
 }
 
 func (s RiskService) CountForMeasureID(
@@ -448,11 +475,11 @@ func (s RiskService) Create(
 	}
 
 	if req.ResidualLikelihood != nil {
-		risk.ResidualLikelihood = *req.ResidualLikelihood
+		risk.ResidualLikelihood = req.ResidualLikelihood
 	}
 
 	if req.ResidualImpact != nil {
-		risk.ResidualImpact = *req.ResidualImpact
+		risk.ResidualImpact = req.ResidualImpact
 	}
 
 	err := s.svc.pg.WithTx(
@@ -551,23 +578,23 @@ func (s RiskService) Update(
 			}
 
 			if req.InherentLikelihood != nil {
-				risk.InherentLikelihood = *req.InherentLikelihood
+				risk.InherentLikelihood = req.InherentLikelihood
 			}
 
 			if req.InherentImpact != nil {
-				risk.InherentImpact = *req.InherentImpact
+				risk.InherentImpact = req.InherentImpact
 			}
 
 			if req.ResidualLikelihood != nil {
-				risk.ResidualLikelihood = *req.ResidualLikelihood
+				risk.ResidualLikelihood = req.ResidualLikelihood
 			}
 
 			if req.ResidualImpact != nil {
-				risk.ResidualImpact = *req.ResidualImpact
+				risk.ResidualImpact = req.ResidualImpact
 			}
 
 			if req.Treatment != nil {
-				risk.Treatment = *req.Treatment
+				risk.Treatment = req.Treatment
 			}
 
 			if req.OwnerID != nil {
@@ -589,6 +616,26 @@ func (s RiskService) Update(
 
 			if req.Note != nil {
 				risk.Note = *req.Note
+			}
+
+			v := validator.New()
+			requireScorePair(
+				v,
+				risk.InherentLikelihood,
+				risk.InherentImpact,
+				"inherent_likelihood",
+				"inherent_impact",
+			)
+			requireScorePair(
+				v,
+				risk.ResidualLikelihood,
+				risk.ResidualImpact,
+				"residual_likelihood",
+				"residual_impact",
+			)
+
+			if err := v.Error(); err != nil {
+				return fmt.Errorf("invalid request: %w", err)
 			}
 
 			risk.UpdatedAt = time.Now()

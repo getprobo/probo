@@ -24,7 +24,7 @@ import (
 
 // CreateRiskAnalysis is the resolver for the createRiskAnalysis field.
 func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.CreateRiskAnalysisInput) (*types.CreateRiskAnalysisPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskAnalysisCreate)
+	scope, err := r.authorize(ctx, input.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 
 // UpdateRiskAnalysis is the resolver for the updateRiskAnalysis field.
 func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.UpdateRiskAnalysisInput) (*types.UpdateRiskAnalysisPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisUpdate)
+	scope, err := r.authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,6 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 			Name:        input.Name,
 			Description: gqlutils.UnwrapOmittable(input.Description),
 			Period:      period,
-			MatrixSize:  input.MatrixSize,
 		},
 	)
 	if err != nil {
@@ -108,7 +107,7 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 
 // DeleteRiskAnalysis is the resolver for the deleteRiskAnalysis field.
 func (r *mutationResolver) DeleteRiskAnalysis(ctx context.Context, input types.DeleteRiskAnalysisInput) (*types.DeleteRiskAnalysisPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisID, probo.ActionRiskAnalysisDelete)
+	scope, err := r.authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +127,7 @@ func (r *mutationResolver) DeleteRiskAnalysis(ctx context.Context, input types.D
 
 // CreateRiskAnalysisDiagram is the resolver for the createRiskAnalysisDiagram field.
 func (r *mutationResolver) CreateRiskAnalysisDiagram(ctx context.Context, input types.CreateRiskAnalysisDiagramInput) (*types.CreateRiskAnalysisDiagramPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisID, probo.ActionRiskAnalysisDiagramCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisDiagramCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +161,7 @@ func (r *mutationResolver) CreateRiskAnalysisDiagram(ctx context.Context, input 
 
 // UpdateRiskAnalysisDiagram is the resolver for the updateRiskAnalysisDiagram field.
 func (r *mutationResolver) UpdateRiskAnalysisDiagram(ctx context.Context, input types.UpdateRiskAnalysisDiagramInput) (*types.UpdateRiskAnalysisDiagramPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisDiagramUpdate)
+	scope, err := r.authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisDiagramUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +189,7 @@ func (r *mutationResolver) UpdateRiskAnalysisDiagram(ctx context.Context, input 
 
 // DeleteRiskAnalysisDiagram is the resolver for the deleteRiskAnalysisDiagram field.
 func (r *mutationResolver) DeleteRiskAnalysisDiagram(ctx context.Context, input types.DeleteRiskAnalysisDiagramInput) (*types.DeleteRiskAnalysisDiagramPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisDiagramDelete)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisDiagramDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +209,7 @@ func (r *mutationResolver) DeleteRiskAnalysisDiagram(ctx context.Context, input 
 
 // CreateRiskAnalysisNode is the resolver for the createRiskAnalysisNode field.
 func (r *mutationResolver) CreateRiskAnalysisNode(ctx context.Context, input types.CreateRiskAnalysisNodeInput) (*types.CreateRiskAnalysisNodePayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisNodeCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisNodeCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +248,7 @@ func (r *mutationResolver) CreateRiskAnalysisNode(ctx context.Context, input typ
 
 // UpdateRiskAnalysisNode is the resolver for the updateRiskAnalysisNode field.
 func (r *mutationResolver) UpdateRiskAnalysisNode(ctx context.Context, input types.UpdateRiskAnalysisNodeInput) (*types.UpdateRiskAnalysisNodePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisNodeUpdate)
+	scope, err := r.authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisNodeUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +278,7 @@ func (r *mutationResolver) UpdateRiskAnalysisNode(ctx context.Context, input typ
 
 // DeleteRiskAnalysisNode is the resolver for the deleteRiskAnalysisNode field.
 func (r *mutationResolver) DeleteRiskAnalysisNode(ctx context.Context, input types.DeleteRiskAnalysisNodeInput) (*types.DeleteRiskAnalysisNodePayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisNodeID, probo.ActionRiskAnalysisNodeDelete)
+	scope, err := r.authorize(ctx, input.RiskAnalysisNodeID, riskmanagement.ActionRiskAnalysisNodeDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +298,7 @@ func (r *mutationResolver) DeleteRiskAnalysisNode(ctx context.Context, input typ
 
 // CreateRiskAnalysisBoundary is the resolver for the createRiskAnalysisBoundary field.
 func (r *mutationResolver) CreateRiskAnalysisBoundary(ctx context.Context, input types.CreateRiskAnalysisBoundaryInput) (*types.CreateRiskAnalysisBoundaryPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisBoundaryCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisBoundaryCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +336,7 @@ func (r *mutationResolver) CreateRiskAnalysisBoundary(ctx context.Context, input
 
 // UpdateRiskAnalysisBoundary is the resolver for the updateRiskAnalysisBoundary field.
 func (r *mutationResolver) UpdateRiskAnalysisBoundary(ctx context.Context, input types.UpdateRiskAnalysisBoundaryInput) (*types.UpdateRiskAnalysisBoundaryPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisBoundaryUpdate)
+	scope, err := r.authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisBoundaryUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -370,7 +369,7 @@ func (r *mutationResolver) UpdateRiskAnalysisBoundary(ctx context.Context, input
 
 // DeleteRiskAnalysisBoundary is the resolver for the deleteRiskAnalysisBoundary field.
 func (r *mutationResolver) DeleteRiskAnalysisBoundary(ctx context.Context, input types.DeleteRiskAnalysisBoundaryInput) (*types.DeleteRiskAnalysisBoundaryPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisBoundaryID, probo.ActionRiskAnalysisBoundaryDelete)
+	scope, err := r.authorize(ctx, input.RiskAnalysisBoundaryID, riskmanagement.ActionRiskAnalysisBoundaryDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +389,7 @@ func (r *mutationResolver) DeleteRiskAnalysisBoundary(ctx context.Context, input
 
 // CreateRiskAnalysisProcess is the resolver for the createRiskAnalysisProcess field.
 func (r *mutationResolver) CreateRiskAnalysisProcess(ctx context.Context, input types.CreateRiskAnalysisProcessInput) (*types.CreateRiskAnalysisProcessPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisProcessCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisProcessCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +428,7 @@ func (r *mutationResolver) CreateRiskAnalysisProcess(ctx context.Context, input 
 
 // UpdateRiskAnalysisProcess is the resolver for the updateRiskAnalysisProcess field.
 func (r *mutationResolver) UpdateRiskAnalysisProcess(ctx context.Context, input types.UpdateRiskAnalysisProcessInput) (*types.UpdateRiskAnalysisProcessPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisProcessUpdate)
+	scope, err := r.authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisProcessUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +458,7 @@ func (r *mutationResolver) UpdateRiskAnalysisProcess(ctx context.Context, input 
 
 // DeleteRiskAnalysisProcess is the resolver for the deleteRiskAnalysisProcess field.
 func (r *mutationResolver) DeleteRiskAnalysisProcess(ctx context.Context, input types.DeleteRiskAnalysisProcessInput) (*types.DeleteRiskAnalysisProcessPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisProcessID, probo.ActionRiskAnalysisProcessDelete)
+	scope, err := r.authorize(ctx, input.RiskAnalysisProcessID, riskmanagement.ActionRiskAnalysisProcessDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -479,7 +478,7 @@ func (r *mutationResolver) DeleteRiskAnalysisProcess(ctx context.Context, input 
 
 // CreateRiskAnalysisThreat is the resolver for the createRiskAnalysisThreat field.
 func (r *mutationResolver) CreateRiskAnalysisThreat(ctx context.Context, input types.CreateRiskAnalysisThreatInput) (*types.CreateRiskAnalysisThreatPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisThreatCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisThreatCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -518,7 +517,7 @@ func (r *mutationResolver) CreateRiskAnalysisThreat(ctx context.Context, input t
 
 // UpdateRiskAnalysisThreat is the resolver for the updateRiskAnalysisThreat field.
 func (r *mutationResolver) UpdateRiskAnalysisThreat(ctx context.Context, input types.UpdateRiskAnalysisThreatInput) (*types.UpdateRiskAnalysisThreatPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisThreatUpdate)
+	scope, err := r.authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisThreatUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -548,7 +547,7 @@ func (r *mutationResolver) UpdateRiskAnalysisThreat(ctx context.Context, input t
 
 // DeleteRiskAnalysisThreat is the resolver for the deleteRiskAnalysisThreat field.
 func (r *mutationResolver) DeleteRiskAnalysisThreat(ctx context.Context, input types.DeleteRiskAnalysisThreatInput) (*types.DeleteRiskAnalysisThreatPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisThreatID, probo.ActionRiskAnalysisThreatDelete)
+	scope, err := r.authorize(ctx, input.RiskAnalysisThreatID, riskmanagement.ActionRiskAnalysisThreatDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -568,7 +567,7 @@ func (r *mutationResolver) DeleteRiskAnalysisThreat(ctx context.Context, input t
 
 // CreateRiskAnalysisScenario is the resolver for the createRiskAnalysisScenario field.
 func (r *mutationResolver) CreateRiskAnalysisScenario(ctx context.Context, input types.CreateRiskAnalysisScenarioInput) (*types.CreateRiskAnalysisScenarioPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, probo.ActionRiskAnalysisScenarioCreate)
+	scope, err := r.authorize(ctx, input.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisScenarioCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -606,7 +605,7 @@ func (r *mutationResolver) CreateRiskAnalysisScenario(ctx context.Context, input
 
 // UpdateRiskAnalysisScenario is the resolver for the updateRiskAnalysisScenario field.
 func (r *mutationResolver) UpdateRiskAnalysisScenario(ctx context.Context, input types.UpdateRiskAnalysisScenarioInput) (*types.UpdateRiskAnalysisScenarioPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAnalysisScenarioUpdate)
+	scope, err := r.authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisScenarioUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -635,7 +634,7 @@ func (r *mutationResolver) UpdateRiskAnalysisScenario(ctx context.Context, input
 
 // DeleteRiskAnalysisScenario is the resolver for the deleteRiskAnalysisScenario field.
 func (r *mutationResolver) DeleteRiskAnalysisScenario(ctx context.Context, input types.DeleteRiskAnalysisScenarioInput) (*types.DeleteRiskAnalysisScenarioPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioDelete)
+	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -655,7 +654,7 @@ func (r *mutationResolver) DeleteRiskAnalysisScenario(ctx context.Context, input
 
 // LinkRiskAnalysisScenarioThreat is the resolver for the linkRiskAnalysisScenarioThreat field.
 func (r *mutationResolver) LinkRiskAnalysisScenarioThreat(ctx context.Context, input types.LinkRiskAnalysisScenarioThreatInput) (*types.LinkRiskAnalysisScenarioThreatPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioThreatLink)
+	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioThreatLink)
 	if err != nil {
 		return nil, err
 	}
@@ -692,7 +691,7 @@ func (r *mutationResolver) LinkRiskAnalysisScenarioThreat(ctx context.Context, i
 
 // UnlinkRiskAnalysisScenarioThreat is the resolver for the unlinkRiskAnalysisScenarioThreat field.
 func (r *mutationResolver) UnlinkRiskAnalysisScenarioThreat(ctx context.Context, input types.UnlinkRiskAnalysisScenarioThreatInput) (*types.UnlinkRiskAnalysisScenarioThreatPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioThreatUnlink)
+	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioThreatUnlink)
 	if err != nil {
 		return nil, err
 	}
@@ -725,7 +724,7 @@ func (r *mutationResolver) UnlinkRiskAnalysisScenarioThreat(ctx context.Context,
 
 // LinkRiskAnalysisScenarioRisk is the resolver for the linkRiskAnalysisScenarioRisk field.
 func (r *mutationResolver) LinkRiskAnalysisScenarioRisk(ctx context.Context, input types.LinkRiskAnalysisScenarioRiskInput) (*types.LinkRiskAnalysisScenarioRiskPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioRiskLink)
+	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioRiskLink)
 	if err != nil {
 		return nil, err
 	}
@@ -770,7 +769,7 @@ func (r *mutationResolver) LinkRiskAnalysisScenarioRisk(ctx context.Context, inp
 
 // UnlinkRiskAnalysisScenarioRisk is the resolver for the unlinkRiskAnalysisScenarioRisk field.
 func (r *mutationResolver) UnlinkRiskAnalysisScenarioRisk(ctx context.Context, input types.UnlinkRiskAnalysisScenarioRiskInput) (*types.UnlinkRiskAnalysisScenarioRiskPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, probo.ActionRiskAnalysisScenarioRiskUnlink)
+	scope, err := r.authorize(ctx, input.RiskAnalysisScenarioID, riskmanagement.ActionRiskAnalysisScenarioRiskUnlink)
 	if err != nil {
 		return nil, err
 	}
@@ -826,9 +825,98 @@ func (r *riskAnalysisResolver) Organization(ctx context.Context, obj *types.Risk
 	return types.NewOrganization(organization), nil
 }
 
+// TreatmentPlans is the resolver for the treatmentPlans field.
+func (r *riskAnalysisResolver) TreatmentPlans(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter) (*types.TreatmentPlanConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TreatmentPlanOrderField]{
+		Field:     coredata.TreatmentPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	planFilter := coredata.NewTreatmentPlanFilter(nil, nil, nil)
+	if filter != nil {
+		planFilter = coredata.NewTreatmentPlanFilter(filter.ScoreType, filter.Likelihood, filter.Impact)
+	}
+
+	p, err := r.riskManagement.ListTreatmentPlansForRiskAnalysisID(ctx, scope, obj.ID, cursor, planFilter)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list treatment plans", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTreatmentPlanConnection(p, r, obj.ID, planFilter), nil
+}
+
+// MatrixCells is the resolver for the matrixCells field.
+func (r *riskAnalysisResolver) MatrixCells(ctx context.Context, obj *types.RiskAnalysis) ([]*coredata.RiskAnalysisMatrixCell, error) {
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
+	if err != nil {
+		return nil, err
+	}
+
+	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get treatment plan matrix cells", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return counts, nil
+}
+
+// ScenarioRisks is the resolver for the scenarioRisks field.
+func (r *riskAnalysisResolver) ScenarioRisks(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
+		Field:     coredata.RiskOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	riskFilter := coredata.NewRiskFilter(nil)
+	if filter != nil {
+		riskFilter = coredata.NewRiskFilter(filter.Query)
+	}
+
+	p, err := r.riskManagement.ListRisksForRiskAnalysisID(ctx, scope, obj.ID, cursor, riskFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list scenario risks on analysis", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskConnection(p, r, obj.ID, riskFilter), nil
+}
+
 // Diagrams is the resolver for the diagrams field.
 func (r *riskAnalysisResolver) Diagrams(ctx context.Context, obj *types.RiskAnalysis, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisDiagramOrderBy) (*types.RiskAnalysisDiagramConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisDiagramList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisDiagramList)
 	if err != nil {
 		return nil, err
 	}
@@ -859,7 +947,7 @@ func (r *riskAnalysisResolver) Permission(ctx context.Context, obj *types.RiskAn
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisBoundaryConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisBoundaryConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisBoundaryList)
+	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisBoundaryList)
 	if err != nil {
 		return nil, err
 	}
@@ -875,7 +963,7 @@ func (r *riskAnalysisBoundaryConnectionResolver) TotalCount(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisList)
+	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisList)
 	if err != nil {
 		return nil, err
 	}
@@ -891,7 +979,7 @@ func (r *riskAnalysisConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 // Nodes is the resolver for the nodes field.
 func (r *riskAnalysisDiagramResolver) Nodes(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisNodeOrderBy) (*types.RiskAnalysisNodeConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisNodeList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisNodeList)
 	if err != nil {
 		return nil, err
 	}
@@ -917,7 +1005,7 @@ func (r *riskAnalysisDiagramResolver) Nodes(ctx context.Context, obj *types.Risk
 
 // Boundaries is the resolver for the boundaries field.
 func (r *riskAnalysisDiagramResolver) Boundaries(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisBoundaryOrderBy) (*types.RiskAnalysisBoundaryConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisBoundaryList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisBoundaryList)
 	if err != nil {
 		return nil, err
 	}
@@ -943,7 +1031,7 @@ func (r *riskAnalysisDiagramResolver) Boundaries(ctx context.Context, obj *types
 
 // Processes is the resolver for the processes field.
 func (r *riskAnalysisDiagramResolver) Processes(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisProcessOrderBy) (*types.RiskAnalysisProcessConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisProcessList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisProcessList)
 	if err != nil {
 		return nil, err
 	}
@@ -969,7 +1057,7 @@ func (r *riskAnalysisDiagramResolver) Processes(ctx context.Context, obj *types.
 
 // Threats is the resolver for the threats field.
 func (r *riskAnalysisDiagramResolver) Threats(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisThreatOrderBy) (*types.RiskAnalysisThreatConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisThreatList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisThreatList)
 	if err != nil {
 		return nil, err
 	}
@@ -995,7 +1083,7 @@ func (r *riskAnalysisDiagramResolver) Threats(ctx context.Context, obj *types.Ri
 
 // Scenarios is the resolver for the scenarios field.
 func (r *riskAnalysisDiagramResolver) Scenarios(ctx context.Context, obj *types.RiskAnalysisDiagram, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
@@ -1021,7 +1109,7 @@ func (r *riskAnalysisDiagramResolver) Scenarios(ctx context.Context, obj *types.
 
 // MermaidChart is the resolver for the mermaidChart field.
 func (r *riskAnalysisDiagramResolver) MermaidChart(ctx context.Context, obj *types.RiskAnalysisDiagram) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisDiagramGet)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisDiagramGet)
 	if err != nil {
 		return "", err
 	}
@@ -1037,7 +1125,7 @@ func (r *riskAnalysisDiagramResolver) MermaidChart(ctx context.Context, obj *typ
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisDiagramConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisDiagramConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisDiagramList)
+	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisDiagramList)
 	if err != nil {
 		return nil, err
 	}
@@ -1053,7 +1141,7 @@ func (r *riskAnalysisDiagramConnectionResolver) TotalCount(ctx context.Context, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisNodeConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisNodeConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisNodeList)
+	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisNodeList)
 	if err != nil {
 		return nil, err
 	}
@@ -1069,7 +1157,7 @@ func (r *riskAnalysisNodeConnectionResolver) TotalCount(ctx context.Context, obj
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisProcessConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisProcessConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisProcessList)
+	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisProcessList)
 	if err != nil {
 		return nil, err
 	}
@@ -1085,7 +1173,7 @@ func (r *riskAnalysisProcessConnectionResolver) TotalCount(ctx context.Context, 
 
 // Diagram is the resolver for the diagram field.
 func (r *riskAnalysisScenarioResolver) Diagram(ctx context.Context, obj *types.RiskAnalysisScenario) (*types.RiskAnalysisDiagram, error) {
-	scope, err := r.authorize(ctx, obj.RiskAnalysisDiagramID, probo.ActionRiskAnalysisDiagramGet)
+	scope, err := r.authorize(ctx, obj.RiskAnalysisDiagramID, riskmanagement.ActionRiskAnalysisDiagramGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,7 +1189,7 @@ func (r *riskAnalysisScenarioResolver) Diagram(ctx context.Context, obj *types.R
 
 // Threats is the resolver for the threats field.
 func (r *riskAnalysisScenarioResolver) Threats(ctx context.Context, obj *types.RiskAnalysisScenario, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisThreatOrderBy) (*types.RiskAnalysisThreatConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisThreatList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisThreatList)
 	if err != nil {
 		return nil, err
 	}
@@ -1153,7 +1241,7 @@ func (r *riskAnalysisScenarioResolver) Risks(ctx context.Context, obj *types.Ris
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisScenarioConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisScenarioConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisScenarioList)
+	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
@@ -1188,7 +1276,7 @@ func (r *riskAnalysisScenarioConnectionResolver) TotalCount(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAnalysisThreatConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAnalysisThreatConnection) (*int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAnalysisThreatList)
+	scope, err := r.authorize(ctx, obj.ParentID, riskmanagement.ActionRiskAnalysisThreatList)
 	if err != nil {
 		return nil, err
 	}

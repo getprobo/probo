@@ -181,10 +181,10 @@ function governanceHref(organizationId: string, permissions: NavPermissions): st
 }
 
 function riskManagementHref(organizationId: string, permissions: NavPermissions): string {
-  if (permissions.canListRisks) {
-    return groupHref(organizationId, "riskManagement", "risks");
+  if (permissions.canListRiskAnalyses) {
+    return groupHref(organizationId, "riskManagement", "risk-analyses");
   }
-  return groupHref(organizationId, "riskManagement", "risk-analyses");
+  return groupHref(organizationId, "riskManagement", "risks");
 }
 
 function privacyHref(organizationId: string, permissions: NavPermissions): string {

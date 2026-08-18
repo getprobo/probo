@@ -174,7 +174,7 @@ export default function RiskScenariosPage(props: RiskScenariosPageProps) {
           </Tr>
         )}
         {scenarios.map(scenario => (
-          <Tr key={scenario.id} to={`/organizations/${organizationId}/risk-management/risk-analyses/${scenario.diagram?.riskAnalysisId}`}>
+          <Tr key={scenario.id} to={`/organizations/${organizationId}/risk-management/risk-analyses/${scenario.diagram?.riskAnalysisId}/treatment-plans`}>
             <Td className="font-medium">{scenario.name}</Td>
             <Td className="text-txt-secondary">
               {scenario.description || "—"}

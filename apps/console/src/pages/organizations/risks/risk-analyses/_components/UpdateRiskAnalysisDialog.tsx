@@ -31,23 +31,14 @@ import {
   IconPencil,
   IconTrashCan,
   Input,
-  Option,
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { graphql, useMutation } from "react-relay";
+import { graphql } from "react-relay";
 
 import type { UpdateRiskAnalysisDialogMutation } from "#/__generated__/core/UpdateRiskAnalysisDialogMutation.graphql";
-import { ControlledField } from "#/components/form/ControlledField";
-
-import {
-  type MatrixSize,
-  matrixSizeFromOption,
-  matrixSizeKey,
-  type RiskAnalysisMatrixSizeOption,
-  riskAnalysisMatrixSizeOptions,
-} from "./matrixSize";
+import { useMutation } from "#/lib/relay/useMutation";
 
 const updateMutation = graphql`
   mutation UpdateRiskAnalysisDialogMutation(
@@ -77,7 +68,6 @@ type FormData = {
   description: string;
   periodStart: string;
   periodEnd: string;
-  matrixSize: RiskAnalysisMatrixSizeOption;
 };
 
 export function UpdateRiskAnalysisDialog(props: {
@@ -89,7 +79,6 @@ export function UpdateRiskAnalysisDialog(props: {
       start: string | null | undefined;
       end: string | null | undefined;
     } | null | undefined;
-    matrixSize: MatrixSize;
   };
   canDelete?: boolean;
   onDelete?: () => void;
@@ -97,34 +86,34 @@ export function UpdateRiskAnalysisDialog(props: {
   const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const [updateRiskAnalysis, isUpdating] = useMutation<UpdateRiskAnalysisDialogMutation>(updateMutation);
-  const { register, handleSubmit, control, formState } = useForm<FormData>({
+  const { register, handleSubmit, formState } = useForm<FormData>({
     values: {
       name: props.riskAnalysis.name,
       description: props.riskAnalysis.description ?? "",
       periodStart: toDateInput(props.riskAnalysis.period?.start),
       periodEnd: toDateInput(props.riskAnalysis.period?.end),
-      matrixSize: matrixSizeKey(props.riskAnalysis.matrixSize),
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    updateRiskAnalysis({
-      variables: {
-        input: {
-          id: props.riskAnalysis.id,
-          name: data.name,
-          description: data.description || null,
-          period: {
-            start: formatDatetime(data.periodStart) ?? null,
-            end: formatDatetime(data.periodEnd) ?? null,
+  const onSubmit = async (data: FormData) => {
+    try {
+      await updateRiskAnalysis({
+        variables: {
+          input: {
+            id: props.riskAnalysis.id,
+            name: data.name,
+            description: data.description || null,
+            period: {
+              start: formatDatetime(data.periodStart) ?? null,
+              end: formatDatetime(data.periodEnd) ?? null,
+            },
           },
-          matrixSize: matrixSizeFromOption(data.matrixSize),
         },
-      },
-      onCompleted: () => {
-        dialogRef.current?.close();
-      },
-    });
+      });
+      dialogRef.current?.close();
+    } catch {
+      // Error toast is handled by useMutation.
+    }
   };
 
   return (
@@ -174,18 +163,6 @@ export function UpdateRiskAnalysisDialog(props: {
               rows={3}
               placeholder={t("updateRiskAnalysisDialog.placeholders.description")}
             />
-            <ControlledField
-              control={control}
-              name="matrixSize"
-              type="select"
-              label={t("updateRiskAnalysisDialog.fields.matrixSize")}
-            >
-              {riskAnalysisMatrixSizeOptions.map(size => (
-                <Option key={size.key} value={size.key}>
-                  {t(`updateRiskAnalysisDialog.matrixSizes.${size.key}`)}
-                </Option>
-              ))}
-            </ControlledField>
             <Field
               label={t("updateRiskAnalysisDialog.fields.periodStart")}
               error={formState.errors.periodStart?.message}

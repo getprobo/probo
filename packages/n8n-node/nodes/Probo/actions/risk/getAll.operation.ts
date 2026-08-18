@@ -21,6 +21,23 @@
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { proboApiRequestAllItems } from '../../GenericFunctions';
 
+const riskNodeFields = `
+	id
+	name
+	description
+	category
+	treatment
+	inherentLikelihood
+	inherentImpact
+	inherentRiskScore
+	residualLikelihood
+	residualImpact
+	residualRiskScore
+	note
+	createdAt
+	updatedAt
+`;
+
 export const description: INodeProperties[] = [
 	{
 		displayName: 'Organization ID',
@@ -33,8 +50,21 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the organization',
+		description: 'The ID of the organization. Ignored when Risk Analysis ID is set.',
 		required: true,
+	},
+	{
+		displayName: 'Risk Analysis ID',
+		name: 'riskAnalysisId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['risk'],
+				operation: ['getAll'],
+			},
+		},
+		default: '',
+		description: 'List unplanned scenario-linked risks on this analysis',
 	},
 	{
 		displayName: 'Return All',
@@ -66,6 +96,58 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Search',
+		name: 'query',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['risk'],
+				operation: ['getAll'],
+			},
+		},
+		default: '',
+		description: 'Filter risks by search query',
+	},
+	{
+		displayName: 'Order By',
+		name: 'orderBy',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['risk'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{ name: 'Category', value: 'CATEGORY' },
+			{ name: 'Created At', value: 'CREATED_AT' },
+			{ name: 'Inherent Risk Score', value: 'INHERENT_RISK_SCORE' },
+			{ name: 'Name', value: 'NAME' },
+			{ name: 'None', value: '' },
+			{ name: 'Residual Risk Score', value: 'RESIDUAL_RISK_SCORE' },
+			{ name: 'Treatment', value: 'TREATMENT' },
+		],
+		default: '',
+		description: 'Field to order risks by',
+	},
+	{
+		displayName: 'Order Direction',
+		name: 'orderDirection',
+		type: 'options',
+		displayOptions: {
+			show: {
+				resource: ['risk'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{ name: 'Ascending', value: 'ASC' },
+			{ name: 'Descending', value: 'DESC' },
+		],
+		default: 'DESC',
+		description: 'Sort direction. Used when Order By is set.',
+	},
 ];
 
 export async function execute(
@@ -73,30 +155,26 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const riskAnalysisId = this.getNodeParameter('riskAnalysisId', itemIndex, '') as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const queryFilter = this.getNodeParameter('query', itemIndex, '') as string;
+	const orderBy = this.getNodeParameter('orderBy', itemIndex, '') as string;
+	const orderDirection = this.getNodeParameter('orderDirection', itemIndex, 'DESC') as string;
+
+	const byAnalysis = riskAnalysisId !== '';
+	const id = byAnalysis ? riskAnalysisId : organizationId;
+	const connectionField = byAnalysis ? 'scenarioRisks' : 'risks';
+	const parentType = byAnalysis ? 'RiskAnalysis' : 'Organization';
 
 	const query = `
-		query GetRisks($organizationId: ID!, $first: Int, $after: CursorKey) {
-			node(id: $organizationId) {
-				... on Organization {
-					risks(first: $first, after: $after) {
+		query GetRisks($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
+			node(id: $id) {
+				... on ${parentType} {
+					${connectionField}(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
 						edges {
 							node {
-								id
-								name
-								description
-								category
-								treatment
-								inherentLikelihood
-								inherentImpact
-								inherentRiskScore
-								residualLikelihood
-								residualImpact
-								residualRiskScore
-								note
-								createdAt
-								updatedAt
+								${riskNodeFields}
 							}
 						}
 						pageInfo {
@@ -109,14 +187,22 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { id };
+	if (orderBy !== '') {
+		variables.orderBy = { field: orderBy, direction: orderDirection };
+	}
+	if (queryFilter !== '') {
+		variables.filter = { query: queryFilter };
+	}
+
 	const risks = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
-			return node?.risks as IDataObject | undefined;
+			return node?.[connectionField] as IDataObject | undefined;
 		},
 		returnAll,
 		limit,

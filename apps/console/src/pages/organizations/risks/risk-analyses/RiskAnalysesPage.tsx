@@ -68,7 +68,7 @@ const riskAnalysesFragment = graphql`
     last: { type: "Int", defaultValue: null }
   ) {
     canCreateRiskAnalysis: permission(
-      action: "core:risk-analysis:create"
+      action: "risk-management:risk-analysis:create"
     )
     riskAnalyses(
       first: $first
@@ -155,32 +155,43 @@ export default function RiskAnalysesPage({ queryRef }: RiskAnalysesPageProps) {
       <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
-            <SortableTh field="NAME">{t("riskAnalysesPage.columns.name")}</SortableTh>
+            <SortableTh field="NAME">
+              {t("riskAnalysesPage.columns.name")}
+            </SortableTh>
             <Th>{t("riskAnalysesPage.columns.description")}</Th>
             <Th>{t("riskAnalysesPage.columns.period")}</Th>
             <Th>{t("riskAnalysesPage.columns.matrixSize")}</Th>
-            <SortableTh field="CREATED_AT">{t("riskAnalysesPage.columns.created")}</SortableTh>
+            <SortableTh field="CREATED_AT">
+              {t("riskAnalysesPage.columns.created")}
+            </SortableTh>
           </Tr>
         </Thead>
         <Tbody>
+          {riskAnalyses.length === 0 && (
+            <Tr>
+              <Td colSpan={5} className="text-center text-txt-secondary">
+                {t("riskAnalysesPage.empty")}
+              </Td>
+            </Tr>
+          )}
           {riskAnalyses.map(ra => (
             <Tr
               key={ra.id}
-              to={`/organizations/${organizationId}/risk-management/risk-analyses/${ra.id}`}
+              to={`/organizations/${organizationId}/risk-management/risk-analyses/${ra.id}/treatment-plans`}
             >
-              <Td className="font-medium">{ra.name}</Td>
-              <Td className="text-txt-secondary truncate max-w-xs">
+              <Td className="w-px whitespace-nowrap font-medium">{ra.name}</Td>
+              <Td className="text-txt-secondary max-w-md">
                 {ra.description || "—"}
               </Td>
-              <Td className="text-txt-secondary">
+              <Td className="w-px whitespace-nowrap text-txt-secondary">
                 {ra.period
                   ? `${ra.period.start ? dateFormat(i18n.language, ra.period.start) : "—"} – ${ra.period.end ? dateFormat(i18n.language, ra.period.end) : "—"}`
                   : "—"}
               </Td>
-              <Td className="text-txt-secondary">
+              <Td className="w-px whitespace-nowrap text-txt-secondary">
                 {formatMatrixSize(ra.matrixSize.rows, ra.matrixSize.cols)}
               </Td>
-              <Td className="text-txt-secondary">
+              <Td className="w-px whitespace-nowrap text-txt-secondary">
                 {dateFormat(i18n.language, ra.createdAt)}
               </Td>
             </Tr>

@@ -23,13 +23,14 @@ package list
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const listQuery = `
+const listByOrgQuery = `
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
   node(id: $id) {
     __typename
@@ -56,34 +57,65 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
 }
 `
 
+const listByAnalysisQuery = `
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: RiskFilter) {
+  node(id: $id) {
+    __typename
+    ... on RiskAnalysis {
+      scenarioRisks(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+        totalCount
+        edges {
+          node {
+            id
+            name
+            category
+            treatment
+            inherentRiskScore
+            residualRiskScore
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+`
+
 type risk struct {
-	ID                string `json:"id"`
-	Name              string `json:"name"`
-	Category          string `json:"category"`
-	Treatment         string `json:"treatment"`
-	InherentRiskScore int    `json:"inherentRiskScore"`
-	ResidualRiskScore int    `json:"residualRiskScore"`
+	ID                string  `json:"id"`
+	Name              string  `json:"name"`
+	Category          string  `json:"category"`
+	Treatment         *string `json:"treatment"`
+	InherentRiskScore *int    `json:"inherentRiskScore"`
+	ResidualRiskScore *int    `json:"residualRiskScore"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
-		flagLimit    int
-		flagOrderBy  string
-		flagOrderDir string
-		flagFilter   string
-		flagOutput   *string
+		flagOrg          string
+		flagRiskAnalysis string
+		flagLimit        int
+		flagOrderBy      string
+		flagOrderDir     string
+		flagFilter       string
+		flagOutput       *string
 	)
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List risks in an organization",
+		Short:   "List risks in an organization or unplanned risks on an analysis",
 		Aliases: []string{"ls"},
 		Example: `  # List risks in the default organization
   prb risk list
 
   # Filter risks by name
   prb risk list --filter "data breach"
+
+  # List unplanned scenario-linked risks on an analysis
+  prb risk ls --risk-analysis <id>
 
   # List risks sorted by inherent score
   prb risk ls --order-by INHERENT_RISK_SCORE --json`,
@@ -111,16 +143,26 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagOrg == "" {
-				flagOrg = hc.Organization
+			query := listByOrgQuery
+			parentID := flagOrg
+			expectedType := "Organization"
+			missingParent := "organization is required; pass --org or set a default with 'prb auth login'"
+
+			if flagRiskAnalysis != "" {
+				query = listByAnalysisQuery
+				parentID = flagRiskAnalysis
+				expectedType = "RiskAnalysis"
+				missingParent = "risk analysis is required; pass --risk-analysis"
+			} else if parentID == "" {
+				parentID = hc.Organization
 			}
 
-			if flagOrg == "" {
-				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
+			if parentID == "" {
+				return fmt.Errorf("%s", missingParent)
 			}
 
 			variables := map[string]any{
-				"id": flagOrg,
+				"id": parentID,
 			}
 
 			if flagOrderBy != "" {
@@ -142,26 +184,27 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			risks, totalCount, err := api.Paginate(
 				client,
-				listQuery,
+				query,
 				variables,
 				flagLimit,
 				func(data json.RawMessage) (*api.Connection[risk], error) {
 					var resp struct {
 						Node *struct {
-							Typename string               `json:"__typename"`
-							Risks    api.Connection[risk] `json:"risks"`
+							Typename      string               `json:"__typename"`
+							Risks         api.Connection[risk] `json:"risks"`
+							ScenarioRisks api.Connection[risk] `json:"scenarioRisks"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
 
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
+					if resp.Node == nil || resp.Node.Typename != expectedType {
+						return nil, fmt.Errorf("%s %s not found", expectedType, parentID)
 					}
 
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
+					if expectedType == "RiskAnalysis" {
+						return &resp.Node.ScenarioRisks, nil
 					}
 
 					return &resp.Node.Risks, nil
@@ -186,9 +229,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					r.ID,
 					r.Name,
 					r.Category,
-					r.Treatment,
-					fmt.Sprintf("%d", r.InherentRiskScore),
-					fmt.Sprintf("%d", r.ResidualRiskScore),
+					formatOptionalString(r.Treatment),
+					formatOptionalInt(r.InherentRiskScore),
+					formatOptionalInt(r.ResidualRiskScore),
 				})
 			}
 
@@ -210,6 +253,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(&flagRiskAnalysis, "risk-analysis", "", "List unplanned scenario-linked risks on a risk analysis")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of risks to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, NAME, CATEGORY, TREATMENT, INHERENT_RISK_SCORE, RESIDUAL_RISK_SCORE)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
@@ -217,4 +261,20 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func formatOptionalString(v *string) string {
+	if v == nil || *v == "" {
+		return "-"
+	}
+
+	return *v
+}
+
+func formatOptionalInt(v *int) string {
+	if v == nil {
+		return "-"
+	}
+
+	return strconv.Itoa(*v)
 }

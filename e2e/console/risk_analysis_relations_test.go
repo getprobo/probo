@@ -190,8 +190,8 @@ func riskRelationsAssessmentOrganizationScopesPermission(
 							hasPreviousPage
 						}
 					}
-					canUpdate: permission(action: "core:risk-analysis:update")
-					canDelete: permission(action: "core:risk-analysis:delete")
+					canUpdate: permission(action: "risk-management:risk-analysis:update")
+					canDelete: permission(action: "risk-management:risk-analysis:delete")
 				}
 			}
 		}

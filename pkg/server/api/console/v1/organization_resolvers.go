@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -1286,7 +1287,7 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 
 // RiskAnalyses is the resolver for the riskAnalyses field.
 func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisOrderBy) (*types.RiskAnalysisConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisList)
 	if err != nil {
 		return nil, err
 	}
@@ -1314,9 +1315,49 @@ func (r *organizationResolver) RiskAnalyses(ctx context.Context, obj *types.Orga
 	return types.NewRiskAnalysisConnection(p, r, obj.ID), nil
 }
 
+// TreatmentPlans is the resolver for the treatmentPlans field.
+func (r *organizationResolver) TreatmentPlans(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter) (*types.TreatmentPlanConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TreatmentPlanOrderField]{
+		Field:     coredata.TreatmentPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	planFilter := coredata.NewTreatmentPlanFilter(nil, nil, nil)
+	if filter != nil {
+		planFilter = coredata.NewTreatmentPlanFilter(filter.ScoreType, filter.Likelihood, filter.Impact)
+	}
+
+	p, err := r.riskManagement.ListTreatmentPlansForOrganizationID(ctx, scope, obj.ID, cursor, planFilter)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list treatment plans", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTreatmentPlanConnection(p, r, obj.ID, planFilter), nil
+}
+
 // RiskAnalysisScenarios is the resolver for the riskAnalysisScenarios field.
 func (r *organizationResolver) RiskAnalysisScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}

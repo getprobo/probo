@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -136,7 +137,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRisk(risk), nil
 		}
 	case coredata.RiskAnalysisEntityType:
-		action = probo.ActionRiskAnalysisGet
+		action = riskmanagement.ActionRiskAnalysisGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			ra, err := r.riskManagement.Get(ctx, scope, id)
 			if err != nil {
@@ -145,8 +146,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewRiskAnalysis(ra), nil
 		}
+	case coredata.TreatmentPlanEntityType:
+		action = riskmanagement.ActionTreatmentPlanGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			tp, err := r.riskManagement.GetTreatmentPlan(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewTreatmentPlan(tp), nil
+		}
 	case coredata.RiskAnalysisNodeEntityType:
-		action = probo.ActionRiskAnalysisNodeGet
+		action = riskmanagement.ActionRiskAnalysisNodeGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			n, err := r.riskManagement.GetNode(ctx, scope, id)
 			if err != nil {
@@ -156,7 +167,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisNode(n), nil
 		}
 	case coredata.RiskAnalysisProcessEntityType:
-		action = probo.ActionRiskAnalysisProcessGet
+		action = riskmanagement.ActionRiskAnalysisProcessGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			p, err := r.riskManagement.GetProcess(ctx, scope, id)
 			if err != nil {
@@ -166,7 +177,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisProcess(p), nil
 		}
 	case coredata.RiskAnalysisThreatEntityType:
-		action = probo.ActionRiskAnalysisThreatGet
+		action = riskmanagement.ActionRiskAnalysisThreatGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			t, err := r.riskManagement.GetThreat(ctx, scope, id)
 			if err != nil {
@@ -176,7 +187,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisThreat(t), nil
 		}
 	case coredata.RiskAnalysisDiagramEntityType:
-		action = probo.ActionRiskAnalysisDiagramGet
+		action = riskmanagement.ActionRiskAnalysisDiagramGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			s, err := r.riskManagement.GetDiagram(ctx, scope, id)
 			if err != nil {
@@ -186,7 +197,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisDiagram(s), nil
 		}
 	case coredata.RiskAnalysisBoundaryEntityType:
-		action = probo.ActionRiskAnalysisBoundaryGet
+		action = riskmanagement.ActionRiskAnalysisBoundaryGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			b, err := r.riskManagement.GetBoundary(ctx, scope, id)
 			if err != nil {
@@ -196,7 +207,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisBoundary(b), nil
 		}
 	case coredata.RiskAnalysisScenarioEntityType:
-		action = probo.ActionRiskAnalysisScenarioGet
+		action = riskmanagement.ActionRiskAnalysisScenarioGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			s, err := r.riskManagement.GetScenario(ctx, scope, id)
 			if err != nil {

@@ -34,8 +34,8 @@ const riskManagementNavPanelQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        canListRisks: permission(action: "core:risk:list")
-        canListRiskAnalyses: permission(action: "core:risk-analysis:list")
+        canListRisks: permission(action: "risk-management:risk:list")
+        canListRiskAnalyses: permission(action: "risk-management:risk-analysis:list")
       }
     }
   }
@@ -67,16 +67,16 @@ function RiskManagementNavPanelInner({ queryRef, group }: RiskManagementNavPanel
 
   return (
     <>
-      {organization.canListRisks && (
-        <NavPanelItem
-          label={t("nav.risks")}
-          to={navHref(organizationId, group, "risks")}
-        />
-      )}
       {organization.canListRiskAnalyses && (
         <NavPanelItem
           label={t("nav.riskAnalyses")}
           to={navHref(organizationId, group, "risk-analyses")}
+        />
+      )}
+      {organization.canListRisks && (
+        <NavPanelItem
+          label={t("nav.allRisks")}
+          to={navHref(organizationId, group, "risks")}
         />
       )}
     </>
