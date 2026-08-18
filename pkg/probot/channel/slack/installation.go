@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -468,13 +469,7 @@ func installationMatchesDisableIdentifiers(
 		return false
 	}
 
-	for _, botUserID := range botUserIDs {
-		if botUserID == installation.BotUserID {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(botUserIDs, installation.BotUserID)
 }
 
 func findMemberConversation(

@@ -23,6 +23,7 @@ package complianceportal
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"go.probo.inc/probo/pkg/bot"
@@ -328,10 +329,8 @@ func resourceIDOnMessage(
 	fileIDs []gid.GID,
 ) bool {
 	for _, ids := range [][]gid.GID{documentIDs, reportIDs, fileIDs} {
-		for _, id := range ids {
-			if id == resourceID {
-				return true
-			}
+		if slices.Contains(ids, resourceID) {
+			return true
 		}
 	}
 
