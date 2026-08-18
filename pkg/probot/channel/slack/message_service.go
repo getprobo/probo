@@ -411,6 +411,48 @@ func (s *MessageService) SetDestination(
 	return destination, nil
 }
 
+// RestoreDestination writes a previously stored destination, including its
+// verification timestamp. Used when rolling back a failed channel change.
+func (s *MessageService) RestoreDestination(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	target probot.DeliveryTarget,
+	previous *coredata.BotDeliveryDestination,
+) (*coredata.BotDeliveryDestination, error) {
+	if previous == nil {
+		return nil, fmt.Errorf("cannot restore nil Slack delivery destination")
+	}
+
+	destination := coredata.NewBotDeliveryDestination(
+		scope,
+		organizationID,
+		ProviderName,
+		target.Namespace,
+		target.Key,
+	)
+	destination.ExternalDestinationID = previous.ExternalDestinationID
+	destination.ExternalName = previous.ExternalName
+	destination.VerifiedAt = previous.VerifiedAt
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			_, err := destination.Upsert(ctx, tx, scope)
+			if err != nil {
+				return fmt.Errorf("cannot upsert Slack delivery destination: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot restore Slack delivery destination: %w", err)
+	}
+
+	return destination, nil
+}
+
 func (s *MessageService) ClearDestination(
 	ctx context.Context,
 	scope coredata.Scoper,

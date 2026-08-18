@@ -68,6 +68,7 @@ type (
 	BotDeliveryDestinations interface {
 		GetDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget) (*coredata.BotDeliveryDestination, error)
 		SetDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget, externalDestinationID string) (*coredata.BotDeliveryDestination, error)
+		RestoreDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget, previous *coredata.BotDeliveryDestination) (*coredata.BotDeliveryDestination, error)
 		ClearDestination(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, target probot.DeliveryTarget) error
 	}
 

@@ -72,6 +72,7 @@ func applySlackbotNotificationChannel(
 			scope,
 			organizationID,
 			target,
+			destination.ExternalDestinationID,
 			previous,
 		); restoreErr != nil {
 			return nil, fmt.Errorf(
@@ -93,8 +94,20 @@ func restoreSlackbotNotificationChannel(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	target probot.DeliveryTarget,
+	writtenChannelID string,
 	previous *coredata.BotDeliveryDestination,
 ) error {
+	current, err := destinations.GetDestination(ctx, scope, organizationID, target)
+	if err != nil && !errors.Is(err, slackchannel.ErrSlackbotChannelNotFound) {
+		return fmt.Errorf("cannot load Slackbot notification channel for restore: %w", err)
+	}
+
+	// Another request already replaced (or cleared) our write; leave it alone.
+	if errors.Is(err, slackchannel.ErrSlackbotChannelNotFound) ||
+		current.ExternalDestinationID != writtenChannelID {
+		return nil
+	}
+
 	if previous == nil {
 		if err := destinations.ClearDestination(ctx, scope, organizationID, target); err != nil {
 			return fmt.Errorf("cannot clear Slackbot notification channel: %w", err)
@@ -103,12 +116,12 @@ func restoreSlackbotNotificationChannel(
 		return nil
 	}
 
-	if _, err := destinations.SetDestination(
+	if _, err := destinations.RestoreDestination(
 		ctx,
 		scope,
 		organizationID,
 		target,
-		previous.ExternalDestinationID,
+		previous,
 	); err != nil {
 		return fmt.Errorf("cannot restore Slackbot notification channel: %w", err)
 	}
