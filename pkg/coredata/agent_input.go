@@ -653,7 +653,7 @@ SET
 WHERE
 	processed_at IS NULL
 	AND dead_lettered_at IS NULL
-	AND agent_execution_id = ANY(@execution_ids::text[])
+	AND agent_execution_id = ANY(@execution_ids)
 	AND EXISTS (
 		SELECT 1
 		FROM agent_executions

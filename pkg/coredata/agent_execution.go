@@ -1177,6 +1177,9 @@ WHERE
 	return nil
 }
 
+// LockStaleAgentExecutionIDs locks stale leased executions in id order.
+// Callers that later update agent_inputs must keep the same parent-then-child
+// lock order as normal completion (execution first, then inputs).
 func LockStaleAgentExecutionIDs(
 	ctx context.Context,
 	conn pg.Tx,
@@ -1252,7 +1255,7 @@ SET
 	END,
 	updated_at = @now
 WHERE
-	id = ANY(@execution_ids::text[])
+	id = ANY(@execution_ids)
 `
 
 	args := pgx.StrictNamedArgs{

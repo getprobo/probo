@@ -35,6 +35,7 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
 )
 
@@ -359,6 +360,15 @@ func (h *handler) processConversation(
 		context.WithoutCancel(commitCtx),
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(execution.ID)
+			if err := lockAgentExecutionForLeaseWrite(
+				ctx,
+				tx,
+				scope,
+				execution.ID,
+			); err != nil {
+				return err
+			}
+
 			for _, input := range inputs {
 				if err := input.MarkProcessed(ctx, tx, scope, ownerToken, now); err != nil {
 					return fmt.Errorf("cannot mark input processed: %w", err)
@@ -512,6 +522,15 @@ func (h *handler) handleFailure(
 		persistErr = h.pg.WithTx(
 			context.WithoutCancel(ctx),
 			func(ctx context.Context, tx pg.Tx) error {
+				if err := lockAgentExecutionForLeaseWrite(
+					ctx,
+					tx,
+					scope,
+					execution.ID,
+				); err != nil {
+					return err
+				}
+
 				for _, input := range inputs {
 					if err := input.DeadLetter(ctx, tx, scope, ownerToken, message, now); err != nil {
 						return fmt.Errorf("cannot dead-letter input: %w", err)
@@ -526,6 +545,15 @@ func (h *handler) handleFailure(
 		persistErr = h.pg.WithTx(
 			context.WithoutCancel(ctx),
 			func(ctx context.Context, tx pg.Tx) error {
+				if err := lockAgentExecutionForLeaseWrite(
+					ctx,
+					tx,
+					scope,
+					execution.ID,
+				); err != nil {
+					return err
+				}
+
 				for _, input := range inputs {
 					if err := input.RecordFailure(
 						ctx,
@@ -618,6 +646,20 @@ func (h *handler) mapLeaseWriteError(action string, err error) error {
 	}
 
 	return fmt.Errorf("%s: %w", action, err)
+}
+
+func lockAgentExecutionForLeaseWrite(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	executionID gid.GID,
+) error {
+	var locked coredata.AgentExecution
+	if err := locked.LoadByIDForUpdate(ctx, tx, scope, executionID); err != nil {
+		return fmt.Errorf("cannot lock agent execution: %w", err)
+	}
+
+	return nil
 }
 
 func (h *handler) signalShutdown() {
