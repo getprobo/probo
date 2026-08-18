@@ -101,6 +101,19 @@ func (s *MessageService) OnSlackbotDeliverySuccess(
 
 	destination.UpdatedAt = now
 	if err := destination.MarkVerified(ctx, tx, scope); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			if s.logger != nil {
+				s.logger.InfoCtx(
+					ctx,
+					"skipping verification of deleted bot destination",
+					log.String("organization_id", message.OrganizationID.String()),
+					log.String("target_namespace", namespace),
+				)
+			}
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot verify delivered bot destination: %w", err)
 	}
 

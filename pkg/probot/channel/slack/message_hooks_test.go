@@ -202,6 +202,53 @@ func TestMessageService_OnSlackbotDeliverySuccessMissingDestinationIsNonFatal(t 
 	)
 }
 
+func TestBotDeliveryDestination_MarkVerifiedDeletedIsNotFound(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	target := coredata.NewBotDeliveryDestination(
+		scope,
+		organizationID,
+		ProviderName,
+		"compliance_portal",
+		organizationID.String(),
+	)
+	target.ExternalDestinationID = "C-deleted-during-verify"
+
+	err := pgClient.WithTx(
+		t.Context(),
+		func(ctx context.Context, tx pg.Tx) error {
+			if _, err := target.Upsert(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			var destination coredata.BotDeliveryDestination
+			if err := destination.LoadByTarget(
+				ctx,
+				tx,
+				scope,
+				organizationID,
+				ProviderName,
+				target.TargetNamespace,
+				target.TargetKey,
+			); err != nil {
+				return err
+			}
+
+			if err := destination.Delete(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			now := time.Now()
+			destination.VerifiedAt = &now
+			destination.UpdatedAt = now
+
+			return destination.MarkVerified(ctx, tx, scope)
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+}
+
 func TestMessageService_OnSlackbotDeliverySuccessIgnoresSourceEventIDForAnchor(t *testing.T) {
 	t.Parallel()
 
