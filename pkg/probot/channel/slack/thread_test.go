@@ -366,6 +366,7 @@ func TestAppendTriggeringEventIfMissing_AppendsTruncatedLongThreadEvent(t *testi
 
 	replies := make([]ThreadReply, 0, threadTranscriptMaxMessages+5)
 	replies = append(replies, ThreadReply{User: "UROOT", Text: "root", TS: "0.000"})
+
 	for i := range threadTranscriptMaxMessages + 3 {
 		replies = append(
 			replies,

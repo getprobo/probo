@@ -253,6 +253,7 @@ func insertTestPortal(
 ) (gid.GID, error) {
 	now := time.Now()
 	portalID := gid.New(organizationID.TenantID(), coredata.CompliancePortalEntityType)
+
 	mailingList := coredata.MailingList{
 		ID:             gid.New(organizationID.TenantID(), coredata.MailingListEntityType),
 		OrganizationID: organizationID,
@@ -291,6 +292,7 @@ func insertTestBlobFile(
 	name string,
 ) (gid.GID, error) {
 	now := time.Now()
+
 	objectKey, err := uuid.NewV7()
 	if err != nil {
 		return gid.Nil, err
@@ -324,6 +326,7 @@ func insertTestPortalFile(
 	name string,
 ) (gid.GID, error) {
 	now := time.Now()
+
 	blobID, err := insertTestBlobFile(
 		ctx,
 		tx,

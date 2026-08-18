@@ -555,6 +555,7 @@ func TestNotificationService_QueueSkipsDeadLetteredSourceEvent(t *testing.T) {
 	first.Error = new("delivery failed")
 	first.ChannelID = &failedChannel
 	first.MessageTS = &failedTS
+
 	require.NoError(
 		t,
 		fixture.client.WithTx(

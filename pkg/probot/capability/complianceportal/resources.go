@@ -97,6 +97,7 @@ func loadResources(
 
 		if access.ReportFileID != nil {
 			var portalAudit coredata.CompliancePortalAudit
+
 			err := portalAudit.LoadByCompliancePortalIDAndReportFileID(
 				ctx,
 				conn,
@@ -138,6 +139,7 @@ func loadResources(
 
 		if access.CompliancePortalFileID != nil {
 			var file coredata.CompliancePortalFile
+
 			err := file.LoadByCompliancePortalIDAndID(
 				ctx,
 				conn,

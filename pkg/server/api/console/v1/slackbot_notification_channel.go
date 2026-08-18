@@ -50,6 +50,7 @@ func applySlackbotNotificationChannel(
 		previous = nil
 		err = nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot load Slackbot notification channel: %w", err)
 	}

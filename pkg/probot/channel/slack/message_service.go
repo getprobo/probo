@@ -469,6 +469,7 @@ func (s *MessageService) RestoreDestination(
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil
 			}
+
 			if err != nil {
 				return fmt.Errorf("cannot update Slack delivery destination: %w", err)
 			}

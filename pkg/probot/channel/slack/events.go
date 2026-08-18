@@ -122,6 +122,7 @@ func parseSlackTimestamp(raw string) (time.Time, bool) {
 	}
 
 	var nsec int64
+
 	if fracPart != "" {
 		if len(fracPart) > 9 {
 			fracPart = fracPart[:9]

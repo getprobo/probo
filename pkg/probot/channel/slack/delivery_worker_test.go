@@ -109,6 +109,7 @@ func TestDeliveryOperationHandler_RetryAndDeadLetter(t *testing.T) {
 
 	claimedAgain, err := handler.Claim(t.Context())
 	require.NoError(t, err)
+
 	claimedAgain.MaxAttempts = claimedAgain.AttemptCount
 	require.Error(t, handler.Process(t.Context(), claimedAgain))
 	dead := loadDeliveryOperation(t, fixture.pg, fixture.scope, operation.ID)

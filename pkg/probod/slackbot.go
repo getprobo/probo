@@ -68,6 +68,7 @@ func (impl *Implm) buildSlackbot(
 	if agentCfg.Temperature != nil {
 		opts = append(opts, agent.WithTemperature(*agentCfg.Temperature))
 	}
+
 	if agentCfg.MaxTokens != nil {
 		opts = append(opts, agent.WithMaxTokens(*agentCfg.MaxTokens))
 	}

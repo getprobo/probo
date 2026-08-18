@@ -529,11 +529,14 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 
 	uninstalled := make(chan struct{})
 	release := make(chan struct{})
+
 	var releaseOnce sync.Once
+
 	releaseUninstall := func() {
 		releaseOnce.Do(func() { close(release) })
 	}
 	defer releaseUninstall()
+
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -609,8 +612,10 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 		t.Fatal("timed out waiting for Slack uninstall")
 	}
 
-	var replacementID gid.GID
-	var replacementUpdatedAt time.Time
+	var (
+		replacementID        gid.GID
+		replacementUpdatedAt time.Time
+	)
 
 	require.NoError(
 		t,
@@ -768,6 +773,7 @@ func TestInstallationUninstall_CleansUpAfterCredentialRefresh(t *testing.T) {
 	teamID := fmt.Sprintf("T-refresh-uninst-%s", organization.ID)
 	encryptionKey := cipher.EncryptionKey{1, 2, 3}
 	expiredAt := time.Now().Add(-time.Minute)
+
 	var refreshCalls, uninstallCalls int
 
 	server := httptest.NewServer(
@@ -777,7 +783,9 @@ func TestInstallationUninstall_CleansUpAfterCredentialRefresh(t *testing.T) {
 				case "/":
 					require.NoError(t, r.ParseForm())
 					assert.Equal(t, "refresh_token", r.Form.Get("grant_type"))
+
 					refreshCalls++
+
 					require.NoError(
 						t,
 						json.NewEncoder(w).Encode(

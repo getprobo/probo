@@ -201,6 +201,7 @@ func parkSlackbotMessage(
 	message.ProcessingStartedAt = nil
 	message.UpdatedAt = now
 	scope := coredata.NewScopeFromObjectID(message.ID)
+
 	require.NoError(
 		t,
 		handler.pg.WithTx(
