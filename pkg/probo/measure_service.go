@@ -158,6 +158,66 @@ func (s MeasureService) ListForRiskID(
 	return page.NewPage(measures, cursor), nil
 }
 
+func (s MeasureService) CountForTreatmentPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	treatmentPlanID gid.GID,
+	filter *coredata.MeasureFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			measures := &coredata.Measures{}
+
+			count, err = measures.CountByTreatmentPlanID(ctx, conn, scope, treatmentPlanID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count measures: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s MeasureService) ListForTreatmentPlanID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	treatmentPlanID gid.GID,
+	cursor *page.Cursor[coredata.MeasureOrderField],
+	filter *coredata.MeasureFilter,
+) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
+	var measures coredata.Measures
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			tp := &coredata.TreatmentPlan{}
+			if err := tp.LoadByID(ctx, conn, scope, treatmentPlanID); err != nil {
+				return fmt.Errorf("cannot load treatment plan: %w", err)
+			}
+
+			err := measures.LoadByTreatmentPlanID(ctx, conn, scope, tp.ID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load measures: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(measures, cursor), nil
+}
+
 func (s MeasureService) CountForControlID(
 	ctx context.Context, scope coredata.Scoper,
 	controlID gid.GID,

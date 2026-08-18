@@ -165,10 +165,14 @@ function RiskRow(props: {
     <Tr to={`/organizations/${organizationId}/risk-management/risks/${risk.id}`}>
       <Td>{risk.name}</Td>
       <Td>
-        <RiskBadge level={risk.inherentRiskScore} />
+        {risk.inherentRiskScore != null
+          ? <RiskBadge level={risk.inherentRiskScore} />
+          : "—"}
       </Td>
       <Td>
-        <RiskBadge level={risk.residualRiskScore} />
+        {risk.residualRiskScore != null
+          ? <RiskBadge level={risk.residualRiskScore} />
+          : "—"}
       </Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">

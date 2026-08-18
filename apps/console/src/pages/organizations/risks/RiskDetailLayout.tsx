@@ -21,15 +21,11 @@
 import { usePageTitle } from "@probo/hooks";
 import {
   ActionDropdown,
-  Avatar,
-  Badge,
   Button,
-  Drawer,
   DropdownItem,
   IconPencil,
   IconTrashCan,
   PageHeader,
-  PropertyRow,
   TabBadge,
   TabLink,
   Tabs,
@@ -54,13 +50,6 @@ export const riskDetailLayoutQuery = graphql`
       ... on Risk {
         name
         description
-        treatment
-        owner {
-          fullName
-        }
-        note
-        inherentRiskScore
-        residualRiskScore
         measuresInfo: measures(first: 0) {
           totalCount
         }
@@ -76,8 +65,11 @@ export const riskDetailLayoutQuery = graphql`
         scenariosInfo: scenarios(first: 0) {
           totalCount
         }
-        canUpdate: permission(action: "core:risk:update")
-        canDelete: permission(action: "core:risk:delete")
+        treatmentPlansInfo: treatmentPlans(first: 0) {
+          totalCount
+        }
+        canUpdate: permission(action: "risk-management:risk:update")
+        canDelete: permission(action: "risk-management:risk:delete")
         ...FormRiskDialog_risk
       }
     }
@@ -155,6 +147,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
   const scenariosCount = risk.scenariosInfo?.totalCount ?? 0;
+  const treatmentPlansCount = risk.treatmentPlansInfo?.totalCount ?? 0;
 
   const baseTabUrl = `/organizations/${organizationId}/risk-management/risks/${riskId}`;
 
@@ -209,36 +202,13 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
           {t("riskDetailLayout.tabs.scenarios")}
           <TabBadge>{scenariosCount}</TabBadge>
         </TabLink>
+        <TabLink to={`${baseTabUrl}/treatment-plans`}>
+          {t("riskDetailLayout.tabs.treatmentPlans")}
+          <TabBadge>{treatmentPlansCount}</TabBadge>
+        </TabLink>
       </Tabs>
 
       <Outlet />
-
-      <Drawer>
-        <PropertyRow label={t("riskDetailLayout.fields.owner")}>
-          <Badge variant="highlight" size="md" className="gap-2">
-            <Avatar name={risk.owner?.fullName ?? ""} />
-            {risk.owner?.fullName}
-          </Badge>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.treatment")}>
-          <Badge variant="highlight" size="md" className="gap-2">
-            {t(`riskDetailLayout.treatments.${(risk.treatment ?? "UNKNOWN").toLowerCase()}`)}
-          </Badge>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.initialRiskScore")}>
-          <div className="text-sm text-txt-secondary">
-            {risk.inherentRiskScore}
-          </div>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.residualRiskScore")}>
-          <div className="text-sm text-txt-secondary">
-            {risk.residualRiskScore}
-          </div>
-        </PropertyRow>
-        <PropertyRow label={t("riskDetailLayout.fields.note")}>
-          <div className="text-sm text-txt-secondary">{risk.note}</div>
-        </PropertyRow>
-      </Drawer>
     </div>
   );
 }

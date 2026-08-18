@@ -338,6 +338,14 @@ type Organization implements Node {
         orderBy: RiskAnalysisOrder
     ): RiskAnalysisConnection! @goField(forceResolver: true)
 
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
     riskAnalysisScenarios(
         first: Int
         after: CursorKey

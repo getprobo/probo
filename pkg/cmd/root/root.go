@@ -62,6 +62,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/tia"
 	trackerpattern "go.probo.inc/probo/pkg/cmd/tracker-pattern"
 	trackerresource "go.probo.inc/probo/pkg/cmd/tracker-resource"
+	treatmentplan "go.probo.inc/probo/pkg/cmd/treatment-plan"
 	"go.probo.inc/probo/pkg/cmd/user"
 	"go.probo.inc/probo/pkg/cmd/version"
 	"go.probo.inc/probo/pkg/cmd/webhook"
@@ -135,6 +136,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(scim.NewCmdScim(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))
+	cmd.AddCommand(treatmentplan.NewCmdTreatmentPlan(f))
 	cmd.AddCommand(tia.NewCmdTIA(f))
 	cmd.AddCommand(complianceportal.NewCmdCompliancePortal(f))
 	cmd.AddCommand(user.NewCmdUser(f))

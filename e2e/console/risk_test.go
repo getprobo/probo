@@ -89,6 +89,74 @@ func TestRisk_Create(t *testing.T) {
 		assert.Equal(t, 3, risk.InherentImpact)
 	})
 
+	t.Run("without scores action or owner", func(t *testing.T) {
+		query := `
+			mutation CreateRisk($input: CreateRiskInput!) {
+				createRisk(input: $input) {
+					riskEdge {
+						node {
+							id
+							name
+							category
+							treatment
+							owner { id }
+							inherentLikelihood
+							inherentImpact
+							inherentRiskScore
+							residualLikelihood
+							residualImpact
+							residualRiskScore
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			CreateRisk struct {
+				RiskEdge struct {
+					Node struct {
+						ID        string  `json:"id"`
+						Name      string  `json:"name"`
+						Category  string  `json:"category"`
+						Treatment *string `json:"treatment"`
+						Owner     *struct {
+							ID string `json:"id"`
+						} `json:"owner"`
+						InherentLikelihood *int `json:"inherentLikelihood"`
+						InherentImpact     *int `json:"inherentImpact"`
+						InherentRiskScore  *int `json:"inherentRiskScore"`
+						ResidualLikelihood *int `json:"residualLikelihood"`
+						ResidualImpact     *int `json:"residualImpact"`
+						ResidualRiskScore  *int `json:"residualRiskScore"`
+					} `json:"node"`
+				} `json:"riskEdge"`
+			} `json:"createRisk"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           "Catalog Risk",
+				"category":       "SECURITY",
+			},
+		}, &result)
+		require.NoError(t, err)
+
+		risk := result.CreateRisk.RiskEdge.Node
+		assert.NotEmpty(t, risk.ID)
+		assert.Equal(t, "Catalog Risk", risk.Name)
+		assert.Equal(t, "SECURITY", risk.Category)
+		assert.Nil(t, risk.Treatment)
+		assert.Nil(t, risk.Owner)
+		assert.Nil(t, risk.InherentLikelihood)
+		assert.Nil(t, risk.InherentImpact)
+		assert.Nil(t, risk.InherentRiskScore)
+		assert.Nil(t, risk.ResidualLikelihood)
+		assert.Nil(t, risk.ResidualImpact)
+		assert.Nil(t, risk.ResidualRiskScore)
+	})
+
 	t.Run("with different treatments", func(t *testing.T) {
 		treatments := []struct {
 			name      string
@@ -207,11 +275,10 @@ func TestRisk_Update(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"id":                 riskID,
-			"name":               "Updated Risk Name",
-			"description":        "Updated by owner",
-			"treatment":          "TRANSFERRED",
-			"inherentLikelihood": 3,
+			"id":          riskID,
+			"name":        "Updated Risk Name",
+			"description": "Updated by owner",
+			"treatment":   "TRANSFERRED",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -348,34 +415,22 @@ func TestRisk_RequiredFields(t *testing.T) {
 			wantErrorContains: "category",
 		},
 		{
-			name: "missing treatment",
-			input: map[string]any{
-				"name":               "Test Risk",
-				"category":           "SECURITY",
-				"inherentLikelihood": 2,
-				"inherentImpact":     2,
-			},
-			wantErrorContains: "treatment",
-		},
-		{
-			name: "missing inherentLikelihood",
+			name: "inherent impact without likelihood",
 			input: map[string]any{
 				"name":           "Test Risk",
 				"category":       "SECURITY",
-				"treatment":      "MITIGATED",
 				"inherentImpact": 2,
 			},
-			wantErrorContains: "inherentLikelihood",
+			wantErrorContains: "must be set together",
 		},
 		{
-			name: "missing inherentImpact",
+			name: "inherent likelihood without impact",
 			input: map[string]any{
 				"name":               "Test Risk",
 				"category":           "SECURITY",
-				"treatment":          "MITIGATED",
 				"inherentLikelihood": 2,
 			},
-			wantErrorContains: "inherentImpact",
+			wantErrorContains: "must be set together",
 		},
 		{
 			name: "invalid treatment enum",

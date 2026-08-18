@@ -302,7 +302,7 @@ func orgRelationsContextProfilesPermission(
 						edges { node { id } }
 					}
 					canCreateFramework: permission(action: "core:framework:create")
-					canListRisks: permission(action: "core:risk:list")
+					canListRisks: permission(action: "risk-management:risk:list")
 				}
 			}
 		}
@@ -850,7 +850,7 @@ func orgRelationsRiskPortfolio(
 			node(id: $id) {
 				... on Risk {
 					organization { id }
-					canUpdate: permission(action: "core:risk:update")
+					canUpdate: permission(action: "risk-management:risk:update")
 				}
 			}
 		}

@@ -31,10 +31,10 @@ export const riskObligationsPageQuery = graphql`
       ... on Risk {
         id
         canCreateObligationMapping: permission(
-          action: "core:risk:create-obligation-mapping"
+          action: "risk-management:risk:create-obligation-mapping"
         )
         canDeleteObligationMapping: permission(
-          action: "core:risk:delete-obligation-mapping"
+          action: "risk-management:risk:delete-obligation-mapping"
         )
         obligations(first: 100) @connection(key: "RiskObligationsPage_obligations") {
           __id

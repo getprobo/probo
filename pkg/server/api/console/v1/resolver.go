@@ -172,6 +172,7 @@ func NewMux(
 			cookieBannerSvc,
 			thirdPartySvc,
 			managementSvc,
+			riskManagementSvc,
 		))
 
 		r.Handle("/graphql", graphqlHandler)
@@ -243,4 +244,33 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
 
 	return err == nil, nil
+}
+
+func (r *Resolver) treatmentPlanNetScores(
+	ctx context.Context,
+	obj *types.TreatmentPlan,
+) (int, int, int, error) {
+	if _, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanGet); err != nil {
+		return 0, 0, 0, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	progress, err := loaders.TreatmentProgress.Load(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get treatment plan progress", log.Error(err))
+		return 0, 0, 0, gqlutils.Internal(ctx)
+	}
+
+	likelihood, impact, score := riskmanagement.NetScores(
+		&coredata.TreatmentPlan{
+			InherentLikelihood: obj.InherentLikelihood,
+			InherentImpact:     obj.InherentImpact,
+			ResidualLikelihood: obj.ResidualLikelihood,
+			ResidualImpact:     obj.ResidualImpact,
+		},
+		progress,
+	)
+
+	return likelihood, impact, score, nil
 }

@@ -31,10 +31,10 @@ export const riskDocumentsPageQuery = graphql`
       ... on Risk {
         id
         canCreateDocumentMapping: permission(
-          action: "core:risk:create-document-mapping"
+          action: "risk-management:risk:create-document-mapping"
         )
         canDeleteDocumentMapping: permission(
-          action: "core:risk:delete-document-mapping"
+          action: "risk-management:risk:delete-document-mapping"
         )
         documents(first: 100) @connection(key: "RiskDocumentsPage_documents") {
           __id

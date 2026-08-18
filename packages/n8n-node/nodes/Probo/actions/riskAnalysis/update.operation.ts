@@ -20,7 +20,6 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
-import { parseRiskAnalysisMatrixSize, riskAnalysisMatrixSizeOptions } from './matrixSize';
 
 export const description: INodeProperties[] = [
 	{
@@ -58,18 +57,6 @@ export const description: INodeProperties[] = [
 				description: 'The description of the risk analysis',
 			},
 			{
-				displayName: 'Matrix Size',
-				name: 'matrixSize',
-				type: 'options',
-				noDataExpression: true,
-				options: [
-					{ name: '(Unchanged)', value: '' },
-					...riskAnalysisMatrixSizeOptions,
-				],
-				default: '',
-				description: 'Likelihood/impact matrix size (3×3, 4×4, or 5×5)',
-			},
-			{
 				displayName: 'Name',
 				name: 'name',
 				type: 'string',
@@ -104,7 +91,6 @@ export async function execute(
 		description?: string;
 		periodStart?: string;
 		periodEnd?: string;
-		matrixSize?: string;
 	};
 
 	const query = `
@@ -137,9 +123,6 @@ export async function execute(
 			...(additionalFields.periodStart ? { start: additionalFields.periodStart } : {}),
 			...(additionalFields.periodEnd ? { end: additionalFields.periodEnd } : {}),
 		};
-	}
-	if (additionalFields.matrixSize) {
-		input.matrixSize = parseRiskAnalysisMatrixSize(additionalFields.matrixSize);
 	}
 
 	if (Object.keys(input).length === 1) {

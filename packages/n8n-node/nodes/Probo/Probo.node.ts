@@ -249,6 +249,11 @@ export class Probo implements INodeType {
 						description: 'Manage tracker patterns',
 					},
 					{
+						name: 'Treatment Plan',
+						value: 'treatmentPlan',
+						description: 'Manage treatment plans',
+					},
+					{
 						name: 'User',
 						value: 'user',
 						description: 'Manage organization users (profiles)',
