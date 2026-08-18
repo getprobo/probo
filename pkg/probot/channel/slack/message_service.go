@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
@@ -412,16 +413,34 @@ func (s *MessageService) SetDestination(
 }
 
 // RestoreDestination writes a previously stored destination, including its
-// verification timestamp. Used when rolling back a failed channel change.
+// verification timestamp, only when the current external destination ID still
+// equals expectedExternalDestinationID (the value this operation wrote). When
+// previous is nil, clears under the same compare-and-swap condition. A CAS miss
+// (concurrent replace or clear) is a no-op success.
 func (s *MessageService) RestoreDestination(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	target probot.DeliveryTarget,
 	previous *coredata.BotDeliveryDestination,
+	expectedExternalDestinationID string,
 ) (*coredata.BotDeliveryDestination, error) {
+	if expectedExternalDestinationID == "" {
+		return nil, fmt.Errorf("cannot restore Slack delivery destination without expected external destination id")
+	}
+
 	if previous == nil {
-		return nil, fmt.Errorf("cannot restore nil Slack delivery destination")
+		if err := s.clearDestinationIf(
+			ctx,
+			scope,
+			organizationID,
+			target,
+			expectedExternalDestinationID,
+		); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
 	}
 
 	destination := coredata.NewBotDeliveryDestination(
@@ -434,20 +453,37 @@ func (s *MessageService) RestoreDestination(
 	destination.ExternalDestinationID = previous.ExternalDestinationID
 	destination.ExternalName = previous.ExternalName
 	destination.VerifiedAt = previous.VerifiedAt
+	destination.UpdatedAt = time.Now()
+
+	updated := false
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			_, err := destination.Upsert(ctx, tx, scope)
-			if err != nil {
-				return fmt.Errorf("cannot upsert Slack delivery destination: %w", err)
+			err := destination.UpdateIfExternalDestinationID(
+				ctx,
+				tx,
+				scope,
+				expectedExternalDestinationID,
+			)
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil
 			}
+			if err != nil {
+				return fmt.Errorf("cannot update Slack delivery destination: %w", err)
+			}
+
+			updated = true
 
 			return nil
 		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot restore Slack delivery destination: %w", err)
+	}
+
+	if !updated {
+		return nil, nil
 	}
 
 	return destination, nil
@@ -472,6 +508,36 @@ func (s *MessageService) ClearDestination(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := destination.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete Slack delivery destination: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+// clearDestinationIf deletes the destination only when its external ID still
+// matches expectedExternalDestinationID.
+func (s *MessageService) clearDestinationIf(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	target probot.DeliveryTarget,
+	expectedExternalDestinationID string,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.DeleteIfExternalDestinationID(
+				ctx,
+				tx,
+				scope,
+				organizationID,
+				ProviderName,
+				target.Namespace,
+				target.Key,
+				expectedExternalDestinationID,
+			); err != nil {
 				return fmt.Errorf("cannot delete Slack delivery destination: %w", err)
 			}
 

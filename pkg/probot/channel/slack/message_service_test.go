@@ -491,3 +491,222 @@ func TestBotDeliveryDestination_UpsertIsolatesOrganizations(t *testing.T) {
 	require.NotNil(t, first.VerifiedAt)
 	assert.Nil(t, second.VerifiedAt)
 }
+
+func TestMessageService_RestoreDestination_CASPreservesConcurrentWrite(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	target := probot.DeliveryTarget{
+		Namespace: "compliance_portal",
+		Key:       "portal-" + organizationID.String(),
+	}
+
+	insertQueueDestinationWithExternalID(
+		t,
+		pgClient,
+		scope,
+		organizationID,
+		target,
+		"C-written",
+		false,
+	)
+
+	// Concurrent selection replaced our write before restore.
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				destination := coredata.NewBotDeliveryDestination(
+					scope,
+					organizationID,
+					ProviderName,
+					target.Namespace,
+					target.Key,
+				)
+				destination.ExternalDestinationID = "C-other"
+				destination.ExternalName = "other-channel"
+				_, err := destination.Upsert(ctx, tx, scope)
+
+				return err
+			},
+		),
+	)
+
+	service := NewMessageService(pgClient, nil, nil, nil, log.NewLogger())
+	verifiedAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+	restored, err := service.RestoreDestination(
+		t.Context(),
+		scope,
+		organizationID,
+		target,
+		&coredata.BotDeliveryDestination{
+			ExternalDestinationID: "C-old",
+			ExternalName:          "old-channel",
+			VerifiedAt:            &verifiedAt,
+		},
+		"C-written",
+	)
+	require.NoError(t, err)
+	assert.Nil(t, restored)
+
+	current, err := service.GetDestination(t.Context(), scope, organizationID, target)
+	require.NoError(t, err)
+	assert.Equal(t, "C-other", current.ExternalDestinationID)
+}
+
+func TestMessageService_RestoreDestination_CASRestoresWhenUnchanged(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	target := probot.DeliveryTarget{
+		Namespace: "compliance_portal",
+		Key:       "portal-" + organizationID.String(),
+	}
+
+	insertQueueDestinationWithExternalID(
+		t,
+		pgClient,
+		scope,
+		organizationID,
+		target,
+		"C-written",
+		false,
+	)
+
+	service := NewMessageService(pgClient, nil, nil, nil, log.NewLogger())
+	verifiedAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+	restored, err := service.RestoreDestination(
+		t.Context(),
+		scope,
+		organizationID,
+		target,
+		&coredata.BotDeliveryDestination{
+			ExternalDestinationID: "C-old",
+			ExternalName:          "old-channel",
+			VerifiedAt:            &verifiedAt,
+		},
+		"C-written",
+	)
+	require.NoError(t, err)
+	require.NotNil(t, restored)
+	assert.Equal(t, "C-old", restored.ExternalDestinationID)
+	require.NotNil(t, restored.VerifiedAt)
+	assert.True(t, restored.VerifiedAt.Equal(verifiedAt))
+
+	current, err := service.GetDestination(t.Context(), scope, organizationID, target)
+	require.NoError(t, err)
+	assert.Equal(t, "C-old", current.ExternalDestinationID)
+	require.NotNil(t, current.VerifiedAt)
+	assert.True(t, current.VerifiedAt.Equal(verifiedAt))
+}
+
+func TestMessageService_RestoreDestination_CASClearsWhenUnchanged(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	target := probot.DeliveryTarget{
+		Namespace: "compliance_portal",
+		Key:       "portal-" + organizationID.String(),
+	}
+
+	insertQueueDestinationWithExternalID(
+		t,
+		pgClient,
+		scope,
+		organizationID,
+		target,
+		"C-written",
+		false,
+	)
+
+	service := NewMessageService(pgClient, nil, nil, nil, log.NewLogger())
+	restored, err := service.RestoreDestination(
+		t.Context(),
+		scope,
+		organizationID,
+		target,
+		nil,
+		"C-written",
+	)
+	require.NoError(t, err)
+	assert.Nil(t, restored)
+
+	_, err = service.GetDestination(t.Context(), scope, organizationID, target)
+	require.ErrorIs(t, err, ErrSlackbotChannelNotFound)
+}
+
+func TestMessageService_RestoreDestination_CASSkipsClearWhenReplaced(t *testing.T) {
+	t.Parallel()
+
+	pgClient, scope, organizationID := newQueueTestOrganization(t)
+	target := probot.DeliveryTarget{
+		Namespace: "compliance_portal",
+		Key:       "portal-" + organizationID.String(),
+	}
+
+	insertQueueDestinationWithExternalID(
+		t,
+		pgClient,
+		scope,
+		organizationID,
+		target,
+		"C-other",
+		false,
+	)
+
+	service := NewMessageService(pgClient, nil, nil, nil, log.NewLogger())
+	restored, err := service.RestoreDestination(
+		t.Context(),
+		scope,
+		organizationID,
+		target,
+		nil,
+		"C-written",
+	)
+	require.NoError(t, err)
+	assert.Nil(t, restored)
+
+	current, err := service.GetDestination(t.Context(), scope, organizationID, target)
+	require.NoError(t, err)
+	assert.Equal(t, "C-other", current.ExternalDestinationID)
+}
+
+func insertQueueDestinationWithExternalID(
+	t *testing.T,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	target probot.DeliveryTarget,
+	externalDestinationID string,
+	verified bool,
+) {
+	t.Helper()
+
+	destination := coredata.NewBotDeliveryDestination(
+		scope,
+		organizationID,
+		ProviderName,
+		target.Namespace,
+		target.Key,
+	)
+	destination.ExternalDestinationID = externalDestinationID
+	destination.ExternalName = "channel-" + externalDestinationID
+
+	if verified {
+		now := time.Now()
+		destination.VerifiedAt = &now
+	}
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				_, err := destination.Upsert(ctx, tx, scope)
+
+				return err
+			},
+		),
+	)
+}

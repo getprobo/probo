@@ -97,32 +97,21 @@ func restoreSlackbotNotificationChannel(
 	writtenChannelID string,
 	previous *coredata.BotDeliveryDestination,
 ) error {
-	current, err := destinations.GetDestination(ctx, scope, organizationID, target)
-	if err != nil && !errors.Is(err, slackchannel.ErrSlackbotChannelNotFound) {
-		return fmt.Errorf("cannot load Slackbot notification channel for restore: %w", err)
-	}
-
-	// Another request already replaced (or cleared) our write; leave it alone.
-	if errors.Is(err, slackchannel.ErrSlackbotChannelNotFound) ||
-		current.ExternalDestinationID != writtenChannelID {
-		return nil
-	}
-
-	if previous == nil {
-		if err := destinations.ClearDestination(ctx, scope, organizationID, target); err != nil {
-			return fmt.Errorf("cannot clear Slackbot notification channel: %w", err)
-		}
-
-		return nil
-	}
-
+	// Conditional restore/clear: only mutates when the destination still equals
+	// writtenChannelID (the value this operation wrote). A concurrent replace or
+	// clear makes the CAS a no-op.
 	if _, err := destinations.RestoreDestination(
 		ctx,
 		scope,
 		organizationID,
 		target,
 		previous,
+		writtenChannelID,
 	); err != nil {
+		if previous == nil {
+			return fmt.Errorf("cannot clear Slackbot notification channel: %w", err)
+		}
+
 		return fmt.Errorf("cannot restore Slackbot notification channel: %w", err)
 	}
 

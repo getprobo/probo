@@ -38,8 +38,14 @@ type (
 	recordingDestinations struct {
 		current      *coredata.BotDeliveryDestination
 		setCalls     []string
-		restoreCalls []*coredata.BotDeliveryDestination
+		restoreCalls []restoreCall
 		clearCalls   int
+		onRestore    func(expectedExternalDestinationID string)
+	}
+
+	restoreCall struct {
+		previous                      *coredata.BotDeliveryDestination
+		expectedExternalDestinationID string
 	}
 
 	failingWelcomeQueue struct{}
@@ -80,8 +86,31 @@ func (d *recordingDestinations) RestoreDestination(
 	_ gid.GID,
 	_ probot.DeliveryTarget,
 	previous *coredata.BotDeliveryDestination,
+	expectedExternalDestinationID string,
 ) (*coredata.BotDeliveryDestination, error) {
-	d.restoreCalls = append(d.restoreCalls, previous)
+	d.restoreCalls = append(
+		d.restoreCalls,
+		restoreCall{
+			previous:                      previous,
+			expectedExternalDestinationID: expectedExternalDestinationID,
+		},
+	)
+
+	if d.onRestore != nil {
+		d.onRestore(expectedExternalDestinationID)
+	}
+
+	// CAS: only restore/clear when current still matches what this operation wrote.
+	if d.current == nil || d.current.ExternalDestinationID != expectedExternalDestinationID {
+		return nil, nil
+	}
+
+	if previous == nil {
+		d.current = nil
+
+		return nil, nil
+	}
+
 	d.current = &coredata.BotDeliveryDestination{
 		ExternalDestinationID: previous.ExternalDestinationID,
 		ExternalName:          previous.ExternalName,
@@ -139,12 +168,15 @@ func TestApplySlackbotNotificationChannel_RestoresPriorChannel(t *testing.T) {
 	assert.ErrorContains(t, err, "cannot queue Slackbot welcome")
 	assert.Equal(t, []string{"C-new"}, destinations.setCalls)
 	require.Len(t, destinations.restoreCalls, 1)
-	assert.Equal(t, "C-old", destinations.restoreCalls[0].ExternalDestinationID)
-	require.NotNil(t, destinations.restoreCalls[0].VerifiedAt)
-	assert.True(t, destinations.restoreCalls[0].VerifiedAt.Equal(verifiedAt))
+	assert.Equal(t, "C-new", destinations.restoreCalls[0].expectedExternalDestinationID)
+	require.NotNil(t, destinations.restoreCalls[0].previous)
+	assert.Equal(t, "C-old", destinations.restoreCalls[0].previous.ExternalDestinationID)
+	require.NotNil(t, destinations.restoreCalls[0].previous.VerifiedAt)
+	assert.True(t, destinations.restoreCalls[0].previous.VerifiedAt.Equal(verifiedAt))
 	assert.Equal(t, 0, destinations.clearCalls)
 	require.NotNil(t, destinations.current.VerifiedAt)
 	assert.True(t, destinations.current.VerifiedAt.Equal(verifiedAt))
+	assert.Equal(t, "C-old", destinations.current.ExternalDestinationID)
 }
 
 func TestApplySlackbotNotificationChannel_ClearsWhenNoPreviousChannel(t *testing.T) {
@@ -167,8 +199,11 @@ func TestApplySlackbotNotificationChannel_ClearsWhenNoPreviousChannel(t *testing
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot queue Slackbot welcome")
 	assert.Equal(t, []string{"C-new"}, destinations.setCalls)
-	assert.Empty(t, destinations.restoreCalls)
-	assert.Equal(t, 1, destinations.clearCalls)
+	require.Len(t, destinations.restoreCalls, 1)
+	assert.Nil(t, destinations.restoreCalls[0].previous)
+	assert.Equal(t, "C-new", destinations.restoreCalls[0].expectedExternalDestinationID)
+	assert.Equal(t, 0, destinations.clearCalls)
+	assert.Nil(t, destinations.current)
 }
 
 func TestApplySlackbotNotificationChannel_SkipsRestoreWhenDestinationChanged(t *testing.T) {
@@ -209,8 +244,85 @@ func TestApplySlackbotNotificationChannel_SkipsRestoreWhenDestinationChanged(t *
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot queue Slackbot welcome")
 	assert.Equal(t, []string{"C-new"}, destinations.setCalls)
-	assert.Empty(t, destinations.restoreCalls)
+	require.Len(t, destinations.restoreCalls, 1)
+	assert.Equal(t, "C-new", destinations.restoreCalls[0].expectedExternalDestinationID)
 	assert.Equal(t, 0, destinations.clearCalls)
+	assert.Equal(t, "C-other", destinations.current.ExternalDestinationID)
+}
+
+func TestApplySlackbotNotificationChannel_SkipsClearWhenDestinationChangedBeforeCAS(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	compliancePortalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
+	destinations := &recordingDestinations{}
+	destinations.onRestore = func(expectedExternalDestinationID string) {
+		// Simulate a concurrent SetDestination after the failed welcome and
+		// before the conditional clear — CAS must leave C-other alone.
+		_ = expectedExternalDestinationID
+		destinations.current = &coredata.BotDeliveryDestination{
+			ExternalDestinationID: "C-other",
+			ExternalName:          "other-channel",
+		}
+	}
+
+	_, err := applySlackbotNotificationChannel(
+		t.Context(),
+		destinations,
+		failingWelcomeQueue{},
+		coredata.NewScope(tenantID),
+		organizationID,
+		compliancePortalID,
+		"C-new",
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot queue Slackbot welcome")
+	require.Len(t, destinations.restoreCalls, 1)
+	assert.Nil(t, destinations.restoreCalls[0].previous)
+	assert.Equal(t, "C-new", destinations.restoreCalls[0].expectedExternalDestinationID)
+	require.NotNil(t, destinations.current)
+	assert.Equal(t, "C-other", destinations.current.ExternalDestinationID)
+}
+
+func TestApplySlackbotNotificationChannel_SkipsRestoreWhenDestinationChangedBeforeCAS(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	compliancePortalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
+	verifiedAt := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+	destinations := &recordingDestinations{
+		current: &coredata.BotDeliveryDestination{
+			ExternalDestinationID: "C-old",
+			ExternalName:          "old-channel",
+			VerifiedAt:            &verifiedAt,
+		},
+	}
+	destinations.onRestore = func(expectedExternalDestinationID string) {
+		_ = expectedExternalDestinationID
+		destinations.current = &coredata.BotDeliveryDestination{
+			ExternalDestinationID: "C-other",
+			ExternalName:          "other-channel",
+		}
+	}
+
+	_, err := applySlackbotNotificationChannel(
+		t.Context(),
+		destinations,
+		failingWelcomeQueue{},
+		coredata.NewScope(tenantID),
+		organizationID,
+		compliancePortalID,
+		"C-new",
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot queue Slackbot welcome")
+	require.Len(t, destinations.restoreCalls, 1)
+	require.NotNil(t, destinations.restoreCalls[0].previous)
+	assert.Equal(t, "C-old", destinations.restoreCalls[0].previous.ExternalDestinationID)
+	assert.Equal(t, "C-new", destinations.restoreCalls[0].expectedExternalDestinationID)
+	require.NotNil(t, destinations.current)
 	assert.Equal(t, "C-other", destinations.current.ExternalDestinationID)
 }
 

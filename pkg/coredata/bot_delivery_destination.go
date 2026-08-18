@@ -197,6 +197,112 @@ RETURNING
 	return originalID == d.ID, nil
 }
 
+// UpdateIfExternalDestinationID writes the receiver only when the existing row's
+// external_destination_id still matches expected. Used to roll back a channel
+// change without clobbering a concurrent update.
+func (d *BotDeliveryDestination) UpdateIfExternalDestinationID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	expectedExternalDestinationID string,
+) error {
+	q := `
+UPDATE bot_delivery_destinations
+SET
+	external_destination_id = @external_destination_id,
+	external_name = @external_name,
+	verified_at = @verified_at,
+	updated_at = @updated_at
+WHERE %s
+	AND organization_id = @organization_id
+	AND provider = @provider
+	AND target_namespace = @target_namespace
+	AND target_key = @target_key
+	AND external_destination_id = @expected_external_destination_id
+RETURNING
+	id,
+	organization_id,
+	provider,
+	target_namespace,
+	target_key,
+	external_destination_id,
+	external_name,
+	verified_at,
+	created_at,
+	updated_at
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"organization_id":                  d.OrganizationID,
+		"provider":                         d.Provider,
+		"target_namespace":                 d.TargetNamespace,
+		"target_key":                       d.TargetKey,
+		"external_destination_id":          d.ExternalDestinationID,
+		"external_name":                    d.ExternalName,
+		"verified_at":                      d.VerifiedAt,
+		"updated_at":                       d.UpdatedAt,
+		"expected_external_destination_id": expectedExternalDestinationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update bot delivery destination: %w", err)
+	}
+	defer rows.Close()
+
+	destination, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[BotDeliveryDestination])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect bot delivery destination update result: %w", err)
+	}
+
+	*d = destination
+
+	return nil
+}
+
+// DeleteIfExternalDestinationID deletes the destination for the given target
+// only when external_destination_id still matches expected.
+func DeleteIfExternalDestinationID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+	provider string,
+	targetNamespace string,
+	targetKey string,
+	expectedExternalDestinationID string,
+) error {
+	q := `
+DELETE FROM bot_delivery_destinations
+WHERE %s
+	AND organization_id = @organization_id
+	AND provider = @provider
+	AND target_namespace = @target_namespace
+	AND target_key = @target_key
+	AND external_destination_id = @expected_external_destination_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"organization_id":                  organizationID,
+		"provider":                         provider,
+		"target_namespace":                 targetNamespace,
+		"target_key":                       targetKey,
+		"expected_external_destination_id": expectedExternalDestinationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete bot delivery destination: %w", err)
+	}
+
+	return nil
+}
+
 func (d *BotDeliveryDestination) MarkVerified(
 	ctx context.Context,
 	conn pg.Tx,
