@@ -23,7 +23,6 @@ package slack
 import (
 	"context"
 	"errors"
-	"sync/atomic"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/agent"
@@ -52,11 +51,12 @@ type (
 	// actually has to be cleared.
 	assistantStatusResolver func(ctx context.Context) (assistantStatusSetter, error)
 
-	// assistantStatusHook clears the thread status indicator when a turn ends
-	// without a user-visible reply. Slack drops the indicator on its own as
-	// soon as the app posts in the thread, so a turn that only reacts, fails,
-	// or stops for approval would otherwise keep spinning until Slack's own
-	// two-minute timeout.
+	// assistantStatusHook clears the thread status indicator when a turn ends.
+	// send_message only queues durable delivery, so a successful tool call is
+	// not proof that Slack has posted yet. Clearing on run end avoids leaving
+	// the indicator spinning through delivery retries or failures until Slack's
+	// own two-minute timeout. Suspended runs keep the indicator because the turn
+	// resumes later.
 	assistantStatusHook struct {
 		agent.NoOpHooks
 
@@ -64,7 +64,6 @@ type (
 		resolve   assistantStatusResolver
 		channelID string
 		threadTS  string
-		replied   atomic.Bool
 	}
 )
 
@@ -115,28 +114,12 @@ func newAssistantStatusHook(
 	}
 }
 
-func (h *assistantStatusHook) OnToolEnd(
-	_ context.Context,
-	_ *agent.Agent,
-	tool agent.Tool,
-	result agent.ToolResult,
-	err error,
-) {
-	if err == nil && !result.IsError && tool.Name() == sendMessageToolName {
-		h.replied.Store(true)
-	}
-}
-
 func (h *assistantStatusHook) OnRunEnd(
 	ctx context.Context,
 	_ *agent.Agent,
 	_ *agent.Result,
 	err error,
 ) {
-	if h.replied.Load() {
-		return
-	}
-
 	// A suspended run resumes later, so the turn is still in progress.
 	if _, ok := errors.AsType[*agent.SuspendedError](err); ok {
 		return

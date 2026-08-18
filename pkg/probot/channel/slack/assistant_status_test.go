@@ -66,34 +66,19 @@ func newTestStatusHook(setter assistantStatusSetter) *assistantStatusHook {
 	)
 }
 
-func newTestSlackTool(name string) agent.Tool {
-	return agent.FunctionTool(
-		name,
-		"test tool",
-		func(context.Context, struct{}) (agent.ToolResult, error) {
-			return agent.ToolResult{}, nil
-		},
-	)
-}
-
 func TestAssistantStatusHook_OnRunEnd(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
-		"clears the indicator when the turn sends no reply",
+		"clears the indicator when the turn ends",
 		func(t *testing.T) {
 			t.Parallel()
 
 			setter := &recordingStatusSetter{}
 			hook := newTestStatusHook(setter)
 
-			hook.OnToolEnd(
-				t.Context(),
-				nil,
-				newTestSlackTool(addReactionToolName),
-				agent.ToolResult{Content: "reaction queued"},
-				nil,
-			)
+			// Queueing send_message is not delivery; always clear on run end so
+			// delivery retries/failures cannot leave Slack spinning.
 			hook.OnRunEnd(t.Context(), nil, nil, nil)
 
 			require.Len(t, setter.calls, 1)
@@ -112,48 +97,6 @@ func TestAssistantStatusHook_OnRunEnd(t *testing.T) {
 			hook := newTestStatusHook(setter)
 
 			hook.OnRunEnd(t.Context(), nil, nil, errors.New("model unavailable"))
-
-			assert.Len(t, setter.calls, 1)
-		},
-	)
-
-	t.Run(
-		"leaves the indicator to Slack when the turn replies",
-		func(t *testing.T) {
-			t.Parallel()
-
-			setter := &recordingStatusSetter{}
-			hook := newTestStatusHook(setter)
-
-			hook.OnToolEnd(
-				t.Context(),
-				nil,
-				newTestSlackTool(sendMessageToolName),
-				agent.ToolResult{Content: "message queued"},
-				nil,
-			)
-			hook.OnRunEnd(t.Context(), nil, nil, nil)
-
-			assert.Empty(t, setter.calls)
-		},
-	)
-
-	t.Run(
-		"clears the indicator when the reply tool fails",
-		func(t *testing.T) {
-			t.Parallel()
-
-			setter := &recordingStatusSetter{}
-			hook := newTestStatusHook(setter)
-
-			hook.OnToolEnd(
-				t.Context(),
-				nil,
-				newTestSlackTool(sendMessageToolName),
-				agent.ToolResult{Content: "cannot queue message", IsError: true},
-				nil,
-			)
-			hook.OnRunEnd(t.Context(), nil, nil, nil)
 
 			assert.Len(t, setter.calls, 1)
 		},
