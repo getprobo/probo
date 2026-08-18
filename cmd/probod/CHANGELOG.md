@@ -8,6 +8,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 - authentik as an access review source, connected with an API-intent token and the instance URL. MFA status is derived from the instance's authenticator devices, and stays unknown rather than disabled when a device kind is unreadable
 
+### Fixed
+
+- Asana access reviews failed to fetch any account. The workspace memberships endpoint the driver reads is reachable only with Asana's full `default` scope, so a connector granted `users:read` and `workspaces:read` connected successfully and then got 403 on every sync. Asana admin, guest and view-only flags now stay unknown when the API withholds them instead of being reported as false
+
+### Changed
+
+- **Operators running their own Asana OAuth app must switch it to "Full permissions" in the Asana developer console before upgrading.** Asana publishes no granular scope covering workspace memberships and rejects an authorize request that mixes `default` with granular scopes, so an app left on granular scopes refuses both new connections and reconnects. Existing Asana connectors keep their old grant and must be reconnected once
+
 ## [0.261.1] - 2026-08-17
 
 ### Fixed
