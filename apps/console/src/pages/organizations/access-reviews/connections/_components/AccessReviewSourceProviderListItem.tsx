@@ -39,8 +39,6 @@ import {
 
 import { accessReviewSourceSection } from "./variants";
 
-const PROTOCOL_OAUTH2 = "OAUTH2";
-
 const protocolActionLabelKey: Record<string, string> = {
   GITHUB_APP: "addAccessReviewSourceDialog.actions.connectWithGitHubApp",
 };
@@ -50,7 +48,8 @@ export const accessReviewSourceProviderListItemFragment = graphql`
     provider
     displayName
     documentationUrl
-    configuredProtocols
+    oauthConfigured
+    installableProtocols
     apiKeySupported
     apiKeyManaged
     clientCredentialsSupported
@@ -84,15 +83,11 @@ export function AccessReviewSourceProviderListItem({
 
   // Every row renders the dialogs its provider can actually reach, so a list of
   // providers does not mount three unusable dialogs per row.
-  const oauthConfigured = provider.configuredProtocols.includes(PROTOCOL_OAUTH2);
-  const installableProtocols = provider.configuredProtocols.filter(
-    (protocol) => protocol !== PROTOCOL_OAUTH2,
-  );
   const supportsAPIKey = provider.apiKeySupported || provider.apiKeyManaged;
   const supportsDatadogOAuth
-    = oauthConfigured && provider.provider === "DATADOG";
+    = provider.oauthConfigured && provider.provider === "DATADOG";
   const supportsZendeskOAuth
-    = oauthConfigured && provider.provider === "ZENDESK";
+    = provider.oauthConfigured && provider.provider === "ZENDESK";
 
   const connectWithOAuth = () => {
     if (provider.provider === "DATADOG") {
@@ -121,12 +116,12 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        {oauthConfigured && (
+        {provider.oauthConfigured && (
           <Button variant="primary" onClick={connectWithOAuth}>
             {t("addAccessReviewSourceDialog.actions.connectWithOAuth")}
           </Button>
         )}
-        {installableProtocols.map((protocol) => (
+        {(provider.installableProtocols ?? []).map((protocol) => (
           <Button
             key={protocol}
             variant="primary"
