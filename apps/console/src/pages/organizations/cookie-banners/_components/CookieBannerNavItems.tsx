@@ -19,37 +19,20 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
 
 import { cookieBannerPath } from "../_lib/cookieBannerPaths";
 
-import {
-  cookieBannerFromSwitcherValueQuery,
-  cookieBannerSwitcherValueQuery,
-} from "./CookieBannerSwitcherValue";
-
 export interface CookieBannerNavItemsProps {
-  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
+  cookieBannerId: string;
 }
 
-export function CookieBannerNavItems({ queryRef }: CookieBannerNavItemsProps) {
+export function CookieBannerNavItems({ cookieBannerId }: CookieBannerNavItemsProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
-    cookieBannerSwitcherValueQuery,
-    queryRef,
-  );
-  const banner = cookieBannerFromSwitcherValueQuery(data, organizationId);
-
-  if (banner == null) {
-    return null;
-  }
-
-  const prefix = cookieBannerPath(organizationId, banner.id);
+  const prefix = cookieBannerPath(organizationId, cookieBannerId);
 
   return (
     <>

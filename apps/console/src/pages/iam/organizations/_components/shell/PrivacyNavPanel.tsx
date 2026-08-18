@@ -19,8 +19,7 @@
 // SOFTWARE.
 
 import { lazy } from "@probo/react-lazy";
-import { InternalServerError } from "@probo/relay";
-import { startTransition, Suspense, useEffect, useState } from "react";
+import { startTransition, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
@@ -31,9 +30,13 @@ import type { PrivacyNavPanelQuery } from "#/__generated__/iam/PrivacyNavPanelQu
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { navHref } from "#/pages/iam/organizations/_lib/navigation";
 import { CookieBannerNavItems } from "#/pages/organizations/cookie-banners/_components/CookieBannerNavItems";
-import { cookieBannerSwitcherValueQuery } from "#/pages/organizations/cookie-banners/_components/CookieBannerSwitcherValue";
+import {
+  cookieBannerFromSwitcherValueQuery,
+  cookieBannerSwitcherValueQuery,
+} from "#/pages/organizations/cookie-banners/_components/CookieBannerSwitcherValue";
 import { cookieBannersBasePath } from "#/pages/organizations/cookie-banners/_lib/cookieBannerPaths";
-import { useSelectedCookieBannerId } from "#/pages/organizations/cookie-banners/_lib/useSelectedCookieBannerId";
+import type { SelectedCookieBanner } from "#/pages/organizations/cookie-banners/_lib/useSelectedCookieBanner";
+import { useSelectedCookieBanner } from "#/pages/organizations/cookie-banners/_lib/useSelectedCookieBanner";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { NavPanelGroup } from "./NavPanelGroup";
@@ -122,38 +125,10 @@ function PrivacyNavPanelInner({ queryRef, group }: PrivacyNavPanelInnerProps) {
   );
 }
 
-interface DroppedBanner {
-  id: string;
-  // Route the lookup failed on. A retryable drop only holds here, so leaving
-  // the route gives the banner another chance.
-  pathname: string;
-  retryable: boolean;
-}
-
-// A deleted or out-of-reach banner fails the same way on every attempt, so its
-// drop is final. A transport failure says nothing about the banner, so that
-// drop is worth retrying.
-function isTransportFailure(error: unknown): boolean {
-  return error instanceof InternalServerError || error instanceof TypeError;
-}
-
 function CookieBannerNavSection() {
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
-  const selectedId = useSelectedCookieBannerId();
-  // `Query.node` is non-null, so looking up a banner that was deleted or moved
-  // out of reach fails the whole query instead of returning null. Dropping the
-  // remembered id once it fails lets the organization fallback take over.
-  //
-  // Every failure drops the id, so the section always falls back to something
-  // usable instead of parking on an error boundary nothing would reset. A
-  // retryable drop then expires as soon as the route changes, which reloads
-  // the query and gives a banner lost to a blip its next attempt.
-  const [dropped, setDropped] = useState<DroppedBanner | null>(null);
-  const activeDrop = dropped != null && (!dropped.retryable || dropped.pathname === pathname)
-    ? dropped
-    : null;
-  const resolvedId = selectedId != null && selectedId !== activeDrop?.id ? selectedId : null;
+  const { routeId, remembered, remember } = useSelectedCookieBanner();
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
   );
@@ -161,26 +136,41 @@ function CookieBannerNavSection() {
   const isNew = pathname === `${cookieBannersBasePath(organizationId)}/new`;
   const fallback = <span className={slots.groupFallback()} aria-hidden />;
 
+  // Off a banner route the selection is decoration, so it is replayed from
+  // memory rather than looked up. A banner deleted meanwhile then costs a
+  // stale label and links that 404 once clicked, instead of a lookup that
+  // takes the whole section down with it.
+  const isReplayed = !isNew && routeId == null && remembered != null;
+
   useEffect(() => {
-    if (isNew) {
+    if (isNew || isReplayed) {
       return;
     }
     startTransition(() => {
       loadQuery(
         {
           organizationId,
-          cookieBannerId: resolvedId ?? "",
-          hasCookieBannerId: resolvedId != null,
+          cookieBannerId: routeId ?? "",
+          hasCookieBannerId: routeId != null,
         },
         { fetchPolicy: "store-or-network" },
       );
     });
-  }, [isNew, loadQuery, organizationId, resolvedId]);
+  }, [isNew, isReplayed, loadQuery, organizationId, routeId]);
 
   if (isNew) {
     return (
       <Suspense fallback={fallback}>
-        <CookieBannerSwitcher queryRef={null} selectedId={selectedId} />
+        <CookieBannerSwitcher banner={remembered} />
+      </Suspense>
+    );
+  }
+
+  if (isReplayed) {
+    return (
+      <Suspense fallback={fallback}>
+        <CookieBannerSwitcher banner={remembered} />
+        <CookieBannerNavItems cookieBannerId={remembered.id} />
       </Suspense>
     );
   }
@@ -190,7 +180,7 @@ function CookieBannerNavSection() {
   // old name in the switcher and point the nav items at the old banner.
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
-    && queryRef.variables.cookieBannerId === (resolvedId ?? "")
+    && queryRef.variables.cookieBannerId === (routeId ?? "")
     ? queryRef
     : null;
 
@@ -198,34 +188,46 @@ function CookieBannerNavSection() {
     return fallback;
   }
 
-  const section = (
-    <>
+  // The id being resolved comes from the URL, or is absent entirely, so a
+  // failure here always sits next to a page failing on the same id. Hiding
+  // the section is enough; there is no remembered state to invalidate.
+  return (
+    <ErrorBoundary key={routeId ?? organizationId} fallbackRender={() => fallback}>
       <Suspense fallback={fallback}>
-        <CookieBannerSwitcher queryRef={currentQueryRef} selectedId={resolvedId} />
+        <CookieBannerNavSelection
+          queryRef={currentQueryRef}
+          onResolve={routeId == null ? undefined : remember}
+        />
       </Suspense>
-      <Suspense fallback={null}>
-        <CookieBannerNavItems queryRef={currentQueryRef} />
-      </Suspense>
-    </>
+    </ErrorBoundary>
   );
+}
 
-  if (resolvedId == null) {
-    return section;
-  }
+interface CookieBannerNavSelectionProps {
+  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
+  onResolve?: (banner: SelectedCookieBanner) => void;
+}
+
+function CookieBannerNavSelection({ queryRef, onResolve }: CookieBannerNavSelectionProps) {
+  const organizationId = useOrganizationId();
+  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
+    cookieBannerSwitcherValueQuery,
+    queryRef,
+  );
+  const banner = cookieBannerFromSwitcherValueQuery(data, organizationId);
+  const id = banner?.id ?? null;
+  const name = banner?.name ?? null;
+
+  useEffect(() => {
+    if (id != null && name != null) {
+      onResolve?.({ id, name });
+    }
+  }, [id, name, onResolve]);
 
   return (
-    <ErrorBoundary
-      key={resolvedId}
-      fallbackRender={() => fallback}
-      onError={(error) => {
-        setDropped({
-          id: resolvedId,
-          pathname,
-          retryable: isTransportFailure(error),
-        });
-      }}
-    >
-      {section}
-    </ErrorBoundary>
+    <>
+      <CookieBannerSwitcher banner={banner} />
+      {id != null && <CookieBannerNavItems cookieBannerId={id} />}
+    </>
   );
 }

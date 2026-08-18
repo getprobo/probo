@@ -18,13 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql } from "react-relay";
 
-import type {
-  CookieBannerSwitcherValueQuery$data,
-  CookieBannerSwitcherValueQuery,
-} from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { CookieBannerSwitcherValueQuery$data } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
 import { NavPanelSwitcherValue } from "#/pages/organizations/_components/NavPanelSwitcher";
 
 export const cookieBannerSwitcherValueQuery = graphql`
@@ -62,22 +58,15 @@ export const cookieBannerSwitcherValueQuery = graphql`
 
 export interface CookieBannerSwitcherValueProps {
   fallback: string;
-  queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
+  name: string | null;
 }
 
-export function CookieBannerSwitcherValue({ fallback, queryRef }: CookieBannerSwitcherValueProps) {
-  const organizationId = useOrganizationId();
-  const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
-    cookieBannerSwitcherValueQuery,
-    queryRef,
-  );
-  const banner = cookieBannerFromSwitcherValueQuery(data, organizationId);
-
-  return <NavPanelSwitcherValue>{banner?.name ?? fallback}</NavPanelSwitcherValue>;
+export function CookieBannerSwitcherValue({ fallback, name }: CookieBannerSwitcherValueProps) {
+  return <NavPanelSwitcherValue>{name ?? fallback}</NavPanelSwitcherValue>;
 }
 
-// A remembered banner can be deleted or belong to another organization, in
-// which case the organization's most recent banner takes over.
+// A route can name a banner belonging to another organization, in which case
+// the organization's most recent banner takes over.
 export function cookieBannerFromSwitcherValueQuery(
   data: CookieBannerSwitcherValueQuery$data,
   organizationId: string,
