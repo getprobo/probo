@@ -223,7 +223,7 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		u, err := url.Parse(*input.AuthentikBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
 			return nil, fmt.Errorf("cannot create authentik connector: authentikBaseUrl must be an http(s) URL")
 		}
 
