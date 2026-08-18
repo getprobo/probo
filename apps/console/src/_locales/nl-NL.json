@@ -3234,6 +3234,7 @@
   "addAccessReviewSourceDialog": {
     "actions": {
       "connectWithOAuth": "OAuth",
+      "connectWithGitHubApp": "GitHub-app",
       "connectWithApiKey": "API-sleutel",
       "connectWithClientCredentials": "Clientreferenties",
       "open": "Open"

@@ -1852,7 +1852,7 @@
     "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
   "addAccessReviewSourceDialog": {
-    "actions": { "connectWithOAuth": "OAuth", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "open": "Open" },
+    "actions": { "connectWithOAuth": "OAuth", "connectWithGitHubApp": "GitHub App", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "open": "Open" },
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {

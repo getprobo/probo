@@ -32,13 +32,15 @@ import (
 type (
 	ConnectorRegistry struct {
 		sync.RWMutex
-		connectors map[string]Connector
+		connectors         map[string]Connector
+		protocolConnectors map[string]map[ProtocolType]Connector
 	}
 )
 
 func NewConnectorRegistry() *ConnectorRegistry {
 	return &ConnectorRegistry{
-		connectors: make(map[string]Connector),
+		connectors:         make(map[string]Connector),
+		protocolConnectors: make(map[string]map[ProtocolType]Connector),
 	}
 }
 
@@ -55,6 +57,26 @@ func (r *ConnectorRegistry) Register(provider string, c Connector) error {
 	return nil
 }
 
+func (r *ConnectorRegistry) RegisterProtocol(provider string, protocol ProtocolType, c Connector) error {
+	r.Lock()
+	defer r.Unlock()
+
+	if _, ok := r.protocolConnectors[provider]; !ok {
+		r.protocolConnectors[provider] = make(map[ProtocolType]Connector)
+	}
+	if _, ok := r.protocolConnectors[provider][protocol]; ok {
+		return fmt.Errorf(
+			"cannot register connector %q with protocol %q: already registered",
+			provider,
+			protocol,
+		)
+	}
+
+	r.protocolConnectors[provider][protocol] = c
+
+	return nil
+}
+
 func (r *ConnectorRegistry) Get(provider string) (Connector, error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -62,6 +84,23 @@ func (r *ConnectorRegistry) Get(provider string) (Connector, error) {
 	c, ok := r.connectors[provider]
 	if !ok {
 		return nil, fmt.Errorf("cannot find connector %q", provider)
+	}
+
+	return c, nil
+}
+
+func (r *ConnectorRegistry) GetProtocol(provider string, protocol ProtocolType) (Connector, error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	connectors, ok := r.protocolConnectors[provider]
+	if !ok {
+		return nil, fmt.Errorf("cannot find connector %q with protocol %q", provider, protocol)
+	}
+
+	c, ok := connectors[protocol]
+	if !ok {
+		return nil, fmt.Errorf("cannot find connector %q with protocol %q", provider, protocol)
 	}
 
 	return c, nil
@@ -75,6 +114,22 @@ func (r *ConnectorRegistry) Initiate(
 	req *http.Request,
 ) (string, error) {
 	c, err := r.Get(provider)
+	if err != nil {
+		return "", fmt.Errorf("cannot initiate connector: %w", err)
+	}
+
+	return c.Initiate(ctx, provider, organizationID, opts, req)
+}
+
+func (r *ConnectorRegistry) InitiateProtocol(
+	ctx context.Context,
+	provider string,
+	protocol ProtocolType,
+	organizationID gid.GID,
+	opts InitiateOptions,
+	req *http.Request,
+) (string, error) {
+	c, err := r.GetProtocol(provider, protocol)
 	if err != nil {
 		return "", fmt.Errorf("cannot initiate connector: %w", err)
 	}
@@ -123,6 +178,23 @@ func (r *ConnectorRegistry) CompleteWithState(ctx context.Context, provider stri
 	}
 
 	return oauth2Connector.CompleteWithState(ctx, req)
+}
+
+func (r *ConnectorRegistry) CompleteGitHubApp(
+	ctx context.Context,
+	req *http.Request,
+) (*GitHubAppConnection, *GitHubAppState, error) {
+	c, err := r.GetProtocol(GitHubProvider, ProtocolGitHubApp)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot complete github app connector: %w", err)
+	}
+
+	gitHubAppConnector, ok := c.(*GitHubAppConnector)
+	if !ok {
+		return nil, nil, fmt.Errorf("cannot complete github app connector: invalid connector type")
+	}
+
+	return gitHubAppConnector.CompleteWithState(ctx, req)
 }
 
 // GetOAuth2RefreshConfig returns the OAuth2 refresh configuration for a provider.

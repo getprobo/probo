@@ -181,3 +181,19 @@ export function connectOAuthProvider(
   );
   window.location.assign(url.toString());
 }
+
+export function connectGitHubApp(organizationId: string, connectorId?: string) {
+  const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
+  const url = new URL("/api/console/v1/connectors/initiate", baseURL);
+  url.searchParams.append("organization_id", organizationId);
+  url.searchParams.append("provider", "GITHUB");
+  url.searchParams.append("protocol", "GITHUB_APP");
+  if (connectorId) {
+    url.searchParams.append("connector_id", connectorId);
+  }
+  url.searchParams.append(
+    "continue",
+    `/organizations/${organizationId}/access-reviews/sources`,
+  );
+  window.location.assign(url.toString());
+}

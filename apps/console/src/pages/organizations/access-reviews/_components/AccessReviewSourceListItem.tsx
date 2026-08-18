@@ -58,6 +58,7 @@ const fragment = graphql`
     connectorId
     connector {
       provider
+      protocol
       oauth2Scopes
     }
     connectionStatus
@@ -127,6 +128,7 @@ const organizationsUnavailableFragment = graphql`
   fragment AccessReviewSourceListItemOrganizationsUnavailable_source on AccessReviewSource {
     connector {
       provider
+      protocol
       oauth2Scopes
     }
   }
@@ -301,6 +303,9 @@ export function AccessReviewSourceListItem({
     url.searchParams.append("organization_id", organizationId);
     url.searchParams.append("provider", connector.provider);
     url.searchParams.append("connector_id", accessSource.connectorId);
+    if (connector.protocol === "GITHUB_APP") {
+      url.searchParams.append("protocol", "GITHUB_APP");
+    }
     for (const scope of connector.oauth2Scopes) {
       url.searchParams.append("scope", scope);
     }
@@ -314,7 +319,9 @@ export function AccessReviewSourceListItem({
 
   const showOrgSelector
     = accessSource.needsConfiguration || accessSource.selectedOrganization;
-  const canReconnect = (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
+  const canReconnect
+    = accessSource.connector?.protocol === "GITHUB_APP"
+      || (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
   const showReconnect
     = canReconnect
       && (accessSource.connectionStatus === "DISCONNECTED"
@@ -564,7 +571,9 @@ function ProviderOrganizationsUnavailable({
   const { t } = useTranslation();
   const source = useFragment(organizationsUnavailableFragment, sourceKey);
   const providerLabel = sourceLabel(source.connector?.provider ?? null, t);
-  const canReconnect = (source.connector?.oauth2Scopes.length ?? 0) > 0;
+  const canReconnect
+    = source.connector?.protocol === "GITHUB_APP"
+      || (source.connector?.oauth2Scopes.length ?? 0) > 0;
 
   return (
     <SourceConnectionIssue

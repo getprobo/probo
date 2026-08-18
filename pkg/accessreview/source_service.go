@@ -532,6 +532,20 @@ func (s *Service) ProviderOrganizations(
 		return nil, nil
 	}
 
+	if dbConnector.Protocol == coredata.ConnectorProtocolGitHubApp {
+		settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read github app connector settings: %w", err)
+		}
+
+		return []drivers.Organization{
+			{
+				Slug:        settings.Organization,
+				DisplayName: settings.Organization,
+			},
+		}, nil
+	}
+
 	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerListBaseURL(dbConnector.Provider))
 	if err != nil {
 		return nil, err

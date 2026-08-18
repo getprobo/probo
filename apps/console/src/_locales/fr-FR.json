@@ -3230,6 +3230,7 @@
   "addAccessReviewSourceDialog": {
     "actions": {
       "connectWithOAuth": "OAuth",
+      "connectWithGitHubApp": "Application GitHub",
       "connectWithApiKey": "Clé API",
       "connectWithClientCredentials": "Identifiants client",
       "open": "Ouvrir"

@@ -26,6 +26,7 @@ import (
 	"slices"
 	"strings"
 
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
@@ -470,6 +471,21 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		)
 	}
 
+	if githubAppID := b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_ID"); githubAppID != "" {
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "GITHUB",
+				Protocol: connector.ProtocolGitHubApp,
+				RawConfig: probodconfig.ConnectorConfigGitHubApp{
+					AppID:      githubAppID,
+					Slug:       b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_SLUG"),
+					PrivateKey: b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY"),
+				},
+			},
+		)
+	}
+
 	if sentryClientID := b.resolver.getEnv("PROBOD_CONNECTOR_SENTRY_CLIENT_ID"); sentryClientID != "" {
 		cfg.Probod.Connectors = append(
 			cfg.Probod.Connectors,
@@ -714,6 +730,21 @@ func (b *Builder) validateRequired() error {
 				missing,
 				providerAPIKey+" (required by the enabled Slackbot agent provider)",
 			)
+		}
+	}
+
+	if b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_ID") != "" {
+		gitHubAppRequired := []string{
+			"PROBOD_CONNECTOR_GITHUB_APP_SLUG",
+			"PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY",
+		}
+		for _, key := range gitHubAppRequired {
+			if b.resolver.getEnv(key) == "" {
+				missing = append(
+					missing,
+					key+" (required when PROBOD_CONNECTOR_GITHUB_APP_ID is set)",
+				)
+			}
 		}
 	}
 

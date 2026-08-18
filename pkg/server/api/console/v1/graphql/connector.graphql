@@ -129,6 +129,7 @@ type ConnectorProviderInfo {
     """
     documentationUrl: String
     oauthConfigured: Boolean!
+    githubAppConfigured: Boolean!
     apiKeySupported: Boolean!
     """
     apiKeyManaged is true when the provider connects with a Probo-supplied
@@ -169,6 +170,7 @@ input ConnectorFilter {
 type Connector {
     id: ID!
     provider: ConnectorProvider!
+    protocol: String!
     oauth2Scopes: [String!]! @goField(forceResolver: true)
     createdAt: Datetime!
 }

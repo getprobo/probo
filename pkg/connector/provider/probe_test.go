@@ -82,6 +82,58 @@ func TestBuildZendeskProbeURL(t *testing.T) {
 	assert.Contains(t, probeURL, "https://acme.zendesk.com/api/v2/users.json")
 }
 
+func TestProbeGitHub_UsesProtocolEndpoint(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		protocol coredata.ConnectorProtocol
+		wantPath string
+	}{
+		{
+			name:     "oauth uses authenticated user",
+			protocol: coredata.ConnectorProtocolOAuth2,
+			wantPath: "/user",
+		},
+		{
+			name:     "github app uses installation repositories",
+			protocol: coredata.ConnectorProtocolGitHubApp,
+			wantPath: "/installation/repositories",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				client := &http.Client{
+					Transport: probeRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+						assert.Equal(t, tt.wantPath, req.URL.Path)
+						return &http.Response{
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(strings.NewReader(`{}`)),
+							Header:     make(http.Header),
+						}, nil
+					}),
+				}
+
+				err := probeGitHub(
+					context.Background(),
+					client,
+					&coredata.Connector{Protocol: tt.protocol},
+					Endpoints{
+						Probe:   "https://api.github.com/user",
+						APIBase: "https://api.github.com",
+					},
+				)
+				require.NoError(t, err)
+			},
+		)
+	}
+}
+
 func TestBuildOktaProbeURL(t *testing.T) {
 	t.Parallel()
 

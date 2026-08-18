@@ -32,7 +32,10 @@ import {
   DatadogConnectDialog,
   ZendeskConnectDialog,
 } from "../../dialogs/_components/OAuthExtraDialog";
-import { connectOAuthProvider } from "../../dialogs/_lib/connectorSettings";
+import {
+  connectGitHubApp,
+  connectOAuthProvider,
+} from "../../dialogs/_lib/connectorSettings";
 
 import { accessReviewSourceSection } from "./variants";
 
@@ -42,6 +45,7 @@ export const accessReviewSourceProviderListItemFragment = graphql`
     displayName
     documentationUrl
     oauthConfigured
+    githubAppConfigured
     apiKeySupported
     apiKeyManaged
     clientCredentialsSupported
@@ -111,6 +115,14 @@ export function AccessReviewSourceProviderListItem({
         {provider.oauthConfigured && (
           <Button variant="primary" onClick={connectWithOAuth}>
             {t("addAccessReviewSourceDialog.actions.connectWithOAuth")}
+          </Button>
+        )}
+        {provider.githubAppConfigured && (
+          <Button
+            variant="primary"
+            onClick={() => connectGitHubApp(organizationId)}
+          >
+            {t("addAccessReviewSourceDialog.actions.connectWithGitHubApp")}
           </Button>
         )}
         {supportsAPIKey && (

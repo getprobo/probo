@@ -249,6 +249,17 @@ func handleConnectorComplete(
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
 			return
 		}
+		if connector.IsGitHubAppState(stateToken) {
+			handleGitHubAppComplete(
+				logger,
+				baseURL,
+				proboSvc,
+				accessReviewSvc,
+				connectorRegistry,
+				safeRedirect,
+			)(w, r)
+			return
+		}
 
 		provider, err := connector.ExtractProviderFromState(stateToken)
 		if err != nil {

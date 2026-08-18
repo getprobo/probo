@@ -28,8 +28,9 @@ import (
 type ConnectorProtocol string
 
 const (
-	ConnectorProtocolOAuth2 ConnectorProtocol = "OAUTH2"
-	ConnectorProtocolAPIKey ConnectorProtocol = "API_KEY"
+	ConnectorProtocolOAuth2    ConnectorProtocol = "OAUTH2"
+	ConnectorProtocolAPIKey    ConnectorProtocol = "API_KEY"
+	ConnectorProtocolGitHubApp ConnectorProtocol = "GITHUB_APP"
 )
 
 var (
@@ -42,6 +43,7 @@ func ConnectorProtocols() []ConnectorProtocol {
 	return []ConnectorProtocol{
 		ConnectorProtocolOAuth2,
 		ConnectorProtocolAPIKey,
+		ConnectorProtocolGitHubApp,
 	}
 }
 
@@ -49,7 +51,8 @@ func (v ConnectorProtocol) IsValid() bool {
 	switch v {
 	case
 		ConnectorProtocolOAuth2,
-		ConnectorProtocolAPIKey:
+		ConnectorProtocolAPIKey,
+		ConnectorProtocolGitHubApp:
 		return true
 	}
 

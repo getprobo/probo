@@ -50,7 +50,27 @@ func handleConnectorInitiate(
 			return
 		}
 
-		if _, err := connectorRegistry.Get(provider); err != nil {
+		protocol := connector.ProtocolOAuth2
+		switch requestedProtocol := r.URL.Query().Get("protocol"); requestedProtocol {
+		case "", string(connector.ProtocolOAuth2):
+		case string(connector.ProtocolGitHubApp):
+			protocol = connector.ProtocolGitHubApp
+		default:
+			httpserver.RenderError(
+				w,
+				http.StatusBadRequest,
+				fmt.Errorf("unsupported protocol: %q", requestedProtocol),
+			)
+			return
+		}
+
+		var connectorErr error
+		if protocol == connector.ProtocolGitHubApp {
+			_, connectorErr = connectorRegistry.GetProtocol(provider, protocol)
+		} else {
+			_, connectorErr = connectorRegistry.Get(provider)
+		}
+		if connectorErr != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}
@@ -60,7 +80,6 @@ func handleConnectorInitiate(
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid organization_id parameter"))
 			return
 		}
-
 		if authn.APIKeyFromContext(r.Context()) != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
 			return
@@ -96,7 +115,10 @@ func handleConnectorInitiate(
 		// into the new auth request. Cross-org/provider/protocol mismatches
 		// are caught inside Reconnect at callback time; this handler only
 		// needs the scope set.
-		existing, err := loadExistingConnector(r, prb, scope, organizationID, provider)
+		var existing *coredata.Connector
+		if protocol == connector.ProtocolOAuth2 || r.URL.Query().Get("connector_id") != "" {
+			existing, err = loadExistingConnector(r, prb, scope, organizationID, provider)
+		}
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
@@ -113,6 +135,14 @@ func handleConnectorInitiate(
 
 			return
 		}
+		if protocol == connector.ProtocolGitHubApp &&
+			existing != nil &&
+			(existing.OrganizationID != organizationID ||
+				existing.Provider != coredata.ConnectorProviderGitHub ||
+				existing.Protocol != coredata.ConnectorProtocolGitHubApp) {
+			httpserver.RenderError(w, http.StatusBadRequest, errInvalidReconnectConnector)
+			return
+		}
 
 		// Hand the earlier grant to the connector rather than unioning it
 		// here: whether a reconnect may widen the request or must ask for
@@ -126,7 +156,25 @@ func handleConnectorInitiate(
 			opts.ConnectorID = existing.ID.String()
 		}
 
-		redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, opts, r)
+		var redirectURL string
+		if protocol == connector.ProtocolGitHubApp {
+			redirectURL, err = connectorRegistry.InitiateProtocol(
+				r.Context(),
+				provider,
+				protocol,
+				organizationID,
+				opts,
+				r,
+			)
+		} else {
+			redirectURL, err = connectorRegistry.Initiate(
+				r.Context(),
+				provider,
+				organizationID,
+				opts,
+				r,
+			)
+		}
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot initiate connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))

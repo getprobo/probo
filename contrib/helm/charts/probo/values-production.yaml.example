@@ -359,6 +359,15 @@ probo:
         redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
         auth-url: "https://github.com/login/oauth/authorize"
         token-url: "https://github.com/login/oauth/access_token"
+    - name: "github"
+      type: "github-app"
+      config:
+        appId: "CHANGE_ME_GITHUB_APP_ID"
+        slug: "CHANGE_ME_GITHUB_APP_SLUG"
+        privateKey: |
+          -----BEGIN RSA PRIVATE KEY-----
+          CHANGE_ME_GITHUB_APP_PRIVATE_KEY
+          -----END RSA PRIVATE KEY-----
 
   # Slack connector endpointToken (Enterprise Grid / private API gateway) is
   # secret material. Set it in values; the chart mounts it via secretKeyRef.
