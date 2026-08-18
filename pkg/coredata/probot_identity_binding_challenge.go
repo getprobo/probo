@@ -265,21 +265,17 @@ func DeleteUnconfirmedProbotIdentityBindingChallengesBySubject(
 	externalUserID string,
 	exceptHashedToken []byte,
 ) error {
+	// Plain DELETE waits on rows locked by a concurrent Confirm instead of
+	// SKIP LOCKED, which would abandon siblings if that transaction rolls back.
 	_, err := conn.Exec(
 		ctx,
 		`
-WITH doomed AS (
-	SELECT hashed_token
-	FROM probot_identity_binding_challenges
-	WHERE provider = @provider
-		AND external_tenant_id = @external_tenant_id
-		AND external_user_id = @external_user_id
-		AND confirmed_at IS NULL
-		AND hashed_token <> @hashed_token
-	FOR UPDATE SKIP LOCKED
-)
 DELETE FROM probot_identity_binding_challenges
-WHERE hashed_token IN (SELECT hashed_token FROM doomed);
+WHERE provider = @provider
+	AND external_tenant_id = @external_tenant_id
+	AND external_user_id = @external_user_id
+	AND confirmed_at IS NULL
+	AND hashed_token <> @hashed_token;
 `,
 		pgx.StrictNamedArgs{
 			"provider":           provider,
