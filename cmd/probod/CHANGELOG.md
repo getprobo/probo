@@ -4,17 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.262.0] - 2026-08-18
+
 ### Added
 
 - authentik as an access review source, connected with an API-intent token and the instance URL. MFA status is derived from the instance's authenticator devices, and stays unknown rather than disabled when a device kind is unreadable
-
-### Fixed
-
-- Asana access reviews failed to fetch any account. The workspace memberships endpoint the driver reads is reachable only with Asana's full `default` scope, so a connector granted `users:read` and `workspaces:read` connected successfully and then got 403 on every sync. Asana admin, guest and view-only flags now stay unknown when the API withholds them instead of being reported as false
+- Probot: a Slack bot that lets employees link their Slack identity to their Probo account (`/probot login`) and manage the link from their profile. Bound users get compliance review and approval notifications in Slack with per-item actions, and can drive Probo actions conversationally from a bound channel. Organizations manage the Slack install, channel, and identity bindings from Settings
 
 ### Changed
 
 - **Operators running their own Asana OAuth app must switch it to "Full permissions" in the Asana developer console before upgrading.** Asana publishes no granular scope covering workspace memberships and rejects an authorize request that mixes `default` with granular scopes, so an app left on granular scopes refuses both new connections and reconnects. Existing Asana connectors keep their old grant and must be reconnected once
+- Reorganized the console navigation into a two-level product rail and panel, replacing the flat sidebar. Settings now groups Organization, IAM (Users, Auth & Provisioning, Audit Log), Registries, and Webhooks; Access Reviews, Privacy (Processing Activities), Third-Party Risk Management, compliance portals, and cookie banners each get their own switcher or panel. Dark mode, which regressed during the rework, is restored
+- Third-party and compliance-portal profile pages (Profile, Assurance, Stakeholders, branding) now save each field as it's edited (on blur) instead of via a page-level Save button
+- Compliance portal review and tool actions now validate that the resource being acted on belongs to the access request, without blocking valid partial (per-item) approvals
+
+### Fixed
+
+- Asana access reviews failed to fetch any account. The workspace memberships endpoint the driver reads is reachable only with Asana's full `default` scope, so a connector granted `users:read` and `workspaces:read` connected successfully and then got 403 on every sync. Asana admin, guest and view-only flags now stay unknown when the API withholds them instead of being reported as false
+- Fixed a crash when adding a new Statement of Applicability entry (the create mutation omitted maturity level)
+- Long labels in risk analysis diagrams no longer get clipped: Mermaid flowchart and threat-hexagon labels wrap again after the Mermaid 11.13 upgrade dropped automatic wrapping
+- Windows device posture (BitLocker protection, password policy, time-sync status) now reports correctly on non-English systems instead of showing Unknown
 
 ## [0.261.1] - 2026-08-17
 
