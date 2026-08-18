@@ -316,9 +316,17 @@ func TestMessageService_QueueRoutesModernAndLegacy(t *testing.T) {
 func newQueueTestOrganization(t *testing.T) (*pg.Client, coredata.Scoper, gid.GID) {
 	t.Helper()
 
+	return newQueueTestOrganizationInTenant(t, gid.NewTenantID())
+}
+
+func newQueueTestOrganizationInTenant(
+	t *testing.T,
+	tenantID gid.TenantID,
+) (*pg.Client, coredata.Scoper, gid.GID) {
+	t.Helper()
+
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
-	tenantID := gid.NewTenantID()
 	scope := coredata.NewScope(tenantID)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now()
@@ -435,8 +443,9 @@ func TestMessageService_GetMessageNilBackend(t *testing.T) {
 func TestBotDeliveryDestination_UpsertIsolatesOrganizations(t *testing.T) {
 	t.Parallel()
 
-	pgClient, firstScope, firstOrg := newQueueTestOrganization(t)
-	_, secondScope, secondOrg := newQueueTestOrganization(t)
+	tenantID := gid.NewTenantID()
+	pgClient, firstScope, firstOrg := newQueueTestOrganizationInTenant(t, tenantID)
+	_, secondScope, secondOrg := newQueueTestOrganizationInTenant(t, tenantID)
 
 	target := probot.DeliveryTarget{
 		Namespace: "shared_namespace",
