@@ -266,7 +266,9 @@ export class ReportQueue {
     const payload = JSON.stringify(body);
 
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
-      const blob = new Blob([payload], { type: "application/json" });
+      const blob = new Blob([payload], {
+        type: "text/plain;charset=UTF-8", // CORS-safelisted content type, so the request is not preflighted.
+      });
       let queued = false;
       try {
         queued = navigator.sendBeacon(this.reportUrl.toString(), blob);
