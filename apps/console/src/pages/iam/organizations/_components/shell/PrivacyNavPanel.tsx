@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { lazy } from "@probo/react-lazy";
+import { InternalServerError } from "@probo/relay";
 import { startTransition, Suspense, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -121,6 +122,13 @@ function PrivacyNavPanelInner({ queryRef, group }: PrivacyNavPanelInnerProps) {
   );
 }
 
+// A deleted or out-of-reach banner fails the same way on every attempt, so the
+// remembered id is dropped for good. A transport failure says nothing about the
+// banner, so the id survives it and the next attempt can still resolve it.
+function isTransportFailure(error: unknown): boolean {
+  return error instanceof InternalServerError || error instanceof TypeError;
+}
+
 function CookieBannerNavSection() {
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
@@ -193,8 +201,10 @@ function CookieBannerNavSection() {
     <ErrorBoundary
       key={resolvedId}
       fallbackRender={() => fallback}
-      onError={() => {
-        setUnresolvableId(resolvedId);
+      onError={(error) => {
+        if (!isTransportFailure(error)) {
+          setUnresolvableId(resolvedId);
+        }
       }}
     >
       {section}

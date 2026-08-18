@@ -83,7 +83,8 @@ export function CompliancePortalProfileSection({
   );
 
   // The mutation rewrites the whole portal record, so overlapping saves would
-  // let an in-flight one discard a field another blur just changed.
+  // let an in-flight one discard a field another blur just changed. Failures
+  // are absorbed here because useMutation already toasted them.
   const pendingSaveRef = useRef<Promise<unknown>>(Promise.resolve());
 
   function patch(
@@ -91,7 +92,6 @@ export function CompliancePortalProfileSection({
     value: string | null,
   ) {
     pendingSaveRef.current = pendingSaveRef.current
-      .catch(() => undefined)
       .then(() =>
         updateCompliancePortal({
           variables: {
@@ -101,7 +101,8 @@ export function CompliancePortalProfileSection({
             },
           },
         }),
-      );
+      )
+      .catch(() => undefined);
   }
 
   function handleEntityNameBlur(event: FocusEvent<HTMLInputElement>) {
