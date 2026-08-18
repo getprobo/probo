@@ -60,13 +60,13 @@ type Risk implements Node {
     name: String!
     description: String
     category: String!
-    treatment: RiskTreatment!
-    inherentLikelihood: Int!
-    inherentImpact: Int!
-    inherentRiskScore: Int!
-    residualLikelihood: Int!
-    residualImpact: Int!
-    residualRiskScore: Int!
+    treatment: RiskTreatment
+    inherentLikelihood: Int
+    inherentImpact: Int
+    inherentRiskScore: Int
+    residualLikelihood: Int
+    residualImpact: Int
+    residualRiskScore: Int
     note: String!
 
     owner: Profile @goField(forceResolver: true)
@@ -114,6 +114,14 @@ type Risk implements Node {
         before: CursorKey
         orderBy: RiskAnalysisScenarioOrder
     ): RiskAnalysisScenarioConnection! @goField(forceResolver: true)
+
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -179,9 +187,9 @@ input CreateRiskInput {
     description: String
     category: String!
     ownerId: ID
-    treatment: RiskTreatment!
-    inherentLikelihood: Int!
-    inherentImpact: Int!
+    treatment: RiskTreatment
+    inherentLikelihood: Int
+    inherentImpact: Int
     residualLikelihood: Int
     residualImpact: Int
     note: String

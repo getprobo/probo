@@ -1648,6 +1648,42 @@
       "probable": "Probable",
       "frequent": "Fréquente"
     },
+    "riskScales": {
+      "impact": {
+        "2": {
+          "1": "Faible",
+          "2": "Élevé"
+        },
+        "3": {
+          "1": "Faible",
+          "2": "Moyen",
+          "3": "Élevé"
+        },
+        "4": {
+          "1": "Faible",
+          "2": "Moyen",
+          "3": "Élevé",
+          "4": "Critique"
+        }
+      },
+      "likelihood": {
+        "2": {
+          "1": "Improbable",
+          "2": "Probable"
+        },
+        "3": {
+          "1": "Improbable",
+          "2": "Possible",
+          "3": "Probable"
+        },
+        "4": {
+          "1": "Improbable",
+          "2": "Possible",
+          "3": "Probable",
+          "4": "Quasi certaine"
+        }
+      }
+    },
     "riskSeverity": {
       "critical": "Critique",
       "high": "Élevée",
@@ -1749,6 +1785,7 @@
     },
     "risk": {
       "initial": "Risque initial",
+      "net": "Risque net",
       "residual": "Risque résiduel",
       "score": "Score",
       "numberOfRisks": "Nombre de risques",
@@ -1765,7 +1802,8 @@
       },
       "likelihood": {
         "label": "Probabilité"
-      }
+      },
+      "cell": "{{count}} avec une probabilité {{likelihood}} et un impact {{impact}}"
     }
   },
   "common": {
@@ -2380,7 +2418,8 @@
     "slackBot": "SlackBot",
     "tasks": "Tâches",
     "measures": "Mesures",
-    "risks": "Tous les risques",
+    "risks": "Risques",
+    "allRisks": "Tous les risques",
     "riskAnalyses": "Analyses des risques",
     "frameworks": "Référentiels",
     "iam": "IAM",
@@ -4598,21 +4637,8 @@
       "documents": "Documents",
       "controls": "Contrôles",
       "obligations": "Obligations",
-      "scenarios": "Scénarios"
-    },
-    "fields": {
-      "owner": "Propriétaire",
-      "treatment": "Traitement",
-      "initialRiskScore": "Score de risque initial",
-      "residualRiskScore": "Score de risque résiduel",
-      "note": "Note"
-    },
-    "treatments": {
-      "mitigated": "Atténuer",
-      "accepted": "Accepter",
-      "transferred": "Transférer",
-      "avoided": "Éviter",
-      "unknown": "Inconnu"
+      "scenarios": "Scénarios",
+      "treatmentPlans": "Plans de traitement"
     }
   },
   "risksPage": {
@@ -4629,6 +4655,23 @@
       "initialRisk": "Risque initial",
       "residualRisk": "Risque résiduel",
       "owner": "Propriétaire"
+    }
+  },
+  "riskOverviewPage": {
+    "emptyScores": "Les scores sont définis sur un plan de traitement dans une analyse de risques.",
+    "fields": {
+      "owner": "Propriétaire",
+      "treatment": "Traitement",
+      "initialRiskScore": "Score initial",
+      "residualRiskScore": "Score résiduel",
+      "note": "Note"
+    },
+    "treatments": {
+      "mitigated": "Atténuer",
+      "accepted": "Accepter",
+      "transferred": "Transférer",
+      "avoided": "Éviter",
+      "unknown": "Inconnu"
     }
   },
   "formRiskDialog": {
@@ -4754,7 +4797,8 @@
     "deleteConfirmation": "Cette action supprimera définitivement cette analyse des risques ainsi que tous ses diagrammes, nœuds, processus et menaces. Cette action est irréversible.",
     "actions": {
       "edit": "Modifier",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "showMore": "Afficher plus"
     },
     "details": "Détails",
     "fields": {
@@ -4764,7 +4808,12 @@
       "updatedAt": "Mis à jour le"
     },
     "diagrams": "Diagrammes",
-    "emptyDiagrams": "Aucun diagramme pour l’instant. Créez un diagramme pour commencer à définir des nœuds, des processus et des menaces."
+    "treatmentPlans": "Risques et plans de traitement",
+    "emptyDiagrams": "Aucun diagramme pour l’instant. Créez un diagramme pour commencer à définir des nœuds, des processus et des menaces.",
+    "tabs": {
+      "diagrams": "Diagrammes",
+      "treatmentPlans": "Risques et plans de traitement"
+    }
   },
   "riskAnalysesPage": {
     "title": "Analyses des risques",
@@ -4775,7 +4824,8 @@
       "period": "Période",
       "matrixSize": "Matrice",
       "created": "Créé le"
-    }
+    },
+    "empty": "Aucune analyse des risques pour le moment."
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": {
@@ -4983,6 +5033,151 @@
       "add": "Ajouter"
     }
   },
+  "createTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "Risques et plans de traitement",
+      "new": "Nouveau plan de traitement"
+    },
+    "fields": {
+      "risk": "Risque",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "inherentRisk": "Risque inhérent",
+      "residualRisk": "Risque résiduel",
+      "inherentLikelihood": "Probabilité inhérente",
+      "inherentImpact": "Impact inhérent",
+      "residualLikelihood": "Probabilité résiduelle",
+      "residualImpact": "Impact résiduel"
+    },
+    "placeholders": {
+      "treatment": "Sélectionner un traitement",
+      "risk": "Sélectionner un risque"
+    },
+    "validation": {
+      "riskRequired": "Sélectionnez un risque",
+      "ownerRequired": "Sélectionnez un responsable"
+    },
+    "properties": "Propriétés",
+    "hint": "Uniquement les risques liés à un scénario de cette analyse.",
+    "emptyEligible": "Liez d’abord un risque à un scénario sur un diagramme.",
+    "actions": {
+      "add": "Ajouter un plan de traitement",
+      "create": "Créer le plan de traitement"
+    }
+  },
+  "updateTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "Risques et plans de traitement",
+      "edit": "Modifier le plan de traitement"
+    },
+    "fields": {
+      "risk": "Risque",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "inherentRisk": "Risque inhérent",
+      "residualRisk": "Risque résiduel",
+      "inherentLikelihood": "Probabilité inhérente",
+      "inherentImpact": "Impact inhérent",
+      "residualLikelihood": "Probabilité résiduelle",
+      "residualImpact": "Impact résiduel"
+    },
+    "placeholders": {
+      "treatment": "Sélectionner un traitement"
+    },
+    "validation": {
+      "ownerRequired": "Sélectionnez un responsable"
+    },
+    "properties": "Propriétés",
+    "actions": {
+      "update": "Mettre à jour le plan de traitement"
+    }
+  },
+  "riskAnalysisTreatmentPlansPage": {
+    "columns": {
+      "risk": "Risque",
+      "category": "Catégorie",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "scores": "Inhérent / Résiduel",
+      "progress": "Avancement"
+    },
+    "empty": "Aucun risque n’est lié à un scénario de cette analyse.",
+    "emptyFilter": "Aucun risque lié ne correspond à cette cellule.",
+    "unplannedWarning_one": "{{count}} risque lié n’a pas encore de plan de traitement.",
+    "unplannedWarning_other": "{{count}} risques liés n’ont pas encore de plan de traitement.",
+    "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "search": "Rechercher des risques",
+    "states": {
+      "inherent": "Inhérent",
+      "net": "Net",
+      "residual": "Résiduel"
+    },
+    "axes": {
+      "likelihood": "Probabilité",
+      "impact": "Impact"
+    },
+    "legend": {
+      "impact": "Impact : {{levels}}",
+      "likelihood": "Probabilité : {{levels}}",
+      "level": "{{value}} {{label}}"
+    },
+    "cell": "{{count}} avec une probabilité {{likelihood}} et un impact {{impact}}"
+  },
+  "linkedRiskListItem": {
+    "empty": "Aucun plan de traitement",
+    "actions": {
+      "create": "Ajouter un plan"
+    }
+  },
+  "treatmentPlanListItem": {
+    "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "progress": "{{done}}/{{total}}",
+    "progressEmpty": "Aucune mesure",
+    "unassigned": "Non attribué",
+    "actions": {
+      "tasks": "Tâches",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "expand": "Afficher les mesures",
+      "collapse": "Masquer les mesures"
+    }
+  },
+  "riskTreatmentPlansPage": {
+    "columns": {
+      "analysis": "Analyse de risque",
+      "treatment": "Traitement",
+      "owner": "Responsable",
+      "scores": "Inhérent / Résiduel"
+    },
+    "empty": "Ce risque n'a pas encore de plan de traitement."
+  },
+  "riskTreatmentPlanListItem": {
+    "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "unassigned": "Non attribué",
+    "actions": {
+      "measures": "Mesures",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    }
+  },
+  "treatmentPlanMeasureList": {
+    "title": "Mesures",
+    "empty": "Aucune mesure liée pour le moment.",
+    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de mesures liées.",
+    "actions": {
+      "create": "Nouvelle mesure",
+      "link": "Lier une mesure",
+      "unlink": "Délier",
+      "showMore": "Afficher plus"
+    }
+  },
+  "treatmentPlanMeasuresDialog": {
+    "title": "Mesures du plan de traitement",
+    "loading": "Chargement des mesures…",
+    "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
+  },
   "riskAnalysisNodeActions": {
     "breadcrumb": {
       "nodes": "Nœuds"
@@ -5116,6 +5311,10 @@
       "boundaries": "Aucun périmètre",
       "threats": "Aucune menace",
       "scenarios": "Aucun scénario"
+    },
+    "schema": {
+      "title": "Structure du diagramme",
+      "hint": "Nœuds, processus, périmètres et menaces utilisés pour mettre à jour le diagramme."
     }
   },
   "diagramChart": {

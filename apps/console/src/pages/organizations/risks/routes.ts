@@ -92,6 +92,13 @@ export const riskRoutes = [
         Fallback: LinkCardSkeleton,
         Component: lazy(() => import("./scenarios/RiskScenariosPageLoader")),
       },
+      {
+        path: "treatment-plans",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("./treatment-plans/RiskTreatmentPlansPageLoader"),
+        ),
+      },
     ],
   },
   {
@@ -99,14 +106,40 @@ export const riskRoutes = [
     Fallback: PageSkeleton,
     Component: lazy(
       () =>
-        import("./risk-analyses/RiskAnalysisDetailPageLoader"),
+        import("./risk-analyses/RiskAnalysisDetailLayoutLoader"),
     ),
+    children: [
+      {
+        path: "",
+        loader: () => {
+          // eslint-disable-next-line
+          throw redirect("treatment-plans");
+        },
+        Component: Fragment,
+      },
+      {
+        path: "treatment-plans",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("./risk-analyses/treatment-plans/RiskAnalysisTreatmentPlansPageLoader"),
+        ),
+      },
+      {
+        path: "diagrams",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("./risk-analyses/diagrams/RiskAnalysisDiagramsPageLoader"),
+        ),
+      },
+    ],
   },
   {
     path: "risk-assessments/:riskAssessmentId",
     loader: ({ params }) => {
       // eslint-disable-next-line
-      throw redirect(`../risk-analyses/${params.riskAssessmentId}`);
+      throw redirect(`../risk-analyses/${params.riskAssessmentId}/treatment-plans`);
     },
     Component: Fragment,
   },

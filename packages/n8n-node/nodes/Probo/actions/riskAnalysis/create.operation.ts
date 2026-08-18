@@ -63,7 +63,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [...riskAnalysisMatrixSizeOptions],
-		default: '',
+		default: '5x5',
 		description: 'Likelihood/impact matrix size (3×3, 4×4, or 5×5)',
 		required: true,
 	},

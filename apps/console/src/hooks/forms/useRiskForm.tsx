@@ -60,6 +60,7 @@ export const useRiskForm = (risk?: RiskNode) => {
           ...risk,
           description: risk.description ?? undefined,
           ownerId: risk.owner?.id,
+          treatment: risk.treatment ?? undefined,
         }
       : {
           inherentLikelihood: 3,

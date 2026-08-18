@@ -158,6 +158,7 @@ const (
 	AgentExecutionAnchorEntityType                   uint16 = 126
 	BotMessageEntityType                             uint16 = 127
 	BotThreadSubjectEntityType                       uint16 = 128
+	TreatmentPlanEntityType                          uint16 = 129
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -400,6 +401,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &BotMessage{ID: id}, true
 	case BotThreadSubjectEntityType:
 		return &BotThreadSubject{ID: id}, true
+	case TreatmentPlanEntityType:
+		return &TreatmentPlan{ID: id}, true
 	default:
 		return nil, false
 	}

@@ -33,11 +33,12 @@ import {
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { graphql, useMutation } from "react-relay";
+import { graphql } from "react-relay";
 
 import type { CreateRiskAnalysisDialogCreateMutation } from "#/__generated__/core/CreateRiskAnalysisDialogCreateMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 
 import {
   matrixSizeFromOption,
@@ -92,10 +93,11 @@ export function CreateRiskAnalysisDialog(props: {
       description: "",
       periodStart: "",
       periodEnd: "",
+      matrixSize: "5x5",
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     const periodStart = formatDatetime(data.periodStart);
     const periodEnd = formatDatetime(data.periodEnd);
     const period = periodStart || periodEnd
@@ -105,22 +107,24 @@ export function CreateRiskAnalysisDialog(props: {
         }
       : null;
 
-    createRiskAnalysis({
-      variables: {
-        input: {
-          organizationId,
-          name: data.name,
-          description: data.description || null,
-          period,
-          matrixSize: matrixSizeFromOption(data.matrixSize),
+    try {
+      await createRiskAnalysis({
+        variables: {
+          input: {
+            organizationId,
+            name: data.name,
+            description: data.description || null,
+            period,
+            matrixSize: matrixSizeFromOption(data.matrixSize),
+          },
+          connections: [props.connectionId],
         },
-        connections: [props.connectionId],
-      },
-      onCompleted: () => {
-        reset();
-        dialogRef.current?.close();
-      },
-    });
+      });
+      reset();
+      dialogRef.current?.close();
+    } catch {
+      // Error toast is handled by useMutation.
+    }
   };
 
   return (

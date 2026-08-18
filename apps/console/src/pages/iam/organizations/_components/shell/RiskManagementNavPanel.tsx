@@ -67,16 +67,16 @@ function RiskManagementNavPanelInner({ queryRef, group }: RiskManagementNavPanel
 
   return (
     <>
-      {organization.canListRisks && (
-        <NavPanelItem
-          label={t("nav.risks")}
-          to={navHref(organizationId, group, "risks")}
-        />
-      )}
       {organization.canListRiskAnalyses && (
         <NavPanelItem
           label={t("nav.riskAnalyses")}
           to={navHref(organizationId, group, "risk-analyses")}
+        />
+      )}
+      {organization.canListRisks && (
+        <NavPanelItem
+          label={t("nav.allRisks")}
+          to={navHref(organizationId, group, "risks")}
         />
       )}
     </>

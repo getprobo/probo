@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -450,7 +451,7 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 // Scenarios is the resolver for the scenarios field.
 func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAnalysisScenarioOrderBy) (*types.RiskAnalysisScenarioConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAnalysisScenarioList)
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionRiskAnalysisScenarioList)
 	if err != nil {
 		return nil, err
 	}
@@ -473,6 +474,36 @@ func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *in
 	}
 
 	return types.NewRiskAnalysisScenarioConnection(p, r, obj.ID), nil
+}
+
+// TreatmentPlans is the resolver for the treatmentPlans field.
+func (r *riskResolver) TreatmentPlans(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy) (*types.TreatmentPlanConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TreatmentPlanOrderField]{
+		Field:     coredata.TreatmentPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListTreatmentPlansForRiskID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list treatment plans", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTreatmentPlanConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -508,6 +539,14 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 		count, err := r.riskManagement.CountRisksForScenarioID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count scenario risks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *riskAnalysisResolver:
+		count, err := r.riskManagement.CountRisksForRiskAnalysisID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count scenario risks on analysis", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 

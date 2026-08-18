@@ -426,7 +426,6 @@ func TestRiskAnalysis_Update(t *testing.T) {
 			"id":          raID,
 			"name":        "Updated",
 			"description": "New description",
-			"matrixSize":  map[string]any{"rows": 3, "cols": 3},
 		},
 	}, &result)
 
@@ -434,8 +433,8 @@ func TestRiskAnalysis_Update(t *testing.T) {
 	assert.Equal(t, "Updated", result.UpdateRiskAnalysis.RiskAnalysis.Name)
 	require.NotNil(t, result.UpdateRiskAnalysis.RiskAnalysis.Description)
 	assert.Equal(t, "New description", *result.UpdateRiskAnalysis.RiskAnalysis.Description)
-	assert.Equal(t, 3, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Rows)
-	assert.Equal(t, 3, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Cols)
+	assert.Equal(t, 5, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Rows)
+	assert.Equal(t, 5, result.UpdateRiskAnalysis.RiskAnalysis.MatrixSize.Cols)
 }
 
 func TestRiskAnalysisDiagram_Update(t *testing.T) {
@@ -737,6 +736,69 @@ func TestRiskAnalysisScenario_LinkUnlinkRisk(t *testing.T) {
 	`, map[string]any{"id": scenarioID}, &result)
 	require.NoError(t, err)
 	assert.Equal(t, 0, result.Node.Risks.TotalCount)
+}
+
+func TestRiskAnalysisScenario_DeleteRiskRequiresUnlinkedScenario(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	raID := factory.CreateRiskAnalysis(owner)
+	scopeID := factory.CreateRiskAnalysisDiagram(owner, raID)
+	riskID := factory.CreateRisk(owner)
+	scenarioID := factory.CreateRiskAnalysisScenario(owner, scopeID)
+	factory.LinkRiskAnalysisScenarioRisk(owner, scenarioID, riskID)
+
+	_, err := owner.Do(`
+		mutation($input: DeleteRiskInput!) {
+			deleteRisk(input: $input) { deletedRiskId }
+		}
+	`, map[string]any{
+		"input": map[string]any{"riskId": riskID},
+	})
+	testutil.RequireConflictError(t, err, "cannot delete a risk linked to a scenario")
+
+	var deleteScenario struct {
+		DeleteRiskAnalysisScenario struct {
+			DeletedRiskAnalysisScenarioID string `json:"deletedRiskAnalysisScenarioId"`
+		} `json:"deleteRiskAnalysisScenario"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: DeleteRiskAnalysisScenarioInput!) {
+			deleteRiskAnalysisScenario(input: $input) {
+				deletedRiskAnalysisScenarioId
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"riskAnalysisScenarioId": scenarioID},
+	}, &deleteScenario)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		scenarioID,
+		deleteScenario.DeleteRiskAnalysisScenario.DeletedRiskAnalysisScenarioID,
+	)
+
+	var riskResult struct {
+		Node struct {
+			ID string `json:"id"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(`
+		query($id: ID!) { node(id: $id) { ... on Risk { id } } }
+	`, map[string]any{"id": riskID}, &riskResult)
+	require.NoError(t, err)
+	assert.Equal(t, riskID, riskResult.Node.ID)
+
+	_, err = owner.Do(`
+		mutation($input: DeleteRiskInput!) {
+			deleteRisk(input: $input) { deletedRiskId }
+		}
+	`, map[string]any{
+		"input": map[string]any{"riskId": riskID},
+	})
+	require.NoError(t, err)
 }
 
 func TestRiskAnalysisBoundary_Create(t *testing.T) {

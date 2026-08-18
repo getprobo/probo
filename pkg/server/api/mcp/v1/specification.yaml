@@ -1904,13 +1904,6 @@ components:
         - organization_id
         - name
         - category
-        - treatment
-        - inherent_likelihood
-        - inherent_impact
-        - inherent_risk_score
-        - residual_likelihood
-        - residual_impact
-        - residual_risk_score
         - note
         - created_at
         - updated_at
@@ -1933,25 +1926,39 @@ components:
           type: string
           description: Risk category
         treatment:
-          $ref: "#/components/schemas/RiskTreatment"
+          anyOf:
+            - $ref: "#/components/schemas/RiskTreatment"
+            - type: "null"
           description: Risk treatment
         inherent_likelihood:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Initial likelihood
         inherent_impact:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Initial impact
         inherent_risk_score:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Initial risk score
         residual_likelihood:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Residual likelihood
         residual_impact:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Residual impact
         residual_risk_score:
-          type: integer
+          type:
+            - integer
+            - "null"
           description: Residual risk score
         note:
           type: string
@@ -2146,6 +2153,271 @@ components:
         deleted_risk_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk ID
+
+    TreatmentPlanOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - TREATMENT
+        - INHERENT_RISK_SCORE
+        - RESIDUAL_RISK_SCORE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderField
+
+    TreatmentPlanOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TreatmentPlanOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    TreatmentPlan:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_id
+        - risk_analysis_id
+        - treatment
+        - inherent_likelihood
+        - inherent_impact
+        - inherent_risk_score
+        - residual_likelihood
+        - residual_impact
+        - residual_risk_score
+        - net_likelihood
+        - net_impact
+        - net_risk_score
+        - measures_total
+        - measures_done
+        - measures_in_progress
+        - measures_not_implemented
+        - owner_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        risk_analysis_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk analysis ID
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        inherent_risk_score:
+          type: integer
+          description: Inherent risk score
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+        residual_risk_score:
+          type: integer
+          description: Residual risk score
+        net_likelihood:
+          type: integer
+          description: Net likelihood after linked measures
+        net_impact:
+          type: integer
+          description: Net impact after linked measures
+        net_risk_score:
+          type: integer
+          description: Net risk score after linked measures
+        measures_total:
+          type: integer
+          description: Number of linked measures
+        measures_done:
+          type: integer
+          description: Number of completed linked measures
+        measures_in_progress:
+          type: integer
+          description: Number of in-progress linked measures
+        measures_not_implemented:
+          type: integer
+          description: Number of not-implemented linked measures
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    ListTreatmentPlansInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Filter by risk ID
+        risk_analysis_id:
+          $ref: "#/components/schemas/GID"
+          description: Filter by risk analysis ID
+        order_by:
+          $ref: "#/components/schemas/TreatmentPlanOrderBy"
+          description: Treatment plan order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTreatmentPlansOutput:
+      type: object
+      required:
+        - treatment_plans
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        treatment_plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/TreatmentPlan"
+
+    GetTreatmentPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+
+    GetTreatmentPlanOutput:
+      type: object
+      required:
+        - treatment_plan
+      properties:
+        treatment_plan:
+          $ref: "#/components/schemas/TreatmentPlan"
+
+    AddTreatmentPlanInput:
+      type: object
+      required:
+        - risk_id
+        - risk_analysis_id
+        - treatment
+        - inherent_likelihood
+        - inherent_impact
+        - owner_id
+      properties:
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        risk_analysis_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk analysis ID
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+
+    AddTreatmentPlanOutput:
+      type: object
+      required:
+        - treatment_plan
+      properties:
+        treatment_plan:
+          $ref: "#/components/schemas/TreatmentPlan"
+
+    UpdateTreatmentPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+
+    UpdateTreatmentPlanOutput:
+      type: object
+      required:
+        - treatment_plan
+      properties:
+        treatment_plan:
+          $ref: "#/components/schemas/TreatmentPlan"
+
+    DeleteTreatmentPlanInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Treatment plan ID
+
+    DeleteTreatmentPlanOutput:
+      type: object
+      required:
+        - deleted_treatment_plan_id
+      properties:
+        deleted_treatment_plan_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted treatment plan ID
 
     MeasureState:
       type: string
@@ -2492,7 +2764,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (control, risk, document, or third party)
+          description: ID of the resource to link (control, risk, document, third party, or treatment plan)
 
     LinkMeasureOutput:
       type: object
@@ -2508,7 +2780,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (control, risk, document, or third party)
+          description: ID of the resource to unlink (control, risk, document, third party, or treatment plan)
 
     UnlinkMeasureOutput:
       type: object
@@ -13581,9 +13853,6 @@ components:
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
-        matrix_size:
-          $ref: "#/components/schemas/MatrixSize"
-          description: Likelihood/impact matrix size (3×3, 4×4, or 5×5)
 
     UpdateRiskAnalysisOutput:
       type: object
@@ -15345,7 +15614,7 @@ tools:
       $ref: "#/components/schemas/DeleteEvidenceOutput"
   - name: linkMeasure
     title: Link Measure
-    description: Link a measure to a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
+    description: Link a measure to a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
@@ -15357,7 +15626,7 @@ tools:
       $ref: "#/components/schemas/LinkMeasureOutput"
   - name: unlinkMeasure
     title: Unlink Measure
-    description: Unlink a measure from a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
+    description: Unlink a measure from a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
@@ -18763,6 +19032,66 @@ tools:
       $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioRiskInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkRiskAnalysisScenarioRiskOutput"
+  - name: listTreatmentPlans
+    title: List Treatment Plans
+    description: List treatment plans for an organization, risk, or risk analysis
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTreatmentPlansInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTreatmentPlansOutput"
+  - name: getTreatmentPlan
+    title: Get Treatment Plan
+    description: Get a treatment plan by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTreatmentPlanOutput"
+  - name: addTreatmentPlan
+    title: Add Treatment Plan
+    description: Create a treatment plan for a risk on a risk analysis
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTreatmentPlanOutput"
+  - name: updateTreatmentPlan
+    title: Update Treatment Plan
+    description: Update an existing treatment plan
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTreatmentPlanOutput"
+  - name: deleteTreatmentPlan
+    title: Delete Treatment Plan
+    description: Delete a treatment plan
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTreatmentPlanInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTreatmentPlanOutput"
   - name: getMailingList
     title: Get Mailing List
     description: Get the mailing list for a compliance portal

@@ -29,7 +29,9 @@ export {
   getTreatment,
   getRiskImpacts,
   getRiskLikelihoods,
+  getRiskScoreLevel,
   getSeverity,
+  type RiskMatrixSize,
 } from "./risk";
 export {
   withViewTransition,
