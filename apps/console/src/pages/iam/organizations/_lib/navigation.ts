@@ -31,10 +31,9 @@ import {
   WarningIcon,
 } from "@phosphor-icons/react";
 
-// Single source of truth for the icon rail and the product segment each
-// feature route is nested under in routes.tsx. Panel contents live in the
-// matching *NavPanel. Moving a feature between products is an edit here plus
-// the matching move in the route tree.
+// Product groups: icon, key, and the URL segment each feature route is
+// nested under in routes.tsx. Rail visibility and default hrefs live in
+// NavRail. Panel contents live in the matching *NavPanel.
 
 export type NavPermission
   = | "canGetContext"
@@ -69,17 +68,10 @@ export type NavPermission
     | "canUninstallSlack"
     | "canUpdateOrganization";
 
-export interface NavLanding {
-  path: string;
-  // One permission, or any of several (OR).
-  permission: NavPermission | readonly NavPermission[];
-}
-
 interface NavGroupConfig {
   key: string;
   segment: string | null;
   icon: Icon;
-  landings: readonly NavLanding[];
 }
 
 export const NAV_GROUPS = [
@@ -87,95 +79,46 @@ export const NAV_GROUPS = [
     key: "governance",
     segment: "governance",
     icon: ScalesIcon,
-    landings: [
-      { path: "tasks", permission: "canListTasks" },
-      { path: "measures", permission: "canListMeasures" },
-      { path: "frameworks", permission: "canListFrameworks" },
-      { path: "audits", permission: "canListAudits" },
-      { path: "findings", permission: "canListFindings" },
-      { path: "documents", permission: "canListDocuments" },
-      { path: "statements-of-applicability", permission: "canListStatementsOfApplicability" },
-    ],
   },
   {
     key: "riskManagement",
     segment: "risk-management",
     icon: WarningIcon,
-    landings: [
-      { path: "risks", permission: "canListRisks" },
-      { path: "risk-analyses", permission: "canListRiskAnalyses" },
-    ],
   },
   {
     key: "tprm",
     segment: "tprm",
     icon: StorefrontIcon,
-    landings: [
-      { path: "third-parties", permission: "canListThirdParties" },
-    ],
   },
   {
     key: "privacy",
     segment: "privacy",
     icon: LockIcon,
-    landings: [
-      { path: "rights-requests", permission: "canListRightsRequests" },
-      { path: "processing-activities", permission: "canListProcessingActivities" },
-      { path: "dpias", permission: "canListDataProtectionImpactAssessments" },
-      { path: "tias", permission: "canListTransferImpactAssessments" },
-      { path: "cookie-banners/new", permission: "canListCookieBanners" },
-    ],
   },
   {
     key: "itam",
     segment: "itam",
     icon: LaptopIcon,
-    landings: [
-      { path: "devices", permission: "canListDevices" },
-    ],
   },
   {
     key: "registries",
     segment: "registries",
     icon: BooksIcon,
-    landings: [
-      { path: "data", permission: "canListData" },
-      { path: "assets", permission: "canListAssets" },
-      { path: "business-functions", permission: "canListBusinessFunctions" },
-      { path: "ai-systems", permission: "canListAiSystems" },
-      { path: "obligations", permission: "canListObligations" },
-    ],
   },
   {
     key: "compliancePortal",
     segment: null,
     icon: ShieldIcon,
-    landings: [
-      { path: "compliance-portals", permission: "canGetCompliancePortal" },
-    ],
   },
   {
     key: "accessReview",
     segment: "access-reviews",
     icon: KeyIcon,
-    landings: [
-      { path: "campaigns", permission: "canListAccessReviewCampaigns" },
-      { path: "connections", permission: "canListAccessReviewSources" },
-    ],
   },
   {
     key: "settings",
     segment: "settings",
     icon: GearIcon,
-    landings: [
-      { path: "general", permission: "canUpdateOrganization" },
-      { path: "context", permission: "canGetContext" },
-      { path: "webhooks", permission: "canListWebhookSubscriptions" },
-      { path: "slackbot", permission: ["canConnectSlack", "canUninstallSlack"] },
-      { path: "people", permission: "canListMembers" },
-      { path: "auth", permission: "canUpdateOrganization" },
-      { path: "audit-log", permission: "canListAuditLogEntries" },
-    ],
   },
 ] as const satisfies readonly NavGroupConfig[];
 
@@ -183,17 +126,6 @@ export type NavGroup = (typeof NAV_GROUPS)[number];
 export type NavGroupKey = NavGroup["key"];
 
 export type NavPermissions = { readonly [K in NavPermission]: boolean };
-
-function landingIsGranted(
-  landing: NavLanding,
-  permissions: NavPermissions,
-): boolean {
-  const required = landing.permission;
-  if (typeof required === "string") {
-    return permissions[required];
-  }
-  return required.some(permission => permissions[permission]);
-}
 
 export function navGroupByKey(key: NavGroupKey): NavGroup {
   const group = NAV_GROUPS.find(candidate => candidate.key === key);
@@ -203,29 +135,10 @@ export function navGroupByKey(key: NavGroupKey): NavGroup {
   return group;
 }
 
-export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
-  return NAV_GROUPS.filter(group =>
-    group.landings.some(landing => landingIsGranted(landing, permissions)),
-  );
-}
-
 export function navLandingPath(group: NavGroup, path: string): string {
   return group.segment == null ? path : `${group.segment}/${path}`;
 }
 
 export function navHref(organizationId: string, group: NavGroup, path: string): string {
   return `/organizations/${organizationId}/${navLandingPath(group, path)}`;
-}
-
-export function navGroupHref(
-  organizationId: string,
-  group: NavGroup,
-  permissions: NavPermissions,
-): string {
-  for (const landing of group.landings) {
-    if (landingIsGranted(landing, permissions)) {
-      return navHref(organizationId, group, landing.path);
-    }
-  }
-  return navHref(organizationId, group, group.landings[0].path);
 }

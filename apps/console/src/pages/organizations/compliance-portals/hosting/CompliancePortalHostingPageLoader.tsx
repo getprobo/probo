@@ -24,9 +24,9 @@ import { useParams } from "react-router";
 
 import type { CompliancePortalHostingPageQuery } from "#/__generated__/core/CompliancePortalHostingPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CompliancePortalHostingPage, compliancePortalHostingPageQuery } from "./CompliancePortalHostingPage";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 export default function CompliancePortalHostingPageLoader() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
@@ -39,7 +39,7 @@ export default function CompliancePortalHostingPageLoader() {
     if (compliancePortalId) {
       loadQuery({ compliancePortalId, organizationId });
     }
-  }, [loadQuery, compliancePortalId]);
+  }, [loadQuery, compliancePortalId, organizationId]);
 
   if (!queryRef) {
     return <LinkCardSkeleton />;

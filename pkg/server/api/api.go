@@ -294,6 +294,7 @@ func NewServer(cfg Config) (*Server, error) {
 				cfg.Visitor.IsVerifiedRedirectHost,
 			),
 			cfg.GraphQLLimits,
+			cfg.SlackbotInstallations != nil,
 		),
 		agentHandler: agent_v1.NewMux(
 			cfg.Logger.Named("agent.v1"),

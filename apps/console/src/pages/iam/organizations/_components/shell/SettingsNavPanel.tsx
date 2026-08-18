@@ -32,6 +32,7 @@ import type { NavPanelBodyProps } from "./navPanels";
 
 const settingsNavPanelQuery = graphql`
   query SettingsNavPanelQuery($organizationId: ID!) {
+    slackbotAvailable
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
@@ -63,13 +64,15 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<SettingsNavPanelQuery>(settingsNavPanelQuery, queryRef);
-  const { organization } = data;
+  const { organization, slackbotAvailable } = data;
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
   }
   const showIam = organization.canListMembers
     || organization.canUpdateOrganization
     || organization.canListAuditLogEntries;
+  const showSlackBot = slackbotAvailable
+    && (organization.canConnectSlack || organization.canUninstallSlack);
 
   return (
     <>
@@ -91,7 +94,7 @@ function SettingsNavPanelInner({ queryRef, group }: SettingsNavPanelInnerProps) 
           to={navHref(organizationId, group, "webhooks")}
         />
       )}
-      {(organization.canConnectSlack || organization.canUninstallSlack) && (
+      {showSlackBot && (
         <NavPanelItem
           label={t("nav.slackBot")}
           to={navHref(organizationId, group, "slackbot")}

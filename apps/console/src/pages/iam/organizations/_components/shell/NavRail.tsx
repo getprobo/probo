@@ -27,7 +27,14 @@ import { graphql, useFragment } from "react-relay";
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavRail_organization$key } from "#/__generated__/iam/NavRail_organization.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { navGroupHref, visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
+import {
+  NAV_GROUPS,
+  type NavGroup,
+  navGroupByKey,
+  type NavGroupKey,
+  navHref,
+  type NavPermissions,
+} from "#/pages/iam/organizations/_lib/navigation";
 import { navPermissionsFragment } from "#/pages/iam/organizations/_lib/navPermissions";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
@@ -46,9 +53,203 @@ const navRailFragment = graphql`
 
 export interface NavRailProps {
   organizationKey: NavRail_organization$key;
+  slackbotAvailable: boolean;
 }
 
-export function NavRail({ organizationKey }: NavRailProps) {
+function isGovernanceVisible(permissions: NavPermissions): boolean {
+  return permissions.canListTasks
+    || permissions.canListMeasures
+    || permissions.canListFrameworks
+    || permissions.canListAudits
+    || permissions.canListFindings
+    || permissions.canListDocuments
+    || permissions.canListStatementsOfApplicability;
+}
+
+function isRiskManagementVisible(permissions: NavPermissions): boolean {
+  return permissions.canListRisks || permissions.canListRiskAnalyses;
+}
+
+function isTprmVisible(permissions: NavPermissions): boolean {
+  return permissions.canListThirdParties;
+}
+
+function isPrivacyVisible(permissions: NavPermissions): boolean {
+  return permissions.canListRightsRequests
+    || permissions.canListProcessingActivities
+    || permissions.canListDataProtectionImpactAssessments
+    || permissions.canListTransferImpactAssessments
+    || permissions.canListCookieBanners;
+}
+
+function isItamVisible(permissions: NavPermissions): boolean {
+  return permissions.canListDevices;
+}
+
+function isRegistriesVisible(permissions: NavPermissions): boolean {
+  return permissions.canListData
+    || permissions.canListAssets
+    || permissions.canListBusinessFunctions
+    || permissions.canListAiSystems
+    || permissions.canListObligations;
+}
+
+function isCompliancePortalVisible(permissions: NavPermissions): boolean {
+  return permissions.canGetCompliancePortal;
+}
+
+function isAccessReviewVisible(permissions: NavPermissions): boolean {
+  return permissions.canListAccessReviewCampaigns || permissions.canListAccessReviewSources;
+}
+
+function isSettingsVisible(
+  permissions: NavPermissions,
+  slackbotAvailable: boolean,
+): boolean {
+  return permissions.canUpdateOrganization
+    || permissions.canGetContext
+    || permissions.canListWebhookSubscriptions
+    || (slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack))
+    || permissions.canListMembers
+    || permissions.canListAuditLogEntries;
+}
+
+function navGroupIsVisible(
+  key: NavGroupKey,
+  permissions: NavPermissions,
+  slackbotAvailable: boolean,
+): boolean {
+  switch (key) {
+    case "governance":
+      return isGovernanceVisible(permissions);
+    case "riskManagement":
+      return isRiskManagementVisible(permissions);
+    case "tprm":
+      return isTprmVisible(permissions);
+    case "privacy":
+      return isPrivacyVisible(permissions);
+    case "itam":
+      return isItamVisible(permissions);
+    case "registries":
+      return isRegistriesVisible(permissions);
+    case "compliancePortal":
+      return isCompliancePortalVisible(permissions);
+    case "accessReview":
+      return isAccessReviewVisible(permissions);
+    case "settings":
+      return isSettingsVisible(permissions, slackbotAvailable);
+  }
+}
+
+export function visibleNavGroups(
+  permissions: NavPermissions,
+  slackbotAvailable: boolean,
+): NavGroup[] {
+  return NAV_GROUPS.filter(group =>
+    navGroupIsVisible(group.key, permissions, slackbotAvailable),
+  );
+}
+
+function groupHref(
+  organizationId: string,
+  key: NavGroupKey,
+  path: string,
+): string {
+  return navHref(organizationId, navGroupByKey(key), path);
+}
+
+function governanceHref(organizationId: string, permissions: NavPermissions): string {
+  if (permissions.canListTasks) {
+    return groupHref(organizationId, "governance", "tasks");
+  }
+  if (permissions.canListMeasures) {
+    return groupHref(organizationId, "governance", "measures");
+  }
+  if (permissions.canListFrameworks) {
+    return groupHref(organizationId, "governance", "frameworks");
+  }
+  if (permissions.canListAudits) {
+    return groupHref(organizationId, "governance", "audits");
+  }
+  if (permissions.canListFindings) {
+    return groupHref(organizationId, "governance", "findings");
+  }
+  if (permissions.canListDocuments) {
+    return groupHref(organizationId, "governance", "documents");
+  }
+  return groupHref(organizationId, "governance", "statements-of-applicability");
+}
+
+function riskManagementHref(organizationId: string, permissions: NavPermissions): string {
+  if (permissions.canListRisks) {
+    return groupHref(organizationId, "riskManagement", "risks");
+  }
+  return groupHref(organizationId, "riskManagement", "risk-analyses");
+}
+
+function privacyHref(organizationId: string, permissions: NavPermissions): string {
+  if (permissions.canListRightsRequests) {
+    return groupHref(organizationId, "privacy", "rights-requests");
+  }
+  if (permissions.canListProcessingActivities) {
+    return groupHref(organizationId, "privacy", "processing-activities");
+  }
+  if (permissions.canListDataProtectionImpactAssessments) {
+    return groupHref(organizationId, "privacy", "dpias");
+  }
+  if (permissions.canListTransferImpactAssessments) {
+    return groupHref(organizationId, "privacy", "tias");
+  }
+  return groupHref(organizationId, "privacy", "cookie-banners/new");
+}
+
+function registriesHref(organizationId: string, permissions: NavPermissions): string {
+  if (permissions.canListData) {
+    return groupHref(organizationId, "registries", "data");
+  }
+  if (permissions.canListAssets) {
+    return groupHref(organizationId, "registries", "assets");
+  }
+  if (permissions.canListBusinessFunctions) {
+    return groupHref(organizationId, "registries", "business-functions");
+  }
+  if (permissions.canListAiSystems) {
+    return groupHref(organizationId, "registries", "ai-systems");
+  }
+  return groupHref(organizationId, "registries", "obligations");
+}
+
+function accessReviewHref(organizationId: string, permissions: NavPermissions): string {
+  if (permissions.canListAccessReviewCampaigns) {
+    return groupHref(organizationId, "accessReview", "campaigns");
+  }
+  return groupHref(organizationId, "accessReview", "connections");
+}
+
+function settingsHref(
+  organizationId: string,
+  permissions: NavPermissions,
+  slackbotAvailable: boolean,
+): string {
+  if (permissions.canUpdateOrganization) {
+    return groupHref(organizationId, "settings", "general");
+  }
+  if (permissions.canGetContext) {
+    return groupHref(organizationId, "settings", "context");
+  }
+  if (permissions.canListWebhookSubscriptions) {
+    return groupHref(organizationId, "settings", "webhooks");
+  }
+  if (slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack)) {
+    return groupHref(organizationId, "settings", "slackbot");
+  }
+  if (permissions.canListMembers) {
+    return groupHref(organizationId, "settings", "people");
+  }
+  return groupHref(organizationId, "settings", "audit-log");
+}
+
+export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const organization = useFragment(navRailFragment, organizationKey);
@@ -58,8 +259,12 @@ export function NavRail({ organizationKey }: NavRailProps) {
     navPermissionsFragment,
     organization,
   );
-  const groups = useMemo(() => visibleNavGroups(permissions), [permissions]);
+  const groups = useMemo(
+    () => visibleNavGroups(permissions, slackbotAvailable),
+    [permissions, slackbotAvailable],
+  );
   const activeGroup = useActiveNavGroup(groups);
+  const activeKey = activeGroup?.key;
 
   const slots = navRail();
 
@@ -69,15 +274,78 @@ export function NavRail({ organizationKey }: NavRailProps) {
         <OrganizationSwitcher variant="rail" organizationKey={organization} />
 
         <div className={slots.items()}>
-          {groups.map(group => (
+          {isGovernanceVisible(permissions) && (
             <NavRailItem
-              key={group.key}
-              icon={group.icon}
-              label={t(`nav.groups.${group.key}`)}
-              to={navGroupHref(organizationId, group, permissions)}
-              active={group.key === activeGroup?.key}
+              icon={navGroupByKey("governance").icon}
+              label={t("nav.groups.governance")}
+              to={governanceHref(organizationId, permissions)}
+              active={activeKey === "governance"}
             />
-          ))}
+          )}
+          {isRiskManagementVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("riskManagement").icon}
+              label={t("nav.groups.riskManagement")}
+              to={riskManagementHref(organizationId, permissions)}
+              active={activeKey === "riskManagement"}
+            />
+          )}
+          {isTprmVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("tprm").icon}
+              label={t("nav.groups.tprm")}
+              to={groupHref(organizationId, "tprm", "third-parties")}
+              active={activeKey === "tprm"}
+            />
+          )}
+          {isPrivacyVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("privacy").icon}
+              label={t("nav.groups.privacy")}
+              to={privacyHref(organizationId, permissions)}
+              active={activeKey === "privacy"}
+            />
+          )}
+          {isItamVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("itam").icon}
+              label={t("nav.groups.itam")}
+              to={groupHref(organizationId, "itam", "devices")}
+              active={activeKey === "itam"}
+            />
+          )}
+          {isRegistriesVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("registries").icon}
+              label={t("nav.groups.registries")}
+              to={registriesHref(organizationId, permissions)}
+              active={activeKey === "registries"}
+            />
+          )}
+          {isCompliancePortalVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("compliancePortal").icon}
+              label={t("nav.groups.compliancePortal")}
+              to={groupHref(organizationId, "compliancePortal", "compliance-portals")}
+              active={activeKey === "compliancePortal"}
+            />
+          )}
+          {isAccessReviewVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("accessReview").icon}
+              label={t("nav.groups.accessReview")}
+              to={accessReviewHref(organizationId, permissions)}
+              active={activeKey === "accessReview"}
+            />
+          )}
+          {isSettingsVisible(permissions, slackbotAvailable) && (
+            <NavRailItem
+              icon={navGroupByKey("settings").icon}
+              label={t("nav.groups.settings")}
+              to={settingsHref(organizationId, permissions, slackbotAvailable)}
+              active={activeKey === "settings"}
+            />
+          )}
         </div>
 
         <NavRailItem

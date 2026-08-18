@@ -266,6 +266,11 @@ func (r *queryResolver) SignUpEnabled(ctx context.Context) (bool, error) {
 	return r.iam.IsSignUpEnabled(), nil
 }
 
+// SlackbotAvailable is the resolver for the slackbotAvailable field.
+func (r *queryResolver) SlackbotAvailable(ctx context.Context) (bool, error) {
+	return r.slackbotAvailable, nil
+}
+
 // Oauth2ScopesSupported is the resolver for the oauth2ScopesSupported field.
 func (r *queryResolver) Oauth2ScopesSupported(ctx context.Context) ([]coredata.OAuth2Scope, error) {
 	return r.scopeRegistry.RegisteredScopes(), nil

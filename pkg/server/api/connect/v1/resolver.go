@@ -64,14 +64,15 @@ import (
 
 type (
 	Resolver struct {
-		authorize      authz.AuthorizeFunc
-		batchAuthorize authz.BatchAuthorizeFunc
-		logger         *log.Logger
-		iam            *iam.Service
-		scopeRegistry  *oauth2scope.Registry
-		fileManager    *filemanager.Service
-		baseURL        *baseurl.BaseURL
-		sessionCookie  *authn.Cookie
+		authorize         authz.AuthorizeFunc
+		batchAuthorize    authz.BatchAuthorizeFunc
+		logger            *log.Logger
+		iam               *iam.Service
+		scopeRegistry     *oauth2scope.Registry
+		fileManager       *filemanager.Service
+		baseURL           *baseurl.BaseURL
+		sessionCookie     *authn.Cookie
+		slackbotAvailable bool
 	}
 )
 
@@ -85,6 +86,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	graphqlLimits gqlutils.Limits,
+	slackbotAvailable bool,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -92,7 +94,15 @@ func NewMux(
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
-	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig, graphqlLimits)
+	graphqlHandler := NewGraphQLHandler(
+		svc,
+		logger,
+		fileManagerSvc,
+		baseURL,
+		cookieConfig,
+		graphqlLimits,
+		slackbotAvailable,
+	)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 

@@ -25,11 +25,11 @@ import { graphql, useFragment } from "react-relay";
 
 import type { NavPanel_organization$key } from "#/__generated__/iam/NavPanel_organization.graphql";
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
-import { visibleNavGroups } from "#/pages/iam/organizations/_lib/navigation";
 import { navPermissionsFragment } from "#/pages/iam/organizations/_lib/navPermissions";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
 
 import { navPanels } from "./navPanels";
+import { visibleNavGroups } from "./NavRail";
 import { navPanel } from "./variants";
 
 const navPanelFragment = graphql`
@@ -40,9 +40,10 @@ const navPanelFragment = graphql`
 
 export interface NavPanelProps {
   organizationKey: NavPanel_organization$key;
+  slackbotAvailable: boolean;
 }
 
-export function NavPanel({ organizationKey }: NavPanelProps) {
+export function NavPanel({ organizationKey, slackbotAvailable }: NavPanelProps) {
   const { t } = useTranslation();
   const organization = useFragment<NavPanel_organization$key>(
     navPanelFragment,
@@ -52,7 +53,10 @@ export function NavPanel({ organizationKey }: NavPanelProps) {
     navPermissionsFragment,
     organization,
   );
-  const groups = useMemo(() => visibleNavGroups(permissions), [permissions]);
+  const groups = useMemo(
+    () => visibleNavGroups(permissions, slackbotAvailable),
+    [permissions, slackbotAvailable],
+  );
   const activeGroup = useActiveNavGroup(groups);
   const slots = navPanel();
 

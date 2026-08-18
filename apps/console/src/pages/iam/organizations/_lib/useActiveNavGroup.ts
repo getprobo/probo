@@ -21,14 +21,10 @@
 import { useMemo } from "react";
 import { matchPath, useLocation } from "react-router";
 
-import { type NavGroup, navLandingPath } from "./navigation";
+import { type NavGroup } from "./navigation";
 
-function navGroupPatterns(group: NavGroup): string[] {
-  const prefixes = group.segment != null
-    ? [group.segment]
-    : group.landings.map(landing => navLandingPath(group, landing.path));
-
-  return prefixes.map(prefix => `/organizations/:organizationId/${prefix}`);
+function navGroupPrefix(group: NavGroup): string {
+  return group.segment ?? "compliance-portals";
 }
 
 export function useActiveNavGroup(groups: readonly NavGroup[]): NavGroup | null {
@@ -37,7 +33,10 @@ export function useActiveNavGroup(groups: readonly NavGroup[]): NavGroup | null 
   return useMemo(
     () =>
       groups.find(group =>
-        navGroupPatterns(group).some(path => matchPath({ path, end: false }, pathname) != null),
+        matchPath(
+          { path: `/organizations/:organizationId/${navGroupPrefix(group)}`, end: false },
+          pathname,
+        ) != null,
       ) ?? null,
     [groups, pathname],
   );

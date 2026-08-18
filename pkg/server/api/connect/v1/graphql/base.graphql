@@ -35,6 +35,9 @@ type Query {
   signUpEnabled: Boolean!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)
+  slackbotAvailable: Boolean!
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
   oauth2ScopesSupported: [OAuth2Scope!]!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)

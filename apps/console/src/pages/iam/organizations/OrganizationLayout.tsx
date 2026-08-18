@@ -37,6 +37,7 @@ export const organizationLayoutQuery = graphql`
     $organizationId: ID!
     $hideNavigation: Boolean!
   ) {
+    slackbotAvailable
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
@@ -63,7 +64,7 @@ export interface OrganizationLayoutProps {
 }
 
 export function OrganizationLayout({ hideNavigation = false, queryRef }: OrganizationLayoutProps) {
-  const { organization, viewer } = usePreloadedQuery<OrganizationLayoutQuery>(
+  const { organization, viewer, slackbotAvailable } = usePreloadedQuery<OrganizationLayoutQuery>(
     organizationLayoutQuery,
     queryRef,
   );
@@ -82,8 +83,18 @@ export function OrganizationLayout({ hideNavigation = false, queryRef }: Organiz
       <div className={slots.root()}>
         {hideNavigation && <TopBar organizationKey={organization} />}
         <div className={slots.body()}>
-          {!hideNavigation && <NavRail organizationKey={organization} />}
-          {!hideNavigation && <NavPanel organizationKey={organization} />}
+          {!hideNavigation && (
+            <NavRail
+              organizationKey={organization}
+              slackbotAvailable={slackbotAvailable}
+            />
+          )}
+          {!hideNavigation && (
+            <NavPanel
+              organizationKey={organization}
+              slackbotAvailable={slackbotAvailable}
+            />
+          )}
           <main className={slots.content()}>
             <div className={slots.contentInner()}>
               <CoreRelayProvider>

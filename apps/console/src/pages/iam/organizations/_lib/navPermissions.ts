@@ -20,8 +20,7 @@
 
 import { graphql } from "react-relay";
 
-// Read through the `permission` key on each nav table entry rather than by
-// name here, which the rule cannot follow. See visibleNavGroups.
+// Consumed by name in NavRail; the rule cannot follow that from this file.
 /* eslint-disable relay/unused-fields */
 export const navPermissionsFragment = graphql`
   fragment navPermissions_organization on Organization {
