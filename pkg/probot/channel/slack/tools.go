@@ -71,6 +71,7 @@ func Tools(queue *DeliveryService, turn TurnBinding) []agent.Tool {
 
 				intent := bot.MessageIntent{FallbackText: p.Text}
 				body := RenderMessageIntent(intent)
+
 				payload := map[string]any{
 					"channel":   turn.ChannelID,
 					"text":      body["text"],

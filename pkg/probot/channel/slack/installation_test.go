@@ -638,6 +638,7 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 				replacement.TeamID = teamID
 				replacement.BotUserID = "B-new"
 				replacement.Status = coredata.SlackbotInstallationStatusActive
+
 				replacement.Scopes = []string{"chat:write"}
 				if _, err := replacement.Upsert(
 					ctx,
@@ -702,6 +703,7 @@ func TestPersistInstallationCredentials_DisabledReturnsNotInstalled(t *testing.T
 				installation.TeamID = fmt.Sprintf("T-disabled-%s", organization.ID)
 				installation.BotUserID = "B-bot"
 				installation.Status = coredata.SlackbotInstallationStatusActive
+
 				installation.Scopes = []string{"chat:write"}
 				if _, err := installation.Upsert(
 					ctx,
@@ -719,6 +721,7 @@ func TestPersistInstallationCredentials_DisabledReturnsNotInstalled(t *testing.T
 				// Disable bumps UpdatedAt the same way DisableByTeamID does,
 				// which previously looked like a concurrent revision race.
 				installation.Status = coredata.SlackbotInstallationStatusDisabled
+
 				installation.UpdatedAt = originalUpdatedAt.Add(time.Second)
 				if err := installation.UpdateStatus(ctx, tx, scope); err != nil {
 					return err

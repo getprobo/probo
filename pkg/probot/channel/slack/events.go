@@ -116,6 +116,7 @@ func parseSlackTimestamp(raw string) (time.Time, bool) {
 	}
 
 	secondsPart, fracPart, _ := strings.Cut(raw, ".")
+
 	seconds, err := strconv.ParseInt(secondsPart, 10, 64)
 	if err != nil {
 		return time.Time{}, false

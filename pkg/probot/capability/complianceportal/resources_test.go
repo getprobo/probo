@@ -368,6 +368,7 @@ func insertTestReport(
 	name string,
 ) (gid.GID, error) {
 	now := time.Now()
+
 	reportFileID, err := insertTestBlobFile(
 		ctx,
 		tx,

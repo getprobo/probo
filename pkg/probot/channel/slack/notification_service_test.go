@@ -126,6 +126,7 @@ func (f notificationFixture) seal(
 					}
 
 					message.SentAt = &now
+
 					message.UpdatedAt = now
 					if err := message.UpdateDeliveryState(ctx, tx, f.scope); err != nil {
 						return err

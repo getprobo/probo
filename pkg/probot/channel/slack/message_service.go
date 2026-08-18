@@ -152,6 +152,7 @@ func (s *MessageService) updateOutbound(
 	}
 
 	message := delivery.Result.Message
+
 	attributes := cloneNotificationData(message.Attributes)
 	if delivery.SourceEventID != "" {
 		attributes[deliverySourceEventMetadata] = delivery.SourceEventID
