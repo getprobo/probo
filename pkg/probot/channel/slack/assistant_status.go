@@ -22,8 +22,11 @@ package slack
 
 import (
 	"context"
+	"errors"
+	"sync/atomic"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/agent"
 )
 
 const assistantWorkingStatus = "is working on your request..."
@@ -34,15 +37,40 @@ var assistantLoadingMessages = []string{
 	"Drafting a reply…",
 }
 
-type assistantStatusSetter interface {
-	SetStatus(
-		ctx context.Context,
-		channelID string,
-		threadTS string,
-		status string,
-		loadingMessages []string,
-	) error
-}
+type (
+	assistantStatusSetter interface {
+		SetStatus(
+			ctx context.Context,
+			channelID string,
+			threadTS string,
+			status string,
+			loadingMessages []string,
+		) error
+	}
+
+	// assistantStatusResolver defers Slack client resolution until the status
+	// actually has to be cleared.
+	assistantStatusResolver func(ctx context.Context) (assistantStatusSetter, error)
+
+	// assistantStatusHook clears the thread status indicator when a turn ends
+	// without a user-visible reply. Slack drops the indicator on its own as
+	// soon as the app posts in the thread, so a turn that only reacts, fails,
+	// or stops for approval would otherwise keep spinning until Slack's own
+	// two-minute timeout.
+	assistantStatusHook struct {
+		agent.NoOpHooks
+
+		logger    *log.Logger
+		resolve   assistantStatusResolver
+		channelID string
+		threadTS  string
+		replied   atomic.Bool
+	}
+)
+
+var (
+	_ agent.RunHooks = (*assistantStatusHook)(nil)
+)
 
 func assistantStatusThreadTS(threadTS, messageTS string) string {
 	if threadTS != "" {
@@ -71,6 +99,70 @@ func setAssistantWorkingStatus(
 	)
 	if err != nil {
 		logAssistantStatusError(ctx, logger, err)
+	}
+}
+
+func newAssistantStatusHook(
+	logger *log.Logger,
+	resolve assistantStatusResolver,
+	channelID, threadTS string,
+) *assistantStatusHook {
+	return &assistantStatusHook{
+		logger:    logger,
+		resolve:   resolve,
+		channelID: channelID,
+		threadTS:  threadTS,
+	}
+}
+
+func (h *assistantStatusHook) OnToolEnd(
+	_ context.Context,
+	_ *agent.Agent,
+	tool agent.Tool,
+	result agent.ToolResult,
+	err error,
+) {
+	if err == nil && !result.IsError && tool.Name() == sendMessageToolName {
+		h.replied.Store(true)
+	}
+}
+
+func (h *assistantStatusHook) OnRunEnd(
+	ctx context.Context,
+	_ *agent.Agent,
+	_ *agent.Result,
+	err error,
+) {
+	if h.replied.Load() {
+		return
+	}
+
+	// A suspended run resumes later, so the turn is still in progress.
+	if _, ok := errors.AsType[*agent.SuspendedError](err); ok {
+		return
+	}
+
+	h.clear(context.WithoutCancel(ctx))
+}
+
+func (h *assistantStatusHook) clear(ctx context.Context) {
+	if h.resolve == nil || h.channelID == "" || h.threadTS == "" {
+		return
+	}
+
+	setter, err := h.resolve(ctx)
+	if err != nil {
+		logAssistantStatusError(ctx, h.logger, err)
+
+		return
+	}
+
+	if setter == nil {
+		return
+	}
+
+	if err := setter.SetStatus(ctx, h.channelID, h.threadTS, "", nil); err != nil {
+		logAssistantStatusError(ctx, h.logger, err)
 	}
 }
 

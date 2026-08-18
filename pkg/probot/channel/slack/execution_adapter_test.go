@@ -385,6 +385,55 @@ func TestExecutionAdapterBindsReactionToInputMessageTS(t *testing.T) {
 	assert.Equal(t, "900.000", runContext.MessageAnchor.MessageID)
 }
 
+func TestExecutionAdapterClearsAssistantStatusForSilentTurn(t *testing.T) {
+	t.Parallel()
+
+	slackAPI := newRecordingSlackAPI(t, nil)
+	pgClient, organizationID, _ := executionAdapterDatabase(t)
+	adapter := newExecutionAdapter(t, pgClient, slackAPI.URL, &fakeExecutionBindings{})
+
+	hook := adapter.assistantStatusHook(
+		organizationID,
+		ExecutionSourceCoordinates{
+			ChannelID: "C123",
+			ThreadTS:  "123.000",
+			MessageTS: "123.456",
+		},
+	)
+	require.NotNil(t, hook)
+
+	hook.OnRunEnd(t.Context(), nil, nil, nil)
+
+	statuses := slackAPI.statusesSnapshot()
+	require.Len(t, statuses, 1)
+	assert.Equal(t, "C123", statuses[0]["channel_id"])
+	assert.Equal(t, "123.000", statuses[0]["thread_ts"])
+	assert.Empty(t, statuses[0]["status"])
+	assert.Nil(t, statuses[0]["loading_messages"])
+}
+
+func TestExecutionAdapterClearsAssistantStatusOnTriggeringMessage(t *testing.T) {
+	t.Parallel()
+
+	pgClient, organizationID, _ := executionAdapterDatabase(t)
+	adapter := newExecutionAdapter(t, pgClient, "", &fakeExecutionBindings{})
+
+	hook := adapter.assistantStatusHook(
+		organizationID,
+		ExecutionSourceCoordinates{ChannelID: "D123", MessageTS: "333.444"},
+	)
+	require.NotNil(t, hook)
+	assert.Equal(t, "333.444", hook.threadTS)
+
+	assert.Nil(
+		t,
+		adapter.assistantStatusHook(
+			organizationID,
+			ExecutionSourceCoordinates{MessageTS: "333.444"},
+		),
+	)
+}
+
 func executionAdapterDatabase(t *testing.T) (*pg.Client, gid.GID, string) {
 	t.Helper()
 

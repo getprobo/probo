@@ -193,7 +193,42 @@ func (a *ExecutionAdapter) registryForRun(
 		)
 	}
 
-	return probot.NewStaticAgentRegistry(startAgentName, base.Clone(agent.WithTools(tools...))), nil
+	options := []agent.Option{agent.WithTools(tools...)}
+	if hook := a.assistantStatusHook(organizationID, turn); hook != nil {
+		options = append(options, agent.WithHooks(hook))
+	}
+
+	return probot.NewStaticAgentRegistry(startAgentName, base.Clone(options...)), nil
+}
+
+// assistantStatusHook derives the status indicator coordinates the same way
+// ingress does when it sets the indicator, so a turn always clears what it set.
+func (a *ExecutionAdapter) assistantStatusHook(
+	organizationID gid.GID,
+	turn ExecutionSourceCoordinates,
+) *assistantStatusHook {
+	threadTS := assistantStatusThreadTS(turn.ThreadTS, turn.MessageTS)
+	if a.installations == nil || turn.ChannelID == "" || threadTS == "" {
+		return nil
+	}
+
+	return newAssistantStatusHook(
+		a.logger,
+		func(ctx context.Context) (assistantStatusSetter, error) {
+			client, _, err := a.installations.ClientByOrganizationID(
+				ctx,
+				coredata.NewScopeFromObjectID(organizationID),
+				organizationID,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("cannot resolve Slack assistant status client: %w", err)
+			}
+
+			return client, nil
+		},
+		turn.ChannelID,
+		threadTS,
+	)
 }
 
 func (a *ExecutionAdapter) loadThreadSubject(

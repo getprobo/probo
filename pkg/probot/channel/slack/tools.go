@@ -49,17 +49,22 @@ type (
 	}
 )
 
+const (
+	sendMessageToolName = "send_message"
+	addReactionToolName = "add_reaction"
+)
+
 func Tools(queue *DeliveryService, turn TurnBinding) []agent.Tool {
 	return []agent.Tool{
 		agent.FunctionTool(
-			"send_message",
+			sendMessageToolName,
 			"Send a concise plain-text user-visible reply in the current trusted Slack conversation. Do not use Slack-specific markup or invent channel or thread IDs.",
 			func(ctx context.Context, p sendMessageParams) (agent.ToolResult, error) {
 				if turn.ChannelID == "" {
 					return agent.ResultError("cannot queue message without a trusted Slack conversation"), nil
 				}
 
-				operationKey, ok := toolOperationKey(ctx, turn, "send_message")
+				operationKey, ok := toolOperationKey(ctx, turn, sendMessageToolName)
 				if !ok {
 					return agent.ResultError("cannot queue message without a stable tool call ID"), nil
 				}
@@ -90,14 +95,14 @@ func Tools(queue *DeliveryService, turn TurnBinding) []agent.Tool {
 			},
 		),
 		agent.FunctionTool(
-			"add_reaction",
+			addReactionToolName,
 			"Add an emoji reaction to the current trusted Slack message. Never invent channel or message IDs.",
 			func(ctx context.Context, p addReactionParams) (agent.ToolResult, error) {
 				if turn.ChannelID == "" || turn.MessageTS == "" {
 					return agent.ResultError("cannot queue reaction without a trusted current Slack message"), nil
 				}
 
-				operationKey, ok := toolOperationKey(ctx, turn, "add_reaction")
+				operationKey, ok := toolOperationKey(ctx, turn, addReactionToolName)
 				if !ok {
 					return agent.ResultError("cannot queue reaction without a stable tool call ID"), nil
 				}

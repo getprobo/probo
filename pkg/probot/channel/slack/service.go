@@ -392,13 +392,17 @@ func (s *Service) handleBoundInteraction(
 		return nil
 	}
 
+	// The turn coordinates persisted below are what the run hook uses to clear
+	// the indicator, so both sides derive it from the same reply target.
 	if slackClient != nil {
+		target := replyTargetFor(*event)
+
 		setAssistantWorkingStatus(
 			ctx,
 			s.logger,
 			slackClient,
-			event.Channel,
-			assistantStatusThreadTS(event.ThreadTS, event.TS),
+			target.channel,
+			assistantStatusThreadTS(target.threadTS, event.TS),
 		)
 	}
 

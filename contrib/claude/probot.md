@@ -151,6 +151,13 @@ timestamps. Assistant final text is never auto-delivered: conversational
 channel-visible effects are queued by channel tools with stable operation
 keys.
 
+Slack ingress sets the assistant thread status indicator when it enqueues a
+turn, and a run hook clears it when the turn ends without queueing a reply
+(reaction-only turns, failures, approval stops). Slack clears the indicator
+itself once the app posts in the thread, so a replying turn leaves it alone.
+Both sides derive the indicator thread from the same turn coordinates so a
+turn always clears the indicator it set.
+
 Slack event HTTP ingress verifies the signature, validates the envelope, and
 inserts `slackbot_events` before returning 200. A duplicate Slack event ID is
 an acknowledged no-op. Channel agents start only on `@mention`. DMs start on
