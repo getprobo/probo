@@ -137,27 +137,82 @@ func TestFormatThreadTranscript(t *testing.T) {
 	)
 }
 
+func TestCollectThreadTranscript_KeepsUserLessOwnBotReplies(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case "/api/auth.test":
+					_, err := w.Write([]byte(`{"ok":true,"bot_id":"BPROBOT"}`))
+					require.NoError(t, err)
+				case "/api/conversations.replies":
+					_, err := w.Write(
+						[]byte(
+							`{"ok":true,"messages":[{"user":"U1","text":"root","ts":"111.000"},{"bot_id":"BPROBOT","text":"Access request","ts":"111.001"},{"bot_id":"BOTHER","text":"foreign bot","ts":"111.002"},{"user":"U1","text":"<@BOT> grant this","ts":"111.003"}]}`,
+						),
+					)
+					require.NoError(t, err)
+				default:
+					t.Fatalf("unexpected path: %s", r.URL.Path)
+				}
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	handler := &Service{logger: log.NewLogger()}
+	transcript := handler.collectThreadTranscript(
+		t.Context(),
+		newTestClient(server.URL+"/api"),
+		EventBody{
+			Type:        EventTypeAppMention,
+			User:        "U1",
+			Text:        "<@BOT> grant this",
+			Channel:     "C123",
+			TS:          "111.003",
+			ThreadTS:    "111.000",
+			ChannelType: ChannelTypeChannel,
+		},
+		"UBOT",
+	)
+
+	assert.Equal(
+		t,
+		"Thread:\n<@U1>: root\n<@UBOT>: Access request\n<@U1>: grant this",
+		transcript,
+	)
+	assert.NotContains(t, transcript, "foreign bot")
+}
+
 func TestCollectThreadTranscript_KeepsPartialRepliesOnLaterPageError(t *testing.T) {
 	t.Parallel()
 
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				require.Equal(t, "/api/conversations.replies", r.URL.Path)
-
-				if r.URL.Query().Get("cursor") == "" {
-					_, err := w.Write(
-						[]byte(
-							`{"ok":true,"messages":[{"user":"U1","text":"root","ts":"111.000"},{"user":"U2","text":"reply","ts":"111.001"}],"response_metadata":{"next_cursor":"page-2"}}`,
-						),
-					)
+				switch r.URL.Path {
+				case "/api/auth.test":
+					_, err := w.Write([]byte(`{"ok":true,"bot_id":"BPROBOT"}`))
 					require.NoError(t, err)
+				case "/api/conversations.replies":
+					if r.URL.Query().Get("cursor") == "" {
+						_, err := w.Write(
+							[]byte(
+								`{"ok":true,"messages":[{"user":"U1","text":"root","ts":"111.000"},{"user":"U2","text":"reply","ts":"111.001"}],"response_metadata":{"next_cursor":"page-2"}}`,
+							),
+						)
+						require.NoError(t, err)
 
-					return
+						return
+					}
+
+					_, err := w.Write([]byte(`{"ok":false,"error":"ratelimited"}`))
+					require.NoError(t, err)
+				default:
+					t.Fatalf("unexpected path: %s", r.URL.Path)
 				}
-
-				_, err := w.Write([]byte(`{"ok":false,"error":"ratelimited"}`))
-				require.NoError(t, err)
 			},
 		),
 	)
@@ -187,7 +242,14 @@ func TestCollectThreadTranscript_FallsBackWhenNoRepliesCollected(t *testing.T) {
 
 	server := httptest.NewServer(
 		http.HandlerFunc(
-			func(w http.ResponseWriter, _ *http.Request) {
+			func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/api/auth.test" {
+					_, err := w.Write([]byte(`{"ok":true,"bot_id":"BPROBOT"}`))
+					require.NoError(t, err)
+
+					return
+				}
+
 				w.WriteHeader(http.StatusInternalServerError)
 				_, err := w.Write([]byte(`{"ok":false,"error":"internal_error"}`))
 				require.NoError(t, err)
@@ -220,14 +282,20 @@ func TestCollectThreadTranscript_AppendsTriggeringEventWhenMissing(t *testing.T)
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				require.Equal(t, "/api/conversations.replies", r.URL.Path)
-
-				_, err := w.Write(
-					[]byte(
-						`{"ok":true,"messages":[{"user":"U1","text":"root","ts":"111.000"},{"user":"U2","text":"reply","ts":"111.001"}]}`,
-					),
-				)
-				require.NoError(t, err)
+				switch r.URL.Path {
+				case "/api/auth.test":
+					_, err := w.Write([]byte(`{"ok":true,"bot_id":"BPROBOT"}`))
+					require.NoError(t, err)
+				case "/api/conversations.replies":
+					_, err := w.Write(
+						[]byte(
+							`{"ok":true,"messages":[{"user":"U1","text":"root","ts":"111.000"},{"user":"U2","text":"reply","ts":"111.001"}]}`,
+						),
+					)
+					require.NoError(t, err)
+				default:
+					t.Fatalf("unexpected path: %s", r.URL.Path)
+				}
 			},
 		),
 	)
@@ -253,6 +321,43 @@ func TestCollectThreadTranscript_AppendsTriggeringEventWhenMissing(t *testing.T)
 		t,
 		"Thread:\n<@U1>: root\n<@U2>: reply\n<@U1>: grant this",
 		transcript,
+	)
+}
+
+func TestInstalledBotIDFromReplies(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"matches bot user id on replies",
+		func(t *testing.T) {
+			t.Parallel()
+
+			botID := installedBotIDFromReplies(
+				[]ThreadReply{
+					{BotID: "BPROBOT", Text: "no user"},
+					{User: "UBOT", BotID: "BPROBOT", Text: "with user"},
+				},
+				"UBOT",
+			)
+
+			assert.Equal(t, "BPROBOT", botID)
+		},
+	)
+
+	t.Run(
+		"returns empty when only user-less bot replies exist",
+		func(t *testing.T) {
+			t.Parallel()
+
+			botID := installedBotIDFromReplies(
+				[]ThreadReply{
+					{BotID: "BPROBOT", Text: "no user"},
+				},
+				"UBOT",
+			)
+
+			assert.Empty(t, botID)
+		},
 	)
 }
 

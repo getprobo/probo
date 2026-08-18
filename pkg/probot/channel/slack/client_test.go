@@ -215,6 +215,56 @@ func TestClientListConversations(t *testing.T) {
 	}
 }
 
+func TestClientInstalledBotID(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"returns bot id from auth.test",
+		func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(
+				http.HandlerFunc(
+					func(w http.ResponseWriter, r *http.Request) {
+						require.Equal(t, "/api/auth.test", r.URL.Path)
+						require.Equal(t, http.MethodPost, r.Method)
+						require.Equal(t, "Bearer "+testBotToken, r.Header.Get("Authorization"))
+
+						_, err := w.Write([]byte(`{"ok":true,"bot_id":"BPROBOT"}`))
+						require.NoError(t, err)
+					},
+				),
+			)
+			t.Cleanup(server.Close)
+
+			botID, err := newTestClient(server.URL + "/api").InstalledBotID(t.Context())
+			require.NoError(t, err)
+			assert.Equal(t, "BPROBOT", botID)
+		},
+	)
+
+	t.Run(
+		"errors when bot id is missing",
+		func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(
+				http.HandlerFunc(
+					func(w http.ResponseWriter, _ *http.Request) {
+						_, err := w.Write([]byte(`{"ok":true}`))
+						require.NoError(t, err)
+					},
+				),
+			)
+			t.Cleanup(server.Close)
+
+			_, err := newTestClient(server.URL + "/api").InstalledBotID(t.Context())
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "no bot_id")
+		},
+	)
+}
+
 func TestClientListThreadReplies(t *testing.T) {
 	t.Parallel()
 

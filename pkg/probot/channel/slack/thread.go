@@ -204,14 +204,33 @@ func (s *Service) collectThreadTranscript(
 		)
 	}
 
-	botID := resolveInstalledBotID(replies, botUserID)
+	botID := resolveInstalledBotID(ctx, slackClient, replies, botUserID)
 	kept := keptThreadReplies(replies, botUserID, botID)
 	transcript := formatKeptThreadTranscript(kept, botUserID)
 
 	return appendTriggeringEventIfMissing(transcript, kept, event, botUserID)
 }
 
-func resolveInstalledBotID(replies []ThreadReply, botUserID string) string {
+func resolveInstalledBotID(
+	ctx context.Context,
+	slackClient *Client,
+	replies []ThreadReply,
+	botUserID string,
+) string {
+	if slackClient != nil {
+		botID, err := slackClient.InstalledBotID(ctx)
+		if err == nil && botID != "" {
+			return botID
+		}
+	}
+
+	return installedBotIDFromReplies(replies, botUserID)
+}
+
+// installedBotIDFromReplies is a best-effort fallback when auth.test is
+// unavailable. It only works when Slack includes user on at least one of our
+// bot replies.
+func installedBotIDFromReplies(replies []ThreadReply, botUserID string) string {
 	if botUserID == "" {
 		return ""
 	}

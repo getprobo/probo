@@ -471,6 +471,9 @@ func newRecordingSlackAPI(
 
 					_, err := w.Write([]byte(`{"ok":true}`))
 					require.NoError(t, err)
+				case "/api/auth.test":
+					_, err := w.Write([]byte(`{"ok":true,"bot_id":"BPROBOT"}`))
+					require.NoError(t, err)
 				case "/api/conversations.replies":
 					_, err := w.Write([]byte(`{"ok":true,"messages":[]}`))
 					require.NoError(t, err)

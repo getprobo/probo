@@ -38,6 +38,7 @@ import (
 const (
 	slackMethodAssistantSetStatus   = "assistant.threads.setStatus"
 	slackMethodAppsUninstall        = "apps.uninstall"
+	slackMethodAuthTest             = "auth.test"
 	slackMethodConversationsList    = "conversations.list"
 	slackMethodConversationsOpen    = "conversations.open"
 	slackMethodConversationsReplies = "conversations.replies"
@@ -166,6 +167,11 @@ type (
 			NextCursor string `json:"next_cursor"`
 		} `json:"response_metadata"`
 	}
+
+	authTestResponse struct {
+		slackResponse
+		BotID string `json:"bot_id,omitempty"`
+	}
 )
 
 func (e *APIError) Error() string {
@@ -194,6 +200,51 @@ func newAPIClient(botToken string, apiBaseURL string, httpClient *http.Client) *
 		httpClient: httpClient,
 		apiBaseURL: apiBaseURL,
 	}
+}
+
+// InstalledBotID returns the bot_id for the token via auth.test. Slack often
+// omits user on bot messages in conversations.replies, so thread filtering
+// cannot rely on matching bot_user_id against reply.User alone.
+func (c *Client) InstalledBotID(ctx context.Context) (string, error) {
+	endpoint, err := c.methodURL(slackMethodAuthTest)
+	if err != nil {
+		return "", fmt.Errorf("cannot build Slack auth.test endpoint: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create Slack auth.test request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot call Slack auth.test: %w", err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	var result authTestResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			return "", newAPIError(resp, "")
+		}
+
+		return "", fmt.Errorf("cannot decode Slack auth.test response: %w", err)
+	}
+
+	if !result.OK || resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return "", newAPIError(resp, result.Error)
+	}
+
+	if result.BotID == "" {
+		return "", fmt.Errorf("slack auth.test response has no bot_id")
+	}
+
+	return result.BotID, nil
 }
 
 func (c *Client) UninstallApp(
