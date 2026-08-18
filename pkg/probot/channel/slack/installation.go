@@ -272,7 +272,7 @@ func (s *InstallationService) Uninstall(
 	installationUpdatedAt := installation.UpdatedAt
 
 	if installation.Status == coredata.SlackbotInstallationStatusActive {
-		client, _, err := s.ClientByOrganizationID(
+		client, loaded, err := s.ClientByOrganizationID(
 			ctx,
 			scope,
 			organizationID,
@@ -280,6 +280,10 @@ func (s *InstallationService) Uninstall(
 		if err != nil {
 			return fmt.Errorf("cannot load Slack client for uninstall: %w", err)
 		}
+
+		// Token refresh during client load advances UpdatedAt; use that
+		// revision so local cleanup is not skipped as a stale reinstall.
+		installationUpdatedAt = loaded.UpdatedAt
 
 		if err := client.UninstallApp(
 			ctx,

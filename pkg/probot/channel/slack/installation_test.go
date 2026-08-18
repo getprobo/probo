@@ -23,6 +23,7 @@ package slack
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -660,6 +661,208 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 	assert.True(t, loaded.UpdatedAt.Equal(replacementUpdatedAt))
 	assert.Equal(t, "B-new", loaded.BotUserID)
 	assert.Equal(t, coredata.SlackbotInstallationStatusActive, loaded.Status)
+}
+
+func TestPersistInstallationCredentials_DisabledReturnsNotInstalled(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	pgClient := test.PGClient(t)
+	tenantID := gid.NewTenantID()
+	scope := coredata.NewScope(tenantID)
+	organization := coredata.Organization{
+		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
+		TenantID:  tenantID,
+		Name:      "Slack credential persist disabled test",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	encryptionKey := cipher.EncryptionKey{1, 2, 3}
+
+	var original coredata.SlackbotInstallation
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				if err := organization.Insert(ctx, tx); err != nil {
+					return err
+				}
+
+				installation := coredata.NewSlackbotInstallation(
+					scope,
+					organization.ID,
+				)
+				installation.TeamID = fmt.Sprintf("T-disabled-%s", organization.ID)
+				installation.BotUserID = "B-bot"
+				installation.Status = coredata.SlackbotInstallationStatusActive
+				installation.Scopes = []string{"chat:write"}
+				if _, err := installation.Upsert(
+					ctx,
+					tx,
+					scope,
+					encryptionKey,
+					coredata.SlackbotInstallationCredentials{AccessToken: "xoxb-old"},
+				); err != nil {
+					return err
+				}
+
+				original = *installation
+				originalUpdatedAt := installation.UpdatedAt
+
+				// Disable bumps UpdatedAt the same way DisableByTeamID does,
+				// which previously looked like a concurrent revision race.
+				installation.Status = coredata.SlackbotInstallationStatusDisabled
+				installation.UpdatedAt = originalUpdatedAt.Add(time.Second)
+				if err := installation.UpdateStatus(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				return nil
+			},
+		),
+	)
+	t.Cleanup(func() {
+		_ = pgClient.WithTx(
+			context.Background(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return organization.Delete(ctx, tx, organization.ID)
+			},
+		)
+	})
+
+	service := NewInstallationService(
+		pgClient,
+		encryptionKey,
+		InstallationConfig{},
+		log.NewLogger(),
+	)
+
+	err := service.persistInstallationCredentials(
+		ctx,
+		scope,
+		&original,
+		coredata.SlackbotInstallationCredentials{AccessToken: "xoxb-new"},
+		original.UpdatedAt,
+	)
+	require.ErrorIs(t, err, ErrSlackbotNotInstalled)
+	assert.False(t, errors.Is(err, errStaleInstallationRevision))
+	assert.False(t, isTransientDeliveryError(err))
+}
+
+func TestInstallationUninstall_CleansUpAfterCredentialRefresh(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	pgClient := test.PGClient(t)
+	tenantID := gid.NewTenantID()
+	scope := coredata.NewScope(tenantID)
+	organization := coredata.Organization{
+		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
+		TenantID:  tenantID,
+		Name:      "Slack uninstall refresh test",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	teamID := fmt.Sprintf("T-refresh-uninst-%s", organization.ID)
+	encryptionKey := cipher.EncryptionKey{1, 2, 3}
+	expiredAt := time.Now().Add(-time.Minute)
+	var refreshCalls, uninstallCalls int
+
+	server := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case "/":
+					require.NoError(t, r.ParseForm())
+					assert.Equal(t, "refresh_token", r.Form.Get("grant_type"))
+					refreshCalls++
+					require.NoError(
+						t,
+						json.NewEncoder(w).Encode(
+							map[string]any{
+								"ok":            true,
+								"access_token":  "xoxb-refreshed",
+								"refresh_token": "xoxe-refreshed",
+								"expires_in":    43200,
+								"scope":         "chat:write",
+							},
+						),
+					)
+				case "/apps.uninstall":
+					uninstallCalls++
+					_, err := w.Write([]byte(`{"ok":true}`))
+					require.NoError(t, err)
+				default:
+					t.Fatalf("unexpected path %q", r.URL.Path)
+				}
+			},
+		),
+	)
+	t.Cleanup(server.Close)
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				if err := organization.Insert(ctx, tx); err != nil {
+					return err
+				}
+
+				installation := coredata.NewSlackbotInstallation(
+					scope,
+					organization.ID,
+				)
+				installation.TeamID = teamID
+				installation.BotUserID = "B-bot"
+				installation.Status = coredata.SlackbotInstallationStatusActive
+				installation.Scopes = []string{"chat:write"}
+				installation.AccessTokenExpiresAt = &expiredAt
+				_, err := installation.Upsert(
+					ctx,
+					tx,
+					scope,
+					encryptionKey,
+					coredata.SlackbotInstallationCredentials{
+						AccessToken:  "xoxb-expired",
+						RefreshToken: new("xoxe-old"),
+					},
+				)
+
+				return err
+			},
+		),
+	)
+	t.Cleanup(func() {
+		_ = pgClient.WithTx(
+			context.Background(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return organization.Delete(ctx, tx, organization.ID)
+			},
+		)
+	})
+
+	service := NewInstallationService(
+		pgClient,
+		encryptionKey,
+		InstallationConfig{
+			ClientID:     "client-id",
+			ClientSecret: "client-secret",
+			TokenURL:     server.URL,
+			APIBaseURL:   server.URL,
+		},
+		log.NewLogger(),
+	)
+	service.httpClient = server.Client()
+
+	require.NoError(t, service.Uninstall(ctx, scope, organization.ID))
+	assert.Equal(t, 1, refreshCalls)
+	assert.Equal(t, 1, uninstallCalls)
+
+	_, err := service.GetByOrganizationID(ctx, scope, organization.ID)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
 
 func seedUninstallIdentity(

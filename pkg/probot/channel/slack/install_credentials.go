@@ -179,15 +179,20 @@ func (s *InstallationService) persistInstallationCredentials(
 				return fmt.Errorf("cannot load Slack installation for credential persist: %w", err)
 			}
 
+			// Disabled installations must surface as not-installed before the
+			// revision check: Disable* also advances UpdatedAt, which would
+			// otherwise look like a concurrent OAuth/refresh and return a
+			// transient stale-revision error to callers such as the
+			// notification worker.
+			if current.Status != coredata.SlackbotInstallationStatusActive {
+				return ErrSlackbotNotInstalled
+			}
+
 			// Organization upserts preserve the row ID across reinstalls, so
 			// UpdatedAt is the revision signal for concurrent OAuth/refresh.
 			if current.ID != installation.ID ||
 				!current.UpdatedAt.Equal(originalUpdatedAt) {
 				return errStaleInstallationRevision
-			}
-
-			if current.Status != coredata.SlackbotInstallationStatusActive {
-				return ErrSlackbotNotInstalled
 			}
 
 			current.Scopes = installation.Scopes
