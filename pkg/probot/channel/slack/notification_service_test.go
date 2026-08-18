@@ -630,3 +630,64 @@ func TestNotificationService_QueueRevisionIsIdempotentBySourceEvent(t *testing.T
 	assert.Equal(t, first.ID, second.ID)
 	assert.Equal(t, "revision", second.Body["text"])
 }
+
+func TestNotificationService_QueueRevisionDoesNotReuseRevisedMessageSourceEvent(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	fixture := newNotificationFixture(t)
+	sourceEventID := gid.New(
+		fixture.scope.GetTenantID(),
+		coredata.BotMessageEntityType,
+	).String()
+
+	initial, err := fixture.service.Queue(
+		ctx,
+		fixture.scope,
+		slackchannel.QueueNotificationRequest{
+			OrganizationID: fixture.organizationID,
+			ChannelID:      "C-REV-INHERITED",
+			MessageType:    "GENERIC_NOTIFICATION",
+			Body:           map[string]any{"text": "initial"},
+			Metadata:       map[string]any{},
+			SourceEventID:  &sourceEventID,
+		},
+	)
+	require.NoError(t, err)
+	fixture.seal(t, initial)
+	assert.Equal(t, sourceEventID, initial.Metadata[coredata.SlackbotMessageMetadataSourceEventID])
+
+	revision, err := fixture.service.QueueRevision(
+		ctx,
+		fixture.scope,
+		initial.ID,
+		map[string]any{"text": "revision"},
+		map[string]any{
+			coredata.SlackbotMessageMetadataSourceEventID: sourceEventID,
+		},
+	)
+	require.NoError(t, err)
+	fixture.seal(t, revision)
+
+	assert.NotEqual(t, initial.ID, revision.ID)
+	assert.Equal(t, initial.ID, revision.InitialSlackbotMessageID)
+	assert.Equal(t, "revision", revision.Body["text"])
+	assert.Equal(t, sourceEventID, revision.Metadata[coredata.SlackbotMessageMetadataSourceEventID])
+
+	reloadedInitial, err := fixture.service.GetByID(ctx, fixture.scope, initial.ID)
+	require.NoError(t, err)
+	assert.NotContains(t, reloadedInitial.Metadata, coredata.SlackbotMessageMetadataSourceEventID)
+
+	retry, err := fixture.service.QueueRevision(
+		ctx,
+		fixture.scope,
+		initial.ID,
+		map[string]any{"text": "revision retry"},
+		map[string]any{
+			coredata.SlackbotMessageMetadataSourceEventID: sourceEventID,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, revision.ID, retry.ID)
+	assert.Equal(t, "revision", retry.Body["text"])
+}

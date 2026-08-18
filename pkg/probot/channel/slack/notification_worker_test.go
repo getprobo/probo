@@ -27,10 +27,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -97,7 +99,9 @@ SET
 	processing_started_at = NULL
 WHERE sent_at IS NULL
 	AND error IS NULL
+	AND tenant_id = @tenant_id
 `,
+					pgx.StrictNamedArgs{"tenant_id": tenantID.String()},
 				)
 
 				return err
@@ -257,6 +261,9 @@ func TestNotificationHandler_RetriesTransientFailureWhenDue(t *testing.T) {
 	require.NotNil(t, failed.NextAttemptAt)
 	assert.WithinDuration(t, now.Add(time.Minute), *failed.NextAttemptAt, time.Microsecond)
 
+	_, err = claimExactSlackbotMessage(t, handler, message.ID)
+	require.ErrorIs(t, err, worker.ErrNoTask)
+
 	now = now.Add(time.Minute)
 	claimed, err = claimExactSlackbotMessage(t, handler, message.ID)
 	require.NoError(t, err)
@@ -284,6 +291,9 @@ func TestNotificationHandler_PermanentFailureBecomesDeadLetter(t *testing.T) {
 	assert.NotNil(t, failed.Error)
 	assert.NotNil(t, failed.LastError)
 	assert.Nil(t, failed.NextAttemptAt)
+
+	_, err = claimExactSlackbotMessage(t, handler, message.ID)
+	require.ErrorIs(t, err, worker.ErrNoTask)
 }
 
 func TestNotificationHandler_StaleClaimIsRecovered(t *testing.T) {

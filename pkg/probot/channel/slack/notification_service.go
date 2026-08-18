@@ -192,9 +192,15 @@ func (s *NotificationService) QueueRevision(
 					return err
 				}
 
-				if reusable != nil {
+				if reusable != nil && reusable.ID != existing.ID {
 					revision = reusable
 					return nil
+				}
+
+				if reusable != nil {
+					if err := releaseSlackbotSourceEvent(ctx, tx, scope, &existing); err != nil {
+						return err
+					}
 				}
 			}
 
@@ -223,6 +229,12 @@ func (s *NotificationService) QueueRevision(
 							return fmt.Errorf(
 								"cannot reload Slackbot revision after source event conflict: %w",
 								loadErr,
+							)
+						}
+
+						if conflicted.ID == existing.ID {
+							return fmt.Errorf(
+								"cannot queue Slackbot message revision: source event still owned by revised message",
 							)
 						}
 
@@ -445,16 +457,29 @@ func reusableBySourceEventID(
 		return &existing, nil
 	}
 
-	if existing.Metadata != nil {
-		delete(existing.Metadata, coredata.SlackbotMessageMetadataSourceEventID)
-	}
-
-	existing.UpdatedAt = time.Now()
-	if err := existing.UpdateMetadata(ctx, tx, scope); err != nil {
+	if err := releaseSlackbotSourceEvent(ctx, tx, scope, &existing); err != nil {
 		return nil, fmt.Errorf("cannot release dead-lettered Slackbot source event: %w", err)
 	}
 
 	return nil, nil
+}
+
+func releaseSlackbotSourceEvent(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	message *coredata.SlackbotMessage,
+) error {
+	if message.Metadata != nil {
+		delete(message.Metadata, coredata.SlackbotMessageMetadataSourceEventID)
+	}
+
+	message.UpdatedAt = time.Now()
+	if err := message.UpdateMetadata(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot release Slackbot source event: %w", err)
+	}
+
+	return nil
 }
 
 func validateDedup(dedupKey *string, dedupWindow *time.Duration) error {
