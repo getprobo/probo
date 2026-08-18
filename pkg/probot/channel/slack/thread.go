@@ -38,11 +38,11 @@ var (
 	_ threadCollector = (*Client)(nil)
 )
 
-func formatThreadTranscript(replies []ThreadReply, botUserID string) string {
-	return formatKeptThreadTranscript(keptThreadReplies(replies, botUserID), botUserID)
+func formatThreadTranscript(replies []ThreadReply, botUserID, botID string) string {
+	return formatKeptThreadTranscript(keptThreadReplies(replies, botUserID, botID), botUserID)
 }
 
-func keptThreadReplies(replies []ThreadReply, botUserID string) []ThreadReply {
+func keptThreadReplies(replies []ThreadReply, botUserID, botID string) []ThreadReply {
 	filtered := make([]ThreadReply, 0, len(replies))
 	for _, reply := range replies {
 		if reply.Subtype == "message_deleted" {
@@ -54,7 +54,7 @@ func keptThreadReplies(replies []ThreadReply, botUserID string) []ThreadReply {
 			continue
 		}
 
-		if reply.BotID != "" && reply.User != "" && reply.User != botUserID {
+		if isForeignBotReply(reply, botUserID, botID) {
 			continue
 		}
 
@@ -94,9 +94,21 @@ func formatKeptThreadTranscript(filtered []ThreadReply, botUserID string) string
 	return strings.TrimSpace(builder.String())
 }
 
-func threadSpeaker(user, botID, botUserID string) string {
+func isForeignBotReply(reply ThreadReply, botUserID, botID string) bool {
+	if reply.BotID == "" {
+		return false
+	}
+
+	if reply.User != "" {
+		return reply.User != botUserID
+	}
+
+	return botID == "" || reply.BotID != botID
+}
+
+func threadSpeaker(user, replyBotID, botUserID string) string {
 	speaker := user
-	if speaker == "" && botID != "" {
+	if speaker == "" && replyBotID != "" {
 		speaker = botUserID
 	}
 
@@ -192,10 +204,25 @@ func (s *Service) collectThreadTranscript(
 		)
 	}
 
-	kept := keptThreadReplies(replies, botUserID)
+	botID := resolveInstalledBotID(replies, botUserID)
+	kept := keptThreadReplies(replies, botUserID, botID)
 	transcript := formatKeptThreadTranscript(kept, botUserID)
 
 	return appendTriggeringEventIfMissing(transcript, kept, event, botUserID)
+}
+
+func resolveInstalledBotID(replies []ThreadReply, botUserID string) string {
+	if botUserID == "" {
+		return ""
+	}
+
+	for _, reply := range replies {
+		if reply.User == botUserID && reply.BotID != "" {
+			return reply.BotID
+		}
+	}
+
+	return ""
 }
 
 func isThreadCollectionFallbackError(err error) bool {

@@ -50,6 +50,7 @@ func TestFormatThreadTranscript(t *testing.T) {
 					{Subtype: "message_deleted", User: "U1", Text: "gone"},
 				},
 				"UBOT",
+				"BPROBOT",
 			)
 
 			assert.Equal(
@@ -70,13 +71,13 @@ func TestFormatThreadTranscript(t *testing.T) {
 				replies = append(replies, ThreadReply{User: "U1", Text: "msg"})
 			}
 
-			transcript := formatThreadTranscript(replies, "")
+			transcript := formatThreadTranscript(replies, "", "")
 			assert.Equal(t, 51, strings.Count(transcript, "<@"))
 		},
 	)
 
 	t.Run(
-		"keeps user-less bot messages",
+		"keeps user-less replies only from the installed bot",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -84,9 +85,11 @@ func TestFormatThreadTranscript(t *testing.T) {
 				[]ThreadReply{
 					{User: "U1", Text: "hello", TS: "1.000"},
 					{BotID: "BPROBOT", Text: "Access request", TS: "2.000"},
+					{BotID: "BOTHER", Text: "foreign bot", TS: "2.500"},
 					{BotID: "BOTHER", User: "UOTHER", Text: "ignore me", TS: "3.000"},
 				},
 				"UBOT",
+				"BPROBOT",
 			)
 
 			assert.Equal(
@@ -94,6 +97,24 @@ func TestFormatThreadTranscript(t *testing.T) {
 				"Thread:\n<@U1>: hello\n<@UBOT>: Access request",
 				transcript,
 			)
+		},
+	)
+
+	t.Run(
+		"drops user-less bot replies without an installed bot id",
+		func(t *testing.T) {
+			t.Parallel()
+
+			transcript := formatThreadTranscript(
+				[]ThreadReply{
+					{User: "U1", Text: "hello", TS: "1.000"},
+					{BotID: "BPROBOT", Text: "Access request", TS: "2.000"},
+				},
+				"UBOT",
+				"",
+			)
+
+			assert.Equal(t, "Thread:\n<@U1>: hello", transcript)
 		},
 	)
 
@@ -109,7 +130,7 @@ func TestFormatThreadTranscript(t *testing.T) {
 				replies = append(replies, ThreadReply{User: "U1", Text: "later"})
 			}
 
-			transcript := formatThreadTranscript(replies, "")
+			transcript := formatThreadTranscript(replies, "", "")
 			assert.Contains(t, transcript, "<@UROOT>: root")
 			assert.Equal(t, threadTranscriptMaxMessages, strings.Count(transcript, "<@"))
 		},
@@ -252,7 +273,7 @@ func TestAppendTriggeringEventIfMissing_AppendsTruncatedLongThreadEvent(t *testi
 	}
 
 	eventTS := "2.000"
-	kept := keptThreadReplies(replies, "UBOT")
+	kept := keptThreadReplies(replies, "UBOT", "BPROBOT")
 	assert.False(t, threadReplyHasTS(kept, eventTS))
 
 	transcript := appendTriggeringEventIfMissing(
