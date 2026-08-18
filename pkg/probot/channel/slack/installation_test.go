@@ -532,7 +532,7 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 	releaseUninstall := func() {
 		releaseOnce.Do(func() { close(release) })
 	}
-	t.Cleanup(releaseUninstall)
+	defer releaseUninstall()
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -609,6 +609,7 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 	}
 
 	var replacementID gid.GID
+	var replacementUpdatedAt time.Time
 
 	require.NoError(
 		t,
@@ -625,10 +626,8 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 					return err
 				}
 
-				if err := current.Delete(ctx, tx, scope); err != nil {
-					return err
-				}
-
+				// Simulate OAuth reinstall: organization upsert preserves the
+				// row ID while refreshing credentials and UpdatedAt.
 				replacement := coredata.NewSlackbotInstallation(scope, organization.ID)
 				replacement.TeamID = teamID
 				replacement.BotUserID = "B-new"
@@ -645,6 +644,7 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 				}
 
 				replacementID = replacement.ID
+				replacementUpdatedAt = replacement.UpdatedAt
 
 				return nil
 			},
@@ -657,6 +657,7 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 	loaded, err := service.GetByOrganizationID(ctx, scope, organization.ID)
 	require.NoError(t, err)
 	assert.Equal(t, replacementID, loaded.ID)
+	assert.True(t, loaded.UpdatedAt.Equal(replacementUpdatedAt))
 	assert.Equal(t, "B-new", loaded.BotUserID)
 	assert.Equal(t, coredata.SlackbotInstallationStatusActive, loaded.Status)
 }

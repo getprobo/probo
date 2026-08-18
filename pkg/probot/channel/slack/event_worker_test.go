@@ -314,3 +314,67 @@ func TestDisableByTeamID_IgnoresNewerInstall(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, coredata.SlackbotInstallationStatusActive, loaded.Status)
 }
+
+func TestDisableByTeamID_DisablesSameSecondUninstall(t *testing.T) {
+	t.Parallel()
+
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	installations := newTestInstallationService(t, pgClient, "")
+	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	loaded, err := installations.GetByOrganizationID(t.Context(), scope, organizationID)
+	require.NoError(t, err)
+
+	// Install UpdatedAt has sub-second precision; Slack event_time is seconds.
+	// Truncating the install time to the same unix second must still disable.
+	eventTime := loaded.UpdatedAt.UTC().Truncate(time.Second)
+
+	require.NoError(
+		t,
+		installations.DisableByTeamID(t.Context(), teamID, &eventTime, nil),
+	)
+
+	loaded, err = installations.GetByOrganizationID(t.Context(), scope, organizationID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.SlackbotInstallationStatusDisabled, loaded.Status)
+}
+
+func TestDisableByTeamID_SameSecondRevocationRequiresBotMatch(t *testing.T) {
+	t.Parallel()
+
+	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	installations := newTestInstallationService(t, pgClient, "")
+	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	loaded, err := installations.GetByOrganizationID(t.Context(), scope, organizationID)
+	require.NoError(t, err)
+	eventTime := loaded.UpdatedAt.UTC().Truncate(time.Second)
+
+	require.NoError(
+		t,
+		installations.DisableByTeamID(
+			t.Context(),
+			teamID,
+			&eventTime,
+			[]string{"B-other"},
+		),
+	)
+
+	loaded, err = installations.GetByOrganizationID(t.Context(), scope, organizationID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.SlackbotInstallationStatusActive, loaded.Status)
+
+	require.NoError(
+		t,
+		installations.DisableByTeamID(
+			t.Context(),
+			teamID,
+			&eventTime,
+			[]string{loaded.BotUserID},
+		),
+	)
+
+	loaded, err = installations.GetByOrganizationID(t.Context(), scope, organizationID)
+	require.NoError(t, err)
+	assert.Equal(t, coredata.SlackbotInstallationStatusDisabled, loaded.Status)
+}

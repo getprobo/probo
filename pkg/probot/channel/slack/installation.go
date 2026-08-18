@@ -44,9 +44,12 @@ const (
 )
 
 var (
-	ErrSlackbotNotInstalled     = errors.New("slack app is not installed")
-	ErrSlackbotChannelNotFound  = errors.New("slack notification channel not found")
-	ErrSlackbotStateAlreadyUsed = errors.New("slack install state already used")
+	ErrSlackbotNotInstalled      = errors.New("slack app is not installed")
+	ErrSlackbotChannelNotFound   = errors.New("slack notification channel not found")
+	ErrSlackbotStateAlreadyUsed  = errors.New("slack install state already used")
+	errStaleInstallationRevision = errors.New(
+		"slack installation was updated during credential refresh",
+	)
 )
 
 type (
@@ -266,6 +269,7 @@ func (s *InstallationService) Uninstall(
 	}
 
 	installationID := installation.ID
+	installationUpdatedAt := installation.UpdatedAt
 
 	if installation.Status == coredata.SlackbotInstallationStatusActive {
 		client, _, err := s.ClientByOrganizationID(
@@ -302,7 +306,10 @@ func (s *InstallationService) Uninstall(
 				return fmt.Errorf("cannot lock Slack installation for uninstall: %w", err)
 			}
 
-			if installation.ID != installationID {
+			// Organization upserts preserve the row ID, so a reinstall during
+			// apps.uninstall is only visible via UpdatedAt (or other field) drift.
+			if installation.ID != installationID ||
+				!installation.UpdatedAt.Equal(installationUpdatedAt) {
 				return nil
 			}
 
@@ -407,7 +414,7 @@ func (s *InstallationService) DisableByTeamID(
 			}
 
 			if eventTime != nil {
-				if !installation.UpdatedAt.Before(*eventTime) {
+				if !shouldDisableInstallationForEvent(installation, *eventTime, botUserIDs) {
 					return nil
 				}
 			} else if !installationMatchesDisableIdentifiers(installation, botUserIDs) {
@@ -424,6 +431,29 @@ func (s *InstallationService) DisableByTeamID(
 			)
 		},
 	)
+}
+
+// shouldDisableInstallationForEvent compares install and event times at second
+// precision because Slack event_time is unix seconds. Same-second token
+// revocations also require a bot-user match so a reinstall in that second is
+// not disabled by a stale revocation for a previous bot.
+func shouldDisableInstallationForEvent(
+	installation coredata.SlackbotInstallation,
+	eventTime time.Time,
+	botUserIDs []string,
+) bool {
+	installSecond := installation.UpdatedAt.UTC().Truncate(time.Second)
+	eventSecond := eventTime.UTC().Truncate(time.Second)
+
+	if installSecond.After(eventSecond) {
+		return false
+	}
+
+	if installSecond.Equal(eventSecond) && len(botUserIDs) > 0 {
+		return installationMatchesDisableIdentifiers(installation, botUserIDs)
+	}
+
+	return true
 }
 
 func installationMatchesDisableIdentifiers(

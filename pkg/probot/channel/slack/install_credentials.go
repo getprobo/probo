@@ -90,6 +90,8 @@ func (s *InstallationService) loadUsableCredentials(
 		)
 	}
 
+	originalUpdatedAt := installation.UpdatedAt
+
 	refreshed, err := s.refreshToken(ctx, *credentials.RefreshToken)
 	if err != nil {
 		return nil, coredata.SlackbotInstallationCredentials{}, fmt.Errorf(
@@ -119,9 +121,15 @@ func (s *InstallationService) loadUsableCredentials(
 			scope,
 			&installation,
 			credentials,
+			originalUpdatedAt,
 		)
 		if persistErr == nil {
 			return &installation, credentials, nil
+		}
+
+		if errors.Is(persistErr, ErrSlackbotNotInstalled) ||
+			errors.Is(persistErr, errStaleInstallationRevision) {
+			return nil, coredata.SlackbotInstallationCredentials{}, persistErr
 		}
 	}
 
@@ -136,6 +144,7 @@ func (s *InstallationService) loadUsableCredentials(
 		ctx,
 		scope,
 		&installation,
+		originalUpdatedAt,
 	); disableErr != nil {
 		return nil, coredata.SlackbotInstallationCredentials{}, fmt.Errorf(
 			"cannot disable Slack installation after credential persist failure: %w",
@@ -154,6 +163,7 @@ func (s *InstallationService) persistInstallationCredentials(
 	scope coredata.Scoper,
 	installation *coredata.SlackbotInstallation,
 	credentials coredata.SlackbotInstallationCredentials,
+	originalUpdatedAt time.Time,
 ) error {
 	return s.pg.WithTx(
 		ctx,
@@ -169,8 +179,15 @@ func (s *InstallationService) persistInstallationCredentials(
 				return fmt.Errorf("cannot load Slack installation for credential persist: %w", err)
 			}
 
-			if current.ID != installation.ID {
-				return fmt.Errorf("cannot persist Slack credentials for replaced installation")
+			// Organization upserts preserve the row ID across reinstalls, so
+			// UpdatedAt is the revision signal for concurrent OAuth/refresh.
+			if current.ID != installation.ID ||
+				!current.UpdatedAt.Equal(originalUpdatedAt) {
+				return errStaleInstallationRevision
+			}
+
+			if current.Status != coredata.SlackbotInstallationStatusActive {
+				return ErrSlackbotNotInstalled
 			}
 
 			current.Scopes = installation.Scopes
@@ -198,6 +215,7 @@ func (s *InstallationService) disableInstallation(
 	ctx context.Context,
 	scope coredata.Scoper,
 	installation *coredata.SlackbotInstallation,
+	originalUpdatedAt time.Time,
 ) error {
 	return s.pg.WithTx(
 		ctx,
@@ -217,7 +235,8 @@ func (s *InstallationService) disableInstallation(
 				return fmt.Errorf("cannot load Slack installation to disable: %w", err)
 			}
 
-			if current.ID != installation.ID {
+			if current.ID != installation.ID ||
+				!current.UpdatedAt.Equal(originalUpdatedAt) {
 				return nil
 			}
 
