@@ -38,7 +38,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 				provider
 				displayName
 				documentationUrl
-				oauthConfigured
+				configuredProtocols
 				apiKeySupported
 				clientCredentialsSupported
 				apiKeyExtraSettings {
@@ -66,7 +66,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 			Provider                       string        `json:"provider"`
 			DisplayName                    string        `json:"displayName"`
 			DocumentationURL               *string       `json:"documentationUrl"`
-			OauthConfigured                bool          `json:"oauthConfigured"`
+			ConfiguredProtocols            []string      `json:"configuredProtocols"`
 			APIKeySupported                bool          `json:"apiKeySupported"`
 			ClientCredentialsSupported     bool          `json:"clientCredentialsSupported"`
 			APIKeyExtraSettings            []settingInfo `json:"apiKeyExtraSettings"`
@@ -86,6 +86,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	for _, info := range result.AccessReviewDrivers {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
+		assert.NotNil(t, info.ConfiguredProtocols)
 		assert.NotNil(t, info.APIKeyExtraSettings)
 		assert.NotNil(t, info.ClientCredentialsExtraSettings)
 		providerNames[info.Provider] = true

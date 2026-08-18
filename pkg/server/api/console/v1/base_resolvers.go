@@ -15,7 +15,6 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/complianceportal/management"
-	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
@@ -644,13 +643,9 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		}
 
 		provider := reg.Provider
-		_, oauthErr := r.connectorRegistry.Get(string(provider))
-		oauthConfigured := oauthErr == nil
-		_, gitHubAppErr := r.connectorRegistry.GetProtocol(
-			string(provider),
-			connector.ProtocolGitHubApp,
+		configuredProtocols := protocolTypeStrings(
+			r.connectorRegistry.ConfiguredProtocols(string(provider)),
 		)
-		gitHubAppConfigured := gitHubAppErr == nil
 		apiKeySupported := reg.SupportsAPIKey
 		clientCredentialsSupported := reg.SupportsClientCredentials
 
@@ -663,10 +658,9 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		apiKeyManaged := r.providerRegistry.ManagedConnectorReady(provider)
 
 		// Skip providers that cannot be connected in this deployment: no
-		// OAuth client credentials configured and no key-based fallback
-		// (API key, managed API key, or client credentials) supported.
-		if !oauthConfigured &&
-			!gitHubAppConfigured &&
+		// connector protocol configured and no key-based fallback (API key,
+		// managed API key, or client credentials) supported.
+		if len(configuredProtocols) == 0 &&
 			!apiKeySupported &&
 			!clientCredentialsSupported &&
 			!apiKeyManaged {
@@ -691,8 +685,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			Provider:                       provider,
 			DisplayName:                    reg.DisplayName,
 			DocumentationURL:               documentationURL,
-			OauthConfigured:                oauthConfigured,
-			GithubAppConfigured:            gitHubAppConfigured,
+			ConfiguredProtocols:            configuredProtocols,
 			APIKeySupported:                apiKeySupported,
 			APIKeyManaged:                  apiKeyManaged,
 			ClientCredentialsSupported:     clientCredentialsSupported,

@@ -163,37 +163,45 @@ export function connectOAuthProvider(
   oauth2Scopes: ReadonlyArray<string>,
   extras?: Record<string, string>,
 ) {
+  connectProviderProtocol(organizationId, provider, "OAUTH2", {
+    oauth2Scopes,
+    extras,
+  });
+}
+
+// connectProviderProtocol builds the connector-initiate URL for any configured
+// protocol (OAUTH2, GITHUB_APP, …) and navigates the browser to it.
+export function connectProviderProtocol(
+  organizationId: string,
+  provider: string,
+  protocol: string,
+  options?: {
+    oauth2Scopes?: ReadonlyArray<string>;
+    connectorId?: string;
+    extras?: Record<string, string>;
+  },
+) {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/connectors/initiate", baseURL);
   url.searchParams.append("organization_id", organizationId);
   url.searchParams.append("provider", provider);
-  for (const scope of oauth2Scopes) {
+  if (protocol !== "OAUTH2") {
+    url.searchParams.append("protocol", protocol);
+  }
+  if (options?.connectorId) {
+    url.searchParams.append("connector_id", options.connectorId);
+  }
+  for (const scope of options?.oauth2Scopes ?? []) {
     url.searchParams.append("scope", scope);
   }
-  if (extras) {
-    for (const [k, v] of Object.entries(extras)) {
+  if (options?.extras) {
+    for (const [k, v] of Object.entries(options.extras)) {
       url.searchParams.append(k, v);
     }
   }
   url.searchParams.append(
     "continue",
     `/organizations/${organizationId}/access-reviews/connections`,
-  );
-  window.location.assign(url.toString());
-}
-
-export function connectGitHubApp(organizationId: string, connectorId?: string) {
-  const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
-  const url = new URL("/api/console/v1/connectors/initiate", baseURL);
-  url.searchParams.append("organization_id", organizationId);
-  url.searchParams.append("provider", "GITHUB");
-  url.searchParams.append("protocol", "GITHUB_APP");
-  if (connectorId) {
-    url.searchParams.append("connector_id", connectorId);
-  }
-  url.searchParams.append(
-    "continue",
-    `/organizations/${organizationId}/access-reviews/sources`,
   );
   window.location.assign(url.toString());
 }

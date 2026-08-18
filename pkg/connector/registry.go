@@ -24,6 +24,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 	"sync"
 
 	"go.probo.inc/probo/pkg/gid"
@@ -104,6 +106,31 @@ func (r *ConnectorRegistry) GetProtocol(provider string, protocol ProtocolType) 
 	}
 
 	return c, nil
+}
+
+// ConfiguredProtocols returns the connector protocols that are registered for
+// provider in this deployment. OAuth2 connectors registered via Register appear
+// as ProtocolOAuth2; protocol-specific connectors registered via RegisterProtocol
+// appear as their ProtocolType. The result is sorted for stable GraphQL output.
+func (r *ConnectorRegistry) ConfiguredProtocols(provider string) []ProtocolType {
+	r.RLock()
+	defer r.RUnlock()
+
+	protocols := make([]ProtocolType, 0, 1+len(r.protocolConnectors[provider]))
+
+	if _, ok := r.connectors[provider]; ok {
+		protocols = append(protocols, ProtocolOAuth2)
+	}
+
+	for protocol := range r.protocolConnectors[provider] {
+		protocols = append(protocols, protocol)
+	}
+
+	slices.SortFunc(protocols, func(a, b ProtocolType) int {
+		return strings.Compare(string(a), string(b))
+	})
+
+	return protocols
 }
 
 func (r *ConnectorRegistry) Initiate(

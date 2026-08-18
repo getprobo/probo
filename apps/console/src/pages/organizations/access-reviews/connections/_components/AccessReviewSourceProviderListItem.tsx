@@ -33,19 +33,24 @@ import {
   ZendeskConnectDialog,
 } from "../../dialogs/_components/OAuthExtraDialog";
 import {
-  connectGitHubApp,
   connectOAuthProvider,
+  connectProviderProtocol,
 } from "../../dialogs/_lib/connectorSettings";
 
 import { accessReviewSourceSection } from "./variants";
+
+const PROTOCOL_OAUTH2 = "OAUTH2";
+
+const protocolActionLabelKey: Record<string, string> = {
+  GITHUB_APP: "addAccessReviewSourceDialog.actions.connectWithGitHubApp",
+};
 
 export const accessReviewSourceProviderListItemFragment = graphql`
   fragment AccessReviewSourceProviderListItem_provider on ConnectorProviderInfo {
     provider
     displayName
     documentationUrl
-    oauthConfigured
-    githubAppConfigured
+    configuredProtocols
     apiKeySupported
     apiKeyManaged
     clientCredentialsSupported
@@ -79,11 +84,15 @@ export function AccessReviewSourceProviderListItem({
 
   // Every row renders the dialogs its provider can actually reach, so a list of
   // providers does not mount three unusable dialogs per row.
+  const oauthConfigured = provider.configuredProtocols.includes(PROTOCOL_OAUTH2);
+  const installableProtocols = provider.configuredProtocols.filter(
+    (protocol) => protocol !== PROTOCOL_OAUTH2,
+  );
   const supportsAPIKey = provider.apiKeySupported || provider.apiKeyManaged;
   const supportsDatadogOAuth
-    = provider.oauthConfigured && provider.provider === "DATADOG";
+    = oauthConfigured && provider.provider === "DATADOG";
   const supportsZendeskOAuth
-    = provider.oauthConfigured && provider.provider === "ZENDESK";
+    = oauthConfigured && provider.provider === "ZENDESK";
 
   const connectWithOAuth = () => {
     if (provider.provider === "DATADOG") {
@@ -112,19 +121,27 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        {provider.oauthConfigured && (
+        {oauthConfigured && (
           <Button variant="primary" onClick={connectWithOAuth}>
             {t("addAccessReviewSourceDialog.actions.connectWithOAuth")}
           </Button>
         )}
-        {provider.githubAppConfigured && (
+        {installableProtocols.map((protocol) => (
           <Button
+            key={protocol}
             variant="primary"
-            onClick={() => connectGitHubApp(organizationId)}
+            onClick={() =>
+              connectProviderProtocol(
+                organizationId,
+                provider.provider,
+                protocol,
+              )}
           >
-            {t("addAccessReviewSourceDialog.actions.connectWithGitHubApp")}
+            {protocolActionLabelKey[protocol]
+              ? t(protocolActionLabelKey[protocol])
+              : protocol.replaceAll("_", " ")}
           </Button>
-        )}
+        ))}
         {supportsAPIKey && (
           <Button variant="primary" onClick={() => setActiveDialog("apiKey")}>
             {t("addAccessReviewSourceDialog.actions.connectWithApiKey")}

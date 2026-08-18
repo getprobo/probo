@@ -18,38 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package console_v1
+package connector_test
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
-	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
-// connectorProviderSettingInfos projects one connect path's settings list onto
-// the GraphQL type. A Registration declares one list per connect path, so
-// AccessReviewDrivers calls this once per path. The result is never nil: both
-// schema fields are non-null lists, and a provider with no settings on a path
-// returns an empty one.
-func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.ConnectorProviderSettingInfo {
-	out := make([]*types.ConnectorProviderSettingInfo, 0, len(settings))
+func TestConfiguredProtocols(t *testing.T) {
+	t.Parallel()
 
-	for _, s := range settings {
-		out = append(out, &types.ConnectorProviderSettingInfo{
-			Key:      s.Key,
-			Label:    s.Label,
-			Required: s.Required,
-		})
-	}
+	registry := connector.NewConnectorRegistry()
 
-	return out
-}
+	assert.Empty(t, registry.ConfiguredProtocols("GITHUB"))
 
-func protocolTypeStrings(protocols []connector.ProtocolType) []string {
-	out := make([]string, 0, len(protocols))
-	for _, protocol := range protocols {
-		out = append(out, string(protocol))
-	}
+	require.NoError(t, registry.Register("GITHUB", &connector.OAuth2Connector{}))
+	assert.Equal(
+		t,
+		[]connector.ProtocolType{connector.ProtocolOAuth2},
+		registry.ConfiguredProtocols("GITHUB"),
+	)
 
-	return out
+	require.NoError(
+		t,
+		registry.RegisterProtocol(
+			"GITHUB",
+			connector.ProtocolGitHubApp,
+			&connector.GitHubAppConnector{},
+		),
+	)
+	assert.Equal(
+		t,
+		[]connector.ProtocolType{
+			connector.ProtocolGitHubApp,
+			connector.ProtocolOAuth2,
+		},
+		registry.ConfiguredProtocols("GITHUB"),
+	)
 }

@@ -128,8 +128,13 @@ type ConnectorProviderInfo {
     provider as an access source, or null when no doc page exists yet.
     """
     documentationUrl: String
-    oauthConfigured: Boolean!
-    githubAppConfigured: Boolean!
+    """
+    configuredProtocols lists the connector protocols that are ready to use
+    for this provider in this deployment (for example OAUTH2 or GITHUB_APP).
+    Empty when the provider is only reachable via customer-supplied
+    credentials (API key or client credentials).
+    """
+    configuredProtocols: [String!]!
     apiKeySupported: Boolean!
     """
     apiKeyManaged is true when the provider connects with a Probo-supplied
