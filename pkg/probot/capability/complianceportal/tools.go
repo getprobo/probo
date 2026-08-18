@@ -80,24 +80,6 @@ func (c *Capability) Tools() []agent.Tool {
 				value := message.ID.String()
 
 				if params.ResourceID != "" {
-					resourceID, err := gid.ParseGID(params.ResourceID)
-					if err != nil {
-						return agent.ResultErrorf("invalid resource ID"), nil
-					}
-
-					documentIDs, reportIDs, fileIDs, err := c.notifications.GetMessageResourceIDs(
-						ctx,
-						coredata.NewScopeFromObjectID(message.OrganizationID),
-						message.ID,
-					)
-					if err != nil {
-						return agent.ResultErrorf("cannot load requested resources: %s", err), nil
-					}
-
-					if !resourceIDOnMessage(resourceID, documentIDs, reportIDs, fileIDs) {
-						return agent.ResultErrorf("resource is not attached to this access request"), nil
-					}
-
 					actionID = capabilityName + "." + params.Decision + "_item"
 					value = params.ResourceID
 				}
