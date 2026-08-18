@@ -174,8 +174,8 @@ function SlackBotSettings({
 function getSlackInstallUrl(organizationId: string): string {
   const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/slackbot/install/initiate", baseUrl);
-  url.searchParams.append("organization_id", organizationId);
-  url.searchParams.append(
+  url.searchParams.set("organization_id", organizationId);
+  url.searchParams.set(
     "continue",
     `/organizations/${organizationId}/settings/slackbot`,
   );

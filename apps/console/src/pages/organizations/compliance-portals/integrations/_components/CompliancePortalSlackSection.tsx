@@ -339,7 +339,7 @@ export function CompliancePortalSlackSection({
 function getSlackInstallUrl(organizationId: string): string {
   const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/slackbot/install/initiate", baseUrl);
-  url.searchParams.append("organization_id", organizationId);
+  url.searchParams.set("organization_id", organizationId);
   url.searchParams.set("continue", window.location.pathname);
   return url.toString();
 }
