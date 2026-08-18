@@ -357,6 +357,44 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 		assert.Equal(t, "read:user write:user", parsed.Query().Get("scope"))
 	})
 
+	t.Run("state records the scopes actually requested", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		// A stale RequestedScopes in the caller's state must not survive:
+		// the callback falls back to it when the token response omits
+		// `scope`, so it has to match what the authorize request carried.
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{
+				OrganizationID:  orgID.String(),
+				Provider:        "TEST",
+				RequestedScopes: []string{"stale:scope"},
+			},
+			InitiateOptions{
+				Scopes:        []string{"read:user"},
+				GrantedScopes: []string{"write:user"},
+			},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "read:user write:user", parsed.Query().Get("scope"))
+
+		payload, err := DecodeOAuth2StatePayload(parsed.Query().Get("state"))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"read:user", "write:user"}, payload.Data.RequestedScopes)
+	})
+
 	t.Run("exclusive scopes drop the earlier grant from the request", func(t *testing.T) {
 		t.Parallel()
 

@@ -224,11 +224,12 @@ func (c *OAuth2Connector) Initiate(
 	opts InitiateOptions,
 	r *http.Request,
 ) (string, error) {
+	// RequestedScopes is filled in by InitiateWithState, which owns the
+	// resolution so the signed state and the authorize request cannot drift.
 	stateData := OAuth2State{
-		OrganizationID:  organizationID.String(),
-		Provider:        provider,
-		ConnectorID:     opts.ConnectorID,
-		RequestedScopes: c.effectiveScopes(opts),
+		OrganizationID: organizationID.String(),
+		Provider:       provider,
+		ConnectorID:    opts.ConnectorID,
 	}
 
 	if r != nil {
@@ -275,6 +276,13 @@ func (c *OAuth2Connector) InitiateWithState(
 		stateData.PKCENonce = nonce
 	}
 
+	// Record what is actually being asked for, overriding whatever the
+	// caller put in the state: the callback falls back to RequestedScopes
+	// when a token response omits `scope`, so a state that disagrees with
+	// the request would persist a grant the connector never asked for.
+	scopes := c.effectiveScopes(opts)
+	stateData.RequestedScopes = scopes
+
 	state, err := statelesstoken.NewToken(salt, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create state token: %w", err)
@@ -286,7 +294,6 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("redirect_uri", c.RedirectURI)
 	authCodeQuery.Set("response_type", "code")
 
-	scopes := c.effectiveScopes(opts)
 	if len(scopes) > 0 {
 		authCodeQuery.Set("scope", strings.Join(scopes, " "))
 	}
