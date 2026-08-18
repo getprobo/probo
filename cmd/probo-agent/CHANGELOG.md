@@ -5,6 +5,16 @@ documented in this file.
 
 ## Unreleased
 
+## [0.6.3] - 2026-08-18
+
+### Fixed
+
+- Windows checks for BitLocker protection, minimum password length, and
+  time sync now parse structured state instead of matching English-only
+  CLI substrings, fixing posture showing as Unknown on non-English
+  Windows systems. A suspended BitLocker volume and a stopped time
+  service now report Off instead of Unknown.
+
 ## [0.6.2] - 2026-08-17
 
 ### Changed
