@@ -114,6 +114,12 @@ type Registration struct {
 	TokenEndpointAuth       string // "post-form" (default), "basic-form", or "basic-json"
 	SupportsIncrementalAuth bool
 	OAuth2Scopes            []string
+	// ExclusiveScopes marks a provider whose authorization server refuses any
+	// scope outside OAuth2Scopes, so a reconnect must request exactly that set
+	// rather than the union with the connector's earlier grant. Asana is one:
+	// once its app moved to Full Permissions, replaying a stored "users:read"
+	// fails the whole authorize with forbidden_scopes.
+	ExclusiveScopes bool
 	// RequiresPKCE enables RFC 7636 PKCE (S256) on the authorization
 	// request and replays the verifier on the token exchange. Default
 	// false; non-PKCE providers are unaffected.

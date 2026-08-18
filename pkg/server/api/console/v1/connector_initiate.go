@@ -114,13 +114,14 @@ func handleConnectorInitiate(
 			return
 		}
 
-		// Always request the union of (old granted ∪ new requested).
-		// Union-not-delta because most providers replace rather than
-		// merge. No short-circuit: every reconnect runs the full OAuth
+		// Hand the earlier grant to the connector rather than unioning it
+		// here: whether a reconnect may widen the request or must ask for
+		// exactly the registered scopes is a per-provider OAuth trait. No
+		// short-circuit either way — every reconnect runs the full OAuth
 		// flow so revoked or stale tokens are never silently reused.
 		opts := connector.InitiateOptions{Scopes: requestedScopes, Site: r.URL.Query().Get("site")}
 		if existing != nil {
-			opts.Scopes = connector.UnionScopes(existing.Connection.Scopes(), requestedScopes)
+			opts.GrantedScopes = existing.Connection.Scopes()
 			opts.IncludeGrantedScopes = true
 			opts.ConnectorID = existing.ID.String()
 		}

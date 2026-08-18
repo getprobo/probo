@@ -60,6 +60,18 @@ type (
 		ExtraAuthParams         map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
 		TokenEndpointAuth       string            // "post-form" (default), "basic-form", or "basic-json"
 		SupportsIncrementalAuth bool
+		// ExclusiveScopes marks a provider whose authorization server
+		// refuses any scope its app registration does not currently
+		// offer, failing the whole authorize request rather than
+		// ignoring the extras. Such a provider asks for RegisteredScopes
+		// verbatim instead of the union with what the connector was
+		// granted earlier.
+		ExclusiveScopes bool
+		// RegisteredScopes mirrors the provider registration's
+		// OAuth2Scopes. It is authoritative for an ExclusiveScopes
+		// provider, whose authorize request must carry exactly the set
+		// the app is registered for.
+		RegisteredScopes []string
 		// RequiresPKCE enables RFC 7636 PKCE (S256). When true,
 		// InitiateWithState generates a verifier, persists it in the
 		// OAuth2State, and adds code_challenge / code_challenge_method
@@ -177,6 +189,34 @@ func DecodeOAuth2StatePayload(tokenString string) (*statelesstoken.Payload[OAuth
 	return statelesstoken.DecodePayload[OAuth2State](tokenString)
 }
 
+// effectiveScopes resolves what the authorize request will ask for. It backs
+// both the request itself and the RequestedScopes recorded in the state token,
+// which the callback falls back to when a token response omits `scope` — the
+// two must not disagree, or a reconnect persists a narrower grant than it
+// actually obtained.
+//
+// Reconnects normally ask for the union of (old granted ∪ new requested),
+// because most providers replace the grant rather than merge into it. A
+// provider with ExclusiveScopes instead accepts only what its registration
+// declares: it rejects the whole authorize request over a scope it no longer
+// offers, so neither the older grant nor a stale scope carried in by the
+// caller may widen the set.
+func (c *OAuth2Connector) effectiveScopes(opts InitiateOptions) []string {
+	if c.ExclusiveScopes {
+		if len(c.RegisteredScopes) > 0 {
+			return c.RegisteredScopes
+		}
+
+		return opts.Scopes
+	}
+
+	if len(opts.GrantedScopes) == 0 {
+		return opts.Scopes
+	}
+
+	return UnionScopes(opts.GrantedScopes, opts.Scopes)
+}
+
 func (c *OAuth2Connector) Initiate(
 	ctx context.Context,
 	provider string,
@@ -188,7 +228,7 @@ func (c *OAuth2Connector) Initiate(
 		OrganizationID:  organizationID.String(),
 		Provider:        provider,
 		ConnectorID:     opts.ConnectorID,
-		RequestedScopes: opts.Scopes,
+		RequestedScopes: c.effectiveScopes(opts),
 	}
 
 	if r != nil {
@@ -246,8 +286,9 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("redirect_uri", c.RedirectURI)
 	authCodeQuery.Set("response_type", "code")
 
-	if len(opts.Scopes) > 0 {
-		authCodeQuery.Set("scope", strings.Join(opts.Scopes, " "))
+	scopes := c.effectiveScopes(opts)
+	if len(scopes) > 0 {
+		authCodeQuery.Set("scope", strings.Join(scopes, " "))
 	}
 
 	if c.RequiresPKCE {

@@ -52,6 +52,8 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 	c.TokenURL = reg.Endpoints.Token
 	c.TokenEndpointAuth = reg.TokenEndpointAuth
 	c.SupportsIncrementalAuth = reg.SupportsIncrementalAuth
+	c.ExclusiveScopes = reg.ExclusiveScopes
+	c.RegisteredScopes = reg.OAuth2Scopes
 	c.RequiresPKCE = reg.RequiresPKCE
 	c.BuildAuthURLForSite = reg.BuildAuthURLForSite
 	c.BuildTokenURLForDomain = reg.BuildTokenURLForDomain

@@ -38,6 +38,13 @@ type (
 	// a different set of scopes (e.g. SCIM bridge vs access review).
 	InitiateOptions struct {
 		Scopes []string
+		// GrantedScopes carries what the connector being reconnected was
+		// granted earlier. The authorize request asks for the union of it
+		// and Scopes, so a reconnect never narrows an existing grant on a
+		// provider that replaces rather than merges. It is ignored for a
+		// provider with ExclusiveScopes, which refuses any scope its app
+		// registration no longer offers. Empty on a fresh install.
+		GrantedScopes []string
 		// IncludeGrantedScopes is honored only when the provider has
 		// SupportsIncrementalAuth=true.
 		IncludeGrantedScopes bool

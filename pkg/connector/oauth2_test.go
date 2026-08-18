@@ -330,6 +330,64 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 		assert.False(t, parsed.Query().Has("scope"), "scope param should be absent when no scopes provided")
 	})
 
+	t.Run("reconnect unions the earlier grant into the request", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{
+				Scopes:        []string{"read:user"},
+				GrantedScopes: []string{"write:user"},
+			},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "read:user write:user", parsed.Query().Get("scope"))
+	})
+
+	t.Run("exclusive scopes drop the earlier grant from the request", func(t *testing.T) {
+		t.Parallel()
+
+		// Asana rejects the whole authorize request when it carries a scope
+		// its app registration no longer offers, so a reconnect must ask for
+		// exactly the registered set.
+		c := &OAuth2Connector{
+			ClientID:        "id",
+			ClientSecret:    "secret",
+			RedirectURI:     "https://example.com/cb",
+			AuthURL:         "https://provider.example.com/authorize",
+			ExclusiveScopes: true,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{
+				Scopes:        []string{"default"},
+				GrantedScopes: []string{"users:read", "workspaces:read"},
+			},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "default", parsed.Query().Get("scope"))
+	})
+
 	t.Run("include_granted_scopes set when provider supports and caller requests", func(t *testing.T) {
 		t.Parallel()
 
