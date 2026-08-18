@@ -149,6 +149,13 @@ func (d *AuthentikDriver) listUsersWithFactor(ctx context.Context) (map[int64]bo
 
 	for _, factor := range authentikFactorPaths {
 		devices, err := fetchAuthentikPages[authentikDevice](ctx, d.httpClient, d.baseURL, "authenticators", "admin", factor)
+
+		for _, device := range devices {
+			if device.User.PK != 0 {
+				usersWithFactor[device.User.PK] = true
+			}
+		}
+
 		if err != nil {
 			var statusErr *authentikStatusError
 			if errors.As(err, &statusErr) && (statusErr.code == http.StatusForbidden || statusErr.code == http.StatusNotFound) {
@@ -158,12 +165,6 @@ func (d *AuthentikDriver) listUsersWithFactor(ctx context.Context) (map[int64]bo
 			}
 
 			return nil, false, err
-		}
-
-		for _, device := range devices {
-			if device.User.PK != 0 {
-				usersWithFactor[device.User.PK] = true
-			}
 		}
 	}
 
@@ -201,7 +202,7 @@ func fetchAuthentikPages[T any](
 
 		result, err := fetchAuthentikPage[T](ctx, httpClient, endpoint.String(), collection)
 		if err != nil {
-			return nil, err
+			return items, err
 		}
 
 		items = append(items, result.Results...)
