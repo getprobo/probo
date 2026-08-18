@@ -65,11 +65,14 @@ export type NavPermission
     | "canListCookieBanners"
     | "canListAuditLogEntries"
     | "canListWebhookSubscriptions"
+    | "canConnectSlack"
+    | "canUninstallSlack"
     | "canUpdateOrganization";
 
 export interface NavLanding {
   path: string;
-  permission: NavPermission;
+  // One permission, or any of several (OR).
+  permission: NavPermission | readonly NavPermission[];
 }
 
 interface NavGroupConfig {
@@ -168,6 +171,7 @@ export const NAV_GROUPS = [
       { path: "general", permission: "canUpdateOrganization" },
       { path: "context", permission: "canGetContext" },
       { path: "webhooks", permission: "canListWebhookSubscriptions" },
+      { path: "slackbot", permission: ["canConnectSlack", "canUninstallSlack"] },
       { path: "people", permission: "canListMembers" },
       { path: "auth", permission: "canUpdateOrganization" },
       { path: "audit-log", permission: "canListAuditLogEntries" },
@@ -180,6 +184,17 @@ export type NavGroupKey = NavGroup["key"];
 
 export type NavPermissions = { readonly [K in NavPermission]: boolean };
 
+function landingIsGranted(
+  landing: NavLanding,
+  permissions: NavPermissions,
+): boolean {
+  const required = landing.permission;
+  if (typeof required === "string") {
+    return permissions[required];
+  }
+  return required.some(permission => permissions[permission]);
+}
+
 export function navGroupByKey(key: NavGroupKey): NavGroup {
   const group = NAV_GROUPS.find(candidate => candidate.key === key);
   if (group == null) {
@@ -190,7 +205,7 @@ export function navGroupByKey(key: NavGroupKey): NavGroup {
 
 export function visibleNavGroups(permissions: NavPermissions): NavGroup[] {
   return NAV_GROUPS.filter(group =>
-    group.landings.some(landing => permissions[landing.permission]),
+    group.landings.some(landing => landingIsGranted(landing, permissions)),
   );
 }
 
@@ -208,7 +223,7 @@ export function navGroupHref(
   permissions: NavPermissions,
 ): string {
   for (const landing of group.landings) {
-    if (permissions[landing.permission]) {
+    if (landingIsGranted(landing, permissions)) {
       return navHref(organizationId, group, landing.path);
     }
   }

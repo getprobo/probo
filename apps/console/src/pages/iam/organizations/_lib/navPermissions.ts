@@ -53,6 +53,8 @@ export const navPermissionsFragment = graphql`
     canListCookieBanners: permission(action: "core:cookie-banner:list")
     canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
     canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
+    canConnectSlack: permission(action: "core:connector:initiate")
+    canUninstallSlack: permission(action: "core:connector:delete")
     canUpdateOrganization: permission(action: "iam:organization:update")
   }
 `;

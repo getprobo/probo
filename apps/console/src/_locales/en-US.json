@@ -1466,6 +1466,7 @@
     },
     "context": "Context",
     "webhooks": "Webhooks",
+    "slackBot": "SlackBot",
     "tasks": "Tasks",
     "measures": "Measures",
     "risks": "All Risks",

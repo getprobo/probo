@@ -2377,6 +2377,7 @@
     "organization": "Organisation",
     "context": "Contexte",
     "webhooks": "Webhooks",
+    "slackBot": "SlackBot",
     "tasks": "Tâches",
     "measures": "Mesures",
     "risks": "Tous les risques",

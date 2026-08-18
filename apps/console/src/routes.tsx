@@ -416,6 +416,14 @@ const routes = [
                     import("./pages/iam/organizations/settings/WebhooksSettingsPageLoader"),
                 ),
               },
+              {
+                path: "slackbot",
+                Fallback: PageSkeleton,
+                Component: lazy(
+                  () =>
+                    import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
+                ),
+              },
               ...peopleRoutes,
               ...authRoutes,
               ...auditLogRoutes,
