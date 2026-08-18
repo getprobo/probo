@@ -92,6 +92,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 				}
 
 				identityID = gid.New(gid.NilTenant, coredata.IdentityEntityType)
+
 				identity := coredata.Identity{
 					ID:                   identityID,
 					EmailAddress:         emailAddress,
@@ -169,6 +170,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 
 				for _, reportID := range []gid.GID{keptReportID, skippedReportID} {
 					id := reportID
+
 					row := coredata.CompliancePortalDocumentAccess{
 						ID:                       gid.New(tenantID, coredata.CompliancePortalDocumentAccessEntityType),
 						OrganizationID:           organizationID,
@@ -185,6 +187,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 
 				for _, fileID := range []gid.GID{keptFileID, skippedFileID} {
 					id := fileID
+
 					row := coredata.CompliancePortalDocumentAccess{
 						ID:                       gid.New(tenantID, coredata.CompliancePortalDocumentAccessEntityType),
 						OrganizationID:           organizationID,

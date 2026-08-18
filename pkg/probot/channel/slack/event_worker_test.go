@@ -348,6 +348,7 @@ func TestDisableByTeamID_SameSecondRevocationRequiresBotMatch(t *testing.T) {
 
 	loaded, err := installations.GetByOrganizationID(t.Context(), scope, organizationID)
 	require.NoError(t, err)
+
 	eventTime := loaded.UpdatedAt.UTC().Truncate(time.Second)
 
 	require.NoError(

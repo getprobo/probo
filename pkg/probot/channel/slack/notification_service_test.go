@@ -114,6 +114,7 @@ func (f notificationFixture) seal(
 	t.Helper()
 
 	now := time.Now()
+
 	require.NoError(
 		t,
 		f.client.WithTx(
