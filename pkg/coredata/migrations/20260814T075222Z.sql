@@ -18,6 +18,9 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
+-- Match agentexecution worker staleAfter default (2 minutes): only live
+-- leases block remapping. Orphaned tokens with an expired heartbeat are
+-- cleared so a crashed worker cannot abort deployment.
 DO $$
 BEGIN
     IF EXISTS (
@@ -25,6 +28,7 @@ BEGIN
         FROM agent_executions
         WHERE status = 'RUNNING'
             AND processing_owner_token IS NOT NULL
+            AND processing_heartbeat_at > NOW() - INTERVAL '2 minutes'
     ) THEN
         RAISE EXCEPTION
             'cannot remap RUNNING agent executions that still hold a processing lease';
@@ -33,9 +37,15 @@ END $$;
 
 UPDATE agent_executions
 SET status = 'IDLE',
-    started_at = NULL
+    started_at = NULL,
+    processing_owner_token = NULL,
+    processing_heartbeat_at = NULL
 WHERE status IN ('COMPLETED', 'RUNNING')
-    AND processing_owner_token IS NULL;
+    AND (
+        processing_owner_token IS NULL
+        OR processing_heartbeat_at IS NULL
+        OR processing_heartbeat_at <= NOW() - INTERVAL '2 minutes'
+    );
 
 ALTER TABLE agent_executions
     DROP COLUMN input_messages,
