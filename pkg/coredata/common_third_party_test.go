@@ -22,6 +22,7 @@ package coredata_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -176,7 +177,7 @@ func TestDeleteIfUnreferenced_RefusesOnceReferenced(t *testing.T) {
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			var err error
 
-			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
+			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID, false)
 
 			return err
 		}))
@@ -208,7 +209,7 @@ func TestDeleteIfUnreferenced_RefusesOnceReferenced(t *testing.T) {
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			var err error
 
-			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
+			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID, false)
 
 			return err
 		}))
@@ -220,5 +221,98 @@ func TestDeleteIfUnreferenced_RefusesOnceReferenced(t *testing.T) {
 		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return still.LoadByID(ctx, conn, party.ID)
 		}))
+	})
+}
+
+func markCommonThirdPartyEnriched(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	id gid.GID,
+) {
+	t.Helper()
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`UPDATE common_third_parties SET enrichment = $2 WHERE id = $1`,
+			id,
+			json.RawMessage(`{"status":"done"}`),
+		)
+
+		return err
+	}))
+}
+
+// TestDeleteIfUnreferenced_RefusesOnceEnriched pins the --unenriched-only
+// race: selection and deletion are separate statements, so enrichment can
+// complete in between. The delete must then refuse, matching the filter the
+// operator asked for.
+func TestDeleteIfUnreferenced_RefusesOnceEnriched(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	t.Run("deletes unenriched when unenrichedOnly", func(t *testing.T) {
+		t.Parallel()
+
+		party := seedCommonThirdParty(t, ctx, client)
+
+		var gone bool
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			var err error
+
+			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID, true)
+
+			return err
+		}))
+
+		assert.True(t, gone)
+	})
+
+	t.Run("refuses once enrichment is set when unenrichedOnly", func(t *testing.T) {
+		t.Parallel()
+
+		party := seedCommonThirdParty(t, ctx, client)
+		markCommonThirdPartyEnriched(t, ctx, client, party.ID)
+
+		var gone bool
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			var err error
+
+			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID, true)
+
+			return err
+		}))
+
+		assert.False(t, gone, "must not delete an entry that completed enrichment")
+
+		var still coredata.CommonThirdParty
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return still.LoadByID(ctx, conn, party.ID)
+		}))
+	})
+
+	t.Run("deletes enriched when not unenrichedOnly", func(t *testing.T) {
+		t.Parallel()
+
+		party := seedCommonThirdParty(t, ctx, client)
+		markCommonThirdPartyEnriched(t, ctx, client, party.ID)
+
+		var gone bool
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			var err error
+
+			gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID, false)
+
+			return err
+		}))
+
+		assert.True(t, gone)
 	})
 }

@@ -409,7 +409,7 @@ func (e *CommonPatternEnricher) identifyThirdParty(
 		return nil, nil
 	}
 
-	ident, rejection := interpretEnrichmentAttribution(result.Output, cp.Pattern)
+	ident, rejection := interpretEnrichmentAttribution(result.Output)
 	if rejection != attributionAccepted {
 		e.logger.InfoCtx(
 			ctx,
@@ -441,7 +441,6 @@ func (e *CommonPatternEnricher) identifyThirdParty(
 // The rejection is for logging only.
 func interpretEnrichmentAttribution(
 	out TrackerMappingAgentResult,
-	pattern string,
 ) (*agentIdentification, attributionRejection) {
 	out.ThirdPartyName = strings.TrimSpace(out.ThirdPartyName)
 

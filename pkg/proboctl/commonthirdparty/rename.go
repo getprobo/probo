@@ -70,7 +70,10 @@ func newCmdRename(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
-		var party coredata.CommonThirdParty
+		var (
+			party    coredata.CommonThirdParty
+			requeued int64
+		)
 
 		if err := pgClient.WithTx(
 			ctx,
@@ -80,7 +83,25 @@ func newCmdRename(f *cmdutil.Factory) *cobra.Command {
 					return err
 				}
 
-				return coredata.CommonThirdParty{}.UpdateName(ctx, tx, party.ID, name)
+				if err := (coredata.CommonThirdParty{}).UpdateName(ctx, tx, party.ID, name); err != nil {
+					return err
+				}
+
+				// The enrichment worker resolved this row's profile from its
+				// old name, so a correction leaves URLs, address and logo
+				// describing the wrong company until the row is re-enriched.
+				// Same transaction as the rename so a queue failure rolls
+				// the name back rather than leaving it committed and idle.
+				if flagReenrich {
+					var parties coredata.CommonThirdParties
+
+					requeued, err = parties.RequestEnrichmentByIDs(ctx, tx, []gid.GID{party.ID})
+					if err != nil {
+						return fmt.Errorf("cannot enqueue enrichment: %w", err)
+					}
+				}
+
+				return nil
 			},
 		); err != nil {
 			return fmt.Errorf("cannot rename common third party: %w", err)
@@ -90,27 +111,7 @@ func newCmdRename(f *cmdutil.Factory) *cobra.Command {
 
 		_, _ = fmt.Fprintf(out, "Renamed %q to %q (slug %s unchanged).\n", party.Name, name, party.Slug)
 
-		// The enrichment worker resolved this row's profile from its old name,
-		// so a correction leaves URLs, address and logo describing the wrong
-		// company until the row is re-enriched.
 		if flagReenrich {
-			var requeued int64
-
-			if err := pgClient.WithTx(
-				ctx,
-				func(ctx context.Context, tx pg.Tx) error {
-					var parties coredata.CommonThirdParties
-
-					var err error
-
-					requeued, err = parties.RequestEnrichmentByIDs(ctx, tx, []gid.GID{party.ID})
-
-					return err
-				},
-			); err != nil {
-				return fmt.Errorf("cannot enqueue enrichment: %w", err)
-			}
-
 			_, _ = fmt.Fprintf(out, "Queued %d common third party(ies) for the enrichment worker.\n", requeued)
 		} else if len(party.Enrichment) > 0 {
 			_, _ = fmt.Fprintf(

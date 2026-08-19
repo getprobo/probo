@@ -238,16 +238,19 @@ func (p *CommonTrackerPattern) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
 ) (inserted bool, err error) {
-	// On insert, a description-less row is immediately queued for the
-	// enrichment worker (enrichment_requested_at = NOW()). On conflict the
-	// enrichment columns are otherwise left untouched, and an empty incoming
-	// description never overwrites an existing one — descriptions are owned
-	// by the enrichment worker, so mapping-side upserts must not clobber a
-	// researched description with an empty string. The one exception is a
-	// blank, unlinked row that gains a third party: it is re-armed for
-	// enrichment, and re-arming resets the attempt counter and drops the
-	// prior payload so the row reads as not-yet-completed again (see the
-	// enrichment CASE below).
+	// On insert, a description-less non-terminal row is immediately queued
+	// for the enrichment worker (enrichment_requested_at = NOW()). A
+	// terminal insert is not: there is no vendor to research. On conflict
+	// the enrichment columns are otherwise left untouched, and an empty
+	// incoming description never overwrites an existing one — descriptions
+	// are owned by the enrichment worker, so mapping-side upserts must not
+	// clobber a researched description with an empty string. The one
+	// exception is a blank, unlinked row that gains a non-terminal third
+	// party: it is re-armed for enrichment, and re-arming resets the
+	// attempt counter and drops the prior payload so the row reads as
+	// not-yet-completed again (see the enrichment CASE below). An incoming
+	// terminal verdict that still names a vendor does not count as gaining
+	// one: the vendor is discarded, so enrichment must stay idle.
 	if p.Attribution == "" {
 		p.Attribution = CommonTrackerPatternAttributionUndetermined
 	}
@@ -271,15 +274,28 @@ INSERT INTO common_tracker_patterns (
     updated_at
 ) VALUES (
     @id,
-    @common_third_party_id,
+    CASE
+        WHEN @attribution::common_tracker_pattern_attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
+        ELSE @common_third_party_id
+    END,
     @tracker_type,
     @pattern,
     @match_type,
     @description,
     @max_age_seconds,
     @confidence,
-    @attribution,
-    CASE WHEN @description = '' THEN NOW() ELSE NULL END,
+    @attribution::common_tracker_pattern_attribution,
+    CASE
+        WHEN @description = ''
+         AND NOT (
+            @attribution::common_tracker_pattern_attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
+        THEN NOW()
+        ELSE NULL
+    END,
     NULL,
     0,
     NULL,
@@ -289,8 +305,11 @@ INSERT INTO common_tracker_patterns (
 ON CONFLICT (tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO UPDATE
 SET
     common_third_party_id = CASE
-        WHEN common_tracker_patterns.attribution = ANY(@terminal_attributions)
-          OR EXCLUDED.attribution = ANY(@terminal_attributions) THEN NULL
+        WHEN common_tracker_patterns.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+          OR EXCLUDED.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
         ELSE EXCLUDED.common_third_party_id
     END,
     match_type            = EXCLUDED.match_type,
@@ -300,12 +319,20 @@ SET
     END,
     confidence            = EXCLUDED.confidence,
     attribution           = CASE
-        WHEN common_tracker_patterns.attribution = ANY(@terminal_attributions)
+        WHEN common_tracker_patterns.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
         THEN common_tracker_patterns.attribution
         ELSE EXCLUDED.attribution
     END,
     enrichment_requested_at = CASE
-        WHEN NOT (common_tracker_patterns.attribution = ANY(@terminal_attributions))
+        WHEN NOT (
+            common_tracker_patterns.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
+         AND NOT (
+            EXCLUDED.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
@@ -313,7 +340,14 @@ SET
         ELSE common_tracker_patterns.enrichment_requested_at
     END,
     enrichment_attempts   = CASE
-        WHEN NOT (common_tracker_patterns.attribution = ANY(@terminal_attributions))
+        WHEN NOT (
+            common_tracker_patterns.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
+         AND NOT (
+            EXCLUDED.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
@@ -321,7 +355,14 @@ SET
         ELSE common_tracker_patterns.enrichment_attempts
     END,
     enrichment            = CASE
-        WHEN NOT (common_tracker_patterns.attribution = ANY(@terminal_attributions))
+        WHEN NOT (
+            common_tracker_patterns.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
+         AND NOT (
+            EXCLUDED.attribution
+            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+         )
          AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL

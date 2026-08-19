@@ -148,7 +148,7 @@ func TestInterpretEnrichmentAttribution(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ident, rejection := interpretEnrichmentAttribution(base(tt.mutate), "_x")
+				ident, rejection := interpretEnrichmentAttribution(base(tt.mutate))
 
 				assert.Equal(t, tt.expectedRejection, rejection)
 

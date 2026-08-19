@@ -191,9 +191,9 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 		)
 
 		// One transaction per row so a single failure does not roll back the
-		// rows already pruned. The delete re-checks the reference predicates,
-		// so an entry that gained a pattern or an organization link since the
-		// selection above is left alone rather than unlinking it.
+		// rows already pruned. The delete re-checks the selection predicates,
+		// so an entry that gained a reference, completed enrichment under
+		// --unenriched-only, or disappeared since the selection is left alone.
 		for _, party := range candidates {
 			var gone bool
 
@@ -202,7 +202,12 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 				func(ctx context.Context, tx pg.Tx) error {
 					var err error
 
-					gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(ctx, tx, party.ID)
+					gone, err = coredata.CommonThirdParty{}.DeleteIfUnreferenced(
+						ctx,
+						tx,
+						party.ID,
+						flagUnenrichedOnly,
+					)
 
 					return err
 				},
@@ -219,7 +224,7 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 
 				_, _ = fmt.Fprintf(
 					errOut,
-					"skipped %q: it gained a reference since the selection\n",
+					"skipped %q: it is no longer eligible\n",
 					party.Slug,
 				)
 
@@ -232,7 +237,7 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 		_, _ = fmt.Fprintf(out, "Deleted %d unreferenced common third party(ies).\n", deleted)
 
 		if skipped > 0 {
-			_, _ = fmt.Fprintf(out, "Skipped %d that gained a reference.\n", skipped)
+			_, _ = fmt.Fprintf(out, "Skipped %d that are no longer eligible.\n", skipped)
 		}
 
 		if failed > 0 {

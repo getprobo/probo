@@ -432,22 +432,38 @@ func TestFindDuplicates_EmptyAndNilInputs(t *testing.T) {
 	assert.Empty(t, FindDuplicates([]*CatalogEntry{catalogEntry("Solo")}, 0))
 }
 
-// TestFindDuplicates_BlankNamesDoNotCluster pins that rows whose names
-// normalize to nothing are not all declared duplicates of each other.
+// TestFindDuplicates_BlankNamesDoNotCluster pins that rows whose comparison
+// keys collapse to nothing are not bucketed together. Punctuation-only names
+// keep a distinct normalized name but fold to an empty slug; parenthetical-
+// only names empty both keys. Neither set must share an empty bucket.
 func TestFindDuplicates_BlankNamesDoNotCluster(t *testing.T) {
 	t.Parallel()
 
-	// Several rows whose names normalize to nothing. They must not bucket
-	// together: a shared empty key would compare them all pairwise and, worse,
-	// report them as duplicates of each other.
-	entries := []*CatalogEntry{
+	emptySlug := []*CatalogEntry{
 		catalogEntry("!!!"),
 		catalogEntry("???"),
 		catalogEntry("---"),
 		catalogEntry("***"),
 	}
 
-	assert.Empty(t, FindDuplicates(entries, 0))
+	assert.Empty(t, FindDuplicates(emptySlug, 0))
+
+	emptySlugBuckets := candidateBuckets(catalogItems(emptySlug))
+	assert.NotContains(t, emptySlugBuckets, "slug:")
+	assert.Contains(t, emptySlugBuckets, "name:!!!")
+	assert.Contains(t, emptySlugBuckets, "name:???")
+
+	emptyName := []*CatalogEntry{
+		catalogEntry("(legacy)"),
+		catalogEntry("(old)"),
+	}
+
+	assert.Empty(t, FindDuplicates(emptyName, 0))
+
+	emptyNameBuckets := candidateBuckets(catalogItems(emptyName))
+	assert.NotContains(t, emptyNameBuckets, "name:")
+	assert.NotContains(t, emptyNameBuckets, "slug:")
+	assert.Empty(t, emptyNameBuckets)
 }
 
 // TestFindDuplicates_RejectsNaNThreshold pins that a NaN threshold falls back

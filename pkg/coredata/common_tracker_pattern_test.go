@@ -515,17 +515,23 @@ func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *test
 			party := seedCommonThirdParty(t, ctx, client)
 
 			now := time.Now().UTC().Truncate(time.Microsecond)
+			attemptAt := now.Add(-time.Hour)
 			pattern := "incoming_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+			payload := json.RawMessage(`{"status":"no_result"}`)
 
 			existing := coredata.CommonTrackerPattern{
-				ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-				TrackerType: coredata.TrackerTypeCookie,
-				Pattern:     pattern,
-				MatchType:   coredata.TrackerPatternMatchTypeExact,
-				Confidence:  0.5,
-				Attribution: coredata.CommonTrackerPatternAttributionUndetermined,
-				CreatedAt:   now,
-				UpdatedAt:   now,
+				ID:                      gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType:             coredata.TrackerTypeCookie,
+				Pattern:                 pattern,
+				MatchType:               coredata.TrackerPatternMatchTypeExact,
+				Description:             "",
+				Confidence:              0.5,
+				Attribution:             coredata.CommonTrackerPatternAttributionUndetermined,
+				Enrichment:              payload,
+				EnrichmentAttempts:      2,
+				LastEnrichmentAttemptAt: &attemptAt,
+				CreatedAt:               now,
+				UpdatedAt:               now,
 			}
 			insertCommonTrackerPattern(t, ctx, client, existing)
 
@@ -534,6 +540,9 @@ func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *test
 			incoming.ID = gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType)
 			incoming.CommonThirdPartyID = &party.ID
 			incoming.Attribution = verdict
+			incoming.Enrichment = nil
+			incoming.EnrichmentAttempts = 0
+			incoming.LastEnrichmentAttemptAt = nil
 			incoming.UpdatedAt = now.Add(time.Minute)
 
 			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -544,6 +553,71 @@ func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *test
 			reloaded := loadCommonTrackerPattern(t, ctx, client, existing.ID)
 			assert.Equal(t, verdict, reloaded.Attribution)
 			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal verdict must not persist alongside a vendor")
+			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a discarded terminal vendor must not re-queue enrichment")
+			assert.Equal(t, 2, reloaded.EnrichmentAttempts, "a discarded terminal vendor must leave the retry budget")
+			assert.JSONEq(t, string(payload), string(reloaded.Enrichment), "a discarded terminal vendor must keep the prior payload")
+			require.NotNil(t, reloaded.LastEnrichmentAttemptAt)
+			assert.Equal(t, attemptAt, reloaded.LastEnrichmentAttemptAt.UTC())
+		})
+	}
+}
+
+// TestCommonTrackerPattern_Upsert_InsertTerminalVerdictSkipsEnrichmentQueue
+// pins the insert-side of the same invariant: a fresh terminal row that
+// still names a vendor must land vendor-free and unqueued.
+func TestCommonTrackerPattern_Upsert_InsertTerminalVerdictSkipsEnrichmentQueue(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
+
+			party := seedCommonThirdParty(t, ctx, client)
+
+			now := time.Now().UTC().Truncate(time.Microsecond)
+			incoming := coredata.CommonTrackerPattern{
+				ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				CommonThirdPartyID: &party.ID,
+				TrackerType:        coredata.TrackerTypeCookie,
+				Pattern:            "insert_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+				MatchType:          coredata.TrackerPatternMatchTypeExact,
+				Description:        "",
+				Confidence:         0.5,
+				Attribution:        verdict,
+				CreatedAt:          now,
+				UpdatedAt:          now,
+			}
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				inserted, err := incoming.Upsert(ctx, tx)
+				if err != nil {
+					return err
+				}
+
+				assert.True(t, inserted)
+
+				return nil
+			}))
+
+			t.Cleanup(func() {
+				_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+					_, err := tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, incoming.ID)
+					return err
+				})
+			})
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, incoming.ID)
+			assert.Equal(t, verdict, reloaded.Attribution)
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal insert must not persist a vendor")
+			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a terminal insert must not enter the enrichment queue")
+			assert.Equal(t, 0, reloaded.EnrichmentAttempts)
+			assert.Empty(t, reloaded.Enrichment)
 		})
 	}
 }

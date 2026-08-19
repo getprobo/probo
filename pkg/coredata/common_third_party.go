@@ -812,26 +812,29 @@ ORDER BY
 	return ids, nil
 }
 
-// DeleteIfUnreferenced deletes a catalog entry only while nothing references
-// it, reporting whether it did.
+// DeleteIfUnreferenced deletes a catalog entry only while it still matches
+// the prune selection, reporting whether it did.
 //
 // The predicates repeat LoadAllUnreferencedIDs deliberately. Selecting
 // candidates and deleting them are separate statements, so a tracker pattern or
 // an organization third party can start referencing an entry in between — and a
 // plain delete would then clear that new link through ON DELETE SET NULL,
-// silently unlinking a row somebody just created. Re-checking inside the delete
-// closes that window: the statement is atomic, so a concurrent insert either
-// lands first and the delete matches nothing, or lands after and its link
-// survives.
+// silently unlinking a row somebody just created. The same window lets
+// enrichment complete under --unenriched-only, so that predicate is repeated
+// too. Re-checking inside the delete closes both: the statement is atomic, so
+// a concurrent write either lands first and the delete matches nothing, or
+// lands after and its link or payload survives.
 func (t CommonThirdParty) DeleteIfUnreferenced(
 	ctx context.Context,
 	conn pg.Tx,
 	id gid.GID,
+	unenrichedOnly bool,
 ) (bool, error) {
 	q := `
 DELETE FROM common_third_parties AS ctp
 WHERE
     ctp.id = @id
+    AND (NOT @unenriched_only OR ctp.enrichment IS NULL)
     AND NOT EXISTS (
         SELECT 1 FROM common_tracker_patterns AS p
         WHERE p.common_third_party_id = ctp.id
@@ -842,7 +845,10 @@ WHERE
     )
 `
 
-	args := pgx.StrictNamedArgs{"id": id}
+	args := pgx.StrictNamedArgs{
+		"id":              id,
+		"unenriched_only": unenrichedOnly,
+	}
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {

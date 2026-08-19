@@ -156,6 +156,16 @@ func FindDuplicates(entries []*CatalogEntry, minScore float64) []DuplicateCluste
 		minScore = DefaultDuplicateMinScore
 	}
 
+	items := catalogItems(entries)
+	pairs := scorePairs(items, minScore)
+	if len(pairs) == 0 {
+		return nil
+	}
+
+	return buildClusters(items, pairs)
+}
+
+func catalogItems(entries []*CatalogEntry) []normalized {
 	items := make([]normalized, 0, len(entries))
 
 	for _, e := range entries {
@@ -182,12 +192,37 @@ func FindDuplicates(entries []*CatalogEntry, minScore float64) []DuplicateCluste
 		})
 	}
 
-	pairs := scorePairs(items, minScore)
-	if len(pairs) == 0 {
-		return nil
+	return items
+}
+
+// candidateBuckets groups entries by the signals that can be indexed in
+// one pass. value is the part that may be empty; key carries a prefix so
+// the three bucket kinds cannot collide. Guarding on value matters: an
+// empty normalized name or slug is shared by every such row, so bucketing
+// them together would compare them all pairwise and find nothing.
+func candidateBuckets(items []normalized) map[string][]int {
+	buckets := make(map[string][]int)
+
+	addBucket := func(kind, value string, idx int) {
+		if value == "" {
+			return
+		}
+
+		key := kind + ":" + value
+
+		buckets[key] = append(buckets[key], idx)
 	}
 
-	return buildClusters(items, pairs)
+	for i, it := range items {
+		addBucket("name", it.normName, i)
+		addBucket("slug", it.normSlug, i)
+
+		for d := range it.domains {
+			addBucket("domain", d, i)
+		}
+	}
+
+	return buckets
 }
 
 // scorePairs returns every pair scoring at least minScore.
@@ -227,30 +262,7 @@ func scorePairs(items []normalized, minScore float64) []DuplicatePair {
 		}
 	}
 
-	buckets := make(map[string][]int)
-
-	// value is the part that may be empty; key carries a prefix so the three
-	// bucket kinds cannot collide. Guarding on value matters: an empty
-	// normalized name or slug is shared by every such row, so bucketing them
-	// together would compare them all pairwise and find nothing.
-	addBucket := func(kind, value string, idx int) {
-		if value == "" {
-			return
-		}
-
-		key := kind + ":" + value
-
-		buckets[key] = append(buckets[key], idx)
-	}
-
-	for i, it := range items {
-		addBucket("name", it.normName, i)
-		addBucket("slug", it.normSlug, i)
-
-		for d := range it.domains {
-			addBucket("domain", d, i)
-		}
-	}
+	buckets := candidateBuckets(items)
 
 	for _, idxs := range buckets {
 		for a := range idxs {

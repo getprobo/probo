@@ -154,3 +154,97 @@ func TestCommonTrackerPatternFilter_PatternKeywordIgnoresDescription(t *testing.
 		"pattern keyword must return the same rows before and after",
 	)
 }
+
+// TestCommonTrackerPatternFilter_PatternKeywordTreatsWildcardsLiterally
+// pins that %, _, and backslash are the literal substring the flag documents,
+// not ILIKE wildcards. Unescaped, "%" would match every row — which on a
+// terminal bulk action would mark the entire catalog.
+func TestCommonTrackerPatternFilter_PatternKeywordTreatsWildcardsLiterally(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	// GIDs are base64url and can contain '_'. Strip it so the unique suffix
+	// cannot make every row match a literal underscore search.
+	token := strings.ReplaceAll(
+		gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		"_",
+		"X",
+	)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	insert := func(pattern string) string {
+		t.Helper()
+
+		row := coredata.CommonTrackerPattern{
+			ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+			TrackerType: coredata.TrackerTypeCookie,
+			Pattern:     pattern,
+			MatchType:   coredata.TrackerPatternMatchTypeExact,
+			Confidence:  1,
+			Attribution: coredata.CommonTrackerPatternAttributionUndetermined,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		insertCommonTrackerPattern(t, ctx, client, row)
+
+		return pattern
+	}
+
+	// The decoy has none of the metacharacters. Unescaped, "%" matches
+	// every row and "_" matches every non-empty row; those regressions
+	// would include this pattern.
+	decoy := insert("plain" + token)
+	hasPercent := insert("has%pct" + token)
+	hasUnderscore := insert("has_und" + token)
+	hasBackslash := insert(`has\bs` + token)
+
+	load := func(keyword string) []string {
+		t.Helper()
+
+		filter := coredata.NewCommonTrackerPatternFilter()
+		filter.WithPatternKeyword(&keyword)
+
+		var patterns []string
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, c pg.Querier) error {
+			rows, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CommonTrackerPatternOrderField]{
+					Field:     coredata.CommonTrackerPatternOrderFieldPattern,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CommonTrackerPatternOrderField]) ([]*coredata.CommonTrackerPattern, error) {
+					var batch coredata.CommonTrackerPatterns
+					if err := batch.Load(ctx, c, cursor, filter); err != nil {
+						return nil, err
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			for _, r := range rows {
+				if strings.Contains(r.Pattern, token) {
+					patterns = append(patterns, r.Pattern)
+				}
+			}
+
+			return nil
+		}))
+
+		return patterns
+	}
+
+	assert.Equal(t, []string{hasPercent}, load("%"), "a bare % must not match the whole catalog")
+	assert.Equal(t, []string{hasUnderscore}, load("_"), "a bare _ must match only a literal underscore")
+	assert.Equal(t, []string{hasBackslash}, load(`\`), "a backslash must match as a literal")
+	assert.Equal(t, []string{hasPercent}, load("has%pct"), "a % inside a needle must stay literal")
+	assert.NotContains(t, load("%"), decoy)
+	assert.NotContains(t, load("_"), decoy)
+	assert.NotContains(t, load(`\`), decoy)
+}
