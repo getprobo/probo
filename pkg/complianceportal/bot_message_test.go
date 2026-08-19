@@ -56,6 +56,11 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, intent.Actions, 3)
 	assert.Equal(t, AccessCapability+".approve_all", intent.Actions[0].ID)
+	assert.Contains(
+		t,
+		intent.Actions[2].URL,
+		"/compliance-portals/"+portalID.String()+"/permissions",
+	)
 
 	require.Len(t, intent.Groups, 1)
 	assert.Equal(t, "Documents (1)", intent.Groups[0].Title)
