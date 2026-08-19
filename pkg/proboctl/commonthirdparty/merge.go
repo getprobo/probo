@@ -251,7 +251,9 @@ func resolveMergeLosers(
 	return losers, nil
 }
 
-// previewMerges reports what each merge would move, without writing.
+// previewMerges runs the real merge sequence in a rollback-only transaction.
+// Each loser therefore sees the winner left by the preceding merges, while
+// reusing the apply path rather than maintaining a second merge model.
 func previewMerges(
 	ctx context.Context,
 	pgClient *pg.Client,
@@ -259,15 +261,17 @@ func previewMerges(
 	winner coredata.CommonThirdParty,
 	losers []coredata.CommonThirdParty,
 ) error {
-	return pgClient.WithConn(
+	rollbackErr := errors.New("roll back merge preview")
+
+	err := pgClient.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
+		func(ctx context.Context, tx pg.Tx) error {
 			for i, loser := range losers {
 				if i > 0 {
 					_, _ = fmt.Fprintln(out)
 				}
 
-				result, err := thirdparty.PreviewMergeCatalog(ctx, conn, winner.ID, loser.ID)
+				result, err := thirdparty.MergeCatalog(ctx, tx, winner.ID, loser.ID)
 				if err != nil {
 					if errors.Is(err, thirdparty.ErrCannotMergeIntoSelf) {
 						return err
@@ -281,9 +285,15 @@ func previewMerges(
 
 			_, _ = fmt.Fprintf(out, "\nWould delete %d common third party(ies).\n", len(losers))
 
-			return nil
+			return rollbackErr
 		},
 	)
+
+	if errors.Is(err, rollbackErr) {
+		return nil
+	}
+
+	return err
 }
 
 // printMergeResult renders one merge's per-table account. The skipped
