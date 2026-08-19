@@ -46,9 +46,9 @@ type CompletionState struct {
 	ProviderMetadata map[string]string
 }
 
-// CompleteFromState routes the callback to the connector registered for the
-// signed state token's protocol and returns a normalized completion payload.
-func (r *ConnectorRegistry) CompleteFromState(
+// CompleteOAuth2FromRequest completes an OAuth2 connector callback and
+// returns a normalized completion payload.
+func (r *ConnectorRegistry) CompleteOAuth2FromRequest(
 	ctx context.Context,
 	req *http.Request,
 ) (*CompletionState, error) {
@@ -57,11 +57,21 @@ func (r *ConnectorRegistry) CompleteFromState(
 		return nil, fmt.Errorf("missing state parameter")
 	}
 
-	if IsGitHubAppState(stateToken) {
-		return r.completeGitHubAppFromState(ctx, req)
+	return r.completeOAuth2FromState(ctx, req, stateToken)
+}
+
+// CompleteGitHubAppFromRequest completes a GitHub App installation callback
+// and returns a normalized completion payload.
+func (r *ConnectorRegistry) CompleteGitHubAppFromRequest(
+	ctx context.Context,
+	req *http.Request,
+) (*CompletionState, error) {
+	stateToken := req.URL.Query().Get("state")
+	if stateToken == "" {
+		return nil, fmt.Errorf("missing state parameter")
 	}
 
-	return r.completeOAuth2FromState(ctx, req, stateToken)
+	return r.completeGitHubAppFromState(ctx, req)
 }
 
 func (r *ConnectorRegistry) completeGitHubAppFromState(

@@ -488,6 +488,8 @@ probo:
   #   config:
   #     appId: "123456"
   #     slug: "probo"
+  #     # Configure the GitHub App setup URL as:
+  #     # https://probo.example.com/api/console/v1/connectors/github-app/complete
   #     privateKey: |
   #       -----BEGIN RSA PRIVATE KEY-----
   #       ...

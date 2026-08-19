@@ -364,6 +364,8 @@ probo:
       config:
         appId: "CHANGE_ME_GITHUB_APP_ID"
         slug: "CHANGE_ME_GITHUB_APP_SLUG"
+        # Configure the GitHub App setup URL as:
+        # https://probo.example.com/api/console/v1/connectors/github-app/complete
         privateKey: |
           -----BEGIN RSA PRIVATE KEY-----
           CHANGE_ME_GITHUB_APP_PRIVATE_KEY

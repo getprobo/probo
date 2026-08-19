@@ -30,13 +30,24 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 )
 
-func TestCompleteFromState_RejectsMissingState(t *testing.T) {
+func TestCompleteOAuth2FromRequest_RejectsMissingState(t *testing.T) {
+	t.Parallel()
+
+	registry := connector.NewConnectorRegistry()
+	req := httptest.NewRequest("GET", "/?code=abc", nil)
+
+	_, err := registry.CompleteOAuth2FromRequest(context.Background(), req)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing state parameter")
+}
+
+func TestCompleteGitHubAppFromRequest_RejectsMissingState(t *testing.T) {
 	t.Parallel()
 
 	registry := connector.NewConnectorRegistry()
 	req := httptest.NewRequest("GET", "/?installation_id=42", nil)
 
-	_, err := registry.CompleteFromState(context.Background(), req)
+	_, err := registry.CompleteGitHubAppFromRequest(context.Background(), req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "missing state parameter")
 }
