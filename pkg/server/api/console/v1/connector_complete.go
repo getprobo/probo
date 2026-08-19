@@ -106,6 +106,7 @@ func handleConnectorGitHubAppComplete(
 		}
 
 		org := completion.ProviderMetadata[connector.CompletionMetadataGitHubOrganization]
+
 		rawSettings, err := json.Marshal(&coredata.GitHubConnectorSettings{
 			Organization: org,
 		})
