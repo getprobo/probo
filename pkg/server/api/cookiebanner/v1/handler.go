@@ -425,6 +425,9 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	var body reportDetectedTrackersBody
+	// The unload-safe Beacon transport sends JSON bytes as text/plain so
+	// cross-origin reports remain CORS-safelisted and avoid a preflight.
+	// Decode the body independently of Content-Type to preserve that contract.
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		jsonx.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return
