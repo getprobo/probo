@@ -3,6 +3,7 @@ import { useCallback, useSyncExternalStore } from "react";
 export interface Config {
   bannerId: string;
   baseUrl: string;
+  gcmEnabled: boolean;
 }
 
 const STORAGE_KEY = "probo-example-config";
@@ -12,12 +13,13 @@ const STORAGE_KEY = "probo-example-config";
 const defaultConfig: Config = {
   bannerId: import.meta.env.PUBLIC_COOKIE_BANNER_ID ?? "",
   baseUrl: import.meta.env.PUBLIC_COOKIE_BANNER_API_BASE_URL ?? "",
+  gcmEnabled: true,
 };
 
 function getSnapshot(): Config {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Config;
+    if (raw) return { ...defaultConfig, ...(JSON.parse(raw) as Partial<Config>) };
   } catch {
     // ignore
   }

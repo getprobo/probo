@@ -5,20 +5,23 @@ export function ConfigTab() {
   const [config, setConfig] = useConfig();
   const [bannerId, setBannerId] = useState(config.bannerId);
   const [baseUrl, setBaseUrl] = useState(config.baseUrl);
+  const [gcmEnabled, setGcmEnabled] = useState(config.gcmEnabled);
 
   const dirty =
-    bannerId !== config.bannerId || baseUrl !== config.baseUrl;
+    bannerId !== config.bannerId ||
+    baseUrl !== config.baseUrl ||
+    gcmEnabled !== config.gcmEnabled;
 
   const save = () => {
-    setConfig({ bannerId, baseUrl });
+    setConfig({ bannerId, baseUrl, gcmEnabled });
   };
 
   return (
     <div>
       <h2>Configuration</h2>
       <p style={{ color: "#666", marginBottom: 16 }}>
-        Set the banner ID and base URL for the cookie banner API. These values
-        are persisted to localStorage and used by every other tab.
+        Set the banner ID, base URL, and Google Consent Mode (GCM) option.
+        These values are persisted to localStorage and used by every other tab.
       </p>
 
       <div style={{ marginBottom: 12 }}>
@@ -61,6 +64,23 @@ export function ConfigTab() {
             boxSizing: "border-box",
           }}
         />
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: "bold" }}>
+          <input
+            type="checkbox"
+            checked={gcmEnabled}
+            onChange={(e) => setGcmEnabled(e.target.checked)}
+          />
+          Google Consent Mode (gcm-enabled)
+        </label>
+        <p style={{ color: "#666", margin: "4px 0 0 24px", fontSize: 13, maxWidth: 520 }}>
+          When enabled (default), the SDK sends deny-all{" "}
+          <code>consent default</code> on load and maps category choices to{" "}
+          <code>gtag</code>/<code>dataLayer</code>. Uncheck if the page already
+          manages Consent Mode itself.
+        </p>
       </div>
 
       <button

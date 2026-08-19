@@ -40,6 +40,21 @@ function readCookie(): string | null {
   }
 }
 
+function readDataLayer(): unknown[] {
+  const w = window as unknown as { dataLayer?: unknown[] };
+  if (!Array.isArray(w.dataLayer)) return [];
+  return w.dataLayer.map((entry) => {
+    if (
+      entry &&
+      typeof entry === "object" &&
+      typeof (entry as ArrayLike<unknown>).length === "number"
+    ) {
+      return Array.from(entry as ArrayLike<unknown>);
+    }
+    return entry;
+  });
+}
+
 export function DebugTab() {
   const [config] = useConfig();
   const [snapshot, setSnapshot] = useState<ConsentSnapshot>(readSnapshot);
@@ -47,6 +62,7 @@ export function DebugTab() {
     readVisitorId(config.bannerId),
   );
   const [cookie, setCookie] = useState<string | null>(readCookie);
+  const [dataLayer, setDataLayer] = useState<unknown[]>(readDataLayer);
 
   useEffect(() => {
     const mgr = getConsent();
@@ -54,13 +70,20 @@ export function DebugTab() {
       setSnapshot(readSnapshot());
       setVisitorId(readVisitorId(config.bannerId));
       setCookie(readCookie());
+      setDataLayer(readDataLayer());
     });
   }, [config.bannerId]);
 
   useEffect(() => {
     setVisitorId(readVisitorId(config.bannerId));
     setCookie(readCookie());
-  }, [config.bannerId]);
+    setDataLayer(readDataLayer());
+  }, [config.bannerId, config.gcmEnabled]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setDataLayer(readDataLayer()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   return (
     <div>
@@ -189,6 +212,35 @@ export function DebugTab() {
               : "(not set)"}
           </pre>
         </div>
+      </div>
+
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: 12,
+          background: "#fafafa",
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Google Consent Mode</h3>
+        <p style={{ color: "#666", margin: "0 0 8px 0", fontSize: 13 }}>
+          SDK integration is{" "}
+          <strong>{config.gcmEnabled ? "enabled" : "disabled"}</strong> (Config
+          tab). When enabled, consent default/update calls land on{" "}
+          <code>window.dataLayer</code>.
+        </p>
+        <pre
+          style={{
+            background: "#f0f0f0",
+            padding: 8,
+            border: "1px solid #ddd",
+            overflow: "auto",
+            margin: 0,
+          }}
+        >
+          {dataLayer.length === 0
+            ? "(empty — no gtag/dataLayer consent calls yet)"
+            : JSON.stringify(dataLayer, null, 2)}
+        </pre>
       </div>
     </div>
   );

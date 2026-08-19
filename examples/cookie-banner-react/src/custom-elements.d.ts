@@ -12,6 +12,7 @@ declare module "react" {
         "banner-id"?: string;
         "base-url"?: string;
         lang?: string;
+        "gcm-enabled"?: string;
       }>;
       "probo-banner": CE;
       "probo-preference-panel": CE;
@@ -30,6 +31,7 @@ declare module "react" {
         "base-url"?: string;
         position?: string;
         lang?: string;
+        "gcm-enabled"?: string;
       }>;
     }
   }

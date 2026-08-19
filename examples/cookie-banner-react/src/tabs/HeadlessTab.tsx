@@ -34,7 +34,7 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
 
     container.innerHTML = `
       <style>probo-banner, probo-preference-panel, probo-privacy-choices { display: block !important; }</style>
-      <probo-cookie-banner-root banner-id="${config.bannerId}" base-url="${config.baseUrl}">
+      <probo-cookie-banner-root banner-id="${config.bannerId}" base-url="${config.baseUrl}" gcm-enabled="${config.gcmEnabled ? "true" : "false"}">
         <probo-banner>
           <div style="border:2px solid #333;padding:12px;margin-bottom:8px;">
             <strong>[probo-banner]</strong>
@@ -116,7 +116,7 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
     return () => {
       container.innerHTML = "";
     };
-  }, [config.bannerId, config.baseUrl, pushEvent]);
+  }, [config.bannerId, config.baseUrl, config.gcmEnabled, pushEvent]);
 
   if (!config.bannerId || !config.baseUrl) {
     return (
@@ -134,7 +134,9 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
       <h2>Headless Components</h2>
       <p style={{ color: "#666", marginBottom: 16 }}>
         Uses <code>registerHeadlessComponents()</code> and renders raw headless
-        elements with no themed styling. Borders show element boundaries.
+        elements with no themed styling.{" "}
+        <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>{" "}
+        is taken from the Config tab. Borders show element boundaries.
       </p>
 
       <div ref={containerRef} />

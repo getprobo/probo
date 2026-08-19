@@ -84,8 +84,9 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
       <h2>Themed Banner</h2>
       <p style={{ color: "#666", marginBottom: 16 }}>
         Uses <code>registerCookieBanner()</code> and renders{" "}
-        <code>&lt;probo-cookie-banner&gt;</code>. The banner appears in the
-        bottom-right corner.
+        <code>&lt;probo-cookie-banner&gt;</code> with{" "}
+        <code>gcm-enabled=&quot;{config.gcmEnabled ? "true" : "false"}&quot;</code>{" "}
+        from the Config tab. The banner appears in the bottom-right corner.
       </p>
 
       <PosthogPanel
@@ -113,10 +114,12 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
       )}
 
       <probo-cookie-banner
+        key={String(config.gcmEnabled)}
         ref={attachListeners}
         banner-id={config.bannerId}
         base-url={config.baseUrl}
         position="bottom-right"
+        gcm-enabled={config.gcmEnabled ? "true" : "false"}
       />
 
       <p style={{ marginTop: 16 }}>
