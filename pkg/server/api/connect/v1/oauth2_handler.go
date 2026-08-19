@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/httpx"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -112,7 +113,7 @@ func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request)
 		h.iam.OAuth2ScopeRegistry.RegisteredScopes(),
 	)
 
-	PublicCache(w, 1*time.Hour)
+	httpx.PublicCache(w, 1*time.Hour)
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
 }
 
@@ -121,7 +122,7 @@ func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request)
 func (h *OAuth2Handler) JWKSHandler(w http.ResponseWriter, r *http.Request) {
 	jwks := h.iam.OAuth2ServerService.JWKS()
 
-	PublicCache(w, 1*time.Hour)
+	httpx.PublicCache(w, 1*time.Hour)
 	httpserver.RenderJSON(w, http.StatusOK, jwks)
 }
 
@@ -476,7 +477,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		return
 	}
 
-	NoCache(w)
+	httpx.NoCache(w)
 	httpserver.RenderJSON(w, http.StatusOK, tokenResultToResponse(result))
 }
 
@@ -499,7 +500,7 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	NoCache(w)
+	httpx.NoCache(w)
 	httpserver.RenderJSON(w, http.StatusOK, tokenResultToResponse(result))
 }
 
@@ -520,7 +521,7 @@ func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	NoCache(w)
+	httpx.NoCache(w)
 	httpserver.RenderJSON(w, http.StatusOK, tokenResultToResponse(result))
 }
 

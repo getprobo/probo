@@ -154,6 +154,37 @@ probo:
     # Then set with --set-file probo.oauth2.signingKey=oauth2_signing_key.pem
     signingKey: "CHANGE_ME_OAUTH2_SIGNING_KEY_PEM"
 
+  # Identity federation issuer (outbound OIDC), used to federate into a customer's
+  # cloud accounts without a shared secret. Disabled by default: it is only
+  # needed once you connect a cloud provider, and it requires an issuer URL that
+  # is publicly reachable over HTTPS, because the cloud provider fetches it to
+  # validate the OIDC provider being registered.
+  identityFederation:
+    enabled: false
+    # Leave empty to serve the issuer at {baseUrl}/federation, which is what a
+    # self-hosted deployment should do. Set it only to an HTTPS apex you
+    # control — never to Probo's own issuer, which you cannot serve documents
+    # for.
+    # WARNING: immutable once a customer registers it with their cloud provider.
+    # Changing it forces every one of your customers to redeploy the
+    # infrastructure they own.
+    issuerBaseUrl: ""
+    # REQUIRED when enabled: a key of its own, never the OAuth2 signing key.
+    # Example: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 > identity_federation_signing_key.pem
+    # Then set with --set-file probo.identityFederation.signingKey=identity_federation_signing_key.pem
+    signingKey: ""
+    # Key id published for signingKey. Give it a real name before the first
+    # rotation: a retired key is only distinguishable by its kid.
+    signingKeyKid: "default"
+    # Retired key, kept published so a cloud provider that cached the key set
+    # can still verify a token minted before a rotation. Leave empty until you
+    # rotate; then set it with
+    # --set-file probo.identityFederation.previousSigningKey=identity_federation_previous_signing_key.pem
+    previousSigningKey: ""
+    # REQUIRED when previousSigningKey is set, and it must differ from
+    # signingKeyKid.
+    previousSigningKeyKid: ""
+
   # Trust center authentication
   trustAuth:
     cookieName: "TCT"

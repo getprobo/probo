@@ -61,6 +61,7 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
@@ -73,6 +74,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
@@ -495,44 +497,31 @@ func (impl *Implm) Run(
 	}
 
 	var (
-		oauth2SigningKeys   oauth2.SigningKeys
-		hasActive           bool
+		oauth2SigningKeys   []jose.SigningKey
 		activeSigningKeyPEM string
 	)
 
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
-		signer, err := pemutil.DecodePrivateKey([]byte(keyCfg.PrivateKey))
+		signingKey, err := decodeSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active)
 		if err != nil {
-			return fmt.Errorf("cannot decode OAuth2 server signing key: %w", err)
-		}
-
-		rsaKey, ok := signer.(*rsa.PrivateKey)
-		if !ok {
-			return fmt.Errorf("OAuth2 server signing key is not an RSA key")
-		}
-
-		kid := keyCfg.KID
-		if kid == "" {
-			kid = "default"
+			return fmt.Errorf("cannot configure OAuth2 server: %w", err)
 		}
 
 		if keyCfg.Active {
-			hasActive = true
 			activeSigningKeyPEM = keyCfg.PrivateKey
 		}
 
-		oauth2SigningKeys = append(
-			oauth2SigningKeys,
-			oauth2.SigningKey{
-				PrivateKey: rsaKey,
-				KID:        kid,
-				Active:     keyCfg.Active,
-			},
-		)
+		oauth2SigningKeys = append(oauth2SigningKeys, signingKey)
 	}
 
-	if !hasActive {
-		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
+	oauth2KeyRing, err := jose.NewKeyRing(oauth2SigningKeys)
+	if err != nil {
+		return fmt.Errorf("cannot configure OAuth2 server: %w", err)
+	}
+
+	identityFederationIssuer, err := impl.buildIdentityFederationIssuer(baseURL, l)
+	if err != nil {
+		return err
 	}
 
 	// Auto-register public-client (CIMD) connectors, which need no operator
@@ -671,10 +660,10 @@ func (impl *Implm) Run(
 				ClientSecret: impl.cfg.Auth.Microsoft.ClientSecret,
 				Enabled:      impl.cfg.Auth.Microsoft.Enabled,
 			},
-			OAuth2ServerSigningKeys: oauth2SigningKeys,
-			OAuth2ServerOptions:     oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
-			OAuth2ScopeRegistry:     oauth2ScopeRegistry,
-			CertManager:             certManagerService,
+			OAuth2ServerKeyRing: oauth2KeyRing,
+			OAuth2ServerOptions: oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
+			OAuth2ScopeRegistry: oauth2ScopeRegistry,
+			CertManager:         certManagerService,
 		},
 	)
 	if err != nil {
@@ -939,10 +928,11 @@ func (impl *Implm) Run(
 				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
 				DisableSuggestion: impl.cfg.Api.GraphQL.DisableSuggestion,
 			},
-			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
-			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
-			Logger:            l.Named("http.server"),
-			Cookie:            authCookie,
+			CustomDomainCname:        impl.cfg.CustomDomains.CnameTarget,
+			TokenSecret:              impl.cfg.Auth.Cookie.Secret,
+			Logger:                   l.Named("http.server"),
+			Cookie:                   authCookie,
+			IdentityFederationIssuer: identityFederationIssuer,
 		},
 	)
 	if err != nil {
@@ -2020,6 +2010,95 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 	}
 
 	return opts
+}
+
+// defaultSigningKeyID names a configured key that carries no explicit kid.
+const defaultSigningKeyID = "default"
+
+// decodeSigningKey turns one configured PEM into a signing key. The OAuth2
+// server and the identity federation issuer keep separate config sections but
+// accept the same material, so both read their keys through here.
+func decodeSigningKey(privateKeyPEM, kid string, active bool) (jose.SigningKey, error) {
+	signer, err := pemutil.DecodePrivateKey([]byte(privateKeyPEM))
+	if err != nil {
+		return jose.SigningKey{}, fmt.Errorf("cannot decode signing key: %w", err)
+	}
+
+	rsaKey, ok := signer.(*rsa.PrivateKey)
+	if !ok {
+		return jose.SigningKey{}, fmt.Errorf("signing key is not an RSA key")
+	}
+
+	if kid == "" {
+		kid = defaultSigningKeyID
+	}
+
+	return jose.SigningKey{
+		PrivateKey: rsaKey,
+		KID:        kid,
+		Active:     active,
+	}, nil
+}
+
+// buildIdentityFederationIssuer returns the outbound OIDC issuer, or nil when the
+// identity federation issuer is disabled. A deployment that never federates into a
+// customer cloud account needs no signing key of its own.
+func (impl *Implm) buildIdentityFederationIssuer(
+	baseURL *baseurl.BaseURL,
+	l *log.Logger,
+) (*identityfederation.Issuer, error) {
+	if !impl.cfg.IdentityFederation.Enabled {
+		return nil, nil
+	}
+
+	if len(impl.cfg.IdentityFederation.SigningKeys) == 0 {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: at least one signing key is required")
+	}
+
+	issuerBaseURL, err := identityfederation.ResolveIssuerBaseURL(impl.cfg.IdentityFederation.IssuerBaseURL, baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
+	}
+
+	signingKeys := make([]jose.SigningKey, 0, len(impl.cfg.IdentityFederation.SigningKeys))
+
+	for _, keyCfg := range impl.cfg.IdentityFederation.SigningKeys {
+		signingKey, err := decodeSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active)
+		if err != nil {
+			return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
+		}
+
+		signingKeys = append(signingKeys, signingKey)
+	}
+
+	keyRing, err := jose.NewKeyRing(signingKeys)
+	if err != nil {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
+	}
+
+	issuer, err := identityfederation.NewIssuer(issuerBaseURL, keyRing, identityfederation.DefaultTokenTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	// probod cannot verify that the configured apex actually reaches it, so the
+	// effective value is logged for the startup record and covered by a canary.
+	l.Info(
+		"identity federation issuer configured",
+		log.String("issuer_base_url", issuer.BaseURL()),
+	)
+
+	// A derived issuer is not held to the provider rules, so localhost and CI
+	// still start. Warn instead of failing, rather than staying silent.
+	if err := identityfederation.ValidateConfig(issuerBaseURL); err != nil {
+		l.Warn(
+			"identity federation issuer cannot be registered with one or more cloud providers; customers cannot install the connector until it is publicly reachable over https without a port",
+			log.String("issuer_base_url", issuer.BaseURL()),
+			log.Error(err),
+		)
+	}
+
+	return issuer, nil
 }
 
 func authSecureCookieConfig(c CookieConfig, maxAgeSeconds int) (securecookie.Config, error) {

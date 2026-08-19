@@ -154,6 +154,33 @@ spec:
             - name: PROBOD_OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS
               value: {{ join "," .Values.probo.oauth2.cimdAllowedClientIds | quote }}
             {{- end }}
+            {{- if .Values.probo.identityFederation.enabled }}
+            # Identity federation issuer
+            - name: PROBOD_IDENTITY_FEDERATION_ENABLED
+              value: "true"
+            {{- if .Values.probo.identityFederation.issuerBaseUrl }}
+            - name: PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL
+              value: {{ .Values.probo.identityFederation.issuerBaseUrl | quote }}
+            {{- end }}
+            - name: PROBOD_IDENTITY_FEDERATION_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: identity-federation-signing-key
+            {{- if .Values.probo.identityFederation.signingKeyKid }}
+            - name: PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID
+              value: {{ .Values.probo.identityFederation.signingKeyKid | quote }}
+            {{- end }}
+            {{- if .Values.probo.identityFederation.previousSigningKey }}
+            - name: PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: identity-federation-previous-signing-key
+            - name: PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID
+              value: {{ required "probo.identityFederation.previousSigningKeyKid is required when probo.identityFederation.previousSigningKey is set" .Values.probo.identityFederation.previousSigningKeyKid | quote }}
+            {{- end }}
+            {{- end }}
             - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             - name: PROBOD_ITAM_DEVICE_ENROLLMENT_TOKEN_VALIDITY

@@ -104,6 +104,12 @@ if [ ! -f "${OAUTH2_SIGNING_KEY_PATH}" ]; then
   chmod 600 "${OAUTH2_SIGNING_KEY_PATH}"
 fi
 
+IDENTITY_FEDERATION_SIGNING_KEY_PATH=/etc/probod/identity-federation-signing-key.pem
+if [ ! -f "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}" ]; then
+  openssl genrsa -out "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}" 2048
+  chmod 600 "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}"
+fi
+
 # Load developer-specific overrides (not committed to repo).
 if [ -f /workspace/.sandbox.env ]; then
   set -a
@@ -119,6 +125,8 @@ PROBOD_BASE_URL="http://${VM_IP}:8080" \
   PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
   PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
   PROBOD_OAUTH2_SERVER_SIGNING_KEY="$(cat "${OAUTH2_SIGNING_KEY_PATH}")" \
+  PROBOD_IDENTITY_FEDERATION_ENABLED=true \
+  PROBOD_IDENTITY_FEDERATION_SIGNING_KEY="$(cat "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}")" \
   PROBOD_API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
   PROBOD_AWS_ENDPOINT="http://127.0.0.1:8333" \
   PROBOD_AWS_ACCESS_KEY_ID="probod" \
@@ -132,7 +140,7 @@ PROBOD_BASE_URL="http://${VM_IP}:8080" \
 
 # probod runs as ${LIMA_USER} but bootstrap writes config.yml as root with 0600
 # because it contains secrets. Transfer ownership so probod can read it.
-chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}"
+chown "${LIMA_USER}:${LIMA_USER}" /etc/probod/config.yml "${OAUTH2_SIGNING_KEY_PATH}" "${IDENTITY_FEDERATION_SIGNING_KEY_PATH}"
 
 # Bind-mount VM-local node_modules over the shared workspace to avoid
 # platform conflicts between macOS host and Linux VM native binaries.

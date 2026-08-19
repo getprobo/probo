@@ -946,6 +946,189 @@ func TestBuilder_Build_OAuth2Preset(t *testing.T) {
 	assert.Equal(t, "preset-signing-key", cfg.Probod.Auth.OAuth2Server.SigningKeys[0].PrivateKey)
 }
 
+func TestBuilder_Build_IdentityFederationDisabledByDefault(t *testing.T) {
+	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Probod.IdentityFederation.Enabled)
+	assert.Empty(t, cfg.Probod.IdentityFederation.IssuerBaseURL)
+	assert.Empty(t, cfg.Probod.IdentityFederation.SigningKeys)
+}
+
+func TestBuilder_Build_IdentityFederationDisabledSkipsSigningKey(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "false"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "unused-identity-federation-key"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Probod.IdentityFederation.Enabled)
+	assert.Empty(t, cfg.Probod.IdentityFederation.SigningKeys)
+}
+
+func TestBuilder_Build_IdentityFederationEnabledFromEnv(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+	env["PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL"] = "https://proboidentity.com"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "env-identity-federation-key"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID"] = "env-identity-federation-kid"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	assert.True(t, cfg.Probod.IdentityFederation.Enabled)
+	assert.Equal(t, "https://proboidentity.com", cfg.Probod.IdentityFederation.IssuerBaseURL)
+
+	require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 1)
+	sk := cfg.Probod.IdentityFederation.SigningKeys[0]
+	assert.Equal(t, "env-identity-federation-key", sk.PrivateKey)
+	assert.Equal(t, "env-identity-federation-kid", sk.KID)
+	assert.True(t, sk.Active)
+}
+
+func TestBuilder_Build_IdentityFederationEnabledDefaultsKID(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "env-identity-federation-key"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 1)
+	assert.Equal(t, "default", cfg.Probod.IdentityFederation.SigningKeys[0].KID)
+}
+
+func TestBuilder_Build_IdentityFederationEnabledRequiresSigningKey(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	_, err := b.Build()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "PROBOD_IDENTITY_FEDERATION_SIGNING_KEY")
+}
+
+func TestBuilder_Build_IdentityFederationPreviousSigningKey(t *testing.T) {
+	t.Parallel()
+
+	enabledEnv := func() map[string]string {
+		env := requiredEnv()
+		env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
+		env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "env-identity-federation-key"
+		env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID"] = "current"
+
+		return env
+	}
+
+	t.Run(
+		"retired key stays published as inactive",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = "env-identity-federation-previous-key"
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "retired"
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			cfg, err := b.Build()
+			require.NoError(t, err)
+
+			require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 2)
+
+			active := cfg.Probod.IdentityFederation.SigningKeys[0]
+			assert.Equal(t, "env-identity-federation-key", active.PrivateKey)
+			assert.Equal(t, "current", active.KID)
+			assert.True(t, active.Active)
+
+			// Published but never signing: a cloud provider that already cached
+			// the key set can still verify a token minted before the rotation.
+			retired := cfg.Probod.IdentityFederation.SigningKeys[1]
+			assert.Equal(t, "env-identity-federation-previous-key", retired.PrivateKey)
+			assert.Equal(t, "retired", retired.KID)
+			assert.False(t, retired.Active)
+		},
+	)
+
+	t.Run(
+		"omitted leaves a single active key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			b := NewBuilder(NewResolver(mockEnv(enabledEnv())))
+
+			cfg, err := b.Build()
+			require.NoError(t, err)
+
+			require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 1)
+			assert.True(t, cfg.Probod.IdentityFederation.SigningKeys[0].Active)
+		},
+	)
+
+	t.Run(
+		"key without kid",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = "env-identity-federation-previous-key"
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			_, err := b.Build()
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID is required")
+		},
+	)
+
+	t.Run(
+		"kid without key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "retired"
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			_, err := b.Build()
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY is required")
+		},
+	)
+
+	t.Run(
+		"kid equal to the active kid",
+		func(t *testing.T) {
+			t.Parallel()
+
+			env := enabledEnv()
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = "env-identity-federation-previous-key"
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "current"
+
+			b := NewBuilder(NewResolver(mockEnv(env)))
+
+			_, err := b.Build()
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "must differ from PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID")
+		},
+	)
+}
+
 func TestBuilder_Build_PgCABundleFromEnv(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_PG_CA_BUNDLE"] = "test-ca-bundle-content"

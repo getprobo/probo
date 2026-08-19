@@ -267,6 +267,7 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap bin/proboctl $(PROBO_AGENT_BIN)
 
 CFG_DEV_OAUTH2_KEY       = cfg/.dev-oauth2-signing-key.pem
+CFG_DEV_IDENTITY_FEDERATION_KEY   = cfg/.dev-identity-federation-signing-key.pem
 CFG_DEV_ACME_ACCOUNT_KEY = cfg/.dev-acme-account-key.pem
 DEV_ENV                  = .env
 
@@ -277,13 +278,19 @@ $(CFG_DEV_OAUTH2_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) genrsa -out $@ 2048
 
+# The identity federation issuer signs with its own key so that rotating the OAuth2 key
+# cannot break customer cloud access.
+$(CFG_DEV_IDENTITY_FEDERATION_KEY):
+	@$(MKDIR) $(@D)
+	$(OPENSSL) genrsa -out $@ 2048
+
 # Stable ACME account key for local step-ca. Without this, each probod restart
 # registers a new account and orphaned in-flight orders return 401 unauthorized.
 $(CFG_DEV_ACME_ACCOUNT_KEY):
 	@$(MKDIR) $(@D)
 	$(OPENSSL) ecparam -name prime256v1 -genkey -noout -out $@
 
-cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_ACME_ACCOUNT_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
+cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_IDENTITY_FEDERATION_KEY) $(CFG_DEV_ACME_ACCOUNT_KEY) compose/step-ca/certs/root_ca.crt $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
 	PROBOD_BASE_URL=http://localhost:8080; \
@@ -295,6 +302,8 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) $(CFG_DEV_ACME_ACCOUNT_
 	PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
 	PROBOD_AUTH_COOKIE_SECURE=false; \
 	PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
+	PROBOD_IDENTITY_FEDERATION_ENABLED=true; \
+	PROBOD_IDENTITY_FEDERATION_SIGNING_KEY="$$($(CAT) $(CFG_DEV_IDENTITY_FEDERATION_KEY))"; \
 	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
 	PROBOD_PG_ADDR=localhost:5432; \
 	PROBOD_PG_USERNAME=postgres; \

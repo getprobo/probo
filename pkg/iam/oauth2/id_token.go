@@ -21,7 +21,6 @@
 package oauth2
 
 import (
-	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -35,16 +34,6 @@ import (
 )
 
 type (
-	// SigningKey pairs an RSA private key with its key ID. All entries are
-	// published in the JWKS endpoint. Keys with Active set to true are
-	// used for signing new tokens; when multiple keys are active, the
-	// service round-robins between them.
-	SigningKey struct {
-		PrivateKey *rsa.PrivateKey
-		KID        string
-		Active     bool
-	}
-
 	IDTokenClaims struct {
 		Issuer        uri.URI               `json:"iss"`
 		Subject       string                `json:"sub"`
@@ -59,8 +48,6 @@ type (
 		Name          string                `json:"name,omitempty"`
 		Scope         coredata.OAuth2Scopes `json:"-"`
 	}
-
-	SigningKeys []SigningKey
 )
 
 // ComputeAtHash computes the at_hash claim value for an access token.

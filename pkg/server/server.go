@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -53,6 +54,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	server_identityfederation "go.probo.inc/probo/pkg/server/identityfederation"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
@@ -96,20 +98,25 @@ type Config struct {
 	CustomDomainCname       string
 	GraphQLLimits           gqlutils.Limits
 	Logger                  *log.Logger
+
+	// IdentityFederationIssuer serves the outbound OIDC documents. It is nil when the
+	// identity federation issuer is disabled, in which case no /federation route exists.
+	IdentityFederationIssuer *identityfederation.Issuer
 }
 
 type Server struct {
-	cfg                   Config
-	apiServer             *api.Server
-	mailActionsHandler    http.Handler
-	consoleWebServer      *console_web.Server
-	consoleSecurityPolicy string
-	router                *chi.Mux
-	extraHeaderFields     map[string]string
-	baseURL               string
-	proboService          *probo.Service
-	iamService            *iam.Service
-	logger                *log.Logger
+	cfg                       Config
+	apiServer                 *api.Server
+	mailActionsHandler        http.Handler
+	identityFederationHandler http.Handler
+	consoleWebServer          *console_web.Server
+	consoleSecurityPolicy     string
+	router                    *chi.Mux
+	extraHeaderFields         map[string]string
+	baseURL                   string
+	proboService              *probo.Service
+	iamService                *iam.Service
+	logger                    *log.Logger
 }
 
 func NewServer(cfg Config) (*Server, error) {
@@ -177,18 +184,33 @@ func NewServer(cfg Config) (*Server, error) {
 
 	router := chi.NewRouter()
 
+	var identityFederationHandler http.Handler
+
+	if cfg.IdentityFederationIssuer != nil {
+		if cfg.Probo == nil || cfg.Probo.Organizations == nil {
+			return nil, fmt.Errorf("cannot create server: identity federation issuer needs an organization service")
+		}
+
+		identityFederationHandler = server_identityfederation.NewMux(
+			cfg.Logger.Named("identityfederation"),
+			cfg.IdentityFederationIssuer,
+			cfg.Probo.Organizations,
+		)
+	}
+
 	server := &Server{
-		cfg:                   cfg,
-		apiServer:             apiServer,
-		mailActionsHandler:    mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
-		consoleWebServer:      consoleWebServer,
-		consoleSecurityPolicy: consoleCSP,
-		router:                router,
-		extraHeaderFields:     cfg.ExtraHeaderFields,
-		baseURL:               cfg.BaseURL.String(),
-		proboService:          cfg.Probo,
-		iamService:            cfg.IAM,
-		logger:                cfg.Logger,
+		cfg:                       cfg,
+		apiServer:                 apiServer,
+		mailActionsHandler:        mailactions.NewMux(cfg.Mailman, cfg.TokenSecret),
+		identityFederationHandler: identityFederationHandler,
+		consoleWebServer:          consoleWebServer,
+		consoleSecurityPolicy:     consoleCSP,
+		router:                    router,
+		extraHeaderFields:         cfg.ExtraHeaderFields,
+		baseURL:                   cfg.BaseURL.String(),
+		proboService:              cfg.Probo,
+		iamService:                cfg.IAM,
+		logger:                    cfg.Logger,
 	}
 
 	server.setupRoutes()
@@ -205,6 +227,16 @@ func (s *Server) setupRoutes() {
 
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
+
+	// The identity federation route tree is mounted at the same prefix in every
+	// deployment; only the advertised issuer differs, and it comes from
+	// configuration. The SaaS edge maps its public apex onto this prefix.
+	if s.identityFederationHandler != nil {
+		s.router.Mount(
+			identityfederation.PathPrefix,
+			http.StripPrefix(identityfederation.PathPrefix, s.identityFederationHandler),
+		)
+	}
 
 	s.router.Mount(
 		"/",

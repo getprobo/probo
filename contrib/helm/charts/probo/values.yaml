@@ -205,6 +205,35 @@ probo:
     # OAuth clients (e.g. MCP connectors). Leave empty to disable CIMD.
     cimdAllowedClientIds: []
 
+  # Outbound OIDC issuer used to federate into customer cloud accounts.
+  # Disabled by default: it needs its own signing key and a publicly reachable
+  # issuer URL.
+  identityFederation:
+    enabled: false
+    # Base of the advertised issuer. Leave empty to serve the issuer at
+    # {baseUrl}/federation, which is what a self-hosted deployment uses.
+    # WARNING: this value becomes immutable once a customer registers it with
+    # their cloud provider. Changing it forces every customer to redeploy their
+    # own infrastructure.
+    issuerBaseUrl: ""
+    # REQUIRED when enabled: PEM-encoded RSA private key, separate from
+    # oauth2.signingKey.
+    # Generate with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+    signingKey: ""
+    # Key id published for signingKey. Name the keys before the first rotation:
+    # a retired key can only be told apart from the active one by its kid.
+    signingKeyKid: "default"
+    # Optional retired key. It never signs, it only stays published in the JWKS
+    # so a cloud provider holding a cached key set can still verify a token
+    # minted before a rotation. Rotate in three steps: set the new key here
+    # while signingKey still signs, then swap the two so the old key becomes the
+    # previous one, then clear these two once the token TTL (5 minutes) has
+    # elapsed.
+    previousSigningKey: ""
+    # REQUIRED when previousSigningKey is set, and it must differ from
+    # signingKeyKid.
+    previousSigningKeyKid: ""
+
   # CORS configuration
   cors:
     allowedOrigins:

@@ -55,16 +55,17 @@ type (
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL          string                 `json:"base-url,omitempty"`
-		EncryptionKey    string                 `json:"encryption-key"`
-		Pg               PgConfig               `json:"pg"`
-		Api              APIConfig              `json:"api"`
-		Auth             AuthConfig             `json:"auth"`
-		ITAM             ITAMConfig             `json:"itam"`
-		CompliancePortal CompliancePortalConfig `json:"trust-center"`
-		AWS              AWSConfig              `json:"aws"`
-		Notifications    NotificationsConfig    `json:"notifications"`
-		Connectors       []ConnectorConfig      `json:"connectors,omitempty"`
+		BaseURL            string                   `json:"base-url,omitempty"`
+		EncryptionKey      string                   `json:"encryption-key"`
+		Pg                 PgConfig                 `json:"pg"`
+		Api                APIConfig                `json:"api"`
+		Auth               AuthConfig               `json:"auth"`
+		IdentityFederation IdentityFederationConfig `json:"identity-federation"`
+		ITAM               ITAMConfig               `json:"itam"`
+		CompliancePortal   CompliancePortalConfig   `json:"trust-center"`
+		AWS                AWSConfig                `json:"aws"`
+		Notifications      NotificationsConfig      `json:"notifications"`
+		Connectors         []ConnectorConfig        `json:"connectors,omitempty"`
 		// ConnectorEndpoints repoints a provider at different hosts (a vendor
 		// sandbox on a staging deployment) keyed by provider name, e.g.
 		// "DOCUSIGN". Omitted providers keep their compiled endpoints.

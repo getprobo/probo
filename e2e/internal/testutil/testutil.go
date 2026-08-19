@@ -288,6 +288,11 @@ func generateConfig(opts configOptions) (string, error) {
 		return "", fmt.Errorf("generate oauth2 signing key: %w", err)
 	}
 
+	identityFederationSigningKey, err := bootstrap.GenerateOAuth2SigningKey()
+	if err != nil {
+		return "", fmt.Errorf("generate identity federation signing key: %w", err)
+	}
+
 	apiAddr := opts.APIAddr
 	if apiAddr == "" {
 		apiAddr = "localhost:18080"
@@ -324,6 +329,11 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_AUTH_COOKIE_SECRET":        "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes",
 		"PROBOD_AUTH_PASSWORD_PEPPER":      "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes",
 		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": oauth2SigningKey,
+
+		// Identity federation issuer. No issuer base URL is set, so the issuer is derived
+		// as {base-url}/federation.
+		"PROBOD_IDENTITY_FEDERATION_ENABLED":     "true",
+		"PROBOD_IDENTITY_FEDERATION_SIGNING_KEY": identityFederationSigningKey,
 
 		// Unit.
 		"PROBOD_METRICS_ADDR": metricsAddr,

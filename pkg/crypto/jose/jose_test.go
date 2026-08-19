@@ -298,6 +298,85 @@ func TestJWTHeader_JSON(t *testing.T) {
 	)
 }
 
+func TestValidateRSAPublicKey(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"accepts a 2048-bit modulus",
+		func(t *testing.T) {
+			t.Parallel()
+
+			key := testRSAKey(t)
+
+			assert.NoError(t, jose.ValidateRSAPublicKey(&key.PublicKey))
+		},
+	)
+
+	t.Run(
+		"rejects a modulus below the minimum",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := jose.ValidateRSAPublicKey(
+				&rsa.PublicKey{
+					N: new(big.Int).Lsh(big.NewInt(1), 1023),
+					E: 65537,
+				},
+			)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "modulus is 1024 bits")
+			assert.Contains(t, err.Error(), "minimum is 2048")
+		},
+	)
+
+	t.Run(
+		"rejects a negative modulus",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := jose.ValidateRSAPublicKey(
+				&rsa.PublicKey{
+					N: new(big.Int).Neg(new(big.Int).Lsh(big.NewInt(1), 2047)),
+					E: 65537,
+				},
+			)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "modulus must be positive")
+		},
+	)
+
+	t.Run(
+		"rejects an even exponent",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := jose.ValidateRSAPublicKey(
+				&rsa.PublicKey{
+					N: new(big.Int).Lsh(big.NewInt(1), 2047),
+					E: 2,
+				},
+			)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "exponent must be an odd integer at least 3")
+		},
+	)
+
+	t.Run(
+		"rejects a nil public key",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := jose.ValidateRSAPublicKey(nil)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "public key is required")
+		},
+	)
+}
+
 func TestRSAPublicKeyFromJWK(t *testing.T) {
 	t.Parallel()
 
@@ -338,6 +417,23 @@ func TestRSAPublicKeyFromJWK(t *testing.T) {
 
 			_, err := jose.RSAPublicKeyFromJWK(invalidExponent)
 			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects a modulus below the minimum",
+		func(t *testing.T) {
+			t.Parallel()
+
+			weakModulus := jwk
+			weakModulus.N = base64.RawURLEncoding.EncodeToString(
+				new(big.Int).Lsh(big.NewInt(1), 1023).Bytes(),
+			)
+
+			_, err := jose.RSAPublicKeyFromJWK(weakModulus)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "modulus is 1024 bits")
 		},
 	)
 }

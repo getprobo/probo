@@ -736,8 +736,8 @@ func parseJWK(k jwk) (crypto.PublicKey, error) {
 
 		return &ecdsa.PublicKey{
 			Curve: curve,
-			X:     new(big.Int).SetBytes(xBytes),
-			Y:     new(big.Int).SetBytes(yBytes),
+			X:     new(big.Int).SetBytes(xBytes), //nolint:staticcheck // JWK stores coordinates as separate fields
+			Y:     new(big.Int).SetBytes(yBytes), //nolint:staticcheck // JWK stores coordinates as separate fields
 		}, nil
 
 	default:

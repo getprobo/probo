@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
@@ -110,7 +111,7 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
-		OAuth2ServerSigningKeys        oauth2.SigningKeys
+		OAuth2ServerKeyRing            *jose.KeyRing
 		OAuth2ServerOptions            []oauth2.Option
 		OAuth2ScopeRegistry            *oauth2scope.Registry
 	}
@@ -225,7 +226,7 @@ func NewService(
 
 	svc.OAuth2ServerService = oauth2.NewService(
 		pgClient,
-		cfg.OAuth2ServerSigningKeys,
+		cfg.OAuth2ServerKeyRing,
 		uri.URI(cfg.BaseURL.String()),
 		cfg.Logger.Named("oauth2"),
 		append(

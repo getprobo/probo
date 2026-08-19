@@ -21,6 +21,10 @@
 package oidc
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"testing"
 
@@ -151,4 +155,30 @@ func TestValidateIDTokenClaims_PersonalAccounts(t *testing.T) {
 		_, ok := errors.AsType[*ErrEmailNotVerified](err)
 		assert.True(t, ok, "got %T: %v", err, err)
 	})
+}
+
+func TestParseJWK_EC(t *testing.T) {
+	t.Parallel()
+
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	point, err := privateKey.PublicKey.Bytes()
+	require.NoError(t, err)
+
+	coordinateLen := (len(point) - 1) / 2
+
+	key, err := parseJWK(
+		jwk{
+			Kty: "EC",
+			Crv: "P-256",
+			X:   base64.RawURLEncoding.EncodeToString(point[1 : 1+coordinateLen]),
+			Y:   base64.RawURLEncoding.EncodeToString(point[1+coordinateLen:]),
+		},
+	)
+	require.NoError(t, err)
+
+	publicKey, ok := key.(*ecdsa.PublicKey)
+	require.True(t, ok, "got %T", key)
+	assert.True(t, publicKey.Equal(&privateKey.PublicKey))
 }

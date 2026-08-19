@@ -23,6 +23,7 @@ package baseurl
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"strings"
 )
@@ -53,8 +54,15 @@ func Parse(rawURL string) (*BaseURL, error) {
 		return nil, fmt.Errorf("base URL scheme must be http or https, got: %s", parsed.Scheme)
 	}
 
-	if parsed.Host == "" {
+	// A port delimiter makes Host non-empty even with no hostname
+	// ("https://:443", "https://:"), so the emptiness check has to run against
+	// Hostname or a hostless base reaches callers that only rule out a port.
+	if parsed.Hostname() == "" {
 		return nil, fmt.Errorf("base URL must include a host")
+	}
+
+	if _, port, err := net.SplitHostPort(parsed.Host); err == nil && port == "" {
+		return nil, fmt.Errorf("base URL host has an empty port")
 	}
 
 	return &BaseURL{

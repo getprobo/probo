@@ -64,6 +64,13 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 
 	oauth2SigningKey := b.getOAuth2SigningKey()
 
+	identityFederationEnabled := b.resolver.getEnvBoolOrDefault("PROBOD_IDENTITY_FEDERATION_ENABLED", false)
+
+	identityFederationSigningKeys, err := b.buildIdentityFederationSigningKeys(identityFederationEnabled)
+	if err != nil {
+		return nil, err
+	}
+
 	pgCACertBundle := b.getPgCACertBundle()
 
 	authCookieSameSite, err := probodconfig.ParseCookieSameSite(
@@ -177,6 +184,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						b.resolver.getEnv("PROBOD_OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS"),
 					),
 				},
+			},
+			IdentityFederation: probodconfig.IdentityFederationConfig{
+				Enabled:       identityFederationEnabled,
+				IssuerBaseURL: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL"),
+				SigningKeys:   identityFederationSigningKeys,
 			},
 			ITAM: probodconfig.ITAMConfig{
 				DeviceEnrollmentTokenValidity: b.resolver.getEnvIntOrDefault(
@@ -633,6 +645,17 @@ func (b *Builder) validateRequired() error {
 		missing = append(missing, "PROBOD_OAUTH2_SERVER_SIGNING_KEY")
 	}
 
+	// The identity federation issuer is opt-in, so its key is only required once an
+	// operator turns it on. A deployment that never federates to a cloud
+	// provider needs no second key.
+	if b.resolver.getEnvBoolOrDefault("PROBOD_IDENTITY_FEDERATION_ENABLED", false) &&
+		b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_SIGNING_KEY") == "" {
+		missing = append(
+			missing,
+			"PROBOD_IDENTITY_FEDERATION_SIGNING_KEY (required when PROBOD_IDENTITY_FEDERATION_ENABLED is true)",
+		)
+	}
+
 	if slackClientID := b.resolver.getEnv("PROBOD_CONNECTOR_SLACK_CLIENT_ID"); slackClientID != "" {
 		slackRequired := []string{
 			"PROBOD_CONNECTOR_SLACK_CLIENT_SECRET",
@@ -764,6 +787,62 @@ func (b *Builder) getOAuth2SigningKey() string {
 	}
 
 	return b.resolver.getEnv("PROBOD_OAUTH2_SERVER_SIGNING_KEY")
+}
+
+// buildIdentityFederationSigningKeys returns the keys published in the identity
+// federation JWKS. The previous key is optional and never signs: it stays
+// published across a rotation so that a cloud provider holding a cached key set
+// can still verify a token minted before the swap.
+func (b *Builder) buildIdentityFederationSigningKeys(
+	enabled bool,
+) ([]probodconfig.IdentityFederationSigningKeyConfig, error) {
+	if !enabled {
+		return nil, nil
+	}
+
+	kid := b.resolver.getEnvOrDefault("PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID", "default")
+
+	signingKeys := []probodconfig.IdentityFederationSigningKeyConfig{
+		{
+			PrivateKey: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"),
+			KID:        kid,
+			Active:     true,
+		},
+	}
+
+	previousPrivateKey := b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY")
+	previousKID := b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID")
+
+	if previousPrivateKey == "" && previousKID == "" {
+		return signingKeys, nil
+	}
+
+	if previousPrivateKey == "" {
+		return nil, fmt.Errorf("cannot build identity federation signing keys: PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY is required when PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID is set")
+	}
+
+	// A verifier selects the retired key by its own kid, so it cannot be
+	// defaulted: "default" is what an operator who never named a key already
+	// signs with.
+	if previousKID == "" {
+		return nil, fmt.Errorf("cannot build identity federation signing keys: PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID is required when PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY is set")
+	}
+
+	if previousKID == kid {
+		return nil, fmt.Errorf(
+			"cannot build identity federation signing keys: PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID must differ from PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID, both are %q",
+			kid,
+		)
+	}
+
+	return append(
+		signingKeys,
+		probodconfig.IdentityFederationSigningKeyConfig{
+			PrivateKey: previousPrivateKey,
+			KID:        previousKID,
+			Active:     false,
+		},
+	), nil
 }
 
 func (b *Builder) getPgCACertBundle() string {

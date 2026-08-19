@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"sync/atomic"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -61,9 +60,7 @@ const (
 type (
 	Service struct {
 		pg                        *pg.Client
-		signingKeys               SigningKeys
-		activeSigningIdx          []int
-		rrCounter                 atomic.Uint64
+		keyRing                   *jose.KeyRing
 		baseURL                   uri.URI
 		logger                    *log.Logger
 		gc                        *GarbageCollector
@@ -184,23 +181,14 @@ func (s *Service) SetCIMDAllow(fn CIMDAllowFunc) {
 
 func NewService(
 	pgClient *pg.Client,
-	signingKeys SigningKeys,
+	keyRing *jose.KeyRing,
 	baseURL uri.URI,
 	logger *log.Logger,
 	opts ...Option,
 ) *Service {
-	var activeIdx []int
-
-	for i, k := range signingKeys {
-		if k.Active {
-			activeIdx = append(activeIdx, i)
-		}
-	}
-
 	s := &Service{
 		pg:                        pgClient,
-		signingKeys:               signingKeys,
-		activeSigningIdx:          activeIdx,
+		keyRing:                   keyRing,
 		baseURL:                   baseURL,
 		logger:                    logger,
 		accessTokenDuration:       1 * time.Hour,
@@ -219,32 +207,13 @@ func NewService(
 	return s
 }
 
-// signingKey returns the next active signing key using round-robin.
-func (s *Service) signingKey() *SigningKey {
-	n := s.rrCounter.Add(1)
-	idx := s.activeSigningIdx[n%uint64(len(s.activeSigningIdx))]
-
-	return &s.signingKeys[idx]
-}
-
 func (s *Service) Run(ctx context.Context) error {
 	return s.gc.Run(ctx)
 }
 
 // JWKS returns the public key set.
 func (s *Service) JWKS() *jose.JWKS {
-	jwks := &jose.JWKS{
-		Keys: make([]jose.JWK, 0, len(s.signingKeys)),
-	}
-
-	for _, sk := range s.signingKeys {
-		jwks.Keys = append(
-			jwks.Keys,
-			jose.RSAPublicKeyToJWK(&sk.PrivateKey.PublicKey, sk.KID),
-		)
-	}
-
-	return jwks
+	return s.keyRing.JWKS()
 }
 
 // Issuer returns the OAuth2 issuer URI embedded in ID tokens.
@@ -428,25 +397,23 @@ func (s *Service) ExchangeAuthorizationCode(
 	}
 
 	if code.Scopes.Contains(ScopeOpenID) {
-		var (
-			idTokenClaims = NewIDTokenClaims(
-				s.baseURL,
-				code.IdentityID,
-				client.ID,
-				code.AuthTime,
-				code.Scopes,
-				ref.UnrefOrZero(code.Nonce),
-				accessTokenValue,
-				identity.EmailAddress.String(),
-				identity.EmailAddressVerified,
-				identity.FullName,
-				s.accessTokenDuration,
-			)
-			sk  = s.signingKey()
-			err error
+		idTokenClaims := NewIDTokenClaims(
+			s.baseURL,
+			code.IdentityID,
+			client.ID,
+			code.AuthTime,
+			code.Scopes,
+			ref.UnrefOrZero(code.Nonce),
+			accessTokenValue,
+			identity.EmailAddress.String(),
+			identity.EmailAddressVerified,
+			identity.FullName,
+			s.accessTokenDuration,
 		)
 
-		idToken, err = jose.SignJWT(sk.PrivateKey, sk.KID, idTokenClaims)
+		var err error
+
+		idToken, err = s.keyRing.Sign(idTokenClaims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -606,25 +573,23 @@ func (s *Service) RefreshToken(
 	}
 
 	if previousRefreshToken.Scopes.Contains(ScopeOpenID) {
-		var (
-			claims = NewIDTokenClaims(
-				s.baseURL,
-				previousRefreshToken.IdentityID,
-				client.ID,
-				time.Now(),
-				previousRefreshToken.Scopes,
-				"",
-				accessTokenValue,
-				identity.EmailAddress.String(),
-				identity.EmailAddressVerified,
-				identity.FullName,
-				s.accessTokenDuration,
-			)
-			sk  = s.signingKey()
-			err error
+		claims := NewIDTokenClaims(
+			s.baseURL,
+			previousRefreshToken.IdentityID,
+			client.ID,
+			time.Now(),
+			previousRefreshToken.Scopes,
+			"",
+			accessTokenValue,
+			identity.EmailAddress.String(),
+			identity.EmailAddressVerified,
+			identity.FullName,
+			s.accessTokenDuration,
 		)
 
-		idToken, err = jose.SignJWT(sk.PrivateKey, sk.KID, claims)
+		var err error
+
+		idToken, err = s.keyRing.Sign(claims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}
@@ -894,25 +859,21 @@ func (s *Service) PollDeviceCode(
 	)
 
 	if deviceCode.Scopes.Contains(ScopeOpenID) {
-		var (
-			claims = NewIDTokenClaims(
-				s.baseURL,
-				*deviceCode.IdentityID,
-				clientID,
-				now,
-				deviceCode.Scopes,
-				"",
-				accessTokenValue,
-				identity.EmailAddress.String(),
-				identity.EmailAddressVerified,
-				identity.FullName,
-				s.accessTokenDuration,
-			)
-			sk  = s.signingKey()
-			err error
+		claims := NewIDTokenClaims(
+			s.baseURL,
+			*deviceCode.IdentityID,
+			clientID,
+			now,
+			deviceCode.Scopes,
+			"",
+			accessTokenValue,
+			identity.EmailAddress.String(),
+			identity.EmailAddressVerified,
+			identity.FullName,
+			s.accessTokenDuration,
 		)
 
-		idToken, err = jose.SignJWT(sk.PrivateKey, sk.KID, claims)
+		idToken, err = s.keyRing.Sign(claims)
 		if err != nil {
 			return nil, fmt.Errorf("cannot sign id token: %w", err)
 		}

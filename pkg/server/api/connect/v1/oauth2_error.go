@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/httpx"
 )
 
 func (h *OAuth2Handler) handleAuthorizeError(w http.ResponseWriter, r *http.Request, err error, redirectURI, state string) {
@@ -51,7 +52,7 @@ func (h *OAuth2Handler) renderOAuth2ErrorResponse(w http.ResponseWriter, r *http
 		h.logger.ErrorCtx(r.Context(), "oauth2 server error", log.Error(err))
 	}
 
-	NoCache(w)
+	httpx.NoCache(w)
 
 	httpserver.RenderJSON(w, oauth2ErrorStatusCode(oauthErr), &types.OAuth2ErrorResponse{
 		Code:        oauthErr.ErrorCode(),

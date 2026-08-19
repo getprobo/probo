@@ -68,6 +68,38 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			// The colon leaves Host non-empty, so only Hostname reveals that
+			// there is no host to reach.
+			name:    "port delimiter without host",
+			input:   "https://:/federation",
+			wantErr: true,
+		},
+		{
+			name:    "port without host",
+			input:   "https://:443",
+			wantErr: true,
+		},
+		{
+			name:    "empty port",
+			input:   "https://example.com:",
+			wantErr: true,
+		},
+		{
+			name:    "IPv6 host without port",
+			input:   "https://[::1]",
+			wantErr: false,
+		},
+		{
+			name:    "IPv6 host with port",
+			input:   "https://[::1]:8443",
+			wantErr: false,
+		},
+		{
+			name:    "IPv6 host with empty port",
+			input:   "https://[::1]:",
+			wantErr: true,
+		},
+		{
 			name:    "invalid URL",
 			input:   "ht!tp://invalid",
 			wantErr: true,

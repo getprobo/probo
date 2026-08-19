@@ -108,6 +108,27 @@ func (s OrganizationService) Get(
 	return organization, nil
 }
 
+// Exists reports whether the organization is present. The lookup is
+// deliberately cross-tenant: identity federation discovery is public, and the
+// caller has no identity to scope by. Only the boolean escapes, so no
+// organization data is reachable without a scope.
+func (s OrganizationService) Exists(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) (bool, error) {
+	_, err := s.Get(ctx, scope, organizationID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (s OrganizationService) GetByIDs(
 	ctx context.Context, scope coredata.Scoper,
 	organizationIDs ...gid.GID,
