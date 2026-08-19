@@ -213,7 +213,6 @@ input CreateAPIKeyConnectorInput {
     settings.
     """
     apiKey: String
-    tallyOrganizationId: String
     sentryOrganizationSlug: String
     supabaseOrganizationSlug: String
     githubOrganization: String

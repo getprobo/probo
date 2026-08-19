@@ -36,13 +36,12 @@ func tallyRegistration() *Registration {
 		DisplayName:      "Tally",
 		DocumentationURL: accessReviewDocsURL("tally"),
 		Endpoints: Endpoints{
-			Probe:   "https://api.tally.so/me",
+			// /users/me is the only identity endpoint that accepts API-key
+			// auth; /me is session-only and 401s every API key, valid or not.
+			Probe:   "https://api.tally.so/users/me",
 			APIBase: "https://api.tally.so",
 		},
 		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
-		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
 			if err != nil {
@@ -55,14 +54,8 @@ func tallyRegistration() *Registration {
 
 			return drivers.NewTallyDriver(c, s.OrganizationID, ep.APIBase), nil
 		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read tally connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewTallyNameResolver(c, s.OrganizationID, ep.APIBase)
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewTallyNameResolver(c, ep.APIBase)
 		},
 	}
 }

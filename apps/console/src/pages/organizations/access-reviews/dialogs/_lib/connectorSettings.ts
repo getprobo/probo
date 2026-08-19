@@ -35,9 +35,6 @@ export function mapAPIKeyExtraSettingToField(
   settingKey: string,
 ): string | null {
   switch (provider) {
-    case "TALLY":
-      if (settingKey === "organizationId") return "tallyOrganizationId";
-      break;
     case "SENTRY":
       if (settingKey === "organizationSlug") return "sentryOrganizationSlug";
       break;

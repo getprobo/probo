@@ -83,6 +83,67 @@ func (r *Resolver) newAPIKeyConnection(provider coredata.ConnectorProvider, key 
 	}
 }
 
+// tallyUserFetcher fetches the Tally user profile bound to an API key. It
+// matches drivers.GetTallyCurrentUser: resolveTallySettings injects the real
+// fetch, and tests substitute a fake so the branch wiring (the auth-failure
+// mapping and the derived organization id) is exercised without a live
+// Tally API.
+type tallyUserFetcher func(ctx context.Context, httpClient *http.Client, baseURL string) (*drivers.TallyCurrentUser, error)
+
+// resolveTallySettings validates the presented API key against Tally and
+// derives the connector settings from it: GET /users/me both proves the key
+// is accepted and returns the organization it belongs to, so no
+// organization-id input is asked of the user (Tally 401s a wrong org id,
+// indistinguishable from a bad key). Runs before any write, so a rejected
+// key leaves no row. Returned Invalid errors carry only guidance, never the
+// key.
+func (r *Resolver) resolveTallySettings(ctx context.Context, apiKey string) (json.RawMessage, error) {
+	return r.resolveTallySettingsWith(ctx, apiKey, drivers.GetTallyCurrentUser)
+}
+
+// resolveTallySettingsWith is resolveTallySettings with the profile fetch
+// injected, so its branch wiring can be unit-tested without reaching the
+// live Tally API. resolveTallySettings passes the real
+// drivers.GetTallyCurrentUser.
+func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, fetch tallyUserFetcher) (json.RawMessage, error) {
+	reg, ok := r.providerRegistry.Get(coredata.ConnectorProviderTally)
+	if !ok {
+		r.logger.ErrorCtx(ctx, "tally connector provider not registered")
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	// The validation client authenticates exactly as the persisted connector
+	// will, so a key accepted here keeps working for the workers.
+	conn := r.newAPIKeyConnection(coredata.ConnectorProviderTally, apiKey)
+
+	httpClient, err := conn.Client(ctx)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot build tally validation client", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	user, err := fetch(ctx, httpClient, reg.Endpoints.APIBase)
+
+	switch {
+	case errors.Is(err, drivers.ErrTallyUnauthorized):
+		return nil, gqlutils.Invalidf(ctx, "Tally rejected the API key: create a key under Settings > API keys and try again")
+	case err != nil:
+		r.logger.ErrorCtx(ctx, "cannot fetch tally current user", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if user.OrganizationID == "" {
+		r.logger.ErrorCtx(ctx, "tally current user has no organization id")
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: user.OrganizationID})
+}
+
 // crispSettingsFetcher reads a Crisp plugin's per-website subscription settings.
 // It matches drivers.GetCrispSubscriptionSettings: verifyCrispOwnership injects
 // the real fetch, and tests substitute a fake so the branch wiring (the security
@@ -171,12 +232,6 @@ func (r *Resolver) verifyCrispOwnershipWith(ctx context.Context, input types.Cre
 // information, never user-supplied values.
 func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMessage, error) {
 	switch input.Provider {
-	case coredata.ConnectorProviderTally:
-		if input.TallyOrganizationID == nil || *input.TallyOrganizationID == "" {
-			return nil, fmt.Errorf("cannot create tally connector: tallyOrganizationId is required")
-		}
-
-		return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: *input.TallyOrganizationID})
 	case coredata.ConnectorProviderSentry:
 		if input.SentryOrganizationSlug == nil || *input.SentryOrganizationSlug == "" {
 			return nil, fmt.Errorf("cannot create sentry connector: sentryOrganizationSlug is required")

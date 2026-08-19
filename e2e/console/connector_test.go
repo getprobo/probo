@@ -180,46 +180,6 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	assert.Equal(t, "BREX", connector.Provider)
 }
 
-func TestCreateAPIKeyConnectorWithSettings(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	orgID := owner.GetOrganizationID().String()
-
-	const query = `
-		mutation($input: CreateAPIKeyConnectorInput!) {
-			createAPIKeyConnector(input: $input) {
-				connector {
-					id
-					provider
-				}
-			}
-		}
-	`
-
-	var result struct {
-		CreateAPIKeyConnector struct {
-			Connector struct {
-				ID       string `json:"id"`
-				Provider string `json:"provider"`
-			} `json:"connector"`
-		} `json:"createAPIKeyConnector"`
-	}
-
-	err := owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"organizationId":      orgID,
-			"provider":            "TALLY",
-			"apiKey":              "test-key",
-			"tallyOrganizationId": "org-123",
-		},
-	}, &result)
-	require.NoError(t, err)
-
-	connector := result.CreateAPIKeyConnector.Connector
-	assert.NotEmpty(t, connector.ID)
-	assert.Equal(t, "TALLY", connector.Provider)
-}
-
 // TestCreateAPIKeyConnectorSentryMissingSlug asserts that creating a
 // Sentry API-key connector without sentryOrganizationSlug returns a
 // validation error, not a 500. This is the e2e gate on the

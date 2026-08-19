@@ -53,6 +53,17 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		return nil, gqlutils.Invalid(ctx, err)
 	}
 
+	// Tally has no settings input: the key itself is validated against
+	// GET /users/me and the organization id it returns becomes the
+	// persisted settings. Runs before any write, so a rejected key
+	// leaves no row.
+	if input.Provider == coredata.ConnectorProviderTally {
+		raw, err = r.resolveTallySettings(ctx, apiKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	req.RawSettings = raw
 
 	// Crisp (ManagedAPIKey) requires proof the organization controls the Crisp
