@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.263.0] - 2026-08-19
+
+### Added
+
+- Tracker attribution now judges third parties by data egress rather than code origin, catching vendor SDKs bundled into first-party code; artifacts belonging to a browser extension or other visitor-installed software are now marked `NOT_ATTRIBUTABLE` instead of first-party or a wrongly attributed vendor
+
+### Changed
+
+- Connecting Tally as an access review source now validates the API key at connect time and derives the organization id automatically; the connection probe and name resolver moved to the one Tally endpoint that accepts API-key auth, fixing every Tally connection reporting "credentials are invalid"
+- The mapping worker no longer re-evaluates tracker writes already confirmed to come from a browser extension, since that evidence settles attribution on its own
+- The `third_parties.common_third_party_id` index can now be built `CONCURRENTLY` ahead of a deploy; the migration is a no-op if the index already exists
+
+### Fixed
+
+- "Open in Probo" links from an access request and from Probot Slack notifications now land on the compliance portal's permissions page instead of a removed console route
+- A tracker artifact could gain a vendor attribution after another worker had already settled it terminal (first-party / not-attributable); the terminal verdict now always wins
+- The enrichment worker could re-process and re-attribute a tracker row that had already received a terminal verdict
+
 ## [0.262.0] - 2026-08-18
 
 ### Added
