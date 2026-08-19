@@ -61,8 +61,8 @@ export class ProboThemedBanner extends HTMLElement {
     const lang = this.getAttribute("lang");
     const langAttr = lang ? ` lang="${esc(lang)}"` : "";
 
-    const gcm = this.getAttribute("google-consent-mode");
-    const gcmAttr = gcm ? ` google-consent-mode="${esc(gcm)}"` : "";
+    const gcm = this.getAttribute("gcm-enabled");
+    const gcmAttr = gcm ? ` gcm-enabled="${esc(gcm)}"` : "";
 
     this.shadow.innerHTML = `
       <style>${THEMED_STYLES}</style>

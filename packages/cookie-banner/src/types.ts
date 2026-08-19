@@ -117,14 +117,14 @@ export interface ConsentRecord {
   created_at: string;
 }
 
-// CookieBannerClientOptions configures the client. `googleConsentMode`
-// (default true) controls the built-in Google Consent Mode integration;
-// set it to false to skip it entirely — no eager deny-all default, no
-// discovery-mode grant-all, no consent defaults or updates — for sites
-// that manage Consent Mode themselves.
+export interface IntegrationConfig {
+  name: "gcm";
+  enabled: boolean;
+}
+
 export interface CookieBannerClientOptions {
   bannerId: string;
   baseUrl: string;
   lang?: string;
-  googleConsentMode?: boolean;
+  integrations?: IntegrationConfig[];
 }

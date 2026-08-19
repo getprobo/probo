@@ -18,42 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createDefaultIntegrations, resolveGoogleConsentMode } from "./index";
+import { createDefaultIntegrations, resolveGcmEnabled } from "./index";
 
 describe("createDefaultIntegrations", () => {
   it("includes Google Consent Mode by default", () => {
     expect(createDefaultIntegrations()).toHaveLength(1);
-    expect(createDefaultIntegrations({})).toHaveLength(1);
-    expect(createDefaultIntegrations({ googleConsentMode: true })).toHaveLength(1);
+    expect(createDefaultIntegrations([])).toHaveLength(1);
+    expect(createDefaultIntegrations([{ name: "gcm", enabled: true }])).toHaveLength(1);
   });
 
   it("is empty when Google Consent Mode is disabled", () => {
-    expect(createDefaultIntegrations({ googleConsentMode: false })).toHaveLength(0);
+    expect(createDefaultIntegrations([{ name: "gcm", enabled: false }])).toHaveLength(0);
   });
 });
 
-describe("resolveGoogleConsentMode", () => {
-  it("keeps the integration when the attribute is absent", () => {
-    expect(resolveGoogleConsentMode(null)).toBe(true);
+describe("resolveGcmEnabled", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("disables on \"off\" and \"false\"", () => {
-    expect(resolveGoogleConsentMode("off")).toBe(false);
-    expect(resolveGoogleConsentMode("false")).toBe(false);
+  it("defaults to enabled when the attribute is absent", () => {
+    expect(resolveGcmEnabled(null)).toBe(true);
+  });
+
+  it("parses \"true\" and \"false\"", () => {
+    expect(resolveGcmEnabled("true")).toBe(true);
+    expect(resolveGcmEnabled("false")).toBe(false);
   });
 
   it("normalizes case and whitespace", () => {
-    expect(resolveGoogleConsentMode("OFF")).toBe(false);
-    expect(resolveGoogleConsentMode("False")).toBe(false);
-    expect(resolveGoogleConsentMode(" off ")).toBe(false);
+    expect(resolveGcmEnabled("FALSE")).toBe(false);
+    expect(resolveGcmEnabled(" false ")).toBe(false);
+    expect(resolveGcmEnabled("True")).toBe(true);
   });
 
-  it("keeps the integration for any other value", () => {
-    expect(resolveGoogleConsentMode("on")).toBe(true);
-    expect(resolveGoogleConsentMode("true")).toBe(true);
-    expect(resolveGoogleConsentMode("")).toBe(true);
-    expect(resolveGoogleConsentMode("nonsense")).toBe(true);
+  it("warns and falls back to enabled on invalid values", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(resolveGcmEnabled("off")).toBe(true);
+    expect(resolveGcmEnabled("")).toBe(true);
+    expect(resolveGcmEnabled("nonsense")).toBe(true);
+    expect(warn).toHaveBeenCalledTimes(3);
   });
 });

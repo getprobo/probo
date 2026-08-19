@@ -95,9 +95,7 @@ export class CookieBannerClient {
     this.bannerId = config.bannerId;
     this.visitorId = getVisitorId(config.bannerId);
     this.lang = detectLanguage(config.lang);
-    this.integrations = createDefaultIntegrations({
-      googleConsentMode: config.googleConsentMode,
-    });
+    this.integrations = createDefaultIntegrations(config.integrations);
   }
 
   get loaded(): boolean {

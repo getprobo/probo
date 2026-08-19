@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CookieBannerClient } from "../client";
-import { resolveGoogleConsentMode } from "../integrations";
+import { resolveGcmEnabled } from "../integrations";
 import { resolveLayout } from "../layout";
 import type { BannerConfig, BannerLayout, Regulation } from "../types";
 import { ProboElement } from "./base";
@@ -145,11 +145,14 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
     }
 
     const lang = this.getAttribute("lang") ?? undefined;
-    const googleConsentMode = resolveGoogleConsentMode(
-      this.getAttribute("google-consent-mode"),
-    );
+    const gcmEnabled = resolveGcmEnabled(this.getAttribute("gcm-enabled"));
 
-    this._client = new CookieBannerClient({ bannerId, baseUrl, lang, googleConsentMode });
+    this._client = new CookieBannerClient({
+      bannerId,
+      baseUrl,
+      lang,
+      integrations: [{ name: "gcm", enabled: gcmEnabled }],
+    });
 
     try {
       await this._client.load();

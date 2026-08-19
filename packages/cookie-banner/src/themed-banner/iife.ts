@@ -51,9 +51,9 @@ if (script) {
         el.setAttribute("lang", lang.split("-")[0].toLowerCase());
       }
 
-      const gcm = script.getAttribute("data-google-consent-mode");
+      const gcm = script.getAttribute("data-gcm-enabled");
       if (gcm) {
-        el.setAttribute("google-consent-mode", gcm);
+        el.setAttribute("gcm-enabled", gcm);
       }
 
       document.body.appendChild(el);
