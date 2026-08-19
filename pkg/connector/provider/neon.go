@@ -52,7 +52,7 @@ func neonRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read neon connector settings: %w", err)
@@ -63,8 +63,8 @@ func neonRegistration() *Registration {
 			}
 
 			return drivers.NewNeonDriver(c, s.OrganizationID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read neon connector settings", log.Error(err))
@@ -72,6 +72,6 @@ func neonRegistration() *Registration {
 			}
 
 			return drivers.NewNeonNameResolver(c, s.OrganizationID, ep.APIBase)
-		},
+		}),
 	}
 }

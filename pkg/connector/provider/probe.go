@@ -48,37 +48,6 @@ const (
 	squareVersion       = "2026-05-20"
 )
 
-// ProbeConnection verifies that the connector credential is accepted by the
-// provider. It dispatches to a provider-specific Probe closure when
-// registered, otherwise issues a lightweight GET against ProbeURL or
-// BuildProbeURL. An empty probe URL means the check is skipped.
-func (r *Registry) ProbeConnection(
-	ctx context.Context,
-	httpClient *http.Client,
-	conn *coredata.Connector,
-) error {
-	reg, ok := r.Get(conn.Provider)
-	if !ok {
-		return nil
-	}
-
-	if reg.Probe != nil {
-		return reg.Probe(ctx, httpClient, conn, reg.Endpoints)
-	}
-
-	probeURL := reg.Endpoints.Probe
-	if reg.BuildProbeURL != nil {
-		built, err := reg.BuildProbeURL(conn, reg.Endpoints)
-		if err != nil {
-			return fmt.Errorf("cannot build probe URL: %w", err)
-		}
-
-		probeURL = built
-	}
-
-	return probeGET(ctx, httpClient, probeURL)
-}
-
 func probeGET(ctx context.Context, httpClient *http.Client, probeURL string) error {
 	if probeURL == "" {
 		return nil

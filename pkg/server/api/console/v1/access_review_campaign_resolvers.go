@@ -483,7 +483,7 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 	// a problem: its organization is captured during the OAuth callback, not
 	// chosen by the user. Reporting that as EMPTY would warn a perfectly
 	// healthy source that its organization may not have approved Probo.
-	if !accessreview.ProviderSupportsOrganizationPicker(cnnctr.Provider) {
+	if !r.accessReview.ProviderSupportsOrganizationPicker(cnnctr.Provider) {
 		return &types.ProviderOrganizations{
 			Status: types.ProviderOrganizationsStatusNotApplicable,
 			Nodes:  []*types.ProviderOrganization{},
@@ -568,7 +568,11 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 		return types.AccessReviewSourceConnectionStatusNotApplicable, err
 	}
 
-	httpClient, dbConnector, err := r.accessReview.ConnectorHTTPClient(ctx, scope, *obj.ConnectorID)
+	// Opening a connector may succeed on an expired or invalid credential (no
+	// refresh token available, a dead API key), so the probe is what decides.
+	// For a connector that federates into a cloud, the credential exchange
+	// happened during the open and is already most of the check.
+	handle, err := r.accessReview.OpenConnector(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
@@ -577,11 +581,7 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}
 
-	// Creating an HTTP client may succeed even with an expired or invalid
-	// credential (e.g. no refresh token available, or a dead API key).
-	// When the provider registers a probe, make a lightweight request to
-	// verify the credential is actually accepted.
-	if err := r.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector); err != nil {
+	if err := handle.Probe(ctx); err != nil {
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}
 

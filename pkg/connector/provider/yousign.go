@@ -51,8 +51,8 @@ func yousignRegistration() *Registration {
 			// so the source keeps its generic name.
 			Probe: "https://api.yousign.app/v3/users?limit=1",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewYousignDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

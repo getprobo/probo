@@ -46,7 +46,7 @@ func datadogRegistration() *Registration {
 		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
 		BuildTokenURLForDomain: connector.DatadogTokenURL,
 		BuildProbeURL:          buildDatadogProbeURL,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read datadog connector settings: %w", err)
@@ -62,8 +62,8 @@ func datadogRegistration() *Registration {
 			}
 
 			return drivers.NewDatadogDriver(c, s.Domain), nil
-		},
-		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read datadog connector settings", log.Error(err))
@@ -71,6 +71,6 @@ func datadogRegistration() *Registration {
 			}
 
 			return drivers.NewDatadogNameResolver(s.Region)
-		},
+		}),
 	}
 }

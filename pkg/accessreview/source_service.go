@@ -24,13 +24,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -62,7 +62,7 @@ type (
 
 		// OnlyIfUnset makes the configure a no-op when the connector already
 		// has an org selected. AutoSelectDefaultOrganization sets it so a
-		// concurrent user pick made while ListOrgs was in flight is not
+		// concurrent user pick made while the listing was in flight is not
 		// silently overwritten by the first listed org.
 		OnlyIfUnset bool
 	}
@@ -338,14 +338,15 @@ func (s *Service) CountSourcesForOrganizationID(
 	return count, nil
 }
 
-// ConnectorHTTPClient loads a connector by ID with decrypted credentials
-// and returns an HTTP client with token refresh support. If the token was
-// refreshed during client creation, the updated credentials are persisted.
-func (s *Service) ConnectorHTTPClient(
+// OpenConnector loads a connector by ID with decrypted credentials and readies
+// it for use, persisting the credential when opening it refreshed an OAuth2
+// token. The returned handle carries the live credential unexported, so one
+// method serves every protocol: callers pass it to a Registration factory.
+func (s *Service) OpenConnector(
 	ctx context.Context,
 	scope coredata.Scoper,
 	connectorID gid.GID,
-) (*http.Client, *coredata.Connector, error) {
+) (*provider.Handle, error) {
 	var dbConnector coredata.Connector
 
 	err := s.pg.WithConn(
@@ -359,61 +360,26 @@ func (s *Service) ConnectorHTTPClient(
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	var tokenBefore string
-
-	oauth2Conn, isOAuth2 := dbConnector.Connection.(*connector.OAuth2Connection)
-	if isOAuth2 {
-		tokenBefore = oauth2Conn.AccessToken
+	handle, err := s.runtime.Open(ctx, &dbConnector)
+	if err != nil {
+		return nil, err
 	}
 
-	var httpClient *http.Client
-
-	if isOAuth2 && s.connectorRegistry != nil {
-		refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
-		if refreshCfg != nil {
-			var err error
-
-			httpClient, err = oauth2Conn.RefreshableClient(ctx, *refreshCfg)
-			if err != nil {
-				return nil, nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
-			}
-		}
-	}
-
-	if httpClient == nil {
-		// Inject the Probo-held key for ManagedAPIKey providers (no-op
-		// otherwise), resolving it fresh at use time rather than from the
-		// connection row.
-		if err := s.providerRegistry.ApplyManagedAPIKey(&dbConnector); err != nil {
-			return nil, nil, err
-		}
-
-		var err error
-
-		httpClient, err = dbConnector.Connection.Client(ctx)
-		if err != nil {
-			return nil, nil, fmt.Errorf("cannot create HTTP client: %w", err)
-		}
-	}
-
-	// Persist refreshed token if it changed.
-	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
-		dbConnector.UpdatedAt = time.Now()
-
+	if handle.CredentialRotated() {
 		if err := s.pg.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				return dbConnector.Update(ctx, tx, scope, s.encryptionKey)
+				return handle.PersistIfDirty(ctx, tx, scope, s.encryptionKey)
 			},
 		); err != nil {
-			return nil, nil, fmt.Errorf("cannot persist refreshed token: %w", err)
+			return nil, err
 		}
 	}
 
-	return httpClient, &dbConnector, nil
+	return handle, nil
 }
 
 func (s *Service) ConfigureAccessReviewSource(
@@ -518,48 +484,21 @@ func (s *Service) ProviderOrganizations(
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) ([]drivers.Organization, error) {
-	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, connectorID)
+	handle, err := s.OpenConnector(ctx, scope, connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("cannot get connector HTTP client: %w", err)
+		return nil, fmt.Errorf("cannot open connector: %w", err)
 	}
 
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || cfg.ListOrgs == nil {
+	reg, ok := s.providerRegistry.For(handle)
+	if !ok || reg.ListOrganizations == nil {
 		return nil, nil
 	}
 
-	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerListBaseURL(dbConnector.Provider))
-	if err != nil {
-		return nil, err
-	}
-
-	return orgs, nil
-}
-
-// providerListBaseURL returns the base URL a picker's ListOrgs call should
-// target: the provider registration's static API root (Endpoints.APIBase),
-// falling back to Endpoints.Identity when the provider has no static data
-// root of its own. DocuSign is that case — it declares no APIBase, but its
-// Identity host is exactly the host ListDocuSignOrganizations needs, so the
-// fallback lets an Identity override reach the picker the same way it
-// reaches the driver and name resolver. Returns "" when the provider is not
-// registered or declares neither; listers treat "" as "no override" and
-// fall back to their production base.
-func (s *Service) providerListBaseURL(connectorProvider coredata.ConnectorProvider) string {
-	reg, ok := s.providerRegistry.Get(connectorProvider)
-	if !ok {
-		return ""
-	}
-
-	if reg.Endpoints.APIBase != "" {
-		return reg.Endpoints.APIBase
-	}
-
-	return reg.Endpoints.Identity
+	return reg.ListOrganizations(ctx, handle)
 }
 
 // SelectedOrganizationSlug returns the org identifier currently configured on
@@ -728,7 +667,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 	}
 
 	cfg, ok := providerOrgConfigs[dbMeta.Provider]
-	if !ok || !cfg.NeedsPicker || cfg.ListOrgs == nil {
+	if !ok || !cfg.NeedsPicker || !s.ProviderSupportsOrganizationPicker(dbMeta.Provider) {
 		return
 	}
 
@@ -737,12 +676,17 @@ func (s *Service) AutoSelectDefaultOrganization(
 		return
 	}
 
-	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, *source.ConnectorID)
+	handle, err := s.OpenConnector(ctx, scope, *source.ConnectorID)
 	if err != nil {
 		if !errors.Is(err, coredata.ErrResourceNotFound) {
-			s.logger.WarnCtx(ctx, "cannot load connector for default organization", log.Error(err))
+			s.logger.WarnCtx(ctx, "cannot open connector for default organization", log.Error(err))
 		}
 
+		return
+	}
+
+	reg, ok := s.providerRegistry.For(handle)
+	if !ok || reg.ListOrganizations == nil {
 		return
 	}
 
@@ -751,12 +695,12 @@ func (s *Service) AutoSelectDefaultOrganization(
 	listCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	orgs, err := cfg.ListOrgs(listCtx, httpClient, s.providerListBaseURL(dbMeta.Provider))
+	orgs, err := reg.ListOrganizations(listCtx, handle)
 	if err != nil {
 		s.logger.WarnCtx(
 			ctx,
 			"cannot list provider organizations for default selection",
-			log.String("provider", dbConnector.Provider.String()),
+			log.String("provider", dbMeta.Provider.String()),
 			log.Error(err),
 		)
 
@@ -767,7 +711,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 		return
 	}
 
-	// OnlyIfUnset guards against a user picking an org while ListOrgs was in
+	// OnlyIfUnset guards against a user picking an org while the listing was in
 	// flight: the configure re-checks inside its tx and does not overwrite.
 	if _, err := s.ConfigureAccessReviewSource(
 		ctx,
@@ -781,7 +725,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 		s.logger.WarnCtx(
 			ctx,
 			"cannot apply default provider organization",
-			log.String("provider", dbConnector.Provider.String()),
+			log.String("provider", dbMeta.Provider.String()),
 			log.Error(err),
 		)
 	}

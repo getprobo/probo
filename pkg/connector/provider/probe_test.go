@@ -502,7 +502,9 @@ func TestProbeClosureURL(t *testing.T) {
 			require.NotNil(t, tc.reg.Probe)
 
 			conn := &coredata.Connector{Provider: tc.reg.Provider}
-			require.NoError(t, tc.reg.Probe(context.Background(), client, conn, tc.reg.Endpoints))
+			handle := NewHTTPHandleForTest(tc.reg, conn, client)
+
+			require.NoError(t, tc.reg.Probe(context.Background(), handle))
 			assert.Equal(t, tc.wantURL, gotURL)
 		})
 	}

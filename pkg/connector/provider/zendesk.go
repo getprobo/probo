@@ -50,7 +50,7 @@ func zendeskRegistration() *Registration {
 		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
 		BuildTokenURLForSite: connector.ZendeskTokenURL,
 		BuildProbeURL:        buildZendeskProbeURL,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read zendesk connector settings: %w", err)
@@ -66,8 +66,8 @@ func zendeskRegistration() *Registration {
 			}
 
 			return drivers.NewZendeskDriver(c, s.Subdomain), nil
-		},
-		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read zendesk connector settings", log.Error(err))
@@ -75,6 +75,6 @@ func zendeskRegistration() *Registration {
 			}
 
 			return drivers.NewZendeskNameResolver(s.Subdomain)
-		},
+		}),
 	}
 }

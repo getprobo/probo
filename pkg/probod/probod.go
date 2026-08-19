@@ -538,6 +538,15 @@ func (impl *Implm) Run(
 		}
 	}
 
+	// The provider catalog plus the deployment-held material an open needs.
+	// SCIM and the create-time Tally/Crisp conn.Client() calls still build
+	// their own client outside it.
+	connectorRuntime := provider.NewRuntime(
+		providerRegistry,
+		defaultConnectorRegistry,
+		identityFederationIssuer,
+	)
+
 	oauth2ScopeRegistry := oauth2scope.NewRegistry().
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
@@ -757,8 +766,7 @@ func (impl *Implm) Run(
 	accessReviewService := accessreview.NewService(
 		pgClient,
 		encryptionKey,
-		defaultConnectorRegistry,
-		providerRegistry,
+		connectorRuntime,
 		l.Named("access-review"),
 	)
 

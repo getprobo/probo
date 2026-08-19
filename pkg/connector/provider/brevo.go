@@ -52,8 +52,8 @@ func brevoRegistration() *Registration {
 		//
 		// No NewNameResolver: the invited-users endpoint carries no account
 		// name, so the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewBrevoDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

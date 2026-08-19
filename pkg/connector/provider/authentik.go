@@ -43,7 +43,7 @@ func authentikRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			settings, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read authentik connector settings: %w", err)
@@ -55,8 +55,8 @@ func authentikRegistration() *Registration {
 			}
 
 			return drivers.NewAuthentikDriver(c, baseURL), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			settings, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read authentik connector settings", log.Error(err))
@@ -70,6 +70,6 @@ func authentikRegistration() *Registration {
 			}
 
 			return drivers.NewAuthentikNameResolver(c, baseURL)
-		},
+		}),
 	}
 }

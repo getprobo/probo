@@ -57,8 +57,8 @@ func clickhouseRegistration() *Registration {
 		// No NewNameResolver: the organization name is available but would
 		// duplicate the driver's discovery call; the source keeps its
 		// generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewClickHouseDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

@@ -53,7 +53,7 @@ func asanaRegistration() *Registration {
 		// the app no longer offers, so a reconnect must not replay the
 		// granular grant these connectors were created with.
 		ExclusiveScopes: true,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read asana connector settings: %w", err)
@@ -64,8 +64,8 @@ func asanaRegistration() *Registration {
 			}
 
 			return drivers.NewAsanaDriver(c, s.WorkspaceGID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read asana connector settings", log.Error(err))
@@ -73,7 +73,8 @@ func asanaRegistration() *Registration {
 			}
 
 			return drivers.NewAsanaNameResolver(c, s.WorkspaceGID, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListAsanaOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, workspaceGID string) error {
 			return c.SetSettings(&coredata.AsanaConnectorSettings{WorkspaceGID: workspaceGID})
 		},

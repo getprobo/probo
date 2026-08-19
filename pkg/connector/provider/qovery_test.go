@@ -70,7 +70,7 @@ func TestQoveryNewDriver(t *testing.T) {
 			RawSettings: raw,
 		}
 
-		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.QoveryDriver{}, drv)
 	})
@@ -83,7 +83,7 @@ func TestQoveryNewDriver(t *testing.T) {
 			RawSettings: []byte(`{}`),
 		}
 
-		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		_, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "organization_id is required")
 	})
@@ -107,6 +107,6 @@ func TestQoveryNewNameResolver(t *testing.T) {
 		RawSettings: raw,
 	}
 
-	resolver := reg.NewNameResolver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+	resolver := reg.NewNameResolver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 	require.NotNil(t, resolver, "qovery name resolver must be constructed for a valid connector")
 }

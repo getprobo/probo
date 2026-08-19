@@ -305,9 +305,9 @@ func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string,
 // several accounts; the picker scopes the access source to one. The account
 // UUID is surfaced as the Organization slug (it is what the driver and name
 // resolver key off). userInfoURL is the registration's Endpoints.Identity
-// (falling back to Endpoints.APIBase upstream — see
-// accessreview.providerListBaseURL), so the picker follows a deployment
-// override the same way the driver and name resolver do.
+// (DocuSign declares no APIBase — see provider.HTTPOrganizations), so the
+// picker follows a deployment override the same way the driver and name
+// resolver do.
 func ListDocuSignOrganizations(ctx context.Context, httpClient *http.Client, userInfoURL string) ([]Organization, error) {
 	accounts, err := fetchDocuSignAccounts(ctx, httpClient, userInfoURL)
 	if err != nil {

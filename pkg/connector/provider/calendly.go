@@ -42,8 +42,8 @@ func calendlyRegistration() *Registration {
 		},
 		OAuth2Scopes: []string{"users:read", "organizations:read"},
 		RequiresPKCE: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewCalendlyDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

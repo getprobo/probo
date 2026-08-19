@@ -40,7 +40,7 @@ func cloudflareRegistration() *Registration {
 			APIBase: "https://api.cloudflare.com/client/v4",
 		},
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read cloudflare connector settings: %w", err)
@@ -51,8 +51,8 @@ func cloudflareRegistration() *Registration {
 			}
 
 			return drivers.NewCloudflareDriver(c, s.AccountID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read cloudflare connector settings", log.Error(err))
@@ -60,7 +60,8 @@ func cloudflareRegistration() *Registration {
 			}
 
 			return drivers.NewCloudflareNameResolver(c, s.AccountID, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListCloudflareOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, accountID string) error {
 			return c.SetSettings(&coredata.CloudflareConnectorSettings{AccountID: accountID})
 		},

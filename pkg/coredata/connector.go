@@ -132,17 +132,16 @@ func (c *Connector) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
+func (c *Connectors) LoadAllByOrganizationIDAndProvider(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	protocol ConnectorProtocol,
 	provider ConnectorProvider,
 	encryptionKey cipher.EncryptionKey,
 ) error {
-	if err := c.loadAllByOrganizationIDProtocolAndProvider(ctx, conn, scope, organizationID, protocol, provider); err != nil {
-		return fmt.Errorf("cannot load all connectors by organization ID, protocol and provider: %w", err)
+	if err := c.loadAllByOrganizationIDAndProvider(ctx, conn, scope, organizationID, provider); err != nil {
+		return fmt.Errorf("cannot load all connectors by organization ID and provider: %w", err)
 	}
 
 	if err := c.decryptConnections(encryptionKey); err != nil {
@@ -152,10 +151,14 @@ func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 	return nil
 }
 
-// LoadOneByOrganizationIDAndProvider loads the effective OAuth2
-// connector for an (organization, provider) pair, picking the row with
-// the widest stored scope set. Ties are broken by most recent
-// updated_at. Returns ErrResourceNotFound if no OAuth2 row exists.
+// LoadOneByOrganizationIDAndProvider loads the effective connector for an
+// (organization, provider) pair, picking the row with the widest stored scope
+// set. Ties are broken by most recent updated_at. Returns ErrResourceNotFound
+// if no row exists.
+//
+// It does not filter on protocol: a unique index covers (organization_id,
+// provider), so the pair already names at most one connector, and filtering
+// would hide a connector on any protocol but the one named.
 func (c *Connector) LoadOneByOrganizationIDAndProvider(
 	ctx context.Context,
 	conn pg.Querier,
@@ -165,12 +168,11 @@ func (c *Connector) LoadOneByOrganizationIDAndProvider(
 	provider ConnectorProvider,
 ) error {
 	var connectors Connectors
-	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
+	if err := connectors.LoadAllByOrganizationIDAndProvider(
 		ctx,
 		conn,
 		scope,
 		organizationID,
-		ConnectorProtocolOAuth2,
 		provider,
 		encryptionKey,
 	); err != nil {
@@ -522,12 +524,11 @@ ORDER BY
 	return nil
 }
 
-func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
+func (c *Connectors) loadAllByOrganizationIDAndProvider(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
-	protocol ConnectorProtocol,
 	provider ConnectorProvider,
 ) error {
 	q := `
@@ -545,7 +546,6 @@ FROM
 WHERE
 	%s
     AND organization_id = @organization_id
-    AND protocol = @protocol
     AND provider = @provider
 ORDER BY
 	created_at ASC
@@ -555,7 +555,6 @@ ORDER BY
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
-		"protocol":        protocol,
 		"provider":        provider,
 	}
 	maps.Copy(args, scope.SQLArguments())

@@ -397,7 +397,7 @@ func TestDocuSignUsesOverriddenIdentity(t *testing.T) {
 		rt := &capturingRoundTripper{}
 		client := &http.Client{Transport: rt}
 
-		driver, err := reg.NewDriver(context.Background(), client, conn, logger, reg.Endpoints)
+		driver, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), logger)
 		require.NoError(t, err)
 
 		// discoverBaseURI's userinfo call fails immediately (401 from the
@@ -416,7 +416,7 @@ func TestDocuSignUsesOverriddenIdentity(t *testing.T) {
 		rt := &capturingRoundTripper{}
 		client := &http.Client{Transport: rt}
 
-		resolver := reg.NewNameResolver(context.Background(), client, conn, logger, reg.Endpoints)
+		resolver := reg.NewNameResolver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), logger)
 		require.NotNil(t, resolver)
 
 		// A non-2xx userinfo response is the resolver's terminal case: it
