@@ -213,6 +213,61 @@ func TestCommonTrackerPattern_UpdateEnrichment_LinksThirdPartyWithoutOverride(t 
 	})
 }
 
+// TestCommonTrackerPattern_UpdateEnrichment_DiscardsVendorOnTerminal pins
+// the persist-side of the claim race: clearing the queue cannot cancel a
+// worker that already holds the row. If that worker then COALESCE-links a
+// researched vendor, a later terminal upsert is undone. The persist must
+// re-read attribution and drop the vendor instead.
+func TestCommonTrackerPattern_UpdateEnrichment_DiscardsVendorOnTerminal(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	party := seedCommonThirdParty(t, ctx, client)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	for _, verdict := range []coredata.CommonTrackerPatternAttribution{
+		coredata.CommonTrackerPatternAttributionFirstParty,
+		coredata.CommonTrackerPatternAttributionNotAttributable,
+	} {
+		t.Run(string(verdict), func(t *testing.T) {
+			t.Parallel()
+
+			require.True(t, verdict.IsTerminal(), "fixture must be a terminal verdict")
+
+			cp := coredata.CommonTrackerPattern{
+				ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType: coredata.TrackerTypeCookie,
+				Pattern:     "stale_enrich_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+				MatchType:   coredata.TrackerPatternMatchTypeExact,
+				Confidence:  0.5,
+				Attribution: verdict,
+				CreatedAt:   now,
+				UpdatedAt:   now,
+			}
+			insertCommonTrackerPattern(t, ctx, client, cp)
+
+			require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+				return cp.UpdateEnrichment(
+					ctx,
+					tx,
+					"Analytics tracker.",
+					&party.ID,
+					json.RawMessage(`{"status":"done"}`),
+				)
+			}))
+
+			assert.Nil(t, cp.CommonThirdPartyID, "in-memory state must not keep a discarded vendor")
+
+			reloaded := loadCommonTrackerPattern(t, ctx, client, cp.ID)
+			assert.Equal(t, verdict, reloaded.Attribution)
+			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal row must stay vendor-free")
+			assert.JSONEq(t, `{"status":"done"}`, string(reloaded.Enrichment))
+		})
+	}
+}
+
 // TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink pins
 // the re-trigger contract: when a blank, unlinked catalog row later
 // gains a third party through the mapping pipeline's Upsert, enrichment

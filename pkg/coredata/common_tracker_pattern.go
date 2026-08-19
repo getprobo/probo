@@ -713,7 +713,12 @@ RETURNING enrichment_attempts, last_enrichment_attempt_at
 // third-party link re-arms enrichment for a second attempt. When
 // thirdPartyID is non-nil it links the row to that third party, but only
 // when none is set yet (COALESCE) — the enrichment worker links, it never
-// overrides an attribution the mapping pipeline already resolved.
+// overrides an attribution the mapping pipeline already resolved. A
+// terminal verdict is stronger still: claim only clears the queue stamp,
+// so a worker that already held the row can finish after an upsert
+// settles FIRST_PARTY or NOT_ATTRIBUTABLE. The persist step therefore
+// re-reads attribution and discards any incoming vendor rather than
+// COALESCE-linking it onto a vendor-free row.
 func (p *CommonTrackerPattern) UpdateEnrichment(
 	ctx context.Context,
 	tx pg.Tx,
@@ -725,36 +730,55 @@ func (p *CommonTrackerPattern) UpdateEnrichment(
 UPDATE common_tracker_patterns
 SET
     description = @description,
-    common_third_party_id = COALESCE(common_third_party_id, @third_party_id),
+    common_third_party_id = CASE
+        WHEN attribution = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
+        ELSE COALESCE(common_third_party_id, @third_party_id)
+    END,
     enrichment = @enrichment,
     enrichment_requested_at = NULL,
     updated_at = NOW()
 WHERE id = @id
+RETURNING
+    description,
+    common_third_party_id,
+    enrichment,
+    enrichment_requested_at
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":             p.ID,
-		"description":    description,
-		"third_party_id": thirdPartyID,
-		"enrichment":     enrichment,
+		"id":                    p.ID,
+		"description":           description,
+		"third_party_id":        thirdPartyID,
+		"enrichment":            enrichment,
+		"terminal_attributions": terminalAttributions(),
 	}
 
-	result, err := tx.Exec(ctx, q, args)
+	var (
+		storedDescription string
+		storedThirdParty  *gid.GID
+		storedEnrichment  json.RawMessage
+		storedRequestedAt *time.Time
+	)
+
+	err := tx.QueryRow(ctx, q, args).Scan(
+		&storedDescription,
+		&storedThirdParty,
+		&storedEnrichment,
+		&storedRequestedAt,
+	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot mark common tracker pattern enriched: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
-
-	p.Description = description
-	p.Enrichment = enrichment
-	p.EnrichmentRequestedAt = nil
-
-	if p.CommonThirdPartyID == nil {
-		p.CommonThirdPartyID = thirdPartyID
-	}
+	p.Description = storedDescription
+	p.CommonThirdPartyID = storedThirdParty
+	p.Enrichment = storedEnrichment
+	p.EnrichmentRequestedAt = storedRequestedAt
 
 	return nil
 }
