@@ -250,7 +250,10 @@ func (p *CommonTrackerPattern) Upsert(
 	// attempt counter and drops the prior payload so the row reads as
 	// not-yet-completed again (see the enrichment CASE below). An incoming
 	// terminal verdict that still names a vendor does not count as gaining
-	// one: the vendor is discarded, so enrichment must stay idle.
+	// one: the vendor is discarded, and any existing queue stamp is
+	// cleared. The worker claims solely on enrichment_requested_at, then
+	// UpdateEnrichment COALESCE-links a vendor, so leaving a terminal row
+	// queued would let a later claim violate the vendor-free invariant.
 	if p.Attribution == "" {
 		p.Attribution = CommonTrackerPatternAttributionUndetermined
 	}
@@ -325,15 +328,12 @@ SET
         ELSE EXCLUDED.attribution
     END,
     enrichment_requested_at = CASE
-        WHEN NOT (
-            common_tracker_patterns.attribution
-            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
-         )
-         AND NOT (
-            EXCLUDED.attribution
-            = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
-         )
-         AND common_tracker_patterns.description = ''
+        WHEN common_tracker_patterns.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+          OR EXCLUDED.attribution
+             = ANY(@terminal_attributions::common_tracker_pattern_attribution[])
+        THEN NULL
+        WHEN common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN NOW()

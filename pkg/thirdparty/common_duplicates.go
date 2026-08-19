@@ -157,6 +157,7 @@ func FindDuplicates(entries []*CatalogEntry, minScore float64) []DuplicateCluste
 	}
 
 	items := catalogItems(entries)
+
 	pairs := scorePairs(items, minScore)
 	if len(pairs) == 0 {
 		return nil

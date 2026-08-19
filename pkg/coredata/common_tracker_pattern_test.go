@@ -498,7 +498,10 @@ func TestCommonTrackerPattern_Upsert_RoundTripsAttribution(t *testing.T) {
 // The existing-attribution guard only stops a terminal row from gaining a
 // vendor. An upsert can also *introduce* a terminal verdict, and if it carries
 // a vendor of its own the row would end up both terminal and attributed —
-// which the organization-scoped lookup then reads as vendor-attributed.
+// which the organization-scoped lookup then reads as vendor-attributed. A
+// queued undetermined row that becomes terminal must also leave the
+// enrichment queue: the worker claims on that stamp alone and can then
+// COALESCE a vendor onto the settled row.
 func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *testing.T) {
 	t.Parallel()
 
@@ -527,6 +530,7 @@ func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *test
 				Description:             "",
 				Confidence:              0.5,
 				Attribution:             coredata.CommonTrackerPatternAttributionUndetermined,
+				EnrichmentRequestedAt:   &now,
 				Enrichment:              payload,
 				EnrichmentAttempts:      2,
 				LastEnrichmentAttemptAt: &attemptAt,
@@ -553,7 +557,7 @@ func TestCommonTrackerPattern_Upsert_IncomingTerminalVerdictClearsVendor(t *test
 			reloaded := loadCommonTrackerPattern(t, ctx, client, existing.ID)
 			assert.Equal(t, verdict, reloaded.Attribution)
 			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal verdict must not persist alongside a vendor")
-			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a discarded terminal vendor must not re-queue enrichment")
+			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a terminal verdict must leave the enrichment queue")
 			assert.Equal(t, 2, reloaded.EnrichmentAttempts, "a discarded terminal vendor must leave the retry budget")
 			assert.JSONEq(t, string(payload), string(reloaded.Enrichment), "a discarded terminal vendor must keep the prior payload")
 			require.NotNil(t, reloaded.LastEnrichmentAttemptAt)
@@ -646,14 +650,15 @@ func TestCommonTrackerPattern_Upsert_PreservesTerminalVerdict(t *testing.T) {
 			pattern := "terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
 
 			terminal := coredata.CommonTrackerPattern{
-				ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-				TrackerType: coredata.TrackerTypeLocalStorage,
-				Pattern:     pattern,
-				MatchType:   coredata.TrackerPatternMatchTypeExact,
-				Confidence:  0.8,
-				Attribution: verdict,
-				CreatedAt:   now,
-				UpdatedAt:   now,
+				ID:                    gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+				TrackerType:           coredata.TrackerTypeLocalStorage,
+				Pattern:               pattern,
+				MatchType:             coredata.TrackerPatternMatchTypeExact,
+				Confidence:            0.8,
+				Attribution:           verdict,
+				EnrichmentRequestedAt: &now,
+				CreatedAt:             now,
+				UpdatedAt:             now,
 			}
 			insertCommonTrackerPattern(t, ctx, client, terminal)
 
@@ -678,6 +683,7 @@ func TestCommonTrackerPattern_Upsert_PreservesTerminalVerdict(t *testing.T) {
 			reloaded := loadCommonTrackerPattern(t, ctx, client, terminal.ID)
 			assert.Equal(t, verdict, reloaded.Attribution, "a terminal verdict must survive an automated upsert")
 			assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal row must stay vendor-free")
+			assert.Nil(t, reloaded.EnrichmentRequestedAt, "a terminal row must leave the enrichment queue")
 		})
 	}
 }
