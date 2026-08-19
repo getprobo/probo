@@ -4,6 +4,16 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.16.0] - 2026-08-19
+
+### Added
+
+- `google-consent-mode="off"` (and `data-google-consent-mode="off"` on the script tag) disables the Google Consent Mode integration entirely, for sites that already manage Consent Mode through their own CMP or GTM setup
+
+### Fixed
+
+- The Beacon-based unload report used a content type that is not CORS-safelisted, so browsers could silently drop it instead of sending it
+
 ## [0.15.0] - 2026-08-13
 
 ### Added
