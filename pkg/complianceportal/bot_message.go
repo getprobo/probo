@@ -78,7 +78,7 @@ func (r *Renderer) RenderMessage(
 		url.PathEscape(message.OrganizationID.String()),
 		"compliance-portals",
 		url.PathEscape(attributes.CompliancePortalID),
-		"access",
+		"permissions",
 	)
 	if err != nil {
 		return bot.MessageIntent{}, fmt.Errorf("cannot build access request URL: %w", err)
