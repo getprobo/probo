@@ -249,31 +249,7 @@ func handleConnectorComplete(
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
 			return
 		}
-		if connector.IsGitHubAppState(stateToken) {
-			handleGitHubAppComplete(
-				logger,
-				baseURL,
-				proboSvc,
-				accessReviewSvc,
-				connectorRegistry,
-				safeRedirect,
-			)(w, r)
-			return
-		}
-
-		provider, err := connector.ExtractProviderFromState(stateToken)
-		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot extract provider from state: %w", err))
-			return
-		}
-
-		var connectorProvider coredata.ConnectorProvider
-		if err := connectorProvider.UnmarshalText([]byte(provider)); err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
-			return
-		}
-
-		connection, state, err := connectorRegistry.CompleteWithState(r.Context(), provider, r)
+		completion, err := connectorRegistry.CompleteFromState(r.Context(), r)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
@@ -281,7 +257,17 @@ func handleConnectorComplete(
 			return
 		}
 
-		organizationID, err := gid.ParseGID(state.OrganizationID)
+		provider := completion.Provider
+
+		var connectorProvider coredata.ConnectorProvider
+		if err := connectorProvider.UnmarshalText([]byte(provider)); err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
+			return
+		}
+
+		connection := completion.Connection
+
+		organizationID, err := gid.ParseGID(completion.OrganizationID)
 		if err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse organization ID from state: %w", err))
 			return
@@ -331,7 +317,7 @@ func handleConnectorComplete(
 			// The subdomain is HMAC-signed in the state (untamperable) and was
 			// validated at initiate, but re-validate it here too — it becomes
 			// a URL host on every API call (defense-in-depth).
-			if !connector.IsValidZendeskSubdomain(state.Site) {
+			if !connector.IsValidZendeskSubdomain(completion.Site) {
 				logger.WarnCtx(r.Context(), "rejecting invalid zendesk subdomain",
 					log.String("provider", string(connectorProvider)),
 				)
@@ -341,7 +327,7 @@ func handleConnectorComplete(
 			}
 
 			raw, err := json.Marshal(&coredata.ZendeskConnectorSettings{
-				Subdomain: state.Site,
+				Subdomain: completion.Site,
 			})
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot marshal zendesk settings", log.Error(err))
@@ -353,10 +339,25 @@ func handleConnectorComplete(
 			rawSettings = raw
 		}
 
+		if completion.Protocol == connector.ProtocolGitHubApp {
+			org := completion.ProviderMetadata[connector.CompletionMetadataGitHubOrganization]
+			raw, err := json.Marshal(&coredata.GitHubConnectorSettings{
+				Organization: org,
+			})
+			if err != nil {
+				logger.ErrorCtx(r.Context(), "cannot marshal github app settings", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+				return
+			}
+
+			rawSettings = raw
+		}
+
 		// If a connector_id was passed in the state, this is a
 		// reconnection — update the existing connector's token.
-		if state.ConnectorID != "" {
-			connectorID, err := gid.ParseGID(state.ConnectorID)
+		if completion.ConnectorID != "" {
+			connectorID, err := gid.ParseGID(completion.ConnectorID)
 			if err != nil {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse connector ID from state: %w", err))
 				return
@@ -405,7 +406,7 @@ func handleConnectorComplete(
 					// Fall back to ProviderMetadata for older OAuth flows
 					// that may have surfaced the subdomain through the
 					// token response body.
-					subdomain = state.ProviderMetadata["subdomain"]
+					subdomain = completion.ProviderMetadata["subdomain"]
 				}
 
 				// The subdomain comes from an attacker-influenceable
@@ -480,7 +481,7 @@ func handleConnectorComplete(
 			}
 		}
 
-		redirectURL := state.ContinueURL
+		redirectURL := completion.ContinueURL
 		if redirectURL == "" {
 			redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
 		}
@@ -499,7 +500,7 @@ func handleConnectorComplete(
 		// Access-review sources toast missing scopes after redirect. Other
 		// continue URLs (Slack compliance page, SCIM settings, …) must not
 		// get a false missing-scope error from this access-review check.
-		if strings.Contains(state.ContinueURL, "/access-reviews/connections") {
+		if strings.Contains(completion.ContinueURL, "/access-reviews/connections") {
 			missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
 			if err != nil {
 				logger.WarnCtx(r.Context(), "cannot determine missing OAuth scopes after connector callback", log.Error(err))
