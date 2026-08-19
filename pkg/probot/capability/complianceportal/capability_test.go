@@ -790,7 +790,7 @@ func TestCapability_RenderMessageProducesChannelNeutralIntent(t *testing.T) {
 	assert.Equal(t, "compliance_access.approve_all", intent.Actions[0].ID)
 	assert.Empty(t, intent.Actions[0].Value)
 	assert.Equal(t, "compliance_access.deny_all", intent.Actions[1].ID)
-	assert.Contains(t, intent.Actions[2].URL, "/compliance-portals/"+compliancePortalID.String()+"/access")
+	assert.Contains(t, intent.Actions[2].URL, "/compliance-portals/"+compliancePortalID.String()+"/permissions")
 
 	require.Len(t, intent.Groups, 1)
 	assert.Equal(t, "Documents (1)", intent.Groups[0].Title)
