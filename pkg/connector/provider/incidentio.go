@@ -52,8 +52,8 @@ func incidentioRegistration() *Registration {
 		//
 		// No NewNameResolver: GET /v2/users carries no organization name, so
 		// the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewIncidentIODriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

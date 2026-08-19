@@ -22,12 +22,13 @@ package provider
 
 import (
 	"context"
-	"net/http"
 
 	"go.gearno.de/kit/log"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/identityfederation"
 )
 
 // Endpoints groups every host-bearing URL a provider owns, so a deployment
@@ -157,6 +158,12 @@ type Registration struct {
 	// Protocol support / GraphQL surface.
 	SupportsAPIKey            bool
 	SupportsClientCredentials bool
+	// SupportsWorkloadIdentity marks a provider that federates into a customer's
+	// cloud with OIDC instead of holding a credential. Runtime.Open fills its
+	// Handle through NewCloudSession, so its factories are written against a
+	// cloud.Session and registered with the Cloud adapter. Mutually exclusive
+	// with every key-based path.
+	SupportsWorkloadIdentity bool
 	// APIKeyExtraSettings declares the per-provider settings fields the
 	// console's API-key connect dialog renders and submits, in render order.
 	// It covers a ManagedAPIKey provider too (Crisp): the customer supplies
@@ -239,21 +246,42 @@ type Registration struct {
 	// Probe runs a provider-specific connection check when a plain GET
 	// against ProbeURL/BuildProbeURL is insufficient (e.g. GraphQL POST,
 	// extra headers, or multi-host region probing). Takes precedence over
-	// ProbeURL and BuildProbeURL when set. It receives the registration's
-	// resolved Endpoints for the same reason BuildProbeURL does.
-	Probe func(context.Context, *http.Client, *coredata.Connector, Endpoints) error
+	// ProbeURL and BuildProbeURL when set.
+	Probe func(context.Context, *Handle) error
 
-	// Factory closures — wired by Stages 2 and 3.
-	// NewDriver and NewNameResolver receive the registration's resolved
-	// Endpoints as their last argument rather than closing over it. The
-	// closures are written inside a &Registration{...} composite literal and
-	// so cannot reference the value being built; capturing a copy declared
-	// above the literal would compile and test green while silently ignoring
-	// any later override of reg.Endpoints. Passing it at call time makes that
-	// failure unrepresentable.
-	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) (drivers.Driver, error)
-	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger, Endpoints) drivers.NameResolver
+	// Factory closures. Each takes the opened connector as a *Handle so one
+	// field serves both credential families: a provider declares the factory it
+	// can write — against an *http.Client or against a cloud.Session — through
+	// the matching adapter (HTTP, Cloud, HTTPNameResolver, HTTPProbe,
+	// HTTPOrganizations), and nothing above them branches on protocol.
+	//
+	// An adapted closure receives the registration's resolved Endpoints rather
+	// than closing over them: the closure sits inside a &Registration{...}
+	// composite literal and so cannot reference the value being built, and
+	// capturing a copy declared above the literal would compile and test green
+	// while silently ignoring any later override of reg.Endpoints.
+	NewDriver       func(context.Context, *Handle, *log.Logger) (drivers.Driver, error)
+	NewNameResolver func(context.Context, *Handle, *log.Logger) drivers.NameResolver
+	// ListOrganizations lists the orgs/workspaces/teams a connection can be
+	// scoped to, for the picker UI. Nil for a provider whose scope is captured
+	// during the OAuth callback (PagerDuty's subdomain, Vercel's team, Datadog's
+	// domain, Zendesk's subdomain) and for one that has no scope at all.
+	ListOrganizations       func(context.Context, *Handle) ([]drivers.Organization, error)
 	SetOrganizationSettings func(*coredata.Connector, string) error
+
+	// NewCloudSession performs the credential exchange behind a workload
+	// identity connector. It has no HTTP counterpart because the OAuth2 and
+	// API-key protocols carry their credential in the connection row, whereas
+	// this one holds none and mints it per use.
+	//
+	// It takes the issuer at call time for the same reason an adapted factory
+	// takes its Endpoints: the closure sits in a literal assembled at startup,
+	// before any issuer exists.
+	NewCloudSession func(
+		ctx context.Context,
+		issuer *identityfederation.Issuer,
+		conn *coredata.Connector,
+	) (cloud.Session, error)
 }
 
 // ExtraSetting describes one extra per-provider settings field

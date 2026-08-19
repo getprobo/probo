@@ -55,7 +55,7 @@ func scalewayRegistration() *Registration {
 		// No NewNameResolver: Scaleway exposes no read-only endpoint that maps
 		// an Organization UUID to its display name, so the source keeps its
 		// generic name.
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read scaleway connector settings: %w", err)
@@ -66,6 +66,6 @@ func scalewayRegistration() *Registration {
 			}
 
 			return drivers.NewScalewayDriver(c, s.OrganizationID, ep.APIBase), nil
-		},
+		}),
 	}
 }

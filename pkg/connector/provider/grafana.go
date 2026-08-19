@@ -40,7 +40,7 @@ func grafanaRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read grafana connector settings: %w", err)
@@ -52,8 +52,8 @@ func grafanaRegistration() *Registration {
 			}
 
 			return drivers.NewGrafanaDriver(c, baseURL), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read grafana connector settings", log.Error(err))
@@ -67,6 +67,6 @@ func grafanaRegistration() *Registration {
 			}
 
 			return drivers.NewGrafanaNameResolver(c, baseURL)
-		},
+		}),
 	}
 }

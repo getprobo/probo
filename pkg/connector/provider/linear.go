@@ -41,13 +41,13 @@ func linearRegistration() *Registration {
 			// verbatim rather than joining a path onto it.
 			APIBase: "https://api.linear.app/graphql",
 		},
-		Probe:        probeLinear,
+		Probe:        HTTPProbe(probeLinear),
 		OAuth2Scopes: []string{"read"},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewLinearDriver(c, ep.APIBase), nil
-		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
 			return drivers.NewLinearNameResolver(c, ep.APIBase)
-		},
+		}),
 	}
 }

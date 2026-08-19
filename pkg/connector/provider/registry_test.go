@@ -21,20 +21,50 @@
 package provider_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/identityfederation"
+)
+
+// Register validates which closures are present, never what they return. Slack
+// stands in below only because it is a valid provider constant.
+func stubNewCloudSession(
+	context.Context,
+	*identityfederation.Issuer,
+	*coredata.Connector,
+) (cloud.Session, error) {
+	return nil, nil
+}
+
+// stubCloudDriver is what a workload identity provider registers: one NewDriver
+// field, adapted for the cloud.Session its Handle carries.
+var stubCloudDriver = provider.Cloud(
+	func(
+		context.Context,
+		cloud.Session,
+		*coredata.Connector,
+		*log.Logger,
+	) (drivers.Driver, error) {
+		return nil, nil
+	},
 )
 
 // TestEveryProviderRegistered asserts that every
 // coredata.ConnectorProvider constant has a matching Registration in
 // the registry, that the registration carries the minimum metadata
-// (Provider, DisplayName), and that the access-review NewDriver
-// closure is wired — so the provider can actually drive a review.
+// (Provider, DisplayName), and that a driver closure is wired — so the
+// provider can actually drive a review. One field covers both credential
+// families: an HTTP provider adapts its factory with provider.HTTP, a workload
+// identity one with provider.Cloud.
 func TestEveryProviderRegistered(t *testing.T) {
 	t.Parallel()
 
@@ -49,7 +79,7 @@ func TestEveryProviderRegistered(t *testing.T) {
 			require.NotNil(t, reg, "provider %q Registration is nil", p)
 			require.Equalf(t, p, reg.Provider, "provider %q has mismatching Registration.Provider", p)
 			assert.NotEmptyf(t, reg.DisplayName, "provider %q has empty DisplayName", p)
-			assert.NotNilf(t, reg.NewDriver, "provider %q has nil NewDriver", p)
+			assert.NotNilf(t, reg.NewDriver, "provider %q wires no NewDriver", p)
 		})
 	}
 }
@@ -296,6 +326,101 @@ func TestRegistry_Register(t *testing.T) {
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "RequiresManagedResourceID requires ManagedAPIKey")
+	})
+
+	t.Run("SupportsWorkloadIdentity excludes the key-based paths", func(t *testing.T) {
+		t.Parallel()
+
+		for _, tc := range []struct {
+			name string
+			reg  *provider.Registration
+		}{
+			{
+				name: "SupportsAPIKey",
+				reg: &provider.Registration{
+					Provider:                 coredata.ConnectorProviderSlack,
+					DisplayName:              "Slack",
+					SupportsWorkloadIdentity: true,
+					SupportsAPIKey:           true,
+					NewCloudSession:          stubNewCloudSession,
+					NewDriver:                stubCloudDriver,
+				},
+			},
+			{
+				name: "SupportsClientCredentials",
+				reg: &provider.Registration{
+					Provider:                  coredata.ConnectorProviderSlack,
+					DisplayName:               "Slack",
+					SupportsWorkloadIdentity:  true,
+					SupportsClientCredentials: true,
+					NewCloudSession:           stubNewCloudSession,
+					NewDriver:                 stubCloudDriver,
+				},
+			},
+			{
+				name: "ManagedAPIKey",
+				reg: &provider.Registration{
+					Provider:                 coredata.ConnectorProviderSlack,
+					DisplayName:              "Slack",
+					SupportsWorkloadIdentity: true,
+					ManagedAPIKey:            true,
+					NewCloudSession:          stubNewCloudSession,
+					NewDriver:                stubCloudDriver,
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				r := provider.NewRegistry()
+				err := r.Register(tc.reg)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "SupportsWorkloadIdentity is mutually exclusive")
+			})
+		}
+	})
+
+	t.Run("NewCloudSession requires SupportsWorkloadIdentity", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:        coredata.ConnectorProviderSlack,
+			DisplayName:     "Slack",
+			NewCloudSession: stubNewCloudSession,
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "NewCloudSession requires SupportsWorkloadIdentity")
+	})
+
+	// Open fills a workload identity Handle through NewCloudSession, so without
+	// it every capability on that Handle fails at use time.
+	t.Run("SupportsWorkloadIdentity requires NewCloudSession", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:                 coredata.ConnectorProviderSlack,
+			DisplayName:              "Slack",
+			SupportsWorkloadIdentity: true,
+			NewDriver:                stubCloudDriver,
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "SupportsWorkloadIdentity requires NewCloudSession")
+	})
+
+	t.Run("complete workload identity Registration", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:                 coredata.ConnectorProviderSlack,
+			DisplayName:              "Slack",
+			SupportsWorkloadIdentity: true,
+			NewCloudSession:          stubNewCloudSession,
+			NewDriver:                stubCloudDriver,
+		})
+		require.NoError(t, err)
 	})
 
 	t.Run("duplicate registration", func(t *testing.T) {

@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -43,6 +44,19 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 		dbConnector := coredata.Connector{
 			Protocol:   coredata.ConnectorProtocolAPIKey,
 			Connection: &connector.APIKeyConnection{APIKey: "k"},
+		}
+
+		assert.Empty(t, missingOAuthScopesForConnector(dbConnector, required))
+	})
+
+	// A missing scope on a connector that cannot be reconnected would pin the
+	// console badge to RECONNECT_REQUIRED with no action able to clear it.
+	t.Run("workload identity protocol returns empty", func(t *testing.T) {
+		t.Parallel()
+
+		dbConnector := coredata.Connector{
+			Protocol:   coredata.ConnectorProtocolWorkloadIdentity,
+			Connection: &connector.WorkloadIdentityConnection{Cloud: cloud.AWS},
 		}
 
 		assert.Empty(t, missingOAuthScopesForConnector(dbConnector, required))

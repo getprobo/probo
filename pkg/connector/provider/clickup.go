@@ -44,7 +44,7 @@ func clickupRegistration() *Registration {
 			// endpoint lives on app.clickup.com and is unrelated.
 			APIBase: "https://api.clickup.com/api/v2",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
@@ -55,8 +55,8 @@ func clickupRegistration() *Registration {
 			}
 
 			return drivers.NewClickUpDriver(c, s.TeamID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read clickup connector settings", log.Error(err))
@@ -64,7 +64,8 @@ func clickupRegistration() *Registration {
 			}
 
 			return drivers.NewClickUpNameResolver(c, s.TeamID, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListClickUpOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, teamID string) error {
 			return c.SetSettings(&coredata.ClickUpConnectorSettings{TeamID: teamID})
 		},

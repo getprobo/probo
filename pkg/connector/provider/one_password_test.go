@@ -96,7 +96,7 @@ func TestOnePassword_NewDriver_DispatchByGrantType(t *testing.T) {
 			},
 		}
 
-		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.OnePasswordUsersAPIDriver{}, drv)
 	})
@@ -118,7 +118,7 @@ func TestOnePassword_NewDriver_DispatchByGrantType(t *testing.T) {
 			Connection:  &connector.APIKeyConnection{APIKey: "scim-token"},
 		}
 
-		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.OnePasswordDriver{}, drv)
 	})
@@ -139,7 +139,7 @@ func TestOnePassword_NewDriver_DispatchByGrantType(t *testing.T) {
 			},
 		}
 
-		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.OnePasswordDriver{}, drv)
 	})
@@ -154,7 +154,7 @@ func TestOnePassword_NewDriver_DispatchByGrantType(t *testing.T) {
 			},
 		}
 
-		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		_, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "scim_bridge_url is required")
 	})

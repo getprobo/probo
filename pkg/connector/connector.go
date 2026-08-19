@@ -64,9 +64,15 @@ type (
 		Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, string, error) // returns: connection, organizationID, continueURL, error
 	}
 
+	// Connection is what a connector row STORES: the credential material that
+	// is marshalled into the encrypted blob, plus the grant it represents.
+	//
+	// It deliberately says nothing about how that credential is used. A
+	// WORKLOAD_IDENTITY connection holds no credential at all and mints one per
+	// use, so no single "give me a transport" method fits every protocol.
+	// provider.Runtime.Open turns a stored connection into something usable.
 	Connection interface {
 		Type() ProtocolType
-		Client(ctx context.Context) (*http.Client, error)
 		Scopes() []string
 
 		json.Unmarshaler
@@ -75,8 +81,9 @@ type (
 )
 
 const (
-	ProtocolOAuth2 ProtocolType = "OAUTH2"
-	ProtocolAPIKey ProtocolType = "API_KEY"
+	ProtocolOAuth2           ProtocolType = "OAUTH2"
+	ProtocolAPIKey           ProtocolType = "API_KEY"
+	ProtocolWorkloadIdentity ProtocolType = "WORKLOAD_IDENTITY"
 )
 
 func UnmarshalConnection(protocol string, provider string, data []byte) (Connection, error) {
@@ -104,6 +111,14 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 		var conn APIKeyConnection
 		if err := json.Unmarshal(data, &conn); err != nil {
 			return nil, fmt.Errorf("cannot unmarshal api key connection: %w", err)
+		}
+
+		return &conn, nil
+
+	case string(ProtocolWorkloadIdentity):
+		var conn WorkloadIdentityConnection
+		if err := json.Unmarshal(data, &conn); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal workload identity connection: %w", err)
 		}
 
 		return &conn, nil

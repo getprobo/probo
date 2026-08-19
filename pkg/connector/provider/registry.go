@@ -136,6 +136,28 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: RequiresManagedResourceID requires ManagedAPIKey", reg.Provider)
 	}
 
+	// A workload identity provider holds no credential, so a key-based path
+	// would advertise a field it can never use, and the two families select
+	// different driver factories — the silent-winner class rejected above.
+	if reg.SupportsWorkloadIdentity &&
+		(reg.SupportsAPIKey || reg.SupportsClientCredentials || reg.ManagedAPIKey) {
+		return fmt.Errorf("cannot register connector provider %q: SupportsWorkloadIdentity is mutually exclusive with SupportsAPIKey, SupportsClientCredentials, and ManagedAPIKey", reg.Provider)
+	}
+
+	// NewCloudSession without the flag is silently ineffective: the driver
+	// catalog gate and the mutual exclusions above both read the flag, so the
+	// provider would advertise a key-based path it cannot serve.
+	if reg.NewCloudSession != nil && !reg.SupportsWorkloadIdentity {
+		return fmt.Errorf("cannot register connector provider %q: NewCloudSession requires SupportsWorkloadIdentity", reg.Provider)
+	}
+
+	// Open fills a workload identity Handle through NewCloudSession, so without
+	// it every capability on that Handle fails at use time — on a provider the
+	// catalog advertised as connectable.
+	if reg.SupportsWorkloadIdentity && reg.NewCloudSession == nil {
+		return fmt.Errorf("cannot register connector provider %q: SupportsWorkloadIdentity requires NewCloudSession", reg.Provider)
+	}
+
 	// A Probe on a different host from APIBase (or Identity) would let a
 	// deployment move the driver to another host while the connection check
 	// keeps hitting the real provider — a half-migrated connector that

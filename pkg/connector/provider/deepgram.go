@@ -52,8 +52,8 @@ func deepgramRegistration() *Registration {
 		//
 		// No NewNameResolver: an account may span several projects, so there
 		// is no single instance name; the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewDeepgramDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

@@ -46,8 +46,8 @@ func calComRegistration() *Registration {
 			"TEAM_MEMBERSHIP_READ",
 			"ORG_MEMBERSHIP_READ",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewCalComDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

@@ -53,12 +53,12 @@ func upcloudRegistration() *Registration {
 			// sub-account token, which authenticates but sees nothing.
 			Probe: "https://api.upcloud.com/1.3/account/list",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewUpCloudDriver(c, logger.Named("upcloud"), ep.APIBase), nil
-		},
+		}),
 		// GET /1.3/account names the source after the token's own account.
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
 			return drivers.NewUpCloudNameResolver(c, ep.APIBase)
-		},
+		}),
 	}
 }

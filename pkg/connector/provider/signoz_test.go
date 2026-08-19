@@ -70,10 +70,8 @@ func TestSigNozNewNameResolver(t *testing.T) {
 
 	resolver := reg.NewNameResolver(
 		context.Background(),
-		httpclient.DefaultClient(httpclient.WithSSRFProtection()),
-		conn,
+		provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())),
 		nil,
-		reg.Endpoints,
 	)
 	require.NotNil(t, resolver)
 }
@@ -99,7 +97,7 @@ func TestSigNozNewDriver(t *testing.T) {
 			RawSettings: raw,
 		}
 
-		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.SigNozDriver{}, drv)
 	})
@@ -112,7 +110,7 @@ func TestSigNozNewDriver(t *testing.T) {
 			RawSettings: []byte(`{}`),
 		}
 
-		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		_, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "base_url is required")
 	})
@@ -130,7 +128,7 @@ func TestSigNozNewDriver(t *testing.T) {
 			RawSettings: raw,
 		}
 
-		_, err = reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		_, err = reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "base_url must be an http(s) URL")
 	})

@@ -538,6 +538,15 @@ func (impl *Implm) Run(
 		}
 	}
 
+	// Everything that USES a connector goes through this runtime: it is the
+	// provider catalog plus the deployment-held material an open needs, so no
+	// consumer decides whether a connector speaks HTTP or a cloud SDK.
+	connectorRuntime := provider.NewRuntime(
+		providerRegistry,
+		defaultConnectorRegistry,
+		identityFederationIssuer,
+	)
+
 	oauth2ScopeRegistry := oauth2scope.NewRegistry().
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
@@ -757,8 +766,7 @@ func (impl *Implm) Run(
 	accessReviewService := accessreview.NewService(
 		pgClient,
 		encryptionKey,
-		defaultConnectorRegistry,
-		providerRegistry,
+		connectorRuntime,
 		l.Named("access-review"),
 	)
 

@@ -43,7 +43,7 @@ func netlifyRegistration() *Registration {
 			// prefix, so the version segment stays in APIBase.
 			APIBase: "https://api.netlify.com/api/v1",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read netlify connector settings: %w", err)
@@ -54,8 +54,8 @@ func netlifyRegistration() *Registration {
 			}
 
 			return drivers.NewNetlifyDriver(c, s.AccountSlug, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read netlify connector settings", log.Error(err))
@@ -63,7 +63,8 @@ func netlifyRegistration() *Registration {
 			}
 
 			return drivers.NewNetlifyNameResolver(c, s.AccountSlug, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListNetlifyOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, accountSlug string) error {
 			return c.SetSettings(&coredata.NetlifyConnectorSettings{AccountSlug: accountSlug})
 		},
