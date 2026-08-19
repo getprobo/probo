@@ -26,15 +26,8 @@ import (
 	"net/http"
 )
 
-const (
-	// CompletionMetadataGitHubOrganization is the installed GitHub org login
-	// surfaced by a GitHub App callback for connector settings persistence.
-	CompletionMetadataGitHubOrganization = "github_organization"
-)
+const CompletionMetadataGitHubOrganization = "github_organization"
 
-// CompletionState is the protocol-neutral result of finishing a connector
-// install or reconnect callback. HTTP handlers use it to create or update the
-// connector row and build the post-auth redirect.
 type CompletionState struct {
 	Provider         string
 	Protocol         ProtocolType
@@ -46,8 +39,6 @@ type CompletionState struct {
 	ProviderMetadata map[string]string
 }
 
-// CompleteOAuth2FromRequest completes an OAuth2 connector callback and
-// returns a normalized completion payload.
 func (r *ConnectorRegistry) CompleteOAuth2FromRequest(
 	ctx context.Context,
 	req *http.Request,
@@ -60,8 +51,6 @@ func (r *ConnectorRegistry) CompleteOAuth2FromRequest(
 	return r.completeOAuth2FromState(ctx, req, stateToken)
 }
 
-// CompleteGitHubAppFromRequest completes a GitHub App installation callback
-// and returns a normalized completion payload.
 func (r *ConnectorRegistry) CompleteGitHubAppFromRequest(
 	ctx context.Context,
 	req *http.Request,

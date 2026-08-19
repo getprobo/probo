@@ -516,6 +516,45 @@ spec:
                   key: acme-account-key
             {{- end }}
             {{- end }}
+            # Slackbot assistant
+            {{- if .Values.probo.slackbot.enabled }}
+            {{- if eq .Values.probo.slackbot.provider "openai" }}
+            {{- $_ := required "probo.openai.apiKey is required when Slackbot uses the OpenAI provider" .Values.probo.openai.apiKey }}
+            {{- end }}
+            {{- if eq .Values.probo.slackbot.provider "anthropic" }}
+            {{- $_ := required "probo.anthropic.apiKey is required when Slackbot uses the Anthropic provider" .Values.probo.anthropic.apiKey }}
+            {{- end }}
+            - name: PROBOD_SLACKBOT_ENABLED
+              value: "true"
+            - name: PROBOD_SLACKBOT_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-signing-secret
+            - name: PROBOD_SLACKBOT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-client-id
+            - name: PROBOD_SLACKBOT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: slackbot-client-secret
+            - name: PROBOD_SLACKBOT_REDIRECT_URI
+              value: {{ required "probo.slackbot.redirectUri is required when Slackbot is enabled" .Values.probo.slackbot.redirectUri | quote }}
+            - name: PROBOD_AGENT_SLACKBOT_PROVIDER
+              value: {{ required "probo.slackbot.provider is required when Slackbot is enabled" .Values.probo.slackbot.provider | quote }}
+            - name: PROBOD_AGENT_SLACKBOT_MODEL_NAME
+              value: {{ required "probo.slackbot.modelName is required when Slackbot is enabled" .Values.probo.slackbot.modelName | quote }}
+            {{- if .Values.probo.slackbot.temperature }}
+            - name: PROBOD_AGENT_SLACKBOT_TEMPERATURE
+              value: {{ .Values.probo.slackbot.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.slackbot.maxTokens }}
+            - name: PROBOD_AGENT_SLACKBOT_MAX_TOKENS
+              value: {{ .Values.probo.slackbot.maxTokens | quote }}
+            {{- end }}
             {{- end }}
             # Connectors
             {{- range .Values.probo.connectors }}
