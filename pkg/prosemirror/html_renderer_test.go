@@ -418,3 +418,58 @@ func TestRenderHTML_UnknownMarkType(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown type")
 }
+
+func TestRenderHTML_NodesWithoutAttrs(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		raw      string
+		expected string
+	}{
+		{
+			name:     "heading",
+			raw:      `{"type":"heading","content":[{"type":"text","text":"X"}]}`,
+			expected: `<h1>X</h1>`,
+		},
+		{
+			name:     "ordered list",
+			raw:      `{"type":"orderedList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item"}]}]}]}`,
+			expected: `<ol><li><p>item</p></li></ol>`,
+		},
+		{
+			name:     "table cell",
+			raw:      `{"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","text":"X"}]}]}`,
+			expected: `<td><p>X</p></td>`,
+		},
+		{
+			name:     "table header",
+			raw:      `{"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"X"}]}]}`,
+			expected: `<th><p>X</p></th>`,
+		},
+		{
+			name:     "empty attrs object",
+			raw:      `{"type":"tableCell","attrs":{},"content":[{"type":"paragraph","content":[{"type":"text","text":"X"}]}]}`,
+			expected: `<td><p>X</p></td>`,
+		},
+		{
+			name:     "image",
+			raw:      `{"type":"image"}`,
+			expected: `<img src="">`,
+		},
+	} {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				var n Node
+				require.NoError(t, json.Unmarshal([]byte(tc.raw), &n))
+
+				got, err := RenderHTML(n)
+				require.NoError(t, err)
+				assert.Equal(t, tc.expected, got)
+			},
+		)
+	}
+}
