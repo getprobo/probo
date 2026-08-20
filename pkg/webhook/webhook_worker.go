@@ -131,6 +131,9 @@ func NewWebhookWorker(
 	if cfg.StaleAfter <= 0 {
 		cfg.StaleAfter = defaultStaleAfter
 	}
+	if cfg.StaleAfter <= cfg.Timeout {
+		cfg.StaleAfter = cfg.Timeout + time.Minute
+	}
 	if cfg.RetryBase <= 0 {
 		cfg.RetryBase = defaultRetryBase
 	}
@@ -409,6 +412,9 @@ func (h *webhookHandler) getSigningSecret(
 	webhookSubscriptionID string,
 	encryptedSigningSecret []byte,
 ) (string, error) {
+	h.cacheMu.Lock()
+	defer h.cacheMu.Unlock()
+
 	if cached, ok := h.cache.Load(webhookSubscriptionID); ok {
 		entry := cached.(*cachedSecret)
 		if bytes.Equal(entry.encryptedSecret, encryptedSigningSecret) {
@@ -523,6 +529,9 @@ func parseRetryAfter(value string, now time.Time) (time.Duration, bool) {
 	if seconds, err := strconv.ParseInt(value, 10, 64); err == nil {
 		if seconds < 0 {
 			return 0, false
+		}
+		if seconds > int64(time.Duration(1<<63-1)/time.Second) {
+			return time.Duration(1<<63 - 1), true
 		}
 
 		return time.Duration(seconds) * time.Second, true

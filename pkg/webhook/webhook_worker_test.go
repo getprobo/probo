@@ -146,4 +146,8 @@ func TestParseRetryAfter_ParsesSecondsAndHTTPDate(t *testing.T) {
 
 	_, ok = parseRetryAfter("invalid", now)
 	assert.False(t, ok)
+
+	delay, ok = parseRetryAfter("9223372036854775807", now)
+	assert.True(t, ok)
+	assert.Equal(t, time.Duration(1<<63-1), delay)
 }

@@ -404,8 +404,8 @@ func ResetStaleWebhookEvents(
 UPDATE webhook_events
 SET
     status = CASE
-        WHEN attempt_count >= max_attempts THEN @failed_status
-        ELSE @pending_status
+        WHEN attempt_count >= max_attempts THEN @failed_status::webhook_event_status
+        ELSE @pending_status::webhook_event_status
     END,
     processing_owner_token = NULL,
     processing_started_at = NULL,

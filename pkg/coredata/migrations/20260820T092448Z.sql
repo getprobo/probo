@@ -27,7 +27,7 @@ ALTER TABLE webhook_events
     ADD COLUMN last_error TEXT,
     ADD COLUMN completed_at TIMESTAMP WITH TIME ZONE,
     ADD COLUMN dead_lettered_at TIMESTAMP WITH TIME ZONE,
-    ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE;
+    ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
 UPDATE webhook_events
 SET
@@ -37,8 +37,6 @@ SET
     updated_at = created_at;
 
 ALTER TABLE webhook_events
-    ALTER COLUMN attempt_count DROP DEFAULT,
-    ALTER COLUMN max_attempts DROP DEFAULT,
     ALTER COLUMN updated_at SET NOT NULL,
     ADD CONSTRAINT webhook_events_data_subscription_unique
         UNIQUE (webhook_data_id, webhook_subscription_id);
