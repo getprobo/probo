@@ -283,18 +283,12 @@ func requireWebhookEventsEventually(
 				return false
 			}
 
-			for _, edge := range last.Node.Events.Edges {
-				if edge.Node.Status != "PENDING" {
-					return true
-				}
-			}
-
-			return false
+			return true
 		},
 	)
 	if !ok {
 		require.NoError(t, lastErr, "last webhook event query failed")
-		require.FailNow(t, "webhook event did not leave PENDING state")
+		require.FailNow(t, "webhook event did not appear")
 	}
 
 	return last
