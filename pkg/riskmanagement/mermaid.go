@@ -190,14 +190,12 @@ func buildDiagramMermaidChart(
 	var b strings.Builder
 	b.WriteString("flowchart LR\n")
 
-	// class statements must live at the flowchart level, not inside a
-	// subgraph block, so collect them and emit once all shapes are written.
-	var classLines []string
+	// `class <subgraphId>` creates a duplicate node on the cluster.
+	var styleLines []string
 
 	emitNode := func(n *coredata.RiskAnalysisNode, indent string) {
 		id := nodeAlias[n.ID]
 		fmt.Fprintf(&b, "%s%s\n", indent, mermaidNodeShape(n.NodeType, id, n.Name))
-		classLines = append(classLines, fmt.Sprintf("  class %s %s", id, mermaidNodeClass(n.NodeType)))
 	}
 
 	var emitBoundary func(bnd *coredata.RiskAnalysisBoundary, indent string)
@@ -205,6 +203,7 @@ func buildDiagramMermaidChart(
 	emitBoundary = func(bnd *coredata.RiskAnalysisBoundary, indent string) {
 		alias := boundaryAlias[bnd.ID]
 		fmt.Fprintf(&b, "%ssubgraph %s[\"%s\"]\n", indent, alias, mermaidLabel(bnd.Name))
+		fmt.Fprintf(&b, "%s  direction TB\n", indent)
 
 		inner := indent + "  "
 		for _, child := range childBoundaries[bnd.ID] {
@@ -217,7 +216,7 @@ func buildDiagramMermaidChart(
 
 		fmt.Fprintf(&b, "%send\n", indent)
 
-		classLines = append(classLines, fmt.Sprintf("  class %s nodeBoundary", alias))
+		styleLines = append(styleLines, fmt.Sprintf("  style %s %s", alias, mermaidBoundaryStyle))
 	}
 
 	for _, bnd := range rootBoundaries {
@@ -228,7 +227,7 @@ func buildDiagramMermaidChart(
 		emitNode(n, "  ")
 	}
 
-	for _, line := range classLines {
+	for _, line := range styleLines {
 		b.WriteString(line + "\n")
 	}
 
@@ -264,13 +263,12 @@ func buildDiagramMermaidChart(
 			fmt.Sprintf("%s (%s)", t.Name, t.Category),
 			mermaidThreatLabelWrapWidth,
 		)
-		fmt.Fprintf(&b, "  %s{{\"%s\"}}\n", tid, label)
-		fmt.Fprintf(&b, "  class %s nodeThreat\n", tid)
+		fmt.Fprintf(&b, "  %s{{\"%s\"}}:::nodeThreat\n", tid, label)
 		fmt.Fprintf(&b, "  %s -.-> %s\n", tid, targetAlias)
 	}
 
 	b.WriteString("  classDef nodeEntity fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a\n")
-	b.WriteString("  classDef nodeBoundary fill:#ffffff,stroke:#b45309,color:#78350f\n")
+	b.WriteString("  classDef nodeBoundary " + mermaidBoundaryStyle + "\n")
 	b.WriteString("  classDef nodeAsset fill:#e5e7eb,stroke:#374151,color:#111827\n")
 	b.WriteString("  classDef nodeData fill:#dcfce7,stroke:#15803d,color:#14532d\n")
 	b.WriteString("  classDef nodeThreat fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d\n")
@@ -280,16 +278,17 @@ func buildDiagramMermaidChart(
 
 func mermaidNodeShape(t coredata.RiskAnalysisNodeType, id, name string) string {
 	label := `"` + mermaidLabel(name) + `"`
+	class := mermaidNodeClass(t)
 
 	switch t {
 	case coredata.RiskAnalysisNodeTypeEntity:
-		return fmt.Sprintf("%s([%s])", id, label)
+		return fmt.Sprintf("%s([%s]):::%s", id, label, class)
 	case coredata.RiskAnalysisNodeTypeData:
-		return fmt.Sprintf("%s[(%s)]", id, label)
+		return fmt.Sprintf("%s[(%s)]:::%s", id, label, class)
 	case coredata.RiskAnalysisNodeTypeAsset:
 		fallthrough
 	default:
-		return fmt.Sprintf("%s[%s]", id, label)
+		return fmt.Sprintf("%s[%s]:::%s", id, label, class)
 	}
 }
 
@@ -309,6 +308,7 @@ func mermaidNodeClass(t coredata.RiskAnalysisNodeType) string {
 const (
 	mermaidLabelWrapWidth       = 28
 	mermaidThreatLabelWrapWidth = 20
+	mermaidBoundaryStyle        = "fill:#ffffff,stroke:#b45309,color:#78350f"
 )
 
 var (

@@ -268,4 +268,106 @@ func TestBuildDiagramMermaidChart_WrapsLabels(t *testing.T) {
 	assert.Contains(t, chart, `\n`)
 	assert.NotContains(t, chart, "<br>")
 	assert.Contains(t, chart, "&amp;")
+	assert.Contains(t, chart, ":::nodeAsset")
+	assert.Contains(t, chart, ":::nodeData")
+	assert.Contains(t, chart, ":::nodeThreat")
+	assert.NotRegexp(t, `(?m)^\s*class `, chart)
+}
+
+func TestBuildDiagramMermaidChart_BoundaryDoesNotDuplicateInnerNode(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	boundaryID := gid.New(tenantID, coredata.RiskAnalysisBoundaryEntityType)
+	nodeID := gid.New(tenantID, coredata.RiskAnalysisNodeEntityType)
+	processID := gid.New(tenantID, coredata.RiskAnalysisProcessEntityType)
+	sourceID := gid.New(tenantID, coredata.RiskAnalysisNodeEntityType)
+
+	const label = "EU representative and supervisory authority"
+
+	chart := buildDiagramMermaidChart(
+		coredata.RiskAnalysisNodes{
+			{
+				ID:       sourceID,
+				NodeType: coredata.RiskAnalysisNodeTypeAsset,
+				Name:     "Probo",
+			},
+			{
+				ID:         nodeID,
+				BoundaryID: &boundaryID,
+				NodeType:   coredata.RiskAnalysisNodeTypeEntity,
+				Name:       label,
+			},
+		},
+		coredata.RiskAnalysisBoundaries{
+			{
+				ID:   boundaryID,
+				Name: label,
+			},
+		},
+		coredata.RiskAnalysisProcesses{
+			{
+				ID:           processID,
+				SourceNodeID: sourceID,
+				TargetNodeID: nodeID,
+				Name:         "Appoint representative",
+			},
+		},
+		coredata.RiskAnalysisThreats{
+			{
+				ProcessID: processID,
+				Name:      "No EU representative",
+				Category:  "regulatory",
+			},
+		},
+	)
+
+	require.NotEmpty(t, chart)
+	assert.Contains(t, chart, `subgraph b0["`+mermaidLabel(label)+`"]`)
+	assert.Contains(t, chart, "direction TB")
+	assert.Contains(t, chart, mermaidNodeShape(coredata.RiskAnalysisNodeTypeEntity, "n1", label))
+	assert.Contains(t, chart, "  style b0 "+mermaidBoundaryStyle)
+	assert.NotContains(t, chart, "class b0")
+	assert.NotRegexp(t, `(?m)^\s*class `, chart)
+}
+
+func TestBuildDiagramMermaidChart_NestedBoundaryKeepsInnerDirection(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	parentID := gid.New(tenantID, coredata.RiskAnalysisBoundaryEntityType)
+	childID := gid.New(tenantID, coredata.RiskAnalysisBoundaryEntityType)
+	nodeID := gid.New(tenantID, coredata.RiskAnalysisNodeEntityType)
+
+	chart := buildDiagramMermaidChart(
+		coredata.RiskAnalysisNodes{
+			{
+				ID:         nodeID,
+				BoundaryID: &childID,
+				NodeType:   coredata.RiskAnalysisNodeTypeData,
+				Name:       "Customer records",
+			},
+		},
+		coredata.RiskAnalysisBoundaries{
+			{
+				ID:   parentID,
+				Name: "EU",
+			},
+			{
+				ID:               childID,
+				ParentBoundaryID: &parentID,
+				Name:             "Processors",
+			},
+		},
+		nil,
+		nil,
+	)
+
+	require.NotEmpty(t, chart)
+	assert.Regexp(t, `(?m)^\s+subgraph b0\["EU"\]$`, chart)
+	assert.Regexp(t, `(?m)^\s+subgraph b1\["Processors"\]$`, chart)
+	assert.Equal(t, 2, strings.Count(chart, "direction TB"))
+	assert.Contains(t, chart, "  style b0 "+mermaidBoundaryStyle)
+	assert.Contains(t, chart, "  style b1 "+mermaidBoundaryStyle)
+	assert.NotRegexp(t, `(?m)^\s*class `, chart)
 }
