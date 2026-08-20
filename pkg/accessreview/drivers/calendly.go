@@ -301,6 +301,7 @@ func calendlyUserEndpoint(baseURL, userURI string) (string, error) {
 	}
 
 	basePath := strings.TrimSuffix(base.EscapedPath(), "/")
+
 	userPathPrefix := basePath + "/users/"
 	if !strings.HasPrefix(user.EscapedPath(), userPathPrefix) {
 		return "", fmt.Errorf("calendly user URI must identify a user resource")
