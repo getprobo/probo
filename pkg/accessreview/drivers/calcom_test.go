@@ -106,19 +106,85 @@ func TestCalComDriver_ListAccounts(t *testing.T) {
 	assert.Equal(t, "7777", pendingAdmin.ExternalID)
 }
 
-func TestCalComDriver_ListAccountsWithoutOrganization(t *testing.T) {
+func TestCalComDriver_ListAccountsWithTeams(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"status":"success","data":{"organizationId":null}}`))
+
+		switch r.URL.Path {
+		case "/v2/me":
+			assert.Equal(t, http.MethodGet, r.Method)
+			_, _ = w.Write(
+				[]byte(`{"status":"success","data":{"id":100,"name":"Key Owner","email":"owner@example.com","organizationId":null}}`),
+			)
+		case "/v2/teams":
+			assert.Equal(t, http.MethodGet, r.Method)
+			assert.Empty(t, r.URL.RawQuery)
+			_, _ = w.Write([]byte(`{"status":"success","data":[{"id":7},{"id":9}]}`))
+		case "/v2/teams/7/memberships":
+			assert.Equal(t, strconv.Itoa(calComPageSize), r.URL.Query().Get("take"))
+			assert.Equal(t, "0", r.URL.Query().Get("skip"))
+			_, _ = w.Write(
+				[]byte(`{"status":"success","data":[{"userId":100,"accepted":false,"role":"MEMBER","user":{"name":"Shared User","email":"shared@example.com"}},{"userId":101,"accepted":true,"role":"MEMBER","user":{"name":"Team Seven User","email":"seven@example.com"}}]}`),
+			)
+		case "/v2/teams/9/memberships":
+			assert.Equal(t, strconv.Itoa(calComPageSize), r.URL.Query().Get("take"))
+			assert.Equal(t, "0", r.URL.Query().Get("skip"))
+			_, _ = w.Write(
+				[]byte(`{"status":"success","data":[{"userId":100,"accepted":true,"role":"OWNER","user":{"name":"Shared User","email":"shared@example.com"}},{"userId":102,"accepted":true,"role":"ADMIN","user":{"name":"Team Nine User","email":"nine@example.com"}}]}`),
+			)
+		default:
+			http.NotFound(w, r)
+		}
 	}))
 	t.Cleanup(server.Close)
 
 	driver := NewCalComDriver(server.Client(), server.URL)
 	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 3)
 
-	require.Error(t, err)
-	assert.Nil(t, records)
-	assert.Contains(t, err.Error(), "authenticated user has no organization")
+	assert.Equal(t, "100", records[0].ExternalID)
+	assert.Equal(t, []string{"Member", "Owner"}, records[0].Roles)
+	assert.Equal(t, new(true), records[0].Active)
+	assert.Equal(t, new(true), records[0].IsAdmin)
+	assert.Equal(t, "101", records[1].ExternalID)
+	assert.Equal(t, []string{"Member"}, records[1].Roles)
+	assert.Equal(t, "102", records[2].ExternalID)
+	assert.Equal(t, []string{"Admin"}, records[2].Roles)
+}
+
+func TestCalComDriver_ListAccountsSolo(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/v2/me":
+			_, _ = w.Write(
+				[]byte(`{"status":"success","data":{"id":42,"name":" Solo User ","email":" solo@example.com ","organizationId":null}}`),
+			)
+		case "/v2/teams":
+			_, _ = w.Write([]byte(`{"status":"success","data":[]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	driver := NewCalComDriver(server.Client(), server.URL)
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+
+	assert.Equal(t, "solo@example.com", records[0].Email)
+	assert.Equal(t, "Solo User", records[0].FullName)
+	assert.Empty(t, records[0].Roles)
+	assert.Equal(t, new(true), records[0].Active)
+	assert.Equal(t, new(false), records[0].IsAdmin)
+	assert.Equal(t, "42", records[0].ExternalID)
+	assert.Equal(t, coredata.MFAStatusUnknown, records[0].MFAStatus)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, records[0].AccountType)
 }
