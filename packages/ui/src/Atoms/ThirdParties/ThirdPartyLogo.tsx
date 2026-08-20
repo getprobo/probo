@@ -28,6 +28,8 @@ import { BetterStack } from "./BetterStack";
 import { Bitbucket } from "./Bitbucket";
 import { Brevo } from "./Brevo";
 import { Brex } from "./Brex";
+import { CalCom } from "./CalCom";
+import { Calendly } from "./Calendly";
 import { Clerk } from "./Clerk";
 import { ClickHouse } from "./ClickHouse";
 import { ClickUp } from "./ClickUp";
@@ -93,6 +95,8 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   BITBUCKET: Bitbucket,
   BREVO: Brevo,
   BREX: Brex,
+  CAL_COM: CalCom,
+  CALENDLY: Calendly,
   CLERK: Clerk,
   CLICKHOUSE: ClickHouse,
   CLICKUP: ClickUp,

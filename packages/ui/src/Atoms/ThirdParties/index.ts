@@ -6,6 +6,8 @@ export { BetterStack } from "./BetterStack";
 export { Bitbucket } from "./Bitbucket";
 export { Brevo } from "./Brevo";
 export { Brex } from "./Brex";
+export { CalCom } from "./CalCom";
+export { Calendly } from "./Calendly";
 export { Clerk } from "./Clerk";
 export { ClickHouse } from "./ClickHouse";
 export { ClickUp } from "./ClickUp";
