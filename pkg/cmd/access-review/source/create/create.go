@@ -33,6 +33,7 @@ import (
 const createMutation = `
 mutation($input: CreateAccessReviewSourceInput!) {
   createAccessReviewSource(input: $input) {
+    created
     accessReviewSourceEdge {
       node {
         id
@@ -45,6 +46,7 @@ mutation($input: CreateAccessReviewSourceInput!) {
 
 type createResponse struct {
 	CreateAccessReviewSource struct {
+		Created                bool `json:"created"`
 		AccessReviewSourceEdge struct {
 			Node struct {
 				ID   string `json:"id"`
@@ -135,7 +137,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 			s := resp.CreateAccessReviewSource.AccessReviewSourceEdge.Node
 			out := f.IOStreams.Out
-			_, _ = fmt.Fprintf(out, "Created access source %s\n", s.ID)
+
+			if resp.CreateAccessReviewSource.Created {
+				_, _ = fmt.Fprintf(out, "Created access source %s\n", s.ID)
+			} else {
+				_, _ = fmt.Fprintf(out, "Access source %s already exists for this connector\n", s.ID)
+			}
+
 			_, _ = fmt.Fprintf(out, "Name: %s\n", s.Name)
 
 			return nil

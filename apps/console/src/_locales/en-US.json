@@ -1929,7 +1929,7 @@
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." },
     "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry" },
-    "sections": { "connected": "Connected", "notConnected": "Not connected" },
+    "sections": { "connected": "Connected", "available": "Available" },
     "searchPlaceholder": "Search sources and providers...",
     "emptyConnected": "No access sources are connected yet.",
     "emptyConnectedSearch": "No connected sources match your search.",
