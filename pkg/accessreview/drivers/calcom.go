@@ -148,6 +148,7 @@ func (d *CalComDriver) fetchMe(ctx context.Context) (*calComMeResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute cal.com profile request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

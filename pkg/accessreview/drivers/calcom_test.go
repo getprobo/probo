@@ -78,6 +78,7 @@ func TestCalComDriver_ListAccounts(t *testing.T) {
 			}
 
 			assert.Equal(t, calComPageSize, skip)
+
 			_, _ = w.Write(
 				[]byte(`{"status":"success","data":[{"id":9999,"userId":7777,"accepted":false,"role":"ADMIN","user":{"name":"Pending Admin","email":"admin@example.com"}}]}`),
 			)

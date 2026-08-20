@@ -143,6 +143,7 @@ func (d *CalendlyDriver) fetchCurrentUser(ctx context.Context) (*calendlyCurrent
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute calendly current user request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -187,6 +188,7 @@ func (d *CalendlyDriver) fetchMembershipsPage(
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute calendly memberships request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
