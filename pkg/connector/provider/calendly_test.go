@@ -18,32 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package provider
+package provider_test
 
 import (
-	"context"
-	"net/http"
+	"testing"
 
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func calendlyRegistration() *Registration {
-	return &Registration{
-		Provider:       coredata.ConnectorProviderCalendly,
-		DisplayName:    "Calendly",
-		SupportsAPIKey: true,
-		Endpoints: Endpoints{
-			Auth:    "https://auth.calendly.com/oauth/authorize",
-			Token:   "https://auth.calendly.com/oauth/token",
-			APIBase: "https://api.calendly.com",
-			Probe:   "https://api.calendly.com/users/me",
-		},
-		OAuth2Scopes: []string{"organizations:read"},
-		RequiresPKCE: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewCalendlyDriver(c, ep.APIBase), nil
-		},
-	}
+func TestCalendlyRegistration(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderCalendly)
+	require.True(t, ok)
+
+	assert.True(t, reg.SupportsAPIKey)
+	assert.True(t, reg.RequiresPKCE)
+	assert.Equal(t, []string{"organizations:read"}, reg.OAuth2Scopes)
+
+	oauthConnector := &connector.OAuth2Connector{}
+	require.NoError(t, r.ApplyOAuth2Defaults(
+		string(coredata.ConnectorProviderCalendly),
+		"https://example.com/callback",
+		oauthConnector,
+	))
+
+	assert.Equal(t, "https://auth.calendly.com/oauth/authorize", oauthConnector.AuthURL)
+	assert.Equal(t, "https://auth.calendly.com/oauth/token", oauthConnector.TokenURL)
+	assert.Equal(t, []string{"organizations:read"}, oauthConnector.RegisteredScopes)
+	assert.True(t, oauthConnector.RequiresPKCE)
 }
