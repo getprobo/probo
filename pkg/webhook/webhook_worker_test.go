@@ -53,10 +53,12 @@ func TestDoHTTPCall_SendsStableDeliveryIdentityAndSignature(t *testing.T) {
 		receivedBody      []byte
 		receivedSignature string
 	)
+
 	server := httptest.NewServer(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				var err error
+
 				receivedBody, err = io.ReadAll(r.Body)
 				require.NoError(t, err)
 
@@ -94,6 +96,7 @@ func TestDoHTTPCall_SendsStableDeliveryIdentityAndSignature(t *testing.T) {
 	)
 
 	require.Nil(t, deliveryErr)
+
 	mac := hmac.New(sha256.New, []byte(signingSecret))
 	_, err := mac.Write([]byte(expectedTimestamp + ":"))
 	require.NoError(t, err)

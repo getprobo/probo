@@ -41,6 +41,7 @@ func TestWebhookEvent_ClaimAndCompleteDelivery(t *testing.T) {
 	event := insertWebhookDeliveryFixture(t, pgClient, time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
 
 	var claimed coredata.WebhookEvent
+
 	require.NoError(
 		t,
 		pgClient.WithTx(
@@ -61,6 +62,7 @@ func TestWebhookEvent_ClaimAndCompleteDelivery(t *testing.T) {
 	claimed.ProcessingStartedAt = nil
 	claimed.CompletedAt = &completedAt
 	claimed.UpdatedAt = completedAt
+
 	require.NoError(
 		t,
 		pgClient.WithConn(
@@ -198,9 +200,11 @@ func insertWebhookDeliveryFixture(
 				if err := organization.Insert(ctx, tx); err != nil {
 					return err
 				}
+
 				if err := subscription.Insert(ctx, tx, scope); err != nil {
 					return err
 				}
+
 				if err := data.Insert(ctx, tx, scope); err != nil {
 					return err
 				}
@@ -262,6 +266,7 @@ func loadWebhookEvent(
 	t.Helper()
 
 	var event coredata.WebhookEvent
+
 	require.NoError(
 		t,
 		pgClient.WithConn(

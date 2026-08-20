@@ -122,24 +122,31 @@ func NewWebhookWorker(
 	if cfg.Interval <= 0 {
 		cfg.Interval = 5 * time.Second
 	}
+
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = defaultTimeout
 	}
+
 	if cfg.CacheTTL <= 0 {
 		cfg.CacheTTL = 24 * time.Hour
 	}
+
 	if cfg.StaleAfter <= 0 {
 		cfg.StaleAfter = defaultStaleAfter
 	}
+
 	if cfg.StaleAfter <= cfg.Timeout {
 		cfg.StaleAfter = cfg.Timeout + time.Minute
 	}
+
 	if cfg.RetryBase <= 0 {
 		cfg.RetryBase = defaultRetryBase
 	}
+
 	if cfg.RetryMax <= 0 {
 		cfg.RetryMax = defaultRetryMax
 	}
+
 	if cfg.MaxConcurrency <= 0 {
 		cfg.MaxConcurrency = defaultMaxConcurrency
 	}
@@ -181,6 +188,7 @@ func (h *webhookHandler) Claim(ctx context.Context) (webhookTask, error) {
 	h.refreshSecretCache()
 
 	var task webhookTask
+
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -196,6 +204,7 @@ func (h *webhookHandler) Claim(ctx context.Context) (webhookTask, error) {
 			if err := task.webhookData.LoadByID(ctx, tx, scope, task.event.WebhookDataID); err != nil {
 				return fmt.Errorf("cannot load webhook data: %w", err)
 			}
+
 			if err := task.subscription.LoadByID(ctx, tx, scope, task.event.WebhookSubscriptionID); err != nil {
 				return fmt.Errorf("cannot load webhook subscription: %w", err)
 			}
@@ -221,6 +230,7 @@ func (h *webhookHandler) Process(ctx context.Context, task webhookTask) error {
 	task.event.Response = response
 	task.event.ProcessingStartedAt = nil
 	task.event.UpdatedAt = now
+
 	if deliveryErr == nil {
 		task.event.Status = coredata.WebhookEventStatusSucceeded
 		task.event.CompletedAt = &now
@@ -240,6 +250,7 @@ func (h *webhookHandler) Process(ctx context.Context, task webhookTask) error {
 	}
 
 	scope := coredata.NewScopeFromObjectID(task.event.ID)
+
 	err := h.pg.WithConn(
 		context.WithoutCancel(ctx),
 		func(ctx context.Context, conn pg.Querier) error {
@@ -310,6 +321,7 @@ func (h *webhookHandler) materializeLegacyWebhookData(ctx context.Context, tx pg
 	}
 
 	scope := coredata.NewScopeFromObjectID(webhookData.ID)
+
 	var subscriptions coredata.WebhookSubscriptions
 	if err := subscriptions.LoadMatchingByOrganizationIDAndEventType(
 		ctx,
@@ -389,6 +401,7 @@ func (h *webhookHandler) retryDelay(
 
 		delay *= 2
 	}
+
 	if delay > h.retryMax {
 		delay = h.retryMax
 	}
@@ -490,10 +503,12 @@ func (h *webhookHandler) doHTTPCall(
 			transient: true,
 		}
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodySize))
 	response := buildResponseJSON(resp, respBody)
+
 	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
 		return response, nil
 	}
@@ -530,6 +545,7 @@ func parseRetryAfter(value string, now time.Time) (time.Duration, bool) {
 		if seconds < 0 {
 			return 0, false
 		}
+
 		if seconds > int64(time.Duration(1<<63-1)/time.Second) {
 			return time.Duration(1<<63 - 1), true
 		}
