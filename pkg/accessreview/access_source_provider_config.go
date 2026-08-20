@@ -151,10 +151,10 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
 	// (subdomain for PagerDuty, teamId or fallback /v2/user.id for
-	// Vercel). No picker UI; NeedsPicker = false. GitHub App installs are
-	// the same pattern (org fixed at installation) but share the GITHUB
-	// provider entry above; ProviderSupportsOrganizationPicker gates them
-	// by protocol.
+	// Vercel). No picker UI; NeedsPicker = false. Install-scoped protocols
+	// (for example GitHub App) share a provider entry that has ListOrgs for
+	// OAuth2; ProviderSupportsOrganizationPicker gates them by requiring
+	// OAUTH2.
 	coredata.ConnectorProviderPagerDuty: {
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](c)
@@ -188,18 +188,15 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 // ProviderSupportsOrganizationPicker reports whether the connector surfaces an
 // organization picker at all.
 //
-// It distinguishes two cases the org listing itself cannot: a provider that
-// offers a picker and returned nothing, versus a connector whose identifier is
-// captured during install/OAuth (PagerDuty subdomain, Vercel team, Datadog
-// domain, Zendesk subdomain, GitHub App installation org). Both come back as
-// an empty list, but only the first means something is wrong — telling a
-// healthy 2-auto source that its organization "may not have approved Probo"
-// would be a lie.
+// Only OAuth2 connectors with a ListOrgs implementation offer a picker. Other
+// protocols (API key, install-scoped apps, …) and Pattern 2-auto OAuth
+// providers (PagerDuty, Vercel, …) capture their identifier at
+// install/callback, so an empty org list is NOT_APPLICABLE rather than EMPTY.
 func ProviderSupportsOrganizationPicker(
 	provider coredata.ConnectorProvider,
 	protocol coredata.ConnectorProtocol,
 ) bool {
-	if protocol == coredata.ConnectorProtocolGitHubApp {
+	if protocol != coredata.ConnectorProtocolOAuth2 {
 		return false
 	}
 

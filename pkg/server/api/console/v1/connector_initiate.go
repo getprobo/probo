@@ -51,28 +51,11 @@ func handleConnectorInitiate(
 		}
 
 		protocol := connector.ProtocolOAuth2
-		switch requestedProtocol := r.URL.Query().Get("protocol"); requestedProtocol {
-		case "", string(connector.ProtocolOAuth2):
-		case string(connector.ProtocolGitHubApp):
-			protocol = connector.ProtocolGitHubApp
-		default:
-			httpserver.RenderError(
-				w,
-				http.StatusBadRequest,
-				fmt.Errorf("unsupported protocol: %q", requestedProtocol),
-			)
-
-			return
+		if requestedProtocol := r.URL.Query().Get("protocol"); requestedProtocol != "" {
+			protocol = connector.ProtocolType(requestedProtocol)
 		}
 
-		var connectorErr error
-		if protocol == connector.ProtocolGitHubApp {
-			_, connectorErr = connectorRegistry.GetProtocol(provider, protocol)
-		} else {
-			_, connectorErr = connectorRegistry.Get(provider)
-		}
-
-		if connectorErr != nil {
+		if _, err := connectorRegistry.Lookup(provider, protocol); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}
@@ -140,15 +123,6 @@ func handleConnectorInitiate(
 			return
 		}
 
-		if protocol == connector.ProtocolGitHubApp &&
-			existing != nil &&
-			(existing.OrganizationID != organizationID ||
-				existing.Provider != coredata.ConnectorProviderGitHub ||
-				existing.Protocol != coredata.ConnectorProtocolGitHubApp) {
-			httpserver.RenderError(w, http.StatusBadRequest, errInvalidReconnectConnector)
-			return
-		}
-
 		// Hand the earlier grant to the connector rather than unioning it
 		// here: whether a reconnect may widen the request or must ask for
 		// exactly the registered scopes is a per-provider OAuth trait. No
@@ -161,26 +135,14 @@ func handleConnectorInitiate(
 			opts.ConnectorID = existing.ID.String()
 		}
 
-		var redirectURL string
-		if protocol == connector.ProtocolGitHubApp {
-			redirectURL, err = connectorRegistry.InitiateProtocol(
-				r.Context(),
-				provider,
-				protocol,
-				organizationID,
-				opts,
-				r,
-			)
-		} else {
-			redirectURL, err = connectorRegistry.Initiate(
-				r.Context(),
-				provider,
-				organizationID,
-				opts,
-				r,
-			)
-		}
-
+		redirectURL, err := connectorRegistry.InitiateForProtocol(
+			r.Context(),
+			provider,
+			protocol,
+			organizationID,
+			opts,
+			r,
+		)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot initiate connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))

@@ -109,6 +109,17 @@ func (r *ConnectorRegistry) GetProtocol(provider string, protocol ProtocolType) 
 	return c, nil
 }
 
+// Lookup returns the connector registered for provider and protocol. OAuth2
+// connectors live in the default Register map; other protocols use
+// RegisterProtocol.
+func (r *ConnectorRegistry) Lookup(provider string, protocol ProtocolType) (Connector, error) {
+	if protocol == ProtocolOAuth2 || protocol == "" {
+		return r.Get(provider)
+	}
+
+	return r.GetProtocol(provider, protocol)
+}
+
 // ConfiguredProtocols returns the connector protocols that are registered for
 // provider in this deployment. OAuth2 connectors registered via Register appear
 // as ProtocolOAuth2; protocol-specific connectors registered via RegisterProtocol
@@ -141,7 +152,20 @@ func (r *ConnectorRegistry) Initiate(
 	opts InitiateOptions,
 	req *http.Request,
 ) (string, error) {
-	c, err := r.Get(provider)
+	return r.InitiateForProtocol(ctx, provider, ProtocolOAuth2, organizationID, opts, req)
+}
+
+// InitiateForProtocol starts the install/auth flow for the connector registered
+// under provider and protocol.
+func (r *ConnectorRegistry) InitiateForProtocol(
+	ctx context.Context,
+	provider string,
+	protocol ProtocolType,
+	organizationID gid.GID,
+	opts InitiateOptions,
+	req *http.Request,
+) (string, error) {
+	c, err := r.Lookup(provider, protocol)
 	if err != nil {
 		return "", fmt.Errorf("cannot initiate connector: %w", err)
 	}
@@ -157,12 +181,7 @@ func (r *ConnectorRegistry) InitiateProtocol(
 	opts InitiateOptions,
 	req *http.Request,
 ) (string, error) {
-	c, err := r.GetProtocol(provider, protocol)
-	if err != nil {
-		return "", fmt.Errorf("cannot initiate connector: %w", err)
-	}
-
-	return c.Initiate(ctx, provider, organizationID, opts, req)
+	return r.InitiateForProtocol(ctx, provider, protocol, organizationID, opts, req)
 }
 
 // ExtractProviderFromState decodes the OAuth2 state token without

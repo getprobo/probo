@@ -51,6 +51,22 @@ import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/A
 
 import { accessReviewSourceSection } from "../connections/_components/variants";
 
+function canReconnectConnector(
+  connector: { protocol: string; oauth2Scopes: ReadonlyArray<string> } | null | undefined,
+): boolean {
+  if (!connector || connector.protocol === "API_KEY") {
+    return false;
+  }
+
+  if (connector.protocol === "OAUTH2") {
+    return connector.oauth2Scopes.length > 0;
+  }
+
+  // Install-scoped protocols (GitHub App, …) reconnect through initiate
+  // without OAuth scopes on the connection.
+  return true;
+}
+
 const fragment = graphql`
   fragment AccessReviewSourceListItem_source on AccessReviewSource {
     id
@@ -303,8 +319,8 @@ export function AccessReviewSourceListItem({
     url.searchParams.append("organization_id", organizationId);
     url.searchParams.append("provider", connector.provider);
     url.searchParams.append("connector_id", accessSource.connectorId);
-    if (connector.protocol === "GITHUB_APP") {
-      url.searchParams.append("protocol", "GITHUB_APP");
+    if (connector.protocol !== "OAUTH2") {
+      url.searchParams.append("protocol", connector.protocol);
     }
     for (const scope of connector.oauth2Scopes) {
       url.searchParams.append("scope", scope);
@@ -319,9 +335,7 @@ export function AccessReviewSourceListItem({
 
   const showOrgSelector
     = accessSource.needsConfiguration || accessSource.selectedOrganization;
-  const canReconnect
-    = accessSource.connector?.protocol === "GITHUB_APP"
-      || (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
+  const canReconnect = canReconnectConnector(accessSource.connector);
   const showReconnect
     = canReconnect
       && (accessSource.connectionStatus === "DISCONNECTED"
@@ -571,9 +585,7 @@ function ProviderOrganizationsUnavailable({
   const { t } = useTranslation();
   const source = useFragment(organizationsUnavailableFragment, sourceKey);
   const providerLabel = sourceLabel(source.connector?.provider ?? null, t);
-  const canReconnect
-    = source.connector?.protocol === "GITHUB_APP"
-      || (source.connector?.oauth2Scopes.length ?? 0) > 0;
+  const canReconnect = canReconnectConnector(source.connector);
 
   return (
     <SourceConnectionIssue

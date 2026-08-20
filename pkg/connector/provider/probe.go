@@ -733,21 +733,31 @@ func probeSquare(
 	return doProbeRequest(httpClient, req)
 }
 
+func buildGitHubProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
+	// Installation tokens cannot call /user; health-check against the
+	// installation repositories listing instead.
+	if conn.Protocol != coredata.ConnectorProtocolOAuth2 &&
+		conn.Protocol != coredata.ConnectorProtocolAPIKey {
+		probeURL, err := url.JoinPath(ep.APIBase, "installation/repositories")
+		if err != nil {
+			return "", fmt.Errorf("cannot build github install probe URL: %w", err)
+		}
+
+		return probeURL, nil
+	}
+
+	return ep.Probe, nil
+}
+
 func probeGitHub(
 	ctx context.Context,
 	httpClient *http.Client,
 	conn *coredata.Connector,
 	ep Endpoints,
 ) error {
-	probeURL := ep.Probe
-
-	if conn.Protocol == coredata.ConnectorProtocolGitHubApp {
-		var err error
-
-		probeURL, err = url.JoinPath(ep.APIBase, "installation/repositories")
-		if err != nil {
-			return fmt.Errorf("cannot build github app probe URL: %w", err)
-		}
+	probeURL, err := buildGitHubProbeURL(conn, ep)
+	if err != nil {
+		return err
 	}
 
 	return probeGET(ctx, httpClient, probeURL)

@@ -351,8 +351,7 @@ func finishConnectorCompletion(
 	q.Set("connector_id", cnnctr.ID.String())
 	q.Set("provider", string(connectorProvider))
 
-	if completion.Protocol != connector.ProtocolGitHubApp &&
-		strings.Contains(completion.ContinueURL, "/access-reviews/connections") {
+	if strings.Contains(completion.ContinueURL, "/access-reviews/connections") {
 		missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
 		if err != nil {
 			logger.WarnCtx(r.Context(), "cannot determine missing OAuth scopes after connector callback", log.Error(err))

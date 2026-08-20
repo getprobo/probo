@@ -96,7 +96,7 @@ func TestProbeGitHub_UsesProtocolEndpoint(t *testing.T) {
 			wantPath: "/user",
 		},
 		{
-			name:     "github app uses installation repositories",
+			name:     "install protocol uses installation repositories",
 			protocol: coredata.ConnectorProtocolGitHubApp,
 			wantPath: "/installation/repositories",
 		},
