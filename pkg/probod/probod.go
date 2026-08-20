@@ -103,6 +103,10 @@ var (
 	_ unit.Runnable     = (*Implm)(nil)
 )
 
+func durationInSeconds(duration time.Duration) int {
+	return int(duration / time.Second)
+}
+
 func New() *Implm {
 	return &Implm{
 		cfg: Config{
@@ -180,12 +184,12 @@ func New() *Implm {
 					SenderInterval: 60,
 				},
 				Webhook: WebhookConfig{
-					SenderInterval: 5,
-					RequestTimeout: 15,
-					CacheTTL:       86400,
-					StaleAfter:     300,
-					RetryBase:      30,
-					RetryMax:       14400,
+					SenderInterval: durationInSeconds(5 * time.Second),
+					RequestTimeout: durationInSeconds(15 * time.Second),
+					CacheTTL:       durationInSeconds(24 * time.Hour),
+					StaleAfter:     durationInSeconds(5 * time.Minute),
+					RetryBase:      durationInSeconds(30 * time.Second),
+					RetryMax:       durationInSeconds(4 * time.Hour),
 					MaxConcurrency: 5,
 				},
 				Document: DocumentNotificationConfig{
