@@ -140,7 +140,7 @@ func (h *sourceFetchHandler) handle(
 
 	campaignSource := &coredata.AccessReviewCampaignSource{}
 	if err := h.loadCampaignSource(ctx, scope, attempt.AccessReviewCampaignSourceID, campaignSource); err != nil {
-		commitErr := h.commitFailedSourceFetch(ctx, attempt, fmt.Errorf("cannot load campaign source: %w", err))
+		commitErr := h.commitFailedSourceFetch(ctx, attempt, nil, fmt.Errorf("cannot load campaign source: %w", err))
 		if commitErr != nil {
 			return fmt.Errorf("cannot load campaign source: %w, and cannot commit failed fetch attempt: %w", err, commitErr)
 		}
@@ -150,7 +150,7 @@ func (h *sourceFetchHandler) handle(
 
 	campaign, err := h.svc.GetCampaign(ctx, scope, campaignSource.AccessReviewCampaignID)
 	if err != nil {
-		commitErr := h.commitFailedSourceFetch(ctx, attempt, fmt.Errorf("cannot load campaign: %w", err))
+		commitErr := h.commitFailedSourceFetch(ctx, attempt, campaignSource, fmt.Errorf("cannot load campaign: %w", err))
 		if commitErr != nil {
 			return fmt.Errorf("cannot load campaign: %w, and cannot commit failed fetch attempt: %w", err, commitErr)
 		}
@@ -160,7 +160,7 @@ func (h *sourceFetchHandler) handle(
 
 	count, err := h.svc.FetchSource(ctx, scope, campaign, campaignSource)
 	if err != nil {
-		if commitErr := h.commitFailedSourceFetch(ctx, attempt, err); commitErr != nil {
+		if commitErr := h.commitFailedSourceFetch(ctx, attempt, campaignSource, err); commitErr != nil {
 			return fmt.Errorf("cannot fetch source: %w, and cannot commit failed fetch attempt: %w", err, commitErr)
 		}
 
@@ -202,14 +202,23 @@ func (h *sourceFetchHandler) loadCampaignSource(
 func (h *sourceFetchHandler) commitFailedSourceFetch(
 	ctx context.Context,
 	attempt *coredata.AccessReviewCampaignSourceFetchAttempt,
+	campaignSource *coredata.AccessReviewCampaignSource,
 	failureErr error,
 ) error {
-	h.logger.WarnCtx(
-		ctx,
-		"source fetch failed but campaign can continue",
+	// campaignSource is nil when the snapshot itself failed to load.
+	fields := []log.Attr{
 		log.String("access_review_campaign_source_id", attempt.AccessReviewCampaignSourceID.String()),
 		log.String("fetch_attempt_id", attempt.ID.String()),
 		log.Error(failureErr),
+	}
+	if campaignSource != nil && campaignSource.ConnectorID != nil {
+		fields = append(fields, log.String("connector_id", campaignSource.ConnectorID.String()))
+	}
+
+	h.logger.WarnCtx(
+		ctx,
+		"source fetch failed but campaign can continue",
+		fields...,
 	)
 
 	var (
