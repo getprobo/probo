@@ -4763,7 +4763,7 @@
   },
   {
     "name": "Microsoft",
-    "category": "ANALYTICS",
+    "category": "OTHER",
     "headquarterAddress": "One Microsoft Way, Redmond, WA 98052, United States",
     "legalName": "Microsoft Corporation",
     "websiteUrl": "https://www.microsoft.com",
@@ -7941,14 +7941,6 @@
     "domains": [
       "tawk.to"
     ]
-  },
-  {
-    "name": "Tawk.to Chat",
-    "category": "OTHER",
-    "websiteUrl": "https://www.tawk.to",
-    "legalName": "tawk.to inc.",
-    "headquarterAddress": "187 East Warm Springs Road, Suite B286, Las Vegas, NV 89119, United States",
-    "privacyPolicyUrl": "https://www.tawk.to/privacy-policy/"
   },
   {
     "name": "Teads",
