@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 
@@ -106,41 +107,13 @@ func TestCalComDriver_ListAccounts(t *testing.T) {
 	assert.Equal(t, "7777", pendingAdmin.ExternalID)
 }
 
-func TestCalComDriver_ListAccountsWithTeams(t *testing.T) {
+func TestCalComDriver(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	rec := newRecorder(t, "testdata/calcom", "CAL_COM_API_KEY")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("CAL_COM_API_KEY")))
 
-		switch r.URL.Path {
-		case "/v2/me":
-			assert.Equal(t, http.MethodGet, r.Method)
-			_, _ = w.Write(
-				[]byte(`{"status":"success","data":{"id":100,"name":"Key Owner","email":"owner@example.com","organizationId":null}}`),
-			)
-		case "/v2/teams":
-			assert.Equal(t, http.MethodGet, r.Method)
-			assert.Empty(t, r.URL.RawQuery)
-			_, _ = w.Write([]byte(`{"status":"success","data":[{"id":7},{"id":9}]}`))
-		case "/v2/teams/7/memberships":
-			assert.Equal(t, strconv.Itoa(calComPageSize), r.URL.Query().Get("take"))
-			assert.Equal(t, "0", r.URL.Query().Get("skip"))
-			_, _ = w.Write(
-				[]byte(`{"status":"success","data":[{"userId":100,"accepted":false,"role":"MEMBER","user":{"name":"Shared User","email":"shared@example.com"}},{"userId":101,"accepted":true,"role":"MEMBER","user":{"name":"Team Seven User","email":"seven@example.com"}}]}`),
-			)
-		case "/v2/teams/9/memberships":
-			assert.Equal(t, strconv.Itoa(calComPageSize), r.URL.Query().Get("take"))
-			assert.Equal(t, "0", r.URL.Query().Get("skip"))
-			_, _ = w.Write(
-				[]byte(`{"status":"success","data":[{"userId":100,"accepted":true,"role":"OWNER","user":{"name":"Shared User","email":"shared@example.com"}},{"userId":102,"accepted":true,"role":"ADMIN","user":{"name":"Team Nine User","email":"nine@example.com"}}]}`),
-			)
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	t.Cleanup(server.Close)
-
-	driver := NewCalComDriver(server.Client(), server.URL)
+	driver := NewCalComDriver(client, "https://api.cal.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)

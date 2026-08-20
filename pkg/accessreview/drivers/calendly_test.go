@@ -24,6 +24,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -32,41 +33,13 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestCalendlyDriver_ListAccounts(t *testing.T) {
+func TestCalendlyDriver(t *testing.T) {
 	t.Parallel()
 
-	const organizationURI = "https://api.calendly.com/organizations/ORG"
+	rec := newRecorder(t, "testdata/calendly", "CALENDLY_TOKEN")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("CALENDLY_TOKEN")))
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		switch r.URL.Path {
-		case "/users/me":
-			assert.Equal(t, http.MethodGet, r.Method)
-			_, _ = w.Write([]byte(`{"resource":{"current_organization":"` + organizationURI + `"}}`))
-		case "/organization_memberships":
-			assert.Equal(t, organizationURI, r.URL.Query().Get("organization"))
-			assert.Equal(t, "100", r.URL.Query().Get("count"))
-
-			if r.URL.Query().Get("page_token") == "" {
-				_, _ = w.Write(
-					[]byte(`{"collection":[{"uri":"https://api.calendly.com/organization_memberships/M1","role":"owner","user":{"uri":"https://api.calendly.com/users/U1","name":"Owner User","email":"owner@example.com","created_at":"2026-01-02T03:04:05Z"}}],"pagination":{"next_page_token":"next"}}`),
-				)
-
-				return
-			}
-
-			assert.Equal(t, "next", r.URL.Query().Get("page_token"))
-			_, _ = w.Write(
-				[]byte(`{"collection":[{"uri":"https://api.calendly.com/organization_memberships/M2","role":"user","user":{"uri":"https://api.calendly.com/users/U2","name":"Member User","email":"member@example.com"}}],"pagination":{"next_page_token":null}}`),
-			)
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	t.Cleanup(server.Close)
-
-	driver := NewCalendlyDriver(server.Client(), server.URL)
+	driver := NewCalendlyDriver(client, "https://api.calendly.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 2)
