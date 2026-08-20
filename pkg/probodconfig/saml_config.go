@@ -25,12 +25,12 @@ import (
 )
 
 type SAMLConfig struct {
-	SessionDuration                   int    `json:"session-duration"`
-	CleanupIntervalSeconds            int    `json:"cleanup-interval-seconds"`
-	Certificate                       string `json:"certificate"`
-	PrivateKey                        string `json:"private-key"`
-	DomainVerificationIntervalSeconds int    `json:"domain-verification-interval-seconds"`
-	DomainVerificationResolverAddr    string `json:"domain-verification-resolver-addr,omitempty"`
+	SessionDuration                   int           `json:"session-duration"`
+	CleanupIntervalSeconds            int           `json:"cleanup-interval-seconds"`
+	Certificate                       string        `json:"certificate"`
+	PrivateKey                        RSAPrivateKey `json:"private-key"`
+	DomainVerificationIntervalSeconds int           `json:"domain-verification-interval-seconds"`
+	DomainVerificationResolverAddr    string        `json:"domain-verification-resolver-addr,omitempty"`
 }
 
 func (c SAMLConfig) SessionDurationTime() time.Duration {

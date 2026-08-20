@@ -43,6 +43,8 @@ type (
 	CookieConfig                       = probodconfig.CookieConfig
 	CookieSameSite                     = probodconfig.CookieSameSite
 	PasswordConfig                     = probodconfig.PasswordConfig
+	PrivateKey                         = probodconfig.PrivateKey
+	RSAPrivateKey                      = probodconfig.RSAPrivateKey
 	AWSConfig                          = probodconfig.AWSConfig
 	ConnectorConfig                    = probodconfig.ConnectorConfig
 	ConnectorConfigOAuth2              = probodconfig.ConnectorConfigOAuth2

@@ -40,8 +40,8 @@ type (
 	// JWKS. Only active keys sign new tokens; retired keys stay listed so that
 	// tokens a cloud provider already cached keep verifying.
 	IdentityFederationSigningKeyConfig struct {
-		PrivateKey string `json:"private-key"`
-		KID        string `json:"kid"`
-		Active     bool   `json:"active"`
+		PrivateKey RSAPrivateKey `json:"private-key"`
+		KID        string        `json:"kid"`
+		Active     bool          `json:"active"`
 	}
 )

@@ -75,9 +75,9 @@ type OAuth2ServerConfig struct {
 }
 
 type OAuth2SigningKeyConfig struct {
-	PrivateKey string `json:"private-key"`
-	KID        string `json:"kid"`
-	Active     bool   `json:"active"`
+	PrivateKey RSAPrivateKey `json:"private-key"`
+	KID        string        `json:"kid"`
+	Active     bool          `json:"active"`
 }
 
 type CookieConfig struct {

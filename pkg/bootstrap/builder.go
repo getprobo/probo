@@ -62,13 +62,21 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		return nil, fmt.Errorf("cannot get SAML credentials: %w", err)
 	}
 
-	oauth2SigningKey := b.getOAuth2SigningKey()
+	oauth2SigningKey, err := b.getOAuth2SigningKey()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get OAuth2 server signing key: %w", err)
+	}
 
 	identityFederationEnabled := b.resolver.getEnvBoolOrDefault("PROBOD_IDENTITY_FEDERATION_ENABLED", false)
 
 	identityFederationSigningKeys, err := b.buildIdentityFederationSigningKeys(identityFederationEnabled)
 	if err != nil {
 		return nil, err
+	}
+
+	acmeAccountKey, err := probodconfig.ParsePrivateKey(b.resolver.getEnv("PROBOD_ACME_ACCOUNT_KEY"))
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse PROBOD_ACME_ACCOUNT_KEY: %w", err)
 	}
 
 	pgCACertBundle := b.getPgCACertBundle()
@@ -334,7 +342,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Email:      b.resolver.getEnv("PROBOD_ACME_EMAIL"),
 					KeyType:    b.resolver.getEnv("PROBOD_ACME_KEY_TYPE"),
 					RootCA:     b.resolver.getEnv("PROBOD_ACME_ROOT_CA"),
-					AccountKey: b.resolver.getEnv("PROBOD_ACME_ACCOUNT_KEY"),
+					AccountKey: acmeAccountKey,
 				},
 			},
 			SCIMBridge: probodconfig.SCIMBridgeConfig{
@@ -759,34 +767,43 @@ func (b *Builder) validateRequired() error {
 	return nil
 }
 
-func (b *Builder) getSAMLCredentials() (cert, key string, err error) {
-	cert = b.samlCertificate
-	key = b.samlPrivateKey
+func (b *Builder) getSAMLCredentials() (string, probodconfig.RSAPrivateKey, error) {
+	cert := b.samlCertificate
+	keyPEM := b.samlPrivateKey
 
 	if cert == "" {
 		cert = b.resolver.getEnv("PROBOD_SAML_CERTIFICATE")
 	}
 
-	if key == "" {
-		key = b.resolver.getEnv("PROBOD_SAML_PRIVATE_KEY")
+	if keyPEM == "" {
+		keyPEM = b.resolver.getEnv("PROBOD_SAML_PRIVATE_KEY")
 	}
 
-	if cert == "" || key == "" {
-		cert, key, err = GenerateSAMLCertificate()
+	if cert == "" || keyPEM == "" {
+		generatedCert, generatedKey, err := GenerateSAMLCertificate()
 		if err != nil {
-			return "", "", fmt.Errorf("cannot generate SAML certificate: %w", err)
+			return "", probodconfig.RSAPrivateKey{}, fmt.Errorf("cannot generate SAML certificate: %w", err)
 		}
+
+		cert = generatedCert
+		keyPEM = generatedKey
+	}
+
+	key, err := probodconfig.ParseRSAPrivateKey(keyPEM)
+	if err != nil {
+		return "", probodconfig.RSAPrivateKey{}, fmt.Errorf("cannot parse SAML private key: %w", err)
 	}
 
 	return cert, key, nil
 }
 
-func (b *Builder) getOAuth2SigningKey() string {
-	if b.oauth2SigningKey != "" {
-		return b.oauth2SigningKey
+func (b *Builder) getOAuth2SigningKey() (probodconfig.RSAPrivateKey, error) {
+	keyPEM := b.oauth2SigningKey
+	if keyPEM == "" {
+		keyPEM = b.resolver.getEnv("PROBOD_OAUTH2_SERVER_SIGNING_KEY")
 	}
 
-	return b.resolver.getEnv("PROBOD_OAUTH2_SERVER_SIGNING_KEY")
+	return probodconfig.ParseRSAPrivateKey(keyPEM)
 }
 
 // buildIdentityFederationSigningKeys returns the keys published in the identity
@@ -802,9 +819,16 @@ func (b *Builder) buildIdentityFederationSigningKeys(
 
 	kid := b.resolver.getEnvOrDefault("PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID", "default")
 
+	activeKey, err := probodconfig.ParseRSAPrivateKey(
+		b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse PROBOD_IDENTITY_FEDERATION_SIGNING_KEY: %w", err)
+	}
+
 	signingKeys := []probodconfig.IdentityFederationSigningKeyConfig{
 		{
-			PrivateKey: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"),
+			PrivateKey: activeKey,
 			KID:        kid,
 			Active:     true,
 		},
@@ -835,10 +859,15 @@ func (b *Builder) buildIdentityFederationSigningKeys(
 		)
 	}
 
+	retiredKey, err := probodconfig.ParseRSAPrivateKey(previousPrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY: %w", err)
+	}
+
 	return append(
 		signingKeys,
 		probodconfig.IdentityFederationSigningKeyConfig{
-			PrivateKey: previousPrivateKey,
+			PrivateKey: retiredKey,
 			KID:        previousKID,
 			Active:     false,
 		},

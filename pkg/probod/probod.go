@@ -64,7 +64,6 @@ import (
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
-	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -464,7 +463,7 @@ func (impl *Implm) Run(
 		samlKey  *rsa.PrivateKey
 	)
 
-	if impl.cfg.Auth.SAML.Certificate != "" && impl.cfg.Auth.SAML.PrivateKey != "" {
+	if impl.cfg.Auth.SAML.Certificate != "" && !impl.cfg.Auth.SAML.PrivateKey.IsZero() {
 		// Decode certificate
 		certBlock, _ := pem.Decode([]byte(impl.cfg.Auth.SAML.Certificate))
 		if certBlock == nil {
@@ -478,18 +477,7 @@ func (impl *Implm) Run(
 			return fmt.Errorf("cannot parse SAML certificate: %w", err)
 		}
 
-		// Decode private key
-		signer, err := pemutil.DecodePrivateKey([]byte(impl.cfg.Auth.SAML.PrivateKey))
-		if err != nil {
-			return fmt.Errorf("cannot decode SAML private key: %w", err)
-		}
-
-		var ok bool
-
-		samlKey, ok = signer.(*rsa.PrivateKey)
-		if !ok {
-			return fmt.Errorf("SAML private key is not an RSA key")
-		}
+		samlKey = impl.cfg.Auth.SAML.PrivateKey.PrivateKey()
 	}
 
 	if len(impl.cfg.Auth.OAuth2Server.SigningKeys) == 0 {
@@ -502,16 +490,14 @@ func (impl *Implm) Run(
 	)
 
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
-		signingKey, err := decodeSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active)
-		if err != nil {
-			return fmt.Errorf("cannot configure OAuth2 server: %w", err)
-		}
-
 		if keyCfg.Active {
-			activeSigningKeyPEM = keyCfg.PrivateKey
+			activeSigningKeyPEM = keyCfg.PrivateKey.PEM()
 		}
 
-		oauth2SigningKeys = append(oauth2SigningKeys, signingKey)
+		oauth2SigningKeys = append(
+			oauth2SigningKeys,
+			newSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active),
+		)
 	}
 
 	oauth2KeyRing, err := jose.NewKeyRing(oauth2SigningKeys)
@@ -567,11 +553,8 @@ func (impl *Implm) Run(
 		l.Info("custom domains and ACME are disabled in external compliance portal TLS mode")
 	} else {
 		var accountKey crypto.Signer
-		if impl.cfg.CustomDomains.ACME.AccountKey != "" {
-			accountKey, err = pemutil.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
-			if err != nil {
-				return fmt.Errorf("cannot decode ACME account key: %w", err)
-			}
+		if !impl.cfg.CustomDomains.ACME.AccountKey.IsZero() {
+			accountKey = impl.cfg.CustomDomains.ACME.AccountKey.Signer()
 
 			l.Info("using configured ACME account key")
 		}
@@ -2015,29 +1998,22 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 // defaultSigningKeyID names a configured key that carries no explicit kid.
 const defaultSigningKeyID = "default"
 
-// decodeSigningKey turns one configured PEM into a signing key. The OAuth2
+// newSigningKey turns one configured key into a key ring entry. The OAuth2
 // server and the identity federation issuer keep separate config sections but
 // accept the same material, so both read their keys through here.
-func decodeSigningKey(privateKeyPEM, kid string, active bool) (jose.SigningKey, error) {
-	signer, err := pemutil.DecodePrivateKey([]byte(privateKeyPEM))
-	if err != nil {
-		return jose.SigningKey{}, fmt.Errorf("cannot decode signing key: %w", err)
-	}
-
-	rsaKey, ok := signer.(*rsa.PrivateKey)
-	if !ok {
-		return jose.SigningKey{}, fmt.Errorf("signing key is not an RSA key")
-	}
-
+//
+// The key material is already decoded by the configuration; a key left empty
+// there arrives nil and is rejected by jose.NewKeyRing.
+func newSigningKey(privateKey RSAPrivateKey, kid string, active bool) jose.SigningKey {
 	if kid == "" {
 		kid = defaultSigningKeyID
 	}
 
 	return jose.SigningKey{
-		PrivateKey: rsaKey,
+		PrivateKey: privateKey.PrivateKey(),
 		KID:        kid,
 		Active:     active,
-	}, nil
+	}
 }
 
 // buildIdentityFederationIssuer returns the outbound OIDC issuer, or nil when the
@@ -2063,12 +2039,10 @@ func (impl *Implm) buildIdentityFederationIssuer(
 	signingKeys := make([]jose.SigningKey, 0, len(impl.cfg.IdentityFederation.SigningKeys))
 
 	for _, keyCfg := range impl.cfg.IdentityFederation.SigningKeys {
-		signingKey, err := decodeSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active)
-		if err != nil {
-			return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
-		}
-
-		signingKeys = append(signingKeys, signingKey)
+		signingKeys = append(
+			signingKeys,
+			newSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active),
+		)
 	}
 
 	keyRing, err := jose.NewKeyRing(signingKeys)

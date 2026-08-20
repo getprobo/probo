@@ -24,11 +24,51 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/probodconfig"
+)
+
+// The configuration decodes key material as it is read, so a test that reaches
+// Build must hand it a real key. Generating one costs enough that the suite
+// shares them; a second signing key lets a test tell two keys apart.
+var (
+	testSigningKeyPEM = sync.OnceValue(func() string {
+		keyPEM, err := GenerateOAuth2SigningKey()
+		if err != nil {
+			panic(err)
+		}
+
+		return keyPEM
+	})
+
+	testOtherSigningKeyPEM = sync.OnceValue(func() string {
+		keyPEM, err := GenerateOAuth2SigningKey()
+		if err != nil {
+			panic(err)
+		}
+
+		return keyPEM
+	})
+
+	testECKeyPEM = sync.OnceValue(func() string {
+		key, err := keys.Generate(keys.TypeEC256)
+		if err != nil {
+			panic(err)
+		}
+
+		keyPEM, err := pem.EncodePrivateKey(key)
+		if err != nil {
+			panic(err)
+		}
+
+		return string(keyPEM)
+	})
 )
 
 func mockEnv(env map[string]string) EnvGetter {
@@ -56,7 +96,7 @@ func requiredEnv() map[string]string {
 		"PROBOD_ENCRYPTION_KEY":            "test-encryption-key-32-bytes-long",
 		"PROBOD_AUTH_COOKIE_SECRET":        "test-cookie-secret-32-bytes-long!",
 		"PROBOD_AUTH_PASSWORD_PEPPER":      "test-password-pepper-32-bytes-lo",
-		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "test-oauth2-signing-key",
+		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": testSigningKeyPEM(),
 	}
 }
 
@@ -175,7 +215,7 @@ func TestBuilder_Build_InvalidCompliancePortalTLSMode(t *testing.T) {
 func TestBuilder_Build_Defaults(t *testing.T) {
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -477,7 +517,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
 	// Custom domains
 	env["PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
-	env["PROBOD_ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
+	env["PROBOD_ACME_ACCOUNT_KEY"] = testECKeyPEM()
 	// SCIM bridge
 	env["PROBOD_SCIM_BRIDGE_SYNC_INTERVAL"] = "1800"
 	env["PROBOD_SCIM_BRIDGE_POLL_INTERVAL"] = "60"
@@ -497,7 +537,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -634,7 +674,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 2, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
-	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
+	assert.Equal(t, testECKeyPEM(), cfg.Probod.CustomDomains.ACME.AccountKey.PEM())
 	// SCIM bridge
 	assert.Equal(t, 1800, cfg.Probod.SCIMBridge.SyncInterval)
 	assert.Equal(t, 60, cfg.Probod.SCIMBridge.PollInterval)
@@ -661,7 +701,7 @@ func TestBuilder_Build_GoogleWorkspaceConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -682,7 +722,7 @@ func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -714,7 +754,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -745,7 +785,7 @@ func TestBuilder_Build_VercelConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -768,7 +808,7 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -792,7 +832,7 @@ func TestBuilder_Build_CrispConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -811,7 +851,7 @@ func TestBuilder_Build_CrispConnectorAbsentWithoutToken(t *testing.T) {
 	// is what keeps Crisp deactivated until Crisp validates the plugin.
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -830,7 +870,7 @@ func TestBuilder_Build_CrispConnectorAbsentWithoutPluginID(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -848,14 +888,15 @@ func TestBuilder_Build_SAMLAutoGeneration(t *testing.T) {
 
 	assert.Contains(t, cfg.Probod.Auth.SAML.Certificate, "-----BEGIN CERTIFICATE-----")
 	assert.Contains(t, cfg.Probod.Auth.SAML.Certificate, "-----END CERTIFICATE-----")
-	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey, "-----BEGIN RSA PRIVATE KEY-----")
-	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey, "-----END RSA PRIVATE KEY-----")
+	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey.PEM(), "-----BEGIN RSA PRIVATE KEY-----")
+	assert.Contains(t, cfg.Probod.Auth.SAML.PrivateKey.PEM(), "-----END RSA PRIVATE KEY-----")
+	assert.NotNil(t, cfg.Probod.Auth.SAML.PrivateKey.PrivateKey())
 }
 
 func TestBuilder_Build_SAMLFromEnv(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_SAML_CERTIFICATE"] = "env-cert"
-	env["PROBOD_SAML_PRIVATE_KEY"] = "env-key"
+	env["PROBOD_SAML_PRIVATE_KEY"] = testOtherSigningKeyPEM()
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -863,19 +904,19 @@ func TestBuilder_Build_SAMLFromEnv(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "env-cert", cfg.Probod.Auth.SAML.Certificate)
-	assert.Equal(t, "env-key", cfg.Probod.Auth.SAML.PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), cfg.Probod.Auth.SAML.PrivateKey.PEM())
 }
 
 func TestBuilder_Build_SAMLPreset(t *testing.T) {
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "preset-cert"
-	b.samlPrivateKey = "preset-key"
+	b.samlPrivateKey = testOtherSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
 
 	assert.Equal(t, "preset-cert", cfg.Probod.Auth.SAML.Certificate)
-	assert.Equal(t, "preset-key", cfg.Probod.Auth.SAML.PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), cfg.Probod.Auth.SAML.PrivateKey.PEM())
 }
 
 func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
@@ -886,7 +927,8 @@ func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
 
 	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
 	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
-	assert.Equal(t, "test-oauth2-signing-key", sk.PrivateKey)
+	assert.Equal(t, testSigningKeyPEM(), sk.PrivateKey.PEM())
+	assert.NotNil(t, sk.PrivateKey.PrivateKey())
 	assert.Equal(t, "default", sk.KID)
 	assert.True(t, sk.Active)
 
@@ -899,7 +941,7 @@ func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
 
 func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
 	env := requiredEnv()
-	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY"] = "env-signing-key"
+	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY"] = testOtherSigningKeyPEM()
 	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY_KID"] = "env-kid"
 	env["PROBOD_OAUTH2_SERVER_ACCESS_TOKEN_DURATION"] = "10"
 	env["PROBOD_OAUTH2_SERVER_REFRESH_TOKEN_DURATION"] = "20"
@@ -914,7 +956,7 @@ func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
 
 	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
 	sk := cfg.Probod.Auth.OAuth2Server.SigningKeys[0]
-	assert.Equal(t, "env-signing-key", sk.PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), sk.PrivateKey.PEM())
 	assert.Equal(t, "env-kid", sk.KID)
 	assert.True(t, sk.Active)
 
@@ -937,13 +979,27 @@ func TestBuilder_Build_OAuth2Preset(t *testing.T) {
 	delete(env, "OAUTH2_SERVER_SIGNING_KEY")
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
-	b.oauth2SigningKey = "preset-signing-key"
+	b.oauth2SigningKey = testOtherSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Probod.Auth.OAuth2Server.SigningKeys, 1)
-	assert.Equal(t, "preset-signing-key", cfg.Probod.Auth.OAuth2Server.SigningKeys[0].PrivateKey)
+	assert.Equal(t, testOtherSigningKeyPEM(), cfg.Probod.Auth.OAuth2Server.SigningKeys[0].PrivateKey.PEM())
+}
+
+// A key that cannot be decoded fails in probod-bootstrap, rather than at the
+// next start of probod.
+func TestBuilder_Build_InvalidSigningKey(t *testing.T) {
+	env := requiredEnv()
+	env["PROBOD_OAUTH2_SERVER_SIGNING_KEY"] = "not-a-pem-key"
+
+	b := NewBuilder(NewResolver(mockEnv(env)))
+
+	_, err := b.Build()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot get OAuth2 server signing key")
 }
 
 func TestBuilder_Build_IdentityFederationDisabledByDefault(t *testing.T) {
@@ -975,7 +1031,7 @@ func TestBuilder_Build_IdentityFederationEnabledFromEnv(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
 	env["PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL"] = "https://proboidentity.com"
-	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "env-identity-federation-key"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = testSigningKeyPEM()
 	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID"] = "env-identity-federation-kid"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
@@ -988,7 +1044,8 @@ func TestBuilder_Build_IdentityFederationEnabledFromEnv(t *testing.T) {
 
 	require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 1)
 	sk := cfg.Probod.IdentityFederation.SigningKeys[0]
-	assert.Equal(t, "env-identity-federation-key", sk.PrivateKey)
+	assert.Equal(t, testSigningKeyPEM(), sk.PrivateKey.PEM())
+	assert.NotNil(t, sk.PrivateKey.PrivateKey())
 	assert.Equal(t, "env-identity-federation-kid", sk.KID)
 	assert.True(t, sk.Active)
 }
@@ -996,7 +1053,7 @@ func TestBuilder_Build_IdentityFederationEnabledFromEnv(t *testing.T) {
 func TestBuilder_Build_IdentityFederationEnabledDefaultsKID(t *testing.T) {
 	env := requiredEnv()
 	env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
-	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "env-identity-federation-key"
+	env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = testSigningKeyPEM()
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -1025,7 +1082,7 @@ func TestBuilder_Build_IdentityFederationPreviousSigningKey(t *testing.T) {
 	enabledEnv := func() map[string]string {
 		env := requiredEnv()
 		env["PROBOD_IDENTITY_FEDERATION_ENABLED"] = "true"
-		env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = "env-identity-federation-key"
+		env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY"] = testSigningKeyPEM()
 		env["PROBOD_IDENTITY_FEDERATION_SIGNING_KEY_KID"] = "current"
 
 		return env
@@ -1037,7 +1094,7 @@ func TestBuilder_Build_IdentityFederationPreviousSigningKey(t *testing.T) {
 			t.Parallel()
 
 			env := enabledEnv()
-			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = "env-identity-federation-previous-key"
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = testOtherSigningKeyPEM()
 			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "retired"
 
 			b := NewBuilder(NewResolver(mockEnv(env)))
@@ -1048,14 +1105,14 @@ func TestBuilder_Build_IdentityFederationPreviousSigningKey(t *testing.T) {
 			require.Len(t, cfg.Probod.IdentityFederation.SigningKeys, 2)
 
 			active := cfg.Probod.IdentityFederation.SigningKeys[0]
-			assert.Equal(t, "env-identity-federation-key", active.PrivateKey)
+			assert.Equal(t, testSigningKeyPEM(), active.PrivateKey.PEM())
 			assert.Equal(t, "current", active.KID)
 			assert.True(t, active.Active)
 
 			// Published but never signing: a cloud provider that already cached
 			// the key set can still verify a token minted before the rotation.
 			retired := cfg.Probod.IdentityFederation.SigningKeys[1]
-			assert.Equal(t, "env-identity-federation-previous-key", retired.PrivateKey)
+			assert.Equal(t, testOtherSigningKeyPEM(), retired.PrivateKey.PEM())
 			assert.Equal(t, "retired", retired.KID)
 			assert.False(t, retired.Active)
 		},
@@ -1082,7 +1139,7 @@ func TestBuilder_Build_IdentityFederationPreviousSigningKey(t *testing.T) {
 			t.Parallel()
 
 			env := enabledEnv()
-			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = "env-identity-federation-previous-key"
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = testOtherSigningKeyPEM()
 
 			b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -1116,7 +1173,7 @@ func TestBuilder_Build_IdentityFederationPreviousSigningKey(t *testing.T) {
 			t.Parallel()
 
 			env := enabledEnv()
-			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = "env-identity-federation-previous-key"
+			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY"] = testOtherSigningKeyPEM()
 			env["PROBOD_IDENTITY_FEDERATION_PREVIOUS_SIGNING_KEY_KID"] = "current"
 
 			b := NewBuilder(NewResolver(mockEnv(env)))
@@ -1135,7 +1192,7 @@ func TestBuilder_Build_PgCABundleFromEnv(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -1154,7 +1211,7 @@ func TestBuilder_Build_PgCABundleFromFile(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -1168,7 +1225,7 @@ func TestBuilder_Build_AuthCookieSameSiteInvalid(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)
@@ -1182,7 +1239,7 @@ func TestBuilder_Build_AuthCookieSameSiteNoneRequiresSecure(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)
@@ -1249,7 +1306,7 @@ func TestBuilder_Build_ConnectorEndpointOverrides(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -1281,7 +1338,7 @@ func TestBuilder_Build_NoConnectorEndpointOverrides(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(requiredEnv())))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
@@ -1305,7 +1362,7 @@ func TestBuilder_Build_ConnectorEndpointTypoUnknownProvider(t *testing.T) {
 
 	b := NewBuilder(resolver)
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)
@@ -1327,7 +1384,7 @@ func TestBuilder_Build_ConnectorEndpointTypoUnknownField(t *testing.T) {
 
 	b := NewBuilder(resolver)
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	_, err := b.Build()
 	require.Error(t, err)

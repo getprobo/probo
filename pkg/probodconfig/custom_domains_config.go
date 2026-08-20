@@ -30,9 +30,11 @@ type CustomDomainsConfig struct {
 }
 
 type ACMEConfig struct {
-	Directory  string `json:"directory,omitempty"`
-	Email      string `json:"email,omitempty"`
-	KeyType    string `json:"key-type,omitempty"`
-	AccountKey string `json:"account-key,omitempty"`
-	RootCA     string `json:"root-ca,omitempty"`
+	Directory string `json:"directory,omitempty"`
+	Email     string `json:"email,omitempty"`
+	KeyType   string `json:"key-type,omitempty"`
+	// omitzero, not omitempty: a struct is never empty, so an unset key would
+	// otherwise be written out as an empty account-key field.
+	AccountKey PrivateKey `json:"account-key,omitzero"`
+	RootCA     string     `json:"root-ca,omitempty"`
 }
