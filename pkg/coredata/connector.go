@@ -207,6 +207,128 @@ func connectorScopeCount(c *Connector) int {
 	return len(c.Connection.Scopes())
 }
 
+func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	protocol ConnectorProtocol,
+	provider ConnectorProvider,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    settings,
+    encrypted_connection,
+	created_at,
+	updated_at
+FROM
+    connectors
+WHERE
+	%s
+    AND organization_id = @organization_id
+    AND protocol = @protocol
+    AND provider = @provider
+ORDER BY
+	created_at ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"protocol":        protocol,
+		"provider":        provider,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	connectors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Connector])
+	if err != nil {
+		return fmt.Errorf("cannot collect connectors: %w", err)
+	}
+
+	*c = connectors
+
+	return nil
+}
+
+// LoadSlackMessagingConnector resolves the Slack connector the legacy
+// messaging fallback sends with (probot delivers via its own
+// installation tokens, not this table). The pick is deterministic
+// under several Slack rows: channel-configured settings win — only the
+// legacy messaging connect flow ever captured one — then oldest
+// created_at, then id. Returns ErrResourceNotFound if no OAuth2 Slack
+// row exists.
+func (c *Connector) LoadSlackMessagingConnector(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	encryptionKey cipher.EncryptionKey,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND provider = @provider
+    AND protocol = @protocol
+ORDER BY
+    (COALESCE(settings->>'channel_id', '') <> '') DESC,
+    created_at ASC,
+    id ASC
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        ConnectorProviderSlack,
+		"protocol":        ConnectorProtocolOAuth2,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	loadedConnector, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Connector])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect connector row: %w", err)
+	}
+
+	*c = loadedConnector
+
+	if err := c.decryptConnection(encryptionKey); err != nil {
+		return fmt.Errorf("cannot decrypt connection: %w", err)
+	}
+
+	return nil
+}
+
 func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
 	ctx context.Context,
 	conn pg.Querier,
@@ -414,13 +536,6 @@ INSERT INTO connectors (
 
 	_, err = conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" &&
-				pgErr.ConstraintName == "idx_connectors_organization_id_provider_protocol" {
-				return ErrResourceAlreadyExists
-			}
-		}
-
 		return fmt.Errorf("cannot insert connector: %w", err)
 	}
 
@@ -523,59 +638,6 @@ ORDER BY
 	return nil
 }
 
-func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	protocol ConnectorProtocol,
-	provider ConnectorProvider,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    provider,
-    protocol,
-    settings,
-    encrypted_connection,
-	created_at,
-	updated_at
-FROM
-    connectors
-WHERE
-	%s
-    AND organization_id = @organization_id
-    AND protocol = @protocol
-    AND provider = @provider
-ORDER BY
-	created_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-		"protocol":        protocol,
-		"provider":        provider,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query connectors: %w", err)
-	}
-
-	connectors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Connector])
-	if err != nil {
-		return fmt.Errorf("cannot collect connectors: %w", err)
-	}
-
-	*c = connectors
-
-	return nil
-}
-
 func (c *Connector) Update(
 	ctx context.Context,
 	conn pg.Tx,
@@ -647,28 +709,39 @@ WHERE
 	return nil
 }
 
+// decryptConnection decrypts and unmarshals the connector's encrypted
+// connection blob, hydrating Slack channel settings from the settings
+// column. A connector without a blob is left with a nil Connection.
+func (c *Connector) decryptConnection(encryptionKey cipher.EncryptionKey) error {
+	if len(c.EncryptedConnection) == 0 {
+		return nil
+	}
+
+	decryptedConnection, err := cipher.Decrypt(c.EncryptedConnection, encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot decrypt connection for %s: %w", c.Provider, err)
+	}
+
+	c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
+	if err != nil {
+		return fmt.Errorf("cannot unmarshal connection for %s: %w", c.Provider, err)
+	}
+
+	if c.Provider == ConnectorProviderSlack {
+		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+			settings, _ := ConnectorSettings[SlackConnectorSettings](c)
+			slackConn.Settings.Channel = settings.Channel
+			slackConn.Settings.ChannelID = settings.ChannelID
+		}
+	}
+
+	return nil
+}
+
 func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) error {
 	for _, cnnctr := range *c {
-		if len(cnnctr.EncryptedConnection) == 0 {
-			continue
-		}
-
-		decryptedConnection, err := cipher.Decrypt(cnnctr.EncryptedConnection, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt connection for %s: %w", cnnctr.Provider, err)
-		}
-
-		cnnctr.Connection, err = connector.UnmarshalConnection(cnnctr.Protocol.String(), cnnctr.Provider.String(), decryptedConnection)
-		if err != nil {
-			return fmt.Errorf("cannot unmarshal connection for %s: %w", cnnctr.Provider, err)
-		}
-
-		if cnnctr.Provider == ConnectorProviderSlack {
-			if slackConn, ok := cnnctr.Connection.(*connector.SlackConnection); ok {
-				settings, _ := ConnectorSettings[SlackConnectorSettings](cnnctr)
-				slackConn.Settings.Channel = settings.Channel
-				slackConn.Settings.ChannelID = settings.ChannelID
-			}
+		if err := cnnctr.decryptConnection(encryptionKey); err != nil {
+			return err
 		}
 	}
 

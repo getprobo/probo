@@ -42,7 +42,7 @@ type (
 		staleAfter    time.Duration
 		// slackAPIBaseURL is the SLACK provider registration's
 		// Endpoints.APIBase. The handler loads the very connector row that
-		// override applies to (LoadOneByOrganizationIDAndProvider below), so
+		// override applies to (LoadSlackMessagingConnector below), so
 		// the token it presents was minted by the overridden Endpoints.Token
 		// and must not be presented anywhere else.
 		slackAPIBaseURL string
@@ -201,13 +201,12 @@ func (h *sendingHandler) loadSlackConnection(ctx context.Context, message *cored
 	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return c.LoadOneByOrganizationIDAndProvider(
+			return c.LoadSlackMessagingConnector(
 				ctx,
 				conn,
 				scope,
 				h.encryptionKey,
 				message.OrganizationID,
-				coredata.ConnectorProviderSlack,
 			)
 		},
 	); err != nil {
