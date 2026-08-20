@@ -483,7 +483,7 @@ func (r *accessReviewSourceResolver) ProviderOrganizations(ctx context.Context, 
 	// a problem: its organization is captured during the OAuth callback, not
 	// chosen by the user. Reporting that as EMPTY would warn a perfectly
 	// healthy source that its organization may not have approved Probo.
-	if !accessreview.ProviderSupportsOrganizationPicker(cnnctr.Provider) {
+	if !accessreview.ProviderSupportsOrganizationPicker(cnnctr.Provider, cnnctr.Protocol) {
 		return &types.ProviderOrganizations{
 			Status: types.ProviderOrganizationsStatusNotApplicable,
 			Nodes:  []*types.ProviderOrganization{},

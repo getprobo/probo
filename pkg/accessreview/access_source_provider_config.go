@@ -44,7 +44,7 @@ import (
 // connector (empty string if none).
 //
 // NeedsPicker reports whether the picker mutation should surface in the
-// UI; false for 2-auto providers.
+// UI; false for 2-auto providers (identifier captured at OAuth/install).
 type providerOrgConfig struct {
 	ListOrgs     func(ctx context.Context, httpClient *http.Client, baseURL string) ([]drivers.Organization, error)
 	SelectedSlug func(c *coredata.Connector) string
@@ -151,7 +151,10 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
 	// (subdomain for PagerDuty, teamId or fallback /v2/user.id for
-	// Vercel). No picker UI; NeedsPicker = false.
+	// Vercel). No picker UI; NeedsPicker = false. GitHub App installs are
+	// the same pattern (org fixed at installation) but share the GITHUB
+	// provider entry above; ProviderSupportsOrganizationPicker gates them
+	// by protocol.
 	coredata.ConnectorProviderPagerDuty: {
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](c)
@@ -182,18 +185,25 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	},
 }
 
-// ProviderSupportsOrganizationPicker reports whether the provider surfaces an
+// ProviderSupportsOrganizationPicker reports whether the connector surfaces an
 // organization picker at all.
 //
 // It distinguishes two cases the org listing itself cannot: a provider that
-// offers a picker and returned nothing, versus a provider that has no picker
-// because its identifier is captured during the OAuth callback (PagerDuty's
-// subdomain, Vercel's team, Datadog's domain, Zendesk's subdomain). Both come
-// back as an empty list, but only the first means something is wrong — telling
-// a healthy 2-auto source that its organization "may not have approved Probo"
+// offers a picker and returned nothing, versus a connector whose identifier is
+// captured during install/OAuth (PagerDuty subdomain, Vercel team, Datadog
+// domain, Zendesk subdomain, GitHub App installation org). Both come back as
+// an empty list, but only the first means something is wrong — telling a
+// healthy 2-auto source that its organization "may not have approved Probo"
 // would be a lie.
-func ProviderSupportsOrganizationPicker(p coredata.ConnectorProvider) bool {
-	cfg, ok := providerOrgConfigs[p]
+func ProviderSupportsOrganizationPicker(
+	provider coredata.ConnectorProvider,
+	protocol coredata.ConnectorProtocol,
+) bool {
+	if protocol == coredata.ConnectorProtocolGitHubApp {
+		return false
+	}
+
+	cfg, ok := providerOrgConfigs[provider]
 
 	return ok && cfg.ListOrgs != nil
 }

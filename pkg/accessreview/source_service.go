@@ -528,22 +528,8 @@ func (s *Service) ProviderOrganizations(
 	}
 
 	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || cfg.ListOrgs == nil {
+	if !ok || !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
 		return nil, nil
-	}
-
-	if dbConnector.Protocol == coredata.ConnectorProtocolGitHubApp {
-		settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read github app connector settings: %w", err)
-		}
-
-		return []drivers.Organization{
-			{
-				Slug:        settings.Organization,
-				DisplayName: settings.Organization,
-			},
-		}, nil
 	}
 
 	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerListBaseURL(dbConnector.Provider))
@@ -611,7 +597,7 @@ func (s *Service) SourceNeedsConfiguration(
 	}
 
 	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !cfg.NeedsPicker {
+	if !ok || !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
 		return false, nil
 	}
 
@@ -742,7 +728,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 	}
 
 	cfg, ok := providerOrgConfigs[dbMeta.Provider]
-	if !ok || !cfg.NeedsPicker || cfg.ListOrgs == nil {
+	if !ok || !ProviderSupportsOrganizationPicker(dbMeta.Provider, dbMeta.Protocol) {
 		return
 	}
 
