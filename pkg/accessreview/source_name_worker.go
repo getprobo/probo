@@ -101,7 +101,6 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		ctx,
 		"syncing source name",
 		log.String("source_id", source.ID.String()),
-		log.String("current_name", source.Name),
 	)
 
 	var (
@@ -238,8 +237,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		ctx,
 		"resolved source name",
 		log.String("source_id", source.ID.String()),
-		log.String("old_name", source.Name),
-		log.String("new_name", newName),
+		log.String("connector_id", dbConnector.ID.String()),
 	)
 
 	source.Name = newName
