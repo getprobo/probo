@@ -740,8 +740,10 @@ func probeGitHub(
 	ep Endpoints,
 ) error {
 	probeURL := ep.Probe
+
 	if conn.Protocol == coredata.ConnectorProtocolGitHubApp {
 		var err error
+
 		probeURL, err = url.JoinPath(ep.APIBase, "installation/repositories")
 		if err != nil {
 			return fmt.Errorf("cannot build github app probe URL: %w", err)

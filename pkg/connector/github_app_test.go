@@ -44,6 +44,7 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 	t.Parallel()
 
 	privateKey := newGitHubAppTestPrivateKey(t)
+
 	var tokenRequests atomic.Int64
 
 	server := httptest.NewServer(
@@ -51,12 +52,14 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 			switch {
 			case r.Method == http.MethodGet && r.URL.Path == "/app/installations/42":
 				assertGitHubAppJWT(t, r.Header.Get("Authorization"))
+
 				_, _ = w.Write(
 					[]byte(`{"target_type":"Organization","account":{"login":"acme"}}`),
 				)
 			case r.Method == http.MethodPost && r.URL.Path == "/app/installations/42/access_tokens":
 				tokenRequests.Add(1)
 				assertGitHubAppJWT(t, r.Header.Get("Authorization"))
+
 				_ = json.NewEncoder(w).Encode(
 					gitHubAppInstallationToken{
 						Token:     "installation-token",
@@ -65,6 +68,7 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 				)
 			case r.Method == http.MethodGet && r.URL.Path == "/orgs/acme":
 				assert.Equal(t, "Bearer installation-token", r.Header.Get("Authorization"))
+
 				_, _ = w.Write([]byte(`{"login":"acme"}`))
 			default:
 				http.NotFound(w, r)
@@ -128,9 +132,11 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 	for range 2 {
 		resp, err := client.Get(server.URL + "/orgs/acme")
 		require.NoError(t, err)
+
 		_ = resp.Body.Close()
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	}
+
 	assert.Equal(t, int64(1), tokenRequests.Load())
 }
 

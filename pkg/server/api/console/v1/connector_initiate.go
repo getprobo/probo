@@ -61,6 +61,7 @@ func handleConnectorInitiate(
 				http.StatusBadRequest,
 				fmt.Errorf("unsupported protocol: %q", requestedProtocol),
 			)
+
 			return
 		}
 
@@ -70,6 +71,7 @@ func handleConnectorInitiate(
 		} else {
 			_, connectorErr = connectorRegistry.Get(provider)
 		}
+
 		if connectorErr != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
@@ -80,6 +82,7 @@ func handleConnectorInitiate(
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid organization_id parameter"))
 			return
 		}
+
 		if authn.APIKeyFromContext(r.Context()) != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
 			return
@@ -119,6 +122,7 @@ func handleConnectorInitiate(
 		if protocol == connector.ProtocolOAuth2 || r.URL.Query().Get("connector_id") != "" {
 			existing, err = loadExistingConnector(r, prb, scope, organizationID, provider)
 		}
+
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
@@ -135,6 +139,7 @@ func handleConnectorInitiate(
 
 			return
 		}
+
 		if protocol == connector.ProtocolGitHubApp &&
 			existing != nil &&
 			(existing.OrganizationID != organizationID ||
@@ -175,6 +180,7 @@ func handleConnectorInitiate(
 				r,
 			)
 		}
+
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot initiate connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))

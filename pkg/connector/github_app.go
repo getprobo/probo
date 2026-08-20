@@ -93,7 +93,7 @@ type (
 
 const (
 	ProtocolGitHubApp ProtocolType = "GITHUB_APP"
-	GitHubProvider                 = "GITHUB"
+	GitHubProvider    string       = "GITHUB"
 
 	gitHubAppStateType = "probo/connector/github-app"
 	gitHubAppStateTTL  = 10 * time.Minute
@@ -255,6 +255,7 @@ func (c *GitHubAppConnector) fetchInstallationOrganization(
 	if err != nil {
 		return "", fmt.Errorf("cannot execute installation request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -265,9 +266,11 @@ func (c *GitHubAppConnector) fetchInstallationOrganization(
 	if err := json.NewDecoder(resp.Body).Decode(&installation); err != nil {
 		return "", fmt.Errorf("cannot decode installation response: %w", err)
 	}
+
 	if installation.Account.Login == "" {
 		return "", fmt.Errorf("installation response has no account login")
 	}
+
 	if installation.TargetType != "Organization" {
 		return "", fmt.Errorf("github app must be installed on an organization")
 	}
@@ -298,16 +301,20 @@ func (c *GitHubAppConnection) Client(ctx context.Context) (*http.Client, error) 
 	}, nil
 }
 
-func (c GitHubAppConnection) MarshalJSON() ([]byte, error) {
-	type Alias GitHubAppConnection
-
+func (c *GitHubAppConnection) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		&struct {
-			Type string `json:"type"`
-			Alias
+			Type           string `json:"type"`
+			AppID          string `json:"app_id"`
+			PrivateKey     string `json:"private_key"`
+			InstallationID int64  `json:"installation_id"`
+			APIBase        string `json:"api_base"`
 		}{
-			Type:  string(ProtocolGitHubApp),
-			Alias: Alias(c),
+			Type:           string(ProtocolGitHubApp),
+			AppID:          c.AppID,
+			PrivateKey:     c.PrivateKey,
+			InstallationID: c.InstallationID,
+			APIBase:        c.APIBase,
 		},
 	)
 }
@@ -353,10 +360,12 @@ func (c *GitHubAppConnection) installationToken(ctx context.Context, underlying 
 	if err != nil {
 		return "", fmt.Errorf("cannot execute installation token request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+
 		return "", fmt.Errorf(
 			"installation token response status: %d: %s",
 			resp.StatusCode,
@@ -368,6 +377,7 @@ func (c *GitHubAppConnection) installationToken(ctx context.Context, underlying 
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
 		return "", fmt.Errorf("cannot decode installation token response: %w", err)
 	}
+
 	if token.Token == "" {
 		return "", fmt.Errorf("installation token response has no token")
 	}
@@ -388,6 +398,7 @@ func (c *GitHubAppConnection) appJWT(now time.Time) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot marshal JWT header: %w", err)
 	}
+
 	claims, err := json.Marshal(map[string]any{
 		"iat": now.Add(-time.Minute).Unix(),
 		"exp": now.Add(9 * time.Minute).Unix(),
@@ -400,6 +411,7 @@ func (c *GitHubAppConnection) appJWT(now time.Time) (string, error) {
 	unsigned := base64.RawURLEncoding.EncodeToString(header) + "." +
 		base64.RawURLEncoding.EncodeToString(claims)
 	digest := sha256.Sum256([]byte(unsigned))
+
 	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, digest[:])
 	if err != nil {
 		return "", fmt.Errorf("cannot sign JWT: %w", err)

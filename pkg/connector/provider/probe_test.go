@@ -111,6 +111,7 @@ func TestProbeGitHub_UsesProtocolEndpoint(t *testing.T) {
 				client := &http.Client{
 					Transport: probeRoundTripFunc(func(req *http.Request) (*http.Response, error) {
 						assert.Equal(t, tt.wantPath, req.URL.Path)
+
 						return &http.Response{
 							StatusCode: http.StatusOK,
 							Body:       io.NopCloser(strings.NewReader(`{}`)),

@@ -66,6 +66,7 @@ func (r *ConnectorRegistry) RegisterProtocol(provider string, protocol ProtocolT
 	if _, ok := r.protocolConnectors[provider]; !ok {
 		r.protocolConnectors[provider] = make(map[ProtocolType]Connector)
 	}
+
 	if _, ok := r.protocolConnectors[provider][protocol]; ok {
 		return fmt.Errorf(
 			"cannot register connector %q with protocol %q: already registered",

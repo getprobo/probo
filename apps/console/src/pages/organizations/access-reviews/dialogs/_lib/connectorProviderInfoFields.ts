@@ -61,6 +61,6 @@ export function installableProtocols(
   );
 
   return provider.configuredProtocols.filter(
-    (protocol) => protocol !== PROTOCOL_OAUTH2,
+    protocol => protocol !== PROTOCOL_OAUTH2,
   );
 }

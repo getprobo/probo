@@ -121,7 +121,7 @@ export function AccessReviewSourceProviderListItem({
             {t("addAccessReviewSourceDialog.actions.connectWithOAuth")}
           </Button>
         )}
-        {(provider.installableProtocols ?? []).map((protocol) => (
+        {(provider.installableProtocols ?? []).map(protocol => (
           <Button
             key={protocol}
             variant="primary"
