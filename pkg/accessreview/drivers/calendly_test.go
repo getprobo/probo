@@ -56,11 +56,11 @@ func TestCalendlyDriver(t *testing.T) {
 	assert.Equal(t, new(createdAt), records[0].CreatedAt)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, records[0].AccountType)
 
-	membershipCreatedAt := time.Date(2026, time.February, 3, 4, 5, 6, 0, time.UTC)
+	memberCreatedAt := time.Date(2026, time.February, 4, 5, 6, 7, 0, time.UTC)
 
 	assert.Equal(t, []string{"User"}, records[1].Roles)
 	assert.Equal(t, new(false), records[1].IsAdmin)
-	assert.Equal(t, new(membershipCreatedAt), records[1].CreatedAt)
+	assert.Equal(t, new(memberCreatedAt), records[1].CreatedAt)
 }
 
 func TestCalendlyDriver_ListAccountsWithoutOrganization(t *testing.T) {

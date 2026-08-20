@@ -51,9 +51,8 @@ type (
 	}
 
 	calendlyMembership struct {
-		Role      string                `json:"role"`
-		User      calendlyUserReference `json:"user"`
-		CreatedAt string                `json:"created_at"`
+		Role string                `json:"role"`
+		User calendlyUserReference `json:"user"`
 	}
 
 	calendlyUserReference struct {
@@ -153,10 +152,6 @@ func (d *CalendlyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  strings.TrimSpace(user.URI),
 				CreatedAt:   parseRFC3339Ptr(user.CreatedAt),
-			}
-
-			if record.CreatedAt == nil {
-				record.CreatedAt = parseRFC3339Ptr(membership.CreatedAt)
 			}
 
 			if isAdmin, known := calendlyRoleIsAdmin(role); known {
