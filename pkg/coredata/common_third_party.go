@@ -401,7 +401,9 @@ INSERT INTO common_third_parties (
 
 // Upsert inserts a row, or on slug conflict updates every column except
 // id and created_at. Returns true if a new row was inserted, false if an
-// existing row was updated.
+// existing row was updated. The flag is read from the written tuple's xmax
+// rather than inferred from the receiver, so it holds both when the caller
+// mints a fresh id (the seed) and when it loads the row first (the CLI).
 func (t *CommonThirdParty) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -504,10 +506,9 @@ RETURNING
     enrichment_attempts,
     last_enrichment_attempt_at,
     created_at,
-    updated_at
+    updated_at,
+    xmax = 0 AS inserted
 `
-
-	originalID := t.ID
 
 	args := pgx.StrictNamedArgs{
 		"id":                               t.ID,
@@ -543,14 +544,24 @@ RETURNING
 	}
 	defer rows.Close()
 
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonThirdParty])
+	// xmax is 0 on a freshly inserted tuple and non-zero on one the
+	// ON CONFLICT branch updated. It is the only signal here that comes
+	// from the database rather than from the values we sent, which is what
+	// makes it correct whether the caller minted a new id (the seed) or
+	// loaded the row first (the CLI).
+	type upsertResult struct {
+		CommonThirdParty
+		Inserted bool `db:"inserted"`
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[upsertResult])
 	if err != nil {
 		return false, fmt.Errorf("cannot collect upsert result: %w", err)
 	}
 
-	*t = row
+	*t = row.CommonThirdParty
 
-	return originalID == t.ID, nil
+	return row.Inserted, nil
 }
 
 func (t CommonThirdParty) Delete(

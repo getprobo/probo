@@ -316,3 +316,88 @@ func TestDeleteIfUnreferenced_RefusesOnceEnriched(t *testing.T) {
 		assert.True(t, gone)
 	})
 }
+
+// TestCommonThirdPartyUpsert_ReportsUpdateAfterLoadBySlug covers the CLI
+// path, which loads the existing row before upserting rather than minting a
+// fresh GID as the seed does. The inserted flag used to be derived by
+// comparing the id sent against the id returned, which holds on the seed
+// path but not here: the loaded receiver already carries the row's own id,
+// so an update reported itself as a create. created_at is the reliable
+// signal because the ON CONFLICT branch leaves it untouched.
+func TestCommonThirdPartyUpsert_ReportsUpdateAfterLoadBySlug(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	existing := seedCommonThirdParty(t, ctx, client)
+
+	var (
+		inserted bool
+		loaded   coredata.CommonThirdParty
+	)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := loaded.LoadBySlug(ctx, tx, existing.Slug); err != nil {
+			return err
+		}
+
+		// What the CLI does: patch a field on the loaded row, keeping the
+		// created_at the database already holds.
+		loaded.Category = coredata.ThirdPartyCategoryOther
+		loaded.UpdatedAt = time.Now().UTC().Truncate(time.Microsecond)
+
+		var err error
+
+		inserted, err = loaded.Upsert(ctx, tx)
+
+		return err
+	}))
+
+	assert.False(t, inserted, "upserting a row loaded by slug must report an update, not a create")
+	assert.Equal(t, existing.ID, loaded.ID, "the loaded row must be the one written")
+	assert.Equal(t, coredata.ThirdPartyCategoryOther, loaded.Category)
+	assert.True(t, existing.CreatedAt.Equal(loaded.CreatedAt), "created_at must survive the update")
+}
+
+// TestCommonThirdPartyUpsert_ReportsInsertForNewSlug is the other half: a
+// slug nothing holds yet must still report a create, so the flag
+// distinguishes the two paths rather than always reporting one of them.
+func TestCommonThirdPartyUpsert_ReportsInsertForNewSlug(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	id := gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType)
+
+	fresh := coredata.CommonThirdParty{
+		ID:             id,
+		Name:           "Novel " + id.String(),
+		Slug:           "novel-" + id.String(),
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, id)
+			return err
+		})
+	})
+
+	var inserted bool
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var err error
+
+		inserted, err = fresh.Upsert(ctx, tx)
+
+		return err
+	}))
+
+	assert.True(t, inserted, "a slug nothing holds yet must report a create")
+}
