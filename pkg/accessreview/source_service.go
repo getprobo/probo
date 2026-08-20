@@ -653,14 +653,18 @@ func (s *Service) SourceNeedsReconnect(
 }
 
 // missingOAuthScopesForConnector returns scopes in required that are absent
-// from the connector's stored OAuth grant. Non-OAuth connectors and empty
-// required lists yield an empty result. A nil Connection is treated as
-// granting nothing.
+// from the connector's stored OAuth grant. Connections that do not support
+// scope-grant checks (API key, install-scoped apps, …) and empty required
+// lists yield an empty result. A nil Connection falls back to the protocol
+// capability probe.
 func missingOAuthScopesForConnector(
 	dbConnector coredata.Connector,
 	required []string,
 ) []string {
-	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
+	if !connector.SupportsScopeGrantCheckFor(
+		dbConnector.Connection,
+		connector.ProtocolType(dbConnector.Protocol),
+	) {
 		return []string{}
 	}
 

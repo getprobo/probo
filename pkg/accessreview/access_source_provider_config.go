@@ -25,6 +25,7 @@ import (
 	"net/http"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -151,10 +152,9 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
 	// (subdomain for PagerDuty, teamId or fallback /v2/user.id for
-	// Vercel). No picker UI; NeedsPicker = false. Install-scoped protocols
-	// (for example GitHub App) share a provider entry that has ListOrgs for
-	// OAuth2; ProviderSupportsOrganizationPicker gates them by requiring
-	// OAUTH2.
+	// Vercel). No picker UI; NeedsPicker = false. Install-scoped connections
+	// (GitHub App) share a provider entry that has ListOrgs for OAuth; the
+	// connection's OrganizationSelector capability gates the picker.
 	coredata.ConnectorProviderPagerDuty: {
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](c)
@@ -188,19 +188,20 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 // ProviderSupportsOrganizationPicker reports whether the connector surfaces an
 // organization picker at all.
 //
-// Only OAuth2 connectors with a ListOrgs implementation offer a picker. Other
-// protocols (API key, install-scoped apps, …) and Pattern 2-auto OAuth
-// providers (PagerDuty, Vercel, …) capture their identifier at
-// install/callback, so an empty org list is NOT_APPLICABLE rather than EMPTY.
+// The provider must register ListOrgs, and the connection auth model must
+// implement OrganizationSelector (OAuth user tokens do; install-scoped and
+// API-key connections do not). Pattern 2-auto OAuth providers omit ListOrgs,
+// so an empty org list is NOT_APPLICABLE rather than EMPTY.
 func ProviderSupportsOrganizationPicker(
 	provider coredata.ConnectorProvider,
 	protocol coredata.ConnectorProtocol,
 ) bool {
-	if protocol != coredata.ConnectorProtocolOAuth2 {
+	cfg, ok := providerOrgConfigs[provider]
+	if !ok || cfg.ListOrgs == nil {
 		return false
 	}
 
-	cfg, ok := providerOrgConfigs[provider]
-
-	return ok && cfg.ListOrgs != nil
+	return connector.SupportsOrganizationPickerForProtocol(
+		connector.ProtocolType(protocol),
+	)
 }
