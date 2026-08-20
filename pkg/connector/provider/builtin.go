@@ -65,6 +65,8 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		bitbucketRegistration(),
 		brevoRegistration(),
 		brexRegistration(),
+		calComRegistration(),
+		calendlyRegistration(),
 		clickhouseRegistration(),
 		clickupRegistration(),
 		cloudflareRegistration(),

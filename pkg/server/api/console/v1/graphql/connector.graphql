@@ -115,6 +115,9 @@ enum ConnectorProvider
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAuthentik"
         )
+    CAL_COM @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalCom")
+    CALENDLY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalendly")
 }
 
 type ConnectorProviderInfo {
