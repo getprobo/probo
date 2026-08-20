@@ -220,7 +220,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				},
 				Webhook: probodconfig.WebhookConfig{
 					SenderInterval: b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_SENDER_INTERVAL", 5),
+					RequestTimeout: b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_REQUEST_TIMEOUT", 15),
 					CacheTTL:       b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_CACHE_TTL", 86400),
+					StaleAfter:     b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_STALE_AFTER", 300),
+					RetryBase:      b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_RETRY_BASE", 30),
+					RetryMax:       b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_RETRY_MAX", 14400),
+					MaxConcurrency: b.resolver.getEnvIntOrDefault("PROBOD_WEBHOOK_MAX_CONCURRENCY", 5),
 				},
 				Document: probodconfig.DocumentNotificationConfig{
 					Interval:         b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_INTERVAL", 300),

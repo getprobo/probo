@@ -299,6 +299,16 @@ probo:
 #      tlsRequired: false
 #      helloName: ""
 
+  # Outbound webhook delivery
+  webhook:
+    senderInterval: 5
+    requestTimeout: 15
+    cacheTTL: 86400
+    staleAfter: 300
+    retryBase: 30
+    retryMax: 14400
+    maxConcurrency: 5
+
   # OpenAI integration (optional)
   openai:
     apiKey: ""

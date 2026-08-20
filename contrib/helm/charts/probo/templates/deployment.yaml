@@ -250,6 +250,21 @@ spec:
             - name: PROBOD_SMTP_HELLO_NAME
               value: {{ .Values.probo.mailer.smtp.helloName | quote }}
             {{- end }}
+            # Outbound Webhooks
+            - name: PROBOD_WEBHOOK_SENDER_INTERVAL
+              value: {{ .Values.probo.webhook.senderInterval | quote }}
+            - name: PROBOD_WEBHOOK_REQUEST_TIMEOUT
+              value: {{ .Values.probo.webhook.requestTimeout | quote }}
+            - name: PROBOD_WEBHOOK_CACHE_TTL
+              value: {{ .Values.probo.webhook.cacheTTL | quote }}
+            - name: PROBOD_WEBHOOK_STALE_AFTER
+              value: {{ .Values.probo.webhook.staleAfter | quote }}
+            - name: PROBOD_WEBHOOK_RETRY_BASE
+              value: {{ .Values.probo.webhook.retryBase | quote }}
+            - name: PROBOD_WEBHOOK_RETRY_MAX
+              value: {{ .Values.probo.webhook.retryMax | quote }}
+            - name: PROBOD_WEBHOOK_MAX_CONCURRENCY
+              value: {{ .Values.probo.webhook.maxConcurrency | quote }}
             # OpenAI Integration
             {{- if .Values.probo.openai.apiKey }}
             - name: PROBOD_OPENAI_API_KEY

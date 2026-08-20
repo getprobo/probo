@@ -257,7 +257,12 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 60, cfg.Probod.Notifications.Slack.SenderInterval)
 	assert.Empty(t, cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
+	assert.Equal(t, 15, cfg.Probod.Notifications.Webhook.RequestTimeout)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, 300, cfg.Probod.Notifications.Webhook.StaleAfter)
+	assert.Equal(t, 30, cfg.Probod.Notifications.Webhook.RetryBase)
+	assert.Equal(t, 14400, cfg.Probod.Notifications.Webhook.RetryMax)
+	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.MaxConcurrency)
 	assert.Equal(t, 300, cfg.Probod.Notifications.Document.Interval)
 	assert.Equal(t, 900, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Document.ReminderInterval)
@@ -399,7 +404,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_AWS_USE_PATH_STYLE"] = "true"
 	// Notifications
 	env["PROBOD_WEBHOOK_SENDER_INTERVAL"] = "10"
+	env["PROBOD_WEBHOOK_REQUEST_TIMEOUT"] = "20"
 	env["PROBOD_WEBHOOK_CACHE_TTL"] = "3600"
+	env["PROBOD_WEBHOOK_STALE_AFTER"] = "600"
+	env["PROBOD_WEBHOOK_RETRY_BASE"] = "60"
+	env["PROBOD_WEBHOOK_RETRY_MAX"] = "7200"
+	env["PROBOD_WEBHOOK_MAX_CONCURRENCY"] = "8"
 	env["PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
 	env["PROBOD_DOCUMENT_NOTIFICATION_INTERVAL"] = "120"
 	env["PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY"] = "60"
@@ -547,7 +557,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Notifications
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
+	assert.Equal(t, 20, cfg.Probod.Notifications.Webhook.RequestTimeout)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, 600, cfg.Probod.Notifications.Webhook.StaleAfter)
+	assert.Equal(t, 60, cfg.Probod.Notifications.Webhook.RetryBase)
+	assert.Equal(t, 7200, cfg.Probod.Notifications.Webhook.RetryMax)
+	assert.Equal(t, 8, cfg.Probod.Notifications.Webhook.MaxConcurrency)
 	assert.Equal(t, 120, cfg.Probod.Notifications.Document.Interval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 43200, cfg.Probod.Notifications.Document.ReminderInterval)

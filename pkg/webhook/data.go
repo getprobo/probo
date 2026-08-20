@@ -67,12 +67,17 @@ func InsertUpdateData(
 ) error {
 	var configs coredata.WebhookSubscriptions
 
-	exists, err := configs.ExistsByOrganizationIDAndEventType(ctx, tx, scope, organizationID, eventType)
-	if err != nil {
-		return fmt.Errorf("cannot check webhook subscriptions: %w", err)
+	if err := configs.LoadMatchingByOrganizationIDAndEventType(
+		ctx,
+		tx,
+		scope,
+		organizationID,
+		eventType,
+	); err != nil {
+		return fmt.Errorf("cannot load matching webhook subscriptions: %w", err)
 	}
 
-	if !exists {
+	if len(configs) == 0 {
 		return nil
 	}
 
@@ -89,17 +94,34 @@ func InsertUpdateData(
 		}
 	}
 
+	now := time.Now()
 	webhookData := &coredata.WebhookData{
 		ID:             gid.New(scope.GetTenantID(), coredata.WebhookDataEntityType),
 		OrganizationID: organizationID,
 		EventType:      eventType,
 		Data:           raw,
 		UpdatedFrom:    updatedFromRaw,
-		CreatedAt:      time.Now(),
+		CreatedAt:      now,
+		ProcessedAt:    &now,
 	}
 
 	if err = webhookData.Insert(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot insert webhook data: %w", err)
+	}
+
+	for _, config := range configs {
+		event := &coredata.WebhookEvent{
+			ID:                    gid.New(scope.GetTenantID(), coredata.WebhookEventEntityType),
+			WebhookDataID:         webhookData.ID,
+			WebhookSubscriptionID: config.ID,
+			Status:                coredata.WebhookEventStatusPending,
+			MaxAttempts:           coredata.WebhookEventDefaultMaxAttempts,
+			CreatedAt:             now,
+			UpdatedAt:             now,
+		}
+		if err := event.Insert(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot insert webhook event: %w", err)
+		}
 	}
 
 	return nil

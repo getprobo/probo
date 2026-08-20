@@ -189,6 +189,6 @@ func TestWebhook_ThirdPartyCreatedEvent(t *testing.T) {
 	event := eventResult.Node.Events.Edges[0].Node
 	assert.NotEmpty(t, event.ID)
 	assert.Equal(t, subscription.ID, event.WebhookSubscriptionID)
-	assert.Equal(t, "FAILED", event.Status)
+	assert.Equal(t, "PENDING", event.Status)
 	assert.False(t, event.CreatedAt.IsZero())
 }

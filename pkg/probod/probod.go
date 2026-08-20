@@ -181,7 +181,12 @@ func New() *Implm {
 				},
 				Webhook: WebhookConfig{
 					SenderInterval: 5,
+					RequestTimeout: 15,
 					CacheTTL:       86400,
+					StaleAfter:     300,
+					RetryBase:      30,
+					RetryMax:       14400,
+					MaxConcurrency: 5,
 				},
 				Document: DocumentNotificationConfig{
 					Interval:         300,   // 5 minutes
@@ -1186,11 +1191,19 @@ func (impl *Implm) Run(
 
 	webhookWorkerCtx, stopWebhookWorker := context.WithCancel(context.Background())
 	webhookWorker := webhook.NewWebhookWorker(pgClient, l.Named("webhook-sender"), webhook.Config{
-		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
-		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
-		EncryptionKey: encryptionKey,
-		Host:          baseURL.String(),
-	})
+		Interval:       time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
+		Timeout:        time.Duration(impl.cfg.Notifications.Webhook.RequestTimeout) * time.Second,
+		CacheTTL:       time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
+		StaleAfter:     time.Duration(impl.cfg.Notifications.Webhook.StaleAfter) * time.Second,
+		RetryBase:      time.Duration(impl.cfg.Notifications.Webhook.RetryBase) * time.Second,
+		RetryMax:       time.Duration(impl.cfg.Notifications.Webhook.RetryMax) * time.Second,
+		MaxConcurrency: impl.cfg.Notifications.Webhook.MaxConcurrency,
+		EncryptionKey:  encryptionKey,
+		Host:           baseURL.String(),
+	},
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
 
 	wg.Go(
 		func() {

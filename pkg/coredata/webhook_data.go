@@ -60,7 +60,8 @@ INSERT INTO webhook_data (
     event_type,
     data,
     updated_from,
-    created_at
+    created_at,
+    processed_at
 )
 VALUES (
     @id,
@@ -69,7 +70,8 @@ VALUES (
     @event_type,
     @data,
     @updated_from,
-    @created_at
+    @created_at,
+    @processed_at
 )
 `
 
@@ -81,12 +83,57 @@ VALUES (
 		"data":            w.Data,
 		"updated_from":    w.UpdatedFrom,
 		"created_at":      w.CreatedAt,
+		"processed_at":    w.ProcessedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert webhook data: %w", err)
 	}
+
+	return nil
+}
+
+func (w *WebhookData) LoadByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	id gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    event_type,
+    data,
+    updated_from,
+    created_at,
+    processed_at
+FROM webhook_data
+WHERE %s
+    AND id = @id
+LIMIT 1
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": id}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query webhook data: %w", err)
+	}
+
+	data, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[WebhookData])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect webhook data: %w", err)
+	}
+
+	*w = data
 
 	return nil
 }

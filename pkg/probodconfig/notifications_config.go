@@ -29,7 +29,12 @@ type NotificationsConfig struct {
 
 type WebhookConfig struct {
 	SenderInterval int `json:"sender-interval"`
+	RequestTimeout int `json:"request-timeout"`
 	CacheTTL       int `json:"cache-ttl"`
+	StaleAfter     int `json:"stale-after"`
+	RetryBase      int `json:"retry-base"`
+	RetryMax       int `json:"retry-max"`
+	MaxConcurrency int `json:"max-concurrency"`
 }
 
 // DocumentNotificationConfig configures the debounced worker that batches
