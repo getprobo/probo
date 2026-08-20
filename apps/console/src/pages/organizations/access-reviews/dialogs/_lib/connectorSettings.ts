@@ -169,9 +169,9 @@ export function connectOAuthProvider(
   });
 }
 
-// connectProviderProtocol builds the connector-initiate URL for any configured
-// protocol (OAUTH2, GITHUB_APP, …) and navigates the browser to it.
-export function connectProviderProtocol(
+// buildConnectorInitiateURL builds the connector-initiate URL for any
+// configured protocol (OAUTH2, install protocols, …).
+export function buildConnectorInitiateURL(
   organizationId: string,
   provider: string,
   protocol: string,
@@ -180,7 +180,7 @@ export function connectProviderProtocol(
     connectorId?: string;
     extras?: Record<string, string>;
   },
-) {
+): string {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/connectors/initiate", baseURL);
   url.searchParams.append("organization_id", organizationId);
@@ -203,5 +203,22 @@ export function connectProviderProtocol(
     "continue",
     `/organizations/${organizationId}/access-reviews/connections`,
   );
-  window.location.assign(url.toString());
+  return url.toString();
+}
+
+// connectProviderProtocol builds the connector-initiate URL for any configured
+// protocol and navigates the browser to it.
+export function connectProviderProtocol(
+  organizationId: string,
+  provider: string,
+  protocol: string,
+  options?: {
+    oauth2Scopes?: ReadonlyArray<string>;
+    connectorId?: string;
+    extras?: Record<string, string>;
+  },
+) {
+  window.location.assign(
+    buildConnectorInitiateURL(organizationId, provider, protocol, options),
+  );
 }

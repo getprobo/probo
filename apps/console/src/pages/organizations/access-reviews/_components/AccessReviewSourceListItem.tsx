@@ -50,6 +50,7 @@ import type { AccessReviewSourceListItemOrganizationsUnavailable_source$key } fr
 import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
 
 import { accessReviewSourceSection } from "../connections/_components/variants";
+import { buildConnectorInitiateURL } from "../dialogs/_lib/connectorSettings";
 
 function canReconnectConnector(
   connector: { protocol: string; oauth2Scopes: ReadonlyArray<string> } | null | undefined,
@@ -62,8 +63,8 @@ function canReconnectConnector(
     return connector.oauth2Scopes.length > 0;
   }
 
-  // Install-scoped protocols (GitHub App, …) reconnect through initiate
-  // without OAuth scopes on the connection.
+  // Install-scoped protocols reconnect through initiate without OAuth scopes
+  // on the connection.
   return true;
 }
 
@@ -314,22 +315,15 @@ export function AccessReviewSourceListItem({
     const connector = accessSource.connector;
     if (!connector || !accessSource.connectorId) return null;
 
-    const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
-    const url = new URL("/api/console/v1/connectors/initiate", baseURL);
-    url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", connector.provider);
-    url.searchParams.append("connector_id", accessSource.connectorId);
-    if (connector.protocol !== "OAUTH2") {
-      url.searchParams.append("protocol", connector.protocol);
-    }
-    for (const scope of connector.oauth2Scopes) {
-      url.searchParams.append("scope", scope);
-    }
-    url.searchParams.append(
-      "continue",
-      `/organizations/${organizationId}/access-reviews/connections`,
+    return buildConnectorInitiateURL(
+      organizationId,
+      connector.provider,
+      connector.protocol,
+      {
+        connectorId: accessSource.connectorId,
+        oauth2Scopes: connector.oauth2Scopes,
+      },
     );
-    return url.toString();
   };
   const reconnectUrl = buildReconnectUrl();
 
