@@ -110,6 +110,7 @@ func (d *CalComDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		}
 
 		var memberships []calComMembership
+
 		for _, team := range teams.Data {
 			teamMemberships, err := d.fetchAllMemberships(ctx, calComTeams, team.ID)
 			if err != nil {
@@ -178,6 +179,7 @@ func (d *CalComDriver) fetchTeams(ctx context.Context) (*calComTeamsResponse, er
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute cal.com teams request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -246,6 +248,7 @@ func (d *CalComDriver) fetchMembershipsPage(
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute cal.com memberships request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -292,6 +295,7 @@ func calComMembershipRecords(memberships []calComMembership) []AccountRecord {
 		}
 
 		externalID := strconv.FormatInt(membership.UserID, 10)
+
 		key := externalID
 		if membership.UserID == 0 {
 			externalID = ""
@@ -319,6 +323,7 @@ func calComMembershipRecords(memberships []calComMembership) []AccountRecord {
 		for _, name := range calComRoles(role) {
 			aggregate.roles[name] = struct{}{}
 		}
+
 		aggregate.active = aggregate.active || membership.Accepted
 		aggregate.isAdmin = aggregate.isAdmin || role == "OWNER" || role == "ADMIN"
 	}
@@ -326,10 +331,12 @@ func calComMembershipRecords(memberships []calComMembership) []AccountRecord {
 	records := make([]AccountRecord, 0, len(order))
 	for _, key := range order {
 		aggregate := byUser[key]
+
 		roles := make([]string, 0, len(aggregate.roles))
 		for role := range aggregate.roles {
 			roles = append(roles, role)
 		}
+
 		sort.Strings(roles)
 
 		aggregate.record.Roles = roles

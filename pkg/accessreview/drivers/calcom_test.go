@@ -44,6 +44,7 @@ func TestCalComDriver_ListAccounts(t *testing.T) {
 		switch r.URL.Path {
 		case "/v2/me":
 			assert.Equal(t, http.MethodGet, r.Method)
+
 			_, _ = w.Write([]byte(`{"status":"success","data":{"organizationId":42}}`))
 		case "/v2/organizations/42/memberships":
 			assert.Equal(t, strconv.Itoa(calComPageSize), r.URL.Query().Get("take"))

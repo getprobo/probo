@@ -45,6 +45,7 @@ func TestCalendlyDriver(t *testing.T) {
 	require.Len(t, records, 2)
 
 	createdAt := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
+
 	assert.Equal(t, "owner@example.com", records[0].Email)
 	assert.Equal(t, "Owner User", records[0].FullName)
 	assert.Equal(t, []string{"Owner"}, records[0].Roles)

@@ -175,9 +175,11 @@ func (d *CalendlyDriver) fetchMembershipsPage(
 	query := req.URL.Query()
 	query.Set("organization", organization)
 	query.Set("count", strconv.Itoa(calendlyPageSize))
+
 	if pageToken != "" {
 		query.Set("page_token", pageToken)
 	}
+
 	req.URL.RawQuery = query.Encode()
 	req.Header.Set("Accept", "application/json")
 
