@@ -3388,7 +3388,7 @@
     "errors": { "create": "Aanmaken van toegangsbron mislukt" },
     "messages": { "error": "Fout", "success": "Succes", "created": "Toegangsbron succesvol aangemaakt." },
     "actions": { "loading": "Laden...", "loadMore": "Meer laden", "retry": "Opnieuw proberen" },
-    "sections": { "connected": "Verbonden", "notConnected": "Niet verbonden" },
+    "sections": { "connected": "Verbonden", "available": "Beschikbaar" },
     "searchPlaceholder": "Bronnen en providers zoeken...",
     "emptyConnected": "Er zijn nog geen toegangsbronnen verbonden.",
     "emptyConnectedSearch": "Geen verbonden bronnen komen overeen met uw zoekopdracht.",

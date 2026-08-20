@@ -18,18 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql } from "relay-runtime";
+import type { RecordSourceSelectorProxy } from "relay-runtime";
+import { ConnectionHandler, graphql } from "relay-runtime";
 
 export const createAccessReviewSourceMutation = graphql`
   mutation accessReviewSourceMutationsCreateMutation(
     $input: CreateAccessReviewSourceInput!
-    $connections: [ID!]!
   ) {
     createAccessReviewSource(input: $input) {
-      accessReviewSourceEdge @prependEdge(connections: $connections) {
+      created
+      accessReviewSourceEdge {
         node {
           id
           name
+          connectorId
           createdAt
           ...AccessReviewSourceListItem_source
         }
@@ -37,3 +39,28 @@ export const createAccessReviewSourceMutation = graphql`
     }
   }
 `;
+
+// prependCreatedSourceEdge inserts the mutation's edge at the top of the
+// sources connection. Creation is idempotent per connector, so a call
+// that resolved to an existing source (created=false) inserts nothing,
+// and a node already present in the connection is never duplicated.
+export function prependCreatedSourceEdge(
+  store: RecordSourceSelectorProxy,
+  connectionId: string,
+) {
+  const payload = store.getRootField("createAccessReviewSource");
+  if (!payload || payload.getValue("created") !== true) return;
+
+  const edge = payload.getLinkedRecord("accessReviewSourceEdge");
+  const node = edge?.getLinkedRecord("node");
+  const connection = store.get(connectionId);
+  if (!edge || !node || !connection) return;
+
+  const nodeId = node.getDataID();
+  const edges = connection.getLinkedRecords("edges") ?? [];
+  if (edges.some(e => e?.getLinkedRecord("node")?.getDataID() === nodeId)) {
+    return;
+  }
+
+  ConnectionHandler.insertEdgeBefore(connection, edge);
+}

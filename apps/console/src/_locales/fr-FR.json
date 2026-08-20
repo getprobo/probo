@@ -3384,7 +3384,7 @@
     "errors": { "create": "Échec de la création de la source d’accès" },
     "messages": { "error": "Erreur", "success": "Succès", "created": "Source d’accès créée avec succès." },
     "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer" },
-    "sections": { "connected": "Connectées", "notConnected": "Non connectées" },
+    "sections": { "connected": "Connectées", "available": "Disponibles" },
     "searchPlaceholder": "Rechercher des sources et des fournisseurs...",
     "emptyConnected": "Aucune source d’accès n’est encore connectée.",
     "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",
