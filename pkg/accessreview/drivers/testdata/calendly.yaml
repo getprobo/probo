@@ -52,7 +52,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"collection":[{"uri":"https://api.calendly.com/organization_memberships/M1","role":"owner","user":{"uri":"https://api.calendly.com/users/U1","name":"Owner User","email":"owner@example.com","created_at":"2026-01-02T03:04:05Z"}}],"pagination":{"next_page_token":"next"}}'
+        body: '{"collection":[{"uri":"https://api.calendly.com/organization_memberships/M1","role":"owner","user":"https://api.calendly.com/users/U1","created_at":"2026-01-01T00:00:00Z"}],"pagination":{"next_page_token":"next"}}'
         headers:
             Content-Type:
                 - application/json
@@ -60,6 +60,32 @@ interactions:
         code: 200
         duration: 50ms
     - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.calendly.com
+        form: {}
+        headers:
+            Accept:
+                - application/json
+        url: https://api.calendly.com/users/U1
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"resource":{"uri":"https://api.calendly.com/users/U1","name":"Owner User","email":"owner@example.com","created_at":"2026-01-02T03:04:05Z"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 50ms
+    - id: 3
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -84,7 +110,33 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"collection":[{"uri":"https://api.calendly.com/organization_memberships/M2","role":"user","user":{"uri":"https://api.calendly.com/users/U2","name":"Member User","email":"member@example.com"}}],"pagination":{"next_page_token":null}}'
+        body: '{"collection":[{"uri":"https://api.calendly.com/organization_memberships/M2","role":"user","user":"https://api.calendly.com/users/U2","created_at":"2026-02-03T04:05:06Z"}],"pagination":{"next_page_token":null}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 50ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.calendly.com
+        form: {}
+        headers:
+            Accept:
+                - application/json
+        url: https://api.calendly.com/users/U2
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"resource":{"uri":"https://api.calendly.com/users/U2","name":"Member User","email":"member@example.com"}}'
         headers:
             Content-Type:
                 - application/json

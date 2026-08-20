@@ -158,8 +158,42 @@ func TestCalComDriver_ListAccountsSolo(t *testing.T) {
 	assert.Equal(t, "Solo User", records[0].FullName)
 	assert.Empty(t, records[0].Roles)
 	assert.Equal(t, new(true), records[0].Active)
-	assert.Equal(t, new(false), records[0].IsAdmin)
+	assert.Nil(t, records[0].IsAdmin)
 	assert.Equal(t, "42", records[0].ExternalID)
 	assert.Equal(t, coredata.MFAStatusUnknown, records[0].MFAStatus)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, records[0].AccountType)
+}
+
+func TestCalComMembershipRecords_AdminSignal(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		roles    []string
+		expected *bool
+	}{
+		{name: "member is known non-admin", roles: []string{"MEMBER"}, expected: new(false)},
+		{name: "owner is known admin", roles: []string{"OWNER"}, expected: new(true)},
+		{name: "empty role is unknown", roles: []string{""}},
+		{name: "unrecognized role is unknown", roles: []string{"SUPER_ADMIN"}},
+		{name: "member plus unknown stays unknown", roles: []string{"MEMBER", "SUPER_ADMIN"}},
+		{name: "owner plus unknown stays known admin", roles: []string{"OWNER", "SUPER_ADMIN"}, expected: new(true)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			memberships := make([]calComMembership, len(tt.roles))
+			for i, role := range tt.roles {
+				memberships[i].UserID = 42
+				memberships[i].User.Email = "user@example.com"
+				memberships[i].Role = role
+			}
+
+			records := calComMembershipRecords(memberships)
+			require.Len(t, records, 1)
+			assert.Equal(t, tt.expected, records[0].IsAdmin)
+		})
+	}
 }

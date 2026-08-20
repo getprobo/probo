@@ -80,10 +80,12 @@ type (
 	}
 
 	calComAccountAggregate struct {
-		record  AccountRecord
-		roles   map[string]struct{}
-		active  bool
-		isAdmin bool
+		record       AccountRecord
+		roles        map[string]struct{}
+		active       bool
+		isAdmin      bool
+		adminKnown   bool
+		adminUnknown bool
 	}
 )
 
@@ -276,7 +278,6 @@ func calComSoloRecord(me *calComMeResponse) []AccountRecord {
 			FullName:    strings.TrimSpace(me.Data.Name),
 			Roles:       []string{},
 			Active:      new(true),
-			IsAdmin:     new(false),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -326,7 +327,14 @@ func calComMembershipRecords(memberships []calComMembership) []AccountRecord {
 		}
 
 		aggregate.active = aggregate.active || membership.Accepted
-		aggregate.isAdmin = aggregate.isAdmin || role == "OWNER" || role == "ADMIN"
+
+		isAdmin, known := calComRoleIsAdmin(role)
+		if known {
+			aggregate.adminKnown = true
+			aggregate.isAdmin = aggregate.isAdmin || isAdmin
+		} else {
+			aggregate.adminUnknown = true
+		}
 	}
 
 	records := make([]AccountRecord, 0, len(order))
@@ -342,7 +350,14 @@ func calComMembershipRecords(memberships []calComMembership) []AccountRecord {
 
 		aggregate.record.Roles = roles
 		aggregate.record.Active = new(aggregate.active)
-		aggregate.record.IsAdmin = new(aggregate.isAdmin)
+
+		switch {
+		case aggregate.isAdmin:
+			aggregate.record.IsAdmin = new(true)
+		case aggregate.adminKnown && !aggregate.adminUnknown:
+			aggregate.record.IsAdmin = new(false)
+		}
+
 		records = append(records, aggregate.record)
 	}
 
@@ -361,5 +376,16 @@ func calComRoles(role string) []string {
 		return []string{}
 	default:
 		return []string{role}
+	}
+}
+
+func calComRoleIsAdmin(role string) (bool, bool) {
+	switch role {
+	case "OWNER", "ADMIN":
+		return true, true
+	case "MEMBER":
+		return false, true
+	default:
+		return false, false
 	}
 }
