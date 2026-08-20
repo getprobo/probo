@@ -18,36 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package provider
+package provider_test
 
 import (
-	"context"
-	"net/http"
+	"testing"
 
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func calComRegistration() *Registration {
-	return &Registration{
-		Provider:       coredata.ConnectorProviderCalCom,
-		DisplayName:    "Cal.com",
-		SupportsAPIKey: true,
-		Endpoints: Endpoints{
-			Auth:    "https://app.cal.com/auth/oauth2/authorize",
-			Token:   "https://api.cal.com/v2/auth/oauth2/token",
-			APIBase: "https://api.cal.com",
-			Probe:   "https://api.cal.com/v2/me",
-		},
-		OAuth2Scopes: []string{
-			"PROFILE_READ",
-			"TEAM_PROFILE_READ",
-			"TEAM_MEMBERSHIP_READ",
-			"ORG_MEMBERSHIP_READ",
-		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewCalComDriver(c, ep.APIBase), nil
-		},
+func TestCalComRegistration(t *testing.T) {
+	t.Parallel()
+
+	expectedScopes := []string{
+		"PROFILE_READ",
+		"TEAM_PROFILE_READ",
+		"TEAM_MEMBERSHIP_READ",
+		"ORG_MEMBERSHIP_READ",
 	}
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderCalCom)
+	require.True(t, ok)
+
+	assert.True(t, reg.SupportsAPIKey)
+	assert.Equal(t, expectedScopes, reg.OAuth2Scopes)
+
+	oauthConnector := &connector.OAuth2Connector{}
+	require.NoError(t, r.ApplyOAuth2Defaults(
+		string(coredata.ConnectorProviderCalCom),
+		"https://example.com/callback",
+		oauthConnector,
+	))
+
+	assert.Equal(t, "https://app.cal.com/auth/oauth2/authorize", oauthConnector.AuthURL)
+	assert.Equal(t, "https://api.cal.com/v2/auth/oauth2/token", oauthConnector.TokenURL)
+	assert.Equal(t, expectedScopes, oauthConnector.RegisteredScopes)
 }
