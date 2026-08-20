@@ -308,6 +308,59 @@ WHERE %s AND id = @id
 	return nil
 }
 
+// LoadByConnectorID loads the access source referencing the connector,
+// oldest first when several exist (possible only in pre-existing data:
+// creation is idempotent per connector on every surface). Returns
+// ErrResourceNotFound when none references it.
+func (as *AccessReviewSource) LoadByConnectorID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	connectorID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    connector_id,
+    name,
+    csv_data,
+    name_synced_at,
+    created_at,
+    updated_at
+FROM
+    access_review_sources
+WHERE
+    %s
+    AND connector_id = @connector_id
+ORDER BY
+    created_at ASC
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"connector_id": connectorID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query access_review_sources: %w", err)
+	}
+
+	source, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AccessReviewSource])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect access source: %w", err)
+	}
+
+	*as = source
+
+	return nil
+}
+
 func (sources *AccessReviewSources) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
