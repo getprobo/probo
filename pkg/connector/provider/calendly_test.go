@@ -39,7 +39,7 @@ func TestCalendlyRegistration(t *testing.T) {
 
 	assert.True(t, reg.SupportsAPIKey)
 	assert.True(t, reg.RequiresPKCE)
-	assert.Equal(t, []string{"organizations:read"}, reg.OAuth2Scopes)
+	assert.Equal(t, []string{"users:read", "organizations:read"}, reg.OAuth2Scopes)
 
 	oauthConnector := &connector.OAuth2Connector{}
 	require.NoError(t, r.ApplyOAuth2Defaults(
@@ -50,6 +50,6 @@ func TestCalendlyRegistration(t *testing.T) {
 
 	assert.Equal(t, "https://auth.calendly.com/oauth/authorize", oauthConnector.AuthURL)
 	assert.Equal(t, "https://auth.calendly.com/oauth/token", oauthConnector.TokenURL)
-	assert.Equal(t, []string{"organizations:read"}, oauthConnector.RegisteredScopes)
+	assert.Equal(t, []string{"users:read", "organizations:read"}, oauthConnector.RegisteredScopes)
 	assert.True(t, oauthConnector.RequiresPKCE)
 }
