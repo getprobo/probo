@@ -51,7 +51,6 @@ type (
 	}
 
 	calendlyMembership struct {
-		URI  string `json:"uri"`
 		Role string `json:"role"`
 		User struct {
 			URI       string `json:"uri"`

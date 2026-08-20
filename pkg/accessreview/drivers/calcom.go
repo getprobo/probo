@@ -52,7 +52,6 @@ type (
 	}
 
 	calComMembership struct {
-		ID       int64  `json:"id"`
 		UserID   int64  `json:"userId"`
 		Accepted bool   `json:"accepted"`
 		Role     string `json:"role"`

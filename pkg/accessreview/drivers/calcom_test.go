@@ -48,7 +48,7 @@ func TestCalComDriver_ListAccounts(t *testing.T) {
 			assert.Equal(t, strconv.Itoa(calComPageSize), r.URL.Query().Get("take"))
 
 			skip, err := strconv.Atoi(r.URL.Query().Get("skip"))
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			if skip == 0 {
 				memberships := make([]map[string]any, calComPageSize)
@@ -70,7 +70,7 @@ func TestCalComDriver_ListAccounts(t *testing.T) {
 					}
 				}
 
-				require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"status": "success", "data": memberships}))
+				assert.NoError(t, json.NewEncoder(w).Encode(map[string]any{"status": "success", "data": memberships}))
 
 				return
 			}
