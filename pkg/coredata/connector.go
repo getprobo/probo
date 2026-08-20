@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -130,134 +129,6 @@ func (c *Connector) AuthorizationAttributes(
 	}
 
 	return attrsByID, nil
-}
-
-func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	protocol ConnectorProtocol,
-	provider ConnectorProvider,
-	encryptionKey cipher.EncryptionKey,
-) error {
-	if err := c.loadAllByOrganizationIDProtocolAndProvider(ctx, conn, scope, organizationID, protocol, provider); err != nil {
-		return fmt.Errorf("cannot load all connectors by organization ID, protocol and provider: %w", err)
-	}
-
-	if err := c.decryptConnections(encryptionKey); err != nil {
-		return fmt.Errorf("cannot decrypt connections: %w", err)
-	}
-
-	return nil
-}
-
-// LoadOneByOrganizationIDAndProvider loads the effective OAuth2
-// connector for an (organization, provider) pair, picking the row with
-// the widest stored scope set. Ties are broken by most recent
-// updated_at. Returns ErrResourceNotFound if no OAuth2 row exists.
-func (c *Connector) LoadOneByOrganizationIDAndProvider(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
-	organizationID gid.GID,
-	provider ConnectorProvider,
-) error {
-	var connectors Connectors
-	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
-		ctx,
-		conn,
-		scope,
-		organizationID,
-		ConnectorProtocolOAuth2,
-		provider,
-		encryptionKey,
-	); err != nil {
-		return fmt.Errorf("cannot load connectors: %w", err)
-	}
-
-	if len(connectors) == 0 {
-		return ErrResourceNotFound
-	}
-
-	// Widest-scope-wins, tiebreak by most recent updated_at.
-	sort.Slice(connectors, func(i, j int) bool {
-		ci, cj := connectorScopeCount(connectors[i]), connectorScopeCount(connectors[j])
-		if ci != cj {
-			return ci > cj
-		}
-
-		return connectors[i].UpdatedAt.After(connectors[j].UpdatedAt)
-	})
-
-	*c = *connectors[0]
-
-	return nil
-}
-
-// connectorScopeCount returns the number of scopes granted on a
-// decrypted connector's connection. Returns 0 if the connection is nil.
-// Used by the widest-scope selector.
-func connectorScopeCount(c *Connector) int {
-	if c == nil || c.Connection == nil {
-		return 0
-	}
-
-	return len(c.Connection.Scopes())
-}
-
-func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	protocol ConnectorProtocol,
-	provider ConnectorProvider,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    provider,
-    protocol,
-    settings,
-    encrypted_connection,
-	created_at,
-	updated_at
-FROM
-    connectors
-WHERE
-	%s
-    AND organization_id = @organization_id
-    AND protocol = @protocol
-    AND provider = @provider
-ORDER BY
-	created_at ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-		"protocol":        protocol,
-		"provider":        provider,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query connectors: %w", err)
-	}
-
-	connectors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Connector])
-	if err != nil {
-		return fmt.Errorf("cannot collect connectors: %w", err)
-	}
-
-	*c = connectors
-
-	return nil
 }
 
 // LoadSlackMessagingConnector resolves the Slack connector the legacy
@@ -732,16 +603,6 @@ func (c *Connector) decryptConnection(encryptionKey cipher.EncryptionKey) error 
 			settings, _ := ConnectorSettings[SlackConnectorSettings](c)
 			slackConn.Settings.Channel = settings.Channel
 			slackConn.Settings.ChannelID = settings.ChannelID
-		}
-	}
-
-	return nil
-}
-
-func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) error {
-	for _, cnnctr := range *c {
-		if err := cnnctr.decryptConnection(encryptionKey); err != nil {
-			return err
 		}
 	}
 
