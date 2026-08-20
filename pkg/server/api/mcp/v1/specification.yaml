@@ -9775,10 +9775,17 @@ components:
     CreateAccessReviewSourceMCPOutput:
       type: object
       required:
-        - access_source
+        - access_review_source
+        - created
       properties:
         access_review_source:
           $ref: "#/components/schemas/AccessReviewSource"
+        created:
+          type: boolean
+          description: >-
+            False when a source already existed for the requested connector:
+            creation is idempotent per connector and the existing source is
+            returned instead of a duplicate.
 
     UpdateAccessReviewSourceMCPInput:
       type: object

@@ -694,7 +694,7 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		return nil, err
 	}
 
-	source, err := r.accessReview.CreateSource(
+	source, created, err := r.accessReview.CreateSource(
 		ctx,
 		scope,
 		accessreview.CreateAccessReviewSourceRequest{
@@ -714,6 +714,7 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 
 	return &types.CreateAccessReviewSourcePayload{
 		AccessReviewSourceEdge: types.NewAccessReviewSourceEdge(source, coredata.AccessReviewSourceOrderFieldCreatedAt),
+		Created:                created,
 	}, nil
 }
 

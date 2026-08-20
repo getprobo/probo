@@ -96,13 +96,18 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 	return v.Error()
 }
 
+// CreateSource creates an access source. Creation is idempotent per
+// connector: when a source already references req.ConnectorID, it is
+// returned with created=false instead of inserting a duplicate. The
+// connector row lock serializes concurrent callers so exactly one
+// creates.
 func (s *Service) CreateSource(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CreateAccessReviewSourceRequest,
-) (*coredata.AccessReviewSource, error) {
+) (*coredata.AccessReviewSource, bool, error) {
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	now := time.Now()
@@ -116,14 +121,35 @@ func (s *Service) CreateSource(
 		UpdatedAt:      now,
 	}
 
+	created := false
+
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			// Validate connector exists if provided
 			if req.ConnectorID != nil {
 				connector := &coredata.Connector{}
+				if err := connector.LockForUpdate(ctx, conn, scope, *req.ConnectorID); err != nil {
+					return fmt.Errorf("cannot serialize source creation: %w", err)
+				}
+
 				if err := connector.LoadMetadataByID(ctx, conn, scope, *req.ConnectorID); err != nil {
 					return fmt.Errorf("cannot load connector: %w", err)
+				}
+
+				if connector.OrganizationID != req.OrganizationID {
+					return fmt.Errorf("cannot create access source: organization mismatch")
+				}
+
+				existing := &coredata.AccessReviewSource{}
+
+				err := existing.LoadByConnectorID(ctx, conn, scope, *req.ConnectorID)
+				if err == nil {
+					*source = *existing
+					return nil
+				}
+
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load access source by connector: %w", err)
 				}
 			}
 
@@ -131,14 +157,16 @@ func (s *Service) CreateSource(
 				return fmt.Errorf("cannot insert access source: %w", err)
 			}
 
+			created = true
+
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create access source: %w", err)
+		return nil, false, fmt.Errorf("cannot create access source: %w", err)
 	}
 
-	return source, nil
+	return source, created, nil
 }
 
 func (s *Service) GetSource(
@@ -188,8 +216,27 @@ func (s *Service) UpdateSource(
 			if req.ConnectorID != nil {
 				if *req.ConnectorID != nil {
 					connector := &coredata.Connector{}
+					if err := connector.LockForUpdate(ctx, conn, scope, **req.ConnectorID); err != nil {
+						return fmt.Errorf("cannot serialize source relink: %w", err)
+					}
+
 					if err := connector.LoadMetadataByID(ctx, conn, scope, **req.ConnectorID); err != nil {
 						return fmt.Errorf("cannot load connector: %w", err)
+					}
+
+					if connector.OrganizationID != source.OrganizationID {
+						return fmt.Errorf("cannot update access source: organization mismatch")
+					}
+
+					other := &coredata.AccessReviewSource{}
+
+					err := other.LoadByConnectorID(ctx, conn, scope, **req.ConnectorID)
+					if err == nil && other.ID != source.ID {
+						return fmt.Errorf("cannot update access source: connector already referenced by another source")
+					}
+
+					if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+						return fmt.Errorf("cannot load access source by connector: %w", err)
 					}
 				}
 
@@ -240,54 +287,15 @@ func (s *Service) DeleteSource(
 			}
 
 			// Garbage-collect the underlying connector once nothing else
-			// references it. The connectors table is unique per
-			// (organization_id, provider), so leaving an orphaned connector
-			// behind would block re-adding a source for the same provider.
+			// references it, so deleting a source does not strand a live
+			// credential that nothing displays or manages.
 			if source.ConnectorID == nil {
 				return nil
 			}
 
-			accessSources := &coredata.AccessReviewSources{}
-
-			sourceCount, err := accessSources.CountByConnectorID(ctx, conn, scope, *source.ConnectorID)
-			if err != nil {
-				return fmt.Errorf("cannot count access sources for connector: %w", err)
-			}
-
-			if sourceCount > 0 {
-				return nil
-			}
-
-			bridges := &coredata.SCIMBridges{}
-
-			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, *source.ConnectorID)
-			if err != nil {
-				return fmt.Errorf("cannot count scim bridges for connector: %w", err)
-			}
-
-			if bridgeCount > 0 {
-				return nil
-			}
-
-			// Garbage-collecting the connector is best-effort. A
-			// concurrent transaction may insert a new access source or
-			// SCIM bridge referencing this connector between the counts
-			// above and the DELETE, producing a foreign-key violation.
-			// Run the delete inside a savepoint so such a failure rolls
-			// back only the GC attempt and still commits the access
-			// source deletion instead of aborting the whole transaction.
-			if err := conn.Savepoint(
-				ctx,
-				func(ctx context.Context, conn pg.Tx) error {
-					cnnctr := &coredata.Connector{ID: *source.ConnectorID}
-					if err := cnnctr.Delete(ctx, conn, scope); err != nil {
-						return fmt.Errorf("cannot delete connector: %w", err)
-					}
-
-					return nil
-				},
-			); err != nil {
-				return err
+			cnnctr := &coredata.Connector{}
+			if err := cnnctr.DeleteIfUnreferenced(ctx, conn, scope, *source.ConnectorID); err != nil {
+				return fmt.Errorf("cannot garbage-collect connector: %w", err)
 			}
 
 			return nil

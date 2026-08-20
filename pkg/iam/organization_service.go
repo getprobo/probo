@@ -1668,32 +1668,20 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			}
 
 			if err == nil {
-				// Bridge exists. Only delete the underlying connector if nothing
-				// else references it (e.g. access_review_sources). Otherwise leave it in
-				// place — the bridge's FK is ON DELETE SET NULL, so deleting the
-				// bridge alone is sufficient to unbind SCIM from the connector.
-				if bridge.ConnectorID != nil {
-					accessSources := &coredata.AccessReviewSources{}
-
-					count, err := accessSources.CountByConnectorID(ctx, tx, scope, *bridge.ConnectorID)
-					if err != nil {
-						return fmt.Errorf("cannot count access sources for connector: %w", err)
-					}
-
-					if count == 0 {
-						connector := &coredata.Connector{ID: *bridge.ConnectorID}
-
-						err = connector.Delete(ctx, tx, scope)
-						if err != nil {
-							return fmt.Errorf("cannot delete connector: %w", err)
-						}
-					}
-				}
-
-				// Delete the bridge
+				// Delete the bridge first, then garbage-collect its
+				// connector once nothing references it — the bridge's FK
+				// is ON DELETE SET NULL, so removing the bridge alone
+				// already unbinds SCIM from the connector.
 				err = bridge.Delete(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot delete SCIM bridge: %w", err)
+				}
+
+				if bridge.ConnectorID != nil {
+					connector := &coredata.Connector{}
+					if err := connector.DeleteIfUnreferenced(ctx, tx, scope, *bridge.ConnectorID); err != nil {
+						return fmt.Errorf("cannot garbage-collect connector: %w", err)
+					}
 				}
 			}
 
