@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,73 +36,10 @@ import (
 func TestRipplingDriverListAccounts(t *testing.T) {
 	t.Parallel()
 
-	var server *httptest.Server
-	server = httptest.NewServer(
-		http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/users", r.URL.Path)
-				assert.Equal(t, "application/json", r.Header.Get("Accept"))
+	rec := newRecorder(t, "testdata/rippling", "RIPPLING_API_TOKEN")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("RIPPLING_API_TOKEN")))
 
-				if r.URL.Query().Get("cursor") == "" {
-					_, err := fmt.Fprintf(
-						w,
-						`{
-							"results": [
-								{
-									"id": "user-1",
-									"created_at": "2026-08-20T14:12:00Z",
-									"active": true,
-									"username": "alice",
-									"display_name": "Alice Admin",
-									"name": {"formatted": "Alice Example"},
-									"emails": [
-										{"value": "alice.personal@example.net", "type": "HOME"},
-										{"value": "alice@example.com", "type": "WORK"}
-									]
-								},
-								{
-									"id": "user-without-email",
-									"active": true,
-									"display_name": "No Email",
-									"emails": []
-								}
-							],
-							"next_link": %q
-						}`,
-						server.URL+"/users?cursor=page-2",
-					)
-					require.NoError(t, err)
-
-					return
-				}
-
-				_, err := fmt.Fprint(
-					w,
-					`{
-						"results": [
-							{
-								"id": "user-2",
-								"active": false,
-								"username": "bob",
-								"name": {"formatted": "Bob Former"},
-								"emails": [{"value": "bob@example.com", "type": "OTHER"}]
-							},
-							{
-								"id": "user-3",
-								"username": "carol",
-								"emails": [{"value": "carol@example.com", "type": "WORK"}]
-							}
-						],
-						"next_link": null
-					}`,
-				)
-				require.NoError(t, err)
-			},
-		),
-	)
-	t.Cleanup(server.Close)
-
-	driver := NewRipplingDriver(server.Client(), server.URL)
+	driver := NewRipplingDriver(client, "https://rest.ripplingapis.com")
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
