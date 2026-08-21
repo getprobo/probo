@@ -1,0 +1,13 @@
+{
+  "description": "Framed ephemeral message carrying a presence heartbeat payload",
+  "message": {
+    "type": "ephemeral",
+    "senderId": "peer-a",
+    "targetId": "server",
+    "documentId": "4NMNnkMhL2wRfvHYuG1uxN",
+    "sessionId": "session-a",
+    "count": 1,
+    "data": "uQABal9fcHJlc2VuY2W5AAFkdHlwZWloZWFydGJlYXQ="
+  },
+  "frameCborBase64": "uQAHZHR5cGVpZXBoZW1lcmFsaHNlbmRlcklkZnBlZXItYWh0YXJnZXRJZGZzZXJ2ZXJqZG9jdW1lbnRJZHY0Tk1ObmtNaEwyd1JmdkhZdUcxdXhOaXNlc3Npb25JZGlzZXNzaW9uLWFlY291bnQBZGRhdGFYILkAAWpfX3ByZXNlbmNluQABZHR5cGVpaGVhcnRiZWF0"
+}

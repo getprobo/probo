@@ -1,0 +1,13 @@
+{
+  "description": "Server peer handshake reply frame",
+  "message": {
+    "type": "peer",
+    "senderId": "server",
+    "targetId": "peer-a",
+    "peerMetadata": {
+      "isEphemeral": false
+    },
+    "selectedProtocolVersion": "1"
+  },
+  "frameCborBase64": "uQAFZHR5cGVkcGVlcmhzZW5kZXJJZGZzZXJ2ZXJodGFyZ2V0SWRmcGVlci1hbHBlZXJNZXRhZGF0YbkAAWtpc0VwaGVtZXJhbPR3c2VsZWN0ZWRQcm90b2NvbFZlcnNpb25hMQ=="
+}

@@ -1,0 +1,13 @@
+{
+  "description": "Ephemeral repo message wrapping a presence update",
+  "message": {
+    "type": "ephemeral",
+    "senderId": "peer-a",
+    "targetId": "peer-b",
+    "documentId": "4NMNnkMhL2wRfvHYuG1uxN",
+    "sessionId": "session-a",
+    "count": 1,
+    "data": "uQABal9fcHJlc2VuY2W5AANkdHlwZWZ1cGRhdGVnY2hhbm5lbGZjdXJzb3JldmFsdWW5AAJmYW5jaG9yYWFkaGVhZGFi"
+  },
+  "payloadCborBase64": "uQABal9fcHJlc2VuY2W5AANkdHlwZWZ1cGRhdGVnY2hhbm5lbGZjdXJzb3JldmFsdWW5AAJmYW5jaG9yYWFkaGVhZGFi"
+}

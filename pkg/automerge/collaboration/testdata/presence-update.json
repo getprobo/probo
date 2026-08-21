@@ -1,0 +1,15 @@
+{
+  "description": "Presence update envelope CBOR-encoded as an ephemeral payload",
+  "marker": "__presence",
+  "envelope": {
+    "__presence": {
+      "type": "update",
+      "channel": "cursor",
+      "value": {
+        "anchor": "a",
+        "head": "b"
+      }
+    }
+  },
+  "cborBase64": "uQABal9fcHJlc2VuY2W5AANkdHlwZWZ1cGRhdGVnY2hhbm5lbGZjdXJzb3JldmFsdWW5AAJmYW5jaG9yYWFkaGVhZGFi"
+}
