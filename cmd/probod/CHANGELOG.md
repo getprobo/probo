@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.264.0] - 2026-08-21
+
+### Added
+
+- A per-organization cloud identity issuer: probod can now act as an outbound OIDC provider, minting short-lived tokens scoped to one organization so audits inside customer AWS accounts no longer require long-lived shared credentials
+- Calendly and Cal.com as access review connectors, both via OAuth (Cal.com also supports team accounts), with provider icons in the connector list
+
+### Changed
+
+- Webhook deliveries now run as durable jobs with processing leases, retry scheduling, stale-delivery recovery, and a terminal dead-letter state, with idempotency headers and bounded concurrent delivery
+- OAuth2, SAML, ACME, and identity-federation private keys are now decoded when configuration loads instead of at server start, surfacing a malformed key immediately rather than at the next restart
+
+### Fixed
+
+- Fixed contract start/end dates not being updatable
+
 ## [0.263.0] - 2026-08-19
 
 ### Added
