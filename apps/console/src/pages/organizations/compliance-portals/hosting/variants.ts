@@ -94,13 +94,6 @@ export const hostingCard = tv({
   },
 });
 
-export const customDomainEmpty = tv({
-  slots: {
-    content: "flex flex-col items-center justify-center gap-4 px-8 py-8 text-center max-md:px-4 max-md:py-4",
-    copy: "max-w-md",
-  },
-});
-
 export const domainsSection = tv({
   slots: {
     root: "flex flex-col gap-4",
@@ -114,13 +107,22 @@ export const domainCard = tv({
     lead: "relative z-1 flex min-w-0 flex-1 items-center gap-3",
     subtitle: "min-w-0 truncate",
     copy: "flex flex-col gap-2",
-    identity: "flex flex-wrap items-center gap-2",
+    heading: "flex items-center justify-between gap-3",
+    identity: "flex min-w-0 flex-wrap items-center gap-2",
     dns: "flex flex-col gap-3",
     record: "flex flex-col gap-2 rounded-4 bg-sand-3 p-4",
     recordHeader: "flex items-center justify-between gap-2",
     recordField: "flex flex-col gap-1",
     recordValue: "flex min-w-0 items-center gap-2",
     code: "min-w-0 flex-1 break-all",
+  },
+});
+
+export const customDomainForm = tv({
+  slots: {
+    form: "flex flex-1 flex-col",
+    field: "w-full max-w-lg",
+    actions: "self-start",
   },
 });
 

@@ -29,7 +29,7 @@ import type { CompliancePortalDomainsSection_organizationFragment$key } from "#/
 
 import { domainsSection } from "../variants";
 
-import { CompliancePortalCustomDomainEmpty } from "./CompliancePortalCustomDomainEmpty";
+import { CompliancePortalCustomDomainForm } from "./CompliancePortalCustomDomainForm";
 import { CompliancePortalDomainCard } from "./CompliancePortalDomainCard";
 
 const organizationFragment = graphql`
@@ -87,7 +87,7 @@ export function CompliancePortalDomainsSection({
           {customDomain && (
             <CompliancePortalDomainCard customDomainKey={customDomain} />
           )}
-          {showEmpty && <CompliancePortalCustomDomainEmpty />}
+          {showEmpty && <CompliancePortalCustomDomainForm />}
         </div>
       )}
     </section>

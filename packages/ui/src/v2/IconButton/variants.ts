@@ -25,7 +25,7 @@ import { tv } from "tailwind-variants/lite";
 // no text padding).
 export const iconButton = tv({
   base: [
-    "inline-flex shrink-0 items-center justify-center border border-transparent",
+    "inline-flex shrink-0 items-center justify-center border",
     "cursor-pointer outline-none transition-colors select-none",
     "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     "disabled:pointer-events-none disabled:opacity-50",
@@ -71,6 +71,7 @@ export const iconButton = tv({
     { variant: ["solid", "classic"], color: "green", highContrast: false, class: "bg-green-9 text-white hover:bg-green-10" },
     { variant: ["solid", "classic"], color: "amber", highContrast: false, class: "bg-amber-9 text-amber-12 hover:bg-amber-10" },
     { variant: ["solid", "classic"], color: "sky", highContrast: false, class: "bg-sky-9 text-sky-12 hover:bg-sky-10" },
+    { variant: ["solid", "classic", "soft", "ghost"], class: "border-transparent" },
     { variant: "classic", class: "shadow-2" },
     { variant: ["solid", "classic"], color: "neutral", highContrast: true, class: "bg-sand-12 text-sand-1 hover:bg-sand-12" },
     { variant: ["solid", "classic"], color: "gold", highContrast: true, class: "bg-gold-12 text-gold-1 hover:bg-gold-12" },

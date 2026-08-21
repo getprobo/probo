@@ -191,10 +191,7 @@
     },
     "domains": {
       "title": "Domains",
-      "description": "Your compliance portal is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own.",
-      "actions": {
-        "configure": "Configure"
-      }
+      "description": "Your compliance portal is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own."
     },
     "profile": {
       "title": "General information",
@@ -374,12 +371,6 @@
     },
     "actions": {
       "toggle": "Toggle {{title}} on the compliance portal"
-    }
-  },
-  "domainPage": {
-    "title": "Custom Domain",
-    "empty": {
-      "description": "Add your own domain to make your compliance portal more professional"
     }
   },
   "thirdPartyListItem": {
@@ -699,9 +690,8 @@
       "add": "Add file"
     }
   },
-  "newDomainDialog": {
-    "title": "Add domain",
-    "description": "Enter your domain and we'll generate the DNS records you need to add.",
+  "customDomainForm": {
+    "title": "Add a custom domain",
     "messages": {
       "created": "Domain added successfully. Configure the DNS records to verify and activate your domain."
     },
@@ -715,9 +705,7 @@
     },
     "examples": "Examples: compliance.example.com, trust.example.com",
     "actions": {
-      "adding": "Adding...",
-      "add": "Add domain",
-      "cancel": "Cancel"
+      "add": "Add domain"
     }
   },
   "deleteDomainDialog": {

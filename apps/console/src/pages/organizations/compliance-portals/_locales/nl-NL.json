@@ -90,8 +90,7 @@
     "darkLogo": { "label": "Logo voor donkere modus", "description": "Dit logo wordt gebruikt wanneer de donkere modus is ingeschakeld.", "alt": "Donker logo van compliancepagina", "uploadDescription": "Upload een donkere logoafbeelding (PNG, JPG, SVG, WEBP tot 5 MB)" },
     "domains": {
       "title": "Domeinen",
-      "description": "Uw compliancepagina is altijd beschikbaar op het standaard probopage.com-subdomein. U kunt deze ook aanbieden op een eigen aangepast domein.",
-      "actions": { "configure": "Configureren" }
+      "description": "Uw compliancepagina is altijd beschikbaar op het standaard probopage.com-subdomein. U kunt deze ook aanbieden op een eigen aangepast domein."
     },
     "profile": {
       "title": "Algemene informatie",
@@ -150,10 +149,6 @@
     "messages": { "visibilityUpdated": "Portaalinstellingen van document succesvol bijgewerkt.", "removed": "Document verwijderd van de pagina." },
     "errors": { "updateVisibility": "Bijwerken van documentzichtbaarheid mislukt", "remove": "Verwijderen van document van de pagina mislukt" },
     "actions": { "toggle": "{{title}} weergeven of verbergen op de compliancepagina" }
-  },
-  "domainPage": {
-    "title": "Aangepast domein",
-    "empty": { "description": "Voeg uw eigen domein toe om uw compliancepagina professioneler te maken" }
   },
   "thirdPartyListItem": {
     "messages": { "linked": "Subverwerker toegevoegd aan de pagina.", "removed": "Subverwerker verwijderd van de pagina." },
@@ -298,9 +293,8 @@
     "description": "Upload en beheer bestanden voor uw compliancepagina",
     "actions": { "add": "Bestand toevoegen" }
   },
-  "newDomainDialog": {
-    "title": "Domein toevoegen",
-    "description": "Voer uw domein in en wij genereren de DNS-records die u moet toevoegen.",
+  "customDomainForm": {
+    "title": "Een aangepast domein toevoegen",
     "messages": { "created": "Domein succesvol toegevoegd. Configureer de DNS-records om uw domein te verifiëren en te activeren." },
     "errors": { "create": "Toevoegen van domein mislukt" },
     "fields": {
@@ -309,7 +303,7 @@
       "domainInvalid": "Voer een geldig domein in (bijv. compliance.example.com)"
     },
     "examples": "Voorbeelden: compliance.example.com, trust.example.com",
-    "actions": { "adding": "Toevoegen...", "add": "Domein toevoegen", "cancel": "Annuleren" }
+    "actions": { "add": "Domein toevoegen" }
   },
   "deleteDomainDialog": {
     "title": "Aangepast domein verwijderen",

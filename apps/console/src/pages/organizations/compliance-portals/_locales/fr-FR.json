@@ -191,10 +191,7 @@
     },
     "domains": {
       "title": "Domaines",
-      "description": "Votre portail de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé.",
-      "actions": {
-        "configure": "Configurer"
-      }
+      "description": "Votre portail de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé."
     },
     "profile": {
       "title": "Informations générales",
@@ -374,12 +371,6 @@
     },
     "actions": {
       "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
-    }
-  },
-  "domainPage": {
-    "title": "Domaine personnalisé",
-    "empty": {
-      "description": "Ajoutez votre propre domaine pour rendre votre portail de conformité plus professionnelle"
     }
   },
   "thirdPartyListItem": {
@@ -699,9 +690,8 @@
       "add": "Ajouter un fichier"
     }
   },
-  "newDomainDialog": {
-    "title": "Ajouter un domaine",
-    "description": "Saisissez votre domaine et nous générerons les enregistrements DNS à ajouter.",
+  "customDomainForm": {
+    "title": "Ajouter un domaine personnalisé",
     "messages": {
       "created": "Domaine ajouté avec succès. Configurez les enregistrements DNS pour vérifier et activer votre domaine."
     },
@@ -715,9 +705,7 @@
     },
     "examples": "Exemples : compliance.example.com, trust.example.com",
     "actions": {
-      "adding": "Ajout en cours...",
-      "add": "Ajouter un domaine",
-      "cancel": "Annuler"
+      "add": "Ajouter un domaine"
     }
   },
   "deleteDomainDialog": {

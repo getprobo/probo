@@ -78,7 +78,7 @@ export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortal
     tone,
     wide: showDns,
   });
-  const { copy, identity, lead, subtitle, dns } = domainCard();
+  const { copy, heading, identity, lead, subtitle, dns } = domainCard();
   const expiresLabel = domain.certificate?.expiresAt
     ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(
         new Date(domain.certificate.expiresAt),
@@ -104,28 +104,30 @@ export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortal
             {callout.title}
           </Text>
         </div>
-        {domain.canDelete && (
-          <div className={controlSlot()}>
-            <DeleteCompliancePortalDomainDialog customDomainKey={domain}>
-              <IconButton
-                variant="soft"
-                color="red"
-                aria-label={t("domainCard.actions.delete")}
-              >
-                <TrashIcon />
-              </IconButton>
-            </DeleteCompliancePortalDomainDialog>
-          </div>
-        )}
       </div>
       <div className={body()}>
         <div className={copy()}>
-          <div className={identity()}>
-            <Text size={4} weight="medium" highContrast>
-              {domain.domain}
-            </Text>
-            {domain.managed && (
-              <Badge variant="soft" color="neutral">{t("domainCard.managed")}</Badge>
+          <div className={heading()}>
+            <div className={identity()}>
+              <Text size={4} weight="medium" highContrast>
+                {domain.domain}
+              </Text>
+              {domain.managed && (
+                <Badge variant="soft" color="neutral">{t("domainCard.managed")}</Badge>
+              )}
+            </div>
+            {domain.canDelete && (
+              <div className={controlSlot()}>
+                <DeleteCompliancePortalDomainDialog customDomainKey={domain}>
+                  <IconButton
+                    variant="surface"
+                    color="red"
+                    aria-label={t("domainCard.actions.delete")}
+                  >
+                    <TrashIcon />
+                  </IconButton>
+                </DeleteCompliancePortalDomainDialog>
+              </div>
             )}
           </div>
           <Text size={2} color="neutral">
