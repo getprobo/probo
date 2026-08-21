@@ -48,6 +48,7 @@ func TestCommonThirdPartyFilter_Review(t *testing.T) {
 			`UPDATE common_third_parties
 			 SET review = 'REJECTED', rejected_verdict = 'NOT_ATTRIBUTABLE'
 			 WHERE id = $1`, rejected.ID)
+
 		return err
 	}))
 
@@ -58,6 +59,7 @@ func TestCommonThirdPartyFilter_Review(t *testing.T) {
 		mutate(filter)
 
 		var parties coredata.CommonThirdParties
+
 		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return parties.LoadAll(ctx, conn, filter)
 		}))

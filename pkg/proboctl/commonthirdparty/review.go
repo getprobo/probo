@@ -81,6 +81,15 @@ func newCmdReview(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
+		if !flagDryRun && !flagYes {
+			return fmt.Errorf(
+				"about to record %s on %q, which the mapping pipeline and the "+
+					"catalog import both act on globally; pass --yes to proceed",
+				review,
+				args[0],
+			)
+		}
+
 		reviewedBy := strings.TrimSpace(flagBy)
 		if reviewedBy == "" {
 			if u, err := user.Current(); err == nil {

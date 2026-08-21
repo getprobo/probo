@@ -30,6 +30,12 @@ ALTER TABLE common_third_parties
     ADD COLUMN reviewed_at TIMESTAMP WITH TIME ZONE,
     ADD COLUMN reviewed_by TEXT;
 
+-- The default existed only to backfill the rows already in the table. Drop it
+-- so an insert that omits the state fails instead of silently claiming nobody
+-- has reviewed the row.
+ALTER TABLE common_third_parties
+    ALTER COLUMN review DROP DEFAULT;
+
 -- A rejection must say which terminal verdict its patterns earn, and only a
 -- rejection may carry one: the mapping pipeline reads this column directly
 -- rather than mapping a reason onto a verdict.
