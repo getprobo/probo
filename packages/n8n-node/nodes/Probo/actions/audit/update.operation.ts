@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequest, toPeriod } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -54,14 +54,14 @@ export const description: INodeProperties[] = [
 				name: 'auditEndDate',
 				type: 'dateTime',
 				default: '',
-				description: 'The end date of the audit engagement',
+				description: 'The end date of the audit',
 			},
 			{
 				displayName: 'Audit Start Date',
 				name: 'auditStartDate',
 				type: 'dateTime',
 				default: '',
-				description: 'The start date of the audit engagement',
+				description: 'The start date of the audit',
 			},
 			{
 				displayName: 'Name',
@@ -138,10 +138,14 @@ export async function execute(
 					id
 					name
 					state
-					validFrom
-					validUntil
-					auditStartDate
-					auditEndDate
+					validity {
+						start
+						end
+					}
+					auditDates {
+						start
+						end
+					}
 					reportUrl
 					createdAt
 					updatedAt
@@ -153,10 +157,10 @@ export async function execute(
 	const input: Record<string, unknown> = { id };
 	if (updateFields.name) input.name = updateFields.name;
 	if (updateFields.state) input.state = updateFields.state;
-	if (updateFields.validFrom) input.validFrom = updateFields.validFrom;
-	if (updateFields.validUntil) input.validUntil = updateFields.validUntil;
-	if (updateFields.auditStartDate) input.auditStartDate = updateFields.auditStartDate;
-	if (updateFields.auditEndDate) input.auditEndDate = updateFields.auditEndDate;
+	const validity = toPeriod(updateFields.validFrom, updateFields.validUntil);
+	if (validity) input.validity = validity;
+	const auditDates = toPeriod(updateFields.auditStartDate, updateFields.auditEndDate);
+	if (auditDates) input.auditDates = auditDates;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

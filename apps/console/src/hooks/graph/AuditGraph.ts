@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { promisifyMutation } from "@probo/helpers";
+import { type Period, promisifyMutation } from "@probo/helpers";
 import { useConfirm } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -45,10 +45,14 @@ export const auditNodeQuery = graphql`
       ... on Audit {
         id
         name
-        validFrom
-        validUntil
-        auditStartDate
-        auditEndDate
+        validity {
+          start
+          end
+        }
+        auditDates {
+          start
+          end
+        }
         reportFile {
           id
           fileName
@@ -91,10 +95,14 @@ export const createAuditMutation = graphql`
         node {
           id
           name
-          validFrom
-          validUntil
-          auditStartDate
-          auditEndDate
+          validity {
+            start
+            end
+          }
+          auditDates {
+            start
+            end
+          }
           reportFile {
             id
             fileName
@@ -119,10 +127,14 @@ export const updateAuditMutation = graphql`
       audit {
         id
         name
-        validFrom
-        validUntil
-        auditStartDate
-        auditEndDate
+        validity {
+          start
+          end
+        }
+        auditDates {
+          start
+          end
+        }
         reportFile {
           id
           fileName
@@ -190,10 +202,8 @@ export const useCreateAudit = (connectionId: string) => {
     organizationId: string;
     frameworkId: string;
     name?: string | null;
-    validFrom?: string;
-    validUntil?: string;
-    auditStartDate?: string;
-    auditEndDate?: string;
+    validity?: Period | null;
+    auditDates?: Period | null;
     reportKey?: string;
     state?: string;
     file?: File | null;
@@ -211,10 +221,8 @@ export const useCreateAudit = (connectionId: string) => {
           organizationId: input.organizationId,
           frameworkId: input.frameworkId,
           name: input.name,
-          validFrom: input.validFrom,
-          validUntil: input.validUntil,
-          auditStartDate: input.auditStartDate,
-          auditEndDate: input.auditEndDate,
+          validity: input.validity,
+          auditDates: input.auditDates,
           reportKey: input.reportKey,
           state: input.state || "NOT_STARTED",
           file: input.file ? null : undefined,
@@ -234,10 +242,8 @@ export const useUpdateAudit = () => {
   return (input: {
     id: string;
     name?: string | null;
-    validFrom?: string | null;
-    validUntil?: string | null;
-    auditStartDate?: string | null;
-    auditEndDate?: string | null;
+    validity?: Period | null;
+    auditDates?: Period | null;
     state?: string;
   }) => {
     if (!input.id) {
@@ -246,7 +252,13 @@ export const useUpdateAudit = () => {
 
     return promisifyMutation(mutate)({
       variables: {
-        input,
+        input: {
+          id: input.id,
+          name: input.name,
+          validity: input.validity,
+          auditDates: input.auditDates,
+          state: input.state,
+        },
       },
     });
   };

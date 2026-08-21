@@ -392,13 +392,15 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
+	validFrom, validUntil := types.PeriodInputDates(input.Validity)
+
 	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Upload(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementCreateRequest{
 			File:       input.File.File,
-			ValidFrom:  input.ValidFrom,
-			ValidUntil: input.ValidUntil,
+			ValidFrom:  validFrom,
+			ValidUntil: validUntil,
 			FileName:   input.FileName,
 		},
 	)
@@ -424,12 +426,14 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
+	validFrom, validUntil := types.PeriodInputOmittableDates(input.Validity)
+
 	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Update(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementUpdateRequest{
-			ValidFrom:  gqlutils.UnwrapOmittable(input.ValidFrom),
-			ValidUntil: gqlutils.UnwrapOmittable(input.ValidUntil),
+			ValidFrom:  validFrom,
+			ValidUntil: validUntil,
 		},
 	)
 	if err != nil {
@@ -471,13 +475,15 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
+	validFrom, validUntil := types.PeriodInputDates(input.Validity)
+
 	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Upload(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementCreateRequest{
 			File:       input.File.File,
-			ValidFrom:  input.ValidFrom,
-			ValidUntil: input.ValidUntil,
+			ValidFrom:  validFrom,
+			ValidUntil: validUntil,
 			FileName:   input.FileName,
 		},
 	)
@@ -503,12 +509,14 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
+	validFrom, validUntil := types.PeriodInputOmittableDates(input.Validity)
+
 	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Update(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementUpdateRequest{
-			ValidFrom:  gqlutils.UnwrapOmittable(input.ValidFrom),
-			ValidUntil: gqlutils.UnwrapOmittable(input.ValidUntil),
+			ValidFrom:  validFrom,
+			ValidUntil: validUntil,
 		},
 	)
 	if err != nil {

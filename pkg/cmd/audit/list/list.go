@@ -41,10 +41,14 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
             id
             name
             state
-            validFrom
-            validUntil
-            auditStartDate
-            auditEndDate
+            validity {
+              start
+              end
+            }
+            auditDates {
+              start
+              end
+            }
           }
         }
         pageInfo {
@@ -58,13 +62,17 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AuditOrder) {
 `
 
 type audit struct {
-	ID             string  `json:"id"`
-	Name           string  `json:"name"`
-	State          string  `json:"state"`
-	ValidFrom      *string `json:"validFrom"`
-	ValidUntil     *string `json:"validUntil"`
-	AuditStartDate *string `json:"auditStartDate"`
-	AuditEndDate   *string `json:"auditEndDate"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	State    string `json:"state"`
+	Validity *struct {
+		Start *string `json:"start"`
+		End   *string `json:"end"`
+	} `json:"validity"`
+	AuditDates *struct {
+		Start *string `json:"start"`
+		End   *string `json:"end"`
+	} `json:"auditDates"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -174,24 +182,28 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(audits))
 			for _, a := range audits {
-				validFrom := ""
-				if a.ValidFrom != nil {
-					validFrom = *a.ValidFrom
+				validFrom, validUntil := "", ""
+
+				if a.Validity != nil {
+					if a.Validity.Start != nil {
+						validFrom = *a.Validity.Start
+					}
+
+					if a.Validity.End != nil {
+						validUntil = *a.Validity.End
+					}
 				}
 
-				validUntil := ""
-				if a.ValidUntil != nil {
-					validUntil = *a.ValidUntil
-				}
+				auditStartDate, auditEndDate := "", ""
 
-				auditStartDate := ""
-				if a.AuditStartDate != nil {
-					auditStartDate = *a.AuditStartDate
-				}
+				if a.AuditDates != nil {
+					if a.AuditDates.Start != nil {
+						auditStartDate = *a.AuditDates.Start
+					}
 
-				auditEndDate := ""
-				if a.AuditEndDate != nil {
-					auditEndDate = *a.AuditEndDate
+					if a.AuditDates.End != nil {
+						auditEndDate = *a.AuditDates.End
+					}
 				}
 
 				rows = append(rows, []string{

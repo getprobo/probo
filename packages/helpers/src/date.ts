@@ -18,9 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+export type Period = {
+  start?: string | null;
+  end?: string | null;
+};
+
 export function formatDatetime(dateString?: string | null): string | undefined {
   if (!dateString) return undefined;
   return `${dateString}T00:00:00Z`;
+}
+
+export function toPeriod(
+  start?: string | null,
+  end?: string | null,
+): Period | null {
+  if (!start && !end) {
+    return null;
+  }
+
+  return {
+    start: start || null,
+    end: end || null,
+  };
 }
 
 export function toDateInput(dateString?: string | null): string {

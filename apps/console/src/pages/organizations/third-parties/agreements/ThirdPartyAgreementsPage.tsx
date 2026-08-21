@@ -51,8 +51,10 @@ const thirdPartyBusinessAssociateAgreementFragment = graphql`
         fileName
         downloadUrl
       }
-      validFrom
-      validUntil
+      validity {
+        start
+        end
+      }
       canUpdate: permission(
         action: "core:thirdParty-business-associate-agreement:update"
       )
@@ -71,8 +73,10 @@ const thirdPartyDataPrivacyAgreementFragment = graphql`
         fileName
         downloadUrl
       }
-      validFrom
-      validUntil
+      validity {
+        start
+        end
+      }
       canUpdate: permission(action: "core:thirdParty-data-privacy-agreement:update")
       canDelete: permission(action: "core:thirdParty-data-privacy-agreement:delete")
     }
@@ -147,12 +151,12 @@ export function ThirdPartyAgreementsPage({ queryRef }: ThirdPartyAgreementsPageP
                 ? businessAssociateAgreement.file.fileName
                 : t("thirdPartyAgreementsPage.agreements.noBusinessAssociate")}
             </p>
-            {(businessAssociateAgreement?.validFrom
-              || businessAssociateAgreement?.validUntil) && (
+            {(businessAssociateAgreement?.validity?.start
+              || businessAssociateAgreement?.validity?.end) && (
               <p className="text-xs text-txt-secondary mt-1">
                 {formatValidity(
-                  businessAssociateAgreement.validFrom,
-                  businessAssociateAgreement.validUntil,
+                  businessAssociateAgreement.validity?.start,
+                  businessAssociateAgreement.validity?.end,
                   i18n.language,
                   t,
                 )}
@@ -178,8 +182,8 @@ export function ThirdPartyAgreementsPage({ queryRef }: ThirdPartyAgreementsPageP
                       <EditBusinessAssociateAgreementDialog
                         thirdPartyId={thirdParty.id}
                         agreement={{
-                          validFrom: businessAssociateAgreement.validFrom,
-                          validUntil: businessAssociateAgreement.validUntil,
+                          validFrom: businessAssociateAgreement.validity?.start,
+                          validUntil: businessAssociateAgreement.validity?.end,
                         }}
                         onSuccess={() => window.location.reload()}
                       >
@@ -222,12 +226,12 @@ export function ThirdPartyAgreementsPage({ queryRef }: ThirdPartyAgreementsPageP
                 ? dataPrivacyAgreement.file.fileName
                 : t("thirdPartyAgreementsPage.agreements.noDataPrivacy")}
             </p>
-            {(dataPrivacyAgreement?.validFrom
-              || dataPrivacyAgreement?.validUntil) && (
+            {(dataPrivacyAgreement?.validity?.start
+              || dataPrivacyAgreement?.validity?.end) && (
               <p className="text-xs text-txt-secondary mt-1">
                 {formatValidity(
-                  dataPrivacyAgreement.validFrom,
-                  dataPrivacyAgreement.validUntil,
+                  dataPrivacyAgreement.validity?.start,
+                  dataPrivacyAgreement.validity?.end,
                   i18n.language,
                   t,
                 )}
@@ -253,8 +257,8 @@ export function ThirdPartyAgreementsPage({ queryRef }: ThirdPartyAgreementsPageP
                       <EditDataPrivacyAgreementDialog
                         thirdPartyId={thirdParty.id}
                         agreement={{
-                          validFrom: dataPrivacyAgreement.validFrom,
-                          validUntil: dataPrivacyAgreement.validUntil,
+                          validFrom: dataPrivacyAgreement.validity?.start,
+                          validUntil: dataPrivacyAgreement.validity?.end,
                         }}
                         onSuccess={() => window.location.reload()}
                       >

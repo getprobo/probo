@@ -33,10 +33,8 @@ func NewAudit(a *coredata.Audit, file *coredata.File) *Audit {
 		FrameworkID:    a.FrameworkID,
 		State:          a.State,
 		HasReport:      a.ReportFileID != nil,
-		ValidFrom:      a.ValidFrom,
-		ValidUntil:     a.ValidUntil,
-		AuditStartDate: a.AuditStartDate,
-		AuditEndDate:   a.AuditEndDate,
+		Validity:       NewPeriod(a.ValidFrom, a.ValidUntil),
+		AuditDates:     NewPeriod(a.AuditStartDate, a.AuditEndDate),
 		CreatedAt:      a.CreatedAt,
 		UpdatedAt:      a.UpdatedAt,
 	}
