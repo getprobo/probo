@@ -43,7 +43,7 @@ func gitlabRegistration() *Registration {
 			APIBase: "https://gitlab.com/api/v4",
 		},
 		OAuth2Scopes: []string{"read_api"},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
@@ -54,8 +54,8 @@ func gitlabRegistration() *Registration {
 			}
 
 			return drivers.NewGitLabDriver(c, s.GroupID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read gitlab connector settings", log.Error(err))
@@ -63,7 +63,8 @@ func gitlabRegistration() *Registration {
 			}
 
 			return drivers.NewGitLabNameResolver(c, s.GroupID, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListGitLabOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, groupID string) error {
 			return c.SetSettings(&coredata.GitLabConnectorSettings{GroupID: groupID})
 		},

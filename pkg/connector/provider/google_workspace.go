@@ -58,11 +58,11 @@ func googleWorkspaceRegistration() *Registration {
 			"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
 			"https://www.googleapis.com/auth/admin.directory.customer.readonly",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			return drivers.NewGoogleWorkspaceDriver(c), nil
-		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
 			return drivers.NewGoogleWorkspaceNameResolver(c)
-		},
+		}),
 	}
 }

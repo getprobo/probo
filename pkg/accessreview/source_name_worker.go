@@ -24,14 +24,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -40,27 +38,26 @@ import (
 // sourceNameHandler polls for access sources that have a connector but no
 // synced name, resolves the provider instance name, and updates the source.
 type sourceNameHandler struct {
-	pg                *pg.Client
-	encryptionKey     cipher.EncryptionKey
-	connectorRegistry *connector.ConnectorRegistry
-	providerRegistry  *provider.Registry
-	logger            *log.Logger
+	pg               *pg.Client
+	encryptionKey    cipher.EncryptionKey
+	runtime          *provider.Runtime
+	providerRegistry *provider.Registry
+	logger           *log.Logger
 }
 
 func NewSourceNameWorker(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.ConnectorRegistry,
-	providerRegistry *provider.Registry,
+	connectorRuntime *provider.Runtime,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.AccessReviewSource] {
 	h := &sourceNameHandler{
-		pg:                pgClient,
-		encryptionKey:     encryptionKey,
-		connectorRegistry: connectorRegistry,
-		providerRegistry:  providerRegistry,
-		logger:            logger,
+		pg:               pgClient,
+		encryptionKey:    encryptionKey,
+		runtime:          connectorRuntime,
+		providerRegistry: connectorRuntime.Providers(),
+		logger:           logger,
 	}
 
 	defaultOpts := []worker.Option{
@@ -121,26 +118,16 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 			}
 
-			var tokenBefore string
-			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-				tokenBefore = oauth2Conn.AccessToken
-			}
-
-			httpClient, err := h.connectorHTTPClient(ctx, &dbConnector)
+			handle, err := h.runtime.Open(ctx, &dbConnector)
 			if err != nil {
-				return fmt.Errorf("cannot create HTTP client for connector: %w", err)
+				return err
 			}
 
-			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-				if oauth2Conn.AccessToken != tokenBefore {
-					dbConnector.UpdatedAt = time.Now()
-					if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
-						return fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
-					}
-				}
+			if err := handle.PersistIfDirty(ctx, tx, scope, h.encryptionKey); err != nil {
+				return err
 			}
 
-			resolver = h.buildResolver(ctx, &dbConnector, httpClient)
+			resolver = handle.NameResolver(ctx, h.logger)
 
 			return nil
 		},
@@ -251,46 +238,4 @@ func (h *sourceNameHandler) markNameSynced(
 			return nil
 		},
 	)
-}
-
-// connectorHTTPClient returns an HTTP client for the given connector.
-// For OAuth2 connections it uses RefreshableClient when a refresh config
-// is registered for the provider, so that short-lived tokens are
-// transparently refreshed.
-func (h *sourceNameHandler) connectorHTTPClient(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-) (*http.Client, error) {
-	oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection)
-	if !ok {
-		// Inject the Probo-held key for ManagedAPIKey providers (no-op
-		// otherwise) before building the client.
-		if err := h.providerRegistry.ApplyManagedAPIKey(dbConnector); err != nil {
-			return nil, err
-		}
-
-		return dbConnector.Connection.Client(ctx)
-	}
-
-	if h.connectorRegistry != nil {
-		refreshCfg := h.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
-		if refreshCfg != nil {
-			return oauth2Conn.RefreshableClient(ctx, *refreshCfg)
-		}
-	}
-
-	return oauth2Conn.Client(ctx)
-}
-
-func (h *sourceNameHandler) buildResolver(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-	httpClient *http.Client,
-) drivers.NameResolver {
-	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
-	if !ok || reg.NewNameResolver == nil {
-		return nil
-	}
-
-	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints)
 }

@@ -43,11 +43,11 @@ func nukiRegistration() *Registration {
 			APIBase: "https://api.nuki.io",
 			Probe:   "https://api.nuki.io/account/user?limit=1",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewNukiDriver(c, ep.APIBase), nil
-		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
 			return drivers.NewNukiNameResolver(c, ep.APIBase)
-		},
+		}),
 	}
 }

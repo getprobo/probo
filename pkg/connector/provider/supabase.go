@@ -43,7 +43,7 @@ func supabaseRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read supabase connector settings: %w", err)
@@ -54,8 +54,8 @@ func supabaseRegistration() *Registration {
 			}
 
 			return drivers.NewSupabaseDriver(c, s.OrganizationSlug, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read supabase connector settings", log.Error(err))
@@ -63,6 +63,6 @@ func supabaseRegistration() *Registration {
 			}
 
 			return drivers.NewSupabaseNameResolver(s.OrganizationSlug)
-		},
+		}),
 	}
 }

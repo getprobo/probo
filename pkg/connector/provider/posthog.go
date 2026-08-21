@@ -64,7 +64,7 @@ func posthogRegistration() *Registration {
 		// organization_member:read applies org-wide and the org endpoints
 		// resolve @current to the granted organization.
 		ExtraAuthParams: map[string]string{"required_access_level": "organization"},
-		Probe:           probePostHog,
+		Probe:           HTTPProbe(probePostHog),
 		SupportsAPIKey:  true,
 		// API-key connections are either PostHog Cloud (a region, us/eu) or
 		// self-hosted (an instance URL). The two are mutually exclusive, so
@@ -75,7 +75,7 @@ func posthogRegistration() *Registration {
 			{Key: "instanceUrl", Label: "Instance URL"},
 		},
 
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read posthog connector settings: %w", err)
@@ -85,8 +85,8 @@ func posthogRegistration() *Registration {
 			// discovers the region (us/eu) lazily by probing, since the
 			// oauth.posthog.com gateway does not serve the data API.
 			return drivers.NewPostHogDriver(c, s.BaseURL), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read posthog connector settings", log.Error(err))
@@ -94,6 +94,6 @@ func posthogRegistration() *Registration {
 			}
 
 			return drivers.NewPostHogNameResolver(c, s.BaseURL)
-		},
+		}),
 	}
 }

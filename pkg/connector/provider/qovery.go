@@ -46,7 +46,7 @@ func qoveryRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read qovery connector settings: %w", err)
@@ -57,8 +57,8 @@ func qoveryRegistration() *Registration {
 			}
 
 			return drivers.NewQoveryDriver(c, s.OrganizationID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read qovery connector settings", log.Error(err))
@@ -66,6 +66,6 @@ func qoveryRegistration() *Registration {
 			}
 
 			return drivers.NewQoveryNameResolver(c, s.OrganizationID, ep.APIBase)
-		},
+		}),
 	}
 }

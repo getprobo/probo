@@ -21,24 +21,14 @@
 package accessreview
 
 import (
-	"context"
-	"net/http"
-
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 // providerOrgConfig binds a connector provider to its picker-UI behavior.
 //
-// ListOrgs returns the orgs/workspaces/teams the authenticated user can
-// scope the connector to (nil for Pattern 2-auto providers like
-// PagerDuty and Vercel where the value is captured during OAuth).
-//
-// Its baseURL is the API root of the provider's registration
-// (Endpoints.APIBase, falling back to Endpoints.Identity — see
-// Service.providerListBaseURL), so the picker targets the same host the
-// driver does when a deployment overrides it. "" means no override is in
-// scope and the lister falls back to its production base.
+// Listing the orgs themselves is not here: that needs the connector's
+// credential, so it lives on the provider's Registration as
+// ListOrganizations and is reached through an opened Handle.
 //
 // SelectedSlug returns the currently-configured org identifier for the
 // connector (empty string if none).
@@ -46,7 +36,6 @@ import (
 // NeedsPicker reports whether the picker mutation should surface in the
 // UI; false for 2-auto providers.
 type providerOrgConfig struct {
-	ListOrgs     func(ctx context.Context, httpClient *http.Client, baseURL string) ([]drivers.Organization, error)
 	SelectedSlug func(c *coredata.Connector) string
 	NeedsPicker  bool
 }
@@ -58,7 +47,6 @@ type providerOrgConfig struct {
 // provider takes one entry here.
 var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 	coredata.ConnectorProviderGitHub: {
-		ListOrgs: drivers.ListGitHubOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](c)
 			return s.Organization
@@ -66,7 +54,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderSentry: {
-		ListOrgs: drivers.ListSentryOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.SentryConnectorSettings](c)
 			return s.OrganizationSlug
@@ -74,7 +61,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderGoogleAnalytics: {
-		ListOrgs: drivers.ListGoogleAnalyticsOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](c)
 			return s.AccountID
@@ -82,7 +68,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderGitLab: {
-		ListOrgs: drivers.ListGitLabOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](c)
 			return s.GroupID
@@ -90,7 +75,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderBitbucket: {
-		ListOrgs: drivers.ListBitbucketOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](c)
 			return s.Workspace
@@ -98,7 +82,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderHeroku: {
-		ListOrgs: drivers.ListHerokuOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](c)
 			return s.TeamID
@@ -106,7 +89,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderAsana: {
-		ListOrgs: drivers.ListAsanaOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](c)
 			return s.WorkspaceGID
@@ -114,7 +96,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderNetlify: {
-		ListOrgs: drivers.ListNetlifyOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](c)
 			return s.AccountSlug
@@ -122,7 +103,6 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderClickUp: {
-		ListOrgs: drivers.ListClickUpOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](c)
 			return s.TeamID
@@ -130,19 +110,13 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		NeedsPicker: true,
 	},
 	coredata.ConnectorProviderCloudflare: {
-		ListOrgs: drivers.ListCloudflareOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](c)
 			return s.AccountID
 		},
 		NeedsPicker: true,
 	},
-	// DocuSign declares no APIBase, but its Identity host is exactly what
-	// ListDocuSignOrganizations calls, so ListOrgs takes the baseURL
-	// providerListBaseURL resolves directly — an Identity override must
-	// reach the picker the same way it reaches the driver and name resolver.
 	coredata.ConnectorProviderDocuSign: {
-		ListOrgs: drivers.ListDocuSignOrganizations,
 		SelectedSlug: func(c *coredata.Connector) string {
 			s, _ := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](c)
 			return s.AccountID
@@ -192,8 +166,8 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 // back as an empty list, but only the first means something is wrong — telling
 // a healthy 2-auto source that its organization "may not have approved Probo"
 // would be a lie.
-func ProviderSupportsOrganizationPicker(p coredata.ConnectorProvider) bool {
-	cfg, ok := providerOrgConfigs[p]
+func (s *Service) ProviderSupportsOrganizationPicker(p coredata.ConnectorProvider) bool {
+	reg, ok := s.providerRegistry.Get(p)
 
-	return ok && cfg.ListOrgs != nil
+	return ok && reg.ListOrganizations != nil
 }

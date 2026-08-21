@@ -24,13 +24,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -209,44 +207,6 @@ func normalizeAccountKey(email, externalID string) string {
 	return emailKey
 }
 
-// oauthClient returns an HTTP client for an OAuth2 connection, using
-// RefreshableClient when a refresh config is available for the provider.
-func (s *Service) oauthClient(
-	ctx context.Context,
-	conn *connector.OAuth2Connection,
-	provider coredata.ConnectorProvider,
-) (*http.Client, error) {
-	if s.connectorRegistry != nil {
-		refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(provider))
-		if refreshCfg != nil {
-			return conn.RefreshableClient(ctx, *refreshCfg)
-		}
-	}
-
-	return conn.Client(ctx)
-}
-
-// connectorHTTPClient returns an HTTP client for the given connector.
-// For OAuth2 connections it delegates to oauthClient so that token refresh
-// is handled transparently. For other connection types it falls back to
-// the standard Client method.
-func (s *Service) connectorHTTPClient(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-) (*http.Client, error) {
-	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-		return s.oauthClient(ctx, oauth2Conn, dbConnector.Provider)
-	}
-
-	// Inject the Probo-held key for ManagedAPIKey providers (no-op otherwise),
-	// resolving it fresh at use time rather than from the connection row.
-	if err := s.providerRegistry.ApplyManagedAPIKey(dbConnector); err != nil {
-		return nil, err
-	}
-
-	return dbConnector.Connection.Client(ctx)
-}
-
 // resolveDriver creates a Driver for the given AccessReviewSource based on
 // connector_id (null = built-in, set = connector-backed).
 func (s *Service) resolveDriver(
@@ -265,42 +225,23 @@ func (s *Service) resolveDriver(
 		return drivers.NewProboMembershipsDriver(s.pg, scope, source.OrganizationID), nil
 	}
 
-	// Connector-backed: look up the connector and resolve driver by provider
 	dbConnector := &coredata.Connector{}
 	if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, s.encryptionKey); err != nil {
 		return nil, fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 	}
 
-	// Capture token before refresh to detect changes.
-	var tokenBefore string
-	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-		tokenBefore = oauth2Conn.AccessToken
-	}
-
-	// Build an HTTP client. For OAuth2 connections, use RefreshableClient
-	// so that short-lived tokens are transparently refreshed.
-	httpClient, err := s.connectorHTTPClient(ctx, dbConnector)
+	handle, err := s.runtime.Open(ctx, dbConnector)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create HTTP client for %s connector: %w", dbConnector.Provider, err)
+		return nil, err
 	}
 
-	// Persist the refreshed token back to the database so subsequent
-	// calls (and other workers) use the updated credentials. Providers
-	// that rotate refresh tokens (HubSpot, DocuSign) will fail on the
-	// next poll if the old refresh token is reused.
-	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-		if oauth2Conn.AccessToken != tokenBefore {
-			dbConnector.UpdatedAt = time.Now()
-			if err := dbConnector.Update(ctx, tx, scope, s.encryptionKey); err != nil {
-				return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
-			}
-		}
+	// Persist before building the driver. A provider that rotates refresh
+	// tokens (HubSpot, DocuSign) has already invalidated the old one upstream,
+	// so dropping the new one on a driver-construction failure would break the
+	// connector permanently rather than until the next poll.
+	if err := handle.PersistIfDirty(ctx, tx, scope, s.encryptionKey); err != nil {
+		return nil, err
 	}
 
-	reg, ok := s.providerRegistry.Get(dbConnector.Provider)
-	if !ok || reg.NewDriver == nil {
-		return nil, fmt.Errorf("cannot resolve driver: unsupported provider %q", dbConnector.Provider)
-	}
-
-	return reg.NewDriver(ctx, httpClient, dbConnector, s.logger, reg.Endpoints)
+	return handle.Driver(ctx, s.logger)
 }

@@ -647,6 +647,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		oauthConfigured := oauthErr == nil
 		apiKeySupported := reg.SupportsAPIKey
 		clientCredentialsSupported := reg.SupportsClientCredentials
+		workloadIdentitySupported := reg.SupportsWorkloadIdentity
 
 		// ManagedAPIKey (Model B, e.g. Crisp) providers are connectable only
 		// once the operator configures the Probo-held key (and any required
@@ -659,7 +660,13 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		// Skip providers that cannot be connected in this deployment: no
 		// OAuth client credentials configured and no key-based fallback
 		// (API key, managed API key, or client credentials) supported.
-		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported && !apiKeyManaged {
+		// Workload identity needs no operator credential — the customer grants
+		// access on their side — so it admits the provider on its own.
+		if !oauthConfigured &&
+			!apiKeySupported &&
+			!clientCredentialsSupported &&
+			!apiKeyManaged &&
+			!workloadIdentitySupported {
 			continue
 		}
 

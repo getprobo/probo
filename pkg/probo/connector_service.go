@@ -315,8 +315,11 @@ func (s *ConnectorService) Reconnect(
 				return fmt.Errorf("cannot reconnect connector: provider mismatch")
 			}
 
+			// Only an OAuth2 grant can be replaced in place. An API key is
+			// re-entered and a workload identity connector has nothing to
+			// refresh, so name the protocol rather than claim it is not OAuth2.
 			if cnnctr.Protocol != coredata.ConnectorProtocolOAuth2 {
-				return fmt.Errorf("cannot reconnect connector: not an OAuth2 connector")
+				return fmt.Errorf("cannot reconnect connector: protocol %s does not support reconnect", cnnctr.Protocol)
 			}
 
 			preserveConnectionFields(req.Connection, cnnctr.Connection)

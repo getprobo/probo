@@ -61,7 +61,7 @@ func onePasswordRegistration() *Registration {
 			{Key: "accountId", Label: "Account ID", Required: true},
 			{Key: "region", Label: "Region", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			// The client-credentials grant uses the Users API driver.
 			// Everything else is the API-key connection, whose
 			// *APIKeyConnection makes GrantType() return "": it uses the
@@ -86,6 +86,6 @@ func onePasswordRegistration() *Registration {
 			}
 
 			return drivers.NewOnePasswordDriver(c, s.SCIMBridgeURL), nil
-		},
+		}),
 	}
 }

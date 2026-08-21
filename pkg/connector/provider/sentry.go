@@ -49,7 +49,7 @@ func sentryRegistration() *Registration {
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read sentry connector settings: %w", err)
@@ -57,8 +57,8 @@ func sentryRegistration() *Registration {
 
 			// OrganizationSlug may be empty for OAuth connections; the driver auto-discovers it.
 			return drivers.NewSentryDriver(c, s.OrganizationSlug, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read sentry connector settings", log.Error(err))
@@ -66,7 +66,8 @@ func sentryRegistration() *Registration {
 			}
 
 			return drivers.NewSentryNameResolver(c, s.OrganizationSlug, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListSentryOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, slug string) error {
 			return c.SetSettings(&coredata.SentryConnectorSettings{OrganizationSlug: slug})
 		},

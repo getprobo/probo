@@ -45,7 +45,7 @@ func bitbucketRegistration() *Registration {
 			// so the version segment stays in APIBase.
 			APIBase: "https://api.bitbucket.org/2.0",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
@@ -56,8 +56,8 @@ func bitbucketRegistration() *Registration {
 			}
 
 			return drivers.NewBitbucketDriver(c, s.Workspace, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read bitbucket connector settings", log.Error(err))
@@ -65,7 +65,8 @@ func bitbucketRegistration() *Registration {
 			}
 
 			return drivers.NewBitbucketNameResolver(c, s.Workspace, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListBitbucketOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, workspace string) error {
 			return c.SetSettings(&coredata.BitbucketConnectorSettings{Workspace: workspace})
 		},

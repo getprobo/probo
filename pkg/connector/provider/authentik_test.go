@@ -77,7 +77,7 @@ func TestAuthentikNewDriver(t *testing.T) {
 			RawSettings: raw,
 		}
 
-		drv, err := reg.NewDriver(context.Background(), client, conn, nil, reg.Endpoints)
+		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), nil)
 		require.NoError(t, err)
 		assert.IsType(t, &drivers.AuthentikDriver{}, drv)
 
@@ -105,7 +105,7 @@ func TestAuthentikNewDriver(t *testing.T) {
 				RawSettings: raw,
 			}
 
-			_, err = reg.NewDriver(context.Background(), client, conn, nil, reg.Endpoints)
+			_, err = reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), nil)
 			require.Error(t, err)
 
 			_, err = reg.BuildProbeURL(conn, reg.Endpoints)

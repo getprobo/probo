@@ -55,7 +55,7 @@ func langfuseRegistration() *Registration {
 		//
 		// No NewNameResolver: the memberships endpoint carries no
 		// organization name, so the source keeps its generic name.
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			settings, err := coredata.ConnectorSettings[coredata.LangfuseConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read langfuse connector settings: %w", err)
@@ -67,6 +67,6 @@ func langfuseRegistration() *Registration {
 			}
 
 			return drivers.NewLangfuseDriver(c, baseURL), nil
-		},
+		}),
 	}
 }

@@ -54,8 +54,8 @@ func mercuryRegistration() *Registration {
 		// name and a read-only token may lack other scopes, so the source
 		// keeps its generic name (the source-name worker degrades
 		// gracefully).
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewMercuryDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

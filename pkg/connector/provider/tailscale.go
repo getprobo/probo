@@ -39,11 +39,11 @@ func tailscaleRegistration() *Registration {
 			Probe:   "https://api.tailscale.com/api/v2/tailnet/-/users",
 			APIBase: "https://api.tailscale.com/api/v2",
 		},
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewTailscaleDriver(c, ep.APIBase), nil
-		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
 			return drivers.NewTailscaleNameResolver(c, ep.APIBase)
-		},
+		}),
 	}
 }

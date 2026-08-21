@@ -55,8 +55,8 @@ func cursorRegistration() *Registration {
 		// No NewNameResolver: the Admin API exposes no team/organization
 		// name endpoint, so the source keeps its generic name (the
 		// source-name worker degrades gracefully when no resolver is set).
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewCursorDriver(c, ep.APIBase), nil
-		},
+		}),
 	}
 }

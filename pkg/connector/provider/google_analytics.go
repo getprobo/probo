@@ -64,7 +64,7 @@ func googleAnalyticsRegistration() *Registration {
 		// the user declined manage.users.readonly on Google's granular consent
 		// screen) would probe green and then 403 on every fetch.
 		BuildProbeURL: buildGoogleAnalyticsProbeURL,
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read google analytics connector settings: %w", err)
@@ -75,8 +75,8 @@ func googleAnalyticsRegistration() *Registration {
 			}
 
 			return drivers.NewGoogleAnalyticsDriver(c, s.AccountID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read google analytics connector settings", log.Error(err))
@@ -85,7 +85,8 @@ func googleAnalyticsRegistration() *Registration {
 			}
 
 			return drivers.NewGoogleAnalyticsNameResolver(c, s.AccountID, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListGoogleAnalyticsOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, accountID string) error {
 			return c.SetSettings(&coredata.GoogleAnalyticsConnectorSettings{AccountID: accountID})
 		},

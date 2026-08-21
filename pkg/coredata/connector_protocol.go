@@ -30,6 +30,10 @@ type ConnectorProtocol string
 const (
 	ConnectorProtocolOAuth2 ConnectorProtocol = "OAUTH2"
 	ConnectorProtocolAPIKey ConnectorProtocol = "API_KEY"
+	// ConnectorProtocolWorkloadIdentity stores no credential: a short-lived
+	// token minted by pkg/identityfederation is exchanged for cloud credentials at
+	// use time. Named for the mechanism, so GCP reuses it.
+	ConnectorProtocolWorkloadIdentity ConnectorProtocol = "WORKLOAD_IDENTITY"
 )
 
 var (
@@ -42,6 +46,7 @@ func ConnectorProtocols() []ConnectorProtocol {
 	return []ConnectorProtocol{
 		ConnectorProtocolOAuth2,
 		ConnectorProtocolAPIKey,
+		ConnectorProtocolWorkloadIdentity,
 	}
 }
 
@@ -49,7 +54,8 @@ func (v ConnectorProtocol) IsValid() bool {
 	switch v {
 	case
 		ConnectorProtocolOAuth2,
-		ConnectorProtocolAPIKey:
+		ConnectorProtocolAPIKey,
+		ConnectorProtocolWorkloadIdentity:
 		return true
 	}
 

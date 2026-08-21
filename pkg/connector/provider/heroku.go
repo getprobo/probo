@@ -46,9 +46,9 @@ func herokuRegistration() *Registration {
 		// Heroku requires the versioned Accept header; a plain ProbeURL GET
 		// (Accept: application/json) returns 400 and would read as connected,
 		// so probe via a closure that sends application/vnd.heroku+json.
-		Probe:        probeHeroku,
+		Probe:        HTTPProbe(probeHeroku),
 		OAuth2Scopes: []string{"read"},
-		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
 			if err != nil {
 				return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
@@ -58,8 +58,8 @@ func herokuRegistration() *Registration {
 			// Heroku account (no Team); the driver runs in personal mode
 			// (app owner + collaborators) in that case.
 			return drivers.NewHerokuDriver(c, s.TeamID, ep.APIBase), nil
-		},
-		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
+		}),
+		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
 			s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot read heroku connector settings", log.Error(err))
@@ -67,7 +67,8 @@ func herokuRegistration() *Registration {
 			}
 
 			return drivers.NewHerokuNameResolver(c, s.TeamID, ep.APIBase)
-		},
+		}),
+		ListOrganizations: HTTPOrganizations(drivers.ListHerokuOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, teamID string) error {
 			return c.SetSettings(&coredata.HerokuConnectorSettings{TeamID: teamID})
 		},
