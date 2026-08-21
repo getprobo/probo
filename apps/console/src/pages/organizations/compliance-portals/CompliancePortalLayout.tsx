@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { safeOpenUrl } from "@probo/helpers";
+import { ArrowSquareOutIcon } from "@phosphor-icons/react";
+import { externalLinkProps } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -104,36 +103,29 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
     return <Navigate to={`${portalBase}/${landingSection.path}`} replace />;
   }
 
-  const { root, header, titleBlock, actions } = compliancePortalLayout();
+  const { root, header, titleRow, openLink } = compliancePortalLayout();
+  const publicLink = compliancePortal.active && compliancePortalUrl
+    ? externalLinkProps(compliancePortalUrl)
+    : null;
 
   return (
     <div className={root()}>
       <div className={header()}>
-        <div className={titleBlock()}>
+        <div className={titleRow()}>
           <Heading level={1} size={7} weight="medium" highContrast>
             {compliancePortal.entityName}
           </Heading>
-          <Text size={2} color="faint">{t("portalLayout.description")}</Text>
-        </div>
-        <div className={actions()}>
-          <Badge
-            variant="soft"
-            color={compliancePortal.active ? "green" : "red"}
-          >
-            {compliancePortal.active
-              ? t("portalLayout.status.active")
-              : t("portalLayout.status.inactive")}
-          </Badge>
-          {compliancePortal.active && compliancePortalUrl && (
-            <Button
-              variant="soft"
-              color="neutral"
-              onClick={() => safeOpenUrl(compliancePortalUrl)}
+          {publicLink?.href != null && (
+            <a
+              {...publicLink}
+              className={openLink()}
+              aria-label={t("portalLayout.open")}
             >
-              {t("portalLayout.actions.open")}
-            </Button>
+              <ArrowSquareOutIcon size={24} aria-hidden />
+            </a>
           )}
         </div>
+        <Text size={2} color="faint">{t("portalLayout.description")}</Text>
       </div>
 
       <Outlet />

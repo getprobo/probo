@@ -18,27 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BadgeSkeleton } from "@probo/ui/src/v2/Badge/BadgeSkeleton";
-import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { compliancePortalLayout } from "./variants";
 
 export function CompliancePortalLayoutSkeleton() {
-  const { root, header, titleBlock, actions } = compliancePortalLayout();
+  const { root, header, titleRow } = compliancePortalLayout();
 
   return (
     <div className={root()}>
       <div className={header()}>
-        <div className={titleBlock()}>
+        <div className={titleRow()}>
           <HeadingSkeleton size={7} className="w-40" />
-          <TextSkeleton size={2} className="w-96" />
         </div>
-        <div className={actions()}>
-          <BadgeSkeleton />
-          <ButtonSkeleton />
-        </div>
+        <TextSkeleton size={2} className="w-96" />
       </div>
     </div>
   );

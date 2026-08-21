@@ -377,8 +377,7 @@
   "portalLayout": {
     "title": "compliancepagina",
     "description": "Configureer uw publieke compliancepagina om uw beveiligings- en compliancepositie te presenteren.",
-    "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "open": "Openen" }
+    "open": "Openen"
   },
   "documentsLayout": {
     "tabs": { "audits": "Audits", "documents": "Documenten", "files": "Bestanden" }

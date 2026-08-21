@@ -838,13 +838,7 @@
   "portalLayout": {
     "title": "Portail de conformité",
     "description": "Configurez votre portail de conformité publique pour présenter votre posture de sécurité et de conformité.",
-    "status": {
-      "active": "Actif",
-      "inactive": "Inactif"
-    },
-    "actions": {
-      "open": "Ouvrir"
-    }
+    "open": "Ouvrir"
   },
   "documentsLayout": {
     "tabs": {

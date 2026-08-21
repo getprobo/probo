@@ -23,8 +23,13 @@ import { tv } from "tailwind-variants/lite";
 export const compliancePortalLayout = tv({
   slots: {
     root: "flex flex-col gap-8",
-    header: "flex flex-wrap items-start justify-between gap-4",
-    titleBlock: "flex min-w-0 flex-col gap-2",
-    actions: "flex shrink-0 items-center gap-2",
+    header: "flex flex-col gap-2",
+    titleRow: "flex flex-wrap items-center gap-2",
+    openLink: [
+      "inline-flex shrink-0 items-center justify-center rounded-2 text-sand-11",
+      "outline-none transition-colors",
+      "hover:text-sand-12",
+      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+    ],
   },
 });

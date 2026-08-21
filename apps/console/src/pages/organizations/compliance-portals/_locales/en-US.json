@@ -838,13 +838,7 @@
   "portalLayout": {
     "title": "compliance portal",
     "description": "Configure your public compliance portal to showcase your security and compliance posture.",
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive"
-    },
-    "actions": {
-      "open": "Open"
-    }
+    "open": "Open"
   },
   "documentsLayout": {
     "tabs": {
