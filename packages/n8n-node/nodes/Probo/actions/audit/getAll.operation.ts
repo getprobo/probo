@@ -86,10 +86,14 @@ export async function execute(
 								id
 								name
 								state
-								validFrom
-								validUntil
-								auditStartDate
-								auditEndDate
+								validity {
+									start
+									end
+								}
+								auditDates {
+									start
+									end
+								}
 								reportUrl
 								createdAt
 								updatedAt

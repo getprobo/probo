@@ -264,3 +264,23 @@ export async function proboApiMultipartRequest(
 		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }
+
+export function toPeriod(
+	start?: string | null,
+	end?: string | null,
+): { start?: string; end?: string } | undefined {
+	if (!start && !end) {
+		return undefined;
+	}
+
+	const period: { start?: string; end?: string } = {};
+	if (start) {
+		period.start = start;
+	}
+
+	if (end) {
+		period.end = end;
+	}
+
+	return period;
+}

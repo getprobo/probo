@@ -849,7 +849,9 @@ func TestUser_EndedContractCancelsSignatureRequests(t *testing.T) {
 			"id":                       signerProfileID,
 			"fullName":                 "Ended Contract Signer",
 			"additionalEmailAddresses": []string{},
-			"contractEndDate":          contractEndDate,
+			"contract": map[string]any{
+				"end": contractEndDate,
+			},
 		},
 	})
 	require.NoError(t, err)

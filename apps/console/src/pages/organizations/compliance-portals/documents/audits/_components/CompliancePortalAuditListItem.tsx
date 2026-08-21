@@ -56,7 +56,9 @@ const auditFragment = graphql`
     framework {
       name
     }
-    validUntil
+    validity {
+      end
+    }
     state
     compliancePortalAudit(compliancePortalId: $compliancePortalId) {
       id
@@ -218,8 +220,8 @@ export function CompliancePortalAuditListItem(props: {
 
   const isMutating = isUpdatingAuditVisibility || isRemoving;
   const auditTitle = audit.name || t("auditListItem.untitled");
-  const validUntilFormatted = audit.validUntil
-    ? dateFormat(i18n.language, audit.validUntil)
+  const validUntilFormatted = audit.validity?.end
+    ? dateFormat(i18n.language, audit.validity.end)
     : t("auditListItem.noExpiry");
 
   return (

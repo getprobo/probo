@@ -49,8 +49,10 @@ const fragment = graphql`
     kind
     position
     additionalEmailAddresses
-    contractStartDate
-    contractEndDate
+    contract {
+      start
+      end
+    }
     canUpdate: permission(action: "iam:membership-profile:update")
   }
 `;
@@ -172,8 +174,10 @@ export function PersonForm(props: {
       additionalEmailAddresses: data.additionalEmailAddresses,
       kind: data.kind,
       position: data.position,
-      contractStartDate: formatDatetime(data.contractStartDate) ?? null,
-      contractEndDate: formatDatetime(data.contractEndDate) ?? null,
+      contract: {
+        start: formatDatetime(data.contractStartDate) ?? null,
+        end: formatDatetime(data.contractEndDate) ?? null,
+      },
     };
 
     if (id) {
@@ -322,8 +326,8 @@ export function PersonFormLoader(props: { fragmentRef: PersonFormFragment$key })
           role: person.membership.role,
           position: person.position || null,
           additionalEmailAddresses: [...person.additionalEmailAddresses],
-          contractStartDate: person.contractStartDate?.split("T")[0] || "",
-          contractEndDate: person.contractEndDate?.split("T")[0] || "",
+          contractStartDate: person.contract?.start?.split("T")[0] || "",
+          contractEndDate: person.contract?.end?.split("T")[0] || "",
         }
       }
     />

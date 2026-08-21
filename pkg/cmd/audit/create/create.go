@@ -38,10 +38,14 @@ mutation($input: CreateAuditInput!) {
         id
         name
         state
-        validFrom
-        validUntil
-        auditStartDate
-        auditEndDate
+        validity {
+          start
+          end
+        }
+        auditDates {
+          start
+          end
+        }
       }
     }
   }
@@ -52,13 +56,17 @@ type createResponse struct {
 	CreateAudit struct {
 		AuditEdge struct {
 			Node struct {
-				ID             string  `json:"id"`
-				Name           string  `json:"name"`
-				State          string  `json:"state"`
-				ValidFrom      *string `json:"validFrom"`
-				ValidUntil     *string `json:"validUntil"`
-				AuditStartDate *string `json:"auditStartDate"`
-				AuditEndDate   *string `json:"auditEndDate"`
+				ID       string `json:"id"`
+				Name     string `json:"name"`
+				State    string `json:"state"`
+				Validity *struct {
+					Start *string `json:"start"`
+					End   *string `json:"end"`
+				} `json:"validity"`
+				AuditDates *struct {
+					Start *string `json:"start"`
+					End   *string `json:"end"`
+				} `json:"auditDates"`
 			} `json:"node"`
 		} `json:"auditEdge"`
 	} `json:"createAudit"`
@@ -157,20 +165,30 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["state"] = flagState
 			}
 
-			if flagValidFrom != "" {
-				input["validFrom"] = flagValidFrom
+			if flagValidFrom != "" || flagValidUntil != "" {
+				period := map[string]any{}
+				if flagValidFrom != "" {
+					period["start"] = flagValidFrom
+				}
+
+				if flagValidUntil != "" {
+					period["end"] = flagValidUntil
+				}
+
+				input["validity"] = period
 			}
 
-			if flagValidUntil != "" {
-				input["validUntil"] = flagValidUntil
-			}
+			if flagAuditStartDate != "" || flagAuditEndDate != "" {
+				period := map[string]any{}
+				if flagAuditStartDate != "" {
+					period["start"] = flagAuditStartDate
+				}
 
-			if flagAuditStartDate != "" {
-				input["auditStartDate"] = flagAuditStartDate
-			}
+				if flagAuditEndDate != "" {
+					period["end"] = flagAuditEndDate
+				}
 
-			if flagAuditEndDate != "" {
-				input["auditEndDate"] = flagAuditEndDate
+				input["auditDates"] = period
 			}
 
 			data, err := client.Do(

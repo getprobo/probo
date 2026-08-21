@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime } from "@probo/helpers";
+import { formatDatetime, toPeriod } from "@probo/helpers";
 import {
   Breadcrumb,
   Button,
@@ -88,14 +88,10 @@ export function CreateRiskAnalysisDialog(props: {
   });
 
   const onSubmit = async (data: FormData) => {
-    const periodStart = formatDatetime(data.periodStart);
-    const periodEnd = formatDatetime(data.periodEnd);
-    const period = periodStart || periodEnd
-      ? {
-          start: periodStart ?? null,
-          end: periodEnd ?? null,
-        }
-      : null;
+    const period = toPeriod(
+      formatDatetime(data.periodStart),
+      formatDatetime(data.periodEnd),
+    );
 
     try {
       await createRiskAnalysis({

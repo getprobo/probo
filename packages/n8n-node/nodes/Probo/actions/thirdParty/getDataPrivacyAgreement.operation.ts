@@ -50,8 +50,10 @@ export async function execute(
 				... on ThirdParty {
 					dataPrivacyAgreement {
 						id
-						validFrom
-						validUntil
+						validity {
+							start
+							end
+						}
 						fileName
 						fileUrl
 						fileSize

@@ -157,10 +157,8 @@ type Audit implements Node {
     name: String
     organization: Organization @goField(forceResolver: true)
     framework: Framework @goField(forceResolver: true)
-    validFrom: Datetime
-    validUntil: Datetime
-    auditStartDate: Datetime
-    auditEndDate: Datetime
+    validity: Period
+    auditDates: Period
     reportFile: File @goField(forceResolver: true)
     state: AuditState!
     compliancePortalAudit(
@@ -288,10 +286,8 @@ input CreateAuditInput {
     organizationId: ID!
     frameworkId: ID!
     name: String
-    validFrom: Datetime
-    validUntil: Datetime
-    auditStartDate: Datetime
-    auditEndDate: Datetime
+    validity: PeriodInput
+    auditDates: PeriodInput
     state: AuditState
     file: Upload
 }
@@ -299,10 +295,8 @@ input CreateAuditInput {
 input UpdateAuditInput {
     id: ID!
     name: String @goField(omittable: true)
-    validFrom: Datetime
-    validUntil: Datetime
-    auditStartDate: Datetime
-    auditEndDate: Datetime
+    validity: PeriodInput
+    auditDates: PeriodInput
     state: AuditState
 }
 

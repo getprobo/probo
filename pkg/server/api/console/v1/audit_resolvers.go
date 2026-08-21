@@ -443,12 +443,10 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 		OrganizationID: input.OrganizationID,
 		FrameworkID:    input.FrameworkID,
 		Name:           input.Name,
-		ValidFrom:      input.ValidFrom,
-		ValidUntil:     input.ValidUntil,
-		AuditStartDate: input.AuditStartDate,
-		AuditEndDate:   input.AuditEndDate,
 		State:          input.State,
 	}
+	req.ValidFrom, req.ValidUntil = types.PeriodInputDates(input.Validity)
+	req.AuditStartDate, req.AuditEndDate = types.PeriodInputDates(input.AuditDates)
 
 	audit, err := r.probo.Audits.Create(ctx, scope, &req)
 	if err != nil {
@@ -497,14 +495,12 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	}
 
 	req := probo.UpdateAuditRequest{
-		ID:             input.ID,
-		Name:           gqlutils.UnwrapOmittable(input.Name),
-		ValidFrom:      input.ValidFrom,
-		ValidUntil:     input.ValidUntil,
-		AuditStartDate: input.AuditStartDate,
-		AuditEndDate:   input.AuditEndDate,
-		State:          input.State,
+		ID:    input.ID,
+		Name:  gqlutils.UnwrapOmittable(input.Name),
+		State: input.State,
 	}
+	req.ValidFrom, req.ValidUntil = types.PeriodInputDates(input.Validity)
+	req.AuditStartDate, req.AuditEndDate = types.PeriodInputDates(input.AuditDates)
 
 	audit, err := r.probo.Audits.Update(ctx, scope, &req)
 	if err != nil {

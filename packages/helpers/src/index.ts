@@ -108,9 +108,11 @@ export {
 } from "./fileAccept";
 export {
   formatDatetime,
+  toPeriod,
   toDateInput,
   todayAsDateInput,
   parseDate,
+  type Period,
 } from "./date";
 export {
   DURATION_UNITS,

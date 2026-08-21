@@ -558,18 +558,9 @@ components:
             - string
             - "null"
           description: Position
-        contract_start_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Contract start date
-        contract_end_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Contract end date
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
         created_at:
           type: string
           format: date-time
@@ -1624,14 +1615,9 @@ components:
         position:
           type: ["string", "null"]
           description: Position
-        contract_start_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract start date
-        contract_end_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract end date
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
 
     CreateUserOutput:
       type: object
@@ -1692,16 +1678,9 @@ components:
           type: ["string", "null"]
           description: Position
           go.probo.inc/mcpgen/omittable: true
-        contract_start_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract start date
-          go.probo.inc/mcpgen/omittable: true
-        contract_end_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract end date
-          go.probo.inc/mcpgen/omittable: true
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
 
     UpdateUserOutput:
       type: object
@@ -1843,16 +1822,9 @@ components:
           type: ["string", "null"]
           description: Position
           go.probo.inc/mcpgen/omittable: true
-        contract_start_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract start date
-          go.probo.inc/mcpgen/omittable: true
-        contract_end_date:
-          type: ["string", "null"]
-          format: date-time
-          description: Contract end date
-          go.probo.inc/mcpgen/omittable: true
+        contract:
+          $ref: "#/components/schemas/Period"
+          description: Employment contract period
 
     UpdateProfileOutput:
       type: object
@@ -6182,30 +6154,12 @@ components:
             - string
             - "null"
           description: Audit name
-        valid_from:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Valid from date
-        valid_until:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Valid until date
-        audit_start_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit start date
-        audit_end_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit end date
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Certificate validity period
+        audit_dates:
+          $ref: "#/components/schemas/Period"
+          description: Audit dates
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
@@ -6329,22 +6283,12 @@ components:
         name:
           type: string
           description: Audit name
-        valid_from:
-          type: string
-          format: date-time
-          description: Valid from date
-        valid_until:
-          type: string
-          format: date-time
-          description: Valid until date
-        audit_start_date:
-          type: string
-          format: date-time
-          description: Audit start date
-        audit_end_date:
-          type: string
-          format: date-time
-          description: Audit end date
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Certificate validity period
+        audit_dates:
+          $ref: "#/components/schemas/Period"
+          description: Audit dates
         state:
           $ref: "#/components/schemas/AuditState"
           description: Audit state
@@ -6369,30 +6313,12 @@ components:
           type: ["string", "null"]
           description: Audit name
           go.probo.inc/mcpgen/omittable: true
-        valid_from:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Valid from date
-        valid_until:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Valid until date
-        audit_start_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit start date
-        audit_end_date:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Audit end date
+        validity:
+          $ref: "#/components/schemas/Period"
+          description: Certificate validity period
+        audit_dates:
+          $ref: "#/components/schemas/Period"
+          description: Audit dates
         state:
           anyOf:
             - $ref: "#/components/schemas/AuditState"

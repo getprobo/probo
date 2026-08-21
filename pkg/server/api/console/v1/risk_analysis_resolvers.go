@@ -30,10 +30,12 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 	}
 
 	var period *riskmanagement.Period
+
 	if input.Period != nil {
+		start, end := types.PeriodInputDates(input.Period)
 		period = &riskmanagement.Period{
-			Start: input.Period.Start,
-			End:   input.Period.End,
+			Start: start,
+			End:   end,
 		}
 	}
 
@@ -75,10 +77,12 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 	}
 
 	var period *riskmanagement.Period
+
 	if input.Period != nil {
+		start, end := types.PeriodInputDates(input.Period)
 		period = &riskmanagement.Period{
-			Start: input.Period.Start,
-			End:   input.Period.End,
+			Start: start,
+			End:   end,
 		}
 	}
 
@@ -153,10 +157,12 @@ func (r *mutationResolver) ForkRiskAnalysis(ctx context.Context, input types.For
 	}
 
 	var period *riskmanagement.Period
+
 	if input.Period != nil {
+		start, end := types.PeriodInputDates(input.Period)
 		period = &riskmanagement.Period{
-			Start: input.Period.Start,
-			End:   input.Period.End,
+			Start: start,
+			End:   end,
 		}
 	}
 

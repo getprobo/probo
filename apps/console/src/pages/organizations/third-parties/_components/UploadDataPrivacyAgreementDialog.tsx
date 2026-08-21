@@ -50,8 +50,10 @@ const uploadDataPrivacyAgreementMutation = graphql`
           fileName
           downloadUrl
         }
-        validFrom
-        validUntil
+        validity {
+          start
+          end
+        }
         createdAt
       }
     }
@@ -121,8 +123,10 @@ export function UploadDataPrivacyAgreementDialog({
         input: {
           thirdPartyId,
           fileName: data.fileName,
-          validFrom: formatDatetime(data.validFrom),
-          validUntil: formatDatetime(data.validUntil),
+          validity: {
+            start: formatDatetime(data.validFrom),
+            end: formatDatetime(data.validUntil),
+          },
           file: null,
         },
       },

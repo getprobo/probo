@@ -32,6 +32,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 		return nil, err
 	}
 
+	contractStart, contractEnd := types.PeriodInputOmittableDates(input.Contract)
+
 	profile, err := r.iam.OrganizationService.CreateUser(
 		ctx,
 		scope,
@@ -43,8 +45,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
 			Kind:                     input.Kind,
 			Position:                 input.Position,
-			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
-			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
+			ContractStartDate:        contractStart,
+			ContractEndDate:          contractEnd,
 		},
 	)
 	if err != nil {
@@ -95,6 +97,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 		return nil, err
 	}
 
+	contractStart, contractEnd := types.PeriodInputOmittableDates(input.Contract)
+
 	profile, err := r.iam.OrganizationService.UpdateUser(
 		ctx,
 		&iam.UpdateUserRequest{
@@ -103,8 +107,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
 			Kind:                     input.Kind,
 			Position:                 input.Position,
-			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
-			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
+			ContractStartDate:        contractStart,
+			ContractEndDate:          contractEnd,
 		},
 	)
 	if err != nil {
