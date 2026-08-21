@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.264.1] - 2026-08-21
+
+### Fixed
+
+- The Cal.com and Calendly connectors were missing their client secret from required-configuration validation and `.env.example`, so a misconfigured deployment would silently fail instead of being caught at startup
+
 ## [0.264.0] - 2026-08-21
 
 ### Added
