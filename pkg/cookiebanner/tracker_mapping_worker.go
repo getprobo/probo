@@ -225,6 +225,43 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	directThirdPartyID := det.directThirdPartyID
 	firstParty := det.firstParty
 
+	// A catalog row a human rejected does not name a party. The name still
+	// matches — that is why the deterministic signals resolved it — but the
+	// review recorded that what it names is a bundled library, a page
+	// artifact, or software the visitor installed. Take the verdict the
+	// review left instead of linking the vendor, and skip the agent: it
+	// would re-derive the same wrong attribution the review exists to stop.
+	if commonThirdPartyID != nil {
+		verdict, err := h.rejectedVerdictFor(ctx, *commonThirdPartyID)
+		if err != nil {
+			return err
+		}
+
+		if verdict != nil {
+			commonThirdPartyID = nil
+			directThirdPartyID = nil
+			firstParty = true
+
+			if err := h.pg.WithTx(
+				ctx,
+				func(ctx context.Context, tx pg.Tx) error {
+					match, err := h.persistFirstPartyVerdict(ctx, tx, tp, *verdict)
+					if err != nil {
+						return err
+					}
+
+					if match != nil {
+						commonPatternID = firstNonNil(commonPatternID, match.commonPatternID)
+					}
+
+					return nil
+				},
+			); err != nil {
+				return fmt.Errorf("cannot persist verdict from a rejected catalog row: %w", err)
+			}
+		}
+	}
+
 	// Phase 2: tracker-mapping agent (no transaction). It runs only when
 	// the deterministic signals could not resolve a catalog third party.
 	// The LLM and web-search calls happen outside any transaction; the
@@ -582,6 +619,44 @@ func isPreExistingSource(tp coredata.TrackerPattern) bool {
 // find. The org-scoped cascade already excludes these rows.
 func isExtensionSource(tp coredata.TrackerPattern) bool {
 	return tp.Source != nil && *tp.Source == coredata.CookieSourceExtension
+}
+
+// rejectedVerdictFor reports the terminal verdict a rejected catalog row
+// carries, or nil when the row was not rejected. The verdict is stored on
+// the row rather than inferred here because which one applies is a property
+// of what the row names: a bundled library egresses nothing and is
+// FIRST_PARTY, while software the visitor installed is NOT_ATTRIBUTABLE and
+// calling it the operator's own would be false.
+func (h *trackerMappingHandler) rejectedVerdictFor(
+	ctx context.Context,
+	commonThirdPartyID gid.GID,
+) (*coredata.CommonTrackerPatternAttribution, error) {
+	var party coredata.CommonThirdParty
+
+	if err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return party.LoadByID(ctx, conn, commonThirdPartyID)
+		},
+	); err != nil {
+		return nil, fmt.Errorf("cannot load common third party: %w", err)
+	}
+
+	if party.Review != coredata.CommonThirdPartyReviewRejected {
+		return nil, nil
+	}
+
+	// The database CHECK ties a verdict to the rejected state, so this is
+	// defensive: a row that lost its verdict must not silently fall through
+	// to a vendor link.
+	if party.RejectedVerdict == nil || !party.RejectedVerdict.IsTerminal() {
+		return nil, fmt.Errorf(
+			"rejected common third party %s carries no terminal verdict",
+			commonThirdPartyID,
+		)
+	}
+
+	return party.RejectedVerdict, nil
 }
 
 // firstNonNil returns a when it is set, otherwise b. It keeps the first
