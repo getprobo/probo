@@ -59,7 +59,6 @@ func seedCatalogThirdParty(
 		Slug:           slugValue,
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

@@ -47,7 +47,8 @@ func TestCommonThirdPartyReview_DefaultsOnInsert(t *testing.T) {
 		return loaded.LoadBySlug(ctx, tx, party.Slug)
 	}))
 
-	assert.Equal(t, coredata.CommonThirdPartyReviewUnreviewed, loaded.Review)
+	require.NotNil(t, loaded.Review, "a stored row always has a concrete review state")
+	assert.Equal(t, coredata.CommonThirdPartyReviewUnreviewed, *loaded.Review)
 	assert.Nil(t, loaded.RejectedVerdict)
 	assert.Nil(t, loaded.ReviewedAt)
 }
@@ -81,7 +82,8 @@ func TestCommonThirdPartyReview_CheckConstraint(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return loaded.LoadBySlug(ctx, tx, party.Slug)
 	}))
-	assert.Equal(t, coredata.CommonThirdPartyReviewRejected, loaded.Review)
+	require.NotNil(t, loaded.Review)
+	assert.Equal(t, coredata.CommonThirdPartyReviewRejected, *loaded.Review)
 	require.NotNil(t, loaded.RejectedVerdict)
 	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, *loaded.RejectedVerdict)
 	assert.True(t, loaded.RejectedVerdict.IsTerminal())
@@ -140,7 +142,8 @@ func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
 		return after.LoadBySlug(ctx, tx, party.Slug)
 	}))
 
-	assert.Equal(t, coredata.CommonThirdPartyReviewRejected, after.Review,
+	require.NotNil(t, after.Review)
+	assert.Equal(t, coredata.CommonThirdPartyReviewRejected, *after.Review,
 		"a category patch must not reset a human rejection")
 	require.NotNil(t, after.RejectedVerdict)
 	assert.Equal(t, notAttributable, *after.RejectedVerdict)
@@ -149,6 +152,8 @@ func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
 
 	// And a receiver that asserts curation promotes the row, which is the
 	// seed's path on a second run.
+	validated := coredata.CommonThirdPartyReviewValidated
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		reseeded := coredata.CommonThirdParty{
 			ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
@@ -156,7 +161,7 @@ func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
 			Slug:           party.Slug,
 			Category:       coredata.ThirdPartyCategoryOther,
 			Certifications: []string{},
-			Review:         coredata.CommonThirdPartyReviewValidated,
+			Review:         &validated,
 			CreatedAt:      time.Now(),
 			UpdatedAt:      time.Now(),
 		}
@@ -172,8 +177,103 @@ func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
 		return promoted.LoadBySlug(ctx, tx, party.Slug)
 	}))
 
-	assert.Equal(t, coredata.CommonThirdPartyReviewValidated, promoted.Review,
+	require.NotNil(t, promoted.Review)
+	assert.Equal(t, coredata.CommonThirdPartyReviewValidated, *promoted.Review,
 		"a seed run must promote its curated entry")
 	assert.Nil(t, promoted.RejectedVerdict,
 		"promotion must clear the verdict the rejection carried")
+}
+
+// An auto-create reaches Upsert's conflict branch only by losing a race:
+// it looked the slug up, found nothing, and by the time it wrote, another
+// writer had created the row. It has no verdict of its own to record, so a
+// nil Review must leave whatever is stored alone — otherwise a concurrent
+// seed run silently resets a human rejection to UNREVIEWED.
+func TestCommonThirdPartyUpsert_NilReviewPreservesStoredVerdict(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	party := seedCommonThirdParty(t, ctx, client)
+	notAttributable := coredata.CommonTrackerPatternAttributionNotAttributable
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return (coredata.CommonThirdParty{}).UpdateReview(
+			ctx, tx, party.ID,
+			coredata.CommonThirdPartyReviewRejected,
+			&notAttributable,
+			"tester",
+		)
+	}))
+
+	// What an auto-create does: fresh id, no review asserted, same slug.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		autoCreated := coredata.CommonThirdParty{
+			ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
+			Name:           party.Name,
+			Slug:           party.Slug,
+			Category:       coredata.ThirdPartyCategoryOther,
+			Certifications: []string{},
+			Review:         nil,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		}
+
+		_, err := autoCreated.Upsert(ctx, tx)
+
+		return err
+	}))
+
+	after := coredata.CommonThirdParty{}
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return after.LoadBySlug(ctx, tx, party.Slug)
+	}))
+
+	require.NotNil(t, after.Review)
+	assert.Equal(t, coredata.CommonThirdPartyReviewRejected, *after.Review,
+		"an auto-create must not reset a human rejection")
+	require.NotNil(t, after.RejectedVerdict,
+		"the verdict must survive alongside the state, or the CHECK would fail")
+	assert.Equal(t, notAttributable, *after.RejectedVerdict)
+	assert.Equal(t, coredata.ThirdPartyCategoryOther, after.Category,
+		"the rest of the upsert must still land")
+}
+
+// A nil Review on a genuine insert has nothing to preserve, so the row must
+// still land in a valid state rather than violating the NOT NULL column.
+func TestCommonThirdPartyUpsert_NilReviewDefaultsOnInsert(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	id := gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType)
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, id)
+			return err
+		})
+	})
+
+	fresh := coredata.CommonThirdParty{
+		ID:             id,
+		Name:           "Auto " + id.String(),
+		Slug:           "auto-" + id.String(),
+		Category:       coredata.ThirdPartyCategoryOther,
+		Certifications: []string{},
+		Review:         nil,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := fresh.Upsert(ctx, tx)
+		return err
+	}))
+
+	require.NotNil(t, fresh.Review)
+	assert.Equal(t, coredata.CommonThirdPartyReviewUnreviewed, *fresh.Review,
+		"a fresh row with no assertion belongs in the backlog")
 }

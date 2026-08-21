@@ -59,7 +59,6 @@ func TestCommonThirdPartyUpsert_SyncsReceiverToWrittenRow(t *testing.T) {
 		Slug:           existing.Slug + "-decoy",
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      existing.CreatedAt,
 		UpdatedAt:      existing.UpdatedAt,
 	}
@@ -84,7 +83,6 @@ func TestCommonThirdPartyUpsert_SyncsReceiverToWrittenRow(t *testing.T) {
 		Slug:           existing.Slug,
 		Category:       coredata.ThirdPartyCategoryMarketing,
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -383,7 +381,6 @@ func TestCommonThirdPartyUpsert_ReportsInsertForNewSlug(t *testing.T) {
 		Slug:           "novel-" + id.String(),
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

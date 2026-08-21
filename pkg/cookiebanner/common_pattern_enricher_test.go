@@ -291,7 +291,6 @@ func seedEnricherCommonThirdParty(
 		Slug:           "acme-analytics-" + suffix,
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

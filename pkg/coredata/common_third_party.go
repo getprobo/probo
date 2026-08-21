@@ -67,7 +67,12 @@ type (
 		// is REJECTED and carries the terminal attribution that patterns
 		// resolving to this row earn instead of a vendor link; a database
 		// CHECK enforces the pairing.
-		Review          CommonThirdPartyReview           `db:"review"`
+		//
+		// Nil means "do not assert a review". Insert writes UNREVIEWED,
+		// and Upsert leaves an existing row's verdict alone — which is what
+		// an auto-create needs, since it reaches the conflict branch only by
+		// losing a race and has no verdict of its own to record.
+		Review          *CommonThirdPartyReview          `db:"review"`
 		RejectedVerdict *CommonTrackerPatternAttribution `db:"rejected_verdict"`
 		ReviewedAt      *time.Time                       `db:"reviewed_at"`
 		ReviewedBy      *string                          `db:"reviewed_by"`
@@ -385,7 +390,7 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
-    @review,
+    COALESCE(@review, 'UNREVIEWED'::common_third_party_review),
     @rejected_verdict,
     @reviewed_at,
     @reviewed_by,
@@ -502,7 +507,7 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
-    @review,
+    COALESCE(@review, 'UNREVIEWED'::common_third_party_review),
     @rejected_verdict,
     @reviewed_at,
     @reviewed_by,
@@ -531,10 +536,18 @@ SET
     -- entries to VALIDATED here, since a curated row needs no human pass.
     -- proboctl's upsert loads the row first and writes the current value
     -- back, so a human REJECTED survives a category patch.
-    review                           = EXCLUDED.review,
+    -- A NULL @review means "whatever is already there": an auto-create that
+    -- only reaches this branch by losing a race has no verdict to assert and
+    -- must not erase a human one. The seed passes VALIDATED deliberately,
+    -- because curation is exactly what it is asserting.
+    review                           = COALESCE(@review, common_third_parties.review),
     -- Moves with review or the CHECK fires: promoting a rejected row would
-    -- otherwise keep the verdict its rejection carried.
-    rejected_verdict                 = EXCLUDED.rejected_verdict,
+    -- otherwise keep the verdict its rejection carried. Held to the same
+    -- rule, so declining to assert a review leaves the verdict alone too.
+    rejected_verdict                 = CASE
+        WHEN @review IS NULL THEN common_third_parties.rejected_verdict
+        ELSE EXCLUDED.rejected_verdict
+    END,
     updated_at                       = EXCLUDED.updated_at
 RETURNING
     id,

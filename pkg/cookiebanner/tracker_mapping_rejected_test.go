@@ -53,7 +53,7 @@ func insertReviewedParty(
 		Slug:           "reviewed-" + id.String(),
 		Category:       coredata.ThirdPartyCategoryOther,
 		Certifications: []string{},
-		Review:         review,
+		Review:         &review,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
