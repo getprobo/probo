@@ -106,8 +106,10 @@ func ResolveOrCreateCommonThirdParty(
 		Slug:           partySlug,
 		Category:       category,
 		Certifications: []string{},
-		// Left nil: a fresh row defaults to UNREVIEWED, and this must not
-		// overwrite a verdict if the row already exists.
+		// Left nil to assert no review: Upsert writes UNREVIEWED on insert
+		// and keeps the stored value on conflict, so this cannot overwrite a
+		// verdict if the row already exists. The column is NOT NULL with no
+		// database default, so nil is only safe through Upsert.
 		Review: nil,
 		// Request enrichment at creation: a freshly resolved catalog row
 		// carries only name/slug/category, so the enrichment worker fills
