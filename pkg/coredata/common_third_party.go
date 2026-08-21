@@ -523,6 +523,14 @@ SET
     terms_of_service_url             = EXCLUDED.terms_of_service_url,
     security_page_url                = EXCLUDED.security_page_url,
     trust_page_url                   = EXCLUDED.trust_page_url,
+    -- Curation is part of what an upsert asserts: the seed promotes its
+    -- entries to VALIDATED here, since a curated row needs no human pass.
+    -- proboctl's upsert loads the row first and writes the current value
+    -- back, so a human REJECTED survives a category patch.
+    review                           = EXCLUDED.review,
+    -- Moves with review or the CHECK fires: promoting a rejected row would
+    -- otherwise keep the verdict its rejection carried.
+    rejected_verdict                 = EXCLUDED.rejected_verdict,
     updated_at                       = EXCLUDED.updated_at
 RETURNING
     id,
