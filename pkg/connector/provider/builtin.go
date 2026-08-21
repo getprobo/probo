@@ -106,6 +106,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		railwayRegistration(),
 		renderRegistration(),
 		resendRegistration(),
+		ripplingRegistration(),
 		scalewayRegistration(),
 		segmentRegistration(),
 		sendgridRegistration(),
