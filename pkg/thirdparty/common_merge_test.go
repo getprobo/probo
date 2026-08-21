@@ -53,6 +53,7 @@ func seedCatalogParty(t *testing.T, ctx context.Context, client *pg.Client) core
 		Slug:           "acme-" + suffix,
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
+		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

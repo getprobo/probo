@@ -42,6 +42,7 @@ func TestCommonThirdPartyReview_DefaultsOnInsert(t *testing.T) {
 	party := seedCommonThirdParty(t, ctx, client)
 
 	var loaded coredata.CommonThirdParty
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return loaded.LoadBySlug(ctx, tx, party.Slug)
 	}))
@@ -61,6 +62,7 @@ func TestCommonThirdPartyReview_CheckConstraint(t *testing.T) {
 	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		_, err := tx.Exec(ctx,
 			`UPDATE common_third_parties SET review = 'REJECTED' WHERE id = $1`, party.ID)
+
 		return err
 	})
 	require.Error(t, err, "REJECTED without a verdict must violate the CHECK")
@@ -70,10 +72,12 @@ func TestCommonThirdPartyReview_CheckConstraint(t *testing.T) {
 			`UPDATE common_third_parties
 			 SET review = 'REJECTED', rejected_verdict = 'FIRST_PARTY', reviewed_at = $2
 			 WHERE id = $1`, party.ID, time.Now())
+
 		return err
 	}))
 
 	var loaded coredata.CommonThirdParty
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return loaded.LoadBySlug(ctx, tx, party.Slug)
 	}))
@@ -87,6 +91,7 @@ func TestCommonThirdPartyReview_CheckConstraint(t *testing.T) {
 		_, err := tx.Exec(ctx,
 			`UPDATE common_third_parties
 			 SET review = 'VALIDATED', rejected_verdict = 'FIRST_PARTY' WHERE id = $1`, party.ID)
+
 		return err
 	})
 	require.Error(t, err, "a non-rejected row must not carry a verdict")
@@ -130,6 +135,7 @@ func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
 	}))
 
 	after := coredata.CommonThirdParty{}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return after.LoadBySlug(ctx, tx, party.Slug)
 	}))
@@ -161,6 +167,7 @@ func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
 	}))
 
 	promoted := coredata.CommonThirdParty{}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return promoted.LoadBySlug(ctx, tx, party.Slug)
 	}))

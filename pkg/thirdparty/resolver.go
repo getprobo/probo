@@ -106,6 +106,9 @@ func ResolveOrCreateCommonThirdParty(
 		Slug:           partySlug,
 		Category:       category,
 		Certifications: []string{},
+		// Resolved from a name the pipeline saw, not from curation: it
+		// starts in the review backlog.
+		Review: coredata.CommonThirdPartyReviewUnreviewed,
 		// Request enrichment at creation: a freshly resolved catalog row
 		// carries only name/slug/category, so the enrichment worker fills
 		// the rest (URLs, address, certifications, logo). Curated seed

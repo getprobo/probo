@@ -331,8 +331,11 @@ func resolveThirdParty(
 		Slug:           platformSlug,
 		Category:       mapOCDCategory(p.Category),
 		Certifications: []string{},
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		// Auto-created from a pattern's vendor name, so nobody has judged
+		// whether that name denotes an entity an organization can engage.
+		Review:    coredata.CommonThirdPartyReviewUnreviewed,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	if _, err := party.Upsert(ctx, tx); err != nil {

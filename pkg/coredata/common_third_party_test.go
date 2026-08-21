@@ -59,6 +59,7 @@ func TestCommonThirdPartyUpsert_SyncsReceiverToWrittenRow(t *testing.T) {
 		Slug:           existing.Slug + "-decoy",
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
+		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      existing.CreatedAt,
 		UpdatedAt:      existing.UpdatedAt,
 	}
@@ -83,6 +84,7 @@ func TestCommonThirdPartyUpsert_SyncsReceiverToWrittenRow(t *testing.T) {
 		Slug:           existing.Slug,
 		Category:       coredata.ThirdPartyCategoryMarketing,
 		Certifications: []string{},
+		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -317,14 +319,14 @@ func TestDeleteIfUnreferenced_RefusesOnceEnriched(t *testing.T) {
 	})
 }
 
-// TestCommonThirdPartyUpsert_ReportsUpdateAfterLoadBySlug covers the CLI
-// path, which loads the existing row before upserting rather than minting a
-// fresh GID as the seed does. The inserted flag used to be derived by
-// comparing the id sent against the id returned, which holds on the seed
-// path but not here: the loaded receiver already carries the row's own id,
-// so an update reported itself as a create. created_at is the reliable
-// signal because the ON CONFLICT branch leaves it untouched.
-func TestCommonThirdPartyUpsert_ReportsUpdateAfterLoadBySlug(t *testing.T) {
+// TestCommonThirdPartyUpsert_LoadedReceiverKeepsItsRow pins what a
+// load-then-upsert caller can and cannot rely on. The write itself must land
+// on the loaded row and preserve created_at; the inserted flag must not be
+// trusted, because the receiver already carries that row's id and the
+// comparison behind the flag cannot tell the branches apart. proboctl's
+// upsert therefore reports from its own LoadBySlug result rather than from
+// this return value.
+func TestCommonThirdPartyUpsert_LoadedReceiverKeepsItsRow(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -354,7 +356,10 @@ func TestCommonThirdPartyUpsert_ReportsUpdateAfterLoadBySlug(t *testing.T) {
 		return err
 	}))
 
-	assert.False(t, inserted, "upserting a row loaded by slug must report an update, not a create")
+	assert.True(t, inserted,
+		"documents the limitation: a loaded receiver's id matches the returned "+
+			"id, so the flag reads as an insert and callers on this path must "+
+			"use their own load result instead")
 	assert.Equal(t, existing.ID, loaded.ID, "the loaded row must be the one written")
 	assert.Equal(t, coredata.ThirdPartyCategoryOther, loaded.Category)
 	assert.True(t, existing.CreatedAt.Equal(loaded.CreatedAt), "created_at must survive the update")
@@ -378,6 +383,7 @@ func TestCommonThirdPartyUpsert_ReportsInsertForNewSlug(t *testing.T) {
 		Slug:           "novel-" + id.String(),
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
+		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

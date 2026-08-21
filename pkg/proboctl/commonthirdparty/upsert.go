@@ -134,12 +134,22 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 				switch {
 				case err == nil:
 					party = existing
+					// The load already answered whether the row exists.
+					// Upsert's return value cannot: this receiver carries
+					// the loaded row's own id, so its id comparison always
+					// reports an insert.
+					inserted = false
 				case errors.Is(err, coredata.ErrResourceNotFound):
+					inserted = true
 					party = coredata.CommonThirdParty{
 						ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 						Slug:           partySlug,
 						Certifications: []string{},
-						CreatedAt:      now,
+						// A hand-created row still needs a review: the
+						// operator asserted a name and category, not that
+						// the entity is engageable. Use `review` for that.
+						Review:    coredata.CommonThirdPartyReviewUnreviewed,
+						CreatedAt: now,
 					}
 				default:
 					return fmt.Errorf("cannot load common third party by slug: %w", err)
@@ -172,8 +182,7 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 					return nil
 				}
 
-				inserted, err = party.Upsert(ctx, tx)
-				if err != nil {
+				if _, err := party.Upsert(ctx, tx); err != nil {
 					return fmt.Errorf("cannot upsert common third party: %w", err)
 				}
 

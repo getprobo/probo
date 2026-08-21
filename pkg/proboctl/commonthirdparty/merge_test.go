@@ -53,6 +53,7 @@ func seedPreviewParty(
 		Slug:           slug.Make(name),
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
+		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

@@ -232,33 +232,45 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// review left instead of linking the vendor, and skip the agent: it
 	// would re-derive the same wrong attribution the review exists to stop.
 	if commonThirdPartyID != nil {
-		verdict, err := h.rejectedVerdictFor(ctx, *commonThirdPartyID)
-		if err != nil {
-			return err
+		var rejected bool
+
+		// The review is read inside the transaction that acts on it: a human
+		// can change a verdict at any time, and a read from an earlier
+		// transaction could persist an attribution the catalog no longer
+		// says. Nothing is written when the row is not rejected.
+		if err := h.pg.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				verdict, err := h.rejectedVerdictFor(ctx, tx, *commonThirdPartyID)
+				if err != nil {
+					return err
+				}
+
+				if verdict == nil {
+					return nil
+				}
+
+				rejected = true
+
+				match, err := h.persistFirstPartyVerdict(ctx, tx, tp, *verdict)
+				if err != nil {
+					return err
+				}
+
+				if match != nil {
+					commonPatternID = firstNonNil(commonPatternID, match.commonPatternID)
+				}
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("cannot persist verdict from a rejected catalog row: %w", err)
 		}
 
-		if verdict != nil {
+		if rejected {
 			commonThirdPartyID = nil
 			directThirdPartyID = nil
 			firstParty = true
-
-			if err := h.pg.WithTx(
-				ctx,
-				func(ctx context.Context, tx pg.Tx) error {
-					match, err := h.persistFirstPartyVerdict(ctx, tx, tp, *verdict)
-					if err != nil {
-						return err
-					}
-
-					if match != nil {
-						commonPatternID = firstNonNil(commonPatternID, match.commonPatternID)
-					}
-
-					return nil
-				},
-			); err != nil {
-				return fmt.Errorf("cannot persist verdict from a rejected catalog row: %w", err)
-			}
 		}
 	}
 
@@ -280,7 +292,11 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// The deterministic catalog match still applies above, so a known cookie
 	// still maps; a later SCRIPT detection upgrades a PRE_EXISTING row and
 	// re-arms mapping, giving the agent a better-grounded run.
-	if commonThirdPartyID == nil && h.mappingEnabled && !det.firstParty &&
+	// Gated on the local firstParty, not det.firstParty: a rejected catalog
+	// row sets it above, and reading the deterministic result here would run
+	// the agent anyway and let a vendor result overwrite the verdict the
+	// review just recorded.
+	if commonThirdPartyID == nil && h.mappingEnabled && !firstParty &&
 		!isPreExistingSource(tp) && !isExtensionSource(tp) {
 		ident, err := h.identifyWithAgent(ctx, tp, det.origin)
 		if err != nil {
@@ -629,16 +645,12 @@ func isExtensionSource(tp coredata.TrackerPattern) bool {
 // calling it the operator's own would be false.
 func (h *trackerMappingHandler) rejectedVerdictFor(
 	ctx context.Context,
+	tx pg.Tx,
 	commonThirdPartyID gid.GID,
 ) (*coredata.CommonTrackerPatternAttribution, error) {
 	var party coredata.CommonThirdParty
 
-	if err := h.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return party.LoadByID(ctx, conn, commonThirdPartyID)
-		},
-	); err != nil {
+	if err := party.LoadByID(ctx, tx, commonThirdPartyID); err != nil {
 		return nil, fmt.Errorf("cannot load common third party: %w", err)
 	}
 

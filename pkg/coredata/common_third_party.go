@@ -385,7 +385,7 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
-    COALESCE(NULLIF(@review, '')::common_third_party_review, 'UNREVIEWED'),
+    @review,
     @rejected_verdict,
     @reviewed_at,
     @reviewed_by,
@@ -436,9 +436,13 @@ INSERT INTO common_third_parties (
 
 // Upsert inserts a row, or on slug conflict updates every column except
 // id and created_at. Returns true if a new row was inserted, false if an
-// existing row was updated. The flag is read from the written tuple's xmax
-// rather than inferred from the receiver, so it holds both when the caller
-// mints a fresh id (the seed) and when it loads the row first (the CLI).
+// existing row was updated, which holds for a caller that mints a fresh id
+// before calling — the seed's path.
+//
+// A caller that loads the row first must not rely on this: its receiver
+// already carries the row's own id, so the comparison cannot distinguish
+// the branches and always reports an insert. Such a caller already knows
+// the answer from its own load and should use that instead.
 func (t *CommonThirdParty) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -498,7 +502,7 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
-    COALESCE(NULLIF(@review, '')::common_third_party_review, 'UNREVIEWED'),
+    @review,
     @rejected_verdict,
     @reviewed_at,
     @reviewed_by,
@@ -561,9 +565,10 @@ RETURNING
     reviewed_at,
     reviewed_by,
     created_at,
-    updated_at,
-    xmax = 0 AS inserted
+    updated_at
 `
+
+	originalID := t.ID
 
 	args := pgx.StrictNamedArgs{
 		"id":                               t.ID,
@@ -603,24 +608,14 @@ RETURNING
 	}
 	defer rows.Close()
 
-	// xmax is 0 on a freshly inserted tuple and non-zero on one the
-	// ON CONFLICT branch updated. It is the only signal here that comes
-	// from the database rather than from the values we sent, which is what
-	// makes it correct whether the caller minted a new id (the seed) or
-	// loaded the row first (the CLI).
-	type upsertResult struct {
-		CommonThirdParty
-		Inserted bool `db:"inserted"`
-	}
-
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[upsertResult])
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonThirdParty])
 	if err != nil {
 		return false, fmt.Errorf("cannot collect upsert result: %w", err)
 	}
 
-	*t = row.CommonThirdParty
+	*t = row
 
-	return row.Inserted, nil
+	return originalID == t.ID, nil
 }
 
 func (t CommonThirdParty) Delete(

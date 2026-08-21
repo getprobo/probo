@@ -77,6 +77,31 @@ func insertReviewedParty(
 	return id
 }
 
+// verdictFor runs rejectedVerdictFor in a transaction, which it now requires
+// so the review is read where it is acted on.
+func verdictFor(
+	t *testing.T,
+	ctx context.Context,
+	h *trackerMappingHandler,
+	id gid.GID,
+) (*coredata.CommonTrackerPatternAttribution, error) {
+	t.Helper()
+
+	var (
+		verdict *coredata.CommonTrackerPatternAttribution
+		inner   error
+	)
+
+	if err := h.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		verdict, inner = h.rejectedVerdictFor(ctx, tx, id)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return verdict, inner
+}
+
 // A rejected catalog row must divert the pattern to the verdict the review
 // recorded rather than link the vendor whose name matched. Both terminal
 // verdicts must survive the round trip, since which one applies is the whole
@@ -94,7 +119,7 @@ func TestRejectedVerdictFor(t *testing.T) {
 	t.Run("rejected as first party", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewRejected, &firstParty)
 
-		got, err := h.rejectedVerdictFor(ctx, id)
+		got, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
 		require.NotNil(t, got, "a rejected row must yield a verdict")
 		assert.Equal(t, firstParty, *got)
@@ -103,7 +128,7 @@ func TestRejectedVerdictFor(t *testing.T) {
 	t.Run("rejected as not attributable", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewRejected, &notAttributable)
 
-		got, err := h.rejectedVerdictFor(ctx, id)
+		got, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		assert.Equal(t, notAttributable, *got,
@@ -113,7 +138,7 @@ func TestRejectedVerdictFor(t *testing.T) {
 	t.Run("validated row yields no verdict", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewValidated, nil)
 
-		got, err := h.rejectedVerdictFor(ctx, id)
+		got, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
 		assert.Nil(t, got, "a validated row must keep its vendor link")
 	})
@@ -121,7 +146,7 @@ func TestRejectedVerdictFor(t *testing.T) {
 	t.Run("unreviewed row yields no verdict", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewUnreviewed, nil)
 
-		got, err := h.rejectedVerdictFor(ctx, id)
+		got, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
 		assert.Nil(t, got,
 			"an unreviewed row is the default state and must not divert anything")
