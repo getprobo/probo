@@ -65,11 +65,18 @@ func searchThirdPartiesTool(pgClient *pg.Client) agent.Tool {
 			if err := pgClient.WithConn(
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
+					// Rejected rows are excluded: a human already ruled
+					// that the name does not denote an engageable entity,
+					// so offering it here would have the agent re-propose
+					// the vendor the review exists to rule out.
+					rejected := coredata.CommonThirdPartyReviewRejected
+
 					var parties coredata.CommonThirdParties
 					if err := parties.LoadAllWithLimit(
 						ctx,
 						conn,
-						coredata.NewCommonThirdPartyFilter(&p.Query),
+						coredata.NewCommonThirdPartyFilter(&p.Query).
+							WithoutReview(&rejected),
 						searchThirdPartiesSearchLimit,
 					); err != nil {
 						return err
