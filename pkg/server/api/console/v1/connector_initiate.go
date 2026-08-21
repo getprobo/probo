@@ -50,12 +50,7 @@ func handleConnectorInitiate(
 			return
 		}
 
-		protocol := connector.ProtocolOAuth2
-		if requestedProtocol := r.URL.Query().Get("protocol"); requestedProtocol != "" {
-			protocol = connector.ProtocolType(requestedProtocol)
-		}
-
-		if _, err := connectorRegistry.Lookup(provider, protocol); err != nil {
+		if _, err := connectorRegistry.Lookup(provider, connector.ProtocolOAuth2); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}
@@ -101,10 +96,7 @@ func handleConnectorInitiate(
 		// into the new auth request. Cross-org/provider/protocol mismatches
 		// are caught inside Reconnect at callback time; this handler only
 		// needs the scope set.
-		var existing *coredata.Connector
-		if protocol == connector.ProtocolOAuth2 || r.URL.Query().Get("connector_id") != "" {
-			existing, err = loadExistingConnector(r, prb, scope, organizationID, provider)
-		}
+		existing, err := loadExistingConnector(r, prb, scope, organizationID, provider)
 
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -135,10 +127,9 @@ func handleConnectorInitiate(
 			opts.ConnectorID = existing.ID.String()
 		}
 
-		redirectURL, err := connectorRegistry.InitiateForProtocol(
+		redirectURL, err := connectorRegistry.Initiate(
 			r.Context(),
 			provider,
-			protocol,
 			organizationID,
 			opts,
 			r,

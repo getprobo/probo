@@ -39,6 +39,27 @@ type CompletionState struct {
 	ProviderMetadata map[string]string
 }
 
+// CompleteFromState routes a connector callback by inspecting the signed
+// state token. GitHub App authorize (and leftover install) callbacks
+// historically (and often still) land on CallbackPath rather than
+// GitHubAppCallbackPath, because the callback URL is configured on the
+// GitHub App itself. Sniffing the token type keeps both URLs working.
+func (r *ConnectorRegistry) CompleteFromState(
+	ctx context.Context,
+	req *http.Request,
+) (*CompletionState, error) {
+	stateToken := req.URL.Query().Get("state")
+	if stateToken == "" {
+		return nil, fmt.Errorf("missing state parameter")
+	}
+
+	if IsGitHubAppState(stateToken) {
+		return r.completeGitHubAppFromState(ctx, req)
+	}
+
+	return r.completeOAuth2FromState(ctx, req, stateToken)
+}
+
 func (r *ConnectorRegistry) CompleteOAuth2FromRequest(
 	ctx context.Context,
 	req *http.Request,

@@ -31,6 +31,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -119,6 +120,12 @@ var (
 	_ ConnectionConfigurer         = (*GitHubAppConnector)(nil)
 	_ Connection                   = (*GitHubAppConnection)(nil)
 	_ RuntimeConfigurationRequired = (*GitHubAppConnection)(nil)
+
+	// ErrGitHubAppInstallationRequired is returned when the user authorized
+	// the GitHub App but it is not installed on any organization they can
+	// access. The callback handler should send them to InstallationURL so
+	// GitHub's install flow can create one.
+	ErrGitHubAppInstallationRequired = errors.New("github app is not installed on an organization")
 )
 
 func (c *GitHubAppConnector) ConfigureConnection(conn Connection) error {
@@ -160,6 +167,38 @@ func (c *GitHubAppConnector) Initiate(
 		return "", fmt.Errorf("cannot create github app state token: %w", err)
 	}
 
+	// Authorize first, not /apps/{slug}/installations/new. GitHub only
+	// redirects to the setup URL after a new install; if the app is already
+	// installed it sends the user to the configure page and never comes
+	// back, so we never create a connector. The OAuth authorize URL always
+	// returns with a code. Complete then binds an existing org installation
+	// or sends the user to InstallationURL when none exists.
+	return c.authorizeURL(state)
+}
+
+func (c *GitHubAppConnector) authorizeURL(state string) (string, error) {
+	installBase, err := url.Parse(c.InstallBase)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse github app install base URL: %w", err)
+	}
+
+	u := &url.URL{
+		Scheme: installBase.Scheme,
+		Host:   installBase.Host,
+		Path:   "/login/oauth/authorize",
+	}
+	q := u.Query()
+	q.Set("client_id", c.ClientID)
+	q.Set("state", state)
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
+}
+
+// InstallationURL is the GitHub App install page for a previously issued
+// state token. Used when authorize succeeds but the user has no organization
+// installation to bind.
+func (c *GitHubAppConnector) InstallationURL(state string) (string, error) {
 	installURL, err := url.JoinPath(
 		c.InstallBase,
 		url.PathEscape(c.Slug),
@@ -217,13 +256,8 @@ func (c *GitHubAppConnector) CompleteWithState(
 	}
 
 	setupAction := r.URL.Query().Get("setup_action")
-	if setupAction != "install" && setupAction != "update" {
+	if setupAction != "" && setupAction != "install" && setupAction != "update" {
 		return nil, nil, fmt.Errorf("cannot complete github app installation: invalid setup action")
-	}
-
-	installationID, err := strconv.ParseInt(r.URL.Query().Get("installation_id"), 10, 64)
-	if err != nil || installationID <= 0 {
-		return nil, nil, fmt.Errorf("cannot complete github app installation: invalid installation ID")
 	}
 
 	code := r.URL.Query().Get("code")
@@ -236,16 +270,51 @@ func (c *GitHubAppConnector) CompleteWithState(
 		return nil, nil, fmt.Errorf("cannot complete github app installation: missing API base URL")
 	}
 
-	connection := &GitHubAppConnection{
+	userToken, err := c.exchangeUserCode(ctx, code)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot exchange github app user code: %w", err)
+	}
+
+	installationID, organization, err := c.resolveAuthorizedInstallation(
+		ctx,
+		userToken,
+		r.URL.Query().Get("installation_id"),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	payload.Data.Organization = organization
+
+	return &GitHubAppConnection{
 		InstallationID: installationID,
 		APIBase:        apiBase,
 		AppID:          c.AppID,
 		PrivateKey:     c.PrivateKey,
+	}, &payload.Data, nil
+}
+
+func (c *GitHubAppConnector) resolveAuthorizedInstallation(
+	ctx context.Context,
+	userToken string,
+	rawInstallationID string,
+) (int64, string, error) {
+	if rawInstallationID == "" {
+		organization, installationID, err := c.fetchSoleAuthorizedOrganizationInstallation(ctx, userToken)
+		if err != nil {
+			if errors.Is(err, ErrGitHubAppInstallationRequired) {
+				return 0, "", fmt.Errorf("cannot complete github app installation: %w", err)
+			}
+
+			return 0, "", fmt.Errorf("cannot authorize github app installation: %w", err)
+		}
+
+		return installationID, organization, nil
 	}
 
-	userToken, err := c.exchangeUserCode(ctx, code)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot exchange github app user code: %w", err)
+	installationID, err := strconv.ParseInt(rawInstallationID, 10, 64)
+	if err != nil || installationID <= 0 {
+		return 0, "", fmt.Errorf("cannot complete github app installation: invalid installation ID")
 	}
 
 	organization, err := c.fetchAuthorizedInstallationOrganization(
@@ -254,12 +323,10 @@ func (c *GitHubAppConnector) CompleteWithState(
 		installationID,
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot authorize github app installation: %w", err)
+		return 0, "", fmt.Errorf("cannot authorize github app installation: %w", err)
 	}
 
-	payload.Data.Organization = organization
-
-	return connection, &payload.Data, nil
+	return installationID, organization, nil
 }
 
 func (c *GitHubAppConnector) exchangeUserCode(
@@ -328,9 +395,69 @@ func (c *GitHubAppConnector) fetchAuthorizedInstallationOrganization(
 	userToken string,
 	installationID int64,
 ) (string, error) {
+	installations, err := c.listUserInstallations(ctx, userToken)
+	if err != nil {
+		return "", fmt.Errorf("cannot list user installations: %w", err)
+	}
+
+	for _, installation := range installations {
+		if installation.ID != installationID {
+			continue
+		}
+
+		if installation.Account.Login == "" {
+			return "", fmt.Errorf("installation response has no account login")
+		}
+
+		if installation.TargetType != "Organization" {
+			return "", fmt.Errorf("github app must be installed on an organization")
+		}
+
+		return installation.Account.Login, nil
+	}
+
+	return "", fmt.Errorf("installation is not accessible to the authorized user")
+}
+
+func (c *GitHubAppConnector) fetchSoleAuthorizedOrganizationInstallation(
+	ctx context.Context,
+	userToken string,
+) (string, int64, error) {
+	installations, err := c.listUserInstallations(ctx, userToken)
+	if err != nil {
+		return "", 0, fmt.Errorf("cannot list user installations: %w", err)
+	}
+
+	var orgInstallations []gitHubAppInstallation
+	for _, installation := range installations {
+		if installation.TargetType == "Organization" {
+			orgInstallations = append(orgInstallations, installation)
+		}
+	}
+
+	if len(orgInstallations) == 0 {
+		return "", 0, ErrGitHubAppInstallationRequired
+	}
+
+	if len(orgInstallations) > 1 {
+		return "", 0, fmt.Errorf("multiple organization installations")
+	}
+
+	installation := orgInstallations[0]
+	if installation.Account.Login == "" {
+		return "", 0, fmt.Errorf("installation response has no account login")
+	}
+
+	return installation.Account.Login, installation.ID, nil
+}
+
+func (c *GitHubAppConnector) listUserInstallations(
+	ctx context.Context,
+	userToken string,
+) ([]gitHubAppInstallation, error) {
 	endpoint, err := url.JoinPath(c.APIBase, "user/installations")
 	if err != nil {
-		return "", fmt.Errorf("cannot build installation URL: %w", err)
+		return nil, fmt.Errorf("cannot build installation URL: %w", err)
 	}
 
 	httpClient := c.HTTPClient
@@ -340,10 +467,12 @@ func (c *GitHubAppConnector) fetchAuthorizedInstallationOrganization(
 		}
 	}
 
+	var all []gitHubAppInstallation
+
 	for page := 1; ; page++ {
 		parsedEndpoint, err := url.Parse(endpoint)
 		if err != nil {
-			return "", fmt.Errorf("cannot parse installation URL: %w", err)
+			return nil, fmt.Errorf("cannot parse installation URL: %w", err)
 		}
 
 		query := parsedEndpoint.Query()
@@ -353,7 +482,7 @@ func (c *GitHubAppConnector) fetchAuthorizedInstallationOrganization(
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsedEndpoint.String(), nil)
 		if err != nil {
-			return "", fmt.Errorf("cannot create installation request: %w", err)
+			return nil, fmt.Errorf("cannot create installation request: %w", err)
 		}
 
 		req.Header.Set("Accept", "application/vnd.github+json")
@@ -362,7 +491,7 @@ func (c *GitHubAppConnector) fetchAuthorizedInstallationOrganization(
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
-			return "", fmt.Errorf("cannot execute installation request: %w", err)
+			return nil, fmt.Errorf("cannot execute installation request: %w", err)
 		}
 
 		var installations gitHubAppInstallations
@@ -371,31 +500,17 @@ func (c *GitHubAppConnector) fetchAuthorizedInstallationOrganization(
 		_ = resp.Body.Close()
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			return "", fmt.Errorf("installation response status: %d", resp.StatusCode)
+			return nil, fmt.Errorf("installation response status: %d", resp.StatusCode)
 		}
 
 		if decodeErr != nil {
-			return "", fmt.Errorf("cannot decode installation response: %w", decodeErr)
+			return nil, fmt.Errorf("cannot decode installation response: %w", decodeErr)
 		}
 
-		for _, installation := range installations.Installations {
-			if installation.ID != installationID {
-				continue
-			}
-
-			if installation.Account.Login == "" {
-				return "", fmt.Errorf("installation response has no account login")
-			}
-
-			if installation.TargetType != "Organization" {
-				return "", fmt.Errorf("github app must be installed on an organization")
-			}
-
-			return installation.Account.Login, nil
-		}
+		all = append(all, installations.Installations...)
 
 		if page*100 >= installations.TotalCount {
-			return "", fmt.Errorf("installation is not accessible to the authorized user")
+			return all, nil
 		}
 	}
 }

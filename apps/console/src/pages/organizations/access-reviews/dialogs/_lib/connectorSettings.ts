@@ -171,8 +171,8 @@ export function connectOAuthProvider(
   });
 }
 
-// buildConnectorInitiateURL builds the connector-initiate URL for any
-// configured protocol (OAUTH2, install protocols, …).
+// buildConnectorInitiateURL builds the start-connect URL for a protocol.
+// OAuth2 uses /connectors/initiate; GitHub App has its own endpoint.
 export function buildConnectorInitiateURL(
   organizationId: string,
   provider: string,
@@ -184,21 +184,26 @@ export function buildConnectorInitiateURL(
   },
 ): string {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
-  const url = new URL("/api/console/v1/connectors/initiate", baseURL);
+  const path
+    = protocol === "GITHUB_APP"
+      ? "/api/console/v1/connectors/github-app/initiate"
+      : "/api/console/v1/connectors/initiate";
+  const url = new URL(path, baseURL);
   url.searchParams.append("organization_id", organizationId);
-  url.searchParams.append("provider", provider);
-  if (protocol !== "OAUTH2") {
-    url.searchParams.append("protocol", protocol);
+  if (protocol !== "GITHUB_APP") {
+    url.searchParams.append("provider", provider);
   }
   if (options?.connectorId) {
     url.searchParams.append("connector_id", options.connectorId);
   }
-  for (const scope of options?.oauth2Scopes ?? []) {
-    url.searchParams.append("scope", scope);
-  }
-  if (options?.extras) {
-    for (const [k, v] of Object.entries(options.extras)) {
-      url.searchParams.append(k, v);
+  if (protocol !== "GITHUB_APP") {
+    for (const scope of options?.oauth2Scopes ?? []) {
+      url.searchParams.append("scope", scope);
+    }
+    if (options?.extras) {
+      for (const [k, v] of Object.entries(options.extras)) {
+        url.searchParams.append(k, v);
+      }
     }
   }
   url.searchParams.append(

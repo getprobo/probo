@@ -22,6 +22,7 @@ package console_v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -54,15 +55,19 @@ func handleConnectorComplete(
 			return
 		}
 
-		completion, err := connectorRegistry.CompleteOAuth2FromRequest(r.Context(), r)
+		completion, err := connectorRegistry.CompleteFromState(r.Context(), r)
 		if err != nil {
-			logger.ErrorCtx(r.Context(), "cannot complete oauth2 connector", log.Error(err))
+			if redirectToGitHubAppInstall(w, r, logger, connectorRegistry, err) {
+				return
+			}
+
+			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
 
 			return
 		}
 
-		rawSettings, ok := oauthConnectorRawSettings(
+		rawSettings, ok := connectorRawSettings(
 			logger,
 			w,
 			r,
@@ -99,21 +104,18 @@ func handleConnectorGitHubAppComplete(
 	return func(w http.ResponseWriter, r *http.Request) {
 		completion, err := connectorRegistry.CompleteGitHubAppFromRequest(r.Context(), r)
 		if err != nil {
+			if redirectToGitHubAppInstall(w, r, logger, connectorRegistry, err) {
+				return
+			}
+
 			logger.ErrorCtx(r.Context(), "cannot complete github app connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot complete GitHub App installation"))
 
 			return
 		}
 
-		org := completion.ProviderMetadata[connector.CompletionMetadataGitHubOrganization]
-
-		rawSettings, err := json.Marshal(&coredata.GitHubConnectorSettings{
-			Organization: org,
-		})
-		if err != nil {
-			logger.ErrorCtx(r.Context(), "cannot marshal github app settings", log.Error(err))
-			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
+		rawSettings, ok := githubAppConnectorRawSettings(logger, w, r, completion)
+		if !ok {
 			return
 		}
 
@@ -130,6 +132,41 @@ func handleConnectorGitHubAppComplete(
 			rawSettings,
 		)
 	}
+}
+
+func connectorRawSettings(
+	logger *log.Logger,
+	w http.ResponseWriter,
+	r *http.Request,
+	completion *connector.CompletionState,
+	query url.Values,
+) (json.RawMessage, bool) {
+	if completion.Protocol == connector.ProtocolGitHubApp {
+		return githubAppConnectorRawSettings(logger, w, r, completion)
+	}
+
+	return oauthConnectorRawSettings(logger, w, r, completion, query)
+}
+
+func githubAppConnectorRawSettings(
+	logger *log.Logger,
+	w http.ResponseWriter,
+	r *http.Request,
+	completion *connector.CompletionState,
+) (json.RawMessage, bool) {
+	org := completion.ProviderMetadata[connector.CompletionMetadataGitHubOrganization]
+
+	raw, err := json.Marshal(&coredata.GitHubConnectorSettings{
+		Organization: org,
+	})
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "cannot marshal github app settings", log.Error(err))
+		httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+		return nil, false
+	}
+
+	return raw, true
 }
 
 func oauthConnectorRawSettings(
@@ -363,6 +400,30 @@ func finishConnectorCompletion(
 	parsedURL.RawQuery = q.Encode()
 
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
+}
+
+func redirectToGitHubAppInstall(
+	w http.ResponseWriter,
+	r *http.Request,
+	logger *log.Logger,
+	connectorRegistry *connector.ConnectorRegistry,
+	err error,
+) bool {
+	if !errors.Is(err, connector.ErrGitHubAppInstallationRequired) {
+		return false
+	}
+
+	installURL, urlErr := connectorRegistry.GitHubAppInstallationURL(r.URL.Query().Get("state"))
+	if urlErr != nil {
+		logger.ErrorCtx(r.Context(), "cannot build github app installation URL", log.Error(urlErr))
+		httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+		return true
+	}
+
+	http.Redirect(w, r, installURL, http.StatusSeeOther)
+
+	return true
 }
 
 func handleConnectorOAuth2Error(

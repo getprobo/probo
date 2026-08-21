@@ -23,6 +23,9 @@ package connector
 // CallbackPath is the HTTP path for the OAuth2 callback endpoint.
 const CallbackPath = "/api/console/v1/connectors/complete"
 
+// GitHubAppInitiatePath is the HTTP path that starts a GitHub App install.
+const GitHubAppInitiatePath = "/api/console/v1/connectors/github-app/initiate"
+
 // GitHubAppCallbackPath is the HTTP path for the GitHub App installation callback.
 const GitHubAppCallbackPath = "/api/console/v1/connectors/github-app/complete"
 

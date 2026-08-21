@@ -232,6 +232,10 @@ func ExtractProviderFromState(stateToken string) (string, error) {
 		return "", fmt.Errorf("cannot decode state token: %w", err)
 	}
 
+	if payload.Type != OAuth2TokenType {
+		return "", fmt.Errorf("cannot extract provider from state token: unexpected token type")
+	}
+
 	if payload.Data.Provider == "" {
 		return "", fmt.Errorf("cannot extract provider from state token: missing provider field")
 	}
@@ -264,6 +268,20 @@ func (r *ConnectorRegistry) CompleteWithState(ctx context.Context, provider stri
 	return oauth2Connector.CompleteWithState(ctx, req)
 }
 
+func (r *ConnectorRegistry) InitiateGitHubApp(
+	ctx context.Context,
+	organizationID gid.GID,
+	opts InitiateOptions,
+	req *http.Request,
+) (string, error) {
+	c, err := r.GetProtocol(GitHubProvider, ProtocolGitHubApp)
+	if err != nil {
+		return "", fmt.Errorf("cannot initiate github app connector: %w", err)
+	}
+
+	return c.Initiate(ctx, GitHubProvider, organizationID, opts, req)
+}
+
 func (r *ConnectorRegistry) CompleteGitHubApp(
 	ctx context.Context,
 	req *http.Request,
@@ -279,6 +297,23 @@ func (r *ConnectorRegistry) CompleteGitHubApp(
 	}
 
 	return gitHubAppConnector.CompleteWithState(ctx, req)
+}
+
+// GitHubAppInstallationURL builds the GitHub App install page for a state
+// token issued by Initiate. Callers use this when authorize succeeded but
+// the user has no organization installation to bind.
+func (r *ConnectorRegistry) GitHubAppInstallationURL(stateToken string) (string, error) {
+	c, err := r.GetProtocol(GitHubProvider, ProtocolGitHubApp)
+	if err != nil {
+		return "", fmt.Errorf("cannot build github app installation URL: %w", err)
+	}
+
+	gitHubAppConnector, ok := c.(*GitHubAppConnector)
+	if !ok {
+		return "", fmt.Errorf("cannot build github app installation URL: invalid connector type")
+	}
+
+	return gitHubAppConnector.InstallationURL(stateToken)
 }
 
 // GetOAuth2RefreshConfig returns the OAuth2 refresh configuration for a provider.

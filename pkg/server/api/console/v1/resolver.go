@@ -182,6 +182,11 @@ func NewMux(
 		)
 
 		r.Get(
+			"/connectors/github-app/initiate",
+			handleConnectorGitHubAppInitiate(logger, proboSvc, iamSvc, connectorRegistry),
+		)
+
+		r.Get(
 			"/connectors/complete",
 			handleConnectorComplete(
 				logger,
