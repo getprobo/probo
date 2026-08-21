@@ -18,14 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  getCertificateProvisioningErrorMessage,
-  getCustomDomainStatusBadgeLabel,
-} from "@probo/helpers";
+import { TrashIcon } from "@phosphor-icons/react";
+import { getCertificateProvisioningErrorMessage } from "@probo/helpers";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
-import { Button } from "@probo/ui/src/v2/Button/Button";
-import { ListItem } from "@probo/ui/src/v2/List/ListItem";
-import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -33,10 +30,15 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePortalDomainCardFragment$key } from "#/__generated__/core/CompliancePortalDomainCardFragment.graphql";
 
-import { customDomainBadgeColor } from "../_lib/customDomainBadgeColor";
-import { domainCard } from "../variants";
+import {
+  customDomainCardTone,
+  CustomDomainStatusIcon,
+  showsCustomDomainDns,
+} from "../_lib/customDomainCardTone";
+import { domainCardCallout } from "../_lib/domainCardCallout";
+import { domainCard, hostingCard } from "../variants";
 
-import { CompliancePortalDomainDialog } from "./CompliancePortalDomainDialog";
+import { CompliancePortalDomainDnsRecordListItem } from "./CompliancePortalDomainDnsRecordListItem";
 import { DeleteCompliancePortalDomainDialog } from "./DeleteCompliancePortalDomainDialog";
 
 const fragment = graphql`
@@ -45,10 +47,15 @@ const fragment = graphql`
     managed
     certificate {
       status
+      expiresAt
       provisioningError
     }
+    dnsRecords {
+      type
+      name
+      ...CompliancePortalDomainDnsRecordListItem_dnsRecord
+    }
     canDelete: permission(action: "compliance-portal:custom-domain:delete")
-    ...CompliancePortalDomainDialogFragment
     ...DeleteCompliancePortalDomainDialog_customDomain
   }
 `;
@@ -58,52 +65,94 @@ interface CompliancePortalDomainCardProps {
 }
 
 export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortalDomainCardProps) {
-  const { t } = useTranslation("organizations/compliance-portals");
-  const { identity, actions } = domainCard();
-
-  const domain = useFragment<CompliancePortalDomainCardFragment$key>(fragment, customDomainKey);
+  const { t, i18n } = useTranslation("organizations/compliance-portals");
+  const domain = useFragment(fragment, customDomainKey);
   const sslStatus = domain.certificate?.status ?? "PENDING";
   const provisioningErrorMessage = getCertificateProvisioningErrorMessage(
     domain.certificate?.provisioningError,
     t,
   );
+  const showDns = showsCustomDomainDns(domain.managed) && domain.dnsRecords.length > 0;
+  const tone = customDomainCardTone(sslStatus);
+  const { frame, header, wash, fade, icon: iconSlot, control: controlSlot, body } = hostingCard({
+    tone,
+    wide: showDns,
+  });
+  const { copy, identity, lead, subtitle, dns } = domainCard();
+  const expiresLabel = domain.certificate?.expiresAt
+    ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(
+        new Date(domain.certificate.expiresAt),
+      )
+    : null;
+  const callout = domainCardCallout(
+    sslStatus,
+    provisioningErrorMessage,
+    expiresLabel,
+    t,
+  );
 
   return (
-    <ListItem>
-      <ListItemContent>
-        <div className={identity()}>
-          <Text size={2} weight="medium" highContrast>{domain.domain}</Text>
-          {domain.managed && (
-            <Badge variant="soft" color="neutral">{t("domainCard.managed")}</Badge>
-          )}
-          <Badge variant="soft" color={customDomainBadgeColor(sslStatus)}>
-            {getCustomDomainStatusBadgeLabel(sslStatus, t)}
-          </Badge>
+    <Card variant="ghost" size={3} padding="none" className={frame()}>
+      <div className={header()}>
+        <div className={wash()} />
+        <div className={fade()} />
+        <div className={lead()}>
+          <div className={iconSlot()}>
+            <CustomDomainStatusIcon status={sslStatus} />
+          </div>
+          <Text size={2} weight="medium" color={tone} className={subtitle()}>
+            {callout.title}
+          </Text>
         </div>
-        <Text size={1} color="neutral">
-          {sslStatus === "ACTIVE"
-            ? t("domainCard.status.active")
-            : provisioningErrorMessage
-              ? provisioningErrorMessage
-              : t("domainCard.status.pending")}
-        </Text>
-      </ListItemContent>
-
-      <div className={actions()}>
-        <CompliancePortalDomainDialog customDomainKey={domain}>
-          <Button variant="soft" color="neutral">
-            {t("domainCard.actions.viewDetails")}
-          </Button>
-        </CompliancePortalDomainDialog>
-
         {domain.canDelete && (
-          <DeleteCompliancePortalDomainDialog customDomainKey={domain}>
-            <Button variant="solid" color="red">
-              {t("domainCard.actions.delete")}
-            </Button>
-          </DeleteCompliancePortalDomainDialog>
+          <div className={controlSlot()}>
+            <DeleteCompliancePortalDomainDialog customDomainKey={domain}>
+              <IconButton
+                variant="soft"
+                color="red"
+                aria-label={t("domainCard.actions.delete")}
+              >
+                <TrashIcon />
+              </IconButton>
+            </DeleteCompliancePortalDomainDialog>
+          </div>
         )}
       </div>
-    </ListItem>
+      <div className={body()}>
+        <div className={copy()}>
+          <div className={identity()}>
+            <Text size={4} weight="medium" highContrast>
+              {domain.domain}
+            </Text>
+            {domain.managed && (
+              <Badge variant="soft" color="neutral">{t("domainCard.managed")}</Badge>
+            )}
+          </div>
+          <Text size={2} color="neutral">
+            {callout.description}
+          </Text>
+          {callout.detail != null && (
+            <Text size={1} color="neutral">
+              {callout.detail}
+            </Text>
+          )}
+        </div>
+        {showDns && (
+          <div className={dns()}>
+            {callout.dns != null && (
+              <Text size={2} color="faint">
+                {callout.dns}
+              </Text>
+            )}
+            {domain.dnsRecords.map(dnsRecord => (
+              <CompliancePortalDomainDnsRecordListItem
+                key={`${dnsRecord.type}:${dnsRecord.name}`}
+                dnsRecordKey={dnsRecord}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }

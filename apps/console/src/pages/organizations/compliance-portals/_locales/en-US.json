@@ -738,28 +738,55 @@
       "cancel": "Cancel"
     }
   },
-  "domainDialog": {
+  "domainCard": {
+    "managed": "Managed",
+    "active": {
+      "title": "Domain is active",
+      "description": "Your custom domain is verified and SSL certificate is active",
+      "dns": "Leave these records in place. They keep this domain pointed here."
+    },
+    "pending": {
+      "title": "Waiting on DNS",
+      "description": "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate.",
+      "dns": "Add these records at your DNS provider to complete verification."
+    },
+    "provisioning": {
+      "title": "Certificate is being issued",
+      "description": "We are provisioning an SSL certificate for this domain.",
+      "dns": "These records must stay in place for as long as this domain is in use."
+    },
+    "renewing": {
+      "title": "Certificate is renewing",
+      "description": "A new SSL certificate is being issued. The current one stays active until it completes.",
+      "dns": "These records must stay in place during renewal and after it completes."
+    },
+    "expired": {
+      "title": "Certificate has expired",
+      "description": "This domain's SSL certificate has expired and needs to be reissued.",
+      "dns": "These records must still point here so we can reissue the certificate."
+    },
+    "failed": {
+      "title": "Certificate provisioning failed",
+      "description": "We could not issue an SSL certificate for this domain.",
+      "dns": "Check that these records match your DNS provider. A mismatch is a common cause of failure."
+    },
+    "error": {
+      "title": "Provisioning error"
+    },
+    "sslExpires": "SSL expires {{date}}",
+    "dns": {
+      "name": "Name",
+      "value": "Value",
+      "ttl": "TTL: {{ttl}}",
+      "copy": "Copy"
+    },
     "messages": {
       "copied": "Copied",
       "valueCopied": "Value copied to clipboard"
     },
-    "active": {
-      "title": "Domain is active",
-      "description": "Your custom domain is verified and SSL certificate is active"
-    },
-    "provisioningError": "Provisioning error",
-    "sslExpires": "SSL expires",
-    "dns": {
-      "title": "DNS configuration",
-      "description": "Add these DNS records to your domain to complete verification",
-      "name": "Name",
-      "value": "Value",
-      "ttl": "TTL: {{ttl}}"
-    },
     "actions": {
-      "copy": "Copy"
-    },
-    "pendingDescription": "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate."
+      "delete": "Delete"
+    }
   },
   "frameworkList": {
     "title": "Compliance frameworks",
@@ -799,17 +826,6 @@
         "title": "File size too large",
         "description": "Please upload a file smaller than 10MB."
       }
-    }
-  },
-  "domainCard": {
-    "managed": "Managed",
-    "status": {
-      "active": "Active",
-      "pending": "Pending"
-    },
-    "actions": {
-      "viewDetails": "View Details",
-      "delete": "Delete"
     }
   },
   "subprocessorsPage": {

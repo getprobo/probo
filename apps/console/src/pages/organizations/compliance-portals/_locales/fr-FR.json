@@ -738,28 +738,55 @@
       "cancel": "Annuler"
     }
   },
-  "domainDialog": {
+  "domainCard": {
+    "managed": "Géré",
+    "active": {
+      "title": "Le domaine est actif",
+      "description": "Votre domaine personnalisé est vérifié et le certificat SSL est actif",
+      "dns": "Laissez ces enregistrements en place. Ils font pointer ce domaine ici."
+    },
+    "pending": {
+      "title": "En attente du DNS",
+      "description": "Après l’ajout des enregistrements DNS, la vérification se fera automatiquement. La propagation peut prendre quelques minutes.",
+      "dns": "Ajoutez ces enregistrements chez votre fournisseur DNS pour terminer la vérification."
+    },
+    "provisioning": {
+      "title": "Le certificat est en cours d’émission",
+      "description": "Nous provisionnons un certificat SSL pour ce domaine.",
+      "dns": "Ces enregistrements doivent rester en place tant que ce domaine est utilisé."
+    },
+    "renewing": {
+      "title": "Le certificat est en cours de renouvellement",
+      "description": "Un nouveau certificat SSL est en cours d’émission. L’actuel reste actif jusqu’à la fin du renouvellement.",
+      "dns": "Ces enregistrements doivent rester en place pendant le renouvellement et après son achèvement."
+    },
+    "expired": {
+      "title": "Le certificat a expiré",
+      "description": "Le certificat SSL de ce domaine a expiré et doit être réémis.",
+      "dns": "Ces enregistrements doivent toujours pointer ici pour que le certificat puisse être réémis."
+    },
+    "failed": {
+      "title": "Échec du provisionnement du certificat",
+      "description": "Nous n’avons pas pu émettre de certificat SSL pour ce domaine.",
+      "dns": "Vérifiez que ces enregistrements correspondent à votre fournisseur DNS. Un écart est une cause fréquente d’échec."
+    },
+    "error": {
+      "title": "Erreur de provisionnement"
+    },
+    "sslExpires": "Expiration du SSL le {{date}}",
+    "dns": {
+      "name": "Nom",
+      "value": "Valeur",
+      "ttl": "TTL : {{ttl}}",
+      "copy": "Copier"
+    },
     "messages": {
       "copied": "Copié",
       "valueCopied": "Valeur copiée dans le presse-papiers"
     },
-    "active": {
-      "title": "Le domaine est actif",
-      "description": "Votre domaine personnalisé est vérifié et le certificat SSL est actif"
-    },
-    "provisioningError": "Erreur de provisionnement",
-    "sslExpires": "Expiration du SSL",
-    "dns": {
-      "title": "Configuration DNS",
-      "description": "Ajoutez ces enregistrements DNS à votre domaine pour terminer la vérification",
-      "name": "Nom",
-      "value": "Valeur",
-      "ttl": "TTL : {{ttl}}"
-    },
     "actions": {
-      "copy": "Copier"
-    },
-    "pendingDescription": "Après l’ajout des enregistrements DNS, la vérification se fera automatiquement. La propagation peut prendre quelques minutes."
+      "delete": "Supprimer"
+    }
   },
   "frameworkList": {
     "title": "Référentiels de conformité",
@@ -799,17 +826,6 @@
         "title": "Fichier trop volumineux",
         "description": "Veuillez téléverser un fichier de moins de 10 Mo."
       }
-    }
-  },
-  "domainCard": {
-    "managed": "Géré",
-    "status": {
-      "active": "Actif",
-      "pending": "En attente"
-    },
-    "actions": {
-      "viewDetails": "Voir les détails",
-      "delete": "Supprimer"
     }
   },
   "subprocessorsPage": {

@@ -321,14 +321,55 @@
     "errors": { "delete": "Verwijderen van domein mislukt" },
     "actions": { "deleting": "Bezig met verwijderen...", "delete": "Domein verwijderen", "cancel": "Annuleren" }
   },
-  "domainDialog": {
-    "messages": { "copied": "Gekopieerd", "valueCopied": "Waarde gekopieerd naar klembord" },
-    "active": { "title": "Domein is actief", "description": "Uw aangepaste domein is geverifieerd en het SSL-certificaat is actief" },
-    "provisioningError": "Fout bij provisioning",
-    "sslExpires": "SSL verloopt op",
-    "dns": { "title": "DNS-configuratie", "description": "Voeg deze DNS-records toe aan uw domein om de verificatie te voltooien", "name": "Naam", "value": "Waarde", "ttl": "TTL: {{ttl}}" },
-    "actions": { "copy": "Kopiëren" },
-    "pendingDescription": "Na het toevoegen van de DNS-records vindt de verificatie automatisch plaats. Dit kan enkele minuten duren om door te dringen."
+  "domainCard": {
+    "managed": "Beheerd",
+    "active": {
+      "title": "Domein is actief",
+      "description": "Uw aangepaste domein is geverifieerd en het SSL-certificaat is actief",
+      "dns": "Laat deze records staan. Ze houden dit domein hierheen gericht."
+    },
+    "pending": {
+      "title": "Wachten op DNS",
+      "description": "Na het toevoegen van de DNS-records vindt de verificatie automatisch plaats. Dit kan enkele minuten duren om door te dringen.",
+      "dns": "Voeg deze records toe bij uw DNS-provider om de verificatie te voltooien."
+    },
+    "provisioning": {
+      "title": "Certificaat wordt uitgegeven",
+      "description": "We voorzien dit domein van een SSL-certificaat.",
+      "dns": "Deze records moeten blijven staan zolang dit domein in gebruik is."
+    },
+    "renewing": {
+      "title": "Certificaat wordt vernieuwd",
+      "description": "Er wordt een nieuw SSL-certificaat uitgegeven. Het huidige blijft actief tot de vernieuwing is voltooid.",
+      "dns": "Deze records moeten blijven staan tijdens de vernieuwing en daarna."
+    },
+    "expired": {
+      "title": "Certificaat is verlopen",
+      "description": "Het SSL-certificaat van dit domein is verlopen en moet opnieuw worden uitgegeven.",
+      "dns": "Deze records moeten nog steeds hierheen wijzen zodat het certificaat opnieuw kan worden uitgegeven."
+    },
+    "failed": {
+      "title": "Uitgifte van certificaat mislukt",
+      "description": "We konden geen SSL-certificaat voor dit domein uitgeven.",
+      "dns": "Controleer of deze records overeenkomen met uw DNS-provider. Een afwijking is een veelvoorkomende oorzaak van mislukking."
+    },
+    "error": {
+      "title": "Fout bij provisioning"
+    },
+    "sslExpires": "SSL verloopt op {{date}}",
+    "dns": {
+      "name": "Naam",
+      "value": "Waarde",
+      "ttl": "TTL: {{ttl}}",
+      "copy": "Kopiëren"
+    },
+    "messages": {
+      "copied": "Gekopieerd",
+      "valueCopied": "Waarde gekopieerd naar klembord"
+    },
+    "actions": {
+      "delete": "Verwijderen"
+    }
   },
   "frameworkList": {
     "title": "Complianceframeworks",
@@ -353,11 +394,6 @@
       "invalidFileType": { "title": "Bestandstype niet ondersteund", "description": "Upload een PDF-bestand." },
       "fileTooLarge": { "title": "Bestand te groot", "description": "Upload een bestand kleiner dan 10 MB." }
     }
-  },
-  "domainCard": {
-    "managed": "Beheerd",
-    "status": { "active": "Actief", "pending": "In afwachting" },
-    "actions": { "viewDetails": "Details bekijken", "delete": "Verwijderen" }
   },
   "subprocessorsPage": {
     "title": "Subverwerkers",

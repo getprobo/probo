@@ -20,30 +20,34 @@
 
 import { GlobeIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
-import { domainsSection } from "../variants";
+import { customDomainEmpty, hostingCard } from "../variants";
 
 import { NewCompliancePortalDomainDialog } from "./NewCompliancePortalDomainDialog";
 
 export function CompliancePortalCustomDomainEmpty() {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { empty, emptyIcon } = domainsSection();
+  const { frame, icon } = hostingCard({ tone: "sand", wide: true });
+  const { content, copy } = customDomainEmpty();
 
   return (
-    <div className={empty()}>
-      <span className={emptyIcon()}>
-        <GlobeIcon />
-      </span>
-      <Text size={2} color="faint" align="center">
-        {t("domainPage.empty.description")}
-      </Text>
-      <NewCompliancePortalDomainDialog>
-        <Button variant="solid" color="neutral" highContrast>
-          {t("brandPage.domains.actions.configure")}
-        </Button>
-      </NewCompliancePortalDomainDialog>
-    </div>
+    <Card variant="ghost" size={3} padding="none" className={frame()}>
+      <div className={content()}>
+        <div className={icon()}>
+          <GlobeIcon size={32} weight="duotone" />
+        </div>
+        <Text size={2} color="neutral" align="center" className={copy()}>
+          {t("domainPage.empty.description")}
+        </Text>
+        <NewCompliancePortalDomainDialog>
+          <Button variant="solid" color="neutral" highContrast>
+            {t("brandPage.domains.actions.configure")}
+          </Button>
+        </NewCompliancePortalDomainDialog>
+      </div>
+    </Card>
   );
 }

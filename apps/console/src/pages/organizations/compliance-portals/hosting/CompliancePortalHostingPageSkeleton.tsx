@@ -19,14 +19,13 @@
 // SOFTWARE.
 
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { hostingPageSkeleton, statusSection } from "./variants";
 
 export function CompliancePortalHostingPageSkeleton() {
-  const { root, section, intro, empty } = hostingPageSkeleton();
+  const { root, section, intro } = hostingPageSkeleton();
   const { grid } = statusSection();
 
   return (
@@ -46,9 +45,9 @@ export function CompliancePortalHostingPageSkeleton() {
           <HeadingSkeleton size={3} className="w-20" />
           <TextSkeleton size={2} className="w-96" />
         </div>
-        <ListSkeleton count={1} />
-        <div className={empty()}>
-          <TextSkeleton size={2} className="w-80" />
+        <div className={grid()}>
+          <CardSkeleton size={3} />
+          <CardSkeleton size={3} />
         </div>
       </div>
     </div>

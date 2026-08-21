@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { List } from "@probo/ui/src/v2/List/List";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -60,12 +59,14 @@ export function CompliancePortalDomainsSection({
   compliancePortalKey,
 }: CompliancePortalDomainsSectionProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { root, intro } = domainsSection();
+  const { root, intro, grid } = domainsSection();
 
   const organization = useFragment(organizationFragment, organizationKey);
   const compliancePortal = useFragment(compliancePortalFragment, compliancePortalKey);
   const defaultDomain = compliancePortal.defaultDomain;
   const customDomain = compliancePortal.customDomain;
+  const showEmpty = customDomain == null && organization.canCreateCustomDomain;
+  const hasCards = defaultDomain != null || customDomain != null || showEmpty;
 
   return (
     <section className={root()}>
@@ -78,19 +79,16 @@ export function CompliancePortalDomainsSection({
         </Text>
       </div>
 
-      {(defaultDomain != null || customDomain != null) && (
-        <List>
+      {hasCards && (
+        <div className={grid()}>
           {defaultDomain && (
             <CompliancePortalDomainCard customDomainKey={defaultDomain} />
           )}
           {customDomain && (
             <CompliancePortalDomainCard customDomainKey={customDomain} />
           )}
-        </List>
-      )}
-
-      {customDomain == null && organization.canCreateCustomDomain && (
-        <CompliancePortalCustomDomainEmpty />
+          {showEmpty && <CompliancePortalCustomDomainEmpty />}
+        </div>
       )}
     </section>
   );

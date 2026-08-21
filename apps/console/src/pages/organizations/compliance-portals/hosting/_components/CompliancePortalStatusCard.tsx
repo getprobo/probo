@@ -26,7 +26,7 @@ import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 
-import { statusCard } from "../variants";
+import { hostingCard } from "../variants";
 
 interface CompliancePortalStatusCardProps {
   title: string;
@@ -47,8 +47,8 @@ export function CompliancePortalStatusCard({
   disabledHint,
   onCheckedChange,
 }: CompliancePortalStatusCardProps) {
-  const { frame, header, wash, fade, icon: iconSlot, control, body } = statusCard({
-    active: checked,
+  const { frame, header, wash, fade, icon: iconSlot, control, body } = hostingCard({
+    tone: checked ? "green" : "sand",
   });
 
   const toggle = (
