@@ -19,8 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
+import { supportsRichEditorCollaboration } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useOutletContext } from "react-router";
@@ -31,7 +32,18 @@ import type { DocumentDescriptionPage_updateContentMutation } from "#/__generate
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
+import {
+  connectRepoDocument,
+  type RepoCollaborationHandle,
+} from "./_lib/connectRepoDocument";
+
 const autoSaveIntervalMs = 1000;
+
+type CollaborationState = {
+  versionID: string;
+  handle?: RepoCollaborationHandle;
+  failed?: boolean;
+};
 
 export const documentDescriptionPageQuery = graphql`
   query DocumentDescriptionPageQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
@@ -168,6 +180,59 @@ export function DocumentDescriptionPage(props: {
     && document.canUpdate
     && document.status !== "ARCHIVED"
     && document.writeMode !== "GENERATED";
+  const collaborationSupported = canEdit
+    && supportsRichEditorCollaboration(currentVersion.content);
+  const [collaboration, setCollaboration] = useState<CollaborationState>();
+
+  useEffect(() => {
+    if (!collaborationSupported) return;
+
+    let cancelled = false;
+    let activeHandle: RepoCollaborationHandle | undefined;
+
+    connectRepoDocument(currentVersion.id)
+      .then((handle) => {
+        if (cancelled) {
+          handle.close();
+          return;
+        }
+
+        activeHandle = handle;
+        setCollaboration({
+          versionID: currentVersion.id,
+          handle,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        setCollaboration({
+          versionID: currentVersion.id,
+          failed: true,
+        });
+        toast.add({
+          title: t("documentDescriptionPage.errors.title"),
+          description: error instanceof Error
+            ? error.message
+            : t("documentDescriptionPage.errors.save"),
+          type: "error",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      activeHandle?.close();
+    };
+  }, [collaborationSupported, currentVersion.id, t, toast]);
+
+  const collaborationConnecting = collaborationSupported
+    && (collaboration?.versionID !== currentVersion.id
+      || (!collaboration?.handle && !collaboration?.failed));
+  const collaborationHandle = collaborationSupported
+    && collaboration?.versionID === currentVersion.id
+    && !collaboration.failed
+    ? collaboration.handle
+    : undefined;
 
   // The editor key must change on explicit actions (delete draft, edit
   // title/type) but NOT on auto-save side effects (cursor preservation).
@@ -209,7 +274,8 @@ export function DocumentDescriptionPage(props: {
       className="flex-1"
       content={currentVersion.content}
       data-theme="document"
-      disabled={!canEdit}
+      disabled={!canEdit || collaborationConnecting}
+      collaborationHandle={collaborationHandle}
       onChangeContent={handleContentChange}
       onUploadingChange={(uploading) => {
         uploadingRef.current = uploading;

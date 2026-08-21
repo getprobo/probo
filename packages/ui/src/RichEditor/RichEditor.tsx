@@ -34,16 +34,24 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { type ComponentProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
 import useToast from "../v2/Toaster/useToast";
 
 import { fileAccept, imageAccept } from "./attachments";
+import { AutomergeTableStructureExtension } from "./AutomergeTableStructureExtension";
+import { AutomergeUnknownBlockExtension } from "./AutomergeUnknownBlockExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
+import {
+  createRichEditorAutomergeDocument as createAutomergeDocument,
+  createRichEditorCollaborationExtension,
+  richEditorAutomergeContent,
+  supportsRichEditorCollaboration as supportsCollaboration,
+} from "./collaboration";
 import { ContentUploadExtension } from "./ContentUploadExtension";
 import { FileExtension } from "./FileExtension";
 import { ImageExtension } from "./ImageExtension";
@@ -51,6 +59,10 @@ import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
+import {
+  createRichEditorPresenceExtension,
+  type RichEditorCollaborationHandle,
+} from "./presence";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
@@ -61,6 +73,10 @@ import {
   type UploadAttachment,
   uploadAttachments,
 } from "./uploadAttachments";
+
+const tableExtension = TableKit.configure({
+  table: { resizable: true },
+});
 
 const extensions = [
   Document,
@@ -87,14 +103,18 @@ const extensions = [
     width: 2,
   }),
   UndoRedo,
-  TableKit.configure({
-    table: { resizable: true },
-  }),
+  tableExtension,
+  AutomergeUnknownBlockExtension,
   MarkdownPasteExtension,
   PlaceholderExtension,
   ImageExtension,
   FileExtension,
   ContentUploadExtension,
+];
+
+export const richEditorCollaborationExtensions = [
+  ...extensions,
+  AutomergeTableStructureExtension,
 ];
 
 const richEditorVariants = tv({
@@ -147,6 +167,7 @@ type RichEditorProps = ComponentProps<"div"> & {
   onChangeContent?: (content: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
   onUploadFile?: UploadAttachment;
+  collaborationHandle?: RichEditorCollaborationHandle;
 };
 
 function parseContent(content: string): Content {
@@ -170,6 +191,7 @@ export function RichEditor(props: RichEditorProps) {
     onChangeContent,
     onUploadingChange,
     onUploadFile,
+    collaborationHandle,
     ...divProps
   } = props;
   const { t } = useTranslation();
@@ -233,6 +255,10 @@ export function RichEditor(props: RichEditorProps) {
         onUploadingChangeRef.current?.(uploading);
       }
 
+      if (collaborationHandle) {
+        return;
+      }
+
       const json = withoutContentUploads(raw);
       stripNonTextMarks(json);
 
@@ -244,8 +270,28 @@ export function RichEditor(props: RichEditorProps) {
       emittedRef.current = next;
       onChangeContentRef.current?.(next);
     },
-    [],
+    [collaborationHandle],
   );
+
+  const editorExtensions = useMemo(
+    () => collaborationHandle
+      ? [
+          ...richEditorCollaborationExtensions,
+          createRichEditorCollaborationExtension(
+            collaborationHandle,
+            richEditorCollaborationExtensions,
+          ),
+          createRichEditorPresenceExtension(collaborationHandle),
+        ]
+      : extensions,
+    [collaborationHandle],
+  );
+  const initialContent = collaborationHandle
+    ? richEditorAutomergeContent(
+        collaborationHandle,
+        richEditorCollaborationExtensions,
+      )
+    : parseContent(content);
 
   const editor = useEditor({
     editorProps: {
@@ -297,15 +343,21 @@ export function RichEditor(props: RichEditorProps) {
       },
     },
     editable: !disabled,
-    extensions,
-    content: parseContent(content),
+    extensions: editorExtensions,
+    content: initialContent,
     onCreate: ({ editor: created }) => {
       const json = withoutContentUploads(created.getJSON());
       stripNonTextMarks(json);
       emittedRef.current = JSON.stringify(json);
     },
     onUpdate: handleUpdate,
-  });
+    onSelectionUpdate: ({ editor }) => {
+      collaborationHandle?.updatePresence?.(
+        editor.state.selection.anchor,
+        editor.state.selection.head,
+      );
+    },
+  }, [collaborationHandle]);
 
   const openFilePicker = useCallback((kind: "image" | "file") => {
     const input = fileInputRef.current;
@@ -394,4 +446,14 @@ function describeUploadError(
     case "failed":
       return t("ui.richEditor.couldNotUpload", { fileName: error.fileName });
   }
+}
+
+export function createRichEditorAutomergeDocument(
+  content: string,
+) {
+  return createAutomergeDocument(content, richEditorCollaborationExtensions);
+}
+
+export function supportsRichEditorCollaboration(content: string): boolean {
+  return supportsCollaboration(content);
 }
