@@ -1,0 +1,31 @@
+---
+# Hand-authored K7 fixture matching Attio's published v2 workspace-member schema.
+# Synthetic resource IDs and identities only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.attio.com
+        form: {}
+        headers:
+            Accept:
+                - application/json
+        url: https://api.attio.com/v2/workspace_members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":{"workspace_id":"11111111-1111-4111-8111-111111111111","workspace_member_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"},"first_name":"Ada","last_name":"Lovelace","avatar_url":null,"email_address":"ada@example.com","created_at":"2022-11-21T13:22:49.061281Z","access_level":"admin"},{"id":{"workspace_id":"11111111-1111-4111-8111-111111111111","workspace_member_id":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"},"first_name":"Grace","last_name":"Hopper","avatar_url":null,"email_address":"grace@example.com","created_at":"2023-01-02T03:04:05Z","access_level":"member"},{"id":{"workspace_id":"11111111-1111-4111-8111-111111111111","workspace_member_id":"cccccccc-cccc-4ccc-8ccc-cccccccccccc"},"first_name":"Suspended","last_name":"User","avatar_url":null,"email_address":"suspended@example.com","created_at":"2024-02-03T04:05:06Z","access_level":"suspended"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 50ms

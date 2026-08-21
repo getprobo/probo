@@ -102,6 +102,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
+	assert.True(t, providerNames["ATTIO"], "expected ATTIO provider to be present")
 
 	// 1Password is the only provider offering both connect paths, and each path
 	// needs different settings: the SCIM-bridge driver behind the API key, the

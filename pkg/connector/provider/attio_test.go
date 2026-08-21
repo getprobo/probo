@@ -18,36 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Meta, StoryObj } from "@storybook/react";
+package provider_test
 
-import { ThirdPartyLogo } from "./ThirdPartyLogo";
+import (
+	"testing"
 
-const meta = {
-  title: "Atoms/ThirdParties/ThirdPartyLogo",
-  component: ThirdPartyLogo,
-  args: {
-    height: 48,
-    width: 48,
-  },
-} satisfies Meta<typeof ThirdPartyLogo>;
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
+)
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+func TestAttioRegistration(t *testing.T) {
+	t.Parallel()
 
-export const Attio: Story = {
-  args: {
-    thirdParty: "ATTIO",
-  },
-};
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderAttio)
+	require.True(t, ok)
 
-export const CalCom: Story = {
-  args: {
-    thirdParty: "CAL_COM",
-  },
-};
+	assert.True(t, reg.SupportsAPIKey)
+	assert.Equal(t, []string{"user_management:read"}, reg.OAuth2Scopes)
+	assert.Equal(t, "https://api.attio.com/v2/workspace_members", reg.Endpoints.Probe)
+	assert.NotNil(t, reg.NewDriver)
+	assert.NotNil(t, reg.NewNameResolver)
 
-export const Calendly: Story = {
-  args: {
-    thirdParty: "CALENDLY",
-  },
-};
+	oauthConnector := &connector.OAuth2Connector{}
+	require.NoError(t, r.ApplyOAuth2Defaults(
+		string(coredata.ConnectorProviderAttio),
+		"https://example.com/callback",
+		oauthConnector,
+	))
+
+	assert.Equal(t, "https://app.attio.com/authorize", oauthConnector.AuthURL)
+	assert.Equal(t, "https://app.attio.com/oauth/token", oauthConnector.TokenURL)
+	assert.Equal(t, []string{"user_management:read"}, oauthConnector.RegisteredScopes)
+}

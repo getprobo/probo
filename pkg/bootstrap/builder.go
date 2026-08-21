@@ -556,6 +556,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"SQUARE",
 		"CAL_COM",
 		"CALENDLY",
+		"ATTIO",
 	} {
 		clientID := b.resolver.getEnv("PROBOD_CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -745,6 +746,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_SQUARE", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_CAL_COM", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_CALENDLY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_ATTIO", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 	}
 
