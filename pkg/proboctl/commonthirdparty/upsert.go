@@ -149,10 +149,12 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 						ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 						Slug:           partySlug,
 						Certifications: []string{},
-						// A hand-created row still needs a review: the
-						// operator asserted a name and category, not that
-						// the entity is engageable. Use `review` for that.
-						Review:    coredata.CommonThirdPartyReviewUnreviewed,
+						// Left nil: a fresh row defaults to UNREVIEWED, and
+						// on the conflict path a concurrent create's verdict
+						// must survive. A hand-created row still needs a
+						// review either way — the operator asserted a name
+						// and category, not that the entity is engageable.
+						Review:    nil,
 						CreatedAt: now,
 					}
 				default:

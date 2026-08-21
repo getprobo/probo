@@ -331,9 +331,11 @@ func resolveThirdParty(
 		Slug:           platformSlug,
 		Category:       mapOCDCategory(p.Category),
 		Certifications: []string{},
-		// Auto-created from a pattern's vendor name, so nobody has judged
-		// whether that name denotes an entity an organization can engage.
-		Review:    coredata.CommonThirdPartyReviewUnreviewed,
+		// Left nil rather than UNREVIEWED: this path is reached only after
+		// LoadBySlug found nothing, so on a fresh insert the column defaults
+		// to UNREVIEWED anyway, and if a concurrent writer created the slug
+		// first there is a verdict here that this caller must not erase.
+		Review:    nil,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

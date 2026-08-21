@@ -69,7 +69,6 @@ func seedPromotionFixture(t *testing.T, ctx context.Context, client *pg.Client) 
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		WebsiteURL:     new("https://google.com"),
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -587,7 +586,6 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 		Slug:           "facebook-" + otherSuffix,
 		Category:       coredata.ThirdPartyCategoryMarketing,
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -1856,7 +1854,6 @@ func TestProcess_LowConfidenceCatalogVendorNotAdopted(t *testing.T) {
 		Slug:           "acme-lowconf-" + suffix,
 		Category:       coredata.ThirdPartyCategoryAnalytics,
 		Certifications: []string{},
-		Review:         coredata.CommonThirdPartyReviewUnreviewed,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
