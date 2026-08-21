@@ -60,16 +60,16 @@ export function showsCustomDomainDns(managed: boolean): boolean {
 export function CustomDomainStatusIcon({ status }: { status: CustomDomainSslStatus }): ReactNode {
   switch (status) {
     case "ACTIVE":
-      return <CheckCircleIcon size={32} weight="duotone" />;
+      return <CheckCircleIcon size={24} weight="duotone" />;
     case "RENEWING":
-      return <ArrowsClockwiseIcon size={32} weight="duotone" />;
+      return <ArrowsClockwiseIcon size={24} weight="duotone" />;
     case "PROVISIONING":
-      return <SpinnerGapIcon size={32} weight="duotone" />;
+      return <SpinnerGapIcon size={24} weight="duotone" />;
     case "PENDING":
-      return <HourglassIcon size={32} weight="duotone" />;
+      return <HourglassIcon size={24} weight="duotone" />;
     case "FAILED":
-      return <WarningCircleIcon size={32} weight="duotone" />;
+      return <WarningCircleIcon size={24} weight="duotone" />;
     case "EXPIRED":
-      return <ClockCountdownIcon size={32} weight="duotone" />;
+      return <ClockCountdownIcon size={24} weight="duotone" />;
   }
 }

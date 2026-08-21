@@ -106,7 +106,7 @@ export function CompliancePortalCustomDomainForm() {
   }
 
   return (
-    <Card variant="ghost" size={3} padding="none" className={frame()}>
+    <Card variant="ghost" size={2} padding="none" className={frame()}>
       <Form
         className={form()}
         errors={errors}
@@ -117,7 +117,7 @@ export function CompliancePortalCustomDomainForm() {
           <div className={fade()} />
           <div className={lead()}>
             <div className={iconSlot()}>
-              <GlobeIcon size={32} weight="duotone" />
+              <GlobeIcon size={24} weight="duotone" />
             </div>
             <Text size={2} weight="medium" color="neutral" className={subtitle()}>
               {t("customDomainForm.title")}

@@ -87,7 +87,7 @@ export function CompliancePortalStatusSection({
     <div className={root()}>
       <div className={intro()}>
         <div className={headingRow()}>
-          <Heading level={2} size={3} weight="medium" highContrast>
+          <Heading level={2} size={4} weight="medium" highContrast>
             {t("statusSection.title")}
           </Heading>
           {isUpdating && <Spinner size={2} />}
@@ -104,7 +104,7 @@ export function CompliancePortalStatusSection({
               : "statusSection.activation.titleInactive",
           )}
           description={t("statusSection.activation.description")}
-          icon={<BroadcastIcon size={32} weight="duotone" />}
+          icon={<BroadcastIcon size={24} weight="duotone" />}
           checked={compliancePortal.active}
           disabled={!compliancePortal.canUpdate}
           onCheckedChange={handleToggleActive}
@@ -112,7 +112,7 @@ export function CompliancePortalStatusSection({
         <CompliancePortalStatusCard
           title={t("statusSection.indexing.title")}
           description={t("statusSection.indexing.description")}
-          icon={<MagnifyingGlassIcon size={32} weight="duotone" />}
+          icon={<MagnifyingGlassIcon size={24} weight="duotone" />}
           checked={compliancePortal.searchEngineIndexing === "INDEXABLE"}
           disabled={indexingDisabled}
           disabledHint={

@@ -112,7 +112,7 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
     <div className={root()}>
       <div className={header()}>
         <div className={titleRow()}>
-          <Heading level={1} size={7} weight="medium" highContrast>
+          <Heading level={1} size={6} weight="medium" highContrast>
             {compliancePortal.entityName}
           </Heading>
           {publicLink?.href != null && (

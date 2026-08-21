@@ -21,12 +21,12 @@
 import { tv } from "tailwind-variants/lite";
 
 export const hostingPage = tv({
-  base: "flex flex-col gap-8",
+  base: "flex flex-col gap-6",
 });
 
 export const hostingPageSkeleton = tv({
   slots: {
-    root: "flex flex-col gap-8",
+    root: "flex flex-col gap-6",
     section: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
   },
@@ -37,7 +37,7 @@ export const statusSection = tv({
     root: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
     headingRow: "flex items-center justify-between",
-    grid: "grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1",
+    grid: "grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1",
   },
 });
 
@@ -45,13 +45,13 @@ export const hostingCard = tv({
   slots: {
     // Ghost Card has no chrome; the frame owns border + fill so tone can
     // swap hue without fighting Card's sand-a3 (tv/lite has no merge).
-    frame: "flex h-full flex-col overflow-hidden rounded-5 border bg-sand-1",
-    header: "relative flex w-full items-center justify-between gap-3 overflow-hidden p-8 max-md:p-4",
+    frame: "flex h-full flex-col overflow-hidden rounded-4 border bg-sand-1",
+    header: "relative flex w-full items-center justify-between gap-3 overflow-hidden px-5 py-4",
     wash: "pointer-events-none absolute top-1/2 left-1/2 aspect-square w-full -translate-x-1/2 -translate-y-1/2 opacity-10 blur-[14px]",
     fade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
-    icon: "relative z-1 flex size-12 items-center justify-center overflow-hidden rounded-3",
+    icon: "relative z-1 flex size-10 items-center justify-center overflow-hidden rounded-2",
     control: "relative z-1 shrink-0",
-    body: "flex flex-1 flex-col gap-2 px-8 pb-8 max-md:px-4 max-md:pb-4",
+    body: "flex flex-1 flex-col gap-2 px-5 pb-4",
   },
   variants: {
     tone: {
@@ -98,7 +98,7 @@ export const domainsSection = tv({
   slots: {
     root: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
-    grid: "grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1",
+    grid: "grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1",
   },
 });
 
@@ -109,11 +109,11 @@ export const domainCard = tv({
     copy: "flex flex-col gap-2",
     heading: "flex items-center justify-between gap-3",
     identity: "flex min-w-0 flex-wrap items-center gap-2",
-    dns: "flex flex-col gap-3",
-    record: "flex flex-col gap-2 rounded-4 bg-sand-3 p-4",
+    dns: "flex flex-col gap-2",
+    record: "flex flex-col gap-2 rounded-2 bg-sand-3 p-3",
     recordHeader: "flex items-center justify-between gap-2",
     recordField: "flex flex-col gap-1",
-    recordValue: "flex min-w-0 items-center gap-2",
+    recordValue: "flex min-w-0 items-center gap-1",
     code: "min-w-0 flex-1 break-all",
   },
 });

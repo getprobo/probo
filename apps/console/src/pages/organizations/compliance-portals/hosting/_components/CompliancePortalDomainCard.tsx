@@ -92,7 +92,7 @@ export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortal
   );
 
   return (
-    <Card variant="ghost" size={3} padding="none" className={frame()}>
+    <Card variant="ghost" size={2} padding="none" className={frame()}>
       <div className={header()}>
         <div className={wash()} />
         <div className={fade()} />
@@ -109,7 +109,7 @@ export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortal
         <div className={copy()}>
           <div className={heading()}>
             <div className={identity()}>
-              <Text size={4} weight="medium" highContrast>
+              <Text size={3} weight="medium" highContrast>
                 {domain.domain}
               </Text>
               {domain.managed && (
@@ -120,6 +120,7 @@ export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortal
               <div className={controlSlot()}>
                 <DeleteCompliancePortalDomainDialog customDomainKey={domain}>
                   <IconButton
+                    size={2}
                     variant="surface"
                     color="red"
                     aria-label={t("domainCard.actions.delete")}

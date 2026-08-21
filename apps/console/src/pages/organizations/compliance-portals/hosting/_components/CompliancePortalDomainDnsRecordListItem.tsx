@@ -72,8 +72,9 @@ export function CompliancePortalDomainDnsRecordListItem({
       <div className={recordField()}>
         <Text size={1} color="faint">{t("domainCard.dns.name")}</Text>
         <div className={recordValue()}>
-          <Code className={code()}>{dnsRecord.name}</Code>
+          <Code size={2} className={code()}>{dnsRecord.name}</Code>
           <IconButton
+            size={1}
             variant="soft"
             color="neutral"
             aria-label={t("domainCard.dns.copy")}
@@ -86,8 +87,9 @@ export function CompliancePortalDomainDnsRecordListItem({
       <div className={recordField()}>
         <Text size={1} color="faint">{t("domainCard.dns.value")}</Text>
         <div className={recordValue()}>
-          <Code className={code()}>{dnsRecord.value}</Code>
+          <Code size={2} className={code()}>{dnsRecord.value}</Code>
           <IconButton
+            size={1}
             variant="soft"
             color="neutral"
             aria-label={t("domainCard.dns.copy")}

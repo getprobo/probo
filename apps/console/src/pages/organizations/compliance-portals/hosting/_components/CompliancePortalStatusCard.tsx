@@ -53,7 +53,7 @@ export function CompliancePortalStatusCard({
 
   const toggle = (
     <Switch
-      size={3}
+      size={2}
       checked={checked}
       color="green"
       disabled={disabled}
@@ -63,7 +63,7 @@ export function CompliancePortalStatusCard({
   );
 
   return (
-    <Card variant="ghost" size={3} padding="none" className={frame()}>
+    <Card variant="ghost" size={2} padding="none" className={frame()}>
       <div className={header()}>
         <div className={wash()} />
         <div className={fade()} />
@@ -80,7 +80,7 @@ export function CompliancePortalStatusCard({
         </div>
       </div>
       <div className={body()}>
-        <Text size={4} weight="medium" highContrast>
+        <Text size={3} weight="medium" highContrast>
           {title}
         </Text>
         <Text size={2} color="neutral">

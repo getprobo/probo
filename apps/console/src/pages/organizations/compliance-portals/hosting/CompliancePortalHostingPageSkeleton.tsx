@@ -32,22 +32,22 @@ export function CompliancePortalHostingPageSkeleton() {
     <div className={root()}>
       <div className={section()}>
         <div className={intro()}>
-          <HeadingSkeleton size={3} className="w-20" />
+          <HeadingSkeleton size={4} className="w-20" />
           <TextSkeleton size={2} className="w-96" />
         </div>
         <div className={grid()}>
-          <CardSkeleton size={3} />
-          <CardSkeleton size={3} />
+          <CardSkeleton size={2} />
+          <CardSkeleton size={2} />
         </div>
       </div>
       <div className={section()}>
         <div className={intro()}>
-          <HeadingSkeleton size={3} className="w-20" />
+          <HeadingSkeleton size={4} className="w-20" />
           <TextSkeleton size={2} className="w-96" />
         </div>
         <div className={grid()}>
-          <CardSkeleton size={3} />
-          <CardSkeleton size={3} />
+          <CardSkeleton size={2} />
+          <CardSkeleton size={2} />
         </div>
       </div>
     </div>

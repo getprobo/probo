@@ -71,7 +71,7 @@ export function CompliancePortalDomainsSection({
   return (
     <section className={root()}>
       <div className={intro()}>
-        <Heading level={2} size={3} weight="medium" highContrast>
+        <Heading level={2} size={4} weight="medium" highContrast>
           {t("domainsSection.title")}
         </Heading>
         <Text size={2} color="neutral">

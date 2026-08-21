@@ -30,7 +30,7 @@ export function CompliancePortalLayoutSkeleton() {
     <div className={root()}>
       <div className={header()}>
         <div className={titleRow()}>
-          <HeadingSkeleton size={7} className="w-40" />
+          <HeadingSkeleton size={6} className="w-40" />
         </div>
         <TextSkeleton size={2} className="w-96" />
       </div>
