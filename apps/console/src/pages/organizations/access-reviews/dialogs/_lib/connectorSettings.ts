@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { ConnectorProtocol } from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+
 // DATADOG_SITES labels are technical identifiers (region code + hostname),
 // intentionally not translated. The dialog's prose strings are.
 export const DATADOG_SITES: { value: string; label: string }[] = [
@@ -163,21 +165,67 @@ export function connectOAuthProvider(
   oauth2Scopes: ReadonlyArray<string>,
   extras?: Record<string, string>,
 ) {
+  connectProviderProtocol(organizationId, provider, "OAUTH2", {
+    oauth2Scopes,
+    extras,
+  });
+}
+
+// buildConnectorInitiateURL builds the start-connect URL for a protocol.
+// OAuth2 uses /connectors/initiate; GitHub App has its own endpoint.
+export function buildConnectorInitiateURL(
+  organizationId: string,
+  provider: string,
+  protocol: ConnectorProtocol,
+  options?: {
+    oauth2Scopes?: ReadonlyArray<string>;
+    connectorId?: string;
+    extras?: Record<string, string>;
+  },
+): string {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
-  const url = new URL("/api/console/v1/connectors/initiate", baseURL);
+  const path
+    = protocol === "GITHUB_APP"
+      ? "/api/console/v1/connectors/github-app/initiate"
+      : "/api/console/v1/connectors/initiate";
+  const url = new URL(path, baseURL);
   url.searchParams.append("organization_id", organizationId);
-  url.searchParams.append("provider", provider);
-  for (const scope of oauth2Scopes) {
-    url.searchParams.append("scope", scope);
+  if (protocol !== "GITHUB_APP") {
+    url.searchParams.append("provider", provider);
   }
-  if (extras) {
-    for (const [k, v] of Object.entries(extras)) {
-      url.searchParams.append(k, v);
+  if (options?.connectorId) {
+    url.searchParams.append("connector_id", options.connectorId);
+  }
+  if (protocol !== "GITHUB_APP") {
+    for (const scope of options?.oauth2Scopes ?? []) {
+      url.searchParams.append("scope", scope);
+    }
+    if (options?.extras) {
+      for (const [k, v] of Object.entries(options.extras)) {
+        url.searchParams.append(k, v);
+      }
     }
   }
   url.searchParams.append(
     "continue",
     `/organizations/${organizationId}/access-reviews/connections`,
   );
-  window.location.assign(url.toString());
+  return url.toString();
+}
+
+// connectProviderProtocol builds the connector-initiate URL for any configured
+// protocol and navigates the browser to it.
+export function connectProviderProtocol(
+  organizationId: string,
+  provider: string,
+  protocol: ConnectorProtocol,
+  options?: {
+    oauth2Scopes?: ReadonlyArray<string>;
+    connectorId?: string;
+    extras?: Record<string, string>;
+  },
+) {
+  window.location.assign(
+    buildConnectorInitiateURL(organizationId, provider, protocol, options),
+  );
 }

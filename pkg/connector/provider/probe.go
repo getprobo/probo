@@ -732,3 +732,26 @@ func probeSquare(
 
 	return doProbeRequest(httpClient, req)
 }
+
+func buildGitHubProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
+	return connector.ResolveProbeURLFor(
+		conn.Connection,
+		connector.ProtocolType(conn.Protocol),
+		ep.APIBase,
+		ep.Probe,
+	)
+}
+
+func probeGitHub(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+	ep Endpoints,
+) error {
+	probeURL, err := buildGitHubProbeURL(conn, ep)
+	if err != nil {
+		return err
+	}
+
+	return probeGET(ctx, httpClient, probeURL)
+}

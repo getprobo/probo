@@ -21,7 +21,9 @@
 package console_v1
 
 import (
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
@@ -39,6 +41,15 @@ func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.Co
 			Label:    s.Label,
 			Required: s.Required,
 		})
+	}
+
+	return out
+}
+
+func connectorProtocols(protocols []connector.ProtocolType) []coredata.ConnectorProtocol {
+	out := make([]coredata.ConnectorProtocol, 0, len(protocols))
+	for _, protocol := range protocols {
+		out = append(out, coredata.ConnectorProtocol(protocol))
 	}
 
 	return out

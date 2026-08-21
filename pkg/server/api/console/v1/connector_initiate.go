@@ -50,7 +50,7 @@ func handleConnectorInitiate(
 			return
 		}
 
-		if _, err := connectorRegistry.Get(provider); err != nil {
+		if _, err := connectorRegistry.Lookup(provider, connector.ProtocolOAuth2); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}
@@ -126,7 +126,13 @@ func handleConnectorInitiate(
 			opts.ConnectorID = existing.ID.String()
 		}
 
-		redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, opts, r)
+		redirectURL, err := connectorRegistry.Initiate(
+			r.Context(),
+			provider,
+			organizationID,
+			opts,
+			r,
+		)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot initiate connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))

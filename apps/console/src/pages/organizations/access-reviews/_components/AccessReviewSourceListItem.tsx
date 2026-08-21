@@ -50,6 +50,13 @@ import type { AccessReviewSourceListItemOrganizationsUnavailable_source$key } fr
 import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
 
 import { accessReviewSourceSection } from "../connections/_components/variants";
+import { buildConnectorInitiateURL } from "../dialogs/_lib/connectorSettings";
+
+function canReconnectConnector(
+  connector: { canReconnect: boolean } | null | undefined,
+): boolean {
+  return connector?.canReconnect ?? false;
+}
 
 const fragment = graphql`
   fragment AccessReviewSourceListItem_source on AccessReviewSource {
@@ -58,6 +65,8 @@ const fragment = graphql`
     connectorId
     connector {
       provider
+      protocol
+      canReconnect
       oauth2Scopes
     }
     connectionStatus
@@ -127,6 +136,8 @@ const organizationsUnavailableFragment = graphql`
   fragment AccessReviewSourceListItemOrganizationsUnavailable_source on AccessReviewSource {
     connector {
       provider
+      protocol
+      canReconnect
       oauth2Scopes
     }
   }
@@ -296,25 +307,21 @@ export function AccessReviewSourceListItem({
     const connector = accessSource.connector;
     if (!connector || !accessSource.connectorId) return null;
 
-    const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
-    const url = new URL("/api/console/v1/connectors/initiate", baseURL);
-    url.searchParams.append("organization_id", organizationId);
-    url.searchParams.append("provider", connector.provider);
-    url.searchParams.append("connector_id", accessSource.connectorId);
-    for (const scope of connector.oauth2Scopes) {
-      url.searchParams.append("scope", scope);
-    }
-    url.searchParams.append(
-      "continue",
-      `/organizations/${organizationId}/access-reviews/connections`,
+    return buildConnectorInitiateURL(
+      organizationId,
+      connector.provider,
+      connector.protocol,
+      {
+        connectorId: accessSource.connectorId,
+        oauth2Scopes: connector.oauth2Scopes,
+      },
     );
-    return url.toString();
   };
   const reconnectUrl = buildReconnectUrl();
 
   const showOrgSelector
     = accessSource.needsConfiguration || accessSource.selectedOrganization;
-  const canReconnect = (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
+  const canReconnect = canReconnectConnector(accessSource.connector);
   const showReconnect
     = canReconnect
       && (accessSource.connectionStatus === "DISCONNECTED"
@@ -564,7 +571,7 @@ function ProviderOrganizationsUnavailable({
   const { t } = useTranslation();
   const source = useFragment(organizationsUnavailableFragment, sourceKey);
   const providerLabel = sourceLabel(source.connector?.provider ?? null, t);
-  const canReconnect = (source.connector?.oauth2Scopes.length ?? 0) > 0;
+  const canReconnect = canReconnectConnector(source.connector);
 
   return (
     <SourceConnectionIssue

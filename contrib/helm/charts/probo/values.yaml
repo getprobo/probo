@@ -483,6 +483,19 @@ probo:
   #     redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
   #     auth-url: "https://github.com/login/oauth/authorize"
   #     token-url: "https://github.com/login/oauth/access_token"
+  # - name: "github"
+  #   type: "github-app"
+  #   config:
+  #     # Enable "Request user authorization (OAuth) during installation" and
+  #     # set its callback URL to /api/console/v1/connectors/github-app/complete.
+  #     appId: "123456"
+  #     clientId: "Iv1.example"
+  #     clientSecret: "github-app-client-secret"
+  #     slug: "probo"
+  #     privateKey: |
+  #       -----BEGIN RSA PRIVATE KEY-----
+  #       ...
+  #       -----END RSA PRIVATE KEY-----
   # Slack endpoint overrides use endpointAuth, endpointToken, and
   # endpointApiBase in the connector config. endpointToken is secret
   # material and is mounted from the chart Secret, not a plain env value.

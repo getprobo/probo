@@ -142,29 +142,25 @@ export function AccessEntryListItem({
         </div>
       </div>
 
-      {isPendingActions
-        ? (
-            <div className={flags()}>
+      <div className={flags()}>
+        {isPendingActions
+          ? (
               <EntryFlagSelect
                 entryKey={entry}
               />
-            </div>
-          )
-        : entry.flags.length > 0
-          ? (
-              <div className={flags()}>
-                {entry.flags.map(f => (
-                  <Badge key={f} variant={flagBadgeVariant(f)}>
-                    {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
-                  </Badge>
-                ))}
-              </div>
             )
-          : null}
+          : entry.flags.map(f => (
+              <Badge key={f} variant={flagBadgeVariant(f)}>
+                {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
+              </Badge>
+            ))}
+      </div>
 
       <div className={trailing()}>
         <div className={status()}>
-          <span className={statusLabel()}>{t("campaignDetailPage.columns.admin")}</span>
+          <span className={statusLabel()} title={t("campaignDetailPage.columns.admin")}>
+            {t("campaignDetailPage.columns.admin")}
+          </span>
           <AdminStatus
             isAdmin={entry.isAdmin}
             trueLabel={t("campaignDetailPage.values.yes")}
@@ -173,14 +169,18 @@ export function AccessEntryListItem({
           />
         </div>
         <div className={status()}>
-          <span className={statusLabel()}>{t("campaignDetailPage.columns.mfa")}</span>
+          <span className={statusLabel()} title={t("campaignDetailPage.columns.mfa")}>
+            {t("campaignDetailPage.columns.mfa")}
+          </span>
           <MfaStatusIcon
             status={entry.mfaStatus}
             label={t(`campaignDetailPage.mfaStatus.${entry.mfaStatus.toLowerCase()}`)}
           />
         </div>
         <div className={status()}>
-          <span className={statusLabel()}>{t("campaignDetailPage.columns.authMethod")}</span>
+          <span className={statusLabel()} title={t("campaignDetailPage.columns.authMethod")}>
+            {t("campaignDetailPage.columns.authMethod")}
+          </span>
           <AuthMethodStatus
             method={entry.authMethod}
             label={t(
@@ -190,7 +190,9 @@ export function AccessEntryListItem({
           />
         </div>
         <div className={status()}>
-          <span className={statusLabel()}>{t("campaignDetailPage.columns.lastLogin")}</span>
+          <span className={statusLabel()} title={t("campaignDetailPage.columns.lastLogin")}>
+            {t("campaignDetailPage.columns.lastLogin")}
+          </span>
           <LastLoginStatus
             lastLogin={entry.lastLogin}
             formatted={
@@ -203,19 +205,21 @@ export function AccessEntryListItem({
           />
         </div>
 
-        {isPendingActions
-          ? (
-              <EntryDecisionActions
-                entryKey={entry}
-              />
-            )
-          : entry.decision !== "PENDING"
+        <div className="justify-self-end">
+          {isPendingActions
             ? (
-                <Badge variant={decisionBadgeVariant(entry.decision)}>
-                  {t(`campaignDetailPage.decisions.${entry.decision.toLowerCase()}`)}
-                </Badge>
+                <EntryDecisionActions
+                  entryKey={entry}
+                />
               )
-            : null}
+            : entry.decision !== "PENDING"
+              ? (
+                  <Badge variant={decisionBadgeVariant(entry.decision)}>
+                    {t(`campaignDetailPage.decisions.${entry.decision.toLowerCase()}`)}
+                  </Badge>
+                )
+              : null}
+        </div>
       </div>
     </li>
   );

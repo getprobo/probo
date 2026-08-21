@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -416,6 +417,44 @@ func (impl *Implm) Run(
 
 			providerRegistry.SetManagedAPIKey(p, connectorCfg.APIKey)
 			providerRegistry.SetManagedResourceID(p, connectorCfg.ResourceID)
+
+			continue
+		}
+
+		if gitHubApp, ok := connectorCfg.Config.(*connector.GitHubAppConnector); ok {
+			if gitHubApp.AppID == "" ||
+				gitHubApp.ClientID == "" ||
+				gitHubApp.ClientSecret == "" ||
+				gitHubApp.Slug == "" ||
+				gitHubApp.PrivateKey == "" {
+				return fmt.Errorf("cannot configure github app connector: app ID, client ID, client secret, slug, and private key are required")
+			}
+
+			reg, ok := providerRegistry.Get(coredata.ConnectorProviderGitHub)
+			if !ok {
+				return fmt.Errorf("cannot configure github app connector: github provider is not registered")
+			}
+
+			authURL, err := url.Parse(reg.Endpoints.Auth)
+			if err != nil || authURL.Scheme == "" || authURL.Host == "" {
+				return fmt.Errorf("cannot configure github app connector: invalid github authorization URL")
+			}
+
+			gitHubApp.InstallBase = (&url.URL{
+				Scheme: authURL.Scheme,
+				Host:   authURL.Host,
+				Path:   "/apps",
+			}).String()
+			gitHubApp.TokenURL = reg.Endpoints.Token
+			gitHubApp.APIBase = reg.Endpoints.APIBase
+
+			if err := defaultConnectorRegistry.RegisterProtocol(
+				connectorCfg.Provider,
+				connector.ProtocolGitHubApp,
+				gitHubApp,
+			); err != nil {
+				return fmt.Errorf("cannot register github app connector: %w", err)
+			}
 
 			continue
 		}

@@ -415,7 +415,8 @@ INSERT INTO connectors (
 	_, err = conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_connectors_organization_id_provider" {
+			if pgErr.Code == "23505" &&
+				pgErr.ConstraintName == "idx_connectors_organization_id_provider_protocol" {
 				return ErrResourceAlreadyExists
 			}
 		}

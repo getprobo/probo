@@ -107,6 +107,17 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 		}
 
 		return &conn, nil
+	case string(ProtocolGitHubApp):
+		if provider != GitHubProvider {
+			return nil, fmt.Errorf("github app protocol is unsupported for provider: %s", provider)
+		}
+
+		var conn GitHubAppConnection
+		if err := json.Unmarshal(data, &conn); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal github app connection: %w", err)
+		}
+
+		return &conn, nil
 	}
 
 	return nil, fmt.Errorf("unknown connection protocol: %s", protocol)

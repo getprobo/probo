@@ -315,8 +315,9 @@ func (s *ConnectorService) Reconnect(
 				return fmt.Errorf("cannot reconnect connector: provider mismatch")
 			}
 
-			if cnnctr.Protocol != coredata.ConnectorProtocolOAuth2 {
-				return fmt.Errorf("cannot reconnect connector: not an OAuth2 connector")
+			expectedProtocol := coredata.ConnectorProtocol(req.Connection.Type())
+			if cnnctr.Protocol != expectedProtocol {
+				return fmt.Errorf("cannot reconnect connector: protocol mismatch")
 			}
 
 			preserveConnectionFields(req.Connection, cnnctr.Connection)

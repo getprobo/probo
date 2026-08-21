@@ -24,14 +24,8 @@ package console_v1
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
@@ -188,8 +182,25 @@ func NewMux(
 		)
 
 		r.Get(
+			"/connectors/github-app/initiate",
+			handleConnectorGitHubAppInitiate(logger, proboSvc, iamSvc, connectorRegistry),
+		)
+
+		r.Get(
 			"/connectors/complete",
 			handleConnectorComplete(
+				logger,
+				baseURL,
+				proboSvc,
+				accessReviewSvc,
+				connectorRegistry,
+				safeRedirect,
+			),
+		)
+
+		r.Get(
+			"/connectors/github-app/complete",
+			handleConnectorGitHubAppComplete(
 				logger,
 				baseURL,
 				proboSvc,
@@ -226,352 +237,6 @@ func NewMux(
 	r.Get("/connectors/oauth-client-metadata", handleConnectorOAuth2ClientMetadata(baseURL))
 
 	return r
-}
-
-func handleConnectorComplete(
-	logger *log.Logger,
-	baseURL *baseurl.BaseURL,
-	proboSvc *probo.Service,
-	accessReviewSvc *accessreview.Service,
-	connectorRegistry *connector.ConnectorRegistry,
-	safeRedirect *saferedirect.SafeRedirect,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-
-		if oauthErr := query.Get("error"); oauthErr != "" {
-			handleConnectorOAuth2Error(w, r, logger, baseURL, safeRedirect, query)
-			return
-		}
-
-		stateToken := query.Get("state")
-		if stateToken == "" {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
-			return
-		}
-
-		provider, err := connector.ExtractProviderFromState(stateToken)
-		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot extract provider from state: %w", err))
-			return
-		}
-
-		var connectorProvider coredata.ConnectorProvider
-		if err := connectorProvider.UnmarshalText([]byte(provider)); err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
-			return
-		}
-
-		connection, state, err := connectorRegistry.CompleteWithState(r.Context(), provider, r)
-		if err != nil {
-			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
-			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-			return
-		}
-
-		organizationID, err := gid.ParseGID(state.OrganizationID)
-		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse organization ID from state: %w", err))
-			return
-		}
-
-		scope := coredata.NewScopeFromObjectID(organizationID)
-		svc := proboSvc
-
-		var cnnctr *coredata.Connector
-
-		// Some providers persist per-customer settings on the connector,
-		// captured here for both the create and the reconnect path: Datadog
-		// echoes its API domain as a `domain` callback param; Zendesk's
-		// subdomain rode the signed OAuth state from initiate (it is not
-		// echoed back). Both become a URL host, so each is re-validated
-		// before use. At most one block applies per callback.
-		var rawSettings json.RawMessage
-
-		if connectorProvider == coredata.ConnectorProviderDatadog {
-			domain := query.Get("domain")
-			if !connector.IsValidDatadogDomain(domain) {
-				logger.WarnCtx(r.Context(), "rejecting invalid datadog domain",
-					log.String("provider", string(connectorProvider)),
-				)
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid domain"))
-
-				return
-			}
-
-			region, _ := connector.DatadogSiteForDomain(domain)
-
-			raw, err := json.Marshal(&coredata.DatadogConnectorSettings{
-				Region: region,
-				Domain: domain,
-			})
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot marshal datadog settings", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-
-			rawSettings = raw
-		}
-
-		if connectorProvider == coredata.ConnectorProviderZendesk {
-			// The subdomain is HMAC-signed in the state (untamperable) and was
-			// validated at initiate, but re-validate it here too — it becomes
-			// a URL host on every API call (defense-in-depth).
-			if !connector.IsValidZendeskSubdomain(state.Site) {
-				logger.WarnCtx(r.Context(), "rejecting invalid zendesk subdomain",
-					log.String("provider", string(connectorProvider)),
-				)
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid subdomain"))
-
-				return
-			}
-
-			raw, err := json.Marshal(&coredata.ZendeskConnectorSettings{
-				Subdomain: state.Site,
-			})
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot marshal zendesk settings", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-
-			rawSettings = raw
-		}
-
-		// If a connector_id was passed in the state, this is a
-		// reconnection — update the existing connector's token.
-		if state.ConnectorID != "" {
-			connectorID, err := gid.ParseGID(state.ConnectorID)
-			if err != nil {
-				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot parse connector ID from state: %w", err))
-				return
-			}
-
-			cnnctr, err = svc.Connectors.Reconnect(
-				r.Context(),
-				scope,
-				probo.ReconnectConnectorRequest{
-					ConnectorID:    connectorID,
-					OrganizationID: organizationID,
-					Provider:       connectorProvider,
-					Connection:     connection,
-					RawSettings:    rawSettings,
-				},
-			)
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot reconnect connector", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-
-			// The reconnect may carry a different scope/org, changing the
-			// resolvable instance name. Clear the synced-name flag so the
-			// source-name worker re-resolves it. Best-effort: a failure here
-			// must not fail the OAuth callback redirect.
-			if err := accessReviewSvc.ResetSourceNameSyncForConnector(r.Context(), scope, cnnctr.ID); err != nil {
-				logger.WarnCtx(r.Context(), "cannot reset access source name sync after reconnect", log.Error(err))
-			}
-		} else {
-			createReq := probo.CreateConnectorRequest{
-				OrganizationID: organizationID,
-				Provider:       connectorProvider,
-				Protocol:       coredata.ConnectorProtocol(connection.Type()),
-				Connection:     connection,
-			}
-
-			// PagerDuty Scoped OAuth surfaces the customer's subdomain as
-			// a `subdomain` query parameter on the redirect URL (not in
-			// the token response body). Persist it on the connector
-			// settings so the driver and name resolver can read it.
-			if connectorProvider == coredata.ConnectorProviderPagerDuty {
-				subdomain := query.Get("subdomain")
-				if subdomain == "" {
-					// Fall back to ProviderMetadata for older OAuth flows
-					// that may have surfaced the subdomain through the
-					// token response body.
-					subdomain = state.ProviderMetadata["subdomain"]
-				}
-
-				// The subdomain comes from an attacker-influenceable
-				// callback parameter; refuse anything that isn't a valid
-				// DNS label so it cannot be smuggled into URLs or logs.
-				if subdomain != "" && !isValidPagerDutySubdomain(subdomain) {
-					logger.WarnCtx(r.Context(), "rejecting invalid pagerduty subdomain",
-						log.String("provider", string(connectorProvider)),
-					)
-
-					subdomain = ""
-				}
-
-				if subdomain != "" {
-					raw, err := json.Marshal(&coredata.PagerDutyConnectorSettings{
-						Subdomain: subdomain,
-					})
-					if err != nil {
-						logger.ErrorCtx(r.Context(), "cannot marshal pagerduty settings", log.Error(err))
-						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-						return
-					}
-
-					createReq.RawSettings = raw
-				}
-			}
-
-			// Personal-account installs send no teamId; fall back to
-			// /v2/user.id as a synthetic TeamID (the v3 members endpoint
-			// accepts personal-account UIDs).
-			if connectorProvider == coredata.ConnectorProviderVercel {
-				teamID := vercelCallbackTeamID(query)
-				if teamID == "" {
-					if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
-						if uid, err := connector.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
-							teamID = uid
-						} else {
-							logger.WarnCtx(r.Context(), "cannot fetch vercel user id for personal-account fallback", log.Error(err))
-						}
-					}
-				}
-
-				if teamID != "" {
-					raw, err := json.Marshal(&coredata.VercelConnectorSettings{
-						TeamID: teamID,
-					})
-					if err != nil {
-						logger.ErrorCtx(r.Context(), "cannot marshal vercel settings", log.Error(err))
-						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-						return
-					}
-
-					createReq.RawSettings = raw
-				}
-			}
-
-			// Per-customer settings captured above (Datadog's callback domain
-			// or Zendesk's state subdomain) apply to the create request; at
-			// most one provider populates them per callback.
-			if rawSettings != nil {
-				createReq.RawSettings = rawSettings
-			}
-
-			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)
-			if err != nil {
-				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
-				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-				return
-			}
-		}
-
-		redirectURL := state.ContinueURL
-		if redirectURL == "" {
-			redirectURL = baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
-		}
-
-		parsedURL, err := url.Parse(redirectURL)
-		if err != nil {
-			logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
-
-			parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
-		}
-
-		q := parsedURL.Query()
-		q.Set("connector_id", cnnctr.ID.String())
-		q.Set("provider", string(connectorProvider))
-
-		// Access-review sources toast missing scopes after redirect. Other
-		// continue URLs (Slack compliance page, SCIM settings, …) must not
-		// get a false missing-scope error from this access-review check.
-		if strings.Contains(state.ContinueURL, "/access-reviews/connections") {
-			missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
-			if err != nil {
-				logger.WarnCtx(r.Context(), "cannot determine missing OAuth scopes after connector callback", log.Error(err))
-			} else if len(missing) > 0 {
-				q.Set("error", accessreview.NewMissingOAuthScopesError(missing).Error())
-			}
-		}
-
-		parsedURL.RawQuery = q.Encode()
-
-		safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
-	}
-}
-
-func handleConnectorOAuth2Error(
-	w http.ResponseWriter,
-	r *http.Request,
-	logger *log.Logger,
-	baseURL *baseurl.BaseURL,
-	safeRedirect *saferedirect.SafeRedirect,
-	query url.Values,
-) {
-	oauthErr := query.Get("error")
-
-	provider := "unknown"
-	redirectURL := baseURL.String()
-
-	if stateToken := query.Get("state"); stateToken != "" {
-		if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
-			if payload.Data.Provider != "" {
-				provider = payload.Data.Provider
-			}
-
-			if payload.Data.ContinueURL != "" {
-				redirectURL = payload.Data.ContinueURL
-			}
-		}
-	}
-
-	// Provider error_description fields routinely carry PII (user emails,
-	// account names) and must never reach logs or the client redirect URL.
-	// Forward only the standardized error code.
-	logger.WarnCtx(r.Context(), "OAuth2 callback returned error",
-		log.String("provider", provider),
-		log.String("error", oauthErr),
-	)
-
-	parsedURL, _ := url.Parse(redirectURL)
-	q := parsedURL.Query()
-	q.Set("error", oauthErr)
-	parsedURL.RawQuery = q.Encode()
-
-	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
-}
-
-// vercelCallbackTeamID returns the team identifier from Vercel's OAuth
-// callback. Vercel uses the camelCase `teamId` query param (not snake_case
-// `team_id`); the name is pinned by a test so it cannot silently regress.
-func vercelCallbackTeamID(query url.Values) string {
-	return query.Get("teamId")
-}
-
-// isValidPagerDutySubdomain reports whether s is a single DNS label
-// (RFC 1035 §2.3.1). PagerDuty subdomains are tenant identifiers that
-// will be embedded in API URLs; the OAuth callback is the only place
-// where a malformed value can enter the system.
-func isValidPagerDutySubdomain(s string) bool {
-	if s == "" || len(s) > 63 {
-		return false
-	}
-
-	for _, c := range s {
-		switch {
-		case c >= 'a' && c <= 'z':
-		case c >= 'A' && c <= 'Z':
-		case c >= '0' && c <= '9':
-		case c == '-':
-		default:
-			return false
-		}
-	}
-
-	return true
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {

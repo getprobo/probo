@@ -643,8 +643,9 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		}
 
 		provider := reg.Provider
-		_, oauthErr := r.connectorRegistry.Get(string(provider))
-		oauthConfigured := oauthErr == nil
+		configuredProtocols := connectorProtocols(
+			r.connectorRegistry.ConfiguredProtocols(string(provider)),
+		)
 		apiKeySupported := reg.SupportsAPIKey
 		clientCredentialsSupported := reg.SupportsClientCredentials
 
@@ -657,9 +658,12 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		apiKeyManaged := r.providerRegistry.ManagedConnectorReady(provider)
 
 		// Skip providers that cannot be connected in this deployment: no
-		// OAuth client credentials configured and no key-based fallback
-		// (API key, managed API key, or client credentials) supported.
-		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported && !apiKeyManaged {
+		// connector protocol configured and no key-based fallback (API key,
+		// managed API key, or client credentials) supported.
+		if len(configuredProtocols) == 0 &&
+			!apiKeySupported &&
+			!clientCredentialsSupported &&
+			!apiKeyManaged {
 			continue
 		}
 
@@ -681,7 +685,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			Provider:                       provider,
 			DisplayName:                    reg.DisplayName,
 			DocumentationURL:               documentationURL,
-			OauthConfigured:                oauthConfigured,
+			ConfiguredProtocols:            configuredProtocols,
 			APIKeySupported:                apiKeySupported,
 			APIKeyManaged:                  apiKeyManaged,
 			ClientCredentialsSupported:     clientCredentialsSupported,

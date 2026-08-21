@@ -556,7 +556,7 @@ spec:
               value: {{ .Values.probo.slackbot.maxTokens | quote }}
             {{- end }}
             {{- end }}
-            # Connectors (Slack OAuth2)
+            # Connectors
             {{- range .Values.probo.connectors }}
             {{- if eq .name "slack" }}
             - name: PROBOD_CONNECTOR_SLACK_CLIENT_ID
@@ -595,6 +595,24 @@ spec:
                   name: {{ include "probo.fullname" $ }}
                   key: connector-slack-signing-secret
             {{- end }}
+            {{- end }}
+            {{- if and (eq .name "github") (eq .type "github-app") }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_ID
+              value: {{ .config.appId | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID
+              value: {{ .config.clientId | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-github-app-client-secret
+            - name: PROBOD_CONNECTOR_GITHUB_APP_SLUG
+              value: {{ .config.slug | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-github-app-private-key
             {{- end }}
             {{- end }}
           ports:

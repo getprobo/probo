@@ -48,6 +48,7 @@ type (
 	AWSConfig                          = probodconfig.AWSConfig
 	ConnectorConfig                    = probodconfig.ConnectorConfig
 	ConnectorConfigOAuth2              = probodconfig.ConnectorConfigOAuth2
+	ConnectorConfigGitHubApp           = probodconfig.ConnectorConfigGitHubApp
 	CustomDomainsConfig                = probodconfig.CustomDomainsConfig
 	ACMEConfig                         = probodconfig.ACMEConfig
 	LLMProviderConfig                  = probodconfig.LLMProviderConfig

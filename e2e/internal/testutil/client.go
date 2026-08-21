@@ -797,6 +797,12 @@ func (c *Client) postConnectMagicLink(email, continueURL string) {
 	require.Equal(c.T, http.StatusNoContent, resp.StatusCode, "magic-link send must return 204")
 }
 
+func (c *Client) GetNoRedirect(rawURL string) *OAuth2HTTPResponse {
+	c.T.Helper()
+
+	return c.redirectHTTPResponse(c.httpClient, rawURL)
+}
+
 func (c *Client) redirectLocation(client *http.Client, rawURL string) string {
 	c.T.Helper()
 

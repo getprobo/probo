@@ -8954,6 +8954,8 @@ components:
         - SSO
         - PASSWORD
         - API_KEY
+        - OAUTH2
+        - SSH
         - SERVICE_ACCOUNT
         - UNKNOWN
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethod

@@ -86,6 +86,14 @@ type ConnectorConfigOAuth2 struct {
 	IntegrationSlug string `json:"integration-slug,omitempty"`
 }
 
+type ConnectorConfigGitHubApp struct {
+	AppID        string `json:"app-id"`
+	ClientID     string `json:"client-id"`
+	ClientSecret string `json:"client-secret"`
+	Slug         string `json:"slug"`
+	PrivateKey   string `json:"private-key"`
+}
+
 // ConnectorConfigAPIKey carries the Probo-held API key for a
 // ManagedAPIKey connector (e.g. Crisp's marketplace plugin token). The
 // operator supplies it via bootstrap env; probod registers it on the
@@ -162,6 +170,23 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 
 		c.APIKey = config.APIKey
 		c.ResourceID = config.ResourceID
+	case connector.ProtocolGitHubApp:
+		if c.Provider != connector.GitHubProvider {
+			return fmt.Errorf("github_app connector protocol requires GITHUB provider")
+		}
+
+		var config ConnectorConfigGitHubApp
+		if err := json.NewDecoder(bytes.NewReader(tmp.RawConfig)).Decode(&config); err != nil {
+			return fmt.Errorf("cannot unmarshal github app connector config: %w", err)
+		}
+
+		c.Config = &connector.GitHubAppConnector{
+			AppID:        config.AppID,
+			ClientID:     config.ClientID,
+			ClientSecret: config.ClientSecret,
+			Slug:         config.Slug,
+			PrivateKey:   config.PrivateKey,
+		}
 	default:
 		return fmt.Errorf("unknown connector protocol: %q", c.Protocol)
 	}

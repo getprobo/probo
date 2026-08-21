@@ -3145,6 +3145,8 @@
       "sso": "SSO",
       "password": "Wachtwoord",
       "api_key": "API-sleutel",
+      "oauth2": "OAuth2",
+      "ssh": "SSH",
       "service_account": "Serviceaccount",
       "unknown": "Onbekend"
     },
@@ -3234,6 +3236,7 @@
   "addAccessReviewSourceDialog": {
     "actions": {
       "connectWithOAuth": "OAuth",
+      "connectWithGitHubApp": "GitHub-app",
       "connectWithApiKey": "API-sleutel",
       "connectWithClientCredentials": "Clientreferenties",
       "open": "Open"

@@ -85,3 +85,36 @@ func TestConnectorConfig_OAuth2RoundTrip(t *testing.T) {
 	assert.Equal(t, "cid", oauth2c.ClientID)
 	assert.Equal(t, "secret", oauth2c.ClientSecret)
 }
+
+func TestConnectorConfig_GitHubAppRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	original := probodconfig.ConnectorConfig{
+		Provider: "GITHUB",
+		Protocol: connector.ProtocolGitHubApp,
+		RawConfig: probodconfig.ConnectorConfigGitHubApp{
+			AppID:        "123456",
+			ClientID:     "Iv1.example",
+			ClientSecret: "client-secret",
+			Slug:         "probo",
+			PrivateKey:   "private-key",
+		},
+	}
+
+	data, err := json.Marshal(original)
+	require.NoError(t, err)
+
+	var got probodconfig.ConnectorConfig
+	require.NoError(t, json.Unmarshal(data, &got))
+
+	assert.Equal(t, "GITHUB", got.Provider)
+	assert.Equal(t, connector.ProtocolGitHubApp, got.Protocol)
+
+	gitHubApp, ok := got.Config.(*connector.GitHubAppConnector)
+	require.True(t, ok)
+	assert.Equal(t, "123456", gitHubApp.AppID)
+	assert.Equal(t, "Iv1.example", gitHubApp.ClientID)
+	assert.Equal(t, "client-secret", gitHubApp.ClientSecret)
+	assert.Equal(t, "probo", gitHubApp.Slug)
+	assert.Equal(t, "private-key", gitHubApp.PrivateKey)
+}

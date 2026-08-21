@@ -294,3 +294,174 @@ interactions:
         status: 200 OK
         code: 200
         duration: 190.346042ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 310
+        host: api.github.com
+        body: '{"query":"query AccessReviewGitHubVerifiedDomainEmails($org: String!, $after: String) { organization(login: $org) { membersWithRole(first: 100, after: $after) { nodes { login organizationVerifiedDomainEmails(login: $org) } pageInfo { hasNextPage endCursor } } } }","variables":{"org":"acme-corp","after":null}}'
+        headers:
+            Accept:
+                - application/vnd.github+json
+            Content-Type:
+                - application/json
+            X-Github-Api-Version:
+                - "2022-11-28"
+        url: https://api.github.com/graphql
+        method: POST
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":{"organization":{"membersWithRole":{"nodes":[{"login":"jdoe","organizationVerifiedDomainEmails":["jane.doe@example.com"]}],"pageInfo":{"hasNextPage":false,"endCursor":""}}}}}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        form:
+            order:
+                - desc
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/orgs/acme-corp/audit-log?order=desc&per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"@timestamp":1774018800000,"document_id":"AAAAAA==","action":"pull_request.create","actor":"jdoe","actor_id":100001,"org":"acme-corp","org_id":100002,"created_at":1774018800000}]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        form:
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/orgs/acme-corp/installations?per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 40
+        body: '{"total_count":0,"installations":[]}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        form:
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/orgs/acme-corp/personal-access-tokens?per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 2
+        body: '[]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.github.com
+        form:
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/vnd.github+json
+        url: https://api.github.com/orgs/acme-corp/credential-authorizations?per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 2
+        body: '[]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 315
+        host: api.github.com
+        body: '{"query":"query AccessReviewGitHubDeployKeys($org: String!, $after: String) { organization(login: $org) { repositories(first: 100, after: $after) { nodes { name deployKeys(first: 100) { nodes { id title createdAt readOnly } } } pageInfo { hasNextPage endCursor } } } }","variables":{"org":"acme-corp","after":null}}'
+        headers:
+            Accept:
+                - application/vnd.github+json
+            Content-Type:
+                - application/json
+            X-Github-Api-Version:
+                - "2022-11-28"
+        url: https://api.github.com/graphql
+        method: POST
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":{"organization":{"repositories":{"nodes":[],"pageInfo":{"hasNextPage":false,"endCursor":""}}}}}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+        status: 200 OK
+        code: 200
+        duration: 1ms

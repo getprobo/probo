@@ -362,6 +362,15 @@ func (s *Service) ConnectorHTTPClient(
 		return nil, nil, err
 	}
 
+	if s.connectorRegistry != nil {
+		if err := s.connectorRegistry.ConfigureConnection(
+			string(dbConnector.Provider),
+			dbConnector.Connection,
+		); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	var tokenBefore string
 
 	oauth2Conn, isOAuth2 := dbConnector.Connection.(*connector.OAuth2Connection)
@@ -528,7 +537,7 @@ func (s *Service) ProviderOrganizations(
 	}
 
 	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || cfg.ListOrgs == nil {
+	if !ok || !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
 		return nil, nil
 	}
 
@@ -597,7 +606,7 @@ func (s *Service) SourceNeedsConfiguration(
 	}
 
 	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !cfg.NeedsPicker {
+	if !ok || !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
 		return false, nil
 	}
 
@@ -653,14 +662,18 @@ func (s *Service) SourceNeedsReconnect(
 }
 
 // missingOAuthScopesForConnector returns scopes in required that are absent
-// from the connector's stored OAuth grant. Non-OAuth connectors and empty
-// required lists yield an empty result. A nil Connection is treated as
-// granting nothing.
+// from the connector's stored OAuth grant. Connections that do not support
+// scope-grant checks (API key, install-scoped apps, …) and empty required
+// lists yield an empty result. A nil Connection falls back to the protocol
+// capability probe.
 func missingOAuthScopesForConnector(
 	dbConnector coredata.Connector,
 	required []string,
 ) []string {
-	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
+	if !connector.SupportsScopeGrantCheckFor(
+		dbConnector.Connection,
+		connector.ProtocolType(dbConnector.Protocol),
+	) {
 		return []string{}
 	}
 
@@ -728,7 +741,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 	}
 
 	cfg, ok := providerOrgConfigs[dbMeta.Provider]
-	if !ok || !cfg.NeedsPicker || cfg.ListOrgs == nil {
+	if !ok || !ProviderSupportsOrganizationPicker(dbMeta.Provider, dbMeta.Protocol) {
 		return
 	}
 

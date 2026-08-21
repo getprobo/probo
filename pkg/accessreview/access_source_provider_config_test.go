@@ -18,24 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package types
+package accessreview
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"testing"
 
-func NewConnectors(connectors coredata.Connectors) []*Connector {
-	items := make([]*Connector, 0, len(connectors))
-	for _, cnnctr := range connectors {
-		items = append(items, NewConnector(cnnctr))
-	}
+	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/coredata"
+)
 
-	return items
-}
+func TestProviderSupportsOrganizationPicker_ConnectionCapabilities(t *testing.T) {
+	t.Parallel()
 
-func NewConnector(c *coredata.Connector) *Connector {
-	return &Connector{
-		ID:        c.ID,
-		Provider:  c.Provider,
-		Protocol:  c.Protocol,
-		CreatedAt: c.CreatedAt,
-	}
+	assert.True(
+		t,
+		ProviderSupportsOrganizationPicker(
+			coredata.ConnectorProviderCloudflare,
+			coredata.ConnectorProtocolAPIKey,
+		),
+	)
+	assert.True(
+		t,
+		ProviderSupportsOrganizationPicker(
+			coredata.ConnectorProviderGitHub,
+			coredata.ConnectorProtocolOAuth2,
+		),
+	)
+	assert.False(
+		t,
+		ProviderSupportsOrganizationPicker(
+			coredata.ConnectorProviderGitHub,
+			coredata.ConnectorProtocolGitHubApp,
+		),
+	)
 }

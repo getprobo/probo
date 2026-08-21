@@ -184,6 +184,14 @@ enum AccessReviewEntryAuthMethod
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethodAPIKey"
         )
+    OAUTH2
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethodOAuth2"
+        )
+    SSH
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethodSSH"
+        )
     SERVICE_ACCOUNT
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.AccessReviewEntryAuthMethodServiceAccount"
