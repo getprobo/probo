@@ -205,7 +205,13 @@ export function PersonForm(props: {
 
   return (
     <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
-      <Field label={t("personForm.fields.fullName")} {...register("fullName")} type="text" disabled={disabled || scimManaged} />
+      <Field
+        label={t("personForm.fields.fullName")}
+        {...register("fullName")}
+        type="text"
+        disabled={disabled}
+        readOnly={scimManaged}
+      />
       {!id && (
         <>
           <Field label={t("personForm.fields.emailAddress")} {...register("emailAddress")} type="email" disabled={disabled} />
@@ -256,16 +262,23 @@ export function PersonForm(props: {
         {...register("kind")}
         type="text"
         label={t("personForm.fields.type")}
-        disabled={disabled || scimManaged}
+        disabled={disabled}
+        readOnly={scimManaged}
       />
       <Field
         label={t("personForm.fields.position")}
         {...register("position")}
         type="text"
         placeholder={t("personForm.fields.positionPlaceholder")}
-        disabled={disabled || scimManaged}
+        disabled={disabled}
+        readOnly={scimManaged}
       />
-      <EmailsField control={control} register={register} disabled={disabled || scimManaged} />
+      <EmailsField
+        control={control}
+        register={register}
+        disabled={disabled}
+        readOnly={scimManaged}
+      />
       <Field label={t("personForm.fields.contractStartDate")}>
         <Input
           {...register("contractStartDate")}
