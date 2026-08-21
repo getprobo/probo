@@ -25,6 +25,7 @@ import type { CompliancePortalHostingPageQuery } from "#/__generated__/core/Comp
 
 import { CompliancePortalDomainsSection } from "./_components/CompliancePortalDomainsSection";
 import { CompliancePortalStatusSection } from "./_components/CompliancePortalStatusSection";
+import { hostingPage } from "./variants";
 
 export const compliancePortalHostingPageQuery = graphql`
   query CompliancePortalHostingPageQuery($compliancePortalId: ID!, $organizationId: ID!) {
@@ -63,11 +64,11 @@ export function CompliancePortalHostingPage({ queryRef }: CompliancePortalHostin
   const { compliancePortal, organization } = data;
 
   return (
-    <div className="space-y-6">
-      <CompliancePortalStatusSection fragmentRef={compliancePortal} />
+    <div className={hostingPage()}>
+      <CompliancePortalStatusSection compliancePortalKey={compliancePortal} />
       <CompliancePortalDomainsSection
-        organizationRef={organization}
-        compliancePortalRef={compliancePortal}
+        organizationKey={organization}
+        compliancePortalKey={compliancePortal}
       />
     </div>
   );

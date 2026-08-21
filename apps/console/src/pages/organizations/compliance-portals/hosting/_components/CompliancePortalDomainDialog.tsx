@@ -18,25 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CheckCircleIcon, CopyIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import {
   getCertificateProvisioningErrorMessage,
   getCustomDomainStatusBadgeLabel,
-  getCustomDomainStatusBadgeVariant,
 } from "@probo/helpers";
-import {
-  Badge,
-  Button,
-  Dialog,
-  DialogContent,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
-import type { PropsWithChildren } from "react";
+import { useToast } from "@probo/ui";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
+import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
+import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
+import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
+import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Code } from "@probo/ui/src/v2/typography/Code";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalDomainDialogFragment$key } from "#/__generated__/core/CompliancePortalDomainDialogFragment.graphql";
+
+import { customDomainBadgeColor } from "../_lib/customDomainBadgeColor";
+import { domainDetailsDialog } from "../variants";
 
 const fragment = graphql`
   fragment CompliancePortalDomainDialogFragment on CustomDomain {
@@ -56,25 +64,22 @@ const fragment = graphql`
   }
 `;
 
-type CompliancePortalDomainDialogProps = PropsWithChildren<{ fKey: CompliancePortalDomainDialogFragment$key }>;
+interface CompliancePortalDomainDialogProps {
+  customDomainKey: CompliancePortalDomainDialogFragment$key;
+  children: ReactElement;
+}
 
-export function CompliancePortalDomainDialog(props: CompliancePortalDomainDialogProps) {
-  const { children, fKey } = props;
-
-  const { t } = useTranslation("organizations/compliance-portals");
-  const dialogRef = useDialogRef();
+export function CompliancePortalDomainDialog({
+  customDomainKey,
+  children,
+}: CompliancePortalDomainDialogProps) {
+  const { t, i18n } = useTranslation("organizations/compliance-portals");
   const { toast } = useToast();
+  const {
+    titleRow, body, calloutBody, dns, records, record, recordHeader, recordField, recordValue, code,
+  } = domainDetailsDialog();
 
-  const copyToClipboard = (text: string) => {
-    void navigator.clipboard.writeText(text);
-    toast({
-      title: t("domainDialog.messages.copied"),
-      description: t("domainDialog.messages.valueCopied"),
-      variant: "success",
-    });
-  };
-
-  const domain = useFragment<CompliancePortalDomainDialogFragment$key>(fragment, fKey);
+  const domain = useFragment<CompliancePortalDomainDialogFragment$key>(fragment, customDomainKey);
   const sslStatus = domain.certificate?.status ?? "PENDING";
   const expiresAt = domain.certificate?.expiresAt;
   const provisioningErrorMessage = getCertificateProvisioningErrorMessage(
@@ -82,125 +87,131 @@ export function CompliancePortalDomainDialog(props: CompliancePortalDomainDialog
     t,
   );
 
+  function copyToClipboard(text: string) {
+    void navigator.clipboard.writeText(text);
+    toast({
+      title: t("domainDialog.messages.copied"),
+      description: t("domainDialog.messages.valueCopied"),
+      variant: "success",
+    });
+  }
+
+  const expiresLabel = expiresAt
+    ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(expiresAt))
+    : null;
+
   return (
-    <Dialog
-      ref={dialogRef}
-      trigger={children}
-      title={(
-        <div className="flex items-center gap-3">
-          <span>{domain.domain}</span>
-          <Badge variant={getCustomDomainStatusBadgeVariant(sslStatus)}>
-            {getCustomDomainStatusBadgeLabel(sslStatus, t)}
-          </Badge>
-        </div>
-      )}
-    >
-      <DialogContent padded className="space-y-6">
-        {sslStatus === "ACTIVE"
-          ? (
-              <div className="bg-subtle rounded-lg p-4">
-                <div className="flex items-start">
-                  <svg
-                    className="w-5 h-5 text-green-500 mt-0.5 mr-3 shrink-0"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <p className="font-medium mb-1">{t("domainDialog.active.title")}</p>
-                    <p className="text-sm text-txt-secondary">
-                      {t("domainDialog.active.description")}
-                    </p>
-                    {expiresAt && (
-                      <p className="text-xs text-txt-tertiary mt-2">
-                        {t("domainDialog.sslExpires")}
-                        {" "}
-                        {new Date(expiresAt).toLocaleDateString()}
-                      </p>
+    <Dialog>
+      <DialogTrigger render={children} />
+      <DialogPopup>
+        <DialogHeader>
+          <div className={titleRow()}>
+            <DialogTitle>{domain.domain}</DialogTitle>
+            <Badge variant="soft" color={customDomainBadgeColor(sslStatus)}>
+              {getCustomDomainStatusBadgeLabel(sslStatus, t)}
+            </Badge>
+          </div>
+        </DialogHeader>
+        <DialogBody>
+          <div className={body()}>
+            {sslStatus === "ACTIVE"
+              ? (
+                  <Callout color="green" icon={<CheckCircleIcon weight="fill" />}>
+                    <div className={calloutBody()}>
+                      <Text size={2} weight="medium" color="current">
+                        {t("domainDialog.active.title")}
+                      </Text>
+                      <Text size={2} color="current">
+                        {t("domainDialog.active.description")}
+                      </Text>
+                      {expiresLabel && (
+                        <Text size={1} color="current">
+                          {t("domainDialog.sslExpires")}
+                          {" "}
+                          {expiresLabel}
+                        </Text>
+                      )}
+                    </div>
+                  </Callout>
+                )
+              : (
+                  <div className={dns()}>
+                    {provisioningErrorMessage && (
+                      <Callout color="red" icon={<WarningCircleIcon weight="fill" />}>
+                        <div className={calloutBody()}>
+                          <Text size={2} weight="medium" color="current">
+                            {t("domainDialog.provisioningError")}
+                          </Text>
+                          <Text size={2} color="current">{provisioningErrorMessage}</Text>
+                        </div>
+                      </Callout>
+                    )}
+
+                    <div className={calloutBody()}>
+                      <Heading level={3} size={3} weight="medium">
+                        {t("domainDialog.dns.title")}
+                      </Heading>
+                      <Text size={2} color="faint">
+                        {t("domainDialog.dns.description")}
+                      </Text>
+                    </div>
+
+                    <div className={records()}>
+                      {domain.dnsRecords?.map((dnsRecord, index) => (
+                        <div key={index} className={record()}>
+                          <div className={recordHeader()}>
+                            <Text size={2} weight="medium">{dnsRecord.type}</Text>
+                            <Badge variant="soft" color="neutral">{dnsRecord.purpose}</Badge>
+                          </div>
+                          <div className={recordField()}>
+                            <Text size={1} color="faint">{t("domainDialog.dns.name")}</Text>
+                            <div className={recordValue()}>
+                              <Code className={code()}>{dnsRecord.name}</Code>
+                              <IconButton
+                                variant="soft"
+                                color="neutral"
+                                aria-label={t("domainDialog.actions.copy")}
+                                onClick={() => copyToClipboard(dnsRecord.name)}
+                              >
+                                <CopyIcon />
+                              </IconButton>
+                            </div>
+                          </div>
+                          <div className={recordField()}>
+                            <Text size={1} color="faint">{t("domainDialog.dns.value")}</Text>
+                            <div className={recordValue()}>
+                              <Code className={code()}>{dnsRecord.value}</Code>
+                              <IconButton
+                                variant="soft"
+                                color="neutral"
+                                aria-label={t("domainDialog.actions.copy")}
+                                onClick={() => copyToClipboard(dnsRecord.value)}
+                              >
+                                <CopyIcon />
+                              </IconButton>
+                            </div>
+                          </div>
+                          {dnsRecord.ttl && (
+                            <Text size={1} color="faint">
+                              {t("domainDialog.dns.ttl", { ttl: dnsRecord.ttl })}
+                            </Text>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {sslStatus === "PENDING" && (
+                      <Callout color="neutral">
+                        <Text size={2} color="current">
+                          {t("domainDialog.pendingDescription")}
+                        </Text>
+                      </Callout>
                     )}
                   </div>
-                </div>
-              </div>
-            )
-          : (
-              <div>
-                {provisioningErrorMessage && (
-                  <div className="bg-danger-subtle text-danger rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium mb-1">{t("domainDialog.provisioningError")}</p>
-                    <p className="text-sm">{provisioningErrorMessage}</p>
-                  </div>
                 )}
-
-                <h4 className="font-medium mb-3">{t("domainDialog.dns.title")}</h4>
-                <p className="text-sm text-txt-secondary mb-4">
-                  {t("domainDialog.dns.description")}
-                </p>
-
-                <div className="space-y-3">
-                  {domain.dnsRecords?.map((record, index) => (
-                    <div key={index} className="bg-subtle rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">{record.type}</span>
-                        <Badge variant="neutral">{record.purpose}</Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-xs text-txt-tertiary">
-                            {t("domainDialog.dns.name")}
-                          </label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <code className="flex-1 text-sm bg-subtle px-2 py-1 rounded">
-                              {record.name}
-                            </code>
-                            <Button
-                              variant="secondary"
-                              onClick={() => copyToClipboard(record.name)}
-                            >
-                              {t("domainDialog.actions.copy")}
-                            </Button>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-txt-tertiary">
-                            {t("domainDialog.dns.value")}
-                          </label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <code className="flex-1 text-sm bg-subtle px-2 py-1 rounded break-all">
-                              {record.value}
-                            </code>
-                            <Button
-                              variant="secondary"
-                              onClick={() => copyToClipboard(record.value)}
-                            >
-                              {t("domainDialog.actions.copy")}
-                            </Button>
-                          </div>
-                        </div>
-                        {record.ttl && (
-                          <div className="text-xs text-txt-tertiary">
-                            {t("domainDialog.dns.ttl", { ttl: record.ttl })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {sslStatus === "PENDING" && (
-                  <div className="bg-subtle rounded-lg p-4 mt-4">
-                    <p className="text-sm">
-                      {t("domainDialog.pendingDescription")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-      </DialogContent>
+          </div>
+        </DialogBody>
+      </DialogPopup>
     </Dialog>
   );
 }

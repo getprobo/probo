@@ -18,21 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  Field,
-  IconTrashCan,
-  useDialogRef,
-} from "@probo/ui";
-import { type PropsWithChildren, useState } from "react";
+import { Form } from "@base-ui/react/form";
+import { TrashIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
+import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
+import { DialogDescription } from "@probo/ui/src/v2/Dialog/DialogDescription";
+import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
+import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
+import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
+import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { DeleteCompliancePortalDomainDialog_customDomain$key } from "#/__generated__/core/DeleteCompliancePortalDomainDialog_customDomain.graphql";
 import type { DeleteCompliancePortalDomainDialogMutation } from "#/__generated__/core/DeleteCompliancePortalDomainDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+
+import { domainFormDialog } from "../variants";
 
 const deleteCustomDomainMutation = graphql`
   mutation DeleteCompliancePortalDomainDialogMutation($input: DeleteCustomDomainInput!) {
@@ -42,17 +52,28 @@ const deleteCustomDomainMutation = graphql`
   }
 `;
 
-type DeleteCompliancePortalDomainDialogProps = PropsWithChildren<{
-  domain: string;
-  customDomainId: string;
-}>;
+const fragment = graphql`
+  fragment DeleteCompliancePortalDomainDialog_customDomain on CustomDomain {
+    id
+    domain
+  }
+`;
 
-export function DeleteCompliancePortalDomainDialog(props: DeleteCompliancePortalDomainDialogProps) {
-  const { children, domain, customDomainId } = props;
+interface DeleteCompliancePortalDomainDialogProps {
+  customDomainKey: DeleteCompliancePortalDomainDialog_customDomain$key;
+  children: ReactElement;
+}
 
+export function DeleteCompliancePortalDomainDialog({
+  customDomainKey,
+  children,
+}: DeleteCompliancePortalDomainDialogProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const dialogRef = useDialogRef();
-  const [inputValue, setInputValue] = useState("");
+  const { form, fields } = domainFormDialog();
+  const domain = useFragment(fragment, customDomainKey);
+  const [open, setOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [deleteCustomDomain, isDeleting]
     = useMutation<DeleteCompliancePortalDomainDialogMutation>(
@@ -63,57 +84,94 @@ export function DeleteCompliancePortalDomainDialog(props: DeleteCompliancePortal
       },
     );
 
-  const handleDeleteDomain = async () => {
-    return deleteCustomDomain({
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setConfirmation("");
+      setErrors({});
+    }
+  }
+
+  function handleSubmit() {
+    if (confirmation !== domain.domain) {
+      setErrors({ confirmation: t("deleteDomainDialog.confirmationMismatch") });
+      return;
+    }
+
+    void deleteCustomDomain({
       variables: {
-        input: { customDomainId },
-      },
-      onCompleted: () => {
-        dialogRef.current?.close();
+        input: { customDomainId: domain.id },
       },
       updater: (store) => {
-        store.delete(customDomainId);
+        store.delete(domain.id);
       },
-    });
-  };
+    }).then(
+      () => {
+        handleOpenChange(false);
+      },
+      () => {
+        // Error toast is already shown by useMutation.
+      },
+    );
+  }
 
   return (
-    <Dialog
-      className="max-w-lg"
-      ref={dialogRef}
-      trigger={children}
-      title={t("deleteDomainDialog.title")}
-    >
-      <DialogContent padded className="space-y-4">
-        <p className="text-txt-secondary text-sm">
-          {t("deleteDomainDialog.description", { domain })}
-        </p>
-
-        <p className="text-red-600 text-sm font-medium">
-          {t("deleteDomainDialog.warning")}
-        </p>
-
-        <Field
-          label={t("deleteDomainDialog.confirmationLabel", { domain })}
-          type="text"
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          placeholder={domain}
-          disabled={isDeleting}
-          autoComplete="off"
-          autoFocus
-        />
-      </DialogContent>
-      <DialogFooter>
-        <Button
-          variant="danger"
-          icon={IconTrashCan}
-          onClick={() => void handleDeleteDomain()}
-          disabled={isDeleting || inputValue !== domain}
-        >
-          {isDeleting ? t("deleteDomainDialog.actions.deleting") : t("deleteDomainDialog.actions.delete")}
-        </Button>
-      </DialogFooter>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger render={children} />
+      <DialogPopup>
+        <Form className={form()} errors={errors} onFormSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>{t("deleteDomainDialog.title")}</DialogTitle>
+            <DialogDescription>
+              {t("deleteDomainDialog.description", { domain: domain.domain })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <div className={fields()}>
+              <Text size={2} color="red" weight="medium">
+                {t("deleteDomainDialog.warning")}
+              </Text>
+              <Field
+                label={t("deleteDomainDialog.confirmationLabel", { domain: domain.domain })}
+                error={errors.confirmation}
+              >
+                <TextField
+                  name="confirmation"
+                  required
+                  value={confirmation}
+                  placeholder={domain.domain}
+                  disabled={isDeleting}
+                  autoComplete="off"
+                  autoFocus
+                  onValueChange={(value) => {
+                    setConfirmation(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <DialogClose
+              render={(
+                <Button variant="soft" color="neutral">
+                  {t("deleteDomainDialog.actions.cancel")}
+                </Button>
+              )}
+            />
+            <Button
+              type="submit"
+              variant="solid"
+              color="red"
+              iconStart={<TrashIcon />}
+              loading={isDeleting}
+              disabled={confirmation !== domain.domain}
+            >
+              {t("deleteDomainDialog.actions.delete")}
+            </Button>
+          </DialogFooter>
+        </Form>
+      </DialogPopup>
     </Dialog>
   );
 }

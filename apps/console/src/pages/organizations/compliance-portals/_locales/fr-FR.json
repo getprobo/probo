@@ -708,12 +708,14 @@
     },
     "fields": {
       "domain": "Domaine",
-      "domainPlaceholder": "compliance.example.com"
+      "domainPlaceholder": "compliance.example.com",
+      "domainInvalid": "Veuillez saisir un domaine valide (p. ex. compliance.example.com)"
     },
     "examples": "Exemples : compliance.example.com, trust.example.com",
     "actions": {
       "adding": "Ajout en cours...",
-      "add": "Ajouter un domaine"
+      "add": "Ajouter un domaine",
+      "cancel": "Annuler"
     }
   },
   "deleteDomainDialog": {
@@ -721,6 +723,7 @@
     "description": "Cela supprimera définitivement le domaine personnalisé {{domain}} et toute sa configuration.",
     "warning": "Cette action est irréversible.",
     "confirmationLabel": "Pour confirmer la suppression, saisissez « {{domain}} » ci-dessous :",
+    "confirmationMismatch": "La valeur ne correspond pas au domaine.",
     "messages": {
       "deleted": "Domaine supprimé avec succès"
     },
@@ -729,7 +732,8 @@
     },
     "actions": {
       "deleting": "Suppression en cours...",
-      "delete": "Supprimer le domaine"
+      "delete": "Supprimer le domaine",
+      "cancel": "Annuler"
     }
   },
   "domainDialog": {

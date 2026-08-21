@@ -302,18 +302,23 @@
     "description": "Voer uw domein in en wij genereren de DNS-records die u moet toevoegen.",
     "messages": { "created": "Domein succesvol toegevoegd. Configureer de DNS-records om uw domein te verifiëren en te activeren." },
     "errors": { "create": "Toevoegen van domein mislukt" },
-    "fields": { "domain": "Domein", "domainPlaceholder": "compliance.example.com" },
+    "fields": {
+      "domain": "Domein",
+      "domainPlaceholder": "compliance.example.com",
+      "domainInvalid": "Voer een geldig domein in (bijv. compliance.example.com)"
+    },
     "examples": "Voorbeelden: compliance.example.com, trust.example.com",
-    "actions": { "adding": "Toevoegen...", "add": "Domein toevoegen" }
+    "actions": { "adding": "Toevoegen...", "add": "Domein toevoegen", "cancel": "Annuleren" }
   },
   "deleteDomainDialog": {
     "title": "Aangepast domein verwijderen",
     "description": "Hiermee wordt het aangepaste domein {{domain}} en de bijbehorende configuratie permanent verwijderd.",
     "warning": "Deze actie kan niet ongedaan worden gemaakt.",
     "confirmationLabel": "Typ \"{{domain}}\" hieronder om verwijdering te bevestigen:",
+    "confirmationMismatch": "De waarde komt niet overeen met het domein.",
     "messages": { "deleted": "Domein succesvol verwijderd" },
     "errors": { "delete": "Verwijderen van domein mislukt" },
-    "actions": { "deleting": "Bezig met verwijderen...", "delete": "Domein verwijderen" }
+    "actions": { "deleting": "Bezig met verwijderen...", "delete": "Domein verwijderen", "cancel": "Annuleren" }
   },
   "domainDialog": {
     "messages": { "copied": "Gekopieerd", "valueCopied": "Waarde gekopieerd naar klembord" },

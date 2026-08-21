@@ -23,9 +23,9 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CompliancePortalLayoutQuery } from "#/__generated__/core/CompliancePortalLayoutQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
 import { CompliancePortalLayout, compliancePortalLayoutQuery } from "./CompliancePortalLayout";
+import { CompliancePortalLayoutSkeleton } from "./CompliancePortalLayoutSkeleton";
 
 export default function CompliancePortalLayoutLoader() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
@@ -46,11 +46,11 @@ export default function CompliancePortalLayoutLoader() {
     : null;
 
   if (currentQueryRef == null) {
-    return <PageSkeleton />;
+    return <CompliancePortalLayoutSkeleton />;
   }
 
   return (
-    <Suspense key={compliancePortalId} fallback={<PageSkeleton />}>
+    <Suspense key={compliancePortalId} fallback={<CompliancePortalLayoutSkeleton />}>
       <CompliancePortalLayout queryRef={currentQueryRef} />
     </Suspense>
   );

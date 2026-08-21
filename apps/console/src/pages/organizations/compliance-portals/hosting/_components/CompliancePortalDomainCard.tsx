@@ -21,21 +21,26 @@
 import {
   getCertificateProvisioningErrorMessage,
   getCustomDomainStatusBadgeLabel,
-  getCustomDomainStatusBadgeVariant,
 } from "@probo/helpers";
-import { Badge, Button, Card } from "@probo/ui";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalDomainCardFragment$key } from "#/__generated__/core/CompliancePortalDomainCardFragment.graphql";
 
+import { customDomainBadgeColor } from "../_lib/customDomainBadgeColor";
+import { domainCard } from "../variants";
+
 import { CompliancePortalDomainDialog } from "./CompliancePortalDomainDialog";
 import { DeleteCompliancePortalDomainDialog } from "./DeleteCompliancePortalDomainDialog";
 
 const fragment = graphql`
   fragment CompliancePortalDomainCardFragment on CustomDomain {
-    id
     domain
     managed
     certificate {
@@ -44,17 +49,19 @@ const fragment = graphql`
     }
     canDelete: permission(action: "compliance-portal:custom-domain:delete")
     ...CompliancePortalDomainDialogFragment
+    ...DeleteCompliancePortalDomainDialog_customDomain
   }
 `;
 
-export function CompliancePortalDomainCard(props: {
-  fKey: CompliancePortalDomainCardFragment$key;
-}) {
-  const { fKey } = props;
+interface CompliancePortalDomainCardProps {
+  customDomainKey: CompliancePortalDomainCardFragment$key;
+}
 
+export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortalDomainCardProps) {
   const { t } = useTranslation("organizations/compliance-portals");
+  const { identity, actions } = domainCard();
 
-  const domain = useFragment<CompliancePortalDomainCardFragment$key>(fragment, fKey);
+  const domain = useFragment<CompliancePortalDomainCardFragment$key>(fragment, customDomainKey);
   const sslStatus = domain.certificate?.status ?? "PENDING";
   const provisioningErrorMessage = getCertificateProvisioningErrorMessage(
     domain.certificate?.provisioningError,
@@ -62,42 +69,41 @@ export function CompliancePortalDomainCard(props: {
   );
 
   return (
-    <Card padded>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{domain.domain}</span>
-            {domain.managed && (
-              <Badge variant="neutral">{t("domainCard.managed")}</Badge>
-            )}
-            <Badge variant={getCustomDomainStatusBadgeVariant(sslStatus)}>
-              {getCustomDomainStatusBadgeLabel(sslStatus, t)}
-            </Badge>
-          </div>
-          <p className="text-sm text-txt-secondary">
-            {sslStatus === "ACTIVE"
-              ? t("domainCard.status.active")
-              : provisioningErrorMessage
-                ? provisioningErrorMessage
-                : t("domainCard.status.pending")}
-          </p>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <CompliancePortalDomainDialog fKey={domain}>
-            <Button variant="secondary">{t("domainCard.actions.viewDetails")}</Button>
-          </CompliancePortalDomainDialog>
-
-          {domain.canDelete && (
-            <DeleteCompliancePortalDomainDialog
-              domain={domain.domain}
-              customDomainId={domain.id}
-            >
-              <Button variant="danger">{t("domainCard.actions.delete")}</Button>
-            </DeleteCompliancePortalDomainDialog>
+    <ListItem>
+      <ListItemContent>
+        <div className={identity()}>
+          <Text size={2} weight="medium" highContrast>{domain.domain}</Text>
+          {domain.managed && (
+            <Badge variant="soft" color="neutral">{t("domainCard.managed")}</Badge>
           )}
+          <Badge variant="soft" color={customDomainBadgeColor(sslStatus)}>
+            {getCustomDomainStatusBadgeLabel(sslStatus, t)}
+          </Badge>
         </div>
+        <Text size={1} color="neutral">
+          {sslStatus === "ACTIVE"
+            ? t("domainCard.status.active")
+            : provisioningErrorMessage
+              ? provisioningErrorMessage
+              : t("domainCard.status.pending")}
+        </Text>
+      </ListItemContent>
+
+      <div className={actions()}>
+        <CompliancePortalDomainDialog customDomainKey={domain}>
+          <Button variant="soft" color="neutral">
+            {t("domainCard.actions.viewDetails")}
+          </Button>
+        </CompliancePortalDomainDialog>
+
+        {domain.canDelete && (
+          <DeleteCompliancePortalDomainDialog customDomainKey={domain}>
+            <Button variant="solid" color="red">
+              {t("domainCard.actions.delete")}
+            </Button>
+          </DeleteCompliancePortalDomainDialog>
+        )}
       </div>
-    </Card>
+    </ListItem>
   );
 }

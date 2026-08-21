@@ -20,7 +20,10 @@
 
 import { safeOpenUrl } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { Badge, Button, PageHeader } from "@probo/ui";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { Navigate, Outlet, useLocation, useParams } from "react-router";
@@ -36,6 +39,7 @@ import {
   firstVisibleSection,
   sectionPermissionsFrom,
 } from "./_lib/compliancePortalSections";
+import { compliancePortalLayout } from "./variants";
 
 export const compliancePortalLayoutQuery = graphql`
   query CompliancePortalLayoutQuery($compliancePortalId: ID!) {
@@ -100,26 +104,37 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
     return <Navigate to={`${portalBase}/${landingSection.path}`} replace />;
   }
 
+  const { root, header, titleBlock, actions } = compliancePortalLayout();
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={compliancePortal.entityName}
-        description={t("portalLayout.description")}
-      >
-        <Badge variant={compliancePortal.active ? "success" : "danger"}>
-          {compliancePortal.active
-            ? t("portalLayout.status.active")
-            : t("portalLayout.status.inactive")}
-        </Badge>
-        {compliancePortal.active && compliancePortalUrl && (
-          <Button
-            variant="secondary"
-            onClick={() => safeOpenUrl(compliancePortalUrl)}
+    <div className={root()}>
+      <div className={header()}>
+        <div className={titleBlock()}>
+          <Heading level={1} size={7} weight="medium" highContrast>
+            {compliancePortal.entityName}
+          </Heading>
+          <Text size={2} color="faint">{t("portalLayout.description")}</Text>
+        </div>
+        <div className={actions()}>
+          <Badge
+            variant="soft"
+            color={compliancePortal.active ? "green" : "red"}
           >
-            {t("portalLayout.actions.open")}
-          </Button>
-        )}
-      </PageHeader>
+            {compliancePortal.active
+              ? t("portalLayout.status.active")
+              : t("portalLayout.status.inactive")}
+          </Badge>
+          {compliancePortal.active && compliancePortalUrl && (
+            <Button
+              variant="soft"
+              color="neutral"
+              onClick={() => safeOpenUrl(compliancePortalUrl)}
+            >
+              {t("portalLayout.actions.open")}
+            </Button>
+          )}
+        </div>
+      </div>
 
       <Outlet />
     </div>

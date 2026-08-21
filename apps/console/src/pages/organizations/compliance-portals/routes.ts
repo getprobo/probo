@@ -24,6 +24,9 @@ import type { AppRoute } from "@probo/routes";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { CompliancePortalLayoutSkeleton } from "./CompliancePortalLayoutSkeleton";
+import { CompliancePortalHostingPageSkeleton } from "./hosting/CompliancePortalHostingPageSkeleton";
+
 export const compliancePortalRoutes = [
   {
     path: "compliance-portals",
@@ -37,12 +40,12 @@ export const compliancePortalRoutes = [
   },
   {
     path: "compliance-portals/:compliancePortalId",
-    Fallback: PageSkeleton,
+    Fallback: CompliancePortalLayoutSkeleton,
     Component: lazy(() => import("#/pages/organizations/compliance-portals/CompliancePortalLayoutLoader")),
     children: [
       {
         path: "hosting",
-        Fallback: LinkCardSkeleton,
+        Fallback: CompliancePortalHostingPageSkeleton,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/hosting/CompliancePortalHostingPageLoader")),
       },
       {

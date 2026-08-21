@@ -1,18 +1,26 @@
 // Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
-// Permission to use, copy, modify, and/or distribute this software for any
-// purpose with or without fee is hereby granted, provided that the above
-// copyright notice and this permission notice appear in all copies.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-// PERFORMANCE OF THIS SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
-import { Button, IconChevronRight } from "@probo/ui";
+import { List } from "@probo/ui/src/v2/List/List";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -20,8 +28,10 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalDomainsSection_compliancePortalFragment$key } from "#/__generated__/core/CompliancePortalDomainsSection_compliancePortalFragment.graphql";
 import type { CompliancePortalDomainsSection_organizationFragment$key } from "#/__generated__/core/CompliancePortalDomainsSection_organizationFragment.graphql";
 
+import { domainsSection } from "../variants";
+
+import { CompliancePortalCustomDomainEmpty } from "./CompliancePortalCustomDomainEmpty";
 import { CompliancePortalDomainCard } from "./CompliancePortalDomainCard";
-import { NewCompliancePortalDomainDialog } from "./NewCompliancePortalDomainDialog";
 
 const organizationFragment = graphql`
   fragment CompliancePortalDomainsSection_organizationFragment on Organization {
@@ -31,59 +41,57 @@ const organizationFragment = graphql`
 
 const compliancePortalFragment = graphql`
   fragment CompliancePortalDomainsSection_compliancePortalFragment on CompliancePortal {
-    id
     defaultDomain {
-      id
       ...CompliancePortalDomainCardFragment
     }
     customDomain {
-      id
       ...CompliancePortalDomainCardFragment
     }
   }
 `;
 
-export function CompliancePortalDomainsSection(props: {
-  organizationRef: CompliancePortalDomainsSection_organizationFragment$key;
-  compliancePortalRef: CompliancePortalDomainsSection_compliancePortalFragment$key;
-}) {
-  const { t } = useTranslation("organizations/compliance-portals");
+interface CompliancePortalDomainsSectionProps {
+  organizationKey: CompliancePortalDomainsSection_organizationFragment$key;
+  compliancePortalKey: CompliancePortalDomainsSection_compliancePortalFragment$key;
+}
 
-  const organization = useFragment(organizationFragment, props.organizationRef);
-  const compliancePortal = useFragment(compliancePortalFragment, props.compliancePortalRef);
-  const compliancePortalId = compliancePortal.id;
+export function CompliancePortalDomainsSection({
+  organizationKey,
+  compliancePortalKey,
+}: CompliancePortalDomainsSectionProps) {
+  const { t } = useTranslation("organizations/compliance-portals");
+  const { root, intro } = domainsSection();
+
+  const organization = useFragment(organizationFragment, organizationKey);
+  const compliancePortal = useFragment(compliancePortalFragment, compliancePortalKey);
   const defaultDomain = compliancePortal.defaultDomain;
   const customDomain = compliancePortal.customDomain;
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-base font-medium">{t("brandPage.domains.title")}</h2>
-        <p className="text-sm text-txt-tertiary">
+    <section className={root()}>
+      <div className={intro()}>
+        <Heading level={2} size={3} weight="medium" highContrast>
+          {t("brandPage.domains.title")}
+        </Heading>
+        <Text size={2} color="neutral">
           {t("brandPage.domains.description")}
-        </p>
+        </Text>
       </div>
 
-      <div className="space-y-3">
-        {defaultDomain && (
-          <CompliancePortalDomainCard fKey={defaultDomain} />
-        )}
-
-        {customDomain
-          ? (
-              <CompliancePortalDomainCard fKey={customDomain} />
-            )
-          : organization.canCreateCustomDomain && (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-solid px-4 py-8">
-              <p className="max-w-md text-center text-sm text-txt-tertiary">
-                {t("domainPage.empty.description")}
-              </p>
-              <NewCompliancePortalDomainDialog compliancePortalId={compliancePortalId}>
-                <Button iconAfter={IconChevronRight}>{t("brandPage.domains.actions.configure")}</Button>
-              </NewCompliancePortalDomainDialog>
-            </div>
+      {(defaultDomain != null || customDomain != null) && (
+        <List>
+          {defaultDomain && (
+            <CompliancePortalDomainCard customDomainKey={defaultDomain} />
           )}
-      </div>
+          {customDomain && (
+            <CompliancePortalDomainCard customDomainKey={customDomain} />
+          )}
+        </List>
+      )}
+
+      {customDomain == null && organization.canCreateCustomDomain && (
+        <CompliancePortalCustomDomainEmpty />
+      )}
     </section>
   );
 }

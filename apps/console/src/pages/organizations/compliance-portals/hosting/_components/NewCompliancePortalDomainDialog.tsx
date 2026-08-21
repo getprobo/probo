@@ -18,23 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  Breadcrumb,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  Field,
-  useDialogRef,
-} from "@probo/ui";
-import type { PropsWithChildren } from "react";
+import { Form } from "@base-ui/react/form";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
+import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
+import { DialogDescription } from "@probo/ui/src/v2/Dialog/DialogDescription";
+import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
+import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
+import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
+import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { DialogTrigger } from "@probo/ui/src/v2/Dialog/DialogTrigger";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { NewCompliancePortalDomainDialogMutation } from "#/__generated__/core/NewCompliancePortalDomainDialogMutation.graphql";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutation } from "#/lib/relay/useMutation";
-import { z } from "#/lib/zod";
+
+import { domainFormDialog } from "../variants";
 
 const createCustomDomainMutation = graphql`
   mutation NewCompliancePortalDomainDialogMutation($input: CreateCustomDomainInput!) {
@@ -63,30 +69,29 @@ const createCustomDomainMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  domain: z
-    .string()
-    .min(1, "Domain is required")
-    .regex(
-      /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/i,
-      "Please enter a valid domain (e.g., compliance.example.com)",
-    ),
-});
+const DOMAIN_PATTERN
+  = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/;
 
-export function NewCompliancePortalDomainDialog(props: PropsWithChildren<{ compliancePortalId: string }>) {
-  const { children, compliancePortalId } = props;
+function normalizeDomain(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "");
+}
 
+interface NewCompliancePortalDomainDialogProps {
+  children: ReactElement;
+}
+
+export function NewCompliancePortalDomainDialog({
+  children,
+}: NewCompliancePortalDomainDialogProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const dialogRef = useDialogRef();
-
-  const { register, handleSubmit, formState, reset } = useFormWithSchema(
-    schema,
-    {
-      defaultValues: {
-        domain: "",
-      },
-    },
-  );
+  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
+  const { form, fields, examples } = domainFormDialog();
+  const [open, setOpen] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [createCustomDomain, isCreating]
     = useMutation<NewCompliancePortalDomainDialogMutation>(createCustomDomainMutation, {
@@ -94,18 +99,29 @@ export function NewCompliancePortalDomainDialog(props: PropsWithChildren<{ compl
       errorToast: t("newDomainDialog.errors.create"),
     });
 
-  const onSubmit = async (data: z.infer<typeof schema>) => {
-    const normalizedDomain = data.domain
-      .trim()
-      .toLowerCase()
-      .replace(/^https?:\/\//, "")
-      .replace(/\/$/, "");
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setErrors({});
+    }
+  }
 
-    await createCustomDomain({
+  function handleSubmit(formValues: Record<string, string>) {
+    if (compliancePortalId == null) {
+      return;
+    }
+
+    const domain = normalizeDomain(formValues.domain ?? "");
+    if (!DOMAIN_PATTERN.test(domain)) {
+      setErrors({ domain: t("newDomainDialog.fields.domainInvalid") });
+      return;
+    }
+
+    void createCustomDomain({
       variables: {
         input: {
-          compliancePortalId: compliancePortalId,
-          domain: normalizedDomain,
+          compliancePortalId,
+          domain,
         },
       },
       updater: (store, data) => {
@@ -120,47 +136,68 @@ export function NewCompliancePortalDomainDialog(props: PropsWithChildren<{ compl
           compliancePortalRecord.setLinkedRecord(newDomainRecord, "customDomain");
         }
       },
-    });
-
-    reset();
-    dialogRef.current?.close();
-  };
+    }).then(
+      () => {
+        handleOpenChange(false);
+      },
+      () => {
+        // Error toast is already shown by useMutation.
+      },
+    );
+  }
 
   return (
-    <Dialog
-      ref={dialogRef}
-      trigger={children}
-      title={<Breadcrumb items={[t("domainPage.title"), t("newDomainDialog.title")]} />}
-    >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
-        <DialogContent padded className="space-y-4">
-          <div>
-            <p className="text-sm text-txt-secondary mb-4">
-              {t("newDomainDialog.description")}
-            </p>
-          </div>
-
-          <Field
-            {...register("domain")}
-            label={t("newDomainDialog.fields.domain")}
-            type="text"
-            placeholder={t("newDomainDialog.fields.domainPlaceholder")}
-            error={formState.errors.domain?.message}
-            autoFocus
-          />
-
-          <div className="bg-subtle rounded-lg p-4">
-            <p className="text-xs text-txt-secondary">
-              {t("newDomainDialog.examples")}
-            </p>
-          </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button type="submit" disabled={isCreating || !formState.isValid}>
-            {isCreating ? t("newDomainDialog.actions.adding") : t("newDomainDialog.actions.add")}
-          </Button>
-        </DialogFooter>
-      </form>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger render={children} />
+      <DialogPopup>
+        <Form
+          className={form()}
+          errors={errors}
+          onFormSubmit={handleSubmit}
+        >
+          <DialogHeader>
+            <DialogTitle>{t("newDomainDialog.title")}</DialogTitle>
+            <DialogDescription>{t("newDomainDialog.description")}</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <div className={fields()}>
+              <Field
+                label={t("newDomainDialog.fields.domain")}
+                error={errors.domain}
+              >
+                <TextField
+                  name="domain"
+                  required
+                  placeholder={t("newDomainDialog.fields.domainPlaceholder")}
+                  autoFocus
+                  onValueChange={() => setErrors({})}
+                />
+              </Field>
+              <div className={examples()}>
+                <Text size={1} color="faint">{t("newDomainDialog.examples")}</Text>
+              </div>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <DialogClose
+              render={(
+                <Button variant="soft" color="neutral">
+                  {t("newDomainDialog.actions.cancel")}
+                </Button>
+              )}
+            />
+            <Button
+              type="submit"
+              variant="solid"
+              color="neutral"
+              highContrast
+              loading={isCreating}
+            >
+              {t("newDomainDialog.actions.add")}
+            </Button>
+          </DialogFooter>
+        </Form>
+      </DialogPopup>
     </Dialog>
   );
 }

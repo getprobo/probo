@@ -708,12 +708,14 @@
     },
     "fields": {
       "domain": "Domain",
-      "domainPlaceholder": "compliance.example.com"
+      "domainPlaceholder": "compliance.example.com",
+      "domainInvalid": "Please enter a valid domain (e.g., compliance.example.com)"
     },
     "examples": "Examples: compliance.example.com, trust.example.com",
     "actions": {
       "adding": "Adding...",
-      "add": "Add domain"
+      "add": "Add domain",
+      "cancel": "Cancel"
     }
   },
   "deleteDomainDialog": {
@@ -721,6 +723,7 @@
     "description": "This will permanently delete the custom domain {{domain}} and all its configuration.",
     "warning": "This action cannot be undone.",
     "confirmationLabel": "To confirm deletion, type \"{{domain}}\" below:",
+    "confirmationMismatch": "The value does not match the domain.",
     "messages": {
       "deleted": "Domain deleted successfully"
     },
@@ -729,7 +732,8 @@
     },
     "actions": {
       "deleting": "Deleting...",
-      "delete": "Delete domain"
+      "delete": "Delete domain",
+      "cancel": "Cancel"
     }
   },
   "domainDialog": {

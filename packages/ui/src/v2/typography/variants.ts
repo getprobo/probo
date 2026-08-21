@@ -131,3 +131,52 @@ export const headingSkeleton = tv({
     size: 6,
   },
 });
+
+// Inline code (Radix "Code"). Accent-only (gold), matching the Figma. Soft is
+// the default surface; extra hues are omitted until a consumer needs them.
+export const code = tv({
+  base: "inline font-mono rounded-1",
+  variants: {
+    size,
+    weight: {
+      regular: "font-normal",
+      bold: "font-bold",
+    },
+    variant: {
+      solid: "px-1",
+      soft: "px-1",
+      outline: "border px-1",
+      ghost: "",
+    },
+    highContrast: {
+      true: "",
+      false: "",
+    },
+  },
+  compoundVariants: [
+    { variant: "soft", highContrast: false, class: "bg-gold-3 text-gold-11" },
+    { variant: "soft", highContrast: true, class: "bg-gold-3 text-gold-12" },
+    { variant: "solid", highContrast: false, class: "bg-gold-9 text-white" },
+    { variant: "solid", highContrast: true, class: "bg-gold-12 text-gold-1" },
+    { variant: "outline", highContrast: false, class: "border-gold-6 text-gold-11" },
+    { variant: "outline", highContrast: true, class: "border-gold-6 text-gold-12" },
+    { variant: "ghost", highContrast: false, class: "text-gold-11" },
+    { variant: "ghost", highContrast: true, class: "text-gold-12" },
+  ],
+  defaultVariants: {
+    size: 2,
+    variant: "soft",
+    weight: "regular",
+    highContrast: false,
+  },
+});
+
+export const codeSkeleton = tv({
+  base: skeletonBase,
+  variants: {
+    size,
+  },
+  defaultVariants: {
+    size: 2,
+  },
+});
