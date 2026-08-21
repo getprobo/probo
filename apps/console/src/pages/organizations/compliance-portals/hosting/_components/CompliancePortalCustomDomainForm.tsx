@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { GlobeIcon } from "@phosphor-icons/react";
+import { LinkSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
@@ -117,7 +117,7 @@ export function CompliancePortalCustomDomainForm() {
           <div className={fade()} />
           <div className={lead()}>
             <div className={iconSlot()}>
-              <GlobeIcon size={24} weight="duotone" />
+              <LinkSimpleIcon size={24} weight="duotone" />
             </div>
             <Text size={2} weight="medium" color="neutral" className={subtitle()}>
               {t("customDomainForm.title")}

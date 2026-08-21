@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BroadcastIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { GlobeIcon, GlobeXIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -104,7 +104,11 @@ export function CompliancePortalStatusSection({
               : "statusSection.activation.titleInactive",
           )}
           description={t("statusSection.activation.description")}
-          icon={<BroadcastIcon size={24} weight="duotone" />}
+          icon={
+            compliancePortal.active
+              ? <GlobeIcon size={24} weight="duotone" />
+              : <GlobeXIcon size={24} weight="duotone" />
+          }
           checked={compliancePortal.active}
           disabled={!compliancePortal.canUpdate}
           onCheckedChange={handleToggleActive}
