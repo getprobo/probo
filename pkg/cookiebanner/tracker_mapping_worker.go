@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
@@ -233,19 +232,21 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// review left instead of linking the vendor, and skip the agent: it
 	// would re-derive the same wrong attribution the review exists to stop.
 	if commonThirdPartyID != nil {
-		var rejected bool
+		var rejected, gone bool
 
-		// The review is read inside the transaction that acts on it: a human
-		// can change a verdict at any time, and a read from an earlier
-		// transaction could persist an attribution the catalog no longer
-		// says. Nothing is written when the row is not rejected.
+		// The review is read and acted on in one transaction, under a row
+		// lock: a human can change a verdict at any time, and a read from an
+		// earlier transaction could persist an attribution the catalog no
+		// longer says. Nothing is written when the row is not rejected.
 		if err := h.pg.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				verdict, err := h.rejectedVerdictFor(ctx, tx, *commonThirdPartyID)
+				verdict, missing, err := h.rejectedVerdictFor(ctx, tx, *commonThirdPartyID)
 				if err != nil {
 					return err
 				}
+
+				gone = missing
 
 				if verdict == nil {
 					return nil
@@ -268,10 +269,18 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 			return fmt.Errorf("cannot persist verdict from a rejected catalog row: %w", err)
 		}
 
-		if rejected {
+		switch {
+		case rejected:
 			commonThirdPartyID = nil
 			directThirdPartyID = nil
 			firstParty = true
+		case gone:
+			// Pruned or merged away since phase one. Drop the id rather than
+			// hand a dangling reference to phase three, which would try to
+			// resolve an org third party for a row that no longer exists.
+			// The pattern falls through to the unmatched path and a later
+			// run can map it again.
+			commonThirdPartyID = nil
 		}
 	}
 
@@ -644,63 +653,48 @@ func isExtensionSource(tp coredata.TrackerPattern) bool {
 // of what the row names: a bundled library egresses nothing and is
 // FIRST_PARTY, while software the visitor installed is NOT_ATTRIBUTABLE and
 // calling it the operator's own would be false.
+// rejectedVerdictFor reports the terminal verdict a rejected catalog row
+// carries, or nil when the row was not rejected. The verdict is stored on
+// the row rather than inferred here because which one applies is a property
+// of what the row names: a bundled library egresses nothing and is
+// FIRST_PARTY, while software the visitor installed is NOT_ATTRIBUTABLE and
+// calling it the operator's own would be false.
+//
+// gone reports that the row no longer exists. The id comes from an earlier
+// transaction, so a prune or a merge can remove it in between, and the
+// caller must stop treating it as a vendor rather than fall through with an
+// id nothing resolves.
 func (h *trackerMappingHandler) rejectedVerdictFor(
 	ctx context.Context,
 	tx pg.Tx,
 	commonThirdPartyID gid.GID,
-) (*coredata.CommonTrackerPatternAttribution, error) {
-	// FOR UPDATE, so a review committed while this transaction runs cannot
-	// leave us persisting a verdict the catalog has since withdrawn (or
-	// linking a vendor a rejection has since ruled out). Reading inside the
-	// transaction is not enough on its own: without the lock the row can
-	// change under a repeatable read. Only the two review columns are
-	// selected — the full row is not needed and a narrower read keeps the
-	// lock's blast radius to the reviewer's own update.
-	q := `
-SELECT
-    review,
-    rejected_verdict
-FROM
-    common_third_parties
-WHERE
-    id = @id
-FOR UPDATE
-`
+) (verdict *coredata.CommonTrackerPatternAttribution, gone bool, err error) {
+	var party coredata.CommonThirdParty
 
-	var (
-		review  coredata.CommonThirdPartyReview
-		verdict *coredata.CommonTrackerPatternAttribution
-	)
-
-	if err := tx.QueryRow(
-		ctx,
-		q,
-		pgx.StrictNamedArgs{"id": commonThirdPartyID},
-	).Scan(&review, &verdict); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			// Deleted between the deterministic phase and here; there is no
-			// review to act on, so leave the mapping to the normal path.
-			return nil, nil
+	review, stored, err := party.LoadReviewForUpdate(ctx, tx, commonThirdPartyID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, true, nil
 		}
 
-		return nil, fmt.Errorf("cannot load common third party review: %w", err)
+		return nil, false, err
 	}
 
 	if review != coredata.CommonThirdPartyReviewRejected {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	// The database CHECK ties a verdict to the rejected state, so this is
 	// defensive: a row that lost its verdict must not silently fall through
 	// to a vendor link.
-	if verdict == nil || !verdict.IsTerminal() {
-		return nil, fmt.Errorf(
+	if stored == nil || !stored.IsTerminal() {
+		return nil, false, fmt.Errorf(
 			"rejected common third party %s carries no terminal verdict",
 			commonThirdPartyID,
 		)
 	}
 
-	return verdict, nil
+	return stored, false, nil
 }
 
 // firstNonNil returns a when it is set, otherwise b. It keeps the first
