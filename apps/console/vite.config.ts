@@ -81,6 +81,7 @@ function apiProxyTo(
   return {
     target,
     changeOrigin: true,
+    ws: true,
     configure(proxy) {
       proxy.on("proxyRes", (proxyResponse) => {
         const location = proxyResponse.headers.location;

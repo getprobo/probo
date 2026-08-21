@@ -21,6 +21,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -55,6 +56,7 @@ import (
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
+	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -81,6 +83,8 @@ type (
 		BaseURL                 *baseurl.BaseURL
 		AllowedOrigins          []string
 		Probo                   *probo.Service
+		CollaborationEvents     *realtime.Events
+		ShutdownContext         context.Context
 		ResourceAlias           *resourcealias.Service
 		File                    *filemanager.Service
 		IAM                     *iam.Service
@@ -276,6 +280,8 @@ func NewServer(cfg Config) (*Server, error) {
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
+			cfg.CollaborationEvents,
+			cfg.ShutdownContext,
 			cfg.ResourceAlias,
 			cfg.IAM,
 			cfg.ESign,
@@ -293,6 +299,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ProviderRegistry,
 			cfg.File,
 			cfg.BaseURL,
+			cfg.AllowedOrigins,
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,

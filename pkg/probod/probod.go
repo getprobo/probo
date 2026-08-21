@@ -84,11 +84,13 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/notification"
+	"go.probo.inc/probo/pkg/pgnotify"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	compliancecapability "go.probo.inc/probo/pkg/probot/capability/complianceportal"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
+	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -307,6 +309,20 @@ func (impl *Implm) Run(
 		rootSpan.RecordError(err)
 		return fmt.Errorf("cannot create pg client: %w", err)
 	}
+
+	collaborationEvents := realtime.NewEvents()
+
+	notificationConfig, err := impl.cfg.Pg.ConnectionConfig()
+	if err != nil {
+		return fmt.Errorf("cannot configure PostgreSQL notifications: %w", err)
+	}
+
+	collaborationListener := pgnotify.NewListener(
+		notificationConfig,
+		realtime.DocumentCollaborationChannel,
+		l.Named("document-collaboration-listener"),
+		collaborationEvents.Publish,
+	)
 
 	pepper, err := impl.cfg.Auth.GetPepperBytes()
 	if err != nil {
@@ -1007,11 +1023,16 @@ func (impl *Implm) Run(
 		}
 	}
 
+	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
+	defer stopApiServer()
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:          impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields:       impl.cfg.Api.ExtraHeaderFields,
 			Probo:                   proboService,
+			CollaborationEvents:     collaborationEvents,
+			ShutdownContext:         apiServerCtx,
 			ResourceAlias:           resourceAliasService,
 			File:                    fileManagerService,
 			IAM:                     iamService,
@@ -1099,8 +1120,16 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create compliance portal handler: %w", err)
 	}
 
-	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
-	defer stopApiServer()
+	notificationCtx, stopNotifications := context.WithCancel(context.Background())
+	defer stopNotifications()
+
+	wg.Go(
+		func() {
+			if err := collaborationListener.Run(notificationCtx); err != nil {
+				cancel(fmt.Errorf("document collaboration listener crashed: %w", err))
+			}
+		},
+	)
 
 	wg.Go(
 		func() {
@@ -1755,6 +1784,7 @@ func (impl *Implm) Run(
 	<-ctx.Done()
 
 	stopApiServer()
+	stopNotifications()
 	stopCompliancePortalServer()
 	stopWebhookWorker()
 	stopESignService()

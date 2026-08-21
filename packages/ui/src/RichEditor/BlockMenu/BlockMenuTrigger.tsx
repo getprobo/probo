@@ -5,7 +5,6 @@
 import { PlusIcon } from "@phosphor-icons/react";
 import { type Editor } from "@tiptap/react";
 
-import { getSlashStorage } from "../_lib/getSlashStorage";
 import { useBlockTrigger } from "../_lib/useBlockTrigger";
 import { activateSlashCommand } from "../SlashCommandExtension";
 
@@ -36,11 +35,9 @@ export function BlockMenuTrigger({ editor, hoveredBlock, compact = false }: Bloc
         editor.chain()
           .focus()
           .setTextSelection(textPos)
-          .insertContent("/")
           .run();
 
-        const s = getSlashStorage(editor);
-        if (s) activateSlashCommand(s, textPos);
+        activateSlashCommand(editor.view, textPos);
         return;
       }
 
@@ -58,11 +55,9 @@ export function BlockMenuTrigger({ editor, hoveredBlock, compact = false }: Bloc
         .focus()
         .insertContentAt(insertPos, { type: "paragraph" })
         .setTextSelection(textPos)
-        .insertContent("/")
         .run();
 
-      const s = getSlashStorage(editor);
-      if (s) activateSlashCommand(s, textPos);
+      activateSlashCommand(editor.view, textPos);
     } catch {
       // Block may no longer be in the document
     }
