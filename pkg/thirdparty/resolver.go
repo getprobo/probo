@@ -106,6 +106,12 @@ func ResolveOrCreateCommonThirdParty(
 		Slug:           partySlug,
 		Category:       category,
 		Certifications: []string{},
+		// Left nil to assert no review: Insert supplies UNREVIEWED in the
+		// statement, so this lands in the backlog without the caller naming
+		// a state it has no basis for. Nothing here can overwrite an
+		// existing verdict — on a slug race the savepoint below reloads the
+		// winning row rather than writing over it.
+		Review: nil,
 		// Request enrichment at creation: a freshly resolved catalog row
 		// carries only name/slug/category, so the enrichment worker fills
 		// the rest (URLs, address, certifications, logo). Curated seed

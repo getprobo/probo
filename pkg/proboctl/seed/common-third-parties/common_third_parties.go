@@ -92,6 +92,11 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 					now := time.Now()
 
 					for _, tp := range thirdParties {
+						// Curated by definition, so the seed asserts it on
+						// every run: this is the one caller that should move
+						// a row's review state without a human doing it.
+						validatedReview := coredata.CommonThirdPartyReviewValidated
+
 						party := coredata.CommonThirdParty{
 							ID:                            gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 							Name:                          tp.Name,
@@ -107,12 +112,17 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 							BusinessAssociateAgreementURL: tp.BusinessAssociateAgreementURL,
 							SubprocessorsListURL:          tp.SubprocessorsListURL,
 							Certifications:                tp.Certifications,
-							StatusPageURL:                 tp.StatusPageURL,
-							TermsOfServiceURL:             tp.TermsOfServiceURL,
-							SecurityPageURL:               tp.SecurityPageURL,
-							TrustPageURL:                  tp.TrustPageURL,
-							CreatedAt:                     now,
-							UpdatedAt:                     now,
+							// Seed entries are curated by definition, so they
+							// start where a review would put them and stay out
+							// of the unreviewed backlog. This is also why prune
+							// refuses to delete them.
+							Review:            &validatedReview,
+							StatusPageURL:     tp.StatusPageURL,
+							TermsOfServiceURL: tp.TermsOfServiceURL,
+							SecurityPageURL:   tp.SecurityPageURL,
+							TrustPageURL:      tp.TrustPageURL,
+							CreatedAt:         now,
+							UpdatedAt:         now,
 						}
 
 						wasInserted, err := party.Upsert(ctx, tx)

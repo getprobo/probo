@@ -554,3 +554,51 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 		assert.Equal(t, coredata.ThirdPartyCategoryMarketing, created.Category)
 	})
 }
+
+// A row created from agent identification has nobody's judgement behind it,
+// so it must land in the review backlog. It is created with Insert and a nil
+// Review, which the statement resolves to UNREVIEWED — the column is NOT NULL
+// with no database default, so this is worth pinning rather than assuming.
+func TestResolveOrCreateCommonThirdParty_StartsUnreviewed(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	name := "Resolver Review " + gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType).String()
+
+	var id *gid.GID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var err error
+
+		id, err = ResolveOrCreateCommonThirdParty(
+			ctx,
+			tx,
+			log.NewLogger(log.WithOutput(io.Discard)),
+			name,
+			coredata.ThirdPartyCategoryAnalytics,
+		)
+
+		return err
+	}))
+
+	require.NotNil(t, id)
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, *id)
+			return err
+		})
+	})
+
+	party := coredata.CommonThirdParty{}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return party.LoadByID(ctx, tx, *id)
+	}))
+
+	require.NotNil(t, party.Review, "the column is NOT NULL, so a stored row always has a state")
+	assert.Equal(t, coredata.CommonThirdPartyReviewUnreviewed, *party.Review)
+	assert.Nil(t, party.RejectedVerdict)
+}

@@ -121,6 +121,7 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 		var (
 			party    coredata.CommonThirdParty
 			inserted bool
+			loaded   bool
 		)
 
 		if err := pgClient.WithTx(
@@ -133,13 +134,31 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 				err := existing.LoadBySlug(ctx, tx, partySlug)
 				switch {
 				case err == nil:
+					// The load settles it: the row exists, so this is an
+					// update. Upsert cannot report that here — the receiver
+					// carries the loaded row's own id, so its id comparison
+					// always reads as an insert.
 					party = existing
+					loaded = true
 				case errors.Is(err, coredata.ErrResourceNotFound):
+					// A fresh id is minted below, so Upsert's comparison is
+					// meaningful on this path and is used instead of assuming
+					// an insert: a concurrent create would take the
+					// ON CONFLICT branch and must be reported as an update.
 					party = coredata.CommonThirdParty{
 						ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 						Slug:           partySlug,
 						Certifications: []string{},
-						CreatedAt:      now,
+						// Left nil to assert no review: Upsert writes
+						// UNREVIEWED on insert and keeps the stored value on
+						// conflict, so a concurrent create's verdict
+						// survives. The column itself is NOT NULL with no
+						// database default — nil is honoured by Upsert, not
+						// by the schema. A hand-created row still needs a
+						// review either way: the operator asserted a name and
+						// category, not that the entity is engageable.
+						Review:    nil,
+						CreatedAt: now,
 					}
 				default:
 					return fmt.Errorf("cannot load common third party by slug: %w", err)
@@ -172,10 +191,12 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 					return nil
 				}
 
-				inserted, err = party.Upsert(ctx, tx)
+				written, err := party.Upsert(ctx, tx)
 				if err != nil {
 					return fmt.Errorf("cannot upsert common third party: %w", err)
 				}
+
+				inserted = !loaded && written
 
 				// Arm enrichment explicitly rather than via the receiver:
 				// Upsert sets enrichment_requested_at from the receiver only

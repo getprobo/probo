@@ -61,8 +61,29 @@ type (
 		Enrichment                    json.RawMessage    `db:"enrichment"`
 		EnrichmentAttempts            int                `db:"enrichment_attempts"`
 		LastEnrichmentAttemptAt       *time.Time         `db:"last_enrichment_attempt_at"`
-		CreatedAt                     time.Time          `db:"created_at"`
-		UpdatedAt                     time.Time          `db:"updated_at"`
+
+		// Review is the human verdict on whether this row names an
+		// engageable entity. RejectedVerdict is set exactly when Review
+		// is REJECTED and carries the terminal attribution that patterns
+		// resolving to this row earn instead of a vendor link; a database
+		// CHECK enforces the pairing.
+		//
+		// Nil means "do not assert a review": Insert and Upsert supply
+		// UNREVIEWED in the statement, and Upsert's conflict branch leaves an
+		// existing row's verdict alone — which is what an auto-create needs,
+		// since it reaches that branch only by losing a race and has no
+		// verdict of its own to record.
+		//
+		// The column is NOT NULL with no database default, so nil is honoured
+		// by these two methods rather than by the schema. Any other writer
+		// must supply a state.
+		Review          *CommonThirdPartyReview          `db:"review"`
+		RejectedVerdict *CommonTrackerPatternAttribution `db:"rejected_verdict"`
+		ReviewedAt      *time.Time                       `db:"reviewed_at"`
+		ReviewedBy      *string                          `db:"reviewed_by"`
+
+		CreatedAt time.Time `db:"created_at"`
+		UpdatedAt time.Time `db:"updated_at"`
 	}
 
 	CommonThirdParties []*CommonThirdParty
@@ -140,6 +161,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -208,6 +233,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -272,6 +301,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -332,6 +365,10 @@ INSERT INTO common_third_parties (
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 ) VALUES (
@@ -358,6 +395,10 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
+    COALESCE(@review, @default_review::common_third_party_review),
+    @rejected_verdict,
+    @reviewed_at,
+    @reviewed_by,
     @created_at,
     @updated_at
 )
@@ -387,6 +428,11 @@ INSERT INTO common_third_parties (
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
+		"review":                           t.Review,
+		"default_review":                   CommonThirdPartyReviewUnreviewed,
+		"rejected_verdict":                 t.RejectedVerdict,
+		"reviewed_at":                      t.ReviewedAt,
+		"reviewed_by":                      t.ReviewedBy,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -401,7 +447,13 @@ INSERT INTO common_third_parties (
 
 // Upsert inserts a row, or on slug conflict updates every column except
 // id and created_at. Returns true if a new row was inserted, false if an
-// existing row was updated.
+// existing row was updated, which holds for a caller that mints a fresh id
+// before calling — the seed's path.
+//
+// A caller that loads the row first must not rely on this: its receiver
+// already carries the row's own id, so the comparison cannot distinguish
+// the branches and always reports an insert. Such a caller already knows
+// the answer from its own load and should use that instead.
 func (t *CommonThirdParty) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -431,6 +483,10 @@ INSERT INTO common_third_parties (
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 ) VALUES (
@@ -457,6 +513,10 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
+    COALESCE(@review, @default_review::common_third_party_review),
+    @rejected_verdict,
+    @reviewed_at,
+    @reviewed_by,
     @created_at,
     @updated_at
 )
@@ -478,6 +538,22 @@ SET
     terms_of_service_url             = EXCLUDED.terms_of_service_url,
     security_page_url                = EXCLUDED.security_page_url,
     trust_page_url                   = EXCLUDED.trust_page_url,
+    -- Curation is part of what an upsert asserts: the seed promotes its
+    -- entries to VALIDATED here, since a curated row needs no human pass.
+    -- proboctl's upsert loads the row first and writes the current value
+    -- back, so a human REJECTED survives a category patch.
+    -- A NULL @review means "whatever is already there": an auto-create that
+    -- only reaches this branch by losing a race has no verdict to assert and
+    -- must not erase a human one. The seed passes VALIDATED deliberately,
+    -- because curation is exactly what it is asserting.
+    review                           = COALESCE(@review, common_third_parties.review),
+    -- Moves with review or the CHECK fires: promoting a rejected row would
+    -- otherwise keep the verdict its rejection carried. Held to the same
+    -- rule, so declining to assert a review leaves the verdict alone too.
+    rejected_verdict                 = CASE
+        WHEN @review IS NULL THEN common_third_parties.rejected_verdict
+        ELSE EXCLUDED.rejected_verdict
+    END,
     updated_at                       = EXCLUDED.updated_at
 RETURNING
     id,
@@ -503,6 +579,10 @@ RETURNING
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 `
@@ -533,6 +613,11 @@ RETURNING
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
+		"review":                           t.Review,
+		"default_review":                   CommonThirdPartyReviewUnreviewed,
+		"rejected_verdict":                 t.RejectedVerdict,
+		"reviewed_at":                      t.ReviewedAt,
+		"reviewed_by":                      t.ReviewedBy,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -600,6 +685,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -682,6 +771,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -895,6 +988,93 @@ WHERE
 	return nil
 }
 
+// LoadReviewForUpdate reads just the review verdict, locking the row so a
+// concurrent review cannot commit between this read and whatever the caller
+// writes on the strength of it. Only the two review columns are selected:
+// the caller needs no more, and a narrow read keeps the lock's blast radius
+// to a reviewer's own update rather than the whole entity.
+//
+// Returns ErrResourceNotFound when the row is gone, which a caller holding
+// an id from an earlier transaction must handle — the row can be pruned or
+// merged away in between.
+func (t *CommonThirdParty) LoadReviewForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+) (CommonThirdPartyReview, *CommonTrackerPatternAttribution, error) {
+	q := `
+SELECT
+    review,
+    rejected_verdict
+FROM
+    common_third_parties
+WHERE
+    id = @id
+FOR UPDATE
+`
+
+	var (
+		review  CommonThirdPartyReview
+		verdict *CommonTrackerPatternAttribution
+	)
+
+	err := conn.QueryRow(ctx, q, pgx.StrictNamedArgs{"id": id}).Scan(&review, &verdict)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil, ErrResourceNotFound
+		}
+
+		return "", nil, fmt.Errorf("cannot load common third party review: %w", err)
+	}
+
+	return review, verdict, nil
+}
+
+// UpdateReview records a human verdict on what the row names.
+//
+// The verdict must be nil unless review is REJECTED, and must be a terminal
+// attribution when it is; a database CHECK enforces the pairing, so a caller
+// that gets it wrong fails here rather than writing a row the mapping
+// pipeline cannot act on.
+func (t CommonThirdParty) UpdateReview(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	review CommonThirdPartyReview,
+	verdict *CommonTrackerPatternAttribution,
+	reviewedBy string,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    review = @review,
+    rejected_verdict = @rejected_verdict,
+    reviewed_at = NOW(),
+    reviewed_by = @reviewed_by,
+    updated_at = NOW()
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":               id,
+		"review":           review,
+		"rejected_verdict": verdict,
+		"reviewed_by":      reviewedBy,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update common third party review: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 // UpdateSlug changes a catalog entry's slug.
 //
 // The slug is the entry's identity: dedup resolves against it and the seed
@@ -1018,6 +1198,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -1112,6 +1296,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM

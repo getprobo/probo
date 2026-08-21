@@ -39,6 +39,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagKeyword  string
 		flagState    string
 		flagStatus   string
+		flagReview   string
 		flagSort     string
 		flagOrder    string
 	)
@@ -56,6 +57,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by name/slug substring")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by last enrichment status (done, partial, failed)")
+	cmd.Flags().StringVar(&flagReview, "review", "", "Filter by review state (unreviewed, validated, rejected)")
 	cmd.Flags().StringVar(&flagSort, "sort", "name", "Sort field: name, created, updated")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
 
@@ -89,6 +91,15 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 
 		if flagKeyword != "" {
 			filter.WithKeyword(&flagKeyword)
+		}
+
+		if flagReview != "" {
+			review, err := parseReview(flagReview)
+			if err != nil {
+				return err
+			}
+
+			filter.WithReview(&review)
 		}
 
 		if flagState != "" {
