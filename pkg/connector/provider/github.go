@@ -42,7 +42,9 @@ func githubRegistration() *Registration {
 			// negotiated through the Accept header instead.
 			APIBase: "https://api.github.com",
 		},
-		OAuth2Scopes:   []string{"read:org"},
+		// read:audit_log is Enterprise Cloud only; without it the driver
+		// still lists members and leaves LastLogin nil.
+		OAuth2Scopes:   []string{"read:org", "read:audit_log"},
 		SupportsAPIKey: true,
 		APIKeyExtraSettings: []ExtraSetting{
 			{Key: "organization", Label: "Organization", Required: true},

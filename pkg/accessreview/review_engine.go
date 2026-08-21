@@ -35,6 +35,12 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
+// sourceFetchTimeout is the budget for one driver's ListAccounts call.
+// GitHub paginates members, then several best-effort APIs (audit log,
+// apps, tokens, deploy keys); 30s was enough to list members but not to
+// also walk a long audit log.
+const sourceFetchTimeout = 2 * time.Minute
+
 // FetchSource pulls accounts from a single campaign source snapshot and upserts
 // access entries against that snapshot.
 func (s *Service) FetchSource(
@@ -100,7 +106,7 @@ func (s *Service) FetchSource(
 		previousByAccountKey[entry.AccountKey] = entry
 	}
 
-	sourceCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	sourceCtx, cancel := context.WithTimeout(ctx, sourceFetchTimeout)
 	accounts, err := driver.ListAccounts(sourceCtx)
 
 	cancel()
