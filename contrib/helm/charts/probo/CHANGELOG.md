@@ -4,6 +4,17 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.18.0] - 2026-08-21
+
+### Added
+
+- Helm values for the per-organization cloud identity issuer: signing key, key id, retired-key rotation, and issuer base URL
+- Helm values for outbound webhook delivery tuning: sender interval, request timeout, cache TTL, stale-after threshold, retry base/max, and max concurrency
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.264.0`
+
 ## [0.17.0] - 2026-08-18
 
 ### Added
