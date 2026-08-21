@@ -92,11 +92,12 @@ func handleConnectorInitiate(
 		requestedScopes := r.URL.Query()["scope"]
 		prb := proboSvc
 
-		// Look up any existing connector so we can union its stored scopes
-		// into the new auth request. Cross-org/provider/protocol mismatches
-		// are caught inside Reconnect at callback time; this handler only
-		// needs the scope set.
-		existing, err := loadExistingConnector(r, prb, scope, organizationID, provider)
+		// Look up the connector this flow reconnects, if any, so we can
+		// union its stored scopes into the new auth request.
+		// Cross-org/provider/protocol mismatches are caught inside
+		// Reconnect at callback time; this handler only needs the scope
+		// set.
+		existing, err := loadExistingConnector(r, prb, scope)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
@@ -139,41 +140,26 @@ func handleConnectorInitiate(
 }
 
 // loadExistingConnector returns the connector the initiate handler
-// should reconnect, or nil if this is a fresh install. An explicit
-// `connector_id` query parameter selects a specific row; otherwise the
-// handler falls back to the widest-scope (org, provider) row. Callers
-// must distinguish ErrResourceNotFound (explicit id not found — 400)
-// from nil (no existing row — fresh install path).
+// should reconnect, or nil for a fresh connect. Reconnect is explicit:
+// only a connector_id query parameter selects a row — a bare initiate
+// always creates a new connector, so an organization can connect the
+// same provider several times. Callers must distinguish
+// ErrResourceNotFound (explicit id not found — 400) from nil
+// (fresh-connect path).
 func loadExistingConnector(
 	r *http.Request,
 	prb *probo.Service,
 	scope coredata.Scoper,
-	organizationID gid.GID,
-	provider string,
 ) (*coredata.Connector, error) {
-	if explicitID := r.URL.Query().Get("connector_id"); explicitID != "" {
-		parsedID, err := gid.ParseGID(explicitID)
-		if err != nil {
-			return nil, fmt.Errorf("%w: cannot parse connector id: %w", errInvalidReconnectConnector, err)
-		}
-
-		found, err := prb.Connectors.GetWithConnection(r.Context(), scope, parsedID)
-		if err != nil {
-			return nil, err
-		}
-
-		return found, nil
-	}
-
-	found, err := prb.Connectors.GetByOrganizationIDAndProvider(
-		r.Context(),
-		scope,
-		organizationID,
-		coredata.ConnectorProvider(provider),
-	)
-	if errors.Is(err, coredata.ErrResourceNotFound) {
+	explicitID := r.URL.Query().Get("connector_id")
+	if explicitID == "" {
 		return nil, nil
 	}
 
-	return found, err
+	parsedID, err := gid.ParseGID(explicitID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: cannot parse connector id: %w", errInvalidReconnectConnector, err)
+	}
+
+	return prb.Connectors.GetWithConnection(r.Context(), scope, parsedID)
 }

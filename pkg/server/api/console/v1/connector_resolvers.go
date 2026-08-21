@@ -7,7 +7,6 @@ package console_v1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/log"
@@ -78,10 +77,6 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot create API key connector", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -126,10 +121,6 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot create client credentials connector", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
