@@ -226,6 +226,7 @@ func TestCommonThirdPartyUpsert_NilReviewPreservesStoredVerdict(t *testing.T) {
 	}))
 
 	after := coredata.CommonThirdParty{}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return after.LoadBySlug(ctx, tx, party.Slug)
 	}))

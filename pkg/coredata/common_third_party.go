@@ -68,10 +68,15 @@ type (
 		// resolving to this row earn instead of a vendor link; a database
 		// CHECK enforces the pairing.
 		//
-		// Nil means "do not assert a review". Insert writes UNREVIEWED,
-		// and Upsert leaves an existing row's verdict alone — which is what
-		// an auto-create needs, since it reaches the conflict branch only by
-		// losing a race and has no verdict of its own to record.
+		// Nil means "do not assert a review": Insert and Upsert supply
+		// UNREVIEWED in the statement, and Upsert's conflict branch leaves an
+		// existing row's verdict alone — which is what an auto-create needs,
+		// since it reaches that branch only by losing a race and has no
+		// verdict of its own to record.
+		//
+		// The column is NOT NULL with no database default, so nil is honoured
+		// by these two methods rather than by the schema. Any other writer
+		// must supply a state.
 		Review          *CommonThirdPartyReview          `db:"review"`
 		RejectedVerdict *CommonTrackerPatternAttribution `db:"rejected_verdict"`
 		ReviewedAt      *time.Time                       `db:"reviewed_at"`
@@ -390,7 +395,7 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
-    COALESCE(@review, 'UNREVIEWED'::common_third_party_review),
+    COALESCE(@review, @default_review::common_third_party_review),
     @rejected_verdict,
     @reviewed_at,
     @reviewed_by,
@@ -424,6 +429,7 @@ INSERT INTO common_third_parties (
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
 		"review":                           t.Review,
+		"default_review":                   CommonThirdPartyReviewUnreviewed,
 		"rejected_verdict":                 t.RejectedVerdict,
 		"reviewed_at":                      t.ReviewedAt,
 		"reviewed_by":                      t.ReviewedBy,
@@ -507,7 +513,7 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
-    COALESCE(@review, 'UNREVIEWED'::common_third_party_review),
+    COALESCE(@review, @default_review::common_third_party_review),
     @rejected_verdict,
     @reviewed_at,
     @reviewed_by,
@@ -608,6 +614,7 @@ RETURNING
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
 		"review":                           t.Review,
+		"default_review":                   CommonThirdPartyReviewUnreviewed,
 		"rejected_verdict":                 t.RejectedVerdict,
 		"reviewed_at":                      t.ReviewedAt,
 		"reviewed_by":                      t.ReviewedBy,

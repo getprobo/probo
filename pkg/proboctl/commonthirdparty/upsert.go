@@ -149,11 +149,14 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 						ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 						Slug:           partySlug,
 						Certifications: []string{},
-						// Left nil: a fresh row defaults to UNREVIEWED, and
-						// on the conflict path a concurrent create's verdict
-						// must survive. A hand-created row still needs a
-						// review either way — the operator asserted a name
-						// and category, not that the entity is engageable.
+						// Left nil to assert no review: Upsert writes
+						// UNREVIEWED on insert and keeps the stored value on
+						// conflict, so a concurrent create's verdict
+						// survives. The column itself is NOT NULL with no
+						// database default — nil is honoured by Upsert, not
+						// by the schema. A hand-created row still needs a
+						// review either way: the operator asserted a name and
+						// category, not that the entity is engageable.
 						Review:    nil,
 						CreatedAt: now,
 					}
