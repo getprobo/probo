@@ -593,6 +593,7 @@ func TestResolveOrCreateCommonThirdParty_StartsUnreviewed(t *testing.T) {
 	})
 
 	party := coredata.CommonThirdParty{}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return party.LoadByID(ctx, tx, *id)
 	}))
