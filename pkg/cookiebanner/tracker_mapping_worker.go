@@ -653,12 +653,6 @@ func isExtensionSource(tp coredata.TrackerPattern) bool {
 // of what the row names: a bundled library egresses nothing and is
 // FIRST_PARTY, while software the visitor installed is NOT_ATTRIBUTABLE and
 // calling it the operator's own would be false.
-// rejectedVerdictFor reports the terminal verdict a rejected catalog row
-// carries, or nil when the row was not rejected. The verdict is stored on
-// the row rather than inferred here because which one applies is a property
-// of what the row names: a bundled library egresses nothing and is
-// FIRST_PARTY, while software the visitor installed is NOT_ATTRIBUTABLE and
-// calling it the operator's own would be false.
 //
 // gone reports that the row no longer exists. The id comes from an earlier
 // transaction, so a prune or a merge can remove it in between, and the
