@@ -261,6 +261,15 @@ func (h *sourceNameHandler) connectorHTTPClient(
 	ctx context.Context,
 	dbConnector *coredata.Connector,
 ) (*http.Client, error) {
+	if h.connectorRegistry != nil {
+		if err := h.connectorRegistry.ConfigureConnection(
+			string(dbConnector.Provider),
+			dbConnector.Connection,
+		); err != nil {
+			return nil, err
+		}
+	}
+
 	oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection)
 	if !ok {
 		// Inject the Probo-held key for ManagedAPIKey providers (no-op

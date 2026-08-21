@@ -50,12 +50,18 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 	server := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch {
-			case r.Method == http.MethodGet && r.URL.Path == "/app/installations/42":
-				assertGitHubAppJWT(t, r.Header.Get("Authorization"))
+			case r.Method == http.MethodPost && r.URL.Path == "/login/oauth/access_token":
+				require.NoError(t, r.ParseForm())
+				assert.Equal(t, "github-app-client-id", r.Form.Get("client_id"))
+				assert.Equal(t, "github-app-client-secret", r.Form.Get("client_secret"))
+				assert.Equal(t, "user-code", r.Form.Get("code"))
 
-				_, _ = w.Write(
-					[]byte(`{"target_type":"Organization","account":{"login":"acme"}}`),
-				)
+				_, _ = w.Write([]byte(`{"access_token":"user-token"}`))
+			case r.Method == http.MethodGet && r.URL.Path == "/user/installations":
+				assert.Equal(t, "Bearer user-token", r.Header.Get("Authorization"))
+				assert.Equal(t, "100", r.URL.Query().Get("per_page"))
+
+				_, _ = w.Write([]byte(`{"total_count":1,"installations":[{"id":42,"target_type":"Organization","account":{"login":"acme"}}]}`))
 			case r.Method == http.MethodPost && r.URL.Path == "/app/installations/42/access_tokens":
 				tokenRequests.Add(1)
 				assertGitHubAppJWT(t, r.Header.Get("Authorization"))
@@ -78,12 +84,15 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	c := &GitHubAppConnector{
-		AppID:       "123456",
-		Slug:        "probo-test",
-		PrivateKey:  privateKey,
-		InstallBase: "https://github.com/apps",
-		APIBase:     server.URL,
-		HTTPClient:  server.Client(),
+		AppID:        "123456",
+		ClientID:     "github-app-client-id",
+		ClientSecret: "github-app-client-secret",
+		Slug:         "probo-test",
+		PrivateKey:   privateKey,
+		InstallBase:  "https://github.com/apps",
+		TokenURL:     server.URL + "/login/oauth/access_token",
+		APIBase:      server.URL,
+		HTTPClient:   server.Client(),
 	}
 	organizationID := gid.New(gid.NewTenantID(), 0)
 	initReq := httptest.NewRequest(
@@ -108,7 +117,7 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 	require.NotEmpty(t, parsedInstallURL.Query().Get("state"))
 	assert.True(t, IsGitHubAppState(parsedInstallURL.Query().Get("state")))
 
-	callbackURL := "/?installation_id=42&setup_action=install&state=" +
+	callbackURL := "/?installation_id=42&setup_action=install&code=user-code&state=" +
 		url.QueryEscape(parsedInstallURL.Query().Get("state"))
 	callbackReq := httptest.NewRequest(http.MethodGet, callbackURL, nil)
 	connection, state, err := c.CompleteWithState(context.Background(), callbackReq)
@@ -144,10 +153,12 @@ func TestGitHubAppConnector_RejectsInvalidState(t *testing.T) {
 	t.Parallel()
 
 	c := &GitHubAppConnector{
-		AppID:       "123456",
-		Slug:        "probo-test",
-		PrivateKey:  newGitHubAppTestPrivateKey(t),
-		InstallBase: "https://github.com/apps",
+		AppID:        "123456",
+		ClientID:     "github-app-client-id",
+		ClientSecret: "github-app-client-secret",
+		Slug:         "probo-test",
+		PrivateKey:   newGitHubAppTestPrivateKey(t),
+		InstallBase:  "https://github.com/apps",
 	}
 	req := httptest.NewRequest(
 		http.MethodGet,
@@ -158,6 +169,80 @@ func TestGitHubAppConnector_RejectsInvalidState(t *testing.T) {
 	_, _, err := c.CompleteWithState(context.Background(), req)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot validate github app state token")
+}
+
+func TestGitHubAppConnector_RejectsUnauthorizedInstallation(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch {
+			case r.Method == http.MethodPost && r.URL.Path == "/login/oauth/access_token":
+				_, _ = w.Write([]byte(`{"access_token":"user-token"}`))
+			case r.Method == http.MethodGet && r.URL.Path == "/user/installations":
+				_, _ = w.Write([]byte(`{"total_count":0,"installations":[]}`))
+			default:
+				http.NotFound(w, r)
+			}
+		}),
+	)
+	t.Cleanup(server.Close)
+
+	c := &GitHubAppConnector{
+		AppID:        "123456",
+		ClientID:     "github-app-client-id",
+		ClientSecret: "github-app-client-secret",
+		Slug:         "probo-test",
+		PrivateKey:   newGitHubAppTestPrivateKey(t),
+		InstallBase:  "https://github.com/apps",
+		TokenURL:     server.URL + "/login/oauth/access_token",
+		APIBase:      server.URL,
+		HTTPClient:   server.Client(),
+	}
+
+	organizationID := gid.New(gid.NewTenantID(), 0)
+	installURL, err := c.Initiate(
+		context.Background(),
+		GitHubProvider,
+		organizationID,
+		InitiateOptions{},
+		nil,
+	)
+	require.NoError(t, err)
+
+	parsedInstallURL, err := url.Parse(installURL)
+	require.NoError(t, err)
+
+	callbackURL := "/?installation_id=99&setup_action=install&code=user-code&state=" +
+		url.QueryEscape(parsedInstallURL.Query().Get("state"))
+	callbackReq := httptest.NewRequest(http.MethodGet, callbackURL, nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), callbackReq)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot authorize github app installation")
+}
+
+func TestGitHubAppConnection_RuntimeCredentialsAreNotPersisted(t *testing.T) {
+	t.Parallel()
+
+	conn := &GitHubAppConnection{
+		AppID:          "app-id",
+		PrivateKey:     "private-key",
+		InstallationID: 42,
+		APIBase:        "https://api.github.com",
+	}
+
+	data, err := json.Marshal(conn)
+	require.NoError(t, err)
+
+	assert.NotContains(t, string(data), "app-id")
+	assert.NotContains(t, string(data), "private-key")
+
+	var restored GitHubAppConnection
+	require.NoError(t, json.Unmarshal(data, &restored))
+	assert.Equal(t, int64(42), restored.InstallationID)
+	assert.Empty(t, restored.AppID)
+	assert.Empty(t, restored.PrivateKey)
 }
 
 func newGitHubAppTestPrivateKey(t *testing.T) string {

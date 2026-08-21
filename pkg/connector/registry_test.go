@@ -59,3 +59,30 @@ func TestConfiguredProtocols(t *testing.T) {
 		registry.ConfiguredProtocols("GITHUB"),
 	)
 }
+
+func TestConnectorRegistry_ConfigureConnection(t *testing.T) {
+	t.Parallel()
+
+	registry := connector.NewConnectorRegistry()
+	require.NoError(
+		t,
+		registry.RegisterProtocol(
+			connector.GitHubProvider,
+			connector.ProtocolGitHubApp,
+			&connector.GitHubAppConnector{
+				AppID:      "current-app-id",
+				PrivateKey: "current-private-key",
+			},
+		),
+	)
+
+	conn := &connector.GitHubAppConnection{
+		InstallationID: 42,
+		APIBase:        "https://api.github.com",
+	}
+	require.NoError(t, registry.ConfigureConnection(connector.GitHubProvider, conn))
+
+	assert.Equal(t, "current-app-id", conn.AppID)
+	assert.Equal(t, "current-private-key", conn.PrivateKey)
+	assert.Equal(t, int64(42), conn.InstallationID)
+}

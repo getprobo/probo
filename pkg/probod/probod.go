@@ -422,8 +422,12 @@ func (impl *Implm) Run(
 		}
 
 		if gitHubApp, ok := connectorCfg.Config.(*connector.GitHubAppConnector); ok {
-			if gitHubApp.AppID == "" || gitHubApp.Slug == "" || gitHubApp.PrivateKey == "" {
-				return fmt.Errorf("cannot configure github app connector: app ID, slug, and private key are required")
+			if gitHubApp.AppID == "" ||
+				gitHubApp.ClientID == "" ||
+				gitHubApp.ClientSecret == "" ||
+				gitHubApp.Slug == "" ||
+				gitHubApp.PrivateKey == "" {
+				return fmt.Errorf("cannot configure github app connector: app ID, client ID, client secret, slug, and private key are required")
 			}
 
 			reg, ok := providerRegistry.Get(coredata.ConnectorProviderGitHub)
@@ -441,6 +445,7 @@ func (impl *Implm) Run(
 				Host:   authURL.Host,
 				Path:   "/apps",
 			}).String()
+			gitHubApp.TokenURL = reg.Endpoints.Token
 			gitHubApp.APIBase = reg.Endpoints.APIBase
 
 			if err := defaultConnectorRegistry.RegisterProtocol(

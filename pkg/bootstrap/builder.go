@@ -478,9 +478,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Provider: "GITHUB",
 				Protocol: connector.ProtocolGitHubApp,
 				RawConfig: probodconfig.ConnectorConfigGitHubApp{
-					AppID:      githubAppID,
-					Slug:       b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_SLUG"),
-					PrivateKey: b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY"),
+					AppID:        githubAppID,
+					ClientID:     b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID"),
+					ClientSecret: b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_CLIENT_SECRET"),
+					Slug:         b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_SLUG"),
+					PrivateKey:   b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY"),
 				},
 			},
 		)
@@ -735,6 +737,8 @@ func (b *Builder) validateRequired() error {
 
 	if b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_ID") != "" {
 		gitHubAppRequired := []string{
+			"PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID",
+			"PROBOD_CONNECTOR_GITHUB_APP_CLIENT_SECRET",
 			"PROBOD_CONNECTOR_GITHUB_APP_SLUG",
 			"PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY",
 		}

@@ -32,6 +32,14 @@ import (
 )
 
 type (
+	ConnectionConfigurer interface {
+		ConfigureConnection(Connection) error
+	}
+
+	RuntimeConfigurationRequired interface {
+		RequiresRuntimeConfiguration()
+	}
+
 	ConnectorRegistry struct {
 		sync.RWMutex
 		connectors         map[string]Connector
@@ -118,6 +126,35 @@ func (r *ConnectorRegistry) Lookup(provider string, protocol ProtocolType) (Conn
 	}
 
 	return r.GetProtocol(provider, protocol)
+}
+
+// ConfigureConnection injects deployment-held runtime configuration into a
+// loaded connection. Credentials injected here are never persisted in the
+// connector row, so rotation takes effect without reconnecting every tenant.
+func (r *ConnectorRegistry) ConfigureConnection(provider string, conn Connection) error {
+	if conn == nil {
+		return nil
+	}
+
+	if _, ok := conn.(RuntimeConfigurationRequired); !ok {
+		return nil
+	}
+
+	registered, err := r.Lookup(provider, conn.Type())
+	if err != nil {
+		return fmt.Errorf("cannot configure connector connection: %w", err)
+	}
+
+	configurer, ok := registered.(ConnectionConfigurer)
+	if !ok {
+		return nil
+	}
+
+	if err := configurer.ConfigureConnection(conn); err != nil {
+		return fmt.Errorf("cannot configure connector connection: %w", err)
+	}
+
+	return nil
 }
 
 // ConfiguredProtocols returns the connector protocols that are registered for

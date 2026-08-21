@@ -599,6 +599,13 @@ spec:
             {{- if and (eq .name "github") (eq .type "github-app") }}
             - name: PROBOD_CONNECTOR_GITHUB_APP_ID
               value: {{ .config.appId | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID
+              value: {{ .config.clientId | quote }}
+            - name: PROBOD_CONNECTOR_GITHUB_APP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-github-app-client-secret
             - name: PROBOD_CONNECTOR_GITHUB_APP_SLUG
               value: {{ .config.slug | quote }}
             - name: PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY

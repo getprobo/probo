@@ -234,6 +234,15 @@ func (s *Service) connectorHTTPClient(
 	ctx context.Context,
 	dbConnector *coredata.Connector,
 ) (*http.Client, error) {
+	if s.connectorRegistry != nil {
+		if err := s.connectorRegistry.ConfigureConnection(
+			string(dbConnector.Provider),
+			dbConnector.Connection,
+		); err != nil {
+			return nil, err
+		}
+	}
+
 	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 		return s.oauthClient(ctx, oauth2Conn, dbConnector.Provider)
 	}

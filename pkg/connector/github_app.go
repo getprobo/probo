@@ -47,12 +47,15 @@ import (
 
 type (
 	GitHubAppConnector struct {
-		AppID       string
-		Slug        string
-		PrivateKey  string
-		InstallBase string
-		APIBase     string
-		HTTPClient  *http.Client
+		AppID        string
+		ClientID     string
+		ClientSecret string
+		Slug         string
+		PrivateKey   string
+		InstallBase  string
+		TokenURL     string
+		APIBase      string
+		HTTPClient   *http.Client
 	}
 
 	GitHubAppState struct {
@@ -63,21 +66,33 @@ type (
 	}
 
 	GitHubAppConnection struct {
-		AppID          string `json:"app_id"`
-		PrivateKey     string `json:"private_key"`
 		InstallationID int64  `json:"installation_id"`
 		APIBase        string `json:"api_base"`
+
+		AppID      string `json:"-"`
+		PrivateKey string `json:"-"`
 
 		mu          sync.Mutex
 		accessToken string
 		expiresAt   time.Time
 	}
 
+	gitHubAppUserToken struct {
+		AccessToken string `json:"access_token"`
+		Error       string `json:"error"`
+	}
+
 	gitHubAppInstallation struct {
+		ID         int64  `json:"id"`
 		TargetType string `json:"target_type"`
 		Account    struct {
 			Login string `json:"login"`
 		} `json:"account"`
+	}
+
+	gitHubAppInstallations struct {
+		TotalCount    int                     `json:"total_count"`
+		Installations []gitHubAppInstallation `json:"installations"`
 	}
 
 	gitHubAppInstallationToken struct {
@@ -100,9 +115,25 @@ const (
 )
 
 var (
-	_ Connector  = (*GitHubAppConnector)(nil)
-	_ Connection = (*GitHubAppConnection)(nil)
+	_ Connector                    = (*GitHubAppConnector)(nil)
+	_ ConnectionConfigurer         = (*GitHubAppConnector)(nil)
+	_ Connection                   = (*GitHubAppConnection)(nil)
+	_ RuntimeConfigurationRequired = (*GitHubAppConnection)(nil)
 )
+
+func (c *GitHubAppConnector) ConfigureConnection(conn Connection) error {
+	gitHubAppConn, ok := conn.(*GitHubAppConnection)
+	if !ok {
+		return fmt.Errorf("github app runtime configuration requires a github app connection")
+	}
+
+	gitHubAppConn.AppID = c.AppID
+	gitHubAppConn.PrivateKey = c.PrivateKey
+
+	return nil
+}
+
+func (c *GitHubAppConnection) RequiresRuntimeConfiguration() {}
 
 func IsGitHubAppState(token string) bool {
 	payload, err := statelesstoken.DecodePayload[json.RawMessage](token)
@@ -124,7 +155,7 @@ func (c *GitHubAppConnector) Initiate(
 		stateData.ContinueURL = r.URL.Query().Get("continue")
 	}
 
-	state, err := statelesstoken.NewToken(c.PrivateKey, gitHubAppStateType, gitHubAppStateTTL, stateData)
+	state, err := statelesstoken.NewToken(c.ClientSecret, gitHubAppStateType, gitHubAppStateTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create github app state token: %w", err)
 	}
@@ -177,7 +208,7 @@ func (c *GitHubAppConnector) CompleteWithState(
 	}
 
 	payload, err := statelesstoken.ValidateToken[GitHubAppState](
-		c.PrivateKey,
+		c.ClientSecret,
 		gitHubAppStateType,
 		stateToken,
 	)
@@ -195,21 +226,35 @@ func (c *GitHubAppConnector) CompleteWithState(
 		return nil, nil, fmt.Errorf("cannot complete github app installation: invalid installation ID")
 	}
 
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		return nil, nil, fmt.Errorf("cannot complete github app installation: missing user authorization code")
+	}
+
 	apiBase := c.APIBase
 	if apiBase == "" {
 		return nil, nil, fmt.Errorf("cannot complete github app installation: missing API base URL")
 	}
 
 	connection := &GitHubAppConnection{
-		AppID:          c.AppID,
-		PrivateKey:     c.PrivateKey,
 		InstallationID: installationID,
 		APIBase:        apiBase,
+		AppID:          c.AppID,
+		PrivateKey:     c.PrivateKey,
 	}
 
-	organization, err := c.fetchInstallationOrganization(ctx, connection)
+	userToken, err := c.exchangeUserCode(ctx, code)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot fetch github app installation: %w", err)
+		return nil, nil, fmt.Errorf("cannot exchange github app user code: %w", err)
+	}
+
+	organization, err := c.fetchAuthorizedInstallationOrganization(
+		ctx,
+		userToken,
+		installationID,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot authorize github app installation: %w", err)
 	}
 
 	payload.Data.Organization = organization
@@ -217,32 +262,32 @@ func (c *GitHubAppConnector) CompleteWithState(
 	return connection, &payload.Data, nil
 }
 
-func (c *GitHubAppConnector) fetchInstallationOrganization(
+func (c *GitHubAppConnector) exchangeUserCode(
 	ctx context.Context,
-	connection *GitHubAppConnection,
+	code string,
 ) (string, error) {
-	endpoint, err := url.JoinPath(
-		connection.APIBase,
-		"app/installations",
-		strconv.FormatInt(connection.InstallationID, 10),
+	if c.TokenURL == "" {
+		return "", fmt.Errorf("missing user token URL")
+	}
+
+	form := url.Values{
+		"client_id":     {c.ClientID},
+		"client_secret": {c.ClientSecret},
+		"code":          {code},
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		c.TokenURL,
+		strings.NewReader(form.Encode()),
 	)
 	if err != nil {
-		return "", fmt.Errorf("cannot build installation URL: %w", err)
+		return "", fmt.Errorf("cannot create user token request: %w", err)
 	}
 
-	jwt, err := connection.appJWT(time.Now())
-	if err != nil {
-		return "", fmt.Errorf("cannot create app JWT: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return "", fmt.Errorf("cannot create installation request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("Authorization", "Bearer "+jwt)
-	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	httpClient := c.HTTPClient
 	if httpClient == nil {
@@ -253,29 +298,106 @@ func (c *GitHubAppConnector) fetchInstallationOrganization(
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("cannot execute installation request: %w", err)
+		return "", fmt.Errorf("cannot execute user token request: %w", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("installation response status: %d", resp.StatusCode)
+		return "", fmt.Errorf("user token response status: %d", resp.StatusCode)
 	}
 
-	var installation gitHubAppInstallation
-	if err := json.NewDecoder(resp.Body).Decode(&installation); err != nil {
-		return "", fmt.Errorf("cannot decode installation response: %w", err)
+	var token gitHubAppUserToken
+	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
+		return "", fmt.Errorf("cannot decode user token response: %w", err)
 	}
 
-	if installation.Account.Login == "" {
-		return "", fmt.Errorf("installation response has no account login")
+	if token.Error != "" {
+		return "", fmt.Errorf("user token exchange rejected: %s", token.Error)
 	}
 
-	if installation.TargetType != "Organization" {
-		return "", fmt.Errorf("github app must be installed on an organization")
+	if token.AccessToken == "" {
+		return "", fmt.Errorf("user token response has no access token")
 	}
 
-	return installation.Account.Login, nil
+	return token.AccessToken, nil
+}
+
+func (c *GitHubAppConnector) fetchAuthorizedInstallationOrganization(
+	ctx context.Context,
+	userToken string,
+	installationID int64,
+) (string, error) {
+	endpoint, err := url.JoinPath(c.APIBase, "user/installations")
+	if err != nil {
+		return "", fmt.Errorf("cannot build installation URL: %w", err)
+	}
+
+	httpClient := c.HTTPClient
+	if httpClient == nil {
+		httpClient = &http.Client{
+			Transport: httpclient.DefaultPooledTransport(httpclient.WithSSRFProtection()),
+		}
+	}
+
+	for page := 1; ; page++ {
+		parsedEndpoint, err := url.Parse(endpoint)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse installation URL: %w", err)
+		}
+
+		query := parsedEndpoint.Query()
+		query.Set("per_page", "100")
+		query.Set("page", strconv.Itoa(page))
+		parsedEndpoint.RawQuery = query.Encode()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsedEndpoint.String(), nil)
+		if err != nil {
+			return "", fmt.Errorf("cannot create installation request: %w", err)
+		}
+
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("Authorization", "Bearer "+userToken)
+		req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return "", fmt.Errorf("cannot execute installation request: %w", err)
+		}
+
+		var installations gitHubAppInstallations
+
+		decodeErr := json.NewDecoder(resp.Body).Decode(&installations)
+		_ = resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return "", fmt.Errorf("installation response status: %d", resp.StatusCode)
+		}
+
+		if decodeErr != nil {
+			return "", fmt.Errorf("cannot decode installation response: %w", decodeErr)
+		}
+
+		for _, installation := range installations.Installations {
+			if installation.ID != installationID {
+				continue
+			}
+
+			if installation.Account.Login == "" {
+				return "", fmt.Errorf("installation response has no account login")
+			}
+
+			if installation.TargetType != "Organization" {
+				return "", fmt.Errorf("github app must be installed on an organization")
+			}
+
+			return installation.Account.Login, nil
+		}
+
+		if page*100 >= installations.TotalCount {
+			return "", fmt.Errorf("installation is not accessible to the authorized user")
+		}
+	}
 }
 
 func (c *GitHubAppConnection) Type() ProtocolType {
@@ -305,14 +427,10 @@ func (c *GitHubAppConnection) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		&struct {
 			Type           string `json:"type"`
-			AppID          string `json:"app_id"`
-			PrivateKey     string `json:"private_key"`
 			InstallationID int64  `json:"installation_id"`
 			APIBase        string `json:"api_base"`
 		}{
 			Type:           string(ProtocolGitHubApp),
-			AppID:          c.AppID,
-			PrivateKey:     c.PrivateKey,
 			InstallationID: c.InstallationID,
 			APIBase:        c.APIBase,
 		},

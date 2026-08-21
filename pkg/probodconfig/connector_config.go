@@ -87,9 +87,11 @@ type ConnectorConfigOAuth2 struct {
 }
 
 type ConnectorConfigGitHubApp struct {
-	AppID      string `json:"app-id"`
-	Slug       string `json:"slug"`
-	PrivateKey string `json:"private-key"`
+	AppID        string `json:"app-id"`
+	ClientID     string `json:"client-id"`
+	ClientSecret string `json:"client-secret"`
+	Slug         string `json:"slug"`
+	PrivateKey   string `json:"private-key"`
 }
 
 // ConnectorConfigAPIKey carries the Probo-held API key for a
@@ -179,9 +181,11 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 		}
 
 		c.Config = &connector.GitHubAppConnector{
-			AppID:      config.AppID,
-			Slug:       config.Slug,
-			PrivateKey: config.PrivateKey,
+			AppID:        config.AppID,
+			ClientID:     config.ClientID,
+			ClientSecret: config.ClientSecret,
+			Slug:         config.Slug,
+			PrivateKey:   config.PrivateKey,
 		}
 	default:
 		return fmt.Errorf("unknown connector protocol: %q", c.Protocol)

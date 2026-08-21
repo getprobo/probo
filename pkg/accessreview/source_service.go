@@ -362,6 +362,15 @@ func (s *Service) ConnectorHTTPClient(
 		return nil, nil, err
 	}
 
+	if s.connectorRegistry != nil {
+		if err := s.connectorRegistry.ConfigureConnection(
+			string(dbConnector.Provider),
+			dbConnector.Connection,
+		); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	var tokenBefore string
 
 	oauth2Conn, isOAuth2 := dbConnector.Connection.(*connector.OAuth2Connection)

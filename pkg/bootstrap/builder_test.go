@@ -741,6 +741,8 @@ func TestBuilder_Build_GitHubAppConnector(t *testing.T) {
 
 	env := requiredEnv()
 	env["PROBOD_CONNECTOR_GITHUB_APP_ID"] = "123456"
+	env["PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID"] = "Iv1.example"
+	env["PROBOD_CONNECTOR_GITHUB_APP_CLIENT_SECRET"] = "client-secret"
 	env["PROBOD_CONNECTOR_GITHUB_APP_SLUG"] = "probo"
 	env["PROBOD_CONNECTOR_GITHUB_APP_PRIVATE_KEY"] = "private-key"
 
@@ -758,6 +760,8 @@ func TestBuilder_Build_GitHubAppConnector(t *testing.T) {
 
 	raw := c.RawConfig.(probodconfig.ConnectorConfigGitHubApp)
 	assert.Equal(t, "123456", raw.AppID)
+	assert.Equal(t, "Iv1.example", raw.ClientID)
+	assert.Equal(t, "client-secret", raw.ClientSecret)
 	assert.Equal(t, "probo", raw.Slug)
 	assert.Equal(t, "private-key", raw.PrivateKey)
 }

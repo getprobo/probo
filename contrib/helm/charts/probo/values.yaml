@@ -486,7 +486,11 @@ probo:
   # - name: "github"
   #   type: "github-app"
   #   config:
+  #     # Enable "Request user authorization (OAuth) during installation" and
+  #     # set its callback URL to /api/console/v1/connectors/github-app/complete.
   #     appId: "123456"
+  #     clientId: "Iv1.example"
+  #     clientSecret: "github-app-client-secret"
   #     slug: "probo"
   #     privateKey: |
   #       -----BEGIN RSA PRIVATE KEY-----

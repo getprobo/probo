@@ -93,9 +93,11 @@ func TestConnectorConfig_GitHubAppRoundTrip(t *testing.T) {
 		Provider: "GITHUB",
 		Protocol: connector.ProtocolGitHubApp,
 		RawConfig: probodconfig.ConnectorConfigGitHubApp{
-			AppID:      "123456",
-			Slug:       "probo",
-			PrivateKey: "private-key",
+			AppID:        "123456",
+			ClientID:     "Iv1.example",
+			ClientSecret: "client-secret",
+			Slug:         "probo",
+			PrivateKey:   "private-key",
 		},
 	}
 
@@ -111,6 +113,8 @@ func TestConnectorConfig_GitHubAppRoundTrip(t *testing.T) {
 	gitHubApp, ok := got.Config.(*connector.GitHubAppConnector)
 	require.True(t, ok)
 	assert.Equal(t, "123456", gitHubApp.AppID)
+	assert.Equal(t, "Iv1.example", gitHubApp.ClientID)
+	assert.Equal(t, "client-secret", gitHubApp.ClientSecret)
 	assert.Equal(t, "probo", gitHubApp.Slug)
 	assert.Equal(t, "private-key", gitHubApp.PrivateKey)
 }
