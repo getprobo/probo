@@ -965,6 +965,51 @@ WHERE
 	return nil
 }
 
+// UpdateReview records a human verdict on what the row names.
+//
+// The verdict must be nil unless review is REJECTED, and must be a terminal
+// attribution when it is; a database CHECK enforces the pairing, so a caller
+// that gets it wrong fails here rather than writing a row the mapping
+// pipeline cannot act on.
+func (t CommonThirdParty) UpdateReview(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+	review CommonThirdPartyReview,
+	verdict *CommonTrackerPatternAttribution,
+	reviewedBy string,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    review = @review,
+    rejected_verdict = @rejected_verdict,
+    reviewed_at = NOW(),
+    reviewed_by = @reviewed_by,
+    updated_at = NOW()
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":               id,
+		"review":           review,
+		"rejected_verdict": verdict,
+		"reviewed_by":      reviewedBy,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update common third party review: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 // UpdateSlug changes a catalog entry's slug.
 //
 // The slug is the entry's identity: dedup resolves against it and the seed
