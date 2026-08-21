@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 // A literal built without setting Review must still land UNREVIEWED, and the
@@ -89,4 +90,83 @@ func TestCommonThirdPartyReview_CheckConstraint(t *testing.T) {
 		return err
 	})
 	require.Error(t, err, "a non-rejected row must not carry a verdict")
+}
+
+// Upsert writes review from the receiver, which is what lets the seed promote
+// its curated entries to VALIDATED on every run. The risk that buys is a
+// human verdict being reset by an unrelated patch, so pin both halves: a
+// receiver carrying REJECTED keeps it, and one carrying VALIDATED promotes.
+func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	party := seedCommonThirdParty(t, ctx, client)
+	notAttributable := coredata.CommonTrackerPatternAttributionNotAttributable
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return (coredata.CommonThirdParty{}).UpdateReview(
+			ctx, tx, party.ID,
+			coredata.CommonThirdPartyReviewRejected,
+			&notAttributable,
+			"tester",
+		)
+	}))
+
+	// What proboctl upsert does: load the row, patch a field, write it back.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		loaded := coredata.CommonThirdParty{}
+		if err := loaded.LoadBySlug(ctx, tx, party.Slug); err != nil {
+			return err
+		}
+
+		loaded.Category = coredata.ThirdPartyCategoryEngineering
+		loaded.UpdatedAt = time.Now()
+
+		_, err := loaded.Upsert(ctx, tx)
+
+		return err
+	}))
+
+	after := coredata.CommonThirdParty{}
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return after.LoadBySlug(ctx, tx, party.Slug)
+	}))
+
+	assert.Equal(t, coredata.CommonThirdPartyReviewRejected, after.Review,
+		"a category patch must not reset a human rejection")
+	require.NotNil(t, after.RejectedVerdict)
+	assert.Equal(t, notAttributable, *after.RejectedVerdict)
+	assert.Equal(t, coredata.ThirdPartyCategoryEngineering, after.Category,
+		"the patch itself must still land")
+
+	// And a receiver that asserts curation promotes the row, which is the
+	// seed's path on a second run.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		reseeded := coredata.CommonThirdParty{
+			ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
+			Name:           party.Name,
+			Slug:           party.Slug,
+			Category:       coredata.ThirdPartyCategoryOther,
+			Certifications: []string{},
+			Review:         coredata.CommonThirdPartyReviewValidated,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		}
+
+		_, err := reseeded.Upsert(ctx, tx)
+
+		return err
+	}))
+
+	promoted := coredata.CommonThirdParty{}
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return promoted.LoadBySlug(ctx, tx, party.Slug)
+	}))
+
+	assert.Equal(t, coredata.CommonThirdPartyReviewValidated, promoted.Review,
+		"a seed run must promote its curated entry")
+	assert.Nil(t, promoted.RejectedVerdict,
+		"promotion must clear the verdict the rejection carried")
 }

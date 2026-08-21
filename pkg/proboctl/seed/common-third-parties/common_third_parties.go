@@ -107,12 +107,17 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 							BusinessAssociateAgreementURL: tp.BusinessAssociateAgreementURL,
 							SubprocessorsListURL:          tp.SubprocessorsListURL,
 							Certifications:                tp.Certifications,
-							StatusPageURL:                 tp.StatusPageURL,
-							TermsOfServiceURL:             tp.TermsOfServiceURL,
-							SecurityPageURL:               tp.SecurityPageURL,
-							TrustPageURL:                  tp.TrustPageURL,
-							CreatedAt:                     now,
-							UpdatedAt:                     now,
+							// Seed entries are curated by definition, so they
+							// start where a review would put them and stay out
+							// of the unreviewed backlog. This is also why prune
+							// refuses to delete them.
+							Review:            coredata.CommonThirdPartyReviewValidated,
+							StatusPageURL:     tp.StatusPageURL,
+							TermsOfServiceURL: tp.TermsOfServiceURL,
+							SecurityPageURL:   tp.SecurityPageURL,
+							TrustPageURL:      tp.TrustPageURL,
+							CreatedAt:         now,
+							UpdatedAt:         now,
 						}
 
 						wasInserted, err := party.Upsert(ctx, tx)
