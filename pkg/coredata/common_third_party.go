@@ -61,8 +61,19 @@ type (
 		Enrichment                    json.RawMessage    `db:"enrichment"`
 		EnrichmentAttempts            int                `db:"enrichment_attempts"`
 		LastEnrichmentAttemptAt       *time.Time         `db:"last_enrichment_attempt_at"`
-		CreatedAt                     time.Time          `db:"created_at"`
-		UpdatedAt                     time.Time          `db:"updated_at"`
+
+		// Review is the human verdict on whether this row names an
+		// engageable entity. RejectedVerdict is set exactly when Review
+		// is REJECTED and carries the terminal attribution that patterns
+		// resolving to this row earn instead of a vendor link; a database
+		// CHECK enforces the pairing.
+		Review          CommonThirdPartyReview           `db:"review"`
+		RejectedVerdict *CommonTrackerPatternAttribution `db:"rejected_verdict"`
+		ReviewedAt      *time.Time                       `db:"reviewed_at"`
+		ReviewedBy      *string                          `db:"reviewed_by"`
+
+		CreatedAt time.Time `db:"created_at"`
+		UpdatedAt time.Time `db:"updated_at"`
 	}
 
 	CommonThirdParties []*CommonThirdParty
@@ -140,6 +151,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -208,6 +223,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -272,6 +291,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -332,6 +355,10 @@ INSERT INTO common_third_parties (
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 ) VALUES (
@@ -358,6 +385,10 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
+    COALESCE(NULLIF(@review, '')::common_third_party_review, 'UNREVIEWED'),
+    @rejected_verdict,
+    @reviewed_at,
+    @reviewed_by,
     @created_at,
     @updated_at
 )
@@ -387,6 +418,10 @@ INSERT INTO common_third_parties (
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
+		"review":                           t.Review,
+		"rejected_verdict":                 t.RejectedVerdict,
+		"reviewed_at":                      t.ReviewedAt,
+		"reviewed_by":                      t.ReviewedBy,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -433,6 +468,10 @@ INSERT INTO common_third_parties (
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 ) VALUES (
@@ -459,6 +498,10 @@ INSERT INTO common_third_parties (
     @enrichment,
     @enrichment_attempts,
     @last_enrichment_attempt_at,
+    COALESCE(NULLIF(@review, '')::common_third_party_review, 'UNREVIEWED'),
+    @rejected_verdict,
+    @reviewed_at,
+    @reviewed_by,
     @created_at,
     @updated_at
 )
@@ -505,6 +548,10 @@ RETURNING
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at,
     xmax = 0 AS inserted
@@ -534,6 +581,10 @@ RETURNING
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
 		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
+		"review":                           t.Review,
+		"rejected_verdict":                 t.RejectedVerdict,
+		"reviewed_at":                      t.ReviewedAt,
+		"reviewed_by":                      t.ReviewedBy,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -611,6 +662,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -693,6 +748,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -1029,6 +1088,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -1123,6 +1186,10 @@ SELECT
     enrichment,
     enrichment_attempts,
     last_enrichment_attempt_at,
+    review,
+    rejected_verdict,
+    reviewed_at,
+    reviewed_by,
     created_at,
     updated_at
 FROM
