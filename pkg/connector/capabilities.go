@@ -132,7 +132,7 @@ func (c *OAuth2Connection) SupportsOrganizationPicker() bool { return true }
 func (c *OAuth2Connection) SupportsScopeGrantCheck() bool    { return true }
 func (c *OAuth2Connection) SupportsReconnect() bool          { return true }
 
-func (c *APIKeyConnection) SupportsOrganizationPicker() bool { return false }
+func (c *APIKeyConnection) SupportsOrganizationPicker() bool { return true }
 func (c *APIKeyConnection) SupportsScopeGrantCheck() bool    { return false }
 func (c *APIKeyConnection) SupportsReconnect() bool          { return false }
 

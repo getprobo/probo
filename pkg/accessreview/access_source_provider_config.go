@@ -189,8 +189,8 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 // organization picker at all.
 //
 // The provider must register ListOrgs, and the connection auth model must
-// implement OrganizationSelector (OAuth user tokens do; install-scoped and
-// API-key connections do not). Pattern 2-auto OAuth providers omit ListOrgs,
+// implement OrganizationSelector (OAuth user tokens and API keys do;
+// install-scoped connections do not). Pattern 2-auto providers omit ListOrgs,
 // so an empty org list is NOT_APPLICABLE rather than EMPTY.
 func ProviderSupportsOrganizationPicker(
 	provider coredata.ConnectorProvider,

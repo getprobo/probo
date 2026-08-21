@@ -49,7 +49,7 @@ func TestConnectionCapabilities(t *testing.T) {
 		{
 			name:           "api key",
 			conn:           &connector.APIKeyConnection{},
-			wantPicker:     false,
+			wantPicker:     true,
 			wantScopeGrant: false,
 			wantReconnect:  false,
 		},
@@ -92,7 +92,7 @@ func TestCapabilityProbeMatchesProtocol(t *testing.T) {
 
 	assert.True(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolOAuth2))
 	assert.False(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolGitHubApp))
-	assert.False(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolAPIKey))
+	assert.True(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolAPIKey))
 	assert.True(t, connector.SupportsReconnectFor(nil, connector.ProtocolGitHubApp))
 	assert.False(t, connector.SupportsScopeGrantCheckFor(nil, connector.ProtocolGitHubApp))
 }
