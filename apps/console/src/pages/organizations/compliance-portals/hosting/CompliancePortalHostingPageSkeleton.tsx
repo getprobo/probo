@@ -23,16 +23,23 @@ import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { hostingPageSkeleton } from "./variants";
+import { hostingPageSkeleton, statusSection } from "./variants";
 
 export function CompliancePortalHostingPageSkeleton() {
   const { root, section, intro, empty } = hostingPageSkeleton();
+  const { grid } = statusSection();
 
   return (
     <div className={root()}>
       <div className={section()}>
-        <HeadingSkeleton size={3} className="w-20" />
-        <CardSkeleton size={2} />
+        <div className={intro()}>
+          <HeadingSkeleton size={3} className="w-20" />
+          <TextSkeleton size={2} className="w-96" />
+        </div>
+        <div className={grid()}>
+          <CardSkeleton size={3} />
+          <CardSkeleton size={3} />
+        </div>
       </div>
       <div className={section()}>
         <div className={intro()}>

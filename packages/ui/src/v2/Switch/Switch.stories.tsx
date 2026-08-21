@@ -25,6 +25,7 @@ import { SwitchSkeleton } from "./SwitchSkeleton";
 
 const sizes = [1, 2, 3] as const;
 const variants = ["classic", "surface", "soft"] as const;
+const colors = ["gold", "green"] as const;
 
 export default {
   title: "v2/Switch",
@@ -58,6 +59,19 @@ export const Variants: Story = {
         <div key={variant} className="flex items-center gap-4">
           <Switch variant={variant} aria-label={`${variant} off`} />
           <Switch variant={variant} aria-label={`${variant} on`} defaultChecked />
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+export const Colors: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      {colors.map(color => (
+        <div key={color} className="flex items-center gap-4">
+          <Switch color={color} aria-label={`${color} off`} />
+          <Switch color={color} aria-label={`${color} on`} defaultChecked />
         </div>
       ))}
     </div>

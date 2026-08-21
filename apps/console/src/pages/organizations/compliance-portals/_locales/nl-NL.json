@@ -176,7 +176,8 @@
   },
   "statusSection": {
     "title": "Zichtbaarheid",
-    "activation": { "title": "Compliancepagina activeren", "description": "Maak uw compliancepagina openbaar toegankelijk om het vertrouwen van klanten te vergroten" },
+    "description": "Publiceer uw compliancepagina en kies of zoekmachines deze kunnen vinden.",
+    "activation": { "titleActive": "Compliancepagina is actief", "titleInactive": "Compliancepagina is inactief", "description": "Maak uw compliancepagina openbaar toegankelijk om het vertrouwen van klanten te vergroten" },
     "indexing": { "title": "Indexering door zoekmachines", "description": "Sta toe dat zoekmachines uw compliancepagina indexeren en vindbaar maken", "disabledHint": "Activeer eerst uw compliancepagina om indexering door zoekmachines mogelijk te maken" },
     "rightsRequests": {
       "title": "Rechtenverzoeken",

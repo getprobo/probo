@@ -35,11 +35,11 @@ export type SwitchProps
 // `onCheckedChange` (or uncontrolled via `defaultChecked`). No built-in
 // label — compose one beside the control. See contrib/claude/ui.md.
 export function Switch(props: SwitchProps) {
-  const { size, variant, highContrast, className, ...rest } = props;
+  const { size, variant, color, highContrast, className, ...rest } = props;
 
   return (
     <BaseSwitch.Root
-      className={switchRoot({ size, variant, highContrast, className })}
+      className={switchRoot({ size, variant, color, highContrast, className })}
       {...rest}
     >
       <BaseSwitch.Thumb className={switchThumb({ size })} />

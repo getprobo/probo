@@ -21,13 +21,13 @@
 import { tv } from "tailwind-variants/lite";
 
 // Toggle track (Radix "Switch"). Checked / hover / active / disabled resolve
-// off Base UI's data-* attributes. Accent is gold.
+// off Base UI's data-* attributes. Figma ships accent (gold) only; extra hues
+// are the same compounds with the hue swapped (per the Switch docs page).
 export const switchRoot = tv({
   base: [
     "inline-flex shrink-0 cursor-pointer items-center rounded-full border p-px",
     "outline-none transition-colors select-none",
-    "focus-visible:ring-2 focus-visible:ring-gold-8",
-    "data-[checked]:justify-end",
+    "focus-visible:ring-2",
     "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
   ],
   variants: {
@@ -41,15 +41,20 @@ export const switchRoot = tv({
       surface: "",
       soft: "",
     },
+    color: {
+      gold: "focus-visible:ring-gold-8",
+      green: "focus-visible:ring-green-8",
+    },
     highContrast: {
       true: "",
       false: "",
     },
   },
   compoundVariants: [
-    // surface (default): sand-alpha track, gold-9 when on
+    // surface (default): sand-alpha track, hue-9 when on
     {
       variant: "surface",
+      color: "gold",
       highContrast: false,
       class: [
         "border-sand-a7 bg-sand-a3",
@@ -60,6 +65,18 @@ export const switchRoot = tv({
     },
     {
       variant: "surface",
+      color: "green",
+      highContrast: false,
+      class: [
+        "border-sand-a7 bg-sand-a3",
+        "hover:bg-sand-a4 active:bg-sand-a5",
+        "data-[checked]:border-transparent data-[checked]:bg-green-9",
+        "data-[checked]:hover:bg-green-10 data-[checked]:active:bg-green-10",
+      ],
+    },
+    {
+      variant: "surface",
+      color: "gold",
       highContrast: true,
       class: [
         "border-sand-a7 bg-sand-a3",
@@ -67,10 +84,21 @@ export const switchRoot = tv({
         "data-[checked]:border-transparent data-[checked]:bg-gold-12",
       ],
     },
+    {
+      variant: "surface",
+      color: "green",
+      highContrast: true,
+      class: [
+        "border-sand-a7 bg-sand-a3",
+        "hover:bg-sand-a4 active:bg-sand-a5",
+        "data-[checked]:border-transparent data-[checked]:bg-green-12",
+      ],
+    },
 
     // classic: same surfaces plus a recessed inset
     {
       variant: "classic",
+      color: "gold",
       highContrast: false,
       class: [
         "border-sand-a6 bg-sand-a3 inset-shadow-1",
@@ -81,6 +109,18 @@ export const switchRoot = tv({
     },
     {
       variant: "classic",
+      color: "green",
+      highContrast: false,
+      class: [
+        "border-sand-a6 bg-sand-a3 inset-shadow-1",
+        "hover:bg-sand-a4 active:bg-sand-a5",
+        "data-[checked]:border-sand-a7 data-[checked]:bg-green-9",
+        "data-[checked]:hover:bg-green-10 data-[checked]:active:bg-green-10",
+      ],
+    },
+    {
+      variant: "classic",
+      color: "gold",
       highContrast: true,
       class: [
         "border-sand-a6 bg-sand-a3 inset-shadow-1",
@@ -88,10 +128,21 @@ export const switchRoot = tv({
         "data-[checked]:border-sand-a7 data-[checked]:bg-gold-12",
       ],
     },
+    {
+      variant: "classic",
+      color: "green",
+      highContrast: true,
+      class: [
+        "border-sand-a6 bg-sand-a3 inset-shadow-1",
+        "hover:bg-sand-a4 active:bg-sand-a5",
+        "data-[checked]:border-sand-a7 data-[checked]:bg-green-12",
+      ],
+    },
 
-    // soft: tinted gold, no border
+    // soft: tinted hue, no border
     {
       variant: "soft",
+      color: "gold",
       highContrast: false,
       class: [
         "border-transparent bg-gold-4",
@@ -102,6 +153,18 @@ export const switchRoot = tv({
     },
     {
       variant: "soft",
+      color: "green",
+      highContrast: false,
+      class: [
+        "border-transparent bg-green-4",
+        "hover:bg-green-5 active:bg-green-5",
+        "data-[checked]:bg-green-8",
+        "data-[checked]:hover:bg-green-9 data-[checked]:active:bg-green-9",
+      ],
+    },
+    {
+      variant: "soft",
+      color: "gold",
       highContrast: true,
       class: [
         "border-transparent bg-gold-4",
@@ -109,10 +172,21 @@ export const switchRoot = tv({
         "data-[checked]:bg-gold-11",
       ],
     },
+    {
+      variant: "soft",
+      color: "green",
+      highContrast: true,
+      class: [
+        "border-transparent bg-green-4",
+        "hover:bg-green-5 active:bg-green-5",
+        "data-[checked]:bg-green-11",
+      ],
+    },
   ],
   defaultVariants: {
     size: 2,
     variant: "surface",
+    color: "gold",
     highContrast: false,
   },
 });
@@ -121,13 +195,17 @@ export const switchThumb = tv({
   base: [
     "rounded-full bg-white shadow-2",
     "border border-sand-8",
+    "transition-transform duration-150 ease-out",
+    "motion-reduce:transition-none",
     "data-[checked]:border-black/20",
   ],
   variants: {
+    // Travel = track width − vertical padding (2×1px) − thumb. justify-end
+    // cannot interpolate; translate is what makes the thumb slide.
     size: {
-      1: "size-[18px]",
-      2: "size-[18px]",
-      3: "size-[22px]",
+      1: "size-[18px] data-[checked]:translate-x-[8px] rtl:data-[checked]:-translate-x-[8px]",
+      2: "size-[18px] data-[checked]:translate-x-[15px] rtl:data-[checked]:-translate-x-[15px]",
+      3: "size-[22px] data-[checked]:translate-x-[18px] rtl:data-[checked]:-translate-x-[18px]",
     },
   },
   defaultVariants: {

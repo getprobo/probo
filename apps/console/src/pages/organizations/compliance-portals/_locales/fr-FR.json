@@ -420,8 +420,10 @@
   },
   "statusSection": {
     "title": "Visibilité",
+    "description": "Publiez votre portail de conformité et choisissez si les moteurs de recherche peuvent le trouver.",
     "activation": {
-      "title": "Activer la portail de conformité",
+      "titleActive": "Le portail de conformité est actif",
+      "titleInactive": "Le portail de conformité est inactif",
       "description": "Rendez votre portail de conformité accessible publiquement pour renforcer la confiance de vos clients"
     },
     "indexing": {

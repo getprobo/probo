@@ -36,10 +36,40 @@ export const hostingPageSkeleton = tv({
 export const statusSection = tv({
   slots: {
     root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
     headingRow: "flex items-center justify-between",
-    cardBody: "flex flex-col gap-4",
-    row: "flex items-center justify-between gap-4",
-    rowText: "flex min-w-0 flex-col gap-1",
+    grid: "grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1",
+  },
+});
+
+export const statusCard = tv({
+  slots: {
+    // Ghost Card has no chrome; the frame owns border + fill so active can
+    // swap to green-6 without fighting Card's sand-a3 (tv/lite has no merge).
+    frame: "overflow-hidden rounded-5 border bg-sand-1",
+    header: "relative flex w-full items-center justify-between overflow-hidden p-8 max-md:p-4",
+    wash: "pointer-events-none absolute top-1/2 left-1/2 aspect-square w-full -translate-x-1/2 -translate-y-1/2 bg-green-9 opacity-10 blur-[14px]",
+    fade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
+    icon: "relative z-1 flex size-12 items-center justify-center overflow-hidden rounded-3",
+    control: "relative z-1",
+    body: "flex flex-col gap-2 px-8 pb-8 max-md:px-4 max-md:pb-4",
+  },
+  variants: {
+    active: {
+      true: {
+        frame: "border-green-6",
+        icon: "bg-transparent text-green-11",
+      },
+      false: {
+        frame: "border-sand-a3",
+        wash: "hidden",
+        fade: "hidden",
+        icon: "bg-sand-1 text-sand-9",
+      },
+    },
+  },
+  defaultVariants: {
+    active: false,
   },
 });
 

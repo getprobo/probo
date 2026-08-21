@@ -420,8 +420,10 @@
   },
   "statusSection": {
     "title": "Visibility",
+    "description": "Publish your compliance portal and choose whether search engines can find it.",
     "activation": {
-      "title": "Activate compliance portal",
+      "titleActive": "Compliance portal is active",
+      "titleInactive": "Compliance portal is inactive",
       "description": "Make your compliance portal publicly accessible to build customer confidence"
     },
     "indexing": {

@@ -18,13 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Separator } from "@probo/ui/src/v2/Separator/Separator";
+import { BroadcastIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
-import { Switch } from "@probo/ui/src/v2/Switch/Switch";
-import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
-import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
-import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -35,6 +30,8 @@ import type { CompliancePortalStatusSectionFragment$key } from "#/__generated__/
 import { useUpdateCompliancePortalMutation } from "#/hooks/graph/CompliancePortalGraph";
 
 import { statusSection } from "../variants";
+
+import { CompliancePortalStatusCard } from "./CompliancePortalStatusCard";
 
 const fragment = graphql`
   fragment CompliancePortalStatusSectionFragment on CompliancePortal {
@@ -53,7 +50,7 @@ export function CompliancePortalStatusSection({
   compliancePortalKey,
 }: CompliancePortalStatusSectionProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { root, headingRow, cardBody, row, rowText } = statusSection();
+  const { root, intro, headingRow, grid } = statusSection();
 
   const compliancePortal = useFragment<CompliancePortalStatusSectionFragment$key>(
     fragment,
@@ -85,66 +82,47 @@ export function CompliancePortalStatusSection({
   };
 
   const indexingDisabled = !compliancePortal.canUpdate || !compliancePortal.active;
-  const indexingSwitch = (
-    <Switch
-      checked={compliancePortal.searchEngineIndexing === "INDEXABLE"}
-      disabled={indexingDisabled}
-      aria-label={t("statusSection.indexing.title")}
-      onCheckedChange={handleToggleSearchEngineIndexing}
-    />
-  );
 
   return (
     <div className={root()}>
-      <div className={headingRow()}>
-        <Heading level={2} size={3} weight="medium" highContrast>
-          {t("statusSection.title")}
-        </Heading>
-        {isUpdating && <Spinner size={2} />}
-      </div>
-      <Card variant="soft" size={2}>
-        <div className={cardBody()}>
-          <div className={row()}>
-            <div className={rowText()}>
-              <Heading level={3} size={3} weight="medium" highContrast>
-                {t("statusSection.activation.title")}
-              </Heading>
-              <Text size={2} color="neutral">
-                {t("statusSection.activation.description")}
-              </Text>
-            </div>
-            <Switch
-              checked={compliancePortal.active}
-              disabled={!compliancePortal.canUpdate}
-              aria-label={t("statusSection.activation.title")}
-              onCheckedChange={handleToggleActive}
-            />
-          </div>
-
-          <Separator />
-
-          <div className={row()}>
-            <div className={rowText()}>
-              <Heading level={3} size={3} weight="medium" highContrast>
-                {t("statusSection.indexing.title")}
-              </Heading>
-              <Text size={2} color="neutral">
-                {t("statusSection.indexing.description")}
-              </Text>
-            </div>
-            {compliancePortal.active
-              ? indexingSwitch
-              : (
-                  <Tooltip>
-                    <TooltipTrigger render={<span>{indexingSwitch}</span>} />
-                    <TooltipPopup>
-                      {t("statusSection.indexing.disabledHint")}
-                    </TooltipPopup>
-                  </Tooltip>
-                )}
-          </div>
+      <div className={intro()}>
+        <div className={headingRow()}>
+          <Heading level={2} size={3} weight="medium" highContrast>
+            {t("statusSection.title")}
+          </Heading>
+          {isUpdating && <Spinner size={2} />}
         </div>
-      </Card>
+        <Text size={2} color="neutral">
+          {t("statusSection.description")}
+        </Text>
+      </div>
+      <div className={grid()}>
+        <CompliancePortalStatusCard
+          title={t(
+            compliancePortal.active
+              ? "statusSection.activation.titleActive"
+              : "statusSection.activation.titleInactive",
+          )}
+          description={t("statusSection.activation.description")}
+          icon={<BroadcastIcon size={32} weight="duotone" />}
+          checked={compliancePortal.active}
+          disabled={!compliancePortal.canUpdate}
+          onCheckedChange={handleToggleActive}
+        />
+        <CompliancePortalStatusCard
+          title={t("statusSection.indexing.title")}
+          description={t("statusSection.indexing.description")}
+          icon={<MagnifyingGlassIcon size={32} weight="duotone" />}
+          checked={compliancePortal.searchEngineIndexing === "INDEXABLE"}
+          disabled={indexingDisabled}
+          disabledHint={
+            compliancePortal.active
+              ? undefined
+              : t("statusSection.indexing.disabledHint")
+          }
+          onCheckedChange={handleToggleSearchEngineIndexing}
+        />
+      </div>
     </div>
   );
 }
