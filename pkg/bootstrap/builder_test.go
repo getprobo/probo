@@ -183,6 +183,26 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			},
 			wantMissing: []string{"PROBOD_CONNECTOR_MICROSOFT_365_CLIENT_SECRET"},
 		},
+		{
+			name: "cal.com connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":              "key",
+				"PROBOD_AUTH_COOKIE_SECRET":          "secret",
+				"PROBOD_AUTH_PASSWORD_PEPPER":        "pepper",
+				"PROBOD_CONNECTOR_CAL_COM_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"PROBOD_CONNECTOR_CAL_COM_CLIENT_SECRET"},
+		},
+		{
+			name: "calendly connector missing required fields",
+			env: map[string]string{
+				"PROBOD_ENCRYPTION_KEY":               "key",
+				"PROBOD_AUTH_COOKIE_SECRET":           "secret",
+				"PROBOD_AUTH_PASSWORD_PEPPER":         "pepper",
+				"PROBOD_CONNECTOR_CALENDLY_CLIENT_ID": "client-id",
+			},
+			wantMissing: []string{"PROBOD_CONNECTOR_CALENDLY_CLIENT_SECRET"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -744,6 +764,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
+		"CAL_COM", "CALENDLY",
 	}
 
 	env := requiredEnv()
