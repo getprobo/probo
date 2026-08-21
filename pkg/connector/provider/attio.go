@@ -18,36 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { Meta, StoryObj } from "@storybook/react";
+package provider
 
-import { ThirdPartyLogo } from "./ThirdPartyLogo";
+import (
+	"context"
+	"net/http"
 
-const meta = {
-  title: "Atoms/ThirdParties/ThirdPartyLogo",
-  component: ThirdPartyLogo,
-  args: {
-    height: 48,
-    width: 48,
-  },
-} satisfies Meta<typeof ThirdPartyLogo>;
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/coredata"
+)
 
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Attio: Story = {
-  args: {
-    thirdParty: "ATTIO",
-  },
-};
-
-export const CalCom: Story = {
-  args: {
-    thirdParty: "CAL_COM",
-  },
-};
-
-export const Calendly: Story = {
-  args: {
-    thirdParty: "CALENDLY",
-  },
-};
+func attioRegistration() *Registration {
+	return &Registration{
+		Provider:       coredata.ConnectorProviderAttio,
+		DisplayName:    "Attio",
+		SupportsAPIKey: true,
+		Endpoints: Endpoints{
+			Auth:    "https://app.attio.com/authorize",
+			Token:   "https://app.attio.com/oauth/token",
+			APIBase: "https://api.attio.com",
+			Probe:   "https://api.attio.com/v2/workspace_members",
+		},
+		OAuth2Scopes: []string{"user_management:read"},
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
+			return drivers.NewAttioDriver(c, ep.APIBase), nil
+		},
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
+			return drivers.NewAttioNameResolver(c, ep.APIBase)
+		},
+	}
+}
