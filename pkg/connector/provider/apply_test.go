@@ -97,7 +97,7 @@ func TestApplyOAuth2Defaults_AuthURLFromSlug(t *testing.T) {
 func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 	t.Parallel()
 
-	for _, p := range []string{"PAGERDUTY", "POSTHOG"} {
+	for _, p := range []string{"PAGERDUTY", "POSTHOG", "RESEND"} {
 		t.Run(p, func(t *testing.T) {
 			t.Parallel()
 
@@ -110,19 +110,44 @@ func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 	}
 }
 
-// TestApplyOAuth2Defaults_PublicClientTokenAuth verifies that PostHog, a
-// public (CIMD) client, propagates token_endpoint_auth_method "none" so the
-// token exchange omits a client_secret.
+// TestApplyOAuth2Defaults_PublicClientTokenAuth verifies that CIMD clients
+// propagate token_endpoint_auth_method "none" so token exchanges omit a
+// client_secret.
 func TestApplyOAuth2Defaults_PublicClientTokenAuth(t *testing.T) {
+	t.Parallel()
+
+	for _, p := range []string{"POSTHOG", "RESEND"} {
+		t.Run(p, func(t *testing.T) {
+			t.Parallel()
+
+			r := provider.NewBuiltinRegistry()
+			c := &connector.OAuth2Connector{}
+			require.NoError(t, r.ApplyOAuth2Defaults(p, "https://example.com/cb", c))
+
+			assert.Equal(t, "none", c.TokenEndpointAuth,
+				"provider %s must use token_endpoint_auth_method none (public client)", p)
+			assert.True(t, c.RequiresPKCE, "provider %s public client must require PKCE", p)
+		})
+	}
+}
+
+func TestApplyOAuth2Defaults_ResendCIMD(t *testing.T) {
 	t.Parallel()
 
 	r := provider.NewBuiltinRegistry()
 	c := &connector.OAuth2Connector{}
-	require.NoError(t, r.ApplyOAuth2Defaults("POSTHOG", "https://example.com/cb", c))
+	require.NoError(t, r.ApplyOAuth2Defaults("RESEND", "https://example.com/cb", c))
 
-	assert.Equal(t, "none", c.TokenEndpointAuth,
-		"PostHog must use token_endpoint_auth_method none (public client)")
-	assert.True(t, c.RequiresPKCE, "PostHog public client must require PKCE")
+	assert.Equal(t, "https://api.resend.com/oauth/authorize", c.AuthURL)
+	assert.Equal(t, "https://api.resend.com/oauth/token", c.TokenURL)
+	assert.Equal(t, []string{"full_access"}, c.RegisteredScopes)
+
+	publicProviders := make(map[coredata.ConnectorProvider]bool)
+	for _, reg := range r.PublicClients() {
+		publicProviders[reg.Provider] = true
+	}
+
+	assert.True(t, publicProviders[coredata.ConnectorProviderResend])
 }
 
 // TestApplyOAuth2Defaults_CopiesSiteClosures verifies the multi-site
