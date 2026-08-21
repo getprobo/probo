@@ -121,6 +121,7 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 		var (
 			party    coredata.CommonThirdParty
 			inserted bool
+			loaded   bool
 		)
 
 		if err := pgClient.WithTx(
@@ -133,14 +134,17 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 				err := existing.LoadBySlug(ctx, tx, partySlug)
 				switch {
 				case err == nil:
+					// The load settles it: the row exists, so this is an
+					// update. Upsert cannot report that here — the receiver
+					// carries the loaded row's own id, so its id comparison
+					// always reads as an insert.
 					party = existing
-					// The load already answered whether the row exists.
-					// Upsert's return value cannot: this receiver carries
-					// the loaded row's own id, so its id comparison always
-					// reports an insert.
-					inserted = false
+					loaded = true
 				case errors.Is(err, coredata.ErrResourceNotFound):
-					inserted = true
+					// A fresh id is minted below, so Upsert's comparison is
+					// meaningful on this path and is used instead of assuming
+					// an insert: a concurrent create would take the
+					// ON CONFLICT branch and must be reported as an update.
 					party = coredata.CommonThirdParty{
 						ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
 						Slug:           partySlug,
@@ -182,9 +186,12 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 					return nil
 				}
 
-				if _, err := party.Upsert(ctx, tx); err != nil {
+				written, err := party.Upsert(ctx, tx)
+				if err != nil {
 					return fmt.Errorf("cannot upsert common third party: %w", err)
 				}
+
+				inserted = !loaded && written
 
 				// Arm enrichment explicitly rather than via the receiver:
 				// Upsert sets enrichment_requested_at from the receiver only
