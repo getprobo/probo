@@ -21,6 +21,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -42,6 +43,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -56,33 +58,35 @@ import (
 )
 
 type Config struct {
-	BaseURL           *baseurl.BaseURL
-	AllowedOrigins    []string
-	ExtraHeaderFields map[string]string
-	Probo             *probo.Service
-	ResourceAlias     *resourcealias.Service
-	File              *filemanager.Service
-	IAM               *iam.Service
-	Visitor           *visitor.Service
-	ESign             *esign.Service
-	Management        *management.Service
-	CertManager       *certmanager.Service
-	AccessReview      *accessreview.Service
-	AgentRun          *agentrun.Service
-	Slack             *slack.Service
-	Mailman           *mailman.Service
-	CookieBanner      *cookiebanner.Service
-	Geoloc            *geoloc.Service
-	ThirdParty        *thirdparty.Service
-	RiskManagement    *riskmanagement.Service
-	ITAM              *itam.Service
-	Cookie            securecookie.Config
-	TokenSecret       string
-	ConnectorRegistry *connector.ConnectorRegistry
-	ProviderRegistry  *provider.Registry
-	CustomDomainCname string
-	GraphQLLimits     gqlutils.Limits
-	Logger            *log.Logger
+	BaseURL             *baseurl.BaseURL
+	AllowedOrigins      []string
+	ExtraHeaderFields   map[string]string
+	Probo               *probo.Service
+	CollaborationEvents *realtime.Events
+	ShutdownContext     context.Context
+	ResourceAlias       *resourcealias.Service
+	File                *filemanager.Service
+	IAM                 *iam.Service
+	Visitor             *visitor.Service
+	ESign               *esign.Service
+	Management          *management.Service
+	CertManager         *certmanager.Service
+	AccessReview        *accessreview.Service
+	AgentRun            *agentrun.Service
+	Slack               *slack.Service
+	Mailman             *mailman.Service
+	CookieBanner        *cookiebanner.Service
+	Geoloc              *geoloc.Service
+	ThirdParty          *thirdparty.Service
+	RiskManagement      *riskmanagement.Service
+	ITAM                *itam.Service
+	Cookie              securecookie.Config
+	TokenSecret         string
+	ConnectorRegistry   *connector.ConnectorRegistry
+	ProviderRegistry    *provider.Registry
+	CustomDomainCname   string
+	GraphQLLimits       gqlutils.Limits
+	Logger              *log.Logger
 }
 
 type Server struct {
@@ -100,32 +104,34 @@ type Server struct {
 
 func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
-		BaseURL:           cfg.BaseURL,
-		AllowedOrigins:    cfg.AllowedOrigins,
-		Probo:             cfg.Probo,
-		ResourceAlias:     cfg.ResourceAlias,
-		File:              cfg.File,
-		IAM:               cfg.IAM,
-		Visitor:           cfg.Visitor,
-		ESign:             cfg.ESign,
-		Management:        cfg.Management,
-		CertManager:       cfg.CertManager,
-		AccessReview:      cfg.AccessReview,
-		AgentRun:          cfg.AgentRun,
-		Slack:             cfg.Slack,
-		Mailman:           cfg.Mailman,
-		CookieBanner:      cfg.CookieBanner,
-		Geoloc:            cfg.Geoloc,
-		ThirdParty:        cfg.ThirdParty,
-		RiskManagement:    cfg.RiskManagement,
-		ITAM:              cfg.ITAM,
-		Cookie:            cfg.Cookie,
-		TokenSecret:       cfg.TokenSecret,
-		ConnectorRegistry: cfg.ConnectorRegistry,
-		ProviderRegistry:  cfg.ProviderRegistry,
-		CustomDomainCname: cfg.CustomDomainCname,
-		GraphQLLimits:     cfg.GraphQLLimits,
-		Logger:            cfg.Logger.Named("api"),
+		BaseURL:             cfg.BaseURL,
+		AllowedOrigins:      cfg.AllowedOrigins,
+		Probo:               cfg.Probo,
+		CollaborationEvents: cfg.CollaborationEvents,
+		ShutdownContext:     cfg.ShutdownContext,
+		ResourceAlias:       cfg.ResourceAlias,
+		File:                cfg.File,
+		IAM:                 cfg.IAM,
+		Visitor:             cfg.Visitor,
+		ESign:               cfg.ESign,
+		Management:          cfg.Management,
+		CertManager:         cfg.CertManager,
+		AccessReview:        cfg.AccessReview,
+		AgentRun:            cfg.AgentRun,
+		Slack:               cfg.Slack,
+		Mailman:             cfg.Mailman,
+		CookieBanner:        cfg.CookieBanner,
+		Geoloc:              cfg.Geoloc,
+		ThirdParty:          cfg.ThirdParty,
+		RiskManagement:      cfg.RiskManagement,
+		ITAM:                cfg.ITAM,
+		Cookie:              cfg.Cookie,
+		TokenSecret:         cfg.TokenSecret,
+		ConnectorRegistry:   cfg.ConnectorRegistry,
+		ProviderRegistry:    cfg.ProviderRegistry,
+		CustomDomainCname:   cfg.CustomDomainCname,
+		GraphQLLimits:       cfg.GraphQLLimits,
+		Logger:              cfg.Logger.Named("api"),
 	}
 
 	apiServer, err := api.NewServer(apiCfg)

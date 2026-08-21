@@ -33,9 +33,12 @@ const DURATION_UNITS = [
 export function humanizeSeconds(
   seconds: number | null,
   t: Translator,
+  storageType?: string,
 ): string {
   if (seconds === null || seconds <= 0) {
-    return '';
+    return storageType === "LOCAL_STORAGE"
+      ? t("duration.persistent")
+      : t("duration.session");
   }
 
   let remaining = seconds;

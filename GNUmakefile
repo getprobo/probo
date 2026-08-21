@@ -219,10 +219,19 @@ test-verbose: test ## Run tests with verbose output
 test-short: TEST_FLAGS+=-short
 test-short: test ## Run short tests only
 
+.PHONY: test-js
+test-js: ## Run frontend unit tests (vitest) across workspaces
+	$(NPM) run test
+
 .PHONY: test-automerge-conformance
 test-automerge-conformance: ## Test Go binary compatibility with official Automerge JS
 	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
 		$(GO_BASE) test -count=1 ./pkg/automerge
+
+.PHONY: generate-prosemirror-parity
+generate-prosemirror-parity: ## Regenerate the ProseMirror render parity fixture from @automerge/prosemirror
+	GEN_PROSEMIRROR_PARITY=1 $(NPX) vitest run \
+		--root packages/ui src/RichEditor/prosemirrorRenderParity.test.ts
 
 .PHONY: audit-automerge-parity
 audit-automerge-parity: test-automerge-conformance
@@ -273,6 +282,13 @@ generate-automerge-collaboration-fixtures: ## Regenerate automerge-repo protocol
 test-automerge-repo-interop: ## Sync a real automerge-repo JS client against the Go gateway
 	AUTOMERGE_REPO_INTEROP_CLIENT=$(CURDIR)/packages/automerge-conformance/collaboration-interop-client.mjs \
 		$(GO_BASE) test -count=1 -run '^TestInterop_' ./pkg/automerge/collaboration
+
+.PHONY: benchmark-prosemirror
+benchmark-prosemirror: ## Benchmark Go rendering and the frontend ProseMirror bridge
+	$(GO_BASE) test -run '^$$' -bench '^BenchmarkRender$$' -benchmem \
+		./pkg/automerge/prosemirror
+	$(NPX) vitest bench --run --root packages/ui \
+		src/RichEditor/prosemirrorBridge.bench.ts
 
 .PHONY: fuzz-automerge
 fuzz-automerge: ## Fuzz Automerge public, wire, sync, and projection surfaces
