@@ -13882,6 +13882,33 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment ID
 
+    ForkRiskAnalysisInput:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Source risk analysis ID
+        name:
+          type: string
+          description: Forked risk analysis name
+        description:
+          type: string
+          description: Forked risk analysis description
+        period:
+          $ref: "#/components/schemas/Period"
+          description: Analysis period (not copied from the source)
+
+    ForkRiskAnalysisOutput:
+      type: object
+      required:
+        - risk_analysis
+      properties:
+        risk_analysis:
+          $ref: "#/components/schemas/RiskAnalysis"
+
     ListRiskAnalysisDiagramsInput:
       type: object
       required:
@@ -18614,6 +18641,18 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAnalysisInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAnalysisOutput"
+  - name: forkRiskAnalysis
+    title: Fork Risk Analysis
+    description: Fork a risk analysis, copying diagrams, treatment plans, and their relations
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ForkRiskAnalysisInput"
+    outputSchema:
+      $ref: "#/components/schemas/ForkRiskAnalysisOutput"
   - name: listRiskAnalysisDiagrams
     title: List Risk Analysis Diagrams
     description: List all diagrams for a risk analysis

@@ -4818,7 +4818,10 @@
       "matrixSize": "Matrix",
       "created": "Aangemaakt"
     },
-    "empty": "Nog geen risicobeoordelingen."
+    "empty": "Nog geen risicobeoordelingen.",
+    "actions": {
+      "fork": "Dupliceren"
+    }
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": {
@@ -4929,6 +4932,30 @@
     },
     "actions": {
       "create": "Aanmaken"
+    }
+  },
+  "forkRiskAnalysisDialog": {
+    "title": "Risicobeoordeling dupliceren",
+    "breadcrumb": {
+      "riskAnalyses": "Risicobeoordelingen"
+    },
+    "fields": {
+      "name": "Naam",
+      "description": "Beschrijving",
+      "matrixSize": "Matrixgrootte",
+      "periodStart": "Periode start",
+      "periodEnd": "Periode eind"
+    },
+    "validation": {
+      "nameRequired": "Dit veld is verplicht",
+      "periodEndBeforeStart": "Periode eind moet op of na periode start liggen"
+    },
+    "placeholders": {
+      "name": "bijv. Platform Dreigingsmodel 2026",
+      "description": "Beschrijf de reikwijdte en het doel van deze beoordeling..."
+    },
+    "actions": {
+      "fork": "Dupliceren"
     }
   },
   "updateRiskAnalysisDialog": {
