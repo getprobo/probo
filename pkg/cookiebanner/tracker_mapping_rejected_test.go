@@ -84,22 +84,23 @@ func verdictFor(
 	ctx context.Context,
 	h *trackerMappingHandler,
 	id gid.GID,
-) (*coredata.CommonTrackerPatternAttribution, error) {
+) (*coredata.CommonTrackerPatternAttribution, bool, error) {
 	t.Helper()
 
 	var (
 		verdict *coredata.CommonTrackerPatternAttribution
+		gone    bool
 		inner   error
 	)
 
 	if err := h.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		verdict, inner = h.rejectedVerdictFor(ctx, tx, id)
+		verdict, gone, inner = h.rejectedVerdictFor(ctx, tx, id)
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return verdict, inner
+	return verdict, gone, inner
 }
 
 // A rejected catalog row must divert the pattern to the verdict the review
@@ -119,8 +120,9 @@ func TestRejectedVerdictFor(t *testing.T) {
 	t.Run("rejected as first party", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewRejected, &firstParty)
 
-		got, err := verdictFor(t, ctx, h, id)
+		got, gone, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
+		assert.False(t, gone)
 		require.NotNil(t, got, "a rejected row must yield a verdict")
 		assert.Equal(t, firstParty, *got)
 	})
@@ -128,8 +130,9 @@ func TestRejectedVerdictFor(t *testing.T) {
 	t.Run("rejected as not attributable", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewRejected, &notAttributable)
 
-		got, err := verdictFor(t, ctx, h, id)
+		got, gone, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
+		assert.False(t, gone)
 		require.NotNil(t, got)
 		assert.Equal(t, notAttributable, *got,
 			"the stored verdict must be used, not a FIRST_PARTY default")
@@ -138,16 +141,18 @@ func TestRejectedVerdictFor(t *testing.T) {
 	t.Run("validated row yields no verdict", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewValidated, nil)
 
-		got, err := verdictFor(t, ctx, h, id)
+		got, gone, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
+		assert.False(t, gone)
 		assert.Nil(t, got, "a validated row must keep its vendor link")
 	})
 
 	t.Run("unreviewed row yields no verdict", func(t *testing.T) {
 		id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewUnreviewed, nil)
 
-		got, err := verdictFor(t, ctx, h, id)
+		got, gone, err := verdictFor(t, ctx, h, id)
 		require.NoError(t, err)
+		assert.False(t, gone)
 		assert.Nil(t, got,
 			"an unreviewed row is the default state and must not divert anything")
 	})
@@ -173,8 +178,9 @@ func TestRejectedVerdictFor_LocksAgainstConcurrentReview(t *testing.T) {
 	// Hold the row inside a transaction that read it, then try to validate it
 	// from a second connection: that update must wait for the first to finish.
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		verdict, err := h.rejectedVerdictFor(ctx, tx, id)
+		verdict, gone, err := h.rejectedVerdictFor(ctx, tx, id)
 		require.NoError(t, err)
+		require.False(t, gone)
 		require.NotNil(t, verdict)
 
 		go func() {
@@ -205,4 +211,30 @@ func TestRejectedVerdictFor_LocksAgainstConcurrentReview(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("the review update never completed after the lock was released")
 	}
+}
+
+// The id reaching rejectedVerdictFor comes from an earlier transaction, so a
+// prune or a merge can delete the row in between. That must be reported as
+// gone rather than as "not rejected": the caller has to drop the id, because
+// phase three would otherwise try to resolve an org third party for a row
+// that no longer exists.
+func TestRejectedVerdictFor_ReportsDeletedRow(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	h := newMappingHandler(client)
+
+	firstParty := coredata.CommonTrackerPatternAttributionFirstParty
+	id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewRejected, &firstParty)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, id)
+		return err
+	}))
+
+	verdict, gone, err := verdictFor(t, ctx, h, id)
+	require.NoError(t, err, "a deleted row is an expected state, not an error")
+	assert.True(t, gone, "the caller must be told the row is gone")
+	assert.Nil(t, verdict, "no verdict can be applied for a row that does not exist")
 }

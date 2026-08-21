@@ -968,6 +968,48 @@ WHERE
 	return nil
 }
 
+// LoadReviewForUpdate reads just the review verdict, locking the row so a
+// concurrent review cannot commit between this read and whatever the caller
+// writes on the strength of it. Only the two review columns are selected:
+// the caller needs no more, and a narrow read keeps the lock's blast radius
+// to a reviewer's own update rather than the whole entity.
+//
+// Returns ErrResourceNotFound when the row is gone, which a caller holding
+// an id from an earlier transaction must handle — the row can be pruned or
+// merged away in between.
+func (t *CommonThirdParty) LoadReviewForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	id gid.GID,
+) (CommonThirdPartyReview, *CommonTrackerPatternAttribution, error) {
+	q := `
+SELECT
+    review,
+    rejected_verdict
+FROM
+    common_third_parties
+WHERE
+    id = @id
+FOR UPDATE
+`
+
+	var (
+		review  CommonThirdPartyReview
+		verdict *CommonTrackerPatternAttribution
+	)
+
+	err := conn.QueryRow(ctx, q, pgx.StrictNamedArgs{"id": id}).Scan(&review, &verdict)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil, ErrResourceNotFound
+		}
+
+		return "", nil, fmt.Errorf("cannot load common third party review: %w", err)
+	}
+
+	return review, verdict, nil
+}
+
 // UpdateReview records a human verdict on what the row names.
 //
 // The verdict must be nil unless review is REJECTED, and must be a terminal
