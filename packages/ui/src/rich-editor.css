@@ -49,6 +49,10 @@
         @apply text-txt-tertiary pointer-events-none float-left h-0;
     }
 
+    p.is-empty-focused.slash-command-active::before {
+        content: none;
+    }
+
     .slash-search {
         @apply bg-subtle rounded px-1.5 py-0.5;
     }

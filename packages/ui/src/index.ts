@@ -52,7 +52,12 @@ export { Field } from "./Molecules/Field/Field";
 export { Input } from "./Atoms/Input/Input";
 export { DurationInput } from "./Atoms/Input/DurationInput";
 export { Textarea } from "./Atoms/Textarea/Textarea";
-export { Option, Select, SelectGroup, SelectLabel } from "./Atoms/Select/Select";
+export {
+  Option,
+  Select,
+  SelectGroup,
+  SelectLabel,
+} from "./Atoms/Select/Select";
 export { Label } from "./Atoms/Label/Label";
 export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 export { Table, Tbody, Td, Th, Thead, Tr, TrButton } from "./Atoms/Table/Table";
@@ -119,4 +124,43 @@ export { EditableRow } from "./Molecules/Table/EditableRow";
 export { Toasts, useToast } from "./Atoms/Toasts/Toasts";
 
 // Rich editor
-export { RichEditor } from "./RichEditor/RichEditor";
+export {
+  createRichEditorAutomergeDocument,
+  RichEditor,
+  supportsRichEditorCollaboration,
+} from "./RichEditor/RichEditor";
+export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
+export type {
+  RichEditorCollaborationHandle,
+  RichEditorPresence,
+} from "./RichEditor/presence";
+export {
+  collaborationDebug,
+  summarizeAutomergeSpans,
+} from "./RichEditor/collaborationDebug";
+export {
+  AUTOMERGE_URL_PREFIX,
+  DOCUMENT_ID_BYTE_LENGTH,
+  automergeUrl,
+  decodeDocumentId,
+  deriveAutomergeUrl,
+  deriveDocumentId,
+  encodeDocumentId,
+  parseAutomergeUrl,
+  validDocumentId,
+} from "./RichEditor/repoDocumentId";
+export {
+  isCollapsed,
+  resolveSelection,
+  textSelection,
+} from "./RichEditor/repoSelection";
+export type {
+  ResolvedSelection,
+  TextSelection,
+} from "./RichEditor/repoSelection";
+export {
+  pmSelectionFromPresence,
+  presenceFromPmSelection,
+  richEditorPresenceAdapter,
+} from "./RichEditor/repoPresence";
+export type { PmPresenceSelection } from "./RichEditor/repoPresence";
