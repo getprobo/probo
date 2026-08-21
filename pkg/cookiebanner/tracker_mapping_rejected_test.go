@@ -192,6 +192,7 @@ func TestRejectedVerdictFor_LocksAgainstConcurrentReview(t *testing.T) {
 					"concurrent",
 				)
 			})
+
 			close(released)
 		}()
 
