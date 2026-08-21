@@ -298,7 +298,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum(
 					"auth-method",
 					flagAuthMethod,
-					[]string{"SSO", "PASSWORD", "API_KEY", "SERVICE_ACCOUNT", "UNKNOWN"},
+					[]string{"SSO", "PASSWORD", "API_KEY", "OAUTH2", "SSH", "SERVICE_ACCOUNT", "UNKNOWN"},
 				); err != nil {
 					return err
 				}
@@ -436,7 +436,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagIncTag, "incremental-tag", "", "Filter by incremental tag (NEW, REMOVED, UNCHANGED)")
 	flagIsAdmin = cmd.Flags().Bool("is-admin", false, "Filter by admin status")
 	flagActive = cmd.Flags().Bool("active", false, "Filter by active status at the source")
-	cmd.Flags().StringVar(&flagAuthMethod, "auth-method", "", "Filter by auth method (SSO, PASSWORD, API_KEY, SERVICE_ACCOUNT, UNKNOWN)")
+	cmd.Flags().StringVar(&flagAuthMethod, "auth-method", "", "Filter by auth method (SSO, PASSWORD, API_KEY, OAUTH2, SSH, SERVICE_ACCOUNT, UNKNOWN)")
 	cmd.Flags().StringVar(&flagAccountType, "account-type", "", "Filter by account type (USER, SERVICE_ACCOUNT)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

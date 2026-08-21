@@ -31,6 +31,8 @@ const (
 	AccessReviewEntryAuthMethodSSO            AccessReviewEntryAuthMethod = "SSO"
 	AccessReviewEntryAuthMethodPassword       AccessReviewEntryAuthMethod = "PASSWORD"
 	AccessReviewEntryAuthMethodAPIKey         AccessReviewEntryAuthMethod = "API_KEY"
+	AccessReviewEntryAuthMethodOAuth2         AccessReviewEntryAuthMethod = "OAUTH2"
+	AccessReviewEntryAuthMethodSSH            AccessReviewEntryAuthMethod = "SSH"
 	AccessReviewEntryAuthMethodServiceAccount AccessReviewEntryAuthMethod = "SERVICE_ACCOUNT"
 	AccessReviewEntryAuthMethodUnknown        AccessReviewEntryAuthMethod = "UNKNOWN"
 )
@@ -46,6 +48,8 @@ func AccessReviewEntryAuthMethods() []AccessReviewEntryAuthMethod {
 		AccessReviewEntryAuthMethodSSO,
 		AccessReviewEntryAuthMethodPassword,
 		AccessReviewEntryAuthMethodAPIKey,
+		AccessReviewEntryAuthMethodOAuth2,
+		AccessReviewEntryAuthMethodSSH,
 		AccessReviewEntryAuthMethodServiceAccount,
 		AccessReviewEntryAuthMethodUnknown,
 	}
@@ -57,6 +61,8 @@ func (v AccessReviewEntryAuthMethod) IsValid() bool {
 		AccessReviewEntryAuthMethodSSO,
 		AccessReviewEntryAuthMethodPassword,
 		AccessReviewEntryAuthMethodAPIKey,
+		AccessReviewEntryAuthMethodOAuth2,
+		AccessReviewEntryAuthMethodSSH,
 		AccessReviewEntryAuthMethodServiceAccount,
 		AccessReviewEntryAuthMethodUnknown:
 		return true

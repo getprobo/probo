@@ -99,7 +99,7 @@ Do not call unless the user explicitly asks for campaign setup:
 | `is_admin` | Heightened scrutiny |
 | `active` | `false` often supports revoke |
 | `mfa_status` | `DISABLED` on privileged access → escalate |
-| `auth_method` | `API_KEY`, `SERVICE_ACCOUNT` context |
+| `auth_method` | `SSO`, `PASSWORD`, `API_KEY`, `OAUTH2`, `SSH`, `SERVICE_ACCOUNT` context |
 | `account_type` | `SERVICE_ACCOUNT` vs `USER` |
 | `last_login` | Dormancy signal |
 | `incremental_tag` | `NEW` needs extra scrutiny |

@@ -3145,6 +3145,8 @@
       "sso": "SSO",
       "password": "Wachtwoord",
       "api_key": "API-sleutel",
+      "oauth2": "OAuth2",
+      "ssh": "SSH",
       "service_account": "Serviceaccount",
       "unknown": "Onbekend"
     },
