@@ -748,7 +748,7 @@ func TestBuilder_Build_GitHubAppConnector(t *testing.T) {
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 	b.samlCertificate = "test-cert"
-	b.samlPrivateKey = "test-key"
+	b.samlPrivateKey = testSigningKeyPEM()
 
 	cfg, err := b.Build()
 	require.NoError(t, err)
