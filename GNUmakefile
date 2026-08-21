@@ -1,6 +1,7 @@
 NPROC ?=	$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 MAKEFLAGS := --jobs=$(NPROC)
 
+CARGO ?=	cargo
 CAT ?=	cat
 CP ?=	cp
 DOCKER ?=	docker
@@ -11,14 +12,20 @@ MKCERT ?=	mkcert
 MKDIR ?=	mkdir -p
 NPM ?=	npm
 NPX ?=	npx
+NODE ?=	node
 OPENSSL ?=	openssl
+AUTOMERGE_BATTERY_OUTPUT ?=	$(CURDIR)/.cache/automerge-battery.json
+AUTOMERGE_BATTERY_FIXTURES ?=	$(CURDIR)/.cache/automerge-battery-fixtures
 SED ?= sed
+SHA256SUM ?= sha256sum
 SYFT ?=	syft
 TAIL ?= tail
 ECHO ?= echo
 GOLINTCMD ?= golangci-lint
 SWIFTLINTCMD ?= swiftlint
 SWIFTCMD ?= swift
+RUST_TOOLCHAIN ?= 1.89.0
+AUTOMERGE_FUZZ_TIME ?= 10s
 SWIFT_ENROLL_UI ?= cmd/probo-agent/installer/macos/enroll-ui
 SWIFT_FORMAT_CONFIG ?= .swift-format
 SWIFTLINT_CONFIG ?= .swiftlint.yml
@@ -37,6 +44,7 @@ SHELL_SCRIPTS := \
 	cmd/probo-agent/installer/macos/reinstall.sh \
 	cmd/probo-agent/installer/macos/uninstall.sh \
 	compose/postgres/01_probod.sh \
+	contrib/benchmarks/automerge-battery.sh \
 	contrib/lima/provision.sh \
 	contrib/lima/sandbox.sh \
 	contrib/merge-graphql-schema.sh \
@@ -103,6 +111,9 @@ GENERATED= pkg/server/api/connect/v1/schema/schema.go \
 EMBEDDED= apps/console/dist/index.html \
 	apps/compliance-portal/dist/index.html \
 	@probo/emails
+
+AUTOMERGE_REFERENCE_DIR=	pkg/automerge/internal/reference
+AUTOMERGE_REFERENCE_WASM=	$(AUTOMERGE_REFERENCE_DIR)/reference.wasm
 
 PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
@@ -207,6 +218,71 @@ test-verbose: test ## Run tests with verbose output
 .PHONY: test-short
 test-short: TEST_FLAGS+=-short
 test-short: test ## Run short tests only
+
+.PHONY: test-automerge-conformance
+test-automerge-conformance: ## Test Go binary compatibility with official Automerge JS
+	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
+		$(GO_BASE) test -count=1 ./pkg/automerge
+
+.PHONY: audit-automerge-parity
+audit-automerge-parity: test-automerge-conformance
+audit-automerge-parity: ## Require every pinned upstream Automerge test to be mapped
+	AUTOMERGE_REQUIRE_FULL_PARITY=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: audit-automerge-interop
+audit-automerge-interop: test-automerge-conformance
+audit-automerge-interop: ## Require complete Rust/JS wire and state interoperability
+	AUTOMERGE_REQUIRE_FULL_INTEROP=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: benchmark-automerge
+benchmark-automerge: ## Benchmark native and Rust/WASM Automerge engines
+	$(GO_BASE) test -run '^$$' -bench . -benchmem ./pkg/automerge
+
+.PHONY: benchmark-automerge-native
+benchmark-automerge-native: ## Compare optimized native Go and native Rust
+	$(NPM) -w @probo/automerge-benchmark run compare
+
+.PHONY: benchmark-automerge-official
+benchmark-automerge-official: ## Run the pinned official Automerge fast benchmark battery
+	@mkdir -p $(dir $(AUTOMERGE_BATTERY_OUTPUT))
+	contrib/benchmarks/automerge-battery.sh run \
+		--tier fast \
+		--output $(AUTOMERGE_BATTERY_OUTPUT)
+
+.PHONY: list-automerge-official-benchmarks
+list-automerge-official-benchmarks: ## List the pinned official Automerge benchmark battery
+	contrib/benchmarks/automerge-battery.sh list --tier all
+
+.PHONY: test-automerge-official-fixtures
+test-automerge-official-fixtures: ## Replay official benchmark-battery documents through Rust and Go
+	rm -rf $(AUTOMERGE_BATTERY_FIXTURES)
+	cargo +1.90.0 run --release --locked \
+		--manifest-path packages/automerge-benchmark/official-fixtures/Cargo.toml \
+		-- $(AUTOMERGE_BATTERY_FIXTURES)
+	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
+		$(GO_BASE) test -count=1 -run '^TestOfficialBenchmarkBatteryFixtures$$' \
+		./pkg/automerge
+
+.PHONY: generate-automerge-collaboration-fixtures
+generate-automerge-collaboration-fixtures: ## Regenerate automerge-repo protocol fixtures from the pinned JS packages
+	$(NODE) packages/automerge-conformance/generate-collaboration-fixtures.mjs
+
+.PHONY: test-automerge-repo-interop
+test-automerge-repo-interop: ## Sync a real automerge-repo JS client against the Go gateway
+	AUTOMERGE_REPO_INTEROP_CLIENT=$(CURDIR)/packages/automerge-conformance/collaboration-interop-client.mjs \
+		$(GO_BASE) test -count=1 -run '^TestInterop_' ./pkg/automerge/collaboration
+
+.PHONY: fuzz-automerge
+fuzz-automerge: ## Fuzz Automerge public, wire, sync, and projection surfaces
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzLoad$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzCoreOperations$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecode$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzParseSyncMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzRender$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/prosemirror
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodePresence$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodeMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
 
 .PHONY: coverage-report
 coverage-report: test ## Generate HTML coverage report
@@ -413,6 +489,18 @@ pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceport
 
 .PHONY: generate
 generate: $(GENERATED)
+
+.PHONY: generate-automerge-reference
+generate-automerge-reference: ## Rebuild the embedded official Automerge WASM backend
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		$(CARGO) +$(RUST_TOOLCHAIN) build --locked --release --target wasm32-wasip1
+	$(CP) $(AUTOMERGE_REFERENCE_DIR)/wasm/target/wasm32-wasip1/release/probo_automerge_reference.wasm $(AUTOMERGE_REFERENCE_WASM)
+	cd $(AUTOMERGE_REFERENCE_DIR) && $(SHA256SUM) reference.wasm > reference.wasm.sha256
+
+.PHONY: audit-automerge-reference
+audit-automerge-reference: ## Audit Automerge Rust advisories, licenses, bans, and sources
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		$(CARGO) +$(RUST_TOOLCHAIN) deny check
 
 .PHONY: embed
 embed: $(EMBEDDED)

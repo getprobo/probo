@@ -1,2 +1,5 @@
 pkg/agent/guardrail/sensitive_data_test\.go
 pkg/validator/validator_format_test\.go
+pkg/automerge/current_state_parity_test\.go
+pkg/automerge/testdata/upstream-parity\.json
+packages/automerge-conformance/parity-mappings\.json
