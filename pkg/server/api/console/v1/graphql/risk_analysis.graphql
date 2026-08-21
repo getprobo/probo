@@ -462,6 +462,9 @@ extend type Mutation {
     deleteRiskAnalysis(
         input: DeleteRiskAnalysisInput!
     ): DeleteRiskAnalysisPayload!
+    forkRiskAnalysis(
+        input: ForkRiskAnalysisInput!
+    ): ForkRiskAnalysisPayload!
 
     createRiskAnalysisDiagram(
         input: CreateRiskAnalysisDiagramInput!
@@ -569,6 +572,17 @@ type UpdateRiskAnalysisPayload {
 
 type DeleteRiskAnalysisPayload {
     deletedRiskAnalysisId: ID!
+}
+
+input ForkRiskAnalysisInput {
+    riskAnalysisId: ID!
+    name: String!
+    description: String
+    period: PeriodInput
+}
+
+type ForkRiskAnalysisPayload {
+    riskAnalysisEdge: RiskAnalysisConnectionEdge!
 }
 
 input CreateRiskAnalysisDiagramInput {

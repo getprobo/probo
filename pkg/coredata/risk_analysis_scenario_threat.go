@@ -96,6 +96,47 @@ WHERE
 	return err
 }
 
+func (sts *RiskAnalysisScenarioThreats) LoadByScenarioIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	scenarioIDs []gid.GID,
+) error {
+	if len(scenarioIDs) == 0 {
+		*sts = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	risk_analysis_scenario_id,
+	risk_analysis_threat_id,
+	created_at
+FROM
+	risk_analysis_scenario_threats
+WHERE
+	%s
+	AND risk_analysis_scenario_id = ANY(@scenario_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"scenario_ids": scenarioIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risk scenario threats: %w", err)
+	}
+
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAnalysisScenarioThreat])
+	if err != nil {
+		return fmt.Errorf("cannot collect risk scenario threats: %w", err)
+	}
+
+	*sts = results
+
+	return nil
+}
+
 func (ts *RiskAnalysisThreats) LoadByScenarioID(
 	ctx context.Context,
 	conn pg.Querier,
