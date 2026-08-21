@@ -1,0 +1,10 @@
+{
+  "description": "Server error frame before closing the socket",
+  "message": {
+    "type": "error",
+    "senderId": "server",
+    "targetId": "peer-a",
+    "message": "unauthorized"
+  },
+  "frameCborBase64": "uQAEZHR5cGVlZXJyb3Joc2VuZGVySWRmc2VydmVyaHRhcmdldElkZnBlZXItYWdtZXNzYWdlbHVuYXV0aG9yaXplZA=="
+}

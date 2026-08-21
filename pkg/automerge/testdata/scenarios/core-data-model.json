@@ -1,0 +1,27 @@
+{
+  "name": "core-data-model",
+  "actor": "0102030405060708090a0b0c0d0e0f10",
+  "operations": [
+    {"action": "createObject", "path": [], "key": "config", "objectType": "map"},
+    {"action": "putScalar", "path": ["config"], "key": "name", "scalar": {"type": "string", "string": "Policy 😀"}},
+    {"action": "putScalar", "path": ["config"], "key": "enabled", "scalar": {"type": "boolean", "bool": true}},
+    {"action": "putScalar", "path": ["config"], "key": "nothing", "scalar": {"type": "null"}},
+    {"action": "putScalar", "path": ["config"], "key": "int", "scalar": {"type": "int", "int": -42}},
+    {"action": "putScalar", "path": ["config"], "key": "uint", "scalar": {"type": "uint", "uint": 42}},
+    {"action": "putScalar", "path": ["config"], "key": "float64", "scalar": {"type": "float64", "floatBits": "4614500768194494464"}},
+    {"action": "putScalar", "path": ["config"], "key": "bytes", "scalar": {"type": "bytes", "bytes": "0001feff"}},
+    {"action": "putScalar", "path": ["config"], "key": "timestamp", "scalar": {"type": "timestamp", "int": 1786147200000}},
+    {"action": "putScalar", "path": ["config"], "key": "counter", "scalar": {"type": "counter", "int": 5}},
+    {"action": "createObject", "path": [], "key": "items", "objectType": "list"},
+    {"action": "insertScalar", "path": ["items"], "index": 0, "scalar": {"type": "string", "string": "first"}},
+    {"action": "insertScalar", "path": ["items"], "index": 1, "scalar": {"type": "string", "string": "second"}},
+    {"action": "putScalarAt", "path": ["items"], "index": 1, "scalar": {"type": "string", "string": "replaced"}},
+    {"action": "deleteIndex", "path": ["items"], "index": 0},
+    {"action": "createText", "path": [], "key": "body"},
+    {"action": "spliceText", "path": ["body"], "index": 0, "deleteCount": 0, "text": "A😀B"},
+    {"action": "commit", "message": "create model", "timestamp": 1786147200},
+    {"action": "increment", "path": ["config"], "key": "counter", "delta": 3},
+    {"action": "spliceText", "path": ["body"], "index": 1, "deleteCount": 2, "text": "X"},
+    {"action": "commit", "message": "update model", "timestamp": 1786147201}
+  ]
+}
