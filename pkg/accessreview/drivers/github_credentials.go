@@ -169,6 +169,7 @@ func (d *GitHubDriver) appendServiceAccounts(ctx context.Context, records []Acco
 
 			seenPATs[rec.ExternalID] = struct{}{}
 			githubRememberPATIDs(seenPATs, pat)
+
 			records = append(records, rec)
 		}
 	}
@@ -569,6 +570,7 @@ func githubCredentialRecord(cred githubCredentialAuthorization) (AccountRecord, 
 	if fullName == "" {
 		kind := strings.TrimSpace(cred.CredentialType)
 		owner := strings.TrimSpace(cred.Login)
+
 		switch {
 		case kind != "" && owner != "":
 			fullName = kind + " (" + owner + ")"
@@ -581,6 +583,7 @@ func githubCredentialRecord(cred githubCredentialAuthorization) (AccountRecord, 
 
 	role := strings.TrimSpace(cred.CredentialType)
 	roles := []string{}
+
 	if role != "" {
 		roles = []string{role}
 	}
@@ -612,6 +615,7 @@ func githubDeployKeyAccountRecord(item githubDeployKeyRecord) (AccountRecord, bo
 
 	repo := strings.TrimSpace(item.Repo)
 	fullName := title
+
 	if repo != "" {
 		fullName = title + " (" + repo + ")"
 	}

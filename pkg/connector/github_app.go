@@ -429,6 +429,7 @@ func (c *GitHubAppConnector) fetchSoleAuthorizedOrganizationInstallation(
 	}
 
 	var orgInstallations []gitHubAppInstallation
+
 	for _, installation := range installations {
 		if installation.TargetType == "Organization" {
 			orgInstallations = append(orgInstallations, installation)

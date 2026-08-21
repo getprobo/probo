@@ -85,6 +85,7 @@ func handleConnectorGitHubAppInitiate(
 		}
 
 		opts := connector.InitiateOptions{}
+
 		if r.URL.Query().Get("connector_id") != "" {
 			existing, err := loadExistingGitHubAppConnector(r, proboSvc, scope)
 			if err != nil {

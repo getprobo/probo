@@ -25,6 +25,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -214,9 +215,9 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	// without audit-log access 403 here; keep listing members with
 	// LastLogin unset.
 	auditCtx, cancelAudit := context.WithTimeout(ctx, githubAuditLogTimeout)
-	lastByLogin, lastByID, err := d.fetchLastActivity(auditCtx, members)
-	cancelAudit()
+	defer cancelAudit()
 
+	lastByLogin, lastByID, err := d.fetchLastActivity(auditCtx, members)
 	if err != nil {
 		d.logger.WarnCtx(
 			ctx,
@@ -279,8 +280,12 @@ func (d *GitHubDriver) memberRecord(
 	}
 
 	roles := []string{}
-	var active *bool
-	var isAdmin *bool
+
+	var (
+		active  *bool
+		isAdmin *bool
+	)
+
 	if membership != nil {
 		role := strings.TrimSpace(membership.Role)
 		if role != "" {
@@ -515,6 +520,7 @@ func (d *GitHubDriver) fetchLastActivity(
 
 	wantedLogin := make(map[string]struct{}, len(members))
 	wantedID := make(map[int64]struct{}, len(members))
+
 	for _, m := range members {
 		if login := strings.ToLower(strings.TrimSpace(m.Login)); login != "" {
 			wantedLogin[login] = struct{}{}
@@ -722,9 +728,7 @@ func (d *GitHubDriver) fetchVerifiedDomainEmails(ctx context.Context) (map[strin
 			return nil, err
 		}
 
-		for login, email := range page {
-			emails[login] = email
-		}
+		maps.Copy(emails, page)
 
 		if next == nil {
 			return emails, nil

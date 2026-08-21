@@ -97,7 +97,6 @@ func handleConnectorInitiate(
 		// are caught inside Reconnect at callback time; this handler only
 		// needs the scope set.
 		existing, err := loadExistingConnector(r, prb, scope, organizationID, provider)
-
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))

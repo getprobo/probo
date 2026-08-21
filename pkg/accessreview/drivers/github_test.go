@@ -198,6 +198,7 @@ func TestGitHubDriver_LastLoginPaginatesAuditLog(t *testing.T) {
 	t.Parallel()
 
 	var srv *httptest.Server
+
 	srv = httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet && r.URL.Path == "/orgs/acme/audit-log" {
@@ -272,11 +273,13 @@ func TestGitHubDriver_AuditLogStopsAfterMaxPages(t *testing.T) {
 	t.Parallel()
 
 	var srv *httptest.Server
+
 	auditPages := 0
 	srv = httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet && r.URL.Path == "/orgs/acme/audit-log" {
 				auditPages++
+
 				w.Header().Set("Content-Type", "application/json")
 				w.Header().Set(
 					"Link",
@@ -387,6 +390,7 @@ func writeGitHubListAccountsREST(t *testing.T, w http.ResponseWriter, r *http.Re
 			},
 		)
 		require.NoError(t, err)
+
 		_, _ = w.Write(profile)
 	case r.Method == http.MethodGet && r.URL.Path == "/orgs/acme/audit-log":
 		_, _ = w.Write([]byte(`[{"@timestamp":1774018800000,"created_at":1774018800000,"actor":"jdoe","actor_id":100001,"action":"pull_request.create"}]`))
@@ -549,6 +553,7 @@ func TestGitHubDriver_ContinuesWhenServiceAccountsUnavailable(t *testing.T) {
 				require.NoError(t, err)
 
 				w.Header().Set("Content-Type", "application/json")
+
 				if strings.Contains(string(body), "deployKeys") {
 					w.WriteHeader(http.StatusForbidden)
 					_, _ = w.Write([]byte(`{"message":"Resource not accessible by integration"}`))
@@ -587,6 +592,7 @@ func TestGitHubDriver_SkipsFineGrainedPATDuplicatedInSSO(t *testing.T) {
 	githubRememberPATIDs(seen, pat)
 	rec, ok := githubFineGrainedPATRecord(pat)
 	require.True(t, ok)
+
 	seen[rec.ExternalID] = struct{}{}
 
 	dup := githubCredentialAuthorization{

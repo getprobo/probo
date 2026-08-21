@@ -351,6 +351,7 @@ func newGitHubAppCompleteFixture(t *testing.T, installationsJSON string) (*GitHu
 
 	parsedAuthURL, err := url.Parse(installURL)
 	require.NoError(t, err)
+
 	state := parsedAuthURL.Query().Get("state")
 	require.NotEmpty(t, state)
 

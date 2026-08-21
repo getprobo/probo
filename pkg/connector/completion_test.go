@@ -53,6 +53,7 @@ func mintGitHubAppStateToken(t *testing.T) string {
 
 	parsedInstallURL, err := url.Parse(installURL)
 	require.NoError(t, err)
+
 	state := parsedInstallURL.Query().Get("state")
 	require.NotEmpty(t, state)
 
