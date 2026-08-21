@@ -41,11 +41,13 @@ export const accessEntryList = tv({
   slots: {
     root: "list-none overflow-hidden rounded-[10px] border border-border-low bg-level-1",
     item: "flex flex-wrap items-center gap-4 border-b border-border-low px-4 py-3 last:border-b-0",
-    content: "flex min-w-0 max-w-64 flex-col gap-0.5",
-    flags: "flex min-w-0 max-w-72 flex-wrap items-center gap-1",
-    trailing: "ml-auto flex min-w-0 flex-wrap items-center gap-4",
-    status: "flex min-w-16 flex-col items-center gap-0.5",
-    statusLabel: "text-[10px] font-medium uppercase tracking-wide text-txt-tertiary",
+    content: "flex w-64 min-w-0 shrink-0 flex-col gap-0.5",
+    flags: "flex min-w-0 flex-1 flex-wrap items-center gap-1",
+    // Fixed tracks so Admin/MFA/Auth/Last login line up across rows; the last
+    // track matches EntryDecisionActions' w-36 Select.
+    trailing: "ml-auto grid shrink-0 grid-cols-[3.5rem_3rem_8rem_5.5rem_9rem] items-center gap-x-4",
+    status: "flex min-w-0 flex-col items-center gap-0.5 overflow-hidden",
+    statusLabel: "w-full truncate text-center text-[10px] font-medium uppercase tracking-wide text-txt-tertiary",
   },
   variants: {
     inactive: {

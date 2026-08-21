@@ -232,7 +232,7 @@ export function AuthMethodStatus({
     <span
       aria-label={label}
       title={label}
-      className="text-xs text-txt-primary"
+      className="max-w-full truncate text-center text-xs text-txt-primary"
     >
       {label}
     </span>
