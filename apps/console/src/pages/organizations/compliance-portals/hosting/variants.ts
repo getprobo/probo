@@ -126,10 +126,9 @@ export const customDomainForm = tv({
   },
 });
 
-export const domainFormDialog = tv({
+export const deleteDomainDialog = tv({
   slots: {
     form: "flex flex-col gap-4",
     fields: "flex flex-col gap-4",
-    examples: "rounded-4 bg-sand-3 p-4",
   },
 });

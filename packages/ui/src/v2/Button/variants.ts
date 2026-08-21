@@ -25,7 +25,7 @@ import { tv } from "tailwind-variants/lite";
 // variant × color surface treatment resolves in the compound variants below.
 export const button = tv({
   base: [
-    "inline-flex shrink-0 items-center justify-center border border-transparent font-medium whitespace-nowrap",
+    "inline-flex shrink-0 items-center justify-center border font-medium whitespace-nowrap",
     "cursor-pointer outline-none transition-colors select-none",
     "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     "disabled:pointer-events-none disabled:opacity-50",
@@ -77,6 +77,7 @@ export const button = tv({
     { variant: ["solid", "classic"], color: "green", highContrast: false, class: "bg-green-9 text-white hover:bg-green-10" },
     { variant: ["solid", "classic"], color: "amber", highContrast: false, class: "bg-amber-9 text-amber-12 hover:bg-amber-10" },
     { variant: ["solid", "classic"], color: "sky", highContrast: false, class: "bg-sky-9 text-sky-12 hover:bg-sky-10" },
+    { variant: ["solid", "classic", "soft", "ghost"], class: "border-transparent" },
     // classic adds elevation over solid
     { variant: "classic", class: "shadow-2" },
     // solid high-contrast: step-12 background, step-1 text

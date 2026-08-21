@@ -65,17 +65,17 @@ export function CompliancePortalDomainsSection({
   const compliancePortal = useFragment(compliancePortalFragment, compliancePortalKey);
   const defaultDomain = compliancePortal.defaultDomain;
   const customDomain = compliancePortal.customDomain;
-  const showEmpty = customDomain == null && organization.canCreateCustomDomain;
-  const hasCards = defaultDomain != null || customDomain != null || showEmpty;
+  const showCustomDomainForm = customDomain == null && organization.canCreateCustomDomain;
+  const hasCards = defaultDomain != null || customDomain != null || showCustomDomainForm;
 
   return (
     <section className={root()}>
       <div className={intro()}>
         <Heading level={2} size={3} weight="medium" highContrast>
-          {t("brandPage.domains.title")}
+          {t("domainsSection.title")}
         </Heading>
         <Text size={2} color="neutral">
-          {t("brandPage.domains.description")}
+          {t("domainsSection.description")}
         </Text>
       </div>
 
@@ -87,7 +87,7 @@ export function CompliancePortalDomainsSection({
           {customDomain && (
             <CompliancePortalDomainCard customDomainKey={customDomain} />
           )}
-          {showEmpty && <CompliancePortalCustomDomainForm />}
+          {showCustomDomainForm && <CompliancePortalCustomDomainForm />}
         </div>
       )}
     </section>

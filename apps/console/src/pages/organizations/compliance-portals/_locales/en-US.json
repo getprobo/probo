@@ -189,10 +189,6 @@
       "alt": "compliance portal dark logo",
       "uploadDescription": "Upload dark logo image (PNG, JPG, SVG, WEBP up to 5MB)"
     },
-    "domains": {
-      "title": "Domains",
-      "description": "Your compliance portal is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own."
-    },
     "profile": {
       "title": "General information",
       "description": "Description and contact details shown to visitors.",
@@ -426,6 +422,10 @@
       "title": "Rights requests",
       "description": "Let visitors submit data subject rights requests on your compliance portal"
     }
+  },
+  "domainsSection": {
+    "title": "Domains",
+    "description": "Your compliance portal is always available on its default probopage.com subdomain. You can also serve it on one custom domain of your own."
   },
   "slackSection": {
     "title": "Slack notifications",
@@ -721,7 +721,6 @@
       "delete": "Failed to delete domain"
     },
     "actions": {
-      "deleting": "Deleting...",
       "delete": "Delete domain",
       "cancel": "Cancel"
     }

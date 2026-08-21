@@ -88,10 +88,6 @@
     "actions": { "uploading": "Uploaden...", "noLogo": "Geen logo", "uploadLogo": "Logo uploaden", "uploadDarkLogo": "Donker logo uploaden", "changeLogo": "Logo wijzigen", "removeLogo": "Logo verwijderen", "changeDarkLogo": "Donker logo wijzigen", "removeDarkLogo": "Donker logo verwijderen" },
     "logo": { "label": "Logo", "description": "Dit logo wordt weergegeven op uw publieke compliancepagina.", "alt": "Logo van compliancepagina", "uploadDescription": "Upload een logoafbeelding (PNG, JPG, SVG, WEBP tot 5 MB)" },
     "darkLogo": { "label": "Logo voor donkere modus", "description": "Dit logo wordt gebruikt wanneer de donkere modus is ingeschakeld.", "alt": "Donker logo van compliancepagina", "uploadDescription": "Upload een donkere logoafbeelding (PNG, JPG, SVG, WEBP tot 5 MB)" },
-    "domains": {
-      "title": "Domeinen",
-      "description": "Uw compliancepagina is altijd beschikbaar op het standaard probopage.com-subdomein. U kunt deze ook aanbieden op een eigen aangepast domein."
-    },
     "profile": {
       "title": "Algemene informatie",
       "description": "Beschrijving en contactgegevens die aan bezoekers worden getoond.",
@@ -178,6 +174,10 @@
       "title": "Rechtenverzoeken",
       "description": "Laat bezoekers verzoeken om rechten van betrokkenen indienen op uw compliancepagina"
     }
+  },
+  "domainsSection": {
+    "title": "Domeinen",
+    "description": "Uw compliancepagina is altijd beschikbaar op het standaard probopage.com-subdomein. U kunt deze ook aanbieden op een eigen aangepast domein."
   },
   "slackSection": {
     "title": "Slack-meldingen",
@@ -313,7 +313,7 @@
     "confirmationMismatch": "De waarde komt niet overeen met het domein.",
     "messages": { "deleted": "Domein succesvol verwijderd" },
     "errors": { "delete": "Verwijderen van domein mislukt" },
-    "actions": { "deleting": "Bezig met verwijderen...", "delete": "Domein verwijderen", "cancel": "Annuleren" }
+    "actions": { "delete": "Domein verwijderen", "cancel": "Annuleren" }
   },
   "domainCard": {
     "managed": "Beheerd",

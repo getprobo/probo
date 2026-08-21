@@ -189,10 +189,6 @@
       "alt": "Logo sombre de la portail de conformité",
       "uploadDescription": "Téléversez une image de logo sombre (PNG, JPG, SVG, WEBP jusqu’à 5 Mo)"
     },
-    "domains": {
-      "title": "Domaines",
-      "description": "Votre portail de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé."
-    },
     "profile": {
       "title": "Informations générales",
       "description": "Description et coordonnées affichées aux visiteurs.",
@@ -426,6 +422,10 @@
       "title": "Demandes de droits",
       "description": "Permettez aux visiteurs de soumettre des demandes relatives aux droits des personnes concernées sur votre portail de conformité"
     }
+  },
+  "domainsSection": {
+    "title": "Domaines",
+    "description": "Votre portail de conformité est toujours disponible sur son sous-domaine probopage.com par défaut. Vous pouvez également la publier sur un domaine personnalisé."
   },
   "slackSection": {
     "title": "Notifications Slack",
@@ -721,7 +721,6 @@
       "delete": "Échec de la suppression du domaine"
     },
     "actions": {
-      "deleting": "Suppression en cours...",
       "delete": "Supprimer le domaine",
       "cancel": "Annuler"
     }

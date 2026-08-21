@@ -42,7 +42,7 @@ import type { DeleteCompliancePortalDomainDialog_customDomain$key } from "#/__ge
 import type { DeleteCompliancePortalDomainDialogMutation } from "#/__generated__/core/DeleteCompliancePortalDomainDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { domainFormDialog } from "../variants";
+import { deleteDomainDialog } from "../variants";
 
 const deleteCustomDomainMutation = graphql`
   mutation DeleteCompliancePortalDomainDialogMutation($input: DeleteCustomDomainInput!) {
@@ -69,7 +69,7 @@ export function DeleteCompliancePortalDomainDialog({
   children,
 }: DeleteCompliancePortalDomainDialogProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { form, fields } = domainFormDialog();
+  const { form, fields } = deleteDomainDialog();
   const domain = useFragment(fragment, customDomainKey);
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
