@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 )
 
 func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
@@ -39,7 +40,8 @@ func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
 		Register(probo.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(agentexecution.OAuth2ScopeMappings).
-		Register(itam.OAuth2ScopeMappings)
+		Register(itam.OAuth2ScopeMappings).
+		Register(riskmanagement.OAuth2ScopeMappings)
 }
 
 func TestRegisteredOAuth2ScopeRegistries_OrganizationRead(t *testing.T) {

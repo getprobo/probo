@@ -23,6 +23,7 @@ package list
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -57,12 +58,12 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: RiskOrder, $filter: Ri
 `
 
 type risk struct {
-	ID                string `json:"id"`
-	Name              string `json:"name"`
-	Category          string `json:"category"`
-	Treatment         string `json:"treatment"`
-	InherentRiskScore int    `json:"inherentRiskScore"`
-	ResidualRiskScore int    `json:"residualRiskScore"`
+	ID                string  `json:"id"`
+	Name              string  `json:"name"`
+	Category          string  `json:"category"`
+	Treatment         *string `json:"treatment"`
+	InherentRiskScore *int    `json:"inherentRiskScore"`
+	ResidualRiskScore *int    `json:"residualRiskScore"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -186,9 +187,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					r.ID,
 					r.Name,
 					r.Category,
-					r.Treatment,
-					fmt.Sprintf("%d", r.InherentRiskScore),
-					fmt.Sprintf("%d", r.ResidualRiskScore),
+					formatOptionalString(r.Treatment),
+					formatOptionalInt(r.InherentRiskScore),
+					formatOptionalInt(r.ResidualRiskScore),
 				})
 			}
 
@@ -217,4 +218,20 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func formatOptionalString(v *string) string {
+	if v == nil || *v == "" {
+		return "-"
+	}
+
+	return *v
+}
+
+func formatOptionalInt(v *int) string {
+	if v == nil {
+		return "-"
+	}
+
+	return strconv.Itoa(*v)
 }

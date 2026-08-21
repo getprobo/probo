@@ -128,21 +128,32 @@ export default function RisksPage(props: RisksPageProps) {
   const risks = fragmentData.risks?.edges.map(edge => edge.node) ?? [];
   const connectionId = fragmentData.risks.__id;
 
-  const chartRisks = risks.map(({
+  const chartRisks = risks.flatMap(({
     id,
     name,
     inherentLikelihood,
     inherentImpact,
     residualLikelihood,
     residualImpact,
-  }) => ({
-    id,
-    name,
-    inherentLikelihood,
-    inherentImpact,
-    residualLikelihood,
-    residualImpact,
-  }));
+  }) => {
+    if (
+      inherentLikelihood == null
+      || inherentImpact == null
+      || residualLikelihood == null
+      || residualImpact == null
+    ) {
+      return [];
+    }
+
+    return [{
+      id,
+      name,
+      inherentLikelihood,
+      inherentImpact,
+      residualLikelihood,
+      residualImpact,
+    }];
+  });
 
   const refetch = ({
     order,

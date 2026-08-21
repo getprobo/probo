@@ -214,6 +214,118 @@ WHERE %s
 	return nil
 }
 
+func (m *Measures) CountByTreatmentPlanID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	treatmentPlanID gid.GID,
+	filter *MeasureFilter,
+) (int, error) {
+	q := `
+WITH msrs AS (
+	SELECT
+		m.id,
+		m.tenant_id,
+		m.search_vector,
+		m.state,
+		m.category
+	FROM
+		measures m
+	INNER JOIN
+		treatment_plans_measures tpm ON m.id = tpm.measure_id
+	WHERE
+		tpm.treatment_plan_id = @treatment_plan_id
+)
+SELECT
+	COUNT(id)
+FROM
+	msrs
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"treatment_plan_id": treatmentPlanID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (m *Measures) LoadByTreatmentPlanID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	treatmentPlanID gid.GID,
+	cursor *page.Cursor[MeasureOrderField],
+	filter *MeasureFilter,
+) error {
+	q := `
+WITH msrs AS (
+	SELECT
+		m.id,
+		m.tenant_id,
+		m.organization_id,
+		m.category,
+		m.name,
+		m.description,
+		m.state,
+		m.reference_id,
+		m.created_at,
+		m.updated_at,
+		m.search_vector
+	FROM
+		measures m
+	INNER JOIN
+		treatment_plans_measures tpm ON m.id = tpm.measure_id
+	WHERE
+		tpm.treatment_plan_id = @treatment_plan_id
+)
+SELECT
+	id,
+	organization_id,
+	category,
+	name,
+	description,
+	state,
+	reference_id,
+	created_at,
+	updated_at
+FROM
+	msrs
+WHERE %s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"treatment_plan_id": treatmentPlanID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query measures: %w", err)
+	}
+
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
+	if err != nil {
+		return fmt.Errorf("cannot collect measures: %w", err)
+	}
+
+	*m = measures
+
+	return nil
+}
+
 func (m *Measures) CountByControlID(
 	ctx context.Context,
 	conn pg.Querier,

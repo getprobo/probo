@@ -18,33 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
-import type { RiskAnalysisDetailPageQuery } from "#/__generated__/core/RiskAnalysisDetailPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+export const description: INodeProperties[] = [
+	{
+		displayName: 'Treatment Plan ID',
+		name: 'treatmentPlanId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['treatmentPlan'],
+				operation: ['delete'],
+			},
+		},
+		default: '',
+		description: 'The ID of the treatment plan to delete',
+		required: true,
+	},
+];
 
-import RiskAnalysisDetailPage, { riskAnalysisDetailPageQuery } from "./RiskAnalysisDetailPage";
+export async function execute(
+	this: IExecuteFunctions,
+	itemIndex: number,
+): Promise<INodeExecutionData> {
+	const treatmentPlanId = this.getNodeParameter('treatmentPlanId', itemIndex) as string;
 
-export default function RiskAnalysisDetailPageLoader() {
-  const { riskAnalysisId } = useParams<{ riskAnalysisId: string }>();
-  const [queryRef, loadQuery]
-    = useQueryLoader<RiskAnalysisDetailPageQuery>(riskAnalysisDetailPageQuery);
+	const query = `
+		mutation DeleteTreatmentPlan($input: DeleteTreatmentPlanInput!) {
+			deleteTreatmentPlan(input: $input) {
+				deletedTreatmentPlanId
+			}
+		}
+	`;
 
-  useEffect(() => {
-    if (riskAnalysisId) {
-      loadQuery({ riskAnalysisId });
-    }
-  }, [loadQuery, riskAnalysisId]);
+	const responseData = await proboApiRequest.call(this, query, { input: { treatmentPlanId } });
 
-  if (!queryRef) {
-    return <PageSkeleton />;
-  }
-
-  return (
-    <Suspense fallback={<PageSkeleton />}>
-      <RiskAnalysisDetailPage queryRef={queryRef} />
-    </Suspense>
-  );
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
 }

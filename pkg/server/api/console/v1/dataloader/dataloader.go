@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -86,6 +87,7 @@ type (
 		Document                   *dataloadgen.Loader[gid.GID, *coredata.Document]
 		Profile                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
 		Risk                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
+		TreatmentProgress          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
 		Measure                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
 		Task                       *dataloadgen.Loader[gid.GID, *coredata.Task]
 		File                       *dataloadgen.Loader[gid.GID, *coredata.File]
@@ -106,6 +108,7 @@ type (
 		cookieBanner     *cookiebanner.Service
 		thirdParty       *thirdparty.Service
 		compliancePortal *management.Service
+		riskManagement   *riskmanagement.Service
 	}
 )
 
@@ -121,6 +124,7 @@ func NewMiddleware(
 	cookieBannerSvc *cookiebanner.Service,
 	thirdPartySvc *thirdparty.Service,
 	compliancePortalSvc *management.Service,
+	riskManagementSvc *riskmanagement.Service,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -131,6 +135,7 @@ func NewMiddleware(
 					cookieBanner:     cookieBannerSvc,
 					thirdParty:       thirdPartySvc,
 					compliancePortal: compliancePortalSvc,
+					riskManagement:   riskManagementSvc,
 				}
 				loaders := f.newLoaders()
 				ctx := context.WithValue(r.Context(), loadersKey, loaders)
@@ -149,6 +154,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Document:                   dataloadgen.NewMappedLoader(f.fetchDocuments),
 		Profile:                    dataloadgen.NewMappedLoader(f.fetchProfiles),
 		Risk:                       dataloadgen.NewMappedLoader(f.fetchRisks),
+		TreatmentProgress:          dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
 		Measure:                    dataloadgen.NewMappedLoader(f.fetchMeasures),
 		Task:                       dataloadgen.NewMappedLoader(f.fetchTasks),
 		File:                       dataloadgen.NewMappedLoader(f.fetchFiles),
@@ -413,6 +419,20 @@ func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.
 	}
 
 	return result, nil
+}
+
+func (f *batchFetcher) fetchTreatmentProgress(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]riskmanagement.TreatmentProgress, error) {
+	scope := coredata.NewScopeFromObjectID(keys[0])
+
+	progress, err := f.riskManagement.GetTreatmentProgressByIDs(ctx, scope, keys)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load treatment progress: %w", err)
+	}
+
+	return progress, nil
 }
 
 func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Measure, error) {

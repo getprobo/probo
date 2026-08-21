@@ -204,6 +204,22 @@ type RiskAnalysis implements Node {
     matrixSize: MatrixSize!
     organization: Organization @goField(forceResolver: true)
 
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
+    scenarioRisks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+    ): RiskConnection! @goField(forceResolver: true)
+
     diagrams(
         first: Int
         after: CursorKey
@@ -537,7 +553,6 @@ input UpdateRiskAnalysisInput {
     name: String
     description: String @goField(omittable: true)
     period: PeriodInput
-    matrixSize: MatrixSizeInput
 }
 
 input DeleteRiskAnalysisInput {

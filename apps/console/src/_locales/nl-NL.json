@@ -1648,6 +1648,42 @@
       "probable": "Waarschijnlijk",
       "frequent": "Frequent"
     },
+    "riskScales": {
+      "impact": {
+        "2": {
+          "1": "Laag",
+          "2": "Hoog"
+        },
+        "3": {
+          "1": "Laag",
+          "2": "Gemiddeld",
+          "3": "Hoog"
+        },
+        "4": {
+          "1": "Laag",
+          "2": "Gemiddeld",
+          "3": "Hoog",
+          "4": "Kritiek"
+        }
+      },
+      "likelihood": {
+        "2": {
+          "1": "Onwaarschijnlijk",
+          "2": "Waarschijnlijk"
+        },
+        "3": {
+          "1": "Onwaarschijnlijk",
+          "2": "Mogelijk",
+          "3": "Waarschijnlijk"
+        },
+        "4": {
+          "1": "Onwaarschijnlijk",
+          "2": "Mogelijk",
+          "3": "Waarschijnlijk",
+          "4": "Bijna zeker"
+        }
+      }
+    },
     "riskSeverity": {
       "critical": "Kritiek",
       "high": "Hoog",
@@ -1749,6 +1785,7 @@
     },
     "risk": {
       "initial": "Initieel risico",
+      "net": "Netto risico",
       "residual": "Restrisico",
       "score": "Score",
       "numberOfRisks": "Aantal risico's",
@@ -1765,7 +1802,8 @@
       },
       "likelihood": {
         "label": "Waarschijnlijkheid"
-      }
+      },
+      "cell": "{{count}} met waarschijnlijkheid {{likelihood}} en impact {{impact}}"
     }
   },
   "common": {
@@ -2380,7 +2418,8 @@
     "slackBot": "SlackBot",
     "tasks": "Taken",
     "measures": "Maatregelen",
-    "risks": "Alle risico's",
+    "risks": "Risico's",
+    "allRisks": "Alle risico's",
     "riskAnalyses": "Risicobeoordelingen",
     "frameworks": "Frameworks",
     "iam": "IAM",
@@ -4588,21 +4627,8 @@
       "documents": "Documenten",
       "controls": "Controls",
       "obligations": "Verplichtingen",
-      "scenarios": "Scenario's"
-    },
-    "fields": {
-      "owner": "Eigenaar",
-      "treatment": "Behandeling",
-      "initialRiskScore": "Initiële risicoscore",
-      "residualRiskScore": "Restrisicoscore",
-      "note": "Opmerking"
-    },
-    "treatments": {
-      "mitigated": "Beperken",
-      "accepted": "Accepteren",
-      "transferred": "Overdragen",
-      "avoided": "Vermijden",
-      "unknown": "Onbekend"
+      "scenarios": "Scenario's",
+      "treatmentPlans": "Behandelplannen"
     }
   },
   "risksPage": {
@@ -4619,6 +4645,23 @@
       "initialRisk": "Initieel risico",
       "residualRisk": "Restrisico",
       "owner": "Eigenaar"
+    }
+  },
+  "riskOverviewPage": {
+    "emptyScores": "Scores worden ingesteld op een behandelplan in een risicoanalyse.",
+    "fields": {
+      "owner": "Eigenaar",
+      "treatment": "Behandeling",
+      "initialRiskScore": "Initiële score",
+      "residualRiskScore": "Restscore",
+      "note": "Opmerking"
+    },
+    "treatments": {
+      "mitigated": "Beperken",
+      "accepted": "Accepteren",
+      "transferred": "Overdragen",
+      "avoided": "Vermijden",
+      "unknown": "Onbekend"
     }
   },
   "formRiskDialog": {
@@ -4744,7 +4787,8 @@
     "deleteConfirmation": "Hiermee worden deze risicobeoordeling en alle bijbehorende diagrammen, nodes, processen en dreigingen permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "edit": "Bewerken",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "showMore": "Meer tonen"
     },
     "details": "Details",
     "fields": {
@@ -4754,7 +4798,12 @@
       "updatedAt": "Bijgewerkt op"
     },
     "diagrams": "Diagrammen",
-    "emptyDiagrams": "Nog geen diagrammen. Maak een diagram aan om nodes, processen en dreigingen te definiëren."
+    "treatmentPlans": "Risico's en behandelplannen",
+    "emptyDiagrams": "Nog geen diagrammen. Maak een diagram aan om nodes, processen en dreigingen te definiëren.",
+    "tabs": {
+      "diagrams": "Diagrammen",
+      "treatmentPlans": "Risico's en behandelplannen"
+    }
   },
   "riskAnalysesPage": {
     "title": "Risicobeoordelingen",
@@ -4765,7 +4814,8 @@
       "period": "Periode",
       "matrixSize": "Matrix",
       "created": "Aangemaakt"
-    }
+    },
+    "empty": "Nog geen risicobeoordelingen."
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": {
@@ -4973,6 +5023,151 @@
       "add": "Toevoegen"
     }
   },
+  "createTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "Risico's en behandelplannen",
+      "new": "Nieuw behandelplan"
+    },
+    "fields": {
+      "risk": "Risico",
+      "treatment": "Behandeling",
+      "owner": "Eigenaar",
+      "inherentRisk": "Inherent risico",
+      "residualRisk": "Restrisico",
+      "inherentLikelihood": "Inherente waarschijnlijkheid",
+      "inherentImpact": "Inherente impact",
+      "residualLikelihood": "Residuele waarschijnlijkheid",
+      "residualImpact": "Residuele impact"
+    },
+    "placeholders": {
+      "treatment": "Selecteer een behandeling",
+      "risk": "Selecteer een risico"
+    },
+    "validation": {
+      "riskRequired": "Selecteer een risico",
+      "ownerRequired": "Selecteer een eigenaar"
+    },
+    "properties": "Eigenschappen",
+    "hint": "Alleen risico’s die aan een scenario van deze analyse zijn gekoppeld.",
+    "emptyEligible": "Koppel eerst een risico aan een scenario op een diagram.",
+    "actions": {
+      "add": "Behandelplan toevoegen",
+      "create": "Behandelplan aanmaken"
+    }
+  },
+  "updateTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "Risico's en behandelplannen",
+      "edit": "Behandelplan bewerken"
+    },
+    "fields": {
+      "risk": "Risico",
+      "treatment": "Behandeling",
+      "owner": "Eigenaar",
+      "inherentRisk": "Inherent risico",
+      "residualRisk": "Restrisico",
+      "inherentLikelihood": "Inherente waarschijnlijkheid",
+      "inherentImpact": "Inherente impact",
+      "residualLikelihood": "Residuele waarschijnlijkheid",
+      "residualImpact": "Residuele impact"
+    },
+    "placeholders": {
+      "treatment": "Selecteer een behandeling"
+    },
+    "validation": {
+      "ownerRequired": "Selecteer een eigenaar"
+    },
+    "properties": "Eigenschappen",
+    "actions": {
+      "update": "Behandelplan bijwerken"
+    }
+  },
+  "riskAnalysisTreatmentPlansPage": {
+    "columns": {
+      "risk": "Risico",
+      "category": "Categorie",
+      "treatment": "Behandeling",
+      "owner": "Eigenaar",
+      "scores": "Inherent / Residueel",
+      "progress": "Voortgang"
+    },
+    "empty": "Er zijn nog geen risico’s gekoppeld aan een scenario van deze analyse.",
+    "emptyFilter": "Geen gekoppelde risico’s komen overeen met deze cel.",
+    "unplannedWarning_one": "{{count}} gekoppeld risico heeft nog geen behandelplan.",
+    "unplannedWarning_other": "{{count}} gekoppelde risico’s hebben nog geen behandelplan.",
+    "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "search": "Zoek risico's",
+    "states": {
+      "inherent": "Inherent",
+      "net": "Netto",
+      "residual": "Residueel"
+    },
+    "axes": {
+      "likelihood": "Waarschijnlijkheid",
+      "impact": "Impact"
+    },
+    "legend": {
+      "impact": "Impact: {{levels}}",
+      "likelihood": "Waarschijnlijkheid: {{levels}}",
+      "level": "{{value}} {{label}}"
+    },
+    "cell": "{{count}} met waarschijnlijkheid {{likelihood}} en impact {{impact}}"
+  },
+  "linkedRiskListItem": {
+    "empty": "Nog geen behandelplan",
+    "actions": {
+      "create": "Plan toevoegen"
+    }
+  },
+  "treatmentPlanListItem": {
+    "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "progress": "{{done}}/{{total}}",
+    "progressEmpty": "Geen maatregelen",
+    "unassigned": "Niet toegewezen",
+    "actions": {
+      "tasks": "Taken",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "expand": "Maatregelen tonen",
+      "collapse": "Maatregelen verbergen"
+    }
+  },
+  "riskTreatmentPlansPage": {
+    "columns": {
+      "analysis": "Risicoanalyse",
+      "treatment": "Behandeling",
+      "owner": "Eigenaar",
+      "scores": "Inherent / Residueel"
+    },
+    "empty": "Dit risico heeft nog geen behandelplannen."
+  },
+  "riskTreatmentPlanListItem": {
+    "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "unassigned": "Niet toegewezen",
+    "actions": {
+      "measures": "Maatregelen",
+      "edit": "Bewerken",
+      "delete": "Verwijderen"
+    }
+  },
+  "treatmentPlanMeasureList": {
+    "title": "Maatregelen",
+    "empty": "Nog geen maatregelen gekoppeld.",
+    "acceptedEmpty": "Geaccepteerde risico's kunnen geen maatregelen hebben.",
+    "actions": {
+      "create": "Nieuwe maatregel",
+      "link": "Maatregel koppelen",
+      "unlink": "Ontkoppelen",
+      "showMore": "Meer tonen"
+    }
+  },
+  "treatmentPlanMeasuresDialog": {
+    "title": "Maatregelen van het behandelplan",
+    "loading": "Maatregelen laden…",
+    "netScore": "Netto {{score}} ({{likelihood}} × {{impact}})"
+  },
   "riskAnalysisNodeActions": {
     "breadcrumb": {
       "nodes": "Nodes"
@@ -5106,6 +5301,10 @@
       "boundaries": "Geen grenzen",
       "threats": "Geen dreigingen",
       "scenarios": "Geen scenario's"
+    },
+    "schema": {
+      "title": "Diagramstructuur",
+      "hint": "Nodes, processen, grenzen en dreigingen om het diagram bij te werken."
     }
   },
   "diagramChart": {
