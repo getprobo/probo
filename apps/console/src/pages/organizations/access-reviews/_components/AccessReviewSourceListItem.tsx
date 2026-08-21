@@ -53,19 +53,9 @@ import { accessReviewSourceSection } from "../connections/_components/variants";
 import { buildConnectorInitiateURL } from "../dialogs/_lib/connectorSettings";
 
 function canReconnectConnector(
-  connector: { protocol: string; oauth2Scopes: ReadonlyArray<string> } | null | undefined,
+  connector: { canReconnect: boolean } | null | undefined,
 ): boolean {
-  if (!connector || connector.protocol === "API_KEY") {
-    return false;
-  }
-
-  if (connector.protocol === "OAUTH2") {
-    return connector.oauth2Scopes.length > 0;
-  }
-
-  // Install-scoped protocols reconnect through initiate without OAuth scopes
-  // on the connection.
-  return true;
+  return connector?.canReconnect ?? false;
 }
 
 const fragment = graphql`
@@ -76,6 +66,7 @@ const fragment = graphql`
     connector {
       provider
       protocol
+      canReconnect
       oauth2Scopes
     }
     connectionStatus
@@ -146,6 +137,7 @@ const organizationsUnavailableFragment = graphql`
     connector {
       provider
       protocol
+      canReconnect
       oauth2Scopes
     }
   }

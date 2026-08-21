@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { AccessReviewSourceProviderListItem_provider$key } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
+import type { ConnectorProtocol } from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
 
 import { APIKeyConnectorDialog } from "../../dialogs/_components/APIKeyConnectorDialog";
 import { ClientCredentialsConnectorDialog } from "../../dialogs/_components/ClientCredentialsConnectorDialog";
@@ -39,7 +40,9 @@ import {
 
 import { accessReviewSourceSection } from "./variants";
 
-const protocolActionLabelKey: Record<string, string> = {
+const protocolActionLabelKey: Record<ConnectorProtocol, string> = {
+  OAUTH2: "addAccessReviewSourceDialog.actions.connectWithOAuth",
+  API_KEY: "addAccessReviewSourceDialog.actions.connectWithApiKey",
   GITHUB_APP: "addAccessReviewSourceDialog.actions.connectWithGitHubApp",
 };
 
@@ -132,9 +135,7 @@ export function AccessReviewSourceProviderListItem({
                 protocol,
               )}
           >
-            {protocolActionLabelKey[protocol]
-              ? t(protocolActionLabelKey[protocol])
-              : protocol.replaceAll("_", " ")}
+            {t(protocolActionLabelKey[protocol])}
           </Button>
         ))}
         {supportsAPIKey && (

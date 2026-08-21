@@ -19,6 +19,14 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
+// CanReconnect is the resolver for the canReconnect field.
+func (r *connectorResolver) CanReconnect(ctx context.Context, obj *types.Connector) (bool, error) {
+	return connector.SupportsReconnectFor(
+		nil,
+		connector.ProtocolType(obj.Protocol),
+	), nil
+}
+
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
 func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
 	scopes := r.providerRegistry.ProviderOAuth2Scopes(obj.Provider)

@@ -120,6 +120,22 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCalendly")
 }
 
+enum ConnectorProtocol
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ConnectorProtocol") {
+    OAUTH2
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolOAuth2"
+        )
+    API_KEY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolAPIKey"
+        )
+    GITHUB_APP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolGitHubApp"
+        )
+}
+
 type ConnectorProviderInfo {
     provider: ConnectorProvider!
     displayName: String!
@@ -134,7 +150,7 @@ type ConnectorProviderInfo {
     Empty when the provider is only reachable via customer-supplied
     credentials (API key or client credentials).
     """
-    configuredProtocols: [String!]!
+    configuredProtocols: [ConnectorProtocol!]!
     apiKeySupported: Boolean!
     """
     apiKeyManaged is true when the provider connects with a Probo-supplied
@@ -175,7 +191,8 @@ input ConnectorFilter {
 type Connector {
     id: ID!
     provider: ConnectorProvider!
-    protocol: String!
+    protocol: ConnectorProtocol!
+    canReconnect: Boolean! @goField(forceResolver: true)
     oauth2Scopes: [String!]! @goField(forceResolver: true)
     createdAt: Datetime!
 }

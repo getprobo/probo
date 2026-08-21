@@ -35,7 +35,7 @@ func NewConnector(c *coredata.Connector) *Connector {
 	return &Connector{
 		ID:        c.ID,
 		Provider:  c.Provider,
-		Protocol:  c.Protocol.String(),
+		Protocol:  c.Protocol,
 		CreatedAt: c.CreatedAt,
 	}
 }

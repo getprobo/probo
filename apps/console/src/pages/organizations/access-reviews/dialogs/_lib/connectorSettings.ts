@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { ConnectorProtocol } from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+
 // DATADOG_SITES labels are technical identifiers (region code + hostname),
 // intentionally not translated. The dialog's prose strings are.
 export const DATADOG_SITES: { value: string; label: string }[] = [
@@ -174,7 +176,7 @@ export function connectOAuthProvider(
 export function buildConnectorInitiateURL(
   organizationId: string,
   provider: string,
-  protocol: string,
+  protocol: ConnectorProtocol,
   options?: {
     oauth2Scopes?: ReadonlyArray<string>;
     connectorId?: string;
@@ -211,7 +213,7 @@ export function buildConnectorInitiateURL(
 export function connectProviderProtocol(
   organizationId: string,
   provider: string,
-  protocol: string,
+  protocol: ConnectorProtocol,
   options?: {
     oauth2Scopes?: ReadonlyArray<string>;
     connectorId?: string;

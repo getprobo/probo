@@ -643,7 +643,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		}
 
 		provider := reg.Provider
-		configuredProtocols := protocolTypeStrings(
+		configuredProtocols := connectorProtocols(
 			r.connectorRegistry.ConfiguredProtocols(string(provider)),
 		)
 		apiKeySupported := reg.SupportsAPIKey

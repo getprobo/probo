@@ -20,7 +20,10 @@
 
 import { graphql, readFragment } from "relay-runtime";
 
-import type { connectorProviderInfoFields_installableProtocols$key } from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+import type {
+  ConnectorProtocol,
+  connectorProviderInfoFields_installableProtocols$key,
+} from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
 import type { connectorProviderInfoFields_oauthConfigured$key } from "#/__generated__/core/connectorProviderInfoFields_oauthConfigured.graphql";
 
 const PROTOCOL_OAUTH2 = "OAUTH2";
@@ -45,12 +48,12 @@ export function oauthConfigured(
 }
 
 /**
- * @relayField ConnectorProviderInfo.installableProtocols: [String!]
+ * @relayField ConnectorProviderInfo.installableProtocols: [ConnectorProtocol!]
  * @rootFragment connectorProviderInfoFields_installableProtocols
  */
 export function installableProtocols(
   key: connectorProviderInfoFields_installableProtocols$key,
-): ReadonlyArray<string> {
+): ReadonlyArray<ConnectorProtocol> {
   const provider = readFragment(
     graphql`
       fragment connectorProviderInfoFields_installableProtocols on ConnectorProviderInfo {
