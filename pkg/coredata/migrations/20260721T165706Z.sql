@@ -32,5 +32,10 @@ WHERE tc.organization_id = o.id;
 ALTER TABLE trust_centers
     ALTER COLUMN entity_name DROP DEFAULT;
 
+-- Drop both names: installs that applied page_title but skipped the
+-- rename still have page_title; fully renamed installs have title.
 ALTER TABLE trust_centers
-    DROP COLUMN title;
+    DROP COLUMN IF EXISTS title;
+
+ALTER TABLE trust_centers
+    DROP COLUMN IF EXISTS page_title;

@@ -12,5 +12,23 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
-ALTER TABLE trust_centers
-    RENAME COLUMN page_title TO title;
+-- Idempotent: no-op when page_title was already renamed or never added.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'trust_centers'
+          AND column_name = 'page_title'
+    ) AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'trust_centers'
+          AND column_name = 'title'
+    ) THEN
+        ALTER TABLE trust_centers
+            RENAME COLUMN page_title TO title;
+    END IF;
+END $$;
