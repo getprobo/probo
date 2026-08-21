@@ -38,7 +38,6 @@ const dnsRecordFragment = graphql`
     name
     value
     ttl
-    purpose
   }
 `;
 
@@ -54,8 +53,17 @@ export function CompliancePortalDomainDnsRecordListItem({
   const dnsRecord = useFragment(dnsRecordFragment, dnsRecordKey);
   const { record, recordHeader, recordField, recordValue, code } = domainCard();
 
-  function copyToClipboard(text: string) {
-    void navigator.clipboard.writeText(text);
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      toast({
+        title: t("domainCard.messages.copyFailed"),
+        description: t("domainCard.messages.valueCopyFailed"),
+        variant: "error",
+      });
+      return;
+    }
     toast({
       title: t("domainCard.messages.copied"),
       description: t("domainCard.messages.valueCopied"),
@@ -67,7 +75,9 @@ export function CompliancePortalDomainDnsRecordListItem({
     <div className={record()}>
       <div className={recordHeader()}>
         <Text size={2} weight="medium">{dnsRecord.type}</Text>
-        <Badge variant="soft" color="neutral">{dnsRecord.purpose}</Badge>
+        <Badge variant="soft" color="neutral">
+          {t("domainCard.dns.purposePointToServers")}
+        </Badge>
       </div>
       <div className={recordField()}>
         <Text size={1} color="faint">{t("domainCard.dns.name")}</Text>
@@ -78,7 +88,7 @@ export function CompliancePortalDomainDnsRecordListItem({
             variant="soft"
             color="neutral"
             aria-label={t("domainCard.dns.copy")}
-            onClick={() => copyToClipboard(dnsRecord.name)}
+            onClick={() => void copyToClipboard(dnsRecord.name)}
           >
             <CopyIcon />
           </IconButton>
@@ -93,7 +103,7 @@ export function CompliancePortalDomainDnsRecordListItem({
             variant="soft"
             color="neutral"
             aria-label={t("domainCard.dns.copy")}
-            onClick={() => copyToClipboard(dnsRecord.value)}
+            onClick={() => void copyToClipboard(dnsRecord.value)}
           >
             <CopyIcon />
           </IconButton>

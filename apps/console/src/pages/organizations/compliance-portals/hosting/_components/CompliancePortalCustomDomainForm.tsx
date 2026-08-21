@@ -33,7 +33,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalCustomDomainFormMutation } from "#/__generated__/core/CompliancePortalCustomDomainFormMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { DOMAIN_PATTERN, normalizeDomain } from "../_lib/normalizeDomain";
+import { DOMAIN_MAX_LENGTH, DOMAIN_PATTERN, normalizeDomain } from "../_lib/normalizeDomain";
 import { customDomainForm, domainCard, hostingCard } from "../variants";
 
 const createCustomDomainMutation = graphql`
@@ -71,7 +71,7 @@ export function CompliancePortalCustomDomainForm() {
     }
 
     const normalized = normalizeDomain(domain);
-    if (!DOMAIN_PATTERN.test(normalized)) {
+    if (normalized.length > DOMAIN_MAX_LENGTH || !DOMAIN_PATTERN.test(normalized)) {
       setErrors({ domain: t("customDomainForm.fields.domainInvalid") });
       return;
     }

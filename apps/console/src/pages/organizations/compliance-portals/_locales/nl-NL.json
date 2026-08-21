@@ -355,11 +355,14 @@
       "name": "Naam",
       "value": "Waarde",
       "ttl": "TTL: {{ttl}}",
-      "copy": "Kopiëren"
+      "copy": "Kopiëren",
+      "purposePointToServers": "Wijs het domein naar de Probo-servers"
     },
     "messages": {
       "copied": "Gekopieerd",
-      "valueCopied": "Waarde gekopieerd naar klembord"
+      "valueCopied": "Waarde gekopieerd naar klembord",
+      "copyFailed": "Kopiëren mislukt",
+      "valueCopyFailed": "De waarde kon niet naar het klembord worden gekopieerd"
     },
     "actions": {
       "delete": "Verwijderen"

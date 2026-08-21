@@ -200,12 +200,13 @@ export const switchThumb = tv({
     "data-[checked]:border-black/20",
   ],
   variants: {
-    // Travel = track width − vertical padding (2×1px) − thumb. justify-end
-    // cannot interpolate; translate is what makes the thumb slide.
+    // Inner track = outer size − 2×1px border − 2×1px padding. Thumb must
+    // fit that box; travel = inner width − thumb. justify-end cannot
+    // interpolate; translate is what makes the thumb slide.
     size: {
-      1: "size-[18px] data-[checked]:translate-x-[8px] rtl:data-[checked]:-translate-x-[8px]",
-      2: "size-[18px] data-[checked]:translate-x-[15px] rtl:data-[checked]:-translate-x-[15px]",
-      3: "size-[22px] data-[checked]:translate-x-[18px] rtl:data-[checked]:-translate-x-[18px]",
+      1: "size-4 data-[checked]:translate-x-[8px] rtl:data-[checked]:-translate-x-[8px]",
+      2: "size-4 data-[checked]:translate-x-[15px] rtl:data-[checked]:-translate-x-[15px]",
+      3: "size-5 data-[checked]:translate-x-[18px] rtl:data-[checked]:-translate-x-[18px]",
     },
   },
   defaultVariants: {

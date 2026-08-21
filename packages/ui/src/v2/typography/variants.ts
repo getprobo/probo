@@ -172,7 +172,7 @@ export const code = tv({
 });
 
 export const codeSkeleton = tv({
-  base: skeletonBase,
+  base: "inline-block animate-pulse select-none rounded-1 bg-sand-3 text-transparent",
   variants: {
     size,
   },

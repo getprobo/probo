@@ -113,7 +113,9 @@ export function CompliancePortalStatusSection({
           title={t("statusSection.indexing.title")}
           description={t("statusSection.indexing.description")}
           icon={<MagnifyingGlassIcon size={24} weight="duotone" />}
-          checked={compliancePortal.searchEngineIndexing === "INDEXABLE"}
+          checked={
+            compliancePortal.active && compliancePortal.searchEngineIndexing === "INDEXABLE"
+          }
           disabled={indexingDisabled}
           disabledHint={
             compliancePortal.active

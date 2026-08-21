@@ -72,7 +72,7 @@ export function CompliancePortalStatusCard({
           {disabled === true && disabledHint != null
             ? (
                 <Tooltip>
-                  <TooltipTrigger render={<span>{toggle}</span>} />
+                  <TooltipTrigger render={<span tabIndex={0}>{toggle}</span>} />
                   <TooltipPopup>{disabledHint}</TooltipPopup>
                 </Tooltip>
               )

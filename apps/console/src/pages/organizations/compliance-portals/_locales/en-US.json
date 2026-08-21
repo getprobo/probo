@@ -765,11 +765,14 @@
       "name": "Name",
       "value": "Value",
       "ttl": "TTL: {{ttl}}",
-      "copy": "Copy"
+      "copy": "Copy",
+      "purposePointToServers": "Point domain to Probo servers"
     },
     "messages": {
       "copied": "Copied",
-      "valueCopied": "Value copied to clipboard"
+      "valueCopied": "Value copied to clipboard",
+      "copyFailed": "Copy failed",
+      "valueCopyFailed": "The value could not be copied to the clipboard"
     },
     "actions": {
       "delete": "Delete"

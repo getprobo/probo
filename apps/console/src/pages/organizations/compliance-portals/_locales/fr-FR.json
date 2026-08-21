@@ -765,11 +765,14 @@
       "name": "Nom",
       "value": "Valeur",
       "ttl": "TTL : {{ttl}}",
-      "copy": "Copier"
+      "copy": "Copier",
+      "purposePointToServers": "Pointer le domaine vers les serveurs Probo"
     },
     "messages": {
       "copied": "Copié",
-      "valueCopied": "Valeur copiée dans le presse-papiers"
+      "valueCopied": "Valeur copiée dans le presse-papiers",
+      "copyFailed": "Échec de la copie",
+      "valueCopyFailed": "La valeur n'a pas pu être copiée dans le presse-papiers"
     },
     "actions": {
       "delete": "Supprimer"
