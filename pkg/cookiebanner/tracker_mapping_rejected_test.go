@@ -152,3 +152,57 @@ func TestRejectedVerdictFor(t *testing.T) {
 			"an unreviewed row is the default state and must not divert anything")
 	})
 }
+
+// The verdict read takes FOR UPDATE, so a review committed by another
+// transaction cannot land between the read and the write. Without the lock
+// the second transaction commits immediately and the worker persists a
+// verdict the catalog has already withdrawn.
+func TestRejectedVerdictFor_LocksAgainstConcurrentReview(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	h := newMappingHandler(client)
+
+	firstParty := coredata.CommonTrackerPatternAttributionFirstParty
+	id := insertReviewedParty(t, ctx, client, coredata.CommonThirdPartyReviewRejected, &firstParty)
+
+	released := make(chan struct{})
+	blocked := make(chan error, 1)
+
+	// Hold the row inside a transaction that read it, then try to validate it
+	// from a second connection: that update must wait for the first to finish.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		verdict, err := h.rejectedVerdictFor(ctx, tx, id)
+		require.NoError(t, err)
+		require.NotNil(t, verdict)
+
+		go func() {
+			blocked <- client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+				return (coredata.CommonThirdParty{}).UpdateReview(
+					ctx, tx, id,
+					coredata.CommonThirdPartyReviewValidated,
+					nil,
+					"concurrent",
+				)
+			})
+			close(released)
+		}()
+
+		// The competing update must still be in flight while the lock is held.
+		select {
+		case <-released:
+			t.Error("the review update completed while the row was locked")
+		case <-time.After(300 * time.Millisecond):
+		}
+
+		return nil
+	}))
+
+	select {
+	case err := <-blocked:
+		require.NoError(t, err, "the update must succeed once the lock is released")
+	case <-time.After(5 * time.Second):
+		t.Fatal("the review update never completed after the lock was released")
+	}
+}

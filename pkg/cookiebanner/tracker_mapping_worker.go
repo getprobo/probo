@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
@@ -648,27 +649,58 @@ func (h *trackerMappingHandler) rejectedVerdictFor(
 	tx pg.Tx,
 	commonThirdPartyID gid.GID,
 ) (*coredata.CommonTrackerPatternAttribution, error) {
-	var party coredata.CommonThirdParty
+	// FOR UPDATE, so a review committed while this transaction runs cannot
+	// leave us persisting a verdict the catalog has since withdrawn (or
+	// linking a vendor a rejection has since ruled out). Reading inside the
+	// transaction is not enough on its own: without the lock the row can
+	// change under a repeatable read. Only the two review columns are
+	// selected — the full row is not needed and a narrower read keeps the
+	// lock's blast radius to the reviewer's own update.
+	q := `
+SELECT
+    review,
+    rejected_verdict
+FROM
+    common_third_parties
+WHERE
+    id = @id
+FOR UPDATE
+`
 
-	if err := party.LoadByID(ctx, tx, commonThirdPartyID); err != nil {
-		return nil, fmt.Errorf("cannot load common third party: %w", err)
+	var (
+		review  coredata.CommonThirdPartyReview
+		verdict *coredata.CommonTrackerPatternAttribution
+	)
+
+	if err := tx.QueryRow(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{"id": commonThirdPartyID},
+	).Scan(&review, &verdict); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Deleted between the deterministic phase and here; there is no
+			// review to act on, so leave the mapping to the normal path.
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load common third party review: %w", err)
 	}
 
-	if party.Review != coredata.CommonThirdPartyReviewRejected {
+	if review != coredata.CommonThirdPartyReviewRejected {
 		return nil, nil
 	}
 
 	// The database CHECK ties a verdict to the rejected state, so this is
 	// defensive: a row that lost its verdict must not silently fall through
 	// to a vendor link.
-	if party.RejectedVerdict == nil || !party.RejectedVerdict.IsTerminal() {
+	if verdict == nil || !verdict.IsTerminal() {
 		return nil, fmt.Errorf(
 			"rejected common third party %s carries no terminal verdict",
 			commonThirdPartyID,
 		)
 	}
 
-	return party.RejectedVerdict, nil
+	return verdict, nil
 }
 
 // firstNonNil returns a when it is set, otherwise b. It keeps the first
