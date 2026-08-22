@@ -40,7 +40,7 @@ func protectedResourceMetadataURL(baseURL *baseurl.BaseURL) string {
 
 // BearerChallenge builds the WWW-Authenticate header value per RFC 6750 and RFC 9728.
 // Pass errorCode == "" for discovery-only (401, no Bearer attempt).
-// Pass scopes only when errorCode == BearerErrInsufficientScope.
+// Optional scopes tell the client which access scopes to request.
 func BearerChallenge(
 	baseURL *baseurl.BaseURL,
 	errorCode string,
@@ -54,7 +54,7 @@ func BearerChallenge(
 		parts = append(parts, fmt.Sprintf(`error="%s"`, errorCode))
 	}
 
-	if errorCode == BearerErrInsufficientScope && len(scopes) > 0 {
+	if len(scopes) > 0 {
 		scopeValues := make([]string, len(scopes))
 		for i, scope := range scopes {
 			scopeValues[i] = string(scope)
@@ -78,8 +78,9 @@ func SetBearerChallenge(
 }
 
 // SetBearerUnauthenticated sets a discovery-only challenge (RFC 9728 resource_metadata).
-func SetBearerUnauthenticated(w http.ResponseWriter, baseURL *baseurl.BaseURL) {
-	SetBearerChallenge(w, baseURL, "")
+// Pass scopes so MCP clients such as Claude request them on connect.
+func SetBearerUnauthenticated(w http.ResponseWriter, baseURL *baseurl.BaseURL, scopes ...coredata.OAuth2Scope) {
+	SetBearerChallenge(w, baseURL, "", scopes...)
 }
 
 func SetBearerInvalidToken(w http.ResponseWriter, baseURL *baseurl.BaseURL) {

@@ -79,6 +79,39 @@ func (s OAuth2Scopes) ContainsAll(seq iter.Seq[OAuth2Scope]) bool {
 	return true
 }
 
+func (s OAuth2Scopes) Union(other OAuth2Scopes) OAuth2Scopes {
+	if len(other) == 0 {
+		return slices.Clone(s)
+	}
+
+	if len(s) == 0 {
+		return slices.Clone(other)
+	}
+
+	seen := make(map[OAuth2Scope]struct{}, len(s)+len(other))
+	out := make(OAuth2Scopes, 0, len(s)+len(other))
+
+	for _, scope := range s {
+		if _, ok := seen[scope]; ok {
+			continue
+		}
+
+		seen[scope] = struct{}{}
+		out = append(out, scope)
+	}
+
+	for _, scope := range other {
+		if _, ok := seen[scope]; ok {
+			continue
+		}
+
+		seen[scope] = struct{}{}
+		out = append(out, scope)
+	}
+
+	return out
+}
+
 func (s OAuth2Scopes) String() string {
 	ss := make([]string, len(s))
 	for i, scope := range s {

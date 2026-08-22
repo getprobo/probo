@@ -46,6 +46,12 @@ func TestBearerChallenge(t *testing.T) {
 			want:      `Bearer resource_metadata="https://example.com/.well-known/oauth-protected-resource"`,
 		},
 		{
+			name:      "discovery with scopes",
+			errorCode: "",
+			scopes:    []coredata.OAuth2Scope{"v1:asset", "v1:business-function"},
+			want:      `Bearer scope="v1:asset v1:business-function", resource_metadata="https://example.com/.well-known/oauth-protected-resource"`,
+		},
+		{
 			name:      "invalid token",
 			errorCode: BearerErrInvalidToken,
 			want:      `Bearer error="invalid_token", resource_metadata="https://example.com/.well-known/oauth-protected-resource"`,

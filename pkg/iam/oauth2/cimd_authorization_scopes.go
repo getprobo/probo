@@ -18,58 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package coredata_test
+package oauth2
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 )
 
-func TestOAuth2Scope_IsRead(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		scope coredata.OAuth2Scope
-		want  bool
-	}{
-		{scope: "v1:org:read", want: true},
-		{scope: "v1:document:read", want: true},
-		{scope: "v1:org", want: false},
-		{scope: "v1:privacy", want: false},
-		{scope: "openid", want: false},
-		{scope: "offline_access", want: false},
+func advertisedWriteScopes(registry *oauth2scope.Registry) coredata.OAuth2Scopes {
+	if registry == nil {
+		return nil
 	}
 
-	for _, tt := range tests {
-		t.Run(
-			tt.scope.String(),
-			func(t *testing.T) {
-				t.Parallel()
-
-				assert.Equal(t, tt.want, tt.scope.IsRead())
-			},
-		)
-	}
+	return authorizationServerScopes(registry.AllWriteScopes())
 }
 
-func TestOAuth2Scopes_Union(t *testing.T) {
-	t.Parallel()
+func resolveCIMDAuthorizationScopes(
+	client *coredata.OAuth2Client,
+	requested coredata.OAuth2Scopes,
+	registry *oauth2scope.Registry,
+) (coredata.OAuth2Scopes, coredata.OAuth2Scopes) {
+	if client == nil {
+		return nil, requested
+	}
 
-	t.Run(
-		"keeps left order and appends new scopes",
-		func(t *testing.T) {
-			t.Parallel()
+	allowed := client.Scopes
+	resolved := requested.OrDefault(allowed)
 
-			left := coredata.OAuth2Scopes{"openid", "v1:asset"}
-			right := coredata.OAuth2Scopes{"v1:asset", "v1:business-function"}
+	if client.ExternalClientID == "" {
+		return allowed, resolved
+	}
 
-			assert.Equal(
-				t,
-				coredata.OAuth2Scopes{"openid", "v1:asset", "v1:business-function"},
-				left.Union(right),
-			)
-		},
-	)
+	advertised := advertisedWriteScopes(registry)
+	allowed = allowed.Union(advertised)
+	resolved = resolved.Union(advertised)
+
+	return allowed, resolved
 }

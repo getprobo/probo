@@ -28,10 +28,11 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Handler) http.Handler {
+func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL, scopes ...coredata.OAuth2Scope) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +43,7 @@ func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Hand
 					if bearertoken.IsAttempt(r.Header.Get("Authorization")) {
 						bearertoken.SetBearerInvalidToken(w, baseURL)
 					} else {
-						bearertoken.SetBearerUnauthenticated(w, baseURL)
+						bearertoken.SetBearerUnauthenticated(w, baseURL, scopes...)
 					}
 
 					httpserver.RenderJSON(

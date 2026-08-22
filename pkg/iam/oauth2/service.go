@@ -693,8 +693,13 @@ func (s *Service) CreateDeviceCode(
 				)
 			}
 
-			requestedScopes := scopes.OrDefault(client.Scopes)
-			if !client.AreScopesAllowed(requestedScopes) {
+			allowed, requestedScopes := resolveCIMDAuthorizationScopes(
+				&client,
+				scopes,
+				s.registry,
+			)
+
+			if !allowed.ContainsAll(requestedScopes.Values()) {
 				return NewError(
 					ErrInvalidScope,
 					WithDescription("requested scope exceeds client registration"),
@@ -1469,8 +1474,13 @@ func (s *Service) Authorize(
 				return fmt.Errorf("cannot authorize: unsupported response_type")
 			}
 
-			requestedScopes := req.Scopes.OrDefault(client.Scopes)
-			if !client.AreScopesAllowed(requestedScopes) {
+			allowed, requestedScopes := resolveCIMDAuthorizationScopes(
+				client,
+				req.Scopes,
+				s.registry,
+			)
+
+			if !allowed.ContainsAll(requestedScopes.Values()) {
 				return fmt.Errorf("cannot authorize: requested scope exceeds client registration")
 			}
 
