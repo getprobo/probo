@@ -19,6 +19,16 @@ scalar EmailAddr
 scalar OAuth2Scope
 scalar Map
 
+type Period {
+  start: Datetime
+  end: Datetime
+}
+
+input PeriodInput {
+  start: Datetime @goField(omittable: true)
+  end: Datetime @goField(omittable: true)
+}
+
 interface Node {
   id: ID!
 }

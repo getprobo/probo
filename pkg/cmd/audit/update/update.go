@@ -36,10 +36,14 @@ mutation($input: UpdateAuditInput!) {
       id
       name
       state
-      validFrom
-      validUntil
-      auditStartDate
-      auditEndDate
+      validity {
+        start
+        end
+      }
+      auditDates {
+        start
+        end
+      }
     }
   }
 }
@@ -48,13 +52,17 @@ mutation($input: UpdateAuditInput!) {
 type updateResponse struct {
 	UpdateAudit struct {
 		Audit struct {
-			ID             string  `json:"id"`
-			Name           string  `json:"name"`
-			State          string  `json:"state"`
-			ValidFrom      *string `json:"validFrom"`
-			ValidUntil     *string `json:"validUntil"`
-			AuditStartDate *string `json:"auditStartDate"`
-			AuditEndDate   *string `json:"auditEndDate"`
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+			State    string `json:"state"`
+			Validity *struct {
+				Start *string `json:"start"`
+				End   *string `json:"end"`
+			} `json:"validity"`
+			AuditDates *struct {
+				Start *string `json:"start"`
+				End   *string `json:"end"`
+			} `json:"auditDates"`
 		} `json:"audit"`
 	} `json:"updateAudit"`
 }
@@ -104,20 +112,30 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["state"] = flagState
 			}
 
-			if cmd.Flags().Changed("valid-from") {
-				input["validFrom"] = flagValidFrom
+			if cmd.Flags().Changed("valid-from") || cmd.Flags().Changed("valid-until") {
+				period := map[string]any{}
+				if cmd.Flags().Changed("valid-from") {
+					period["start"] = flagValidFrom
+				}
+
+				if cmd.Flags().Changed("valid-until") {
+					period["end"] = flagValidUntil
+				}
+
+				input["validity"] = period
 			}
 
-			if cmd.Flags().Changed("valid-until") {
-				input["validUntil"] = flagValidUntil
-			}
+			if cmd.Flags().Changed("audit-start-date") || cmd.Flags().Changed("audit-end-date") {
+				period := map[string]any{}
+				if cmd.Flags().Changed("audit-start-date") {
+					period["start"] = flagAuditStartDate
+				}
 
-			if cmd.Flags().Changed("audit-start-date") {
-				input["auditStartDate"] = flagAuditStartDate
-			}
+				if cmd.Flags().Changed("audit-end-date") {
+					period["end"] = flagAuditEndDate
+				}
 
-			if cmd.Flags().Changed("audit-end-date") {
-				input["auditEndDate"] = flagAuditEndDate
+				input["auditDates"] = period
 			}
 
 			if len(input) == 1 {

@@ -24,8 +24,8 @@ type Period {
 }
 
 input PeriodInput {
-    start: Datetime
-    end: Datetime
+    start: Datetime @goField(omittable: true)
+    end: Datetime @goField(omittable: true)
 }
 
 type MatrixSize

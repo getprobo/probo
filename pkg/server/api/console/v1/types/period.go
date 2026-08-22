@@ -20,7 +20,11 @@
 
 package types
 
-import "time"
+import (
+	"time"
+
+	"go.probo.inc/probo/pkg/server/gqlutils"
+)
 
 func NewPeriod(start, end *time.Time) *Period {
 	if start == nil && end == nil {
@@ -31,4 +35,28 @@ func NewPeriod(start, end *time.Time) *Period {
 		Start: start,
 		End:   end,
 	}
+}
+
+func PeriodInputDates(p *PeriodInput) (start, end *time.Time) {
+	if p == nil {
+		return nil, nil
+	}
+
+	if p.Start.IsSet() {
+		start = p.Start.Value()
+	}
+
+	if p.End.IsSet() {
+		end = p.End.Value()
+	}
+
+	return start, end
+}
+
+func PeriodInputOmittableDates(p *PeriodInput) (start, end **time.Time) {
+	if p == nil {
+		return nil, nil
+	}
+
+	return gqlutils.UnwrapOmittable(p.Start), gqlutils.UnwrapOmittable(p.End)
 }

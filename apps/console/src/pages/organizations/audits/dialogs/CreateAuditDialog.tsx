@@ -23,6 +23,7 @@ import {
   formatDatetime,
   formatError,
   type GraphQLError,
+  toPeriod,
 } from "@probo/helpers";
 import {
   Breadcrumb,
@@ -124,10 +125,14 @@ export function CreateAuditDialog({
         organizationId,
         frameworkId: data.frameworkId,
         name: data.name || null,
-        validFrom: formatDatetime(data.validFrom),
-        validUntil: formatDatetime(data.validUntil),
-        auditStartDate: formatDatetime(data.auditStartDate),
-        auditEndDate: formatDatetime(data.auditEndDate),
+        validity: toPeriod(
+          formatDatetime(data.validFrom),
+          formatDatetime(data.validUntil),
+        ),
+        auditDates: toPeriod(
+          formatDatetime(data.auditStartDate),
+          formatDatetime(data.auditEndDate),
+        ),
         state: data.state,
         file: file ?? null,
       });

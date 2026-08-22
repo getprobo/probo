@@ -42,8 +42,7 @@ type Profile implements Node {
     additionalEmailAddresses: [EmailAddr!]!
     kind: String
     position: String
-    contractStartDate: Datetime
-    contractEndDate: Datetime
+    contract: Period
     createdAt: Datetime!
     updatedAt: Datetime!
 

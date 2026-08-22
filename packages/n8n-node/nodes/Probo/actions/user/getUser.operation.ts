@@ -56,8 +56,10 @@ export async function execute(
 					additionalEmailAddresses
 					kind
 					position
-					contractStartDate
-					contractEndDate
+					contract {
+						start
+						end
+					}
 					createdAt
 					updatedAt
 					identity { id email fullName emailVerified }

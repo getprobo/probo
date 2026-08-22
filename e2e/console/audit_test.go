@@ -163,8 +163,10 @@ func TestAudit_AuditDates(t *testing.T) {
 				auditEdge {
 					node {
 						id
-						auditStartDate
-						auditEndDate
+						auditDates {
+							start
+							end
+						}
 					}
 				}
 			}
@@ -174,19 +176,23 @@ func TestAudit_AuditDates(t *testing.T) {
 	input := map[string]any{
 		"organizationId": owner.GetOrganizationID().String(),
 		"frameworkId":    frameworkID,
-		"name":           "Audit with engagement dates",
+		"name":           "Audit with start and end dates",
 		"state":          "NOT_STARTED",
-		"auditStartDate": "2026-03-01T00:00:00Z",
-		"auditEndDate":   "2026-03-15T00:00:00Z",
+		"auditDates": map[string]any{
+			"start": "2026-03-01T00:00:00Z",
+			"end":   "2026-03-15T00:00:00Z",
+		},
 	}
 
 	var createResult struct {
 		CreateAudit struct {
 			AuditEdge struct {
 				Node struct {
-					ID             string  `json:"id"`
-					AuditStartDate *string `json:"auditStartDate"`
-					AuditEndDate   *string `json:"auditEndDate"`
+					ID         string `json:"id"`
+					AuditDates *struct {
+						Start *string `json:"start"`
+						End   *string `json:"end"`
+					} `json:"auditDates"`
 				} `json:"node"`
 			} `json:"auditEdge"`
 		} `json:"createAudit"`
@@ -196,34 +202,41 @@ func TestAudit_AuditDates(t *testing.T) {
 	require.NoError(t, err)
 
 	node := createResult.CreateAudit.AuditEdge.Node
-	require.NotNil(t, node.AuditStartDate)
-	require.NotNil(t, node.AuditEndDate)
-	assert.True(t, strings.HasPrefix(*node.AuditStartDate, "2026-03-01"))
-	assert.True(t, strings.HasPrefix(*node.AuditEndDate, "2026-03-15"))
+	require.NotNil(t, node.AuditDates)
+	require.NotNil(t, node.AuditDates.Start)
+	require.NotNil(t, node.AuditDates.End)
+	assert.True(t, strings.HasPrefix(*node.AuditDates.Start, "2026-03-01"))
+	assert.True(t, strings.HasPrefix(*node.AuditDates.End, "2026-03-15"))
 
 	const updateQuery = `
 		mutation UpdateAudit($input: UpdateAuditInput!) {
 			updateAudit(input: $input) {
 				audit {
 					id
-					auditStartDate
-					auditEndDate
+					auditDates {
+						start
+						end
+					}
 				}
 			}
 		}
 	`
 
 	updateInput := map[string]any{
-		"id":             node.ID,
-		"auditStartDate": "2026-04-01T00:00:00Z",
-		"auditEndDate":   "2026-04-30T00:00:00Z",
+		"id": node.ID,
+		"auditDates": map[string]any{
+			"start": "2026-04-01T00:00:00Z",
+			"end":   "2026-04-30T00:00:00Z",
+		},
 	}
 
 	var updateResult struct {
 		UpdateAudit struct {
 			Audit struct {
-				AuditStartDate *string `json:"auditStartDate"`
-				AuditEndDate   *string `json:"auditEndDate"`
+				AuditDates *struct {
+					Start *string `json:"start"`
+					End   *string `json:"end"`
+				} `json:"auditDates"`
 			} `json:"audit"`
 		} `json:"updateAudit"`
 	}
@@ -232,10 +245,11 @@ func TestAudit_AuditDates(t *testing.T) {
 	require.NoError(t, err)
 
 	updated := updateResult.UpdateAudit.Audit
-	require.NotNil(t, updated.AuditStartDate)
-	require.NotNil(t, updated.AuditEndDate)
-	assert.True(t, strings.HasPrefix(*updated.AuditStartDate, "2026-04-01"))
-	assert.True(t, strings.HasPrefix(*updated.AuditEndDate, "2026-04-30"))
+	require.NotNil(t, updated.AuditDates)
+	require.NotNil(t, updated.AuditDates.Start)
+	require.NotNil(t, updated.AuditDates.End)
+	assert.True(t, strings.HasPrefix(*updated.AuditDates.Start, "2026-04-01"))
+	assert.True(t, strings.HasPrefix(*updated.AuditDates.End, "2026-04-30"))
 }
 
 func TestAudit_Create_Validation(t *testing.T) {

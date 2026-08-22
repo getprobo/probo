@@ -1507,15 +1507,18 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 
 	svc := r.proboSvc
 
+	validFrom, validUntil := types.PeriodDates(input.Validity)
+	auditStart, auditEnd := types.PeriodDates(input.AuditDates)
+
 	audit, err := svc.Audits.Create(
 		ctx, scope,
 		&probo.CreateAuditRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
-			ValidFrom:      input.ValidFrom,
-			ValidUntil:     input.ValidUntil,
-			AuditStartDate: input.AuditStartDate,
-			AuditEndDate:   input.AuditEndDate,
+			ValidFrom:      validFrom,
+			ValidUntil:     validUntil,
+			AuditStartDate: auditStart,
+			AuditEndDate:   auditEnd,
 			State:          input.State,
 			FrameworkID:    input.FrameworkID,
 		},
@@ -1537,15 +1540,18 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
+	validFrom, validUntil := types.PeriodDates(input.Validity)
+	auditStart, auditEnd := types.PeriodDates(input.AuditDates)
+
 	audit, err := svc.Audits.Update(
 		ctx, scope,
 		&probo.UpdateAuditRequest{
 			ID:             input.ID,
 			Name:           UnwrapOmittable(input.Name),
-			ValidFrom:      input.ValidFrom,
-			ValidUntil:     input.ValidUntil,
-			AuditStartDate: input.AuditStartDate,
-			AuditEndDate:   input.AuditEndDate,
+			ValidFrom:      validFrom,
+			ValidUntil:     validUntil,
+			AuditStartDate: auditStart,
+			AuditEndDate:   auditEnd,
 			State:          input.State,
 		},
 	)
@@ -2888,12 +2894,8 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 	}
 
 	var contractStart, contractEnd **time.Time
-	if input.ContractStartDate != nil {
-		contractStart = &input.ContractStartDate
-	}
-
-	if input.ContractEndDate != nil {
-		contractEnd = &input.ContractEndDate
+	if input.Contract != nil {
+		contractStart, contractEnd = types.PeriodOmittableDates(input.Contract)
 	}
 
 	profile, err := r.iamSvc.OrganizationService.CreateUser(ctx, scope, &iam.CreateUserRequest{
@@ -2958,12 +2960,8 @@ func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 	}
 
 	var contractStart, contractEnd **time.Time
-	if p := UnwrapOmittable(input.ContractStartDate); p != nil {
-		contractStart = p
-	}
-
-	if p := UnwrapOmittable(input.ContractEndDate); p != nil {
-		contractEnd = p
+	if input.Contract != nil {
+		contractStart, contractEnd = types.PeriodOmittableDates(input.Contract)
 	}
 
 	profile, err := r.iamSvc.OrganizationService.UpdateUser(ctx, &iam.UpdateUserRequest{

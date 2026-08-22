@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,18 +21,26 @@
 package types
 
 import (
-	"go.probo.inc/probo/pkg/coredata"
+	"time"
+
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewThirdPartyBusinessAssociateAgreement(v *coredata.ThirdPartyBusinessAssociateAgreement) *ThirdPartyBusinessAssociateAgreement {
-	return &ThirdPartyBusinessAssociateAgreement{
-		ID: v.ID,
-		ThirdParty: &ThirdParty{
-			ID: v.ThirdPartyID,
-		},
-		Validity:  NewPeriod(v.ValidFrom, v.ValidUntil),
-		File:      &File{ID: v.FileID},
-		CreatedAt: v.CreatedAt,
-		UpdatedAt: v.UpdatedAt,
+func NewPeriod(start, end *time.Time) *Period {
+	if start == nil && end == nil {
+		return nil
 	}
+
+	return &Period{
+		Start: start,
+		End:   end,
+	}
+}
+
+func PeriodInputOmittableDates(p *PeriodInput) (start, end **time.Time) {
+	if p == nil {
+		return nil, nil
+	}
+
+	return gqlutils.UnwrapOmittable(p.Start), gqlutils.UnwrapOmittable(p.End)
 }

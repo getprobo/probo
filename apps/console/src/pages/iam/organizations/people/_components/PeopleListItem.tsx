@@ -69,7 +69,9 @@ const fragment = graphql`
       }
     }
     createdAt
-    contractEndDate
+    contract {
+      end
+    }
     canUpdate: permission(action: "iam:membership-profile:update")
     canInvite: permission(action: "iam:invitation:create")
     canDeactivate: permission(action: "iam:membership-profile:deactivate")
@@ -317,10 +319,10 @@ export function PeopleListItem(props: {
         isInactive && "opacity-50",
       )}
       >
-        {profile.contractEndDate
+        {profile.contract?.end
           ? (
-              <time dateTime={profile.contractEndDate}>
-                {dateFormat(i18n.language, profile.contractEndDate)}
+              <time dateTime={profile.contract.end}>
+                {dateFormat(i18n.language, profile.contract.end)}
               </time>
             )
           : (

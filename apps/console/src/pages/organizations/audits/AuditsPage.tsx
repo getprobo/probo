@@ -85,8 +85,10 @@ const paginatedAuditsFragment = graphql`
         node {
           id
           name
-          validFrom
-          validUntil
+          validity {
+            start
+            end
+          }
           reportFile {
             id
           }
@@ -296,11 +298,11 @@ function AuditRow({
         </Badge>
       </Td>
       <Td>
-        {dateFormat(i18n.language, entry.validFrom)
+        {dateFormat(i18n.language, entry.validity?.start)
           || t("auditsPage.row.notSet")}
       </Td>
       <Td>
-        {dateFormat(i18n.language, entry.validUntil)
+        {dateFormat(i18n.language, entry.validity?.end)
           || t("auditsPage.row.notSet")}
       </Td>
       <Td>
