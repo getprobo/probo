@@ -142,19 +142,21 @@ export function AccessEntryListItem({
         </div>
       </div>
 
-      <div className={flags()}>
-        {isPendingActions
-          ? (
-              <EntryFlagSelect
-                entryKey={entry}
-              />
-            )
-          : entry.flags.map(f => (
-              <Badge key={f} variant={flagBadgeVariant(f)}>
-                {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
-              </Badge>
-            ))}
-      </div>
+      {(isPendingActions || entry.flags.length > 0) && (
+        <div className={flags()}>
+          {isPendingActions
+            ? (
+                <EntryFlagSelect
+                  entryKey={entry}
+                />
+              )
+            : entry.flags.map(f => (
+                <Badge key={f} variant={flagBadgeVariant(f)}>
+                  {t(`campaignDetailPage.flags.${f.toLowerCase()}`)}
+                </Badge>
+              ))}
+        </div>
+      )}
 
       <div className={trailing()}>
         <div className={status()}>
