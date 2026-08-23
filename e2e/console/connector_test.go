@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,6 +39,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 				provider
 				displayName
 				documentationUrl
+				oauthConfigured
 				configuredProtocols
 				apiKeySupported
 				clientCredentialsSupported
@@ -66,6 +68,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 			Provider                       string        `json:"provider"`
 			DisplayName                    string        `json:"displayName"`
 			DocumentationURL               *string       `json:"documentationUrl"`
+			OAuthConfigured                bool          `json:"oauthConfigured"`
 			ConfiguredProtocols            []string      `json:"configuredProtocols"`
 			APIKeySupported                bool          `json:"apiKeySupported"`
 			ClientCredentialsSupported     bool          `json:"clientCredentialsSupported"`
@@ -80,17 +83,19 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
+	protocolsByProvider := make(map[string][]string)
 	apiKeySettingKeys := make(map[string][]string)
 	clientCredentialsSettingKeys := make(map[string][]string)
 
 	for _, info := range result.AccessReviewDrivers {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
-		assert.NotNil(t, info.ConfiguredProtocols)
 		assert.NotNil(t, info.APIKeyExtraSettings)
 		assert.NotNil(t, info.ClientCredentialsExtraSettings)
 		providerNames[info.Provider] = true
 		docURLByProvider[info.Provider] = info.DocumentationURL
+		protocolsByProvider[info.Provider] = info.ConfiguredProtocols
+		assert.Equal(t, slices.Contains(info.ConfiguredProtocols, "OAUTH2"), info.OAuthConfigured)
 
 		for _, s := range info.APIKeyExtraSettings {
 			apiKeySettingKeys[info.Provider] = append(apiKeySettingKeys[info.Provider], s.Key)
@@ -103,6 +108,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 
 	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
+	assert.Equal(t, []string{"OAUTH2"}, protocolsByProvider["GITHUB"])
 
 	// 1Password is the only provider offering both connect paths, and each path
 	// needs different settings: the SCIM-bridge driver behind the API key, the

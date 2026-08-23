@@ -87,7 +87,12 @@ func handleConnectorGitHubAppInitiate(
 		opts := connector.InitiateOptions{}
 
 		if r.URL.Query().Get("connector_id") != "" {
-			existing, err := loadExistingGitHubAppConnector(r, proboSvc, scope)
+			existing, err := loadExistingGitHubAppConnector(
+				r,
+				proboSvc,
+				scope,
+				organizationID,
+			)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
@@ -129,6 +134,7 @@ func loadExistingGitHubAppConnector(
 	r *http.Request,
 	prb *probo.Service,
 	scope coredata.Scoper,
+	organizationID gid.GID,
 ) (*coredata.Connector, error) {
 	parsedID, err := gid.ParseGID(r.URL.Query().Get("connector_id"))
 	if err != nil {
@@ -140,10 +146,25 @@ func loadExistingGitHubAppConnector(
 		return nil, err
 	}
 
-	if found.Provider != coredata.ConnectorProviderGitHub ||
-		found.Protocol != coredata.ConnectorProtocolGitHubApp {
-		return nil, fmt.Errorf("%w: connector is not a github app", errInvalidReconnectConnector)
+	if err := validateGitHubAppReconnectConnector(found, organizationID); err != nil {
+		return nil, err
 	}
 
 	return found, nil
+}
+
+func validateGitHubAppReconnectConnector(
+	found *coredata.Connector,
+	organizationID gid.GID,
+) error {
+	if found.OrganizationID != organizationID {
+		return coredata.ErrResourceNotFound
+	}
+
+	if found.Provider != coredata.ConnectorProviderGitHub ||
+		found.Protocol != coredata.ConnectorProtocolGitHubApp {
+		return fmt.Errorf("%w: connector is not a github app", errInvalidReconnectConnector)
+	}
+
+	return nil
 }

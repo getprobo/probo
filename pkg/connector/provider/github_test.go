@@ -18,32 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, readFragment } from "relay-runtime";
+package provider_test
 
-import type {
-  ConnectorProtocol,
-  connectorProviderInfoFields_installableProtocols$key,
-} from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+import (
+	"testing"
 
-const PROTOCOL_OAUTH2 = "OAUTH2";
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
+)
 
-/**
- * @relayField ConnectorProviderInfo.installableProtocols: [ConnectorProtocol!]
- * @rootFragment connectorProviderInfoFields_installableProtocols
- */
-export function installableProtocols(
-  key: connectorProviderInfoFields_installableProtocols$key,
-): ReadonlyArray<ConnectorProtocol> {
-  const provider = readFragment(
-    graphql`
-      fragment connectorProviderInfoFields_installableProtocols on ConnectorProviderInfo {
-        configuredProtocols
-      }
-    `,
-    key,
-  );
+func TestGitHubScopes_ExcludeEnterpriseOnlyAuditLog(t *testing.T) {
+	t.Parallel()
 
-  return provider.configuredProtocols.filter(
-    protocol => protocol !== PROTOCOL_OAUTH2,
-  );
+	registration, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderGitHub)
+	require.True(t, ok)
+	assert.Equal(t, []string{"read:org"}, registration.OAuth2Scopes)
 }

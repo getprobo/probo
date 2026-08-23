@@ -140,6 +140,14 @@ func (c *GitHubAppConnector) ConfigureConnection(conn Connection) error {
 	return nil
 }
 
+func (c *GitHubAppConnector) Validate() error {
+	if _, err := parseGitHubAppPrivateKey(c.PrivateKey); err != nil {
+		return fmt.Errorf("cannot validate github app private key: %w", err)
+	}
+
+	return nil
+}
+
 func (c *GitHubAppConnection) RequiresRuntimeConfiguration() {}
 
 func IsGitHubAppState(token string) bool {
@@ -655,7 +663,11 @@ func (c *GitHubAppConnection) appJWT(now time.Time) (string, error) {
 }
 
 func (c *GitHubAppConnection) privateKey() (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode([]byte(c.PrivateKey))
+	return parseGitHubAppPrivateKey(c.PrivateKey)
+}
+
+func parseGitHubAppPrivateKey(privateKey string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(privateKey))
 	if block == nil {
 		return nil, fmt.Errorf("cannot decode private key PEM")
 	}

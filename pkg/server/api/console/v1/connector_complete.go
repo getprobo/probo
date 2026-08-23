@@ -51,7 +51,16 @@ func handleConnectorComplete(
 		query := r.URL.Query()
 
 		if oauthErr := query.Get("error"); oauthErr != "" {
-			handleConnectorOAuth2Error(w, r, logger, baseURL, safeRedirect, query)
+			handleConnectorCallbackError(
+				w,
+				r,
+				logger,
+				baseURL,
+				connectorRegistry,
+				safeRedirect,
+				query,
+			)
+
 			return
 		}
 
@@ -102,6 +111,21 @@ func handleConnectorGitHubAppComplete(
 	safeRedirect *saferedirect.SafeRedirect,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		if callbackErr := query.Get("error"); callbackErr != "" {
+			handleConnectorCallbackError(
+				w,
+				r,
+				logger,
+				baseURL,
+				connectorRegistry,
+				safeRedirect,
+				query,
+			)
+
+			return
+		}
+
 		completion, err := connectorRegistry.CompleteGitHubAppFromRequest(r.Context(), r)
 		if err != nil {
 			if redirectToGitHubAppInstall(w, r, logger, connectorRegistry, err) {
@@ -234,6 +258,36 @@ func oauthConnectorRawSettings(
 		rawSettings = raw
 	}
 
+	if connectorProvider == coredata.ConnectorProviderPagerDuty {
+		subdomain := query.Get("subdomain")
+		if subdomain == "" {
+			subdomain = completion.ProviderMetadata["subdomain"]
+		}
+
+		if subdomain != "" && !isValidPagerDutySubdomain(subdomain) {
+			logger.WarnCtx(r.Context(), "rejecting invalid pagerduty subdomain",
+				log.String("provider", string(connectorProvider)),
+			)
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid subdomain"))
+
+			return nil, false
+		}
+
+		if subdomain != "" {
+			raw, err := json.Marshal(&coredata.PagerDutyConnectorSettings{
+				Subdomain: subdomain,
+			})
+			if err != nil {
+				logger.ErrorCtx(r.Context(), "cannot marshal pagerduty settings", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+				return nil, false
+			}
+
+			rawSettings = raw
+		}
+	}
+
 	return rawSettings, true
 }
 
@@ -301,35 +355,6 @@ func finishConnectorCompletion(
 			Provider:       connectorProvider,
 			Protocol:       coredata.ConnectorProtocol(connection.Type()),
 			Connection:     connection,
-		}
-
-		if connectorProvider == coredata.ConnectorProviderPagerDuty {
-			subdomain := query.Get("subdomain")
-			if subdomain == "" {
-				subdomain = completion.ProviderMetadata["subdomain"]
-			}
-
-			if subdomain != "" && !isValidPagerDutySubdomain(subdomain) {
-				logger.WarnCtx(r.Context(), "rejecting invalid pagerduty subdomain",
-					log.String("provider", string(connectorProvider)),
-				)
-
-				subdomain = ""
-			}
-
-			if subdomain != "" {
-				raw, err := json.Marshal(&coredata.PagerDutyConnectorSettings{
-					Subdomain: subdomain,
-				})
-				if err != nil {
-					logger.ErrorCtx(r.Context(), "cannot marshal pagerduty settings", log.Error(err))
-					httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-					return
-				}
-
-				createReq.RawSettings = raw
-			}
 		}
 
 		if connectorProvider == coredata.ConnectorProviderVercel {
@@ -426,11 +451,12 @@ func redirectToGitHubAppInstall(
 	return true
 }
 
-func handleConnectorOAuth2Error(
+func handleConnectorCallbackError(
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *log.Logger,
 	baseURL *baseurl.BaseURL,
+	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
 	query url.Values,
 ) {
@@ -440,7 +466,15 @@ func handleConnectorOAuth2Error(
 	redirectURL := baseURL.String()
 
 	if stateToken := query.Get("state"); stateToken != "" {
-		if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
+		if connector.IsGitHubAppState(stateToken) {
+			if state, err := connectorRegistry.ValidateGitHubAppState(stateToken); err == nil {
+				provider = connector.GitHubProvider
+
+				if state.ContinueURL != "" {
+					redirectURL = state.ContinueURL
+				}
+			}
+		} else if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
 			if payload.Data.Provider != "" {
 				provider = payload.Data.Provider
 			}
@@ -451,7 +485,7 @@ func handleConnectorOAuth2Error(
 		}
 	}
 
-	logger.WarnCtx(r.Context(), "OAuth2 callback returned error",
+	logger.WarnCtx(r.Context(), "connector callback returned error",
 		log.String("provider", provider),
 		log.String("error", oauthErr),
 	)

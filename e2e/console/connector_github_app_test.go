@@ -58,6 +58,10 @@ func TestGitHubAppConnector_Initiate(t *testing.T) {
 		t.Parallel()
 
 		resp := owner.ForTest(t).GetNoRedirect(initiateURL)
+		if resp.StatusCode == http.StatusSeeOther {
+			t.Skip("GitHub App is configured in this e2e environment")
+		}
+
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		assert.Contains(t, string(resp.Body), "github app is not configured")
 	})

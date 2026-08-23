@@ -24,6 +24,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 const CompletionMetadataGitHubOrganization = "github_organization"
@@ -82,6 +84,29 @@ func (r *ConnectorRegistry) CompleteGitHubAppFromRequest(
 	}
 
 	return r.completeGitHubAppFromState(ctx, req)
+}
+
+func (r *ConnectorRegistry) ValidateGitHubAppState(stateToken string) (*GitHubAppState, error) {
+	registered, err := r.GetProtocol(GitHubProvider, ProtocolGitHubApp)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get github app connector: %w", err)
+	}
+
+	gitHubApp, ok := registered.(*GitHubAppConnector)
+	if !ok {
+		return nil, fmt.Errorf("registered github app connector has unexpected type")
+	}
+
+	payload, err := statelesstoken.ValidateToken[GitHubAppState](
+		gitHubApp.ClientSecret,
+		gitHubAppStateType,
+		stateToken,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot validate github app state token: %w", err)
+	}
+
+	return &payload.Data, nil
 }
 
 func (r *ConnectorRegistry) completeGitHubAppFromState(

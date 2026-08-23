@@ -21,8 +21,17 @@ import (
 
 // CanReconnect is the resolver for the canReconnect field.
 func (r *connectorResolver) CanReconnect(ctx context.Context, obj *types.Connector) (bool, error) {
+	cnnctr, err := r.probo.Connectors.GetWithConnection(
+		ctx,
+		coredata.NewScopeFromObjectID(obj.ID),
+		obj.ID,
+	)
+	if err != nil {
+		return false, fmt.Errorf("cannot load connector connection: %w", err)
+	}
+
 	return connector.SupportsReconnectFor(
-		nil,
+		cnnctr.Connection,
 		connector.ProtocolType(obj.Protocol),
 	), nil
 }

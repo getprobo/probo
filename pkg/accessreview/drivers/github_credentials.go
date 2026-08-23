@@ -91,9 +91,30 @@ type (
 		Variables gitHubDeployKeysVariables `json:"variables"`
 	}
 
+	gitHubRepositoryDeployKeysRequest struct {
+		Query     string                              `json:"query"`
+		Variables gitHubRepositoryDeployKeysVariables `json:"variables"`
+	}
+
 	gitHubDeployKeysVariables struct {
 		Org   string  `json:"org"`
 		After *string `json:"after"`
+	}
+
+	gitHubRepositoryDeployKeysVariables struct {
+		Org   string  `json:"org"`
+		Repo  string  `json:"repo"`
+		After *string `json:"after"`
+	}
+
+	gitHubPageInfo struct {
+		HasNextPage bool   `json:"hasNextPage"`
+		EndCursor   string `json:"endCursor"`
+	}
+
+	gitHubDeployKeyConnection struct {
+		Nodes    []githubGraphQLDeployKey `json:"nodes"`
+		PageInfo gitHubPageInfo           `json:"pageInfo"`
 	}
 
 	gitHubDeployKeysResponse struct {
@@ -101,17 +122,23 @@ type (
 			Organization *struct {
 				Repositories struct {
 					Nodes []struct {
-						Name       string `json:"name"`
-						DeployKeys *struct {
-							Nodes []githubGraphQLDeployKey `json:"nodes"`
-						} `json:"deployKeys"`
+						Name       string                     `json:"name"`
+						DeployKeys *gitHubDeployKeyConnection `json:"deployKeys"`
 					} `json:"nodes"`
-					PageInfo struct {
-						HasNextPage bool   `json:"hasNextPage"`
-						EndCursor   string `json:"endCursor"`
-					} `json:"pageInfo"`
+					PageInfo gitHubPageInfo `json:"pageInfo"`
 				} `json:"repositories"`
 			} `json:"organization"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+
+	gitHubRepositoryDeployKeysResponse struct {
+		Data struct {
+			Repository *struct {
+				DeployKeys gitHubDeployKeyConnection `json:"deployKeys"`
+			} `json:"repository"`
 		} `json:"data"`
 		Errors []struct {
 			Message string `json:"message"`
@@ -131,11 +158,12 @@ type (
 	}
 )
 
-// githubDeployKeysQuery batches repository deploy keys. REST GET
-// /repos/{owner}/{repo}/keys is one call per repo and would blow the
-// campaign fetch timeout on a large org. Nested pagination stops at 100
-// keys per repo; orgs with more than that on a single repo are rare.
-const githubDeployKeysQuery = `query AccessReviewGitHubDeployKeys($org: String!, $after: String) { organization(login: $org) { repositories(first: 100, after: $after) { nodes { name deployKeys(first: 100) { nodes { id title createdAt readOnly } } } pageInfo { hasNextPage endCursor } } } }`
+// githubDeployKeysQuery batches the first page of deploy keys for every
+// repository. Repositories with more than 100 keys are uncommon; those
+// specific connections are continued separately by githubRepositoryDeployKeysQuery.
+const githubDeployKeysQuery = `query AccessReviewGitHubDeployKeys($org: String!, $after: String) { organization(login: $org) { repositories(first: 100, after: $after) { nodes { name deployKeys(first: 100) { nodes { id title createdAt readOnly } pageInfo { hasNextPage endCursor } } } pageInfo { hasNextPage endCursor } } } }`
+
+const githubRepositoryDeployKeysQuery = `query AccessReviewGitHubRepositoryDeployKeys($org: String!, $repo: String!, $after: String) { repository(owner: $org, name: $repo) { deployKeys(first: 100, after: $after) { nodes { id title createdAt readOnly } pageInfo { hasNextPage endCursor } } } }`
 
 func (d *GitHubDriver) appendServiceAccounts(ctx context.Context, records []AccountRecord) []AccountRecord {
 	if err := ctx.Err(); err != nil {
@@ -350,6 +378,28 @@ func (d *GitHubDriver) fetchDeployKeysPage(
 				},
 			)
 		}
+
+		pageInfo := repo.DeployKeys.PageInfo
+		if pageInfo.HasNextPage && pageInfo.EndCursor != "" {
+			remaining, err := d.fetchRemainingDeployKeys(
+				ctx,
+				repo.Name,
+				pageInfo.EndCursor,
+			)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			for _, key := range remaining {
+				keys = append(
+					keys,
+					githubDeployKeyRecord{
+						Repo: repo.Name,
+						Key:  key,
+					},
+				)
+			}
+		}
 	}
 
 	pageInfo := resp.Data.Organization.Repositories.PageInfo
@@ -360,6 +410,98 @@ func (d *GitHubDriver) fetchDeployKeysPage(
 	next := pageInfo.EndCursor
 
 	return keys, &next, nil
+}
+
+func (d *GitHubDriver) fetchRemainingDeployKeys(
+	ctx context.Context,
+	repo string,
+	after string,
+) ([]githubGraphQLDeployKey, error) {
+	var keys []githubGraphQLDeployKey
+
+	for range maxPaginationPages {
+		page, next, err := d.fetchRepositoryDeployKeysPage(ctx, repo, after)
+		if err != nil {
+			return nil, err
+		}
+
+		keys = append(keys, page...)
+
+		if next == "" {
+			return keys, nil
+		}
+
+		after = next
+	}
+
+	return nil, fmt.Errorf("cannot list all github deploy keys for repository: %w", ErrPaginationLimitReached)
+}
+
+func (d *GitHubDriver) fetchRepositoryDeployKeysPage(
+	ctx context.Context,
+	repo string,
+	after string,
+) ([]githubGraphQLDeployKey, string, error) {
+	endpoint, err := url.JoinPath(d.baseURL, githubGraphqlPath)
+	if err != nil {
+		return nil, "", fmt.Errorf("cannot build github graphql URL: %w", err)
+	}
+
+	payload, err := json.Marshal(
+		gitHubRepositoryDeployKeysRequest{
+			Query: githubRepositoryDeployKeysQuery,
+			Variables: gitHubRepositoryDeployKeysVariables{
+				Org:   d.org,
+				Repo:  repo,
+				After: &after,
+			},
+		},
+	)
+	if err != nil {
+		return nil, "", fmt.Errorf("cannot marshal github repository deploy keys query: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return nil, "", fmt.Errorf("cannot create github repository deploy keys request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("cannot execute github repository deploy keys request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, "", fmt.Errorf("cannot fetch github repository deploy keys: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp gitHubRepositoryDeployKeysResponse
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, "", fmt.Errorf("cannot decode github repository deploy keys response: %w", err)
+	}
+
+	if resp.Data.Repository == nil {
+		if len(resp.Errors) > 0 {
+			return nil, "", fmt.Errorf("cannot fetch github repository deploy keys: graphql error")
+		}
+
+		return nil, "", nil
+	}
+
+	pageInfo := resp.Data.Repository.DeployKeys.PageInfo
+	if !pageInfo.HasNextPage || pageInfo.EndCursor == "" {
+		return resp.Data.Repository.DeployKeys.Nodes, "", nil
+	}
+
+	return resp.Data.Repository.DeployKeys.Nodes, pageInfo.EndCursor, nil
 }
 
 func githubOrgCollectionURL(baseURL, org, segment string) (string, error) {

@@ -145,6 +145,12 @@ type ConnectorProviderInfo {
     """
     documentationUrl: String
     """
+    oauthConfigured is retained for v1 clients that have not migrated to
+    configuredProtocols.
+    """
+    oauthConfigured: Boolean!
+        @deprecated(reason: "Use configuredProtocols instead.")
+    """
     configuredProtocols lists the connector protocols that are ready to use
     for this provider in this deployment (for example OAUTH2 or GITHUB_APP).
     Empty when the provider is only reachable via customer-supplied

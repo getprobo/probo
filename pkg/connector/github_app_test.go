@@ -22,9 +22,12 @@ package connector
 
 import (
 	"context"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"net/http"
@@ -64,7 +67,12 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 				_, _ = w.Write([]byte(`{"total_count":1,"installations":[{"id":42,"target_type":"Organization","account":{"login":"acme"}}]}`))
 			case r.Method == http.MethodPost && r.URL.Path == "/app/installations/42/access_tokens":
 				tokenRequests.Add(1)
-				assertGitHubAppJWT(t, r.Header.Get("Authorization"))
+				assertGitHubAppJWT(
+					t,
+					r.Header.Get("Authorization"),
+					"123456",
+					privateKey,
+				)
 
 				_ = json.NewEncoder(w).Encode(
 					gitHubAppInstallationToken{
@@ -374,9 +382,54 @@ func newGitHubAppTestPrivateKey(t *testing.T) string {
 	)
 }
 
-func assertGitHubAppJWT(t *testing.T, authorization string) {
+func TestGitHubAppConnector_ValidatePrivateKey(t *testing.T) {
+	t.Parallel()
+
+	t.Run("valid RSA PEM", func(t *testing.T) {
+		t.Parallel()
+
+		c := &GitHubAppConnector{PrivateKey: newGitHubAppTestPrivateKey(t)}
+		require.NoError(t, c.Validate())
+	})
+
+	t.Run("invalid PEM", func(t *testing.T) {
+		t.Parallel()
+
+		c := &GitHubAppConnector{PrivateKey: "not a private key"}
+		err := c.Validate()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot decode private key PEM")
+	})
+}
+
+func assertGitHubAppJWT(t *testing.T, authorization, appID, privateKeyPEM string) {
 	t.Helper()
 
 	token := strings.TrimPrefix(authorization, "Bearer ")
-	assert.Len(t, strings.Split(token, "."), 3)
+	parts := strings.Split(token, ".")
+	require.Len(t, parts, 3)
+
+	claimsJSON, err := base64.RawURLEncoding.DecodeString(parts[1])
+	require.NoError(t, err)
+
+	var claims struct {
+		IssuedAt  int64  `json:"iat"`
+		ExpiresAt int64  `json:"exp"`
+		Issuer    string `json:"iss"`
+	}
+	require.NoError(t, json.Unmarshal(claimsJSON, &claims))
+	assert.Equal(t, appID, claims.Issuer)
+	assert.Greater(t, claims.ExpiresAt, claims.IssuedAt)
+
+	signature, err := base64.RawURLEncoding.DecodeString(parts[2])
+	require.NoError(t, err)
+
+	privateKey, err := parseGitHubAppPrivateKey(privateKeyPEM)
+	require.NoError(t, err)
+
+	digest := sha256.Sum256([]byte(parts[0] + "." + parts[1]))
+	require.NoError(
+		t,
+		rsa.VerifyPKCS1v15(&privateKey.PublicKey, crypto.SHA256, digest[:], signature),
+	)
 }

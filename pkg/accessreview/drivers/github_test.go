@@ -21,6 +21,7 @@
 package drivers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -28,6 +29,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -581,6 +583,51 @@ func TestGitHubDriver_ContinuesWhenServiceAccountsUnavailable(t *testing.T) {
 	require.Len(t, records, 1)
 	assert.Equal(t, "100001", records[0].ExternalID)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, records[0].AccountType)
+}
+
+func TestGitHubDriver_DeployKeysPaginatesRepositoryConnection(t *testing.T) {
+	t.Parallel()
+
+	var requests atomic.Int64
+
+	srv := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, http.MethodPost, r.Method)
+			require.Equal(t, "/graphql", r.URL.Path)
+
+			requests.Add(1)
+
+			body, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+
+			switch {
+			case bytes.Contains(body, []byte("AccessReviewGitHubDeployKeys")):
+				_, _ = w.Write([]byte(`{"data":{"organization":{"repositories":{"nodes":[{"name":"api","deployKeys":{"nodes":[{"id":"DK_1","title":"first","createdAt":"2026-01-01T00:00:00Z","readOnly":true}],"pageInfo":{"hasNextPage":true,"endCursor":"key-cursor"}}}],"pageInfo":{"hasNextPage":false,"endCursor":""}}}}}`))
+			case bytes.Contains(body, []byte("AccessReviewGitHubRepositoryDeployKeys")):
+				assert.Contains(t, string(body), `"repo":"api"`)
+				assert.Contains(t, string(body), `"after":"key-cursor"`)
+
+				_, _ = w.Write([]byte(`{"data":{"repository":{"deployKeys":{"nodes":[{"id":"DK_2","title":"second","createdAt":"2026-01-02T00:00:00Z","readOnly":false}],"pageInfo":{"hasNextPage":false,"endCursor":""}}}}}`))
+			default:
+				http.Error(w, "unexpected query", http.StatusBadRequest)
+			}
+		}),
+	)
+	t.Cleanup(srv.Close)
+
+	driver := NewGitHubDriver(
+		srv.Client(),
+		"acme",
+		log.NewLogger(log.WithName("test")),
+		srv.URL,
+	)
+
+	keys, err := driver.fetchAllDeployKeys(context.Background())
+	require.NoError(t, err)
+	require.Len(t, keys, 2)
+	assert.Equal(t, int64(2), requests.Load())
+	assert.Equal(t, "DK_1", keys[0].Key.ID)
+	assert.Equal(t, "DK_2", keys[1].Key.ID)
 }
 
 func TestGitHubDriver_SkipsFineGrainedPATDuplicatedInSSO(t *testing.T) {

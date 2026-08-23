@@ -106,6 +106,10 @@ func SupportsReconnect(conn Connection) bool {
 
 // SupportsReconnectFor reports reconnect support, using protocol when conn is nil.
 func SupportsReconnectFor(conn Connection, protocol ProtocolType) bool {
+	if conn == nil && protocol == ProtocolOAuth2 {
+		return false
+	}
+
 	return SupportsReconnect(connectionOrProbe(conn, protocol))
 }
 
@@ -130,7 +134,9 @@ func ResolveProbeURLFor(
 
 func (c *OAuth2Connection) SupportsOrganizationPicker() bool { return true }
 func (c *OAuth2Connection) SupportsScopeGrantCheck() bool    { return true }
-func (c *OAuth2Connection) SupportsReconnect() bool          { return true }
+func (c *OAuth2Connection) SupportsReconnect() bool {
+	return c.GrantType != OAuth2GrantTypeClientCredentials
+}
 
 func (c *APIKeyConnection) SupportsOrganizationPicker() bool { return true }
 func (c *APIKeyConnection) SupportsScopeGrantCheck() bool    { return false }

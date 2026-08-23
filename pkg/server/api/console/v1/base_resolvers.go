@@ -685,6 +685,7 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			Provider:                       provider,
 			DisplayName:                    reg.DisplayName,
 			DocumentationURL:               documentationURL,
+			OauthConfigured:                slices.Contains(configuredProtocols, coredata.ConnectorProtocolOAuth2),
 			ConfiguredProtocols:            configuredProtocols,
 			APIKeySupported:                apiKeySupported,
 			APIKeyManaged:                  apiKeyManaged,

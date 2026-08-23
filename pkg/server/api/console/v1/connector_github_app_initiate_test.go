@@ -18,32 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, readFragment } from "relay-runtime";
+package console_v1
 
-import type {
-  ConnectorProtocol,
-  connectorProviderInfoFields_installableProtocols$key,
-} from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+import (
+	"errors"
+	"testing"
 
-const PROTOCOL_OAUTH2 = "OAUTH2";
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+)
 
-/**
- * @relayField ConnectorProviderInfo.installableProtocols: [ConnectorProtocol!]
- * @rootFragment connectorProviderInfoFields_installableProtocols
- */
-export function installableProtocols(
-  key: connectorProviderInfoFields_installableProtocols$key,
-): ReadonlyArray<ConnectorProtocol> {
-  const provider = readFragment(
-    graphql`
-      fragment connectorProviderInfoFields_installableProtocols on ConnectorProviderInfo {
-        configuredProtocols
-      }
-    `,
-    key,
-  );
+func TestValidateGitHubAppReconnectConnector_CrossOrganizationIsNotFound(t *testing.T) {
+	t.Parallel()
 
-  return provider.configuredProtocols.filter(
-    protocol => protocol !== PROTOCOL_OAUTH2,
-  );
+	tenantID := gid.NewTenantID()
+	requestedOrganizationID := gid.New(tenantID, 1)
+	cnnctr := &coredata.Connector{
+		OrganizationID: gid.New(tenantID, 2),
+		Provider:       coredata.ConnectorProviderGitHub,
+		Protocol:       coredata.ConnectorProtocolGitHubApp,
+	}
+
+	err := validateGitHubAppReconnectConnector(cnnctr, requestedOrganizationID)
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+	require.False(t, errors.Is(err, errInvalidReconnectConnector))
 }

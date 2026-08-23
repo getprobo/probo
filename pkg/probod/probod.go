@@ -430,6 +430,10 @@ func (impl *Implm) Run(
 				return fmt.Errorf("cannot configure github app connector: app ID, client ID, client secret, slug, and private key are required")
 			}
 
+			if err := gitHubApp.Validate(); err != nil {
+				return fmt.Errorf("cannot configure github app connector: %w", err)
+			}
+
 			reg, ok := providerRegistry.Get(coredata.ConnectorProviderGitHub)
 			if !ok {
 				return fmt.Errorf("cannot configure github app connector: github provider is not registered")

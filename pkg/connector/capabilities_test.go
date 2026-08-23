@@ -47,6 +47,15 @@ func TestConnectionCapabilities(t *testing.T) {
 			wantReconnect:  true,
 		},
 		{
+			name: "oauth2 client credentials",
+			conn: &connector.OAuth2Connection{
+				GrantType: connector.OAuth2GrantTypeClientCredentials,
+			},
+			wantPicker:     true,
+			wantScopeGrant: true,
+			wantReconnect:  false,
+		},
+		{
 			name:           "api key",
 			conn:           &connector.APIKeyConnection{},
 			wantPicker:     true,
@@ -93,6 +102,7 @@ func TestCapabilityProbeMatchesProtocol(t *testing.T) {
 	assert.True(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolOAuth2))
 	assert.False(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolGitHubApp))
 	assert.True(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolAPIKey))
+	assert.False(t, connector.SupportsReconnectFor(nil, connector.ProtocolOAuth2))
 	assert.True(t, connector.SupportsReconnectFor(nil, connector.ProtocolGitHubApp))
 	assert.False(t, connector.SupportsScopeGrantCheckFor(nil, connector.ProtocolGitHubApp))
 }

@@ -362,6 +362,12 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION": "5",
 		"PROBOD_OAUTH2_SERVER_DEVICE_CODE_DURATION":        "15",
 
+		// Connector catalog. No test completes this external OAuth flow, but
+		// one deterministic configured protocol lets catalog tests assert the
+		// configuredProtocols migration rather than ambient deployment state.
+		"PROBOD_CONNECTOR_GITHUB_CLIENT_ID":     "e2e-github-client-id",
+		"PROBOD_CONNECTOR_GITHUB_CLIENT_SECRET": "e2e-github-client-secret",
+
 		// Trust center. Compliance pages are served exclusively over this
 		// dedicated listener, addressed by Host/SNI. The managed base domain
 		// yields {slug}.probopage.localhost subdomains for pages without a
