@@ -32,31 +32,34 @@ import (
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 )
+
+// nameResolutionTimeout bounds the call that asks a provider what its instance
+// is called.
+const nameResolutionTimeout = 10 * time.Second
 
 // sourceNameHandler polls for access sources that have a connector but no
 // synced name, resolves the provider instance name, and updates the source.
 type sourceNameHandler struct {
 	pg               *pg.Client
-	encryptionKey    cipher.EncryptionKey
-	runtime          *provider.Runtime
+	connectors       *provider.Opener
 	providerRegistry *provider.Registry
+	sources          *drivers.Registry
 	logger           *log.Logger
 }
 
 func NewSourceNameWorker(
 	pgClient *pg.Client,
-	encryptionKey cipher.EncryptionKey,
-	connectorRuntime *provider.Runtime,
+	connectors *provider.Opener,
+	sources *drivers.Registry,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.AccessReviewSource] {
 	h := &sourceNameHandler{
 		pg:               pgClient,
-		encryptionKey:    encryptionKey,
-		runtime:          connectorRuntime,
-		providerRegistry: connectorRuntime.Providers(),
+		connectors:       connectors,
+		providerRegistry: connectors.Providers(),
+		sources:          sources,
 		logger:           logger,
 	}
 
@@ -101,81 +104,60 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		log.String("current_name", source.Name),
 	)
 
+	if source.ConnectorID == nil {
+		return fmt.Errorf("source %s has no connector", source.ID)
+	}
+
 	var (
-		dbConnector coredata.Connector
-		resolver    drivers.NameResolver
+		connectorProvider coredata.ConnectorProvider
+		instanceName      string
+		// resolutionFailed separates a resolver that ran and failed from a
+		// resolver that could never be built, because only the former is worth
+		// retrying — and then only when the failure is transient.
+		resolutionFailed bool
 	)
 
-	err := h.pg.WithTx(
+	err := h.connectors.Use(
 		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(source.ID)
-			if source.ConnectorID == nil {
-				return fmt.Errorf("source %s has no connector", source.ID)
-			}
+		coredata.NewScopeFromObjectID(source.ID),
+		*source.ConnectorID,
+		func(ctx context.Context, handle *provider.Handle) error {
+			connectorProvider = handle.Connector.Provider
 
-			if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, h.encryptionKey); err != nil {
-				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
-			}
-
-			handle, err := h.runtime.Open(ctx, &dbConnector)
+			driver, err := h.sources.New(ctx, handle, h.logger)
 			if err != nil {
 				return err
 			}
 
-			if err := handle.PersistIfDirty(ctx, tx, scope, h.encryptionKey); err != nil {
+			ctx, cancel := context.WithTimeout(ctx, nameResolutionTimeout)
+			defer cancel()
+
+			resolved, err := drivers.InstanceName(ctx, driver)
+			if err != nil {
+				resolutionFailed = true
+
 				return err
 			}
 
-			if reg, ok := h.providerRegistry.For(handle); ok && reg.NewNameResolver != nil {
-				resolver = reg.NewNameResolver(ctx, handle, h.logger)
-			}
+			instanceName = resolved
 
 			return nil
 		},
 	)
 	if err != nil {
-		// Resolver setup failed (missing connector, undecryptable credential,
-		// or an eager refresh on a revoked token). Mark the source synced
-		// rather than returning nil: an unsynced row is re-claimed every poll
-		// with no backoff and hot-loops the vendor. A reconnect clears it.
-		h.logger.WarnCtx(
-			ctx,
-			"cannot set up name resolver, keeping generic name",
-			log.String("source_id", source.ID.String()),
-			log.Error(err),
-		)
-
-		return h.markNameSynced(ctx, &source)
-	}
-
-	if resolver == nil {
-		h.logger.InfoCtx(
-			ctx,
-			"no name resolver for provider, keeping generic name",
-			log.String("source_id", source.ID.String()),
-			log.String("provider", dbConnector.Provider.String()),
-		)
-
-		return h.markNameSynced(ctx, &source)
-	}
-
-	resolveCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
-	if err != nil {
-		// A permanent failure (auth/bad-request) cannot be fixed by
-		// retrying: keep the generic name and mark the source synced so the
-		// worker stops re-claiming it every poll. Returning the error here
-		// would leave name_synced_at NULL and re-enqueue the source forever
-		// (a single unauthorized source produced millions of error logs).
-		if errors.Is(err, drivers.ErrTerminalNameResolution) {
+		// A resolver that could not be built (missing connector, undecryptable
+		// credential, an eager refresh on a revoked token) and a permanent
+		// resolution failure (auth, bad request) share one remedy: keep the
+		// generic name and mark the source synced. Returning the error would
+		// leave name_synced_at NULL, and an unsynced row is re-claimed every
+		// poll with no backoff — a single unauthorized source once produced
+		// millions of error logs. A reconnect clears it.
+		if !resolutionFailed || errors.Is(err, drivers.ErrTerminalNameResolution) {
 			h.logger.WarnCtx(
 				ctx,
-				"permanent name resolution failure, keeping generic name",
+				"cannot resolve source name, keeping generic name",
 				log.String("source_id", source.ID.String()),
-				log.String("provider", dbConnector.Provider.String()),
+				log.String("provider", connectorProvider.String()),
 				log.Error(err),
 			)
 
@@ -186,7 +168,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 			ctx,
 			"cannot resolve instance name",
 			log.String("source_id", source.ID.String()),
-			log.String("provider", dbConnector.Provider.String()),
+			log.String("provider", connectorProvider.String()),
 			log.Error(err),
 		)
 
@@ -196,15 +178,15 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 	if instanceName == "" {
 		h.logger.InfoCtx(
 			ctx,
-			"instance name is empty, keeping generic name",
+			"no instance name for provider, keeping generic name",
 			log.String("source_id", source.ID.String()),
-			log.String("provider", dbConnector.Provider.String()),
+			log.String("provider", connectorProvider.String()),
 		)
 
 		return h.markNameSynced(ctx, &source)
 	}
 
-	displayName := h.providerRegistry.ProviderDisplayName(dbConnector.Provider)
+	displayName := h.providerRegistry.ProviderDisplayName(connectorProvider)
 	newName := displayName + " " + instanceName
 
 	h.logger.InfoCtx(

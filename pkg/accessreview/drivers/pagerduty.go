@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // PagerDuty path element joined onto the driver's base URL.
@@ -197,4 +200,52 @@ func NewPagerDutyNameResolver(subdomain string) NameResolver {
 
 func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return r.subdomain, nil
+}
+
+func pagerdutySource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := pagerdutySourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			pagerdutySourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func pagerdutySourceDriver(
+	_ context.Context,
+	c *http.Client,
+	_ *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	// PagerDuty's REST API uses the regional api.pagerduty.com host;
+	// the driver does not consume the per-tenant subdomain.
+	return NewPagerDutyDriver(c, ep.APIBase), nil
+}
+
+func pagerdutySourceNameResolver(
+	ctx context.Context,
+	_ *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read pagerduty connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewPagerDutyNameResolver(s.Subdomain)
 }

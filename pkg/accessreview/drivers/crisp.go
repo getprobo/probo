@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"errors"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // ErrCrispPluginNotSubscribed is returned by GetCrispSubscriptionSettings when
@@ -280,4 +283,60 @@ func (r *crispNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	}
 
 	return resp.Data.Name, nil
+}
+
+func crispSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := crispSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			crispSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func crispSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read crisp connector settings: %w", err)
+	}
+
+	if s.WebsiteID == "" {
+		return nil, fmt.Errorf("cannot create crisp driver: website_id is required")
+	}
+
+	return NewCrispDriver(c, s.WebsiteID, ep.APIBase), nil
+}
+
+func crispSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read crisp connector settings", log.Error(err))
+
+		return nil
+	}
+
+	return NewCrispNameResolver(c, s.WebsiteID, ep.APIBase)
 }

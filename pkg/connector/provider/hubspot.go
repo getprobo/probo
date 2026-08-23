@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -43,17 +38,13 @@ func hubspotRegistration() *Registration {
 			// the host.
 			APIBase: "https://api.hubapi.com",
 		},
-		OAuth2Scopes: []string{
-			"settings.users.read",
-			"crm.objects.owners.read",
-			"account-info.security.read",
+		OAuth2: &OAuth2Spec{
+			Scopes: []string{
+				"settings.users.read",
+				"crm.objects.owners.read",
+				"account-info.security.read",
+			},
 		},
-		SupportsAPIKey: true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewHubSpotDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewHubSpotNameResolver(c, ep.APIBase)
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

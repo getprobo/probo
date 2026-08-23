@@ -21,15 +21,18 @@
 package drivers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"bytes"
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -244,4 +247,19 @@ func (r *squareNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return resp.Merchant.BusinessName, nil
+}
+
+func squareSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewSquareDriver(credential.Client, opened.Endpoints.APIBase),
+			NewSquareNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

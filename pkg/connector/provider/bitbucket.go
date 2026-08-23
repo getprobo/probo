@@ -21,19 +21,13 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 func bitbucketRegistration() *Registration {
 	// Bitbucket scopes are pinned on the OAuth consumer at registration
-	// time (`account` for workspace membership). They are not passed in
-	// the authorize URL.
+	// time (`account` for workspace membership) rather than passed in the
+	// authorize URL, so the spec requests none.
 	return &Registration{
 		Provider:    coredata.ConnectorProviderBitbucket,
 		DisplayName: "Bitbucket",
@@ -45,28 +39,7 @@ func bitbucketRegistration() *Registration {
 			// so the version segment stays in APIBase.
 			APIBase: "https://api.bitbucket.org/2.0",
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
-			}
-
-			if s.Workspace == "" {
-				return nil, fmt.Errorf("cannot create bitbucket driver: workspace is required")
-			}
-
-			return drivers.NewBitbucketDriver(c, s.Workspace, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read bitbucket connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewBitbucketNameResolver(c, s.Workspace, ep.APIBase)
-		}),
-		ListOrganizations: HTTPOrganizations(drivers.ListBitbucketOrganizations),
+		OAuth2: &OAuth2Spec{},
 		SetOrganizationSettings: func(c *coredata.Connector, workspace string) error {
 			return c.SetSettings(&coredata.BitbucketConnectorSettings{Workspace: workspace})
 		},

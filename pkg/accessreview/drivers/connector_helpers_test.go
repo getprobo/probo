@@ -80,32 +80,6 @@ func TestAddGoogleAnalyticsBinding(t *testing.T) {
 	})
 }
 
-// The probe must target the account's accessBindings, not the accounts list,
-// so a connection that can read accounts but not bindings reports disconnected.
-func TestGoogleAnalyticsAccountBindingsProbeURL(t *testing.T) {
-	t.Parallel()
-
-	t.Run("targets the account bindings with a single-item page", func(t *testing.T) {
-		t.Parallel()
-
-		got, err := GoogleAnalyticsAccountBindingsProbeURL("123456", "https://analyticsadmin.googleapis.com/v1alpha")
-		require.NoError(t, err)
-		assert.Equal(
-			t,
-			"https://analyticsadmin.googleapis.com/v1alpha/accounts/123456/accessBindings?pageSize=1",
-			got,
-		)
-	})
-
-	t.Run("escapes the account ID", func(t *testing.T) {
-		t.Parallel()
-
-		got, err := GoogleAnalyticsAccountBindingsProbeURL("12/34", "https://analyticsadmin.googleapis.com/v1alpha")
-		require.NoError(t, err)
-		assert.Contains(t, got, "/accounts/12%2F34/accessBindings")
-	})
-}
-
 func TestDotfileIsAdmin(t *testing.T) {
 	t.Parallel()
 

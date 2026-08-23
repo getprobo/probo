@@ -21,13 +21,9 @@
 package provider
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -41,10 +37,6 @@ func vercelRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderVercel,
 		DisplayName: "Vercel",
-		// See Registration.EndpointOverrideUnsupported: BuildAuthURL builds the
-		// authorize URL from an operator slug and FetchVercelUserID resolves the
-		// OAuth callback's user from a pinned host — neither reads Endpoints.
-		EndpointOverrideUnsupported: "its authorize URL is built from an operator slug and its OAuth callback resolves the user from a pinned host",
 		Endpoints: Endpoints{
 			Token: "https://api.vercel.com/v2/oauth/access_token",
 			Probe: "https://api.vercel.com/v2/user",
@@ -53,34 +45,19 @@ func vercelRegistration() *Registration {
 			// its own version onto this origin.
 			APIBase: "https://api.vercel.com",
 		},
-		BuildAuthURL: func(slug string) (string, error) {
-			u, err := url.JoinPath("https://vercel.com/integrations", url.PathEscape(slug), "new")
-			if err != nil {
-				return "", fmt.Errorf("cannot build vercel auth URL: %w", err)
-			}
+		// See Registration.EndpointOverrideUnsupported: BuildAuthURL builds the
+		// authorize URL from an operator slug and FetchVercelUserID resolves the
+		// OAuth callback's user from a pinned host — neither reads Endpoints.
+		EndpointOverrideUnsupported: "its authorize URL is built from an operator slug and its OAuth callback resolves the user from a pinned host",
+		OAuth2: &OAuth2Spec{
+			BuildAuthURL: func(slug string) (string, error) {
+				u, err := url.JoinPath("https://vercel.com/integrations", url.PathEscape(slug), "new")
+				if err != nil {
+					return "", fmt.Errorf("cannot build vercel auth URL: %w", err)
+				}
 
-			return u, nil
+				return u, nil
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
-			}
-
-			if s.TeamID == "" {
-				return nil, fmt.Errorf("cannot create vercel driver: team_id is required")
-			}
-
-			return drivers.NewVercelDriver(c, s.TeamID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read vercel connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewVercelNameResolver(c, s.TeamID, ep.APIBase)
-		}),
 	}
 }

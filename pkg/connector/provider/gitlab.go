@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -42,29 +36,9 @@ func gitlabRegistration() *Registration {
 			// prefix, so the version segment stays in APIBase.
 			APIBase: "https://gitlab.com/api/v4",
 		},
-		OAuth2Scopes: []string{"read_api"},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
-			}
-
-			if s.GroupID == "" {
-				return nil, fmt.Errorf("cannot create gitlab driver: group_id is required")
-			}
-
-			return drivers.NewGitLabDriver(c, s.GroupID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read gitlab connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewGitLabNameResolver(c, s.GroupID, ep.APIBase)
-		}),
-		ListOrganizations: HTTPOrganizations(drivers.ListGitLabOrganizations),
+		OAuth2: &OAuth2Spec{
+			Scopes: []string{"read_api"},
+		},
 		SetOrganizationSettings: func(c *coredata.Connector, groupID string) error {
 			return c.SetSettings(&coredata.GitLabConnectorSettings{GroupID: groupID})
 		},

@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // betterStackTeamMembersPath is the Better Stack Uptime API team-members
@@ -251,4 +254,60 @@ func NewBetterStackNameResolver(teamName string) NameResolver {
 
 func (r *betterStackNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return r.teamName, nil
+}
+
+func betterStackSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := betterStackSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			betterStackSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func betterStackSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read better stack connector settings: %w", err)
+	}
+
+	teamName := strings.TrimSpace(s.TeamName)
+	if teamName == "" {
+		return nil, fmt.Errorf("cannot create better stack driver: team_name is required")
+	}
+
+	return NewBetterStackDriver(c, teamName, ep.APIBase), nil
+}
+
+func betterStackSourceNameResolver(
+	ctx context.Context,
+	_ *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.BetterStackConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read better stack connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewBetterStackNameResolver(strings.TrimSpace(s.TeamName))
 }

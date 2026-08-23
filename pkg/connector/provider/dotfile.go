@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,13 +29,11 @@ func dotfileRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderDotfile,
 		DisplayName:      "Dotfile",
 		DocumentationURL: accessReviewDocsURL("dotfile"),
-		SupportsAPIKey:   true,
 		// Dotfile authenticates with the API key in the X-DOTFILE-API-KEY
-		// header rather than Authorization: Bearer. APIKeyHeader makes the
+		// header rather than Authorization: Bearer. APIKeyCustomHeader makes the
 		// APIKeyConnection send that header and omit Authorization. The key is
 		// bound to one workspace, so there is nothing to pick (Pattern 3): no
 		// settings struct, no picker.
-		APIKeyHeader: "X-DOTFILE-API-KEY",
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /v1
 			// prefix, so the version segment stays in APIBase.
@@ -51,10 +43,11 @@ func dotfileRegistration() *Registration {
 			// key returns 401.
 			Probe: "https://api.dotfile.com/v1/users?limit=1",
 		},
-		// No NewNameResolver: the users endpoint carries no workspace name, so
+		// No name resolver: the users endpoint carries no workspace name, so
 		// the source keeps its generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewDotfileDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomHeader,
+			Name:         "X-DOTFILE-API-KEY",
+		},
 	}
 }

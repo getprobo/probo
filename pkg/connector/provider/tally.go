@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -41,21 +35,6 @@ func tallyRegistration() *Registration {
 			Probe:   "https://api.tally.so/users/me",
 			APIBase: "https://api.tally.so",
 		},
-		SupportsAPIKey: true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
-			}
-
-			if s.OrganizationID == "" {
-				return nil, fmt.Errorf("cannot create tally driver: organization_id is required")
-			}
-
-			return drivers.NewTallyDriver(c, s.OrganizationID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewTallyNameResolver(c, ep.APIBase)
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

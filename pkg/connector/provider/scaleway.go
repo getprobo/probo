@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,37 +29,27 @@ func scalewayRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderScaleway,
 		DisplayName:      "Scaleway",
 		DocumentationURL: accessReviewDocsURL("scaleway"),
-		SupportsAPIKey:   true,
 		// Scaleway authenticates with the secret key in the X-Auth-Token header
-		// rather than Authorization: Bearer. APIKeyHeader makes the
+		// rather than Authorization: Bearer. APIKeyCustomHeader makes the
 		// APIKeyConnection send that header and omit Authorization. The key is
 		// bound to one Organization, but GET /iam/v1alpha1/users requires the
-		// organization_id explicitly, so it is captured via APIKeyExtraSettings
+		// organization_id explicitly, so it is captured via APIKey.ExtraSettings
 		// rather than discovered — hence no picker and a BuildProbeURL.
-		APIKeyHeader: "X-Auth-Token",
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same
 			// /iam/v1alpha1 prefix, so the version segment stays in APIBase.
 			APIBase: "https://api.scaleway.com/iam/v1alpha1",
 		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
-		},
-		BuildProbeURL: buildScalewayProbeURL,
-		// No NewNameResolver: Scaleway exposes no read-only endpoint that maps
+		// No name resolver: Scaleway exposes no read-only endpoint that maps
 		// an Organization UUID to its display name, so the source keeps its
 		// generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read scaleway connector settings: %w", err)
-			}
-
-			if s.OrganizationID == "" {
-				return nil, fmt.Errorf("cannot create scaleway driver: organization_id is required")
-			}
-
-			return drivers.NewScalewayDriver(c, s.OrganizationID, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomHeader,
+			Name:         "X-Auth-Token",
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
+		},
+		BuildProbeURL: buildScalewayProbeURL,
 	}
 }

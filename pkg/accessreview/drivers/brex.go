@@ -22,13 +22,16 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // BrexDriver fetches users from Brex via OAuth2-authenticated REST API
@@ -198,4 +201,19 @@ func (r *brexNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 	}
 
 	return resp.LegalName, nil
+}
+
+func brexSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewBrexDriver(credential.Client, opened.Endpoints.APIBase),
+			NewBrexNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

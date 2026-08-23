@@ -26,9 +26,12 @@ import (
 	"strings"
 )
 
-// normalizeSelfHostedBaseURL validates an operator-supplied instance URL and
+// NormalizeSelfHostedBaseURL validates a customer-supplied instance URL and
 // strips the query, fragment and trailing slash before a path is joined onto it.
-func normalizeSelfHostedBaseURL(raw string) (string, error) {
+//
+// It is exported because a consumer domain's driver reaches the same host as
+// the connection probe, and the two must agree on what that host is.
+func NormalizeSelfHostedBaseURL(raw string) (string, error) {
 	baseURL := strings.TrimSpace(raw)
 	if baseURL == "" {
 		return "", fmt.Errorf("base_url is required")

@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,7 +29,6 @@ func incidentioRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderIncidentIO,
 		DisplayName:      "incident.io",
 		DocumentationURL: accessReviewDocsURL("incident-io"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			APIBase: "https://api.incident.io/v2",
 			// incident.io publishes an OAuth2 flow, but it is outbound-only (for
@@ -50,10 +44,8 @@ func incidentioRegistration() *Registration {
 			Probe: "https://api.incident.io/v2/users?page_size=1",
 		},
 		//
-		// No NewNameResolver: GET /v2/users carries no organization name, so
+		// No name resolver: GET /v2/users carries no organization name, so
 		// the source keeps its generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewIncidentIODriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

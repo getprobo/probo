@@ -21,14 +21,17 @@
 package drivers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
+	"bytes"
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"time"
 )
 
 // mondayUsersListQuery paginates Monday.com users by `page` (1-indexed).
@@ -246,4 +249,19 @@ func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return resp.Data.Account.Name, nil
+}
+
+func mondaySource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewMondayDriver(credential.Client, opened.Endpoints.APIBase),
+			NewMondayNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

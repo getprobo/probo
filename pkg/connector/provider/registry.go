@@ -75,11 +75,10 @@ func NewRegistry() *Registry {
 	}
 }
 
-// Register adds a Registration to r. It returns an error on nil or
-// incomplete Registration metadata or on duplicate registration so
-// callers (in particular NewBuiltinRegistry) can decide whether the
-// condition is a programmer error worth crashing on or a recoverable
-// state worth surfacing.
+// Register adds a Registration to r. It returns an error on nil or incomplete
+// metadata, on a contradictory credential path, or on a duplicate, so callers
+// (in particular NewBuiltinRegistry) can decide whether the condition is a
+// programmer error worth crashing on or a recoverable state worth surfacing.
 func (r *Registry) Register(reg *Registration) error {
 	if reg == nil {
 		return fmt.Errorf("cannot register connector provider: nil Registration")
@@ -93,141 +92,162 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
 	}
 
-	// APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and
-	// APIKeyAuthScheme select different presentations of the same key;
-	// setting more than one is a programmer error with a silent winner
-	// (Client checks BasicAuth, then BasicAuthUserPass, then Header, then
-	// Scheme). Reject it at startup.
-	apiKeyModes := 0
-
-	if reg.APIKeyBasicAuth {
-		apiKeyModes++
+	if err := reg.validateCredentialPaths(); err != nil {
+		return err
 	}
 
-	if reg.APIKeyBasicAuthUserPass {
-		apiKeyModes++
+	if err := reg.validateProbeHost(); err != nil {
+		return err
 	}
 
-	if reg.APIKeyHeader != "" {
-		apiKeyModes++
+	if err := reg.validateExtraSettings(); err != nil {
+		return err
 	}
 
-	if reg.APIKeyAuthScheme != "" {
-		apiKeyModes++
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, dup := r.providers[reg.Provider]; dup {
+		return fmt.Errorf("cannot register connector provider %q: duplicate registration", reg.Provider)
 	}
 
-	if apiKeyModes > 1 {
-		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
-	}
+	r.providers[reg.Provider] = reg
 
-	// ManagedAPIKey injects a Probo-held key and ignores any customer
-	// credential, so pairing it with SupportsAPIKey/SupportsClientCredentials
-	// would advertise a credential field whose value is silently discarded —
-	// the same silent-winner class rejected above. Reject it at startup.
-	if reg.ManagedAPIKey && (reg.SupportsAPIKey || reg.SupportsClientCredentials) {
-		return fmt.Errorf("cannot register connector provider %q: ManagedAPIKey is mutually exclusive with SupportsAPIKey and SupportsClientCredentials", reg.Provider)
-	}
+	return nil
+}
 
-	// RequiresManagedResourceID only has meaning for a ManagedAPIKey provider:
-	// ManagedConnectorReady consults it exclusively on that path, so setting it
-	// on a non-managed provider is a silently ineffective flag. Reject it at
-	// startup rather than let the requirement quietly do nothing.
-	if reg.RequiresManagedResourceID && !reg.ManagedAPIKey {
-		return fmt.Errorf("cannot register connector provider %q: RequiresManagedResourceID requires ManagedAPIKey", reg.Provider)
-	}
-
-	// A workload identity provider holds no credential, so a key-based path
-	// would advertise a field it can never use, and the two families select
-	// different driver factories — the silent-winner class rejected above.
-	if reg.SupportsWorkloadIdentity &&
-		(reg.SupportsAPIKey || reg.SupportsClientCredentials || reg.ManagedAPIKey) {
-		return fmt.Errorf("cannot register connector provider %q: SupportsWorkloadIdentity is mutually exclusive with SupportsAPIKey, SupportsClientCredentials, and ManagedAPIKey", reg.Provider)
-	}
-
-	// NewCloudSession without the flag is silently ineffective: the driver
-	// catalog gate and the mutual exclusions above both read the flag, so the
-	// provider would advertise a key-based path it cannot serve.
-	if reg.NewCloudSession != nil && !reg.SupportsWorkloadIdentity {
-		return fmt.Errorf("cannot register connector provider %q: NewCloudSession requires SupportsWorkloadIdentity", reg.Provider)
-	}
-
-	// Open fills a workload identity Handle through NewCloudSession, so without
-	// it every capability on that Handle fails at use time — on a provider the
-	// catalog advertised as connectable.
-	if reg.SupportsWorkloadIdentity && reg.NewCloudSession == nil {
-		return fmt.Errorf("cannot register connector provider %q: SupportsWorkloadIdentity requires NewCloudSession", reg.Provider)
-	}
-
-	// A Probe on a different host from APIBase (or Identity) would let a
-	// deployment move the driver to another host while the connection check
-	// keeps hitting the real provider — a half-migrated connector that
-	// reports healthy. All three describe the same provider's API or identity
-	// surface, so their hosts must agree. This is what turns an override that
-	// moves Probe without moving the matching field (an operator forgetting
-	// DocuSign's Identity, say) into a boot failure instead of the silent
-	// split applyEndpointOverride's own check cannot see, because it only
-	// runs before Register on the still-being-assembled Endpoints.
-	if reg.Endpoints.Probe != "" && (reg.Endpoints.APIBase != "" || reg.Endpoints.Identity != "") {
-		probe, err := url.Parse(reg.Endpoints.Probe)
-		if err != nil {
-			return fmt.Errorf("cannot register connector provider %q: cannot parse Probe: %w", reg.Provider, err)
+// validateCredentialPaths rejects a provider whose declared paths contradict
+// each other. Grouping each path into its own spec leaves only the rules that
+// say something about the domain.
+func (reg *Registration) validateCredentialPaths() error {
+	// Federating into a customer's cloud means Probo holds no credential, so
+	// any path where it does would advertise a field this provider can never
+	// use — and the two families need different consumer code.
+	if reg.WorkloadIdentity != nil {
+		if reg.OAuth2 != nil || reg.APIKey != nil || reg.ClientCredentials != nil {
+			return fmt.Errorf("cannot register connector provider %q: WorkloadIdentity rules out OAuth2, APIKey, and ClientCredentials", reg.Provider)
 		}
 
-		if reg.Endpoints.APIBase != "" {
-			base, err := url.Parse(reg.Endpoints.APIBase)
-			if err != nil {
-				return fmt.Errorf("cannot register connector provider %q: cannot parse APIBase: %w", reg.Provider, err)
-			}
-
-			if !strings.EqualFold(base.Host, probe.Host) {
-				return fmt.Errorf("cannot register connector provider %q: Probe host %q does not match APIBase host %q", reg.Provider, probe.Host, base.Host)
-			}
-		}
-
-		if reg.Endpoints.Identity != "" {
-			identity, err := url.Parse(reg.Endpoints.Identity)
-			if err != nil {
-				return fmt.Errorf("cannot register connector provider %q: cannot parse Identity: %w", reg.Provider, err)
-			}
-
-			if !strings.EqualFold(identity.Host, probe.Host) {
-				return fmt.Errorf("cannot register connector provider %q: Probe host %q does not match Identity host %q", reg.Provider, probe.Host, identity.Host)
-			}
+		// Without it every capability built on this connector fails at use
+		// time, on a provider the catalog advertised as connectable.
+		if reg.WorkloadIdentity.NewSession == nil {
+			return fmt.Errorf("cannot register connector provider %q: WorkloadIdentity requires NewSession", reg.Provider)
 		}
 	}
 
-	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
-	// endpoint host, but from different sources (a callback param vs. the
-	// signed state). CompleteWithState checks them in order, so setting both
-	// is a programmer error with a silent winner. Reject it at startup.
-	if reg.BuildTokenURLForDomain != nil && reg.BuildTokenURLForSite != nil {
+	if reg.APIKey != nil {
+		// Name is consumed by exactly two presentations. Set anywhere else it
+		// is silently ignored; missing on these two it yields a request with an
+		// empty header name or scheme.
+		needsName := reg.APIKey.Presentation == APIKeyCustomHeader ||
+			reg.APIKey.Presentation == APIKeyCustomScheme
+
+		if needsName && reg.APIKey.Name == "" {
+			return fmt.Errorf("cannot register connector provider %q: APIKey presentation %q requires Name", reg.Provider, reg.APIKey.Presentation)
+		}
+
+		if !needsName && reg.APIKey.Name != "" {
+			return fmt.Errorf("cannot register connector provider %q: APIKey presentation %q consumes no Name", reg.Provider, reg.APIKey.Presentation)
+		}
+
+		// ManagedConnectorReady consults RequiresResourceID only on the managed
+		// path, so setting it elsewhere is a requirement that quietly does
+		// nothing.
+		if reg.APIKey.RequiresResourceID && !reg.APIKey.Managed {
+			return fmt.Errorf("cannot register connector provider %q: APIKey.RequiresResourceID requires Managed", reg.Provider)
+		}
+
+		// A managed key is injected at use time and any customer credential is
+		// discarded, so offering another key-based path would advertise a field
+		// whose value is thrown away.
+		if reg.APIKey.Managed && reg.ClientCredentials != nil {
+			return fmt.Errorf("cannot register connector provider %q: a managed APIKey rules out ClientCredentials", reg.Provider)
+		}
+	}
+
+	// CompleteWithState checks the two token-URL builders in order, so setting
+	// both is a programmer error with a silent winner.
+	if reg.OAuth2 != nil &&
+		reg.OAuth2.BuildTokenURLForDomain != nil &&
+		reg.OAuth2.BuildTokenURLForSite != nil {
 		return fmt.Errorf("cannot register connector provider %q: BuildTokenURLForDomain and BuildTokenURLForSite are mutually exclusive", reg.Provider)
 	}
 
-	// A per-path settings list for a path the provider cannot offer is a dead
-	// declaration: no dialog will ever render it. ManagedAPIKey counts as an
-	// API-key path — the customer supplies the settings, Probo the key.
-	if len(reg.APIKeyExtraSettings) > 0 && !reg.SupportsAPIKey && !reg.ManagedAPIKey {
-		return fmt.Errorf("cannot register connector provider %q: APIKeyExtraSettings requires SupportsAPIKey or ManagedAPIKey", reg.Provider)
+	return nil
+}
+
+// validateProbeHost rejects a Probe on a different host from the API or
+// identity surface it checks.
+//
+// Such a split would let a deployment move the driver to another host while the
+// connection check keeps hitting the real provider — a half-migrated connector
+// that reports healthy. This is what turns an override that moves Probe without
+// moving the matching field (an operator forgetting DocuSign's Identity, say)
+// into a boot failure instead of the silent split applyEndpointOverride cannot
+// see, because that only runs before Register on the still-being-assembled
+// Endpoints.
+func (reg *Registration) validateProbeHost() error {
+	if reg.Endpoints.Probe == "" {
+		return nil
 	}
 
-	if len(reg.ClientCredentialsExtraSettings) > 0 && !reg.SupportsClientCredentials {
-		return fmt.Errorf("cannot register connector provider %q: ClientCredentialsExtraSettings requires SupportsClientCredentials", reg.Provider)
+	probe, err := url.Parse(reg.Endpoints.Probe)
+	if err != nil {
+		return fmt.Errorf("cannot register connector provider %q: cannot parse Probe: %w", reg.Provider, err)
 	}
 
-	// The console keys both its form state and its submitted values by setting
-	// key within one dialog, so a duplicate key silently collapses two fields
-	// into one and an empty key produces an unlabelled field bound to nothing.
-	// Reject both at startup. A key repeated across the two lists is fine and
-	// intended: that is how a dual-path provider declares one setting both
-	// dialogs need.
-	for _, list := range []struct {
+	for _, surface := range []struct {
+		field string
+		value string
+	}{
+		{"APIBase", reg.Endpoints.APIBase},
+		{"Identity", reg.Endpoints.Identity},
+	} {
+		if surface.value == "" {
+			continue
+		}
+
+		parsed, err := url.Parse(surface.value)
+		if err != nil {
+			return fmt.Errorf("cannot register connector provider %q: cannot parse %s: %w", reg.Provider, surface.field, err)
+		}
+
+		if !strings.EqualFold(parsed.Host, probe.Host) {
+			return fmt.Errorf("cannot register connector provider %q: Probe host %q does not match %s host %q", reg.Provider, probe.Host, surface.field, parsed.Host)
+		}
+	}
+
+	return nil
+}
+
+// validateExtraSettings rejects a settings list the console cannot render.
+//
+// The console keys both its form state and its submitted values by setting key
+// within one dialog, so a duplicate key silently collapses two fields into one
+// and an empty key produces an unlabelled field bound to nothing. A key
+// repeated ACROSS the two lists is fine and intended: that is how a dual-path
+// provider declares one setting both dialogs need.
+func (reg *Registration) validateExtraSettings() error {
+	lists := []struct {
 		field    string
 		settings []ExtraSetting
-	}{
-		{"APIKeyExtraSettings", reg.APIKeyExtraSettings},
-		{"ClientCredentialsExtraSettings", reg.ClientCredentialsExtraSettings},
-	} {
+	}{}
+
+	if reg.APIKey != nil {
+		lists = append(lists, struct {
+			field    string
+			settings []ExtraSetting
+		}{"APIKey.ExtraSettings", reg.APIKey.ExtraSettings})
+	}
+
+	if reg.ClientCredentials != nil {
+		lists = append(lists, struct {
+			field    string
+			settings []ExtraSetting
+		}{"ClientCredentials.ExtraSettings", reg.ClientCredentials.ExtraSettings})
+	}
+
+	for _, list := range lists {
 		seen := make(map[string]bool, len(list.settings))
 
 		for _, s := range list.settings {
@@ -243,15 +263,6 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if _, dup := r.providers[reg.Provider]; dup {
-		return fmt.Errorf("cannot register connector provider %q: duplicate registration", reg.Provider)
-	}
-
-	r.providers[reg.Provider] = reg
-
 	return nil
 }
 
@@ -264,13 +275,6 @@ func (r *Registry) Get(p coredata.ConnectorProvider) (*Registration, bool) {
 	reg, ok := r.providers[p]
 
 	return reg, ok
-}
-
-// For returns the Registration behind an opened connector, or false when the
-// registry knows no such provider. It is Get for a caller holding a Handle,
-// which owns no Registration of its own.
-func (r *Registry) For(h *Handle) (*Registration, bool) {
-	return r.Get(h.Connector.Provider)
 }
 
 // All returns every Registration currently in r. Order is not stable;
@@ -287,9 +291,9 @@ func (r *Registry) All() []*Registration {
 	return out
 }
 
-// PublicClients returns every Registration flagged PublicClient (CIMD,
-// no client_secret). probod uses this to auto-register their OAuth2
-// connectors with a deployment-derived client_id and state-signing key.
+// PublicClients returns every OAuth2 provider that authenticates as a public
+// client (CIMD, no client_secret). probod uses this to auto-register their
+// OAuth2 connectors with a deployment-derived client_id and state-signing key.
 // Order is not stable.
 func (r *Registry) PublicClients() []*Registration {
 	r.mu.RLock()
@@ -298,7 +302,7 @@ func (r *Registry) PublicClients() []*Registration {
 	var out []*Registration
 
 	for _, reg := range r.providers {
-		if reg.PublicClient {
+		if reg.OAuth2 != nil && reg.OAuth2.PublicClient {
 			out = append(out, reg)
 		}
 	}
@@ -317,55 +321,56 @@ func (r *Registry) ProviderDisplayName(p coredata.ConnectorProvider) string {
 	return string(p)
 }
 
-// APIKeyHeader returns the request header an API-key connection for the
-// given provider must use to present its key. Empty means the default
-// `Authorization: Bearer` scheme; a value such as "x-api-key" means the
-// raw key is sent in that header instead. Returns empty for unknown
-// providers and for providers that do not customise the scheme.
-func (r *Registry) APIKeyHeader(p coredata.ConnectorProvider) string {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyHeader
+// apiKeySpec returns the provider's API-key path, or nil when it offers none.
+// The accessors below read through it so a caller building an APIKeyConnection
+// need not know the registration's shape.
+func (r *Registry) apiKeySpec(p coredata.ConnectorProvider) *APIKeySpec {
+	reg, ok := r.Get(p)
+	if !ok {
+		return nil
 	}
 
-	return ""
+	return reg.APIKey
 }
 
-// APIKeyUsesBasicAuth reports whether an API-key connection for the
-// given provider must present its key as an HTTP Basic auth username
-// (empty password) instead of a Bearer token. Returns false for unknown
-// providers and for providers that use the default Bearer scheme.
-func (r *Registry) APIKeyUsesBasicAuth(p coredata.ConnectorProvider) bool {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyBasicAuth
+// APIKeyHeader returns the request header an API-key connection for the given
+// provider must send its raw key in, and "" when the key travels in the
+// Authorization header instead.
+func (r *Registry) APIKeyHeader(p coredata.ConnectorProvider) string {
+	spec := r.apiKeySpec(p)
+	if spec == nil || spec.Presentation != APIKeyCustomHeader {
+		return ""
 	}
 
-	return false
+	return spec.Name
 }
 
 // APIKeyAuthScheme returns the non-Bearer Authorization scheme an API-key
-// connection for the given provider must use to present its key (e.g.
-// "SSWS" for Okta). Empty means the default `Authorization: Bearer`
-// scheme. Returns empty for unknown providers and for providers that do
-// not customise the scheme.
+// connection for the given provider must use (e.g. "SSWS" for Okta), and "" for
+// the default Bearer scheme.
 func (r *Registry) APIKeyAuthScheme(p coredata.ConnectorProvider) string {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyAuthScheme
+	spec := r.apiKeySpec(p)
+	if spec == nil || spec.Presentation != APIKeyCustomScheme {
+		return ""
 	}
 
-	return ""
+	return spec.Name
 }
 
-// APIKeyUsesBasicAuthUserPass reports whether an API-key connection for the
-// given provider must present its key as a complete HTTP Basic credential
-// (`username:password` already encoded in the key, base64'd verbatim)
-// instead of a Bearer token. Returns false for unknown providers and for
-// providers that use the default Bearer scheme.
-func (r *Registry) APIKeyUsesBasicAuthUserPass(p coredata.ConnectorProvider) bool {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyBasicAuthUserPass
-	}
+// APIKeyUsesBasicAuth reports whether the key is presented as a Basic auth
+// username with an empty password instead of a Bearer token.
+func (r *Registry) APIKeyUsesBasicAuth(p coredata.ConnectorProvider) bool {
+	spec := r.apiKeySpec(p)
 
-	return false
+	return spec != nil && spec.Presentation == APIKeyBasic
+}
+
+// APIKeyUsesBasicAuthUserPass reports whether the key is presented as a
+// complete Basic credential whose `username:password` pair is already inside it.
+func (r *Registry) APIKeyUsesBasicAuthUserPass(p coredata.ConnectorProvider) bool {
+	spec := r.apiKeySpec(p)
+
+	return spec != nil && spec.Presentation == APIKeyBasicUserPass
 }
 
 // SetManagedAPIKey records the Probo-supplied API key for a
@@ -433,8 +438,8 @@ func (r *Registry) ManagedResourceID(p coredata.ConnectorProvider) (string, bool
 // of the driver catalog, since connecting it would fail at verify time. It is
 // false for non-managed and unregistered providers.
 func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
-	reg, ok := r.Get(p)
-	if !ok || !reg.ManagedAPIKey {
+	spec := r.apiKeySpec(p)
+	if spec == nil || !spec.Managed {
 		return false
 	}
 
@@ -442,7 +447,7 @@ func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
 		return false
 	}
 
-	if reg.RequiresManagedResourceID {
+	if spec.RequiresResourceID {
 		if _, ok := r.ManagedResourceID(p); !ok {
 			return false
 		}
@@ -456,11 +461,12 @@ func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
 // nil for providers that do not need any scopes (Notion, Intercom)
 // or for non-access-review providers.
 func (r *Registry) ProviderOAuth2Scopes(p coredata.ConnectorProvider) []string {
-	if reg, ok := r.Get(p); ok {
-		// Return a copy so callers cannot mutate the shared, concurrently
-		// read registration slice held by this long-lived registry.
-		return slices.Clone(reg.OAuth2Scopes)
+	reg, ok := r.Get(p)
+	if !ok || reg.OAuth2 == nil {
+		return nil
 	}
 
-	return nil
+	// Return a copy so callers cannot mutate the shared, concurrently read
+	// registration slice held by this long-lived registry.
+	return slices.Clone(reg.OAuth2.Scopes)
 }

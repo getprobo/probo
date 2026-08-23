@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,7 +29,6 @@ func pylonRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderPylon,
 		DisplayName:      "Pylon",
 		DocumentationURL: accessReviewDocsURL("pylon"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			APIBase: "https://api.usepylon.com",
 			// Pylon authenticates with an account API token presented as
@@ -49,11 +43,9 @@ func pylonRegistration() *Registration {
 			Probe: "https://api.usepylon.com/users?limit=1",
 		},
 		//
-		// No NewNameResolver: GET /users carries no organization name, so the
+		// No name resolver: GET /users carries no organization name, so the
 		// source keeps its generic name (the source-name worker degrades
 		// gracefully).
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewPylonDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

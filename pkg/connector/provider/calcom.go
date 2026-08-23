@@ -21,33 +21,27 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 func calComRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderCalCom,
-		DisplayName:    "Cal.com",
-		SupportsAPIKey: true,
+		Provider:    coredata.ConnectorProviderCalCom,
+		DisplayName: "Cal.com",
 		Endpoints: Endpoints{
 			Auth:    "https://app.cal.com/auth/oauth2/authorize",
 			Token:   "https://api.cal.com/v2/auth/oauth2/token",
 			APIBase: "https://api.cal.com",
 			Probe:   "https://api.cal.com/v2/me",
 		},
-		OAuth2Scopes: []string{
-			"PROFILE_READ",
-			"TEAM_PROFILE_READ",
-			"TEAM_MEMBERSHIP_READ",
-			"ORG_MEMBERSHIP_READ",
+		OAuth2: &OAuth2Spec{
+			Scopes: []string{
+				"PROFILE_READ",
+				"TEAM_PROFILE_READ",
+				"TEAM_MEMBERSHIP_READ",
+				"ORG_MEMBERSHIP_READ",
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewCalComDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

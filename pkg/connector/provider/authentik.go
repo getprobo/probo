@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -36,40 +30,13 @@ import (
 // password a service account is created with.
 func authentikRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderAuthentik,
-		DisplayName:    "authentik",
-		SupportsAPIKey: true,
-		BuildProbeURL:  buildAuthentikProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
+		Provider:    coredata.ConnectorProviderAuthentik,
+		DisplayName: "authentik",
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			settings, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read authentik connector settings: %w", err)
-			}
-
-			baseURL, err := normalizeSelfHostedBaseURL(settings.BaseURL)
-			if err != nil {
-				return nil, fmt.Errorf("cannot create authentik driver: %w", err)
-			}
-
-			return drivers.NewAuthentikDriver(c, baseURL), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			settings, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read authentik connector settings", log.Error(err))
-				return nil
-			}
-
-			baseURL, err := normalizeSelfHostedBaseURL(settings.BaseURL)
-			if err != nil {
-				logger.ErrorCtx(ctx, "invalid authentik base url in connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewAuthentikNameResolver(c, baseURL)
-		}),
+		BuildProbeURL: buildAuthentikProbeURL,
 	}
 }

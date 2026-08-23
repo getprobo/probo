@@ -43,3 +43,24 @@ func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.Co
 
 	return out
 }
+
+// apiKeyExtraSettings and clientCredentialsExtraSettings read the per-path
+// settings lists a registration declares, answering nil for a path the provider
+// does not offer. Since the lists now live inside the path's spec, declaring one
+// declares the path, and there is no longer a way to attach settings to a dialog
+// the provider never shows.
+func apiKeyExtraSettings(reg *provider.Registration) []provider.ExtraSetting {
+	if reg.APIKey == nil {
+		return nil
+	}
+
+	return reg.APIKey.ExtraSettings
+}
+
+func clientCredentialsExtraSettings(reg *provider.Registration) []provider.ExtraSetting {
+	if reg.ClientCredentials == nil {
+		return nil
+	}
+
+	return reg.ClientCredentials.ExtraSettings
+}

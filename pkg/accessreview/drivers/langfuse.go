@@ -22,13 +22,16 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // LangfuseDriver lists the members of a single Langfuse organization via the
@@ -157,4 +160,44 @@ func langfuseIsAdmin(role string) bool {
 	default:
 		return false
 	}
+}
+
+func langfuseSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := langfuseSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			nil,
+			nil,
+		), nil
+	})
+}
+
+func langfuseSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	settings, err := coredata.ConnectorSettings[coredata.LangfuseConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read langfuse connector settings: %w", err)
+	}
+
+	baseURL, err := provider.NormalizeSelfHostedBaseURL(settings.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create langfuse driver: %w", err)
+	}
+
+	return NewLangfuseDriver(c, baseURL), nil
 }

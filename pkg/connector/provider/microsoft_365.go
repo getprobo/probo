@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -33,15 +28,6 @@ func microsoft365Registration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderMicrosoft365,
 		DisplayName: "Microsoft 365",
-		// See Registration.EndpointOverrideUnsupported: the SCIM bridge
-		// (pkg/iam/scim/bridge/provider/microsoft365) is a second consumer of
-		// this very connector row — bridge_runner_sync hands it the row's
-		// OAuth2 client — and it dials graphBaseURL, a const pinned in that
-		// package rather than a value read from Endpoints. An override would
-		// move the driver and the probe below while every bridge sync kept
-		// hitting the real Graph with a token the override minted. Its sibling
-		// Google Workspace is refused for the same class of reason.
-		EndpointOverrideUnsupported: "its SCIM bridge dials a graph.microsoft.com base pinned in pkg/iam/scim/bridge/provider/microsoft365, not a value in Endpoints",
 		Endpoints: Endpoints{
 			Auth:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
 			Token: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
@@ -52,23 +38,28 @@ func microsoft365Registration() *Registration {
 			// identifiers, not endpoints, and must not be derived from this.
 			APIBase: "https://graph.microsoft.com/v1.0",
 		},
-		ExtraAuthParams: map[string]string{
-			"prompt": "consent",
+		// See Registration.EndpointOverrideUnsupported: the SCIM bridge
+		// (pkg/iam/scim/bridge/provider/microsoft365) is a second consumer of
+		// this very connector row — bridge_runner_sync hands it the row's
+		// OAuth2 client — and it dials graphBaseURL, a const pinned in that
+		// package rather than a value read from Endpoints. An override would
+		// move the driver and the probe below while every bridge sync kept
+		// hitting the real Graph with a token the override minted. Its sibling
+		// Google Workspace is refused for the same class of reason.
+		EndpointOverrideUnsupported: "its SCIM bridge dials a graph.microsoft.com base pinned in pkg/iam/scim/bridge/provider/microsoft365, not a value in Endpoints",
+		OAuth2: &OAuth2Spec{
+			ExtraAuthParams: map[string]string{
+				"prompt": "consent",
+			},
+			Scopes: []string{
+				"openid",
+				"profile",
+				"offline_access",
+				"https://graph.microsoft.com/AuditLog.Read.All",
+				"https://graph.microsoft.com/User.Read.All",
+				"https://graph.microsoft.com/Directory.Read.All",
+				"https://graph.microsoft.com/RoleManagement.Read.Directory",
+			},
 		},
-		OAuth2Scopes: []string{
-			"openid",
-			"profile",
-			"offline_access",
-			"https://graph.microsoft.com/AuditLog.Read.All",
-			"https://graph.microsoft.com/User.Read.All",
-			"https://graph.microsoft.com/Directory.Read.All",
-			"https://graph.microsoft.com/RoleManagement.Read.Directory",
-		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewMicrosoft365Driver(c, logger.Named("microsoft365"), ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewMicrosoft365NameResolver(c, ep.APIBase)
-		}),
 	}
 }

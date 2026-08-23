@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -42,33 +36,14 @@ func githubRegistration() *Registration {
 			// negotiated through the Accept header instead.
 			APIBase: "https://api.github.com",
 		},
-		OAuth2Scopes:   []string{"read:org"},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organization", Label: "Organization", Required: true},
+		OAuth2: &OAuth2Spec{
+			Scopes: []string{"read:org"},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read github connector settings: %w", err)
-			}
-
-			if s.Organization == "" {
-				return nil, fmt.Errorf("cannot create github driver: organization is required")
-			}
-
-			return drivers.NewGitHubDriver(c, s.Organization, logger.Named("github"), ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read github connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewGitHubNameResolver(c, s.Organization, ep.APIBase)
-		}),
-		ListOrganizations: HTTPOrganizations(drivers.ListGitHubOrganizations),
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organization", Label: "Organization", Required: true},
+			},
+		},
 		SetOrganizationSettings: func(c *coredata.Connector, org string) error {
 			return c.SetSettings(&coredata.GitHubConnectorSettings{Organization: org})
 		},

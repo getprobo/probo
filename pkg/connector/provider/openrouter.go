@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,12 +29,15 @@ func openrouterRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderOpenRouter,
 		DisplayName:      "OpenRouter",
 		DocumentationURL: accessReviewDocsURL("openrouter"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls shares the /api/v1 prefix, so
 			// the version segment stays in APIBase.
 			APIBase: "https://openrouter.ai/api/v1",
 		},
+		//
+		// No name resolver: the members endpoint carries no organization
+		// name, so the source keeps its generic name.
+		APIKey: &APIKeySpec{},
 		// OpenRouter authenticates with an organization management
 		// (provisioning) API key presented as Authorization: Bearer, the
 		// default APIKeyConnection scheme. The key is bound to one
@@ -51,12 +49,6 @@ func openrouterRegistration() *Registration {
 		// rejects 401/403 (revoked/invalid key) and also 404, which a valid
 		// but personal (non-organization) key returns — so a key that cannot
 		// list members shows as not-connected rather than failing later.
-		Probe: HTTPProbe(probeOpenRouter),
-		//
-		// No NewNameResolver: the members endpoint carries no organization
-		// name, so the source keeps its generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewOpenRouterDriver(c, ep.APIBase), nil
-		}),
+		Probe: ProbeOver(probeOpenRouter),
 	}
 }

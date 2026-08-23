@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -39,38 +33,14 @@ func datadogRegistration() *Registration {
 	// BuildProbeURL targets the stored API domain. Confidential client + PKCE map
 	// to the default post-form token-endpoint auth.
 	return &Registration{
-		Provider:               coredata.ConnectorProviderDatadog,
-		DisplayName:            "Datadog",
-		OAuth2Scopes:           []string{"user_access_read"},
-		RequiresPKCE:           true,
-		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
-		BuildTokenURLForDomain: connector.DatadogTokenURL,
-		BuildProbeURL:          buildDatadogProbeURL,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read datadog connector settings: %w", err)
-			}
-
-			// Re-validate the stored domain against the fixed allow-list at
-			// the construction site (defense-in-depth). The OAuth callback
-			// validates on write, but pinning the SSRF invariant here keeps
-			// the driver safe regardless of how the connector row was
-			// populated. An empty domain also fails this check.
-			if !connector.IsValidDatadogDomain(s.Domain) {
-				return nil, fmt.Errorf("cannot create datadog driver: invalid or missing domain")
-			}
-
-			return drivers.NewDatadogDriver(c, s.Domain), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read datadog connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewDatadogNameResolver(s.Region)
-		}),
+		Provider:    coredata.ConnectorProviderDatadog,
+		DisplayName: "Datadog",
+		OAuth2: &OAuth2Spec{
+			Scopes:                 []string{"user_access_read"},
+			RequiresPKCE:           true,
+			BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
+			BuildTokenURLForDomain: connector.DatadogTokenURL,
+		},
+		BuildProbeURL: buildDatadogProbeURL,
 	}
 }

@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,7 +29,6 @@ func nukiRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderNuki,
 		DisplayName:      "Nuki",
 		DocumentationURL: accessReviewDocsURL("nuki"),
-		SupportsAPIKey:   true,
 		// Nuki Web API token (Menu > API). Required scopes: account,
 		// smartlock.auth. Optional: smartlock.readOnly (door names). OAuth2
 		// implicit flow has no refreshable credential, so only API tokens are
@@ -43,11 +37,6 @@ func nukiRegistration() *Registration {
 			APIBase: "https://api.nuki.io",
 			Probe:   "https://api.nuki.io/account/user?limit=1",
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewNukiDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewNukiNameResolver(c, ep.APIBase)
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

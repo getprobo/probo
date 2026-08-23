@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -44,30 +38,14 @@ func sentryRegistration() *Registration {
 			// joins on, never to APIBase.
 			APIBase: "https://sentry.io/api/0",
 		},
-		OAuth2Scopes:   []string{"org:read", "member:read"},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+		OAuth2: &OAuth2Spec{
+			Scopes: []string{"org:read", "member:read"},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read sentry connector settings: %w", err)
-			}
-
-			// OrganizationSlug may be empty for OAuth connections; the driver auto-discovers it.
-			return drivers.NewSentryDriver(c, s.OrganizationSlug, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read sentry connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewSentryNameResolver(c, s.OrganizationSlug, ep.APIBase)
-		}),
-		ListOrganizations: HTTPOrganizations(drivers.ListSentryOrganizations),
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+			},
+		},
 		SetOrganizationSettings: func(c *coredata.Connector, slug string) error {
 			return c.SetSettings(&coredata.SentryConnectorSettings{OrganizationSlug: slug})
 		},

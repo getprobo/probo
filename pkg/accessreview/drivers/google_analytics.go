@@ -22,16 +22,19 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"errors"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -289,22 +292,6 @@ func googleAnalyticsURL(baseURL, pageToken string, extra url.Values, segments ..
 	return parsed.String(), nil
 }
 
-// GoogleAnalyticsAccountBindingsProbeURL builds a single-item account-level
-// accessBindings request for accountID under baseURL. The connection probe
-// uses it so the check exercises the permission the driver actually needs —
-// Administrator on the account, granted through
-// analytics.manage.users.readonly — instead of the accounts list, which any
-// analytics.readonly grant can call. It takes baseURL rather than composing
-// its own so the probe follows the same host as the driver.
-func GoogleAnalyticsAccountBindingsProbeURL(accountID, baseURL string) (string, error) {
-	return googleAnalyticsURL(
-		baseURL,
-		"",
-		url.Values{"pageSize": {"1"}},
-		googleAnalyticsAccountsSegment, url.PathEscape(accountID), googleAnalyticsAccessBindingsSegment,
-	)
-}
-
 // addGoogleAnalyticsBinding folds one access binding into the per-email member
 // map, deduplicating roles and setting the admin flag when the admin role is
 // present.
@@ -504,4 +491,62 @@ func ListGoogleAnalyticsOrganizations(ctx context.Context, httpClient *http.Clie
 	}
 
 	return nil, fmt.Errorf("cannot list all google analytics accounts: %w", ErrPaginationLimitReached)
+}
+
+func googleAnalyticsSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := googleAnalyticsSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			googleAnalyticsSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListGoogleAnalyticsOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func googleAnalyticsSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read google analytics connector settings: %w", err)
+	}
+
+	if s.AccountID == "" {
+		return nil, fmt.Errorf("cannot create google analytics driver: account_id is required")
+	}
+
+	return NewGoogleAnalyticsDriver(c, s.AccountID, ep.APIBase), nil
+}
+
+func googleAnalyticsSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read google analytics connector settings", log.Error(err))
+
+		return nil
+	}
+
+	return NewGoogleAnalyticsNameResolver(c, s.AccountID, ep.APIBase)
 }

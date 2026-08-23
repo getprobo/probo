@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,43 +29,23 @@ import (
 // read-scoped API key plus their Workspace ID (Render's owner ID). The key
 // authenticates with the default Authorization: Bearer scheme, so no
 // APIKeyAuthScheme override is set. There is no picker — the workspace is
-// captured up front via APIKeyExtraSettings — so SetOrganizationSettings is
+// captured up front via APIKey.ExtraSettings — so SetOrganizationSettings is
 // omitted.
 func renderRegistration() *Registration {
 	return &Registration{
 		Provider:         coredata.ConnectorProviderRender,
 		DisplayName:      "Render",
 		DocumentationURL: accessReviewDocsURL("render"),
-		SupportsAPIKey:   true,
-		BuildProbeURL:    buildRenderProbeURL,
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /v1 prefix,
 			// so the version segment stays in APIBase.
 			APIBase: "https://api.render.com/v1",
 		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "workspaceId", Label: "Workspace ID", Required: true},
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "workspaceId", Label: "Workspace ID", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read render connector settings: %w", err)
-			}
-
-			if s.OwnerID == "" {
-				return nil, fmt.Errorf("cannot create render driver: owner_id is required")
-			}
-
-			return drivers.NewRenderDriver(c, s.OwnerID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read render connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewRenderNameResolver(c, s.OwnerID, ep.APIBase)
-		}),
+		BuildProbeURL: buildRenderProbeURL,
 	}
 }

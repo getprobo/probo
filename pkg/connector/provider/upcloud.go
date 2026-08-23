@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,7 +29,6 @@ func upcloudRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderUpCloud,
 		DisplayName:      "UpCloud",
 		DocumentationURL: accessReviewDocsURL("upcloud"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /1.3
 			// prefix, so the version segment stays in APIBase.
@@ -53,12 +47,7 @@ func upcloudRegistration() *Registration {
 			// sub-account token, which authenticates but sees nothing.
 			Probe: "https://api.upcloud.com/1.3/account/list",
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewUpCloudDriver(c, logger.Named("upcloud"), ep.APIBase), nil
-		}),
 		// GET /1.3/account names the source after the token's own account.
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewUpCloudNameResolver(c, ep.APIBase)
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

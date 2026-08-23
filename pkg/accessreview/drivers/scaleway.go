@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -222,4 +225,43 @@ func scalewayMFAStatus(u scalewayUser) coredata.MFAStatus {
 	}
 
 	return coredata.MFAStatusDisabled
+}
+
+func scalewaySource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := scalewaySourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			nil,
+			nil,
+		), nil
+	})
+}
+
+func scalewaySourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read scaleway connector settings: %w", err)
+	}
+
+	if s.OrganizationID == "" {
+		return nil, fmt.Errorf("cannot create scaleway driver: organization_id is required")
+	}
+
+	return NewScalewayDriver(c, s.OrganizationID, ep.APIBase), nil
 }

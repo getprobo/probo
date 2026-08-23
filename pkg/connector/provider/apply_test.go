@@ -21,15 +21,11 @@
 package provider_test
 
 import (
-	"context"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.gearno.de/kit/log"
 
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
@@ -133,15 +129,14 @@ func TestApplyOAuth2Defaults_CopiesSiteClosures(t *testing.T) {
 
 	r := provider.NewRegistry()
 	require.NoError(t, r.Register(&provider.Registration{
-		Provider:               coredata.ConnectorProviderDatadog,
-		DisplayName:            "Datadog",
-		OAuth2Scopes:           []string{"user_access_read"},
-		RequiresPKCE:           true,
-		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
-		BuildTokenURLForDomain: connector.DatadogTokenURL,
-		NewDriver: provider.HTTP(func(context.Context, *http.Client, *coredata.Connector, *log.Logger, provider.Endpoints) (drivers.Driver, error) {
-			return nil, nil
-		}),
+		Provider:    coredata.ConnectorProviderDatadog,
+		DisplayName: "Datadog",
+		OAuth2: &provider.OAuth2Spec{
+			Scopes:                 []string{"user_access_read"},
+			RequiresPKCE:           true,
+			BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
+			BuildTokenURLForDomain: connector.DatadogTokenURL,
+		},
 	}))
 
 	var c connector.OAuth2Connector
@@ -168,14 +163,13 @@ func TestApplyOAuth2Defaults_CopiesTokenURLForSiteClosure(t *testing.T) {
 
 	r := provider.NewRegistry()
 	require.NoError(t, r.Register(&provider.Registration{
-		Provider:             coredata.ConnectorProviderZendesk,
-		DisplayName:          "Zendesk",
-		OAuth2Scopes:         []string{"users:read"},
-		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
-		BuildTokenURLForSite: connector.ZendeskTokenURL,
-		NewDriver: provider.HTTP(func(context.Context, *http.Client, *coredata.Connector, *log.Logger, provider.Endpoints) (drivers.Driver, error) {
-			return nil, nil
-		}),
+		Provider:    coredata.ConnectorProviderZendesk,
+		DisplayName: "Zendesk",
+		OAuth2: &provider.OAuth2Spec{
+			Scopes:               []string{"users:read"},
+			BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
+			BuildTokenURLForSite: connector.ZendeskTokenURL,
+		},
 	}))
 
 	var c connector.OAuth2Connector

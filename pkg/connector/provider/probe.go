@@ -32,7 +32,6 @@ import (
 	"slices"
 	"strings"
 
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -274,7 +273,7 @@ func buildGrafanaProbeURL(conn *coredata.Connector, _ Endpoints) (string, error)
 		return "", fmt.Errorf("cannot read grafana connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
+	baseURL, err := NormalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -304,7 +303,7 @@ func buildMetabaseProbeURL(conn *coredata.Connector, _ Endpoints) (string, error
 		return "", fmt.Errorf("missing metabase instance_url")
 	}
 
-	if err := validateMetabaseInstanceURL(instanceURL); err != nil {
+	if err := ValidateMetabaseInstanceURL(instanceURL); err != nil {
 		return "", err
 	}
 
@@ -329,7 +328,7 @@ func buildLangfuseProbeURL(conn *coredata.Connector, _ Endpoints) (string, error
 		return "", fmt.Errorf("cannot read langfuse connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
+	baseURL, err := NormalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -348,7 +347,7 @@ func buildSigNozProbeURL(conn *coredata.Connector, _ Endpoints) (string, error) 
 		return "", fmt.Errorf("cannot read signoz connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
+	baseURL, err := NormalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -367,7 +366,7 @@ func buildAuthentikProbeURL(conn *coredata.Connector, _ Endpoints) (string, erro
 		return "", fmt.Errorf("cannot read authentik connector settings: %w", err)
 	}
 
-	baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
+	baseURL, err := NormalizeSelfHostedBaseURL(s.BaseURL)
 	if err != nil {
 		return "", err
 	}
@@ -391,19 +390,18 @@ func buildPostHogProbeURL(conn *coredata.Connector) (string, error) {
 		return "", nil
 	}
 
-	return url.JoinPath(baseURL, drivers.PostHogOrganizationPath)
+	return url.JoinPath(baseURL, PostHogOrganizationPath)
 }
 
 func probeLinear(
 	ctx context.Context,
-	httpClient *http.Client,
-	_ *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
 	return probePOSTJSON(
 		ctx,
-		httpClient,
-		ep.APIBase,
+		credential.Client,
+		h.Endpoints.APIBase,
 		map[string]string{"query": "{ viewer { id } }"},
 		nil,
 	)
@@ -411,14 +409,13 @@ func probeLinear(
 
 func probeMonday(
 	ctx context.Context,
-	httpClient *http.Client,
-	_ *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
 	return probePOSTJSON(
 		ctx,
-		httpClient,
-		ep.APIBase,
+		credential.Client,
+		h.Endpoints.APIBase,
 		map[string]string{"query": "query { users(limit: 1) { id } }"},
 		nil,
 	)
@@ -430,16 +427,15 @@ func probeMonday(
 // response body instead.
 func probeRailway(
 	ctx context.Context,
-	httpClient *http.Client,
-	_ *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
 	body, err := json.Marshal(map[string]string{"query": "query { me { id } }"})
 	if err != nil {
 		return fmt.Errorf("cannot marshal railway probe request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ep.APIBase, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, h.Endpoints.APIBase, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("cannot create railway probe request: %w", err)
 	}
@@ -447,7 +443,7 @@ func probeRailway(
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := httpClient.Do(req)
+	resp, err := credential.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("railway probe request failed: %w", err)
 	}
@@ -490,11 +486,10 @@ func probeRailway(
 // surfaces at connection time instead.
 func probeCrisp(
 	ctx context.Context,
-	httpClient *http.Client,
-	conn *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
-	s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](conn)
+	s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](h.Connector)
 	if err != nil {
 		return fmt.Errorf("cannot read crisp connector settings: %w", err)
 	}
@@ -503,7 +498,7 @@ func probeCrisp(
 		return fmt.Errorf("missing crisp website_id")
 	}
 
-	endpoint, err := url.JoinPath(ep.APIBase, "website", url.PathEscape(s.WebsiteID), "operators", "list")
+	endpoint, err := url.JoinPath(h.Endpoints.APIBase, "website", url.PathEscape(s.WebsiteID), "operators", "list")
 	if err != nil {
 		return fmt.Errorf("cannot build crisp probe URL: %w", err)
 	}
@@ -516,16 +511,15 @@ func probeCrisp(
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set(crispTierHeader, crispTierValue)
 
-	return doProbeRequest(httpClient, req, http.StatusNotFound)
+	return doProbeRequest(credential.Client, req, http.StatusNotFound)
 }
 
 func probeAnthropic(
 	ctx context.Context,
-	httpClient *http.Client,
-	_ *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
-	endpoint, err := url.JoinPath(ep.APIBase, "organizations", "users")
+	endpoint, err := url.JoinPath(h.Endpoints.APIBase, "organizations", "users")
 	if err != nil {
 		return fmt.Errorf("cannot build anthropic probe URL: %w", err)
 	}
@@ -540,16 +534,15 @@ func probeAnthropic(
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("anthropic-version", anthropicAPIVersion)
 
-	return doProbeRequest(httpClient, req)
+	return doProbeRequest(credential.Client, req)
 }
 
 func probeHeroku(
 	ctx context.Context,
-	httpClient *http.Client,
-	_ *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
-	endpoint, err := url.JoinPath(ep.APIBase, "account")
+	endpoint, err := url.JoinPath(h.Endpoints.APIBase, "account")
 	if err != nil {
 		return fmt.Errorf("cannot build heroku probe URL: %w", err)
 	}
@@ -566,7 +559,7 @@ func probeHeroku(
 	// 401 (verified live: 400 with application/json, 401 with this header).
 	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
 
-	return doProbeRequest(httpClient, req)
+	return doProbeRequest(credential.Client, req)
 }
 
 // probeOpenRouter verifies an OpenRouter management key. Beyond the usual
@@ -577,11 +570,10 @@ func probeHeroku(
 // surfaces at connection time instead of failing a campaign later.
 func probeOpenRouter(
 	ctx context.Context,
-	httpClient *http.Client,
-	_ *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
-	endpoint, err := url.JoinPath(ep.APIBase, "organization", "members")
+	endpoint, err := url.JoinPath(h.Endpoints.APIBase, "organization", "members")
 	if err != nil {
 		return fmt.Errorf("cannot build openrouter probe URL: %w", err)
 	}
@@ -595,7 +587,7 @@ func probeOpenRouter(
 
 	req.Header.Set("Accept", "application/json")
 
-	return doProbeRequest(httpClient, req, http.StatusNotFound)
+	return doProbeRequest(credential.Client, req, http.StatusNotFound)
 }
 
 // probePostHog ignores Endpoints because PostHog's APIBase is deliberately
@@ -604,26 +596,25 @@ func probeOpenRouter(
 // settings below, never from the registration.
 func probePostHog(
 	ctx context.Context,
-	httpClient *http.Client,
-	conn *coredata.Connector,
-	_ Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
-	probeURL, err := buildPostHogProbeURL(conn)
+	probeURL, err := buildPostHogProbeURL(h.Connector)
 	if err != nil {
 		return err
 	}
 
 	// Explicit host (API-key region or self-hosted): probe it directly.
 	if probeURL != "" {
-		return probeGET(ctx, httpClient, probeURL)
+		return probeGET(ctx, credential.Client, probeURL)
 	}
 
 	// Cloud OAuth (empty BaseURL): reuse the driver's region resolver so the
 	// probe and the campaign never drift. Only a credential every region
 	// rejected is disconnected; a transient failure on the token's own region
 	// stays connected rather than flapping the badge.
-	if _, err := drivers.ResolvePostHogRegion(ctx, httpClient); err != nil {
-		if errors.Is(err, drivers.ErrPostHogCredentialRejected) {
+	if _, err := ResolvePostHogRegion(ctx, credential.Client); err != nil {
+		if errors.Is(err, ErrPostHogCredentialRejected) {
 			return fmt.Errorf("cannot probe posthog: %w", err)
 		}
 
@@ -660,9 +651,11 @@ func buildSegmentProbeURL(conn *coredata.Connector, _ Endpoints) (string, error)
 	return u.String(), nil
 }
 
-// buildGoogleAnalyticsProbeURL targets the selected account's accessBindings,
-// the driver's first call, so the probe fails for a connection that can list
-// accounts but cannot read access bindings.
+// buildGoogleAnalyticsProbeURL targets the selected account's accessBindings —
+// the driver's first call — rather than the accounts list, so the probe fails
+// for a connection that can read accounts but not bindings. That is the
+// difference between a plain analytics.readonly grant and the
+// analytics.manage.users.readonly one a review needs.
 func buildGoogleAnalyticsProbeURL(conn *coredata.Connector, ep Endpoints) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
 	if err != nil {
@@ -673,7 +666,12 @@ func buildGoogleAnalyticsProbeURL(conn *coredata.Connector, ep Endpoints) (strin
 		return "", fmt.Errorf("missing google analytics account ID")
 	}
 
-	return drivers.GoogleAnalyticsAccountBindingsProbeURL(s.AccountID, ep.APIBase)
+	endpoint, err := url.JoinPath(ep.APIBase, "accounts", url.PathEscape(s.AccountID), "accessBindings")
+	if err != nil {
+		return "", fmt.Errorf("cannot build google analytics probe URL: %w", err)
+	}
+
+	return endpoint + "?" + url.Values{"pageSize": {"1"}}.Encode(), nil
 }
 
 // probeSquare checks a Square credential (OAuth Bearer token or Personal Access
@@ -682,11 +680,10 @@ func buildGoogleAnalyticsProbeURL(conn *coredata.Connector, ep Endpoints) (strin
 // PAT connections, which are always scoped to a single merchant.
 func probeSquare(
 	ctx context.Context,
-	httpClient *http.Client,
-	_ *coredata.Connector,
-	ep Endpoints,
+	credential connector.HTTPCredential,
+	h *Handle,
 ) error {
-	endpoint, err := url.JoinPath(ep.APIBase, "merchants", "me")
+	endpoint, err := url.JoinPath(h.Endpoints.APIBase, "merchants", "me")
 	if err != nil {
 		return fmt.Errorf("cannot build square probe URL: %w", err)
 	}
@@ -699,5 +696,5 @@ func probeSquare(
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Square-Version", squareVersion)
 
-	return doProbeRequest(httpClient, req)
+	return doProbeRequest(credential.Client, req)
 }

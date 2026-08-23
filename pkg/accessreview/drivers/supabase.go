@@ -22,13 +22,16 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -152,4 +155,59 @@ func NewSupabaseNameResolver(orgSlug string) NameResolver {
 
 func (r *supabaseNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return r.orgSlug, nil
+}
+
+func supabaseSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := supabaseSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			supabaseSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func supabaseSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read supabase connector settings: %w", err)
+	}
+
+	if s.OrganizationSlug == "" {
+		return nil, fmt.Errorf("cannot create supabase driver: organization_slug is required")
+	}
+
+	return NewSupabaseDriver(c, s.OrganizationSlug, ep.APIBase), nil
+}
+
+func supabaseSourceNameResolver(
+	ctx context.Context,
+	_ *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read supabase connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewSupabaseNameResolver(s.OrganizationSlug)
 }

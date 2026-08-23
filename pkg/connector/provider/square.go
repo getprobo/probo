@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -41,24 +35,20 @@ func squareRegistration() *Registration {
 			// the version segment stays in APIBase.
 			APIBase: "https://connect.squareup.com/v2",
 		},
-		// EMPLOYEES_READ lists team members; MERCHANT_PROFILE_READ is needed
-		// for the merchant-name resolver and the /v2/merchants/me probe.
-		// Square's confidential token endpoint accepts client credentials in
-		// the form body (the default post-form scheme) and rejects HTTP Basic,
-		// so no TokenEndpointAuth override is set.
-		OAuth2Scopes: []string{"EMPLOYEES_READ", "MERCHANT_PROFILE_READ"},
-		Probe:        HTTPProbe(probeSquare),
 		// SupportsAPIKey enables the Personal Access Token fallback, which
 		// authenticates with the same Authorization: Bearer scheme as the OAuth
 		// token. A Square token — OAuth or PAT — is always scoped to one
 		// merchant, so there is nothing to pick (Pattern 3): no settings
 		// struct, no picker, no OAuth-callback capture.
-		SupportsAPIKey: true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewSquareDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewSquareNameResolver(c, ep.APIBase)
-		}),
+		OAuth2: &OAuth2Spec{
+			Scopes: []string{"EMPLOYEES_READ", "MERCHANT_PROFILE_READ"},
+		},
+		APIKey: &APIKeySpec{},
+		// EMPLOYEES_READ lists team members; MERCHANT_PROFILE_READ is needed
+		// for the merchant-name resolver and the /v2/merchants/me probe.
+		// Square's confidential token endpoint accepts client credentials in
+		// the form body (the default post-form scheme) and rejects HTTP Basic,
+		// so no TokenEndpointAuth override is set.
+		Probe: ProbeOver(probeSquare),
 	}
 }

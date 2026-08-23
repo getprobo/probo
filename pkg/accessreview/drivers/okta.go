@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/rfc5988"
 	"net/url"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/rfc5988"
 )
 
 // OktaDriver lists the users of a single Okta org. The org is identified by
@@ -281,4 +284,69 @@ func (r *oktaNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 	}
 
 	return resp.Subdomain, nil
+}
+
+func oktaSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := oktaSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			oktaSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func oktaSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read okta connector settings: %w", err)
+	}
+
+	// Re-validate the stored domain at the construction site
+	// (defense-in-depth): the create-connector resolver validates on
+	// write, but pinning the host invariant here keeps the driver safe
+	// regardless of how the connector row was populated. An empty
+	// domain also fails this check.
+	if !connector.IsValidOktaDomain(s.Domain) {
+		return nil, fmt.Errorf("cannot create okta driver: invalid or missing domain")
+	}
+
+	return NewOktaDriver(c, s.Domain), nil
+}
+
+func oktaSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read okta connector settings", log.Error(err))
+		return nil
+	}
+
+	if !connector.IsValidOktaDomain(s.Domain) {
+		logger.ErrorCtx(ctx, "invalid okta domain in connector settings")
+		return nil
+	}
+
+	return NewOktaNameResolver(c, s.Domain)
 }

@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -44,37 +38,13 @@ func zendeskRegistration() *Registration {
 	// client carries a client_secret, which both authenticates the token
 	// exchange (default post-form) and signs the state.
 	return &Registration{
-		Provider:             coredata.ConnectorProviderZendesk,
-		DisplayName:          "Zendesk",
-		OAuth2Scopes:         []string{"users:read"},
-		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
-		BuildTokenURLForSite: connector.ZendeskTokenURL,
-		BuildProbeURL:        buildZendeskProbeURL,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read zendesk connector settings: %w", err)
-			}
-
-			// Re-validate the stored subdomain at the construction site
-			// (defense-in-depth). The OAuth callback validates on write, but
-			// pinning the SSRF invariant here keeps the driver safe regardless
-			// of how the connector row was populated. An empty subdomain also
-			// fails this check.
-			if !connector.IsValidZendeskSubdomain(s.Subdomain) {
-				return nil, fmt.Errorf("cannot create zendesk driver: invalid or missing subdomain")
-			}
-
-			return drivers.NewZendeskDriver(c, s.Subdomain), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read zendesk connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewZendeskNameResolver(s.Subdomain)
-		}),
+		Provider:    coredata.ConnectorProviderZendesk,
+		DisplayName: "Zendesk",
+		OAuth2: &OAuth2Spec{
+			Scopes:               []string{"users:read"},
+			BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
+			BuildTokenURLForSite: connector.ZendeskTokenURL,
+		},
+		BuildProbeURL: buildZendeskProbeURL,
 	}
 }

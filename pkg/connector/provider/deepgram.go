@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,14 +29,12 @@ func deepgramRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderDeepgram,
 		DisplayName:      "Deepgram",
 		DocumentationURL: accessReviewDocsURL("deepgram"),
-		SupportsAPIKey:   true,
 		// Deepgram authenticates with an API key under the `Token` scheme
 		// (`Authorization: Token <key>`), not Bearer. APIKeyAuthScheme makes
 		// the APIKeyConnection use that scheme. There is no third-party
 		// OAuth2 flow; the customer supplies an owner/admin key bound to one
 		// account, so there is nothing to pick (Pattern 3): no settings
 		// struct, no picker.
-		APIKeyAuthScheme: "Token",
 		Endpoints: Endpoints{
 			APIBase: "https://api.deepgram.com/v1",
 			// ProbeURL lets the connection-status check confirm the key with a
@@ -50,10 +43,11 @@ func deepgramRegistration() *Registration {
 			Probe: "https://api.deepgram.com/v1/projects",
 		},
 		//
-		// No NewNameResolver: an account may span several projects, so there
+		// No name resolver: an account may span several projects, so there
 		// is no single instance name; the source keeps its generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewDeepgramDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomScheme,
+			Name:         "Token",
+		},
 	}
 }

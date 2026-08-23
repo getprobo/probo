@@ -22,15 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // Vercel path elements joined onto the driver's base URL. The members
@@ -270,4 +272,59 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return user.Name, nil
+}
+
+func vercelSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := vercelSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			vercelSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func vercelSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
+	}
+
+	if s.TeamID == "" {
+		return nil, fmt.Errorf("cannot create vercel driver: team_id is required")
+	}
+
+	return NewVercelDriver(c, s.TeamID, ep.APIBase), nil
+}
+
+func vercelSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read vercel connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewVercelNameResolver(c, s.TeamID, ep.APIBase)
 }

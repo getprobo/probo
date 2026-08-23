@@ -21,13 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -42,42 +35,13 @@ func oktaRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderOkta,
 		DisplayName:      "Okta",
 		DocumentationURL: accessReviewDocsURL("okta"),
-		SupportsAPIKey:   true,
-		APIKeyAuthScheme: "SSWS",
-		BuildProbeURL:    buildOktaProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "domain", Label: "Okta Domain", Required: true},
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomScheme,
+			Name:         "SSWS",
+			ExtraSettings: []ExtraSetting{
+				{Key: "domain", Label: "Okta Domain", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read okta connector settings: %w", err)
-			}
-
-			// Re-validate the stored domain at the construction site
-			// (defense-in-depth): the create-connector resolver validates on
-			// write, but pinning the host invariant here keeps the driver safe
-			// regardless of how the connector row was populated. An empty
-			// domain also fails this check.
-			if !connector.IsValidOktaDomain(s.Domain) {
-				return nil, fmt.Errorf("cannot create okta driver: invalid or missing domain")
-			}
-
-			return drivers.NewOktaDriver(c, s.Domain), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read okta connector settings", log.Error(err))
-				return nil
-			}
-
-			if !connector.IsValidOktaDomain(s.Domain) {
-				logger.ErrorCtx(ctx, "invalid okta domain in connector settings")
-				return nil
-			}
-
-			return drivers.NewOktaNameResolver(c, s.Domain)
-		}),
+		BuildProbeURL: buildOktaProbeURL,
 	}
 }

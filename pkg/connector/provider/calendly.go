@@ -21,29 +21,23 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 func calendlyRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderCalendly,
-		DisplayName:    "Calendly",
-		SupportsAPIKey: true,
+		Provider:    coredata.ConnectorProviderCalendly,
+		DisplayName: "Calendly",
 		Endpoints: Endpoints{
 			Auth:    "https://auth.calendly.com/oauth/authorize",
 			Token:   "https://auth.calendly.com/oauth/token",
 			APIBase: "https://api.calendly.com",
 			Probe:   "https://api.calendly.com/users/me",
 		},
-		OAuth2Scopes: []string{"users:read", "organizations:read"},
-		RequiresPKCE: true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewCalendlyDriver(c, ep.APIBase), nil
-		}),
+		OAuth2: &OAuth2Spec{
+			Scopes:       []string{"users:read", "organizations:read"},
+			RequiresPKCE: true,
+		},
+		APIKey: &APIKeySpec{},
 	}
 }

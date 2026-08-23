@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -39,24 +34,22 @@ func cursorRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderCursor,
 		DisplayName:      "Cursor",
 		DocumentationURL: accessReviewDocsURL("cursor"),
-		SupportsAPIKey:   true,
 		// Cursor's Admin API has no third-party OAuth2 flow; it
 		// authenticates with a team admin key (key_...) presented as the
 		// HTTP Basic auth username with an empty password ("-u <key>:")
-		// and rejects Bearer tokens. APIKeyBasicAuth selects that scheme
+		// and rejects Bearer tokens. APIKeyBasic selects that scheme
 		// on the APIKeyConnection. The key is bound to a single team, so
 		// there is nothing to pick (Pattern 3): no settings struct, no
 		// picker, and no SetOrganizationSettings.
-		APIKeyBasicAuth: true,
 		Endpoints: Endpoints{
 			APIBase: cursorAPIBaseURL,
 			Probe:   cursorMembersEndpoint,
 		},
-		// No NewNameResolver: the Admin API exposes no team/organization
+		// No name resolver: the Admin API exposes no team/organization
 		// name endpoint, so the source keeps its generic name (the
 		// source-name worker degrades gracefully when no resolver is set).
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewCursorDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyBasic,
+		},
 	}
 }

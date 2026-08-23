@@ -21,15 +21,18 @@
 package drivers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"bytes"
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"sort"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // railwayMembersQuery fetches the authenticated account and the members of all
@@ -359,4 +362,19 @@ func (r *railwayNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	}
 
 	return me.Name, nil
+}
+
+func railwaySource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewRailwayDriver(credential.Client, opened.Endpoints.APIBase),
+			NewRailwayNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

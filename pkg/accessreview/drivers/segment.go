@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -395,4 +398,60 @@ func (r *segmentNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	}
 
 	return resp.Data.Workspace.Name, nil
+}
+
+func segmentSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := segmentSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			segmentSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func segmentSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read segment connector settings: %w", err)
+	}
+
+	if s.BaseURL == "" {
+		return nil, fmt.Errorf("cannot create segment driver: base URL is required")
+	}
+
+	return NewSegmentDriver(c, s.BaseURL), nil
+}
+
+func segmentSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read segment connector settings", log.Error(err))
+
+		return nil
+	}
+
+	return NewSegmentNameResolver(c, s.BaseURL)
 }

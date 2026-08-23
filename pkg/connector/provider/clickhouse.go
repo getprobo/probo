@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,16 +29,14 @@ func clickhouseRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderClickHouse,
 		DisplayName:      "ClickHouse Cloud",
 		DocumentationURL: accessReviewDocsURL("clickhouse"),
-		SupportsAPIKey:   true,
 		// ClickHouse Cloud's control-plane API authenticates with HTTP Basic
-		// auth where the credential is keyId:keySecret. APIKeyBasicAuthUserPass
+		// auth where the credential is keyId:keySecret. APIKeyBasicUserPass
 		// makes the APIKeyConnection base64 the verbatim "keyId:keySecret"
-		// the operator pastes (the empty-password APIKeyBasicAuth cannot
+		// the operator pastes (the empty-password APIKeyBasic cannot
 		// carry the secret). There is no OAuth2 flow; a key/secret pair is
 		// scoped to exactly one organization, which the driver discovers via
 		// GET /v1/organizations, so there is nothing to pick or configure
 		// (Pattern 3): no settings struct, no picker.
-		APIKeyBasicAuthUserPass: true,
 		Endpoints: Endpoints{
 			// Every control-plane endpoint the driver calls lives under the
 			// same /v1 prefix, so the version segment stays in APIBase.
@@ -54,11 +47,11 @@ func clickhouseRegistration() *Registration {
 			Probe: "https://api.clickhouse.cloud/v1/organizations",
 		},
 		//
-		// No NewNameResolver: the organization name is available but would
+		// No name resolver: the organization name is available but would
 		// duplicate the driver's discovery call; the source keeps its
 		// generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewClickHouseDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyBasicUserPass,
+		},
 	}
 }

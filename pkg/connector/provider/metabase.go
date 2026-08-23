@@ -21,14 +21,9 @@
 package provider
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"net/url"
-	"strings"
 
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -37,53 +32,21 @@ func metabaseRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderMetabase,
 		DisplayName:      "Metabase",
 		DocumentationURL: accessReviewDocsURL("metabase"),
-		SupportsAPIKey:   true,
-		APIKeyHeader:     "x-api-key",
-		BuildProbeURL:    buildMetabaseProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "instanceUrl", Label: "Instance URL", Required: true},
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomHeader,
+			Name:         "x-api-key",
+			ExtraSettings: []ExtraSetting{
+				{Key: "instanceUrl", Label: "Instance URL", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read metabase connector settings: %w", err)
-			}
-
-			instanceURL := strings.TrimSpace(settings.InstanceURL)
-			if instanceURL == "" {
-				return nil, fmt.Errorf("cannot create metabase driver: instance_url is required")
-			}
-
-			if err := validateMetabaseInstanceURL(instanceURL); err != nil {
-				return nil, err
-			}
-
-			return drivers.NewMetabaseDriver(c, instanceURL), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read metabase connector settings", log.Error(err))
-				return nil
-			}
-
-			instanceURL := strings.TrimSpace(settings.InstanceURL)
-			if instanceURL == "" {
-				logger.ErrorCtx(ctx, "missing metabase instance url in connector settings")
-				return nil
-			}
-
-			if err := validateMetabaseInstanceURL(instanceURL); err != nil {
-				logger.ErrorCtx(ctx, "invalid metabase instance url in connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewMetabaseNameResolver(c, instanceURL)
-		}),
+		BuildProbeURL: buildMetabaseProbeURL,
 	}
 }
 
-func validateMetabaseInstanceURL(rawURL string) error {
+// ValidateMetabaseInstanceURL rejects a stored instance URL that no request
+// could target. Metabase is self-hosted, so the host comes from connector
+// settings rather than from Endpoints.
+func ValidateMetabaseInstanceURL(rawURL string) error {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return fmt.Errorf("cannot create metabase driver: instance_url is invalid: %w", err)

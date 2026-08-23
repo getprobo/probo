@@ -21,17 +21,11 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 func clickupRegistration() *Registration {
-	// ClickUp OAuth flow has no scope granularity, so OAuth2Scopes is empty.
+	// ClickUp OAuth flow has no scope granularity, so its spec requests no scopes.
 	return &Registration{
 		Provider:    coredata.ConnectorProviderClickUp,
 		DisplayName: "ClickUp",
@@ -44,28 +38,7 @@ func clickupRegistration() *Registration {
 			// endpoint lives on app.clickup.com and is unrelated.
 			APIBase: "https://api.clickup.com/api/v2",
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
-			}
-
-			if s.TeamID == "" {
-				return nil, fmt.Errorf("cannot create clickup driver: team_id is required")
-			}
-
-			return drivers.NewClickUpDriver(c, s.TeamID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read clickup connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewClickUpNameResolver(c, s.TeamID, ep.APIBase)
-		}),
-		ListOrganizations: HTTPOrganizations(drivers.ListClickUpOrganizations),
+		OAuth2: &OAuth2Spec{},
 		SetOrganizationSettings: func(c *coredata.Connector, teamID string) error {
 			return c.SetSettings(&coredata.ClickUpConnectorSettings{TeamID: teamID})
 		},

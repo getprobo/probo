@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/rfc5988"
+	"net/url"
+	"strings"
 )
 
 // NetlifyDriver fetches account members from the Netlify REST API
@@ -263,4 +266,61 @@ func ListNetlifyOrganizations(ctx context.Context, httpClient *http.Client, base
 	}
 
 	return result, nil
+}
+
+func netlifySource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := netlifySourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			netlifySourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListNetlifyOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func netlifySourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read netlify connector settings: %w", err)
+	}
+
+	if s.AccountSlug == "" {
+		return nil, fmt.Errorf("cannot create netlify driver: account_slug is required")
+	}
+
+	return NewNetlifyDriver(c, s.AccountSlug, ep.APIBase), nil
+}
+
+func netlifySourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read netlify connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewNetlifyNameResolver(c, s.AccountSlug, ep.APIBase)
 }

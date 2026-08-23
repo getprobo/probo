@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,25 +29,21 @@ func anthropicRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderAnthropic,
 		DisplayName:      "Anthropic",
 		DocumentationURL: accessReviewDocsURL("anthropic"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			// Every Admin API endpoint the driver calls shares the /v1
 			// prefix, so the version segment stays in APIBase.
 			APIBase: "https://api.anthropic.com/v1",
 		},
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomHeader,
+			Name:         "x-api-key",
+		},
 		// Anthropic's Admin API authenticates with the admin key in the
 		// x-api-key header; it rejects Authorization: Bearer and returns
-		// 400 when both headers are present. APIKeyHeader makes the
+		// 400 when both headers are present. APIKeyCustomHeader makes the
 		// APIKeyConnection send x-api-key instead of Bearer. There is no
 		// third-party OAuth2 flow for the Admin API, so this is API-key
 		// only and takes a single admin key (sk-ant-admin...) per org.
-		APIKeyHeader: "x-api-key",
-		Probe:        HTTPProbe(probeAnthropic),
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewAnthropicDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewAnthropicNameResolver(c, ep.APIBase)
-		}),
+		Probe: ProbeOver(probeAnthropic),
 	}
 }

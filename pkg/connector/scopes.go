@@ -121,6 +121,39 @@ func MissingScopes(required, granted []string) []string {
 	return missing
 }
 
+// GrantedScopes returns the scopes a stored connection's grant actually
+// carries, for comparison against what a provider requires.
+//
+// Microsoft (and similar OIDC providers) omit offline_access from the token
+// scope echo even when a refresh token was issued, so a refresh token is taken
+// as proof of that grant. This applies to missing-scope checks only: it is
+// never synthesized into Connection.Scopes(), which reconnect uses to build the
+// next authorize request (Google rejects offline_access).
+func GrantedScopes(c Connection) []string {
+	if c == nil {
+		return nil
+	}
+
+	granted := c.Scopes()
+
+	if hasRefreshToken(c) {
+		granted = UnionScopes(granted, []string{"offline_access"})
+	}
+
+	return granted
+}
+
+func hasRefreshToken(c Connection) bool {
+	switch conn := c.(type) {
+	case *OAuth2Connection:
+		return conn.RefreshToken != ""
+	case *SlackConnection:
+		return conn.RefreshToken != ""
+	}
+
+	return false
+}
+
 // UnionScopes returns the sorted, deduplicated union of the given scope
 // slices. Empty strings and empty slices are handled gracefully. The
 // result is a fresh slice and never aliases any input.

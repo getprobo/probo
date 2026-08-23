@@ -22,12 +22,15 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"net/url"
 )
 
 type CursorDriver struct {
@@ -145,4 +148,19 @@ func cursorRoles(role string) []string {
 	default:
 		return []string{role}
 	}
+}
+
+func cursorSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewCursorDriver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+			nil,
+		), nil
+	})
 }

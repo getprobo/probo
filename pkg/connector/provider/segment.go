@@ -21,13 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -36,38 +29,17 @@ func segmentRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderSegment,
 		DisplayName:      "Segment",
 		DocumentationURL: accessReviewDocsURL("segment"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "region", Label: "Region", Required: true},
+			},
+		},
 		// Segment authenticates with a Public API token as the default
 		// Authorization: Bearer scheme, so no APIKeyHeader. The token is bound
 		// to one workspace, but the workspace's region selects the API host
 		// (US vs EU) and is not discoverable from the token, so it is captured
 		// as an extra setting and resolved to a base URL (Pattern 3 + region);
 		// there is nothing to pick.
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "region", Label: "Region", Required: true},
-		},
 		BuildProbeURL: buildSegmentProbeURL,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read segment connector settings: %w", err)
-			}
-
-			if s.BaseURL == "" {
-				return nil, fmt.Errorf("cannot create segment driver: base URL is required")
-			}
-
-			return drivers.NewSegmentDriver(c, s.BaseURL), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.SegmentConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read segment connector settings", log.Error(err))
-
-				return nil
-			}
-
-			return drivers.NewSegmentNameResolver(c, s.BaseURL)
-		}),
 	}
 }

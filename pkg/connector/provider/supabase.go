@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -39,30 +33,10 @@ func supabaseRegistration() *Registration {
 			APIBase: "https://api.supabase.com/v1",
 			Probe:   "https://api.supabase.com/v1/organizations",
 		},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read supabase connector settings: %w", err)
-			}
-
-			if s.OrganizationSlug == "" {
-				return nil, fmt.Errorf("cannot create supabase driver: organization_slug is required")
-			}
-
-			return drivers.NewSupabaseDriver(c, s.OrganizationSlug, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read supabase connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewSupabaseNameResolver(s.OrganizationSlug)
-		}),
 	}
 }

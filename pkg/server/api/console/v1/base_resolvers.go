@@ -638,23 +638,31 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 	infos := make([]*types.ConnectorProviderInfo, 0, len(registrations))
 
 	for _, reg := range registrations {
-		if reg == nil || reg.NewDriver == nil {
+		if reg == nil {
 			continue
 		}
 
 		provider := reg.Provider
+
+		// Whether a provider can be reviewed is the access-review domain's
+		// answer, not the connector catalog's: the catalog only knows how to
+		// connect one.
+		if !r.accessReview.ProviderReviewsAccounts(provider) {
+			continue
+		}
+
 		_, oauthErr := r.connectorRegistry.Get(string(provider))
 		oauthConfigured := oauthErr == nil
-		apiKeySupported := reg.SupportsAPIKey
-		clientCredentialsSupported := reg.SupportsClientCredentials
-		workloadIdentitySupported := reg.SupportsWorkloadIdentity
+		apiKeySupported := reg.AcceptsCustomerAPIKey()
+		clientCredentialsSupported := reg.ClientCredentials != nil
+		workloadIdentitySupported := reg.WorkloadIdentity != nil
 
-		// ManagedAPIKey (Model B, e.g. Crisp) providers are connectable only
-		// once the operator configures the Probo-held key (and any required
-		// resource ID, e.g. Crisp's plugin ID); until then they stay hidden, so
-		// such a provider ships deactivated. Gating on full readiness keeps a
-		// half-configured provider out of the catalog rather than surfacing it
-		// and failing at connect time.
+		// A provider whose key Probo supplies (Crisp) is connectable only once
+		// the operator configures that key (and any required resource ID, e.g.
+		// Crisp's plugin ID); until then it stays hidden, so such a provider
+		// ships deactivated. Gating on full readiness keeps a half-configured
+		// provider out of the catalog rather than surfacing it and failing at
+		// connect time.
 		apiKeyManaged := r.providerRegistry.ManagedConnectorReady(provider)
 
 		// Skip providers that cannot be connected in this deployment: no
@@ -693,8 +701,8 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			APIKeyManaged:                  apiKeyManaged,
 			ClientCredentialsSupported:     clientCredentialsSupported,
 			Oauth2Scopes:                   scopes,
-			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings),
-			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings),
+			APIKeyExtraSettings:            connectorProviderSettingInfos(apiKeyExtraSettings(reg)),
+			ClientCredentialsExtraSettings: connectorProviderSettingInfos(clientCredentialsExtraSettings(reg)),
 		})
 	}
 

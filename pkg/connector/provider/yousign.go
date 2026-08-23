@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,7 +29,6 @@ func yousignRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderYousign,
 		DisplayName:      "Yousign",
 		DocumentationURL: accessReviewDocsURL("yousign"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			APIBase: "https://api.yousign.app/v3",
 			// Yousign authenticates with an API key as Authorization: Bearer. The
@@ -47,12 +41,10 @@ func yousignRegistration() *Registration {
 			// lightweight GET; the transport attaches the Bearer credential and a
 			// dead key returns 401/403.
 			//
-			// No NewNameResolver: Yousign v3 exposes no organization-name endpoint,
+			// No name resolver: Yousign v3 exposes no organization-name endpoint,
 			// so the source keeps its generic name.
 			Probe: "https://api.yousign.app/v3/users?limit=1",
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewYousignDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
+	"errors"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
+	"time"
 )
 
 // GoogleWorkspaceDriver fetches user accounts from Google Workspace
@@ -157,4 +160,19 @@ func (r *googleWorkspaceNameResolver) ResolveInstanceName(ctx context.Context) (
 	}
 
 	return customer.CustomerDomain, nil
+}
+
+func googleWorkspaceSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewGoogleWorkspaceDriver(credential.Client),
+			NewGoogleWorkspaceNameResolver(credential.Client),
+			nil,
+		), nil
+	})
 }

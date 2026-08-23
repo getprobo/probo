@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,7 +29,6 @@ func mercuryRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderMercury,
 		DisplayName:      "Mercury",
 		DocumentationURL: accessReviewDocsURL("mercury"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			APIBase: "https://api.mercury.com/api/v1",
 			// Mercury authenticates with a self-serve API token presented as
@@ -50,12 +44,10 @@ func mercuryRegistration() *Registration {
 			Probe: "https://api.mercury.com/api/v1/users?limit=1",
 		},
 		//
-		// No NewNameResolver: GET /api/v1/users carries no organization
+		// No name resolver: GET /api/v1/users carries no organization
 		// name and a read-only token may lack other scopes, so the source
 		// keeps its generic name (the source-name worker degrades
 		// gracefully).
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewMercuryDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

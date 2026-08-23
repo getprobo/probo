@@ -27,8 +27,8 @@ import (
 // providerOrgConfig binds a connector provider to its picker-UI behavior.
 //
 // Listing the orgs themselves is not here: that needs the connector's
-// credential, so it lives on the provider's Registration as
-// ListOrganizations and is reached through an opened Handle.
+// credential, so it is a capability of the provider's driver
+// (drivers.OrganizationLister) reached through an opened handle.
 //
 // SelectedSlug returns the currently-configured org identifier for the
 // connector (empty string if none).
@@ -166,8 +166,11 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 // back as an empty list, but only the first means something is wrong — telling
 // a healthy 2-auto source that its organization "may not have approved Probo"
 // would be a lie.
+//
+// It answers from the table above rather than by building a driver, because the
+// question is asked before any credential is opened.
 func (s *Service) ProviderSupportsOrganizationPicker(p coredata.ConnectorProvider) bool {
-	reg, ok := s.providerRegistry.Get(p)
+	cfg, ok := providerOrgConfigs[p]
 
-	return ok && reg.ListOrganizations != nil
+	return ok && cfg.NeedsPicker
 }

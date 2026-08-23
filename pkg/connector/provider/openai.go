@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -38,12 +33,6 @@ func openaiRegistration() *Registration {
 			APIBase: "https://api.openai.com/v1",
 			Probe:   "https://api.openai.com/v1/organization/users?limit=1",
 		},
-		SupportsAPIKey: true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewOpenAIDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewOpenAINameResolver(c, ep.APIBase)
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

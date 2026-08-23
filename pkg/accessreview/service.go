@@ -27,25 +27,29 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"golang.org/x/sync/errgroup"
 )
 
 type (
 	Service struct {
-		pg            *pg.Client
-		encryptionKey cipher.EncryptionKey
-		// runtime opens a stored connector for use. It owns everything a
-		// credential needs — the OAuth app credentials behind a token refresh,
-		// the issuer a workload identity connector federates through — so
-		// nothing here decides how a provider authenticates.
-		runtime *provider.Runtime
+		pg *pg.Client
+		// connectors is the only route to a connector's credential. It owns
+		// the encryption key, the OAuth app credentials behind a token
+		// refresh, and the issuer a workload identity connector federates
+		// through, so nothing here decides how a provider authenticates or
+		// holds a secret of its own.
+		connectors *provider.Opener
 		// providerRegistry serves the catalog lookups that need no credential:
 		// display names, OAuth scopes, settings writers.
 		providerRegistry *provider.Registry
-		logger           *log.Logger
+		// sources maps a provider to the driver that reviews its accounts. It
+		// belongs to this domain, not to the connector catalog, which is what
+		// lets another domain want something else from the same connector.
+		sources *drivers.Registry
+		logger  *log.Logger
 
 		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
 		sourceNameWorker *worker.Worker[coredata.AccessReviewSource]
@@ -66,8 +70,7 @@ func WithFetchInterval(interval time.Duration) Option {
 
 func NewService(
 	pgClient *pg.Client,
-	encryptionKey cipher.EncryptionKey,
-	connectorRuntime *provider.Runtime,
+	connectors *provider.Opener,
 	logger *log.Logger,
 	opts ...Option,
 ) *Service {
@@ -78,9 +81,9 @@ func NewService(
 
 	s := &Service{
 		pg:               pgClient,
-		encryptionKey:    encryptionKey,
-		runtime:          connectorRuntime,
-		providerRegistry: connectorRuntime.Providers(),
+		connectors:       connectors,
+		providerRegistry: connectors.Providers(),
+		sources:          drivers.NewBuiltinRegistry(),
 		logger:           logger,
 	}
 
@@ -101,8 +104,8 @@ func NewService(
 	)
 	s.sourceNameWorker = NewSourceNameWorker(
 		pgClient,
-		encryptionKey,
-		connectorRuntime,
+		connectors,
+		s.sources,
 		logger.Named("source-name"),
 	)
 

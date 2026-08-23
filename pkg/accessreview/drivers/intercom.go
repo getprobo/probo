@@ -22,12 +22,15 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"net/url"
 )
 
 // IntercomDriver fetches workspace admins from Intercom via Bearer
@@ -184,4 +187,19 @@ func (r *intercomNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	}
 
 	return resp.App.Name, nil
+}
+
+func intercomSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewIntercomDriver(credential.Client, opened.Endpoints.APIBase),
+			NewIntercomNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

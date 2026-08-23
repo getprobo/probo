@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // ZendeskDriver lists a Zendesk account's staff (agents and admins) via GET
@@ -219,4 +222,64 @@ func NewZendeskNameResolver(subdomain string) NameResolver {
 
 func (r *zendeskNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return r.subdomain, nil
+}
+
+func zendeskSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := zendeskSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			zendeskSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func zendeskSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read zendesk connector settings: %w", err)
+	}
+
+	// Re-validate the stored subdomain at the construction site
+	// (defense-in-depth). The OAuth callback validates on write, but
+	// pinning the SSRF invariant here keeps the driver safe regardless
+	// of how the connector row was populated. An empty subdomain also
+	// fails this check.
+	if !connector.IsValidZendeskSubdomain(s.Subdomain) {
+		return nil, fmt.Errorf("cannot create zendesk driver: invalid or missing subdomain")
+	}
+
+	return NewZendeskDriver(c, s.Subdomain), nil
+}
+
+func zendeskSourceNameResolver(
+	ctx context.Context,
+	_ *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read zendesk connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewZendeskNameResolver(s.Subdomain)
 }

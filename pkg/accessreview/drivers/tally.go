@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"errors"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 type TallyDriver struct {
@@ -316,4 +319,43 @@ func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	}
 
 	return user.Email, nil
+}
+
+func tallySource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := tallySourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			NewTallyNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
+}
+
+func tallySourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
+	}
+
+	if s.OrganizationID == "" {
+		return nil, fmt.Errorf("cannot create tally driver: organization_id is required")
+	}
+
+	return NewTallyDriver(c, s.OrganizationID, ep.APIBase), nil
 }

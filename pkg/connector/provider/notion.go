@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -39,14 +34,10 @@ func notionRegistration() *Registration {
 			Probe:   "https://api.notion.com/v1/users/me",
 			APIBase: "https://api.notion.com/v1",
 		},
-		ExtraAuthParams:   map[string]string{"owner": "user"},
-		TokenEndpointAuth: "basic-json",
-		SupportsAPIKey:    true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewNotionDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewNotionNameResolver(c, ep.APIBase)
-		}),
+		OAuth2: &OAuth2Spec{
+			ExtraAuthParams:   map[string]string{"owner": "user"},
+			TokenEndpointAuth: "basic-json",
+		},
+		APIKey: &APIKeySpec{},
 	}
 }

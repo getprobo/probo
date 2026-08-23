@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -33,6 +28,11 @@ func googleWorkspaceRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderGoogleWorkspace,
 		DisplayName: "Google Workspace",
+		Endpoints: Endpoints{
+			Auth:  "https://accounts.google.com/o/oauth2/v2/auth",
+			Token: "https://oauth2.googleapis.com/token",
+			Probe: "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
+		},
 		// APIBase is deliberately empty. Unlike every other provider here, the
 		// Admin Directory host is not a Probo literal: it lives in the Google
 		// SDK's generated basePath, which admin.NewService picks up (see
@@ -43,26 +43,17 @@ func googleWorkspaceRegistration() *Registration {
 		// worse than declaring none: the Probe below would silently keep
 		// pointing at production while the SDK went on using its own basePath.
 		EndpointOverrideUnsupported: "its data host is the Google SDK's basePath (admin.NewService), not a value in Endpoints",
-		Endpoints: Endpoints{
-			Auth:  "https://accounts.google.com/o/oauth2/v2/auth",
-			Token: "https://oauth2.googleapis.com/token",
-			Probe: "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
+		OAuth2: &OAuth2Spec{
+			ExtraAuthParams: map[string]string{
+				"access_type": "offline",
+				"prompt":      "consent",
+			},
+			SupportsIncrementalAuth: true,
+			Scopes: []string{
+				"https://www.googleapis.com/auth/admin.directory.user.readonly",
+				"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+				"https://www.googleapis.com/auth/admin.directory.customer.readonly",
+			},
 		},
-		ExtraAuthParams: map[string]string{
-			"access_type": "offline",
-			"prompt":      "consent",
-		},
-		SupportsIncrementalAuth: true,
-		OAuth2Scopes: []string{
-			"https://www.googleapis.com/auth/admin.directory.user.readonly",
-			"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
-			"https://www.googleapis.com/auth/admin.directory.customer.readonly",
-		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			return drivers.NewGoogleWorkspaceDriver(c), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, _ Endpoints) drivers.NameResolver {
-			return drivers.NewGoogleWorkspaceNameResolver(c)
-		}),
 	}
 }

@@ -22,12 +22,15 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"net/url"
 )
 
 // BitbucketDriver fetches workspace members from the Bitbucket Cloud
@@ -320,4 +323,61 @@ func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client, ba
 	}
 
 	return nil, fmt.Errorf("cannot list all bitbucket organizations: %w", ErrPaginationLimitReached)
+}
+
+func bitbucketSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := bitbucketSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			bitbucketSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListBitbucketOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func bitbucketSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
+	}
+
+	if s.Workspace == "" {
+		return nil, fmt.Errorf("cannot create bitbucket driver: workspace is required")
+	}
+
+	return NewBitbucketDriver(c, s.Workspace, ep.APIBase), nil
+}
+
+func bitbucketSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read bitbucket connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewBitbucketNameResolver(c, s.Workspace, ep.APIBase)
 }

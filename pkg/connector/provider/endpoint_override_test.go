@@ -21,17 +21,13 @@
 package provider_test
 
 import (
-	"context"
-	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.gearno.de/kit/log"
 
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -41,25 +37,6 @@ import (
 // leaked credential to secret scanners.
 func credentialedDocuSignAuthURL() string {
 	return (&url.URL{Scheme: "https", User: url.UserPassword("u", "p"), Host: "account-d.docusign.com", Path: "/oauth/auth"}).String()
-}
-
-// capturingRoundTripper records the URL of every request it sees and returns
-// a canned response, so a test can assert on the outgoing host without
-// touching the network.
-type capturingRoundTripper struct {
-	urls   []string
-	status int
-}
-
-func (c *capturingRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	c.urls = append(c.urls, r.URL.String())
-
-	status := c.status
-	if status == 0 {
-		status = http.StatusUnauthorized
-	}
-
-	return &http.Response{StatusCode: status, Body: http.NoBody, Header: make(http.Header)}, nil
 }
 
 // TestEndpointOverrideRepointsProvider covers the case the feature exists for:
@@ -359,89 +336,6 @@ func TestEndpointOverrideAuthMayCarryQuery(t *testing.T) {
 	require.True(t, ok)
 
 	assert.Equal(t, "https://account-d.docusign.com/oauth/auth?prompt=login", reg.Endpoints.Auth)
-}
-
-// TestDocuSignUsesOverriddenIdentity is the mechanism-level regression test
-// for the bug: it builds the driver, the name resolver, and the org picker
-// through the registration closures with an overridden Endpoints and asserts
-// each one's outgoing request actually hits the overridden identity host,
-// not the compiled-in production one. Before the fix, this would have hit
-// account.docusign.com regardless of the override.
-func TestDocuSignUsesOverriddenIdentity(t *testing.T) {
-	t.Parallel()
-
-	const overriddenIdentity = "https://account-d.docusign.com/oauth/userinfo"
-
-	r, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(provider.EndpointOverrides{
-		coredata.ConnectorProviderDocuSign: {
-			Auth:     "https://account-d.docusign.com/oauth/auth",
-			Token:    "https://account-d.docusign.com/oauth/token",
-			Probe:    overriddenIdentity,
-			Identity: overriddenIdentity,
-		},
-	}))
-	require.NoError(t, err)
-
-	reg, ok := r.Get(coredata.ConnectorProviderDocuSign)
-	require.True(t, ok)
-	require.Equal(t, overriddenIdentity, reg.Endpoints.Identity)
-
-	conn := &coredata.Connector{Provider: coredata.ConnectorProviderDocuSign}
-	require.NoError(t, conn.SetSettings(&coredata.DocuSignConnectorSettings{AccountID: "acct-1"}))
-
-	logger := log.NewLogger(log.WithName("test"))
-
-	t.Run("driver", func(t *testing.T) {
-		t.Parallel()
-
-		rt := &capturingRoundTripper{}
-		client := &http.Client{Transport: rt}
-
-		driver, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), logger)
-		require.NoError(t, err)
-
-		// discoverBaseURI's userinfo call fails immediately (401 from the
-		// capturing transport), so ListAccounts errors out — the request URL
-		// it made on the way there is what this test is about.
-		_, err = driver.ListAccounts(context.Background())
-		require.Error(t, err)
-
-		require.NotEmpty(t, rt.urls)
-		assert.Equal(t, overriddenIdentity, rt.urls[0])
-	})
-
-	t.Run("name resolver", func(t *testing.T) {
-		t.Parallel()
-
-		rt := &capturingRoundTripper{}
-		client := &http.Client{Transport: rt}
-
-		resolver := reg.NewNameResolver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), logger)
-		require.NotNil(t, resolver)
-
-		// A non-2xx userinfo response is the resolver's terminal case: it
-		// returns ("", nil) rather than an error. The captured URL is what
-		// this test asserts on.
-		name, err := resolver.ResolveInstanceName(context.Background())
-		require.NoError(t, err)
-		assert.Empty(t, name)
-
-		require.NotEmpty(t, rt.urls)
-		assert.Equal(t, overriddenIdentity, rt.urls[0])
-	})
-
-	t.Run("org picker", func(t *testing.T) {
-		t.Parallel()
-
-		rt := &capturingRoundTripper{}
-		client := &http.Client{Transport: rt}
-
-		_, err := drivers.ListDocuSignOrganizations(context.Background(), client, reg.Endpoints.Identity)
-		require.Error(t, err)
-
-		require.NotEmpty(t, rt.urls)
-		assert.Equal(t, overriddenIdentity, rt.urls[0])
-	})
 }
 
 // TestDocumentedDocuSignOverrideBoots pins the exact override documented in

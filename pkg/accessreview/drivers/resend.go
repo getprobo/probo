@@ -22,13 +22,16 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 type ResendDriver struct {
@@ -136,4 +139,19 @@ func NewResendNameResolver() NameResolver {
 
 func (r *resendNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return "Resend", nil
+}
+
+func resendSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewResendDriver(credential.Client, opened.Endpoints.APIBase),
+			NewResendNameResolver(),
+			nil,
+		), nil
+	})
 }

@@ -22,17 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 type PostHogDriver struct {
@@ -42,35 +43,14 @@ type PostHogDriver struct {
 
 var _ Driver = (*PostHogDriver)(nil)
 
-// PostHogOrganizationPath is the @current organization endpoint. It is the
-// single source of truth shared with the connection probe so the two never
-// duplicate the path.
-const PostHogOrganizationPath = "/api/organizations/@current/"
-
 const (
 	posthogMembersPath     = "/api/organizations/@current/members/"
 	posthogMembersPageSize = 100
-
-	// PostHog Cloud regional data hosts. OAuth connections carry no region
-	// (empty baseURL): the region-agnostic oauth.posthog.com gateway used
-	// for the OAuth handshake does NOT serve the data API, so the driver
-	// discovers the region by probing these hosts with the connection's
-	// token. API-key (us/eu) and self-hosted connections always carry an
-	// explicit host instead.
-	posthogUSBaseURL = "https://us.posthog.com"
-	posthogEUBaseURL = "https://eu.posthog.com"
 
 	posthogMembershipLevelMember = 1
 	posthogMembershipLevelAdmin  = 8
 	posthogMembershipLevelOwner  = 15
 )
-
-// ErrPostHogCredentialRejected reports that every PostHog Cloud region refused
-// the token with 401/403 — a definitively dead or revoked credential, as
-// opposed to a transient failure (5xx/network) on the token's own region. The
-// connection probe uses it to tell a rejected credential apart from an
-// inconclusive result, which must not flap the source to disconnected.
-var ErrPostHogCredentialRejected = errors.New("posthog rejected the credential on every region")
 
 type (
 	posthogMembersResponse struct {
@@ -113,7 +93,7 @@ func (d *PostHogDriver) resolveBaseURL(ctx context.Context) error {
 		return nil
 	}
 
-	host, err := ResolvePostHogRegion(ctx, d.httpClient)
+	host, err := provider.ResolvePostHogRegion(ctx, d.httpClient)
 	if err != nil {
 		return err
 	}
@@ -200,80 +180,16 @@ func (d *PostHogDriver) resolveNextURL(next string) (string, error) {
 // the regional hosts, shared with the connector-settings resolver so the two
 // never drift. Self-hosted instances use a full instance URL instead.
 func PostHogRegionBaseURL(region string) (string, bool) {
+	hosts := provider.PostHogRegionBaseURLs()
+
 	switch strings.ToLower(region) {
 	case "us":
-		return posthogUSBaseURL, true
+		return hosts[0], true
 	case "eu":
-		return posthogEUBaseURL, true
+		return hosts[1], true
 	default:
 		return "", false
 	}
-}
-
-// ResolvePostHogRegion probes the PostHog Cloud region hosts with the given
-// token-bearing client and returns the first that answers 2xx on the @current
-// organization endpoint. OAuth connections authenticate via the region-agnostic
-// oauth.posthog.com gateway, which does not serve /api, so the actual data
-// region (us/eu) must be discovered against the regional hosts directly.
-//
-// A token is valid on exactly one region; the other rejects it with 401/403.
-// The result distinguishes the two failure classes the connection probe needs:
-// ErrPostHogCredentialRejected when every region refused the token (dead/revoked
-// credential), and a generic error when a region was merely unreachable or
-// errored transiently, which must not be read as a rejection.
-func ResolvePostHogRegion(ctx context.Context, client *http.Client) (string, error) {
-	allRejected := true
-
-	for _, host := range []string{posthogUSBaseURL, posthogEUBaseURL} {
-		endpoint, err := url.JoinPath(host, PostHogOrganizationPath)
-		if err != nil {
-			allRejected = false
-
-			continue
-		}
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-		if err != nil {
-			allRejected = false
-
-			continue
-		}
-
-		req.Header.Set("Accept", "application/json")
-
-		resp, err := client.Do(req)
-		if err != nil {
-			// Surface a cancelled/expired context as the real cause rather
-			// than masking it behind "no region accepted the connection".
-			if ctx.Err() != nil {
-				return "", fmt.Errorf("cannot resolve posthog region: %w", ctx.Err())
-			}
-
-			allRejected = false
-
-			continue
-		}
-
-		status := resp.StatusCode
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-
-		if status >= http.StatusOK && status < http.StatusMultipleChoices {
-			return host, nil
-		}
-
-		// Only 401/403 is a credential rejection; a 5xx/429 is transient and
-		// leaves the verdict inconclusive rather than rejected.
-		if status != http.StatusUnauthorized && status != http.StatusForbidden {
-			allRejected = false
-		}
-	}
-
-	if allRejected {
-		return "", fmt.Errorf("cannot resolve posthog region: %w", ErrPostHogCredentialRejected)
-	}
-
-	return "", fmt.Errorf("cannot resolve posthog region: no region accepted the connection")
 }
 
 func (d *PostHogDriver) fetchMembers(
@@ -389,7 +305,7 @@ func NewPostHogNameResolver(httpClient *http.Client, baseURL string) NameResolve
 func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
 	baseURL := r.baseURL
 	if baseURL == "" {
-		host, err := ResolvePostHogRegion(ctx, r.httpClient)
+		host, err := provider.ResolvePostHogRegion(ctx, r.httpClient)
 		if err != nil {
 			// Terminal: cannot determine the region (e.g. revoked token).
 			// Keep the generic source name rather than making the
@@ -400,7 +316,7 @@ func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		baseURL = host
 	}
 
-	endpoint, err := url.JoinPath(baseURL, PostHogOrganizationPath)
+	endpoint, err := url.JoinPath(baseURL, provider.PostHogOrganizationPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot build posthog organization URL: %w", err)
 	}
@@ -452,4 +368,58 @@ func parseRFC3339(value string) (time.Time, bool) {
 	}
 
 	return t, true
+}
+
+func posthogSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := posthogSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			posthogSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func posthogSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read posthog connector settings: %w", err)
+	}
+
+	// BaseURL is empty for cloud OAuth connections; the driver then
+	// discovers the region (us/eu) lazily by probing, since the
+	// oauth.posthog.com gateway does not serve the data API.
+	return NewPostHogDriver(c, s.BaseURL), nil
+}
+
+func posthogSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read posthog connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewPostHogNameResolver(c, s.BaseURL)
 }

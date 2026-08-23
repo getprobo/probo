@@ -400,17 +400,16 @@ func (impl *Implm) Run(
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
-		// ManagedAPIKey (Model B) connectors carry a Probo-held API key
-		// instead of an OAuth2 client; register it on the provider registry
-		// and skip the OAuth-only connector registry. Fail loudly on a
-		// provider that is not a managed-api-key connector (e.g. a typo)
-		// rather than silently swallowing the key, mirroring how the OAuth2
-		// path surfaces misconfiguration at startup.
+		// An api_key connector carries a Probo-held key instead of an OAuth2
+		// client; register it on the provider registry and skip the OAuth-only
+		// connector registry. Fail loudly on a provider whose key it does not
+		// supply (e.g. a typo) rather than silently swallowing the key,
+		// mirroring how the OAuth2 path surfaces misconfiguration at startup.
 		if connectorCfg.Protocol == connector.ProtocolAPIKey {
 			p := coredata.ConnectorProvider(connectorCfg.Provider)
 
 			reg, ok := providerRegistry.Get(p)
-			if !ok || !reg.ManagedAPIKey {
+			if !ok || reg.APIKey == nil || !reg.APIKey.Managed {
 				return fmt.Errorf("cannot configure api_key connector %q: not a managed-api-key provider", connectorCfg.Provider)
 			}
 
@@ -538,10 +537,13 @@ func (impl *Implm) Run(
 		}
 	}
 
-	// The provider catalog plus the deployment-held material an open needs.
-	// SCIM and the create-time Tally/Crisp conn.Client() calls still build
-	// their own client outside it.
-	connectorRuntime := provider.NewRuntime(
+	// The only route from a stored connector row to a live credential: it owns
+	// the encryption key, the provider catalog, and the deployment-held
+	// material an open needs. SCIM and the create-time Tally/Crisp
+	// conn.Client() calls still build their own client outside it.
+	connectorOpener := provider.NewOpener(
+		pgClient,
+		encryptionKey,
 		providerRegistry,
 		defaultConnectorRegistry,
 		identityFederationIssuer,
@@ -765,8 +767,7 @@ func (impl *Implm) Run(
 
 	accessReviewService := accessreview.NewService(
 		pgClient,
-		encryptionKey,
-		connectorRuntime,
+		connectorOpener,
 		l.Named("access-review"),
 	)
 

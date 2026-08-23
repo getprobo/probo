@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -39,12 +34,9 @@ func intercomRegistration() *Registration {
 			Probe:   "https://api.intercom.io/me",
 			APIBase: "https://api.intercom.io",
 		},
-		SupportsAPIKey: true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewIntercomDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewIntercomNameResolver(c, ep.APIBase)
-		}),
+		// Intercom's OAuth flow has no scope granularity, so the spec
+		// declares the path without any scopes to request.
+		OAuth2: &OAuth2Spec{},
+		APIKey: &APIKeySpec{},
 	}
 }

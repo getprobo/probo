@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -234,4 +237,59 @@ func (r *qoveryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return resp.Name, nil
+}
+
+func qoverySource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := qoverySourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			qoverySourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func qoverySourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read qovery connector settings: %w", err)
+	}
+
+	if s.OrganizationID == "" {
+		return nil, fmt.Errorf("cannot create qovery driver: organization_id is required")
+	}
+
+	return NewQoveryDriver(c, s.OrganizationID, ep.APIBase), nil
+}
+
+func qoverySourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read qovery connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewQoveryNameResolver(c, s.OrganizationID, ep.APIBase)
 }

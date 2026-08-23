@@ -22,18 +22,20 @@ package drivers
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+
 	"encoding/json"
 	"errors"
-	"fmt"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"io"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // Microsoft365Driver fetches user accounts from a Microsoft 365 / Microsoft
@@ -542,4 +544,19 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 	}
 
 	return "", nil
+}
+
+func microsoft365Source() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewMicrosoft365Driver(credential.Client, logger.Named("microsoft365"), opened.Endpoints.APIBase),
+			NewMicrosoft365NameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

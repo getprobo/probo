@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,37 +29,18 @@ func qoveryRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderQovery,
 		DisplayName:      "Qovery",
 		DocumentationURL: accessReviewDocsURL("qovery"),
-		SupportsAPIKey:   true,
-		APIKeyAuthScheme: "Token",
-		BuildProbeURL:    buildQoveryProbeURL,
 		Endpoints: Endpoints{
 			// Qovery's API is unversioned in the path; the driver joins the
 			// resource segments onto this origin.
 			APIBase: "https://api.qovery.com",
 		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomScheme,
+			Name:         "Token",
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read qovery connector settings: %w", err)
-			}
-
-			if s.OrganizationID == "" {
-				return nil, fmt.Errorf("cannot create qovery driver: organization_id is required")
-			}
-
-			return drivers.NewQoveryDriver(c, s.OrganizationID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read qovery connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewQoveryNameResolver(c, s.OrganizationID, ep.APIBase)
-		}),
+		BuildProbeURL: buildQoveryProbeURL,
 	}
 }

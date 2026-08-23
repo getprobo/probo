@@ -21,14 +21,10 @@
 package provider_test
 
 import (
-	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.gearno.de/kit/httpclient"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -41,75 +37,11 @@ func TestAuthentikRegistrationMetadata(t *testing.T) {
 	require.True(t, ok, "authentik provider must be registered")
 
 	assert.Equal(t, "authentik", reg.DisplayName)
-	assert.True(t, reg.SupportsAPIKey)
-	assert.Empty(t, reg.APIKeyHeader)
-	assert.Empty(t, reg.APIKeyAuthScheme)
-	assert.False(t, reg.APIKeyBasicAuth)
-	assert.False(t, reg.APIKeyBasicAuthUserPass)
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	assert.Equal(t, "baseUrl", reg.APIKeyExtraSettings[0].Key)
-	assert.True(t, reg.APIKeyExtraSettings[0].Required)
+	assert.NotNil(t, reg.APIKey)
+	assert.Equal(t, provider.APIKeyBearer, reg.APIKey.Presentation)
+	require.Len(t, reg.APIKey.ExtraSettings, 1)
+	assert.Equal(t, "baseUrl", reg.APIKey.ExtraSettings[0].Key)
+	assert.True(t, reg.APIKey.ExtraSettings[0].Required)
 	assert.Empty(t, reg.Endpoints.APIBase)
 	assert.NotNil(t, reg.BuildProbeURL)
-	assert.NotNil(t, reg.NewNameResolver)
-}
-
-func TestAuthentikNewDriver(t *testing.T) {
-	t.Parallel()
-
-	r := provider.NewBuiltinRegistry()
-	reg, ok := r.Get(coredata.ConnectorProviderAuthentik)
-	require.True(t, ok, "authentik provider must be registered")
-	require.NotNil(t, reg.NewDriver, "authentik NewDriver closure must be wired")
-
-	client := httpclient.DefaultClient(httpclient.WithSSRFProtection())
-
-	t.Run("creates driver with valid base_url", func(t *testing.T) {
-		t.Parallel()
-
-		raw, err := json.Marshal(&coredata.AuthentikConnectorSettings{
-			BaseURL: "https://authentik.example.com/",
-		})
-		require.NoError(t, err)
-
-		conn := &coredata.Connector{
-			Provider:    coredata.ConnectorProviderAuthentik,
-			RawSettings: raw,
-		}
-
-		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), nil)
-		require.NoError(t, err)
-		assert.IsType(t, &drivers.AuthentikDriver{}, drv)
-
-		probeURL, err := reg.BuildProbeURL(conn, reg.Endpoints)
-		require.NoError(t, err)
-		assert.Equal(t, "https://authentik.example.com/api/v3/core/users/me/", probeURL)
-	})
-
-	for name, baseURL := range map[string]string{
-		"missing":           "",
-		"no scheme":         "authentik.example.com",
-		"bad scheme":        "ftp://authentik.example.com",
-		"no host":           "https://",
-		"unparseable":       "https://authentik.example.com/%zz",
-		"port without host": "https://:443",
-	} {
-		t.Run("rejects "+name+" base_url", func(t *testing.T) {
-			t.Parallel()
-
-			raw, err := json.Marshal(&coredata.AuthentikConnectorSettings{BaseURL: baseURL})
-			require.NoError(t, err)
-
-			conn := &coredata.Connector{
-				Provider:    coredata.ConnectorProviderAuthentik,
-				RawSettings: raw,
-			}
-
-			_, err = reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, client), nil)
-			require.Error(t, err)
-
-			_, err = reg.BuildProbeURL(conn, reg.Endpoints)
-			require.Error(t, err)
-		})
-	}
 }

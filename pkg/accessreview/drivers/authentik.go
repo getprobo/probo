@@ -22,16 +22,19 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"errors"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"slices"
 	"strconv"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // AuthentikDriver lists the users of a self-hosted authentik instance.
@@ -359,4 +362,66 @@ func (r *authentikNameResolver) ResolveInstanceName(ctx context.Context) (string
 	}
 
 	return fallback, nil
+}
+
+func authentikSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := authentikSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			authentikSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func authentikSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	settings, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read authentik connector settings: %w", err)
+	}
+
+	baseURL, err := provider.NormalizeSelfHostedBaseURL(settings.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create authentik driver: %w", err)
+	}
+
+	return NewAuthentikDriver(c, baseURL), nil
+}
+
+func authentikSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	settings, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read authentik connector settings", log.Error(err))
+		return nil
+	}
+
+	baseURL, err := provider.NormalizeSelfHostedBaseURL(settings.BaseURL)
+	if err != nil {
+		logger.ErrorCtx(ctx, "invalid authentik base url in connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewAuthentikNameResolver(c, baseURL)
 }

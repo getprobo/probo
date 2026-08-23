@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,6 +29,16 @@ func neonRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderNeon,
 		DisplayName:      "Neon",
 		DocumentationURL: accessReviewDocsURL("neon"),
+		Endpoints: Endpoints{
+			// Every endpoint the driver calls lives under the same /api/v2
+			// prefix, so the version segment stays in APIBase.
+			APIBase: "https://console.neon.tech/api/v2",
+		},
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
+		},
 		// Neon's API authenticates with an API key (napi_...) presented
 		// as Authorization: Bearer, the default APIKeyConnection scheme.
 		// Neon's OAuth is partner-gated (manual application), so the
@@ -42,36 +46,6 @@ func neonRegistration() *Registration {
 		// can belong to several organizations; the operator supplies the
 		// org ID (org-...) of the one to review.
 		//
-		SupportsAPIKey: true,
-		BuildProbeURL:  buildNeonProbeURL,
-		Endpoints: Endpoints{
-			// Every endpoint the driver calls lives under the same /api/v2
-			// prefix, so the version segment stays in APIBase.
-			APIBase: "https://console.neon.tech/api/v2",
-		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
-		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read neon connector settings: %w", err)
-			}
-
-			if s.OrganizationID == "" {
-				return nil, fmt.Errorf("cannot create neon driver: organization_id is required")
-			}
-
-			return drivers.NewNeonDriver(c, s.OrganizationID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read neon connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewNeonNameResolver(c, s.OrganizationID, ep.APIBase)
-		}),
+		BuildProbeURL: buildNeonProbeURL,
 	}
 }

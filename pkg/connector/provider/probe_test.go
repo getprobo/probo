@@ -30,7 +30,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -187,7 +186,10 @@ func TestProbePostHog(t *testing.T) {
 			conn := &coredata.Connector{Provider: coredata.ConnectorProviderPostHog}
 			require.NoError(t, conn.SetSettings(&coredata.PostHogConnectorSettings{BaseURL: tc.baseURL}))
 
-			err := probePostHog(context.Background(), client, conn, posthogRegistration().Endpoints)
+			err := posthogRegistration().Probe(
+				context.Background(),
+				NewHTTPHandleForTest(posthogRegistration(), conn, client),
+			)
 
 			if !tc.wantErr {
 				require.NoError(t, err)
@@ -200,7 +202,7 @@ func TestProbePostHog(t *testing.T) {
 			// A credential every region refused must surface the sentinel so the
 			// probe distinguishes it from an inconclusive/transient failure.
 			if tc.wantRejected {
-				require.ErrorIs(t, err, drivers.ErrPostHogCredentialRejected)
+				require.ErrorIs(t, err, ErrPostHogCredentialRejected)
 			}
 		})
 	}
@@ -265,7 +267,14 @@ func TestProbeOpenRouter(t *testing.T) {
 				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
 			})}
 
-			err := probeOpenRouter(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderOpenRouter}, openrouterRegistration().Endpoints)
+			err := openrouterRegistration().Probe(
+				context.Background(),
+				NewHTTPHandleForTest(
+					openrouterRegistration(),
+					&coredata.Connector{Provider: coredata.ConnectorProviderOpenRouter},
+					client,
+				),
+			)
 
 			assert.Equal(t, "https://openrouter.ai/api/v1/organization/members?limit=1", gotURL)
 
@@ -308,7 +317,14 @@ func TestProbeHeroku(t *testing.T) {
 				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
 			})}
 
-			err := probeHeroku(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderHeroku}, herokuRegistration().Endpoints)
+			err := herokuRegistration().Probe(
+				context.Background(),
+				NewHTTPHandleForTest(
+					herokuRegistration(),
+					&coredata.Connector{Provider: coredata.ConnectorProviderHeroku},
+					client,
+				),
+			)
 
 			assert.Equal(t, "application/vnd.heroku+json; version=3", gotAccept)
 			assert.Equal(t, "https://api.heroku.com/account", gotURL)
@@ -357,7 +373,14 @@ func TestProbeRailway(t *testing.T) {
 				}, nil
 			})}
 
-			err := probeRailway(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderRailway}, railwayRegistration().Endpoints)
+			err := railwayRegistration().Probe(
+				context.Background(),
+				NewHTTPHandleForTest(
+					railwayRegistration(),
+					&coredata.Connector{Provider: coredata.ConnectorProviderRailway},
+					client,
+				),
+			)
 
 			assert.Equal(t, "https://backboard.railway.com/graphql/v2", gotURL)
 			assert.Equal(t, "application/json", gotContentType)
@@ -406,7 +429,10 @@ func TestProbeCrisp(t *testing.T) {
 				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
 			})}
 
-			err := probeCrisp(context.Background(), client, conn, crispRegistration().Endpoints)
+			err := crispRegistration().Probe(
+				context.Background(),
+				NewHTTPHandleForTest(crispRegistration(), conn, client),
+			)
 
 			assert.Equal(t, "https://api.crisp.chat/v1/website/abc-123/operators/list", gotURL)
 			assert.Equal(t, "plugin", gotTier)

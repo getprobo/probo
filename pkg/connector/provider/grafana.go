@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,38 +29,11 @@ func grafanaRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderGrafana,
 		DisplayName:      "Grafana",
 		DocumentationURL: accessReviewDocsURL("grafana"),
-		SupportsAPIKey:   true,
-		BuildProbeURL:    buildGrafanaProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read grafana connector settings: %w", err)
-			}
-
-			baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
-			if err != nil {
-				return nil, fmt.Errorf("cannot create grafana driver: %w", err)
-			}
-
-			return drivers.NewGrafanaDriver(c, baseURL), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read grafana connector settings", log.Error(err))
-				return nil
-			}
-
-			baseURL, err := normalizeSelfHostedBaseURL(s.BaseURL)
-			if err != nil {
-				logger.ErrorCtx(ctx, "invalid grafana base url in connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewGrafanaNameResolver(c, baseURL)
-		}),
+		BuildProbeURL: buildGrafanaProbeURL,
 	}
 }

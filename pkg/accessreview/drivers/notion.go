@@ -22,12 +22,15 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
+	"net/url"
 )
 
 type NotionDriver struct {
@@ -202,4 +205,19 @@ func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return resp.Bot.WorkspaceName, nil
+}
+
+func notionSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewNotionDriver(credential.Client, opened.Endpoints.APIBase),
+			NewNotionNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

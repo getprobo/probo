@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -45,21 +40,9 @@ func pagerdutyRegistration() *Registration {
 			// the identity.pagerduty.com OAuth endpoints above.
 			APIBase: "https://api.pagerduty.com",
 		},
-		OAuth2Scopes: []string{"users.read"},
-		RequiresPKCE: true,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			// PagerDuty's REST API uses the regional api.pagerduty.com host;
-			// the driver does not consume the per-tenant subdomain.
-			return drivers.NewPagerDutyDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, _ *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read pagerduty connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewPagerDutyNameResolver(s.Subdomain)
-		}),
+		OAuth2: &OAuth2Spec{
+			Scopes:       []string{"users.read"},
+			RequiresPKCE: true,
+		},
 	}
 }

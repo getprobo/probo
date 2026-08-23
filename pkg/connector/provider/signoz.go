@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,39 +29,13 @@ func signozRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderSigNoz,
 		DisplayName:      "SigNoz",
 		DocumentationURL: accessReviewDocsURL("signoz"),
-		SupportsAPIKey:   true,
-		APIKeyHeader:     "SIGNOZ-API-KEY",
-		BuildProbeURL:    buildSigNozProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomHeader,
+			Name:         "SIGNOZ-API-KEY",
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			settings, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read signoz connector settings: %w", err)
-			}
-
-			baseURL, err := normalizeSelfHostedBaseURL(settings.BaseURL)
-			if err != nil {
-				return nil, fmt.Errorf("cannot create signoz driver: %w", err)
-			}
-
-			return drivers.NewSigNozDriver(c, baseURL), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
-			settings, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read signoz connector settings", log.Error(err))
-				return nil
-			}
-
-			baseURL, err := normalizeSelfHostedBaseURL(settings.BaseURL)
-			if err != nil {
-				logger.ErrorCtx(ctx, "invalid signoz base url in connector settings", log.Error(err))
-				return nil
-			}
-
-			return drivers.NewSigNozNameResolver(c, baseURL)
-		}),
+		BuildProbeURL: buildSigNozProbeURL,
 	}
 }

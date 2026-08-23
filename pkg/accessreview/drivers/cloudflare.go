@@ -22,13 +22,16 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // CloudflareDriver fetches account members from the Cloudflare API for a
@@ -341,4 +344,61 @@ func queryCloudflareAccounts(
 	}
 
 	return &resp, nil
+}
+
+func cloudflareSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := cloudflareSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			cloudflareSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListCloudflareOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func cloudflareSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read cloudflare connector settings: %w", err)
+	}
+
+	if s.AccountID == "" {
+		return nil, fmt.Errorf("cannot create cloudflare driver: account_id is required")
+	}
+
+	return NewCloudflareDriver(c, s.AccountID, ep.APIBase), nil
+}
+
+func cloudflareSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read cloudflare connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewCloudflareNameResolver(c, s.AccountID, ep.APIBase)
 }

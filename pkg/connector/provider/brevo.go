@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,14 +29,12 @@ func brevoRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderBrevo,
 		DisplayName:      "Brevo",
 		DocumentationURL: accessReviewDocsURL("brevo"),
-		SupportsAPIKey:   true,
 		// Brevo authenticates with an API key sent in the api-key header
-		// rather than Authorization: Bearer. APIKeyHeader makes the
+		// rather than Authorization: Bearer. APIKeyCustomHeader makes the
 		// APIKeyConnection send api-key instead and omit Authorization. There
 		// is no OAuth2 flow needed: the key is bound to one Brevo account, so
 		// there is nothing to pick (Pattern 3): no settings struct, no
 		// picker.
-		APIKeyHeader: "api-key",
 		Endpoints: Endpoints{
 			APIBase: "https://api.brevo.com/v3",
 			// ProbeURL lets the connection-status check confirm the key with a
@@ -50,10 +43,11 @@ func brevoRegistration() *Registration {
 			Probe: "https://api.brevo.com/v3/organization/invited/users",
 		},
 		//
-		// No NewNameResolver: the invited-users endpoint carries no account
+		// No name resolver: the invited-users endpoint carries no account
 		// name, so the source keeps its generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewBrevoDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomHeader,
+			Name:         "api-key",
+		},
 	}
 }

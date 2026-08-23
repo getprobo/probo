@@ -22,16 +22,19 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"errors"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // DocuSignDriver fetches account users from DocuSign via OAuth2-authenticated
@@ -325,4 +328,61 @@ func ListDocuSignOrganizations(ctx context.Context, httpClient *http.Client, use
 	}
 
 	return result, nil
+}
+
+func docusignSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := docusignSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			docusignSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListDocuSignOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func docusignSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read docusign connector settings: %w", err)
+	}
+
+	if s.AccountID == "" {
+		return nil, fmt.Errorf("cannot create docusign driver: account_id is required")
+	}
+
+	return NewDocuSignDriver(c, s.AccountID, ep.Identity), nil
+}
+
+func docusignSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read docusign connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewDocuSignNameResolver(c, s.AccountID, ep.Identity)
 }

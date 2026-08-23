@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 type MetabaseDriver struct {
@@ -263,4 +266,75 @@ func parseMetabaseTimestamp(value string) (time.Time, bool) {
 	}
 
 	return time.Time{}, false
+}
+
+func metabaseSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := metabaseSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			metabaseSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func metabaseSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read metabase connector settings: %w", err)
+	}
+
+	instanceURL := strings.TrimSpace(settings.InstanceURL)
+	if instanceURL == "" {
+		return nil, fmt.Errorf("cannot create metabase driver: instance_url is required")
+	}
+
+	if err := provider.ValidateMetabaseInstanceURL(instanceURL); err != nil {
+		return nil, err
+	}
+
+	return NewMetabaseDriver(c, instanceURL), nil
+}
+
+func metabaseSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read metabase connector settings", log.Error(err))
+		return nil
+	}
+
+	instanceURL := strings.TrimSpace(settings.InstanceURL)
+	if instanceURL == "" {
+		logger.ErrorCtx(ctx, "missing metabase instance url in connector settings")
+		return nil
+	}
+
+	if err := provider.ValidateMetabaseInstanceURL(instanceURL); err != nil {
+		logger.ErrorCtx(ctx, "invalid metabase instance url in connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewMetabaseNameResolver(c, instanceURL)
 }

@@ -21,15 +21,18 @@
 package drivers
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"bytes"
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // LinearDriver fetches workspace users from Linear via OAuth2-authenticated
@@ -288,4 +291,19 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return resp.Data.Organization.Name, nil
+}
+
+func linearSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewLinearDriver(credential.Client, opened.Endpoints.APIBase),
+			NewLinearNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
 
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/rfc5988"
+	"net/url"
+	"strconv"
 )
 
 // GitLabDriver fetches all-members of a GitLab group via REST API
@@ -318,4 +321,61 @@ func ListGitLabOrganizations(ctx context.Context, httpClient *http.Client, baseU
 	}
 
 	return result, nil
+}
+
+func gitlabSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := gitlabSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			gitlabSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListGitLabOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func gitlabSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
+	}
+
+	if s.GroupID == "" {
+		return nil, fmt.Errorf("cannot create gitlab driver: group_id is required")
+	}
+
+	return NewGitLabDriver(c, s.GroupID, ep.APIBase), nil
+}
+
+func gitlabSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read gitlab connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewGitLabNameResolver(c, s.GroupID, ep.APIBase)
 }

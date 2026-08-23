@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,15 +29,13 @@ func apolloRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderApollo,
 		DisplayName:      "Apollo.io",
 		DocumentationURL: accessReviewDocsURL("apollo"),
-		SupportsAPIKey:   true,
 		// Apollo's REST API authenticates with a master API key in the
 		// x-api-key header; it rejects Authorization: Bearer (and, since
-		// Sept 2024, query/body key params). APIKeyHeader makes the
+		// Sept 2024, query/body key params). APIKeyCustomHeader makes the
 		// APIKeyConnection send x-api-key instead of Bearer. There is no
 		// OAuth2 flow needed: the customer supplies a master key, which is
 		// bound to one Apollo account, so there is nothing to pick
 		// (Pattern 3): no settings struct, no picker.
-		APIKeyHeader: "x-api-key",
 		Endpoints: Endpoints{
 			APIBase: "https://api.apollo.io/api/v1",
 			// ProbeURL lets the connection-status check confirm the key with a
@@ -51,11 +44,12 @@ func apolloRegistration() *Registration {
 			Probe: "https://api.apollo.io/api/v1/users/search?page=1&per_page=1",
 		},
 		//
-		// No NewNameResolver: Apollo exposes no stable account-name
+		// No name resolver: Apollo exposes no stable account-name
 		// endpoint reachable with the master key, so the source keeps its
 		// generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewApolloDriver(c, ep.APIBase), nil
-		}),
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyCustomHeader,
+			Name:         "x-api-key",
+		},
 	}
 }

@@ -22,13 +22,16 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -273,4 +276,59 @@ func (r *neonNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 	}
 
 	return resp.Name, nil
+}
+
+func neonSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := neonSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			neonSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func neonSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read neon connector settings: %w", err)
+	}
+
+	if s.OrganizationID == "" {
+		return nil, fmt.Errorf("cannot create neon driver: organization_id is required")
+	}
+
+	return NewNeonDriver(c, s.OrganizationID, ep.APIBase), nil
+}
+
+func neonSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.NeonConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read neon connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewNeonNameResolver(c, s.OrganizationID, ep.APIBase)
 }

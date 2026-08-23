@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // ClickUpDriver fetches workspace ("team") members from the ClickUp
@@ -290,4 +293,61 @@ func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client, base
 	}
 
 	return result, nil
+}
+
+func clickupSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := clickupSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			clickupSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListClickUpOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func clickupSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
+	}
+
+	if s.TeamID == "" {
+		return nil, fmt.Errorf("cannot create clickup driver: team_id is required")
+	}
+
+	return NewClickUpDriver(c, s.TeamID, ep.APIBase), nil
+}
+
+func clickupSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read clickup connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewClickUpNameResolver(c, s.TeamID, ep.APIBase)
 }

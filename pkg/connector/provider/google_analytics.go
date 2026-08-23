@@ -21,13 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -45,48 +38,27 @@ func googleAnalyticsRegistration() *Registration {
 			// must not be derived from this.
 			APIBase: "https://analyticsadmin.googleapis.com/v1alpha",
 		},
-		ExtraAuthParams: map[string]string{
-			"access_type": "offline",
-			"prompt":      "consent",
+		OAuth2: &OAuth2Spec{
+			ExtraAuthParams: map[string]string{
+				"access_type": "offline",
+				"prompt":      "consent",
+			},
+			SupportsIncrementalAuth: true,
+			Scopes: []string{
+				"https://www.googleapis.com/auth/analytics.readonly",
+				"https://www.googleapis.com/auth/analytics.manage.users.readonly",
+			},
 		},
-		SupportsIncrementalAuth: true,
 		// analytics.readonly is required to LIST accounts and properties (the
 		// picker and the probe); analytics.manage.users.readonly is required to
 		// read the access bindings. The manage.users scope alone cannot list
 		// accounts (it returns 403), so both are requested.
-		OAuth2Scopes: []string{
-			"https://www.googleapis.com/auth/analytics.readonly",
-			"https://www.googleapis.com/auth/analytics.manage.users.readonly",
-		},
 		// BuildProbeURL targets the selected account's accessBindings rather
 		// than the accounts list: listing accounts only needs
 		// analytics.readonly, so a non-Administrator connection (or one where
 		// the user declined manage.users.readonly on Google's granular consent
 		// screen) would probe green and then 403 on every fetch.
 		BuildProbeURL: buildGoogleAnalyticsProbeURL,
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read google analytics connector settings: %w", err)
-			}
-
-			if s.AccountID == "" {
-				return nil, fmt.Errorf("cannot create google analytics driver: account_id is required")
-			}
-
-			return drivers.NewGoogleAnalyticsDriver(c, s.AccountID, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) drivers.NameResolver {
-			s, err := coredata.ConnectorSettings[coredata.GoogleAnalyticsConnectorSettings](conn)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot read google analytics connector settings", log.Error(err))
-
-				return nil
-			}
-
-			return drivers.NewGoogleAnalyticsNameResolver(c, s.AccountID, ep.APIBase)
-		}),
-		ListOrganizations: HTTPOrganizations(drivers.ListGoogleAnalyticsOrganizations),
 		SetOrganizationSettings: func(c *coredata.Connector, accountID string) error {
 			return c.SetSettings(&coredata.GoogleAnalyticsConnectorSettings{AccountID: accountID})
 		},

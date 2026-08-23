@@ -21,12 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -35,38 +29,26 @@ func langfuseRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderLangfuse,
 		DisplayName:      "Langfuse",
 		DocumentationURL: accessReviewDocsURL("langfuse"),
-		SupportsAPIKey:   true,
+		//
+		// No name resolver: the memberships endpoint carries no
+		// organization name, so the source keeps its generic name.
+		APIKey: &APIKeySpec{
+			Presentation: APIKeyBasicUserPass,
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
+		},
 		// Langfuse's organization-scoped public API authenticates with HTTP
 		// Basic auth where the credential is publicKey:secretKey.
-		// APIKeyBasicAuthUserPass base64s the verbatim "publicKey:secretKey" the
-		// operator pastes (the empty-password APIKeyBasicAuth cannot carry
+		// APIKeyBasicUserPass base64s the verbatim "publicKey:secretKey" the
+		// operator pastes (the empty-password APIKeyBasic cannot carry
 		// the secret). The org API key is bound to one organization, so
 		// there is nothing to pick; only the regional/self-hosted base URL
 		// is per-tenant and is surfaced as an extra setting.
-		APIKeyBasicAuthUserPass: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
-		},
 		// BuildProbeURL derives the probe endpoint from the per-connection
 		// base URL (the host is regional/self-hosted, so a static ProbeURL
 		// cannot express it); the transport attaches the Basic credential
 		// and a dead key returns 401/403.
 		BuildProbeURL: buildLangfuseProbeURL,
-		//
-		// No NewNameResolver: the memberships endpoint carries no
-		// organization name, so the source keeps its generic name.
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			settings, err := coredata.ConnectorSettings[coredata.LangfuseConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read langfuse connector settings: %w", err)
-			}
-
-			baseURL, err := normalizeSelfHostedBaseURL(settings.BaseURL)
-			if err != nil {
-				return nil, fmt.Errorf("cannot create langfuse driver: %w", err)
-			}
-
-			return drivers.NewLangfuseDriver(c, baseURL), nil
-		}),
 	}
 }

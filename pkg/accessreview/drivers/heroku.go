@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const (
@@ -485,4 +488,60 @@ func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client, baseU
 	})
 
 	return result, nil
+}
+
+func herokuSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := herokuSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			herokuSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListHerokuOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func herokuSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
+	}
+
+	// TeamID may be empty or the personal-account slug for a solo
+	// Heroku account (no Team); the driver runs in personal mode
+	// (app owner + collaborators) in that case.
+	return NewHerokuDriver(c, s.TeamID, ep.APIBase), nil
+}
+
+func herokuSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read heroku connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewHerokuNameResolver(c, s.TeamID, ep.APIBase)
 }

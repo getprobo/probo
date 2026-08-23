@@ -21,13 +21,6 @@
 package provider
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -39,7 +32,7 @@ func onePasswordRegistration() *Registration {
 		// APIBase is deliberately empty: 1Password has no single data host to
 		// name. Four host families live under this one registration —
 		// the per-connection SCIM bridge URL (customer-hosted, from
-		// APIKeyExtraSettings), the three regional Users API hosts resolved
+		// APIKey.ExtraSettings), the three regional Users API hosts resolved
 		// from the Region setting (drivers.onePasswordBaseURL), and the
 		// events.1password.com probe below, which is yet another host and is
 		// therefore not the root any driver joins onto. A single APIBase would
@@ -48,44 +41,20 @@ func onePasswordRegistration() *Registration {
 		Endpoints: Endpoints{
 			Probe: "https://events.1password.com/api/v1/auditevents",
 		},
-		SupportsAPIKey:            true,
-		SupportsClientCredentials: true,
 		// Two settings shapes, one per connect path, because a different
 		// driver sits behind each:
 		//  - API key:            SCIMBridgeURL      (SCIM-bridge driver).
 		//  - Client credentials: AccountID + Region (Users API driver).
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
+		APIKey: &APIKeySpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
+			},
 		},
-		ClientCredentialsExtraSettings: []ExtraSetting{
-			{Key: "accountId", Label: "Account ID", Required: true},
-			{Key: "region", Label: "Region", Required: true},
+		ClientCredentials: &ClientCredentialsSpec{
+			ExtraSettings: []ExtraSetting{
+				{Key: "accountId", Label: "Account ID", Required: true},
+				{Key: "region", Label: "Region", Required: true},
+			},
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			// The client-credentials grant uses the Users API driver.
-			// Everything else is the API-key connection, whose
-			// *APIKeyConnection makes GrantType() return "": it uses the
-			// SCIM-bridge driver. 1Password declares no AuthURL/TokenURL, so
-			// the authorization-code path is unreachable.
-			if conn.GrantType() == string(connector.OAuth2GrantTypeClientCredentials) {
-				s, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](conn)
-				if err != nil {
-					return nil, fmt.Errorf("cannot read 1password users api settings: %w", err)
-				}
-
-				return drivers.NewOnePasswordUsersAPIDriver(c, s.AccountID, s.Region), nil
-			}
-
-			s, err := coredata.ConnectorSettings[coredata.OnePasswordConnectorSettings](conn)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read 1password connector settings: %w", err)
-			}
-
-			if s.SCIMBridgeURL == "" {
-				return nil, fmt.Errorf("cannot create 1password driver: scim_bridge_url is required")
-			}
-
-			return drivers.NewOnePasswordDriver(c, s.SCIMBridgeURL), nil
-		}),
 	}
 }

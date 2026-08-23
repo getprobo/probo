@@ -29,9 +29,14 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
+
+// sourceFetchTimeout bounds one source's account listing, however many
+// paginated calls the driver makes to complete it.
+const sourceFetchTimeout = 30 * time.Second
 
 // FetchSource pulls accounts from a single campaign source snapshot and upserts
 // access entries against that snapshot.
@@ -49,11 +54,10 @@ func (s *Service) FetchSource(
 
 	sourceID := *campaignSource.AccessReviewSourceID
 
-	// Resolve the driver and load baseline data outside the write transaction
-	// so that external HTTP calls do not hold a database connection.
+	// Load baseline data first and fetch accounts afterwards, so the
+	// third-party call never holds a database connection.
 	var (
 		source   *coredata.AccessReviewSource
-		driver   drivers.Driver
 		baseline []coredata.BaselineAccountEntry
 	)
 
@@ -65,26 +69,23 @@ func (s *Service) FetchSource(
 				return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 			}
 
-			var err error
-
-			driver, err = s.resolveDriver(ctx, tx, scope, source)
-			if err != nil {
-				return fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err)
-			}
-
 			lastCompletedCampaign := &coredata.AccessReviewCampaign{}
 			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, tx, scope, campaign.OrganizationID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load last completed campaign: %w", err)
 				}
-			} else {
-				entries := &coredata.AccessReviewEntries{}
 
-				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, scope, lastCompletedCampaign.ID, sourceID)
-				if err != nil {
-					return fmt.Errorf("cannot load baseline entries by source: %w", err)
-				}
+				return nil
 			}
+
+			entries := &coredata.AccessReviewEntries{}
+
+			loaded, err := entries.LoadBaselineBySourceID(ctx, tx, scope, lastCompletedCampaign.ID, sourceID)
+			if err != nil {
+				return fmt.Errorf("cannot load baseline entries by source: %w", err)
+			}
+
+			baseline = loaded
 
 			return nil
 		},
@@ -98,11 +99,7 @@ func (s *Service) FetchSource(
 		previousByAccountKey[entry.AccountKey] = entry
 	}
 
-	sourceCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	accounts, err := driver.ListAccounts(sourceCtx)
-
-	cancel()
-
+	accounts, err := s.listAccounts(ctx, scope, source)
 	if err != nil {
 		return 0, fmt.Errorf("cannot list accounts from source %s: %w", source.Name, err)
 	}
@@ -207,46 +204,61 @@ func normalizeAccountKey(email, externalID string) string {
 	return emailKey
 }
 
-// resolveDriver creates a Driver for the given AccessReviewSource based on
-// connector_id (null = built-in, set = connector-backed).
-func (s *Service) resolveDriver(
+// listAccounts pulls the accounts an access source exposes. A connector-backed
+// source runs inside Opener.Use, so its credential lives no longer than the
+// fetch; a built-in source needs no credential at all.
+func (s *Service) listAccounts(
 	ctx context.Context,
-	tx pg.Tx,
 	scope coredata.Scoper,
 	source *coredata.AccessReviewSource,
-) (drivers.Driver, error) {
+) ([]drivers.AccountRecord, error) {
 	if source.ConnectorID == nil {
-		// CSV-backed source: use CSVDriver when csv_data is present
-		if source.CsvData != nil && *source.CsvData != "" {
-			return drivers.NewCSVDriver(strings.NewReader(*source.CsvData)), nil
-		}
-
-		// Built-in driver: default to ProboMemberships
-		return drivers.NewProboMembershipsDriver(s.pg, scope, source.OrganizationID), nil
+		return listAccountsWithTimeout(ctx, s.builtinDriver(scope, source))
 	}
 
-	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, s.encryptionKey); err != nil {
-		return nil, fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
-	}
+	var accounts []drivers.AccountRecord
 
-	handle, err := s.runtime.Open(ctx, dbConnector)
+	err := s.connectors.Use(
+		ctx,
+		scope,
+		*source.ConnectorID,
+		func(ctx context.Context, handle *provider.Handle) error {
+			driver, err := s.sources.New(ctx, handle, s.logger)
+			if err != nil {
+				return err
+			}
+
+			accounts, err = listAccountsWithTimeout(ctx, driver)
+
+			return err
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Persist before building the driver. A provider that rotates refresh
-	// tokens (HubSpot, DocuSign) has already invalidated the old one upstream,
-	// so dropping the new one on a driver-construction failure would break the
-	// connector permanently rather than until the next poll.
-	if err := handle.PersistIfDirty(ctx, tx, scope, s.encryptionKey); err != nil {
-		return nil, err
+	return accounts, nil
+}
+
+// builtinDriver serves a source with no connector behind it: pasted CSV, or the
+// organization's own Probo memberships.
+func (s *Service) builtinDriver(
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
+) drivers.Driver {
+	if source.CsvData != nil && *source.CsvData != "" {
+		return drivers.NewCSVDriver(strings.NewReader(*source.CsvData))
 	}
 
-	reg, ok := s.providerRegistry.For(handle)
-	if !ok || reg.NewDriver == nil {
-		return nil, fmt.Errorf("cannot resolve driver: unsupported provider %q", dbConnector.Provider)
-	}
+	return drivers.NewProboMembershipsDriver(s.pg, scope, source.OrganizationID)
+}
 
-	return reg.NewDriver(ctx, handle, s.logger)
+func listAccountsWithTimeout(
+	ctx context.Context,
+	driver drivers.Driver,
+) ([]drivers.AccountRecord, error) {
+	ctx, cancel := context.WithTimeout(ctx, sourceFetchTimeout)
+	defer cancel()
+
+	return driver.ListAccounts(ctx)
 }

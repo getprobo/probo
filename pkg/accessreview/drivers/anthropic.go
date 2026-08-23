@@ -22,13 +22,16 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 type AnthropicDriver struct {
@@ -231,4 +234,19 @@ func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string
 	}
 
 	return resp.Name, nil
+}
+
+func anthropicSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewAnthropicDriver(credential.Client, opened.Endpoints.APIBase),
+			NewAnthropicNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

@@ -21,14 +21,10 @@
 package provider_test
 
 import (
-	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.gearno.de/kit/httpclient"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -41,72 +37,11 @@ func TestQoveryRegistrationMetadata(t *testing.T) {
 	require.True(t, ok, "qovery provider must be registered")
 
 	assert.Equal(t, "Qovery", reg.DisplayName)
-	assert.True(t, reg.SupportsAPIKey)
-	assert.Equal(t, "Token", reg.APIKeyAuthScheme)
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	assert.Equal(t, "organizationId", reg.APIKeyExtraSettings[0].Key)
-	assert.Equal(t, "Organization ID", reg.APIKeyExtraSettings[0].Label)
-	assert.True(t, reg.APIKeyExtraSettings[0].Required)
-}
-
-func TestQoveryNewDriver(t *testing.T) {
-	t.Parallel()
-
-	r := provider.NewBuiltinRegistry()
-	reg, ok := r.Get(coredata.ConnectorProviderQovery)
-	require.True(t, ok, "qovery provider must be registered")
-	require.NotNil(t, reg.NewDriver, "qovery NewDriver closure must be wired")
-
-	t.Run("creates driver with valid organization_id", func(t *testing.T) {
-		t.Parallel()
-
-		raw, err := json.Marshal(&coredata.QoveryConnectorSettings{
-			OrganizationID: "c4f2de4d-3e50-4f98-bf00-065778f7f5b5",
-		})
-		require.NoError(t, err)
-
-		conn := &coredata.Connector{
-			Provider:    coredata.ConnectorProviderQovery,
-			RawSettings: raw,
-		}
-
-		drv, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
-		require.NoError(t, err)
-		assert.IsType(t, &drivers.QoveryDriver{}, drv)
-	})
-
-	t.Run("errors when organization_id is missing", func(t *testing.T) {
-		t.Parallel()
-
-		conn := &coredata.Connector{
-			Provider:    coredata.ConnectorProviderQovery,
-			RawSettings: []byte(`{}`),
-		}
-
-		_, err := reg.NewDriver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "organization_id is required")
-	})
-}
-
-func TestQoveryNewNameResolver(t *testing.T) {
-	t.Parallel()
-
-	r := provider.NewBuiltinRegistry()
-	reg, ok := r.Get(coredata.ConnectorProviderQovery)
-	require.True(t, ok, "qovery provider must be registered")
-	require.NotNil(t, reg.NewNameResolver, "qovery NewNameResolver closure must be wired")
-
-	raw, err := json.Marshal(&coredata.QoveryConnectorSettings{
-		OrganizationID: "c4f2de4d-3e50-4f98-bf00-065778f7f5b5",
-	})
-	require.NoError(t, err)
-
-	conn := &coredata.Connector{
-		Provider:    coredata.ConnectorProviderQovery,
-		RawSettings: raw,
-	}
-
-	resolver := reg.NewNameResolver(context.Background(), provider.NewHTTPHandleForTest(reg, conn, httpclient.DefaultClient(httpclient.WithSSRFProtection())), nil)
-	require.NotNil(t, resolver, "qovery name resolver must be constructed for a valid connector")
+	assert.NotNil(t, reg.APIKey)
+	assert.Equal(t, provider.APIKeyCustomScheme, reg.APIKey.Presentation)
+	assert.Equal(t, "Token", reg.APIKey.Name)
+	require.Len(t, reg.APIKey.ExtraSettings, 1)
+	assert.Equal(t, "organizationId", reg.APIKey.ExtraSettings[0].Key)
+	assert.Equal(t, "Organization ID", reg.APIKey.ExtraSettings[0].Label)
+	assert.True(t, reg.APIKey.ExtraSettings[0].Required)
 }

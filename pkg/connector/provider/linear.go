@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -41,13 +36,9 @@ func linearRegistration() *Registration {
 			// verbatim rather than joining a path onto it.
 			APIBase: "https://api.linear.app/graphql",
 		},
-		Probe:        HTTPProbe(probeLinear),
-		OAuth2Scopes: []string{"read"},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewLinearDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewLinearNameResolver(c, ep.APIBase)
-		}),
+		OAuth2: &OAuth2Spec{
+			Scopes: []string{"read"},
+		},
+		Probe: ProbeOver(probeLinear),
 	}
 }

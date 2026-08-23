@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"slices"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // SigNozDriver fetches organization members from the SigNoz API. The API key
@@ -271,4 +274,66 @@ func (r *signozNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	return strings.TrimSpace(envelope.Data.Name), nil
+}
+
+func signozSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := signozSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			signozSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func signozSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	settings, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read signoz connector settings: %w", err)
+	}
+
+	baseURL, err := provider.NormalizeSelfHostedBaseURL(settings.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create signoz driver: %w", err)
+	}
+
+	return NewSigNozDriver(c, baseURL), nil
+}
+
+func signozSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	settings, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read signoz connector settings", log.Error(err))
+		return nil
+	}
+
+	baseURL, err := provider.NormalizeSelfHostedBaseURL(settings.BaseURL)
+	if err != nil {
+		logger.ErrorCtx(ctx, "invalid signoz base url in connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewSigNozNameResolver(c, baseURL)
 }

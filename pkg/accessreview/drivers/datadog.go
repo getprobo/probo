@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // DatadogDriver lists Datadog org members via GET /api/v2/users. The API
@@ -219,4 +222,64 @@ func NewDatadogNameResolver(region string) NameResolver {
 
 func (r *datadogNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return r.region, nil
+}
+
+func datadogSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := datadogSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			datadogSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func datadogSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read datadog connector settings: %w", err)
+	}
+
+	// Re-validate the stored domain against the fixed allow-list at
+	// the construction site (defense-in-depth). The OAuth callback
+	// validates on write, but pinning the SSRF invariant here keeps
+	// the driver safe regardless of how the connector row was
+	// populated. An empty domain also fails this check.
+	if !connector.IsValidDatadogDomain(s.Domain) {
+		return nil, fmt.Errorf("cannot create datadog driver: invalid or missing domain")
+	}
+
+	return NewDatadogDriver(c, s.Domain), nil
+}
+
+func datadogSourceNameResolver(
+	ctx context.Context,
+	_ *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read datadog connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewDatadogNameResolver(s.Region)
 }

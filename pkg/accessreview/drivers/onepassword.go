@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // OnePasswordDriver fetches user accounts from a 1Password SCIM bridge.
@@ -181,4 +184,57 @@ func (d *OnePasswordDriver) queryUsers(ctx context.Context, startIndex int) (*on
 	}
 
 	return &resp, nil
+}
+
+func onePasswordSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := onePasswordSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			nil,
+			nil,
+		), nil
+	})
+}
+
+func onePasswordSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	// The client-credentials grant uses the Users API driver.
+	// Everything else is the API-key connection, whose
+	// *APIKeyConnection makes GrantType() return "": it uses the
+	// SCIM-bridge driver. 1Password declares no AuthURL/TokenURL, so
+	// the authorization-code path is unreachable.
+	if conn.GrantType() == string(connector.OAuth2GrantTypeClientCredentials) {
+		s, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](conn)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read 1password users api settings: %w", err)
+		}
+
+		return NewOnePasswordUsersAPIDriver(c, s.AccountID, s.Region), nil
+	}
+
+	s, err := coredata.ConnectorSettings[coredata.OnePasswordConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read 1password connector settings: %w", err)
+	}
+
+	if s.SCIMBridgeURL == "" {
+		return nil, fmt.Errorf("cannot create 1password driver: scim_bridge_url is required")
+	}
+
+	return NewOnePasswordDriver(c, s.SCIMBridgeURL), nil
 }

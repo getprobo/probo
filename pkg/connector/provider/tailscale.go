@@ -21,11 +21,6 @@
 package provider
 
 import (
-	"context"
-	"net/http"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -34,16 +29,10 @@ func tailscaleRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderTailscale,
 		DisplayName:      "Tailscale",
 		DocumentationURL: accessReviewDocsURL("tailscale"),
-		SupportsAPIKey:   true,
 		Endpoints: Endpoints{
 			Probe:   "https://api.tailscale.com/api/v2/tailnet/-/users",
 			APIBase: "https://api.tailscale.com/api/v2",
 		},
-		NewDriver: HTTP(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
-			return drivers.NewTailscaleDriver(c, ep.APIBase), nil
-		}),
-		NewNameResolver: HTTPNameResolver(func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
-			return drivers.NewTailscaleNameResolver(c, ep.APIBase)
-		}),
+		APIKey: &APIKeySpec{},
 	}
 }

@@ -22,17 +22,19 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/rfc5988"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/rfc5988"
 )
 
 // GitHub REST path segments joined onto the driver's base URL. They are
@@ -478,4 +480,61 @@ func ListGitHubOrganizations(ctx context.Context, httpClient *http.Client, baseU
 	}
 
 	return result, nil
+}
+
+func githubSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := githubSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			githubSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			organizationListerFunc(func(ctx context.Context) ([]Organization, error) {
+				return ListGitHubOrganizations(ctx, credential.Client, organizationsBase(opened.Endpoints))
+			}),
+		), nil
+	})
+}
+
+func githubSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read github connector settings: %w", err)
+	}
+
+	if s.Organization == "" {
+		return nil, fmt.Errorf("cannot create github driver: organization is required")
+	}
+
+	return NewGitHubDriver(c, s.Organization, logger.Named("github"), ep.APIBase), nil
+}
+
+func githubSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	ep provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read github connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewGitHubNameResolver(c, s.Organization, ep.APIBase)
 }

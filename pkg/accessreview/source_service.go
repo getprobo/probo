@@ -338,48 +338,29 @@ func (s *Service) CountSourcesForOrganizationID(
 	return count, nil
 }
 
-// OpenConnector loads a connector by ID with decrypted credentials and readies
-// it for use, persisting the credential when opening it refreshed an OAuth2
-// token. The returned handle carries the live credential unexported, so one
-// method serves every protocol: callers pass it to a Registration factory.
-func (s *Service) OpenConnector(
+// ProviderReviewsAccounts reports whether a connector provider can be used as
+// an access source at all. The console gates its driver catalog on it: a
+// provider Probo can connect and probe but not review accounts from would
+// otherwise be offered and then fail its first campaign fetch.
+func (s *Service) ProviderReviewsAccounts(p coredata.ConnectorProvider) bool {
+	return s.sources.Supports(p)
+}
+
+// ProbeConnector reports whether the provider still accepts the connector's
+// credential. ErrResourceNotFound is propagated for a missing connector.
+func (s *Service) ProbeConnector(
 	ctx context.Context,
 	scope coredata.Scoper,
 	connectorID gid.GID,
-) (*provider.Handle, error) {
-	var dbConnector coredata.Connector
-
-	err := s.pg.WithConn(
+) error {
+	return s.connectors.Use(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey); err != nil {
-				return fmt.Errorf("cannot load connector: %w", err)
-			}
-
-			return nil
+		scope,
+		connectorID,
+		func(ctx context.Context, handle *provider.Handle) error {
+			return handle.Probe(ctx)
 		},
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	handle, err := s.runtime.Open(ctx, &dbConnector)
-	if err != nil {
-		return nil, err
-	}
-
-	if handle.CredentialRotated() {
-		if err := s.pg.WithTx(
-			ctx,
-			func(ctx context.Context, tx pg.Tx) error {
-				return handle.PersistIfDirty(ctx, tx, scope, s.encryptionKey)
-			},
-		); err != nil {
-			return nil, err
-		}
-	}
-
-	return handle, nil
 }
 
 func (s *Service) ConfigureAccessReviewSource(
@@ -404,33 +385,43 @@ func (s *Service) ConfigureAccessReviewSource(
 				return fmt.Errorf("cannot configure access source: no connector attached")
 			}
 
-			dbConnector := &coredata.Connector{}
-			if err := dbConnector.LoadByID(ctx, conn, scope, *source.ConnectorID, s.encryptionKey); err != nil {
-				return fmt.Errorf("cannot load connector: %w", err)
+			configured := false
+
+			err := s.connectors.Modify(
+				ctx,
+				conn,
+				scope,
+				*source.ConnectorID,
+				func(reg *provider.Registration, dbConnector *coredata.Connector) (bool, error) {
+					// TOCTOU guard for the auto-default path: if the org was
+					// set (e.g. by a concurrent user pick) after the caller
+					// observed it as unset, leave the existing selection
+					// untouched.
+					if req.OnlyIfUnset {
+						if cfg, ok := providerOrgConfigs[dbConnector.Provider]; ok && cfg.SelectedSlug(dbConnector) != "" {
+							return false, nil
+						}
+					}
+
+					if reg.SetOrganizationSettings == nil {
+						return false, fmt.Errorf("cannot configure access source: provider %s does not support organization configuration", dbConnector.Provider)
+					}
+
+					if err := reg.SetOrganizationSettings(dbConnector, req.OrganizationSlug); err != nil {
+						return false, fmt.Errorf("cannot set %s settings: %w", dbConnector.Provider, err)
+					}
+
+					configured = true
+
+					return true, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
-			// TOCTOU guard for the auto-default path: if the org was set (e.g.
-			// by a concurrent user pick) after the caller observed it as unset,
-			// leave the existing selection untouched.
-			if req.OnlyIfUnset {
-				if cfg, ok := providerOrgConfigs[dbConnector.Provider]; ok && cfg.SelectedSlug(dbConnector) != "" {
-					return nil
-				}
-			}
-
-			reg, ok := s.providerRegistry.Get(dbConnector.Provider)
-			if !ok || reg.SetOrganizationSettings == nil {
-				return fmt.Errorf("cannot configure access source: provider %s does not support organization configuration", dbConnector.Provider)
-			}
-
-			if err := reg.SetOrganizationSettings(dbConnector, req.OrganizationSlug); err != nil {
-				return fmt.Errorf("cannot set %s settings: %w", dbConnector.Provider, err)
-			}
-
-			dbConnector.UpdatedAt = time.Now()
-
-			if err := dbConnector.Update(ctx, conn, scope, s.encryptionKey); err != nil {
-				return fmt.Errorf("cannot update connector: %w", err)
+			if !configured {
+				return nil
 			}
 
 			// The selected org changed, so the resolvable instance name may
@@ -484,21 +475,37 @@ func (s *Service) ProviderOrganizations(
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) ([]drivers.Organization, error) {
-	handle, err := s.OpenConnector(ctx, scope, connectorID)
+	var organizations []drivers.Organization
+
+	err := s.connectors.Use(
+		ctx,
+		scope,
+		connectorID,
+		func(ctx context.Context, handle *provider.Handle) error {
+			driver, err := s.sources.New(ctx, handle, s.logger)
+			if err != nil {
+				return err
+			}
+
+			listed, err := drivers.Organizations(ctx, driver)
+			if err != nil {
+				return err
+			}
+
+			organizations = listed
+
+			return nil
+		},
+	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("cannot open connector: %w", err)
+		return nil, fmt.Errorf("cannot list provider organizations: %w", err)
 	}
 
-	reg, ok := s.providerRegistry.For(handle)
-	if !ok || reg.ListOrganizations == nil {
-		return nil, nil
-	}
-
-	return reg.ListOrganizations(ctx, handle)
+	return organizations, nil
 }
 
 // SelectedOrganizationSlug returns the org identifier currently configured on
@@ -554,25 +561,28 @@ func (s *Service) SourceMissingOAuthScopes(
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) ([]string, error) {
-	var dbConnector coredata.Connector
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey); err != nil {
-				return err
-			}
-
-			return nil
-		},
-	)
+	dbConnector, err := s.loadConnectorMetadata(ctx, scope, connectorID)
 	if err != nil {
 		return nil, err
 	}
 
 	required := s.providerRegistry.ProviderOAuth2Scopes(dbConnector.Provider)
+	if len(required) == 0 {
+		return []string{}, nil
+	}
 
-	return missingOAuthScopesForConnector(dbConnector, required), nil
+	granted, err := s.connectors.GrantedScopes(ctx, scope, connectorID)
+	if err != nil {
+		return nil, err
+	}
+
+	// A connector holding no grant at all (API key, workload identity) is never
+	// short of scopes, even when the provider also advertises an OAuth2 path.
+	if granted == nil {
+		return []string{}, nil
+	}
+
+	return connector.MissingScopes(required, granted), nil
 }
 
 // SourceNeedsReconnect reports whether the connector is missing OAuth scopes
@@ -589,50 +599,6 @@ func (s *Service) SourceNeedsReconnect(
 	}
 
 	return len(missing) > 0, nil
-}
-
-// missingOAuthScopesForConnector returns scopes in required that are absent
-// from the connector's stored OAuth grant. Non-OAuth connectors and empty
-// required lists yield an empty result. A nil Connection is treated as
-// granting nothing.
-func missingOAuthScopesForConnector(
-	dbConnector coredata.Connector,
-	required []string,
-) []string {
-	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
-		return []string{}
-	}
-
-	if len(required) == 0 {
-		return []string{}
-	}
-
-	var granted []string
-	if dbConnector.Connection != nil {
-		granted = dbConnector.Connection.Scopes()
-	}
-
-	// Microsoft (and similar OIDC providers) omit offline_access from the
-	// token scope echo even when a refresh token was issued. Treat a
-	// refresh token as proof of that grant for missing-scope checks only —
-	// never synthesize it into Connection.Scopes(), which reconnect uses
-	// to build the next authorize request (Google rejects offline_access).
-	if connectionHasRefreshToken(dbConnector.Connection) {
-		granted = connector.UnionScopes(granted, []string{"offline_access"})
-	}
-
-	return connector.MissingScopes(required, granted)
-}
-
-func connectionHasRefreshToken(c connector.Connection) bool {
-	switch conn := c.(type) {
-	case *connector.OAuth2Connection:
-		return conn.RefreshToken != ""
-	case *connector.SlackConnection:
-		return conn.RefreshToken != ""
-	default:
-		return false
-	}
 }
 
 // AutoSelectDefaultOrganization picks the first workspace/org a freshly linked
@@ -667,7 +633,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 	}
 
 	cfg, ok := providerOrgConfigs[dbMeta.Provider]
-	if !ok || !cfg.NeedsPicker || !s.ProviderSupportsOrganizationPicker(dbMeta.Provider) {
+	if !ok || !cfg.NeedsPicker {
 		return
 	}
 
@@ -676,26 +642,12 @@ func (s *Service) AutoSelectDefaultOrganization(
 		return
 	}
 
-	handle, err := s.OpenConnector(ctx, scope, *source.ConnectorID)
-	if err != nil {
-		if !errors.Is(err, coredata.ErrResourceNotFound) {
-			s.logger.WarnCtx(ctx, "cannot open connector for default organization", log.Error(err))
-		}
-
-		return
-	}
-
-	reg, ok := s.providerRegistry.For(handle)
-	if !ok || reg.ListOrganizations == nil {
-		return
-	}
-
 	// Bound the outbound provider call so a hung provider cannot stall the
 	// create/update mutation that triggered the defaulting.
 	listCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	orgs, err := reg.ListOrganizations(listCtx, handle)
+	orgs, err := s.ProviderOrganizations(listCtx, scope, *source.ConnectorID)
 	if err != nil {
 		s.logger.WarnCtx(
 			ctx,

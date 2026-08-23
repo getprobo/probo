@@ -572,16 +572,11 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 	// refresh token available, a dead API key), so the probe is what decides.
 	// For a connector that federates into a cloud, the credential exchange
 	// happened during the open and is already most of the check.
-	handle, err := r.accessReview.OpenConnector(ctx, scope, *obj.ConnectorID)
-	if err != nil {
+	if err := r.accessReview.ProbeConnector(ctx, scope, *obj.ConnectorID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return types.AccessReviewSourceConnectionStatusNotApplicable, nil
 		}
 
-		return types.AccessReviewSourceConnectionStatusDisconnected, nil
-	}
-
-	if err := handle.Probe(ctx); err != nil {
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}
 

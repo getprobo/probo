@@ -51,7 +51,7 @@ import (
 // client via gqlutils.Invalid, so it contains only provider/field names,
 // never the key itself.
 func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorProvider, clientKey *string) (string, error) {
-	if reg, ok := r.providerRegistry.Get(provider); ok && reg.ManagedAPIKey {
+	if reg, ok := r.providerRegistry.Get(provider); ok && reg.APIKey != nil && reg.APIKey.Managed {
 		if _, ok := r.providerRegistry.ManagedAPIKey(provider); !ok {
 			return "", fmt.Errorf("connector is not configured for this deployment")
 		}

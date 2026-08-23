@@ -37,9 +37,9 @@ func TestCalendlyRegistration(t *testing.T) {
 	reg, ok := r.Get(coredata.ConnectorProviderCalendly)
 	require.True(t, ok)
 
-	assert.True(t, reg.SupportsAPIKey)
-	assert.True(t, reg.RequiresPKCE)
-	assert.Equal(t, []string{"users:read", "organizations:read"}, reg.OAuth2Scopes)
+	assert.NotNil(t, reg.APIKey)
+	assert.True(t, reg.OAuth2.RequiresPKCE)
+	assert.Equal(t, []string{"users:read", "organizations:read"}, reg.OAuth2.Scopes)
 
 	oauthConnector := &connector.OAuth2Connector{}
 	require.NoError(t, r.ApplyOAuth2Defaults(

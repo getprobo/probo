@@ -22,15 +22,18 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const grafanaUsersPageSize = 100
@@ -217,4 +220,66 @@ func (r *grafanaNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	}
 
 	return strings.TrimSpace(org.Name), nil
+}
+
+func grafanaSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		driver, err := grafanaSourceDriver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints)
+		if err != nil {
+			return nil, err
+		}
+
+		return capable(
+			driver,
+			grafanaSourceNameResolver(ctx, credential.Client, opened.Connector, logger, opened.Endpoints),
+			nil,
+		), nil
+	})
+}
+
+func grafanaSourceDriver(
+	_ context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	_ *log.Logger,
+	_ provider.Endpoints,
+) (Driver, error) {
+	s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read grafana connector settings: %w", err)
+	}
+
+	baseURL, err := provider.NormalizeSelfHostedBaseURL(s.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create grafana driver: %w", err)
+	}
+
+	return NewGrafanaDriver(c, baseURL), nil
+}
+
+func grafanaSourceNameResolver(
+	ctx context.Context,
+	c *http.Client,
+	conn *coredata.Connector,
+	logger *log.Logger,
+	_ provider.Endpoints,
+) NameResolver {
+	s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
+	if err != nil {
+		logger.ErrorCtx(ctx, "cannot read grafana connector settings", log.Error(err))
+		return nil
+	}
+
+	baseURL, err := provider.NormalizeSelfHostedBaseURL(s.BaseURL)
+	if err != nil {
+		logger.ErrorCtx(ctx, "invalid grafana base url in connector settings", log.Error(err))
+		return nil
+	}
+
+	return NewGrafanaNameResolver(c, baseURL)
 }

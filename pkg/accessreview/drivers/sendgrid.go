@@ -22,15 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 type SendGridDriver struct {
@@ -336,4 +338,19 @@ func (r *sendGridNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	}
 
 	return resp.Company, nil
+}
+
+func sendgridSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewSendGridDriver(credential.Client, logger.Named("sendgrid"), opened.Endpoints.APIBase),
+			NewSendGridNameResolver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+		), nil
+	})
 }

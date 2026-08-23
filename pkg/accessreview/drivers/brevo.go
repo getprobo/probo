@@ -22,14 +22,17 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"encoding/json"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 	"net/url"
 	"sort"
 	"strings"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 const brevoInvitedUsersPath = "/organization/invited/users"
@@ -191,4 +194,19 @@ func brevoRoles(featureAccess map[string]json.RawMessage) []string {
 	sort.Strings(roles)
 
 	return roles
+}
+
+func brevoSource() Factory {
+	return provider.Over(func(
+		ctx context.Context,
+		credential connector.HTTPCredential,
+		opened *provider.Handle,
+		logger *log.Logger,
+	) (Driver, error) {
+		return capable(
+			NewBrevoDriver(credential.Client, opened.Endpoints.APIBase),
+			nil,
+			nil,
+		), nil
+	})
 }
