@@ -90,12 +90,16 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		accessToken, err := authn.AuthenticateOAuth2AccessToken(
-			r.Context(),
-			h.iam,
-			tokenValue,
-		)
+		accessToken, err := h.iam.OAuth2ServerService.LoadAccessToken(r.Context(), tokenValue)
 		if err != nil {
+			bearertoken.SetBearerInvalidToken(w, h.baseURL)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+
+			return
+		}
+
+		if accessToken.ClientID != nil &&
+			!accessToken.HasAudience(h.iam.OAuth2ServerService.Issuer()) {
 			bearertoken.SetBearerInvalidToken(w, h.baseURL)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 

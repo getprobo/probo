@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -62,6 +63,10 @@ func (t *OAuth2AccessToken) CursorKey(orderBy OAuth2AccessTokenOrderField) page.
 
 func (t *OAuth2AccessToken) ExpiresIn(now time.Time) time.Duration {
 	return t.ExpiresAt.Sub(now)
+}
+
+func (t *OAuth2AccessToken) HasAudience(audience uri.URI) bool {
+	return slices.Contains(t.Resources, audience)
 }
 
 func (t *OAuth2AccessToken) Insert(ctx context.Context, conn pg.Tx) error {
