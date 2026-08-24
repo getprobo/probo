@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ThirdPartyLogo } from "@probo/ui";
+import { Badge, ThirdPartyLogo } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -88,6 +88,9 @@ export function AccessReviewSourceProviderListItem({
     "apiKey" | "clientCredentials" | "datadog" | "zendesk" | null
   >(null);
 
+  // AWS access review is not implemented yet.
+  const isComingSoon = provider.provider === "AWS";
+
   // Every row renders the dialogs its provider can actually reach, so a list of
   // providers does not mount three unusable dialogs per row.
   const supportsAPIKey = provider.apiKeySupported || provider.apiKeyManaged;
@@ -152,12 +155,20 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        <ConnectMethodSplitButton
-          actions={actions}
-          chooseAnotherMethodLabel={t(
-            "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
-          )}
-        />
+        {isComingSoon
+          ? (
+              <Badge variant="info">
+                {t("addAccessReviewSourceDialog.comingSoon")}
+              </Badge>
+            )
+          : (
+              <ConnectMethodSplitButton
+                actions={actions}
+                chooseAnotherMethodLabel={t(
+                  "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
+                )}
+              />
+            )}
       </div>
       {supportsAPIKey && (
         <APIKeyConnectorDialog

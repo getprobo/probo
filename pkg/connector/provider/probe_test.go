@@ -46,7 +46,14 @@ func TestBuiltinRegistry_ProbeCoverage(t *testing.T) {
 	r := NewBuiltinRegistry()
 
 	for _, reg := range r.All() {
+		// A workload identity provider's credential is a cloud SDK
+		// credential, so its probe is a cloud call rather than an HTTP one and
+		// none of the three HTTP forms can express it.
 		hasProbe := reg.Probe != nil || reg.Endpoints.Probe != "" || reg.BuildProbeURL != nil
+		if reg.SupportsWorkloadIdentity() {
+			hasProbe = reg.WorkloadIdentity.Probe != nil
+		}
+
 		assert.True(t, hasProbe, "provider %s has no connection probe configured", reg.Provider)
 	}
 }

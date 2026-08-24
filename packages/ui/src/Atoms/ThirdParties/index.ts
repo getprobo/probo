@@ -1,3 +1,4 @@
+export { AWS } from "./AWS";
 export { Anthropic } from "./Anthropic";
 export { Apollo } from "./Apollo";
 export { Asana } from "./Asana";

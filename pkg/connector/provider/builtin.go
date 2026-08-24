@@ -61,6 +61,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		apolloRegistration(),
 		authentikRegistration(),
 		asanaRegistration(),
+		awsRegistration(),
 		betterStackRegistration(),
 		bitbucketRegistration(),
 		brevoRegistration(),

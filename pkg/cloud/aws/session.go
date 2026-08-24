@@ -30,7 +30,6 @@ package aws
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	awssdk "github.com/aws/aws-sdk-go-v2/aws"
@@ -44,8 +43,8 @@ import (
 )
 
 const (
-	// DefaultRegion is where STS is called when the connector names no region.
-	// It only selects the STS endpoint; IAM and Organizations are global.
+	// DefaultRegion is the STS endpoint the session uses. It only selects
+	// the STS host; IAM is global.
 	DefaultRegion = "us-east-1"
 
 	// roleSessionNamePrefix labels the assumed-role session in the customer's
@@ -67,9 +66,7 @@ type (
 	Option func(*options)
 
 	options struct {
-		region      string
-		stsEndpoint string
-		httpClient  *http.Client
+		region string
 	}
 
 	// issuerTokenRetriever adapts the issuer to the AWS SDK's
@@ -88,17 +85,6 @@ var (
 // WithRegion selects the region the STS exchange targets.
 func WithRegion(region string) Option {
 	return func(o *options) { o.region = region }
-}
-
-// WithSTSEndpoint overrides the STS endpoint URL. Production leaves it unset
-// and lets the SDK resolve the regional endpoint.
-func WithSTSEndpoint(endpoint string) Option {
-	return func(o *options) { o.stsEndpoint = endpoint }
-}
-
-// WithHTTPClient replaces the SSRF-protected client the STS exchange uses.
-func WithHTTPClient(c *http.Client) Option {
-	return func(o *options) { o.httpClient = c }
 }
 
 // NewSession opens a session on the account owning roleARN, by exchanging an
@@ -135,9 +121,7 @@ func NewSession(
 		o.region = DefaultRegion
 	}
 
-	if o.httpClient == nil {
-		o.httpClient = httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
-	}
+	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
 
 	// AssumeRoleWithWebIdentity is the one STS call that takes no credential —
 	// the assertion is the credential. Signing it anonymously also keeps any
@@ -146,12 +130,7 @@ func NewSession(
 		awssdk.Config{
 			Region:      o.region,
 			Credentials: awssdk.AnonymousCredentials{},
-			HTTPClient:  o.httpClient,
-		},
-		func(so *sts.Options) {
-			if o.stsEndpoint != "" {
-				so.BaseEndpoint = awssdk.String(o.stsEndpoint)
-			}
+			HTTPClient:  httpClient,
 		},
 	)
 
@@ -172,7 +151,7 @@ func NewSession(
 		cfg: awssdk.Config{
 			Region:      o.region,
 			Credentials: awssdk.NewCredentialsCache(provider),
-			HTTPClient:  o.httpClient,
+			HTTPClient:  httpClient,
 		},
 		accountID: parsedARN.AccountID,
 	}, nil
@@ -191,6 +170,27 @@ func (s *Session) AccountID() string {
 // Config returns the SDK config to build service clients from.
 func (s *Session) Config() awssdk.Config {
 	return s.cfg
+}
+
+// CheckAccess reports whether this session can actually reach its account.
+//
+// It calls sts:GetCallerIdentity, which every principal may call regardless of
+// its policies, so a failure means the web identity exchange itself was
+// refused — a missing role, a trust policy that does not name this
+// organization, an unpublished signing key — and never a missing permission on
+// the role. That is what makes it a connection check rather than a capability
+// check.
+//
+// It is also the first call to force the exchange: NewSession fetches no
+// credential, so until something calls AWS there is nothing to be wrong.
+func (s *Session) CheckAccess(ctx context.Context) error {
+	client := sts.NewFromConfig(s.cfg)
+
+	if _, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{}); err != nil {
+		return fmt.Errorf("cannot reach aws account: %w", err)
+	}
+
+	return nil
 }
 
 // GetIdentityToken mints the assertion STS exchanges for credentials.

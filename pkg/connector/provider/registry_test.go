@@ -92,6 +92,17 @@ func TestEveryProviderRegistered(t *testing.T) {
 			require.NotNil(t, reg, "provider %q Registration is nil", p)
 			require.Equalf(t, p, reg.Provider, "provider %q has mismatching Registration.Provider", p)
 			assert.NotEmptyf(t, reg.DisplayName, "provider %q has empty DisplayName", p)
+
+			// A workload identity provider builds its driver from a cloud
+			// session rather than an *http.Client, so it wires the factory
+			// inside its connect path and leaves NewDriver nil — Register
+			// rejects a provider that sets both.
+			if reg.SupportsWorkloadIdentity() {
+				assert.NotNilf(t, reg.WorkloadIdentity.NewDriver, "provider %q has nil WorkloadIdentity.NewDriver", p)
+
+				return
+			}
+
 			assert.NotNilf(t, reg.NewDriver, "provider %q has nil NewDriver", p)
 		})
 	}

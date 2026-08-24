@@ -73,6 +73,21 @@ func TestConnectorSettings_RoundTrip(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 
+	t.Run("AWSConnectorSettings", func(t *testing.T) {
+		t.Parallel()
+
+		want := coredata.AWSConnectorSettings{
+			RoleARN: "arn:aws:iam::123456789012:role/" + coredata.DefaultAWSRoleName,
+			Issuer:  "https://proboidentity.com/e5IaD7ibAAEAAAAAAZZ9aR_Oq_Npymhg",
+		}
+		c := &coredata.Connector{}
+		require.NoError(t, c.SetSettings(&want))
+
+		got, err := coredata.ConnectorSettings[coredata.AWSConnectorSettings](c)
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	})
+
 	t.Run("empty RawSettings returns zero value", func(t *testing.T) {
 		t.Parallel()
 

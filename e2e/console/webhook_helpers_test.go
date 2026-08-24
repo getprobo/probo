@@ -246,8 +246,7 @@ func bestEffortDeleteWebhookSubscription(
 		return
 	}
 
-	var gqlErrors testutil.GraphQLErrors
-	if errors.As(err, &gqlErrors) {
+	if gqlErrors, ok := errors.AsType[testutil.GraphQLErrors](err); ok {
 		for _, gqlErr := range gqlErrors {
 			if gqlErr.Code() == "NOT_FOUND" {
 				return

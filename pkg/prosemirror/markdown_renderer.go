@@ -23,6 +23,7 @@ package prosemirror
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -274,8 +275,8 @@ func (r *mdRenderer) renderText(n Node) error {
 
 	r.buf.WriteString(escapeMarkdown(text))
 
-	for i := len(n.Marks) - 1; i >= 0; i-- {
-		if err := r.closeMark(n.Marks[i]); err != nil {
+	for _, v := range slices.Backward(n.Marks) {
+		if err := r.closeMark(v); err != nil {
 			return err
 		}
 	}
@@ -336,8 +337,8 @@ func (r *mdRenderer) renderCodeText(n Node) error {
 
 	r.buf.WriteString(fence)
 
-	for i := len(otherMarks) - 1; i >= 0; i-- {
-		if err := r.closeMark(otherMarks[i]); err != nil {
+	for _, otherMark := range slices.Backward(otherMarks) {
+		if err := r.closeMark(otherMark); err != nil {
 			return err
 		}
 	}

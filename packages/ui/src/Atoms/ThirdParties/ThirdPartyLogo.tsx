@@ -24,6 +24,7 @@ import { Anthropic } from "./Anthropic";
 import { Apollo } from "./Apollo";
 import { Asana } from "./Asana";
 import { Authentik } from "./Authentik";
+import { AWS } from "./AWS";
 import { BetterStack } from "./BetterStack";
 import { Bitbucket } from "./Bitbucket";
 import { Brevo } from "./Brevo";
@@ -87,6 +88,7 @@ import { Yousign } from "./Yousign";
 import { Zendesk } from "./Zendesk";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
+  AWS: AWS,
   ANTHROPIC: Anthropic,
   APOLLO: Apollo,
   ASANA: Asana,

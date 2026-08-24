@@ -1868,6 +1868,7 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": { "connectWithOAuth": "OAuth", "connectWithGitHubApp": "GitHub App", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "connectWithWorkloadIdentity": "Workload Identity", "chooseAnotherMethod": "Choose another connection method", "open": "Open" },
+    "comingSoon": "Coming soon!",
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {

@@ -254,8 +254,7 @@ func isThreadCollectionFallbackError(err error) bool {
 }
 
 func slackAPIErrorCode(err error) string {
-	var apiErr *APIError
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*APIError](err); ok {
 		return apiErr.Code
 	}
 
