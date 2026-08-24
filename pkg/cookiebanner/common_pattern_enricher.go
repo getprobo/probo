@@ -230,17 +230,10 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 	)
 }
 
-// persistTerminalVerdict records the agent's terminal verdict that a
-// catalog pattern has no third party behind it (FIRST_PARTY or
-// NOT_ATTRIBUTABLE), mirroring the operator mark-first-party and
-// mark-not-attributable commands: the attribution is set (which also
-// clears any vendor link), the description returns to empty because a
-// terminal non-vendor row keeps no vendor-naming prose, and the linked
-// org patterns are re-queued for mapping with their descriptions cleared.
-//
-// It still writes the enrichment payload. The payload's presence is what
-// marks the row as having been through the workflow, so the stale-recovery
-// sweep — which re-queues rows with a null payload — never loops on it.
+// persistTerminalVerdict records a no-vendor verdict, clears the
+// vendor-naming description, and re-queues linked org patterns. The
+// enrichment payload is still written so the stale-recovery sweep does
+// not re-queue the row.
 func (e *CommonPatternEnricher) persistTerminalVerdict(
 	ctx context.Context,
 	cp coredata.CommonTrackerPattern,

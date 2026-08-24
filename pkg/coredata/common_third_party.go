@@ -63,19 +63,10 @@ type (
 		LastEnrichmentAttemptAt       *time.Time         `db:"last_enrichment_attempt_at"`
 
 		// Review is the human verdict on whether this row names an
-		// engageable entity. RejectedVerdict is set exactly when Review
-		// is REJECTED and carries the terminal attribution that patterns
-		// resolving to this row earn instead of a vendor link.
-		//
-		// Nil means "do not assert a review": Insert and Upsert supply
-		// UNREVIEWED in the statement, and Upsert's conflict branch leaves an
-		// existing row's verdict alone — which is what an auto-create needs,
-		// since it reaches that branch only by losing a race and has no
-		// verdict of its own to record.
-		//
-		// The column is NOT NULL with no database default, so nil is honoured
-		// by these two methods rather than by the schema. Any other writer
-		// must supply a state.
+		// engageable entity. RejectedVerdict is set only when Review is
+		// REJECTED. Nil means "do not assert": Insert/Upsert supply
+		// UNREVIEWED, and Upsert's conflict branch leaves a stored
+		// verdict alone. The column is NOT NULL with no default.
 		Review          *CommonThirdPartyReview          `db:"review"`
 		RejectedVerdict *CommonTrackerPatternAttribution `db:"rejected_verdict"`
 		ReviewedAt      *time.Time                       `db:"reviewed_at"`
@@ -528,18 +519,7 @@ SET
     terms_of_service_url             = EXCLUDED.terms_of_service_url,
     security_page_url                = EXCLUDED.security_page_url,
     trust_page_url                   = EXCLUDED.trust_page_url,
-    -- Curation is part of what an upsert asserts: the seed promotes its
-    -- entries to VALIDATED here, since a curated row needs no human pass.
-    -- proboctl's upsert loads the row first and writes the current value
-    -- back, so a human REJECTED survives a category patch.
-    -- A NULL @review means "whatever is already there": an auto-create that
-    -- only reaches this branch by losing a race has no verdict to assert and
-    -- must not erase a human one. The seed passes VALIDATED deliberately,
-    -- because curation is exactly what it is asserting.
     review                           = COALESCE(@review, common_third_parties.review),
-    -- Moves with review: promoting a rejected row must not keep the
-    -- verdict its rejection carried. Declining to assert a review leaves
-    -- the verdict alone too.
     rejected_verdict                 = CASE
         WHEN @review IS NULL THEN common_third_parties.rejected_verdict
         ELSE EXCLUDED.rejected_verdict
@@ -974,15 +954,9 @@ WHERE
 	return nil
 }
 
-// LoadReviewForUpdate reads just the review verdict, locking the row so a
-// concurrent review cannot commit between this read and whatever the caller
-// writes on the strength of it. Only the two review columns are selected:
-// the caller needs no more, and a narrow read keeps the lock's blast radius
-// to a reviewer's own update rather than the whole entity.
-//
-// Returns ErrResourceNotFound when the row is gone, which a caller holding
-// an id from an earlier transaction must handle — the row can be pruned or
-// merged away in between.
+// LoadReviewForUpdate reads the review under FOR UPDATE so a concurrent
+// review cannot commit between this read and the caller's write. Returns
+// ErrResourceNotFound when the row was pruned or merged away.
 func (t *CommonThirdParty) LoadReviewForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
@@ -1016,11 +990,8 @@ FOR UPDATE
 	return review, verdict, nil
 }
 
-// UpdateReview records a human verdict on what the row names.
-//
-// The verdict must be nil unless review is REJECTED, and must be a terminal
-// attribution when it is. A mismatched pairing is rejected here so a
-// caller cannot write a row the mapping pipeline cannot act on.
+// UpdateReview records a human verdict. A rejection requires a terminal
+// verdict; any other state must carry none.
 func (t CommonThirdParty) UpdateReview(
 	ctx context.Context,
 	conn pg.Tx,
