@@ -19,13 +19,13 @@
 -- SOFTWARE.
 
 ALTER TABLE iam_oauth2_authorization_codes
-    ADD COLUMN resource TEXT;
+    ADD COLUMN resources TEXT[];
 
 ALTER TABLE iam_oauth2_consents
-    ADD COLUMN resource TEXT;
+    ADD COLUMN resources TEXT[];
 
 ALTER TABLE iam_oauth2_access_tokens
-    ADD COLUMN resource TEXT;
+    ADD COLUMN resources TEXT[];
 
 ALTER TABLE iam_oauth2_refresh_tokens
-    ADD COLUMN resource TEXT;
+    ADD COLUMN resources TEXT[];

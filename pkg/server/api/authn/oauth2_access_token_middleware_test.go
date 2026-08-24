@@ -55,7 +55,7 @@ func TestOAuth2AccessTokenMatchesIssuer(t *testing.T) {
 	}{
 		{
 			name:  "manual token remains unbound",
-			token: &coredata.OAuth2AccessToken{Resource: &other},
+			token: &coredata.OAuth2AccessToken{Resources: []uri.URI{other}},
 			want:  true,
 		},
 		{
@@ -64,19 +64,36 @@ func TestOAuth2AccessTokenMatchesIssuer(t *testing.T) {
 			want:  false,
 		},
 		{
-			name:  "matching issuer allowed",
-			token: &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &root},
-			want:  true,
+			name: "matching issuer allowed",
+			token: &coredata.OAuth2AccessToken{
+				ClientID:  &clientID,
+				Resources: []uri.URI{root},
+			},
+			want: true,
 		},
 		{
-			name:  "route resource rejected",
-			token: &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &mcp},
-			want:  false,
+			name: "issuer among audiences allowed",
+			token: &coredata.OAuth2AccessToken{
+				ClientID:  &clientID,
+				Resources: []uri.URI{other, root},
+			},
+			want: true,
 		},
 		{
-			name:  "unknown resource rejected",
-			token: &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &other},
-			want:  false,
+			name: "route resource rejected",
+			token: &coredata.OAuth2AccessToken{
+				ClientID:  &clientID,
+				Resources: []uri.URI{mcp},
+			},
+			want: false,
+		},
+		{
+			name: "unknown resource rejected",
+			token: &coredata.OAuth2AccessToken{
+				ClientID:  &clientID,
+				Resources: []uri.URI{other},
+			},
+			want: false,
 		},
 	}
 

@@ -129,7 +129,7 @@ func (h *OAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		clientID,
 		code,
 		redirectURI,
-		"",
+		nil,
 		state.CodeVerifier,
 	)
 	if err != nil {

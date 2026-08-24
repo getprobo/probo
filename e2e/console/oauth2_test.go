@@ -478,6 +478,51 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 	)
 
 	t.Run(
+		"duplicate resource parameters are accepted",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2Client(owner, nil)
+			redirectURI := "http://localhost:9999/callback"
+			verifier, challenge := testutil.GeneratePKCE()
+			resources := []string{owner.BaseURL(), owner.BaseURL()}
+			params := url.Values{
+				"client_id":             {client.ClientID},
+				"redirect_uri":          {redirectURI},
+				"response_type":         {"code"},
+				"scope":                 {"openid"},
+				"state":                 {"duplicate-resource-test"},
+				"code_challenge":        {challenge},
+				"code_challenge_method": {"S256"},
+				"resource":              resources,
+			}
+
+			authResp, err := testutil.OAuth2Authorize(owner, params)
+			require.NoError(t, err)
+			require.True(t, testutil.IsConsentRedirect(authResp))
+			consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
+			require.NoError(t, err)
+			consentResp, err := testutil.OAuth2ConsentApprove(owner, consentID)
+			require.NoError(t, err)
+			code, err := testutil.OAuth2AuthorizeCodeFromRedirect(consentResp)
+			require.NoError(t, err)
+
+			tokenResp, raw, err := testutil.OAuth2TokenWithCodeForResources(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				code,
+				redirectURI,
+				verifier,
+				resources,
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode, string(raw.Body))
+			assert.NotEmpty(t, tokenResp.AccessToken)
+		},
+	)
+
+	t.Run(
 		"consent deny returns access_denied",
 		func(t *testing.T) {
 			t.Parallel()
@@ -956,6 +1001,7 @@ func TestOAuth2_Introspect(t *testing.T) {
 			assert.Greater(t, introspect.Exp, int64(0))
 			assert.NotEmpty(t, introspect.Scope, "introspection should return scope")
 			assert.Equal(t, client.ClientID, introspect.ClientID, "introspection should return client_id")
+			assert.Equal(t, []string{owner.BaseURL()}, introspect.Audiences)
 		},
 	)
 
@@ -1076,6 +1122,7 @@ func TestOAuth2_Introspect(t *testing.T) {
 			assert.NotEmpty(t, introspect.Sub)
 			assert.Greater(t, introspect.Exp, int64(0))
 			assert.NotEmpty(t, introspect.Scope)
+			assert.Equal(t, []string{owner.BaseURL()}, introspect.Audiences)
 		},
 	)
 

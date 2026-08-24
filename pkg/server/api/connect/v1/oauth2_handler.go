@@ -490,7 +490,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		client.ID.String(),
 		in.Code,
 		in.RedirectURI,
-		in.Resource,
+		in.Resources,
 		in.CodeVerifier,
 	)
 	if err != nil {
@@ -529,7 +529,7 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 		r.Context(),
 		client,
 		in.RefreshToken,
-		in.Resource,
+		in.Resources,
 	)
 	if err != nil {
 		if errors.Is(err, oauth2.ErrInvalidTarget) {

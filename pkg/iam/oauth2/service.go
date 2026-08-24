@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -126,6 +127,7 @@ type (
 	IntrospectResult struct {
 		ClientID   gid.GID
 		IdentityID gid.GID
+		Resources  []uri.URI
 		Scopes     coredata.OAuth2Scopes
 		IssuedAt   time.Time
 		ExpiresAt  time.Time
@@ -237,7 +239,7 @@ func (s *Service) CreateAccessToken(
 		HashedValue: hash.SHA256String(tokenValue),
 		ClientID:    new(clientID),
 		IdentityID:  identityID,
-		Resource:    new(s.baseURL),
+		Resources:   []uri.URI{s.baseURL},
 		Scopes:      scopes,
 		CreatedAt:   now,
 		ExpiresAt:   now.Add(s.accessTokenDuration),
@@ -285,13 +287,20 @@ func (s *Service) GetClientByID(ctx context.Context, clientID gid.GID) (*coredat
 func (s *Service) ExchangeAuthorizationCode(
 	ctx context.Context,
 	clientIDRaw string,
-	codeValue, redirectURI, resource, codeVerifier string,
+	codeValue string,
+	redirectURI string,
+	resources []string,
+	codeVerifier string,
 ) (*TokenResult, error) {
 	client, err := s.resolveClient(ctx, nil, clientIDRaw)
 	if err != nil {
 		return nil, err
 	}
-	resource = s.tokenResource(resource)
+
+	requestedResources, err := s.requestedResources(resources)
+	if err != nil {
+		return nil, err
+	}
 
 	var (
 		code                 = coredata.OAuth2AuthorizationCode{}
@@ -355,11 +364,15 @@ func (s *Service) ExchangeAuthorizationCode(
 				)
 			}
 
+			if len(requestedResources) == 0 {
+				requestedResources = slices.Clone(code.Resources)
+			}
+
 			if err := validateAuthorizationCodeExchange(
 				&code,
 				now,
 				redirectURI,
-				resource,
+				requestedResources,
 				codeVerifier,
 			); err != nil {
 				return err
@@ -411,7 +424,7 @@ func (s *Service) ExchangeAuthorizationCode(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    new(client.ID),
 				IdentityID:  code.IdentityID,
-				Resource:    code.Resource,
+				Resources:   requestedResources,
 				Scopes:      code.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
@@ -429,7 +442,7 @@ func (s *Service) ExchangeAuthorizationCode(
 					HashedValue:   hash.SHA256String(refreshTokenValue),
 					ClientID:      client.ID,
 					IdentityID:    code.IdentityID,
-					Resource:      code.Resource,
+					Resources:     code.Resources,
 					Scopes:        code.Scopes,
 					AccessTokenID: accessToken.ID,
 					CreatedAt:     now,
@@ -462,9 +475,12 @@ func (s *Service) RefreshToken(
 	ctx context.Context,
 	client *coredata.OAuth2Client,
 	refreshTokenValue string,
-	resource string,
+	resources []string,
 ) (*TokenResult, error) {
-	resource = s.tokenResource(resource)
+	requestedResources, err := s.requestedResources(resources)
+	if err != nil {
+		return nil, err
+	}
 
 	var (
 		accessTokenValue     = rand.MustHexString(tokenByteLength)
@@ -560,7 +576,11 @@ func (s *Service) RefreshToken(
 		)
 	}
 
-	if !resourceMatches(previousRefreshToken.Resource, resource) {
+	if len(requestedResources) == 0 {
+		requestedResources = slices.Clone(previousRefreshToken.Resources)
+	}
+
+	if !resourcesSubset(requestedResources, previousRefreshToken.Resources) {
 		return nil, NewError(
 			ErrInvalidTarget,
 			WithDescription("resource does not match refresh token"),
@@ -616,7 +636,7 @@ func (s *Service) RefreshToken(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    new(client.ID),
 				IdentityID:  previousRefreshToken.IdentityID,
-				Resource:    previousRefreshToken.Resource,
+				Resources:   requestedResources,
 				Scopes:      previousRefreshToken.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
@@ -630,7 +650,7 @@ func (s *Service) RefreshToken(
 				HashedValue:   hash.SHA256String(refreshTokenValueNew),
 				ClientID:      client.ID,
 				IdentityID:    previousRefreshToken.IdentityID,
-				Resource:      previousRefreshToken.Resource,
+				Resources:     previousRefreshToken.Resources,
 				Scopes:        previousRefreshToken.Scopes,
 				AccessTokenID: accessToken.ID,
 				CreatedAt:     now,
@@ -885,7 +905,7 @@ func (s *Service) PollDeviceCode(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    new(clientID),
 				IdentityID:  *deviceCode.IdentityID,
-				Resource:    new(s.baseURL),
+				Resources:   []uri.URI{s.baseURL},
 				Scopes:      deviceCode.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
@@ -902,7 +922,7 @@ func (s *Service) PollDeviceCode(
 					HashedValue:   hash.SHA256String(refreshTokenValue),
 					ClientID:      clientID,
 					IdentityID:    *deviceCode.IdentityID,
-					Resource:      new(s.baseURL),
+					Resources:     []uri.URI{s.baseURL},
 					Scopes:        deviceCode.Scopes,
 					AccessTokenID: accessToken.ID,
 					CreatedAt:     now,
@@ -985,7 +1005,7 @@ func (s *Service) AuthorizeDevice(
 					identityID,
 					client.ID,
 					deviceCode.Scopes,
-					new(s.baseURL),
+					[]uri.URI{s.baseURL},
 				); err == nil {
 					deviceCode.Status = coredata.OAuth2DeviceCodeStatusAuthorized
 					deviceCode.IdentityID = &identityID
@@ -1005,7 +1025,7 @@ func (s *Service) AuthorizeDevice(
 				SessionID:    sessionID,
 				ClientID:     client.ID,
 				Scopes:       deviceCode.Scopes,
-				Resource:     new(s.baseURL),
+				Resources:    []uri.URI{s.baseURL},
 				DeviceCodeID: &deviceCode.ID,
 				Approved:     false,
 				CreatedAt:    now,
@@ -1272,6 +1292,7 @@ func (s *Service) IntrospectToken(
 		return &IntrospectResult{
 			ClientID:   resultClientID,
 			IdentityID: accessToken.IdentityID,
+			Resources:  accessToken.Resources,
 			Scopes:     accessToken.Scopes,
 			IssuedAt:   accessToken.CreatedAt,
 			ExpiresAt:  accessToken.ExpiresAt,
@@ -1285,6 +1306,7 @@ func (s *Service) IntrospectToken(
 		return &IntrospectResult{
 			ClientID:   refreshToken.ClientID,
 			IdentityID: refreshToken.IdentityID,
+			Resources:  refreshToken.Resources,
 			Scopes:     refreshToken.Scopes,
 			IssuedAt:   refreshToken.CreatedAt,
 			ExpiresAt:  refreshToken.ExpiresAt,
@@ -1450,7 +1472,7 @@ func (s *Service) Authorize(
 			}
 			redirectValidated = true
 
-			resource, err := s.protectedResource(req.Resources)
+			resources, err := s.protectedResources(req.Resources)
 			if err != nil {
 				return err
 			}
@@ -1539,7 +1561,7 @@ func (s *Service) Authorize(
 					req.IdentityID,
 					client.ID,
 					requestedScopes,
-					resource,
+					resources,
 				) == nil
 			}
 
@@ -1552,7 +1574,7 @@ func (s *Service) Authorize(
 					client,
 					req.IdentityID,
 					uri.URI(req.RedirectURI),
-					resource,
+					resources,
 					requestedScopes,
 					req.CodeChallenge,
 					codeChallengeMethod,
@@ -1574,7 +1596,7 @@ func (s *Service) Authorize(
 				ClientID:            client.ID,
 				Scopes:              requestedScopes,
 				RedirectURI:         new(uri.URI(req.RedirectURI)),
-				Resource:            resource,
+				Resources:           resources,
 				CodeChallenge:       req.CodeChallenge,
 				CodeChallengeMethod: codeChallengeMethod,
 				Nonce:               req.Nonce,
@@ -1751,7 +1773,7 @@ func (s *Service) ApproveConsent(
 				&client,
 				consent.IdentityID,
 				ref.UnrefOrZero(consent.RedirectURI),
-				consent.Resource,
+				consent.Resources,
 				consent.Scopes,
 				consent.CodeChallenge,
 				consent.CodeChallengeMethod,
@@ -1800,58 +1822,68 @@ func (s *Service) AuthenticateClient(
 	return client, nil
 }
 
-func (s *Service) protectedResource(values []string) (*uri.URI, error) {
+func (s *Service) protectedResources(values []string) ([]uri.URI, error) {
 	if len(values) == 0 {
-		return new(s.baseURL), nil
+		values = []string{s.baseURL.String()}
 	}
 
-	if len(values) > 1 {
-		return nil, NewError(
-			ErrInvalidTarget,
-			WithDescription("multiple resource parameters are not supported"),
-		)
-	}
-
-	raw := values[0]
-	if raw == "" {
-		return nil, NewError(
-			ErrInvalidTarget,
-			WithDescription("resource must not be empty"),
-		)
-	}
-
-	resource := uri.URI(raw)
-	if resource == s.baseURL {
-		return &resource, nil
-	}
-
-	return nil, NewError(
-		ErrInvalidTarget,
-		WithDescription("unsupported resource"),
-	)
+	return s.supportedResources(values)
 }
 
-func (s *Service) tokenResource(raw string) string {
-	if raw == "" {
-		return s.baseURL.String()
+func (s *Service) requestedResources(values []string) ([]uri.URI, error) {
+	if len(values) == 0 {
+		return nil, nil
 	}
 
-	return raw
+	return s.supportedResources(values)
 }
 
-func resourceMatches(expected *uri.URI, raw string) bool {
-	if expected == nil {
+func (s *Service) supportedResources(values []string) ([]uri.URI, error) {
+	supported := []uri.URI{s.baseURL}
+	resources := make([]uri.URI, 0, len(values))
+	for _, raw := range values {
+		if raw == "" {
+			return nil, NewError(
+				ErrInvalidTarget,
+				WithDescription("resource must not be empty"),
+			)
+		}
+
+		resource := uri.URI(raw)
+		if !slices.Contains(supported, resource) {
+			return nil, NewError(
+				ErrInvalidTarget,
+				WithDescription("unsupported resource"),
+			)
+		}
+
+		if !slices.Contains(resources, resource) {
+			resources = append(resources, resource)
+		}
+	}
+
+	return resources, nil
+}
+
+func resourcesSubset(requested []uri.URI, allowed []uri.URI) bool {
+	if len(requested) == 0 || len(allowed) == 0 {
 		return false
 	}
 
-	return expected.String() == raw
+	for _, resource := range requested {
+		if !slices.Contains(allowed, resource) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func validateAuthorizationCodeExchange(
 	code *coredata.OAuth2AuthorizationCode,
 	now time.Time,
 	redirectURI string,
-	resource string,
+	resources []uri.URI,
 	codeVerifier string,
 ) error {
 	if now.After(code.ExpiresAt) {
@@ -1868,7 +1900,7 @@ func validateAuthorizationCodeExchange(
 		)
 	}
 
-	if !resourceMatches(code.Resource, resource) {
+	if !resourcesSubset(resources, code.Resources) {
 		return NewError(
 			ErrInvalidTarget,
 			WithDescription("resource does not match authorization request"),
@@ -1902,7 +1934,7 @@ func (s *Service) issueAuthorizationCode(
 	client *coredata.OAuth2Client,
 	identityID gid.GID,
 	redirectURI uri.URI,
-	resource *uri.URI,
+	resources []uri.URI,
 	scopes coredata.OAuth2Scopes,
 	codeChallenge string,
 	codeChallengeMethod coredata.OAuth2CodeChallengeMethod,
@@ -1918,7 +1950,7 @@ func (s *Service) issueAuthorizationCode(
 		ClientID:    client.ID,
 		IdentityID:  identityID,
 		RedirectURI: redirectURI,
-		Resource:    resource,
+		Resources:   resources,
 		Scopes:      scopes,
 		AuthTime:    authTime,
 		CreatedAt:   now,

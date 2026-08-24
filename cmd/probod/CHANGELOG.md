@@ -17,21 +17,21 @@ below with the exact `PROBOD_BASE_URL`, and run:
 BEGIN;
 
 UPDATE iam_oauth2_authorization_codes
-SET resource = 'https://your-probo.example.com'
-WHERE resource IS NULL;
+SET resources = ARRAY['https://your-probo.example.com']
+WHERE resources IS NULL;
 
 UPDATE iam_oauth2_consents
-SET resource = 'https://your-probo.example.com'
-WHERE resource IS NULL;
+SET resources = ARRAY['https://your-probo.example.com']
+WHERE resources IS NULL;
 
 UPDATE iam_oauth2_access_tokens
-SET resource = 'https://your-probo.example.com'
-WHERE resource IS NULL
+SET resources = ARRAY['https://your-probo.example.com']
+WHERE resources IS NULL
   AND client_id IS NOT NULL;
 
 UPDATE iam_oauth2_refresh_tokens
-SET resource = 'https://your-probo.example.com'
-WHERE resource IS NULL;
+SET resources = ARRAY['https://your-probo.example.com']
+WHERE resources IS NULL;
 
 COMMIT;
 ```
