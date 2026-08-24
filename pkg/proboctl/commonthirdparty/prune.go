@@ -61,7 +61,11 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 			"vendor that nothing ever linked. They are not duplicates of anything, so " +
 			"`merge` cannot clean them up.\n\n" +
 			"Curated seed entries are always excluded, with no override: the next seed " +
-			"run would recreate them anyway.\n\n" +
+			"run would recreate them anyway. Reviewed entries are excluded for the same " +
+			"reason: a rejection is what the mapping pipeline reads to settle future " +
+			"patterns, and a validation is a confirmation that the entry belongs here — " +
+			"both are decisions worth keeping even with nothing referencing them. Use " +
+			"`review <slug> unreviewed` first if an entry really should go.\n\n" +
 			"Entries younger than --older-than are kept, because an entry is created " +
 			"before enrichment fills it in and before its triggering pattern is " +
 			"linked, so a young unreferenced entry is usually still in flight.",
@@ -129,6 +133,19 @@ func newCmdPrune(f *cmdutil.Factory) *cobra.Command {
 					// Curated entries are never pruned: the seed recreates
 					// them, so deleting one is churn at best.
 					if _, seeded := seededSlugs[party.Slug]; seeded {
+						continue
+					}
+
+					// A reviewed row carries a human decision, which is the
+					// thing worth keeping even when nothing references it.
+					// Deleting a rejected row loses the verdict the mapping
+					// pipeline reads, so the next matching pattern is
+					// adjudicated from scratch — the recurrence this state
+					// exists to stop. Deleting a validated one discards a
+					// confirmation that a real vendor belongs in the catalog,
+					// and it is precisely the vendors whose misattributed
+					// patterns were just detached that end up unreferenced.
+					if party.Review != nil && *party.Review != coredata.CommonThirdPartyReviewUnreviewed {
 						continue
 					}
 
