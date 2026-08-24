@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.218.0] - 2026-08-24
+
+### Changed
+
+- `prb access-review entry list --auth-method` now accepts `OAUTH2` and `SSH`, matching GitHub credential rows (OAuth app tokens and deploy keys) that were previously indistinguishable from API keys or service accounts
+
 ## [0.217.0] - 2026-08-14
 
 ### Added
