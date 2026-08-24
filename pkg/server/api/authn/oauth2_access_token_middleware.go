@@ -21,51 +21,15 @@
 package authn
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 )
-
-func oauth2AccessTokenMatchesIssuer(
-	svc *iam.Service,
-	accessToken *coredata.OAuth2AccessToken,
-) bool {
-	if accessToken.ClientID == nil {
-		return true
-	}
-
-	if len(accessToken.Resources) == 0 {
-		return false
-	}
-
-	return slices.Contains(accessToken.Resources, svc.OAuth2ServerService.Issuer())
-}
-
-func AuthenticateOAuth2AccessToken(
-	ctx context.Context,
-	svc *iam.Service,
-	tokenValue string,
-) (*coredata.OAuth2AccessToken, error) {
-	accessToken, err := svc.OAuth2ServerService.LoadAccessToken(ctx, tokenValue)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load oauth2 access token: %w", err)
-	}
-
-	if !oauth2AccessTokenMatchesIssuer(svc, accessToken) {
-		return nil, errors.New("oauth2 access token audience does not match issuer")
-	}
-
-	return accessToken, nil
-}
 
 func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -87,8 +51,15 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 					return
 				}
 
-				accessToken, err := AuthenticateOAuth2AccessToken(ctx, svc, tokenValue)
+				accessToken, err := svc.OAuth2ServerService.LoadAccessToken(ctx, tokenValue)
 				if err != nil {
+					next.ServeHTTP(w, r)
+
+					return
+				}
+
+				if accessToken.ClientID != nil &&
+					!accessToken.HasAudience(svc.OAuth2ServerService.Issuer()) {
 					next.ServeHTTP(w, r)
 
 					return
