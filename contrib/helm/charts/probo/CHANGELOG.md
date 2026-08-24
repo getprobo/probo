@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.19.0] - 2026-08-24
+
+### Added
+
+- Example Helm values for connecting a GitHub App connector (`appId`, `clientId`, `clientSecret`, `slug`, `privateKey`), and Secret wiring for the app's private key and client secret
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.265.0`
+
 ## [0.18.0] - 2026-08-21
 
 ### Added
