@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.265.1] - 2026-08-24
+
+### Fixed
+
+- The GitHub App connector's authorization URL didn't pin a redirect_uri, so GitHub could send installs to the wrong callback URL on deployments with more than one registered
+
 ## [0.265.0] - 2026-08-24
 
 ### Added
