@@ -451,6 +451,7 @@ func (impl *Implm) Run(
 			}).String()
 			gitHubApp.TokenURL = reg.Endpoints.Token
 			gitHubApp.APIBase = reg.Endpoints.APIBase
+			gitHubApp.RedirectURI = baseURL.WithPath(connector.GitHubAppCallbackPath).MustString()
 
 			if err := defaultConnectorRegistry.RegisterProtocol(
 				connectorCfg.Provider,

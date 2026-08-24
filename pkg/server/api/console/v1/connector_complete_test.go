@@ -45,6 +45,7 @@ func TestHandleConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
 		InstallBase:  "https://github.example/apps",
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
 	}
 	registry := connector.NewConnectorRegistry()
 	require.NoError(

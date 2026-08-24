@@ -40,6 +40,7 @@ func mintGitHubAppStateToken(t *testing.T) string {
 		ClientSecret: "github-app-client-secret",
 		Slug:         "probo-test",
 		InstallBase:  "https://github.com/apps",
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
 	}
 	organizationID := gid.New(gid.NewTenantID(), 0)
 	installURL, err := githubApp.Initiate(
@@ -121,6 +122,7 @@ func TestInitiateGitHubApp_BuildsAuthorizeURL(t *testing.T) {
 		ClientSecret: "github-app-client-secret",
 		Slug:         "probo-test",
 		InstallBase:  "https://github.com/apps",
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
 	}
 	require.NoError(
 		t,

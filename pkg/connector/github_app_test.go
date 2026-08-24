@@ -100,6 +100,7 @@ func TestGitHubAppConnector_InstallationFlow(t *testing.T) {
 		InstallBase:  "https://github.com/apps",
 		TokenURL:     server.URL + "/login/oauth/access_token",
 		APIBase:      server.URL,
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
 		HTTPClient:   server.Client(),
 	}
 	organizationID := gid.New(gid.NewTenantID(), 0)
@@ -271,6 +272,7 @@ func TestGitHubAppConnector_RejectsUnauthorizedInstallation(t *testing.T) {
 		InstallBase:  "https://github.com/apps",
 		TokenURL:     server.URL + "/login/oauth/access_token",
 		APIBase:      server.URL,
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
 		HTTPClient:   server.Client(),
 	}
 
@@ -345,6 +347,7 @@ func newGitHubAppCompleteFixture(t *testing.T, installationsJSON string) (*GitHu
 		InstallBase:  "https://github.com/apps",
 		TokenURL:     server.URL + "/login/oauth/access_token",
 		APIBase:      server.URL,
+		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
 		HTTPClient:   server.Client(),
 	}
 

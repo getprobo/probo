@@ -56,6 +56,7 @@ type (
 		InstallBase  string
 		TokenURL     string
 		APIBase      string
+		RedirectURI  string
 		HTTPClient   *http.Client
 	}
 
@@ -198,6 +199,7 @@ func (c *GitHubAppConnector) authorizeURL(state string) (string, error) {
 	q := u.Query()
 	q.Set("client_id", c.ClientID)
 	q.Set("state", state)
+	q.Set("redirect_uri", c.RedirectURI)
 	u.RawQuery = q.Encode()
 
 	return u.String(), nil
