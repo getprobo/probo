@@ -156,7 +156,7 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 	}
 
 	if firstParty {
-		return e.persistFirstPartyVerdict(ctx, cp, attribution)
+		return e.persistTerminalVerdict(ctx, cp, attribution)
 	}
 
 	alreadyLinked := cp.CommonThirdPartyID != nil
@@ -230,17 +230,18 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 	)
 }
 
-// persistFirstPartyVerdict records the agent's terminal verdict that a
-// catalog pattern has no third party behind it, mirroring the operator
-// mark-first-party command: the attribution is set (which also clears any
-// vendor link), the description returns to empty because a terminal
-// non-vendor row keeps no vendor-naming prose, and the linked org patterns
-// are re-queued for mapping with their descriptions cleared.
+// persistTerminalVerdict records the agent's terminal verdict that a
+// catalog pattern has no third party behind it (FIRST_PARTY or
+// NOT_ATTRIBUTABLE), mirroring the operator mark-first-party and
+// mark-not-attributable commands: the attribution is set (which also
+// clears any vendor link), the description returns to empty because a
+// terminal non-vendor row keeps no vendor-naming prose, and the linked
+// org patterns are re-queued for mapping with their descriptions cleared.
 //
 // It still writes the enrichment payload. The payload's presence is what
 // marks the row as having been through the workflow, so the stale-recovery
 // sweep — which re-queues rows with a null payload — never loops on it.
-func (e *CommonPatternEnricher) persistFirstPartyVerdict(
+func (e *CommonPatternEnricher) persistTerminalVerdict(
 	ctx context.Context,
 	cp coredata.CommonTrackerPattern,
 	attribution *agentIdentification,
@@ -270,7 +271,7 @@ func (e *CommonPatternEnricher) persistFirstPartyVerdict(
 				ids,
 				verdict,
 			); err != nil {
-				return fmt.Errorf("cannot record first-party verdict: %w", err)
+				return fmt.Errorf("cannot record terminal verdict: %w", err)
 			}
 
 			// Blank the description and write the payload in one statement.
@@ -294,9 +295,10 @@ func (e *CommonPatternEnricher) persistFirstPartyVerdict(
 
 			e.logger.InfoCtx(
 				ctx,
-				"recorded first-party verdict on common tracker pattern",
+				"recorded terminal verdict on common tracker pattern",
 				log.String("common_tracker_pattern_id", cp.ID.String()),
 				log.String("pattern", cp.Pattern),
+				log.String("attribution", string(verdict)),
 				log.Int("enrichment_attempts", cp.EnrichmentAttempts),
 				log.Int64("remapped_tracker_patterns", remapped),
 				log.Int64("cleared_tracker_patterns", cleared),

@@ -168,15 +168,15 @@ func TestInterpretEnrichmentAttribution(t *testing.T) {
 	}
 }
 
-// TestPersistFirstPartyVerdict_DoesNotRequeue pins the terminal state of a
-// first-party verdict, and above all that the stale-recovery sweep never
+// TestPersistTerminalVerdict_DoesNotRequeue pins the terminal state of a
+// no-vendor verdict, and above all that the stale-recovery sweep never
 // re-queues it.
 //
 // The sweep re-arms rows that were claimed but carry no enrichment
-// payload. A first-party verdict writes no description and links no
-// vendor, so if it also skipped the payload the row would be re-queued on
-// every sweep and re-run the agent forever.
-func TestPersistFirstPartyVerdict_DoesNotRequeue(t *testing.T) {
+// payload. A terminal verdict writes no description and links no vendor,
+// so if it also skipped the payload the row would be re-queued on every
+// sweep and re-run the agent forever.
+func TestPersistTerminalVerdict_DoesNotRequeue(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -223,7 +223,7 @@ func TestPersistFirstPartyVerdict_DoesNotRequeue(t *testing.T) {
 		TrackerMappingAgentConfig{},
 	)
 
-	require.NoError(t, enricher.persistFirstPartyVerdict(
+	require.NoError(t, enricher.persistTerminalVerdict(
 		ctx,
 		cp,
 		&agentIdentification{firstParty: true},

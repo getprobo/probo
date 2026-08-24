@@ -23,7 +23,6 @@ package commonthirdparty
 import (
 	"context"
 	"fmt"
-	"os/user"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -35,7 +34,6 @@ import (
 func newCmdReview(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagVerdict string
-		flagBy      string
 		flagDryRun  bool
 		flagYes     bool
 	)
@@ -64,7 +62,6 @@ func newCmdReview(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagVerdict, "verdict", "", "Terminal attribution for a rejection: first-party or not-attributable")
-	cmd.Flags().StringVar(&flagBy, "by", "", "Who reviewed it (defaults to the current OS user)")
 	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the change without writing")
 	cmd.Flags().BoolVar(&flagYes, "yes", false, "Skip confirmation")
 
@@ -88,13 +85,6 @@ func newCmdReview(f *cmdutil.Factory) *cobra.Command {
 				review,
 				args[0],
 			)
-		}
-
-		reviewedBy := strings.TrimSpace(flagBy)
-		if reviewedBy == "" {
-			if u, err := user.Current(); err == nil {
-				reviewedBy = u.Username
-			}
 		}
 
 		pgClient, err := f.PgClient()
@@ -124,7 +114,6 @@ func newCmdReview(f *cmdutil.Factory) *cobra.Command {
 					party.ID,
 					review,
 					verdict,
-					reviewedBy,
 				)
 			},
 		); err != nil {

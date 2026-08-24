@@ -65,8 +65,7 @@ type (
 		// Review is the human verdict on whether this row names an
 		// engageable entity. RejectedVerdict is set exactly when Review
 		// is REJECTED and carries the terminal attribution that patterns
-		// resolving to this row earn instead of a vendor link; a database
-		// CHECK enforces the pairing.
+		// resolving to this row earn instead of a vendor link.
 		//
 		// Nil means "do not assert a review": Insert and Upsert supply
 		// UNREVIEWED in the statement, and Upsert's conflict branch leaves an
@@ -80,7 +79,6 @@ type (
 		Review          *CommonThirdPartyReview          `db:"review"`
 		RejectedVerdict *CommonTrackerPatternAttribution `db:"rejected_verdict"`
 		ReviewedAt      *time.Time                       `db:"reviewed_at"`
-		ReviewedBy      *string                          `db:"reviewed_by"`
 
 		CreatedAt time.Time `db:"created_at"`
 		UpdatedAt time.Time `db:"updated_at"`
@@ -164,7 +162,6 @@ SELECT
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -236,7 +233,6 @@ SELECT
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -304,7 +300,6 @@ SELECT
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -368,7 +363,6 @@ INSERT INTO common_third_parties (
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 ) VALUES (
@@ -398,7 +392,6 @@ INSERT INTO common_third_parties (
     COALESCE(@review, @default_review::common_third_party_review),
     @rejected_verdict,
     @reviewed_at,
-    @reviewed_by,
     @created_at,
     @updated_at
 )
@@ -432,7 +425,6 @@ INSERT INTO common_third_parties (
 		"default_review":                   CommonThirdPartyReviewUnreviewed,
 		"rejected_verdict":                 t.RejectedVerdict,
 		"reviewed_at":                      t.ReviewedAt,
-		"reviewed_by":                      t.ReviewedBy,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -486,7 +478,6 @@ INSERT INTO common_third_parties (
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 ) VALUES (
@@ -516,7 +507,6 @@ INSERT INTO common_third_parties (
     COALESCE(@review, @default_review::common_third_party_review),
     @rejected_verdict,
     @reviewed_at,
-    @reviewed_by,
     @created_at,
     @updated_at
 )
@@ -547,9 +537,9 @@ SET
     -- must not erase a human one. The seed passes VALIDATED deliberately,
     -- because curation is exactly what it is asserting.
     review                           = COALESCE(@review, common_third_parties.review),
-    -- Moves with review or the CHECK fires: promoting a rejected row would
-    -- otherwise keep the verdict its rejection carried. Held to the same
-    -- rule, so declining to assert a review leaves the verdict alone too.
+    -- Moves with review: promoting a rejected row must not keep the
+    -- verdict its rejection carried. Declining to assert a review leaves
+    -- the verdict alone too.
     rejected_verdict                 = CASE
         WHEN @review IS NULL THEN common_third_parties.rejected_verdict
         ELSE EXCLUDED.rejected_verdict
@@ -582,7 +572,6 @@ RETURNING
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 `
@@ -617,7 +606,6 @@ RETURNING
 		"default_review":                   CommonThirdPartyReviewUnreviewed,
 		"rejected_verdict":                 t.RejectedVerdict,
 		"reviewed_at":                      t.ReviewedAt,
-		"reviewed_by":                      t.ReviewedBy,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -688,7 +676,6 @@ SELECT
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -774,7 +761,6 @@ SELECT
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -1033,24 +1019,29 @@ FOR UPDATE
 // UpdateReview records a human verdict on what the row names.
 //
 // The verdict must be nil unless review is REJECTED, and must be a terminal
-// attribution when it is; a database CHECK enforces the pairing, so a caller
-// that gets it wrong fails here rather than writing a row the mapping
-// pipeline cannot act on.
+// attribution when it is. A mismatched pairing is rejected here so a
+// caller cannot write a row the mapping pipeline cannot act on.
 func (t CommonThirdParty) UpdateReview(
 	ctx context.Context,
 	conn pg.Tx,
 	id gid.GID,
 	review CommonThirdPartyReview,
 	verdict *CommonTrackerPatternAttribution,
-	reviewedBy string,
 ) error {
+	if review == CommonThirdPartyReviewRejected {
+		if verdict == nil || !verdict.IsTerminal() {
+			return fmt.Errorf("cannot update common third party review: rejected review requires a terminal verdict")
+		}
+	} else if verdict != nil {
+		return fmt.Errorf("cannot update common third party review: verdict only applies to a rejected review")
+	}
+
 	q := `
 UPDATE common_third_parties
 SET
     review = @review,
     rejected_verdict = @rejected_verdict,
     reviewed_at = NOW(),
-    reviewed_by = @reviewed_by,
     updated_at = NOW()
 WHERE
     id = @id
@@ -1060,7 +1051,6 @@ WHERE
 		"id":               id,
 		"review":           review,
 		"rejected_verdict": verdict,
-		"reviewed_by":      reviewedBy,
 	}
 
 	result, err := conn.Exec(ctx, q, args)
@@ -1201,7 +1191,6 @@ SELECT
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 FROM
@@ -1299,7 +1288,6 @@ SELECT
     review,
     rejected_verdict,
     reviewed_at,
-    reviewed_by,
     created_at,
     updated_at
 FROM

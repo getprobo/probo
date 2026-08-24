@@ -254,7 +254,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 
 				rejected = true
 
-				match, err := h.persistFirstPartyVerdict(ctx, tx, tp, *verdict)
+				match, err := h.persistTerminalVerdict(ctx, tx, tp, *verdict)
 				if err != nil {
 					return err
 				}
@@ -320,7 +320,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 					var match *catalogMatch
 
 					if ident.firstParty {
-						match, err = h.persistFirstPartyVerdict(ctx, tx, tp, ident.terminalVerdict)
+						match, err = h.persistTerminalVerdict(ctx, tx, tp, ident.terminalVerdict)
 					} else {
 						match, err = h.persistAgentIdentification(ctx, tx, tp, *ident, det.untrustedThirdPartyID)
 					}
@@ -678,8 +678,7 @@ func (h *trackerMappingHandler) rejectedVerdictFor(
 		return nil, false, nil
 	}
 
-	// The database CHECK ties a verdict to the rejected state, so this is
-	// defensive: a row that lost its verdict must not silently fall through
+	// A rejected row without a verdict must not silently fall through
 	// to a vendor link.
 	if stored == nil || !stored.IsTerminal() {
 		return nil, false, fmt.Errorf(
@@ -1120,12 +1119,12 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 	}, nil
 }
 
-// persistFirstPartyVerdict records the agent's terminal first-party
-// verdict on the catalog: it upserts the row with no vendor and the
-// FIRST_PARTY attribution, which the upsert preserves on later automated
-// runs. Any stray low-confidence vendor a prior run left on the row is
-// cleared. It runs inside the caller's short transaction.
-func (h *trackerMappingHandler) persistFirstPartyVerdict(
+// persistTerminalVerdict records a terminal no-vendor verdict on the
+// catalog: it upserts the row with no vendor and the given attribution
+// (FIRST_PARTY or NOT_ATTRIBUTABLE), which the upsert preserves on later
+// automated runs. Any stray low-confidence vendor a prior run left on
+// the row is cleared. It runs inside the caller's short transaction.
+func (h *trackerMappingHandler) persistTerminalVerdict(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
@@ -1149,14 +1148,15 @@ func (h *trackerMappingHandler) persistFirstPartyVerdict(
 	}
 
 	if _, err := commonPattern.Upsert(ctx, tx); err != nil {
-		return nil, fmt.Errorf("cannot upsert first-party common tracker pattern: %w", err)
+		return nil, fmt.Errorf("cannot upsert terminal common tracker pattern: %w", err)
 	}
 
 	h.logger.InfoCtx(
 		ctx,
-		"recorded first-party tracker verdict",
+		"recorded terminal tracker verdict",
 		log.String("pattern", tp.Pattern),
 		log.String("tracker_pattern_id", tp.ID.String()),
+		log.String("attribution", string(verdict)),
 	)
 
 	return &catalogMatch{

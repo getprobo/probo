@@ -189,7 +189,6 @@ func TestRejectedVerdictFor_LocksAgainstConcurrentReview(t *testing.T) {
 					ctx, tx, id,
 					coredata.CommonThirdPartyReviewValidated,
 					nil,
-					"concurrent",
 				)
 			})
 

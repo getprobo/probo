@@ -53,28 +53,30 @@ func TestCommonThirdPartyReview_DefaultsOnInsert(t *testing.T) {
 	assert.Nil(t, loaded.ReviewedAt)
 }
 
-// The CHECK must reject a rejection with no verdict, and accept one with.
-func TestCommonThirdPartyReview_CheckConstraint(t *testing.T) {
+// UpdateReview must pair a rejection with a terminal verdict, and must
+// refuse a verdict on any other state.
+func TestCommonThirdPartyReview_UpdateReviewPairsVerdict(t *testing.T) {
 	t.Parallel()
 	client := test.PGClient(t)
 	ctx := context.Background()
 	party := seedCommonThirdParty(t, ctx, client)
+	firstParty := coredata.CommonTrackerPatternAttributionFirstParty
 
 	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		_, err := tx.Exec(ctx,
-			`UPDATE common_third_parties SET review = 'REJECTED' WHERE id = $1`, party.ID)
-
-		return err
+		return (coredata.CommonThirdParty{}).UpdateReview(
+			ctx, tx, party.ID,
+			coredata.CommonThirdPartyReviewRejected,
+			nil,
+		)
 	})
-	require.Error(t, err, "REJECTED without a verdict must violate the CHECK")
+	require.Error(t, err, "REJECTED without a verdict must be refused")
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		_, err := tx.Exec(ctx,
-			`UPDATE common_third_parties
-			 SET review = 'REJECTED', rejected_verdict = 'FIRST_PARTY', reviewed_at = $2
-			 WHERE id = $1`, party.ID, time.Now())
-
-		return err
+		return (coredata.CommonThirdParty{}).UpdateReview(
+			ctx, tx, party.ID,
+			coredata.CommonThirdPartyReviewRejected,
+			&firstParty,
+		)
 	}))
 
 	var loaded coredata.CommonThirdParty
@@ -88,15 +90,14 @@ func TestCommonThirdPartyReview_CheckConstraint(t *testing.T) {
 	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, *loaded.RejectedVerdict)
 	assert.True(t, loaded.RejectedVerdict.IsTerminal())
 
-	// And a validated row must not be allowed to carry a verdict.
 	err = client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		_, err := tx.Exec(ctx,
-			`UPDATE common_third_parties
-			 SET review = 'VALIDATED', rejected_verdict = 'FIRST_PARTY' WHERE id = $1`, party.ID)
-
-		return err
+		return (coredata.CommonThirdParty{}).UpdateReview(
+			ctx, tx, party.ID,
+			coredata.CommonThirdPartyReviewValidated,
+			&firstParty,
+		)
 	})
-	require.Error(t, err, "a non-rejected row must not carry a verdict")
+	require.Error(t, err, "a non-rejected review must not carry a verdict")
 }
 
 // Upsert writes review from the receiver, which is what lets the seed promote
@@ -117,7 +118,6 @@ func TestCommonThirdPartyUpsert_PreservesReview(t *testing.T) {
 			ctx, tx, party.ID,
 			coredata.CommonThirdPartyReviewRejected,
 			&notAttributable,
-			"tester",
 		)
 	}))
 
@@ -203,7 +203,6 @@ func TestCommonThirdPartyUpsert_NilReviewPreservesStoredVerdict(t *testing.T) {
 			ctx, tx, party.ID,
 			coredata.CommonThirdPartyReviewRejected,
 			&notAttributable,
-			"tester",
 		)
 	}))
 
@@ -235,7 +234,7 @@ func TestCommonThirdPartyUpsert_NilReviewPreservesStoredVerdict(t *testing.T) {
 	assert.Equal(t, coredata.CommonThirdPartyReviewRejected, *after.Review,
 		"an auto-create must not reset a human rejection")
 	require.NotNil(t, after.RejectedVerdict,
-		"the verdict must survive alongside the state, or the CHECK would fail")
+		"the verdict must survive alongside the state")
 	assert.Equal(t, notAttributable, *after.RejectedVerdict)
 	assert.Equal(t, coredata.ThirdPartyCategoryOther, after.Category,
 		"the rest of the upsert must still land")
