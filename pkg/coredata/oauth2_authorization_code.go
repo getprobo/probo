@@ -198,27 +198,6 @@ WHERE
 	return nil
 }
 
-func (c *OAuth2AuthorizationCode) BindUnboundResource(
-	ctx context.Context,
-	conn pg.Tx,
-	resource uri.URI,
-) error {
-	q := `
-UPDATE iam_oauth2_authorization_codes
-SET
-	resource = @resource
-WHERE
-	resource IS NULL
-`
-
-	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource": resource})
-	if err != nil {
-		return fmt.Errorf("cannot bind unbound oauth2 authorization code resources: %w", err)
-	}
-
-	return nil
-}
-
 func (c *OAuth2AuthorizationCode) Delete(ctx context.Context, conn pg.Querier) error {
 	q := `
 DELETE FROM iam_oauth2_authorization_codes

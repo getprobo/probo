@@ -92,7 +92,7 @@ func TestResourceMatches(t *testing.T) {
 
 	resource := uri.URI("https://auth.example.com")
 
-	assert.True(t, resourceMatches(nil, ""))
+	assert.False(t, resourceMatches(nil, ""))
 	assert.True(t, resourceMatches(&resource, resource.String()))
 	assert.False(t, resourceMatches(nil, resource.String()))
 	assert.False(t, resourceMatches(&resource, ""))

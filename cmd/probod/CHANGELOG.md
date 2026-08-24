@@ -8,6 +8,36 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 - ChatGPT and Codex MCP OAuth compatibility through CIMD auth-method negotiation, RFC 9207 issuer identification, and resource-bound access and refresh tokens
 
+### Migration
+
+Before starting this release, apply `20260824T102541Z.sql`, replace the URL
+below with the exact `PROBOD_BASE_URL`, and run:
+
+```sql
+BEGIN;
+
+UPDATE iam_oauth2_authorization_codes
+SET resource = 'https://your-probo.example.com'
+WHERE resource IS NULL;
+
+UPDATE iam_oauth2_consents
+SET resource = 'https://your-probo.example.com'
+WHERE resource IS NULL;
+
+UPDATE iam_oauth2_access_tokens
+SET resource = 'https://your-probo.example.com'
+WHERE resource IS NULL
+  AND client_id IS NOT NULL;
+
+UPDATE iam_oauth2_refresh_tokens
+SET resource = 'https://your-probo.example.com'
+WHERE resource IS NULL;
+
+COMMIT;
+```
+
+Manual access tokens remain unbound because they have no `client_id`.
+
 ## [0.265.1] - 2026-08-24
 
 ### Fixed
