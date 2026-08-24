@@ -45,14 +45,14 @@ func TestOAuth2AudiencePolicyAllows(t *testing.T) {
 	}{
 		{
 			name:   "manual token remains unbound",
-			policy: OAuth2AudiencePolicy{Resources: []uri.URI{mcp}},
+			policy: OAuth2AudiencePolicy{Resource: mcp},
 			token:  &coredata.OAuth2AccessToken{Resource: &other},
 			want:   true,
 		},
 		{
 			name: "legacy client token allowed explicitly",
 			policy: OAuth2AudiencePolicy{
-				Resources:    []uri.URI{root},
+				Resource:     root,
 				AllowUnbound: true,
 			},
 			token: &coredata.OAuth2AccessToken{ClientID: &clientID},
@@ -60,25 +60,19 @@ func TestOAuth2AudiencePolicyAllows(t *testing.T) {
 		},
 		{
 			name:   "unbound client token rejected by strict resource",
-			policy: OAuth2AudiencePolicy{Resources: []uri.URI{mcp}},
+			policy: OAuth2AudiencePolicy{Resource: mcp},
 			token:  &coredata.OAuth2AccessToken{ClientID: &clientID},
 			want:   false,
 		},
 		{
 			name:   "matching resource allowed",
-			policy: OAuth2AudiencePolicy{Resources: []uri.URI{mcp}},
-			token:  &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &mcp},
-			want:   true,
-		},
-		{
-			name:   "secondary resource allowed",
-			policy: OAuth2AudiencePolicy{Resources: []uri.URI{root, mcp}},
+			policy: OAuth2AudiencePolicy{Resource: mcp},
 			token:  &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &mcp},
 			want:   true,
 		},
 		{
 			name:   "unknown resource rejected",
-			policy: OAuth2AudiencePolicy{Resources: []uri.URI{root, mcp}},
+			policy: OAuth2AudiencePolicy{Resource: root},
 			token:  &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &other},
 			want:   false,
 		},

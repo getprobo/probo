@@ -187,10 +187,7 @@ func TestNewMetadata(t *testing.T) {
 
 			assert.Equal(
 				t,
-				[]uri.URI{
-					issuer,
-					"https://auth.example.com/api/mcp/v1",
-				},
+				[]uri.URI{issuer},
 				metadata.ProtectedResources,
 			)
 		},

@@ -99,7 +99,7 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 		}
 
 		audiencePolicy := authn.OAuth2AudiencePolicy{
-			Resources:    []uri.URI{h.iam.OAuth2ServerService.Issuer()},
+			Resource:     h.iam.OAuth2ServerService.Issuer(),
 			AllowUnbound: true,
 		}
 		if !audiencePolicy.Allows(accessToken) {

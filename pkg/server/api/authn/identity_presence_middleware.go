@@ -31,10 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewIdentityPresenceMiddleware(
-	baseURL *baseurl.BaseURL,
-	resourceMetadataURLs ...string,
-) func(next http.Handler) http.Handler {
+func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -42,18 +39,7 @@ func NewIdentityPresenceMiddleware(
 				identity := IdentityFromContext(ctx)
 
 				if identity == nil {
-					errorCode := ""
 					if bearertoken.IsAttempt(r.Header.Get("Authorization")) {
-						errorCode = bearertoken.BearerErrInvalidToken
-					}
-
-					if len(resourceMetadataURLs) > 0 {
-						bearertoken.SetBearerChallengeWithMetadataURL(
-							w,
-							resourceMetadataURLs[0],
-							errorCode,
-						)
-					} else if errorCode != "" {
 						bearertoken.SetBearerInvalidToken(w, baseURL)
 					} else {
 						bearertoken.SetBearerUnauthenticated(w, baseURL)

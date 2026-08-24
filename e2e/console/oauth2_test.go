@@ -104,9 +104,7 @@ func TestOAuth2_Discovery(t *testing.T) {
 	assert.Contains(t, discovery.ClaimsSupported, "name")
 	assert.True(t, discovery.ClientIDMetadataDocumentSupported)
 	assert.True(t, discovery.AuthorizationResponseIssuerSupported)
-	mcpResource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
-	require.NoError(t, err)
-	assert.Contains(t, discovery.ProtectedResources, mcpResource)
+	assert.Equal(t, []string{owner.BaseURL()}, discovery.ProtectedResources)
 }
 
 func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
@@ -127,23 +125,9 @@ func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
 	assert.Contains(t, metadata.ScopesSupported, "v1:document")
 	assert.NotContains(t, metadata.ScopesSupported, "v1:document:read")
 	assert.NotContains(t, metadata.ScopesSupported, "profile")
-}
-
-func TestOAuth2_MCPProtectedResourceMetadata(t *testing.T) {
-	t.Parallel()
-
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	metadata, raw, err := testutil.OAuth2MCPProtectedResourceMetadata(owner)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, raw.StatusCode)
-	require.NotNil(t, metadata)
 
 	resource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
 	require.NoError(t, err)
-	assert.Equal(t, resource, metadata.Resource)
-	assert.Contains(t, metadata.AuthorizationServers, owner.BaseURL())
-
 	resp, err := owner.HTTPClient().Get(resource)
 	require.NoError(t, err)
 	defer func() { _ = resp.Body.Close() }()
@@ -151,7 +135,7 @@ func TestOAuth2_MCPProtectedResourceMetadata(t *testing.T) {
 	assert.Contains(
 		t,
 		resp.Header.Get("WWW-Authenticate"),
-		"/.well-known/oauth-protected-resource/api/mcp/v1",
+		"/.well-known/oauth-protected-resource",
 	)
 }
 
@@ -304,7 +288,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 	)
 
 	t.Run(
-		"resource-bound flow returns issuer",
+		"root resource works across APIs",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -315,7 +299,8 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			)
 			redirectURI := "http://localhost:9999/callback"
 			verifier, challenge := testutil.GeneratePKCE()
-			resource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
+			resource := owner.BaseURL()
+			wrongResource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
 			require.NoError(t, err)
 
 			params := url.Values{
@@ -352,7 +337,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 				code,
 				redirectURI,
 				verifier,
-				owner.BaseURL(),
+				wrongResource,
 			)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusBadRequest, wrongResourceRaw.StatusCode)
@@ -387,7 +372,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			userinfoResp, err := owner.HTTPClient().Do(userinfoReq)
 			require.NoError(t, err)
 			defer func() { _ = userinfoResp.Body.Close() }()
-			assert.Equal(t, http.StatusUnauthorized, userinfoResp.StatusCode)
+			assert.Equal(t, http.StatusOK, userinfoResp.StatusCode)
 
 			fileURL, err := url.JoinPath(owner.BaseURL(), "api", "files", "v1", "not-a-gid")
 			require.NoError(t, err)
@@ -404,7 +389,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 				client.ClientID,
 				client.ClientSecret,
 				tokenResp.RefreshToken,
-				owner.BaseURL(),
+				wrongResource,
 			)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusBadRequest, wrongResourceRaw.StatusCode)

@@ -56,7 +56,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/thirdparty"
-	"go.probo.inc/probo/pkg/uri"
 )
 
 type (
@@ -168,7 +167,7 @@ func NewMux(
 			authn.NewOAuth2AccessTokenMiddleware(
 				iamSvc,
 				authn.OAuth2AudiencePolicy{
-					Resources:    []uri.URI{iamSvc.OAuth2ServerService.Issuer()},
+					Resource:     iamSvc.OAuth2ServerService.Issuer(),
 					AllowUnbound: true,
 				},
 			),

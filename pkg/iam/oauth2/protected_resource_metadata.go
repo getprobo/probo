@@ -21,16 +21,8 @@
 package oauth2
 
 import (
-	"fmt"
-	"net/url"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/uri"
-)
-
-const (
-	MCPResourcePath                  = "/api/mcp/v1"
-	MCPProtectedResourceMetadataPath = "/.well-known/oauth-protected-resource/api/mcp/v1"
 )
 
 // ProtectedResourceMetadata represents the RFC 9728 protected resource metadata
@@ -55,13 +47,4 @@ func NewProtectedResourceMetadata(
 		},
 		ScopesSupported: protectedResourceScopes(writeScopes),
 	}
-}
-
-func MCPResourceURI(baseURL uri.URI) uri.URI {
-	raw, err := url.JoinPath(baseURL.String(), MCPResourcePath)
-	if err != nil {
-		panic(fmt.Sprintf("cannot build MCP resource URI: %v", err))
-	}
-
-	return uri.URI(raw)
 }

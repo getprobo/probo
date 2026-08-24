@@ -48,11 +48,6 @@ func TestServiceProtectedResource(t *testing.T) {
 			want:   new(uri.URI("https://auth.example.com")),
 		},
 		{
-			name:   "MCP resource",
-			values: []string{"https://auth.example.com/api/mcp/v1"},
-			want:   new(uri.URI("https://auth.example.com/api/mcp/v1")),
-		},
-		{
 			name:    "unknown resource",
 			values:  []string{"https://other.example.com/api/mcp/v1"},
 			wantErr: true,
@@ -94,11 +89,11 @@ func TestServiceProtectedResource(t *testing.T) {
 func TestResourceMatches(t *testing.T) {
 	t.Parallel()
 
-	resource := uri.URI("https://auth.example.com/api/mcp/v1")
+	resource := uri.URI("https://auth.example.com")
 
 	assert.True(t, resourceMatches(nil, ""))
 	assert.True(t, resourceMatches(&resource, resource.String()))
 	assert.False(t, resourceMatches(nil, resource.String()))
 	assert.False(t, resourceMatches(&resource, ""))
-	assert.False(t, resourceMatches(&resource, "https://other.example.com/api/mcp/v1"))
+	assert.False(t, resourceMatches(&resource, "https://other.example.com"))
 }

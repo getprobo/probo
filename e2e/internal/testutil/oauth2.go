@@ -289,15 +289,6 @@ func OAuth2ProtectedResourceMetadata(
 	return oauth2ProtectedResourceMetadata(c, "/.well-known/oauth-protected-resource")
 }
 
-func OAuth2MCPProtectedResourceMetadata(
-	c *Client,
-) (*OAuth2ProtectedResourceMetadataResponse, *OAuth2HTTPResponse, error) {
-	return oauth2ProtectedResourceMetadata(
-		c,
-		"/.well-known/oauth-protected-resource/api/mcp/v1",
-	)
-}
-
 func oauth2ProtectedResourceMetadata(
 	c *Client,
 	path string,
