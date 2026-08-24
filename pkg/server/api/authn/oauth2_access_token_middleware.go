@@ -43,7 +43,7 @@ func OAuth2AccessTokenMatchesIssuer(
 	}
 
 	if accessToken.Resource == nil {
-		return true
+		return false
 	}
 
 	return *accessToken.Resource == svc.OAuth2ServerService.Issuer()

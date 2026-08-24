@@ -59,9 +59,9 @@ func TestOAuth2AccessTokenMatchesIssuer(t *testing.T) {
 			want:  true,
 		},
 		{
-			name:  "legacy client token defaults to issuer",
+			name:  "unmigrated client token rejected",
 			token: &coredata.OAuth2AccessToken{ClientID: &clientID},
-			want:  true,
+			want:  false,
 		},
 		{
 			name:  "matching issuer allowed",

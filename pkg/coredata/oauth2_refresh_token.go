@@ -245,27 +245,6 @@ FOR UPDATE;
 	return nil
 }
 
-func (t *OAuth2RefreshToken) BindUnboundResource(
-	ctx context.Context,
-	conn pg.Tx,
-	resource uri.URI,
-) error {
-	q := `
-UPDATE iam_oauth2_refresh_tokens
-SET
-	resource = @resource
-WHERE
-	resource IS NULL
-`
-
-	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource": resource})
-	if err != nil {
-		return fmt.Errorf("cannot bind unbound oauth2 refresh token resources: %w", err)
-	}
-
-	return nil
-}
-
 func (t *OAuth2RefreshToken) Revoke(
 	ctx context.Context,
 	conn pg.Tx,

@@ -356,28 +356,6 @@ WHERE
 	return count, nil
 }
 
-func (t *OAuth2AccessToken) BindUnboundResource(
-	ctx context.Context,
-	conn pg.Tx,
-	resource uri.URI,
-) error {
-	q := `
-UPDATE iam_oauth2_access_tokens
-SET
-	resource = @resource
-WHERE
-	resource IS NULL
-	AND client_id IS NOT NULL
-`
-
-	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource": resource})
-	if err != nil {
-		return fmt.Errorf("cannot bind unbound oauth2 access token resources: %w", err)
-	}
-
-	return nil
-}
-
 func (t *OAuth2AccessToken) Delete(ctx context.Context, conn pg.Tx) error {
 	q := `
 DELETE FROM iam_oauth2_access_tokens
