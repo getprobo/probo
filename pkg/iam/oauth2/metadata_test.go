@@ -185,7 +185,23 @@ func TestNewMetadata(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, []uri.URI{issuer}, metadata.ProtectedResources)
+			assert.Equal(
+				t,
+				[]uri.URI{
+					issuer,
+					"https://auth.example.com/api/mcp/v1",
+				},
+				metadata.ProtectedResources,
+			)
+		},
+	)
+
+	t.Run(
+		"authorization response issuer supported",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(t, metadata.AuthorizationResponseIssuerParameterSupported)
 		},
 	)
 

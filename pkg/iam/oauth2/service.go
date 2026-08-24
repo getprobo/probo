@@ -81,6 +81,7 @@ type (
 		ResponseType        coredata.OAuth2ResponseType
 		ClientIDRaw         string
 		RedirectURI         string
+		Resources           []string
 		Scopes              coredata.OAuth2Scopes
 		CodeChallenge       string
 		CodeChallengeMethod coredata.OAuth2CodeChallengeMethod
@@ -283,7 +284,7 @@ func (s *Service) GetClientByID(ctx context.Context, clientID gid.GID) (*coredat
 func (s *Service) ExchangeAuthorizationCode(
 	ctx context.Context,
 	clientIDRaw string,
-	codeValue, redirectURI, codeVerifier string,
+	codeValue, redirectURI, resource, codeVerifier string,
 ) (*TokenResult, error) {
 	client, err := s.resolveClient(ctx, nil, clientIDRaw)
 	if err != nil {
@@ -352,6 +353,16 @@ func (s *Service) ExchangeAuthorizationCode(
 				)
 			}
 
+			if err := validateAuthorizationCodeExchange(
+				&code,
+				now,
+				redirectURI,
+				resource,
+				codeVerifier,
+			); err != nil {
+				return err
+			}
+
 			if err := identity.LoadByID(ctx, tx, code.IdentityID); err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
@@ -364,36 +375,6 @@ func (s *Service) ExchangeAuthorizationCode(
 		},
 	); err != nil {
 		return nil, err
-	}
-
-	if now.After(code.ExpiresAt) {
-		return nil, NewError(
-			ErrInvalidGrant,
-			WithDescription("authorization code expired"),
-		)
-	}
-
-	if code.RedirectURI.String() != redirectURI {
-		return nil, NewError(
-			ErrInvalidRedirectURI,
-			WithDescription("redirect_uri mismatch"),
-		)
-	}
-
-	if code.CodeChallenge != nil {
-		if codeVerifier == "" {
-			return nil, NewError(
-				ErrInvalidRequest,
-				WithDescription("code_verifier required"),
-			)
-		}
-
-		if !ValidateCodeChallenge(codeVerifier, *code.CodeChallenge, *code.CodeChallengeMethod) {
-			return nil, NewError(
-				ErrInvalidRequest,
-				WithDescription("invalid code_verifier"),
-			)
-		}
 	}
 
 	if code.Scopes.Contains(ScopeOpenID) {
@@ -428,6 +409,7 @@ func (s *Service) ExchangeAuthorizationCode(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    new(client.ID),
 				IdentityID:  code.IdentityID,
+				Resource:    code.Resource,
 				Scopes:      code.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
@@ -445,6 +427,7 @@ func (s *Service) ExchangeAuthorizationCode(
 					HashedValue:   hash.SHA256String(refreshTokenValue),
 					ClientID:      client.ID,
 					IdentityID:    code.IdentityID,
+					Resource:      code.Resource,
 					Scopes:        code.Scopes,
 					AccessTokenID: accessToken.ID,
 					CreatedAt:     now,
@@ -477,6 +460,7 @@ func (s *Service) RefreshToken(
 	ctx context.Context,
 	client *coredata.OAuth2Client,
 	refreshTokenValue string,
+	resource string,
 ) (*TokenResult, error) {
 	var (
 		accessTokenValue     = rand.MustHexString(tokenByteLength)
@@ -572,6 +556,13 @@ func (s *Service) RefreshToken(
 		)
 	}
 
+	if !resourceMatches(previousRefreshToken.Resource, resource) {
+		return nil, NewError(
+			ErrInvalidTarget,
+			WithDescription("resource does not match refresh token"),
+		)
+	}
+
 	if previousRefreshToken.Scopes.Contains(ScopeOpenID) {
 		claims := NewIDTokenClaims(
 			s.baseURL,
@@ -621,6 +612,7 @@ func (s *Service) RefreshToken(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    new(client.ID),
 				IdentityID:  previousRefreshToken.IdentityID,
+				Resource:    previousRefreshToken.Resource,
 				Scopes:      previousRefreshToken.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
@@ -634,6 +626,7 @@ func (s *Service) RefreshToken(
 				HashedValue:   hash.SHA256String(refreshTokenValueNew),
 				ClientID:      client.ID,
 				IdentityID:    previousRefreshToken.IdentityID,
+				Resource:      previousRefreshToken.Resource,
 				Scopes:        previousRefreshToken.Scopes,
 				AccessTokenID: accessToken.ID,
 				CreatedAt:     now,
@@ -986,6 +979,7 @@ func (s *Service) AuthorizeDevice(
 					identityID,
 					client.ID,
 					deviceCode.Scopes,
+					nil,
 				); err == nil {
 					deviceCode.Status = coredata.OAuth2DeviceCodeStatusAuthorized
 					deviceCode.IdentityID = &identityID
@@ -1430,8 +1424,11 @@ func (s *Service) RevokeToken(
 func (s *Service) Authorize(
 	ctx context.Context,
 	req *AuthorizeRequest,
-) (string, error) {
-	var code string
+) (string, bool, error) {
+	var (
+		code              string
+		redirectValidated bool
+	)
 
 	if err := s.pg.WithTx(
 		ctx,
@@ -1443,6 +1440,12 @@ func (s *Service) Authorize(
 
 			if !client.IsRedirectURIAllowed(req.RedirectURI) {
 				return ErrInvalidRedirectURI
+			}
+			redirectValidated = true
+
+			resource, err := s.protectedResource(req.Resources)
+			if err != nil {
+				return err
 			}
 
 			if client.Visibility == coredata.OAuth2ClientVisibilityPrivate {
@@ -1466,12 +1469,18 @@ func (s *Service) Authorize(
 			}
 
 			if req.ResponseType != coredata.OAuth2ResponseTypeCode {
-				return fmt.Errorf("cannot authorize: unsupported response_type")
+				return NewError(
+					ErrUnsupportedResponseType,
+					WithDescription("unsupported response_type"),
+				)
 			}
 
 			requestedScopes := req.Scopes.OrDefault(client.Scopes)
 			if !client.AreScopesAllowed(requestedScopes) {
-				return fmt.Errorf("cannot authorize: requested scope exceeds client registration")
+				return NewError(
+					ErrInvalidScope,
+					WithDescription("requested scope exceeds client registration"),
+				)
 			}
 
 			if requestedScopes.Contains(ScopeOfflineAccess) && !client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) {
@@ -1483,11 +1492,17 @@ func (s *Service) Authorize(
 
 			codeChallengeMethod := req.CodeChallengeMethod
 			if client.TokenEndpointAuthMethod == coredata.OAuth2ClientTokenEndpointAuthMethodNone && req.CodeChallenge == "" {
-				return fmt.Errorf("cannot authorize: code_challenge required for public clients")
+				return NewError(
+					ErrInvalidRequest,
+					WithDescription("code_challenge required for public clients"),
+				)
 			}
 
 			if codeChallengeMethod != "" && codeChallengeMethod != coredata.OAuth2CodeChallengeMethodS256 {
-				return fmt.Errorf("cannot authorize: only S256 code_challenge_method is supported")
+				return NewError(
+					ErrInvalidRequest,
+					WithDescription("only S256 code_challenge_method is supported"),
+				)
 			}
 
 			if req.CodeChallenge != "" && codeChallengeMethod == "" {
@@ -1517,6 +1532,7 @@ func (s *Service) Authorize(
 					req.IdentityID,
 					client.ID,
 					requestedScopes,
+					resource,
 				) == nil
 			}
 
@@ -1529,6 +1545,7 @@ func (s *Service) Authorize(
 					client,
 					req.IdentityID,
 					uri.URI(req.RedirectURI),
+					resource,
 					requestedScopes,
 					req.CodeChallenge,
 					codeChallengeMethod,
@@ -1550,6 +1567,7 @@ func (s *Service) Authorize(
 				ClientID:            client.ID,
 				Scopes:              requestedScopes,
 				RedirectURI:         new(uri.URI(req.RedirectURI)),
+				Resource:            resource,
 				CodeChallenge:       req.CodeChallenge,
 				CodeChallengeMethod: codeChallengeMethod,
 				Nonce:               req.Nonce,
@@ -1573,13 +1591,13 @@ func (s *Service) Authorize(
 		},
 	); err != nil {
 		if _, ok := errors.AsType[*ConsentRequiredError](err); ok {
-			return "", err
+			return "", redirectValidated, err
 		}
 
-		return "", err
+		return "", redirectValidated, err
 	}
 
-	return code, nil
+	return code, redirectValidated, nil
 }
 
 func (s *Service) GetConsentByID(
@@ -1726,6 +1744,7 @@ func (s *Service) ApproveConsent(
 				&client,
 				consent.IdentityID,
 				ref.UnrefOrZero(consent.RedirectURI),
+				consent.Resource,
 				consent.Scopes,
 				consent.CodeChallenge,
 				consent.CodeChallengeMethod,
@@ -1774,12 +1793,101 @@ func (s *Service) AuthenticateClient(
 	return client, nil
 }
 
+func (s *Service) protectedResource(values []string) (*uri.URI, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	if len(values) > 1 {
+		return nil, NewError(
+			ErrInvalidTarget,
+			WithDescription("multiple resource parameters are not supported"),
+		)
+	}
+
+	raw := values[0]
+	if raw == "" {
+		return nil, NewError(
+			ErrInvalidTarget,
+			WithDescription("resource must not be empty"),
+		)
+	}
+
+	resource := uri.URI(raw)
+	if resource == s.baseURL || resource == MCPResourceURI(s.baseURL) {
+		return &resource, nil
+	}
+
+	return nil, NewError(
+		ErrInvalidTarget,
+		WithDescription("unsupported resource"),
+	)
+}
+
+func resourceMatches(expected *uri.URI, raw string) bool {
+	if expected == nil {
+		return raw == ""
+	}
+
+	return expected.String() == raw
+}
+
+func validateAuthorizationCodeExchange(
+	code *coredata.OAuth2AuthorizationCode,
+	now time.Time,
+	redirectURI string,
+	resource string,
+	codeVerifier string,
+) error {
+	if now.After(code.ExpiresAt) {
+		return NewError(
+			ErrInvalidGrant,
+			WithDescription("authorization code expired"),
+		)
+	}
+
+	if code.RedirectURI.String() != redirectURI {
+		return NewError(
+			ErrInvalidRedirectURI,
+			WithDescription("redirect_uri mismatch"),
+		)
+	}
+
+	if !resourceMatches(code.Resource, resource) {
+		return NewError(
+			ErrInvalidTarget,
+			WithDescription("resource does not match authorization request"),
+		)
+	}
+
+	if code.CodeChallenge == nil {
+		return nil
+	}
+
+	if codeVerifier == "" {
+		return NewError(
+			ErrInvalidRequest,
+			WithDescription("code_verifier required"),
+		)
+	}
+
+	if !ValidateCodeChallenge(codeVerifier, *code.CodeChallenge, *code.CodeChallengeMethod) {
+		return NewError(
+			ErrInvalidRequest,
+			WithDescription("invalid code_verifier"),
+		)
+	}
+
+	return nil
+}
+
 func (s *Service) issueAuthorizationCode(
 	ctx context.Context,
 	tx pg.Tx,
 	client *coredata.OAuth2Client,
 	identityID gid.GID,
 	redirectURI uri.URI,
+	resource *uri.URI,
 	scopes coredata.OAuth2Scopes,
 	codeChallenge string,
 	codeChallengeMethod coredata.OAuth2CodeChallengeMethod,
@@ -1795,6 +1903,7 @@ func (s *Service) issueAuthorizationCode(
 		ClientID:    client.ID,
 		IdentityID:  identityID,
 		RedirectURI: redirectURI,
+		Resource:    resource,
 		Scopes:      scopes,
 		AuthTime:    authTime,
 		CreatedAt:   now,

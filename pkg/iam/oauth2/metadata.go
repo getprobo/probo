@@ -29,27 +29,28 @@ type (
 	// ServerMetadata represents the OpenID Connect Discovery 1.0 / RFC 8414
 	// authorization server metadata document.
 	ServerMetadata struct {
-		Issuer                                    uri.URI                                        `json:"issuer"`
-		AuthorizationEndpoint                     uri.URI                                        `json:"authorization_endpoint"`
-		TokenEndpoint                             uri.URI                                        `json:"token_endpoint"`
-		UserinfoEndpoint                          uri.URI                                        `json:"userinfo_endpoint"`
-		JwksURI                                   uri.URI                                        `json:"jwks_uri"`
-		RegistrationEndpoint                      uri.URI                                        `json:"registration_endpoint"`
-		IntrospectionEndpoint                     uri.URI                                        `json:"introspection_endpoint"`
-		RevocationEndpoint                        uri.URI                                        `json:"revocation_endpoint"`
-		DeviceAuthorizationEndpoint               uri.URI                                        `json:"device_authorization_endpoint"`
-		ScopesSupported                           []coredata.OAuth2Scope                         `json:"scopes_supported"`
-		ProtectedResources                        []uri.URI                                      `json:"protected_resources,omitempty"`
-		ResponseTypesSupported                    []coredata.OAuth2ResponseType                  `json:"response_types_supported"`
-		GrantTypesSupported                       []coredata.OAuth2GrantType                     `json:"grant_types_supported"`
-		TokenEndpointAuthMethodsSupported         []coredata.OAuth2ClientTokenEndpointAuthMethod `json:"token_endpoint_auth_methods_supported"`
-		RevocationEndpointAuthMethodsSupported    []coredata.OAuth2ClientTokenEndpointAuthMethod `json:"revocation_endpoint_auth_methods_supported"`
-		IntrospectionEndpointAuthMethodsSupported []coredata.OAuth2ClientTokenEndpointAuthMethod `json:"introspection_endpoint_auth_methods_supported"`
-		SubjectTypesSupported                     []coredata.OAuth2SubjectType                   `json:"subject_types_supported"`
-		IDTokenSigningAlgValuesSupported          []coredata.OAuth2SigningAlgorithm              `json:"id_token_signing_alg_values_supported"`
-		CodeChallengeMethodsSupported             []coredata.OAuth2CodeChallengeMethod           `json:"code_challenge_methods_supported"`
-		ClaimsSupported                           []coredata.OAuth2Claim                         `json:"claims_supported"`
-		ClientIDMetadataDocumentSupported         bool                                           `json:"client_id_metadata_document_supported"`
+		Issuer                                        uri.URI                                        `json:"issuer"`
+		AuthorizationEndpoint                         uri.URI                                        `json:"authorization_endpoint"`
+		TokenEndpoint                                 uri.URI                                        `json:"token_endpoint"`
+		UserinfoEndpoint                              uri.URI                                        `json:"userinfo_endpoint"`
+		JwksURI                                       uri.URI                                        `json:"jwks_uri"`
+		RegistrationEndpoint                          uri.URI                                        `json:"registration_endpoint"`
+		IntrospectionEndpoint                         uri.URI                                        `json:"introspection_endpoint"`
+		RevocationEndpoint                            uri.URI                                        `json:"revocation_endpoint"`
+		DeviceAuthorizationEndpoint                   uri.URI                                        `json:"device_authorization_endpoint"`
+		ScopesSupported                               []coredata.OAuth2Scope                         `json:"scopes_supported"`
+		ProtectedResources                            []uri.URI                                      `json:"protected_resources,omitempty"`
+		ResponseTypesSupported                        []coredata.OAuth2ResponseType                  `json:"response_types_supported"`
+		GrantTypesSupported                           []coredata.OAuth2GrantType                     `json:"grant_types_supported"`
+		TokenEndpointAuthMethodsSupported             []coredata.OAuth2ClientTokenEndpointAuthMethod `json:"token_endpoint_auth_methods_supported"`
+		RevocationEndpointAuthMethodsSupported        []coredata.OAuth2ClientTokenEndpointAuthMethod `json:"revocation_endpoint_auth_methods_supported"`
+		IntrospectionEndpointAuthMethodsSupported     []coredata.OAuth2ClientTokenEndpointAuthMethod `json:"introspection_endpoint_auth_methods_supported"`
+		SubjectTypesSupported                         []coredata.OAuth2SubjectType                   `json:"subject_types_supported"`
+		IDTokenSigningAlgValuesSupported              []coredata.OAuth2SigningAlgorithm              `json:"id_token_signing_alg_values_supported"`
+		CodeChallengeMethodsSupported                 []coredata.OAuth2CodeChallengeMethod           `json:"code_challenge_methods_supported"`
+		ClaimsSupported                               []coredata.OAuth2Claim                         `json:"claims_supported"`
+		ClientIDMetadataDocumentSupported             bool                                           `json:"client_id_metadata_document_supported"`
+		AuthorizationResponseIssuerParameterSupported bool                                           `json:"authorization_response_iss_parameter_supported"`
 	}
 
 	// Endpoints holds the endpoint URLs for the OIDC discovery document.
@@ -77,7 +78,7 @@ func NewMetadata(issuer uri.URI, endpoints Endpoints, registeredScopes []coredat
 		RevocationEndpoint:          endpoints.Revocation,
 		DeviceAuthorizationEndpoint: endpoints.DeviceAuthorization,
 		ScopesSupported:             authorizationServerScopes(registeredScopes),
-		ProtectedResources:          []uri.URI{issuer},
+		ProtectedResources:          []uri.URI{issuer, MCPResourceURI(issuer)},
 		ResponseTypesSupported: []coredata.OAuth2ResponseType{
 			coredata.OAuth2ResponseTypeCode,
 		},
@@ -123,6 +124,7 @@ func NewMetadata(issuer uri.URI, endpoints Endpoints, registeredScopes []coredat
 			coredata.OAuth2ClaimEmailVerified,
 			coredata.OAuth2ClaimName,
 		},
-		ClientIDMetadataDocumentSupported: true,
+		ClientIDMetadataDocumentSupported:             true,
+		AuthorizationResponseIssuerParameterSupported: true,
 	}
 }

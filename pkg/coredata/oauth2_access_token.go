@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type (
@@ -41,6 +42,7 @@ type (
 		HashedValue []byte       `db:"hashed_value"`
 		ClientID    *gid.GID     `db:"client_id"`
 		IdentityID  gid.GID      `db:"identity_id"`
+		Resource    *uri.URI     `db:"resource"`
 		Scopes      OAuth2Scopes `db:"scopes"`
 		CreatedAt   time.Time    `db:"created_at"`
 		ExpiresAt   time.Time    `db:"expires_at"`
@@ -70,6 +72,7 @@ INSERT INTO iam_oauth2_access_tokens (
 	hashed_value,
 	client_id,
 	identity_id,
+	resource,
 	scopes,
 	created_at,
 	expires_at
@@ -79,6 +82,7 @@ INSERT INTO iam_oauth2_access_tokens (
 	@hashed_value,
 	@client_id,
 	@identity_id,
+	@resource,
 	@scopes,
 	@created_at,
 	@expires_at
@@ -91,6 +95,7 @@ INSERT INTO iam_oauth2_access_tokens (
 		"hashed_value": t.HashedValue,
 		"client_id":    t.ClientID,
 		"identity_id":  t.IdentityID,
+		"resource":     t.Resource,
 		"scopes":       t.Scopes,
 		"created_at":   t.CreatedAt,
 		"expires_at":   t.ExpiresAt,
@@ -112,6 +117,7 @@ SELECT
 	hashed_value,
 	client_id,
 	identity_id,
+	resource,
 	scopes,
 	created_at,
 	expires_at
@@ -149,6 +155,7 @@ SELECT
 	hashed_value,
 	client_id,
 	identity_id,
+	resource,
 	scopes,
 	created_at,
 	expires_at
@@ -191,6 +198,7 @@ SELECT
 	hashed_value,
 	client_id,
 	identity_id,
+	resource,
 	scopes,
 	created_at,
 	expires_at
@@ -287,6 +295,7 @@ SELECT
 	hashed_value,
 	client_id,
 	identity_id,
+	resource,
 	scopes,
 	created_at,
 	expires_at

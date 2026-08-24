@@ -260,7 +260,11 @@ func (s *Service) OAuth2ServerMetadata(endpoints oauth2.Endpoints) *oauth2.Serve
 
 // OAuth2ProtectedResourceMetadata returns the RFC 9728 protected resource metadata document.
 func (s *Service) OAuth2ProtectedResourceMetadata(resource uri.URI) *oauth2.ProtectedResourceMetadata {
-	return oauth2.NewProtectedResourceMetadata(resource, resource, s.OAuth2ScopeRegistry.AllWriteScopes())
+	return oauth2.NewProtectedResourceMetadata(
+		resource,
+		s.OAuth2ServerService.Issuer(),
+		s.OAuth2ScopeRegistry.AllWriteScopes(),
+	)
 }
 
 func (s *Service) IsSignUpEnabled() bool {

@@ -90,6 +90,7 @@ func (r *mutationResolver) ApproveConsent(ctx context.Context, input types.Appro
 		q := u.Query()
 		q.Set("error", "access_denied")
 		q.Set("error_description", "user denied the request")
+		q.Set("iss", r.baseURL.String())
 
 		if result.State != "" {
 			q.Set("state", result.State)
@@ -113,6 +114,7 @@ func (r *mutationResolver) ApproveConsent(ctx context.Context, input types.Appro
 	u, _ := url.Parse(result.RedirectURI)
 	q := u.Query()
 	q.Set("code", result.Code)
+	q.Set("iss", r.baseURL.String())
 
 	if result.State != "" {
 		q.Set("state", result.State)
