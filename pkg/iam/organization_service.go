@@ -2175,6 +2175,17 @@ func (s OrganizationService) CreateSCIMBridge(
 				return NewConnectorNotFoundError(connectorID)
 			}
 
+			sources := &coredata.AccessReviewSources{}
+
+			sourceCount, err := sources.CountByConnectorID(ctx, tx, scope, connectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count access sources for connector: %w", err)
+			}
+
+			if sourceCount > 0 {
+				return fmt.Errorf("cannot create SCIM bridge: connector is used by an access review source: %w", coredata.ErrResourceInUse)
+			}
+
 			// Map connector provider to bridge type
 			var bridgeType coredata.SCIMBridgeType
 

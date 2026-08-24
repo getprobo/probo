@@ -705,6 +705,10 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create access source", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -738,6 +742,10 @@ func (r *mutationResolver) UpdateAccessReviewSource(ctx context.Context, input t
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update access source", log.Error(err))

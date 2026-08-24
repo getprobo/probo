@@ -42,7 +42,12 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 	if input.ConnectorID != nil {
 		scimBridge, err := r.iam.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
 		if err != nil {
+			if errors.Is(err, coredata.ErrResourceInUse) {
+				return nil, gqlutils.Conflict(ctx, err)
+			}
+
 			r.logger.ErrorCtx(ctx, "cannot create scim bridge", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 

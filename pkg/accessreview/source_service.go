@@ -136,13 +136,20 @@ func (s *Service) CreateSource(
 					return fmt.Errorf("cannot load connector: %w", err)
 				}
 
-				if connector.OrganizationID != req.OrganizationID {
-					return fmt.Errorf("cannot create access source: organization mismatch")
+				bridges := &coredata.SCIMBridges{}
+
+				bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, *req.ConnectorID)
+				if err != nil {
+					return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+				}
+
+				if bridgeCount > 0 {
+					return fmt.Errorf("cannot create access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
 				}
 
 				existing := &coredata.AccessReviewSource{}
 
-				err := existing.LoadByConnectorID(ctx, conn, scope, *req.ConnectorID)
+				err = existing.LoadByConnectorID(ctx, conn, scope, *req.ConnectorID)
 				if err == nil {
 					*source = *existing
 					return nil
@@ -224,13 +231,20 @@ func (s *Service) UpdateSource(
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
 
-					if connector.OrganizationID != source.OrganizationID {
-						return fmt.Errorf("cannot update access source: organization mismatch")
+					bridges := &coredata.SCIMBridges{}
+
+					bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, **req.ConnectorID)
+					if err != nil {
+						return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+					}
+
+					if bridgeCount > 0 {
+						return fmt.Errorf("cannot update access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
 					}
 
 					other := &coredata.AccessReviewSource{}
 
-					err := other.LoadByConnectorID(ctx, conn, scope, **req.ConnectorID)
+					err = other.LoadByConnectorID(ctx, conn, scope, **req.ConnectorID)
 					if err == nil && other.ID != source.ID {
 						return fmt.Errorf("cannot update access source: connector already referenced by another source")
 					}

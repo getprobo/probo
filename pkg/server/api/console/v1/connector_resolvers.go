@@ -7,6 +7,7 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/log"
@@ -156,6 +157,10 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 	}
 
 	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
+		if errors.Is(err, coredata.ErrResourceInUse) {
+			return nil, gqlutils.Conflictf(ctx, "connector is in use")
+		}
+
 		panic(fmt.Errorf("cannot delete connector: %w", err))
 	}
 

@@ -66,12 +66,13 @@ func insertConnector(
 	organizationID gid.GID,
 	provider coredata.ConnectorProvider,
 	key cipher.EncryptionKey,
-) error {
+) (gid.GID, error) {
 	now := time.Now().UTC()
+	id := gid.New(scope.GetTenantID(), coredata.ConnectorEntityType)
 
-	return client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		cnnctr := &coredata.Connector{
-			ID:             gid.New(scope.GetTenantID(), coredata.ConnectorEntityType),
+			ID:             id,
 			OrganizationID: organizationID,
 			Provider:       provider,
 			Protocol:       coredata.ConnectorProtocolOAuth2,
@@ -85,6 +86,8 @@ func insertConnector(
 
 		return cnnctr.Insert(ctx, tx, scope, key)
 	})
+
+	return id, err
 }
 
 // TestConnectorInsert_MultipleConnectionsPerProvider pins the relaxed
@@ -101,10 +104,15 @@ func TestConnectorInsert_MultipleConnectionsPerProvider(t *testing.T) {
 
 	var key cipher.EncryptionKey
 
-	require.NoError(t, insertConnector(ctx, client, scope, organizationID, coredata.ConnectorProviderGitHub, key))
-	require.NoError(t, insertConnector(ctx, client, scope, organizationID, coredata.ConnectorProviderGitHub, key))
-	require.NoError(t, insertConnector(ctx, client, scope, organizationID, coredata.ConnectorProviderSlack, key))
-	require.NoError(t, insertConnector(ctx, client, scope, organizationID, coredata.ConnectorProviderSlack, key))
+	for _, provider := range []coredata.ConnectorProvider{
+		coredata.ConnectorProviderGitHub,
+		coredata.ConnectorProviderGitHub,
+		coredata.ConnectorProviderSlack,
+		coredata.ConnectorProviderSlack,
+	} {
+		_, err := insertConnector(ctx, client, scope, organizationID, provider, key)
+		require.NoError(t, err)
+	}
 }
 
 // TestLoadSlackMessagingConnector pins the deterministic pick the
