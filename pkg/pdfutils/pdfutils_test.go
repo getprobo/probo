@@ -34,7 +34,7 @@ func TestAddWatermarkWithTimestamp_WatermarkTextTooLong(t *testing.T) {
 
 	watermarkText := strings.Repeat("a", MaxWatermarkTextLength+1)
 
-	pdf, err := AddWatermarkWithTimestamp(nil, watermarkText)
+	pdf, err := AddWatermarkWithTimestamp(nil, "PUBLIC", watermarkText)
 
 	require.Error(t, err)
 	assert.Nil(t, pdf)
@@ -56,7 +56,7 @@ func TestAddWatermarkWithTimestamp_WatermarkTextEmpty(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				pdf, err := AddWatermarkWithTimestamp(nil, watermarkText)
+				pdf, err := AddWatermarkWithTimestamp(nil, "PUBLIC", watermarkText)
 
 				require.Error(t, err)
 				assert.Nil(t, pdf)
@@ -66,15 +66,16 @@ func TestAddWatermarkWithTimestamp_WatermarkTextEmpty(t *testing.T) {
 	}
 }
 
-func TestBuildWatermarkLines_DoesNotAddClassification(t *testing.T) {
+func TestBuildWatermarkLines_UsesDocumentClassification(t *testing.T) {
 	t.Parallel()
 
 	lines := buildWatermarkLines(
+		"PUBLIC",
 		"recipient@example.com",
 		time.Date(2026, time.August, 24, 10, 43, 0, 0, time.UTC),
 	)
 
-	assert.Equal(t, []string{"recipient@example.com", "2026-08-24"}, lines)
+	assert.Equal(t, []string{"PUBLIC", "recipient@example.com", "2026-08-24"}, lines)
 }
 
 func TestTruncateWatermarkText(t *testing.T) {

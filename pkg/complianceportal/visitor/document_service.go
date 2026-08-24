@@ -85,14 +85,18 @@ func (s *Service) ExportDocumentPDF(
 	documentID gid.GID,
 	email mail.Addr,
 ) ([]byte, error) {
-	pdfData, err := s.exportDocumentPDFData(ctx, scope, compliancePortalID, documentID)
+	pdfData, classification, err := s.exportDocumentPDFData(ctx, scope, compliancePortalID, documentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
 	watermarkText := pdfutils.TruncateWatermarkText(email.String())
 
-	watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(pdfData, watermarkText)
+	watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+		pdfData,
+		classification.String(),
+		watermarkText,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}
@@ -106,7 +110,12 @@ func (s *Service) ExportDocumentPDFWithoutWatermark(
 	compliancePortalID gid.GID,
 	documentID gid.GID,
 ) ([]byte, error) {
-	return s.exportDocumentPDFData(ctx, scope, compliancePortalID, documentID)
+	pdfData, _, err := s.exportDocumentPDFData(ctx, scope, compliancePortalID, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return pdfData, nil
 }
 
 // GetDocument loads a document and its association with the given compliance
@@ -160,7 +169,7 @@ func (s *Service) exportDocumentPDFData(
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	documentID gid.GID,
-) ([]byte, error) {
+) ([]byte, coredata.DocumentClassification, error) {
 	document := &coredata.Document{}
 	portalDocument := &coredata.CompliancePortalDocument{}
 	compliancePortal := &coredata.CompliancePortal{}
@@ -207,25 +216,25 @@ func (s *Service) exportDocumentPDFData(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if version.FileID != nil {
 		pdfData, err := s.fileManager.GetFileBytes(ctx, fileRecord)
 		if err != nil {
-			return nil, fmt.Errorf("cannot fetch document PDF file: %w", err)
+			return nil, "", fmt.Errorf("cannot fetch document PDF file: %w", err)
 		}
 
-		return pdfData, nil
+		return pdfData, version.Classification, nil
 	}
 
 	// TODO: remove on-the-fly fallback once all published versions have a stored PDF.
 	pdfData, err := s.generateDocumentPDFOnTheFly(ctx, scope, document, version)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate PDF on the fly: %w", err)
+		return nil, "", fmt.Errorf("cannot generate PDF on the fly: %w", err)
 	}
 
-	return pdfData, nil
+	return pdfData, version.Classification, nil
 }
 
 // generatePDFOnTheFly generates a PDF from scratch for versions that don't have

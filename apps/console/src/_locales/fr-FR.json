@@ -1003,7 +1003,7 @@
     },
     "watermark": {
       "label": "Ajouter un filigrane",
-      "description": "Ajouter un filigrane avec un texte personnalisé et un horodatage à tous les PDF",
+      "description": "Ajouter à tous les PDF un filigrane avec la classification de chaque document, un texte personnalisé et un horodatage",
       "textLabel": "Texte du filigrane",
       "textPlaceholder": "Saisissez le texte du filigrane"
     },
@@ -1044,7 +1044,7 @@
     },
     "watermark": {
       "label": "Ajouter un filigrane",
-      "description": "Ajouter un filigrane avec un texte personnalisé et un horodatage",
+      "description": "Ajouter un filigrane avec la classification du document, un texte personnalisé et un horodatage",
       "textLabel": "Texte du filigrane",
       "textPlaceholder": "Saisissez le texte du filigrane"
     },

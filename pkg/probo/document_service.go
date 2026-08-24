@@ -2748,7 +2748,11 @@ func exportDocumentPDF(
 			return nil, fmt.Errorf("watermark text is required with watermark enabled")
 		}
 
-		pdfData, err = pdfutils.AddWatermarkWithTimestamp(pdfData, *options.WatermarkText)
+		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			pdfData,
+			version.Classification.String(),
+			*options.WatermarkText,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
@@ -2795,7 +2799,11 @@ func exportStoredPDF(
 			return nil, fmt.Errorf("watermark text is required with watermark enabled")
 		}
 
-		pdfData, err = pdfutils.AddWatermarkWithTimestamp(pdfData, *options.WatermarkText)
+		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			pdfData,
+			version.Classification.String(),
+			*options.WatermarkText,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
@@ -3017,7 +3025,11 @@ func generateDocumentPDF(
 			return nil, fmt.Errorf("watermark text is required with watermark enabled")
 		}
 
-		watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(pdfData, *options.WatermarkText)
+		watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+			pdfData,
+			version.Classification.String(),
+			*options.WatermarkText,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}

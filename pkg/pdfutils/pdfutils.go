@@ -70,14 +70,14 @@ func MergePDFs(pdfs ...[]byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func AddWatermarkWithTimestamp(pdfData []byte, watermarkText string) ([]byte, error) {
+func AddWatermarkWithTimestamp(pdfData []byte, classification string, watermarkText string) ([]byte, error) {
 	if err := ValidateWatermarkText(watermarkText); err != nil {
 		return nil, fmt.Errorf("cannot validate watermark text: %w", err)
 	}
 
 	reader := bytes.NewReader(pdfData)
 
-	textImage, err := generateTextImage(buildWatermarkLines(watermarkText, time.Now()))
+	textImage, err := generateTextImage(buildWatermarkLines(classification, watermarkText, time.Now()))
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate watermark image: %w", err)
 	}
@@ -111,8 +111,9 @@ func AddWatermarkWithTimestamp(pdfData []byte, watermarkText string) ([]byte, er
 	return buf.Bytes(), nil
 }
 
-func buildWatermarkLines(watermarkText string, timestamp time.Time) []string {
+func buildWatermarkLines(classification string, watermarkText string, timestamp time.Time) []string {
 	return []string{
+		classification,
 		watermarkText,
 		timestamp.Format("2006-01-02"),
 	}

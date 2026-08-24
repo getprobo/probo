@@ -104,7 +104,11 @@ func (s *Service) ExportReportPDF(
 
 	watermarkText := pdfutils.TruncateWatermarkText(email.String())
 
-	watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(pdfData, watermarkText)
+	watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+		pdfData,
+		coredata.DocumentClassificationConfidential.String(),
+		watermarkText,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
 	}
