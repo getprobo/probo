@@ -4,6 +4,28 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.265.0] - 2026-08-24
+
+### Added
+
+- GitHub App as an access-review connector alongside OAuth and personal access tokens: users authorize an app installation, short-lived installation tokens are minted automatically, and connector health checks are protocol-aware
+- OAuth2 and SSH auth methods for access-review entries, so GitHub App tokens and deploy keys are recognized instead of being reported as API keys or service accounts
+- Resend as an access-review connector via CIMD authentication
+- Human review tracking for third-party catalog entries: a reviewer can mark a catalog row validated or rejected, and the tracker mapping pipeline now honors a rejected verdict instead of re-attributing it to a vendor
+
+### Changed
+
+- Compliance portal hosting page redesigned onto the v2 UI kit: domain cards restyled around SSL status, an inline form replaces the domain dialog, and visibility is split into switch cards
+- Access-review table columns widened to fit longer connector labels; GitHub App and OAuth2 connector callbacks now route through separate endpoints instead of sharing one
+
+### Fixed
+
+- A concurrent review update could be silently overwritten mid-mapping-run because the read wasn't locked
+- The organization picker for API keys, which had regressed
+- Mermaid diagrams duplicating nodes
+- The Microsoft catalog entry's category and a duplicate Tawk.to catalog entry
+- Upserting a common third party that already existed was reported as created instead of updated
+
 ## [0.264.1] - 2026-08-21
 
 ### Fixed
