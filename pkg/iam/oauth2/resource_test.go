@@ -40,7 +40,8 @@ func TestServiceProtectedResource(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "resource omitted",
+			name: "resource omitted defaults to issuer",
+			want: new(uri.URI("https://auth.example.com")),
 		},
 		{
 			name:   "issuer resource",
@@ -96,4 +97,17 @@ func TestResourceMatches(t *testing.T) {
 	assert.False(t, resourceMatches(nil, resource.String()))
 	assert.False(t, resourceMatches(&resource, ""))
 	assert.False(t, resourceMatches(&resource, "https://other.example.com"))
+}
+
+func TestServiceTokenResource(t *testing.T) {
+	t.Parallel()
+
+	service := &Service{baseURL: "https://auth.example.com"}
+
+	assert.Equal(t, "https://auth.example.com", service.tokenResource(""))
+	assert.Equal(
+		t,
+		"https://other.example.com",
+		service.tokenResource("https://other.example.com"),
+	)
 }

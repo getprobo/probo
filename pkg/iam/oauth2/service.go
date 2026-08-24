@@ -209,7 +209,40 @@ func NewService(
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	if err := s.bindLegacyResources(ctx); err != nil {
+		return err
+	}
+
 	return s.gc.Run(ctx)
+}
+
+func (s *Service) bindLegacyResources(ctx context.Context) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			authorizationCode := &coredata.OAuth2AuthorizationCode{}
+			if err := authorizationCode.BindUnboundResource(ctx, tx, s.baseURL); err != nil {
+				return fmt.Errorf("cannot bind legacy authorization code resources: %w", err)
+			}
+
+			consent := &coredata.OAuth2Consent{}
+			if err := consent.BindUnboundResource(ctx, tx, s.baseURL); err != nil {
+				return fmt.Errorf("cannot bind legacy consent resources: %w", err)
+			}
+
+			accessToken := &coredata.OAuth2AccessToken{}
+			if err := accessToken.BindUnboundResource(ctx, tx, s.baseURL); err != nil {
+				return fmt.Errorf("cannot bind legacy access token resources: %w", err)
+			}
+
+			refreshToken := &coredata.OAuth2RefreshToken{}
+			if err := refreshToken.BindUnboundResource(ctx, tx, s.baseURL); err != nil {
+				return fmt.Errorf("cannot bind legacy refresh token resources: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 // JWKS returns the public key set.
@@ -237,6 +270,7 @@ func (s *Service) CreateAccessToken(
 		HashedValue: hash.SHA256String(tokenValue),
 		ClientID:    new(clientID),
 		IdentityID:  identityID,
+		Resource:    new(s.baseURL),
 		Scopes:      scopes,
 		CreatedAt:   now,
 		ExpiresAt:   now.Add(s.accessTokenDuration),
@@ -290,6 +324,7 @@ func (s *Service) ExchangeAuthorizationCode(
 	if err != nil {
 		return nil, err
 	}
+	resource = s.tokenResource(resource)
 
 	var (
 		code                 = coredata.OAuth2AuthorizationCode{}
@@ -351,6 +386,10 @@ func (s *Service) ExchangeAuthorizationCode(
 						WithDescription("authorization code already redeemed"),
 					),
 				)
+			}
+
+			if code.Resource == nil {
+				code.Resource = new(s.baseURL)
 			}
 
 			if err := validateAuthorizationCodeExchange(
@@ -462,6 +501,8 @@ func (s *Service) RefreshToken(
 	refreshTokenValue string,
 	resource string,
 ) (*TokenResult, error) {
+	resource = s.tokenResource(resource)
+
 	var (
 		accessTokenValue     = rand.MustHexString(tokenByteLength)
 		refreshTokenValueNew = rand.MustHexString(refreshTokenByteLength)
@@ -554,6 +595,10 @@ func (s *Service) RefreshToken(
 			ErrInvalidGrant,
 			WithDescription("refresh token expired"),
 		)
+	}
+
+	if previousRefreshToken.Resource == nil {
+		previousRefreshToken.Resource = new(s.baseURL)
 	}
 
 	if !resourceMatches(previousRefreshToken.Resource, resource) {
@@ -881,6 +926,7 @@ func (s *Service) PollDeviceCode(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    new(clientID),
 				IdentityID:  *deviceCode.IdentityID,
+				Resource:    new(s.baseURL),
 				Scopes:      deviceCode.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
@@ -897,6 +943,7 @@ func (s *Service) PollDeviceCode(
 					HashedValue:   hash.SHA256String(refreshTokenValue),
 					ClientID:      clientID,
 					IdentityID:    *deviceCode.IdentityID,
+					Resource:      new(s.baseURL),
 					Scopes:        deviceCode.Scopes,
 					AccessTokenID: accessToken.ID,
 					CreatedAt:     now,
@@ -979,7 +1026,7 @@ func (s *Service) AuthorizeDevice(
 					identityID,
 					client.ID,
 					deviceCode.Scopes,
-					nil,
+					new(s.baseURL),
 				); err == nil {
 					deviceCode.Status = coredata.OAuth2DeviceCodeStatusAuthorized
 					deviceCode.IdentityID = &identityID
@@ -999,6 +1046,7 @@ func (s *Service) AuthorizeDevice(
 				SessionID:    sessionID,
 				ClientID:     client.ID,
 				Scopes:       deviceCode.Scopes,
+				Resource:     new(s.baseURL),
 				DeviceCodeID: &deviceCode.ID,
 				Approved:     false,
 				CreatedAt:    now,
@@ -1795,7 +1843,7 @@ func (s *Service) AuthenticateClient(
 
 func (s *Service) protectedResource(values []string) (*uri.URI, error) {
 	if len(values) == 0 {
-		return nil, nil
+		return new(s.baseURL), nil
 	}
 
 	if len(values) > 1 {
@@ -1822,6 +1870,14 @@ func (s *Service) protectedResource(values []string) (*uri.URI, error) {
 		ErrInvalidTarget,
 		WithDescription("unsupported resource"),
 	)
+}
+
+func (s *Service) tokenResource(raw string) string {
+	if raw == "" {
+		return s.baseURL.String()
+	}
+
+	return raw
 }
 
 func resourceMatches(expected *uri.URI, raw string) bool {

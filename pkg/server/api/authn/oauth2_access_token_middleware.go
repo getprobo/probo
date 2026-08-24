@@ -21,6 +21,8 @@
 package authn
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -30,30 +32,41 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
-	"go.probo.inc/probo/pkg/uri"
 )
 
-type OAuth2AudiencePolicy struct {
-	Resource     uri.URI
-	AllowUnbound bool
-}
-
-func (p OAuth2AudiencePolicy) Allows(accessToken *coredata.OAuth2AccessToken) bool {
+func OAuth2AccessTokenMatchesIssuer(
+	svc *iam.Service,
+	accessToken *coredata.OAuth2AccessToken,
+) bool {
 	if accessToken.ClientID == nil {
 		return true
 	}
 
 	if accessToken.Resource == nil {
-		return p.AllowUnbound
+		return true
 	}
 
-	return p.Resource != "" && *accessToken.Resource == p.Resource
+	return *accessToken.Resource == svc.OAuth2ServerService.Issuer()
 }
 
-func NewOAuth2AccessTokenMiddleware(
+func AuthenticateOAuth2AccessToken(
+	ctx context.Context,
 	svc *iam.Service,
-	audiencePolicy OAuth2AudiencePolicy,
-) func(next http.Handler) http.Handler {
+	tokenValue string,
+) (*coredata.OAuth2AccessToken, error) {
+	accessToken, err := svc.OAuth2ServerService.LoadAccessToken(ctx, tokenValue)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load oauth2 access token: %w", err)
+	}
+
+	if !OAuth2AccessTokenMatchesIssuer(svc, accessToken) {
+		return nil, errors.New("oauth2 access token audience does not match issuer")
+	}
+
+	return accessToken, nil
+}
+
+func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -73,14 +86,8 @@ func NewOAuth2AccessTokenMiddleware(
 					return
 				}
 
-				accessToken, err := svc.OAuth2ServerService.LoadAccessToken(ctx, tokenValue)
+				accessToken, err := AuthenticateOAuth2AccessToken(ctx, svc, tokenValue)
 				if err != nil {
-					next.ServeHTTP(w, r)
-
-					return
-				}
-
-				if !audiencePolicy.Allows(accessToken) {
 					next.ServeHTTP(w, r)
 
 					return

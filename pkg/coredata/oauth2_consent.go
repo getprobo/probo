@@ -321,7 +321,10 @@ WHERE
 	AND approved = TRUE
 	AND scopes @> @scopes
 	AND scopes <@ @scopes
-	AND resource IS NOT DISTINCT FROM @resource
+	AND (
+		resource IS NOT DISTINCT FROM @resource
+		OR resource IS NULL
+	)
 LIMIT 1;
 `
 
@@ -439,6 +442,27 @@ WHERE
 	)
 	if err != nil {
 		return fmt.Errorf("cannot update oauth2_consent: %w", err)
+	}
+
+	return nil
+}
+
+func (c *OAuth2Consent) BindUnboundResource(
+	ctx context.Context,
+	conn pg.Tx,
+	resource uri.URI,
+) error {
+	q := `
+UPDATE iam_oauth2_consents
+SET
+	resource = @resource
+WHERE
+	resource IS NULL
+`
+
+	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"resource": resource})
+	if err != nil {
+		return fmt.Errorf("cannot bind unbound oauth2 consent resources: %w", err)
 	}
 
 	return nil
