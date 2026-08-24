@@ -48,11 +48,13 @@ func asanaRegistration() *Registration {
 		// endpoint". Requesting "default" is the documented opt-out, and
 		// naming it keeps SourceNeedsReconnect able to spot the connectors
 		// still holding a narrower grant.
-		OAuth2Scopes: []string{"default"},
+		OAuth2: &OAuth2Config{
+			Scopes:          []string{"default"},
+			ExclusiveScopes: true,
+		},
 		// Asana rejects the whole authorize request when it carries a scope
 		// the app no longer offers, so a reconnect must not replay the
 		// granular grant these connectors were created with.
-		ExclusiveScopes: true,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](conn)
 			if err != nil {

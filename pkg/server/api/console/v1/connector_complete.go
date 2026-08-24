@@ -44,7 +44,7 @@ func handleConnectorComplete(
 	baseURL *baseurl.BaseURL,
 	proboSvc *probo.Service,
 	accessReviewSvc *accessreview.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	safeRedirect *saferedirect.SafeRedirect,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +107,7 @@ func handleConnectorGitHubAppComplete(
 	baseURL *baseurl.BaseURL,
 	proboSvc *probo.Service,
 	accessReviewSvc *accessreview.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	safeRedirect *saferedirect.SafeRedirect,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -431,7 +431,7 @@ func redirectToGitHubAppInstall(
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *log.Logger,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	err error,
 ) bool {
 	if !errors.Is(err, connector.ErrGitHubAppInstallationRequired) {
@@ -456,7 +456,7 @@ func handleConnectorCallbackError(
 	r *http.Request,
 	logger *log.Logger,
 	baseURL *baseurl.BaseURL,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	safeRedirect *saferedirect.SafeRedirect,
 	query url.Values,
 ) {

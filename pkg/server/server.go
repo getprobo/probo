@@ -93,7 +93,7 @@ type Config struct {
 	ITAM                    *itam.Service
 	Cookie                  securecookie.Config
 	TokenSecret             string
-	ConnectorRegistry       *connector.ConnectorRegistry
+	ConnectorRegistry       *connector.Registry
 	ProviderRegistry        *provider.Registry
 	CustomDomainCname       string
 	GraphQLLimits           gqlutils.Limits

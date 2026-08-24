@@ -36,13 +36,14 @@ import (
 // password a service account is created with.
 func authentikRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderAuthentik,
-		DisplayName:    "authentik",
-		SupportsAPIKey: true,
-		BuildProbeURL:  buildAuthentikProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
+		Provider:    coredata.ConnectorProviderAuthentik,
+		DisplayName: "authentik",
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
 		},
+		BuildProbeURL: buildAuthentikProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			settings, err := coredata.ConnectorSettings[coredata.AuthentikConnectorSettings](conn)
 			if err != nil {

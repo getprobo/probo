@@ -84,7 +84,7 @@ type (
 		fileManager                           *filemanager.Service
 		logger                                *log.Logger
 		esign                                 *esign.Service
-		connectorRegistry                     *connector.ConnectorRegistry
+		connectorRegistry                     *connector.Registry
 		invitationTokenValidity               time.Duration
 		Frameworks                            *FrameworkService
 		Measures                              *MeasureService
@@ -136,7 +136,7 @@ func NewService(
 	logger *log.Logger,
 	iamService *iam.Service,
 	esignService *esign.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	if bucket == "" {

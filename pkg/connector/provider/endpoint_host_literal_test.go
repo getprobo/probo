@@ -401,7 +401,11 @@ func knownOAuth2Scopes(r *provider.Registry) map[string]bool {
 	scopes := make(map[string]bool)
 
 	for _, reg := range r.All() {
-		for _, s := range reg.OAuth2Scopes {
+		if reg.OAuth2 == nil {
+			continue
+		}
+
+		for _, s := range reg.OAuth2.Scopes {
 			scopes[s] = true
 		}
 	}

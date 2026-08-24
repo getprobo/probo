@@ -44,6 +44,7 @@ func clickupRegistration() *Registration {
 			// endpoint lives on app.clickup.com and is unrelated.
 			APIBase: "https://api.clickup.com/api/v2",
 		},
+		OAuth2: &OAuth2Config{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](conn)
 			if err != nil {

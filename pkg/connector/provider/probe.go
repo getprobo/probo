@@ -33,6 +33,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -77,6 +78,23 @@ func (r *Registry) ProbeConnection(
 	}
 
 	return probeGET(ctx, httpClient, probeURL)
+}
+
+// ProbeCloudConnection is ProbeConnection for a workload identity connector,
+// whose credential is a cloud SDK credential rather than an *http.Client. A
+// provider that registers no ProbeCloud skips the check, matching the empty
+// probe URL contract above.
+func (r *Registry) ProbeCloudConnection(
+	ctx context.Context,
+	session cloud.Session,
+	conn *coredata.Connector,
+) error {
+	reg, ok := r.Get(conn.Provider)
+	if !ok || reg.WorkloadIdentity == nil || reg.WorkloadIdentity.Probe == nil {
+		return nil
+	}
+
+	return reg.WorkloadIdentity.Probe(ctx, session, conn)
 }
 
 func probeGET(ctx context.Context, httpClient *http.Client, probeURL string) error {

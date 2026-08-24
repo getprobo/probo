@@ -34,7 +34,9 @@ func clickhouseRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderClickHouse,
 		DisplayName:      "ClickHouse Cloud",
 		DocumentationURL: accessReviewDocsURL("clickhouse"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthBasicUserPass},
+		},
 		// ClickHouse Cloud's control-plane API authenticates with HTTP Basic
 		// auth where the credential is keyId:keySecret. APIKeyBasicAuthUserPass
 		// makes the APIKeyConnection base64 the verbatim "keyId:keySecret"
@@ -43,7 +45,6 @@ func clickhouseRegistration() *Registration {
 		// scoped to exactly one organization, which the driver discovers via
 		// GET /v1/organizations, so there is nothing to pick or configure
 		// (Pattern 3): no settings struct, no picker.
-		APIKeyBasicAuthUserPass: true,
 		Endpoints: Endpoints{
 			// Every control-plane endpoint the driver calls lives under the
 			// same /v1 prefix, so the version segment stays in APIBase.

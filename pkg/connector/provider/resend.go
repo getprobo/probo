@@ -34,17 +34,19 @@ func resendRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderResend,
 		DisplayName:      "Resend",
 		DocumentationURL: accessReviewDocsURL("resend"),
-		PublicClient:     true,
+		OAuth2: &OAuth2Config{
+			PublicClient:      true,
+			TokenEndpointAuth: "none",
+			RequiresPKCE:      true,
+			Scopes:            []string{"full_access"},
+		},
 		Endpoints: Endpoints{
 			APIBase: "https://api.resend.com",
 			Auth:    "https://api.resend.com/oauth/authorize",
 			Token:   "https://api.resend.com/oauth/token",
 			Probe:   "https://api.resend.com/domains",
 		},
-		TokenEndpointAuth: "none",
-		RequiresPKCE:      true,
-		OAuth2Scopes:      []string{"full_access"},
-		SupportsAPIKey:    true,
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewResendDriver(c, ep.APIBase), nil
 		},

@@ -35,13 +35,14 @@ func dotfileRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderDotfile,
 		DisplayName:      "Dotfile",
 		DocumentationURL: accessReviewDocsURL("dotfile"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "X-DOTFILE-API-KEY"},
+		},
 		// Dotfile authenticates with the API key in the X-DOTFILE-API-KEY
 		// header rather than Authorization: Bearer. APIKeyHeader makes the
 		// APIKeyConnection send that header and omit Authorization. The key is
 		// bound to one workspace, so there is nothing to pick (Pattern 3): no
 		// settings struct, no picker.
-		APIKeyHeader: "X-DOTFILE-API-KEY",
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same /v1
 			// prefix, so the version segment stays in APIBase.

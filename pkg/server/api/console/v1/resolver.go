@@ -83,7 +83,7 @@ type (
 		agentExecution          *agentexecution.Service
 		mailman                 *mailman.Service
 		cookieBanner            *cookiebanner.Service
-		connectorRegistry       *connector.ConnectorRegistry
+		connectorRegistry       *connector.Registry
 		providerRegistry        *provider.Registry
 		riskManagement          *riskmanagement.Service
 		thirdParty              *thirdparty.Service
@@ -114,7 +114,7 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,

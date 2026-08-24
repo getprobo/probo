@@ -35,16 +35,17 @@ func qoveryRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderQovery,
 		DisplayName:      "Qovery",
 		DocumentationURL: accessReviewDocsURL("qovery"),
-		SupportsAPIKey:   true,
-		APIKeyAuthScheme: "Token",
-		BuildProbeURL:    buildQoveryProbeURL,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthScheme, Name: "Token"},
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
+		},
+		BuildProbeURL: buildQoveryProbeURL,
 		Endpoints: Endpoints{
 			// Qovery's API is unversioned in the path; the driver joins the
 			// resource segments onto this origin.
 			APIBase: "https://api.qovery.com",
-		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.QoveryConnectorSettings](conn)

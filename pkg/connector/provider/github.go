@@ -46,10 +46,13 @@ func githubRegistration() *Registration {
 		// universal requirement for GitHub.com organizations. The driver
 		// treats audit-log access as optional and leaves LastLogin nil when
 		// GitHub rejects that request.
-		OAuth2Scopes:   []string{"read:org"},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organization", Label: "Organization", Required: true},
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"read:org"},
+		},
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organization", Label: "Organization", Required: true},
+			},
 		},
 		Probe: probeGitHub,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {

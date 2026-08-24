@@ -43,6 +43,7 @@ func netlifyRegistration() *Registration {
 			// prefix, so the version segment stays in APIBase.
 			APIBase: "https://api.netlify.com/api/v1",
 		},
+		OAuth2: &OAuth2Config{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](conn)
 			if err != nil {

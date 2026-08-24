@@ -60,6 +60,8 @@ func CapabilityProbe(protocol ProtocolType) Connection {
 		return &APIKeyConnection{}
 	case ProtocolGitHubApp:
 		return &GitHubAppConnection{}
+	case ProtocolWorkloadIdentity:
+		return &WorkloadIdentityConnection{}
 	default:
 		return nil
 	}
@@ -172,4 +174,8 @@ var (
 	_ ScopeGranter         = (*GitHubAppConnection)(nil)
 	_ Reconnector          = (*GitHubAppConnection)(nil)
 	_ ProbeURLProvider     = (*GitHubAppConnection)(nil)
+
+	_ OrganizationSelector = (*SlackConnection)(nil)
+	_ ScopeGranter         = (*SlackConnection)(nil)
+	_ Reconnector          = (*SlackConnection)(nil)
 )

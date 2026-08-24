@@ -411,7 +411,7 @@ func (impl *Implm) Run(
 			p := coredata.ConnectorProvider(connectorCfg.Provider)
 
 			reg, ok := providerRegistry.Get(p)
-			if !ok || !reg.ManagedAPIKey {
+			if !ok || !reg.IsManagedAPIKey() {
 				return fmt.Errorf("cannot configure api_key connector %q: not a managed-api-key provider", connectorCfg.Provider)
 			}
 
@@ -804,6 +804,7 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		providerRegistry,
 		l.Named("access-review"),
+		accessreview.WithIdentityFederation(identityFederationIssuer),
 	)
 
 	agentExecutionService := agentexecution.NewService(pgClient)

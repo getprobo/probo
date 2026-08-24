@@ -37,12 +37,13 @@ func metabaseRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderMetabase,
 		DisplayName:      "Metabase",
 		DocumentationURL: accessReviewDocsURL("metabase"),
-		SupportsAPIKey:   true,
-		APIKeyHeader:     "x-api-key",
-		BuildProbeURL:    buildMetabaseProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "instanceUrl", Label: "Instance URL", Required: true},
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+			ExtraSettings: []ExtraSetting{
+				{Key: "instanceUrl", Label: "Instance URL", Required: true},
+			},
 		},
+		BuildProbeURL: buildMetabaseProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
 			if err != nil {

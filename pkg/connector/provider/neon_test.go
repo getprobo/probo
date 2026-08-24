@@ -41,12 +41,12 @@ func TestNeonRegistrationMetadata(t *testing.T) {
 	require.True(t, ok, "neon provider must be registered")
 
 	assert.Equal(t, "Neon", reg.DisplayName)
-	assert.True(t, reg.SupportsAPIKey)
-	assert.Empty(t, reg.APIKeyAuthScheme, "neon API keys use the default Bearer scheme")
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	assert.Equal(t, "organizationId", reg.APIKeyExtraSettings[0].Key)
-	assert.Equal(t, "Organization ID", reg.APIKeyExtraSettings[0].Label)
-	assert.True(t, reg.APIKeyExtraSettings[0].Required)
+	assert.True(t, reg.SupportsAPIKey())
+	assert.Equal(t, provider.APIKeyAuthBearer, reg.APIKey.Auth.Mode)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	assert.Equal(t, "organizationId", reg.APIKeyExtraSettings()[0].Key)
+	assert.Equal(t, "Organization ID", reg.APIKeyExtraSettings()[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings()[0].Required)
 }
 
 func TestNeonNewDriver(t *testing.T) {

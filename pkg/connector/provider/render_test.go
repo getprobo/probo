@@ -41,19 +41,17 @@ func TestRenderRegistrationMetadata(t *testing.T) {
 	require.True(t, ok, "render provider must be registered")
 
 	assert.Equal(t, "Render", reg.DisplayName)
-	assert.True(t, reg.SupportsAPIKey)
+	assert.True(t, reg.SupportsAPIKey())
 	// Render authenticates with the default Authorization: Bearer scheme.
-	assert.Empty(t, reg.APIKeyAuthScheme)
-	assert.Empty(t, reg.APIKeyHeader)
-	assert.False(t, reg.APIKeyBasicAuth)
+	assert.Equal(t, provider.APIKeyAuthBearer, reg.APIKey.Auth.Mode)
 	// No OAuth and no picker.
 	assert.Empty(t, reg.Endpoints.Auth)
 	assert.Nil(t, reg.SetOrganizationSettings)
 
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	assert.Equal(t, "workspaceId", reg.APIKeyExtraSettings[0].Key)
-	assert.Equal(t, "Workspace ID", reg.APIKeyExtraSettings[0].Label)
-	assert.True(t, reg.APIKeyExtraSettings[0].Required)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	assert.Equal(t, "workspaceId", reg.APIKeyExtraSettings()[0].Key)
+	assert.Equal(t, "Workspace ID", reg.APIKeyExtraSettings()[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings()[0].Required)
 }
 
 func TestRenderNewDriver(t *testing.T) {

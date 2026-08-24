@@ -35,21 +35,22 @@ func scalewayRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderScaleway,
 		DisplayName:      "Scaleway",
 		DocumentationURL: accessReviewDocsURL("scaleway"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "X-Auth-Token"},
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationId", Label: "Organization ID", Required: true},
+			},
+		},
 		// Scaleway authenticates with the secret key in the X-Auth-Token header
 		// rather than Authorization: Bearer. APIKeyHeader makes the
 		// APIKeyConnection send that header and omit Authorization. The key is
 		// bound to one Organization, but GET /iam/v1alpha1/users requires the
 		// organization_id explicitly, so it is captured via APIKeyExtraSettings
 		// rather than discovered — hence no picker and a BuildProbeURL.
-		APIKeyHeader: "X-Auth-Token",
 		Endpoints: Endpoints{
 			// Every endpoint the driver calls lives under the same
 			// /iam/v1alpha1 prefix, so the version segment stays in APIBase.
 			APIBase: "https://api.scaleway.com/iam/v1alpha1",
-		},
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},
 		BuildProbeURL: buildScalewayProbeURL,
 		// No NewNameResolver: Scaleway exposes no read-only endpoint that maps

@@ -42,7 +42,7 @@ import (
 type sourceNameHandler struct {
 	pg                *pg.Client
 	encryptionKey     cipher.EncryptionKey
-	connectorRegistry *connector.ConnectorRegistry
+	connectorRegistry *connector.Registry
 	providerRegistry  *provider.Registry
 	logger            *log.Logger
 }
@@ -50,7 +50,7 @@ type sourceNameHandler struct {
 func NewSourceNameWorker(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
 	logger *log.Logger,
 	opts ...worker.Option,
@@ -121,17 +121,33 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 			}
 
+			// Every name resolver reads the provider's HTTP API, so a connector
+			// whose credential does not ride on HTTP has none to build. Leave
+			// resolver nil for the ordinary "no resolver for provider" path
+			// below, rather than the failure path, which would warn about
+			// normal operation.
+			conn, ok := dbConnector.Connection.(connector.HTTPConnection)
+			if !ok {
+				return nil
+			}
+
 			var tokenBefore string
-			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
+			if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
 				tokenBefore = oauth2Conn.AccessToken
 			}
 
-			httpClient, err := h.connectorHTTPClient(ctx, &dbConnector)
+			httpClient, err := buildHTTPClient(
+				ctx,
+				h.connectorRegistry,
+				h.providerRegistry,
+				dbConnector.Provider,
+				conn,
+			)
 			if err != nil {
 				return fmt.Errorf("cannot create HTTP client for connector: %w", err)
 			}
 
-			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
+			if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
 				if oauth2Conn.AccessToken != tokenBefore {
 					dbConnector.UpdatedAt = time.Now()
 					if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
@@ -251,44 +267,6 @@ func (h *sourceNameHandler) markNameSynced(
 			return nil
 		},
 	)
-}
-
-// connectorHTTPClient returns an HTTP client for the given connector.
-// For OAuth2 connections it uses RefreshableClient when a refresh config
-// is registered for the provider, so that short-lived tokens are
-// transparently refreshed.
-func (h *sourceNameHandler) connectorHTTPClient(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-) (*http.Client, error) {
-	if h.connectorRegistry != nil {
-		if err := h.connectorRegistry.ConfigureConnection(
-			string(dbConnector.Provider),
-			dbConnector.Connection,
-		); err != nil {
-			return nil, err
-		}
-	}
-
-	oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection)
-	if !ok {
-		// Inject the Probo-held key for ManagedAPIKey providers (no-op
-		// otherwise) before building the client.
-		if err := h.providerRegistry.ApplyManagedAPIKey(dbConnector); err != nil {
-			return nil, err
-		}
-
-		return dbConnector.Connection.Client(ctx)
-	}
-
-	if h.connectorRegistry != nil {
-		refreshCfg := h.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
-		if refreshCfg != nil {
-			return oauth2Conn.RefreshableClient(ctx, *refreshCfg)
-		}
-	}
-
-	return oauth2Conn.Client(ctx)
 }
 
 func (h *sourceNameHandler) buildResolver(

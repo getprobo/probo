@@ -44,8 +44,8 @@ func TestAsanaRegistrationScopes(t *testing.T) {
 	reg, ok := r.Get(coredata.ConnectorProviderAsana)
 	require.True(t, ok, "asana provider must be registered")
 
-	assert.Equal(t, []string{"default"}, reg.OAuth2Scopes)
-	assert.True(t, reg.ExclusiveScopes, "asana rejects any scope its app no longer offers")
+	assert.Equal(t, []string{"default"}, reg.OAuth2.Scopes)
+	assert.True(t, reg.OAuth2.ExclusiveScopes, "asana rejects any scope its app no longer offers")
 }
 
 // TestApplyOAuth2Defaults_AsanaExclusiveScopes checks the trait survives the

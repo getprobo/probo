@@ -35,12 +35,13 @@ func signozRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderSigNoz,
 		DisplayName:      "SigNoz",
 		DocumentationURL: accessReviewDocsURL("signoz"),
-		SupportsAPIKey:   true,
-		APIKeyHeader:     "SIGNOZ-API-KEY",
-		BuildProbeURL:    buildSigNozProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "SIGNOZ-API-KEY"},
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
 		},
+		BuildProbeURL: buildSigNozProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			settings, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
 			if err != nil {

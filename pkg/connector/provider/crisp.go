@@ -43,12 +43,17 @@ func crispRegistration() *Registration {
 		// operator configures PROBOD_CONNECTOR_CRISP_PLUGIN_TOKEN — it ships
 		// deactivated until Crisp validates the production plugin and
 		// activates with no code change once the token is set.
-		ManagedAPIKey: true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthBasicUserPass},
+			ExtraSettings: []ExtraSetting{
+				{Key: "websiteId", Label: "Website ID", Required: true},
+			},
+			Managed: &ManagedAPIKey{RequiresResourceID: true},
+		},
 		// The per-website plugin API also needs the plugin ID (a distinct value
 		// from the token identifier), supplied via bootstrap alongside the
 		// token. Require it so Crisp stays hidden until both are configured
 		// rather than surfacing as connectable and failing at connect time.
-		RequiresManagedResourceID: true,
 		// Crisp authenticates with the plugin token presented as HTTP Basic,
 		// the credential being the verbatim "identifier:key" pair.
 		// APIKeyBasicAuthUserPass base64-encodes it (the empty-password
@@ -57,10 +62,6 @@ func crispRegistration() *Registration {
 		// APIKeyExtraSettings. Every request also needs the non-auth X-Crisp-Tier
 		// header (set by the driver/probe/name resolver), so the probe is a
 		// custom closure.
-		APIKeyBasicAuthUserPass: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "websiteId", Label: "Website ID", Required: true},
-		},
 		// See Registration.EndpointOverrideUnsupported: GetCrispSubscriptionSettings,
 		// called at connect time from connector_settings.go to verify plugin
 		// ownership, hits crispDefaultBaseURL directly instead of APIBase.

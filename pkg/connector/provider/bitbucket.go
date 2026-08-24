@@ -45,6 +45,7 @@ func bitbucketRegistration() *Registration {
 			// so the version segment stays in APIBase.
 			APIBase: "https://api.bitbucket.org/2.0",
 		},
+		OAuth2: &OAuth2Config{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](conn)
 			if err != nil {

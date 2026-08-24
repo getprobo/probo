@@ -34,7 +34,7 @@ func nukiRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderNuki,
 		DisplayName:      "Nuki",
 		DocumentationURL: accessReviewDocsURL("nuki"),
-		SupportsAPIKey:   true,
+		APIKey:           &APIKeyConfig{},
 		// Nuki Web API token (Menu > API). Required scopes: account,
 		// smartlock.auth. Optional: smartlock.readOnly (door names). OAuth2
 		// implicit flow has no refreshable credential, so only API tokens are

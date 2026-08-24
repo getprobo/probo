@@ -173,8 +173,9 @@ type (
 )
 
 var (
-	_ Connector  = (*OAuth2Connector)(nil)
-	_ Connection = (*OAuth2Connection)(nil)
+	_ Connector      = (*OAuth2Connector)(nil)
+	_ Connection     = (*OAuth2Connection)(nil)
+	_ HTTPConnection = (*OAuth2Connection)(nil)
 
 	OAuth2TokenType = "probo/connector/oauth2"
 	OAuth2TokenTTL  = 10 * time.Minute

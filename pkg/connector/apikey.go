@@ -66,7 +66,10 @@ type APIKeyConnection struct {
 	Scheme string `json:"scheme,omitempty"`
 }
 
-var _ Connection = (*APIKeyConnection)(nil)
+var (
+	_ Connection     = (*APIKeyConnection)(nil)
+	_ HTTPConnection = (*APIKeyConnection)(nil)
+)
 
 func (c *APIKeyConnection) Type() ProtocolType {
 	return ProtocolAPIKey

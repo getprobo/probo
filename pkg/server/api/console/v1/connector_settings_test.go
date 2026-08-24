@@ -44,8 +44,8 @@ func TestApiKeyConnectorSettings_LangfuseBaseURL(t *testing.T) {
 
 	reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderLangfuse)
 	require.True(t, ok)
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	require.Equal(t, "baseUrl", reg.APIKeyExtraSettings[0].Key)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	require.Equal(t, "baseUrl", reg.APIKeyExtraSettings()[0].Key)
 
 	baseURL := "https://cloud.langfuse.com"
 
@@ -70,8 +70,8 @@ func TestApiKeyConnectorSettings_OnePasswordSCIMBridgeURL(t *testing.T) {
 
 	reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderOnePassword)
 	require.True(t, ok)
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	require.Equal(t, "scimBridgeUrl", reg.APIKeyExtraSettings[0].Key)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	require.Equal(t, "scimBridgeUrl", reg.APIKeyExtraSettings()[0].Key)
 
 	scimBridgeURL := "https://scim.example.test"
 
@@ -99,9 +99,9 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 
 	reg, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderOnePassword)
 	require.True(t, ok)
-	require.Len(t, reg.ClientCredentialsExtraSettings, 2)
-	require.Equal(t, "accountId", reg.ClientCredentialsExtraSettings[0].Key)
-	require.Equal(t, "region", reg.ClientCredentialsExtraSettings[1].Key)
+	require.Len(t, reg.ClientCredentialsExtraSettings(), 2)
+	require.Equal(t, "accountId", reg.ClientCredentialsExtraSettings()[0].Key)
+	require.Equal(t, "region", reg.ClientCredentialsExtraSettings()[1].Key)
 
 	accountID, region := "acme", "EU"
 

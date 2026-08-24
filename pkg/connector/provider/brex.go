@@ -45,8 +45,10 @@ func brexRegistration() *Registration {
 		// call; without it Brex 403s that endpoint (users.readonly covers only
 		// /v2/users, which the driver uses). Existing Brex connectors must
 		// reconnect to re-consent to the added scope.
-		OAuth2Scopes:   []string{"openid", "offline_access", "users.readonly", "companies.readonly"},
-		SupportsAPIKey: true,
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"openid", "offline_access", "users.readonly", "companies.readonly"},
+		},
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewBrexDriver(c, ep.APIBase), nil
 		},

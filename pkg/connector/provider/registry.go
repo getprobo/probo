@@ -38,6 +38,7 @@ import (
 	"strings"
 	"sync"
 
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -93,47 +94,58 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
 	}
 
-	// APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and
-	// APIKeyAuthScheme select different presentations of the same key;
-	// setting more than one is a programmer error with a silent winner
-	// (Client checks BasicAuth, then BasicAuthUserPass, then Header, then
-	// Scheme). Reject it at startup.
-	apiKeyModes := 0
-
-	if reg.APIKeyBasicAuth {
-		apiKeyModes++
+	// The auth mode is a single value, so the four presentations it replaces can
+	// no longer be set together. What is left to check is that the mode and its
+	// payload agree: a Name on a mode that ignores it is silently dead, and a
+	// mode that needs one without it would send a header with no name.
+	if reg.APIKey != nil {
+		switch reg.APIKey.Auth.Mode {
+		case APIKeyAuthHeader, APIKeyAuthScheme:
+			if reg.APIKey.Auth.Name == "" {
+				return fmt.Errorf("cannot register connector provider %q: API-key auth mode %q requires a Name", reg.Provider, reg.APIKey.Auth.Mode)
+			}
+		case APIKeyAuthBearer, APIKeyAuthBasic, APIKeyAuthBasicUserPass:
+			if reg.APIKey.Auth.Name != "" {
+				return fmt.Errorf("cannot register connector provider %q: API-key auth mode %q ignores Name", reg.Provider, reg.APIKey.Auth.Mode)
+			}
+		default:
+			return fmt.Errorf("cannot register connector provider %q: unknown API-key auth mode %q", reg.Provider, reg.APIKey.Auth.Mode)
+		}
 	}
 
-	if reg.APIKeyBasicAuthUserPass {
-		apiKeyModes++
+	// A Probo-held key ignores any customer credential, so pairing it with the
+	// client-credentials path would advertise a credential field whose value is
+	// silently discarded. Its former conflict with a customer-supplied API key
+	// is now unrepresentable: Managed is a variant of the one API-key path.
+	if reg.IsManagedAPIKey() && reg.SupportsClientCredentials() {
+		return fmt.Errorf("cannot register connector provider %q: a managed API key is mutually exclusive with ClientCredentials", reg.Provider)
 	}
 
-	if reg.APIKeyHeader != "" {
-		apiKeyModes++
+	// The two driver factories take different credentials, and resolveDriver
+	// picks between them from the connector's own connection type. A provider
+	// declaring both claims to speak two protocols whose connectors it has no
+	// way to create, so one factory would simply never run.
+	if reg.NewDriver != nil && reg.SupportsWorkloadIdentity() {
+		return fmt.Errorf("cannot register connector provider %q: NewDriver and WorkloadIdentity are mutually exclusive", reg.Provider)
 	}
 
-	if reg.APIKeyAuthScheme != "" {
-		apiKeyModes++
+	// A workload identity provider holds no credential, so the customer never
+	// supplies one and Probo never injects one. Pairing it with a
+	// credential-bearing path would advertise a credential field the driver
+	// cannot reach — the same silent-winner class rejected above.
+	// Note APIKey != nil rather than SupportsAPIKey(), which answers the
+	// narrower "does the customer paste a key": a Probo-held key conflicts with
+	// workload identity just as much as a customer-pasted one.
+	if reg.SupportsWorkloadIdentity() &&
+		(reg.APIKey != nil || reg.SupportsClientCredentials()) {
+		return fmt.Errorf("cannot register connector provider %q: a workload identity provider cannot also declare APIKey or ClientCredentials", reg.Provider)
 	}
 
-	if apiKeyModes > 1 {
-		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
-	}
-
-	// ManagedAPIKey injects a Probo-held key and ignores any customer
-	// credential, so pairing it with SupportsAPIKey/SupportsClientCredentials
-	// would advertise a credential field whose value is silently discarded —
-	// the same silent-winner class rejected above. Reject it at startup.
-	if reg.ManagedAPIKey && (reg.SupportsAPIKey || reg.SupportsClientCredentials) {
-		return fmt.Errorf("cannot register connector provider %q: ManagedAPIKey is mutually exclusive with SupportsAPIKey and SupportsClientCredentials", reg.Provider)
-	}
-
-	// RequiresManagedResourceID only has meaning for a ManagedAPIKey provider:
-	// ManagedConnectorReady consults it exclusively on that path, so setting it
-	// on a non-managed provider is a silently ineffective flag. Reject it at
-	// startup rather than let the requirement quietly do nothing.
-	if reg.RequiresManagedResourceID && !reg.ManagedAPIKey {
-		return fmt.Errorf("cannot register connector provider %q: RequiresManagedResourceID requires ManagedAPIKey", reg.Provider)
+	// Neither closure is usable alone: without a session there is nothing to
+	// build a driver from, and without a driver nothing ever opens a session.
+	// Grouping them already makes a dangling Probe unrepresentable.
+	if wi := reg.WorkloadIdentity; wi != nil && (wi.NewSession == nil || wi.NewDriver == nil) {
+		return fmt.Errorf("cannot register connector provider %q: WorkloadIdentity requires both NewSession and NewDriver", reg.Provider)
 	}
 
 	// A Probe on a different host from APIBase (or Identity) would let a
@@ -174,25 +186,34 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
-	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
-	// endpoint host, but from different sources (a callback param vs. the
-	// signed state). CompleteWithState checks them in order, so setting both
-	// is a programmer error with a silent winner. Reject it at startup.
-	if reg.BuildTokenURLForDomain != nil && reg.BuildTokenURLForSite != nil {
-		return fmt.Errorf("cannot register connector provider %q: BuildTokenURLForDomain and BuildTokenURLForSite are mutually exclusive", reg.Provider)
+	// An OAuth2 provider is one that can produce an authorization URL, whether
+	// static or built per flow. Requiring the block in exactly that case is
+	// what lets every reader treat a nil OAuth2 as "no OAuth2 path" instead of
+	// "no metadata beyond the defaults", which would silently drop a provider's
+	// scopes if someone added it without the block.
+	if reg.OAuth2 == nil {
+		if reg.Endpoints.Auth != "" {
+			return fmt.Errorf("cannot register connector provider %q: Endpoints.Auth requires an OAuth2 block", reg.Provider)
+		}
+	} else {
+		if reg.Endpoints.Auth == "" &&
+			reg.OAuth2.BuildAuthURL == nil &&
+			reg.OAuth2.BuildAuthURLForSite == nil {
+			return fmt.Errorf("cannot register connector provider %q: OAuth2 requires Endpoints.Auth, BuildAuthURL or BuildAuthURLForSite", reg.Provider)
+		}
+
+		// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
+		// endpoint host, but from different sources (a callback param vs. the
+		// signed state). CompleteWithState checks them in order, so setting
+		// both is a programmer error with a silent winner. Reject it at startup.
+		if reg.OAuth2.BuildTokenURLForDomain != nil && reg.OAuth2.BuildTokenURLForSite != nil {
+			return fmt.Errorf("cannot register connector provider %q: BuildTokenURLForDomain and BuildTokenURLForSite are mutually exclusive", reg.Provider)
+		}
 	}
 
-	// A per-path settings list for a path the provider cannot offer is a dead
-	// declaration: no dialog will ever render it. ManagedAPIKey counts as an
-	// API-key path — the customer supplies the settings, Probo the key.
-	if len(reg.APIKeyExtraSettings) > 0 && !reg.SupportsAPIKey && !reg.ManagedAPIKey {
-		return fmt.Errorf("cannot register connector provider %q: APIKeyExtraSettings requires SupportsAPIKey or ManagedAPIKey", reg.Provider)
-	}
-
-	if len(reg.ClientCredentialsExtraSettings) > 0 && !reg.SupportsClientCredentials {
-		return fmt.Errorf("cannot register connector provider %q: ClientCredentialsExtraSettings requires SupportsClientCredentials", reg.Provider)
-	}
-
+	// A settings list for a path the provider does not offer is now
+	// unrepresentable: each list lives inside the block that offers it.
+	//
 	// The console keys both its form state and its submitted values by setting
 	// key within one dialog, so a duplicate key silently collapses two fields
 	// into one and an empty key produces an unlabelled field bound to nothing.
@@ -203,8 +224,8 @@ func (r *Registry) Register(reg *Registration) error {
 		field    string
 		settings []ExtraSetting
 	}{
-		{"APIKeyExtraSettings", reg.APIKeyExtraSettings},
-		{"ClientCredentialsExtraSettings", reg.ClientCredentialsExtraSettings},
+		{"APIKey.ExtraSettings", reg.APIKeyExtraSettings()},
+		{"ClientCredentials.ExtraSettings", reg.ClientCredentialsExtraSettings()},
 	} {
 		seen := make(map[string]bool, len(list.settings))
 
@@ -269,7 +290,7 @@ func (r *Registry) PublicClients() []*Registration {
 	var out []*Registration
 
 	for _, reg := range r.providers {
-		if reg.PublicClient {
+		if reg.OAuth2 != nil && reg.OAuth2.PublicClient {
 			out = append(out, reg)
 		}
 	}
@@ -288,55 +309,38 @@ func (r *Registry) ProviderDisplayName(p coredata.ConnectorProvider) string {
 	return string(p)
 }
 
-// APIKeyHeader returns the request header an API-key connection for the
-// given provider must use to present its key. Empty means the default
-// `Authorization: Bearer` scheme; a value such as "x-api-key" means the
-// raw key is sent in that header instead. Returns empty for unknown
-// providers and for providers that do not customise the scheme.
-func (r *Registry) APIKeyHeader(p coredata.ConnectorProvider) string {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyHeader
+// NewAPIKeyConnection builds an API-key connection for provider p that presents
+// key the way p's registration declares.
+//
+// This is the only place an APIKeyAuthMode is translated into the connection's
+// presentation fields, so a caller cannot present a key one way on the persisted
+// connection and another on a verification client. An unknown provider, or one
+// with no API-key path, yields the default Bearer presentation.
+func (r *Registry) NewAPIKeyConnection(
+	p coredata.ConnectorProvider,
+	key string,
+) *connector.APIKeyConnection {
+	conn := &connector.APIKeyConnection{APIKey: key}
+
+	reg, ok := r.Get(p)
+	if !ok || reg.APIKey == nil {
+		return conn
 	}
 
-	return ""
-}
-
-// APIKeyUsesBasicAuth reports whether an API-key connection for the
-// given provider must present its key as an HTTP Basic auth username
-// (empty password) instead of a Bearer token. Returns false for unknown
-// providers and for providers that use the default Bearer scheme.
-func (r *Registry) APIKeyUsesBasicAuth(p coredata.ConnectorProvider) bool {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyBasicAuth
+	switch auth := reg.APIKey.Auth; auth.Mode {
+	case APIKeyAuthHeader:
+		conn.Header = auth.Name
+	case APIKeyAuthBasic:
+		conn.BasicAuth = true
+	case APIKeyAuthBasicUserPass:
+		conn.BasicAuthUserPass = true
+	case APIKeyAuthScheme:
+		conn.Scheme = auth.Name
+	case APIKeyAuthBearer:
+		// The connection's zero value already means Bearer.
 	}
 
-	return false
-}
-
-// APIKeyAuthScheme returns the non-Bearer Authorization scheme an API-key
-// connection for the given provider must use to present its key (e.g.
-// "SSWS" for Okta). Empty means the default `Authorization: Bearer`
-// scheme. Returns empty for unknown providers and for providers that do
-// not customise the scheme.
-func (r *Registry) APIKeyAuthScheme(p coredata.ConnectorProvider) string {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyAuthScheme
-	}
-
-	return ""
-}
-
-// APIKeyUsesBasicAuthUserPass reports whether an API-key connection for the
-// given provider must present its key as a complete HTTP Basic credential
-// (`username:password` already encoded in the key, base64'd verbatim)
-// instead of a Bearer token. Returns false for unknown providers and for
-// providers that use the default Bearer scheme.
-func (r *Registry) APIKeyUsesBasicAuthUserPass(p coredata.ConnectorProvider) bool {
-	if reg, ok := r.Get(p); ok {
-		return reg.APIKeyBasicAuthUserPass
-	}
-
-	return false
+	return conn
 }
 
 // SetManagedAPIKey records the Probo-supplied API key for a
@@ -405,7 +409,7 @@ func (r *Registry) ManagedResourceID(p coredata.ConnectorProvider) (string, bool
 // false for non-managed and unregistered providers.
 func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
 	reg, ok := r.Get(p)
-	if !ok || !reg.ManagedAPIKey {
+	if !ok || !reg.IsManagedAPIKey() {
 		return false
 	}
 
@@ -413,7 +417,7 @@ func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
 		return false
 	}
 
-	if reg.RequiresManagedResourceID {
+	if reg.APIKey.Managed.RequiresResourceID {
 		if _, ok := r.ManagedResourceID(p); !ok {
 			return false
 		}
@@ -427,10 +431,10 @@ func (r *Registry) ManagedConnectorReady(p coredata.ConnectorProvider) bool {
 // nil for providers that do not need any scopes (Notion, Intercom)
 // or for non-access-review providers.
 func (r *Registry) ProviderOAuth2Scopes(p coredata.ConnectorProvider) []string {
-	if reg, ok := r.Get(p); ok {
+	if reg, ok := r.Get(p); ok && reg.OAuth2 != nil {
 		// Return a copy so callers cannot mutate the shared, concurrently
 		// read registration slice held by this long-lived registry.
-		return slices.Clone(reg.OAuth2Scopes)
+		return slices.Clone(reg.OAuth2.Scopes)
 	}
 
 	return nil

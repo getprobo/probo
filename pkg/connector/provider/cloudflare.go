@@ -39,7 +39,7 @@ func cloudflareRegistration() *Registration {
 			Probe:   "https://api.cloudflare.com/client/v4/user/tokens/verify",
 			APIBase: "https://api.cloudflare.com/client/v4",
 		},
-		SupportsAPIKey: true,
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.CloudflareConnectorSettings](conn)
 			if err != nil {

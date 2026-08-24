@@ -638,7 +638,10 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 	infos := make([]*types.ConnectorProviderInfo, 0, len(registrations))
 
 	for _, reg := range registrations {
-		if reg == nil || reg.NewDriver == nil {
+		// A workload identity provider builds its driver from a cloud session
+		// rather than an HTTP client, so it registers NewCloudDriver and leaves
+		// NewDriver nil.
+		if reg == nil || (reg.NewDriver == nil && !reg.SupportsWorkloadIdentity()) {
 			continue
 		}
 
@@ -646,8 +649,8 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		configuredProtocols := connectorProtocols(
 			r.connectorRegistry.ConfiguredProtocols(string(provider)),
 		)
-		apiKeySupported := reg.SupportsAPIKey
-		clientCredentialsSupported := reg.SupportsClientCredentials
+		apiKeySupported := reg.SupportsAPIKey()
+		clientCredentialsSupported := reg.SupportsClientCredentials()
 
 		// ManagedAPIKey (Model B, e.g. Crisp) providers are connectable only
 		// once the operator configures the Probo-held key (and any required
@@ -659,11 +662,15 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 
 		// Skip providers that cannot be connected in this deployment: no
 		// connector protocol configured and no key-based fallback (API key,
-		// managed API key, or client credentials) supported.
+		// managed API key, or client credentials) supported. A workload
+		// identity provider needs no operator configuration at all — the
+		// customer grants access in their own cloud account — so it is
+		// connectable everywhere and never skipped here.
 		if len(configuredProtocols) == 0 &&
 			!apiKeySupported &&
 			!clientCredentialsSupported &&
-			!apiKeyManaged {
+			!apiKeyManaged &&
+			!reg.SupportsWorkloadIdentity() {
 			continue
 		}
 
@@ -691,8 +698,8 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			APIKeyManaged:                  apiKeyManaged,
 			ClientCredentialsSupported:     clientCredentialsSupported,
 			Oauth2Scopes:                   scopes,
-			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings),
-			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings),
+			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings()),
+			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings()),
 		})
 	}
 

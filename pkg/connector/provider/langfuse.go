@@ -35,7 +35,12 @@ func langfuseRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderLangfuse,
 		DisplayName:      "Langfuse",
 		DocumentationURL: accessReviewDocsURL("langfuse"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthBasicUserPass},
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
+		},
 		// Langfuse's organization-scoped public API authenticates with HTTP
 		// Basic auth where the credential is publicKey:secretKey.
 		// APIKeyBasicAuthUserPass base64s the verbatim "publicKey:secretKey" the
@@ -43,10 +48,6 @@ func langfuseRegistration() *Registration {
 		// the secret). The org API key is bound to one organization, so
 		// there is nothing to pick; only the regional/self-hosted base URL
 		// is per-tenant and is surfaced as an extra setting.
-		APIKeyBasicAuthUserPass: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
-		},
 		// BuildProbeURL derives the probe endpoint from the per-connection
 		// base URL (the host is regional/self-hosted, so a static ProbeURL
 		// cannot express it); the transport attaches the Basic credential

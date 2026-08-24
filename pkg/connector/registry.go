@@ -40,21 +40,21 @@ type (
 		RequiresRuntimeConfiguration()
 	}
 
-	ConnectorRegistry struct {
+	Registry struct {
 		sync.RWMutex
 		connectors         map[string]Connector
 		protocolConnectors map[string]map[ProtocolType]Connector
 	}
 )
 
-func NewConnectorRegistry() *ConnectorRegistry {
-	return &ConnectorRegistry{
+func NewConnectorRegistry() *Registry {
+	return &Registry{
 		connectors:         make(map[string]Connector),
 		protocolConnectors: make(map[string]map[ProtocolType]Connector),
 	}
 }
 
-func (r *ConnectorRegistry) Register(provider string, c Connector) error {
+func (r *Registry) Register(provider string, c Connector) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -67,7 +67,7 @@ func (r *ConnectorRegistry) Register(provider string, c Connector) error {
 	return nil
 }
 
-func (r *ConnectorRegistry) RegisterProtocol(provider string, protocol ProtocolType, c Connector) error {
+func (r *Registry) RegisterProtocol(provider string, protocol ProtocolType, c Connector) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -88,7 +88,7 @@ func (r *ConnectorRegistry) RegisterProtocol(provider string, protocol ProtocolT
 	return nil
 }
 
-func (r *ConnectorRegistry) Get(provider string) (Connector, error) {
+func (r *Registry) Get(provider string) (Connector, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -100,7 +100,7 @@ func (r *ConnectorRegistry) Get(provider string) (Connector, error) {
 	return c, nil
 }
 
-func (r *ConnectorRegistry) GetProtocol(provider string, protocol ProtocolType) (Connector, error) {
+func (r *Registry) GetProtocol(provider string, protocol ProtocolType) (Connector, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -120,7 +120,7 @@ func (r *ConnectorRegistry) GetProtocol(provider string, protocol ProtocolType) 
 // Lookup returns the connector registered for provider and protocol. OAuth2
 // connectors live in the default Register map; other protocols use
 // RegisterProtocol.
-func (r *ConnectorRegistry) Lookup(provider string, protocol ProtocolType) (Connector, error) {
+func (r *Registry) Lookup(provider string, protocol ProtocolType) (Connector, error) {
 	if protocol == ProtocolOAuth2 || protocol == "" {
 		return r.Get(provider)
 	}
@@ -131,7 +131,7 @@ func (r *ConnectorRegistry) Lookup(provider string, protocol ProtocolType) (Conn
 // ConfigureConnection injects deployment-held runtime configuration into a
 // loaded connection. Credentials injected here are never persisted in the
 // connector row, so rotation takes effect without reconnecting every tenant.
-func (r *ConnectorRegistry) ConfigureConnection(provider string, conn Connection) error {
+func (r *Registry) ConfigureConnection(provider string, conn Connection) error {
 	if conn == nil {
 		return nil
 	}
@@ -161,7 +161,7 @@ func (r *ConnectorRegistry) ConfigureConnection(provider string, conn Connection
 // provider in this deployment. OAuth2 connectors registered via Register appear
 // as ProtocolOAuth2; protocol-specific connectors registered via RegisterProtocol
 // appear as their ProtocolType. The result is sorted for stable GraphQL output.
-func (r *ConnectorRegistry) ConfiguredProtocols(provider string) []ProtocolType {
+func (r *Registry) ConfiguredProtocols(provider string) []ProtocolType {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -182,7 +182,7 @@ func (r *ConnectorRegistry) ConfiguredProtocols(provider string) []ProtocolType 
 	return protocols
 }
 
-func (r *ConnectorRegistry) Initiate(
+func (r *Registry) Initiate(
 	ctx context.Context,
 	provider string,
 	organizationID gid.GID,
@@ -194,7 +194,7 @@ func (r *ConnectorRegistry) Initiate(
 
 // InitiateForProtocol starts the install/auth flow for the connector registered
 // under provider and protocol.
-func (r *ConnectorRegistry) InitiateForProtocol(
+func (r *Registry) InitiateForProtocol(
 	ctx context.Context,
 	provider string,
 	protocol ProtocolType,
@@ -210,7 +210,7 @@ func (r *ConnectorRegistry) InitiateForProtocol(
 	return c.Initiate(ctx, provider, organizationID, opts, req)
 }
 
-func (r *ConnectorRegistry) InitiateProtocol(
+func (r *Registry) InitiateProtocol(
 	ctx context.Context,
 	provider string,
 	protocol ProtocolType,
@@ -243,7 +243,7 @@ func ExtractProviderFromState(stateToken string) (string, error) {
 	return payload.Data.Provider, nil
 }
 
-func (r *ConnectorRegistry) Complete(ctx context.Context, provider string, req *http.Request) (Connection, *gid.GID, string, error) {
+func (r *Registry) Complete(ctx context.Context, provider string, req *http.Request) (Connection, *gid.GID, string, error) {
 	c, err := r.Get(provider)
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("cannot complete connector: %w", err)
@@ -254,7 +254,7 @@ func (r *ConnectorRegistry) Complete(ctx context.Context, provider string, req *
 
 // CompleteWithState completes the OAuth2 flow and returns the full state
 // including any reconnection context (ConnectorID).
-func (r *ConnectorRegistry) CompleteWithState(ctx context.Context, provider string, req *http.Request) (Connection, *OAuth2State, error) {
+func (r *Registry) CompleteWithState(ctx context.Context, provider string, req *http.Request) (Connection, *OAuth2State, error) {
 	c, err := r.Get(provider)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot complete connector: %w", err)
@@ -268,7 +268,7 @@ func (r *ConnectorRegistry) CompleteWithState(ctx context.Context, provider stri
 	return oauth2Connector.CompleteWithState(ctx, req)
 }
 
-func (r *ConnectorRegistry) InitiateGitHubApp(
+func (r *Registry) InitiateGitHubApp(
 	ctx context.Context,
 	organizationID gid.GID,
 	opts InitiateOptions,
@@ -282,7 +282,7 @@ func (r *ConnectorRegistry) InitiateGitHubApp(
 	return c.Initiate(ctx, GitHubProvider, organizationID, opts, req)
 }
 
-func (r *ConnectorRegistry) CompleteGitHubApp(
+func (r *Registry) CompleteGitHubApp(
 	ctx context.Context,
 	req *http.Request,
 ) (*GitHubAppConnection, *GitHubAppState, error) {
@@ -302,7 +302,7 @@ func (r *ConnectorRegistry) CompleteGitHubApp(
 // GitHubAppInstallationURL builds the GitHub App install page for a state
 // token issued by Initiate. Callers use this when authorize succeeded but
 // the user has no organization installation to bind.
-func (r *ConnectorRegistry) GitHubAppInstallationURL(stateToken string) (string, error) {
+func (r *Registry) GitHubAppInstallationURL(stateToken string) (string, error) {
 	c, err := r.GetProtocol(GitHubProvider, ProtocolGitHubApp)
 	if err != nil {
 		return "", fmt.Errorf("cannot build github app installation URL: %w", err)
@@ -318,7 +318,7 @@ func (r *ConnectorRegistry) GitHubAppInstallationURL(stateToken string) (string,
 
 // GetOAuth2RefreshConfig returns the OAuth2 refresh configuration for a provider.
 // Returns nil if the provider is not found or is not an OAuth2 connector.
-func (r *ConnectorRegistry) GetOAuth2RefreshConfig(provider string) *OAuth2RefreshConfig {
+func (r *Registry) GetOAuth2RefreshConfig(provider string) *OAuth2RefreshConfig {
 	r.RLock()
 	defer r.RUnlock()
 

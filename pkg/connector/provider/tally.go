@@ -41,7 +41,7 @@ func tallyRegistration() *Registration {
 			Probe:   "https://api.tally.so/users/me",
 			APIBase: "https://api.tally.so",
 		},
-		SupportsAPIKey: true,
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)
 			if err != nil {

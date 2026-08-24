@@ -31,20 +31,22 @@ import (
 
 func calComRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderCalCom,
-		DisplayName:    "Cal.com",
-		SupportsAPIKey: true,
+		Provider:    coredata.ConnectorProviderCalCom,
+		DisplayName: "Cal.com",
+		APIKey:      &APIKeyConfig{},
 		Endpoints: Endpoints{
 			Auth:    "https://app.cal.com/auth/oauth2/authorize",
 			Token:   "https://api.cal.com/v2/auth/oauth2/token",
 			APIBase: "https://api.cal.com",
 			Probe:   "https://api.cal.com/v2/me",
 		},
-		OAuth2Scopes: []string{
-			"PROFILE_READ",
-			"TEAM_PROFILE_READ",
-			"TEAM_MEMBERSHIP_READ",
-			"ORG_MEMBERSHIP_READ",
+		OAuth2: &OAuth2Config{
+			Scopes: []string{
+				"PROFILE_READ",
+				"TEAM_PROFILE_READ",
+				"TEAM_MEMBERSHIP_READ",
+				"ORG_MEMBERSHIP_READ",
+			},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewCalComDriver(c, ep.APIBase), nil

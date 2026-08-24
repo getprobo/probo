@@ -60,7 +60,10 @@ const (
 	SlackProvider = "SLACK"
 )
 
-var _ Connection = (*SlackConnection)(nil)
+var (
+	_ Connection     = (*SlackConnection)(nil)
+	_ HTTPConnection = (*SlackConnection)(nil)
+)
 
 func (c *SlackConnection) Type() ProtocolType {
 	return ProtocolOAuth2
