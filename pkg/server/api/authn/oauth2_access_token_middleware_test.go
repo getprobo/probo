@@ -24,57 +24,59 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/uri"
 )
 
-func TestOAuth2AudiencePolicyAllows(t *testing.T) {
+func TestOAuth2AccessTokenMatchesIssuer(t *testing.T) {
 	t.Parallel()
 
 	root := uri.URI("https://app.example.com")
 	mcp := uri.URI("https://app.example.com/api/mcp/v1")
 	other := uri.URI("https://other.example.com")
 	clientID := gid.GID{}
+	svc := &iam.Service{
+		OAuth2ServerService: oauth2.NewService(
+			nil,
+			nil,
+			root,
+			log.NewLogger(),
+		),
+	}
 
 	tests := []struct {
-		name   string
-		policy OAuth2AudiencePolicy
-		token  *coredata.OAuth2AccessToken
-		want   bool
+		name  string
+		token *coredata.OAuth2AccessToken
+		want  bool
 	}{
 		{
-			name:   "manual token remains unbound",
-			policy: OAuth2AudiencePolicy{Resource: mcp},
-			token:  &coredata.OAuth2AccessToken{Resource: &other},
-			want:   true,
+			name:  "manual token remains unbound",
+			token: &coredata.OAuth2AccessToken{Resource: &other},
+			want:  true,
 		},
 		{
-			name: "legacy client token allowed explicitly",
-			policy: OAuth2AudiencePolicy{
-				Resource:     root,
-				AllowUnbound: true,
-			},
+			name:  "legacy client token defaults to issuer",
 			token: &coredata.OAuth2AccessToken{ClientID: &clientID},
 			want:  true,
 		},
 		{
-			name:   "unbound client token rejected by strict resource",
-			policy: OAuth2AudiencePolicy{Resource: mcp},
-			token:  &coredata.OAuth2AccessToken{ClientID: &clientID},
-			want:   false,
+			name:  "matching issuer allowed",
+			token: &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &root},
+			want:  true,
 		},
 		{
-			name:   "matching resource allowed",
-			policy: OAuth2AudiencePolicy{Resource: mcp},
-			token:  &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &mcp},
-			want:   true,
+			name:  "route resource rejected",
+			token: &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &mcp},
+			want:  false,
 		},
 		{
-			name:   "unknown resource rejected",
-			policy: OAuth2AudiencePolicy{Resource: root},
-			token:  &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &other},
-			want:   false,
+			name:  "unknown resource rejected",
+			token: &coredata.OAuth2AccessToken{ClientID: &clientID, Resource: &other},
+			want:  false,
 		},
 	}
 
@@ -84,7 +86,7 @@ func TestOAuth2AudiencePolicyAllows(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				assert.Equal(t, tt.want, tt.policy.Allows(tt.token))
+				assert.Equal(t, tt.want, OAuth2AccessTokenMatchesIssuer(svc, tt.token))
 			},
 		)
 	}

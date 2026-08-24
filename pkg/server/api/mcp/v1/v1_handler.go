@@ -102,18 +102,10 @@ func NewMux(
 		},
 	)
 	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
-	resource := iamSvc.OAuth2ServerService.Issuer()
 
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Use(
-		authn.NewOAuth2AccessTokenMiddleware(
-			iamSvc,
-			authn.OAuth2AudiencePolicy{
-				Resource: resource,
-			},
-		),
-	)
+	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 	r.Handle("/", protectedHandler)
 

@@ -163,15 +163,7 @@ func NewMux(
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-		r.Use(
-			authn.NewOAuth2AccessTokenMiddleware(
-				iamSvc,
-				authn.OAuth2AudiencePolicy{
-					Resource:     iamSvc.OAuth2ServerService.Issuer(),
-					AllowUnbound: true,
-				},
-			),
-		)
+		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Use(newMembershipAccessMiddleware(iamSvc, logger))
 		r.Use(dataloader.NewMiddleware(

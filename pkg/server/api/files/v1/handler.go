@@ -75,24 +75,10 @@ func NewMux(
 	r.Get("/static/{file}", h.handleGetStaticFile)
 	r.Get("/public/{fileID}", h.handleGetPublicFile)
 
-	audiencePolicy := authn.OAuth2AudiencePolicy{}
-	if iamSvc != nil {
-		issuer := iamSvc.OAuth2ServerService.Issuer()
-		audiencePolicy = authn.OAuth2AudiencePolicy{
-			Resource:     issuer,
-			AllowUnbound: true,
-		}
-	}
-
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-		r.Use(
-			authn.NewOAuth2AccessTokenMiddleware(
-				iamSvc,
-				audiencePolicy,
-			),
-		)
+		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Get("/{fileID}", h.handleGetFile)
 	})

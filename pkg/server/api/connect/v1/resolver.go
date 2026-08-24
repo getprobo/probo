@@ -92,13 +92,7 @@ func NewMux(
 
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
-	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(
-		svc,
-		authn.OAuth2AudiencePolicy{
-			Resource:     svc.OAuth2ServerService.Issuer(),
-			AllowUnbound: true,
-		},
-	)
+	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
 	graphqlHandler := NewGraphQLHandler(
 		svc,

@@ -417,7 +417,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 	)
 
 	t.Run(
-		"unbound client token is rejected by MCP",
+		"omitted resource defaults to root",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -431,17 +431,14 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 				"v1:iam:read",
 			)
 
-			resource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
-			require.NoError(t, err)
-			req, err := http.NewRequest(http.MethodGet, resource, nil)
-			require.NoError(t, err)
-			req.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
-
-			resp, err := owner.HTTPClient().Do(req)
-			require.NoError(t, err)
-			defer func() { _ = resp.Body.Close() }()
-			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-			assert.Contains(t, resp.Header.Get("WWW-Authenticate"), `error="invalid_token"`)
+			mcpClient := testutil.NewMCPClientWithAccessToken(t, owner, tokenResp.AccessToken)
+			var result struct {
+				Organizations []struct {
+					ID string `json:"id"`
+				} `json:"organizations"`
+			}
+			mcpClient.CallToolInto("listOrganizations", map[string]any{}, &result)
+			assert.NotEmpty(t, result.Organizations)
 		},
 	)
 
