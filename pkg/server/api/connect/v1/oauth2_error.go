@@ -34,7 +34,7 @@ import (
 
 func (h *OAuth2Handler) handleAuthorizeError(w http.ResponseWriter, r *http.Request, err error, redirectURI, state string) {
 	if isRedirectableError(err) && redirectURI != "" {
-		redirectWithError(w, r, redirectURI, state, err)
+		redirectWithError(w, r, redirectURI, state, h.baseURL.String(), err)
 		return
 	}
 
@@ -64,8 +64,11 @@ func isRedirectableError(err error) bool {
 	return errors.Is(err, oauth2.ErrAccessDenied) ||
 		errors.Is(err, oauth2.ErrInvalidRequest) ||
 		errors.Is(err, oauth2.ErrInvalidScope) ||
+		errors.Is(err, oauth2.ErrInvalidTarget) ||
 		errors.Is(err, oauth2.ErrUnauthorizedClient) ||
 		errors.Is(err, oauth2.ErrInvalidGrant) ||
+		errors.Is(err, oauth2.ErrServerError) ||
+		errors.Is(err, oauth2.ErrUnsupportedResponseType) ||
 		errors.Is(err, oauth2.ErrUnsupportedGrantType)
 }
 
@@ -101,7 +104,14 @@ func toOAuth2Error(err error) *oauth2.OAuth2Error {
 	}
 }
 
-func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, state string, err error) {
+func redirectWithError(
+	w http.ResponseWriter,
+	r *http.Request,
+	redirectURI string,
+	state string,
+	issuer string,
+	err error,
+) {
 	u, parseErr := url.Parse(redirectURI)
 	if parseErr != nil {
 		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
@@ -116,6 +126,7 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, stat
 
 	q := u.Query()
 	q.Set("error", oauthErr.ErrorCode())
+	q.Set("iss", issuer)
 
 	if desc := oauthErr.Description(); desc != "" {
 		q.Set("error_description", desc)

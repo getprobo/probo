@@ -51,15 +51,16 @@ const (
 
 type (
 	ClientMetadataDocument struct {
-		ClientID                string   `json:"client_id"`
-		ClientName              string   `json:"client_name"`
-		ClientURI               string   `json:"client_uri"`
-		LogoURI                 string   `json:"logo_uri"`
-		RedirectURIs            []string `json:"redirect_uris"`
-		GrantTypes              []string `json:"grant_types"`
-		ResponseTypes           []string `json:"response_types"`
-		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-		Scope                   string   `json:"scope,omitempty"`
+		ClientID                          string   `json:"client_id"`
+		ClientName                        string   `json:"client_name"`
+		ClientURI                         string   `json:"client_uri"`
+		LogoURI                           string   `json:"logo_uri"`
+		RedirectURIs                      []string `json:"redirect_uris"`
+		GrantTypes                        []string `json:"grant_types"`
+		ResponseTypes                     []string `json:"response_types"`
+		TokenEndpointAuthMethod           string   `json:"token_endpoint_auth_method"`
+		TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
+		Scope                             string   `json:"scope,omitempty"`
 	}
 
 	cimdCacheEntry struct {
@@ -266,22 +267,42 @@ func validateClientMetadataDocument(clientIDURL string, doc *ClientMetadataDocum
 		return err
 	}
 
-	authMethod := doc.TokenEndpointAuthMethod
-	if authMethod == "" {
-		authMethod = string(coredata.OAuth2ClientTokenEndpointAuthMethodNone)
+	if _, err := selectCIMDTokenEndpointAuthMethod(doc); err != nil {
+		return err
 	}
 
-	switch coredata.OAuth2ClientTokenEndpointAuthMethod(authMethod) {
-	case coredata.OAuth2ClientTokenEndpointAuthMethodNone:
-		// Public MCP clients (ChatGPT, Claude) authenticate with PKCE.
-	default:
-		return NewError(
+	return nil
+}
+
+func selectCIMDTokenEndpointAuthMethod(
+	doc *ClientMetadataDocument,
+) (coredata.OAuth2ClientTokenEndpointAuthMethod, error) {
+	none := coredata.OAuth2ClientTokenEndpointAuthMethodNone
+
+	if len(doc.TokenEndpointAuthMethodsSupported) > 0 {
+		if slices.Contains(doc.TokenEndpointAuthMethodsSupported, none.String()) {
+			return none, nil
+		}
+
+		return "", NewError(
+			ErrInvalidClient,
+			WithDescription("client metadata document has no supported token endpoint auth method"),
+		)
+	}
+
+	authMethod := doc.TokenEndpointAuthMethod
+	if authMethod == "" {
+		authMethod = none.String()
+	}
+
+	if authMethod != none.String() {
+		return "", NewError(
 			ErrInvalidClient,
 			WithDescription("unsupported token_endpoint_auth_method in client metadata document"),
 		)
 	}
 
-	return nil
+	return none, nil
 }
 
 func validateCIMDRedirectURI(redirectURI string) error {

@@ -29,9 +29,13 @@ import (
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/uri"
 )
 
-func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) http.Handler {
+func NewOAuth2AccessTokenMiddleware(
+	svc *iam.Service,
+	resources ...uri.URI,
+) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +60,22 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 					next.ServeHTTP(w, r)
 
 					return
+				}
+
+				if accessToken.ClientID != nil {
+					switch {
+					case len(resources) > 0 &&
+						(accessToken.Resource == nil || *accessToken.Resource != resources[0]):
+						next.ServeHTTP(w, r)
+
+						return
+					case len(resources) == 0 &&
+						accessToken.Resource != nil &&
+						*accessToken.Resource != svc.OAuth2ServerService.Issuer():
+						next.ServeHTTP(w, r)
+
+						return
+					}
 				}
 
 				identity, err := svc.AccountService.GetIdentity(ctx, accessToken.IdentityID)

@@ -103,6 +103,10 @@ func TestOAuth2_Discovery(t *testing.T) {
 	assert.Contains(t, discovery.ClaimsSupported, "email_verified")
 	assert.Contains(t, discovery.ClaimsSupported, "name")
 	assert.True(t, discovery.ClientIDMetadataDocumentSupported)
+	assert.True(t, discovery.AuthorizationResponseIssuerSupported)
+	mcpResource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
+	require.NoError(t, err)
+	assert.Contains(t, discovery.ProtectedResources, mcpResource)
 }
 
 func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
@@ -123,6 +127,32 @@ func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
 	assert.Contains(t, metadata.ScopesSupported, "v1:document")
 	assert.NotContains(t, metadata.ScopesSupported, "v1:document:read")
 	assert.NotContains(t, metadata.ScopesSupported, "profile")
+}
+
+func TestOAuth2_MCPProtectedResourceMetadata(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	metadata, raw, err := testutil.OAuth2MCPProtectedResourceMetadata(owner)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, raw.StatusCode)
+	require.NotNil(t, metadata)
+
+	resource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
+	require.NoError(t, err)
+	assert.Equal(t, resource, metadata.Resource)
+	assert.Contains(t, metadata.AuthorizationServers, owner.BaseURL())
+
+	resp, err := owner.HTTPClient().Get(resource)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	assert.Contains(
+		t,
+		resp.Header.Get("WWW-Authenticate"),
+		"/.well-known/oauth-protected-resource/api/mcp/v1",
+	)
 }
 
 func TestOAuth2_RegisterClientWithAPIScope(t *testing.T) {
@@ -270,6 +300,188 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			assert.Equal(t, "Bearer", tokenResp.TokenType)
 			assert.Greater(t, tokenResp.ExpiresIn, int64(0))
 			assert.Contains(t, tokenResp.Scope, "openid")
+		},
+	)
+
+	t.Run(
+		"resource-bound flow returns issuer",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2ClientWithAPIScopes(
+				owner,
+				"v1:iam:read offline_access",
+				nil,
+			)
+			redirectURI := "http://localhost:9999/callback"
+			verifier, challenge := testutil.GeneratePKCE()
+			resource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
+			require.NoError(t, err)
+
+			params := url.Values{
+				"client_id":             {client.ClientID},
+				"redirect_uri":          {redirectURI},
+				"resource":              {resource},
+				"response_type":         {"code"},
+				"scope":                 {"v1:iam:read offline_access"},
+				"state":                 {"resource-test"},
+				"code_challenge":        {challenge},
+				"code_challenge_method": {"S256"},
+			}
+
+			authResp, err := testutil.OAuth2Authorize(owner, params)
+			require.NoError(t, err)
+			require.True(t, testutil.IsConsentRedirect(authResp))
+
+			consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
+			require.NoError(t, err)
+			consentResp, err := testutil.OAuth2ConsentApprove(owner, consentID)
+			require.NoError(t, err)
+
+			location, err := url.Parse(consentResp.Header.Get("Location"))
+			require.NoError(t, err)
+			assert.Equal(t, owner.BaseURL(), location.Query().Get("iss"))
+
+			code, err := testutil.OAuth2AuthorizeCodeFromRedirect(consentResp)
+			require.NoError(t, err)
+
+			_, wrongResourceRaw, err := testutil.OAuth2TokenWithCodeForResource(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				code,
+				redirectURI,
+				verifier,
+				owner.BaseURL(),
+			)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusBadRequest, wrongResourceRaw.StatusCode)
+			assert.Contains(t, string(wrongResourceRaw.Body), `"error":"invalid_target"`)
+
+			tokenResp, raw, err := testutil.OAuth2TokenWithCodeForResource(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				code,
+				redirectURI,
+				verifier,
+				resource,
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode, string(raw.Body))
+			assert.NotEmpty(t, tokenResp.AccessToken)
+			assert.NotEmpty(t, tokenResp.RefreshToken)
+
+			userinfoURL, err := url.JoinPath(
+				owner.BaseURL(),
+				"api",
+				"connect",
+				"v1",
+				"oauth2",
+				"userinfo",
+			)
+			require.NoError(t, err)
+			userinfoReq, err := http.NewRequest(http.MethodGet, userinfoURL, nil)
+			require.NoError(t, err)
+			userinfoReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+			userinfoResp, err := owner.HTTPClient().Do(userinfoReq)
+			require.NoError(t, err)
+			defer func() { _ = userinfoResp.Body.Close() }()
+			assert.Equal(t, http.StatusUnauthorized, userinfoResp.StatusCode)
+
+			_, wrongResourceRaw, err = testutil.OAuth2TokenWithRefreshTokenForResource(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				tokenResp.RefreshToken,
+				owner.BaseURL(),
+			)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusBadRequest, wrongResourceRaw.StatusCode)
+			assert.Contains(t, string(wrongResourceRaw.Body), `"error":"invalid_target"`)
+
+			refreshed, raw, err := testutil.OAuth2TokenWithRefreshTokenForResource(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				tokenResp.RefreshToken,
+				resource,
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode, string(raw.Body))
+
+			mcpClient := testutil.NewMCPClientWithAccessToken(t, owner, refreshed.AccessToken)
+			var result struct {
+				Organizations []struct {
+					ID string `json:"id"`
+				} `json:"organizations"`
+			}
+			mcpClient.CallToolInto("listOrganizations", map[string]any{}, &result)
+			assert.NotEmpty(t, result.Organizations)
+		},
+	)
+
+	t.Run(
+		"unbound client token is rejected by MCP",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2ClientWithAPIScopes(owner, "v1:iam:read", nil)
+			tokenResp := testutil.OAuth2PerformAuthorizationCodeFlowWithScopes(
+				t,
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				"http://localhost:9999/callback",
+				"v1:iam:read",
+			)
+
+			resource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
+			require.NoError(t, err)
+			req, err := http.NewRequest(http.MethodGet, resource, nil)
+			require.NoError(t, err)
+			req.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+
+			resp, err := owner.HTTPClient().Do(req)
+			require.NoError(t, err)
+			defer func() { _ = resp.Body.Close() }()
+			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+			assert.Contains(t, resp.Header.Get("WWW-Authenticate"), `error="invalid_token"`)
+		},
+	)
+
+	t.Run(
+		"multiple resources redirect with issuer",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2Client(owner, nil)
+			redirectURI := "http://localhost:9999/callback"
+			_, challenge := testutil.GeneratePKCE()
+			mcpResource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
+			require.NoError(t, err)
+			params := url.Values{
+				"client_id":             {client.ClientID},
+				"redirect_uri":          {redirectURI},
+				"response_type":         {"code"},
+				"scope":                 {"openid"},
+				"state":                 {"multiple-resource-test"},
+				"code_challenge":        {challenge},
+				"code_challenge_method": {"S256"},
+				"resource": {
+					owner.BaseURL(),
+					mcpResource,
+				},
+			}
+
+			authResp, err := testutil.OAuth2Authorize(owner, params)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusFound, authResp.StatusCode)
+
+			location, err := url.Parse(authResp.Header.Get("Location"))
+			require.NoError(t, err)
+			assert.Equal(t, "invalid_target", location.Query().Get("error"))
+			assert.Equal(t, owner.BaseURL(), location.Query().Get("iss"))
 		},
 	)
 

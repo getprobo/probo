@@ -46,8 +46,18 @@ func BearerChallenge(
 	errorCode string,
 	scopes ...coredata.OAuth2Scope,
 ) string {
-	metadataURL := protectedResourceMetadataURL(baseURL)
+	return BearerChallengeWithMetadataURL(
+		protectedResourceMetadataURL(baseURL),
+		errorCode,
+		scopes...,
+	)
+}
 
+func BearerChallengeWithMetadataURL(
+	metadataURL string,
+	errorCode string,
+	scopes ...coredata.OAuth2Scope,
+) string {
 	var parts []string
 
 	if errorCode != "" {
@@ -75,6 +85,18 @@ func SetBearerChallenge(
 	scopes ...coredata.OAuth2Scope,
 ) {
 	w.Header().Set("WWW-Authenticate", BearerChallenge(baseURL, errorCode, scopes...))
+}
+
+func SetBearerChallengeWithMetadataURL(
+	w http.ResponseWriter,
+	metadataURL string,
+	errorCode string,
+	scopes ...coredata.OAuth2Scope,
+) {
+	w.Header().Set(
+		"WWW-Authenticate",
+		BearerChallengeWithMetadataURL(metadataURL, errorCode, scopes...),
+	)
 }
 
 // SetBearerUnauthenticated sets a discovery-only challenge (RFC 9728 resource_metadata).

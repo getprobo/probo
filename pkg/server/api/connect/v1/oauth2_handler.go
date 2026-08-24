@@ -98,6 +98,15 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		if accessToken.ClientID != nil &&
+			accessToken.Resource != nil &&
+			*accessToken.Resource != h.iam.OAuth2ServerService.Issuer() {
+			bearertoken.SetBearerInvalidToken(w, h.baseURL)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+
+			return
+		}
+
 		ctx := oauth2.ContextWithAccessToken(r.Context(), accessToken)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -154,7 +163,13 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 	var in types.OAuth2AuthorizeInput
 	if err := in.DecodeQuery(r.URL.Query()); err != nil {
-		h.handleAuthorizeError(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err)), "", "")
+		oauthErr := oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err))
+		if targetErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok &&
+			errors.Is(targetErr, oauth2.ErrInvalidTarget) {
+			oauthErr = targetErr
+		}
+
+		h.handleAuthorizeError(w, r, oauthErr, "", "")
 		return
 	}
 
@@ -165,7 +180,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		authTime = session.CreatedAt
 	}
 
-	code, err := h.iam.OAuth2ServerService.Authorize(
+	code, redirectValidated, err := h.iam.OAuth2ServerService.Authorize(
 		r.Context(),
 		&oauth2.AuthorizeRequest{
 			IdentityID:          identity.ID,
@@ -173,6 +188,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			ResponseType:        in.ResponseType,
 			ClientIDRaw:         in.ClientIDRaw,
 			RedirectURI:         in.RedirectURI,
+			Resources:           in.Resources,
 			Scopes:              in.Scopes,
 			CodeChallenge:       in.CodeChallenge,
 			CodeChallengeMethod: in.CodeChallengeMethod,
@@ -193,12 +209,16 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		oauthErr := toOAuth2Error(err)
-		h.handleAuthorizeError(w, r, oauthErr, in.RedirectURI, in.State)
+		if redirectValidated {
+			h.handleAuthorizeError(w, r, oauthErr, in.RedirectURI, in.State)
+		} else {
+			h.handleAuthorizeError(w, r, oauthErr, "", "")
+		}
 
 		return
 	}
 
-	redirectWithCode(w, r, in.RedirectURI, code, in.State)
+	redirectWithCode(w, r, in.RedirectURI, code, in.State, h.baseURL.String())
 }
 
 func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
@@ -461,6 +481,11 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 
 	var in types.OAuth2AuthorizationCodeGrantInput
 	if err := in.DecodeForm(r); err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
 		return
 	}
@@ -470,9 +495,15 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		client.ID.String(),
 		in.Code,
 		in.RedirectURI,
+		in.Resource,
 		in.CodeVerifier,
 	)
 	if err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired code")))
 		return
 	}
@@ -490,12 +521,27 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 
 	var in types.OAuth2RefreshTokenGrantInput
 	if err := in.DecodeForm(r); err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
 		return
 	}
 
-	result, err := h.iam.OAuth2ServerService.RefreshToken(r.Context(), client, in.RefreshToken)
+	result, err := h.iam.OAuth2ServerService.RefreshToken(
+		r.Context(),
+		client,
+		in.RefreshToken,
+		in.Resource,
+	)
 	if err != nil {
+		if errors.Is(err, oauth2.ErrInvalidTarget) {
+			h.renderOAuth2ErrorResponse(w, r, err)
+			return
+		}
+
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired refresh token")))
 		return
 	}
@@ -536,10 +582,18 @@ func tokenResultToResponse(r *oauth2.TokenResult) *types.OAuth2TokenResponse {
 	}
 }
 
-func redirectWithCode(w http.ResponseWriter, r *http.Request, redirectURI, code, state string) {
+func redirectWithCode(
+	w http.ResponseWriter,
+	r *http.Request,
+	redirectURI string,
+	code string,
+	state string,
+	issuer string,
+) {
 	u, _ := url.Parse(redirectURI)
 	q := u.Query()
 	q.Set("code", code)
+	q.Set("iss", issuer)
 
 	if state != "" {
 		q.Set("state", state)

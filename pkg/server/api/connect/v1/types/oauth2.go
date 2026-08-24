@@ -54,10 +54,34 @@ func parseScopes(s string) (coredata.OAuth2Scopes, error) {
 	return scopes, nil
 }
 
+func parseResource(values url.Values) (string, error) {
+	resources := values["resource"]
+	if len(resources) == 0 {
+		return "", nil
+	}
+
+	if len(resources) > 1 {
+		return "", oauth2.NewError(
+			oauth2.ErrInvalidTarget,
+			oauth2.WithDescription("multiple resource parameters are not supported"),
+		)
+	}
+
+	if resources[0] == "" {
+		return "", oauth2.NewError(
+			oauth2.ErrInvalidTarget,
+			oauth2.WithDescription("resource must not be empty"),
+		)
+	}
+
+	return resources[0], nil
+}
+
 type (
 	OAuth2AuthorizeInput struct {
 		ClientIDRaw         string
 		RedirectURI         string
+		Resources           []string
 		State               string
 		ResponseType        coredata.OAuth2ResponseType
 		Scopes              coredata.OAuth2Scopes
@@ -86,6 +110,7 @@ type (
 		ClientSecret string
 		Code         string
 		RedirectURI  string
+		Resource     string
 		CodeVerifier string
 	}
 
@@ -93,6 +118,7 @@ type (
 		ClientID     string
 		ClientSecret string
 		RefreshToken string
+		Resource     string
 	}
 
 	OAuth2DeviceCodeGrantInput struct {
@@ -124,6 +150,7 @@ func (in *OAuth2AuthorizeInput) DecodeQuery(q url.Values) error {
 	}
 
 	in.RedirectURI = q.Get("redirect_uri")
+	in.Resources = q["resource"]
 	in.State = q.Get("state")
 	in.ResponseType = coredata.OAuth2ResponseType(q.Get("response_type"))
 	in.CodeChallenge = q.Get("code_challenge")
@@ -206,6 +233,12 @@ func (in *OAuth2AuthorizationCodeGrantInput) DecodeForm(r *http.Request) error {
 	in.ClientSecret = r.FormValue("client_secret")
 	in.Code = r.FormValue("code")
 	in.RedirectURI = r.FormValue("redirect_uri")
+	resource, err := parseResource(r.Form)
+	if err != nil {
+		return err
+	}
+
+	in.Resource = resource
 	in.CodeVerifier = r.FormValue("code_verifier")
 
 	if in.Code == "" {
@@ -223,7 +256,12 @@ func (in *OAuth2RefreshTokenGrantInput) DecodeForm(r *http.Request) error {
 	in.ClientID = r.FormValue("client_id")
 	in.ClientSecret = r.FormValue("client_secret")
 	in.RefreshToken = r.FormValue("refresh_token")
+	resource, err := parseResource(r.Form)
+	if err != nil {
+		return err
+	}
 
+	in.Resource = resource
 	if in.RefreshToken == "" {
 		return fmt.Errorf("missing refresh_token")
 	}
