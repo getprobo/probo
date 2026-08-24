@@ -187,10 +187,10 @@
     "notInstalled": "Installeer de Probo Slack-app via de organisatie-instellingen voordat u een kanaal kiest.",
     "channel": {
       "label": "Kanaal",
-      "placeholder": "Kies een kanaal",
+      "placeholder": "Selecteer kanaal",
       "help": "Nodig @Probo uit in een kanaal voordat u het selecteert.",
       "emptyTitle": "Nog geen Slack-kanaal",
-      "emptyDescription": "Nodig @Probo in Slack uit in een kanaal en vernieuw daarna deze lijst."
+      "emptyDescription": "Nodig @Probo in Slack uit in een kanaal en open daarna deze lijst opnieuw."
     },
     "actions": {
       "clear": "Wissen",

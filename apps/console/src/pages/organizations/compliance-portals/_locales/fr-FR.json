@@ -435,10 +435,10 @@
     "notInstalled": "Installez l’application Slack Probo depuis les paramètres de l’organisation avant de choisir un canal.",
     "channel": {
       "label": "Canal",
-      "placeholder": "Choisir un canal",
+      "placeholder": "Sélectionner un canal",
       "help": "Invitez @Probo dans un canal avant de le sélectionner.",
       "emptyTitle": "Aucun canal Slack pour le moment",
-      "emptyDescription": "Dans Slack, invitez @Probo dans un canal, puis actualisez cette liste."
+      "emptyDescription": "Dans Slack, invitez @Probo dans un canal, puis rouvrez cette liste."
     },
     "actions": {
       "clear": "Effacer",

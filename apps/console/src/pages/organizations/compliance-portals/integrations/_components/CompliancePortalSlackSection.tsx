@@ -30,7 +30,7 @@ import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { SlackLogo } from "@probo/ui/src/v2/SlackLogo/SlackLogo";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, useRefetchableFragment, useRelayEnvironment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -167,11 +167,13 @@ export function CompliancePortalSlackSection({
   };
 
   const environment = useRelayEnvironment();
+  const [, startTransition] = useTransition();
   const [extraChannels, setExtraChannels] = useState<
     { id: string; name: string }[]
   >([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isInstalled = compliancePortal.organization.slackbotInstallation?.active;
   const firstPage = compliancePortal.organization.slackbotChannels;
@@ -189,7 +191,8 @@ export function CompliancePortalSlackSection({
         ...listedChannels,
       ]
     : listedChannels;
-  const hasChannels = channels.length > 0;
+  const slackListEmpty = listedChannels.length === 0;
+  const showEmptyCallout = slackListEmpty && !isRefreshing;
   const loadMoreCursor = extraChannels.length > 0
     ? nextCursor
     : firstPage.nextCursor;
@@ -204,7 +207,15 @@ export function CompliancePortalSlackSection({
   const refreshChannels = () => {
     setExtraChannels([]);
     setNextCursor(null);
-    refetch({}, { fetchPolicy: "network-only" });
+    setIsRefreshing(true);
+    startTransition(() => {
+      refetch({}, {
+        fetchPolicy: "network-only",
+        onComplete() {
+          setIsRefreshing(false);
+        },
+      });
+    });
   };
 
   const loadMoreChannels = () => {
@@ -242,7 +253,7 @@ export function CompliancePortalSlackSection({
 
   const {
     root, intro, grid, card, lead, copy, channel, channelRow, channelField,
-    empty, emptyCopy, emptyCallout,
+    empty, emptyCopy, emptyCallout, popupEmpty, popupLoadMore,
   } = slackSection();
   const { frame, header, wash, fade, icon: iconSlot, control, body } = hostingCard({
     tone: "sand",
@@ -292,91 +303,103 @@ export function CompliancePortalSlackSection({
           </div>
           {showChannelConfig && (
             <div className={body()}>
-              {hasChannels
-                ? (
-                    <Select
-                      value={configuredChannel?.channelId ?? null}
-                      onValueChange={(channelId) => {
-                        if (channelId != null) {
-                          setNotificationChannel(channelId);
-                        }
-                      }}
-                      disabled={isSettingChannel || isClearingChannel}
+              {showEmptyCallout && (
+                <div className={empty()}>
+                  <Callout variant="surface" color="neutral" className={emptyCallout()}>
+                    <div className={emptyCopy()}>
+                      <Text size={2} weight="medium" highContrast>
+                        {t("slackSection.channel.emptyTitle")}
+                      </Text>
+                      <Text size={2}>
+                        {t("slackSection.channel.emptyDescription")}
+                      </Text>
+                    </div>
+                  </Callout>
+                </div>
+              )}
+              <Select
+                value={configuredChannel?.channelId ?? null}
+                onOpenChange={(open) => {
+                  if (open) {
+                    refreshChannels();
+                  }
+                }}
+                onValueChange={(channelId) => {
+                  if (channelId != null) {
+                    setNotificationChannel(channelId);
+                  }
+                }}
+                disabled={isSettingChannel || isClearingChannel}
+              >
+                <div className={channel()}>
+                  <div className={channelRow()}>
+                    <Field
+                      label={t("slackSection.channel.label")}
+                      className={channelField()}
                     >
-                      <div className={channel()}>
-                        <div className={channelRow()}>
-                          <Field
-                            label={t("slackSection.channel.label")}
-                            className={channelField()}
-                          >
-                            <SelectTrigger placeholder={t("slackSection.channel.placeholder")}>
-                              {(value: string | null) => (value ? channelNames[value] : null)}
-                            </SelectTrigger>
-                          </Field>
-                          {configuredChannel && (
-                            <Button
-                              variant="surface"
-                              color="neutral"
-                              loading={isClearingChannel}
-                              onClick={clearNotificationChannel}
-                            >
-                              {t("slackSection.actions.clear")}
-                            </Button>
-                          )}
-                        </div>
-                        <Text size={1} color="faint">
-                          {t("slackSection.channel.help")}
-                        </Text>
-                        {listedChannels.length === 0 && (
-                          <Button
-                            variant="surface"
-                            color="neutral"
-                            onClick={refreshChannels}
-                          >
-                            {t("slackSection.actions.refresh")}
-                          </Button>
+                      <SelectTrigger placeholder={t("slackSection.channel.placeholder")}>
+                        {(value: string | null) => (
+                          value
+                            ? (channelNames[value] ?? `#${value}`)
+                            : t("slackSection.channel.placeholder")
                         )}
-                      </div>
-                      <SelectPopup>
-                        {channels.map(listedChannel => (
+                      </SelectTrigger>
+                    </Field>
+                    {configuredChannel && (
+                      <Button
+                        variant="surface"
+                        color="neutral"
+                        loading={isClearingChannel}
+                        onClick={clearNotificationChannel}
+                      >
+                        {t("slackSection.actions.clear")}
+                      </Button>
+                    )}
+                  </div>
+                  <Text size={1} color="faint">
+                    {t("slackSection.channel.help")}
+                  </Text>
+                </div>
+                <SelectPopup>
+                  {isRefreshing && slackListEmpty
+                    ? (
+                        <Text size={2} color="faint" className={popupEmpty()}>
+                          {t("slackSection.actions.loadingMore")}
+                        </Text>
+                      )
+                    : slackListEmpty
+                      ? (
+                          <div className={popupEmpty()}>
+                            <Text size={2} weight="medium" highContrast>
+                              {t("slackSection.channel.emptyTitle")}
+                            </Text>
+                            <Text size={1} color="faint">
+                              {t("slackSection.channel.emptyDescription")}
+                            </Text>
+                          </div>
+                        )
+                      : channels.map(listedChannel => (
                           <SelectItem key={listedChannel.id} value={listedChannel.id}>
                             {`#${listedChannel.name}`}
                           </SelectItem>
                         ))}
-                      </SelectPopup>
-                    </Select>
-                  )
-                : (
-                    <div className={empty()}>
-                      <Callout variant="surface" color="neutral" className={emptyCallout()}>
-                        <div className={emptyCopy()}>
-                          <Text size={2} weight="medium" highContrast>
-                            {t("slackSection.channel.emptyTitle")}
-                          </Text>
-                          <Text size={2}>
-                            {t("slackSection.channel.emptyDescription")}
-                          </Text>
-                        </div>
-                      </Callout>
+                  {loadMoreCursor && (
+                    <div className={popupLoadMore()}>
                       <Button
-                        variant="surface"
+                        variant="ghost"
                         color="neutral"
-                        onClick={refreshChannels}
+                        loading={isLoadingMore}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                        }}
+                        onClick={loadMoreChannels}
                       >
-                        {t("slackSection.actions.refresh")}
+                        {t("slackSection.actions.loadMore")}
                       </Button>
                     </div>
                   )}
-              {loadMoreCursor && (
-                <Button
-                  variant="surface"
-                  color="neutral"
-                  loading={isLoadingMore}
-                  onClick={loadMoreChannels}
-                >
-                  {t("slackSection.actions.loadMore")}
-                </Button>
-              )}
+                </SelectPopup>
+              </Select>
             </div>
           )}
         </Card>

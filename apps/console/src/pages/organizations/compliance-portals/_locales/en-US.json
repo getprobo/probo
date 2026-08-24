@@ -435,10 +435,10 @@
     "notInstalled": "Install the Probo Slack app from organization settings before choosing a channel.",
     "channel": {
       "label": "Channel",
-      "placeholder": "Choose a channel",
+      "placeholder": "Select channel",
       "help": "Invite @Probo to a channel before selecting it.",
       "emptyTitle": "No Slack channel yet",
-      "emptyDescription": "In Slack, invite @Probo to a channel, then refresh this list."
+      "emptyDescription": "In Slack, invite @Probo to a channel, then open this list again."
     },
     "actions": {
       "clear": "Clear",
