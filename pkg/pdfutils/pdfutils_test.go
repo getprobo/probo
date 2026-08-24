@@ -18,30 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package pdfutils_test
+package pdfutils
 
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/pdfutils"
 )
 
-func TestAddConfidentialWithTimestamp_WatermarkTextTooLong(t *testing.T) {
+func TestAddWatermarkWithTimestamp_WatermarkTextTooLong(t *testing.T) {
 	t.Parallel()
 
-	watermarkText := strings.Repeat("a", pdfutils.MaxWatermarkTextLength+1)
+	watermarkText := strings.Repeat("a", MaxWatermarkTextLength+1)
 
-	pdf, err := pdfutils.AddConfidentialWithTimestamp(nil, watermarkText)
+	pdf, err := AddWatermarkWithTimestamp(nil, watermarkText)
 
 	require.Error(t, err)
 	assert.Nil(t, pdf)
 	assert.ErrorContains(t, err, "watermark text must not exceed 64 bytes")
 }
 
-func TestAddConfidentialWithTimestamp_WatermarkTextEmpty(t *testing.T) {
+func TestAddWatermarkWithTimestamp_WatermarkTextEmpty(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]string{
@@ -56,7 +56,7 @@ func TestAddConfidentialWithTimestamp_WatermarkTextEmpty(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				pdf, err := pdfutils.AddConfidentialWithTimestamp(nil, watermarkText)
+				pdf, err := AddWatermarkWithTimestamp(nil, watermarkText)
 
 				require.Error(t, err)
 				assert.Nil(t, pdf)
@@ -64,6 +64,17 @@ func TestAddConfidentialWithTimestamp_WatermarkTextEmpty(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestBuildWatermarkLines_DoesNotAddClassification(t *testing.T) {
+	t.Parallel()
+
+	lines := buildWatermarkLines(
+		"recipient@example.com",
+		time.Date(2026, time.August, 24, 10, 43, 0, 0, time.UTC),
+	)
+
+	assert.Equal(t, []string{"recipient@example.com", "2026-08-24"}, lines)
 }
 
 func TestTruncateWatermarkText(t *testing.T) {
@@ -78,12 +89,12 @@ func TestTruncateWatermarkText(t *testing.T) {
 			expected: "recipient@example.com",
 		},
 		"ASCII over limit": {
-			input:    strings.Repeat("a", pdfutils.MaxWatermarkTextLength+1),
-			expected: strings.Repeat("a", pdfutils.MaxWatermarkTextLength),
+			input:    strings.Repeat("a", MaxWatermarkTextLength+1),
+			expected: strings.Repeat("a", MaxWatermarkTextLength),
 		},
 		"multibyte rune at boundary": {
-			input:    strings.Repeat("a", pdfutils.MaxWatermarkTextLength-1) + "é",
-			expected: strings.Repeat("a", pdfutils.MaxWatermarkTextLength-1),
+			input:    strings.Repeat("a", MaxWatermarkTextLength-1) + "é",
+			expected: strings.Repeat("a", MaxWatermarkTextLength-1),
 		},
 	}
 
@@ -93,7 +104,7 @@ func TestTruncateWatermarkText(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				actual := pdfutils.TruncateWatermarkText(testCase.input)
+				actual := TruncateWatermarkText(testCase.input)
 
 				assert.Equal(t, testCase.expected, actual)
 			},
