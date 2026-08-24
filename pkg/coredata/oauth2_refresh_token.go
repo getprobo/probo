@@ -38,7 +38,7 @@ type (
 		HashedValue   []byte       `db:"hashed_value"`
 		ClientID      gid.GID      `db:"client_id"`
 		IdentityID    gid.GID      `db:"identity_id"`
-		Resource      *uri.URI     `db:"resource"`
+		Resources     []uri.URI    `db:"resources"`
 		Scopes        OAuth2Scopes `db:"scopes"`
 		AccessTokenID gid.GID      `db:"access_token_id"`
 		CreatedAt     time.Time    `db:"created_at"`
@@ -54,7 +54,7 @@ INSERT INTO iam_oauth2_refresh_tokens (
 	hashed_value,
 	client_id,
 	identity_id,
-	resource,
+	resources,
 	scopes,
 	access_token_id,
 	created_at,
@@ -65,7 +65,7 @@ INSERT INTO iam_oauth2_refresh_tokens (
 	@hashed_value,
 	@client_id,
 	@identity_id,
-	@resource,
+	@resources,
 	@scopes,
 	@access_token_id,
 	@created_at,
@@ -79,7 +79,7 @@ INSERT INTO iam_oauth2_refresh_tokens (
 		"hashed_value":    t.HashedValue,
 		"client_id":       t.ClientID,
 		"identity_id":     t.IdentityID,
-		"resource":        t.Resource,
+		"resources":       t.Resources,
 		"scopes":          t.Scopes,
 		"access_token_id": t.AccessTokenID,
 		"created_at":      t.CreatedAt,
@@ -105,7 +105,7 @@ SELECT
 	hashed_value,
 	client_id,
 	identity_id,
-	resource,
+	resources,
 	scopes,
 	access_token_id,
 	created_at,
@@ -153,7 +153,7 @@ SELECT
 	hashed_value,
 	client_id,
 	identity_id,
-	resource,
+	resources,
 	scopes,
 	access_token_id,
 	created_at,
@@ -205,7 +205,7 @@ SELECT
 	hashed_value,
 	client_id,
 	identity_id,
-	resource,
+	resources,
 	scopes,
 	access_token_id,
 	created_at,

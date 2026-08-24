@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
-func TestParseResource(t *testing.T) {
+func TestParseResources(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
@@ -37,20 +37,20 @@ func TestParseResource(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			resource, err := parseResource(
+			resources, err := parseResources(
 				url.Values{"resource": {"https://auth.example.com/api/mcp/v1"}},
 			)
 			require.NoError(t, err)
-			assert.Equal(t, "https://auth.example.com/api/mcp/v1", resource)
+			assert.Equal(t, []string{"https://auth.example.com/api/mcp/v1"}, resources)
 		},
 	)
 
 	t.Run(
-		"multiple resources rejected",
+		"multiple resources accepted",
 		func(t *testing.T) {
 			t.Parallel()
 
-			_, err := parseResource(
+			resources, err := parseResources(
 				url.Values{
 					"resource": {
 						"https://auth.example.com/api/mcp/v1",
@@ -58,7 +58,15 @@ func TestParseResource(t *testing.T) {
 					},
 				},
 			)
-			require.ErrorIs(t, err, oauth2.ErrInvalidTarget)
+			require.NoError(t, err)
+			assert.Equal(
+				t,
+				[]string{
+					"https://auth.example.com/api/mcp/v1",
+					"https://other.example.com/api/mcp/v1",
+				},
+				resources,
+			)
 		},
 	)
 
@@ -67,7 +75,7 @@ func TestParseResource(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			_, err := parseResource(url.Values{"resource": {""}})
+			_, err := parseResources(url.Values{"resource": {""}})
 			require.ErrorIs(t, err, oauth2.ErrInvalidTarget)
 		},
 	)

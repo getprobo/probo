@@ -64,13 +64,14 @@ type (
 	}
 
 	OAuth2IntrospectResponse struct {
-		Active    bool   `json:"active"`
-		Scope     string `json:"scope,omitempty"`
-		ClientID  string `json:"client_id,omitempty"`
-		Sub       string `json:"sub,omitempty"`
-		Exp       int64  `json:"exp,omitempty"`
-		Iat       int64  `json:"iat,omitempty"`
-		TokenType string `json:"token_type,omitempty"`
+		Active    bool     `json:"active"`
+		Scope     string   `json:"scope,omitempty"`
+		ClientID  string   `json:"client_id,omitempty"`
+		Sub       string   `json:"sub,omitempty"`
+		Audiences []string `json:"aud,omitempty"`
+		Exp       int64    `json:"exp,omitempty"`
+		Iat       int64    `json:"iat,omitempty"`
+		TokenType string   `json:"token_type,omitempty"`
 	}
 
 	OAuth2DeviceAuthResponse struct {
@@ -470,6 +471,27 @@ func OAuth2TokenWithCodeForResource(
 	c *Client,
 	clientID, clientSecret, code, redirectURI, codeVerifier, resource string,
 ) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
+	var resources []string
+	if resource != "" {
+		resources = []string{resource}
+	}
+
+	return OAuth2TokenWithCodeForResources(
+		c,
+		clientID,
+		clientSecret,
+		code,
+		redirectURI,
+		codeVerifier,
+		resources,
+	)
+}
+
+func OAuth2TokenWithCodeForResources(
+	c *Client,
+	clientID, clientSecret, code, redirectURI, codeVerifier string,
+	resources []string,
+) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
 	values := url.Values{
 		"grant_type":   {"authorization_code"},
 		"code":         {code},
@@ -480,8 +502,8 @@ func OAuth2TokenWithCodeForResource(
 		values.Set("code_verifier", codeVerifier)
 	}
 
-	if resource != "" {
-		values.Set("resource", resource)
+	if len(resources) > 0 {
+		values["resource"] = resources
 	}
 
 	raw, err := postFormWithBasicAuth(
@@ -560,13 +582,32 @@ func OAuth2TokenWithRefreshTokenForResource(
 	c *Client,
 	clientID, clientSecret, refreshToken, resource string,
 ) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
+	var resources []string
+	if resource != "" {
+		resources = []string{resource}
+	}
+
+	return OAuth2TokenWithRefreshTokenForResources(
+		c,
+		clientID,
+		clientSecret,
+		refreshToken,
+		resources,
+	)
+}
+
+func OAuth2TokenWithRefreshTokenForResources(
+	c *Client,
+	clientID, clientSecret, refreshToken string,
+	resources []string,
+) (*OAuth2TokenResponse, *OAuth2HTTPResponse, error) {
 	values := url.Values{
 		"grant_type":    {"refresh_token"},
 		"refresh_token": {refreshToken},
 	}
 
-	if resource != "" {
-		values.Set("resource", resource)
+	if len(resources) > 0 {
+		values["resource"] = resources
 	}
 
 	raw, err := postFormWithBasicAuth(

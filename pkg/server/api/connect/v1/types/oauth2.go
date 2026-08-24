@@ -54,27 +54,22 @@ func parseScopes(s string) (coredata.OAuth2Scopes, error) {
 	return scopes, nil
 }
 
-func parseResource(values url.Values) (string, error) {
+func parseResources(values url.Values) ([]string, error) {
 	resources := values["resource"]
 	if len(resources) == 0 {
-		return "", nil
+		return nil, nil
 	}
 
-	if len(resources) > 1 {
-		return "", oauth2.NewError(
-			oauth2.ErrInvalidTarget,
-			oauth2.WithDescription("multiple resource parameters are not supported"),
-		)
+	for _, resource := range resources {
+		if resource == "" {
+			return nil, oauth2.NewError(
+				oauth2.ErrInvalidTarget,
+				oauth2.WithDescription("resource must not be empty"),
+			)
+		}
 	}
 
-	if resources[0] == "" {
-		return "", oauth2.NewError(
-			oauth2.ErrInvalidTarget,
-			oauth2.WithDescription("resource must not be empty"),
-		)
-	}
-
-	return resources[0], nil
+	return resources, nil
 }
 
 type (
@@ -110,7 +105,7 @@ type (
 		ClientSecret string
 		Code         string
 		RedirectURI  string
-		Resource     string
+		Resources    []string
 		CodeVerifier string
 	}
 
@@ -118,7 +113,7 @@ type (
 		ClientID     string
 		ClientSecret string
 		RefreshToken string
-		Resource     string
+		Resources    []string
 	}
 
 	OAuth2DeviceCodeGrantInput struct {
@@ -233,12 +228,12 @@ func (in *OAuth2AuthorizationCodeGrantInput) DecodeForm(r *http.Request) error {
 	in.ClientSecret = r.FormValue("client_secret")
 	in.Code = r.FormValue("code")
 	in.RedirectURI = r.FormValue("redirect_uri")
-	resource, err := parseResource(r.Form)
+	resources, err := parseResources(r.Form)
 	if err != nil {
 		return err
 	}
 
-	in.Resource = resource
+	in.Resources = resources
 	in.CodeVerifier = r.FormValue("code_verifier")
 
 	if in.Code == "" {
@@ -256,12 +251,12 @@ func (in *OAuth2RefreshTokenGrantInput) DecodeForm(r *http.Request) error {
 	in.ClientID = r.FormValue("client_id")
 	in.ClientSecret = r.FormValue("client_secret")
 	in.RefreshToken = r.FormValue("refresh_token")
-	resource, err := parseResource(r.Form)
+	resources, err := parseResources(r.Form)
 	if err != nil {
 		return err
 	}
 
-	in.Resource = resource
+	in.Resources = resources
 	if in.RefreshToken == "" {
 		return fmt.Errorf("missing refresh_token")
 	}
@@ -304,6 +299,7 @@ type (
 		Scope     coredata.OAuth2Scopes `json:"scope,omitempty"`
 		ClientID  gid.GID               `json:"client_id,omitempty"`
 		Sub       gid.GID               `json:"sub,omitempty"`
+		Audiences []uri.URI             `json:"aud,omitempty"`
 		Exp       int64                 `json:"exp,omitempty"`
 		Iat       int64                 `json:"iat,omitempty"`
 		TokenType string                `json:"token_type,omitempty"`
@@ -378,6 +374,7 @@ func ActiveIntrospectResponse(result *oauth2.IntrospectResult) *OAuth2Introspect
 		Scope:     result.Scopes,
 		ClientID:  result.ClientID,
 		Sub:       result.IdentityID,
+		Audiences: result.Resources,
 		Exp:       result.ExpiresAt.Unix(),
 		Iat:       result.IssuedAt.Unix(),
 		TokenType: result.TokenType,

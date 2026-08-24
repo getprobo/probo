@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -42,11 +43,11 @@ func OAuth2AccessTokenMatchesIssuer(
 		return true
 	}
 
-	if accessToken.Resource == nil {
+	if len(accessToken.Resources) == 0 {
 		return false
 	}
 
-	return *accessToken.Resource == svc.OAuth2ServerService.Issuer()
+	return slices.Contains(accessToken.Resources, svc.OAuth2ServerService.Issuer())
 }
 
 func AuthenticateOAuth2AccessToken(

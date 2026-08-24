@@ -36,17 +36,25 @@ func TestServiceProtectedResource(t *testing.T) {
 	tests := []struct {
 		name    string
 		values  []string
-		want    *uri.URI
+		want    []uri.URI
 		wantErr bool
 	}{
 		{
 			name: "resource omitted defaults to issuer",
-			want: new(uri.URI("https://auth.example.com")),
+			want: []uri.URI{"https://auth.example.com"},
 		},
 		{
 			name:   "issuer resource",
 			values: []string{"https://auth.example.com"},
-			want:   new(uri.URI("https://auth.example.com")),
+			want:   []uri.URI{"https://auth.example.com"},
+		},
+		{
+			name: "duplicate resources deduplicated",
+			values: []string{
+				"https://auth.example.com",
+				"https://auth.example.com",
+			},
+			want: []uri.URI{"https://auth.example.com"},
 		},
 		{
 			name:    "unknown resource",
@@ -59,7 +67,7 @@ func TestServiceProtectedResource(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "multiple resources",
+			name: "one unsupported resource",
 			values: []string{
 				"https://auth.example.com/api/mcp/v1",
 				"https://auth.example.com",
@@ -74,7 +82,7 @@ func TestServiceProtectedResource(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				got, err := service.protectedResource(tt.values)
+				got, err := service.protectedResources(tt.values)
 				if tt.wantErr {
 					require.ErrorIs(t, err, ErrInvalidTarget)
 					return
@@ -87,27 +95,23 @@ func TestServiceProtectedResource(t *testing.T) {
 	}
 }
 
-func TestResourceMatches(t *testing.T) {
+func TestResourcesSubset(t *testing.T) {
 	t.Parallel()
 
-	resource := uri.URI("https://auth.example.com")
+	root := uri.URI("https://auth.example.com")
+	files := uri.URI("https://files.example.com")
 
-	assert.False(t, resourceMatches(nil, ""))
-	assert.True(t, resourceMatches(&resource, resource.String()))
-	assert.False(t, resourceMatches(nil, resource.String()))
-	assert.False(t, resourceMatches(&resource, ""))
-	assert.False(t, resourceMatches(&resource, "https://other.example.com"))
-}
-
-func TestServiceTokenResource(t *testing.T) {
-	t.Parallel()
-
-	service := &Service{baseURL: "https://auth.example.com"}
-
-	assert.Equal(t, "https://auth.example.com", service.tokenResource(""))
-	assert.Equal(
+	assert.False(t, resourcesSubset(nil, nil))
+	assert.True(t, resourcesSubset([]uri.URI{root}, []uri.URI{root}))
+	assert.True(
 		t,
-		"https://other.example.com",
-		service.tokenResource("https://other.example.com"),
+		resourcesSubset(
+			[]uri.URI{root, files},
+			[]uri.URI{files, root},
+		),
 	)
+	assert.True(t, resourcesSubset([]uri.URI{root}, []uri.URI{root, files}))
+	assert.False(t, resourcesSubset([]uri.URI{root}, nil))
+	assert.False(t, resourcesSubset([]uri.URI{root}, []uri.URI{files}))
+	assert.False(t, resourcesSubset([]uri.URI{root, files}, []uri.URI{root}))
 }

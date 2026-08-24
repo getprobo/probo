@@ -38,7 +38,7 @@ type OAuth2AuthorizationCode struct {
 	ClientID            gid.GID                    `db:"client_id"`
 	IdentityID          gid.GID                    `db:"identity_id"`
 	RedirectURI         uri.URI                    `db:"redirect_uri"`
-	Resource            *uri.URI                   `db:"resource"`
+	Resources           []uri.URI                  `db:"resources"`
 	Scopes              OAuth2Scopes               `db:"scopes"`
 	CodeChallenge       *string                    `db:"code_challenge"`
 	CodeChallengeMethod *OAuth2CodeChallengeMethod `db:"code_challenge_method"`
@@ -58,7 +58,7 @@ INSERT INTO iam_oauth2_authorization_codes (
 	client_id,
 	identity_id,
 	redirect_uri,
-	resource,
+	resources,
 	scopes,
 	code_challenge,
 	code_challenge_method,
@@ -74,7 +74,7 @@ INSERT INTO iam_oauth2_authorization_codes (
 	@client_id,
 	@identity_id,
 	@redirect_uri,
-	@resource,
+	@resources,
 	@scopes,
 	@code_challenge,
 	@code_challenge_method,
@@ -93,7 +93,7 @@ INSERT INTO iam_oauth2_authorization_codes (
 		"client_id":             c.ClientID,
 		"identity_id":           c.IdentityID,
 		"redirect_uri":          c.RedirectURI,
-		"resource":              c.Resource,
+		"resources":             c.Resources,
 		"scopes":                c.Scopes,
 		"code_challenge":        c.CodeChallenge,
 		"code_challenge_method": c.CodeChallengeMethod,
@@ -126,7 +126,7 @@ SELECT
 	client_id,
 	identity_id,
 	redirect_uri,
-	resource,
+	resources,
 	scopes,
 	code_challenge,
 	code_challenge_method,

@@ -43,7 +43,7 @@ type (
 		ClientID            gid.GID                   `db:"client_id"`
 		Scopes              OAuth2Scopes              `db:"scopes"`
 		RedirectURI         *uri.URI                  `db:"redirect_uri"`
-		Resource            *uri.URI                  `db:"resource"`
+		Resources           []uri.URI                 `db:"resources"`
 		CodeChallenge       string                    `db:"code_challenge"`
 		CodeChallengeMethod OAuth2CodeChallengeMethod `db:"code_challenge_method"`
 		Nonce               string                    `db:"nonce"`
@@ -132,7 +132,7 @@ SELECT
 	client_id,
 	scopes,
 	redirect_uri,
-	resource,
+	resources,
 	code_challenge,
 	code_challenge_method,
 	nonce,
@@ -182,7 +182,7 @@ SELECT
 	client_id,
 	scopes,
 	redirect_uri,
-	resource,
+	resources,
 	code_challenge,
 	code_challenge_method,
 	nonce,
@@ -242,7 +242,7 @@ SELECT
 	client_id,
 	scopes,
 	redirect_uri,
-	resource,
+	resources,
 	code_challenge,
 	code_challenge_method,
 	nonce,
@@ -294,7 +294,7 @@ func (c *OAuth2Consent) LoadMatchingConsent(
 	identityID gid.GID,
 	clientID gid.GID,
 	scopes OAuth2Scopes,
-	resource *uri.URI,
+	resources []uri.URI,
 ) error {
 	q := `
 SELECT
@@ -304,7 +304,7 @@ SELECT
 	client_id,
 	scopes,
 	redirect_uri,
-	resource,
+	resources,
 	code_challenge,
 	code_challenge_method,
 	nonce,
@@ -321,7 +321,8 @@ WHERE
 	AND approved = TRUE
 	AND scopes @> @scopes
 	AND scopes <@ @scopes
-	AND resource IS NOT DISTINCT FROM @resource
+	AND resources @> @resources
+	AND resources <@ @resources
 LIMIT 1;
 `
 
@@ -332,7 +333,7 @@ LIMIT 1;
 			"identity_id": identityID,
 			"client_id":   clientID,
 			"scopes":      scopes,
-			"resource":    resource,
+			"resources":   resources,
 		},
 	)
 	if err != nil {
@@ -362,7 +363,7 @@ INSERT INTO iam_oauth2_consents (
 	client_id,
 	scopes,
 	redirect_uri,
-	resource,
+	resources,
 	code_challenge,
 	code_challenge_method,
 	nonce,
@@ -378,7 +379,7 @@ INSERT INTO iam_oauth2_consents (
 	@client_id,
 	@scopes,
 	@redirect_uri,
-	@resource,
+	@resources,
 	@code_challenge,
 	@code_challenge_method,
 	@nonce,
@@ -397,7 +398,7 @@ INSERT INTO iam_oauth2_consents (
 		"client_id":             c.ClientID,
 		"scopes":                c.Scopes,
 		"redirect_uri":          c.RedirectURI,
-		"resource":              c.Resource,
+		"resources":             c.Resources,
 		"code_challenge":        c.CodeChallenge,
 		"code_challenge_method": c.CodeChallengeMethod,
 		"nonce":                 c.Nonce,
@@ -473,7 +474,7 @@ SELECT
 	client_id,
 	scopes,
 	redirect_uri,
-	resource,
+	resources,
 	code_challenge,
 	code_challenge_method,
 	nonce,
