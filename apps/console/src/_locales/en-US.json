@@ -524,7 +524,7 @@
     },
     "watermark": {
       "label": "Add watermark",
-      "description": "Add a confidential watermark with custom text and a timestamp to all PDFs",
+      "description": "Add a watermark with custom text and a timestamp to all PDFs",
       "textLabel": "Watermark text",
       "textPlaceholder": "Enter watermark text"
     },
@@ -565,7 +565,7 @@
     },
     "watermark": {
       "label": "Add watermark",
-      "description": "Add a confidential watermark with custom text and a timestamp",
+      "description": "Add a watermark with custom text and a timestamp",
       "textLabel": "Watermark text",
       "textPlaceholder": "Enter watermark text"
     },

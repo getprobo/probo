@@ -1003,7 +1003,7 @@
     },
     "watermark": {
       "label": "Watermerk toevoegen",
-      "description": "Voeg een vertrouwelijk watermerk met aangepaste tekst en een tijdstempel toe aan alle PDF's",
+      "description": "Voeg een watermerk met aangepaste tekst en een tijdstempel toe aan alle PDF's",
       "textLabel": "Watermerktekst",
       "textPlaceholder": "Voer watermerktekst in"
     },
@@ -1044,7 +1044,7 @@
     },
     "watermark": {
       "label": "Watermerk toevoegen",
-      "description": "Voeg een vertrouwelijk watermerk met aangepaste tekst en een tijdstempel toe",
+      "description": "Voeg een watermerk met aangepaste tekst en een tijdstempel toe",
       "textLabel": "Watermerktekst",
       "textPlaceholder": "Voer watermerktekst in"
     },
