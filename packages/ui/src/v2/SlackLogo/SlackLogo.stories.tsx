@@ -18,35 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { tv } from "tailwind-variants/lite";
+import type { Meta, StoryObj } from "@storybook/react";
 
-export const integrationsPage = tv({
-  base: "flex flex-col gap-6",
-});
+import { SlackLogo } from "./SlackLogo";
 
-export const integrationsPageSkeleton = tv({
-  slots: {
-    root: "flex flex-col gap-6",
-    section: "flex flex-col gap-4",
-    intro: "flex flex-col gap-1",
-    grid: "grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1",
-    card: "col-span-2 max-sm:col-span-1",
+export default {
+  title: "v2/SlackLogo",
+  component: SlackLogo,
+  args: {
+    className: "size-6",
   },
-});
+  render: args => <SlackLogo {...args} />,
+} satisfies Meta<typeof SlackLogo>;
 
-export const slackSection = tv({
-  slots: {
-    root: "flex flex-col gap-4",
-    intro: "flex flex-col gap-1",
-    grid: "grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1",
-    card: "col-span-2 max-sm:col-span-1",
-    lead: "relative z-1 flex min-w-0 flex-1 items-center gap-3",
-    copy: "flex min-w-0 flex-1 flex-col gap-0.5",
-    channel: "flex flex-col gap-1.5",
-    channelRow: "flex items-end gap-2",
-    channelField: "min-w-0 flex-1",
-    empty: "flex items-start gap-3",
-    emptyCopy: "flex flex-col gap-0.5",
-    emptyCallout: "min-w-0 flex-1",
-  },
-});
+type Story = StoryObj<typeof SlackLogo>;
+
+export const Playground: Story = {};
+
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-6">
+      <SlackLogo className="size-4" />
+      <SlackLogo className="size-6" />
+      <SlackLogo className="size-10" />
+    </div>
+  ),
+};

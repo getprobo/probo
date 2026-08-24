@@ -24,7 +24,7 @@ import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { integrationsPageSkeleton } from "./variants";
 
 export function CompliancePortalIntegrationsPageSkeleton() {
-  const { root, section, intro } = integrationsPageSkeleton();
+  const { root, section, intro, grid, card } = integrationsPageSkeleton();
 
   return (
     <div className={root()}>
@@ -32,7 +32,9 @@ export function CompliancePortalIntegrationsPageSkeleton() {
         <div className={intro()}>
           <HeadingSkeleton size={4} className="w-40" />
         </div>
-        <CardSkeleton size={4} />
+        <div className={grid()}>
+          <CardSkeleton size={3} className={card()} />
+        </div>
       </div>
     </div>
   );
