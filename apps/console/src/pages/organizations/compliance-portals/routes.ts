@@ -26,6 +26,7 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
 import { CompliancePortalLayoutSkeleton } from "./CompliancePortalLayoutSkeleton";
 import { CompliancePortalHostingPageSkeleton } from "./hosting/CompliancePortalHostingPageSkeleton";
+import { CompliancePortalIntegrationsPageSkeleton } from "./integrations/CompliancePortalIntegrationsPageSkeleton";
 
 export const compliancePortalRoutes = [
   {
@@ -55,7 +56,7 @@ export const compliancePortalRoutes = [
       },
       {
         path: "integrations",
-        Fallback: LinkCardSkeleton,
+        Fallback: CompliancePortalIntegrationsPageSkeleton,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/integrations/CompliancePortalIntegrationsPageLoader")),
       },
       {

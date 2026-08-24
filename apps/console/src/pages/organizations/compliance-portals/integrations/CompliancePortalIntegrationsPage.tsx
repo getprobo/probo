@@ -24,6 +24,7 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalIntegrationsPageQuery } from "#/__generated__/core/CompliancePortalIntegrationsPageQuery.graphql";
 
 import { CompliancePortalSlackSection } from "./_components/CompliancePortalSlackSection";
+import { integrationsPage } from "./variants";
 
 export const compliancePortalIntegrationsPageQuery = graphql`
   query CompliancePortalIntegrationsPageQuery($compliancePortalId: ID!) {
@@ -50,7 +51,7 @@ export function CompliancePortalIntegrationsPage({ queryRef }: CompliancePortalI
   }
 
   return (
-    <div className="space-y-6">
+    <div className={integrationsPage()}>
       <CompliancePortalSlackSection compliancePortalKey={compliancePortal} />
     </div>
   );

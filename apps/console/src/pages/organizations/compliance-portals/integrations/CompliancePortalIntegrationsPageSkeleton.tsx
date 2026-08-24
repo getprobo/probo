@@ -18,37 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 
-import type { CompliancePortalIntegrationsPageQuery } from "#/__generated__/core/CompliancePortalIntegrationsPageQuery.graphql";
+import { integrationsPageSkeleton } from "./variants";
 
-import {
-  CompliancePortalIntegrationsPage,
-  compliancePortalIntegrationsPageQuery,
-} from "./CompliancePortalIntegrationsPage";
-import { CompliancePortalIntegrationsPageSkeleton } from "./CompliancePortalIntegrationsPageSkeleton";
-
-export default function CompliancePortalIntegrationsPageLoader() {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalIntegrationsPageQuery>(
-    compliancePortalIntegrationsPageQuery,
-  );
-
-  useEffect(() => {
-    if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
-    }
-  }, [loadQuery, compliancePortalId]);
-
-  if (!queryRef) {
-    return <CompliancePortalIntegrationsPageSkeleton />;
-  }
+export function CompliancePortalIntegrationsPageSkeleton() {
+  const { root, section, intro } = integrationsPageSkeleton();
 
   return (
-    <Suspense fallback={<CompliancePortalIntegrationsPageSkeleton />}>
-      <CompliancePortalIntegrationsPage queryRef={queryRef} />
-    </Suspense>
+    <div className={root()}>
+      <div className={section()}>
+        <div className={intro()}>
+          <HeadingSkeleton size={4} className="w-40" />
+        </div>
+        <CardSkeleton size={4} />
+      </div>
+    </div>
   );
 }

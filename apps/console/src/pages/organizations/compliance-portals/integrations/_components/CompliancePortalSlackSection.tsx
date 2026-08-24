@@ -18,7 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, Option, Select, Slack } from "@probo/ui";
+import { SlackLogoIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, useRefetchableFragment, useRelayEnvironment } from "react-relay";
@@ -31,6 +42,9 @@ import type { CompliancePortalSlackSectionRefetchQuery } from "#/__generated__/c
 import type { CompliancePortalSlackSectionSetMutation } from "#/__generated__/core/CompliancePortalSlackSectionSetMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+
+import { hostingCard } from "../../hosting/variants";
+import { slackSection } from "../variants";
 
 const fragment = graphql`
   fragment CompliancePortalSlackSection_compliancePortal on CompliancePortal
@@ -179,6 +193,13 @@ export function CompliancePortalSlackSection({
   const loadMoreCursor = extraChannels.length > 0
     ? nextCursor
     : firstPage.nextCursor;
+  const channelNames = Object.fromEntries(
+    channels.map(channel => [channel.id, `#${channel.name}`]),
+  );
+  const showInstall = !isInstalled
+    && compliancePortal.organization.canInstallSlackbot
+    && compliancePortal.organization.slackbotAvailable;
+  const showChannelConfig = isInstalled === true && compliancePortal.canConfigureSlack;
 
   const refreshChannels = () => {
     setExtraChannels([]);
@@ -219,99 +240,125 @@ export function CompliancePortalSlackSection({
     });
   };
 
+  const { root, intro, lead, copy, channel, channelRow, channelField, empty, emptyCopy, emptyCallout }
+    = slackSection();
+  const { frame, header, wash, fade, icon: iconSlot, control, body } = hostingCard({
+    tone: "sand",
+    wide: true,
+  });
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-base font-medium">{t("slackSection.title")}</h2>
-      <Card padded className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
-            <Slack className="h-6 w-6" />
+    <section className={root()}>
+      <div className={intro()}>
+        <Heading level={2} size={4} weight="medium" highContrast>
+          {t("slackSection.title")}
+        </Heading>
+      </div>
+      <Card variant="ghost" size={2} padding="none" className={frame()}>
+        <div className={header()}>
+          <div className={wash()} />
+          <div className={fade()} />
+          <div className={lead()}>
+            <div className={iconSlot()}>
+              <SlackLogoIcon size={24} weight="duotone" />
+            </div>
+            <div className={copy()}>
+              <Text size={3} weight="medium" highContrast>
+                {isInstalled
+                  ? t("slackSection.connectionTitle")
+                  : t("slackSection.notInstalledTitle")}
+              </Text>
+              <Text size={2} color="neutral">
+                {isInstalled
+                  ? t("slackSection.description")
+                  : t("slackSection.notInstalled")}
+              </Text>
+            </div>
           </div>
-          <div className="mr-auto">
-            <h3 className="text-base font-semibold">
-              {isInstalled
-                ? t("slackSection.connectionTitle")
-                : t("slackSection.notInstalledTitle")}
-            </h3>
-            <p className="text-sm text-txt-tertiary">
-              {isInstalled
-                ? t("slackSection.description")
-                : t("slackSection.notInstalled")}
-            </p>
-          </div>
-          {!isInstalled
-            && compliancePortal.organization.canInstallSlackbot
-            && compliancePortal.organization.slackbotAvailable && (
-            <Button variant="secondary" asChild>
-              <a href={getSlackInstallUrl(organizationId)}>
+          {showInstall && (
+            <div className={control()}>
+              <ButtonAnchor
+                href={getSlackInstallUrl(organizationId)}
+                variant="solid"
+                color="neutral"
+                highContrast
+              >
                 {t("slackSection.actions.install")}
-              </a>
-            </Button>
+              </ButtonAnchor>
+            </div>
           )}
         </div>
-
-        {isInstalled && compliancePortal.canConfigureSlack && (
-          <div className="space-y-1.5">
+        {showChannelConfig && (
+          <div className={body()}>
             {hasChannels
               ? (
-                  <>
-                    <label className="text-sm font-medium">
-                      {t("slackSection.channel.label")}
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <div className="grow">
-                        <Select
-                          value={
-                            compliancePortal.slackbotNotificationChannel
-                              ?.channelId ?? ""
-                          }
-                          onValueChange={setNotificationChannel}
-                          placeholder={t("slackSection.channel.placeholder")}
-                          disabled={isSettingChannel || isClearingChannel}
+                  <Select
+                    value={configuredChannel?.channelId ?? null}
+                    onValueChange={(channelId) => {
+                      if (channelId != null) {
+                        setNotificationChannel(channelId);
+                      }
+                    }}
+                    disabled={isSettingChannel || isClearingChannel}
+                  >
+                    <div className={channel()}>
+                      <div className={channelRow()}>
+                        <Field
+                          label={t("slackSection.channel.label")}
+                          className={channelField()}
                         >
-                          {channels.map(channel => (
-                            <Option key={channel.id} value={channel.id}>
-                              #
-                              {channel.name}
-                            </Option>
-                          ))}
-                        </Select>
+                          <SelectTrigger placeholder={t("slackSection.channel.placeholder")}>
+                            {(value: string | null) => (value ? channelNames[value] : null)}
+                          </SelectTrigger>
+                        </Field>
+                        {configuredChannel && (
+                          <Button
+                            variant="surface"
+                            color="neutral"
+                            loading={isClearingChannel}
+                            onClick={clearNotificationChannel}
+                          >
+                            {t("slackSection.actions.clear")}
+                          </Button>
+                        )}
                       </div>
-                      {compliancePortal.slackbotNotificationChannel && (
+                      <Text size={1} color="faint">
+                        {t("slackSection.channel.help")}
+                      </Text>
+                      {listedChannels.length === 0 && (
                         <Button
-                          variant="secondary"
-                          onClick={clearNotificationChannel}
-                          disabled={isClearingChannel}
+                          variant="surface"
+                          color="neutral"
+                          onClick={refreshChannels}
                         >
-                          {t("slackSection.actions.clear")}
+                          {t("slackSection.actions.refresh")}
                         </Button>
                       )}
                     </div>
-                    <p className="text-xs text-txt-tertiary">
-                      {t("slackSection.channel.help")}
-                    </p>
-                    {listedChannels.length === 0 && (
-                      <Button
-                        variant="secondary"
-                        onClick={refreshChannels}
-                      >
-                        {t("slackSection.actions.refresh")}
-                      </Button>
-                    )}
-                  </>
+                    <SelectPopup>
+                      {channels.map(listedChannel => (
+                        <SelectItem key={listedChannel.id} value={listedChannel.id}>
+                          {`#${listedChannel.name}`}
+                        </SelectItem>
+                      ))}
+                    </SelectPopup>
+                  </Select>
                 )
               : (
-                  <div className="flex items-center gap-3 rounded-lg border border-border-low bg-level-1 px-4 py-3">
-                    <div className="grow">
-                      <p className="text-sm font-medium">
-                        {t("slackSection.channel.emptyTitle")}
-                      </p>
-                      <p className="text-sm text-txt-tertiary">
-                        {t("slackSection.channel.emptyDescription")}
-                      </p>
-                    </div>
+                  <div className={empty()}>
+                    <Callout variant="surface" color="neutral" className={emptyCallout()}>
+                      <div className={emptyCopy()}>
+                        <Text size={2} weight="medium" highContrast>
+                          {t("slackSection.channel.emptyTitle")}
+                        </Text>
+                        <Text size={2}>
+                          {t("slackSection.channel.emptyDescription")}
+                        </Text>
+                      </div>
+                    </Callout>
                     <Button
-                      variant="secondary"
+                      variant="surface"
+                      color="neutral"
                       onClick={refreshChannels}
                     >
                       {t("slackSection.actions.refresh")}
@@ -320,19 +367,18 @@ export function CompliancePortalSlackSection({
                 )}
             {loadMoreCursor && (
               <Button
-                variant="secondary"
+                variant="surface"
+                color="neutral"
+                loading={isLoadingMore}
                 onClick={loadMoreChannels}
-                disabled={isLoadingMore}
               >
-                {isLoadingMore
-                  ? t("slackSection.actions.loadingMore")
-                  : t("slackSection.actions.loadMore")}
+                {t("slackSection.actions.loadMore")}
               </Button>
             )}
           </div>
         )}
       </Card>
-    </div>
+    </section>
   );
 }
 
