@@ -389,6 +389,16 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			defer func() { _ = userinfoResp.Body.Close() }()
 			assert.Equal(t, http.StatusUnauthorized, userinfoResp.StatusCode)
 
+			fileURL, err := url.JoinPath(owner.BaseURL(), "api", "files", "v1", "not-a-gid")
+			require.NoError(t, err)
+			fileReq, err := http.NewRequest(http.MethodGet, fileURL, nil)
+			require.NoError(t, err)
+			fileReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
+			fileResp, err := owner.HTTPClient().Do(fileReq)
+			require.NoError(t, err)
+			defer func() { _ = fileResp.Body.Close() }()
+			assert.Equal(t, http.StatusNotFound, fileResp.StatusCode)
+
 			_, wrongResourceRaw, err = testutil.OAuth2TokenWithRefreshTokenForResource(
 				owner,
 				client.ClientID,

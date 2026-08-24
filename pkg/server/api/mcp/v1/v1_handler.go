@@ -109,7 +109,14 @@ func NewMux(
 
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc, mcpResource))
+	r.Use(
+		authn.NewOAuth2AccessTokenMiddleware(
+			iamSvc,
+			authn.OAuth2AudiencePolicy{
+				Resources: []uri.URI{mcpResource},
+			},
+		),
+	)
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL, resourceMetadataURL))
 	r.Handle("/", protectedHandler)
 

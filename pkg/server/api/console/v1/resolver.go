@@ -56,6 +56,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/thirdparty"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type (
@@ -163,7 +164,15 @@ func NewMux(
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
+		r.Use(
+			authn.NewOAuth2AccessTokenMiddleware(
+				iamSvc,
+				authn.OAuth2AudiencePolicy{
+					Resources:    []uri.URI{iamSvc.OAuth2ServerService.Issuer()},
+					AllowUnbound: true,
+				},
+			),
+		)
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Use(newMembershipAccessMiddleware(iamSvc, logger))
 		r.Use(dataloader.NewMiddleware(

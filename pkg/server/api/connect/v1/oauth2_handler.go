@@ -98,9 +98,11 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if accessToken.ClientID != nil &&
-			accessToken.Resource != nil &&
-			*accessToken.Resource != h.iam.OAuth2ServerService.Issuer() {
+		audiencePolicy := authn.OAuth2AudiencePolicy{
+			Resources:    []uri.URI{h.iam.OAuth2ServerService.Issuer()},
+			AllowUnbound: true,
+		}
+		if !audiencePolicy.Allows(accessToken) {
 			bearertoken.SetBearerInvalidToken(w, h.baseURL)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 
