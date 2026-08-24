@@ -34,6 +34,7 @@ import {
   StorageDetector,
 } from "./detectors";
 import { NotFoundError } from "./errors";
+import { rewriteLegacyConsoleHost } from "./hosted-url";
 import { fetchJSON } from "./http";
 import { detectLanguage } from "./i18n";
 import type { ConsentIntegration } from "./integrations";
@@ -91,7 +92,7 @@ export class CookieBannerClient {
     if (!base.endsWith("/")) {
       base += "/";
     }
-    this.baseUrl = new URL(base);
+    this.baseUrl = rewriteLegacyConsoleHost(new URL(base));
     this.bannerId = config.bannerId;
     this.visitorId = getVisitorId(config.bannerId);
     this.lang = detectLanguage(config.lang);

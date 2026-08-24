@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { COOKIE_NAME } from "./cookie";
+import { rewriteLegacyConsoleHost } from "./hosted-url";
 import { fetchJSON } from "./http";
 const MAX_QUEUE_SIZE = 10;
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -91,7 +92,10 @@ export async function flush(bannerId: string): Promise<void> {
 
   for (const entry of queue) {
     try {
-      await fetchJSON(entry.url, { method: "POST", body: entry.body });
+      await fetchJSON(rewriteLegacyConsoleHost(new URL(entry.url)), {
+        method: "POST",
+        body: entry.body,
+      });
       sentTimestamps.push(entry.timestamp);
     } catch {
       // will remain in queue
