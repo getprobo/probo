@@ -4,6 +4,21 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.11.0] - 2026-08-24
+
+### Added
+
+- `proboctl common-third-party review <slug> --verdict <VALIDATED|REJECTED>` — record a human review verdict on a catalog entry, and `--review <state>` on `list` to filter by review state so the backlog can be worked through
+
+### Changed
+
+- Seeded catalog entries are now marked reviewed on load, so the review backlog reflects only rows that actually need a human look instead of the whole catalog
+
+### Fixed
+
+- A verdict recorded by `common-third-party review` could be silently overwritten by a concurrent tracker-mapping run; the read is now locked against it
+- The Microsoft catalog entry was seeded under the wrong category (`ANALYTICS` instead of `OTHER`), and a duplicate Tawk.to entry was removed
+
 ## [0.10.0] - 2026-08-19
 
 ### Added
