@@ -103,6 +103,11 @@
         pre {
             @apply my-0 rounded-lg border-none;
         }
+
+        svg {
+            max-width: none!important;
+            aspect-ratio: none!important;
+        }
     }
 
     .mermaid-toolbar {
@@ -123,19 +128,4 @@
         }
     }
 
-    .mermaid-preview {
-        @apply flex justify-center p-6 min-h-24;
-
-        svg {
-            @apply max-w-full h-auto;
-        }
-    }
-
-    .mermaid-error {
-        @apply p-4 text-sm font-mono text-txt-danger;
-    }
-
-    .mermaid-empty {
-        @apply p-4 text-sm text-txt-tertiary text-center;
-    }
 }
