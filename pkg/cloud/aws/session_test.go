@@ -68,12 +68,40 @@ func testOrganizationID() gid.GID {
 func TestNewSession(t *testing.T) {
 	t.Parallel()
 
-	session, err := cloudaws.NewSession(testIssuer(t), testOrganizationID(), testRoleARN)
-	require.NoError(t, err)
+	tests := []struct {
+		name    string
+		roleARN string
+		region  string
+	}{
+		{
+			name:    "commercial",
+			roleARN: testRoleARN,
+			region:  cloudaws.DefaultCommercialRegion,
+		},
+		{
+			name:    "govcloud",
+			roleARN: "arn:aws-us-gov:iam::123456789012:role/ProboAudit",
+			region:  cloudaws.DefaultGovRegion,
+		},
+		{
+			name:    "china",
+			roleARN: "arn:aws-cn:iam::123456789012:role/ProboAudit",
+			region:  cloudaws.DefaultChinaRegion,
+		},
+	}
 
-	assert.Equal(t, cloud.AWS, session.Cloud())
-	assert.Equal(t, "123456789012", session.AccountID(), "account comes from the role ARN")
-	assert.Equal(t, cloudaws.DefaultRegion, session.Config().Region)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			session, err := cloudaws.NewSession(testIssuer(t), testOrganizationID(), tt.roleARN)
+			require.NoError(t, err)
+
+			assert.Equal(t, cloud.AWS, session.Cloud())
+			assert.Equal(t, "123456789012", session.AccountID(), "account comes from the role ARN")
+			assert.Equal(t, tt.region, session.Config().Region)
+		})
+	}
 }
 
 func TestNewSession_Validation(t *testing.T) {

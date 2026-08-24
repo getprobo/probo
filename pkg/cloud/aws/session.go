@@ -43,9 +43,24 @@ import (
 )
 
 const (
-	// DefaultRegion is the STS endpoint the session uses. It only selects
-	// the STS host; IAM is global.
-	DefaultRegion = "us-east-1"
+	// CommercialPartition is the worldwide AWS partition.
+	CommercialPartition = "aws"
+
+	// GovPartition is AWS GovCloud (US).
+	GovPartition = "aws-us-gov"
+
+	// ChinaPartition is AWS China.
+	ChinaPartition = "aws-cn"
+
+	// DefaultCommercialRegion is the STS endpoint for CommercialPartition.
+	// It only selects the STS host; IAM is global within the partition.
+	DefaultCommercialRegion = "us-east-1"
+
+	// DefaultGovRegion is the STS endpoint for GovPartition.
+	DefaultGovRegion = "us-gov-west-1"
+
+	// DefaultChinaRegion is the STS endpoint for ChinaPartition.
+	DefaultChinaRegion = "cn-north-1"
 
 	// roleSessionNamePrefix labels the assumed-role session in the customer's
 	// CloudTrail, so they can attribute every call to the Probo organization
@@ -62,13 +77,6 @@ type (
 		accountID string
 	}
 
-	// Option configures a Session.
-	Option func(*options)
-
-	options struct {
-		region string
-	}
-
 	// issuerTokenRetriever adapts the issuer to the AWS SDK's
 	// IdentityTokenRetriever, which the SDK calls on every credential refresh.
 	issuerTokenRetriever struct {
@@ -81,11 +89,6 @@ var (
 	_ cloud.Session                   = (*Session)(nil)
 	_ stscreds.IdentityTokenRetriever = (*issuerTokenRetriever)(nil)
 )
-
-// WithRegion selects the region the STS exchange targets.
-func WithRegion(region string) Option {
-	return func(o *options) { o.region = region }
-}
 
 // NewSession opens a session on the account owning roleARN, by exchanging an
 // assertion minted for organizationID.
@@ -101,7 +104,6 @@ func NewSession(
 	issuer *identityfederation.Issuer,
 	organizationID gid.GID,
 	roleARN string,
-	opts ...Option,
 ) (*Session, error) {
 	parsedARN, err := arn.Parse(roleARN)
 	if err != nil {
@@ -112,14 +114,7 @@ func NewSession(
 		return nil, fmt.Errorf("cannot open aws session: role ARN carries no account ID")
 	}
 
-	var o options
-	for _, opt := range opts {
-		opt(&o)
-	}
-
-	if o.region == "" {
-		o.region = DefaultRegion
-	}
+	region := regionForPartition(parsedARN.Partition)
 
 	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
 
@@ -128,7 +123,7 @@ func NewSession(
 	// ambient credentials in Probo's own environment out of the exchange.
 	stsClient := sts.NewFromConfig(
 		awssdk.Config{
-			Region:      o.region,
+			Region:      region,
 			Credentials: awssdk.AnonymousCredentials{},
 			HTTPClient:  httpClient,
 		},
@@ -149,12 +144,26 @@ func NewSession(
 
 	return &Session{
 		cfg: awssdk.Config{
-			Region:      o.region,
+			Region:      region,
 			Credentials: awssdk.NewCredentialsCache(provider),
 			HTTPClient:  httpClient,
 		},
 		accountID: parsedARN.AccountID,
 	}, nil
+}
+
+// regionForPartition is any STS region in the partition the role ARN names.
+// IAM roles are global; the region only selects the STS host, which cannot
+// cross partitions.
+func regionForPartition(partition string) string {
+	switch partition {
+	case GovPartition:
+		return DefaultGovRegion
+	case ChinaPartition:
+		return DefaultChinaRegion
+	default:
+		return DefaultCommercialRegion
+	}
 }
 
 // Cloud implements cloud.Session.

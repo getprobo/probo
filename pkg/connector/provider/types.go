@@ -370,6 +370,19 @@ type WorkloadIdentityConfig struct {
 	// Probe is the connection check, replacing the HTTP Probe/BuildProbeURL
 	// path. Nil means the check is skipped, matching an empty Endpoints.Probe.
 	Probe func(context.Context, cloud.Session, *coredata.Connector) error
+
+	// InspectGrant reads the grant the customer deployed in their own cloud
+	// account and refuses it when it does not match what this provider
+	// requires. It runs once, before activation.
+	//
+	// It is separate from Probe. Probe asks whether the assume still works, on
+	// every status check. This asks whether the grant itself is acceptable,
+	// which cannot change without the customer editing their infrastructure.
+	//
+	// Nil means a successful assume is enough: isolation is already
+	// structural (a per-organization issuer), or there is no grant document
+	// to read.
+	InspectGrant func(context.Context, cloud.Session, *coredata.Connector) error
 }
 
 // The three Supports* predicates below are derived from the presence of a

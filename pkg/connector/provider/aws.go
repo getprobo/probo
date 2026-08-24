@@ -36,7 +36,9 @@ import (
 // AWS credential and mints an assertion the customer's STS exchanges for
 // temporary ones. It therefore declares no OAuth2, API-key or
 // client-credentials path — there is no credential for a customer to paste or
-// an operator to configure.
+// an operator to configure. It also registers no InspectGrant: each
+// organization has its own issuer, so STS rejects a foreign token before any
+// trust-policy condition runs.
 func awsRegistration() *Registration {
 	return &Registration{
 		Provider:                    coredata.ConnectorProviderAWS,

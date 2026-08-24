@@ -93,6 +93,10 @@ func TestAWSRegistration(t *testing.T) {
 	assert.Nil(t, reg.NewDriver)
 	assert.NotEmpty(t, reg.EndpointOverrideUnsupported)
 	assert.Equal(t, provider.Endpoints{}, reg.Endpoints)
+
+	// Isolation is the per-organization issuer, so there is no grant to read
+	// back beyond a successful assume.
+	assert.Nil(t, reg.WorkloadIdentity.InspectGrant)
 }
 
 func TestAWSNewSession(t *testing.T) {
@@ -114,5 +118,5 @@ func TestAWSNewSession(t *testing.T) {
 
 	awsSession, ok := session.(*cloudaws.Session)
 	require.True(t, ok)
-	assert.Equal(t, cloudaws.DefaultRegion, awsSession.Config().Region)
+	assert.Equal(t, cloudaws.DefaultCommercialRegion, awsSession.Config().Region)
 }
