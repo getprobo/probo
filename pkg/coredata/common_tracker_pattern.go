@@ -562,6 +562,83 @@ LIMIT @limit;
 	return results, nil
 }
 
+// PatternSummary is the part of a pattern a reviewer reads to judge what the
+// software actually did: the key, where it was stored, and the verdict already
+// on it. The description is deliberately absent — it is agent prose that names
+// a vendor, which is what a review is meant to check rather than trust.
+type PatternSummary struct {
+	Pattern     string
+	TrackerType string
+	Attribution CommonTrackerPatternAttribution
+	Confidence  float32
+}
+
+// LoadSummariesGroupedByCommonThirdPartyID returns a short pattern summary for
+// every catalog entry in one round trip, keyed by the entry that owns it.
+//
+// Judging a row means reading its keys — a device id means a vendor, a theme
+// preference means local state — and doing that per row is one query each. A
+// backlog of a hundred rows makes the correct method slow enough that batching
+// by name becomes tempting, which is where misjudgements come from. Loading
+// them together removes the reason to guess.
+//
+// Capped per entry by the caller: a handful of keys is enough to classify a
+// row, and loglevel-style namespaces run to dozens.
+func (ps *CommonTrackerPatterns) LoadSummariesGroupedByCommonThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+) (map[gid.GID][]PatternSummary, error) {
+	q := `
+SELECT
+    common_third_party_id,
+    pattern,
+    tracker_type,
+    attribution,
+    confidence
+FROM
+    common_tracker_patterns
+WHERE
+    common_third_party_id IS NOT NULL
+ORDER BY
+    common_third_party_id,
+    confidence DESC,
+    pattern
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common tracker pattern summaries: %w", err)
+	}
+	defer rows.Close()
+
+	byParty := make(map[gid.GID][]PatternSummary)
+
+	for rows.Next() {
+		var (
+			partyID gid.GID
+			summary PatternSummary
+		)
+
+		if err := rows.Scan(
+			&partyID,
+			&summary.Pattern,
+			&summary.TrackerType,
+			&summary.Attribution,
+			&summary.Confidence,
+		); err != nil {
+			return nil, fmt.Errorf("cannot scan common tracker pattern summary: %w", err)
+		}
+
+		byParty[partyID] = append(byParty[partyID], summary)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate common tracker pattern summaries: %w", err)
+	}
+
+	return byParty, nil
+}
+
 func (ps *CommonTrackerPatterns) LoadByCommonThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
