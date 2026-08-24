@@ -6393,17 +6393,7 @@
     "name": "PowerLinks",
     "category": "MARKETING",
     "domains": [
-      "powerlinks.com"
-    ],
-    "legalName": "PowerLinks Media Ltd.",
-    "headquarterAddress": "London, United Kingdom",
-    "websiteUrl": "https://www.powerlinks.com",
-    "privacyPolicyUrl": "https://www.powerlinks.com/privacy-policy/"
-  },
-  {
-    "name": "PowerLinks Media",
-    "category": "MARKETING",
-    "domains": [
+      "powerlinks.com",
       "px.powerlinks.com"
     ],
     "legalName": "PowerLinks Media Ltd.",
