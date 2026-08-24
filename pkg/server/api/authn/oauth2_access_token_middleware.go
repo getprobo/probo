@@ -23,7 +23,6 @@ package authn
 import (
 	"fmt"
 	"net/http"
-	"slices"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -35,7 +34,7 @@ import (
 )
 
 type OAuth2AudiencePolicy struct {
-	Resources    []uri.URI
+	Resource     uri.URI
 	AllowUnbound bool
 }
 
@@ -48,7 +47,7 @@ func (p OAuth2AudiencePolicy) Allows(accessToken *coredata.OAuth2AccessToken) bo
 		return p.AllowUnbound
 	}
 
-	return slices.Contains(p.Resources, *accessToken.Resource)
+	return p.Resource != "" && *accessToken.Resource == p.Resource
 }
 
 func NewOAuth2AccessTokenMiddleware(

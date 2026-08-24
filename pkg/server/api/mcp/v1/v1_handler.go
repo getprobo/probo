@@ -35,7 +35,6 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -45,7 +44,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 	"go.probo.inc/probo/pkg/thirdparty"
-	"go.probo.inc/probo/pkg/uri"
 )
 
 func NewMux(
@@ -104,8 +102,7 @@ func NewMux(
 		},
 	)
 	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
-	mcpResource := oauth2.MCPResourceURI(uri.URI(baseURL.String()))
-	resourceMetadataURL := baseURL.WithPath(oauth2.MCPProtectedResourceMetadataPath).MustString()
+	resource := iamSvc.OAuth2ServerService.Issuer()
 
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
@@ -113,11 +110,11 @@ func NewMux(
 		authn.NewOAuth2AccessTokenMiddleware(
 			iamSvc,
 			authn.OAuth2AudiencePolicy{
-				Resources: []uri.URI{mcpResource},
+				Resource: resource,
 			},
 		),
 	)
-	r.Use(authn.NewIdentityPresenceMiddleware(baseURL, resourceMetadataURL))
+	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 	r.Handle("/", protectedHandler)
 
 	logger.Info("MCP server initialized successfully")

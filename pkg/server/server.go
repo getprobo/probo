@@ -41,7 +41,6 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
@@ -225,7 +224,6 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-protected-resource", s.protectedResourceMetadataHandler)
-	s.router.Get(oauth2.MCPProtectedResourceMetadataPath, s.mcpProtectedResourceMetadataHandler)
 
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
@@ -272,14 +270,6 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) protectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	resource := uri.URI(s.baseURL)
-	metadata := s.iamService.OAuth2ProtectedResourceMetadata(resource)
-
-	w.Header().Set("Cache-Control", "public, max-age=3600")
-	httpserver.RenderJSON(w, http.StatusOK, metadata)
-}
-
-func (s *Server) mcpProtectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	resource := oauth2.MCPResourceURI(uri.URI(s.baseURL))
 	metadata := s.iamService.OAuth2ProtectedResourceMetadata(resource)
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")

@@ -35,12 +35,10 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/jsonx"
-	"go.probo.inc/probo/pkg/uri"
 )
 
 const presignedURLExpiry = 1 * time.Hour
@@ -81,10 +79,7 @@ func NewMux(
 	if iamSvc != nil {
 		issuer := iamSvc.OAuth2ServerService.Issuer()
 		audiencePolicy = authn.OAuth2AudiencePolicy{
-			Resources: []uri.URI{
-				issuer,
-				oauth2.MCPResourceURI(issuer),
-			},
+			Resource:     issuer,
 			AllowUnbound: true,
 		}
 	}

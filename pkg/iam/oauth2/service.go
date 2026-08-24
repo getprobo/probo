@@ -1814,7 +1814,7 @@ func (s *Service) protectedResource(values []string) (*uri.URI, error) {
 	}
 
 	resource := uri.URI(raw)
-	if resource == s.baseURL || resource == MCPResourceURI(s.baseURL) {
+	if resource == s.baseURL {
 		return &resource, nil
 	}
 

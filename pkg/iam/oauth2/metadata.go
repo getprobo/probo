@@ -78,7 +78,7 @@ func NewMetadata(issuer uri.URI, endpoints Endpoints, registeredScopes []coredat
 		RevocationEndpoint:          endpoints.Revocation,
 		DeviceAuthorizationEndpoint: endpoints.DeviceAuthorization,
 		ScopesSupported:             authorizationServerScopes(registeredScopes),
-		ProtectedResources:          []uri.URI{issuer, MCPResourceURI(issuer)},
+		ProtectedResources:          []uri.URI{issuer},
 		ResponseTypesSupported: []coredata.OAuth2ResponseType{
 			coredata.OAuth2ResponseTypeCode,
 		},
