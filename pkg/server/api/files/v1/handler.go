@@ -35,10 +35,12 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/jsonx"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 const presignedURLExpiry = 1 * time.Hour
@@ -75,10 +77,27 @@ func NewMux(
 	r.Get("/static/{file}", h.handleGetStaticFile)
 	r.Get("/public/{fileID}", h.handleGetPublicFile)
 
+	audiencePolicy := authn.OAuth2AudiencePolicy{}
+	if iamSvc != nil {
+		issuer := iamSvc.OAuth2ServerService.Issuer()
+		audiencePolicy = authn.OAuth2AudiencePolicy{
+			Resources: []uri.URI{
+				issuer,
+				oauth2.MCPResourceURI(issuer),
+			},
+			AllowUnbound: true,
+		}
+	}
+
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
+		r.Use(
+			authn.NewOAuth2AccessTokenMiddleware(
+				iamSvc,
+				audiencePolicy,
+			),
+		)
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Get("/{fileID}", h.handleGetFile)
 	})

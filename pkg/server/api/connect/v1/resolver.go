@@ -60,6 +60,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type (
@@ -92,7 +93,13 @@ func NewMux(
 
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
-	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
+	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(
+		svc,
+		authn.OAuth2AudiencePolicy{
+			Resources:    []uri.URI{svc.OAuth2ServerService.Issuer()},
+			AllowUnbound: true,
+		},
+	)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
 	graphqlHandler := NewGraphQLHandler(
 		svc,

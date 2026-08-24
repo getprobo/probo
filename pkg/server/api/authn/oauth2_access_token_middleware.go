@@ -23,18 +23,37 @@ package authn
 import (
 	"fmt"
 	"net/http"
+	"slices"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/uri"
 )
 
+type OAuth2AudiencePolicy struct {
+	Resources    []uri.URI
+	AllowUnbound bool
+}
+
+func (p OAuth2AudiencePolicy) Allows(accessToken *coredata.OAuth2AccessToken) bool {
+	if accessToken.ClientID == nil {
+		return true
+	}
+
+	if accessToken.Resource == nil {
+		return p.AllowUnbound
+	}
+
+	return slices.Contains(p.Resources, *accessToken.Resource)
+}
+
 func NewOAuth2AccessTokenMiddleware(
 	svc *iam.Service,
-	resources ...uri.URI,
+	audiencePolicy OAuth2AudiencePolicy,
 ) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -62,20 +81,10 @@ func NewOAuth2AccessTokenMiddleware(
 					return
 				}
 
-				if accessToken.ClientID != nil {
-					switch {
-					case len(resources) > 0 &&
-						(accessToken.Resource == nil || *accessToken.Resource != resources[0]):
-						next.ServeHTTP(w, r)
+				if !audiencePolicy.Allows(accessToken) {
+					next.ServeHTTP(w, r)
 
-						return
-					case len(resources) == 0 &&
-						accessToken.Resource != nil &&
-						*accessToken.Resource != svc.OAuth2ServerService.Issuer():
-						next.ServeHTTP(w, r)
-
-						return
-					}
+					return
 				}
 
 				identity, err := svc.AccountService.GetIdentity(ctx, accessToken.IdentityID)
