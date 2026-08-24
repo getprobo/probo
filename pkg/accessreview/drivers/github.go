@@ -162,7 +162,22 @@ type (
 // githubVerifiedDomainEmailsQuery is the same field GitHub's org-admin
 // members page uses. REST GET /users/{login} only returns a public
 // profile email, which most people hide.
-const githubVerifiedDomainEmailsQuery = `query AccessReviewGitHubVerifiedDomainEmails($org: String!, $after: String) { organization(login: $org) { membersWithRole(first: 100, after: $after) { nodes { login organizationVerifiedDomainEmails(login: $org) } pageInfo { hasNextPage endCursor } } } }`
+const githubVerifiedDomainEmailsQuery = `
+	query AccessReviewGitHubVerifiedDomainEmails($org: String!, $after: String) {
+		organization(login: $org) {
+			membersWithRole(first: 100, after: $after) {
+				nodes {
+					login
+					organizationVerifiedDomainEmails(login: $org)
+				}
+				pageInfo {
+					hasNextPage
+					endCursor
+				}
+			}
+		}
+	}
+`
 
 // NewGitHubDriver builds a driver against baseURL, the GitHub REST API
 // origin (e.g. https://api.github.com).
