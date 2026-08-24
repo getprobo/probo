@@ -103,7 +103,7 @@ func TestOAuth2AccessTokenMatchesIssuer(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				assert.Equal(t, tt.want, OAuth2AccessTokenMatchesIssuer(svc, tt.token))
+				assert.Equal(t, tt.want, oauth2AccessTokenMatchesIssuer(svc, tt.token))
 			},
 		)
 	}

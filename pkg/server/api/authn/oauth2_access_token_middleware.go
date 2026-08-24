@@ -35,7 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
-func OAuth2AccessTokenMatchesIssuer(
+func oauth2AccessTokenMatchesIssuer(
 	svc *iam.Service,
 	accessToken *coredata.OAuth2AccessToken,
 ) bool {
@@ -60,7 +60,7 @@ func AuthenticateOAuth2AccessToken(
 		return nil, fmt.Errorf("cannot load oauth2 access token: %w", err)
 	}
 
-	if !OAuth2AccessTokenMatchesIssuer(svc, accessToken) {
+	if !oauth2AccessTokenMatchesIssuer(svc, accessToken) {
 		return nil, errors.New("oauth2 access token audience does not match issuer")
 	}
 
