@@ -127,7 +127,7 @@ func (r *mutationResolver) DeleteRiskAnalysis(ctx context.Context, input types.D
 
 // ForkRiskAnalysis is the resolver for the forkRiskAnalysis field.
 func (r *mutationResolver) ForkRiskAnalysis(ctx context.Context, input types.ForkRiskAnalysisInput) (*types.ForkRiskAnalysisPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskAnalysisID, probo.ActionRiskAnalysisGet)
+	scope, err := r.authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisGet)
 	if err != nil {
 		if gqlutils.IsForbidden(err) {
 			return nil, gqlutils.NotFoundf(ctx, "risk analysis not found")
@@ -147,7 +147,7 @@ func (r *mutationResolver) ForkRiskAnalysis(ctx context.Context, input types.For
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	scope, err = r.authorize(ctx, source.OrganizationID, probo.ActionRiskAnalysisCreate)
+	scope, err = r.authorize(ctx, source.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
 	if err != nil {
 		return nil, err
 	}

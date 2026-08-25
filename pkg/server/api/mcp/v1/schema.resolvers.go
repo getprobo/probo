@@ -6570,7 +6570,7 @@ func (r *Resolver) DeleteRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) ForkRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ForkRiskAnalysisInput) (*mcp.CallToolResult, types.ForkRiskAnalysisOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAnalysisGet)
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisGet)
 	if err != nil {
 		return nil, types.ForkRiskAnalysisOutput{}, err
 	}
@@ -6586,7 +6586,7 @@ func (r *Resolver) ForkRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRe
 		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("internal server error")
 	}
 
-	scope, err = r.Authorize(ctx, source.OrganizationID, probo.ActionRiskAnalysisCreate)
+	scope, err = r.Authorize(ctx, source.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
 	if err != nil {
 		return nil, types.ForkRiskAnalysisOutput{}, err
 	}

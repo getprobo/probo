@@ -52,7 +52,7 @@ const riskAnalysisListItemFragment = graphql`
     createdAt
     organization {
       id
-      canCreateRiskAnalysis: permission(action: "core:risk-analysis:create")
+      canCreateRiskAnalysis: permission(action: "risk-management:risk-analysis:create")
     }
     ...ForkRiskAnalysisDialog_riskAnalysis
   }
