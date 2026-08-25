@@ -70,17 +70,11 @@
     }
   },
   "documentAccessList": {
-    "title": "Documents",
+    "title": "Restricted Document Accesses",
     "types": {
       "document": "Document",
       "report": "Report",
       "file": "File"
-    },
-    "columns": {
-      "name": "Name",
-      "type": "Type",
-      "category": "Category",
-      "access": "Access"
     },
     "actions": {
       "grantAll": "Grant all",

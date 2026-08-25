@@ -18,19 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ArrowCounterClockwiseIcon, CheckIcon, ProhibitIcon } from "@phosphor-icons/react";
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
 import { getCompliancePortalDocumentAccessStatusLabel } from "@probo/helpers";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
-import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
-import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
 import {
   documentAccessStatusColor,
-  documentAccessTypeColor,
   rejectOrRevokeStatus,
 } from "../_lib/documentAccessInfo";
 import { documentAccessList } from "../variants";
@@ -52,73 +51,76 @@ export function CompliancePortalDocumentAccessListItem({
 }: CompliancePortalDocumentAccessListItemProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const { t: tRoot } = useTranslation();
-  const { rowActions } = documentAccessList();
+  const { titleRow, title, meta, badge, trailing } = documentAccessList();
   const showStatus = documentAccess.persisted || documentAccess.status !== "REQUESTED";
   const showGrant = canUpdate && documentAccess.status !== "GRANTED";
   const showRejectOrRevoke = canUpdate
     && documentAccess.status !== "REJECTED"
     && documentAccess.status !== "REVOKED";
   const revoke = documentAccess.status === "GRANTED";
+  const kind = documentAccess.type === "document" && documentAccess.category !== ""
+    ? tRoot(`documentTypeOptions.types.${documentAccess.category}`)
+    : documentAccess.category;
 
   return (
-    <TableRow align="center">
-      <TableRowHeaderCell minWidth="12rem">
-        <Text size={2} weight="medium" highContrast className="truncate">
-          {documentAccess.name}
-        </Text>
-      </TableRowHeaderCell>
-      <TableCell>
-        <Badge variant="soft" color={documentAccessTypeColor(documentAccess.variant)}>
-          {documentAccess.typeLabel}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <Text size={2} color="neutral">
-          {documentAccess.category || "—"}
-        </Text>
-      </TableCell>
-      <TableCell>
-        {showStatus && (
-          <Badge variant="soft" color={documentAccessStatusColor(documentAccess.status)}>
-            {getCompliancePortalDocumentAccessStatusLabel(documentAccess.status, tRoot)}
-          </Badge>
+    <ListItem>
+      <ListItemContent>
+        <div className={titleRow()}>
+          <Text size={2} weight="medium" color="neutral" highContrast className={title()}>
+            {documentAccess.name}
+          </Text>
+          {showStatus && (
+            <Badge
+              size={1}
+              variant="soft"
+              color={documentAccessStatusColor(documentAccess.status)}
+              className={badge()}
+            >
+              {getCompliancePortalDocumentAccessStatusLabel(documentAccess.status, tRoot)}
+            </Badge>
+          )}
+        </div>
+        {kind !== "" && (
+          <Text size={1} color="gold" className={meta()}>
+            {kind}
+          </Text>
         )}
-      </TableCell>
-      <TableCell justify="end">
-        {(showGrant || showRejectOrRevoke) && (
-          <div className={rowActions()}>
-            {showGrant && (
-              <Button
-                type="button"
-                size={1}
-                variant="soft"
-                color="neutral"
-                disabled={disabled}
-                onClick={() => onGrant(documentAccess)}
-              >
-                {t("documentAccessList.actions.grant")}
-              </Button>
-            )}
-            {showRejectOrRevoke && (
-              <Button
-                type="button"
-                size={1}
-                variant="soft"
-                color="red"
-                disabled={disabled}
-                onClick={() => onRejectOrRevoke({
-                  ...documentAccess,
-                  status: rejectOrRevokeStatus(documentAccess.status),
-                })}
-              >
-                {revoke
-                  ? t("documentAccessList.actions.revoke")
-                  : t("documentAccessList.actions.reject")}
-              </Button>
-            )}
-          </div>
-        )}
-      </TableCell>
-    </TableRow>
+      </ListItemContent>
+      {(showGrant || showRejectOrRevoke) && (
+        <div className={trailing()}>
+          {showGrant && (
+            <Button
+              type="button"
+              size={2}
+              variant="ghost"
+              color="neutral"
+              disabled={disabled}
+              iconStart={<CheckIcon />}
+              onClick={() => onGrant(documentAccess)}
+            >
+              {t("documentAccessList.actions.grant")}
+            </Button>
+          )}
+          {showRejectOrRevoke && (
+            <Button
+              type="button"
+              size={2}
+              variant="ghost"
+              color="red"
+              disabled={disabled}
+              iconStart={revoke ? <ArrowCounterClockwiseIcon /> : <ProhibitIcon />}
+              onClick={() => onRejectOrRevoke({
+                ...documentAccess,
+                status: rejectOrRevokeStatus(documentAccess.status),
+              })}
+            >
+              {revoke
+                ? t("documentAccessList.actions.revoke")
+                : t("documentAccessList.actions.reject")}
+            </Button>
+          )}
+        </div>
+      )}
+    </ListItem>
   );
 }

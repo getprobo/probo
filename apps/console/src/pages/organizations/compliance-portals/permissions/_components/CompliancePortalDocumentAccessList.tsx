@@ -20,12 +20,9 @@
 
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Table } from "@probo/ui/src/v2/Table/Table";
-import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
-import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
-import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
-import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
-import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { List } from "@probo/ui/src/v2/List/List";
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -44,8 +41,6 @@ import { documentAccessList } from "../variants";
 
 import { CompliancePortalDocumentAccessBulkDialog } from "./CompliancePortalDocumentAccessBulkDialog";
 import { CompliancePortalDocumentAccessListItem } from "./CompliancePortalDocumentAccessListItem";
-
-const COLUMN_COUNT = 5;
 
 const fragment = graphql`
   fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess {
@@ -131,37 +126,26 @@ export function CompliancePortalDocumentAccessList({
           </div>
         )}
       </div>
-      <Table size={2} variant="surface">
-        <TableHeader>
-          <TableRow>
-            <TableColumnHeaderCell>{t("documentAccessList.columns.name")}</TableColumnHeaderCell>
-            <TableColumnHeaderCell>{t("documentAccessList.columns.type")}</TableColumnHeaderCell>
-            <TableColumnHeaderCell>{t("documentAccessList.columns.category")}</TableColumnHeaderCell>
-            <TableColumnHeaderCell>{t("documentAccessList.columns.access")}</TableColumnHeaderCell>
-            <TableColumnHeaderCell />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {documentAccesses.length === 0
-            ? (
-                <TableRow>
-                  <TableCell colSpan={COLUMN_COUNT}>
-                    <Text size={2} color="faint">{t("documentAccessList.empty")}</Text>
-                  </TableCell>
-                </TableRow>
-              )
-            : documentAccesses.map(documentAccess => (
-                <CompliancePortalDocumentAccessListItem
-                  key={`${documentAccess.type}:${documentAccess.id}`}
-                  documentAccess={documentAccess}
-                  canUpdate={canUpdate}
-                  disabled={isUpdating}
-                  onGrant={item => void commit([{ ...item, status: "GRANTED" }])}
-                  onRejectOrRevoke={item => void commit([item])}
-                />
-              ))}
-        </TableBody>
-      </Table>
+      <List>
+        {documentAccesses.length === 0
+          ? (
+              <ListItem>
+                <ListItemContent>
+                  <Text size={2} color="faint">{t("documentAccessList.empty")}</Text>
+                </ListItemContent>
+              </ListItem>
+            )
+          : documentAccesses.map(documentAccess => (
+              <CompliancePortalDocumentAccessListItem
+                key={`${documentAccess.type}:${documentAccess.id}`}
+                documentAccess={documentAccess}
+                canUpdate={canUpdate}
+                disabled={isUpdating}
+                onGrant={item => void commit([{ ...item, status: "GRANTED" }])}
+                onRejectOrRevoke={item => void commit([item])}
+              />
+            ))}
+      </List>
     </section>
   );
 }

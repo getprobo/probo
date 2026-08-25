@@ -37,9 +37,8 @@
     "actions": { "open": "Bezoeker openen" }
   },
   "documentAccessList": {
-    "title": "Documenten",
+    "title": "Beperkte documenttoegang",
     "types": { "document": "Document", "report": "Rapport", "file": "Bestand" },
-    "columns": { "name": "Naam", "type": "Type", "category": "Categorie", "access": "Toegang" },
     "actions": {
       "grantAll": "Alles toestaan",
       "rejectOrRevokeAll": "Alles weigeren of intrekken",

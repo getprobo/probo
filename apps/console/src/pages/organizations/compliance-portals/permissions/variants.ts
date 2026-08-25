@@ -139,6 +139,10 @@ export const documentAccessList = tv({
     root: "flex flex-col gap-3",
     heading: "flex flex-wrap items-center justify-between gap-2",
     actions: "flex flex-wrap items-center gap-2",
-    rowActions: "flex justify-end gap-2",
+    titleRow: "flex min-w-0 items-center gap-2",
+    title: "min-w-0 truncate",
+    meta: "truncate",
+    badge: "shrink-0",
+    trailing: "flex shrink-0 items-center gap-2",
   },
 });

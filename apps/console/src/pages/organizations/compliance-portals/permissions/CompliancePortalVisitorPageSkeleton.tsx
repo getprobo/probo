@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
@@ -36,8 +36,8 @@ export function CompliancePortalVisitorPageSkeleton() {
         <CardSkeleton size={3} className={nda()} />
       </div>
       <div className={section()}>
-        <HeadingSkeleton size={3} className="w-28" />
-        <TableSkeleton variant="surface" count={4} columns={5} />
+        <HeadingSkeleton size={3} className="w-72" />
+        <ListSkeleton count={4} />
       </div>
     </div>
   );

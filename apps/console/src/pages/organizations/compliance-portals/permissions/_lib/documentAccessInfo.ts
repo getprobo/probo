@@ -28,7 +28,8 @@ import type {
 } from "#/__generated__/core/documentAccessInfo_documentAccess.graphql";
 
 export const documentAccessInfoFragment = graphql`
-  fragment documentAccessInfo_documentAccess on CompliancePortalDocumentAccess @inline {
+  fragment documentAccessInfo_documentAccess on CompliancePortalDocumentAccess
+  @inline {
     id
     status
     document {
@@ -108,19 +109,6 @@ function toDocumentAccessInfo(
     };
   }
   throw new Error("Unknown compliance page access document type");
-}
-
-export function documentAccessTypeColor(
-  variant: CompliancePortalDocumentAccessInfo["variant"],
-): "sky" | "green" | "gold" {
-  switch (variant) {
-    case "info":
-      return "sky";
-    case "success":
-      return "green";
-    case "highlight":
-      return "gold";
-  }
 }
 
 export function documentAccessStatusColor(
