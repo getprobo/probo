@@ -36,8 +36,7 @@ import {
   connectOAuthProvider,
   connectProviderProtocol,
 } from "../../dialogs/_lib/connectorSettings";
-
-import { connectMethods, type ConnectMethod } from "../_lib/connectMethods";
+import { type ConnectMethod, connectMethods } from "../_lib/connectMethods";
 
 import { ConnectMethodSplitButton } from "./ConnectMethodSplitButton";
 import { accessReviewSourceSection } from "./variants";
