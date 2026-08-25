@@ -98,14 +98,6 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if accessToken.ClientID != nil &&
-			!accessToken.HasAudience(h.iam.OAuth2ServerService.Issuer()) {
-			bearertoken.SetBearerInvalidToken(w, h.baseURL)
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-
-			return
-		}
-
 		ctx := oauth2.ContextWithAccessToken(r.Context(), accessToken)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
