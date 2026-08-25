@@ -77,22 +77,27 @@
       "file": "Fichier"
     },
     "actions": {
-      "grantAll": "Tout accorder",
-      "rejectOrRevokeAll": "Tout rejeter ou révoquer",
       "grant": "Accorder",
       "reject": "Rejeter",
       "revoke": "Révoquer",
+      "rejectOrRevoke": "Rejeter ou révoquer",
       "cancel": "Annuler"
     },
-    "grantAllConfirm": {
-      "title": "Accorder tous les documents ?",
-      "description": "Ce visiteur pourra lire tous les documents listés.",
-      "confirm": "Tout accorder"
+    "selection": {
+      "count": "{{count}} sélectionnés",
+      "clear": "Effacer la sélection",
+      "selectAll": "Tout sélectionner",
+      "selectRow": "Sélectionner {{title}}"
     },
-    "rejectOrRevokeAllConfirm": {
-      "title": "Rejeter ou révoquer tous les accès ?",
+    "grantConfirm": {
+      "title": "Accorder {{count}} documents ?",
+      "description": "Ce visiteur pourra lire les documents sélectionnés.",
+      "confirm": "Accorder"
+    },
+    "rejectOrRevokeConfirm": {
+      "title": "Rejeter ou révoquer {{count}} documents ?",
       "description": "Les documents accordés seront révoqués. Les demandes en attente seront rejetées.",
-      "confirm": "Tout rejeter ou révoquer"
+      "confirm": "Rejeter ou révoquer"
     },
     "empty": "Aucun document disponible"
   },

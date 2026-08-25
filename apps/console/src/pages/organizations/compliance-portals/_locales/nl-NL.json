@@ -40,22 +40,27 @@
     "title": "Beperkte documenttoegang",
     "types": { "document": "Document", "report": "Rapport", "file": "Bestand" },
     "actions": {
-      "grantAll": "Alles toestaan",
-      "rejectOrRevokeAll": "Alles weigeren of intrekken",
       "grant": "Toestaan",
       "reject": "Weigeren",
       "revoke": "Intrekken",
+      "rejectOrRevoke": "Weigeren of intrekken",
       "cancel": "Annuleren"
     },
-    "grantAllConfirm": {
-      "title": "Alle documenten toestaan?",
-      "description": "Deze bezoeker kan elk vermeld document lezen.",
-      "confirm": "Alles toestaan"
+    "selection": {
+      "count": "{{count}} geselecteerd",
+      "clear": "Selectie wissen",
+      "selectAll": "Alles selecteren",
+      "selectRow": "{{title}} selecteren"
     },
-    "rejectOrRevokeAllConfirm": {
-      "title": "Alle toegang weigeren of intrekken?",
+    "grantConfirm": {
+      "title": "{{count}} documenten toestaan?",
+      "description": "Deze bezoeker kan de geselecteerde documenten lezen.",
+      "confirm": "Toestaan"
+    },
+    "rejectOrRevokeConfirm": {
+      "title": "Toegang tot {{count}} documenten weigeren of intrekken?",
       "description": "Toegestane documenten worden ingetrokken. Openstaande aanvragen worden geweigerd.",
-      "confirm": "Alles weigeren of intrekken"
+      "confirm": "Weigeren of intrekken"
     },
     "empty": "Geen documenten beschikbaar"
   },

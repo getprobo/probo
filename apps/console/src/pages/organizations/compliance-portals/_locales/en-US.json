@@ -77,22 +77,27 @@
       "file": "File"
     },
     "actions": {
-      "grantAll": "Grant all",
-      "rejectOrRevokeAll": "Reject or revoke all",
       "grant": "Grant",
       "reject": "Reject",
       "revoke": "Revoke",
+      "rejectOrRevoke": "Reject or revoke",
       "cancel": "Cancel"
     },
-    "grantAllConfirm": {
-      "title": "Grant all documents?",
-      "description": "This visitor will be able to read every document listed.",
-      "confirm": "Grant all"
+    "selection": {
+      "count": "{{count}} selected",
+      "clear": "Clear selection",
+      "selectAll": "Select all",
+      "selectRow": "Select {{title}}"
     },
-    "rejectOrRevokeAllConfirm": {
-      "title": "Reject or revoke all access?",
+    "grantConfirm": {
+      "title": "Grant {{count}} documents?",
+      "description": "This visitor will be able to read the selected documents.",
+      "confirm": "Grant"
+    },
+    "rejectOrRevokeConfirm": {
+      "title": "Reject or revoke {{count}} documents?",
       "description": "Granted documents will be revoked. Pending requests will be rejected.",
-      "confirm": "Reject or revoke all"
+      "confirm": "Reject or revoke"
     },
     "empty": "No documents available"
   },

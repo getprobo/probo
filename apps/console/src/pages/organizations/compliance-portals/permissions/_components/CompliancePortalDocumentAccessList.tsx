@@ -19,12 +19,12 @@
 // SOFTWARE.
 
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { List } from "@probo/ui/src/v2/List/List";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -33,14 +33,14 @@ import type { CompliancePortalDocumentAccessList_access$key } from "#/__generate
 
 import {
   documentAccessInfoFrom,
-  rejectOrRevokeStatus,
+  documentAccessKey,
   updateAccessInput,
 } from "../_lib/documentAccessInfo";
 import { useUpdateCompliancePortalAccess } from "../_lib/useUpdateCompliancePortalAccess";
 import { documentAccessList } from "../variants";
 
-import { CompliancePortalDocumentAccessBulkDialog } from "./CompliancePortalDocumentAccessBulkDialog";
 import { CompliancePortalDocumentAccessListItem } from "./CompliancePortalDocumentAccessListItem";
+import { CompliancePortalDocumentAccessSelectionBar } from "./CompliancePortalDocumentAccessSelectionBar";
 
 const fragment = graphql`
   fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess {
@@ -68,20 +68,35 @@ export function CompliancePortalDocumentAccessList({
   canUpdate,
 }: CompliancePortalDocumentAccessListProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { root, heading, actions } = documentAccessList();
+  const { root, heading } = documentAccessList();
   const access = useFragment(fragment, accessKey);
   const documentAccesses = access.availableDocumentAccesses.edges.map(edge =>
     documentAccessInfoFrom(edge.node, t),
   );
   const [updateAccess, isUpdating] = useUpdateCompliancePortalAccess();
-
-  const showGrantAll = canUpdate && documentAccesses.some(item => item.status !== "GRANTED");
-  const showRejectOrRevokeAll = canUpdate
-    && documentAccesses.some(item => item.status !== "REJECTED" && item.status !== "REVOKED");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectedItems = documentAccesses.filter(item => selectedIds.has(documentAccessKey(item)));
 
   async function commit(updates: CompliancePortalDocumentAccessInfo[]) {
     await updateAccess({
       variables: { input: updateAccessInput(access.id, updates) },
+    });
+  }
+
+  async function commitSelection(updates: CompliancePortalDocumentAccessInfo[]) {
+    await commit(updates);
+    setSelectedIds(new Set());
+  }
+
+  function toggle(key: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
     });
   }
 
@@ -91,40 +106,6 @@ export function CompliancePortalDocumentAccessList({
         <Heading level={3} size={3} weight="medium" highContrast>
           {t("documentAccessList.title")}
         </Heading>
-        {canUpdate && (showGrantAll || showRejectOrRevokeAll) && (
-          <div className={actions()}>
-            {showGrantAll && (
-              <CompliancePortalDocumentAccessBulkDialog
-                action="grantAll"
-                loading={isUpdating}
-                onConfirm={() => commit(
-                  documentAccesses
-                    .filter(item => item.status !== "GRANTED")
-                    .map(item => ({ ...item, status: "GRANTED" as const })),
-                )}
-              >
-                <Button type="button" size={1} variant="soft" color="neutral" disabled={isUpdating}>
-                  {t("documentAccessList.actions.grantAll")}
-                </Button>
-              </CompliancePortalDocumentAccessBulkDialog>
-            )}
-            {showRejectOrRevokeAll && (
-              <CompliancePortalDocumentAccessBulkDialog
-                action="rejectOrRevokeAll"
-                loading={isUpdating}
-                onConfirm={() => commit(
-                  documentAccesses
-                    .filter(item => item.status !== "REJECTED" && item.status !== "REVOKED")
-                    .map(item => ({ ...item, status: rejectOrRevokeStatus(item.status) })),
-                )}
-              >
-                <Button type="button" size={1} variant="soft" color="red" disabled={isUpdating}>
-                  {t("documentAccessList.actions.rejectOrRevokeAll")}
-                </Button>
-              </CompliancePortalDocumentAccessBulkDialog>
-            )}
-          </div>
-        )}
       </div>
       <List>
         {documentAccesses.length === 0
@@ -135,17 +116,33 @@ export function CompliancePortalDocumentAccessList({
                 </ListItemContent>
               </ListItem>
             )
-          : documentAccesses.map(documentAccess => (
-              <CompliancePortalDocumentAccessListItem
-                key={`${documentAccess.type}:${documentAccess.id}`}
-                documentAccess={documentAccess}
-                canUpdate={canUpdate}
-                disabled={isUpdating}
-                onGrant={item => void commit([{ ...item, status: "GRANTED" }])}
-                onRejectOrRevoke={item => void commit([item])}
-              />
-            ))}
+          : documentAccesses.map((documentAccess) => {
+              const key = documentAccessKey(documentAccess);
+              return (
+                <CompliancePortalDocumentAccessListItem
+                  key={key}
+                  documentAccess={documentAccess}
+                  canUpdate={canUpdate}
+                  disabled={isUpdating}
+                  selected={canUpdate ? selectedIds.has(key) : undefined}
+                  onSelectedChange={canUpdate ? () => toggle(key) : undefined}
+                  onGrant={item => void commit([{ ...item, status: "GRANTED" }])}
+                  onRejectOrRevoke={item => void commit([item])}
+                />
+              );
+            })}
       </List>
+      {canUpdate && (
+        <CompliancePortalDocumentAccessSelectionBar
+          selectedItems={selectedItems}
+          allSelected={selectedItems.length === documentAccesses.length && documentAccesses.length > 0}
+          loading={isUpdating}
+          onClear={() => setSelectedIds(new Set())}
+          onSelectAll={() => setSelectedIds(new Set(documentAccesses.map(documentAccessKey)))}
+          onGrant={commitSelection}
+          onRejectOrRevoke={commitSelection}
+        />
+      )}
     </section>
   );
 }

@@ -102,7 +102,7 @@ export const accessListEmpty = tv({
 
 export const visitorPage = tv({
   slots: {
-    root: "flex flex-col gap-6",
+    root: "flex flex-col gap-6 pb-28",
     back: "self-start",
     hero: "grid grid-cols-3 gap-3 max-lg:grid-cols-1",
     profile: "flex h-full min-w-0 flex-col overflow-hidden rounded-4 border border-sand-a3 bg-sand-1",
@@ -114,7 +114,7 @@ export const visitorPage = tv({
 
 export const visitorPageSkeleton = tv({
   slots: {
-    root: "flex flex-col gap-6",
+    root: "flex flex-col gap-6 pb-28",
     hero: "grid grid-cols-3 gap-3 max-lg:grid-cols-1",
     profile: "min-w-0",
     nda: "col-span-2 max-lg:col-span-1",
@@ -138,11 +138,18 @@ export const documentAccessList = tv({
   slots: {
     root: "flex flex-col gap-3",
     heading: "flex flex-wrap items-center justify-between gap-2",
-    actions: "flex flex-wrap items-center gap-2",
     titleRow: "flex min-w-0 items-center gap-2",
     title: "min-w-0 truncate",
     meta: "truncate",
     badge: "shrink-0",
     trailing: "flex shrink-0 items-center gap-2",
+  },
+});
+
+export const documentAccessSelectionBar = tv({
+  slots: {
+    bar: "fixed inset-x-0 bottom-0 z-2 border-t border-sand-a3 bg-sand-1/80 px-8 py-4 backdrop-blur max-md:px-4",
+    inner: "mx-auto flex w-full flex-wrap items-center justify-between gap-4",
+    actions: "flex flex-wrap items-center gap-2",
   },
 });

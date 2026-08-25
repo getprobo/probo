@@ -111,6 +111,10 @@ function toDocumentAccessInfo(
   throw new Error("Unknown compliance page access document type");
 }
 
+export function documentAccessKey(item: CompliancePortalDocumentAccessInfo): string {
+  return `${item.type}:${item.id}`;
+}
+
 export function documentAccessStatusColor(
   status: CompliancePortalDocumentAccessStatus,
 ): "amber" | "green" | "red" {

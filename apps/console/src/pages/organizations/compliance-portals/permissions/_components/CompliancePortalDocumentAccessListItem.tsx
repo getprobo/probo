@@ -23,6 +23,7 @@ import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
 import { getCompliancePortalDocumentAccessStatusLabel } from "@probo/helpers";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -38,6 +39,8 @@ interface CompliancePortalDocumentAccessListItemProps {
   documentAccess: CompliancePortalDocumentAccessInfo;
   canUpdate: boolean;
   disabled: boolean;
+  selected?: boolean;
+  onSelectedChange?: () => void;
   onGrant: (documentAccess: CompliancePortalDocumentAccessInfo) => void;
   onRejectOrRevoke: (documentAccess: CompliancePortalDocumentAccessInfo) => void;
 }
@@ -46,6 +49,8 @@ export function CompliancePortalDocumentAccessListItem({
   documentAccess,
   canUpdate,
   disabled,
+  selected,
+  onSelectedChange,
   onGrant,
   onRejectOrRevoke,
 }: CompliancePortalDocumentAccessListItemProps) {
@@ -64,6 +69,14 @@ export function CompliancePortalDocumentAccessListItem({
 
   return (
     <ListItem>
+      {onSelectedChange != null && (
+        <Checkbox
+          checked={selected ?? false}
+          disabled={disabled}
+          onCheckedChange={onSelectedChange}
+          aria-label={t("documentAccessList.selection.selectRow", { title: documentAccess.name })}
+        />
+      )}
       <ListItemContent>
         <div className={titleRow()}>
           <Text size={2} weight="medium" color="neutral" highContrast className={title()}>

@@ -31,7 +31,8 @@ import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface CompliancePortalDocumentAccessBulkDialogProps {
-  action: "grantAll" | "rejectOrRevokeAll";
+  action: "grant" | "rejectOrRevoke";
+  count: number;
   loading: boolean;
   children: ReactElement;
   onConfirm: () => Promise<void>;
@@ -39,13 +40,14 @@ interface CompliancePortalDocumentAccessBulkDialogProps {
 
 export function CompliancePortalDocumentAccessBulkDialog({
   action,
+  count,
   loading,
   children,
   onConfirm,
 }: CompliancePortalDocumentAccessBulkDialogProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const [open, setOpen] = useState(false);
-  const isRevoke = action === "rejectOrRevokeAll";
+  const isRevoke = action === "rejectOrRevoke";
 
   function handleConfirm() {
     void onConfirm().then(
@@ -65,13 +67,13 @@ export function CompliancePortalDocumentAccessBulkDialog({
         <DialogHeader>
           <DialogTitle>
             {isRevoke
-              ? t("documentAccessList.rejectOrRevokeAllConfirm.title")
-              : t("documentAccessList.grantAllConfirm.title")}
+              ? t("documentAccessList.rejectOrRevokeConfirm.title", { count })
+              : t("documentAccessList.grantConfirm.title", { count })}
           </DialogTitle>
           <DialogDescription>
             {isRevoke
-              ? t("documentAccessList.rejectOrRevokeAllConfirm.description")
-              : t("documentAccessList.grantAllConfirm.description")}
+              ? t("documentAccessList.rejectOrRevokeConfirm.description", { count })
+              : t("documentAccessList.grantConfirm.description", { count })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -91,8 +93,8 @@ export function CompliancePortalDocumentAccessBulkDialog({
             onClick={handleConfirm}
           >
             {isRevoke
-              ? t("documentAccessList.rejectOrRevokeAllConfirm.confirm")
-              : t("documentAccessList.grantAllConfirm.confirm")}
+              ? t("documentAccessList.rejectOrRevokeConfirm.confirm")
+              : t("documentAccessList.grantConfirm.confirm")}
           </Button>
         </DialogFooter>
       </DialogPopup>
