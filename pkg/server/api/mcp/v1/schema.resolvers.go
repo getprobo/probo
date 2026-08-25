@@ -6630,6 +6630,70 @@ func (r *Resolver) DeleteRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 		DeletedRiskAnalysisID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) ForkRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ForkRiskAnalysisInput) (*mcp.CallToolResult, types.ForkRiskAnalysisOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, riskmanagement.ActionRiskAnalysisGet)
+	if err != nil {
+		return nil, types.ForkRiskAnalysisOutput{}, err
+	}
+
+	source, err := r.riskManagement.Get(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load risk analysis", log.Error(err))
+
+		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("internal server error")
+	}
+
+	scope, err = r.Authorize(ctx, source.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
+	if err != nil {
+		return nil, types.ForkRiskAnalysisOutput{}, err
+	}
+
+	var period *riskmanagement.Period
+	if input.Period != nil {
+		period = &riskmanagement.Period{
+			Start: input.Period.Start,
+			End:   input.Period.End,
+		}
+	}
+
+	ra, err := r.riskManagement.Fork(
+		ctx,
+		scope,
+		riskmanagement.ForkRiskAnalysisRequest{
+			RiskAnalysisID: input.ID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Period:         period,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.ForkRiskAnalysisOutput{}, validationErrors
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("resource already exists")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot fork risk analysis", log.Error(err))
+
+		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.ForkRiskAnalysisOutput{
+		RiskAnalysis: types.NewRiskAnalysis(ra),
+	}, nil
+}
+
 func (r *Resolver) ListRiskAnalysisDiagramsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAnalysisDiagramsInput) (*mcp.CallToolResult, types.ListRiskAnalysisDiagramsOutput, error) {
 	scope, err := r.Authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisDiagramList)
 	if err != nil {

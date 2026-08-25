@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { dateFormat } from "@probo/i18n";
 import {
   PageHeader,
   Tbody,
@@ -40,10 +39,9 @@ import type { RiskAnalysesPageFragment$key } from "#/__generated__/core/RiskAnal
 import type { RiskAnalysesPageQuery } from "#/__generated__/core/RiskAnalysesPageQuery.graphql";
 import type { RiskAnalysesPageRefetchQuery } from "#/__generated__/core/RiskAnalysesPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateRiskAnalysisDialog } from "./_components/CreateRiskAnalysisDialog";
-import { formatMatrixSize } from "./_components/matrixSize";
+import { RiskAnalysisListItem } from "./_components/RiskAnalysisListItem";
 
 export const riskAnalysesPageQuery = graphql`
   query RiskAnalysesPageQuery($organizationId: ID!) {
@@ -85,17 +83,7 @@ const riskAnalysesFragment = graphql`
       edges {
         node {
           id
-          name
-          description
-          period {
-            start
-            end
-          }
-          matrixSize {
-            rows
-            cols
-          }
-          createdAt
+          ...RiskAnalysisListItem_riskAnalysis
         }
       }
     }
@@ -107,8 +95,7 @@ interface RiskAnalysesPageProps {
 }
 
 export default function RiskAnalysesPage({ queryRef }: RiskAnalysesPageProps) {
-  const { i18n, t } = useTranslation();
-  const organizationId = useOrganizationId();
+  const { t } = useTranslation();
 
   const data = usePreloadedQuery<RiskAnalysesPageQuery>(riskAnalysesPageQuery, queryRef);
   const { data: fragmentData, ...pagination } = usePaginationFragment<
@@ -164,37 +151,23 @@ export default function RiskAnalysesPage({ queryRef }: RiskAnalysesPageProps) {
             <SortableTh field="CREATED_AT">
               {t("riskAnalysesPage.columns.created")}
             </SortableTh>
+            <Th />
           </Tr>
         </Thead>
         <Tbody>
           {riskAnalyses.length === 0 && (
             <Tr>
-              <Td colSpan={5} className="text-center text-txt-secondary">
+              <Td colSpan={6} className="text-center text-txt-secondary">
                 {t("riskAnalysesPage.empty")}
               </Td>
             </Tr>
           )}
           {riskAnalyses.map(ra => (
-            <Tr
+            <RiskAnalysisListItem
               key={ra.id}
-              to={`/organizations/${organizationId}/risk-management/risk-analyses/${ra.id}/treatment-plans`}
-            >
-              <Td className="w-px whitespace-nowrap font-medium">{ra.name}</Td>
-              <Td className="text-txt-secondary max-w-md">
-                {ra.description || "—"}
-              </Td>
-              <Td className="w-px whitespace-nowrap text-txt-secondary">
-                {ra.period
-                  ? `${ra.period.start ? dateFormat(i18n.language, ra.period.start) : "—"} – ${ra.period.end ? dateFormat(i18n.language, ra.period.end) : "—"}`
-                  : "—"}
-              </Td>
-              <Td className="w-px whitespace-nowrap text-txt-secondary">
-                {formatMatrixSize(ra.matrixSize.rows, ra.matrixSize.cols)}
-              </Td>
-              <Td className="w-px whitespace-nowrap text-txt-secondary">
-                {dateFormat(i18n.language, ra.createdAt)}
-              </Td>
-            </Tr>
+              riskAnalysisKey={ra}
+              connectionId={connectionId}
+            />
           ))}
         </Tbody>
       </SortableTable>

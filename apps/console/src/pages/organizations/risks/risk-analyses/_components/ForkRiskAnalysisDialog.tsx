@@ -26,32 +26,37 @@ import {
   DialogContent,
   DialogFooter,
   Field,
-  IconPlusLarge,
   Input,
-  Option,
   useDialogRef,
 } from "@probo/ui";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { graphql } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 
-import type { CreateRiskAnalysisDialogCreateMutation } from "#/__generated__/core/CreateRiskAnalysisDialogCreateMutation.graphql";
-import { ControlledField } from "#/components/form/ControlledField";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { ForkRiskAnalysisDialog_riskAnalysis$key } from "#/__generated__/core/ForkRiskAnalysisDialog_riskAnalysis.graphql";
+import type { ForkRiskAnalysisDialogMutation } from "#/__generated__/core/ForkRiskAnalysisDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import {
-  matrixSizeFromOption,
-  type RiskAnalysisMatrixSizeOption,
-  riskAnalysisMatrixSizeOptions,
-} from "./matrixSize";
+import { formatMatrixSize } from "./matrixSize";
 
-const createMutation = graphql`
-  mutation CreateRiskAnalysisDialogCreateMutation(
-    $input: CreateRiskAnalysisInput!
+export const forkRiskAnalysisDialogFragment = graphql`
+  fragment ForkRiskAnalysisDialog_riskAnalysis on RiskAnalysis {
+    id
+    name
+    description
+    matrixSize {
+      rows
+      cols
+    }
+  }
+`;
+
+const forkMutation = graphql`
+  mutation ForkRiskAnalysisDialogMutation(
+    $input: ForkRiskAnalysisInput!
     $connections: [ID!]!
   ) {
-    createRiskAnalysis(input: $input) {
+    forkRiskAnalysis(input: $input) {
       riskAnalysisEdge @prependEdge(connections: $connections) {
         node {
           id
@@ -67,23 +72,30 @@ type FormData = {
   description: string;
   periodStart: string;
   periodEnd: string;
-  matrixSize: RiskAnalysisMatrixSizeOption;
 };
 
-export function CreateRiskAnalysisDialog(props: {
+interface ForkRiskAnalysisDialogProps {
+  riskAnalysisKey: ForkRiskAnalysisDialog_riskAnalysis$key;
   connectionId: string;
-}) {
+  dialogRef?: ReturnType<typeof useDialogRef>;
+}
+
+export function ForkRiskAnalysisDialog({
+  riskAnalysisKey,
+  connectionId,
+  dialogRef: dialogRefFromParent,
+}: ForkRiskAnalysisDialogProps) {
   const { t } = useTranslation();
-  const organizationId = useOrganizationId();
-  const dialogRef = useDialogRef();
-  const [createRiskAnalysis, isCreating] = useMutation<CreateRiskAnalysisDialogCreateMutation>(createMutation);
-  const { register, handleSubmit, reset, control, formState } = useForm<FormData>({
-    defaultValues: {
-      name: "",
-      description: "",
+  const localDialogRef = useDialogRef();
+  const dialogRef = dialogRefFromParent ?? localDialogRef;
+  const riskAnalysis = useFragment(forkRiskAnalysisDialogFragment, riskAnalysisKey);
+  const [forkRiskAnalysis, isForking] = useMutation<ForkRiskAnalysisDialogMutation>(forkMutation);
+  const { register, handleSubmit, formState } = useForm<FormData>({
+    values: {
+      name: riskAnalysis.name,
+      description: riskAnalysis.description ?? "",
       periodStart: "",
       periodEnd: "",
-      matrixSize: "5x5",
     },
   });
 
@@ -98,19 +110,17 @@ export function CreateRiskAnalysisDialog(props: {
       : null;
 
     try {
-      await createRiskAnalysis({
+      await forkRiskAnalysis({
         variables: {
           input: {
-            organizationId,
+            riskAnalysisId: riskAnalysis.id,
             name: data.name,
             description: data.description || null,
             period,
-            matrixSize: matrixSizeFromOption(data.matrixSize),
           },
-          connections: [props.connectionId],
+          connections: [connectionId],
         },
       });
-      reset();
       dialogRef.current?.close();
     } catch {
       // Error toast is handled by useMutation.
@@ -121,54 +131,48 @@ export function CreateRiskAnalysisDialog(props: {
     <Dialog
       className="max-w-lg"
       ref={dialogRef}
-      trigger={(
-        <Button icon={IconPlusLarge} variant="primary">
-          {t("createRiskAnalysisDialog.title")}
-        </Button>
-      )}
       title={(
         <Breadcrumb
-          items={[t("createRiskAnalysisDialog.breadcrumb.riskAnalyses"), t("createRiskAnalysisDialog.title")]}
+          items={[
+            t("forkRiskAnalysisDialog.breadcrumb.riskAnalyses"),
+            t("forkRiskAnalysisDialog.title"),
+          ]}
         />
       )}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
-            label={t("createRiskAnalysisDialog.fields.name")}
-            {...register("name", { required: t("createRiskAnalysisDialog.validation.nameRequired") })}
+            label={t("forkRiskAnalysisDialog.fields.name")}
+            {...register("name", { required: t("forkRiskAnalysisDialog.validation.nameRequired") })}
             type="text"
             error={formState.errors.name?.message}
-            placeholder={t("createRiskAnalysisDialog.placeholders.name")}
+            placeholder={t("forkRiskAnalysisDialog.placeholders.name")}
           />
           <Field
-            label={t("createRiskAnalysisDialog.fields.description")}
+            label={t("forkRiskAnalysisDialog.fields.description")}
             {...register("description")}
             type="textarea"
             rows={3}
-            placeholder={t("createRiskAnalysisDialog.placeholders.description")}
+            placeholder={t("forkRiskAnalysisDialog.placeholders.description")}
           />
-          <ControlledField
-            control={control}
-            name="matrixSize"
-            type="select"
-            label={t("createRiskAnalysisDialog.fields.matrixSize")}
-            rules={{ required: t("createRiskAnalysisDialog.validation.matrixSizeRequired") }}
-          >
-            {riskAnalysisMatrixSizeOptions.map(size => (
-              <Option key={size.key} value={size.key}>
-                {t(`createRiskAnalysisDialog.matrixSizes.${size.key}`)}
-              </Option>
-            ))}
-          </ControlledField>
           <Field
-            label={t("createRiskAnalysisDialog.fields.periodStart")}
+            disabled
+            label={t("forkRiskAnalysisDialog.fields.matrixSize")}
+            type="text"
+            value={formatMatrixSize(
+              riskAnalysis.matrixSize.rows,
+              riskAnalysis.matrixSize.cols,
+            )}
+          />
+          <Field
+            label={t("forkRiskAnalysisDialog.fields.periodStart")}
             error={formState.errors.periodStart?.message}
           >
             <Input {...register("periodStart")} type="date" />
           </Field>
           <Field
-            label={t("createRiskAnalysisDialog.fields.periodEnd")}
+            label={t("forkRiskAnalysisDialog.fields.periodEnd")}
             error={formState.errors.periodEnd?.message}
           >
             <Input
@@ -177,15 +181,15 @@ export function CreateRiskAnalysisDialog(props: {
                   !value
                   || !formValues.periodStart
                   || value >= formValues.periodStart
-                  || t("createRiskAnalysisDialog.validation.periodEndBeforeStart"),
+                  || t("forkRiskAnalysisDialog.validation.periodEndBeforeStart"),
               })}
               type="date"
             />
           </Field>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={isCreating}>
-            {t("createRiskAnalysisDialog.actions.create")}
+          <Button type="submit" disabled={isForking}>
+            {t("forkRiskAnalysisDialog.actions.fork")}
           </Button>
         </DialogFooter>
       </form>

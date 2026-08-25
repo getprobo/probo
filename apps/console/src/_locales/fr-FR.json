@@ -4803,6 +4803,7 @@
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer",
+      "fork": "Fork",
       "showMore": "Afficher plus"
     },
     "details": "Détails",
@@ -4830,7 +4831,10 @@
       "matrixSize": "Matrice",
       "created": "Créé le"
     },
-    "empty": "Aucune analyse des risques pour le moment."
+    "empty": "Aucune analyse des risques pour le moment.",
+    "actions": {
+      "fork": "Fork"
+    }
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": {
@@ -4941,6 +4945,30 @@
     },
     "actions": {
       "create": "Créer"
+    }
+  },
+  "forkRiskAnalysisDialog": {
+    "title": "Fork de l’analyse des risques",
+    "breadcrumb": {
+      "riskAnalyses": "Analyses des risques"
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "matrixSize": "Taille de matrice",
+      "periodStart": "Début de période",
+      "periodEnd": "Fin de période"
+    },
+    "validation": {
+      "nameRequired": "Ce champ est requis",
+      "periodEndBeforeStart": "La fin de période doit être égale ou postérieure au début"
+    },
+    "placeholders": {
+      "name": "ex. Modèle de menace de la plateforme 2026",
+      "description": "Décrivez la portée et l’objectif de cette analyse..."
+    },
+    "actions": {
+      "fork": "Fork"
     }
   },
   "updateRiskAnalysisDialog": {

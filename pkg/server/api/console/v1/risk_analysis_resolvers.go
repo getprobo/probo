@@ -125,6 +125,74 @@ func (r *mutationResolver) DeleteRiskAnalysis(ctx context.Context, input types.D
 	return &types.DeleteRiskAnalysisPayload{DeletedRiskAnalysisID: input.RiskAnalysisID}, nil
 }
 
+// ForkRiskAnalysis is the resolver for the forkRiskAnalysis field.
+func (r *mutationResolver) ForkRiskAnalysis(ctx context.Context, input types.ForkRiskAnalysisInput) (*types.ForkRiskAnalysisPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisGet)
+	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, gqlutils.NotFoundf(ctx, "risk analysis not found")
+		}
+
+		return nil, err
+	}
+
+	source, err := r.riskManagement.Get(ctx, scope, input.RiskAnalysisID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load risk analysis", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	scope, err = r.authorize(ctx, source.OrganizationID, riskmanagement.ActionRiskAnalysisCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	var period *riskmanagement.Period
+	if input.Period != nil {
+		period = &riskmanagement.Period{
+			Start: input.Period.Start,
+			End:   input.Period.End,
+		}
+	}
+
+	ra, err := r.riskManagement.Fork(
+		ctx,
+		scope,
+		riskmanagement.ForkRiskAnalysisRequest{
+			RiskAnalysisID: input.RiskAnalysisID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Period:         period,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot fork risk analysis", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ForkRiskAnalysisPayload{
+		RiskAnalysisEdge: types.NewRiskAnalysisConnectionEdge(ra, coredata.RiskAnalysisOrderFieldCreatedAt),
+	}, nil
+}
+
 // CreateRiskAnalysisDiagram is the resolver for the createRiskAnalysisDiagram field.
 func (r *mutationResolver) CreateRiskAnalysisDiagram(ctx context.Context, input types.CreateRiskAnalysisDiagramInput) (*types.CreateRiskAnalysisDiagramPayload, error) {
 	scope, err := r.authorize(ctx, input.RiskAnalysisID, riskmanagement.ActionRiskAnalysisDiagramCreate)

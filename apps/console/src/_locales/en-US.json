@@ -2509,7 +2509,7 @@
     "messages": { "error": "Error" },
     "errors": { "delete": "Failed to delete risk analysis" },
     "deleteConfirmation": "This will permanently delete this risk analysis and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
-    "actions": { "edit": "Edit", "delete": "Delete", "showMore": "Show more" },
+    "actions": { "fork": "Fork", "edit": "Edit", "delete": "Delete", "showMore": "Show more" },
     "details": "Details",
     "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at", "updatedAt": "Updated at" },
     "diagrams": "Diagrams",
@@ -2521,7 +2521,8 @@
     "title": "Risk Analyses",
     "description": "Manage risk analyses with diagrams, nodes, processes, threats, and scenarios.",
     "columns": { "name": "Name", "description": "Description", "period": "Period", "matrixSize": "Matrix", "created": "Created" },
-    "empty": "No risk analyses yet."
+    "empty": "No risk analyses yet.",
+    "actions": { "fork": "Fork" }
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": { "boundaries": "Boundaries" },
@@ -2565,6 +2566,17 @@
     },
     "placeholders": { "name": "e.g. Platform Threat Model 2026", "description": "Describe the scope and purpose of this assessment..." },
     "actions": { "create": "Create" }
+  },
+  "forkRiskAnalysisDialog": {
+    "title": "Fork Risk Analysis",
+    "breadcrumb": { "riskAnalyses": "Risk Analyses" },
+    "fields": { "name": "Name", "description": "Description", "matrixSize": "Matrix size", "periodStart": "Period start", "periodEnd": "Period end" },
+    "validation": {
+      "nameRequired": "This field is required",
+      "periodEndBeforeStart": "Period end must be on or after period start"
+    },
+    "placeholders": { "name": "e.g. Platform Threat Model 2026", "description": "Describe the scope and purpose of this assessment..." },
+    "actions": { "fork": "Fork" }
   },
   "updateRiskAnalysisDialog": {
     "title": "Edit Risk Analysis",

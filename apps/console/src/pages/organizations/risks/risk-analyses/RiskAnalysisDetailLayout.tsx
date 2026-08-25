@@ -21,14 +21,10 @@
 import { usePageTitle } from "@probo/hooks";
 import { dateFormat } from "@probo/i18n";
 import {
-  ActionDropdown,
   Card,
-  DropdownItem,
-  IconTrashCan,
   PageHeader,
   TabLink,
   Tabs,
-  useConfirm,
 } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import {
@@ -39,14 +35,12 @@ import {
 } from "react-relay";
 import { Outlet, useNavigate } from "react-router";
 
-import type { RiskAnalysisDetailLayoutDeleteMutation } from "#/__generated__/core/RiskAnalysisDetailLayoutDeleteMutation.graphql";
 import type { RiskAnalysisDetailLayoutQuery } from "#/__generated__/core/RiskAnalysisDetailLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
-import { useMutation } from "#/lib/relay/useMutation";
 
 import { formatMatrixSize } from "./_components/matrixSize";
-import { UpdateRiskAnalysisDialog } from "./_components/UpdateRiskAnalysisDialog";
+import { RiskAnalysisActions } from "./_components/RiskAnalysisActions";
 
 export const riskAnalysisDetailLayoutQuery = graphql`
   query RiskAnalysisDetailLayoutQuery($riskAnalysisId: ID!) {
@@ -66,20 +60,8 @@ export const riskAnalysisDetailLayoutQuery = graphql`
         }
         createdAt
         updatedAt
-        canUpdate: permission(action: "risk-management:risk-analysis:update")
-        canDelete: permission(action: "risk-management:risk-analysis:delete")
+        ...RiskAnalysisActions_riskAnalysis
       }
-    }
-  }
-`;
-
-const deleteMutation = graphql`
-  mutation RiskAnalysisDetailLayoutDeleteMutation(
-    $input: DeleteRiskAnalysisInput!
-    $connections: [ID!]!
-  ) {
-    deleteRiskAnalysis(input: $input) {
-      deletedRiskAnalysisId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -94,16 +76,11 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
   const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const confirm = useConfirm();
   const data = usePreloadedQuery<RiskAnalysisDetailLayoutQuery>(
     riskAnalysisDetailLayoutQuery,
     queryRef,
   );
   const ra = data.node;
-  const [deleteRiskAnalysis] = useMutation<RiskAnalysisDetailLayoutDeleteMutation>(
-    deleteMutation,
-    { errorToast: t("riskAnalysisDetailPage.errors.delete") },
-  );
 
   usePageTitle(
     ra?.__typename === "RiskAnalysis"
@@ -126,52 +103,17 @@ export default function RiskAnalysisDetailLayout({ queryRef }: RiskAnalysisDetai
     ? `${ra.period.start ? dateFormat(i18n.language, ra.period.start) : "—"} – ${ra.period.end ? dateFormat(i18n.language, ra.period.end) : "—"}`
     : "—";
 
-  const handleDelete = () => {
-    confirm(
-      async () => {
-        await deleteRiskAnalysis({
-          variables: {
-            input: { riskAnalysisId: raId },
-            connections: [listConnectionId],
-          },
-        });
-        void navigate(listUrl);
-      },
-      { message: t("riskAnalysisDetailPage.deleteConfirmation") },
-    );
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader title={ra.name} description={ra.description}>
-        {ra.canUpdate
-          ? (
-              <UpdateRiskAnalysisDialog
-                riskAnalysis={{
-                  id: raId,
-                  name: ra.name ?? "",
-                  description: ra.description,
-                  period: ra.period
-                    ? { start: ra.period.start, end: ra.period.end }
-                    : ra.period,
-                }}
-                canDelete={ra.canDelete}
-                onDelete={handleDelete}
-              />
-            )
-          : ra.canDelete
-            ? (
-                <ActionDropdown variant="secondary">
-                  <DropdownItem
-                    variant="danger"
-                    icon={IconTrashCan}
-                    onClick={handleDelete}
-                  >
-                    {t("riskAnalysisDetailPage.actions.delete")}
-                  </DropdownItem>
-                </ActionDropdown>
-              )
-            : null}
+        <RiskAnalysisActions
+          riskAnalysisKey={ra}
+          connectionId={listConnectionId}
+          variant="secondary"
+          onDeleted={() => {
+            void navigate(listUrl);
+          }}
+        />
       </PageHeader>
 
       <Card padded>

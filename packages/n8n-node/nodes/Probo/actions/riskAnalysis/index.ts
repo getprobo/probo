@@ -24,6 +24,7 @@ import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
+import * as forkOp from './fork.operation';
 import * as createDiagramOp from './createDiagram.operation';
 import * as getDiagramOp from './getDiagram.operation';
 import * as getAllDiagramsOp from './getAllDiagrams.operation';
@@ -155,6 +156,12 @@ export const description: INodeProperties[] = [
 				value: 'deleteThreat',
 				description: 'Delete a threat',
 				action: 'Delete a threat',
+			},
+			{
+				name: 'Fork',
+				value: 'fork',
+				description: 'Fork a risk analysis, copying diagrams and treatment plans',
+				action: 'Fork a risk analysis',
 			},
 			{
 				name: 'Get',
@@ -314,6 +321,7 @@ export const description: INodeProperties[] = [
 	...getAllOp.description,
 	...updateOp.description,
 	...deleteOp.description,
+	...forkOp.description,
 	...createDiagramOp.description,
 	...getDiagramOp.description,
 	...getAllDiagramsOp.description,
@@ -357,6 +365,7 @@ export {
 	getAllOp as getAll,
 	updateOp as update,
 	deleteOp as delete,
+	forkOp as fork,
 	createDiagramOp as createDiagram,
 	getDiagramOp as getDiagram,
 	getAllDiagramsOp as getAllDiagrams,

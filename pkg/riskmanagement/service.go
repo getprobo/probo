@@ -166,6 +166,13 @@ type (
 		RiskAnalysisScenarioID gid.GID
 		RiskID                 gid.GID
 	}
+
+	ForkRiskAnalysisRequest struct {
+		RiskAnalysisID gid.GID
+		Name           string
+		Description    *string
+		Period         *Period
+	}
 )
 
 func (r *CreateRiskAnalysisRequest) Validate() error {
@@ -187,6 +194,19 @@ func (r *UpdateRiskAnalysisRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.RiskAnalysisEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
+
+	if r.Period != nil {
+		validatePeriodRange(v, r.Period.Start, r.Period.End)
+	}
+
+	return v.Error()
+}
+
+func (r *ForkRiskAnalysisRequest) Validate() error {
+	v := validator.New()
+	v.Check(r.RiskAnalysisID, "risk_analysis_id", validator.Required(), validator.GID(coredata.RiskAnalysisEntityType))
+	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.Description, "description", validator.SafeText(ContentMaxLength))
 
 	if r.Period != nil {
