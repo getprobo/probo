@@ -159,6 +159,8 @@ const (
 	BotMessageEntityType                             uint16 = 127
 	BotThreadSubjectEntityType                       uint16 = 128
 	TreatmentPlanEntityType                          uint16 = 129
+	CommonGVLSnapshotEntityType                      uint16 = 130
+	CommonGVLVendorEntityType                        uint16 = 131
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -403,6 +405,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &BotThreadSubject{ID: id}, true
 	case TreatmentPlanEntityType:
 		return &TreatmentPlan{ID: id}, true
+	case CommonGVLSnapshotEntityType:
+		return &CommonGVLSnapshot{ID: id}, true
+	case CommonGVLVendorEntityType:
+		return &CommonGVLVendor{ID: id}, true
 	default:
 		return nil, false
 	}
