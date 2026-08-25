@@ -21,10 +21,12 @@
 package mcputils_test
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"testing"
+	"testing/slogtest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,4 +69,33 @@ func TestNewSlogLogger_PreservesRecord(t *testing.T) {
 		},
 		entry["request"],
 	)
+}
+
+func TestNewSlogLogger_ConformsToSlogHandler(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	logger := log.NewLogger(
+		log.WithLevel(log.LevelDebug),
+		log.WithOutput(&output),
+	)
+
+	err := slogtest.TestHandler(
+		mcputils.NewSlogLogger(logger).Handler(),
+		func() []map[string]any {
+			entries := make([]map[string]any, 0)
+			scanner := bufio.NewScanner(bytes.NewReader(output.Bytes()))
+			for scanner.Scan() {
+				var entry map[string]any
+				unmarshalErr := json.Unmarshal(scanner.Bytes(), &entry)
+				require.NoError(t, unmarshalErr)
+				entries = append(entries, entry)
+			}
+			require.NoError(t, scanner.Err())
+
+			return entries
+		},
+	)
+
+	assert.NoError(t, err)
 }
