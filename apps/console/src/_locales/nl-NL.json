@@ -1519,10 +1519,10 @@
       "custom": "Aangepaste certificeringen"
     },
     "compliancePortalDocumentAccessStatus": {
-      "requested": "aangevraagd",
-      "granted": "toegekend",
-      "rejected": "afgewezen",
-      "revoked": "ingetrokken"
+      "requested": "Aangevraagd",
+      "granted": "Toegekend",
+      "rejected": "Afgewezen",
+      "revoked": "Ingetrokken"
     },
     "compliancePortalVisibility": {
       "none": "Geen",

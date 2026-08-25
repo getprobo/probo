@@ -919,10 +919,10 @@
       "custom": "Custom certifications"
     },
     "compliancePortalDocumentAccessStatus": {
-      "requested": "requested",
-      "granted": "granted",
-      "rejected": "rejected",
-      "revoked": "revoked"
+      "requested": "Requested",
+      "granted": "Granted",
+      "rejected": "Rejected",
+      "revoked": "Revoked"
     },
     "compliancePortalVisibility": {
       "none": "None",

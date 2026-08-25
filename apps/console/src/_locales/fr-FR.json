@@ -1519,10 +1519,10 @@
       "custom": "Certifications personnalisées"
     },
     "compliancePortalDocumentAccessStatus": {
-      "requested": "demandé",
-      "granted": "accordé",
-      "rejected": "rejeté",
-      "revoked": "révoqué"
+      "requested": "Demandé",
+      "granted": "Accordé",
+      "rejected": "Rejeté",
+      "revoked": "Révoqué"
     },
     "compliancePortalVisibility": {
       "none": "Aucune",
