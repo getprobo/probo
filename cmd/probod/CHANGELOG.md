@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.266.0] - 2026-08-25
+
 ### Added
 
 - ChatGPT and Codex MCP OAuth compatibility through CIMD auth-method negotiation, RFC 9207 issuer identification, and resource-bound access and refresh tokens
