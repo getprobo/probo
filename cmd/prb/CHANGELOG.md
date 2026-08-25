@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.219.0] - 2026-08-25
+
+### Added
+
+- `tracker-pattern list` / `view` show the catalog attribution (vendor name, first-party, or still-identifying) inherited from the linked catalog entry, for patterns with no vendor of their own
+
 ## [0.218.0] - 2026-08-24
 
 ### Changed
