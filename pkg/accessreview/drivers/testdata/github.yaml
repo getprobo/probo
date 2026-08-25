@@ -299,9 +299,9 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 310
+        content_length: 423
         host: api.github.com
-        body: '{"query":"query AccessReviewGitHubVerifiedDomainEmails($org: String!, $after: String) { organization(login: $org) { membersWithRole(first: 100, after: $after) { nodes { login organizationVerifiedDomainEmails(login: $org) } pageInfo { hasNextPage endCursor } } } }","variables":{"org":"acme-corp","after":null}}'
+        body: '{"query":"\n\tquery AccessReviewGitHubVerifiedDomainEmails($org: String!, $after: String) {\n\t\torganization(login: $org) {\n\t\t\tmembersWithRole(first: 100, after: $after) {\n\t\t\t\tnodes {\n\t\t\t\t\tlogin\n\t\t\t\t\torganizationVerifiedDomainEmails(login: $org)\n\t\t\t\t}\n\t\t\t\tpageInfo {\n\t\t\t\t\thasNextPage\n\t\t\t\t\tendCursor\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n","variables":{"org":"acme-corp","after":null}}'
         headers:
             Accept:
                 - application/vnd.github+json
@@ -440,9 +440,9 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 315
+        content_length: 350
         host: api.github.com
-        body: '{"query":"query AccessReviewGitHubDeployKeys($org: String!, $after: String) { organization(login: $org) { repositories(first: 100, after: $after) { nodes { name deployKeys(first: 100) { nodes { id title createdAt readOnly } } } pageInfo { hasNextPage endCursor } } } }","variables":{"org":"acme-corp","after":null}}'
+        body: '{"query":"query AccessReviewGitHubDeployKeys($org: String!, $after: String) { organization(login: $org) { repositories(first: 100, after: $after) { nodes { name deployKeys(first: 100) { nodes { id title createdAt readOnly } pageInfo { hasNextPage endCursor } } } pageInfo { hasNextPage endCursor } } } }","variables":{"org":"acme-corp","after":null}}'
         headers:
             Accept:
                 - application/vnd.github+json
