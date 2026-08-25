@@ -26,10 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewTrackerPattern(p *coredata.TrackerPattern) *TrackerPattern {
-	return NewTrackerPatternWithAttribution(p, nil)
-}
-
 func NewTrackerPatternWithAttribution(
 	p *coredata.TrackerPattern,
 	attribution *coredata.CommonTrackerPatternAttribution,
