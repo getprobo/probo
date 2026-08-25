@@ -3275,6 +3275,7 @@
       "connectWithApiKey": "Clé API",
       "connectWithClientCredentials": "Identifiants client",
       "connectWithWorkloadIdentity": "Identité de charge de travail",
+      "chooseAnotherMethod": "Choisir une autre méthode de connexion",
       "open": "Ouvrir"
     },
     "csv": {

@@ -18,13 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, ThirdPartyLogo } from "@probo/ui";
+import { ThirdPartyLogo } from "@probo/ui";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { AccessReviewSourceProviderListItem_provider$key } from "#/__generated__/core/AccessReviewSourceProviderListItem_provider.graphql";
-import type { ConnectorProtocol } from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
 
 import { APIKeyConnectorDialog } from "../../dialogs/_components/APIKeyConnectorDialog";
 import { ClientCredentialsConnectorDialog } from "../../dialogs/_components/ClientCredentialsConnectorDialog";
@@ -38,14 +37,19 @@ import {
   connectProviderProtocol,
 } from "../../dialogs/_lib/connectorSettings";
 
+import { connectMethods, type ConnectMethod } from "../_lib/connectMethods";
+
+import { ConnectMethodSplitButton } from "./ConnectMethodSplitButton";
 import { accessReviewSourceSection } from "./variants";
 
-const protocolActionLabelKey: Record<ConnectorProtocol, string> = {
+const connectMethodActionLabelKey: Record<ConnectMethod, string> = {
   OAUTH2: "addAccessReviewSourceDialog.actions.connectWithOAuth",
   API_KEY: "addAccessReviewSourceDialog.actions.connectWithApiKey",
   GITHUB_APP: "addAccessReviewSourceDialog.actions.connectWithGitHubApp",
   WORKLOAD_IDENTITY:
     "addAccessReviewSourceDialog.actions.connectWithWorkloadIdentity",
+  CLIENT_CREDENTIALS:
+    "addAccessReviewSourceDialog.actions.connectWithClientCredentials",
 };
 
 export const accessReviewSourceProviderListItemFragment = graphql`
@@ -53,8 +57,7 @@ export const accessReviewSourceProviderListItemFragment = graphql`
     provider
     displayName
     documentationUrl
-    oauthConfigured
-    installableProtocols
+    configuredProtocols
     apiKeySupported
     apiKeyManaged
     clientCredentialsSupported
@@ -89,10 +92,12 @@ export function AccessReviewSourceProviderListItem({
   // Every row renders the dialogs its provider can actually reach, so a list of
   // providers does not mount three unusable dialogs per row.
   const supportsAPIKey = provider.apiKeySupported || provider.apiKeyManaged;
+  const supportsOAuth = provider.configuredProtocols.includes("OAUTH2");
   const supportsDatadogOAuth
-    = provider.oauthConfigured && provider.provider === "DATADOG";
+    = supportsOAuth && provider.provider === "DATADOG";
   const supportsZendeskOAuth
-    = provider.oauthConfigured && provider.provider === "ZENDESK";
+    = supportsOAuth && provider.provider === "ZENDESK";
+  const methods = connectMethods(provider);
 
   const connectWithOAuth = () => {
     if (provider.provider === "DATADOG") {
@@ -108,6 +113,33 @@ export function AccessReviewSourceProviderListItem({
     }
   };
 
+  const connect = (method: ConnectMethod) => {
+    switch (method) {
+      case "OAUTH2":
+        connectWithOAuth();
+        break;
+      case "API_KEY":
+        setActiveDialog("apiKey");
+        break;
+      case "CLIENT_CREDENTIALS":
+        setActiveDialog("clientCredentials");
+        break;
+      case "GITHUB_APP":
+      case "WORKLOAD_IDENTITY":
+        connectProviderProtocol(
+          organizationId,
+          provider.provider,
+          method,
+        );
+        break;
+    }
+  };
+  const actions = methods.map(method => ({
+    id: method,
+    label: t(connectMethodActionLabelKey[method]),
+    onSelect: () => connect(method),
+  }));
+
   return (
     <li className={item()}>
       <ThirdPartyLogo
@@ -121,40 +153,12 @@ export function AccessReviewSourceProviderListItem({
         <ConnectorDocumentationLink url={provider.documentationUrl} />
       </div>
       <div className={trailing()}>
-        {provider.oauthConfigured && (
-          <Button variant="primary" onClick={connectWithOAuth}>
-            {t("addAccessReviewSourceDialog.actions.connectWithOAuth")}
-          </Button>
-        )}
-        {(provider.installableProtocols ?? []).map(protocol => (
-          <Button
-            key={protocol}
-            variant="primary"
-            onClick={() =>
-              connectProviderProtocol(
-                organizationId,
-                provider.provider,
-                protocol,
-              )}
-          >
-            {t(protocolActionLabelKey[protocol])}
-          </Button>
-        ))}
-        {supportsAPIKey && (
-          <Button variant="primary" onClick={() => setActiveDialog("apiKey")}>
-            {t("addAccessReviewSourceDialog.actions.connectWithApiKey")}
-          </Button>
-        )}
-        {provider.clientCredentialsSupported && (
-          <Button
-            variant="primary"
-            onClick={() => setActiveDialog("clientCredentials")}
-          >
-            {t(
-              "addAccessReviewSourceDialog.actions.connectWithClientCredentials",
-            )}
-          </Button>
-        )}
+        <ConnectMethodSplitButton
+          actions={actions}
+          chooseAnotherMethodLabel={t(
+            "addAccessReviewSourceDialog.actions.chooseAnotherMethod",
+          )}
+        />
       </div>
       {supportsAPIKey && (
         <APIKeyConnectorDialog
