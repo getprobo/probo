@@ -45,6 +45,13 @@ type (
 	CommonThirdPartyDomains []*CommonThirdPartyDomain
 )
 
+// LoadByDomain resolves a host to the catalog entry that owns it.
+//
+// A domain is unique per catalog entry, not globally: two entries for the same
+// vendor each carry it until one is merged away. The ordering makes the choice
+// deterministic in that window, so attribution cannot flip between two calls
+// or after a vacuum. Collapsing the duplicate is `proboctl common-third-party
+// merge`; this only keeps the answer stable until it runs.
 func (d *CommonThirdPartyDomain) LoadByDomain(
 	ctx context.Context,
 	conn pg.Querier,
@@ -61,6 +68,8 @@ FROM
     common_third_party_domains
 WHERE
     domain = @domain
+ORDER BY
+    created_at, id
 LIMIT 1;
 `
 
