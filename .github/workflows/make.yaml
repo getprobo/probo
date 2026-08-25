@@ -461,6 +461,23 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
       - uses: "./.github/actions/setup"
+      - name: "Configure Docker image source"
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "Fork pull request: pulling images from their origin registries, not the artifact.probo.inc mirror"
+            echo "COMPOSE_FILE=compose.yaml" >> "$GITHUB_ENV"
+          else
+            echo "COMPOSE_FILE=compose.yaml:compose.github-action.yaml" >> "$GITHUB_ENV"
+          fi
+      - uses: "docker/setup-compose-action@4eb059ff7f16592f9c84d5ca339c53cb7c5064e2" # v2.3.0
+      - uses: "docker/login-action@dbcb813823bdd20940b903addbd779551569679f" # v4.6.0
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        with:
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+      - name: "Start test database"
+        run: "docker compose up --detach --wait postgres"
       - name: "Create placeholder dist files"
         run: |
           mkdir -p apps/console/dist apps/compliance-portal/dist
@@ -470,6 +487,7 @@ jobs:
       - run: "make test"
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
+          PROBO_TEST_PG_URL: "postgres://probod:probod@localhost:5432/probod_test"
       - name: "Race-test e2e harness packages"
         run: "CGO_ENABLED=1 go test -race -count=1 ./e2e/internal/..."
       - name: "Upload test results"
