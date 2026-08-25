@@ -182,7 +182,7 @@ func TestEventWorkerHandler_RetriesTransientFailure(t *testing.T) {
 	assert.Nil(t, failed.ProcessedAt)
 	assert.NotNil(t, failed.LastError)
 	require.NotNil(t, failed.NextAttemptAt)
-	assert.True(t, failed.NextAttemptAt.Equal(now.Add(time.Second)))
+	assert.WithinDuration(t, now.Add(time.Second), *failed.NextAttemptAt, time.Microsecond)
 
 	_, err = handler.Claim(t.Context())
 	require.ErrorIs(t, err, worker.ErrNoTask)
@@ -257,7 +257,7 @@ func TestEventWorkerHandler_RecoversStaleClaim(t *testing.T) {
 	recovered := fixture.load(t, queued.EventID)
 	assert.Nil(t, recovered.ProcessingStartedAt)
 	require.NotNil(t, recovered.NextAttemptAt)
-	assert.True(t, recovered.NextAttemptAt.Equal(recoveryTime))
+	assert.WithinDuration(t, recoveryTime, *recovered.NextAttemptAt, time.Microsecond)
 	assert.NotNil(t, recovered.LastError)
 }
 

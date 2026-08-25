@@ -488,6 +488,7 @@ jobs:
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
           PROBO_TEST_PG_URL: "postgres://probod:probod@localhost:5432/probod_test"
+          TEST_FLAGS: "-count=1 -race -cover -coverprofile=coverage.out"
       - name: "Race-test e2e harness packages"
         run: "CGO_ENABLED=1 go test -race -count=1 ./e2e/internal/..."
       - name: "Upload test results"

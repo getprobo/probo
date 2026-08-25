@@ -231,13 +231,15 @@ func TestService_HandleInteraction_BoundMentionSetsAssistantStatus(t *testing.T)
 
 	slackAPI := newRecordingSlackAPI(t, nil)
 	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	identityID := gid.New(organizationID.TenantID(), coredata.IdentityEntityType)
+	insertTestIdentity(t, pgClient, identityID)
 	handler := newInteractionService(
 		t,
 		pgClient,
 		slackAPI.URL,
 		&stubBindingGate{
 			binding: &identitybinding.Binding{
-				IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
+				IdentityID: identityID,
 			},
 		},
 	)
@@ -371,13 +373,15 @@ func TestService_HandleInteraction_BoundDMSetsAssistantStatus(t *testing.T) {
 
 	slackAPI := newRecordingSlackAPI(t, nil)
 	pgClient, organizationID, teamID := executionAdapterDatabase(t)
+	identityID := gid.New(organizationID.TenantID(), coredata.IdentityEntityType)
+	insertTestIdentity(t, pgClient, identityID)
 	handler := newInteractionService(
 		t,
 		pgClient,
 		slackAPI.URL,
 		&stubBindingGate{
 			binding: &identitybinding.Binding{
-				IdentityID: gid.New(organizationID.TenantID(), coredata.IdentityEntityType),
+				IdentityID: identityID,
 			},
 		},
 	)

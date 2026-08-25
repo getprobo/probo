@@ -112,7 +112,7 @@ func (s *InstallationService) loadUsableCredentials(
 		)
 	}
 
-	installation.UpdatedAt = time.Now()
+	installation.UpdatedAt = time.Now().Round(time.Microsecond)
 
 	var persistErr error
 	for range credentialPersistAttempts {

@@ -44,6 +44,23 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
+type cancellationObservedTool struct {
+	agent.Tool
+	canceled chan<- struct{}
+	once     sync.Once
+}
+
+func (t *cancellationObservedTool) Execute(ctx context.Context, arguments string) (agent.ToolResult, error) {
+	stop := context.AfterFunc(ctx, func() {
+		t.once.Do(func() { close(t.canceled) })
+	})
+	defer stop()
+
+	return t.Tool.Execute(ctx, arguments)
+}
+
+func (*cancellationObservedTool) Suspendable() {}
+
 func TestWorker_PicksUpAndCompletes(t *testing.T) {
 	client := test.PGClient(t)
 	ag := newDummyAgent(
@@ -570,6 +587,7 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 	client := test.PGClient(t)
 
 	toolReady := make(chan struct{})
+	innerCanceled := make(chan struct{})
 	toolRelease := make(chan struct{})
 
 	var readyOnce sync.Once
@@ -610,7 +628,10 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 			),
 			stopResponse("outer done"),
 		},
-		innerAgent.AsTool("call_inner", "Call inner"),
+		&cancellationObservedTool{
+			Tool:     innerAgent.AsTool("call_inner", "Call inner"),
+			canceled: innerCanceled,
+		},
 	)
 
 	registry := &simpleRegistry{
@@ -641,6 +662,12 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 	case <-runWorker.ShutdownBroadcast():
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for worker shutdown broadcast")
+	}
+
+	select {
+	case <-innerCanceled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for cancellation to reach inner agent")
 	}
 
 	close(toolRelease)
@@ -696,6 +723,7 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	client := test.PGClient(t)
 
 	toolReady := make(chan struct{})
+	grandchildCanceled := make(chan struct{})
 	toolRelease := make(chan struct{})
 
 	var readyOnce sync.Once
@@ -736,7 +764,10 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 			),
 			stopResponse("child done"),
 		},
-		grandchildAgent.AsTool("call_grandchild", "Call grandchild"),
+		&cancellationObservedTool{
+			Tool:     grandchildAgent.AsTool("call_grandchild", "Call grandchild"),
+			canceled: grandchildCanceled,
+		},
 	)
 
 	outerAgent := newDummyAgent(
@@ -782,6 +813,12 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	case <-runWorker.ShutdownBroadcast():
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for worker shutdown broadcast")
+	}
+
+	select {
+	case <-grandchildCanceled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for cancellation to reach grandchild agent")
 	}
 
 	close(toolRelease)

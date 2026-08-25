@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 func testLogger() *log.Logger {
@@ -409,7 +410,6 @@ func enqueueAgentInput(
 			},
 		),
 	)
-
 	return input
 }
 
@@ -427,6 +427,8 @@ func enqueueAgentInputWithIdentity(
 	require.NoError(t, err)
 
 	now := time.Now()
+	emailAddress, err := mail.ParseAddr(identityID.String() + "@example.com")
+	require.NoError(t, err)
 	input := coredata.AgentInput{
 		ID:               gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
 		OrganizationID:   execution.OrganizationID,
@@ -444,6 +446,18 @@ func enqueueAgentInputWithIdentity(
 		client.WithTx(
 			context.Background(),
 			func(ctx context.Context, tx pg.Tx) error {
+				identity := coredata.Identity{
+					ID:                   identityID,
+					EmailAddress:         emailAddress,
+					FullName:             "Agent Input Test",
+					EmailAddressVerified: true,
+					CreatedAt:            now,
+					UpdatedAt:            now,
+				}
+				if err := identity.Insert(ctx, tx); err != nil {
+					return err
+				}
+
 				_, err := input.EnqueueIdempotently(
 					ctx,
 					tx,
@@ -453,6 +467,16 @@ func enqueueAgentInputWithIdentity(
 				return err
 			},
 		),
+	)
+	t.Cleanup(
+		func() {
+			_ = client.WithTx(
+				context.Background(),
+				func(ctx context.Context, tx pg.Tx) error {
+					return (&coredata.Identity{ID: identityID}).Delete(ctx, tx)
+				},
+			)
+		},
 	)
 
 	return input

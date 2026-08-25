@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/httpclient"
@@ -34,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/probot"
 )
 
@@ -141,4 +143,40 @@ func uniqueSlackTeamID(t *testing.T) string {
 	t.Helper()
 
 	return "T-" + gid.New(gid.NilTenant, coredata.SlackbotInstallationEntityType).String()
+}
+
+func insertTestIdentity(t *testing.T, pgClient *pg.Client, identityID gid.GID) {
+	t.Helper()
+
+	now := time.Now()
+	emailAddress, err := mail.ParseAddr(identityID.String() + "@example.com")
+	require.NoError(t, err)
+	identity := coredata.Identity{
+		ID:                   identityID,
+		EmailAddress:         emailAddress,
+		FullName:             "Slack Test",
+		EmailAddressVerified: true,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+	}
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				return identity.Insert(ctx, tx)
+			},
+		),
+	)
+	t.Cleanup(
+		func() {
+			_ = pgClient.WithTx(
+				context.Background(),
+				func(ctx context.Context, tx pg.Tx) error {
+					return identity.Delete(ctx, tx)
+				},
+			)
+		},
+	)
 }

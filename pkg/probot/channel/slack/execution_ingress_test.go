@@ -41,6 +41,7 @@ func TestExecutionIngressCreatesIdleDirectConversationAndDeduplicatesEvent(t *te
 	pgClient, scope, organizationID := executionIngressDatabase(t)
 	handler := &Service{pg: pgClient}
 	identityID := gid.New(scope.GetTenantID(), coredata.IdentityEntityType)
+	insertTestIdentity(t, pgClient, identityID)
 	event := EventBody{
 		Type:        EventTypeAppMention,
 		User:        "U123",
@@ -220,6 +221,8 @@ func TestExecutionIngressReusesThreadSessionAndStoresPerInputCoordinates(t *test
 	handler := &Service{pg: pgClient}
 	aliceID := gid.New(scope.GetTenantID(), coredata.IdentityEntityType)
 	bobID := gid.New(scope.GetTenantID(), coredata.IdentityEntityType)
+	insertTestIdentity(t, pgClient, aliceID)
+	insertTestIdentity(t, pgClient, bobID)
 	transcript := "Thread:\n<@U1>: we should grant it\n<@U2>: @probot grant it"
 
 	require.NoError(
@@ -398,6 +401,8 @@ func TestExecutionIngressRoutesAnchoredReplyWithoutChangingDomainSession(t *test
 
 	domainSessionKey := *execution.SessionKey
 	handler := &Service{pg: pgClient}
+	identityID := gid.New(scope.GetTenantID(), coredata.IdentityEntityType)
+	insertTestIdentity(t, pgClient, identityID)
 	require.NoError(
 		t,
 		handler.enqueueExecutionInput(
@@ -406,7 +411,7 @@ func TestExecutionIngressRoutesAnchoredReplyWithoutChangingDomainSession(t *test
 			"T999",
 			"T999",
 			organizationID,
-			gid.New(scope.GetTenantID(), coredata.IdentityEntityType),
+			identityID,
 			EventBody{
 				Type:        EventTypeMessage,
 				User:        "U999",
