@@ -1470,6 +1470,7 @@ func (s *Service) Authorize(
 			if !client.IsRedirectURIAllowed(req.RedirectURI) {
 				return ErrInvalidRedirectURI
 			}
+
 			redirectValidated = true
 
 			resources, err := s.protectedResources(req.Resources)
@@ -1856,6 +1857,7 @@ func (s *Service) supportedResources(values []string) ([]uri.URI, error) {
 	}
 
 	supported := []uri.URI{s.baseURL, mcpResource}
+
 	resources := make([]uri.URI, 0, len(values))
 	for _, raw := range values {
 		if raw == "" {

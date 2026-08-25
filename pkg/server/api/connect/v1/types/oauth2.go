@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -60,13 +61,11 @@ func parseResources(values url.Values) ([]string, error) {
 		return nil, nil
 	}
 
-	for _, resource := range resources {
-		if resource == "" {
-			return nil, oauth2.NewError(
-				oauth2.ErrInvalidTarget,
-				oauth2.WithDescription("resource must not be empty"),
-			)
-		}
+	if slices.Contains(resources, "") {
+		return nil, oauth2.NewError(
+			oauth2.ErrInvalidTarget,
+			oauth2.WithDescription("resource must not be empty"),
+		)
 	}
 
 	return resources, nil
@@ -228,6 +227,7 @@ func (in *OAuth2AuthorizationCodeGrantInput) DecodeForm(r *http.Request) error {
 	in.ClientSecret = r.FormValue("client_secret")
 	in.Code = r.FormValue("code")
 	in.RedirectURI = r.FormValue("redirect_uri")
+
 	resources, err := parseResources(r.Form)
 	if err != nil {
 		return err
@@ -251,6 +251,7 @@ func (in *OAuth2RefreshTokenGrantInput) DecodeForm(r *http.Request) error {
 	in.ClientID = r.FormValue("client_id")
 	in.ClientSecret = r.FormValue("client_secret")
 	in.RefreshToken = r.FormValue("refresh_token")
+
 	resources, err := parseResources(r.Form)
 	if err != nil {
 		return err

@@ -161,6 +161,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		}
 
 		h.handleAuthorizeError(w, r, oauthErr, "", "")
+
 		return
 	}
 
@@ -478,6 +479,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		}
 
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
+
 		return
 	}
 
@@ -496,6 +498,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		}
 
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired code")))
+
 		return
 	}
 
@@ -518,6 +521,7 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 		}
 
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
+
 		return
 	}
 
@@ -534,6 +538,7 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 		}
 
 		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired refresh token")))
+
 		return
 	}
 

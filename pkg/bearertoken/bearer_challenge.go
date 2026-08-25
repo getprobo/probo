@@ -47,6 +47,7 @@ func BearerChallenge(
 	scopes ...coredata.OAuth2Scope,
 ) string {
 	metadataURL := protectedResourceMetadataURL(baseURL)
+
 	var parts []string
 
 	if errorCode != "" {
