@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
@@ -27,22 +26,14 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { visitorPageSkeleton } from "./variants";
 
 export function CompliancePortalVisitorPageSkeleton() {
-  const { root, header, identity, section } = visitorPageSkeleton();
+  const { root, hero, profile, nda, section } = visitorPageSkeleton();
 
   return (
     <div className={root()}>
       <TextSkeleton size={2} className="w-20" />
-      <div className={header()}>
-        <AvatarSkeleton size={5} />
-        <div className={identity()}>
-          <HeadingSkeleton size={4} className="w-48" />
-          <TextSkeleton size={2} className="w-56" />
-          <TextSkeleton size={1} className="w-32" />
-        </div>
-      </div>
-      <div className={section()}>
-        <HeadingSkeleton size={3} className="w-16" />
-        <CardSkeleton size={3} />
+      <div className={hero()}>
+        <CardSkeleton size={3} className={profile()} />
+        <CardSkeleton size={3} className={nda()} />
       </div>
       <div className={section()}>
         <HeadingSkeleton size={3} className="w-28" />

@@ -24,7 +24,7 @@ import { timeline } from "./variants";
 
 export type TimelineContentProps = ComponentProps<"div">;
 
-// Title + timestamp (or any copy) beside the marker.
+// Label on the left, timestamp (or any copy) on the right, beside the marker.
 export function TimelineContent(props: TimelineContentProps) {
   const { className, ...rest } = props;
   const { content } = timeline();

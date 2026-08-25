@@ -18,18 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon, DownloadSimpleIcon, SignatureIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, InfoIcon, SignatureIcon } from "@phosphor-icons/react";
 import { safeOpenUrl } from "@probo/helpers";
 import { dateTimeFormat } from "@probo/i18n";
-import { Collapsible } from "@probo/ui/src/v2/Collapsible/Collapsible";
-import { CollapsiblePanel } from "@probo/ui/src/v2/Collapsible/CollapsiblePanel";
-import { CollapsibleTrigger } from "@probo/ui/src/v2/Collapsible/CollapsibleTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Popover } from "@probo/ui/src/v2/Popover/Popover";
+import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
+import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import { Timeline } from "@probo/ui/src/v2/Timeline/Timeline";
 import { TimelineContent } from "@probo/ui/src/v2/Timeline/TimelineContent";
 import { TimelineItem } from "@probo/ui/src/v2/Timeline/TimelineItem";
 import { TimelineMarker } from "@probo/ui/src/v2/Timeline/TimelineMarker";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -115,7 +114,7 @@ export function ElectronicSignatureSection({
 }) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
   const signature = useFragment(fragment, fragmentRef);
-  const { root, card, activity, copy, description, trigger }
+  const { root, copy, description, trigger, popup, event, timestamp }
     = electronicSignatureSection();
   const tone = ndaSignatureTone(signature.status);
   const certificateUrl = signature.certificate?.downloadUrl;
@@ -127,12 +126,8 @@ export function ElectronicSignatureSection({
   );
 
   return (
-    <section className={root()}>
-      <Heading level={3} size={3} weight="medium" highContrast>
-        {t("electronicSignature.title")}
-      </Heading>
+    <section className={root()} aria-label={t("electronicSignature.title")}>
       <CompliancePortalTonedCard
-        className={card()}
         tone={tone}
         icon={<SignatureIcon size={24} weight="duotone" />}
         lead={(
@@ -161,47 +156,47 @@ export function ElectronicSignatureSection({
         </Text>
         {signature.events.length > 0
           ? (
-              <Collapsible className={activity()}>
-                <div className={copy()}>
-                  <Text size={2} color="neutral" className={description()}>
-                    {descriptionCopy}
-                  </Text>
-                  <CollapsibleTrigger
-                    className={trigger()}
+              <div className={copy()}>
+                <Text size={2} color="neutral" className={description()}>
+                  {descriptionCopy}
+                </Text>
+                <Popover>
+                  <PopoverTrigger
                     render={(
                       <IconButton
                         size={1}
                         variant="ghost"
                         color="neutral"
                         aria-label={t("electronicSignature.activity")}
+                        className={trigger()}
                       />
                     )}
                   >
-                    <CaretDownIcon />
-                  </CollapsibleTrigger>
-                </div>
-                <CollapsiblePanel>
-                  <Timeline>
-                    {signature.events.map(item => (
-                      <TimelineItem key={item.id}>
-                        <TimelineMarker
-                          color={item.eventType === "PROCESSING_ERROR" ? "red" : "neutral"}
-                        >
-                          <EventTypeIcon eventType={item.eventType} />
-                        </TimelineMarker>
-                        <TimelineContent>
-                          <Text size={1} highContrast>
-                            <EventTypeLabel eventType={item.eventType} />
-                          </Text>
-                          <Text size={1} color="faint">
-                            {dateTimeFormat(i18n.language, item.occurredAt, signedAtFormat)}
-                          </Text>
-                        </TimelineContent>
-                      </TimelineItem>
-                    ))}
-                  </Timeline>
-                </CollapsiblePanel>
-              </Collapsible>
+                    <InfoIcon />
+                  </PopoverTrigger>
+                  <PopoverPopup className={popup()} align="end">
+                    <Timeline>
+                      {signature.events.map(item => (
+                        <TimelineItem key={item.id}>
+                          <TimelineMarker
+                            color={item.eventType === "PROCESSING_ERROR" ? "red" : "neutral"}
+                          >
+                            <EventTypeIcon eventType={item.eventType} />
+                          </TimelineMarker>
+                          <TimelineContent>
+                            <Text size={1} highContrast className={event()}>
+                              <EventTypeLabel eventType={item.eventType} />
+                            </Text>
+                            <Text size={1} color="faint" className={timestamp()}>
+                              {dateTimeFormat(i18n.language, item.occurredAt, signedAtFormat)}
+                            </Text>
+                          </TimelineContent>
+                        </TimelineItem>
+                      ))}
+                    </Timeline>
+                  </PopoverPopup>
+                </Popover>
+              </div>
             )
           : (
               <Text size={2} color="neutral">

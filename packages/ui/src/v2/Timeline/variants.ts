@@ -34,7 +34,7 @@ export const timeline = tv({
       "relative z-1 flex size-6 shrink-0 items-center justify-center rounded-full",
       "[&_svg]:size-4",
     ],
-    content: "flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5",
+    content: "flex min-w-0 flex-1 items-center justify-between gap-4 pt-0.5",
   },
   variants: {
     color: {

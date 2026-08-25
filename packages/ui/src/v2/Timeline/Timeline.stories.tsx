@@ -41,7 +41,9 @@ export function Default() {
         </TimelineMarker>
         <TimelineContent>
           <Text size={1} highContrast>Viewed the document</Text>
-          <Text size={1} color="faint">25 Aug 2026, 21:04:12</Text>
+          <Text size={1} color="faint" className="shrink-0 whitespace-nowrap">
+            25 Aug 2026, 21:04:12
+          </Text>
         </TimelineContent>
       </TimelineItem>
       <TimelineItem>
@@ -50,7 +52,9 @@ export function Default() {
         </TimelineMarker>
         <TimelineContent>
           <Text size={1} highContrast>Agreed to sign electronically</Text>
-          <Text size={1} color="faint">25 Aug 2026, 21:04:18</Text>
+          <Text size={1} color="faint" className="shrink-0 whitespace-nowrap">
+            25 Aug 2026, 21:04:18
+          </Text>
         </TimelineContent>
       </TimelineItem>
       <TimelineItem>
@@ -59,7 +63,9 @@ export function Default() {
         </TimelineMarker>
         <TimelineContent>
           <Text size={1} highContrast>Processing failed</Text>
-          <Text size={1} color="faint">25 Aug 2026, 21:04:40</Text>
+          <Text size={1} color="faint" className="shrink-0 whitespace-nowrap">
+            25 Aug 2026, 21:04:40
+          </Text>
         </TimelineContent>
       </TimelineItem>
     </Timeline>

@@ -20,11 +20,7 @@
 
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { dateFormat } from "@probo/i18n";
-import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Link } from "@probo/ui/src/v2/Link/Link";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -33,6 +29,7 @@ import type { CompliancePortalVisitorPageQuery } from "#/__generated__/core/Comp
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { CompliancePortalDocumentAccessList } from "./_components/CompliancePortalDocumentAccessList";
+import { CompliancePortalVisitorProfileCard } from "./_components/CompliancePortalVisitorProfileCard";
 import { ElectronicSignatureSection } from "./_components/ElectronicSignatureSection";
 import { visitorPage } from "./variants";
 
@@ -63,8 +60,8 @@ interface CompliancePortalVisitorPageProps {
 }
 
 export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisitorPageProps) {
-  const { i18n, t } = useTranslation("organizations/compliance-portals");
-  const { root, back, header, identity } = visitorPage();
+  const { t } = useTranslation("organizations/compliance-portals");
+  const { root, back, hero } = visitorPage();
   const { node } = usePreloadedQuery<CompliancePortalVisitorPageQuery>(
     compliancePortalVisitorPageQuery,
     queryRef,
@@ -81,28 +78,16 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
       <Link to=".." size={2} color="neutral" underline={false} iconStart={<CaretLeftIcon />} className={back()}>
         {t("visitorPage.back")}
       </Link>
-      <div className={header()}>
-        <Avatar
-          size={5}
-          variant="soft"
-          color="gold"
-          fallback={node.profile.fullName.charAt(0).toUpperCase() || "?"}
+      <div className={hero()}>
+        <CompliancePortalVisitorProfileCard
+          fullName={node.profile.fullName}
+          emailAddress={node.profile.emailAddress}
+          createdAt={node.createdAt}
         />
-        <div className={identity()}>
-          <Heading level={2} size={4} weight="medium" highContrast>
-            {node.profile.fullName}
-          </Heading>
-          <Text size={2} color="gold">
-            {node.profile.emailAddress}
-          </Text>
-          <Text size={1} color="faint">
-            {t("visitorPage.joinedOn", { date: dateFormat(i18n.language, node.createdAt) })}
-          </Text>
-        </div>
+        {node.ndaSignature != null && (
+          <ElectronicSignatureSection fragmentRef={node.ndaSignature} />
+        )}
       </div>
-      {node.ndaSignature != null && (
-        <ElectronicSignatureSection fragmentRef={node.ndaSignature} />
-      )}
       <CompliancePortalDocumentAccessList
         accessKey={node}
         canUpdate={canUpdate}
