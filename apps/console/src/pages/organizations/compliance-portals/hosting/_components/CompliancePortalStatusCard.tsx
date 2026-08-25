@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Switch } from "@probo/ui/src/v2/Switch/Switch";
 import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
 import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
@@ -26,7 +25,7 @@ import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 
-import { hostingCard } from "../variants";
+import { CompliancePortalTonedCard } from "#/pages/organizations/compliance-portals/_components/CompliancePortalTonedCard";
 
 interface CompliancePortalStatusCardProps {
   title: string;
@@ -47,10 +46,6 @@ export function CompliancePortalStatusCard({
   disabledHint,
   onCheckedChange,
 }: CompliancePortalStatusCardProps) {
-  const { frame, header, wash, fade, icon: iconSlot, control, body } = hostingCard({
-    tone: checked ? "green" : "sand",
-  });
-
   const toggle = (
     <Switch
       size={2}
@@ -63,30 +58,24 @@ export function CompliancePortalStatusCard({
   );
 
   return (
-    <Card variant="ghost" size={2} padding="none" className={frame()}>
-      <div className={header()}>
-        <div className={wash()} />
-        <div className={fade()} />
-        <div className={iconSlot()}>{icon}</div>
-        <div className={control()}>
-          {disabled === true && disabledHint != null
-            ? (
-                <Tooltip>
-                  <TooltipTrigger render={<span tabIndex={0}>{toggle}</span>} />
-                  <TooltipPopup>{disabledHint}</TooltipPopup>
-                </Tooltip>
-              )
-            : toggle}
-        </div>
-      </div>
-      <div className={body()}>
-        <Text size={3} weight="medium" highContrast>
-          {title}
-        </Text>
-        <Text size={2} color="neutral">
-          {description}
-        </Text>
-      </div>
-    </Card>
+    <CompliancePortalTonedCard
+      tone={checked ? "green" : "sand"}
+      icon={icon}
+      control={disabled === true && disabledHint != null
+        ? (
+            <Tooltip>
+              <TooltipTrigger render={<span tabIndex={0}>{toggle}</span>} />
+              <TooltipPopup>{disabledHint}</TooltipPopup>
+            </Tooltip>
+          )
+        : toggle}
+    >
+      <Text size={3} weight="medium" highContrast>
+        {title}
+      </Text>
+      <Text size={2} color="neutral">
+        {description}
+      </Text>
+    </CompliancePortalTonedCard>
   );
 }

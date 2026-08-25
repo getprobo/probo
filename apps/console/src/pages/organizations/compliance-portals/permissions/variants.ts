@@ -37,17 +37,14 @@ export const ndaSection = tv({
     root: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
     body: "flex flex-col gap-3",
-    empty: "flex flex-col items-center justify-center gap-3 rounded-4 border border-dashed border-sand-6 px-4 py-8",
-    emptyCopy: "max-w-md text-center",
+    grid: "grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1",
     errorCopy: "flex flex-col gap-0.5",
   },
 });
 
 export const ndaCard = tv({
   slots: {
-    root: "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
-    copy: "flex min-w-0 flex-col gap-1",
-    actions: "flex shrink-0 flex-wrap items-center gap-2",
+    actions: "flex flex-wrap items-center gap-2 pt-1",
   },
 });
 

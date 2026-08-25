@@ -41,59 +41,6 @@ export const statusSection = tv({
   },
 });
 
-export const hostingCard = tv({
-  slots: {
-    // Ghost Card has no chrome; the frame owns border + fill so tone can
-    // swap hue without fighting Card's sand-a3 (tv/lite has no merge).
-    frame: "flex h-full flex-col overflow-hidden rounded-4 border bg-sand-1",
-    header: "relative flex w-full items-center justify-between gap-3 overflow-hidden px-5 py-4",
-    wash: "pointer-events-none absolute top-1/2 left-1/2 aspect-square w-full -translate-x-1/2 -translate-y-1/2 opacity-10 blur-[14px]",
-    fade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",
-    icon: "relative z-1 flex size-10 items-center justify-center overflow-hidden rounded-2",
-    control: "relative z-1 shrink-0",
-    body: "flex flex-1 flex-col gap-2 px-5 pb-4",
-  },
-  variants: {
-    tone: {
-      sand: {
-        frame: "border-sand-a3",
-        wash: "hidden",
-        fade: "hidden",
-        icon: "bg-sand-1 text-sand-9",
-      },
-      green: {
-        frame: "border-green-6",
-        wash: "bg-green-9",
-        icon: "bg-transparent text-green-11",
-      },
-      sky: {
-        frame: "border-sky-6",
-        wash: "bg-sky-9",
-        icon: "bg-transparent text-sky-11",
-      },
-      amber: {
-        frame: "border-amber-6",
-        wash: "bg-amber-9",
-        icon: "bg-transparent text-amber-11",
-      },
-      red: {
-        frame: "border-red-6",
-        wash: "bg-red-9",
-        icon: "bg-transparent text-red-11",
-      },
-    },
-    wide: {
-      true: {
-        frame: "col-span-3 max-lg:col-span-2 max-sm:col-span-1",
-      },
-    },
-  },
-  defaultVariants: {
-    tone: "sand",
-    wide: false,
-  },
-});
-
 export const domainsSection = tv({
   slots: {
     root: "flex flex-col gap-4",
@@ -115,6 +62,7 @@ export const domainCard = tv({
     recordField: "flex flex-col gap-1",
     recordValue: "flex min-w-0 items-center gap-1",
     code: "min-w-0 flex-1 break-all",
+    wide: "col-span-3 max-lg:col-span-2 max-sm:col-span-1",
   },
 });
 

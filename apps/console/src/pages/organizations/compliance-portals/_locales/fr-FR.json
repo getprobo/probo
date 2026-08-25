@@ -794,13 +794,15 @@
   "ndaSection": {
     "title": "Accord de confidentialité",
     "empty": "Aucun fichier NDA téléversé",
-    "emptyDescription": "Téléversez un PDF que les visiteurs doivent accepter avant de pouvoir accéder à votre portail de conformité.",
-    "uploadDescription": "Exigez que les visiteurs acceptent un accord de confidentialité avant d’accéder à votre portail de conformité.",
-    "acceptanceDescription": "Les visiteurs doivent accepter cet accord avant d’accéder à votre portail de conformité.",
+    "description": "Les visiteurs doivent signer cet accord avant de pouvoir lire les documents privés.",
+    "dropHint": "Déposez un PDF ici",
+    "dropReplace": "Déposez un PDF pour remplacer",
+    "dropActive": "Déposez le PDF",
     "actions": {
       "download": "Télécharger",
       "upload": "Téléverser le NDA",
       "replace": "Remplacer",
+      "clear": "Effacer",
       "uploading": "Téléversement..."
     },
     "delete": {

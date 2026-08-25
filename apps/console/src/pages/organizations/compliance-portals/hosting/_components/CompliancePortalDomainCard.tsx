@@ -29,6 +29,7 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalDomainCardFragment$key } from "#/__generated__/core/CompliancePortalDomainCardFragment.graphql";
+import { tonedCard } from "#/pages/organizations/compliance-portals/_lib/tonedCard";
 
 import {
   customDomainCardTone,
@@ -36,7 +37,7 @@ import {
   showsCustomDomainDns,
 } from "../_lib/customDomainCardTone";
 import { domainCardCallout } from "../_lib/domainCardCallout";
-import { domainCard, hostingCard } from "../variants";
+import { domainCard } from "../variants";
 
 import { CompliancePortalDomainDnsRecordListItem } from "./CompliancePortalDomainDnsRecordListItem";
 import { DeleteCompliancePortalDomainDialog } from "./DeleteCompliancePortalDomainDialog";
@@ -74,11 +75,10 @@ export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortal
   );
   const showDns = showsCustomDomainDns(domain.managed) && domain.dnsRecords.length > 0;
   const tone = customDomainCardTone(sslStatus);
-  const { frame, header, wash, fade, icon: iconSlot, control: controlSlot, body } = hostingCard({
+  const { frame, header, wash, fade, icon: iconSlot, control: controlSlot, body } = tonedCard({
     tone,
-    wide: showDns,
   });
-  const { copy, heading, identity, lead, subtitle, dns } = domainCard();
+  const { copy, heading, identity, lead, subtitle, dns, wide } = domainCard();
   const expiresLabel = domain.certificate?.expiresAt
     ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(
         new Date(domain.certificate.expiresAt),
@@ -92,7 +92,7 @@ export function CompliancePortalDomainCard({ customDomainKey }: CompliancePortal
   );
 
   return (
-    <Card variant="ghost" size={2} padding="none" className={frame()}>
+    <Card variant="ghost" size={2} padding="none" className={frame({ className: showDns ? wide() : undefined })}>
       <div className={header()}>
         <div className={wash()} />
         <div className={fade()} />

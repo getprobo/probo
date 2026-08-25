@@ -18,34 +18,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { useDropzone } from "react-dropzone";
 
-import { ndaSection, permissionsPageSkeleton } from "./variants";
+export type NdaUploadError = "invalidFileType" | "fileTooLarge";
 
-export function CompliancePortalPermissionsPageSkeleton() {
-  const { root, section, intro } = permissionsPageSkeleton();
-  const { grid } = ndaSection();
+const NDA_MAX_BYTES = 10 * 1024 * 1024;
 
-  return (
-    <div className={root()}>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-56" />
-        </div>
-        <div className={grid()}>
-          <CardSkeleton size={5} />
-        </div>
-      </div>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-36" />
-          <TextSkeleton size={2} className="w-80" />
-        </div>
-        <TableSkeleton variant="surface" count={4} columns={7} />
-      </div>
-    </div>
-  );
+export function useNdaDropzone({
+  disabled,
+  onFile,
+  onReject,
+}: {
+  disabled: boolean;
+  onFile: (file: File) => void;
+  onReject: (error: NdaUploadError) => void;
+}) {
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    noClick: true,
+    noKeyboard: true,
+    multiple: false,
+    disabled,
+    accept: { "application/pdf": [".pdf"] },
+    maxSize: NDA_MAX_BYTES,
+    onDrop(acceptedFiles, fileRejections) {
+      const rejection = fileRejections[0];
+      if (rejection != null) {
+        const code = rejection.errors[0]?.code;
+        onReject(code === "file-too-large" ? "fileTooLarge" : "invalidFileType");
+        return;
+      }
+
+      const file = acceptedFiles[0];
+      if (file != null) {
+        onFile(file);
+      }
+    },
+  });
+
+  return { getRootProps, getInputProps, isDragActive, open };
 }

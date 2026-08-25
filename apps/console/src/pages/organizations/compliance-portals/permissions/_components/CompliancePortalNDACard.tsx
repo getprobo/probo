@@ -18,17 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretRightIcon, DownloadSimpleIcon, FileDashedIcon, FilePdfIcon } from "@phosphor-icons/react";
 import { safeOpenUrl } from "@probo/helpers";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Card } from "@probo/ui/src/v2/Card/Card";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type ChangeEventHandler, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalNDACard_compliancePortal$key } from "#/__generated__/core/CompliancePortalNDACard_compliancePortal.graphql";
+import { CompliancePortalTonedCard } from "#/pages/organizations/compliance-portals/_components/CompliancePortalTonedCard";
 
+import { type NdaUploadError, useNdaDropzone } from "../_lib/useNdaDropzone";
 import { ndaCard } from "../variants";
 
 import { CompliancePortalNDADeleteDialog } from "./CompliancePortalNDADeleteDialog";
@@ -48,88 +50,106 @@ const fragment = graphql`
 export interface CompliancePortalNDACardProps {
   compliancePortalKey: CompliancePortalNDACard_compliancePortal$key;
   isUploading: boolean;
-  onFileChange: ChangeEventHandler<HTMLInputElement>;
+  onFile: (file: File) => void;
+  onReject: (error: NdaUploadError) => void;
 }
 
 export function CompliancePortalNDACard({
   compliancePortalKey,
   isUploading,
-  onFileChange,
+  onFile,
+  onReject,
 }: CompliancePortalNDACardProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { root, copy, actions } = ndaCard();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const { actions } = ndaCard();
   const compliancePortal = useFragment(fragment, compliancePortalKey);
   const fileName = compliancePortal.nda?.fileName;
+  const hasFile = fileName != null;
+  const canUpload = compliancePortal.canUploadNDA;
+  const { getRootProps, getInputProps, isDragActive, open } = useNdaDropzone({
+    disabled: !canUpload || isUploading,
+    onFile,
+    onReject,
+  });
 
-  if (!fileName) {
-    return null;
-  }
+  const downloadUrl = compliancePortal.nda?.downloadUrl;
+  const tone = isDragActive ? "sky" : hasFile ? "green" : "sand";
+  const dropHint = isDragActive
+    ? t("ndaSection.dropActive")
+    : hasFile
+      ? t("ndaSection.dropReplace")
+      : t("ndaSection.dropHint");
 
   return (
-    <Card size={2} variant="soft">
-      <div className={root()}>
-        <div className={copy()}>
-          <Text size={3} weight="medium" highContrast>
-            {fileName}
-          </Text>
-          <Text size={2} color="neutral">
-            {t("ndaSection.acceptanceDescription")}
-          </Text>
-        </div>
-
+    <CompliancePortalTonedCard
+      {...getRootProps()}
+      tone={tone}
+      icon={hasFile
+        ? <FilePdfIcon size={24} weight="duotone" />
+        : <FileDashedIcon size={24} weight="duotone" />}
+      lead={canUpload
+        ? (
+            <Text size={2} weight="medium" color={tone === "sand" ? "neutral" : tone} className="truncate">
+              {dropHint}
+            </Text>
+          )
+        : undefined}
+      control={hasFile && downloadUrl != null
+        ? (
+            <IconButton
+              size={2}
+              variant="ghost"
+              color="neutral"
+              aria-label={t("ndaSection.actions.download")}
+              onClick={() => {
+                safeOpenUrl(downloadUrl);
+              }}
+            >
+              <DownloadSimpleIcon />
+            </IconButton>
+          )
+        : undefined}
+    >
+      <input {...getInputProps()} />
+      <Text size={3} weight="medium" highContrast className="w-full min-w-0 truncate">
+        {hasFile ? fileName : t("ndaSection.empty")}
+      </Text>
+      <Text size={2} color="neutral">
+        {t("ndaSection.description")}
+      </Text>
+      {(canUpload || compliancePortal.canDeleteNDA) && (
         <div className={actions()}>
-          <Button
-            type="button"
-            variant="soft"
-            color="neutral"
-            onClick={() => {
-              if (compliancePortal.nda?.downloadUrl) {
-                safeOpenUrl(compliancePortal.nda.downloadUrl);
-              }
-            }}
-          >
-            {t("ndaSection.actions.download")}
-          </Button>
-
-          {compliancePortal.canUploadNDA && (
-            <>
+          {canUpload && (
+            <Button
+              type="button"
+              variant="solid"
+              color="neutral"
+              highContrast
+              iconEnd={isUploading ? undefined : <CaretRightIcon />}
+              loading={isUploading}
+              onClick={() => open()}
+            >
+              {isUploading
+                ? t("ndaSection.actions.uploading")
+                : hasFile
+                  ? t("ndaSection.actions.replace")
+                  : t("ndaSection.actions.upload")}
+            </Button>
+          )}
+          {hasFile && compliancePortal.canDeleteNDA && (
+            <CompliancePortalNDADeleteDialog compliancePortalId={compliancePortal.id}>
               <Button
                 type="button"
                 variant="soft"
                 color="neutral"
-                loading={isUploading}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {isUploading
-                  ? t("ndaSection.actions.uploading")
-                  : t("ndaSection.actions.replace")}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                hidden
-                accept="application/pdf,.pdf"
-                onChange={onFileChange}
-              />
-            </>
-          )}
-
-          {compliancePortal.canDeleteNDA && (
-            <CompliancePortalNDADeleteDialog compliancePortalId={compliancePortal.id}>
-              <Button
-                type="button"
-                variant="solid"
-                color="red"
                 disabled={isUploading}
               >
-                {t("ndaSection.delete.actions.delete")}
+                {t("ndaSection.actions.clear")}
               </Button>
             </CompliancePortalNDADeleteDialog>
           )}
         </div>
-      </div>
-    </Card>
+      )}
+    </CompliancePortalTonedCard>
   );
 }

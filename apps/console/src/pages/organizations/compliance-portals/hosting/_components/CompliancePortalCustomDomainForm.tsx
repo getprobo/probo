@@ -32,9 +32,10 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePortalCustomDomainFormMutation } from "#/__generated__/core/CompliancePortalCustomDomainFormMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { tonedCard } from "#/pages/organizations/compliance-portals/_lib/tonedCard";
 
 import { DOMAIN_MAX_LENGTH, DOMAIN_PATTERN, normalizeDomain } from "../_lib/normalizeDomain";
-import { customDomainForm, domainCard, hostingCard } from "../variants";
+import { customDomainForm, domainCard } from "../variants";
 
 const createCustomDomainMutation = graphql`
   mutation CompliancePortalCustomDomainFormMutation($input: CreateCustomDomainInput!) {
@@ -52,11 +53,10 @@ export function CompliancePortalCustomDomainForm() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const [domain, setDomain] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { frame, header, wash, fade, icon: iconSlot, body } = hostingCard({
+  const { frame, header, wash, fade, icon: iconSlot, body } = tonedCard({
     tone: "sand",
-    wide: true,
   });
-  const { copy, lead, subtitle } = domainCard();
+  const { copy, lead, subtitle, wide } = domainCard();
   const { form, field, actions } = customDomainForm();
 
   const [createCustomDomain, isCreating]
@@ -106,7 +106,7 @@ export function CompliancePortalCustomDomainForm() {
   }
 
   return (
-    <Card variant="ghost" size={2} padding="none" className={frame()}>
+    <Card variant="ghost" size={2} padding="none" className={frame({ className: wide() })}>
       <Form
         className={form()}
         errors={errors}

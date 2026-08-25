@@ -794,13 +794,15 @@
   "ndaSection": {
     "title": "Non-disclosure agreement",
     "empty": "No NDA file uploaded",
-    "emptyDescription": "Upload a PDF that visitors must accept before they can access your compliance portal.",
-    "uploadDescription": "Require visitors to accept a Non-Disclosure Agreement before accessing your compliance portal.",
-    "acceptanceDescription": "Visitors must accept this agreement before accessing your compliance portal.",
+    "description": "Visitors must sign this agreement before they can read private documents.",
+    "dropHint": "Drop a PDF here",
+    "dropReplace": "Drop a PDF to replace",
+    "dropActive": "Drop PDF",
     "actions": {
       "download": "Download",
       "upload": "Upload NDA",
       "replace": "Replace",
+      "clear": "Clear",
       "uploading": "Uploading..."
     },
     "delete": {

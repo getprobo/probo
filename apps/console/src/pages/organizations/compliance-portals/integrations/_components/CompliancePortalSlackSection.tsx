@@ -41,8 +41,8 @@ import type { CompliancePortalSlackSectionRefetchQuery } from "#/__generated__/c
 import type { CompliancePortalSlackSectionSetMutation } from "#/__generated__/core/CompliancePortalSlackSectionSetMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { tonedCard } from "#/pages/organizations/compliance-portals/_lib/tonedCard";
 
-import { hostingCard } from "../../hosting/variants";
 import { slackSection } from "../variants";
 
 const fragment = graphql`
@@ -186,7 +186,7 @@ export function CompliancePortalSlackSection({
     root, intro, grid, card, lead, copy, channel, channelRow, channelField,
     empty, emptyCopy, emptyCallout, popupEmpty,
   } = slackSection();
-  const { frame, header, wash, fade, icon: iconSlot, control, body } = hostingCard({
+  const { frame, header, wash, fade, icon: iconSlot, control, body } = tonedCard({
     tone: "sand",
   });
 
