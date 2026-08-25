@@ -47,7 +47,9 @@ const (
 	slackMethodReactionsAdd         = "reactions.add"
 	slackMethodUpdateMessage        = "chat.update"
 
-	conversationsPageSize = 200
+	// Slack conversations.list max page size. One request is enough for
+	// typical workspaces; the picker does not page further in the UI.
+	conversationsPageSize = 1000
 	threadRepliesPageSize = 200
 	slackHTTPTimeout      = 30 * time.Second
 )

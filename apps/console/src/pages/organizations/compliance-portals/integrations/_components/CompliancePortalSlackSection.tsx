@@ -32,11 +32,10 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { fetchQuery, useRefetchableFragment, useRelayEnvironment } from "react-relay";
+import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalSlackSection_compliancePortal$key } from "#/__generated__/core/CompliancePortalSlackSection_compliancePortal.graphql";
-import type { CompliancePortalSlackSectionChannelsQuery } from "#/__generated__/core/CompliancePortalSlackSectionChannelsQuery.graphql";
 import type { CompliancePortalSlackSectionClearMutation } from "#/__generated__/core/CompliancePortalSlackSectionClearMutation.graphql";
 import type { CompliancePortalSlackSectionRefetchQuery } from "#/__generated__/core/CompliancePortalSlackSectionRefetchQuery.graphql";
 import type { CompliancePortalSlackSectionSetMutation } from "#/__generated__/core/CompliancePortalSlackSectionSetMutation.graphql";
@@ -56,7 +55,6 @@ const fragment = graphql`
       channelName
     }
     organization {
-      id
       canInstallSlackbot: permission(action: "core:connector:initiate")
       slackbotAvailable
       slackbotInstallation {
@@ -66,26 +64,6 @@ const fragment = graphql`
         channels {
           id
           name
-        }
-        nextCursor
-      }
-    }
-  }
-`;
-
-const loadMoreChannelsQuery = graphql`
-  query CompliancePortalSlackSectionChannelsQuery(
-    $organizationId: ID!
-    $cursor: String
-  ) {
-    organization: node(id: $organizationId) @required(action: THROW) {
-      ... on Organization {
-        slackbotChannels(cursor: $cursor) {
-          channels {
-            id
-            name
-          }
-          nextCursor
         }
       }
     }
@@ -166,20 +144,11 @@ export function CompliancePortalSlackSection({
     });
   };
 
-  const environment = useRelayEnvironment();
   const [, startTransition] = useTransition();
-  const [extraChannels, setExtraChannels] = useState<
-    { id: string; name: string }[]
-  >([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isInstalled = compliancePortal.organization.slackbotInstallation?.active;
-  const firstPage = compliancePortal.organization.slackbotChannels;
-  const listedChannels = extraChannels.length > 0
-    ? [...firstPage.channels, ...extraChannels]
-    : firstPage.channels;
+  const listedChannels = compliancePortal.organization.slackbotChannels.channels;
   const configuredChannel = compliancePortal.slackbotNotificationChannel;
   const channels = configuredChannel
     && !listedChannels.some(channel => channel.id === configuredChannel.channelId)
@@ -193,9 +162,6 @@ export function CompliancePortalSlackSection({
     : listedChannels;
   const slackListEmpty = listedChannels.length === 0;
   const showEmptyCallout = slackListEmpty && !isRefreshing;
-  const loadMoreCursor = extraChannels.length > 0
-    ? nextCursor
-    : firstPage.nextCursor;
   const channelNames = Object.fromEntries(
     channels.map(channel => [channel.id, `#${channel.name}`]),
   );
@@ -205,8 +171,6 @@ export function CompliancePortalSlackSection({
   const showChannelConfig = isInstalled === true && compliancePortal.canConfigureSlack;
 
   const refreshChannels = () => {
-    setExtraChannels([]);
-    setNextCursor(null);
     setIsRefreshing(true);
     startTransition(() => {
       refetch({}, {
@@ -218,42 +182,9 @@ export function CompliancePortalSlackSection({
     });
   };
 
-  const loadMoreChannels = () => {
-    if (!loadMoreCursor || isLoadingMore) {
-      return;
-    }
-
-    setIsLoadingMore(true);
-    fetchQuery<CompliancePortalSlackSectionChannelsQuery>(
-      environment,
-      loadMoreChannelsQuery,
-      {
-        organizationId: compliancePortal.organization.id,
-        cursor: loadMoreCursor,
-      },
-      { fetchPolicy: "network-only" },
-    ).subscribe({
-      next(data) {
-        const page = data.organization.slackbotChannels;
-        if (!page) {
-          return;
-        }
-
-        setExtraChannels(current => [...current, ...page.channels]);
-        setNextCursor(page.nextCursor ?? null);
-      },
-      complete() {
-        setIsLoadingMore(false);
-      },
-      error() {
-        setIsLoadingMore(false);
-      },
-    });
-  };
-
   const {
     root, intro, grid, card, lead, copy, channel, channelRow, channelField,
-    empty, emptyCopy, emptyCallout, popupEmpty, popupLoadMore,
+    empty, emptyCopy, emptyCallout, popupEmpty,
   } = slackSection();
   const { frame, header, wash, fade, icon: iconSlot, control, body } = hostingCard({
     tone: "sand",
@@ -383,21 +314,6 @@ export function CompliancePortalSlackSection({
                             {`#${listedChannel.name}`}
                           </SelectItem>
                         ))}
-                  {loadMoreCursor && (
-                    <div className={popupLoadMore()}>
-                      <Button
-                        variant="ghost"
-                        color="neutral"
-                        loading={isLoadingMore}
-                        onPointerDown={(event) => {
-                          event.preventDefault();
-                        }}
-                        onClick={loadMoreChannels}
-                      >
-                        {t("slackSection.actions.loadMore")}
-                      </Button>
-                    </div>
-                  )}
                 </SelectPopup>
               </Select>
             </div>

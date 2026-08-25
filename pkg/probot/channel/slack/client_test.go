@@ -184,7 +184,7 @@ func TestClientListConversations(t *testing.T) {
 							assert.Equal(t, "/api/conversations.list", r.URL.Path)
 							assert.Equal(t, tt.wantCursor, r.URL.Query().Get("cursor"))
 							assert.Equal(t, "true", r.URL.Query().Get("exclude_archived"))
-							assert.Equal(t, "200", r.URL.Query().Get("limit"))
+							assert.Equal(t, "1000", r.URL.Query().Get("limit"))
 							assert.Equal(t, "public_channel,private_channel", r.URL.Query().Get("types"))
 							assert.Equal(t, "Bearer "+testBotToken, r.Header.Get("Authorization"))
 
