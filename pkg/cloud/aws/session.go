@@ -75,6 +75,7 @@ type (
 	Session struct {
 		cfg       awssdk.Config
 		accountID string
+		partition string
 	}
 
 	// issuerTokenRetriever adapts the issuer to the AWS SDK's
@@ -149,6 +150,7 @@ func NewSession(
 			HTTPClient:  httpClient,
 		},
 		accountID: parsedARN.AccountID,
+		partition: parsedARN.Partition,
 	}, nil
 }
 
@@ -176,9 +178,22 @@ func (s *Session) AccountID() string {
 	return s.accountID
 }
 
+// Partition is the AWS partition the assumed role lives in: commercial,
+// GovCloud, or China. IAM ARNs are partition-scoped, so a constructed
+// identity must use this rather than assuming the commercial form.
+func (s *Session) Partition() string {
+	return s.partition
+}
+
 // Config returns the SDK config to build service clients from.
 func (s *Session) Config() awssdk.Config {
 	return s.cfg
+}
+
+// NewSessionFromConfig builds a session from an already-resolved SDK config.
+// Production uses NewSession, which obtains credentials through web identity.
+func NewSessionFromConfig(accountID, partition string, cfg awssdk.Config) *Session {
+	return &Session{cfg: cfg, accountID: accountID, partition: partition}
 }
 
 // CheckAccess reports whether this session can actually reach its account.

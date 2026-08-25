@@ -76,15 +76,20 @@ func newAWSSession(
 	return session, nil
 }
 
-// newAWSDriver builds the access review driver. Listing IAM users in the
-// connected account is not implemented yet.
+// newAWSDriver builds the access review driver over the session already
+// assumed on the connected account.
 func newAWSDriver(
 	_ context.Context,
-	_ cloud.Session,
+	session cloud.Session,
 	_ *coredata.Connector,
-	_ *log.Logger,
+	logger *log.Logger,
 ) (drivers.Driver, error) {
-	return nil, fmt.Errorf("cannot create aws driver: access review for AWS is not implemented")
+	awsSession, ok := session.(*cloudaws.Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot create aws driver: session is for %s", session.Cloud())
+	}
+
+	return drivers.NewAWSDriver(awsSession, logger), nil
 }
 
 // probeAWS checks the connection by asking AWS who we are. It reaches for the
