@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getConsent } from "@probo/cookie-banner/consent";
 import type { ConsentData } from "@probo/cookie-banner/consent";
 import { useConfig } from "../hooks/useConfig";
+import { debugLogger } from "../lib/logger";
 
 interface ConsentSnapshot {
   ready: boolean;
@@ -67,7 +68,9 @@ export function DebugTab() {
   useEffect(() => {
     const mgr = getConsent();
     return mgr.subscribe(() => {
-      setSnapshot(readSnapshot());
+      const next = readSnapshot();
+      debugLogger.debug("[debug] consent", next);
+      setSnapshot(next);
       setVisitorId(readVisitorId(config.bannerId));
       setCookie(readCookie());
       setDataLayer(readDataLayer());

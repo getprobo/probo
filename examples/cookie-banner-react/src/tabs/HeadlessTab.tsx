@@ -6,7 +6,36 @@ import {
   type BannerConfig,
 } from "@probo/cookie-banner/headless";
 import { useConfig } from "../hooks/useConfig";
+import { headlessLogger } from "../lib/logger";
 import type { EventEntry } from "../App";
+
+const headlessActions: Record<string, string> = {
+  "PROBO-ACKNOWLEDGE-BUTTON": "Acknowledge",
+  "PROBO-ACCEPT-BUTTON": "Accept All",
+  "PROBO-REJECT-BUTTON": "Reject All",
+  "PROBO-CUSTOMIZE-BUTTON": "Customize",
+  "PROBO-SAVE-BUTTON": "Save Preferences",
+  "PROBO-SETTINGS-LINK": "Cookie settings",
+};
+
+function headlessActionLabel(target: EventTarget | null): string | null {
+  if (!(target instanceof Element)) {
+    return null;
+  }
+
+  const host = target.closest(
+    "probo-acknowledge-button, probo-accept-button, probo-reject-button, probo-customize-button, probo-save-button, probo-settings-link",
+  );
+  if (!host) {
+    return null;
+  }
+
+  if (host.tagName === "PROBO-REJECT-BUTTON" && host.closest("probo-privacy-choices")) {
+    return "Do Not Sell";
+  }
+
+  return headlessActions[host.tagName] ?? null;
+}
 
 let registered = false;
 
@@ -21,6 +50,7 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
 
   useEffect(() => {
     if (!registered) {
+      headlessLogger.debug("[headless] registerHeadlessComponents");
       registerHeadlessComponents();
       registered = true;
     }
@@ -95,6 +125,14 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
       </p>
     `;
 
+    const onClick = (e: Event) => {
+      const label = headlessActionLabel(e.target);
+      if (label) {
+        headlessLogger.debug("[headless] click", label);
+      }
+    };
+    container.addEventListener("click", onClick);
+
     const root = container.querySelector("probo-cookie-banner-root");
     if (root) {
       root.addEventListener("probo-ready", (e: Event) => {
@@ -102,18 +140,21 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
           config?: BannerConfig;
         };
         const bannerConfig = detail?.config;
+        headlessLogger.debug("[headless] probo-ready", detail);
         pushEvent("probo-ready", {
           ...detail,
           layout: bannerConfig ? resolveLayout(bannerConfig) : null,
           bannerText: bannerConfig ? resolveBannerText(bannerConfig) : null,
         });
       });
-      root.addEventListener("probo-consent", (e: Event) =>
-        pushEvent("probo-consent", (e as CustomEvent).detail),
-      );
+      root.addEventListener("probo-consent", (e: Event) => {
+        headlessLogger.debug("[headless] probo-consent", (e as CustomEvent).detail);
+        pushEvent("probo-consent", (e as CustomEvent).detail);
+      });
     }
 
     return () => {
+      container.removeEventListener("click", onClick);
       container.innerHTML = "";
     };
   }, [config.bannerId, config.baseUrl, config.gcmEnabled, pushEvent]);

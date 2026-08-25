@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useConfig } from "../hooks/useConfig";
+import { configLogger } from "../lib/logger";
 
 export function ConfigTab() {
   const [config, setConfig] = useConfig();
@@ -13,6 +14,7 @@ export function ConfigTab() {
     gcmEnabled !== config.gcmEnabled;
 
   const save = () => {
+    configLogger.debug("[config] save", { bannerId, baseUrl, gcmEnabled });
     setConfig({ bannerId, baseUrl, gcmEnabled });
   };
 

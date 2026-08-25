@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import posthog from "posthog-js";
 import { registerCookieBanner, type BannerConfig } from "@probo/cookie-banner";
 import { useConfig } from "../hooks/useConfig";
+import { themedLogger } from "../lib/logger";
 import {
   configurePosthogFromBanner,
   getPosthogStatus,
@@ -27,6 +28,7 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
 
   useEffect(() => {
     if (!registered) {
+      themedLogger.debug("[themed] registerCookieBanner");
       registerCookieBanner();
       registered = true;
     }
@@ -45,11 +47,13 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
         if (detail?.config) {
           configurePosthogFromBanner(detail.config);
         }
+        themedLogger.debug("[themed] probo-ready", (e as CustomEvent).detail);
         pushEvent("probo-ready", (e as CustomEvent).detail);
       });
-      el.addEventListener("probo-consent", (e: Event) =>
-        pushEvent("probo-consent", (e as CustomEvent).detail),
-      );
+      el.addEventListener("probo-consent", (e: Event) => {
+        themedLogger.debug("[themed] probo-consent", (e as CustomEvent).detail);
+        pushEvent("probo-consent", (e as CustomEvent).detail);
+      });
     },
     [pushEvent],
   );
@@ -64,6 +68,7 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
     // make the example fail closed if the panel is reused without its
     // disabled-state wiring.
     if (posthog.has_opted_out_capturing()) return;
+    themedLogger.debug("[themed] posthog ping");
     posthog.capture("themed_tab_manual_ping", { source: "example" });
     setManualPing(new Date().toISOString());
   }, []);
@@ -122,7 +127,10 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
         gcm-enabled={config.gcmEnabled ? "true" : "false"}
       />
 
-      <p style={{ marginTop: 16 }}>
+      <p
+        style={{ marginTop: 16 }}
+        onClick={() => themedLogger.debug("[themed] cookie settings")}
+      >
         <probo-settings-link>Cookie settings</probo-settings-link>
       </p>
 

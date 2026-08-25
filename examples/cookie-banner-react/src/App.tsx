@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { appLogger } from "./lib/logger";
 import { ConfigTab } from "./tabs/ConfigTab";
 import { ThemedBannerTab } from "./tabs/ThemedBannerTab";
 import { HeadlessTab } from "./tabs/HeadlessTab";
@@ -58,7 +59,10 @@ export function App() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              appLogger.debug("[app] tab", tab.id);
+              setActiveTab(tab.id);
+            }}
             style={{
               padding: "8px 16px",
               border: "none",
