@@ -56,6 +56,7 @@
   },
   "trackerAttribution": {
     "firstParty": "Première partie",
+    "thirdParty": "Tierce partie",
     "visitorSoftware": "Logiciel du visiteur",
     "undetermined": "Indéterminé"
   },

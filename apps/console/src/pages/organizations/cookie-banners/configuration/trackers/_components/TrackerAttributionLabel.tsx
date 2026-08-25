@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { Badge } from "@probo/ui";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { CommonTrackerPatternAttribution } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
@@ -27,12 +28,25 @@ interface TrackerAttributionLabelProps {
   attribution: CommonTrackerPatternAttribution | null | undefined;
 }
 
-export function TrackerAttributionLabel({ attribution }: TrackerAttributionLabelProps) {
+// The explicit ReactElement return is what makes the switch below exhaustive:
+// without it a missing case falls out of the function as undefined and still
+// compiles, which is how THIRD_PARTY silently rendered as a dash.
+export function TrackerAttributionLabel({
+  attribution,
+}: TrackerAttributionLabelProps): ReactElement {
   const { t } = useTranslation("organizations/cookie-banners");
+
+  // A null attribution is a pattern with no catalog link at all, which is the
+  // only case with nothing to say.
+  if (attribution == null) {
+    return <span className="text-txt-tertiary text-sm">-</span>;
+  }
 
   switch (attribution) {
     case "FIRST_PARTY":
       return <Badge variant="success">{t("trackerAttribution.firstParty")}</Badge>;
+    case "THIRD_PARTY":
+      return <Badge variant="info">{t("trackerAttribution.thirdParty")}</Badge>;
     case "NOT_ATTRIBUTABLE":
       return <Badge variant="warning">{t("trackerAttribution.visitorSoftware")}</Badge>;
     case "UNDETERMINED":
@@ -41,7 +55,5 @@ export function TrackerAttributionLabel({ attribution }: TrackerAttributionLabel
           {t("trackerAttribution.undetermined")}
         </span>
       );
-    default:
-      return <span className="text-txt-tertiary text-sm">-</span>;
   }
 }
