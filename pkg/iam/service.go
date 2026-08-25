@@ -267,6 +267,11 @@ func (s *Service) OAuth2ProtectedResourceMetadata(resource uri.URI) *oauth2.Prot
 	)
 }
 
+// OAuth2MCPResource returns the MCP protected-resource identifier.
+func (s *Service) OAuth2MCPResource() (uri.URI, error) {
+	return oauth2.MCPResource(uri.URI(s.baseURL))
+}
+
 func (s *Service) IsSignUpEnabled() bool {
 	return !s.disableSignup
 }

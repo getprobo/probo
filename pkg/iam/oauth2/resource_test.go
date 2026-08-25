@@ -28,6 +28,14 @@ import (
 	"go.probo.inc/probo/pkg/uri"
 )
 
+func TestMCPResource(t *testing.T) {
+	t.Parallel()
+
+	got, err := MCPResource("https://auth.example.com")
+	require.NoError(t, err)
+	assert.Equal(t, uri.URI("https://auth.example.com/api/mcp/v1"), got)
+}
+
 func TestServiceProtectedResource(t *testing.T) {
 	t.Parallel()
 
@@ -47,6 +55,22 @@ func TestServiceProtectedResource(t *testing.T) {
 			name:   "issuer resource",
 			values: []string{"https://auth.example.com"},
 			want:   []uri.URI{"https://auth.example.com"},
+		},
+		{
+			name:   "mcp resource",
+			values: []string{"https://auth.example.com/api/mcp/v1"},
+			want:   []uri.URI{"https://auth.example.com/api/mcp/v1"},
+		},
+		{
+			name: "issuer and mcp resource",
+			values: []string{
+				"https://auth.example.com",
+				"https://auth.example.com/api/mcp/v1",
+			},
+			want: []uri.URI{
+				"https://auth.example.com",
+				"https://auth.example.com/api/mcp/v1",
+			},
 		},
 		{
 			name: "duplicate resources deduplicated",
@@ -69,7 +93,7 @@ func TestServiceProtectedResource(t *testing.T) {
 		{
 			name: "one unsupported resource",
 			values: []string{
-				"https://auth.example.com/api/mcp/v1",
+				"https://other.example.com/api/mcp/v1",
 				"https://auth.example.com",
 			},
 			wantErr: true,
