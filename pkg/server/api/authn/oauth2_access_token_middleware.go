@@ -58,13 +58,6 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 					return
 				}
 
-				if accessToken.ClientID != nil &&
-					!accessToken.HasAudience(svc.OAuth2ServerService.Issuer()) {
-					next.ServeHTTP(w, r)
-
-					return
-				}
-
 				identity, err := svc.AccountService.GetIdentity(ctx, accessToken.IdentityID)
 				if err != nil {
 					panic(fmt.Errorf("cannot get identity for oauth2 access token: %w", err))
