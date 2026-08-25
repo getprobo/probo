@@ -6,7 +6,7 @@ import {
   type BannerConfig,
 } from "@probo/cookie-banner/headless";
 import { useConfig } from "../hooks/useConfig";
-import { headlessLogger } from "../lib/logger";
+import { enableNamedLoggers, headlessLogger } from "../lib/logger";
 import type { EventEntry } from "../App";
 
 const headlessActions: Record<string, string> = {
@@ -140,6 +140,7 @@ export function HeadlessTab({ events, pushEvent }: HeadlessTabProps) {
           config?: BannerConfig;
         };
         const bannerConfig = detail?.config;
+        enableNamedLoggers();
         headlessLogger.debug("[headless] probo-ready", detail);
         pushEvent("probo-ready", {
           ...detail,

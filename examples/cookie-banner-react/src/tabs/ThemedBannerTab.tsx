@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import posthog from "posthog-js";
 import { registerCookieBanner, type BannerConfig } from "@probo/cookie-banner";
 import { useConfig } from "../hooks/useConfig";
-import { themedLogger } from "../lib/logger";
+import { enableNamedLoggers, themedLogger } from "../lib/logger";
 import {
   configurePosthogFromBanner,
   getPosthogStatus,
@@ -47,6 +47,7 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
         if (detail?.config) {
           configurePosthogFromBanner(detail.config);
         }
+        enableNamedLoggers();
         themedLogger.debug("[themed] probo-ready", (e as CustomEvent).detail);
         pushEvent("probo-ready", (e as CustomEvent).detail);
       });
