@@ -290,6 +290,15 @@ func OAuth2ProtectedResourceMetadata(
 	return oauth2ProtectedResourceMetadata(c, "/.well-known/oauth-protected-resource")
 }
 
+// OAuth2ProtectedResourceMetadataAt fetches RFC 9728 metadata at a path-aware
+// well-known URL (RFC 9728 §3.1).
+func OAuth2ProtectedResourceMetadataAt(
+	c *Client,
+	path string,
+) (*OAuth2ProtectedResourceMetadataResponse, *OAuth2HTTPResponse, error) {
+	return oauth2ProtectedResourceMetadata(c, path)
+}
+
 func oauth2ProtectedResourceMetadata(
 	c *Client,
 	path string,
