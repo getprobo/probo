@@ -3235,6 +3235,7 @@
       "connectWithGitHubApp": "Application GitHub",
       "connectWithApiKey": "Clé API",
       "connectWithClientCredentials": "Identifiants client",
+      "connectWithWorkloadIdentity": "Identité de charge de travail",
       "open": "Ouvrir"
     },
     "csv": {

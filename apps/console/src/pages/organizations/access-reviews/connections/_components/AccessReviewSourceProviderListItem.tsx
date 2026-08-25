@@ -44,6 +44,8 @@ const protocolActionLabelKey: Record<ConnectorProtocol, string> = {
   OAUTH2: "addAccessReviewSourceDialog.actions.connectWithOAuth",
   API_KEY: "addAccessReviewSourceDialog.actions.connectWithApiKey",
   GITHUB_APP: "addAccessReviewSourceDialog.actions.connectWithGitHubApp",
+  WORKLOAD_IDENTITY:
+    "addAccessReviewSourceDialog.actions.connectWithWorkloadIdentity",
 };
 
 export const accessReviewSourceProviderListItemFragment = graphql`
