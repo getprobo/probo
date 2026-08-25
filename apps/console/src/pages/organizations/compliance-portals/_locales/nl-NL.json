@@ -62,20 +62,33 @@
   },
   "electronicSignature": {
     "title": "NDA",
-    "fields": { "status": "Status", "signedAt": "Ondertekend op", "certificate": "Certificaat" },
+    "certificateTitle": "Voltooiingscertificaat",
+    "status": {
+      "signed": "Elektronisch ondertekend",
+      "processing": "Handtekening in behandeling",
+      "pending": "Wacht op ondertekening",
+      "failed": "Ondertekening mislukt"
+    },
+    "descriptions": {
+      "signedAt": "Deze bezoeker heeft elektronisch ondertekend op {{date}}.",
+      "pending": "Deze bezoeker heeft nog niet ondertekend.",
+      "processing": "Deze handtekening wordt nog verwerkt.",
+      "failed": "Deze handtekening kon niet worden voltooid.",
+      "completed": "Deze bezoeker heeft elektronisch ondertekend."
+    },
     "actions": { "download": "Downloaden" },
     "activity": "Activiteit"
   },
   "eventTypeLabel": {
-    "documentViewed": "Document bekeken",
-    "consentGiven": "Toestemming gegeven",
-    "fullNameTyped": "Volledige naam ingevoerd",
-    "signatureAccepted": "Handtekening geaccepteerd",
-    "signatureCompleted": "Handtekening voltooid",
-    "sealComputed": "Zegel berekend",
-    "timestampRequested": "Tijdstempel aangevraagd",
-    "certificateGenerated": "Certificaat gegenereerd",
-    "processingError": "Verwerkingsfout"
+    "documentViewed": "Heeft het document bekeken",
+    "consentGiven": "Akkoord gegaan met elektronisch ondertekenen",
+    "fullNameTyped": "Heeft de naam ingevoerd",
+    "signatureAccepted": "Heeft de handtekening geaccepteerd",
+    "signatureCompleted": "Handtekening vastgelegd",
+    "sealComputed": "Document verzegeld",
+    "timestampRequested": "Tijdstempel toegepast",
+    "certificateGenerated": "Certificaat aangemaakt",
+    "processingError": "Verwerking mislukt"
   },
   "ndaSignatureBadge": {
     "signed": "Ondertekend",

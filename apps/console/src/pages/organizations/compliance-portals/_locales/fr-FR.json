@@ -104,10 +104,19 @@
   },
   "electronicSignature": {
     "title": "NDA",
-    "fields": {
-      "status": "Statut",
-      "signedAt": "Signé le",
-      "certificate": "Certificat"
+    "certificateTitle": "Certificat d’achèvement",
+    "status": {
+      "signed": "Signé électroniquement",
+      "processing": "Signature en cours",
+      "pending": "En attente de signature",
+      "failed": "Signature non aboutie"
+    },
+    "descriptions": {
+      "signedAt": "Ce visiteur a signé électroniquement le {{date}}.",
+      "pending": "Ce visiteur n’a pas encore signé.",
+      "processing": "Cette signature est encore en cours de traitement.",
+      "failed": "Cette signature n’a pas pu être finalisée.",
+      "completed": "Ce visiteur a signé électroniquement."
     },
     "actions": {
       "download": "Télécharger"
@@ -115,15 +124,15 @@
     "activity": "Activité"
   },
   "eventTypeLabel": {
-    "documentViewed": "Document consulté",
-    "consentGiven": "Consentement donné",
-    "fullNameTyped": "Nom complet saisi",
-    "signatureAccepted": "Signature acceptée",
-    "signatureCompleted": "Signature terminée",
-    "sealComputed": "Sceau calculé",
-    "timestampRequested": "Horodatage demandé",
-    "certificateGenerated": "Certificat généré",
-    "processingError": "Erreur de traitement"
+    "documentViewed": "A consulté le document",
+    "consentGiven": "A accepté de signer électroniquement",
+    "fullNameTyped": "A saisi son nom",
+    "signatureAccepted": "A accepté la signature",
+    "signatureCompleted": "Signature enregistrée",
+    "sealComputed": "Document scellé",
+    "timestampRequested": "Horodatage appliqué",
+    "certificateGenerated": "Certificat créé",
+    "processingError": "Échec du traitement"
   },
   "ndaSignatureBadge": {
     "signed": "Signé",

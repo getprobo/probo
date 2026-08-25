@@ -34,7 +34,6 @@ import { NotFoundError } from "#/lib/relay/errors";
 
 import { CompliancePortalDocumentAccessList } from "./_components/CompliancePortalDocumentAccessList";
 import { ElectronicSignatureSection } from "./_components/ElectronicSignatureSection";
-import { NdaSignatureBadge } from "./_components/NdaSignatureBadge";
 import { visitorPage } from "./variants";
 
 export const compliancePortalVisitorPageQuery = graphql`
@@ -51,7 +50,6 @@ export const compliancePortalVisitorPageQuery = graphql`
           state
         }
         ndaSignature {
-          status
           ...ElectronicSignatureSectionFragment
         }
         ...CompliancePortalDocumentAccessList_access
@@ -66,7 +64,7 @@ interface CompliancePortalVisitorPageProps {
 
 export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisitorPageProps) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
-  const { root, back, header, identity, meta } = visitorPage();
+  const { root, back, header, identity } = visitorPage();
   const { node } = usePreloadedQuery<CompliancePortalVisitorPageQuery>(
     compliancePortalVisitorPageQuery,
     queryRef,
@@ -97,14 +95,9 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
           <Text size={2} color="gold">
             {node.profile.emailAddress}
           </Text>
-          <div className={meta()}>
-            <Text size={1} color="faint">
-              {t("visitorPage.joinedOn", { date: dateFormat(i18n.language, node.createdAt) })}
-            </Text>
-            {node.ndaSignature != null && (
-              <NdaSignatureBadge status={node.ndaSignature.status} />
-            )}
-          </div>
+          <Text size={1} color="faint">
+            {t("visitorPage.joinedOn", { date: dateFormat(i18n.language, node.createdAt) })}
+          </Text>
         </div>
       </div>
       {node.ndaSignature != null && (

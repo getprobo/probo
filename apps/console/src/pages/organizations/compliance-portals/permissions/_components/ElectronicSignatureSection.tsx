@@ -18,10 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretDownIcon, DownloadSimpleIcon, SignatureIcon } from "@phosphor-icons/react";
 import { safeOpenUrl } from "@probo/helpers";
 import { dateTimeFormat } from "@probo/i18n";
-import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Collapsible } from "@probo/ui/src/v2/Collapsible/Collapsible";
+import { CollapsiblePanel } from "@probo/ui/src/v2/Collapsible/CollapsiblePanel";
+import { CollapsibleTrigger } from "@probo/ui/src/v2/Collapsible/CollapsibleTrigger";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Timeline } from "@probo/ui/src/v2/Timeline/Timeline";
+import { TimelineContent } from "@probo/ui/src/v2/Timeline/TimelineContent";
+import { TimelineItem } from "@probo/ui/src/v2/Timeline/TimelineItem";
+import { TimelineMarker } from "@probo/ui/src/v2/Timeline/TimelineMarker";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -29,11 +36,24 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ElectronicSignatureSectionFragment$key } from "#/__generated__/core/ElectronicSignatureSectionFragment.graphql";
+import { CompliancePortalTonedCard } from "#/pages/organizations/compliance-portals/_components/CompliancePortalTonedCard";
 
 import { electronicSignatureSection } from "../variants";
 
+import { EventTypeIcon } from "./EventTypeIcon";
 import { EventTypeLabel } from "./EventTypeLabel";
-import { NdaSignatureBadge } from "./NdaSignatureBadge";
+import type { NdaSignatureStatus } from "./NdaSignatureBadge";
+import { ndaSignatureTone } from "./NdaSignatureBadge";
+
+const signedAtFormat = {
+  hour: "2-digit",
+  hour12: false,
+  minute: "2-digit",
+  second: "2-digit",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+} as const;
 
 const fragment = graphql`
   fragment ElectronicSignatureSectionFragment on ElectronicSignature {
@@ -41,16 +61,52 @@ const fragment = graphql`
     signedAt
     certificate {
       downloadUrl
-      fileName
     }
     events {
       id
       eventType
-      actorEmail
       occurredAt
     }
   }
 `;
+
+function signatureLeadKey(status: NdaSignatureStatus): string {
+  switch (status) {
+    case "COMPLETED":
+      return "electronicSignature.status.signed";
+    case "ACCEPTED":
+    case "PROCESSING":
+      return "electronicSignature.status.processing";
+    case "PENDING":
+      return "electronicSignature.status.pending";
+    case "FAILED":
+      return "electronicSignature.status.failed";
+  }
+}
+
+function signatureDescription(
+  status: NdaSignatureStatus,
+  signedAt: string | null | undefined,
+  language: string,
+  t: (key: string, options?: { date: string }) => string,
+): string {
+  if (signedAt != null) {
+    return t("electronicSignature.descriptions.signedAt", {
+      date: dateTimeFormat(language, signedAt, signedAtFormat),
+    });
+  }
+  switch (status) {
+    case "PENDING":
+      return t("electronicSignature.descriptions.pending");
+    case "ACCEPTED":
+    case "PROCESSING":
+      return t("electronicSignature.descriptions.processing");
+    case "FAILED":
+      return t("electronicSignature.descriptions.failed");
+    case "COMPLETED":
+      return t("electronicSignature.descriptions.completed");
+  }
+}
 
 export function ElectronicSignatureSection({
   fragmentRef,
@@ -59,76 +115,100 @@ export function ElectronicSignatureSection({
 }) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
   const signature = useFragment(fragment, fragmentRef);
-  const { root, rows, row, activity, event, eventCopy } = electronicSignatureSection();
+  const { root, card, activity, copy, description, trigger }
+    = electronicSignatureSection();
+  const tone = ndaSignatureTone(signature.status);
   const certificateUrl = signature.certificate?.downloadUrl;
+  const descriptionCopy = signatureDescription(
+    signature.status,
+    signature.signedAt,
+    i18n.language,
+    t,
+  );
 
   return (
     <section className={root()}>
       <Heading level={3} size={3} weight="medium" highContrast>
         {t("electronicSignature.title")}
       </Heading>
-      <Card variant="soft" size={2}>
-        <div className={rows()}>
-          <div className={row()}>
-            <Text size={2} color="neutral">
-              {t("electronicSignature.fields.status")}
-            </Text>
-            <NdaSignatureBadge status={signature.status} />
-          </div>
-          {signature.signedAt != null && (
-            <div className={row()}>
-              <Text size={2} color="neutral">
-                {t("electronicSignature.fields.signedAt")}
-              </Text>
-              <Text size={2} highContrast>
-                {dateTimeFormat(i18n.language, signature.signedAt)}
-              </Text>
-            </div>
-          )}
-          {certificateUrl != null && (
-            <div className={row()}>
-              <Text size={2} color="neutral">
-                {t("electronicSignature.fields.certificate")}
-              </Text>
-              <Button
-                type="button"
+      <CompliancePortalTonedCard
+        className={card()}
+        tone={tone}
+        icon={<SignatureIcon size={24} weight="duotone" />}
+        lead={(
+          <Text size={2} weight="medium" color={tone} className="truncate">
+            {t(signatureLeadKey(signature.status))}
+          </Text>
+        )}
+        control={certificateUrl != null
+          ? (
+              <IconButton
+                size={1}
                 variant="ghost"
                 color="neutral"
-                size={1}
+                aria-label={t("electronicSignature.actions.download")}
                 onClick={() => {
                   safeOpenUrl(certificateUrl);
                 }}
               >
-                {signature.certificate?.fileName ?? t("electronicSignature.actions.download")}
-              </Button>
-            </div>
-          )}
-          {signature.events.length > 0 && (
-            <div className={activity()}>
-              <Text size={1} weight="medium" color="faint">
-                {t("electronicSignature.activity")}
-              </Text>
-              {signature.events.map(item => (
-                <div key={item.id} className={event()}>
-                  <div className={eventCopy()}>
-                    <Text size={1} highContrast>
-                      <EventTypeLabel eventType={item.eventType} />
-                    </Text>
-                    {item.actorEmail != null && (
-                      <Text size={1} color="faint">
-                        {item.actorEmail}
-                      </Text>
-                    )}
-                  </div>
-                  <Text size={1} color="faint">
-                    {dateTimeFormat(i18n.language, item.occurredAt)}
+                <DownloadSimpleIcon />
+              </IconButton>
+            )
+          : undefined}
+      >
+        <Text size={3} weight="medium" highContrast>
+          {t("electronicSignature.certificateTitle")}
+        </Text>
+        {signature.events.length > 0
+          ? (
+              <Collapsible className={activity()}>
+                <div className={copy()}>
+                  <Text size={2} color="neutral" className={description()}>
+                    {descriptionCopy}
                   </Text>
+                  <CollapsibleTrigger
+                    className={trigger()}
+                    render={(
+                      <IconButton
+                        size={1}
+                        variant="ghost"
+                        color="neutral"
+                        aria-label={t("electronicSignature.activity")}
+                      />
+                    )}
+                  >
+                    <CaretDownIcon />
+                  </CollapsibleTrigger>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </Card>
+                <CollapsiblePanel>
+                  <Timeline>
+                    {signature.events.map(item => (
+                      <TimelineItem key={item.id}>
+                        <TimelineMarker
+                          color={item.eventType === "PROCESSING_ERROR" ? "red" : "neutral"}
+                        >
+                          <EventTypeIcon eventType={item.eventType} />
+                        </TimelineMarker>
+                        <TimelineContent>
+                          <Text size={1} highContrast>
+                            <EventTypeLabel eventType={item.eventType} />
+                          </Text>
+                          <Text size={1} color="faint">
+                            {dateTimeFormat(i18n.language, item.occurredAt, signedAtFormat)}
+                          </Text>
+                        </TimelineContent>
+                      </TimelineItem>
+                    ))}
+                  </Timeline>
+                </CollapsiblePanel>
+              </Collapsible>
+            )
+          : (
+              <Text size={2} color="neutral">
+                {descriptionCopy}
+              </Text>
+            )}
+      </CompliancePortalTonedCard>
     </section>
   );
 }

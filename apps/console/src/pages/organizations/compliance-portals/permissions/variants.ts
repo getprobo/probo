@@ -104,16 +104,15 @@ export const visitorPage = tv({
   slots: {
     root: "flex flex-col gap-6",
     back: "self-start",
-    header: "flex items-start gap-3",
+    header: "flex items-center gap-3",
     identity: "flex min-w-0 flex-col gap-1",
-    meta: "flex flex-wrap items-center gap-2",
   },
 });
 
 export const visitorPageSkeleton = tv({
   slots: {
     root: "flex flex-col gap-6",
-    header: "flex items-start gap-3",
+    header: "flex items-center gap-3",
     identity: "flex min-w-0 flex-col gap-1",
     section: "flex flex-col gap-3",
   },
@@ -122,11 +121,11 @@ export const visitorPageSkeleton = tv({
 export const electronicSignatureSection = tv({
   slots: {
     root: "flex flex-col gap-3",
-    rows: "flex flex-col gap-3",
-    row: "flex items-center justify-between gap-3",
-    activity: "flex flex-col gap-2 border-t border-sand-a3 pt-3",
-    event: "flex items-start justify-between gap-2",
-    eventCopy: "min-w-0",
+    card: "w-2/3 max-lg:w-full",
+    activity: "flex flex-col gap-2",
+    copy: "flex items-center gap-2",
+    description: "min-w-0 flex-1",
+    trigger: "shrink-0 [&_svg]:transition-transform data-panel-open:[&_svg]:rotate-180",
   },
 });
 

@@ -21,10 +21,10 @@
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { useTranslation } from "react-i18next";
 
-type ElectronicSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
+export type NdaSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
 
-function ndaBadgeColor(
-  status: ElectronicSignatureStatus,
+export function ndaSignatureTone(
+  status: NdaSignatureStatus,
 ): "green" | "sky" | "amber" | "red" {
   switch (status) {
     case "COMPLETED":
@@ -39,7 +39,7 @@ function ndaBadgeColor(
   }
 }
 
-function ndaBadgeKey(status: ElectronicSignatureStatus): string {
+export function ndaSignatureStatusKey(status: NdaSignatureStatus): string {
   switch (status) {
     case "COMPLETED":
       return "ndaSignatureBadge.signed";
@@ -53,12 +53,12 @@ function ndaBadgeKey(status: ElectronicSignatureStatus): string {
   }
 }
 
-export function NdaSignatureBadge({ status }: { status: ElectronicSignatureStatus }) {
+export function NdaSignatureBadge({ status }: { status: NdaSignatureStatus }) {
   const { t } = useTranslation("organizations/compliance-portals");
 
   return (
-    <Badge color={ndaBadgeColor(status)} variant="soft">
-      {t(ndaBadgeKey(status))}
+    <Badge color={ndaSignatureTone(status)} variant="soft">
+      {t(ndaSignatureStatusKey(status))}
     </Badge>
   );
 }

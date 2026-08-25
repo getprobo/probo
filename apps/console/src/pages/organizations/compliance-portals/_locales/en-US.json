@@ -104,10 +104,19 @@
   },
   "electronicSignature": {
     "title": "NDA",
-    "fields": {
-      "status": "Status",
-      "signedAt": "Signed at",
-      "certificate": "Certificate"
+    "certificateTitle": "Certificate of completion",
+    "status": {
+      "signed": "Signed electronically",
+      "processing": "Signature in progress",
+      "pending": "Awaiting signature",
+      "failed": "Signature unsuccessful"
+    },
+    "descriptions": {
+      "signedAt": "This visitor signed electronically on {{date}}.",
+      "pending": "This visitor has not signed yet.",
+      "processing": "This signature is still being processed.",
+      "failed": "This signature could not be completed.",
+      "completed": "This visitor signed electronically."
     },
     "actions": {
       "download": "Download"
@@ -115,15 +124,15 @@
     "activity": "Activity"
   },
   "eventTypeLabel": {
-    "documentViewed": "Document viewed",
-    "consentGiven": "Consent given",
-    "fullNameTyped": "Full name typed",
-    "signatureAccepted": "Signature accepted",
-    "signatureCompleted": "Signature completed",
-    "sealComputed": "Seal computed",
-    "timestampRequested": "Timestamp requested",
-    "certificateGenerated": "Certificate generated",
-    "processingError": "Processing error"
+    "documentViewed": "Viewed the document",
+    "consentGiven": "Agreed to sign electronically",
+    "fullNameTyped": "Typed their name",
+    "signatureAccepted": "Accepted the signature",
+    "signatureCompleted": "Signature recorded",
+    "sealComputed": "Document sealed",
+    "timestampRequested": "Timestamp applied",
+    "certificateGenerated": "Certificate created",
+    "processingError": "Processing failed"
   },
   "ndaSignatureBadge": {
     "signed": "Signed",
