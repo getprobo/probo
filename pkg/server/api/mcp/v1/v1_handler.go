@@ -98,7 +98,7 @@ func NewMux(
 			Stateless: true,
 			// SessionTimeout: 30 * time.Minute,
 			EventStore: eventStore,
-			Logger:     nil, // TODO put logger here
+			Logger:     mcputils.NewSlogLogger(logger.Named("transport")),
 		},
 	)
 	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
