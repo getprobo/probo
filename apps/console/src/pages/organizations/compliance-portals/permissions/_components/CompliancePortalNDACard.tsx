@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretRightIcon, DownloadSimpleIcon, FileDashedIcon, FilePdfIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, FileDashedIcon, FilePdfIcon, TrashIcon } from "@phosphor-icons/react";
 import { safeOpenUrl } from "@probo/helpers";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
@@ -61,7 +61,7 @@ export function CompliancePortalNDACard({
   onReject,
 }: CompliancePortalNDACardProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { actions } = ndaCard();
+  const { controls, actions } = ndaCard();
   const compliancePortal = useFragment(fragment, compliancePortalKey);
   const fileName = compliancePortal.nda?.fileName;
   const hasFile = fileName != null;
@@ -73,6 +73,7 @@ export function CompliancePortalNDACard({
   });
 
   const downloadUrl = compliancePortal.nda?.downloadUrl;
+  const showDelete = hasFile && compliancePortal.canDeleteNDA;
   const tone = isDragActive ? "sky" : hasFile ? "green" : "sand";
   const dropHint = isDragActive
     ? t("ndaSection.dropActive")
@@ -94,19 +95,36 @@ export function CompliancePortalNDACard({
             </Text>
           )
         : undefined}
-      control={hasFile && downloadUrl != null
+      control={downloadUrl != null || showDelete
         ? (
-            <IconButton
-              size={2}
-              variant="ghost"
-              color="neutral"
-              aria-label={t("ndaSection.actions.download")}
-              onClick={() => {
-                safeOpenUrl(downloadUrl);
-              }}
-            >
-              <DownloadSimpleIcon />
-            </IconButton>
+            <div className={controls()}>
+              {downloadUrl != null && (
+                <IconButton
+                  size={1}
+                  variant="ghost"
+                  color="neutral"
+                  aria-label={t("ndaSection.actions.download")}
+                  onClick={() => {
+                    safeOpenUrl(downloadUrl);
+                  }}
+                >
+                  <DownloadSimpleIcon />
+                </IconButton>
+              )}
+              {showDelete && (
+                <CompliancePortalNDADeleteDialog compliancePortalId={compliancePortal.id}>
+                  <IconButton
+                    size={1}
+                    variant="ghost"
+                    color="red"
+                    disabled={isUploading}
+                    aria-label={t("ndaSection.actions.delete")}
+                  >
+                    <TrashIcon />
+                  </IconButton>
+                </CompliancePortalNDADeleteDialog>
+              )}
+            </div>
           )
         : undefined}
     >
@@ -117,37 +135,22 @@ export function CompliancePortalNDACard({
       <Text size={2} color="neutral">
         {t("ndaSection.description")}
       </Text>
-      {(canUpload || compliancePortal.canDeleteNDA) && (
+      {canUpload && (
         <div className={actions()}>
-          {canUpload && (
-            <Button
-              type="button"
-              variant="solid"
-              color="neutral"
-              highContrast
-              iconEnd={isUploading ? undefined : <CaretRightIcon />}
-              loading={isUploading}
-              onClick={() => open()}
-            >
-              {isUploading
-                ? t("ndaSection.actions.uploading")
-                : hasFile
-                  ? t("ndaSection.actions.replace")
-                  : t("ndaSection.actions.upload")}
-            </Button>
-          )}
-          {hasFile && compliancePortal.canDeleteNDA && (
-            <CompliancePortalNDADeleteDialog compliancePortalId={compliancePortal.id}>
-              <Button
-                type="button"
-                variant="soft"
-                color="neutral"
-                disabled={isUploading}
-              >
-                {t("ndaSection.actions.clear")}
-              </Button>
-            </CompliancePortalNDADeleteDialog>
-          )}
+          <Button
+            type="button"
+            variant="solid"
+            color="neutral"
+            highContrast
+            loading={isUploading}
+            onClick={() => open()}
+          >
+            {isUploading
+              ? t("ndaSection.actions.uploading")
+              : hasFile
+                ? t("ndaSection.actions.replace")
+                : t("ndaSection.actions.upload")}
+          </Button>
         </div>
       )}
     </CompliancePortalTonedCard>

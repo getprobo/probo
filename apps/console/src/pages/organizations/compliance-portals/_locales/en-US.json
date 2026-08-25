@@ -802,7 +802,7 @@
       "download": "Download",
       "upload": "Upload NDA",
       "replace": "Replace",
-      "clear": "Clear",
+      "delete": "Delete",
       "uploading": "Uploading..."
     },
     "delete": {

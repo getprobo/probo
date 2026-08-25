@@ -802,7 +802,7 @@
       "download": "Télécharger",
       "upload": "Téléverser le NDA",
       "replace": "Remplacer",
-      "clear": "Effacer",
+      "delete": "Supprimer",
       "uploading": "Téléversement..."
     },
     "delete": {

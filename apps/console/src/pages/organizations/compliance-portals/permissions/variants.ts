@@ -44,6 +44,7 @@ export const ndaSection = tv({
 
 export const ndaCard = tv({
   slots: {
+    controls: "flex items-center gap-1",
     actions: "flex flex-wrap items-center gap-2 pt-1",
   },
 });

@@ -384,7 +384,7 @@
     "dropHint": "Sleep hier een PDF naartoe",
     "dropReplace": "Sleep een PDF om te vervangen",
     "dropActive": "Sleep de PDF",
-    "actions": { "download": "Downloaden", "upload": "NDA uploaden", "replace": "Vervangen", "clear": "Wissen", "uploading": "Uploaden..." },
+    "actions": { "download": "Downloaden", "upload": "NDA uploaden", "replace": "Vervangen", "delete": "Verwijderen", "uploading": "Uploaden..." },
     "delete": {
       "title": "NDA verwijderen",
       "description": "Weet u zeker dat u het NDA-bestand wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
