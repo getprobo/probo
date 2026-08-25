@@ -1528,6 +1528,14 @@ func (r *trackerPatternResolver) Attribution(ctx context.Context, obj *types.Tra
 		return nil, nil
 	}
 
+	// Same catalog row, same gate as the sibling commonThirdParty resolver:
+	// the verdict is global catalog data, so a role denied it there must not
+	// be able to read it here instead.
+	identity := authn.IdentityFromContext(ctx)
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyGet); err != nil {
+		return nil, err
+	}
+
 	loaders := dataloader.FromContext(ctx)
 
 	pattern, err := loaders.CommonTrackerPattern.Load(ctx, *obj.CommonTrackerPatternID)
