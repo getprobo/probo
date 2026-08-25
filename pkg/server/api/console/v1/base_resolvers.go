@@ -388,6 +388,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewCompliancePortalAccess(compliancePortalAccess), nil
 		}
+	case coredata.CompliancePortalDocumentAccessEntityType:
+		action = management.ActionCompliancePortalAccessGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			documentAccess, err := r.management.GetDocumentAccess(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewCompliancePortalDocumentAccess(documentAccess), nil
+		}
 	case coredata.CompliancePortalDocumentEntityType:
 		action = management.ActionCompliancePortalGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

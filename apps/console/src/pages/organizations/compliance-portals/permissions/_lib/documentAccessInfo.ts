@@ -22,93 +22,136 @@ import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
 import { graphql, readInlineData } from "relay-runtime";
 
-import type {
-  documentAccessInfo_documentAccess$data,
-  documentAccessInfo_documentAccess$key,
-} from "#/__generated__/core/documentAccessInfo_documentAccess.graphql";
+import type { documentAccessInfo_audit$key } from "#/__generated__/core/documentAccessInfo_audit.graphql";
+import type { documentAccessInfo_document$key } from "#/__generated__/core/documentAccessInfo_document.graphql";
+import type { documentAccessInfo_file$key } from "#/__generated__/core/documentAccessInfo_file.graphql";
 
-export const documentAccessInfoFragment = graphql`
-  fragment documentAccessInfo_documentAccess on CompliancePortalDocumentAccess
-  @inline {
+export const documentAccessInfoDocumentFragment = graphql`
+  fragment documentAccessInfo_document on Document
+  @inline
+  @argumentDefinitions(
+    compliancePortalId: { type: "ID!" }
+    accessId: { type: "ID!" }
+  ) {
     id
-    status
-    document {
-      id
-      versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-        edges {
-          node {
-            title
-            documentType
-          }
+    versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+      edges {
+        node {
+          title
+          documentType
         }
       }
     }
-    reportFile {
-      id
-      fileName
+    compliancePortalDocument(compliancePortalId: $compliancePortalId) {
+      visibility
     }
-    audit {
-      framework {
-        name
-      }
-    }
-    compliancePortalFile {
+    compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
       id
-      name
-      category
+      status
     }
   }
 `;
 
-export function documentAccessInfoFrom(
-  fragmentRef: documentAccessInfo_documentAccess$key,
+export const documentAccessInfoAuditFragment = graphql`
+  fragment documentAccessInfo_audit on Audit
+  @inline
+  @argumentDefinitions(
+    compliancePortalId: { type: "ID!" }
+    accessId: { type: "ID!" }
+  ) {
+    reportFile {
+      id
+      fileName
+    }
+    framework {
+      name
+    }
+    compliancePortalAudit(compliancePortalId: $compliancePortalId) {
+      visibility
+    }
+    compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
+      id
+      status
+    }
+  }
+`;
+
+export const documentAccessInfoFileFragment = graphql`
+  fragment documentAccessInfo_file on CompliancePortalFile
+  @inline
+  @argumentDefinitions(accessId: { type: "ID!" }) {
+    id
+    name
+    category
+    compliancePortalVisibility
+    compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
+      id
+      status
+    }
+  }
+`;
+
+export function documentAccessInfoFromDocument(
+  fragmentRef: documentAccessInfo_document$key,
   t: (key: string) => string,
-): CompliancePortalDocumentAccessInfo {
-  const node = readInlineData(documentAccessInfoFragment, fragmentRef);
-  return toDocumentAccessInfo(node, t);
+): CompliancePortalDocumentAccessInfo | null {
+  const node = readInlineData(documentAccessInfoDocumentFragment, fragmentRef);
+  if (node.compliancePortalDocument?.visibility !== "RESTRICTED") {
+    return null;
+  }
+
+  return {
+    variant: "info",
+    type: "document",
+    name: node.versions?.edges[0]?.node.title ?? "",
+    typeLabel: t("documentAccessList.types.document"),
+    category: node.versions?.edges[0]?.node.documentType ?? "",
+    id: node.id,
+    status: node.compliancePortalDocumentAccess?.status ?? null,
+  };
 }
 
-function toDocumentAccessInfo(
-  node: documentAccessInfo_documentAccess$data,
+export function documentAccessInfoFromAudit(
+  fragmentRef: documentAccessInfo_audit$key,
   t: (key: string) => string,
-): CompliancePortalDocumentAccessInfo {
-  if (node.document) {
-    return {
-      persisted: node.id !== node.document.id,
-      variant: "info",
-      name: node.document.versions?.edges[0]?.node.title ?? "",
-      type: "document",
-      typeLabel: t("documentAccessList.types.document"),
-      category: node.document.versions?.edges[0]?.node.documentType ?? "",
-      id: node.document.id,
-      status: node.status,
-    };
+): CompliancePortalDocumentAccessInfo | null {
+  const node = readInlineData(documentAccessInfoAuditFragment, fragmentRef);
+  if (node.compliancePortalAudit?.visibility !== "RESTRICTED" || node.reportFile == null) {
+    return null;
   }
-  if (node.reportFile) {
-    return {
-      persisted: node.id !== node.reportFile.id,
-      variant: "success",
-      name: node.reportFile.fileName,
-      type: "report",
-      typeLabel: t("documentAccessList.types.report"),
-      category: node.audit?.framework?.name ?? "",
-      id: node.reportFile.id,
-      status: node.status,
-    };
+
+  return {
+    variant: "success",
+    type: "report",
+    name: node.reportFile.fileName,
+    typeLabel: t("documentAccessList.types.report"),
+    category: node.framework?.name ?? "",
+    id: node.reportFile.id,
+    status: node.compliancePortalDocumentAccess?.status ?? null,
+  };
+}
+
+export function documentAccessInfoFromFile(
+  fragmentRef: documentAccessInfo_file$key,
+  t: (key: string) => string,
+): CompliancePortalDocumentAccessInfo | null {
+  const node = readInlineData(documentAccessInfoFileFragment, fragmentRef);
+  if (
+    node.compliancePortalVisibility !== "RESTRICTED"
+    && node.compliancePortalVisibility !== "NONE"
+  ) {
+    return null;
   }
-  if (node.compliancePortalFile) {
-    return {
-      persisted: node.id !== node.compliancePortalFile.id,
-      variant: "highlight",
-      name: node.compliancePortalFile.name,
-      type: "file",
-      typeLabel: t("documentAccessList.types.file"),
-      category: node.compliancePortalFile.category,
-      id: node.compliancePortalFile.id,
-      status: node.status,
-    };
-  }
-  throw new Error("Unknown compliance page access document type");
+
+  return {
+    variant: "highlight",
+    type: "file",
+    name: node.name,
+    typeLabel: t("documentAccessList.types.file"),
+    category: node.category,
+    id: node.id,
+    status: node.compliancePortalDocumentAccess?.status ?? null,
+  };
 }
 
 export function documentAccessKey(item: CompliancePortalDocumentAccessInfo): string {
@@ -130,7 +173,7 @@ export function documentAccessStatusColor(
 }
 
 export function rejectOrRevokeStatus(
-  status: CompliancePortalDocumentAccessStatus,
+  status: CompliancePortalDocumentAccessStatus | null,
 ): "REJECTED" | "REVOKED" {
   return status === "GRANTED" ? "REVOKED" : "REJECTED";
 }
@@ -144,6 +187,10 @@ export function updateAccessInput(
   const compliancePortalFiles: { id: string; status: CompliancePortalDocumentAccessStatus }[] = [];
 
   for (const update of updates) {
+    if (update.status == null) {
+      continue;
+    }
+
     const item = { id: update.id, status: update.status };
     switch (update.type) {
       case "document":

@@ -57,7 +57,6 @@ export function CompliancePortalDocumentAccessListItem({
   const { t } = useTranslation("organizations/compliance-portals");
   const { t: tRoot } = useTranslation();
   const { titleRow, title, meta, badge, trailing } = documentAccessList();
-  const showStatus = documentAccess.persisted || documentAccess.status !== "REQUESTED";
   const showGrant = canUpdate && documentAccess.status !== "GRANTED";
   const showRejectOrRevoke = canUpdate
     && documentAccess.status !== "REJECTED"
@@ -82,7 +81,7 @@ export function CompliancePortalDocumentAccessListItem({
           <Text size={2} weight="medium" color="neutral" highContrast className={title()}>
             {documentAccess.name}
           </Text>
-          {showStatus && (
+          {documentAccess.status != null && (
             <Badge
               size={1}
               variant="soft"

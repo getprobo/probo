@@ -48,12 +48,11 @@ export function getCompliancePortalDocumentAccessStatusLabel(status: ComplianceP
 interface ICompliancePortalDocumentAccessInfo {
   variant: string;
   type: string;
-  persisted: boolean;
   name: string,
   typeLabel: string,
   category: string;
   id: string;
-  status: CompliancePortalDocumentAccessStatus;
+  status: CompliancePortalDocumentAccessStatus | null;
 }
 
 export type CompliancePortalDocumentAccessInfo = ICompliancePortalDocumentAccessInfo & (

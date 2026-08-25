@@ -79,27 +79,48 @@ type (
 		ThirdPartyID       gid.GID
 	}
 
+	CompliancePortalDocumentAccessByDocumentKey struct {
+		TenantID                 gid.TenantID
+		CompliancePortalAccessID gid.GID
+		DocumentID               gid.GID
+	}
+
+	CompliancePortalDocumentAccessByReportFileKey struct {
+		TenantID                 gid.TenantID
+		CompliancePortalAccessID gid.GID
+		ReportFileID             gid.GID
+	}
+
+	CompliancePortalDocumentAccessByFileKey struct {
+		TenantID                 gid.TenantID
+		CompliancePortalAccessID gid.GID
+		CompliancePortalFileID   gid.GID
+	}
+
 	Loaders struct {
-		Organization               *dataloadgen.Loader[gid.GID, *coredata.Organization]
-		Framework                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
-		Control                    *dataloadgen.Loader[gid.GID, *coredata.Control]
-		ThirdParty                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
-		Document                   *dataloadgen.Loader[gid.GID, *coredata.Document]
-		Profile                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
-		Risk                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
-		TreatmentProgress          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
-		Measure                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
-		Task                       *dataloadgen.Loader[gid.GID, *coredata.Task]
-		File                       *dataloadgen.Loader[gid.GID, *coredata.File]
-		CookieBanner               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
-		CookieCategory             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
-		CommonTrackerPattern       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
-		CommonThirdParty           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
-		ThirdPartyAdministratorIDs *dataloadgen.Loader[gid.GID, []gid.GID]
-		CompliancePortalDocument   *dataloadgen.Loader[CompliancePortalDocumentKey, *coredata.CompliancePortalDocument]
-		CompliancePortalAudit      *dataloadgen.Loader[CompliancePortalAuditKey, *coredata.CompliancePortalAudit]
-		CompliancePortalThirdParty *dataloadgen.Loader[CompliancePortalThirdPartyKey, *coredata.CompliancePortalThirdParty]
-		Authorize                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
+		Organization                               *dataloadgen.Loader[gid.GID, *coredata.Organization]
+		Framework                                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
+		Control                                    *dataloadgen.Loader[gid.GID, *coredata.Control]
+		ThirdParty                                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
+		Document                                   *dataloadgen.Loader[gid.GID, *coredata.Document]
+		Profile                                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
+		Risk                                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
+		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
+		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
+		Task                                       *dataloadgen.Loader[gid.GID, *coredata.Task]
+		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
+		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
+		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
+		CommonTrackerPattern                       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
+		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
+		ThirdPartyAdministratorIDs                 *dataloadgen.Loader[gid.GID, []gid.GID]
+		CompliancePortalDocument                   *dataloadgen.Loader[CompliancePortalDocumentKey, *coredata.CompliancePortalDocument]
+		CompliancePortalAudit                      *dataloadgen.Loader[CompliancePortalAuditKey, *coredata.CompliancePortalAudit]
+		CompliancePortalThirdParty                 *dataloadgen.Loader[CompliancePortalThirdPartyKey, *coredata.CompliancePortalThirdParty]
+		CompliancePortalDocumentAccessByDocument   *dataloadgen.Loader[CompliancePortalDocumentAccessByDocumentKey, *coredata.CompliancePortalDocumentAccess]
+		CompliancePortalDocumentAccessByReportFile *dataloadgen.Loader[CompliancePortalDocumentAccessByReportFileKey, *coredata.CompliancePortalDocumentAccess]
+		CompliancePortalDocumentAccessByFile       *dataloadgen.Loader[CompliancePortalDocumentAccessByFileKey, *coredata.CompliancePortalDocumentAccess]
+		Authorize                                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 	}
 
 	batchFetcher struct {
@@ -147,25 +168,28 @@ func NewMiddleware(
 
 func (f *batchFetcher) newLoaders() *Loaders {
 	return &Loaders{
-		Organization:               dataloadgen.NewMappedLoader(f.fetchOrganizations),
-		Framework:                  dataloadgen.NewMappedLoader(f.fetchFrameworks),
-		Control:                    dataloadgen.NewMappedLoader(f.fetchControls),
-		ThirdParty:                 dataloadgen.NewMappedLoader(f.fetchThirdParties),
-		Document:                   dataloadgen.NewMappedLoader(f.fetchDocuments),
-		Profile:                    dataloadgen.NewMappedLoader(f.fetchProfiles),
-		Risk:                       dataloadgen.NewMappedLoader(f.fetchRisks),
-		TreatmentProgress:          dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
-		Measure:                    dataloadgen.NewMappedLoader(f.fetchMeasures),
-		Task:                       dataloadgen.NewMappedLoader(f.fetchTasks),
-		File:                       dataloadgen.NewMappedLoader(f.fetchFiles),
-		CookieBanner:               dataloadgen.NewMappedLoader(f.fetchCookieBanners),
-		CookieCategory:             dataloadgen.NewMappedLoader(f.fetchCookieCategories),
-		CommonTrackerPattern:       dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
-		CommonThirdParty:           dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
-		ThirdPartyAdministratorIDs: dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
-		CompliancePortalDocument:   dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocuments),
-		CompliancePortalAudit:      dataloadgen.NewMappedLoader(f.fetchCompliancePortalAudits),
-		CompliancePortalThirdParty: dataloadgen.NewMappedLoader(f.fetchCompliancePortalThirdParties),
+		Organization:                             dataloadgen.NewMappedLoader(f.fetchOrganizations),
+		Framework:                                dataloadgen.NewMappedLoader(f.fetchFrameworks),
+		Control:                                  dataloadgen.NewMappedLoader(f.fetchControls),
+		ThirdParty:                               dataloadgen.NewMappedLoader(f.fetchThirdParties),
+		Document:                                 dataloadgen.NewMappedLoader(f.fetchDocuments),
+		Profile:                                  dataloadgen.NewMappedLoader(f.fetchProfiles),
+		Risk:                                     dataloadgen.NewMappedLoader(f.fetchRisks),
+		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
+		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
+		Task:                                     dataloadgen.NewMappedLoader(f.fetchTasks),
+		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
+		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
+		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
+		CommonTrackerPattern:                     dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
+		CommonThirdParty:                         dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
+		ThirdPartyAdministratorIDs:               dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
+		CompliancePortalDocument:                 dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocuments),
+		CompliancePortalAudit:                    dataloadgen.NewMappedLoader(f.fetchCompliancePortalAudits),
+		CompliancePortalThirdParty:               dataloadgen.NewMappedLoader(f.fetchCompliancePortalThirdParties),
+		CompliancePortalDocumentAccessByDocument: dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentAccessesByDocument),
+		CompliancePortalDocumentAccessByReportFile: dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentAccessesByReportFile),
+		CompliancePortalDocumentAccessByFile:       dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentAccessesByFile),
 		Authorize: dataloadgen.NewMappedLoader(
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
@@ -303,6 +327,150 @@ func (f *batchFetcher) fetchCompliancePortalThirdParties(
 				CompliancePortalID: group.compliancePortalID,
 				ThirdPartyID:       link.ThirdPartyID,
 			}] = link
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByDocument(
+	ctx context.Context,
+	keys []CompliancePortalDocumentAccessByDocumentKey,
+) (map[CompliancePortalDocumentAccessByDocumentKey]*coredata.CompliancePortalDocumentAccess, error) {
+	type groupKey struct {
+		tenantID                 gid.TenantID
+		compliancePortalAccessID gid.GID
+	}
+
+	documentIDsByGroup := make(map[groupKey][]gid.GID)
+
+	for _, key := range keys {
+		group := groupKey{
+			tenantID:                 key.TenantID,
+			compliancePortalAccessID: key.CompliancePortalAccessID,
+		}
+		documentIDsByGroup[group] = append(documentIDsByGroup[group], key.DocumentID)
+	}
+
+	result := make(map[CompliancePortalDocumentAccessByDocumentKey]*coredata.CompliancePortalDocumentAccess, len(keys))
+
+	for group, documentIDs := range documentIDsByGroup {
+		accesses, err := f.compliancePortal.GetDocumentAccessesByDocumentIDs(
+			ctx,
+			coredata.NewScope(group.tenantID),
+			group.compliancePortalAccessID,
+			documentIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load document accesses: %w", err)
+		}
+
+		for _, access := range accesses {
+			if access.DocumentID == nil {
+				continue
+			}
+
+			result[CompliancePortalDocumentAccessByDocumentKey{
+				TenantID:                 group.tenantID,
+				CompliancePortalAccessID: group.compliancePortalAccessID,
+				DocumentID:               *access.DocumentID,
+			}] = access
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByReportFile(
+	ctx context.Context,
+	keys []CompliancePortalDocumentAccessByReportFileKey,
+) (map[CompliancePortalDocumentAccessByReportFileKey]*coredata.CompliancePortalDocumentAccess, error) {
+	type groupKey struct {
+		tenantID                 gid.TenantID
+		compliancePortalAccessID gid.GID
+	}
+
+	reportFileIDsByGroup := make(map[groupKey][]gid.GID)
+
+	for _, key := range keys {
+		group := groupKey{
+			tenantID:                 key.TenantID,
+			compliancePortalAccessID: key.CompliancePortalAccessID,
+		}
+		reportFileIDsByGroup[group] = append(reportFileIDsByGroup[group], key.ReportFileID)
+	}
+
+	result := make(map[CompliancePortalDocumentAccessByReportFileKey]*coredata.CompliancePortalDocumentAccess, len(keys))
+
+	for group, reportFileIDs := range reportFileIDsByGroup {
+		accesses, err := f.compliancePortal.GetDocumentAccessesByReportFileIDs(
+			ctx,
+			coredata.NewScope(group.tenantID),
+			group.compliancePortalAccessID,
+			reportFileIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load report file accesses: %w", err)
+		}
+
+		for _, access := range accesses {
+			if access.ReportFileID == nil {
+				continue
+			}
+
+			result[CompliancePortalDocumentAccessByReportFileKey{
+				TenantID:                 group.tenantID,
+				CompliancePortalAccessID: group.compliancePortalAccessID,
+				ReportFileID:             *access.ReportFileID,
+			}] = access
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByFile(
+	ctx context.Context,
+	keys []CompliancePortalDocumentAccessByFileKey,
+) (map[CompliancePortalDocumentAccessByFileKey]*coredata.CompliancePortalDocumentAccess, error) {
+	type groupKey struct {
+		tenantID                 gid.TenantID
+		compliancePortalAccessID gid.GID
+	}
+
+	fileIDsByGroup := make(map[groupKey][]gid.GID)
+
+	for _, key := range keys {
+		group := groupKey{
+			tenantID:                 key.TenantID,
+			compliancePortalAccessID: key.CompliancePortalAccessID,
+		}
+		fileIDsByGroup[group] = append(fileIDsByGroup[group], key.CompliancePortalFileID)
+	}
+
+	result := make(map[CompliancePortalDocumentAccessByFileKey]*coredata.CompliancePortalDocumentAccess, len(keys))
+
+	for group, fileIDs := range fileIDsByGroup {
+		accesses, err := f.compliancePortal.GetDocumentAccessesByCompliancePortalFileIDs(
+			ctx,
+			coredata.NewScope(group.tenantID),
+			group.compliancePortalAccessID,
+			fileIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal file accesses: %w", err)
+		}
+
+		for _, access := range accesses {
+			if access.CompliancePortalFileID == nil {
+				continue
+			}
+
+			result[CompliancePortalDocumentAccessByFileKey{
+				TenantID:                 group.tenantID,
+				CompliancePortalAccessID: group.compliancePortalAccessID,
+				CompliancePortalFileID:   *access.CompliancePortalFileID,
+			}] = access
 		}
 	}
 

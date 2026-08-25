@@ -90,6 +90,34 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 	return types.NewCompliancePortalDocument(link), nil
 }
 
+// CompliancePortalDocumentAccess is the resolver for the compliancePortalDocumentAccess field.
+func (r *documentResolver) CompliancePortalDocumentAccess(ctx context.Context, obj *types.Document, compliancePortalAccessID gid.GID) (*types.CompliancePortalDocumentAccess, error) {
+	scope, err := r.authorize(ctx, compliancePortalAccessID, management.ActionCompliancePortalAccessGet)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := dataloader.FromContext(ctx).CompliancePortalDocumentAccessByDocument.Load(
+		ctx,
+		dataloader.CompliancePortalDocumentAccessByDocumentKey{
+			TenantID:                 scope.GetTenantID(),
+			CompliancePortalAccessID: compliancePortalAccessID,
+			DocumentID:               obj.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalDocumentAccess(access), nil
+}
+
 // Versions is the resolver for the versions field.
 func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionList)

@@ -122,6 +122,38 @@ func (r *auditResolver) CompliancePortalAudit(ctx context.Context, obj *types.Au
 	return types.NewCompliancePortalAudit(link), nil
 }
 
+// CompliancePortalDocumentAccess is the resolver for the compliancePortalDocumentAccess field.
+func (r *auditResolver) CompliancePortalDocumentAccess(ctx context.Context, obj *types.Audit, compliancePortalAccessID gid.GID) (*types.CompliancePortalDocumentAccess, error) {
+	if obj.ReportFile == nil {
+		return nil, nil
+	}
+
+	scope, err := r.authorize(ctx, compliancePortalAccessID, management.ActionCompliancePortalAccessGet)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := dataloader.FromContext(ctx).CompliancePortalDocumentAccessByReportFile.Load(
+		ctx,
+		dataloader.CompliancePortalDocumentAccessByReportFileKey{
+			TenantID:                 scope.GetTenantID(),
+			CompliancePortalAccessID: compliancePortalAccessID,
+			ReportFileID:             obj.ReportFile.ID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalDocumentAccess(access), nil
+}
+
 // Controls is the resolver for the controls field.
 func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)

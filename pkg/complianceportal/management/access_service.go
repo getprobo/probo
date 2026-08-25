@@ -134,27 +134,6 @@ func (s *Service) ListAccesses(
 	return page.NewPage(accesses, cursor), nil
 }
 
-func (s *Service) ListAvailableDocumentAccesses(
-	ctx context.Context,
-	scope coredata.Scoper,
-	compliancePortalAccessID gid.GID,
-	cursor *page.Cursor[coredata.CompliancePortalDocumentAccessOrderField],
-) (*page.Page[*coredata.CompliancePortalDocumentAccess, coredata.CompliancePortalDocumentAccessOrderField], error) {
-	var documentAccesses coredata.CompliancePortalDocumentAccesses
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return documentAccesses.LoadAvailableByCompliancePortalAccessID(ctx, conn, scope, compliancePortalAccessID, cursor)
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(documentAccesses, cursor), nil
-}
-
 func (s *Service) GetAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -173,6 +152,107 @@ func (s *Service) GetAccess(
 	}
 
 	return &access, nil
+}
+
+func (s *Service) GetDocumentAccess(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentAccessID gid.GID,
+) (*coredata.CompliancePortalDocumentAccess, error) {
+	var documentAccess coredata.CompliancePortalDocumentAccess
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentAccess.LoadByID(ctx, conn, scope, documentAccessID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &documentAccess, nil
+}
+
+func (s *Service) GetDocumentAccessesByDocumentIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalAccessID gid.GID,
+	documentIDs []gid.GID,
+) (coredata.CompliancePortalDocumentAccesses, error) {
+	var documentAccesses coredata.CompliancePortalDocumentAccesses
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentAccesses.LoadByCompliancePortalAccessIDAndDocumentIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalAccessID,
+				documentIDs,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load document accesses: %w", err)
+	}
+
+	return documentAccesses, nil
+}
+
+func (s *Service) GetDocumentAccessesByReportFileIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalAccessID gid.GID,
+	reportFileIDs []gid.GID,
+) (coredata.CompliancePortalDocumentAccesses, error) {
+	var documentAccesses coredata.CompliancePortalDocumentAccesses
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentAccesses.LoadByCompliancePortalAccessIDAndReportFileIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalAccessID,
+				reportFileIDs,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load report file accesses: %w", err)
+	}
+
+	return documentAccesses, nil
+}
+
+func (s *Service) GetDocumentAccessesByCompliancePortalFileIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalAccessID gid.GID,
+	compliancePortalFileIDs []gid.GID,
+) (coredata.CompliancePortalDocumentAccesses, error) {
+	var documentAccesses coredata.CompliancePortalDocumentAccesses
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentAccesses.LoadByCompliancePortalAccessIDAndCompliancePortalFileIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalAccessID,
+				compliancePortalFileIDs,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load compliance portal file accesses: %w", err)
+	}
+
+	return documentAccesses, nil
 }
 
 func (s *Service) CountDocumentAccesses(
@@ -283,11 +363,11 @@ func (s *Service) UpdateAccess(
 			var tcdas coredata.CompliancePortalDocumentAccesses
 
 			if len(req.DocumentAccesses) > 0 {
-				var documentData []coredata.MergeCompliancePortalDocumentAccessesData
+				var documentData []coredata.UpsertCompliancePortalDocumentAccessesData
 
 				documentIDs := make([]gid.GID, 0, len(req.DocumentAccesses))
 				for _, d := range req.DocumentAccesses {
-					documentData = append(documentData, coredata.MergeCompliancePortalDocumentAccessesData{
+					documentData = append(documentData, coredata.UpsertCompliancePortalDocumentAccessesData{
 						ID:     d.ID,
 						Status: d.Status,
 					})
@@ -312,17 +392,17 @@ func (s *Service) UpdateAccess(
 					return err
 				}
 
-				if err := tcdas.MergeDocumentAccesses(ctx, tx, scope, access.OrganizationID, access.ID, documentData); err != nil {
-					return fmt.Errorf("cannot merge document accesses: %w", err)
+				if err := tcdas.UpsertDocumentAccesses(ctx, tx, scope, access.OrganizationID, access.ID, documentData); err != nil {
+					return fmt.Errorf("cannot upsert document accesses: %w", err)
 				}
 			}
 
 			if len(req.ReportAccesses) > 0 {
-				var reportData []coredata.MergeCompliancePortalDocumentAccessesData
+				var reportData []coredata.UpsertCompliancePortalDocumentAccessesData
 
 				reportIDs := make([]gid.GID, 0, len(req.ReportAccesses))
 				for _, d := range req.ReportAccesses {
-					reportData = append(reportData, coredata.MergeCompliancePortalDocumentAccessesData{
+					reportData = append(reportData, coredata.UpsertCompliancePortalDocumentAccessesData{
 						ID:     d.ID,
 						Status: d.Status,
 					})
@@ -347,17 +427,17 @@ func (s *Service) UpdateAccess(
 					return err
 				}
 
-				if err := tcdas.MergeReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
-					return fmt.Errorf("cannot merge report accesses: %w", err)
+				if err := tcdas.UpsertReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
+					return fmt.Errorf("cannot upsert report accesses: %w", err)
 				}
 			}
 
 			if len(req.CompliancePortalFileAccesses) > 0 {
-				var fileData []coredata.MergeCompliancePortalDocumentAccessesData
+				var fileData []coredata.UpsertCompliancePortalDocumentAccessesData
 
 				compliancePortalFileIDs := make([]gid.GID, 0, len(req.CompliancePortalFileAccesses))
 				for _, d := range req.CompliancePortalFileAccesses {
-					fileData = append(fileData, coredata.MergeCompliancePortalDocumentAccessesData{
+					fileData = append(fileData, coredata.UpsertCompliancePortalDocumentAccessesData{
 						ID:     d.ID,
 						Status: d.Status,
 					})
@@ -382,8 +462,8 @@ func (s *Service) UpdateAccess(
 					return err
 				}
 
-				if err := tcdas.MergeCompliancePortalFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, fileData); err != nil {
-					return fmt.Errorf("cannot merge compliance page file accesses: %w", err)
+				if err := tcdas.UpsertCompliancePortalFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, fileData); err != nil {
+					return fmt.Errorf("cannot upsert compliance page file accesses: %w", err)
 				}
 			}
 

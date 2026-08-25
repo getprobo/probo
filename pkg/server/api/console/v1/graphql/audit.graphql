@@ -166,6 +166,9 @@ type Audit implements Node {
     compliancePortalAudit(
         compliancePortalId: ID!
     ): CompliancePortalAudit @goField(forceResolver: true)
+    compliancePortalDocumentAccess(
+        compliancePortalAccessId: ID!
+    ): CompliancePortalDocumentAccess @goField(forceResolver: true)
 
     controls(
         first: Int

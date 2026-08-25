@@ -86,16 +86,6 @@ enum CompliancePortalAccessState
         )
 }
 
-enum CompliancePortalDocumentAccessOrderField
-    @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessOrderField"
-    ) {
-    CREATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalDocumentAccessOrderFieldCreatedAt"
-        )
-}
-
 enum CompliancePortalReferenceOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CompliancePortalReferenceOrderField"
@@ -284,14 +274,6 @@ input CompliancePortalAccessOrder
     ) {
     direction: OrderDirection!
     field: CompliancePortalAccessOrderField!
-}
-
-input CompliancePortalDocumentAccessOrder
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentAccessOrderBy"
-    ) {
-    direction: OrderDirection!
-    field: CompliancePortalDocumentAccessOrderField!
 }
 
 input CompliancePortalReferenceOrder
@@ -489,38 +471,16 @@ type CompliancePortalAccess implements Node {
 
     profile: Profile! @goField(forceResolver: true)
 
-    availableDocumentAccesses(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: CompliancePortalDocumentAccessOrder
-    ): CompliancePortalDocumentAccessConnection! @goField(forceResolver: true)
-
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type CompliancePortalDocumentAccess {
+type CompliancePortalDocumentAccess implements Node {
     id: ID!
     status: CompliancePortalDocumentAccessStatus!
     document: Document @goField(forceResolver: true)
     reportFile: File @goField(forceResolver: true)
     audit: Audit @goField(forceResolver: true)
     compliancePortalFile: CompliancePortalFile @goField(forceResolver: true)
-}
-
-type CompliancePortalDocumentAccessConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalDocumentAccessConnection"
-    ) {
-    totalCount: Int! @goField(forceResolver: true)
-    edges: [CompliancePortalDocumentAccessEdge!]!
-    pageInfo: PageInfo!
-}
-
-type CompliancePortalDocumentAccessEdge {
-    cursor: CursorKey!
-    node: CompliancePortalDocumentAccess!
 }
 
 type CompliancePortalAccessConnection {
@@ -676,6 +636,9 @@ type CompliancePortalFile implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
+    compliancePortalDocumentAccess(
+        compliancePortalAccessId: ID!
+    ): CompliancePortalDocumentAccess @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -1095,6 +1058,9 @@ type UpdateCompliancePortalBrandPayload {
 
 type UpdateCompliancePortalAccessPayload {
     compliancePortalAccess: CompliancePortalAccess!
+    documents: [Document!]!
+    audits: [Audit!]!
+    compliancePortalFiles: [CompliancePortalFile!]!
 }
 
 type DeleteCompliancePortalAccessPayload {

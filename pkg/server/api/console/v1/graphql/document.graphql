@@ -274,6 +274,9 @@ type Document implements Node {
     compliancePortalDocument(
         compliancePortalId: ID!
     ): CompliancePortalDocument @goField(forceResolver: true)
+    compliancePortalDocumentAccess(
+        compliancePortalAccessId: ID!
+    ): CompliancePortalDocumentAccess @goField(forceResolver: true)
 
     versions(
         first: Int

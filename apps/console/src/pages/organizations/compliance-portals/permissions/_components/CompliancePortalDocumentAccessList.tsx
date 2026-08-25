@@ -29,10 +29,13 @@ import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePortalDocumentAccessList_access$key } from "#/__generated__/core/CompliancePortalDocumentAccessList_access.graphql";
+import type { CompliancePortalDocumentAccessList_compliancePortal$key } from "#/__generated__/core/CompliancePortalDocumentAccessList_compliancePortal.graphql";
+import type { CompliancePortalDocumentAccessList_organization$key } from "#/__generated__/core/CompliancePortalDocumentAccessList_organization.graphql";
 
 import {
-  documentAccessInfoFrom,
+  documentAccessInfoFromAudit,
+  documentAccessInfoFromDocument,
+  documentAccessInfoFromFile,
   documentAccessKey,
   updateAccessInput,
 } from "../_lib/documentAccessInfo";
@@ -42,16 +45,41 @@ import { documentAccessList } from "../variants";
 import { CompliancePortalDocumentAccessListItem } from "./CompliancePortalDocumentAccessListItem";
 import { CompliancePortalDocumentAccessSelectionBar } from "./CompliancePortalDocumentAccessSelectionBar";
 
-const fragment = graphql`
-  fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess {
-    id
-    availableDocumentAccesses(
+const organizationFragment = graphql`
+  fragment CompliancePortalDocumentAccessList_organization on Organization
+  @argumentDefinitions(
+    compliancePortalId: { type: "ID!" }
+    accessId: { type: "ID!" }
+  ) {
+    documents(
       first: 100
-      orderBy: { field: CREATED_AT, direction: DESC }
+      filter: { status: [ACTIVE], published: true }
     ) {
       edges {
         node {
-          ...documentAccessInfo_documentAccess
+          ...documentAccessInfo_document
+            @arguments(compliancePortalId: $compliancePortalId, accessId: $accessId)
+        }
+      }
+    }
+    audits(first: 100) {
+      edges {
+        node {
+          ...documentAccessInfo_audit
+            @arguments(compliancePortalId: $compliancePortalId, accessId: $accessId)
+        }
+      }
+    }
+  }
+`;
+
+const compliancePortalFragment = graphql`
+  fragment CompliancePortalDocumentAccessList_compliancePortal on CompliancePortal
+  @argumentDefinitions(accessId: { type: "ID!" }) {
+    compliancePortalFiles(first: 100) {
+      edges {
+        node {
+          ...documentAccessInfo_file @arguments(accessId: $accessId)
         }
       }
     }
@@ -59,27 +87,46 @@ const fragment = graphql`
 `;
 
 interface CompliancePortalDocumentAccessListProps {
-  accessKey: CompliancePortalDocumentAccessList_access$key;
+  organizationKey: CompliancePortalDocumentAccessList_organization$key;
+  compliancePortalKey: CompliancePortalDocumentAccessList_compliancePortal$key;
+  accessId: string;
   canUpdate: boolean;
 }
 
 export function CompliancePortalDocumentAccessList({
-  accessKey,
+  organizationKey,
+  compliancePortalKey,
+  accessId,
   canUpdate,
 }: CompliancePortalDocumentAccessListProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const { root, heading } = documentAccessList();
-  const access = useFragment(fragment, accessKey);
-  const documentAccesses = access.availableDocumentAccesses.edges.map(edge =>
-    documentAccessInfoFrom(edge.node, t),
-  );
+  const organization = useFragment(organizationFragment, organizationKey);
+  const compliancePortal = useFragment(compliancePortalFragment, compliancePortalKey);
+  const documentAccesses = [
+    ...organization.documents.edges.flatMap((edge) => {
+      const item = documentAccessInfoFromDocument(edge.node, t);
+      return item == null ? [] : [item];
+    }),
+    ...organization.audits.edges.flatMap((edge) => {
+      const item = documentAccessInfoFromAudit(edge.node, t);
+      return item == null ? [] : [item];
+    }),
+    ...compliancePortal.compliancePortalFiles.edges.flatMap((edge) => {
+      const item = documentAccessInfoFromFile(edge.node, t);
+      return item == null ? [] : [item];
+    }),
+  ];
   const [updateAccess, isUpdating] = useUpdateCompliancePortalAccess();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const selectedItems = documentAccesses.filter(item => selectedIds.has(documentAccessKey(item)));
 
   async function commit(updates: CompliancePortalDocumentAccessInfo[]) {
     await updateAccess({
-      variables: { input: updateAccessInput(access.id, updates) },
+      variables: {
+        accessId,
+        input: updateAccessInput(accessId, updates),
+      },
     });
   }
 

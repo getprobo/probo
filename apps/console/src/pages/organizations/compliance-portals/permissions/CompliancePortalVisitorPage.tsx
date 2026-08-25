@@ -34,10 +34,15 @@ import { ElectronicSignatureSection } from "./_components/ElectronicSignatureSec
 import { visitorPage } from "./variants";
 
 export const compliancePortalVisitorPageQuery = graphql`
-  query CompliancePortalVisitorPageQuery($accessId: ID!) {
-    node(id: $accessId) {
+  query CompliancePortalVisitorPageQuery(
+    $organizationId: ID!
+    $compliancePortalId: ID!
+    $accessId: ID!
+  ) {
+    access: node(id: $accessId) {
       __typename
       ... on CompliancePortalAccess {
+        id
         createdAt
         canGet: permission(action: "compliance-portal:portal-access:get")
         canUpdate: permission(action: "compliance-portal:portal-access:update")
@@ -49,7 +54,20 @@ export const compliancePortalVisitorPageQuery = graphql`
         ndaSignature {
           ...ElectronicSignatureSectionFragment
         }
-        ...CompliancePortalDocumentAccessList_access
+      }
+    }
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        ...CompliancePortalDocumentAccessList_organization
+          @arguments(compliancePortalId: $compliancePortalId, accessId: $accessId)
+      }
+    }
+    compliancePortal: node(id: $compliancePortalId) {
+      __typename
+      ... on CompliancePortal {
+        ...CompliancePortalDocumentAccessList_compliancePortal
+          @arguments(accessId: $accessId)
       }
     }
   }
@@ -62,16 +80,22 @@ interface CompliancePortalVisitorPageProps {
 export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisitorPageProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const { root, back, hero } = visitorPage();
-  const { node } = usePreloadedQuery<CompliancePortalVisitorPageQuery>(
+  const data = usePreloadedQuery<CompliancePortalVisitorPageQuery>(
     compliancePortalVisitorPageQuery,
     queryRef,
   );
-  if (node?.__typename !== "CompliancePortalAccess" || !node.canGet) {
+  if (data.access?.__typename !== "CompliancePortalAccess" || !data.access.canGet) {
     throw new NotFoundError("Visitor not found");
   }
+  if (data.organization?.__typename !== "Organization") {
+    throw new NotFoundError("Organization not found");
+  }
+  if (data.compliancePortal?.__typename !== "CompliancePortal") {
+    throw new NotFoundError("Compliance portal not found");
+  }
 
-  const canUpdate = node.canUpdate && node.profile.state === "ACTIVE";
-  usePageTitle(node.profile.fullName);
+  const canUpdate = data.access.canUpdate && data.access.profile.state === "ACTIVE";
+  usePageTitle(data.access.profile.fullName);
 
   return (
     <div className={root()}>
@@ -80,16 +104,18 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
       </Link>
       <div className={hero()}>
         <CompliancePortalVisitorProfileCard
-          fullName={node.profile.fullName}
-          emailAddress={node.profile.emailAddress}
-          createdAt={node.createdAt}
+          fullName={data.access.profile.fullName}
+          emailAddress={data.access.profile.emailAddress}
+          createdAt={data.access.createdAt}
         />
-        {node.ndaSignature != null && (
-          <ElectronicSignatureSection fragmentRef={node.ndaSignature} />
+        {data.access.ndaSignature != null && (
+          <ElectronicSignatureSection fragmentRef={data.access.ndaSignature} />
         )}
       </div>
       <CompliancePortalDocumentAccessList
-        accessKey={node}
+        organizationKey={data.organization}
+        compliancePortalKey={data.compliancePortal}
+        accessId={data.access.id}
         canUpdate={canUpdate}
       />
     </div>
