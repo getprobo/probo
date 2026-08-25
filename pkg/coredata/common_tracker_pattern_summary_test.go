@@ -88,6 +88,7 @@ func TestLoadSummariesGroupedByCommonThirdPartyID(t *testing.T) {
 		var patterns coredata.CommonTrackerPatterns
 
 		var err error
+
 		byParty, err = patterns.LoadSummariesGroupedByCommonThirdPartyID(ctx, conn)
 
 		return err

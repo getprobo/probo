@@ -40,6 +40,7 @@ func NewTrackerPatternWithAttribution(
 	}
 
 	var mapped *TrackerPatternAttribution
+
 	if attribution != nil {
 		value := TrackerPatternAttribution(*attribution)
 		mapped = &value
@@ -78,6 +79,7 @@ func AttributionByOrgPatternID(
 	}
 
 	out := make(map[gid.GID]coredata.CommonTrackerPatternAttribution)
+
 	for _, pattern := range patterns {
 		if pattern.CommonTrackerPatternID == nil {
 			continue

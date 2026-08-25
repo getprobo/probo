@@ -83,10 +83,12 @@ func TestPruneSkipsReviewedRows(t *testing.T) {
 	// LoadAllUnreferencedIDs is what prune selects from; all three qualify,
 	// so the review check is the only thing that can separate them.
 	var ids []gid.GID
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var parties coredata.CommonThirdParties
 
 		var err error
+
 		ids, err = parties.LoadAllUnreferencedIDs(ctx, conn, time.Now().Add(-24*time.Hour), false)
 
 		return err

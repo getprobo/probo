@@ -184,6 +184,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 					var patterns coredata.CommonTrackerPatterns
 
 					var err error
+
 					byParty, err = patterns.LoadSummariesGroupedByCommonThirdPartyID(ctx, conn)
 
 					return err

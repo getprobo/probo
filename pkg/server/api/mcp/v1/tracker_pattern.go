@@ -34,6 +34,7 @@ func (r *Resolver) trackerPatternAttributions(
 	patterns ...*coredata.TrackerPattern,
 ) (map[gid.GID]coredata.CommonTrackerPatternAttribution, error) {
 	ids := make([]gid.GID, 0, len(patterns))
+
 	seen := make(map[gid.GID]struct{}, len(patterns))
 	for _, pattern := range patterns {
 		if pattern == nil || pattern.CommonTrackerPatternID == nil {
