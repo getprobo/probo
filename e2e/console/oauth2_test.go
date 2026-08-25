@@ -130,7 +130,9 @@ func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
 	require.NoError(t, err)
 	resp, err := owner.HTTPClient().Get(resource)
 	require.NoError(t, err)
+
 	defer func() { _ = resp.Body.Close() }()
+
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	assert.Contains(
 		t,
@@ -381,7 +383,9 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			userinfoReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
 			userinfoResp, err := owner.HTTPClient().Do(userinfoReq)
 			require.NoError(t, err)
+
 			defer func() { _ = userinfoResp.Body.Close() }()
+
 			assert.Equal(t, http.StatusOK, userinfoResp.StatusCode)
 
 			fileURL, err := url.JoinPath(owner.BaseURL(), "api", "files", "v1", "not-a-gid")
@@ -391,7 +395,9 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			fileReq.Header.Set("Authorization", "Bearer "+tokenResp.AccessToken)
 			fileResp, err := owner.HTTPClient().Do(fileReq)
 			require.NoError(t, err)
+
 			defer func() { _ = fileResp.Body.Close() }()
+
 			assert.Equal(t, http.StatusNotFound, fileResp.StatusCode)
 
 			_, wrongResourceRaw, err = testutil.OAuth2TokenWithRefreshTokenForResource(
@@ -416,6 +422,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			require.Equal(t, http.StatusOK, raw.StatusCode, string(raw.Body))
 
 			mcpClient := testutil.NewMCPClientWithAccessToken(t, owner, refreshed.AccessToken)
+
 			var result struct {
 				Organizations []struct {
 					ID string `json:"id"`
@@ -473,6 +480,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			require.Equal(t, http.StatusOK, raw.StatusCode, string(raw.Body))
 
 			mcpClient := testutil.NewMCPClientWithAccessToken(t, owner, tokenResp.AccessToken)
+
 			var result struct {
 				Organizations []struct {
 					ID string `json:"id"`
@@ -499,6 +507,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			)
 
 			mcpClient := testutil.NewMCPClientWithAccessToken(t, owner, tokenResp.AccessToken)
+
 			var result struct {
 				Organizations []struct {
 					ID string `json:"id"`
