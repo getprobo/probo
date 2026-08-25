@@ -57,7 +57,7 @@
   "trackerAttribution": {
     "firstParty": "First party",
     "visitorSoftware": "Visitor software",
-    "identifying": "Identifying…"
+    "undetermined": "Undetermined"
   },
   "trackerPatternRowEdit": {
     "fields": { "description": "Description", "descriptionPlaceholder": "Description", "maxAge": "Max age" },

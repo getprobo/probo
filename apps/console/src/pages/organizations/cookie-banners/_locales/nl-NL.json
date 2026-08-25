@@ -57,7 +57,7 @@
   "trackerAttribution": {
     "firstParty": "Eerste partij",
     "visitorSoftware": "Bezoekerssoftware",
-    "identifying": "Bezig met identificeren…"
+    "undetermined": "Onbepaald"
   },
   "trackerPatternRowEdit": {
     "fields": { "description": "Beschrijving", "descriptionPlaceholder": "Beschrijving", "maxAge": "Maximale leeftijd" },

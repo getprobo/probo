@@ -38,7 +38,7 @@ export function TrackerAttributionLabel({ attribution }: TrackerAttributionLabel
     case "UNDETERMINED":
       return (
         <span className="text-txt-tertiary text-sm">
-          {t("trackerAttribution.identifying")}
+          {t("trackerAttribution.undetermined")}
         </span>
       );
     default:
