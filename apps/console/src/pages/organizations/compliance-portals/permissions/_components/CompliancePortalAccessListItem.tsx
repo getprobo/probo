@@ -18,17 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PencilSimpleIcon } from "@phosphor-icons/react";
 import { dateFormat } from "@probo/i18n";
-import { ActionDropdown, DropdownItem, IconPencil, Td, Tr } from "@probo/ui";
-import { useState } from "react";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalAccessListItemFragment$key } from "#/__generated__/core/CompliancePortalAccessListItemFragment.graphql";
 
+import { accessListItem } from "../variants";
+
 import { CompliancePortalAccessEditDialog } from "./CompliancePortalAccessEditDialog";
-import { NdaSignatureBadge } from "./NdaSignatureBadge";
 
 const fragment = graphql`
   fragment CompliancePortalAccessListItemFragment on CompliancePortalAccess {
@@ -48,65 +55,120 @@ const fragment = graphql`
   }
 `;
 
-export function CompliancePortalAccessListItem(props: {
-  fragmentRef: CompliancePortalAccessListItemFragment$key;
-}) {
-  const { fragmentRef } = props;
+type ElectronicSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
 
+function ndaBadgeColor(
+  status: ElectronicSignatureStatus,
+): "green" | "sky" | "amber" | "red" {
+  switch (status) {
+    case "COMPLETED":
+      return "green";
+    case "ACCEPTED":
+    case "PROCESSING":
+      return "sky";
+    case "PENDING":
+      return "amber";
+    case "FAILED":
+      return "red";
+  }
+}
+
+function ndaBadgeKey(status: ElectronicSignatureStatus): string {
+  switch (status) {
+    case "COMPLETED":
+      return "ndaSignatureBadge.signed";
+    case "ACCEPTED":
+    case "PROCESSING":
+      return "ndaSignatureBadge.processing";
+    case "PENDING":
+      return "ndaSignatureBadge.pending";
+    case "FAILED":
+      return "ndaSignatureBadge.failed";
+  }
+}
+
+interface CompliancePortalAccessListItemProps {
+  accessKey: CompliancePortalAccessListItemFragment$key;
+}
+
+export function CompliancePortalAccessListItem({
+  accessKey,
+}: CompliancePortalAccessListItemProps) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 
-  const access = useFragment<CompliancePortalAccessListItemFragment$key>(fragment, fragmentRef);
+  const access = useFragment<CompliancePortalAccessListItemFragment$key>(fragment, accessKey);
 
   const isActive = access.profile.state === "ACTIVE";
+  const canEdit = access.canUpdate && isActive;
+  const { item, trailing, counts } = accessListItem({
+    interactive: canEdit,
+    inactive: !isActive,
+  });
+
+  function handleRowClick() {
+    if (canEdit) {
+      setDialogOpen(true);
+    }
+  }
+
+  function handleEditClick(event: MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    setDialogOpen(true);
+  }
 
   return (
     <>
-      <Tr
-        key={access.id}
-        onClick={() => access.canUpdate && isActive && setDialogOpen(true)}
-        className={`cursor-pointer hover:bg-bg-secondary transition-colors${!isActive ? " opacity-50" : ""}`}
-      >
-        <Td className="font-medium">{access.profile.fullName}</Td>
-        <Td>{access.profile.emailAddress}</Td>
-        <Td>{dateFormat(i18n.language, access.createdAt)}</Td>
-        <Td className="text-center">{access.activeCount}</Td>
-        <Td className="text-center">
-          {access.pendingRequestCount > 0 ? access.pendingRequestCount : ""}
-        </Td>
-        <Td>
-          <div className="flex justify-center">
-            {access.ndaSignature
-              ? (
-                  <NdaSignatureBadge status={access.ndaSignature.status} />
-                )
-              : (
-                  <span className="text-txt-tertiary">-</span>
-                )}
-          </div>
-        </Td>
-        <Td noLink width={160} className="text-end">
-          <div
-            className="flex gap-2 justify-end"
-            onClick={e => e.stopPropagation()}
-          >
-            {access.canUpdate && (
-              <ActionDropdown>
-                {isActive && (
-                  <DropdownItem
-                    icon={IconPencil}
-                    onClick={() => setDialogOpen(true)}
-                  >
-                    {t("accessListItem.actions.edit")}
-                  </DropdownItem>
-                )}
-              </ActionDropdown>
+      <ListItem key={access.id} className={item()} onClick={handleRowClick}>
+        <Avatar
+          size={2}
+          variant="soft"
+          color="gold"
+          fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
+        />
+        <ListItemContent>
+          <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
+            {access.profile.fullName}
+          </Text>
+          <Text size={1} color="gold" className="truncate">
+            {access.profile.emailAddress}
+          </Text>
+        </ListItemContent>
+        <div className={trailing()}>
+          <Text size={1} color="faint">
+            {dateFormat(i18n.language, access.createdAt)}
+          </Text>
+          <div className={counts()}>
+            <Text size={1} color="faint">
+              {t("accessListItem.granted", { count: access.activeCount })}
+            </Text>
+            {access.pendingRequestCount > 0 && (
+              <Text size={1} color="faint">
+                {t("accessListItem.pending", { count: access.pendingRequestCount })}
+              </Text>
             )}
           </div>
-        </Td>
-      </Tr>
+          {access.ndaSignature
+            ? (
+                <Badge color={ndaBadgeColor(access.ndaSignature.status)} variant="soft">
+                  {t(ndaBadgeKey(access.ndaSignature.status))}
+                </Badge>
+              )
+            : null}
+          {canEdit && (
+            <IconButton
+              variant="ghost"
+              color="neutral"
+              aria-label={t("accessListItem.actions.edit")}
+              onClick={handleEditClick}
+            >
+              <PencilSimpleIcon />
+            </IconButton>
+          )}
+        </div>
+      </ListItem>
 
-      {access.canUpdate && isActive && dialogOpen && (
+      {canEdit && dialogOpen && (
         <CompliancePortalAccessEditDialog
           access={access}
           onClose={() => setDialogOpen(false)}

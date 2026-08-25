@@ -18,37 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { UsersThreeIcon } from "@phosphor-icons/react";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 
-import type { CompliancePortalPermissionsPageQuery } from "#/__generated__/core/CompliancePortalPermissionsPageQuery.graphql";
+import { accessListEmpty } from "../variants";
 
-import {
-  CompliancePortalPermissionsPage,
-  compliancePortalPermissionsPageQuery,
-} from "./CompliancePortalPermissionsPage";
-import { CompliancePortalPermissionsPageSkeleton } from "./CompliancePortalPermissionsPageSkeleton";
-
-export default function CompliancePortalPermissionsPageLoader() {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalPermissionsPageQuery>(
-    compliancePortalPermissionsPageQuery,
-  );
-
-  useEffect(() => {
-    if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
-    }
-  }, [loadQuery, compliancePortalId]);
-
-  if (!queryRef) {
-    return <CompliancePortalPermissionsPageSkeleton />;
-  }
+export function CompliancePortalAccessListEmpty() {
+  const { t } = useTranslation("organizations/compliance-portals");
+  const { root, icon, body } = accessListEmpty();
 
   return (
-    <Suspense fallback={<CompliancePortalPermissionsPageSkeleton />}>
-      <CompliancePortalPermissionsPage queryRef={queryRef} />
-    </Suspense>
+    <div className={root()}>
+      <span className={icon()}>
+        <UsersThreeIcon weight="light" />
+      </span>
+      <div className={body()}>
+        <Text size={2} weight="medium" color="faint">
+          {t("accessList.empty")}
+        </Text>
+        <Text size={2} color="faint">
+          {t("accessList.emptyDescription")}
+        </Text>
+      </div>
+    </div>
   );
 }

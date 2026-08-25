@@ -27,6 +27,7 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { CompliancePortalLayoutSkeleton } from "./CompliancePortalLayoutSkeleton";
 import { CompliancePortalHostingPageSkeleton } from "./hosting/CompliancePortalHostingPageSkeleton";
 import { CompliancePortalIntegrationsPageSkeleton } from "./integrations/CompliancePortalIntegrationsPageSkeleton";
+import { CompliancePortalPermissionsPageSkeleton } from "./permissions/CompliancePortalPermissionsPageSkeleton";
 
 export const compliancePortalRoutes = [
   {
@@ -51,7 +52,7 @@ export const compliancePortalRoutes = [
       },
       {
         path: "permissions",
-        Fallback: LinkCardSkeleton,
+        Fallback: CompliancePortalPermissionsPageSkeleton,
         Component: lazy(() => import("#/pages/organizations/compliance-portals/permissions/CompliancePortalPermissionsPageLoader")),
       },
       {

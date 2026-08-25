@@ -28,10 +28,13 @@
   },
   "accessList": {
     "empty": "Nog geen externe toegang verleend",
+    "emptyDescription": "Personen die toegang tot uw portal aanvragen, verschijnen hier.",
     "columns": { "name": "Naam", "email": "E-mail", "date": "Datum", "access": "Toegang", "requests": "Aanvragen", "nda": "NDA" },
     "actions": { "showMore": "Meer weergeven" }
   },
   "accessListItem": {
+    "granted": "{{count}} verleend",
+    "pending": "{{count}} in behandeling",
     "actions": { "edit": "Bewerken" }
   },
   "documentAccessList": {
@@ -380,11 +383,11 @@
     "emptyDescription": "Upload een PDF die bezoekers moeten accepteren voordat ze toegang krijgen tot uw compliancepagina.",
     "uploadDescription": "Vereis dat bezoekers een geheimhoudingsovereenkomst accepteren voordat ze toegang krijgen tot uw compliancepagina.",
     "acceptanceDescription": "Bezoekers moeten deze overeenkomst accepteren voordat ze toegang krijgen tot uw compliancepagina.",
-    "actions": { "download": "Downloaden", "upload": "NDA uploaden", "replace": "Vervangen" },
+    "actions": { "download": "Downloaden", "upload": "NDA uploaden", "replace": "Vervangen", "uploading": "Uploaden..." },
     "delete": {
       "title": "NDA verwijderen",
       "description": "Weet u zeker dat u het NDA-bestand wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
-      "actions": { "delete": "Verwijderen" }
+      "actions": { "delete": "Verwijderen", "cancel": "Annuleren" }
     },
     "errors": {
       "invalidFileType": { "title": "Bestandstype niet ondersteund", "description": "Upload een PDF-bestand." },

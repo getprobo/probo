@@ -56,6 +56,7 @@
   },
   "accessList": {
     "empty": "Aucun accès externe accordé pour le moment",
+    "emptyDescription": "Les personnes qui demandent l’accès à votre portail apparaîtront ici.",
     "columns": {
       "name": "Nom",
       "email": "E-mail",
@@ -69,6 +70,8 @@
     }
   },
   "accessListItem": {
+    "granted": "{{count}} accès",
+    "pending": "{{count}} en attente",
     "actions": {
       "edit": "Modifier"
     }
@@ -797,13 +800,15 @@
     "actions": {
       "download": "Télécharger",
       "upload": "Téléverser le NDA",
-      "replace": "Remplacer"
+      "replace": "Remplacer",
+      "uploading": "Téléversement..."
     },
     "delete": {
       "title": "Supprimer le NDA",
       "description": "Voulez-vous vraiment supprimer le fichier NDA ? Cette action est irréversible.",
       "actions": {
-        "delete": "Supprimer"
+        "delete": "Supprimer",
+        "cancel": "Annuler"
       }
     },
     "errors": {

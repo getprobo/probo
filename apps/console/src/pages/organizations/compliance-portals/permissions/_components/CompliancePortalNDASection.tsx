@@ -18,14 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, IconChevronRight, useConfirm, useToast } from "@probo/ui";
-import { type ChangeEventHandler, useRef } from "react";
+import { CaretRightIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ChangeEventHandler, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalNDASectionFragment$key } from "#/__generated__/core/CompliancePortalNDASectionFragment.graphql";
-import { useDeleteCompliancePortalNDAMutation, useUploadCompliancePortalNDAMutation } from "#/hooks/graph/CompliancePortalGraph";
+import { useUploadCompliancePortalNDAMutation } from "#/hooks/graph/CompliancePortalGraph";
+
+import { ndaSection } from "../variants";
 
 import { CompliancePortalNDACard } from "./CompliancePortalNDACard";
 
@@ -41,21 +47,25 @@ const fragment = graphql`
 `;
 
 export interface CompliancePortalNDASectionProps {
-  fragmentRef: CompliancePortalNDASectionFragment$key;
+  compliancePortalKey: CompliancePortalNDASectionFragment$key;
 }
 
-export function CompliancePortalNDASection(props: CompliancePortalNDASectionProps) {
-  const { fragmentRef } = props;
+type UploadError = "invalidFileType" | "fileTooLarge";
 
+export function CompliancePortalNDASection({
+  compliancePortalKey,
+}: CompliancePortalNDASectionProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { toast } = useToast();
-  const confirm = useConfirm();
+  const { root, intro, body, empty, emptyCopy, errorCopy } = ndaSection();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<UploadError | null>(null);
 
-  const compliancePortal = useFragment<CompliancePortalNDASectionFragment$key>(fragment, fragmentRef);
+  const compliancePortal = useFragment<CompliancePortalNDASectionFragment$key>(
+    fragment,
+    compliancePortalKey,
+  );
 
   const [uploadNDA, isUploadingNDA] = useUploadCompliancePortalNDAMutation();
-  const [deleteNDA, isDeletingNDA] = useDeleteCompliancePortalNDAMutation();
 
   const handleNDAUpload = async (file: File) => {
     await uploadNDA({
@@ -79,76 +89,72 @@ export function CompliancePortalNDASection(props: CompliancePortalNDASectionProp
     if (!file) return;
 
     if (file.type !== "application/pdf") {
-      toast({
-        title: t("ndaSection.errors.invalidFileType.title"),
-        description: t("ndaSection.errors.invalidFileType.description"),
-        variant: "error",
-      });
+      setUploadError("invalidFileType");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: t("ndaSection.errors.fileTooLarge.title"),
-        description: t("ndaSection.errors.fileTooLarge.description"),
-        variant: "error",
-      });
+      setUploadError("fileTooLarge");
       return;
     }
 
+    setUploadError(null);
     void handleNDAUpload(file);
-  };
-
-  const handleNDADelete = () => {
-    confirm(
-      () => deleteNDA({ variables: { input: { compliancePortalId: compliancePortal.id } } }),
-      {
-        title: t("ndaSection.delete.title"),
-        message: t("ndaSection.delete.description"),
-        label: t("ndaSection.delete.actions.delete"),
-        variant: "danger",
-      },
-    );
   };
 
   const hasNDA = !!compliancePortal.nda?.fileName;
   const canUploadNDA = compliancePortal.canUploadNDA;
-  const isBusy = isUploadingNDA || isDeletingNDA;
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-base font-medium">
+    <section className={root()}>
+      <div className={intro()}>
+        <Heading level={2} size={4} weight="medium" highContrast>
           {t("ndaSection.title")}
-        </h2>
-        <p className="text-sm text-txt-tertiary">
+        </Heading>
+        <Text size={2} color="neutral">
           {t("ndaSection.uploadDescription")}
-        </p>
+        </Text>
       </div>
 
-      <div className="space-y-3">
+      <div className={body()}>
+        {uploadError != null && (
+          <Callout color="red" icon={<WarningCircleIcon weight="fill" />}>
+            <div className={errorCopy()}>
+              <Text size={2} weight="medium" color="current" highContrast>
+                {t(`ndaSection.errors.${uploadError}.title`)}
+              </Text>
+              <Text size={2} color="current">
+                {t(`ndaSection.errors.${uploadError}.description`)}
+              </Text>
+            </div>
+          </Callout>
+        )}
+
         {hasNDA
           ? (
               <CompliancePortalNDACard
                 compliancePortalKey={compliancePortal}
-                isBusy={isBusy}
                 isUploading={isUploadingNDA}
                 onFileChange={handleNDAFileChange}
-                onDelete={handleNDADelete}
               />
             )
           : canUploadNDA
             ? (
-                <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-solid px-4 py-8">
-                  <p className="max-w-md text-center text-sm text-txt-tertiary">
+                <div className={empty()}>
+                  <Text size={2} color="faint" className={emptyCopy()}>
                     {t("ndaSection.emptyDescription")}
-                  </p>
+                  </Text>
                   <Button
-                    iconAfter={IconChevronRight}
-                    disabled={isBusy}
+                    variant="solid"
+                    color="neutral"
+                    highContrast
+                    iconEnd={<CaretRightIcon />}
+                    loading={isUploadingNDA}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {isUploadingNDA ? t("brandPage.actions.uploading") : t("ndaSection.actions.upload")}
+                    {isUploadingNDA
+                      ? t("ndaSection.actions.uploading")
+                      : t("ndaSection.actions.upload")}
                   </Button>
                   <input
                     ref={fileInputRef}
@@ -160,9 +166,9 @@ export function CompliancePortalNDASection(props: CompliancePortalNDASectionProp
                 </div>
               )
             : (
-                <p className="text-sm text-txt-tertiary">
+                <Text size={2} color="faint">
                   {t("ndaSection.empty")}
-                </p>
+                </Text>
               )}
       </div>
     </section>

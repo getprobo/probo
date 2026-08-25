@@ -18,37 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import type { CompliancePortalPermissionsPageQuery } from "#/__generated__/core/CompliancePortalPermissionsPageQuery.graphql";
+import { permissionsPageSkeleton } from "./variants";
 
-import {
-  CompliancePortalPermissionsPage,
-  compliancePortalPermissionsPageQuery,
-} from "./CompliancePortalPermissionsPage";
-import { CompliancePortalPermissionsPageSkeleton } from "./CompliancePortalPermissionsPageSkeleton";
-
-export default function CompliancePortalPermissionsPageLoader() {
-  const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalPermissionsPageQuery>(
-    compliancePortalPermissionsPageQuery,
-  );
-
-  useEffect(() => {
-    if (compliancePortalId) {
-      loadQuery({ compliancePortalId });
-    }
-  }, [loadQuery, compliancePortalId]);
-
-  if (!queryRef) {
-    return <CompliancePortalPermissionsPageSkeleton />;
-  }
+export function CompliancePortalPermissionsPageSkeleton() {
+  const { root, section, intro } = permissionsPageSkeleton();
 
   return (
-    <Suspense fallback={<CompliancePortalPermissionsPageSkeleton />}>
-      <CompliancePortalPermissionsPage queryRef={queryRef} />
-    </Suspense>
+    <div className={root()}>
+      <div className={section()}>
+        <div className={intro()}>
+          <HeadingSkeleton size={4} className="w-56" />
+          <TextSkeleton size={2} className="w-96" />
+        </div>
+        <CardSkeleton size={2} />
+      </div>
+      <div className={section()}>
+        <div className={intro()}>
+          <HeadingSkeleton size={4} className="w-36" />
+          <TextSkeleton size={2} className="w-80" />
+        </div>
+        <ListSkeleton count={4} />
+      </div>
+    </div>
   );
 }

@@ -18,16 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalPermissionsPageQuery } from "#/__generated__/core/CompliancePortalPermissionsPageQuery.graphql";
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
+import { accessSection, permissionsPage } from "./variants";
 
 export const compliancePortalPermissionsPageQuery = graphql`
   query CompliancePortalPermissionsPageQuery($compliancePortalId: ID!) {
@@ -48,6 +51,7 @@ interface CompliancePortalPermissionsPageProps {
 
 export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPermissionsPageProps) {
   const { t } = useTranslation("organizations/compliance-portals");
+  const { root, intro } = accessSection();
 
   const { compliancePortal } = usePreloadedQuery<CompliancePortalPermissionsPageQuery>(
     compliancePortalPermissionsPageQuery,
@@ -58,25 +62,25 @@ export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPe
   }
 
   return (
-    <div className="space-y-6">
+    <div className={permissionsPage()}>
       {compliancePortal.canGetNDA && (
-        <CompliancePortalNDASection fragmentRef={compliancePortal} />
+        <CompliancePortalNDASection compliancePortalKey={compliancePortal} />
       )}
 
       {compliancePortal.canListAccesses && (
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-base font-medium">
+        <section className={root()}>
+          <div className={intro()}>
+            <Heading level={2} size={4} weight="medium" highContrast>
               {t("accessPage.title")}
-            </h3>
-            <p className="text-sm text-txt-tertiary">
+            </Heading>
+            <Text size={2} color="neutral">
               {t("accessPage.description")}
-            </p>
+            </Text>
           </div>
-          <Suspense fallback={<LinkCardSkeleton />}>
+          <Suspense fallback={<ListSkeleton count={4} />}>
             <CompliancePortalAccessList />
           </Suspense>
-        </div>
+        </section>
       )}
     </div>
   );

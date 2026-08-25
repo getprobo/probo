@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, IconChevronDown, Spinner, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { List } from "@probo/ui/src/v2/List/List";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { useParams } from "react-router";
@@ -27,6 +28,9 @@ import type { CompliancePortalAccessListFragment$key } from "#/__generated__/cor
 import type { CompliancePortalAccessListQuery } from "#/__generated__/core/CompliancePortalAccessListQuery.graphql";
 import type { CompliancePortalAccessListRootQuery } from "#/__generated__/core/CompliancePortalAccessListRootQuery.graphql";
 
+import { accessSection } from "../variants";
+
+import { CompliancePortalAccessListEmpty } from "./CompliancePortalAccessListEmpty";
 import { CompliancePortalAccessListItem } from "./CompliancePortalAccessListItem";
 
 const accessListQuery = graphql`
@@ -71,6 +75,7 @@ const fragment = graphql`
 
 export function CompliancePortalAccessList() {
   const { t } = useTranslation("organizations/compliance-portals");
+  const { more } = accessSection();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const { node } = useLazyLoadQuery<CompliancePortalAccessListRootQuery>(
     accessListQuery,
@@ -92,57 +97,32 @@ export function CompliancePortalAccessList() {
 
   const { accesses } = data;
 
-  return accesses.edges.length === 0
-    ? (
-        <Table>
-          <Tbody>
-            <Tr>
-              <Td className="text-center text-txt-tertiary py-8">
-                {t("accessList.empty")}
-              </Td>
-            </Tr>
-          </Tbody>
-        </Table>
-      )
-    : (
-        <>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{t("accessList.columns.name")}</Th>
-                <Th>{t("accessList.columns.email")}</Th>
-                <Th>{t("accessList.columns.date")}</Th>
-                <Th className="text-center">
-                  {t("accessList.columns.access")}
-                </Th>
-                <Th className="text-center">
-                  {t("accessList.columns.requests")}
-                </Th>
-                <Th className="text-center">{t("accessList.columns.nda")}</Th>
-                <Th></Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {accesses.edges.map(({ node: access }) => (
-                <CompliancePortalAccessListItem
-                  key={access.id}
-                  fragmentRef={access}
-                />
-              ))}
-            </Tbody>
-          </Table>
-          {hasNext && (
-            <Button
-              variant="tertiary"
-              onClick={() => loadNext(10)}
-              disabled={isLoadingNext}
-              className="mt-3 mx-auto"
-              icon={IconChevronDown}
-            >
-              {isLoadingNext && <Spinner />}
-              {t("accessList.actions.showMore")}
-            </Button>
-          )}
-        </>
-      );
+  if (accesses.edges.length === 0) {
+    return <CompliancePortalAccessListEmpty />;
+  }
+
+  return (
+    <>
+      <List>
+        {accesses.edges.map(({ node: access }) => (
+          <CompliancePortalAccessListItem
+            key={access.id}
+            accessKey={access}
+          />
+        ))}
+      </List>
+      {hasNext && (
+        <div className={more()}>
+          <Button
+            variant="ghost"
+            color="neutral"
+            loading={isLoadingNext}
+            onClick={() => loadNext(10)}
+          >
+            {t("accessList.actions.showMore")}
+          </Button>
+        </div>
+      )}
+    </>
+  );
 }

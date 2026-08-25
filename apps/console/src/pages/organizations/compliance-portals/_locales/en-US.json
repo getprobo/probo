@@ -56,6 +56,7 @@
   },
   "accessList": {
     "empty": "No external access granted yet",
+    "emptyDescription": "People who request access to your portal will appear here.",
     "columns": {
       "name": "Name",
       "email": "Email",
@@ -69,6 +70,8 @@
     }
   },
   "accessListItem": {
+    "granted": "{{count}} granted",
+    "pending": "{{count}} pending",
     "actions": {
       "edit": "Edit"
     }
@@ -797,13 +800,15 @@
     "actions": {
       "download": "Download",
       "upload": "Upload NDA",
-      "replace": "Replace"
+      "replace": "Replace",
+      "uploading": "Uploading..."
     },
     "delete": {
       "title": "Delete NDA",
       "description": "Are you sure you want to delete the NDA file? This action cannot be undone.",
       "actions": {
-        "delete": "Delete"
+        "delete": "Delete",
+        "cancel": "Cancel"
       }
     },
     "errors": {
