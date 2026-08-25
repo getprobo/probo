@@ -4,6 +4,8 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.17.0] - 2026-08-25
+
 ### Changed
 
 - API calls to the retired hosted console hosts (`eu.console.getprobo.com`, `us.console.getprobo.com`) are rewritten to `eu.probo.com` and `us.probo.com` so existing snippets keep working after the domain migration. Self-hosted and already-migrated base URLs are unchanged.
