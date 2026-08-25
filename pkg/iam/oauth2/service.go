@@ -1838,8 +1838,24 @@ func (s *Service) requestedResources(values []string) ([]uri.URI, error) {
 	return s.supportedResources(values)
 }
 
+// MCPResource returns the MCP protected-resource identifier for base.
+// ChatGPT and other MCP clients send this as the OAuth resource parameter.
+func MCPResource(base uri.URI) (uri.URI, error) {
+	joined, err := url.JoinPath(base.String(), "api", "mcp", "v1")
+	if err != nil {
+		return "", fmt.Errorf("cannot build MCP resource: %w", err)
+	}
+
+	return uri.URI(joined), nil
+}
+
 func (s *Service) supportedResources(values []string) ([]uri.URI, error) {
-	supported := []uri.URI{s.baseURL}
+	mcpResource, err := MCPResource(s.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve MCP resource: %w", err)
+	}
+
+	supported := []uri.URI{s.baseURL, mcpResource}
 	resources := make([]uri.URI, 0, len(values))
 	for _, raw := range values {
 		if raw == "" {
