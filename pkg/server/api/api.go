@@ -201,7 +201,30 @@ func NewServer(cfg Config) (*Server, error) {
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/revoke")
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/device")
 
+	// MCP is a bearer-token API called by external clients (ChatGPT, Claude,
+	// Composio, IDEs). Authentication is the Authorization header, not
+	// cookies, so CSRF does not apply. Clients send Sec-Fetch-Site:
+	// cross-site by design.
+	csrf.AddInsecureBypassPattern("POST /mcp/v1")
+	csrf.AddInsecureBypassPattern("POST /mcp/v1/{rest...}")
+	csrf.AddInsecureBypassPattern("DELETE /mcp/v1")
+	csrf.AddInsecureBypassPattern("DELETE /mcp/v1/{rest...}")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := httpserver.LoggerFromContext(r.Context())
+		if logger == nil {
+			logger = cfg.Logger
+		}
+
+		logger.WarnCtx(
+			r.Context(),
+			"cross-origin request denied",
+			log.String("path", r.URL.Path),
+			log.String("host", r.Host),
+			log.String("origin", r.Header.Get("Origin")),
+			log.String("sec_fetch_site", r.Header.Get("Sec-Fetch-Site")),
+		)
+
 		httpserver.RenderJSON(
 			w,
 			http.StatusForbidden,
