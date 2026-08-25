@@ -410,6 +410,7 @@ func enqueueAgentInput(
 			},
 		),
 	)
+
 	return input
 }
 
@@ -429,6 +430,7 @@ func enqueueAgentInputWithIdentity(
 	now := time.Now()
 	emailAddress, err := mail.ParseAddr(identityID.String() + "@example.com")
 	require.NoError(t, err)
+
 	input := coredata.AgentInput{
 		ID:               gid.New(execution.ID.TenantID(), coredata.AgentInputEntityType),
 		OrganizationID:   execution.OrganizationID,
