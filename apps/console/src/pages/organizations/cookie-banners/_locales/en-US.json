@@ -54,6 +54,11 @@
     "languageDefault": "{{language}} (default)",
     "defaultLanguageDescription": "This is the default language. These translations are shown when a visitor's language is not available."
   },
+  "trackerAttribution": {
+    "firstParty": "First party",
+    "visitorSoftware": "Visitor software",
+    "identifying": "Identifying…"
+  },
   "trackerPatternRowEdit": {
     "fields": { "description": "Description", "descriptionPlaceholder": "Description", "maxAge": "Max age" },
     "actions": { "save": "Save", "cancel": "Cancel" }

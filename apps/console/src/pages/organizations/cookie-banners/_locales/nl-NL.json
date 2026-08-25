@@ -54,6 +54,11 @@
     "languageDefault": "{{language}} (standaard)",
     "defaultLanguageDescription": "Dit is de standaardtaal. Deze vertalingen worden getoond wanneer de taal van een bezoeker niet beschikbaar is."
   },
+  "trackerAttribution": {
+    "firstParty": "Eerste partij",
+    "visitorSoftware": "Bezoekerssoftware",
+    "identifying": "Bezig met identificeren…"
+  },
   "trackerPatternRowEdit": {
     "fields": { "description": "Beschrijving", "descriptionPlaceholder": "Beschrijving", "maxAge": "Maximale leeftijd" },
     "actions": { "save": "Opslaan", "cancel": "Annuleren" }

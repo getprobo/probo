@@ -246,6 +246,28 @@ type CookieCategory implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
+enum CommonTrackerPatternAttribution
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttribution"
+    ) {
+    UNDETERMINED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionUndetermined"
+        )
+    THIRD_PARTY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionThirdParty"
+        )
+    FIRST_PARTY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionFirstParty"
+        )
+    NOT_ATTRIBUTABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CommonTrackerPatternAttributionNotAttributable"
+        )
+}
+
 enum TrackerPatternMatchType
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.TrackerPatternMatchType"
@@ -330,6 +352,13 @@ type TrackerPattern implements Node
     debugging agent-generated descriptions.
     """
     commonTrackerPatternId: ID
+
+    """
+    Catalog verdict inherited from the linked common tracker pattern.
+    Null when the org pattern has no catalog link.
+    """
+    attribution: CommonTrackerPatternAttribution
+        @goField(forceResolver: true)
 
     detectedTrackers(
         first: Int

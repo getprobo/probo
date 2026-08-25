@@ -5883,7 +5883,12 @@ func (r *Resolver) ListTrackerPatternsTool(ctx context.Context, req *mcp.CallToo
 
 	p := page.NewPage(patterns, cursor)
 
-	return nil, types.NewListTrackerPatternsOutput(p), nil
+	attributions, err := r.trackerPatternAttributions(ctx, patterns...)
+	if err != nil {
+		panic(fmt.Errorf("cannot load tracker pattern attributions: %w", err))
+	}
+
+	return nil, types.NewListTrackerPatternsOutput(p, attributions), nil
 }
 
 func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrackerPatternInput) (*mcp.CallToolResult, types.GetTrackerPatternOutput, error) {
@@ -5897,7 +5902,12 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get tracker pattern: %w", err)
 	}
 
-	return nil, types.GetTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, pattern)
+	if err != nil {
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerPatternInput) (*mcp.CallToolResult, types.AddTrackerPatternOutput, error) {
@@ -5922,7 +5932,12 @@ func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.AddTrackerPatternOutput{}, fmt.Errorf("cannot create tracker pattern: %w", err)
 	}
 
-	return nil, types.AddTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, pattern)
+	if err != nil {
+		return nil, types.AddTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.AddTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrackerPatternInput) (*mcp.CallToolResult, types.UpdateTrackerPatternOutput, error) {
@@ -5950,7 +5965,12 @@ func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallTo
 		return nil, types.UpdateTrackerPatternOutput{}, fmt.Errorf("cannot update tracker pattern: %w", err)
 	}
 
-	return nil, types.UpdateTrackerPatternOutput{TrackerPattern: types.NewTrackerPattern(pattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, pattern)
+	if err != nil {
+		return nil, types.UpdateTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.UpdateTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) DeleteTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteTrackerPatternInput) (*mcp.CallToolResult, types.DeleteTrackerPatternOutput, error) {
@@ -5984,7 +6004,12 @@ func (r *Resolver) MoveTrackerPatternToCategoryTool(ctx context.Context, req *mc
 		return nil, types.MoveTrackerPatternToCategoryOutput{}, fmt.Errorf("cannot move tracker pattern: %w", err)
 	}
 
-	return nil, types.MoveTrackerPatternToCategoryOutput{TrackerPattern: types.NewTrackerPattern(result.TrackerPattern)}, nil
+	mapped, err := r.newTrackerPattern(ctx, result.TrackerPattern)
+	if err != nil {
+		return nil, types.MoveTrackerPatternToCategoryOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
+	}
+
+	return nil, types.MoveTrackerPatternToCategoryOutput{TrackerPattern: mapped}, nil
 }
 
 func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishCookieBannerVersionInput) (*mcp.CallToolResult, types.PublishCookieBannerVersionOutput, error) {

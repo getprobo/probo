@@ -1519,6 +1519,33 @@ func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *type
 	return types.NewCommonThirdParty(party), nil
 }
 
+// Attribution is the resolver for the attribution field.
+//
+// The verdict lives on the linked common catalog row, not the org
+// pattern. A missing catalog link is a real null, not UNDETERMINED.
+func (r *trackerPatternResolver) Attribution(ctx context.Context, obj *types.TrackerPattern) (*coredata.CommonTrackerPatternAttribution, error) {
+	if obj.CommonTrackerPatternID == nil {
+		return nil, nil
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	pattern, err := loaders.CommonTrackerPattern.Load(ctx, *obj.CommonTrackerPatternID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get common tracker pattern", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	attribution := pattern.Attribution
+
+	return &attribution, nil
+}
+
 // DetectedTrackers is the resolver for the detectedTrackers field.
 func (r *trackerPatternResolver) DetectedTrackers(ctx context.Context, obj *types.TrackerPattern, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DetectedTrackerOrderBy) (*types.DetectedTrackerConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)

@@ -22,13 +22,27 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
 func NewTrackerPattern(p *coredata.TrackerPattern) *TrackerPattern {
+	return NewTrackerPatternWithAttribution(p, nil)
+}
+
+func NewTrackerPatternWithAttribution(
+	p *coredata.TrackerPattern,
+	attribution *coredata.CommonTrackerPatternAttribution,
+) *TrackerPattern {
 	var source TrackerPatternSource
 	if p.Source != nil {
 		source = TrackerPatternSource(*p.Source)
+	}
+
+	var mapped *TrackerPatternAttribution
+	if attribution != nil {
+		value := TrackerPatternAttribution(*attribution)
+		mapped = &value
 	}
 
 	return &TrackerPattern{
@@ -46,15 +60,52 @@ func NewTrackerPattern(p *coredata.TrackerPattern) *TrackerPattern {
 		Excluded:               p.Excluded,
 		LastMatchedAt:          p.LastMatchedAt,
 		CommonTrackerPatternID: p.CommonTrackerPatternID,
+		Attribution:            mapped,
 		CreatedAt:              p.CreatedAt,
 		UpdatedAt:              p.UpdatedAt,
 	}
 }
 
-func NewListTrackerPatternsOutput(pg *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField]) ListTrackerPatternsOutput {
+// AttributionByOrgPatternID maps each org pattern to the catalog verdict
+// on its linked common row. Patterns with no catalog link are omitted.
+func AttributionByOrgPatternID(
+	patterns []*coredata.TrackerPattern,
+	commons coredata.CommonTrackerPatterns,
+) map[gid.GID]coredata.CommonTrackerPatternAttribution {
+	byCommon := make(map[gid.GID]coredata.CommonTrackerPatternAttribution, len(commons))
+	for _, common := range commons {
+		byCommon[common.ID] = common.Attribution
+	}
+
+	out := make(map[gid.GID]coredata.CommonTrackerPatternAttribution)
+	for _, pattern := range patterns {
+		if pattern.CommonTrackerPatternID == nil {
+			continue
+		}
+
+		attribution, ok := byCommon[*pattern.CommonTrackerPatternID]
+		if !ok {
+			continue
+		}
+
+		out[pattern.ID] = attribution
+	}
+
+	return out
+}
+
+func NewListTrackerPatternsOutput(
+	pg *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField],
+	attributions map[gid.GID]coredata.CommonTrackerPatternAttribution,
+) ListTrackerPatternsOutput {
 	patterns := make([]*TrackerPattern, 0, len(pg.Data))
 	for _, p := range pg.Data {
-		patterns = append(patterns, NewTrackerPattern(p))
+		var attribution *coredata.CommonTrackerPatternAttribution
+		if a, ok := attributions[p.ID]; ok {
+			attribution = &a
+		}
+
+		patterns = append(patterns, NewTrackerPatternWithAttribution(p, attribution))
 	}
 
 	var nextCursor *page.CursorKey

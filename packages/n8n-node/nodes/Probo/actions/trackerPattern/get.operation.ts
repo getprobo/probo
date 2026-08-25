@@ -58,6 +58,7 @@ export async function execute(
 					excluded
 					lastMatchedAt
 					commonTrackerPatternId
+					attribution
 					createdAt
 					updatedAt
 				}

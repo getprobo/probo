@@ -11870,6 +11870,12 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Linked common tracker-pattern catalog ID, if any. Non-null indicates the pattern was matched to the global catalog (description may originate from the seed or agents); null means no catalog link.
+        attribution:
+          anyOf:
+            - type: string
+              enum: [UNDETERMINED, THIRD_PARTY, FIRST_PARTY, NOT_ATTRIBUTABLE]
+            - type: "null"
+          description: Catalog verdict inherited from the linked common tracker pattern. Null when the org pattern has no catalog link.
         created_at:
           type: string
           format: date-time

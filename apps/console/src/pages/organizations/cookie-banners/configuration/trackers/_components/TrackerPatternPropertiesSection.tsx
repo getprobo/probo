@@ -28,6 +28,7 @@ import type { TrackerPatternPropertiesSection_trackerPattern$key } from "#/__gen
 import type { TrackerPatternPropertiesSectionMoveMutation } from "#/__generated__/core/TrackerPatternPropertiesSectionMoveMutation.graphql";
 
 import { MoveToCategorySelect } from "./MoveToCategorySelect";
+import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
 
 const trackerPatternPropertiesSectionFragment = graphql`
   fragment TrackerPatternPropertiesSection_trackerPattern on TrackerPattern {
@@ -53,6 +54,7 @@ const trackerPatternPropertiesSectionFragment = graphql`
     commonThirdParty {
       name
     }
+    attribution
   }
 `;
 
@@ -182,7 +184,7 @@ export function TrackerPatternPropertiesSection({
                   <span className="text-sm">{pattern.commonThirdParty.name}</span>
                 </div>
               )
-            : <span className="text-txt-tertiary text-sm">-</span>}
+            : <TrackerAttributionLabel attribution={pattern.attribution} />}
       </PropertyRow>
       <PropertyRow label={t("trackerProperties.properties.maxAge")}>
         <span className="text-sm">

@@ -54,6 +54,11 @@
     "languageDefault": "{{language}} (par défaut)",
     "defaultLanguageDescription": "Il s’agit de la langue par défaut. Ces traductions sont affichées lorsque la langue d’un visiteur n’est pas disponible."
   },
+  "trackerAttribution": {
+    "firstParty": "Première partie",
+    "visitorSoftware": "Logiciel du visiteur",
+    "identifying": "Identification…"
+  },
   "trackerPatternRowEdit": {
     "fields": { "description": "Description", "descriptionPlaceholder": "Description", "maxAge": "Âge maximal" },
     "actions": { "save": "Enregistrer", "cancel": "Annuler" }

@@ -45,6 +45,7 @@ import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/Track
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { MoveToCategorySelect } from "./MoveToCategorySelect";
+import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
 import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
 
 const trackerPatternFragment = graphql`
@@ -70,6 +71,7 @@ const trackerPatternFragment = graphql`
       id
       name
     }
+    attribution
   }
 `;
 
@@ -400,7 +402,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
                   <span className="truncate">{pattern.commonThirdParty.name}</span>
                 </div>
               )
-            : <span className="text-txt-tertiary">-</span>}
+            : <TrackerAttributionLabel attribution={pattern.attribution} />}
       </Td>
       <Td>
         {srcBadge

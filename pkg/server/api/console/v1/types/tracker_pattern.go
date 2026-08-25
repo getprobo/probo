@@ -35,7 +35,7 @@ type (
 	// type via @goModel. The first block contains the fields gqlgen
 	// fulfills directly from the model; resolver-only fields
 	// (cookieCategory, detectedTrackers, thirdParty, commonThirdParty,
-	// detectedCount, permission) are populated by the resolver.
+	// attribution, detectedCount, permission) are populated by the resolver.
 	//
 	// ThirdPartyID is not exposed in GraphQL — it is a foreign-key
 	// handle the resolver uses to load the linked org-scoped third
