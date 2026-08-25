@@ -568,7 +568,7 @@ LIMIT @limit;
 // a vendor, which is what a review is meant to check rather than trust.
 type PatternSummary struct {
 	Pattern     string
-	TrackerType string
+	TrackerType TrackerType
 	Attribution CommonTrackerPatternAttribution
 	Confidence  float32
 }

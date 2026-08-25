@@ -100,7 +100,7 @@ func TestLoadSummariesGroupedByCommonThirdPartyID(t *testing.T) {
 	assert.Equal(t, "aaa-high-confidence", mine[0].Pattern,
 		"highest confidence first, since the caller shows only the first few")
 	assert.Equal(t, "zzz-low-confidence", mine[1].Pattern)
-	assert.Equal(t, "COOKIE", mine[0].TrackerType,
+	assert.Equal(t, coredata.TrackerTypeCookie, mine[0].TrackerType,
 		"the storage kind is what separates an egressing cookie from local state")
 
 	require.Len(t, byParty[other.ID], 1, "grouping must not leak across entries")

@@ -278,17 +278,19 @@ func summarisePatterns(summaries []coredata.PatternSummary) string {
 // storageAbbrev keeps the storage kind visible without the column dominating
 // the row: where a key lives distinguishes a cookie sent to a vendor from
 // local state that never leaves the browser.
-func storageAbbrev(trackerType string) string {
+func storageAbbrev(trackerType coredata.TrackerType) string {
 	switch trackerType {
-	case "COOKIE":
+	case coredata.TrackerTypeCookie:
 		return "ck"
-	case "LOCAL_STORAGE":
+	case coredata.TrackerTypeLocalStorage:
 		return "ls"
-	case "SESSION_STORAGE":
+	case coredata.TrackerTypeSessionStorage:
 		return "ss"
-	case "INDEXED_DB":
+	case coredata.TrackerTypeIndexedDB:
 		return "idb"
+	case coredata.TrackerTypeCacheStorage:
+		return "cs"
 	}
 
-	return strings.ToLower(trackerType)
+	return strings.ToLower(string(trackerType))
 }
