@@ -59,7 +59,7 @@
     }
 
     table {
-        @apply border border-border-mid border-collapse w-max;
+        @apply border border-border-mid border-collapse w-max max-w-full;
         tbody {
             @apply border border-border-mid border-collapse;
         }
