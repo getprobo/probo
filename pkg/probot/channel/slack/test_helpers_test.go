@@ -151,6 +151,7 @@ func insertTestIdentity(t *testing.T, pgClient *pg.Client, identityID gid.GID) {
 	now := time.Now()
 	emailAddress, err := mail.ParseAddr(identityID.String() + "@example.com")
 	require.NoError(t, err)
+
 	identity := coredata.Identity{
 		ID:                   identityID,
 		EmailAddress:         emailAddress,
