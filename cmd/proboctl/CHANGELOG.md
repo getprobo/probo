@@ -4,6 +4,18 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.12.0] - 2026-08-25
+
+### Added
+
+- `common-third-party list --with-patterns` shows each entry's tracker pattern keys grouped by storage kind, to help judge whether a row is a real vendor
+- `common-third-party show` / `list` display the review verdict (e.g. `REJECTED -> FIRST_PARTY`)
+
+### Fixed
+
+- `common-third-party prune` no longer offers to delete a catalog entry that has already been reviewed
+- Removed a duplicate PowerLinks seed entry that was re-added on every reseed
+
 ## [0.11.0] - 2026-08-24
 
 ### Added

@@ -4,6 +4,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.221.0] - 2026-08-25
+
 ### Added
 
 - Tracker Pattern `Get` / `Get Many`: `attribution` catalog verdict inherited from the linked common tracker pattern

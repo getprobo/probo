@@ -643,8 +643,6 @@ go.opentelemetry.io/otel/trace v1.45.0 h1:l/mP6Uv7oNO7/TblbhpbgMidxhq1uO/rPsikOy
 go.opentelemetry.io/otel/trace v1.45.0/go.mod h1:qoJJA2xNMnxRrdISU/kLtfUH2wNeQbiv+jhs/CxI8bc=
 go.opentelemetry.io/proto/otlp v1.11.0 h1:5rrYs0Ykyj50sdU/JU0x8etU+LubXWb+gED6TbEdMIk=
 go.opentelemetry.io/proto/otlp v1.11.0/go.mod h1:SmVizdCOAm3XBtG1g1NnOdhW6jtddT72hLMhv8VwA8E=
-go.probo.inc/mcpgen v0.0.0-20260730090041-c6744c61f15e h1:GHJYIQWv5RNAv6h3D6MOzaNuJFevXIfccoOcqqkk+9M=
-go.probo.inc/mcpgen v0.0.0-20260730090041-c6744c61f15e/go.mod h1:UkHR/KYxzwtGJThanF06Jt/rl4P+oLexu5moz+QZEmI=
 go.probo.inc/mcpgen v0.0.0-20260825122734-849ff4c0468d h1:DLtPiyrV2J4F3krSt0xBWdnxLw+zA1ot+nztNYD/2Qw=
 go.probo.inc/mcpgen v0.0.0-20260825122734-849ff4c0468d/go.mod h1:UkHR/KYxzwtGJThanF06Jt/rl4P+oLexu5moz+QZEmI=
 go.step.sm/crypto v0.77.7 h1:6azC+pD678Vjju8yXnMDHCZJ+HzFaEmL3sCryiezTIA=

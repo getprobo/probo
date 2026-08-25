@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.267.0] - 2026-08-25
+
+### Added
+
+- Catalog attribution (vendor name, first-party, or still-identifying) now shows on tracker pages in console, GraphQL, and MCP, for patterns whose catalog entry has no vendor name of its own
+
+### Changed
+
+- Migrated the compliance portal integrations page to UI v2, including a reworked Slack channel picker (correct icon, wider card, refreshes on open, fixed pagination)
+
 ## [0.266.0] - 2026-08-25
 
 ### Added
