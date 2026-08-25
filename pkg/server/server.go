@@ -224,6 +224,10 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-protected-resource", s.protectedResourceMetadataHandler)
+	s.router.Get(
+		"/.well-known/oauth-protected-resource/api/mcp/v1",
+		s.mcpProtectedResourceMetadataHandler,
+	)
 
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
@@ -269,7 +273,20 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) protectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
-	resource := uri.URI(s.baseURL)
+	s.renderProtectedResourceMetadata(w, uri.URI(s.baseURL))
+}
+
+func (s *Server) mcpProtectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
+	resource, err := s.iamService.OAuth2MCPResource()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	s.renderProtectedResourceMetadata(w, resource)
+}
+
+func (s *Server) renderProtectedResourceMetadata(w http.ResponseWriter, resource uri.URI) {
 	metadata := s.iamService.OAuth2ProtectedResourceMetadata(resource)
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
