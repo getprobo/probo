@@ -137,6 +137,16 @@ func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
 		resp.Header.Get("WWW-Authenticate"),
 		"/.well-known/oauth-protected-resource",
 	)
+
+	mcpMetadata, mcpRaw, err := testutil.OAuth2ProtectedResourceMetadataAt(
+		owner,
+		"/.well-known/oauth-protected-resource/api/mcp/v1",
+	)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, mcpRaw.StatusCode)
+	require.NotNil(t, mcpMetadata)
+	assert.Equal(t, resource, mcpMetadata.Resource)
+	assert.Contains(t, mcpMetadata.AuthorizationServers, expectedResource)
 }
 
 func TestOAuth2_RegisterClientWithAPIScope(t *testing.T) {
@@ -417,6 +427,63 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 	)
 
 	t.Run(
+		"mcp resource is accepted",
+		func(t *testing.T) {
+			t.Parallel()
+
+			client := factory.CreateOAuth2ClientWithAPIScopes(owner, "v1:iam:read", nil)
+			redirectURI := "http://localhost:9999/callback"
+			verifier, challenge := testutil.GeneratePKCE()
+			mcpResource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
+			require.NoError(t, err)
+
+			params := url.Values{
+				"client_id":             {client.ClientID},
+				"redirect_uri":          {redirectURI},
+				"resource":              {mcpResource},
+				"response_type":         {"code"},
+				"scope":                 {"v1:iam:read"},
+				"state":                 {"mcp-resource-test"},
+				"code_challenge":        {challenge},
+				"code_challenge_method": {"S256"},
+			}
+
+			authResp, err := testutil.OAuth2Authorize(owner, params)
+			require.NoError(t, err)
+			require.True(t, testutil.IsConsentRedirect(authResp))
+
+			consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
+			require.NoError(t, err)
+			consentResp, err := testutil.OAuth2ConsentApprove(owner, consentID)
+			require.NoError(t, err)
+
+			code, err := testutil.OAuth2AuthorizeCodeFromRedirect(consentResp)
+			require.NoError(t, err)
+
+			tokenResp, raw, err := testutil.OAuth2TokenWithCodeForResource(
+				owner,
+				client.ClientID,
+				client.ClientSecret,
+				code,
+				redirectURI,
+				verifier,
+				mcpResource,
+			)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, raw.StatusCode, string(raw.Body))
+
+			mcpClient := testutil.NewMCPClientWithAccessToken(t, owner, tokenResp.AccessToken)
+			var result struct {
+				Organizations []struct {
+					ID string `json:"id"`
+				} `json:"organizations"`
+			}
+			mcpClient.CallToolInto("listOrganizations", map[string]any{}, &result)
+			assert.NotEmpty(t, result.Organizations)
+		},
+	)
+
+	t.Run(
 		"omitted resource defaults to root",
 		func(t *testing.T) {
 			t.Parallel()
@@ -450,8 +517,6 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			client := factory.CreateOAuth2Client(owner, nil)
 			redirectURI := "http://localhost:9999/callback"
 			_, challenge := testutil.GeneratePKCE()
-			mcpResource, err := url.JoinPath(owner.BaseURL(), "api", "mcp", "v1")
-			require.NoError(t, err)
 			params := url.Values{
 				"client_id":             {client.ClientID},
 				"redirect_uri":          {redirectURI},
@@ -462,7 +527,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 				"code_challenge_method": {"S256"},
 				"resource": {
 					owner.BaseURL(),
-					mcpResource,
+					"https://other.example.com/api/mcp/v1",
 				},
 			}
 
