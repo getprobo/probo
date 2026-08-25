@@ -101,13 +101,12 @@ func NewMux(
 			Logger:     nil, // TODO put logger here
 		},
 	)
-	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
 
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
-	r.Handle("/", protectedHandler)
+	r.Handle("/", handler)
 
 	logger.Info("MCP server initialized successfully")
 
