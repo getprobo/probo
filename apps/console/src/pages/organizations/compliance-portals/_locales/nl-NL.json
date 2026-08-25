@@ -16,8 +16,8 @@
     "placeholder": "bijv. privacybeleid"
   },
   "accessPage": {
-    "title": "Externe toegang",
-    "description": "Beheer wie toegang heeft tot uw compliancepagina"
+    "title": "Bezoekers",
+    "description": "Uw pagina is openbaar. Personen die zich aanmelden om documenten aan te vragen of een NDA te accepteren, verschijnen hier."
   },
   "accessEditDialog": {
     "title": "Toegang bewerken voor {{email}}",
@@ -27,9 +27,9 @@
     "actions": { "update": "Toegang bijwerken" }
   },
   "accessList": {
-    "empty": "Nog geen externe toegang verleend",
-    "emptyDescription": "Personen die toegang tot uw portal aanvragen, verschijnen hier.",
-    "columns": { "name": "Naam", "email": "E-mail", "date": "Datum", "access": "Toegang", "requests": "Aanvragen", "nda": "NDA" },
+    "empty": "Nog geen bezoekers",
+    "emptyDescription": "Personen die zich op uw portal aanmelden, verschijnen hier.",
+    "columns": { "name": "Naam", "email": "E-mail", "joinedOn": "Aangemeld op", "access": "Toegang", "requests": "Aanvragen", "nda": "NDA" },
     "actions": { "showMore": "Meer weergeven" }
   },
   "accessListItem": {

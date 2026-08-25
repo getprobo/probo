@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
@@ -77,7 +77,7 @@ export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPe
               {t("accessPage.description")}
             </Text>
           </div>
-          <Suspense fallback={<ListSkeleton count={4} />}>
+          <Suspense fallback={<TableSkeleton variant="surface" count={4} columns={7} />}>
             <CompliancePortalAccessList />
           </Suspense>
         </section>

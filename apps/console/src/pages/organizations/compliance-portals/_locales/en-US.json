@@ -34,8 +34,8 @@
     "placeholder": "e.g. privacy-policy"
   },
   "accessPage": {
-    "title": "External Access",
-    "description": "Manage who can access your compliance portal"
+    "title": "Visitors",
+    "description": "Your portal is public. People who sign in to request documents or accept an NDA appear here."
   },
   "accessEditDialog": {
     "title": "Edit Access for {{email}}",
@@ -55,12 +55,12 @@
     }
   },
   "accessList": {
-    "empty": "No external access granted yet",
-    "emptyDescription": "People who request access to your portal will appear here.",
+    "empty": "No visitors yet",
+    "emptyDescription": "People who sign in on your portal will appear here.",
     "columns": {
       "name": "Name",
       "email": "Email",
-      "date": "Date",
+      "joinedOn": "Joined on",
       "access": "Access",
       "requests": "Requests",
       "nda": "NDA"

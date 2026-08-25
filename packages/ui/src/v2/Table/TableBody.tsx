@@ -18,32 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import type { ComponentProps } from "react";
 
-import { permissionsPageSkeleton } from "./variants";
+import { table } from "./variants";
 
-export function CompliancePortalPermissionsPageSkeleton() {
-  const { root, section, intro } = permissionsPageSkeleton();
+export type TableBodyProps = ComponentProps<"tbody">;
 
-  return (
-    <div className={root()}>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-56" />
-          <TextSkeleton size={2} className="w-96" />
-        </div>
-        <CardSkeleton size={2} />
-      </div>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-36" />
-          <TextSkeleton size={2} className="w-80" />
-        </div>
-        <TableSkeleton variant="surface" count={4} columns={7} />
-      </div>
-    </div>
-  );
+// Data row group (Radix "Table.Body"). Renders a <tbody>.
+export function TableBody(props: TableBodyProps) {
+  const { className, ...rest } = props;
+  const { body } = table();
+
+  return <tbody className={body({ className })} {...rest} />;
 }

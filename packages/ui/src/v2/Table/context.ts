@@ -18,32 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { createContext, useContext } from "react";
 
-import { permissionsPageSkeleton } from "./variants";
+export type TableSize = 1 | 2 | 3;
 
-export function CompliancePortalPermissionsPageSkeleton() {
-  const { root, section, intro } = permissionsPageSkeleton();
+// The table's resolved size, shared with cells so padding/type match Root.
+const TableContext = createContext<TableSize>(2);
 
-  return (
-    <div className={root()}>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-56" />
-          <TextSkeleton size={2} className="w-96" />
-        </div>
-        <CardSkeleton size={2} />
-      </div>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-36" />
-          <TextSkeleton size={2} className="w-80" />
-        </div>
-        <TableSkeleton variant="surface" count={4} columns={7} />
-      </div>
-    </div>
-  );
+export const TableProvider = TableContext.Provider;
+
+export function useTableContext() {
+  return useContext(TableContext);
 }

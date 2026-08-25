@@ -34,8 +34,8 @@
     "placeholder": "par ex. politique-de-confidentialite"
   },
   "accessPage": {
-    "title": "Accès externe",
-    "description": "Gérez qui peut accéder à votre portail de conformité"
+    "title": "Visiteurs",
+    "description": "Votre portail est public. Les personnes qui se connectent pour demander des documents ou accepter un NDA apparaissent ici."
   },
   "accessEditDialog": {
     "title": "Modifier l’accès pour {{email}}",
@@ -55,12 +55,12 @@
     }
   },
   "accessList": {
-    "empty": "Aucun accès externe accordé pour le moment",
-    "emptyDescription": "Les personnes qui demandent l’accès à votre portail apparaîtront ici.",
+    "empty": "Aucun visiteur pour le moment",
+    "emptyDescription": "Les personnes qui se connectent sur votre portail apparaîtront ici.",
     "columns": {
       "name": "Nom",
       "email": "E-mail",
-      "date": "Date",
+      "joinedOn": "Inscrit le",
       "access": "Accès",
       "requests": "Demandes",
       "nda": "NDA"

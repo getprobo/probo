@@ -61,19 +61,19 @@ export const accessSection = tv({
 
 export const accessListItem = tv({
   slots: {
-    item: "",
-    trailing: "relative z-2 flex shrink-0 items-center gap-3",
-    counts: "flex flex-col items-end gap-0.5",
+    row: "",
+    person: "flex min-w-0 items-center gap-3",
+    personCopy: "min-w-0 truncate",
   },
   variants: {
     interactive: {
       true: {
-        item: "cursor-pointer hover:bg-sand-2",
+        row: "cursor-pointer hover:bg-sand-2",
       },
     },
     inactive: {
       true: {
-        item: "opacity-50",
+        row: "opacity-50",
       },
     },
   },

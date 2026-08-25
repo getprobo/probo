@@ -23,8 +23,9 @@ import { dateFormat } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { ListItem } from "@probo/ui/src/v2/List/ListItem";
-import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -101,7 +102,7 @@ export function CompliancePortalAccessListItem({
 
   const isActive = access.profile.state === "ACTIVE";
   const canEdit = access.canUpdate && isActive;
-  const { item, trailing, counts } = accessListItem({
+  const { row, person, personCopy } = accessListItem({
     interactive: canEdit,
     inactive: !isActive,
   });
@@ -119,35 +120,46 @@ export function CompliancePortalAccessListItem({
 
   return (
     <>
-      <ListItem key={access.id} className={item()} onClick={handleRowClick}>
-        <Avatar
-          size={2}
-          variant="soft"
-          color="gold"
-          fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
-        />
-        <ListItemContent>
-          <Text size={2} weight="medium" color="neutral" highContrast className="truncate">
-            {access.profile.fullName}
-          </Text>
+      <TableRow
+        key={access.id}
+        align="center"
+        className={row()}
+        onClick={handleRowClick}
+      >
+        <TableRowHeaderCell minWidth="12rem">
+          <div className={person()}>
+            <Avatar
+              size={2}
+              variant="soft"
+              color="gold"
+              fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
+            />
+            <Text size={2} weight="medium" color="neutral" highContrast className={personCopy()}>
+              {access.profile.fullName}
+            </Text>
+          </div>
+        </TableRowHeaderCell>
+        <TableCell>
           <Text size={1} color="gold" className="truncate">
             {access.profile.emailAddress}
           </Text>
-        </ListItemContent>
-        <div className={trailing()}>
+        </TableCell>
+        <TableCell>
           <Text size={1} color="faint">
             {dateFormat(i18n.language, access.createdAt)}
           </Text>
-          <div className={counts()}>
-            <Text size={1} color="faint">
-              {t("accessListItem.granted", { count: access.activeCount })}
-            </Text>
-            {access.pendingRequestCount > 0 && (
-              <Text size={1} color="faint">
-                {t("accessListItem.pending", { count: access.pendingRequestCount })}
-              </Text>
-            )}
-          </div>
+        </TableCell>
+        <TableCell>
+          <Text size={1} color="faint">
+            {access.activeCount}
+          </Text>
+        </TableCell>
+        <TableCell>
+          <Text size={1} color="faint">
+            {access.pendingRequestCount}
+          </Text>
+        </TableCell>
+        <TableCell>
           {access.ndaSignature
             ? (
                 <Badge color={ndaBadgeColor(access.ndaSignature.status)} variant="soft">
@@ -155,6 +167,8 @@ export function CompliancePortalAccessListItem({
                 </Badge>
               )
             : null}
+        </TableCell>
+        <TableCell>
           {canEdit && (
             <IconButton
               variant="ghost"
@@ -165,8 +179,8 @@ export function CompliancePortalAccessListItem({
               <PencilSimpleIcon />
             </IconButton>
           )}
-        </div>
-      </ListItem>
+        </TableCell>
+      </TableRow>
 
       {canEdit && dialogOpen && (
         <CompliancePortalAccessEditDialog

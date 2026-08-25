@@ -18,32 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import type { CSSProperties } from "react";
 
-import { permissionsPageSkeleton } from "./variants";
-
-export function CompliancePortalPermissionsPageSkeleton() {
-  const { root, section, intro } = permissionsPageSkeleton();
-
-  return (
-    <div className={root()}>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-56" />
-          <TextSkeleton size={2} className="w-96" />
-        </div>
-        <CardSkeleton size={2} />
-      </div>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-36" />
-          <TextSkeleton size={2} className="w-80" />
-        </div>
-        <TableSkeleton variant="surface" count={4} columns={7} />
-      </div>
-    </div>
-  );
+export function cellStyle(
+  width: string | undefined,
+  minWidth: string | undefined,
+  maxWidth: string | undefined,
+  style: CSSProperties | undefined,
+): CSSProperties | undefined {
+  if (width == null && minWidth == null && maxWidth == null) {
+    return style;
+  }
+  return { width, minWidth, maxWidth, ...style };
 }

@@ -18,32 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import type { ComponentProps } from "react";
+import type { VariantProps } from "tailwind-variants/lite";
 
-import { permissionsPageSkeleton } from "./variants";
+import { TableProvider } from "./context";
+import { table } from "./variants";
 
-export function CompliancePortalPermissionsPageSkeleton() {
-  const { root, section, intro } = permissionsPageSkeleton();
+export type TableProps = ComponentProps<"div"> & Pick<VariantProps<typeof table>, "size" | "variant" | "layout">;
+
+// Scroll wrapper around a semantic <table> (Radix "Table.Root"). Size and
+// variant live here so cells inherit padding; pair with TableHeader / TableBody
+// / TableRow / TableCell. Use TableSkeleton while loading.
+export function Table(props: TableProps) {
+  const { size = 2, variant = "ghost", layout = "auto", className, children, ...rest } = props;
+  const { root, table: tableSlot } = table({ size, variant, layout });
 
   return (
-    <div className={root()}>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-56" />
-          <TextSkeleton size={2} className="w-96" />
-        </div>
-        <CardSkeleton size={2} />
-      </div>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-36" />
-          <TextSkeleton size={2} className="w-80" />
-        </div>
-        <TableSkeleton variant="surface" count={4} columns={7} />
-      </div>
+    <div className={root({ className })} {...rest}>
+      <TableProvider value={size}>
+        <table className={tableSlot()}>{children}</table>
+      </TableProvider>
     </div>
   );
 }
