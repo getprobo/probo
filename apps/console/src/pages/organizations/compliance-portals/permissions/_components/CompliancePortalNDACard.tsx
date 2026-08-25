@@ -61,7 +61,6 @@ export function CompliancePortalNDACard({
   onReject,
 }: CompliancePortalNDACardProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { controls, actions } = ndaCard();
   const compliancePortal = useFragment(fragment, compliancePortalKey);
   const fileName = compliancePortal.nda?.fileName;
   const hasFile = fileName != null;
@@ -70,6 +69,9 @@ export function CompliancePortalNDACard({
     disabled: !canUpload || isUploading,
     onFile,
     onReject,
+  });
+  const { frame, controls, actions } = ndaCard({
+    dashed: isDragActive || !hasFile,
   });
 
   const downloadUrl = compliancePortal.nda?.downloadUrl;
@@ -83,7 +85,7 @@ export function CompliancePortalNDACard({
 
   return (
     <CompliancePortalTonedCard
-      {...getRootProps()}
+      {...getRootProps({ className: frame() })}
       tone={tone}
       icon={hasFile
         ? <FilePdfIcon size={24} weight="duotone" />
