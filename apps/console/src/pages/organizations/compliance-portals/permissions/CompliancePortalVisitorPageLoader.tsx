@@ -18,47 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
-import { useTranslation } from "react-i18next";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+import { useParams } from "react-router";
 
-type ElectronicSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
+import type { CompliancePortalVisitorPageQuery } from "#/__generated__/core/CompliancePortalVisitorPageQuery.graphql";
 
-function ndaBadgeColor(
-  status: ElectronicSignatureStatus,
-): "green" | "sky" | "amber" | "red" {
-  switch (status) {
-    case "COMPLETED":
-      return "green";
-    case "ACCEPTED":
-    case "PROCESSING":
-      return "sky";
-    case "PENDING":
-      return "amber";
-    case "FAILED":
-      return "red";
+import {
+  CompliancePortalVisitorPage,
+  compliancePortalVisitorPageQuery,
+} from "./CompliancePortalVisitorPage";
+import { CompliancePortalVisitorPageSkeleton } from "./CompliancePortalVisitorPageSkeleton";
+
+export default function CompliancePortalVisitorPageLoader() {
+  const { accessId } = useParams<{ accessId: string }>();
+  if (accessId == null) {
+    throw new Error(":accessId missing in route params");
   }
-}
+  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalVisitorPageQuery>(
+    compliancePortalVisitorPageQuery,
+  );
 
-function ndaBadgeKey(status: ElectronicSignatureStatus): string {
-  switch (status) {
-    case "COMPLETED":
-      return "ndaSignatureBadge.signed";
-    case "ACCEPTED":
-    case "PROCESSING":
-      return "ndaSignatureBadge.processing";
-    case "PENDING":
-      return "ndaSignatureBadge.pending";
-    case "FAILED":
-      return "ndaSignatureBadge.failed";
+  useEffect(() => {
+    loadQuery({ accessId });
+  }, [accessId, loadQuery]);
+
+  if (queryRef == null) {
+    return <CompliancePortalVisitorPageSkeleton />;
   }
-}
-
-export function NdaSignatureBadge({ status }: { status: ElectronicSignatureStatus }) {
-  const { t } = useTranslation("organizations/compliance-portals");
 
   return (
-    <Badge color={ndaBadgeColor(status)} variant="soft">
-      {t(ndaBadgeKey(status))}
-    </Badge>
+    <Suspense fallback={<CompliancePortalVisitorPageSkeleton />}>
+      <CompliancePortalVisitorPage queryRef={queryRef} />
+    </Suspense>
   );
 }

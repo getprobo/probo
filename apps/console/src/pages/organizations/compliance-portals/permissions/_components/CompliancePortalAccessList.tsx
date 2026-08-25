@@ -93,7 +93,7 @@ function AccessListHeader() {
         <TableColumnHeaderCell>{t("accessList.columns.requests")}</TableColumnHeaderCell>
         <TableColumnHeaderCell>{t("accessList.columns.nda")}</TableColumnHeaderCell>
         <TableColumnHeaderCell>
-          <span className="sr-only">{t("accessListItem.actions.edit")}</span>
+          <span className="sr-only">{t("accessListItem.actions.open")}</span>
         </TableColumnHeaderCell>
       </TableRow>
     </TableHeader>

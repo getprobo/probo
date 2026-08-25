@@ -28,6 +28,7 @@ import { CompliancePortalLayoutSkeleton } from "./CompliancePortalLayoutSkeleton
 import { CompliancePortalHostingPageSkeleton } from "./hosting/CompliancePortalHostingPageSkeleton";
 import { CompliancePortalIntegrationsPageSkeleton } from "./integrations/CompliancePortalIntegrationsPageSkeleton";
 import { CompliancePortalPermissionsPageSkeleton } from "./permissions/CompliancePortalPermissionsPageSkeleton";
+import { CompliancePortalVisitorPageSkeleton } from "./permissions/CompliancePortalVisitorPageSkeleton";
 
 export const compliancePortalRoutes = [
   {
@@ -52,8 +53,18 @@ export const compliancePortalRoutes = [
       },
       {
         path: "permissions",
-        Fallback: CompliancePortalPermissionsPageSkeleton,
-        Component: lazy(() => import("#/pages/organizations/compliance-portals/permissions/CompliancePortalPermissionsPageLoader")),
+        children: [
+          {
+            index: true,
+            Fallback: CompliancePortalPermissionsPageSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/permissions/CompliancePortalPermissionsPageLoader")),
+          },
+          {
+            path: ":accessId",
+            Fallback: CompliancePortalVisitorPageSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/permissions/CompliancePortalVisitorPageLoader")),
+          },
+        ],
       },
       {
         path: "integrations",

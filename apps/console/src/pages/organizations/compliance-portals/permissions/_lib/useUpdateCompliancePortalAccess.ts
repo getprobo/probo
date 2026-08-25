@@ -18,47 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { useTranslation } from "react-i18next";
+import { graphql } from "relay-runtime";
 
-type ElectronicSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
+import type { useUpdateCompliancePortalAccessMutation } from "#/__generated__/core/useUpdateCompliancePortalAccessMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
-function ndaBadgeColor(
-  status: ElectronicSignatureStatus,
-): "green" | "sky" | "amber" | "red" {
-  switch (status) {
-    case "COMPLETED":
-      return "green";
-    case "ACCEPTED":
-    case "PROCESSING":
-      return "sky";
-    case "PENDING":
-      return "amber";
-    case "FAILED":
-      return "red";
+const updateAccessMutation = graphql`
+  mutation useUpdateCompliancePortalAccessMutation(
+    $input: UpdateCompliancePortalAccessInput!
+  ) {
+    updateCompliancePortalAccess(input: $input) {
+      compliancePortalAccess {
+        id
+        pendingRequestCount
+        activeCount
+        ...CompliancePortalDocumentAccessList_access
+      }
+    }
   }
-}
+`;
 
-function ndaBadgeKey(status: ElectronicSignatureStatus): string {
-  switch (status) {
-    case "COMPLETED":
-      return "ndaSignatureBadge.signed";
-    case "ACCEPTED":
-    case "PROCESSING":
-      return "ndaSignatureBadge.processing";
-    case "PENDING":
-      return "ndaSignatureBadge.pending";
-    case "FAILED":
-      return "ndaSignatureBadge.failed";
-  }
-}
-
-export function NdaSignatureBadge({ status }: { status: ElectronicSignatureStatus }) {
+export function useUpdateCompliancePortalAccess() {
   const { t } = useTranslation("organizations/compliance-portals");
-
-  return (
-    <Badge color={ndaBadgeColor(status)} variant="soft">
-      {t(ndaBadgeKey(status))}
-    </Badge>
-  );
+  return useMutation<useUpdateCompliancePortalAccessMutation>(updateAccessMutation, {
+    successMessage: t("visitorPage.messages.updated"),
+    errorToast: t("visitorPage.errors.update"),
+  });
 }

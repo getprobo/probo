@@ -21,22 +21,23 @@
 import { PencilSimpleIcon } from "@phosphor-icons/react";
 import { dateFormat } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type MouseEvent, useState } from "react";
+import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
+import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalAccessListItemFragment$key } from "#/__generated__/core/CompliancePortalAccessListItemFragment.graphql";
 
 import { accessListItem } from "../variants";
 
-import { CompliancePortalAccessEditDialog } from "./CompliancePortalAccessEditDialog";
+import { NdaSignatureBadge } from "./NdaSignatureBadge";
 
 const fragment = graphql`
   fragment CompliancePortalAccessListItemFragment on CompliancePortalAccess {
@@ -52,41 +53,8 @@ const fragment = graphql`
     ndaSignature {
       status
     }
-    canUpdate: permission(action: "compliance-portal:portal-access:update")
   }
 `;
-
-type ElectronicSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
-
-function ndaBadgeColor(
-  status: ElectronicSignatureStatus,
-): "green" | "sky" | "amber" | "red" {
-  switch (status) {
-    case "COMPLETED":
-      return "green";
-    case "ACCEPTED":
-    case "PROCESSING":
-      return "sky";
-    case "PENDING":
-      return "amber";
-    case "FAILED":
-      return "red";
-  }
-}
-
-function ndaBadgeKey(status: ElectronicSignatureStatus): string {
-  switch (status) {
-    case "COMPLETED":
-      return "ndaSignatureBadge.signed";
-    case "ACCEPTED":
-    case "PROCESSING":
-      return "ndaSignatureBadge.processing";
-    case "PENDING":
-      return "ndaSignatureBadge.pending";
-    case "FAILED":
-      return "ndaSignatureBadge.failed";
-  }
-}
 
 interface CompliancePortalAccessListItemProps {
   accessKey: CompliancePortalAccessListItemFragment$key;
@@ -96,98 +64,86 @@ export function CompliancePortalAccessListItem({
   accessKey,
 }: CompliancePortalAccessListItemProps) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-
-  const access = useFragment<CompliancePortalAccessListItemFragment$key>(fragment, accessKey);
-
+  const navigate = useNavigate();
+  const access = useFragment(fragment, accessKey);
   const isActive = access.profile.state === "ACTIVE";
-  const canEdit = access.canUpdate && isActive;
   const { row, person, personCopy } = accessListItem({
-    interactive: canEdit,
+    interactive: true,
     inactive: !isActive,
   });
 
   function handleRowClick() {
-    if (canEdit) {
-      setDialogOpen(true);
-    }
+    void navigate(access.id);
   }
 
-  function handleEditClick(event: MouseEvent<HTMLButtonElement>) {
+  function handleLinkClick(event: MouseEvent) {
     event.stopPropagation();
-    setDialogOpen(true);
   }
 
   return (
-    <>
-      <TableRow
-        key={access.id}
-        align="center"
-        className={row()}
-        onClick={handleRowClick}
-      >
-        <TableRowHeaderCell minWidth="12rem">
-          <div className={person()}>
-            <Avatar
-              size={2}
-              variant="soft"
-              color="gold"
-              fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
-            />
-            <Text size={2} weight="medium" color="neutral" highContrast className={personCopy()}>
-              {access.profile.fullName}
-            </Text>
-          </div>
-        </TableRowHeaderCell>
-        <TableCell>
-          <Text size={1} color="gold" className="truncate">
-            {access.profile.emailAddress}
-          </Text>
-        </TableCell>
-        <TableCell>
-          <Text size={1} color="faint">
-            {dateFormat(i18n.language, access.createdAt)}
-          </Text>
-        </TableCell>
-        <TableCell>
-          <Text size={1} color="faint">
-            {access.activeCount}
-          </Text>
-        </TableCell>
-        <TableCell>
-          <Text size={1} color="faint">
-            {access.pendingRequestCount}
-          </Text>
-        </TableCell>
-        <TableCell>
-          {access.ndaSignature
-            ? (
-                <Badge color={ndaBadgeColor(access.ndaSignature.status)} variant="soft">
-                  {t(ndaBadgeKey(access.ndaSignature.status))}
-                </Badge>
-              )
-            : null}
-        </TableCell>
-        <TableCell>
-          {canEdit && (
-            <IconButton
-              variant="ghost"
-              color="neutral"
-              aria-label={t("accessListItem.actions.edit")}
-              onClick={handleEditClick}
-            >
-              <PencilSimpleIcon />
-            </IconButton>
-          )}
-        </TableCell>
-      </TableRow>
-
-      {canEdit && dialogOpen && (
-        <CompliancePortalAccessEditDialog
-          access={access}
-          onClose={() => setDialogOpen(false)}
-        />
-      )}
-    </>
+    <TableRow
+      align="center"
+      className={row()}
+      onClick={handleRowClick}
+    >
+      <TableRowHeaderCell minWidth="12rem">
+        <div className={person()}>
+          <Avatar
+            size={2}
+            variant="soft"
+            color="gold"
+            fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
+          />
+          <Link
+            to={access.id}
+            size={2}
+            color="neutral"
+            highContrast
+            underline={false}
+            onClick={handleLinkClick}
+            className={personCopy()}
+          >
+            {access.profile.fullName}
+          </Link>
+        </div>
+      </TableRowHeaderCell>
+      <TableCell>
+        <Text size={1} color="gold" className="truncate">
+          {access.profile.emailAddress}
+        </Text>
+      </TableCell>
+      <TableCell>
+        <Text size={1} color="faint">
+          {dateFormat(i18n.language, access.createdAt)}
+        </Text>
+      </TableCell>
+      <TableCell>
+        <Text size={1} color="faint">
+          {access.activeCount}
+        </Text>
+      </TableCell>
+      <TableCell>
+        <Text size={1} color="faint">
+          {access.pendingRequestCount}
+        </Text>
+      </TableCell>
+      <TableCell>
+        {access.ndaSignature
+          ? <NdaSignatureBadge status={access.ndaSignature.status} />
+          : null}
+      </TableCell>
+      <TableCell>
+        <ButtonLink
+          to={access.id}
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label={t("accessListItem.actions.open")}
+          onClick={handleLinkClick}
+        >
+          <PencilSimpleIcon />
+        </ButtonLink>
+      </TableCell>
+    </TableRow>
   );
 }

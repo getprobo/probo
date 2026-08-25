@@ -99,3 +99,42 @@ export const accessListEmpty = tv({
     body: "flex max-w-xs flex-col items-center gap-2",
   },
 });
+
+export const visitorPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    back: "self-start",
+    header: "flex items-start gap-3",
+    identity: "flex min-w-0 flex-col gap-1",
+    meta: "flex flex-wrap items-center gap-2",
+  },
+});
+
+export const visitorPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex items-start gap-3",
+    identity: "flex min-w-0 flex-col gap-1",
+    section: "flex flex-col gap-3",
+  },
+});
+
+export const electronicSignatureSection = tv({
+  slots: {
+    root: "flex flex-col gap-3",
+    rows: "flex flex-col gap-3",
+    row: "flex items-center justify-between gap-3",
+    activity: "flex flex-col gap-2 border-t border-sand-a3 pt-3",
+    event: "flex items-start justify-between gap-2",
+    eventCopy: "min-w-0",
+  },
+});
+
+export const documentAccessList = tv({
+  slots: {
+    root: "flex flex-col gap-3",
+    heading: "flex flex-wrap items-center justify-between gap-2",
+    actions: "flex flex-wrap items-center gap-2",
+    rowActions: "flex justify-end gap-2",
+  },
+});

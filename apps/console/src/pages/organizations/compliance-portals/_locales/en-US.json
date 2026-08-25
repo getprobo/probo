@@ -37,21 +37,14 @@
     "title": "Visitors",
     "description": "Your portal is public. People who sign in to request documents or accept an NDA appear here."
   },
-  "accessEditDialog": {
-    "title": "Edit Access for {{email}}",
-    "types": {
-      "document": "Document",
-      "report": "Report",
-      "file": "File"
-    },
+  "visitorPage": {
+    "back": "Visitors",
+    "joinedOn": "Joined on {{date}}",
     "messages": {
-      "updated": "Access updated successfully"
+      "updated": "Access updated"
     },
     "errors": {
       "update": "Failed to update access"
-    },
-    "actions": {
-      "update": "Update Access"
     }
   },
   "accessList": {
@@ -73,11 +66,16 @@
     "granted": "{{count}} granted",
     "pending": "{{count}} pending",
     "actions": {
-      "edit": "Edit"
+      "open": "Open visitor"
     }
   },
   "documentAccessList": {
-    "title": "Document Access Permissions",
+    "title": "Documents",
+    "types": {
+      "document": "Document",
+      "report": "Report",
+      "file": "File"
+    },
     "columns": {
       "name": "Name",
       "type": "Type",
@@ -85,16 +83,27 @@
       "access": "Access"
     },
     "actions": {
-      "grantAll": "Grant All",
-      "rejectOrRevokeAll": "Reject/Revoke All",
+      "grantAll": "Grant all",
+      "rejectOrRevokeAll": "Reject or revoke all",
       "grant": "Grant",
       "reject": "Reject",
-      "revoke": "Revoke"
+      "revoke": "Revoke",
+      "cancel": "Cancel"
+    },
+    "grantAllConfirm": {
+      "title": "Grant all documents?",
+      "description": "This visitor will be able to read every document listed.",
+      "confirm": "Grant all"
+    },
+    "rejectOrRevokeAllConfirm": {
+      "title": "Reject or revoke all access?",
+      "description": "Granted documents will be revoked. Pending requests will be rejected.",
+      "confirm": "Reject or revoke all"
     },
     "empty": "No documents available"
   },
   "electronicSignature": {
-    "title": "Electronic Signature",
+    "title": "NDA",
     "fields": {
       "status": "Status",
       "signedAt": "Signed at",

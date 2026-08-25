@@ -19,12 +19,11 @@
     "title": "Bezoekers",
     "description": "Uw pagina is openbaar. Personen die zich aanmelden om documenten aan te vragen of een NDA te accepteren, verschijnen hier."
   },
-  "accessEditDialog": {
-    "title": "Toegang bewerken voor {{email}}",
-    "types": { "document": "Document", "report": "Rapport", "file": "Bestand" },
-    "messages": { "updated": "Toegang succesvol bijgewerkt" },
-    "errors": { "update": "Bijwerken van toegang mislukt" },
-    "actions": { "update": "Toegang bijwerken" }
+  "visitorPage": {
+    "back": "Bezoekers",
+    "joinedOn": "Aangemeld op {{date}}",
+    "messages": { "updated": "Toegang bijgewerkt" },
+    "errors": { "update": "Bijwerken van toegang mislukt" }
   },
   "accessList": {
     "empty": "Nog geen bezoekers",
@@ -35,16 +34,34 @@
   "accessListItem": {
     "granted": "{{count}} verleend",
     "pending": "{{count}} in behandeling",
-    "actions": { "edit": "Bewerken" }
+    "actions": { "open": "Bezoeker openen" }
   },
   "documentAccessList": {
-    "title": "Documenttoegangsrechten",
+    "title": "Documenten",
+    "types": { "document": "Document", "report": "Rapport", "file": "Bestand" },
     "columns": { "name": "Naam", "type": "Type", "category": "Categorie", "access": "Toegang" },
-    "actions": { "grantAll": "Alles toestaan", "rejectOrRevokeAll": "Alles weigeren/intrekken", "grant": "Toestaan", "reject": "Weigeren", "revoke": "Intrekken" },
+    "actions": {
+      "grantAll": "Alles toestaan",
+      "rejectOrRevokeAll": "Alles weigeren of intrekken",
+      "grant": "Toestaan",
+      "reject": "Weigeren",
+      "revoke": "Intrekken",
+      "cancel": "Annuleren"
+    },
+    "grantAllConfirm": {
+      "title": "Alle documenten toestaan?",
+      "description": "Deze bezoeker kan elk vermeld document lezen.",
+      "confirm": "Alles toestaan"
+    },
+    "rejectOrRevokeAllConfirm": {
+      "title": "Alle toegang weigeren of intrekken?",
+      "description": "Toegestane documenten worden ingetrokken. Openstaande aanvragen worden geweigerd.",
+      "confirm": "Alles weigeren of intrekken"
+    },
     "empty": "Geen documenten beschikbaar"
   },
   "electronicSignature": {
-    "title": "Elektronische handtekening",
+    "title": "NDA",
     "fields": { "status": "Status", "signedAt": "Ondertekend op", "certificate": "Certificaat" },
     "actions": { "download": "Downloaden" },
     "activity": "Activiteit"

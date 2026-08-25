@@ -18,147 +18,150 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
-import {
-  getCompliancePortalDocumentAccessStatusBadgeVariant,
-  getCompliancePortalDocumentAccessStatusLabel,
-} from "@probo/helpers";
-import { Badge, Button, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Table } from "@probo/ui/src/v2/Table/Table";
+import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
+import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+
+import type { CompliancePortalDocumentAccessList_access$key } from "#/__generated__/core/CompliancePortalDocumentAccessList_access.graphql";
+
+import {
+  documentAccessInfoFrom,
+  rejectOrRevokeStatus,
+  updateAccessInput,
+} from "../_lib/documentAccessInfo";
+import { useUpdateCompliancePortalAccess } from "../_lib/useUpdateCompliancePortalAccess";
+import { documentAccessList } from "../variants";
+
+import { CompliancePortalDocumentAccessBulkDialog } from "./CompliancePortalDocumentAccessBulkDialog";
+import { CompliancePortalDocumentAccessListItem } from "./CompliancePortalDocumentAccessListItem";
+
+const COLUMN_COUNT = 5;
+
+const fragment = graphql`
+  fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess {
+    id
+    availableDocumentAccesses(
+      first: 100
+      orderBy: { field: CREATED_AT, direction: DESC }
+    ) {
+      edges {
+        node {
+          ...documentAccessInfo_documentAccess
+        }
+      }
+    }
+  }
+`;
 
 interface CompliancePortalDocumentAccessListProps {
-  documentAccesses: CompliancePortalDocumentAccessInfo[];
-  initialStatusByID: Record<string, CompliancePortalDocumentAccessStatus>;
-  onGrantAll: () => void;
-  onRejectOrRevokeAll: () => void;
-  onUpdateStatus: (docAccess: CompliancePortalDocumentAccessInfo, status: CompliancePortalDocumentAccessStatus) => void;
+  accessKey: CompliancePortalDocumentAccessList_access$key;
+  canUpdate: boolean;
 }
 
-export function CompliancePortalDocumentAccessList(props: CompliancePortalDocumentAccessListProps) {
-  const { documentAccesses, initialStatusByID, onGrantAll, onRejectOrRevokeAll, onUpdateStatus } = props;
-
+export function CompliancePortalDocumentAccessList({
+  accessKey,
+  canUpdate,
+}: CompliancePortalDocumentAccessListProps) {
   const { t } = useTranslation("organizations/compliance-portals");
+  const { root, heading, actions } = documentAccessList();
+  const access = useFragment(fragment, accessKey);
+  const documentAccesses = access.availableDocumentAccesses.edges.map(edge =>
+    documentAccessInfoFrom(edge.node, t),
+  );
+  const [updateAccess, isUpdating] = useUpdateCompliancePortalAccess();
 
-  const showGrantCTA = documentAccesses.some(da => da.status !== "GRANTED");
-  const showRejectCTA = documentAccesses.some(da => da.status !== "REJECTED" && da.status !== "REVOKED");
+  const showGrantAll = canUpdate && documentAccesses.some(item => item.status !== "GRANTED");
+  const showRejectOrRevokeAll = canUpdate
+    && documentAccesses.some(item => item.status !== "REJECTED" && item.status !== "REVOKED");
+
+  async function commit(updates: CompliancePortalDocumentAccessInfo[]) {
+    await updateAccess({
+      variables: { input: updateAccessInput(access.id, updates) },
+    });
+  }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h4 className="font-medium text-txt-primary">
+    <section className={root()}>
+      <div className={heading()}>
+        <Heading level={3} size={3} weight="medium" highContrast>
           {t("documentAccessList.title")}
-        </h4>
-        <div className="ml-auto flex items-center gap-2">
-          {showGrantCTA
-            && (
-              <Button
-                type="button"
-                variant="quaternary"
-                onClick={onGrantAll}
-                className="text-xs h-7 min-h-7"
+        </Heading>
+        {canUpdate && (showGrantAll || showRejectOrRevokeAll) && (
+          <div className={actions()}>
+            {showGrantAll && (
+              <CompliancePortalDocumentAccessBulkDialog
+                action="grantAll"
+                loading={isUpdating}
+                onConfirm={() => commit(
+                  documentAccesses
+                    .filter(item => item.status !== "GRANTED")
+                    .map(item => ({ ...item, status: "GRANTED" as const })),
+                )}
               >
-                {t("documentAccessList.actions.grantAll")}
-              </Button>
+                <Button type="button" size={1} variant="soft" color="neutral" disabled={isUpdating}>
+                  {t("documentAccessList.actions.grantAll")}
+                </Button>
+              </CompliancePortalDocumentAccessBulkDialog>
             )}
-          {showRejectCTA
-            && (
-              <Button
-                type="button"
-                variant="danger"
-                onClick={onRejectOrRevokeAll}
-                className="text-xs h-7 min-h-7"
+            {showRejectOrRevokeAll && (
+              <CompliancePortalDocumentAccessBulkDialog
+                action="rejectOrRevokeAll"
+                loading={isUpdating}
+                onConfirm={() => commit(
+                  documentAccesses
+                    .filter(item => item.status !== "REJECTED" && item.status !== "REVOKED")
+                    .map(item => ({ ...item, status: rejectOrRevokeStatus(item.status) })),
+                )}
               >
-                {t("documentAccessList.actions.rejectOrRevokeAll")}
-              </Button>
+                <Button type="button" size={1} variant="soft" color="red" disabled={isUpdating}>
+                  {t("documentAccessList.actions.rejectOrRevokeAll")}
+                </Button>
+              </CompliancePortalDocumentAccessBulkDialog>
             )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {documentAccesses.length > 0
-        ? (
-            <div className="bg-bg-secondary rounded-lg overflow-hidden">
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t("documentAccessList.columns.name")}</Th>
-                    <Th>{t("documentAccessList.columns.type")}</Th>
-                    <Th>{t("documentAccessList.columns.category")}</Th>
-                    <Th>
-                      {t("documentAccessList.columns.access")}
-                    </Th>
-                    <Th></Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {documentAccesses.map((docAccess) => {
-                    return (
-                      <Tr key={docAccess.id}>
-                        <Td>
-                          <div className="font-medium text-txt-primary">
-                            {docAccess.name}
-                          </div>
-                        </Td>
-                        <Td>
-                          <Badge variant={docAccess.variant}>
-                            {docAccess.typeLabel}
-                          </Badge>
-                        </Td>
-                        <Td>
-                          <div className="text-txt-secondary">
-                            {docAccess.category || "-"}
-                          </div>
-                        </Td>
-                        <Td>
-                          {(docAccess.persisted || docAccess.status !== "REQUESTED")
-                            && (
-                              <Badge variant={getCompliancePortalDocumentAccessStatusBadgeVariant(docAccess.status)}>
-                                {getCompliancePortalDocumentAccessStatusLabel(docAccess.status, t)}
-                              </Badge>
-                            )}
-                        </Td>
-                        <Td className="flex justify-end gap-2">
-                          {docAccess.status !== "GRANTED"
-                            && (
-                              <Button
-                                type="button"
-                                variant="quaternary"
-                                onClick={() => onUpdateStatus(docAccess, "GRANTED")}
-                                className="text-xs h-7 min-h-7"
-                              >
-                                {t("documentAccessList.actions.grant")}
-                              </Button>
-                            )}
-                          {docAccess.status !== "REJECTED" && docAccess.status !== "REVOKED"
-                            && (
-                              <Button
-                                type="button"
-                                variant="danger"
-                                onClick={() => onUpdateStatus(
-                                  docAccess,
-                                  docAccess.id && initialStatusByID[docAccess.id] === "GRANTED" ? "REVOKED" : "REJECTED",
-                                )}
-                                className="text-xs h-7 min-h-7"
-                              >
-                                {docAccess.id
-                                  && initialStatusByID[docAccess.id] === "GRANTED"
-                                  ? t("documentAccessList.actions.revoke")
-                                  : t("documentAccessList.actions.reject")}
-                              </Button>
-                            )}
-                        </Td>
-                      </Tr>
-                    );
-                  })}
-                </Tbody>
-              </Table>
-            </div>
-          )
-        : (
-            <div className="text-center text-txt-tertiary py-8">
-              {t("documentAccessList.empty")}
-            </div>
-          )}
-    </div>
+      <Table size={2} variant="surface">
+        <TableHeader>
+          <TableRow>
+            <TableColumnHeaderCell>{t("documentAccessList.columns.name")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell>{t("documentAccessList.columns.type")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell>{t("documentAccessList.columns.category")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell>{t("documentAccessList.columns.access")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {documentAccesses.length === 0
+            ? (
+                <TableRow>
+                  <TableCell colSpan={COLUMN_COUNT}>
+                    <Text size={2} color="faint">{t("documentAccessList.empty")}</Text>
+                  </TableCell>
+                </TableRow>
+              )
+            : documentAccesses.map(documentAccess => (
+                <CompliancePortalDocumentAccessListItem
+                  key={`${documentAccess.type}:${documentAccess.id}`}
+                  documentAccess={documentAccess}
+                  canUpdate={canUpdate}
+                  disabled={isUpdating}
+                  onGrant={item => void commit([{ ...item, status: "GRANTED" }])}
+                  onRejectOrRevoke={item => void commit([item])}
+                />
+              ))}
+        </TableBody>
+      </Table>
+    </section>
   );
 }

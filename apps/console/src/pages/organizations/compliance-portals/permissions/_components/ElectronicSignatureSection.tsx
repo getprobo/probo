@@ -18,12 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { safeOpenUrl } from "@probo/helpers";
 import { dateTimeFormat } from "@probo/i18n";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ElectronicSignatureSectionFragment$key } from "#/__generated__/core/ElectronicSignatureSectionFragment.graphql";
+
+import { electronicSignatureSection } from "../variants";
 
 import { EventTypeLabel } from "./EventTypeLabel";
 import { NdaSignatureBadge } from "./NdaSignatureBadge";
@@ -52,74 +59,76 @@ export function ElectronicSignatureSection({
 }) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
   const signature = useFragment(fragment, fragmentRef);
+  const { root, rows, row, activity, event, eventCopy } = electronicSignatureSection();
+  const certificateUrl = signature.certificate?.downloadUrl;
 
   return (
-    <div>
-      <h3 className="text-sm font-medium text-txt-primary mb-3">
+    <section className={root()}>
+      <Heading level={3} size={3} weight="medium" highContrast>
         {t("electronicSignature.title")}
-      </h3>
-      <div className="rounded-lg border border-border-solid bg-bg-secondary p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-txt-secondary">
-            {t("electronicSignature.fields.status")}
-          </span>
-          <NdaSignatureBadge status={signature.status} />
-        </div>
-        {signature.signedAt && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-txt-secondary">
-              {t("electronicSignature.fields.signedAt")}
-            </span>
-            <span className="text-sm text-txt-primary">
-              {dateTimeFormat(i18n.language, signature.signedAt)}
-            </span>
+      </Heading>
+      <Card variant="soft" size={2}>
+        <div className={rows()}>
+          <div className={row()}>
+            <Text size={2} color="neutral">
+              {t("electronicSignature.fields.status")}
+            </Text>
+            <NdaSignatureBadge status={signature.status} />
           </div>
-        )}
-        {signature.certificate?.downloadUrl && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-txt-secondary">
-              {t("electronicSignature.fields.certificate")}
-            </span>
-            <a
-              href={signature.certificate.downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-txt-primary hover:underline"
-              download
-            >
-              {signature.certificate.fileName
-                ?? t("electronicSignature.actions.download")}
-            </a>
-          </div>
-        )}
-        {signature.events.length > 0 && (
-          <div className="pt-2 border-t border-border-solid">
-            <span className="text-xs font-medium text-txt-secondary uppercase tracking-wider">
-              {t("electronicSignature.activity")}
-            </span>
-            <div className="mt-2 space-y-2">
-              {signature.events.map(event => (
-                <div
-                  key={event.id}
-                  className="flex items-start justify-between text-xs"
-                >
-                  <div>
-                    <span className="text-txt-primary">
-                      <EventTypeLabel eventType={event.eventType} />
-                    </span>
-                    <span className="text-txt-tertiary ml-1">
-                      {event.actorEmail}
-                    </span>
+          {signature.signedAt != null && (
+            <div className={row()}>
+              <Text size={2} color="neutral">
+                {t("electronicSignature.fields.signedAt")}
+              </Text>
+              <Text size={2} highContrast>
+                {dateTimeFormat(i18n.language, signature.signedAt)}
+              </Text>
+            </div>
+          )}
+          {certificateUrl != null && (
+            <div className={row()}>
+              <Text size={2} color="neutral">
+                {t("electronicSignature.fields.certificate")}
+              </Text>
+              <Button
+                type="button"
+                variant="ghost"
+                color="neutral"
+                size={1}
+                onClick={() => {
+                  safeOpenUrl(certificateUrl);
+                }}
+              >
+                {signature.certificate?.fileName ?? t("electronicSignature.actions.download")}
+              </Button>
+            </div>
+          )}
+          {signature.events.length > 0 && (
+            <div className={activity()}>
+              <Text size={1} weight="medium" color="faint">
+                {t("electronicSignature.activity")}
+              </Text>
+              {signature.events.map(item => (
+                <div key={item.id} className={event()}>
+                  <div className={eventCopy()}>
+                    <Text size={1} highContrast>
+                      <EventTypeLabel eventType={item.eventType} />
+                    </Text>
+                    {item.actorEmail != null && (
+                      <Text size={1} color="faint">
+                        {item.actorEmail}
+                      </Text>
+                    )}
                   </div>
-                  <span className="text-txt-tertiary shrink-0 ml-2">
-                    {dateTimeFormat(i18n.language, event.occurredAt)}
-                  </span>
+                  <Text size={1} color="faint">
+                    {dateTimeFormat(i18n.language, item.occurredAt)}
+                  </Text>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      </Card>
+    </section>
   );
 }

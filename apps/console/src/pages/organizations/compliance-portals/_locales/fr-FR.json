@@ -37,21 +37,14 @@
     "title": "Visiteurs",
     "description": "Votre portail est public. Les personnes qui se connectent pour demander des documents ou accepter un NDA apparaissent ici."
   },
-  "accessEditDialog": {
-    "title": "Modifier l’accès pour {{email}}",
-    "types": {
-      "document": "Document",
-      "report": "Rapport",
-      "file": "Fichier"
-    },
+  "visitorPage": {
+    "back": "Visiteurs",
+    "joinedOn": "Inscrit le {{date}}",
     "messages": {
-      "updated": "Accès mis à jour avec succès"
+      "updated": "Accès mis à jour"
     },
     "errors": {
       "update": "Échec de la mise à jour de l’accès"
-    },
-    "actions": {
-      "update": "Mettre à jour l’accès"
     }
   },
   "accessList": {
@@ -73,11 +66,16 @@
     "granted": "{{count}} accès",
     "pending": "{{count}} en attente",
     "actions": {
-      "edit": "Modifier"
+      "open": "Ouvrir le visiteur"
     }
   },
   "documentAccessList": {
-    "title": "Autorisations d’accès aux documents",
+    "title": "Documents",
+    "types": {
+      "document": "Document",
+      "report": "Rapport",
+      "file": "Fichier"
+    },
     "columns": {
       "name": "Nom",
       "type": "Type",
@@ -86,15 +84,26 @@
     },
     "actions": {
       "grantAll": "Tout accorder",
-      "rejectOrRevokeAll": "Tout rejeter/révoquer",
+      "rejectOrRevokeAll": "Tout rejeter ou révoquer",
       "grant": "Accorder",
       "reject": "Rejeter",
-      "revoke": "Révoquer"
+      "revoke": "Révoquer",
+      "cancel": "Annuler"
+    },
+    "grantAllConfirm": {
+      "title": "Accorder tous les documents ?",
+      "description": "Ce visiteur pourra lire tous les documents listés.",
+      "confirm": "Tout accorder"
+    },
+    "rejectOrRevokeAllConfirm": {
+      "title": "Rejeter ou révoquer tous les accès ?",
+      "description": "Les documents accordés seront révoqués. Les demandes en attente seront rejetées.",
+      "confirm": "Tout rejeter ou révoquer"
     },
     "empty": "Aucun document disponible"
   },
   "electronicSignature": {
-    "title": "Signature électronique",
+    "title": "NDA",
     "fields": {
       "status": "Statut",
       "signedAt": "Signé le",
