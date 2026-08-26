@@ -86,9 +86,13 @@ func TestDecodePresence_MatchesJavaScriptFixtures(t *testing.T) {
 
 				var state map[string]map[string]string
 				require.NoError(t, message.UnmarshalState(&state))
-				assert.Equal(t, map[string]map[string]string{
-					"cursor": {"anchor": "a", "head": "b"},
-				}, state)
+				assert.Equal(
+					t,
+					map[string]map[string]string{
+						"cursor": {"anchor": "a", "head": "b"},
+					},
+					state,
+				)
 			},
 		},
 		{
@@ -106,17 +110,20 @@ func TestDecodePresence_MatchesJavaScriptFixtures(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(testCase.fixture, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			testCase.fixture,
+			func(t *testing.T) {
+				t.Parallel()
 
-			fixture := readFixture[presenceFixture](t, testCase.fixture)
-			assert.Equal(t, PresenceMarker, fixture.Marker)
+				fixture := readFixture[presenceFixture](t, testCase.fixture)
+				assert.Equal(t, PresenceMarker, fixture.Marker)
 
-			message, err := DecodePresence(decodeBase64(t, fixture.CBORBase64))
-			require.NoError(t, err)
+				message, err := DecodePresence(decodeBase64(t, fixture.CBORBase64))
+				require.NoError(t, err)
 
-			testCase.expect(t, message)
-		})
+				testCase.expect(t, message)
+			},
+		)
 	}
 }
 
@@ -154,11 +161,13 @@ func TestEncodePresence_BuildsUpdate(t *testing.T) {
 	value, err := MarshalPresenceValue(map[string]string{"anchor": "x", "head": "y"})
 	require.NoError(t, err)
 
-	data, err := EncodePresence(PresenceMessage{
-		Type:    PresenceUpdate,
-		Channel: "cursor",
-		Value:   value,
-	})
+	data, err := EncodePresence(
+		PresenceMessage{
+			Type:    PresenceUpdate,
+			Channel: "cursor",
+			Value:   value,
+		},
+	)
 	require.NoError(t, err)
 
 	message, err := DecodePresence(data)

@@ -126,14 +126,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := json.NewEncoder(os.Stdout).Encode(result{
-		Workload:   *workload,
-		Size:       *size,
-		Iterations: *iterations,
-		TotalNS:    total.Nanoseconds(),
-		NSPerOp:    total.Nanoseconds() / int64(*iterations),
-		Checksum:   checksum,
-	}); err != nil {
+	if err := json.NewEncoder(os.Stdout).Encode(
+		result{
+			Workload:   *workload,
+			Size:       *size,
+			Iterations: *iterations,
+			TotalNS:    total.Nanoseconds(),
+			NSPerOp:    total.Nanoseconds() / int64(*iterations),
+			Checksum:   checksum,
+		},
+	); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

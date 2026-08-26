@@ -185,9 +185,12 @@ func orderedObjectsInState(state *State) []ObjectID {
 		makers = append(makers, operation)
 	}
 
-	sort.Slice(makers, func(i, j int) bool {
-		return makers[i].ID.Compare(makers[j].ID) < 0
-	})
+	sort.Slice(
+		makers,
+		func(i, j int) bool {
+			return makers[i].ID.Compare(makers[j].ID) < 0
+		},
+	)
 
 	for _, operation := range makers {
 		objects = append(objects, ObjectID{OpID: operation.ID})
@@ -245,15 +248,18 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 				return nil, err
 			}
 
-			patches = append(patches, patchOut{
-				Obj: identifier,
-				Action: patchActionOut{
-					Type:     "put_map",
-					Key:      key,
-					Value:    &value,
-					Conflict: len(state.visibleMapObjectOperations(object, key)) > 1,
+			patches = append(
+				patches,
+				patchOut{
+					Obj: identifier,
+					Action: patchActionOut{
+						Type:     "put_map",
+						Key:      key,
+						Value:    &value,
+						Conflict: len(state.visibleMapObjectOperations(object, key)) > 1,
+					},
 				},
-			})
+			)
 		}
 
 		return patches, nil
@@ -271,10 +277,13 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 				return nil, err
 			}
 
-			inserts = append(inserts, patchInsertOut{
-				Value:    value,
-				Conflict: len(state.visibleSequenceElementOperations(values[index].Element)) > 1,
-			})
+			inserts = append(
+				inserts,
+				patchInsertOut{
+					Value:    value,
+					Conflict: len(state.visibleSequenceElementOperations(values[index].Element)) > 1,
+				},
+			)
 		}
 
 		return []patchOut{{
@@ -300,15 +309,18 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 			}
 
 			for _, textRun := range runs {
-				patches = append(patches, patchOut{
-					Obj: identifier,
-					Action: patchActionOut{
-						Type:  "splice_text",
-						Index: textRun.index,
-						Text:  textRun.text,
-						Marks: textRun.marks,
+				patches = append(
+					patches,
+					patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:  "splice_text",
+							Index: textRun.index,
+							Text:  textRun.text,
+							Marks: textRun.marks,
+						},
 					},
-				})
+				)
 			}
 
 			run.Reset()
@@ -329,14 +341,17 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 					return nil, err
 				}
 
-				patches = append(patches, patchOut{
-					Obj: identifier,
-					Action: patchActionOut{
-						Type:   "insert",
-						Index:  position,
-						Values: []patchInsertOut{{Value: blockValue}},
+				patches = append(
+					patches,
+					patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:   "insert",
+							Index:  position,
+							Values: []patchInsertOut{{Value: blockValue}},
+						},
 					},
-				})
+				)
 				position++
 
 				continue
@@ -541,7 +556,8 @@ func diffObjectPatches(source, target *State, object ObjectID, incremental bool)
 // emits a single mark patch positioned by the smallest affected index, so the
 // combined patch is inserted before the first sequence patch beyond that index.
 func mergeTextMarkPatches(
-	source, target *State,
+	source *State,
+	target *State,
 	object ObjectID,
 	identifier string,
 	patches []patchOut,
@@ -612,9 +628,12 @@ func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, er
 		begins = append(begins, operation)
 	}
 
-	sort.Slice(begins, func(i, j int) bool {
-		return begins[i].ID.Compare(begins[j].ID) < 0
-	})
+	sort.Slice(
+		begins,
+		func(i, j int) bool {
+			return begins[i].ID.Compare(begins[j].ID) < 0
+		},
+	)
 
 	out := make([]markPatchOut, 0, len(begins))
 
@@ -639,12 +658,15 @@ func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, er
 			return nil, err
 		}
 
-		out = append(out, markPatchOut{
-			Start: start,
-			End:   finish,
-			Name:  *begin.MarkName,
-			Value: json.RawMessage(encoded),
-		})
+		out = append(
+			out,
+			markPatchOut{
+				Start: start,
+				End:   finish,
+				Name:  *begin.MarkName,
+				Value: json.RawMessage(encoded),
+			},
+		)
 	}
 
 	return out, nil
@@ -686,15 +708,21 @@ func textRunsWithMarks(
 				return nil, "", err
 			}
 
-			marks = append(marks, markPatchOut{
-				Name:  candidate.Name,
-				Value: json.RawMessage(encoded),
-			})
+			marks = append(
+				marks,
+				markPatchOut{
+					Name:  candidate.Name,
+					Value: json.RawMessage(encoded),
+				},
+			)
 		}
 
-		sort.Slice(marks, func(i, j int) bool {
-			return marks[i].Name < marks[j].Name
-		})
+		sort.Slice(
+			marks,
+			func(i, j int) bool {
+				return marks[i].Name < marks[j].Name
+			},
+		)
 
 		var key strings.Builder
 		for _, mark := range marks {
@@ -759,7 +787,8 @@ func textRunsWithMarks(
 }
 
 func diffMapPatches(
-	source, target *State,
+	source *State,
+	target *State,
 	object ObjectID,
 	identifier string,
 ) ([]patchOut, error) {
@@ -792,20 +821,26 @@ func diffMapPatches(
 				return nil, err
 			}
 
-			patches = append(patches, patchOut{
-				Obj: identifier,
-				Action: patchActionOut{
-					Type:     "put_map",
-					Key:      key,
-					Value:    &value,
-					Conflict: len(target.visibleMapObjectOperations(object, key)) > 1,
+			patches = append(
+				patches,
+				patchOut{
+					Obj: identifier,
+					Action: patchActionOut{
+						Type:     "put_map",
+						Key:      key,
+						Value:    &value,
+						Conflict: len(target.visibleMapObjectOperations(object, key)) > 1,
+					},
 				},
-			})
+			)
 		case !targetOK && sourceOK:
-			patches = append(patches, patchOut{
-				Obj:    identifier,
-				Action: patchActionOut{Type: "delete_map", Key: key},
-			})
+			patches = append(
+				patches,
+				patchOut{
+					Obj:    identifier,
+					Action: patchActionOut{Type: "delete_map", Key: key},
+				},
+			)
 		}
 	}
 
@@ -813,7 +848,8 @@ func diffMapPatches(
 }
 
 func diffSequencePatches(
-	source, target *State,
+	source *State,
+	target *State,
 	object ObjectID,
 	objectType string,
 	identifier string,
@@ -862,14 +898,17 @@ func diffSequencePatches(
 			// delete followed by a splice; the incremental patch log and every
 			// list report a put_seq instead, mirroring the reference.
 			if objectType == "text" && !incremental {
-				patches = append(patches, patchOut{
-					Obj: identifier,
-					Action: patchActionOut{
-						Type:   "delete_seq",
-						Index:  position,
-						Length: width(sourceValues[i]),
+				patches = append(
+					patches,
+					patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:   "delete_seq",
+							Index:  position,
+							Length: width(sourceValues[i]),
+						},
 					},
-				})
+				)
 
 				operation := targetValues[j].Operation
 				if operation.Value != nil && operation.Value.Type == ScalarString {
@@ -879,15 +918,18 @@ func diffSequencePatches(
 					}
 
 					for _, run := range runs {
-						patches = append(patches, patchOut{
-							Obj: identifier,
-							Action: patchActionOut{
-								Type:  "splice_text",
-								Index: run.index,
-								Text:  run.text,
-								Marks: run.marks,
+						patches = append(
+							patches,
+							patchOut{
+								Obj: identifier,
+								Action: patchActionOut{
+									Type:  "splice_text",
+									Index: run.index,
+									Text:  run.text,
+									Marks: run.marks,
+								},
 							},
-						})
+						)
 					}
 
 					position += width(targetValues[j])
@@ -898,15 +940,18 @@ func diffSequencePatches(
 					return nil, err
 				}
 
-				patches = append(patches, patchOut{
-					Obj: identifier,
-					Action: patchActionOut{
-						Type:     "put_seq",
-						Index:    position,
-						Value:    &value,
-						Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
+				patches = append(
+					patches,
+					patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:     "put_seq",
+							Index:    position,
+							Value:    &value,
+							Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
+						},
 					},
-				})
+				)
 				position += width(targetValues[j])
 			}
 
@@ -929,14 +974,17 @@ func diffSequencePatches(
 					i++
 				}
 
-				patches = append(patches, patchOut{
-					Obj: identifier,
-					Action: patchActionOut{
-						Type:   "delete_seq",
-						Index:  position,
-						Length: length,
+				patches = append(
+					patches,
+					patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:   "delete_seq",
+							Index:  position,
+							Length: length,
+						},
 					},
-				})
+				)
 
 				continue
 			}
@@ -970,15 +1018,18 @@ func diffSequencePatches(
 				}
 
 				for _, run := range runs {
-					patches = append(patches, patchOut{
-						Obj: identifier,
-						Action: patchActionOut{
-							Type:  "splice_text",
-							Index: run.index,
-							Text:  run.text,
-							Marks: run.marks,
+					patches = append(
+						patches,
+						patchOut{
+							Obj: identifier,
+							Action: patchActionOut{
+								Type:  "splice_text",
+								Index: run.index,
+								Text:  run.text,
+								Marks: run.marks,
+							},
 						},
-					})
+					)
 				}
 
 				continue
@@ -998,10 +1049,13 @@ func diffSequencePatches(
 				return nil, err
 			}
 
-			inserts = append(inserts, patchInsertOut{
-				Value:    value,
-				Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
-			})
+			inserts = append(
+				inserts,
+				patchInsertOut{
+					Value:    value,
+					Conflict: len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1,
+				},
+			)
 			position++
 			j++
 		}
@@ -1010,14 +1064,17 @@ func diffSequencePatches(
 			break
 		}
 
-		patches = append(patches, patchOut{
-			Obj: identifier,
-			Action: patchActionOut{
-				Type:   "insert",
-				Index:  start,
-				Values: inserts,
+		patches = append(
+			patches,
+			patchOut{
+				Obj: identifier,
+				Action: patchActionOut{
+					Type:   "insert",
+					Index:  start,
+					Values: inserts,
+				},
 			},
-		})
+		)
 	}
 
 	return patches, nil

@@ -130,10 +130,13 @@ func (t *Text) UpdateSpans(
 
 	for _, span := range spans {
 		if span.Block != nil {
-			encodedSpans = append(encodedSpans, map[string]any{
-				"type":  "block",
-				"block": span.Block,
-			})
+			encodedSpans = append(
+				encodedSpans,
+				map[string]any{
+					"type":  "block",
+					"block": span.Block,
+				},
+			)
 
 			continue
 		}
@@ -149,11 +152,14 @@ func (t *Text) UpdateSpans(
 			marks[name] = json.RawMessage(encoded)
 		}
 
-		encodedSpans = append(encodedSpans, map[string]any{
-			"type":  "text",
-			"text":  span.Text,
-			"marks": marks,
-		})
+		encodedSpans = append(
+			encodedSpans,
+			map[string]any{
+				"type":  "text",
+				"text":  span.Text,
+				"marks": marks,
+			},
+		)
 	}
 
 	spansPayload, err := json.Marshal(encodedSpans)

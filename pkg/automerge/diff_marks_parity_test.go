@@ -68,14 +68,17 @@ func TestRustDiffMarks(t *testing.T) {
 			require.NoError(t, text.Splice(ctx, 0, 0, content))
 
 			for _, mark := range marks {
-				require.NoError(t, text.Mark(
-					ctx,
-					mark.start,
-					mark.end,
-					mark.name,
-					mark.value,
-					automerge.MarkExpandBoth,
-				))
+				require.NoError(
+					t,
+					text.Mark(
+						ctx,
+						mark.start,
+						mark.end,
+						mark.name,
+						mark.value,
+						automerge.MarkExpandBoth,
+					),
+				)
 			}
 		}
 	}
@@ -213,10 +216,14 @@ func TestRustDiffMarks(t *testing.T) {
 			setup: spliceSetup("formatted"),
 			spans: []automerge.SpanInput{
 				{Text: "formatted", Marks: marks(
-					"bold", markBool(),
-					"italic", markBool(),
-					"underline", markBool(),
-					"link", markStr("https://example.com"),
+					"bold",
+					markBool(),
+					"italic",
+					markBool(),
+					"underline",
+					markBool(),
+					"link",
+					markStr("https://example.com"),
 				)},
 			},
 			config: defaultConfig,
@@ -362,42 +369,45 @@ func TestRustDiffMarks(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			scenario.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			result := make(map[string][]automerge.Span)
+				ctx := context.Background()
+				result := make(map[string][]automerge.Span)
 
-			for _, engine := range rustParityEngines() {
-				document, err := engine.open(ctx, actor(0xaa))
-				require.NoError(t, err)
-				closeDocument(t, document)
-
-				text, err := document.CreateText(ctx, "text")
-				require.NoError(t, err)
-
-				scenario.setup(ctx, t, text)
-				_, err = document.Commit(ctx, "setup", commitTime)
-				require.NoError(t, err)
-
-				require.NoError(t, text.UpdateSpans(ctx, scenario.spans, scenario.config))
-				_, err = document.Commit(ctx, "update", commitTime)
-				require.NoError(t, err)
-
-				if scenario.post != nil {
-					scenario.post(ctx, t, text)
-					_, err = document.Commit(ctx, "post", commitTime)
+				for _, engine := range rustParityEngines() {
+					document, err := engine.open(ctx, actor(0xaa))
 					require.NoError(t, err)
+					closeDocument(t, document)
+
+					text, err := document.CreateText(ctx, "text")
+					require.NoError(t, err)
+
+					scenario.setup(ctx, t, text)
+					_, err = document.Commit(ctx, "setup", commitTime)
+					require.NoError(t, err)
+
+					require.NoError(t, text.UpdateSpans(ctx, scenario.spans, scenario.config))
+					_, err = document.Commit(ctx, "update", commitTime)
+					require.NoError(t, err)
+
+					if scenario.post != nil {
+						scenario.post(ctx, t, text)
+						_, err = document.Commit(ctx, "post", commitTime)
+						require.NoError(t, err)
+					}
+
+					spans, err := text.Spans(ctx)
+					require.NoError(t, err)
+
+					result[engine.name] = spans
 				}
 
-				spans, err := text.Spans(ctx)
-				require.NoError(t, err)
-
-				result[engine.name] = spans
-			}
-
-			assert.Equal(t, result["reference"], result["native"])
-		})
+				assert.Equal(t, result["reference"], result["native"])
+			},
+		)
 	}
 }
 
@@ -409,40 +419,43 @@ func TestRustDiffMarks_Idempotent(t *testing.T) {
 	ctx := context.Background()
 
 	for _, engine := range rustParityEngines() {
-		t.Run(engine.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := engine.open(ctx, actor(0xaa))
-			require.NoError(t, err)
-			closeDocument(t, document)
+				document, err := engine.open(ctx, actor(0xaa))
+				require.NoError(t, err)
+				closeDocument(t, document)
 
-			text, err := document.CreateText(ctx, "text")
-			require.NoError(t, err)
+				text, err := document.CreateText(ctx, "text")
+				require.NoError(t, err)
 
-			spans := []automerge.SpanInput{
-				{Text: "hello ", Marks: marks("bold", markBool())},
-				{Text: "world", Marks: marks("italic", markBool())},
-			}
-			config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandAfter}
+				spans := []automerge.SpanInput{
+					{Text: "hello ", Marks: marks("bold", markBool())},
+					{Text: "world", Marks: marks("italic", markBool())},
+				}
+				config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandAfter}
 
-			require.NoError(t, text.UpdateSpans(ctx, spans, config))
-			_, err = document.Commit(ctx, "first", commitTime)
-			require.NoError(t, err)
+				require.NoError(t, text.UpdateSpans(ctx, spans, config))
+				_, err = document.Commit(ctx, "first", commitTime)
+				require.NoError(t, err)
 
-			first, err := document.Heads(ctx)
-			require.NoError(t, err)
+				first, err := document.Heads(ctx)
+				require.NoError(t, err)
 
-			require.NoError(t, text.UpdateSpans(ctx, spans, config))
-			second, err := document.Heads(ctx)
-			require.NoError(t, err)
+				require.NoError(t, text.UpdateSpans(ctx, spans, config))
+				second, err := document.Heads(ctx)
+				require.NoError(t, err)
 
-			require.NoError(t, text.UpdateSpans(ctx, spans, config))
-			third, err := document.Heads(ctx)
-			require.NoError(t, err)
+				require.NoError(t, text.UpdateSpans(ctx, spans, config))
+				third, err := document.Heads(ctx)
+				require.NoError(t, err)
 
-			assert.Equal(t, headHexes(first), headHexes(second))
-			assert.Equal(t, headHexes(first), headHexes(third))
-		})
+				assert.Equal(t, headHexes(first), headHexes(second))
+				assert.Equal(t, headHexes(first), headHexes(third))
+			},
+		)
 	}
 }
 

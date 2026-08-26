@@ -141,11 +141,14 @@ func TestRustTextEncoding_Put(t *testing.T) {
 
 	for _, engine := range rustParityEngines() {
 		document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
-		require.NoError(t, object.PutScalarAt(
-			ctx,
-			13,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
-		))
+		require.NoError(
+			t,
+			object.PutScalarAt(
+				ctx,
+				13,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
+			),
+		)
 		_, err := document.Commit(ctx, "put", commitTime)
 		require.NoError(t, err)
 
@@ -171,11 +174,14 @@ func TestRustTextEncoding_Insert(t *testing.T) {
 
 	for _, engine := range rustParityEngines() {
 		document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
-		require.NoError(t, object.InsertScalar(
-			ctx,
-			13,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
-		))
+		require.NoError(
+			t,
+			object.InsertScalar(
+				ctx,
+				13,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
+			),
+		)
 		_, err := document.Commit(ctx, "insert", commitTime)
 		require.NoError(t, err)
 
@@ -329,11 +335,17 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 
 	for _, engine := range rustParityEngines() {
 		document, _, text := seedText(t, ctx, engine, "12345")
-		require.NoError(t, text.Mark(
-			ctx, 1, 2, "strong",
-			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-			automerge.MarkExpandBoth,
-		))
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				1,
+				2,
+				"strong",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				automerge.MarkExpandBoth,
+			),
+		)
 		_, err := document.Commit(ctx, "mark", commitTime)
 		require.NoError(t, err)
 		require.NoError(t, document.UpdateDiffCursor(ctx))
@@ -384,11 +396,17 @@ func TestRustText_NoexpandMarksAtEndOfText(t *testing.T) {
 
 	for _, engine := range rustParityEngines() {
 		document, _, text := seedText(t, ctx, engine, "Hello world")
-		require.NoError(t, text.Mark(
-			ctx, 10, 11, "strong",
-			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-			automerge.MarkExpandNone,
-		))
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				10,
+				11,
+				"strong",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				automerge.MarkExpandNone,
+			),
+		)
 		_, err := document.Commit(ctx, "mark", commitTime)
 		require.NoError(t, err)
 		require.NoError(t, document.UpdateDiffCursor(ctx))
@@ -426,21 +444,39 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 		text, err := document.CreateText(ctx, "text")
 		require.NoError(t, err)
 		require.NoError(t, text.Splice(ctx, 0, 0, "the quick fox jumps over the lazy dog"))
-		require.NoError(t, text.Mark(
-			ctx, 0, 37, "bold",
-			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-			automerge.MarkExpandBoth,
-		))
-		require.NoError(t, text.Mark(
-			ctx, 4, 19, "italic",
-			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-			automerge.MarkExpandBoth,
-		))
-		require.NoError(t, text.Mark(
-			ctx, 10, 13, "comment:somerandomcommentid",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "foxes are my favorite animal!"},
-			automerge.MarkExpandBoth,
-		))
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				0,
+				37,
+				"bold",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				automerge.MarkExpandBoth,
+			),
+		)
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				4,
+				19,
+				"italic",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				automerge.MarkExpandBoth,
+			),
+		)
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				10,
+				13,
+				"comment:somerandomcommentid",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "foxes are my favorite animal!"},
+				automerge.MarkExpandBoth,
+			),
+		)
 		_, err = document.Commit(ctx, "seed", commitTime)
 		require.NoError(t, err)
 
@@ -496,11 +532,14 @@ func TestRustTextEncoding_PatchPutSeq(t *testing.T) {
 		document, object, _ := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
 
 		require.NoError(t, document.UpdateDiffCursor(ctx))
-		require.NoError(t, object.PutScalarAt(
-			ctx,
-			13,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
-		))
+		require.NoError(
+			t,
+			object.PutScalarAt(
+				ctx,
+				13,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
+			),
+		)
 		_, err := document.Commit(ctx, "put", commitTime)
 		require.NoError(t, err)
 
@@ -555,28 +594,31 @@ func TestDocument_IncrementalDiffMatchesReference(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			scenario.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			result := make(map[string][]automerge.Patch)
+				result := make(map[string][]automerge.Patch)
 
-			for _, engine := range rustParityEngines() {
-				document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
+				for _, engine := range rustParityEngines() {
+					document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
 
-				require.NoError(t, document.UpdateDiffCursor(ctx))
-				require.NoError(t, scenario.mutate(ctx, object, text))
-				_, err := document.Commit(ctx, scenario.name, commitTime)
-				require.NoError(t, err)
+					require.NoError(t, document.UpdateDiffCursor(ctx))
+					require.NoError(t, scenario.mutate(ctx, object, text))
+					_, err := document.Commit(ctx, scenario.name, commitTime)
+					require.NoError(t, err)
 
-				patches, err := document.DiffIncremental(ctx)
-				require.NoError(t, err)
+					patches, err := document.DiffIncremental(ctx)
+					require.NoError(t, err)
 
-				result[engine.name] = patches
-			}
+					result[engine.name] = patches
+				}
 
-			assert.NotEmpty(t, result["reference"])
-			assert.Equal(t, result["reference"], result["native"])
-		})
+				assert.NotEmpty(t, result["reference"])
+				assert.Equal(t, result["reference"], result["native"])
+			},
+		)
 	}
 }
 
@@ -621,14 +663,17 @@ func TestTextDiff_MarkRemovalMatchesReference(t *testing.T) {
 
 	for _, engine := range rustParityEngines() {
 		document, _, text := seedText(t, ctx, engine, "hello world")
-		require.NoError(t, text.Mark(
-			ctx,
-			0,
-			5,
-			"bold",
-			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-			automerge.MarkExpandBoth,
-		))
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				0,
+				5,
+				"bold",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				automerge.MarkExpandBoth,
+			),
+		)
 		_, err := document.Commit(ctx, "mark", commitTime)
 		require.NoError(t, err)
 
@@ -661,27 +706,33 @@ func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 
 	for _, engine := range rustParityEngines() {
 		document, _, text := seedText(t, ctx, engine, "hello world")
-		require.NoError(t, text.Mark(
-			ctx,
-			0,
-			5,
-			"color",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "red"},
-			automerge.MarkExpandBoth,
-		))
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				0,
+				5,
+				"color",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "red"},
+				automerge.MarkExpandBoth,
+			),
+		)
 		_, err := document.Commit(ctx, "red", commitTime)
 		require.NoError(t, err)
 
 		before, err := document.Heads(ctx)
 		require.NoError(t, err)
-		require.NoError(t, text.Mark(
-			ctx,
-			0,
-			5,
-			"color",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "blue"},
-			automerge.MarkExpandBoth,
-		))
+		require.NoError(
+			t,
+			text.Mark(
+				ctx,
+				0,
+				5,
+				"color",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "blue"},
+				automerge.MarkExpandBoth,
+			),
+		)
 		after, err := document.Commit(ctx, "blue", commitTime)
 		require.NoError(t, err)
 

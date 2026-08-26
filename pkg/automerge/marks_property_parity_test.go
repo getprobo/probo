@@ -105,9 +105,12 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 				value := randomLetters(random, 1+random.Intn(6))
 				runes := []rune(value)
 
-				actions = append(actions, func(ctx context.Context, t *testing.T, text *automerge.Text) {
-					require.NoError(t, text.Splice(ctx, uint32(index), 0, value))
-				})
+				actions = append(
+					actions,
+					func(ctx context.Context, t *testing.T, text *automerge.Text) {
+						require.NoError(t, text.Splice(ctx, uint32(index), 0, value))
+					},
+				)
 
 				expected = append(expected[:index], append(append([]rune{}, runes...), expected[index:]...)...)
 				length += len(runes)
@@ -119,19 +122,25 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 				deleteLen := 1 + random.Intn(length)
 				index := random.Intn(length - deleteLen + 1)
 
-				actions = append(actions, func(ctx context.Context, t *testing.T, text *automerge.Text) {
-					require.NoError(t, text.Splice(ctx, uint32(index), int32(deleteLen), ""))
-				})
+				actions = append(
+					actions,
+					func(ctx context.Context, t *testing.T, text *automerge.Text) {
+						require.NoError(t, text.Splice(ctx, uint32(index), int32(deleteLen), ""))
+					},
+				)
 
 				expected = append(expected[:index], expected[index+deleteLen:]...)
 				length -= deleteLen
 			case 2: // split block
 				index := random.Intn(length + 1)
 
-				actions = append(actions, func(ctx context.Context, t *testing.T, text *automerge.Text) {
-					_, err := text.SplitBlock(ctx, uint32(index))
-					require.NoError(t, err)
-				})
+				actions = append(
+					actions,
+					func(ctx context.Context, t *testing.T, text *automerge.Text) {
+						_, err := text.SplitBlock(ctx, uint32(index))
+						require.NoError(t, err)
+					},
+				)
 
 				expected = append(expected[:index], append([]rune{'\n'}, expected[index:]...)...)
 				length++
@@ -144,16 +153,22 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 				index := random.Intn(length - markLen + 1)
 				name := markNames[random.Intn(len(markNames))]
 
-				actions = append(actions, func(ctx context.Context, t *testing.T, text *automerge.Text) {
-					require.NoError(t, text.Mark(
-						ctx,
-						uint32(index),
-						uint32(index+markLen),
-						name,
-						automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-						automerge.MarkExpandBoth,
-					))
-				})
+				actions = append(
+					actions,
+					func(ctx context.Context, t *testing.T, text *automerge.Text) {
+						require.NoError(
+							t,
+							text.Mark(
+								ctx,
+								uint32(index),
+								uint32(index+markLen),
+								name,
+								automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+								automerge.MarkExpandBoth,
+							),
+						)
+					},
+				)
 			}
 		}
 
@@ -185,7 +200,9 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 				t,
 				marksAreConsolidated(spans),
 				"scenario %d marks not consolidated on %s: %+v",
-				scenario, engine.name, spans,
+				scenario,
+				engine.name,
+				spans,
 			)
 
 			var builder strings.Builder
@@ -205,7 +222,8 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 				string(expected),
 				builder.String(),
 				"scenario %d span text diverged on %s",
-				scenario, engine.name,
+				scenario,
+				engine.name,
 			)
 		}
 	}

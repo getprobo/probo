@@ -101,11 +101,14 @@ func TestRustTransaction_RollbackDiscardsOps(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		require.NoError(t, document.Root().PutScalar(
-			ctx,
-			"keep",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "yes"},
-		))
+		require.NoError(
+			t,
+			document.Root().PutScalar(
+				ctx,
+				"keep",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "yes"},
+			),
+		)
 		_, err = document.Commit(ctx, "keep", commitTime)
 		require.NoError(t, err)
 
@@ -140,11 +143,14 @@ func TestRustTransaction_RollbackUndoesWrites(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		require.NoError(t, document.Root().PutScalar(
-			ctx,
-			"gone",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "soon"},
-		))
+		require.NoError(
+			t,
+			document.Root().PutScalar(
+				ctx,
+				"gone",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "soon"},
+			),
+		)
 
 		count, err := document.Rollback(ctx)
 		require.NoError(t, err)

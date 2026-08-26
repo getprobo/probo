@@ -50,67 +50,70 @@ func TestOfficialBenchmarkBatteryFixtures(t *testing.T) {
 	sort.Strings(fixtures)
 
 	for index, fixture := range fixtures {
-		t.Run(filepath.Base(fixture), func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			filepath.Base(fixture),
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
+				ctx := context.Background()
 
-			data, err := os.ReadFile(fixture)
-			require.NoError(t, err)
+				data, err := os.ReadFile(fixture)
+				require.NoError(t, err)
 
-			nativeDocument, err := automerge.Load(ctx, data, actor(byte(0x80+index)))
-			require.NoError(t, err)
-			closeDocument(t, nativeDocument)
+				nativeDocument, err := automerge.Load(ctx, data, actor(byte(0x80+index)))
+				require.NoError(t, err)
+				closeDocument(t, nativeDocument)
 
-			referenceDocument, err := automerge.LoadReference(
-				ctx,
-				data,
-				actor(byte(0x90+index)),
-			)
-			require.NoError(t, err)
-			closeDocument(t, referenceDocument)
+				referenceDocument, err := automerge.LoadReference(
+					ctx,
+					data,
+					actor(byte(0x90+index)),
+				)
+				require.NoError(t, err)
+				closeDocument(t, referenceDocument)
 
-			assert.Equal(
-				t,
-				sortedHeadHex(t, ctx, referenceDocument),
-				sortedHeadHex(t, ctx, nativeDocument),
-			)
+				assert.Equal(
+					t,
+					sortedHeadHex(t, ctx, referenceDocument),
+					sortedHeadHex(t, ctx, nativeDocument),
+				)
 
-			// Rust fixture -> Go save -> Rust load.
-			nativeSaved, err := nativeDocument.Save(ctx)
-			require.NoError(t, err)
+				// Rust fixture -> Go save -> Rust load.
+				nativeSaved, err := nativeDocument.Save(ctx)
+				require.NoError(t, err)
 
-			referenceReloaded, err := automerge.LoadReference(
-				ctx,
-				nativeSaved,
-				actor(byte(0xa0+index)),
-			)
-			require.NoError(t, err)
-			closeDocument(t, referenceReloaded)
+				referenceReloaded, err := automerge.LoadReference(
+					ctx,
+					nativeSaved,
+					actor(byte(0xa0+index)),
+				)
+				require.NoError(t, err)
+				closeDocument(t, referenceReloaded)
 
-			assert.Equal(
-				t,
-				sortedHeadHex(t, ctx, referenceDocument),
-				sortedHeadHex(t, ctx, referenceReloaded),
-			)
+				assert.Equal(
+					t,
+					sortedHeadHex(t, ctx, referenceDocument),
+					sortedHeadHex(t, ctx, referenceReloaded),
+				)
 
-			// Rust fixture -> Rust save -> Go load.
-			referenceSaved, err := referenceDocument.Save(ctx)
-			require.NoError(t, err)
+				// Rust fixture -> Rust save -> Go load.
+				referenceSaved, err := referenceDocument.Save(ctx)
+				require.NoError(t, err)
 
-			nativeReloaded, err := automerge.Load(
-				ctx,
-				referenceSaved,
-				actor(byte(0xb0+index)),
-			)
-			require.NoError(t, err)
-			closeDocument(t, nativeReloaded)
+				nativeReloaded, err := automerge.Load(
+					ctx,
+					referenceSaved,
+					actor(byte(0xb0+index)),
+				)
+				require.NoError(t, err)
+				closeDocument(t, nativeReloaded)
 
-			assert.Equal(
-				t,
-				sortedHeadHex(t, ctx, nativeDocument),
-				sortedHeadHex(t, ctx, nativeReloaded),
-			)
-		})
+				assert.Equal(
+					t,
+					sortedHeadHex(t, ctx, nativeDocument),
+					sortedHeadHex(t, ctx, nativeReloaded),
+				)
+			},
+		)
 	}
 }

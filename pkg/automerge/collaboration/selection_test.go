@@ -115,15 +115,18 @@ func TestTextSelectionValue_Validation(t *testing.T) {
 	}
 
 	for name, selection := range cases {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			_, err := selection.Encode()
-			assert.Error(t, err)
+				_, err := selection.Encode()
+				assert.Error(t, err)
 
-			_, err = collaboration.NewTextSelectionPresence("", selection)
-			assert.Error(t, err)
-		})
+				_, err = collaboration.NewTextSelectionPresence("", selection)
+				assert.Error(t, err)
+			},
+		)
 	}
 }
 

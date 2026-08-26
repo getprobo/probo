@@ -458,12 +458,15 @@ func desiredMarks(spans []updateSpanInput) ([]desiredMark, error) {
 				return nil, fmt.Errorf("cannot decode mark %q value: %w", name, err)
 			}
 
-			marks = append(marks, desiredMark{
-				name:  name,
-				value: value,
-				start: index,
-				end:   index + width,
-			})
+			marks = append(
+				marks,
+				desiredMark{
+					name:  name,
+					value: value,
+					start: index,
+					end:   index + width,
+				},
+			)
 		}
 
 		index += width
@@ -858,13 +861,15 @@ func (b *Engine) JoinBlock(
 		return fmt.Errorf("text position %d is not a block", index)
 	}
 
-	return b.addPending(Operation{
-		ID:           b.nextOperationID(),
-		Object:       object,
-		Key:          Key{Element: new(target.ID)},
-		Action:       ActionDelete,
-		Predecessors: []OpID{target.ID},
-	})
+	return b.addPending(
+		Operation{
+			ID:           b.nextOperationID(),
+			Object:       object,
+			Key:          Key{Element: new(target.ID)},
+			Action:       ActionDelete,
+			Predecessors: []OpID{target.ID},
+		},
+	)
 }
 
 func (b *Engine) ReplaceBlock(
@@ -1012,12 +1017,15 @@ func encodeMarks(marks []MarkRange) ([]byte, error) {
 			return nil, err
 		}
 
-		wire = append(wire, markWire{
-			Start: mark.Start,
-			End:   mark.End,
-			Name:  mark.Name,
-			Value: json.RawMessage(encoded),
-		})
+		wire = append(
+			wire,
+			markWire{
+				Start: mark.Start,
+				End:   mark.End,
+				Name:  mark.Name,
+				Value: json.RawMessage(encoded),
+			},
+		)
 	}
 
 	data, err := json.Marshal(wire)

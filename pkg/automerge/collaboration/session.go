@@ -93,12 +93,14 @@ func (s *ServerSession) Accept(joinData []byte) (Handshake, error) {
 	}
 
 	if !join.SupportsV1() {
-		reply, encodeErr := EncodeErrorFrame(ErrorFrame{
-			Type:     FrameError,
-			SenderID: s.config.ServerPeerID,
-			TargetID: join.SenderID,
-			Message:  "unsupported protocol version",
-		})
+		reply, encodeErr := EncodeErrorFrame(
+			ErrorFrame{
+				Type:     FrameError,
+				SenderID: s.config.ServerPeerID,
+				TargetID: join.SenderID,
+				Message:  "unsupported protocol version",
+			},
+		)
 		if encodeErr != nil {
 			return Handshake{}, encodeErr
 		}
@@ -106,13 +108,15 @@ func (s *ServerSession) Accept(joinData []byte) (Handshake, error) {
 		return Handshake{Reply: reply, Accepted: false, RemotePeerID: join.SenderID}, nil
 	}
 
-	reply, err := EncodePeerFrame(PeerFrame{
-		Type:                    FramePeer,
-		SenderID:                s.config.ServerPeerID,
-		TargetID:                join.SenderID,
-		PeerMetadata:            s.config.PeerMetadata,
-		SelectedProtocolVersion: ProtocolV1,
-	})
+	reply, err := EncodePeerFrame(
+		PeerFrame{
+			Type:                    FramePeer,
+			SenderID:                s.config.ServerPeerID,
+			TargetID:                join.SenderID,
+			PeerMetadata:            s.config.PeerMetadata,
+			SelectedProtocolVersion: ProtocolV1,
+		},
+	)
 	if err != nil {
 		return Handshake{}, err
 	}

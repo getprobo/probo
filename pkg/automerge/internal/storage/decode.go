@@ -348,9 +348,12 @@ func restoreChangeOperations(operations []Operation) ([]Operation, error) {
 	}
 
 	for identifier := range predecessors {
-		slices.SortFunc(predecessors[identifier], func(left, right OpID) int {
-			return left.Compare(right)
-		})
+		slices.SortFunc(
+			predecessors[identifier],
+			func(left, right OpID) int {
+				return left.Compare(right)
+			},
+		)
 	}
 
 	for i := range operations {
@@ -375,18 +378,24 @@ func restoreChangeOperations(operations []Operation) ([]Operation, error) {
 			)
 		}
 
-		deletes = append(deletes, Operation{
-			ID:           identifier,
-			Object:       source.Object,
-			Key:          supersededKey(source),
-			Action:       ActionDelete,
-			Predecessors: superseded,
-		})
+		deletes = append(
+			deletes,
+			Operation{
+				ID:           identifier,
+				Object:       source.Object,
+				Key:          supersededKey(source),
+				Action:       ActionDelete,
+				Predecessors: superseded,
+			},
+		)
 	}
 
-	slices.SortFunc(deletes, func(left, right Operation) int {
-		return left.ID.Compare(right.ID)
-	})
+	slices.SortFunc(
+		deletes,
+		func(left, right Operation) int {
+			return left.ID.Compare(right.ID)
+		},
+	)
 
 	return append(operations, deletes...), nil
 }

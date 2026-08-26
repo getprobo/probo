@@ -41,9 +41,12 @@ func (b *Engine) changeDependencies(sequence uint64) []ChangeHash {
 		last, ok := b.state.hashForActorSequence(b.actor, sequence-1)
 		if ok && !containsHash(dependencies, last) {
 			dependencies = append(dependencies, last)
-			sort.Slice(dependencies, func(i, j int) bool {
-				return bytes.Compare(dependencies[i][:], dependencies[j][:]) < 0
-			})
+			sort.Slice(
+				dependencies,
+				func(i, j int) bool {
+					return bytes.Compare(dependencies[i][:], dependencies[j][:]) < 0
+				},
+			)
 		}
 	}
 

@@ -41,26 +41,29 @@ func TestRustOrphans_LoadIncrementalChangeWithoutDepsThrows(t *testing.T) {
 	ctx := context.Background()
 
 	for _, engine := range rustParityEngines() {
-		t.Run(engine.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			doc, err := engine.open(ctx, actor(1))
-			require.NoError(t, err)
-			closeDocument(t, doc)
-			require.NoError(t, doc.PutString(ctx, "key", "value"))
-			_, err = doc.Commit(ctx, "value", commitTime)
-			require.NoError(t, err)
-			_, err = doc.SaveIncremental(ctx)
-			require.NoError(t, err)
+				doc, err := engine.open(ctx, actor(1))
+				require.NoError(t, err)
+				closeDocument(t, doc)
+				require.NoError(t, doc.PutString(ctx, "key", "value"))
+				_, err = doc.Commit(ctx, "value", commitTime)
+				require.NoError(t, err)
+				_, err = doc.SaveIncremental(ctx)
+				require.NoError(t, err)
 
-			require.NoError(t, doc.PutString(ctx, "key", "value2"))
-			_, err = doc.Commit(ctx, "value2", commitTime.Add(time.Second))
-			require.NoError(t, err)
-			orphan, err := doc.SaveIncremental(ctx)
-			require.NoError(t, err)
+				require.NoError(t, doc.PutString(ctx, "key", "value2"))
+				_, err = doc.Commit(ctx, "value2", commitTime.Add(time.Second))
+				require.NoError(t, err)
+				orphan, err := doc.SaveIncremental(ctx)
+				require.NoError(t, err)
 
-			_, err = engine.load(ctx, orphan, actor(2))
-			require.Error(t, err)
-		})
+				_, err = engine.load(ctx, orphan, actor(2))
+				require.Error(t, err)
+			},
+		)
 	}
 }

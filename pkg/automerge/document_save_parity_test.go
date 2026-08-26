@@ -57,15 +57,33 @@ func documentSaveScenarios() []documentSaveScenario {
 		{
 			name: "map puts and delete",
 			apply: func(t *testing.T, ctx context.Context, document *automerge.Document) {
-				require.NoError(t, document.PutScalar(ctx, "title",
-					automerge.Scalar{Type: automerge.ScalarTypeString, String: "first"}))
-				require.NoError(t, document.PutScalar(ctx, "keep",
-					automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"}))
+				require.NoError(
+					t,
+					document.PutScalar(
+						ctx,
+						"title",
+						automerge.Scalar{Type: automerge.ScalarTypeString, String: "first"},
+					),
+				)
+				require.NoError(
+					t,
+					document.PutScalar(
+						ctx,
+						"keep",
+						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+					),
+				)
 				_, err := document.Commit(ctx, "one", base)
 				require.NoError(t, err)
 
-				require.NoError(t, document.PutScalar(ctx, "title",
-					automerge.Scalar{Type: automerge.ScalarTypeString, String: "second"}))
+				require.NoError(
+					t,
+					document.PutScalar(
+						ctx,
+						"title",
+						automerge.Scalar{Type: automerge.ScalarTypeString, String: "second"},
+					),
+				)
 				_, err = document.Commit(ctx, "two", base.Add(time.Second))
 				require.NoError(t, err)
 
@@ -77,8 +95,14 @@ func documentSaveScenarios() []documentSaveScenario {
 		{
 			name: "counter increment",
 			apply: func(t *testing.T, ctx context.Context, document *automerge.Document) {
-				require.NoError(t, document.PutScalar(ctx, "counter",
-					automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5}))
+				require.NoError(
+					t,
+					document.PutScalar(
+						ctx,
+						"counter",
+						automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
+					),
+				)
 				_, err := document.Commit(ctx, "create", base)
 				require.NoError(t, err)
 
@@ -96,9 +120,17 @@ func documentSaveScenarios() []documentSaveScenario {
 				_, err = document.Commit(ctx, "write", base)
 				require.NoError(t, err)
 
-				require.NoError(t, text.Mark(ctx, 0, 5, "strong",
-					automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-					automerge.MarkExpandBoth))
+				require.NoError(
+					t,
+					text.Mark(
+						ctx,
+						0,
+						5,
+						"strong",
+						automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+						automerge.MarkExpandBoth,
+					),
+				)
 				_, err = document.Commit(ctx, "mark", base.Add(time.Second))
 				require.NoError(t, err)
 
@@ -134,28 +166,31 @@ func TestDocumentSave_MatchesReferenceBytes(t *testing.T) {
 	ctx := context.Background()
 
 	for _, scenario := range documentSaveScenarios() {
-		t.Run(scenario.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			scenario.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			native, err := automerge.New(ctx, actor(41))
-			require.NoError(t, err)
-			closeDocument(t, native)
+				native, err := automerge.New(ctx, actor(41))
+				require.NoError(t, err)
+				closeDocument(t, native)
 
-			reference, err := automerge.NewReference(ctx, actor(41))
-			require.NoError(t, err)
-			closeDocument(t, reference)
+				reference, err := automerge.NewReference(ctx, actor(41))
+				require.NoError(t, err)
+				closeDocument(t, reference)
 
-			scenario.apply(t, ctx, native)
-			scenario.apply(t, ctx, reference)
+				scenario.apply(t, ctx, native)
+				scenario.apply(t, ctx, reference)
 
-			expected, err := reference.Save(ctx)
-			require.NoError(t, err)
+				expected, err := reference.Save(ctx)
+				require.NoError(t, err)
 
-			actual, err := native.Save(ctx)
-			require.NoError(t, err)
+				actual, err := native.Save(ctx)
+				require.NoError(t, err)
 
-			assert.Equal(t, expected, actual)
-		})
+				assert.Equal(t, expected, actual)
+			},
+		)
 	}
 }
 
@@ -168,48 +203,51 @@ func TestDocumentSave_ReloadsIntoTheSameHistory(t *testing.T) {
 	ctx := context.Background()
 
 	for _, scenario := range documentSaveScenarios() {
-		t.Run(scenario.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			scenario.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := automerge.New(ctx, actor(42))
-			require.NoError(t, err)
-			closeDocument(t, document)
+				document, err := automerge.New(ctx, actor(42))
+				require.NoError(t, err)
+				closeDocument(t, document)
 
-			scenario.apply(t, ctx, document)
+				scenario.apply(t, ctx, document)
 
-			heads, err := document.Heads(ctx)
-			require.NoError(t, err)
+				heads, err := document.Heads(ctx)
+				require.NoError(t, err)
 
-			original, err := document.ChangesSince(ctx, nil)
-			require.NoError(t, err)
+				original, err := document.ChangesSince(ctx, nil)
+				require.NoError(t, err)
 
-			snapshot, err := document.Save(ctx)
-			require.NoError(t, err)
+				snapshot, err := document.Save(ctx)
+				require.NoError(t, err)
 
-			reloaded, err := automerge.Load(ctx, snapshot, actor(43))
-			require.NoError(t, err)
-			closeDocument(t, reloaded)
+				reloaded, err := automerge.Load(ctx, snapshot, actor(43))
+				require.NoError(t, err)
+				closeDocument(t, reloaded)
 
-			reloadedHeads, err := reloaded.Heads(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, heads, reloadedHeads)
+				reloadedHeads, err := reloaded.Heads(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, heads, reloadedHeads)
 
-			changes, err := reloaded.ChangesSince(ctx, nil)
-			require.NoError(t, err)
-			require.Len(t, changes, len(original))
+				changes, err := reloaded.ChangesSince(ctx, nil)
+				require.NoError(t, err)
+				require.Len(t, changes, len(original))
 
-			for i := range changes {
-				assert.Equal(t, original[i].Hash, changes[i].Hash, "change %d", i)
-				assert.Equal(t, original[i].Bytes, changes[i].Bytes, "change %d bytes", i)
-			}
+				for i := range changes {
+					assert.Equal(t, original[i].Hash, changes[i].Hash, "change %d", i)
+					assert.Equal(t, original[i].Bytes, changes[i].Bytes, "change %d bytes", i)
+				}
 
-			adopted, err := automerge.LoadReference(ctx, snapshot, actor(44))
-			require.NoError(t, err)
-			closeDocument(t, adopted)
+				adopted, err := automerge.LoadReference(ctx, snapshot, actor(44))
+				require.NoError(t, err)
+				closeDocument(t, adopted)
 
-			adoptedHeads, err := adopted.Heads(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, heads, adoptedHeads)
-		})
+				adoptedHeads, err := adopted.Heads(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, heads, adoptedHeads)
+			},
+		)
 	}
 }

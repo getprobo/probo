@@ -569,9 +569,12 @@ func renderMarks(values map[string]any) ([]mark, error) {
 		names = append(names, name)
 	}
 
-	sort.SliceStable(names, func(i, j int) bool {
-		return markRenderOrder[names[i]] < markRenderOrder[names[j]]
-	})
+	sort.SliceStable(
+		names,
+		func(i, j int) bool {
+			return markRenderOrder[names[i]] < markRenderOrder[names[j]]
+		},
+	)
 
 	marks := make([]mark, 0, len(names))
 

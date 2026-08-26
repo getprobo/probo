@@ -50,46 +50,60 @@ func TestRustTest_CompressedDocCols(t *testing.T) {
 	}
 
 	for _, engine := range rustParityEngines() {
-		t.Run(engine.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := engine.open(ctx, actor(0x01))
-			require.NoError(t, err)
-			closeDocument(t, document)
-
-			require.NoError(t, document.Root().PutValue(ctx, "list", automerge.Value{
-				Type: automerge.ValueTypeList,
-				List: values,
-			}))
-
-			_, err = document.Commit(ctx, "list", commitTime)
-			require.NoError(t, err)
-
-			uncompressed, err := document.Save(ctx, automerge.NoCompress())
-			require.NoError(t, err)
-
-			compressed, err := document.Save(ctx)
-			require.NoError(t, err)
-
-			assert.Less(t, len(compressed), len(uncompressed),
-				"compressed save should be smaller than uncompressed")
-
-			loaded, err := engine.load(ctx, compressed, actor(0x02))
-			require.NoError(t, err)
-			closeDocument(t, loaded)
-
-			list, err := loaded.Root().Object(ctx, "list")
-			require.NoError(t, err)
-
-			length, err := list.Len(ctx)
-			require.NoError(t, err)
-			require.Equal(t, uint64(items), length)
-
-			for i := range items {
-				value, err := list.ScalarAt(ctx, uint64(i))
+				document, err := engine.open(ctx, actor(0x01))
 				require.NoError(t, err)
-				assert.Equal(t, uint64(i), value.Uint)
-			}
-		})
+				closeDocument(t, document)
+
+				require.NoError(
+					t,
+					document.Root().PutValue(
+						ctx,
+						"list",
+						automerge.Value{
+							Type: automerge.ValueTypeList,
+							List: values,
+						},
+					),
+				)
+
+				_, err = document.Commit(ctx, "list", commitTime)
+				require.NoError(t, err)
+
+				uncompressed, err := document.Save(ctx, automerge.NoCompress())
+				require.NoError(t, err)
+
+				compressed, err := document.Save(ctx)
+				require.NoError(t, err)
+
+				assert.Less(
+					t,
+					len(compressed),
+					len(uncompressed),
+					"compressed save should be smaller than uncompressed",
+				)
+
+				loaded, err := engine.load(ctx, compressed, actor(0x02))
+				require.NoError(t, err)
+				closeDocument(t, loaded)
+
+				list, err := loaded.Root().Object(ctx, "list")
+				require.NoError(t, err)
+
+				length, err := list.Len(ctx)
+				require.NoError(t, err)
+				require.Equal(t, uint64(items), length)
+
+				for i := range items {
+					value, err := list.ScalarAt(ctx, uint64(i))
+					require.NoError(t, err)
+					assert.Equal(t, uint64(i), value.Uint)
+				}
+			},
+		)
 	}
 }

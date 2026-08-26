@@ -221,10 +221,13 @@ func decodePatches(data []byte) ([]Patch, error) {
 				return nil, err
 			}
 
-			patch.Values = append(patch.Values, InsertedValue{
-				Value:    value,
-				Conflict: inserted.Conflict,
-			})
+			patch.Values = append(
+				patch.Values,
+				InsertedValue{
+					Value:    value,
+					Conflict: inserted.Conflict,
+				},
+			)
 		}
 
 		if source.Action.Prop != nil {
@@ -243,12 +246,15 @@ func decodePatches(data []byte) ([]Patch, error) {
 				return nil, err
 			}
 
-			patch.Marks = append(patch.Marks, Mark{
-				Start: mark.Start,
-				End:   mark.End,
-				Name:  mark.Name,
-				Value: value,
-			})
+			patch.Marks = append(
+				patch.Marks,
+				Mark{
+					Start: mark.Start,
+					End:   mark.End,
+					Name:  mark.Name,
+					Value: value,
+				},
+			)
 		}
 
 		patches[i] = patch

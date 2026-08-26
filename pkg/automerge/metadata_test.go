@@ -45,35 +45,44 @@ func TestDocument_StatsMatchReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := factory(ctx, actor(1))
-			require.NoError(t, err)
-			closeDocument(t, document)
+				document, err := factory(ctx, actor(1))
+				require.NoError(t, err)
+				closeDocument(t, document)
 
-			require.NoError(t, document.Root().PutScalar(
-				ctx,
-				"a",
-				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
-			))
-			_, err = document.Commit(ctx, "a", commitTime)
-			require.NoError(t, err)
+				require.NoError(
+					t,
+					document.Root().PutScalar(
+						ctx,
+						"a",
+						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+					),
+				)
+				_, err = document.Commit(ctx, "a", commitTime)
+				require.NoError(t, err)
 
-			require.NoError(t, document.Root().PutScalar(
-				ctx,
-				"b",
-				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
-			))
-			_, err = document.Commit(ctx, "b", commitTime.Add(time.Second))
-			require.NoError(t, err)
+				require.NoError(
+					t,
+					document.Root().PutScalar(
+						ctx,
+						"b",
+						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
+					),
+				)
+				_, err = document.Commit(ctx, "b", commitTime.Add(time.Second))
+				require.NoError(t, err)
 
-			stats, err := document.Stats(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, uint64(2), stats.NumChanges)
-			assert.Equal(t, uint64(2), stats.NumOps)
-			assert.Equal(t, uint64(1), stats.NumActors)
-		})
+				stats, err := document.Stats(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, uint64(2), stats.NumChanges)
+				assert.Equal(t, uint64(2), stats.NumOps)
+				assert.Equal(t, uint64(1), stats.NumActors)
+			},
+		)
 	}
 }
 
@@ -89,42 +98,45 @@ func TestDocument_CommitTimeParity(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			document, err := factory(ctx, actor(149))
-			require.NoError(t, err)
-			closeDocument(t, document)
+				ctx := context.Background()
+				document, err := factory(ctx, actor(149))
+				require.NoError(t, err)
+				closeDocument(t, document)
 
-			require.NoError(t, document.PutString(ctx, "zero", "value"))
-			_, err = document.Commit(ctx, "zero", time.Time{})
-			require.NoError(t, err)
-			require.NoError(t, document.PutString(ctx, "provided", "value"))
-			_, err = document.Commit(
-				ctx,
-				"provided",
-				time.Unix(12_345, 0),
-			)
-			require.NoError(t, err)
-			require.NoError(t, document.PutString(ctx, "current", "value"))
+				require.NoError(t, document.PutString(ctx, "zero", "value"))
+				_, err = document.Commit(ctx, "zero", time.Time{})
+				require.NoError(t, err)
+				require.NoError(t, document.PutString(ctx, "provided", "value"))
+				_, err = document.Commit(
+					ctx,
+					"provided",
+					time.Unix(12_345, 0),
+				)
+				require.NoError(t, err)
+				require.NoError(t, document.PutString(ctx, "current", "value"))
 
-			before := time.Now().Unix()
-			_, err = document.CommitNow(ctx, "current")
-			after := time.Now().Unix()
+				before := time.Now().Unix()
+				_, err = document.CommitNow(ctx, "current")
+				after := time.Now().Unix()
 
-			require.NoError(t, err)
+				require.NoError(t, err)
 
-			data, err := document.Save(ctx)
-			require.NoError(t, err)
-			decoded, err := native.Decode(data)
-			require.NoError(t, err)
-			require.Len(t, decoded.Changes, 3)
-			assert.Equal(t, int64(0), decoded.Changes[0].Time)
-			assert.Equal(t, int64(12_345), decoded.Changes[1].Time)
-			assert.GreaterOrEqual(t, decoded.Changes[2].Time, before)
-			assert.LessOrEqual(t, decoded.Changes[2].Time, after)
-		})
+				data, err := document.Save(ctx)
+				require.NoError(t, err)
+				decoded, err := native.Decode(data)
+				require.NoError(t, err)
+				require.Len(t, decoded.Changes, 3)
+				assert.Equal(t, int64(0), decoded.Changes[0].Time)
+				assert.Equal(t, int64(12_345), decoded.Changes[1].Time)
+				assert.GreaterOrEqual(t, decoded.Changes[2].Time, before)
+				assert.LessOrEqual(t, decoded.Changes[2].Time, after)
+			},
+		)
 	}
 }
 
@@ -140,47 +152,50 @@ func TestDocument_EmptyCommitTimeParity(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			document, err := factory(ctx, actor(150))
-			require.NoError(t, err)
-			closeDocument(t, document)
+				ctx := context.Background()
+				document, err := factory(ctx, actor(150))
+				require.NoError(t, err)
+				closeDocument(t, document)
 
-			_, err = document.EmptyCommit(ctx, "zero", time.Time{})
-			require.NoError(t, err)
-			_, err = document.EmptyCommit(
-				ctx,
-				"provided",
-				time.Unix(12_345, 0),
-			)
-			require.NoError(t, err)
+				_, err = document.EmptyCommit(ctx, "zero", time.Time{})
+				require.NoError(t, err)
+				_, err = document.EmptyCommit(
+					ctx,
+					"provided",
+					time.Unix(12_345, 0),
+				)
+				require.NoError(t, err)
 
-			before := time.Now().Unix()
-			_, err = document.EmptyCommitNow(ctx, "current")
-			after := time.Now().Unix()
+				before := time.Now().Unix()
+				_, err = document.EmptyCommitNow(ctx, "current")
+				after := time.Now().Unix()
 
-			require.NoError(t, err)
+				require.NoError(t, err)
 
-			data, err := document.Save(ctx)
-			require.NoError(t, err)
-			decoded, err := native.Decode(data)
-			require.NoError(t, err)
-			require.Len(t, decoded.Changes, 3)
+				data, err := document.Save(ctx)
+				require.NoError(t, err)
+				decoded, err := native.Decode(data)
+				require.NoError(t, err)
+				require.Len(t, decoded.Changes, 3)
 
-			for index, change := range decoded.Changes {
-				assert.Equal(t, uint64(index+1), change.Sequence)
-				assert.Equal(t, uint64(1), change.StartOp)
-				assert.Equal(t, uint64(0), change.MaxOp)
-				assert.Empty(t, change.Operations)
-			}
+				for index, change := range decoded.Changes {
+					assert.Equal(t, uint64(index+1), change.Sequence)
+					assert.Equal(t, uint64(1), change.StartOp)
+					assert.Equal(t, uint64(0), change.MaxOp)
+					assert.Empty(t, change.Operations)
+				}
 
-			assert.Equal(t, int64(0), decoded.Changes[0].Time)
-			assert.Equal(t, int64(12_345), decoded.Changes[1].Time)
-			assert.GreaterOrEqual(t, decoded.Changes[2].Time, before)
-			assert.LessOrEqual(t, decoded.Changes[2].Time, after)
-		})
+				assert.Equal(t, int64(0), decoded.Changes[0].Time)
+				assert.Equal(t, int64(12_345), decoded.Changes[1].Time)
+				assert.GreaterOrEqual(t, decoded.Changes[2].Time, before)
+				assert.LessOrEqual(t, decoded.Changes[2].Time, after)
+			},
+		)
 	}
 }
 
@@ -224,81 +239,90 @@ func TestDocument_HistoricalReadsMatchReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			document, err := factory(ctx, actor(158))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			root := document.Root()
-			require.NoError(t, root.PutScalar(
-				ctx,
-				"value",
-				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
-			))
-			text, err := document.CreateText(ctx, "body")
-			require.NoError(t, err)
-			require.NoError(t, text.Splice(ctx, 0, 0, "A"))
-			first, err := document.Commit(ctx, "first", commitTime)
-			require.NoError(t, err)
+				ctx := context.Background()
+				document, err := factory(ctx, actor(158))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				root := document.Root()
+				require.NoError(
+					t,
+					root.PutScalar(
+						ctx,
+						"value",
+						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+					),
+				)
+				text, err := document.CreateText(ctx, "body")
+				require.NoError(t, err)
+				require.NoError(t, text.Splice(ctx, 0, 0, "A"))
+				first, err := document.Commit(ctx, "first", commitTime)
+				require.NoError(t, err)
 
-			require.NoError(t, root.PutScalar(
-				ctx,
-				"value",
-				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
-			))
-			require.NoError(t, text.Splice(ctx, 1, 0, "B"))
-			second, err := document.Commit(
-				ctx,
-				"second",
-				commitTime.Add(time.Second),
-			)
-			require.NoError(t, err)
+				require.NoError(
+					t,
+					root.PutScalar(
+						ctx,
+						"value",
+						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
+					),
+				)
+				require.NoError(t, text.Splice(ctx, 1, 0, "B"))
+				second, err := document.Commit(
+					ctx,
+					"second",
+					commitTime.Add(time.Second),
+				)
+				require.NoError(t, err)
 
-			historicalScalar, err := root.ScalarAtHeads(
-				ctx,
-				"value",
-				[]automerge.Hash{first},
-			)
-			require.NoError(t, err)
-			assert.Equal(t, int64(1), historicalScalar.Int)
+				historicalScalar, err := root.ScalarAtHeads(
+					ctx,
+					"value",
+					[]automerge.Hash{first},
+				)
+				require.NoError(t, err)
+				assert.Equal(t, int64(1), historicalScalar.Int)
 
-			currentScalar, err := root.Scalar(ctx, "value")
-			require.NoError(t, err)
-			assert.Equal(t, int64(2), currentScalar.Int)
+				currentScalar, err := root.Scalar(ctx, "value")
+				require.NoError(t, err)
+				assert.Equal(t, int64(2), currentScalar.Int)
 
-			historicalText, err := text.StringAt(
-				ctx,
-				[]automerge.Hash{first},
-			)
-			require.NoError(t, err)
-			assert.Equal(t, "A", historicalText)
+				historicalText, err := text.StringAt(
+					ctx,
+					[]automerge.Hash{first},
+				)
+				require.NoError(t, err)
+				assert.Equal(t, "A", historicalText)
 
-			currentText, err := text.String(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, "AB", currentText)
+				currentText, err := text.String(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, "AB", currentText)
 
-			hasHeads, err := document.HasHeads(
-				ctx,
-				[]automerge.Hash{first, second},
-			)
-			require.NoError(t, err)
-			assert.True(t, hasHeads)
-			hasHeads, err = document.HasHeads(ctx, nil)
-			require.NoError(t, err)
-			assert.True(t, hasHeads)
+				hasHeads, err := document.HasHeads(
+					ctx,
+					[]automerge.Hash{first, second},
+				)
+				require.NoError(t, err)
+				assert.True(t, hasHeads)
+				hasHeads, err = document.HasHeads(ctx, nil)
+				require.NoError(t, err)
+				assert.True(t, hasHeads)
 
-			var unknown automerge.Hash
+				var unknown automerge.Hash
 
-			unknown[0] = 1
-			hasHeads, err = document.HasHeads(
-				ctx,
-				[]automerge.Hash{unknown},
-			)
-			require.NoError(t, err)
-			assert.False(t, hasHeads)
-		})
+				unknown[0] = 1
+				hasHeads, err = document.HasHeads(
+					ctx,
+					[]automerge.Hash{unknown},
+				)
+				require.NoError(t, err)
+				assert.False(t, hasHeads)
+			},
+		)
 	}
 }
 

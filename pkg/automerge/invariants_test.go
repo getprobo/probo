@@ -85,10 +85,16 @@ func TestDocument_AppliesDependentChangesInAnyOrder(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Empty(t, missing)
-	require.NoError(t, target.ApplyChanges(ctx, []automerge.Change{
-		changes[0],
-		changes[1],
-	}))
+	require.NoError(
+		t,
+		target.ApplyChanges(
+			ctx,
+			[]automerge.Change{
+				changes[0],
+				changes[1],
+			},
+		),
+	)
 
 	targetText, err := target.Text(ctx, "body")
 	require.NoError(t, err)
@@ -118,9 +124,12 @@ func TestDocument_InvalidChangesDoNotMutateState(t *testing.T) {
 	headsBefore, err := document.Heads(ctx)
 	require.NoError(t, err)
 
-	err = document.ApplyChanges(ctx, []automerge.Change{
-		{Bytes: []byte("invalid")},
-	})
+	err = document.ApplyChanges(
+		ctx,
+		[]automerge.Change{
+			{Bytes: []byte("invalid")},
+		},
+	)
 	require.Error(t, err)
 
 	value, err := text.String(ctx)
@@ -167,71 +176,74 @@ func TestDocument_IncrementalSaveLoadParity(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			source, err := test.source(ctx, actor(151))
-			require.NoError(t, err)
-			closeDocument(t, source)
+				ctx := context.Background()
+				source, err := test.source(ctx, actor(151))
+				require.NoError(t, err)
+				closeDocument(t, source)
 
-			target, err := test.target(ctx, actor(152))
-			require.NoError(t, err)
-			closeDocument(t, target)
+				target, err := test.target(ctx, actor(152))
+				require.NoError(t, err)
+				closeDocument(t, target)
 
-			text, err := source.CreateText(ctx, "body")
-			require.NoError(t, err)
-			require.NoError(t, text.Splice(ctx, 0, 0, "A"))
-			_, err = source.Commit(ctx, "first", commitTime)
-			require.NoError(t, err)
-			first, err := source.SaveIncremental(ctx)
-			require.NoError(t, err)
-			require.NotEmpty(t, first)
+				text, err := source.CreateText(ctx, "body")
+				require.NoError(t, err)
+				require.NoError(t, text.Splice(ctx, 0, 0, "A"))
+				_, err = source.Commit(ctx, "first", commitTime)
+				require.NoError(t, err)
+				first, err := source.SaveIncremental(ctx)
+				require.NoError(t, err)
+				require.NotEmpty(t, first)
 
-			empty, err := source.SaveIncremental(ctx)
-			require.NoError(t, err)
-			assert.Empty(t, empty)
+				empty, err := source.SaveIncremental(ctx)
+				require.NoError(t, err)
+				assert.Empty(t, empty)
 
-			applied, err := target.LoadIncremental(ctx, first)
-			require.NoError(t, err)
-			assert.Positive(t, applied)
+				applied, err := target.LoadIncremental(ctx, first)
+				require.NoError(t, err)
+				assert.Positive(t, applied)
 
-			targetText, err := target.Text(ctx, "body")
-			require.NoError(t, err)
-			value, err := targetText.String(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, "A", value)
+				targetText, err := target.Text(ctx, "body")
+				require.NoError(t, err)
+				value, err := targetText.String(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, "A", value)
 
-			applied, err = target.LoadIncremental(ctx, first)
-			require.NoError(t, err)
-			assert.Zero(t, applied)
+				applied, err = target.LoadIncremental(ctx, first)
+				require.NoError(t, err)
+				assert.Zero(t, applied)
 
-			require.NoError(t, text.Splice(ctx, 1, 0, "B"))
-			_, err = source.Commit(ctx, "second", commitTime.Add(time.Second))
-			require.NoError(t, err)
-			second, err := source.SaveIncremental(ctx)
-			require.NoError(t, err)
-			require.NotEmpty(t, second)
-			applied, err = target.LoadIncremental(ctx, second)
-			require.NoError(t, err)
-			assert.Positive(t, applied)
+				require.NoError(t, text.Splice(ctx, 1, 0, "B"))
+				_, err = source.Commit(ctx, "second", commitTime.Add(time.Second))
+				require.NoError(t, err)
+				second, err := source.SaveIncremental(ctx)
+				require.NoError(t, err)
+				require.NotEmpty(t, second)
+				applied, err = target.LoadIncremental(ctx, second)
+				require.NoError(t, err)
+				assert.Positive(t, applied)
 
-			value, err = targetText.String(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, "AB", value)
+				value, err = targetText.String(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, "AB", value)
 
-			sourceHeads, err := source.Heads(ctx)
-			require.NoError(t, err)
-			targetHeads, err := target.Heads(ctx)
-			require.NoError(t, err)
-			assert.ElementsMatch(t, sourceHeads, targetHeads)
+				sourceHeads, err := source.Heads(ctx)
+				require.NoError(t, err)
+				targetHeads, err := target.Heads(ctx)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, sourceHeads, targetHeads)
 
-			_, err = source.Save(ctx)
-			require.NoError(t, err)
-			empty, err = source.SaveIncremental(ctx)
-			require.NoError(t, err)
-			assert.Empty(t, empty)
-		})
+				_, err = source.Save(ctx)
+				require.NoError(t, err)
+				empty, err = source.SaveIncremental(ctx)
+				require.NoError(t, err)
+				assert.Empty(t, empty)
+			},
+		)
 	}
 }
 
@@ -258,20 +270,23 @@ func TestDocument_IncrementalLoadIgnoresCorruptTail(t *testing.T) {
 		"reference": automerge.NewReference,
 	}
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := factory(ctx, actor(170))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			applied, err := document.LoadIncremental(ctx, data)
-			require.NoError(t, err)
-			assert.Positive(t, applied)
+				document, err := factory(ctx, actor(170))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				applied, err := document.LoadIncremental(ctx, data)
+				require.NoError(t, err)
+				assert.Positive(t, applied)
 
-			value, err := document.String(ctx, "key")
-			require.NoError(t, err)
-			assert.Equal(t, "value", value)
-		})
+				value, err := document.String(ctx, "key")
+				require.NoError(t, err)
+				assert.Equal(t, "value", value)
+			},
+		)
 	}
 }
 

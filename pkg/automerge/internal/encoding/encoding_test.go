@@ -62,14 +62,16 @@ func FuzzReader(f *testing.F) {
 	f.Add([]byte{0x80, 0x01})
 	f.Add([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01})
 
-	f.Fuzz(func(t *testing.T, data []byte) {
-		reader := NewReader(data)
+	f.Fuzz(
+		func(t *testing.T, data []byte) {
+			reader := NewReader(data)
 
-		length, err := reader.ULEB()
-		if err != nil {
-			return
-		}
+			length, err := reader.ULEB()
+			if err != nil {
+				return
+			}
 
-		_, _ = reader.Bytes(length)
-	})
+			_, _ = reader.Bytes(length)
+		},
+	)
 }

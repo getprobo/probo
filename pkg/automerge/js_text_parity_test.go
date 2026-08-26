@@ -87,11 +87,14 @@ func TestJSText_TextAndOtherOpsSameChange(t *testing.T) {
 
 	for _, engine := range rustParityEngines() {
 		document, _, text := seedText(t, ctx, engine, "")
-		require.NoError(t, document.Root().PutScalar(
-			ctx,
-			"foo",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "bar"},
-		))
+		require.NoError(
+			t,
+			document.Root().PutScalar(
+				ctx,
+				"foo",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "bar"},
+			),
+		)
 		require.NoError(t, text.Splice(ctx, 0, 0, "a"))
 		_, err := document.Commit(ctx, "mixed", commitTime)
 		require.NoError(t, err)

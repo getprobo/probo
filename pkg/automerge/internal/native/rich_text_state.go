@@ -159,10 +159,13 @@ func (s *State) insertAnchorKey(object OpID, base Key) Key {
 			}
 
 			if !withdrawn && ((!isEnd && expand) || (isEnd && !expand)) {
-				candidates = append(candidates, candidate{
-					key: Key{Element: new(operation.ID)},
-					id:  new(operation.ID),
-				})
+				candidates = append(
+					candidates,
+					candidate{
+						key: Key{Element: new(operation.ID)},
+						id:  new(operation.ID),
+					},
+				)
 			}
 
 			continue
@@ -204,14 +207,17 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 			return
 		}
 
-		marks = append(marks, richTextMark{
-			start:  begin.start,
-			end:    end,
-			name:   *begin.operation.MarkName,
-			value:  scalarMaterializedValue(begin.operation.Value),
-			scalar: begin.operation.Value,
-			id:     begin.operation.ID,
-		})
+		marks = append(
+			marks,
+			richTextMark{
+				start:  begin.start,
+				end:    end,
+				name:   *begin.operation.MarkName,
+				value:  scalarMaterializedValue(begin.operation.Value),
+				scalar: begin.operation.Value,
+				id:     begin.operation.ID,
+			},
+		)
 	}
 
 	for _, id := range order {
@@ -263,9 +269,12 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 		remaining = append(remaining, opened)
 	}
 
-	sort.Slice(remaining, func(i, j int) bool {
-		return remaining[i].operation.ID.Compare(remaining[j].operation.ID) < 0
-	})
+	sort.Slice(
+		remaining,
+		func(i, j int) bool {
+			return remaining[i].operation.ID.Compare(remaining[j].operation.ID) < 0
+		},
+	)
 
 	for _, opened := range remaining {
 		// A dangling begin that expands leftward (expand "before" or "both")
@@ -283,9 +292,12 @@ func (s *State) richTextMarks(object OpID, elements []Operation) []richTextMark 
 
 	// Precedence follows creation order, so a later unmark or replacement value
 	// wins over an earlier mark where the two overlap.
-	sort.SliceStable(marks, func(i, j int) bool {
-		return marks[i].id.Compare(marks[j].id) < 0
-	})
+	sort.SliceStable(
+		marks,
+		func(i, j int) bool {
+			return marks[i].id.Compare(marks[j].id) < 0
+		},
+	)
 
 	_ = elements
 
@@ -330,12 +342,15 @@ func (s *State) Marks(object OpID) []MarkRange {
 	var position uint32
 
 	closeMark := func(name string, mark openMark, end uint32) {
-		result = append(result, MarkRange{
-			Start: mark.start,
-			End:   end,
-			Name:  name,
-			Value: mark.value,
-		})
+		result = append(
+			result,
+			MarkRange{
+				Start: mark.start,
+				End:   end,
+				Name:  name,
+				Value: mark.value,
+			},
+		)
 	}
 
 	for index, element := range elements {
@@ -374,13 +389,16 @@ func (s *State) Marks(object OpID) []MarkRange {
 		closeMark(name, mark, position)
 	}
 
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].Start != result[j].Start {
-			return result[i].Start < result[j].Start
-		}
+	sort.Slice(
+		result,
+		func(i, j int) bool {
+			if result[i].Start != result[j].Start {
+				return result[i].Start < result[j].Start
+			}
 
-		return result[i].Name < result[j].Name
-	})
+			return result[i].Name < result[j].Name
+		},
+	)
 
 	return result
 }
@@ -443,10 +461,26 @@ func (s *State) markOpUTF16Range(object OpID, begin, end Operation) (uint32, uin
 	endExpand := end.MarkExpand != nil && *end.MarkExpand
 
 	startIndex, startOK := s.markAnchorPosition(
-		object, begin.Key, begin.ID, true, beginExpand, positions, elements, false, make(map[OpID]struct{}),
+		object,
+		begin.Key,
+		begin.ID,
+		true,
+		beginExpand,
+		positions,
+		elements,
+		false,
+		make(map[OpID]struct{}),
 	)
 	endIndex, endOK := s.markAnchorPosition(
-		object, end.Key, end.ID, false, endExpand, positions, elements, false, make(map[OpID]struct{}),
+		object,
+		end.Key,
+		end.ID,
+		false,
+		endExpand,
+		positions,
+		elements,
+		false,
+		make(map[OpID]struct{}),
 	)
 
 	if !startOK || !endOK {

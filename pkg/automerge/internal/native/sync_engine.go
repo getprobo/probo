@@ -334,9 +334,12 @@ func (b *Engine) ReceiveSyncMessage(
 		state.Need = append(state.Need, dependency)
 	}
 
-	sort.Slice(state.Need, func(i, j int) bool {
-		return bytes.Compare(state.Need[i][:], state.Need[j][:]) < 0
-	})
+	sort.Slice(
+		state.Need,
+		func(i, j int) bool {
+			return bytes.Compare(state.Need[i][:], state.Need[j][:]) < 0
+		},
+	)
 
 	state.NeedsAck = len(message.Changes) > 0 || state.PeerModeChanged
 

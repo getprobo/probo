@@ -237,40 +237,55 @@ func TestDocument_NestedMapsAndListsMatchReference(t *testing.T) {
 		root := document.Root()
 		config, err := root.CreateObject(ctx, "config", automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		require.NoError(t, config.PutScalar(
-			ctx,
-			"enabled",
-			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-		))
+		require.NoError(
+			t,
+			config.PutScalar(
+				ctx,
+				"enabled",
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+			),
+		)
 
 		items, err := root.CreateObject(ctx, "items", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		require.NoError(t, items.InsertScalar(
-			ctx,
-			0,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "first"},
-		))
+		require.NoError(
+			t,
+			items.InsertScalar(
+				ctx,
+				0,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "first"},
+			),
+		)
 		nested, err := items.InsertObject(ctx, 1, automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		require.NoError(t, nested.PutScalar(
-			ctx,
-			"count",
-			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
-		))
-		require.NoError(t, items.InsertScalar(
-			ctx,
-			2,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "last"},
-		))
+		require.NoError(
+			t,
+			nested.PutScalar(
+				ctx,
+				"count",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
+			),
+		)
+		require.NoError(
+			t,
+			items.InsertScalar(
+				ctx,
+				2,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "last"},
+			),
+		)
 		require.NoError(t, items.DeleteIndex(ctx, 0))
-		require.NoError(t, items.PutScalarAt(
-			ctx,
-			1,
-			automerge.Scalar{
-				Type:   automerge.ScalarTypeString,
-				String: "replaced",
-			},
-		))
+		require.NoError(
+			t,
+			items.PutScalarAt(
+				ctx,
+				1,
+				automerge.Scalar{
+					Type:   automerge.ScalarTypeString,
+					String: "replaced",
+				},
+			),
+		)
 		require.NoError(t, config.DeleteKey(ctx, "enabled"))
 
 		_, err = document.Commit(ctx, "nested values", commitTime)
@@ -336,11 +351,14 @@ func TestDocument_LoadedObjectRemainsEditable(t *testing.T) {
 	closeDocument(t, loaded)
 	items, err := loaded.Root().Object(ctx, "items")
 	require.NoError(t, err)
-	require.NoError(t, items.InsertScalar(
-		ctx,
-		0,
-		automerge.Scalar{Type: automerge.ScalarTypeUint, Uint: 1},
-	))
+	require.NoError(
+		t,
+		items.InsertScalar(
+			ctx,
+			0,
+			automerge.Scalar{Type: automerge.ScalarTypeUint, Uint: 1},
+		),
+	)
 	_, err = loaded.Commit(ctx, "insert item", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	data, err = loaded.Save(ctx)
@@ -373,28 +391,40 @@ func TestDocument_CountersMatchReference(t *testing.T) {
 		referenceDocument,
 	} {
 		root := document.Root()
-		require.NoError(t, root.PutScalar(
-			ctx,
-			"counter",
-			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
-		))
-		require.NoError(t, root.PutScalar(
-			ctx,
-			"integer",
-			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 5},
-		))
+		require.NoError(
+			t,
+			root.PutScalar(
+				ctx,
+				"counter",
+				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
+			),
+		)
+		require.NoError(
+			t,
+			root.PutScalar(
+				ctx,
+				"integer",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 5},
+			),
+		)
 		list, err := root.CreateObject(ctx, "list", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(
-			ctx,
-			0,
-			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 10},
-		))
-		require.NoError(t, list.InsertScalar(
-			ctx,
-			1,
-			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 10},
-		))
+		require.NoError(
+			t,
+			list.InsertScalar(
+				ctx,
+				0,
+				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 10},
+			),
+		)
+		require.NoError(
+			t,
+			list.InsertScalar(
+				ctx,
+				1,
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 10},
+			),
+		)
 		_, err = document.Commit(ctx, "create counters", commitTime)
 		require.NoError(t, err)
 
@@ -422,11 +452,14 @@ func TestDocument_CountersMatchReference(t *testing.T) {
 	base, err := automerge.New(ctx, actor(140))
 	require.NoError(t, err)
 	closeDocument(t, base)
-	require.NoError(t, base.Root().PutScalar(
-		ctx,
-		"counter",
-		automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
-	))
+	require.NoError(
+		t,
+		base.Root().PutScalar(
+			ctx,
+			"counter",
+			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
+		),
+	)
 	_, err = base.Commit(ctx, "base counter", commitTime)
 	require.NoError(t, err)
 	baseData, err := base.Save(ctx)
@@ -474,31 +507,40 @@ func TestDocument_CounterDeletionMatchesReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := factory(ctx, actor(160))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			root := document.Root()
-			require.NoError(t, root.PutScalar(
-				ctx,
-				"counter",
-				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
-			))
-			list, err := root.CreateObject(ctx, "list", automerge.ObjectTypeList)
-			require.NoError(t, err)
-			require.NoError(t, list.InsertScalar(
-				ctx,
-				0,
-				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
-			))
-			_, err = document.Commit(ctx, "counters", commitTime)
-			require.NoError(t, err)
+				document, err := factory(ctx, actor(160))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				root := document.Root()
+				require.NoError(
+					t,
+					root.PutScalar(
+						ctx,
+						"counter",
+						automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
+					),
+				)
+				list, err := root.CreateObject(ctx, "list", automerge.ObjectTypeList)
+				require.NoError(t, err)
+				require.NoError(
+					t,
+					list.InsertScalar(
+						ctx,
+						0,
+						automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
+					),
+				)
+				_, err = document.Commit(ctx, "counters", commitTime)
+				require.NoError(t, err)
 
-			require.NoError(t, root.DeleteKey(ctx, "counter"))
-			require.NoError(t, list.DeleteIndex(ctx, 0))
-		})
+				require.NoError(t, root.DeleteKey(ctx, "counter"))
+				require.NoError(t, list.DeleteIndex(ctx, 0))
+			},
+		)
 	}
 }
 
@@ -779,11 +821,14 @@ func TestDocument_RollbackMatchesReference(t *testing.T) {
 			automerge.ObjectTypeList,
 		)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(
-			ctx,
-			0,
-			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
-		))
+		require.NoError(
+			t,
+			list.InsertScalar(
+				ctx,
+				0,
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
+			),
+		)
 		cancelled, err := document.Rollback(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, uint64(3), cancelled)
@@ -816,40 +861,43 @@ func TestDocument_ForkMatchesReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			document, err := factory(ctx, actor(161))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			require.NoError(t, document.PutString(ctx, "base", "value"))
-			_, err = document.Commit(ctx, "base", commitTime)
-			require.NoError(t, err)
+				ctx := context.Background()
+				document, err := factory(ctx, actor(161))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				require.NoError(t, document.PutString(ctx, "base", "value"))
+				_, err = document.Commit(ctx, "base", commitTime)
+				require.NoError(t, err)
 
-			fork, err := document.Fork(ctx, actor(162))
-			require.NoError(t, err)
-			closeDocument(t, fork)
-			require.NoError(t, fork.PutString(ctx, "fork", "value"))
-			_, err = fork.Commit(
-				ctx,
-				"fork",
-				commitTime.Add(time.Second),
-			)
-			require.NoError(t, err)
+				fork, err := document.Fork(ctx, actor(162))
+				require.NoError(t, err)
+				closeDocument(t, fork)
+				require.NoError(t, fork.PutString(ctx, "fork", "value"))
+				_, err = fork.Commit(
+					ctx,
+					"fork",
+					commitTime.Add(time.Second),
+				)
+				require.NoError(t, err)
 
-			_, err = document.String(ctx, "fork")
-			require.Error(t, err)
-			value, err := fork.String(ctx, "base")
-			require.NoError(t, err)
-			assert.Equal(t, "value", value)
+				_, err = document.String(ctx, "fork")
+				require.Error(t, err)
+				value, err := fork.String(ctx, "base")
+				require.NoError(t, err)
+				assert.Equal(t, "value", value)
 
-			_, err = document.Merge(ctx, fork)
-			require.NoError(t, err)
-			value, err = document.String(ctx, "fork")
-			require.NoError(t, err)
-			assert.Equal(t, "value", value)
-		})
+				_, err = document.Merge(ctx, fork)
+				require.NoError(t, err)
+				value, err = document.String(ctx, "fork")
+				require.NoError(t, err)
+				assert.Equal(t, "value", value)
+			},
+		)
 	}
 }
 
@@ -865,48 +913,51 @@ func TestDocument_WrongObjectOperationsMatchReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			document, err := factory(ctx, actor(171))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			root := document.Root()
-			mapObject, err := root.CreateObject(
-				ctx,
-				"map",
-				automerge.ObjectTypeMap,
-			)
-			require.NoError(t, err)
-			listObject, err := root.CreateObject(
-				ctx,
-				"list",
-				automerge.ObjectTypeList,
-			)
-			require.NoError(t, err)
-			textObject, err := root.CreateObject(
-				ctx,
-				"text",
-				automerge.ObjectTypeText,
-			)
-			require.NoError(t, err)
+				ctx := context.Background()
+				document, err := factory(ctx, actor(171))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				root := document.Root()
+				mapObject, err := root.CreateObject(
+					ctx,
+					"map",
+					automerge.ObjectTypeMap,
+				)
+				require.NoError(t, err)
+				listObject, err := root.CreateObject(
+					ctx,
+					"list",
+					automerge.ObjectTypeList,
+				)
+				require.NoError(t, err)
+				textObject, err := root.CreateObject(
+					ctx,
+					"text",
+					automerge.ObjectTypeText,
+				)
+				require.NoError(t, err)
 
-			scalar := automerge.Scalar{
-				Type: automerge.ScalarTypeInt,
-				Int:  1,
-			}
-			require.Error(t, listObject.PutScalar(ctx, "key", scalar))
-			require.Error(t, textObject.PutScalar(ctx, "key", scalar))
-			require.Error(t, mapObject.InsertScalar(ctx, 0, scalar))
-			require.Error(t, mapObject.DeleteIndex(ctx, 0))
-			length, err := mapObject.Len(ctx)
-			require.NoError(t, err)
-			assert.Zero(t, length)
+				scalar := automerge.Scalar{
+					Type: automerge.ScalarTypeInt,
+					Int:  1,
+				}
+				require.Error(t, listObject.PutScalar(ctx, "key", scalar))
+				require.Error(t, textObject.PutScalar(ctx, "key", scalar))
+				require.Error(t, mapObject.InsertScalar(ctx, 0, scalar))
+				require.Error(t, mapObject.DeleteIndex(ctx, 0))
+				length, err := mapObject.Len(ctx)
+				require.NoError(t, err)
+				assert.Zero(t, length)
 
-			_, err = listObject.Text(ctx)
-			require.Error(t, err)
-		})
+				_, err = listObject.Text(ctx)
+				require.Error(t, err)
+			},
+		)
 	}
 }
 
@@ -978,14 +1029,17 @@ func TestDocument_ManyMapDeletes(t *testing.T) {
 
 		for index := range 100 {
 			key := fmt.Sprintf("%d", index)
-			require.NoError(t, object.PutScalar(
-				ctx,
-				key,
-				automerge.Scalar{
-					Type: automerge.ScalarTypeInt,
-					Int:  int64(index),
-				},
-			))
+			require.NoError(
+				t,
+				object.PutScalar(
+					ctx,
+					key,
+					automerge.Scalar{
+						Type: automerge.ScalarTypeInt,
+						Int:  int64(index),
+					},
+				),
+			)
 			require.NoError(t, object.DeleteKey(ctx, key))
 		}
 
@@ -1010,50 +1064,56 @@ func TestDocument_MapKeysMatchReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := factory(ctx, actor(179))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			keys, err := document.Root().Keys(ctx)
-			require.NoError(t, err)
-			assert.Empty(t, keys)
+				document, err := factory(ctx, actor(179))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				keys, err := document.Root().Keys(ctx)
+				require.NoError(t, err)
+				assert.Empty(t, keys)
 
-			object, err := document.Root().CreateObject(
-				ctx,
-				"map",
-				automerge.ObjectTypeMap,
-			)
-			require.NoError(t, err)
-
-			for _, key := range []string{"z", "", "a@b", "a"} {
-				require.NoError(t, object.PutScalar(
+				object, err := document.Root().CreateObject(
 					ctx,
-					key,
-					automerge.Scalar{
-						Type: automerge.ScalarTypeInt,
-						Int:  1,
-					},
-				))
-			}
+					"map",
+					automerge.ObjectTypeMap,
+				)
+				require.NoError(t, err)
 
-			require.NoError(t, object.DeleteKey(ctx, "z"))
-			keys, err = object.Keys(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, []string{"", "a", "a@b"}, keys)
+				for _, key := range []string{"z", "", "a@b", "a"} {
+					require.NoError(
+						t,
+						object.PutScalar(
+							ctx,
+							key,
+							automerge.Scalar{
+								Type: automerge.ScalarTypeInt,
+								Int:  1,
+							},
+						),
+					)
+				}
 
-			_, err = document.Commit(ctx, "keys", commitTime)
-			require.NoError(t, err)
-			loaded, err := document.Fork(ctx, actor(180))
-			require.NoError(t, err)
-			closeDocument(t, loaded)
-			loadedObject, err := loaded.Root().Object(ctx, "map")
-			require.NoError(t, err)
-			keys, err = loadedObject.Keys(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, []string{"", "a", "a@b"}, keys)
-		})
+				require.NoError(t, object.DeleteKey(ctx, "z"))
+				keys, err = object.Keys(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, []string{"", "a", "a@b"}, keys)
+
+				_, err = document.Commit(ctx, "keys", commitTime)
+				require.NoError(t, err)
+				loaded, err := document.Fork(ctx, actor(180))
+				require.NoError(t, err)
+				closeDocument(t, loaded)
+				loadedObject, err := loaded.Root().Object(ctx, "map")
+				require.NoError(t, err)
+				keys, err = loadedObject.Keys(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, []string{"", "a", "a@b"}, keys)
+			},
+		)
 	}
 }
 
@@ -1070,55 +1130,58 @@ func TestDocument_NoOpMergeAndEqualPutMatchReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			document, err := factory(ctx, actor(176))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			require.NoError(t, document.PutString(ctx, "value", "same"))
-			_, err = document.Commit(ctx, "initial", commitTime)
-			require.NoError(t, err)
+				document, err := factory(ctx, actor(176))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				require.NoError(t, document.PutString(ctx, "value", "same"))
+				_, err = document.Commit(ctx, "initial", commitTime)
+				require.NoError(t, err)
 
-			fork, err := document.Fork(ctx, actor(177))
-			require.NoError(t, err)
-			closeDocument(t, fork)
-			_, err = fork.EmptyCommit(
-				ctx,
-				"noop",
-				commitTime.Add(time.Second),
-			)
-			require.NoError(t, err)
-			require.NoError(t, fork.PutString(ctx, "value", "changed"))
-			_, err = fork.Commit(
-				ctx,
-				"real",
-				commitTime.Add(2*time.Second),
-			)
-			require.NoError(t, err)
+				fork, err := document.Fork(ctx, actor(177))
+				require.NoError(t, err)
+				closeDocument(t, fork)
+				_, err = fork.EmptyCommit(
+					ctx,
+					"noop",
+					commitTime.Add(time.Second),
+				)
+				require.NoError(t, err)
+				require.NoError(t, fork.PutString(ctx, "value", "changed"))
+				_, err = fork.Commit(
+					ctx,
+					"real",
+					commitTime.Add(2*time.Second),
+				)
+				require.NoError(t, err)
 
-			require.NoError(t, document.PutString(ctx, "value", "same"))
-			_, err = document.Commit(
-				ctx,
-				"equal",
-				commitTime.Add(time.Second),
-			)
-			require.Error(t, err)
-			_, err = document.Merge(ctx, fork)
-			require.NoError(t, err)
-			value, err := document.String(ctx, "value")
-			require.NoError(t, err)
-			assert.Equal(t, "changed", value)
+				require.NoError(t, document.PutString(ctx, "value", "same"))
+				_, err = document.Commit(
+					ctx,
+					"equal",
+					commitTime.Add(time.Second),
+				)
+				require.Error(t, err)
+				_, err = document.Merge(ctx, fork)
+				require.NoError(t, err)
+				value, err := document.String(ctx, "value")
+				require.NoError(t, err)
+				assert.Equal(t, "changed", value)
 
-			data, err := document.Save(ctx)
-			require.NoError(t, err)
-			loaded, err := automerge.Load(ctx, data, actor(178))
-			require.NoError(t, err)
-			closeDocument(t, loaded)
-			value, err = loaded.String(ctx, "value")
-			require.NoError(t, err)
-			assert.Equal(t, "changed", value)
-		})
+				data, err := document.Save(ctx)
+				require.NoError(t, err)
+				loaded, err := automerge.Load(ctx, data, actor(178))
+				require.NoError(t, err)
+				closeDocument(t, loaded)
+				value, err = loaded.String(ctx, "value")
+				require.NoError(t, err)
+				assert.Equal(t, "changed", value)
+			},
+		)
 	}
 }
 
@@ -1145,14 +1208,17 @@ func TestDocument_RandomConcurrentMapParity(t *testing.T) {
 		require.NoError(t, err)
 
 		for index, key := range keys {
-			require.NoError(t, baseMap.PutScalar(
-				ctx,
-				key,
-				automerge.Scalar{
-					Type: automerge.ScalarTypeInt,
-					Int:  int64(index),
-				},
-			))
+			require.NoError(
+				t,
+				baseMap.PutScalar(
+					ctx,
+					key,
+					automerge.Scalar{
+						Type: automerge.ScalarTypeInt,
+						Int:  int64(index),
+					},
+				),
+			)
 		}
 
 		_, err = base.Commit(ctx, "base map", commitTime)
@@ -1276,14 +1342,17 @@ func TestDocument_RandomConcurrentListParity(t *testing.T) {
 		require.NoError(t, err)
 
 		for index := range 8 {
-			require.NoError(t, baseList.InsertScalar(
-				ctx,
-				uint64(index),
-				automerge.Scalar{
-					Type: automerge.ScalarTypeInt,
-					Int:  int64(index),
-				},
-			))
+			require.NoError(
+				t,
+				baseList.InsertScalar(
+					ctx,
+					uint64(index),
+					automerge.Scalar{
+						Type: automerge.ScalarTypeInt,
+						Int:  int64(index),
+					},
+				),
+			)
 		}
 
 		_, err = base.Commit(ctx, "base list", commitTime)
@@ -1406,11 +1475,14 @@ func TestDocument_ConcurrentListOrderingMatchesReference(t *testing.T) {
 			automerge.ObjectTypeList,
 		)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(
-			ctx,
-			0,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "A"},
-		))
+		require.NoError(
+			t,
+			list.InsertScalar(
+				ctx,
+				0,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "A"},
+			),
+		)
 		_, err = base.Commit(ctx, "base", commitTime)
 		require.NoError(t, err)
 
@@ -1419,14 +1491,17 @@ func TestDocument_ConcurrentListOrderingMatchesReference(t *testing.T) {
 		closeDocument(t, left)
 		leftList, err := left.Root().Object(ctx, "list")
 		require.NoError(t, err)
-		require.NoError(t, leftList.InsertValues(
-			ctx,
-			1,
-			[]automerge.Value{
-				hydratedString("L1"),
-				hydratedString("L2"),
-			},
-		))
+		require.NoError(
+			t,
+			leftList.InsertValues(
+				ctx,
+				1,
+				[]automerge.Value{
+					hydratedString("L1"),
+					hydratedString("L2"),
+				},
+			),
+		)
 		_, err = left.Commit(ctx, "left", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -1435,14 +1510,17 @@ func TestDocument_ConcurrentListOrderingMatchesReference(t *testing.T) {
 		closeDocument(t, right)
 		rightList, err := right.Root().Object(ctx, "list")
 		require.NoError(t, err)
-		require.NoError(t, rightList.InsertValues(
-			ctx,
-			1,
-			[]automerge.Value{
-				hydratedString("R1"),
-				hydratedString("R2"),
-			},
-		))
+		require.NoError(
+			t,
+			rightList.InsertValues(
+				ctx,
+				1,
+				[]automerge.Value{
+					hydratedString("R1"),
+					hydratedString("R2"),
+				},
+			),
+		)
 		_, err = right.Commit(ctx, "right", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -1482,14 +1560,17 @@ func TestDocument_InsertAfterConcurrentDeleteMatchesReference(t *testing.T) {
 			automerge.ObjectTypeList,
 		)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertValues(
-			ctx,
-			0,
-			[]automerge.Value{
-				hydratedString("A"),
-				hydratedString("B"),
-			},
-		))
+		require.NoError(
+			t,
+			list.InsertValues(
+				ctx,
+				0,
+				[]automerge.Value{
+					hydratedString("A"),
+					hydratedString("B"),
+				},
+			),
+		)
 		_, err = base.Commit(ctx, "base", commitTime)
 		require.NoError(t, err)
 
@@ -1507,11 +1588,14 @@ func TestDocument_InsertAfterConcurrentDeleteMatchesReference(t *testing.T) {
 		closeDocument(t, right)
 		rightList, err := right.Root().Object(ctx, "list")
 		require.NoError(t, err)
-		require.NoError(t, rightList.InsertScalar(
-			ctx,
-			1,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "X"},
-		))
+		require.NoError(
+			t,
+			rightList.InsertScalar(
+				ctx,
+				1,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "X"},
+			),
+		)
 		_, err = right.Commit(ctx, "insert", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -1580,14 +1664,17 @@ func mutateRandomMap(
 			require.NoError(t, object.DeleteKey(ctx, key))
 			present[key] = false
 		} else {
-			require.NoError(t, object.PutScalar(
-				ctx,
-				key,
-				automerge.Scalar{
-					Type: automerge.ScalarTypeInt,
-					Int:  random.Int63(),
-				},
-			))
+			require.NoError(
+				t,
+				object.PutScalar(
+					ctx,
+					key,
+					automerge.Scalar{
+						Type: automerge.ScalarTypeInt,
+						Int:  random.Int63(),
+					},
+				),
+			)
 			present[key] = true
 		}
 
@@ -1619,14 +1706,17 @@ func mutateRandomList(
 		switch {
 		case length == 0 || random.Intn(3) == 0:
 			index := random.Intn(length + 1)
-			require.NoError(t, object.InsertScalar(
-				ctx,
-				uint64(index),
-				automerge.Scalar{
-					Type: automerge.ScalarTypeInt,
-					Int:  random.Int63(),
-				},
-			))
+			require.NoError(
+				t,
+				object.InsertScalar(
+					ctx,
+					uint64(index),
+					automerge.Scalar{
+						Type: automerge.ScalarTypeInt,
+						Int:  random.Int63(),
+					},
+				),
+			)
 
 			length++
 		case random.Intn(2) == 0:
@@ -1636,14 +1726,17 @@ func mutateRandomList(
 			length--
 		default:
 			index := random.Intn(length)
-			require.NoError(t, object.PutScalarAt(
-				ctx,
-				uint64(index),
-				automerge.Scalar{
-					Type: automerge.ScalarTypeInt,
-					Int:  random.Int63(),
-				},
-			))
+			require.NoError(
+				t,
+				object.PutScalarAt(
+					ctx,
+					uint64(index),
+					automerge.Scalar{
+						Type: automerge.ScalarTypeInt,
+						Int:  random.Int63(),
+					},
+				),
+			)
 		}
 
 		if step%5 == 4 {

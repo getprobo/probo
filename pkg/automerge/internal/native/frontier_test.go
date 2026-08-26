@@ -38,9 +38,15 @@ func committedTextBackend(t *testing.T, id byte, edits int) *Engine {
 
 	backend, err := NewEngine(ctx)
 	require.NoError(t, err)
-	require.NoError(t, backend.SetActor(ctx, []byte{
-		id, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-	}))
+	require.NoError(
+		t,
+		backend.SetActor(
+			ctx,
+			[]byte{
+				id, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+			},
+		),
+	)
 
 	handle, err := backend.PutText(ctx, 0, "body")
 	require.NoError(t, err)

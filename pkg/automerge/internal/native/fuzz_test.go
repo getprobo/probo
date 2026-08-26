@@ -67,13 +67,15 @@ func FuzzDecode(f *testing.F) {
 		f.Add(data)
 	}
 
-	f.Fuzz(func(t *testing.T, data []byte) {
-		if len(data) > 1024*1024 {
-			t.Skip()
-		}
+	f.Fuzz(
+		func(t *testing.T, data []byte) {
+			if len(data) > 1024*1024 {
+				t.Skip()
+			}
 
-		_, _ = Decode(data)
-	})
+			_, _ = Decode(data)
+		},
+	)
 }
 
 func FuzzParseSyncMessage(f *testing.F) {
@@ -96,21 +98,23 @@ func FuzzParseSyncMessage(f *testing.F) {
 	f.Add([]byte{byte(SyncMessageVersion1)})
 	f.Add([]byte{byte(SyncMessageVersion2)})
 
-	f.Fuzz(func(t *testing.T, data []byte) {
-		if len(data) > 1024*1024 {
-			t.Skip()
-		}
+	f.Fuzz(
+		func(t *testing.T, data []byte) {
+			if len(data) > 1024*1024 {
+				t.Skip()
+			}
 
-		parsed, err := ParseSyncMessage(data)
-		if err != nil {
-			return
-		}
+			parsed, err := ParseSyncMessage(data)
+			if err != nil {
+				return
+			}
 
-		encoded, err := parsed.Encode()
-		if err != nil {
-			return
-		}
+			encoded, err := parsed.Encode()
+			if err != nil {
+				return
+			}
 
-		_, _ = ParseSyncMessage(encoded)
-	})
+			_, _ = ParseSyncMessage(encoded)
+		},
+	)
 }

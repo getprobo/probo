@@ -100,10 +100,13 @@ func TestEncodeRLE_CanonicalRuns(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			assert.Equal(t, test.want, encodeRLE(test.values, appendULEB))
-		})
+				assert.Equal(t, test.want, encodeRLE(test.values, appendULEB))
+			},
+		)
 	}
 }

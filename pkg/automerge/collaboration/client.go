@@ -118,8 +118,10 @@ func (c *ClientConn) Receive(ctx context.Context, frame []byte) (ClientInbound, 
 		}
 
 		if peer.SelectedProtocolVersion != ProtocolV1 {
-			return ClientInbound{}, fmt.Errorf("server selected unsupported protocol version %q",
-				peer.SelectedProtocolVersion)
+			return ClientInbound{}, fmt.Errorf(
+				"server selected unsupported protocol version %q",
+				peer.SelectedProtocolVersion,
+			)
 		}
 
 		c.joined = true
@@ -197,15 +199,17 @@ func (c *ClientConn) Ephemeral(sessionID string, count uint64, payload []byte) (
 		return nil, fmt.Errorf("cannot send ephemeral before the handshake completed")
 	}
 
-	return EncodeMessage(Message{
-		Type:       MessageEphemeral,
-		SenderID:   c.config.ClientPeerID,
-		TargetID:   c.serverPeerID,
-		DocumentID: c.config.DocumentID,
-		SessionID:  sessionID,
-		Count:      count,
-		Data:       payload,
-	})
+	return EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   c.config.ClientPeerID,
+			TargetID:   c.serverPeerID,
+			DocumentID: c.config.DocumentID,
+			SessionID:  sessionID,
+			Count:      count,
+			Data:       payload,
+		},
+	)
 }
 
 // drainSync generates sync frames until the client is up to date. The first
@@ -231,13 +235,15 @@ func (c *ClientConn) drainSync(ctx context.Context) ([][]byte, error) {
 
 		c.sentFirst = true
 
-		frame, err := EncodeMessage(Message{
-			Type:       messageType,
-			SenderID:   c.config.ClientPeerID,
-			TargetID:   c.serverPeerID,
-			DocumentID: c.config.DocumentID,
-			Data:       message,
-		})
+		frame, err := EncodeMessage(
+			Message{
+				Type:       messageType,
+				SenderID:   c.config.ClientPeerID,
+				TargetID:   c.serverPeerID,
+				DocumentID: c.config.DocumentID,
+				Data:       message,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}

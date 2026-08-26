@@ -222,9 +222,14 @@ func commonSuffixLen(before []string, oldStart, oldEnd int, after []string, newS
 }
 
 func findMiddleSnake(
-	before []string, oldStart, oldEnd int,
-	after []string, newStart, newEnd int,
-	vf, vb *vArray,
+	before []string,
+	oldStart int,
+	oldEnd int,
+	after []string,
+	newStart int,
+	newEnd int,
+	vf *vArray,
+	vb *vArray,
 ) (int, int, bool) {
 	n := oldEnd - oldStart
 	m := newEnd - newStart
@@ -293,9 +298,14 @@ func findMiddleSnake(
 
 func conquer(
 	hook diffSink,
-	before []string, oldStart, oldEnd int,
-	after []string, newStart, newEnd int,
-	vf, vb *vArray,
+	before []string,
+	oldStart int,
+	oldEnd int,
+	after []string,
+	newStart int,
+	newEnd int,
+	vf *vArray,
+	vb *vArray,
 ) {
 	if hook.failed() {
 		return

@@ -161,16 +161,19 @@ func TestDecode_OfficialStorageCorpus(t *testing.T) {
 		"two_change_chunks_out_of_order.automerge",
 	}
 	for _, name := range valid {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			data, err := base64.StdEncoding.DecodeString(
-				officialStorageFixtures[name],
-			)
-			require.NoError(t, err)
-			_, err = Decode(data)
-			require.NoError(t, err)
-		})
+				data, err := base64.StdEncoding.DecodeString(
+					officialStorageFixtures[name],
+				)
+				require.NoError(t, err)
+				_, err = Decode(data)
+				require.NoError(t, err)
+			},
+		)
 	}
 
 	invalid := []string{
@@ -178,16 +181,19 @@ func TestDecode_OfficialStorageCorpus(t *testing.T) {
 		"counter_value_is_overlong.automerge",
 	}
 	for _, name := range invalid {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			data, err := base64.StdEncoding.DecodeString(
-				officialStorageFixtures[name],
-			)
-			require.NoError(t, err)
-			_, err = Decode(data)
-			require.Error(t, err)
-		})
+				data, err := base64.StdEncoding.DecodeString(
+					officialStorageFixtures[name],
+				)
+				require.NoError(t, err)
+				_, err = Decode(data)
+				require.Error(t, err)
+			},
+		)
 	}
 }
 
@@ -202,14 +208,17 @@ func TestDecode_OfficialFuzzCrashersDoNotPanic(t *testing.T) {
 		name := name
 		encoded := encoded
 
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			data, err := base64.StdEncoding.DecodeString(encoded)
-			require.NoError(t, err)
+				data, err := base64.StdEncoding.DecodeString(encoded)
+				require.NoError(t, err)
 
-			_, _ = Decode(data)
-		})
+				_, _ = Decode(data)
+			},
+		)
 	}
 }
 
@@ -220,31 +229,34 @@ func TestDecode_Official64BitObjectIDs(t *testing.T) {
 		"64bit_obj_id_change.automerge",
 		"64bit_obj_id_doc.automerge",
 	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			data, err := base64.StdEncoding.DecodeString(
-				officialStorageFixtures[name],
-			)
-			require.NoError(t, err)
+				data, err := base64.StdEncoding.DecodeString(
+					officialStorageFixtures[name],
+				)
+				require.NoError(t, err)
 
-			document, err := Decode(data)
-			if err != nil {
-				return
-			}
-
-			require.NotEmpty(t, document.Changes)
-
-			found := false
-
-			for _, operation := range document.Changes[0].Operations {
-				if operation.ID.Counter == 1<<42 {
-					found = true
+				document, err := Decode(data)
+				if err != nil {
+					return
 				}
-			}
 
-			assert.True(t, found)
-		})
+				require.NotEmpty(t, document.Changes)
+
+				found := false
+
+				for _, operation := range document.Changes[0].Operations {
+					if operation.ID.Counter == 1<<42 {
+						found = true
+					}
+				}
+
+				assert.True(t, found)
+			},
+		)
 	}
 }
 
@@ -254,9 +266,11 @@ func TestDecode_ReferenceBackendDocument(t *testing.T) {
 	ctx := context.Background()
 	backend, err := reference.New(ctx)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		assert.NoError(t, backend.Close(ctx))
-	})
+	t.Cleanup(
+		func() {
+			assert.NoError(t, backend.Close(ctx))
+		},
+	)
 
 	actor := []byte{1, 3, 3, 7}
 	require.NoError(t, backend.SetActor(ctx, actor))
@@ -279,9 +293,11 @@ func TestDecode_ReferenceBackendConcurrentGraph(t *testing.T) {
 	ctx := context.Background()
 	base, err := reference.New(ctx)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		assert.NoError(t, base.Close(ctx))
-	})
+	t.Cleanup(
+		func() {
+			assert.NoError(t, base.Close(ctx))
+		},
+	)
 	require.NoError(t, base.SetActor(ctx, []byte{1}))
 	require.NoError(t, base.PutString(ctx, 0, "base", "value"))
 	_, err = base.Commit(ctx, "base", time.Unix(1, 0))
@@ -291,9 +307,11 @@ func TestDecode_ReferenceBackendConcurrentGraph(t *testing.T) {
 
 	left, err := reference.Load(ctx, baseData)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		assert.NoError(t, left.Close(ctx))
-	})
+	t.Cleanup(
+		func() {
+			assert.NoError(t, left.Close(ctx))
+		},
+	)
 	require.NoError(t, left.SetActor(ctx, []byte{2}))
 	require.NoError(t, left.PutString(ctx, 0, "left", "value"))
 	_, err = left.Commit(ctx, "left", time.Unix(2, 0))
@@ -301,9 +319,11 @@ func TestDecode_ReferenceBackendConcurrentGraph(t *testing.T) {
 
 	right, err := reference.Load(ctx, baseData)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		assert.NoError(t, right.Close(ctx))
-	})
+	t.Cleanup(
+		func() {
+			assert.NoError(t, right.Close(ctx))
+		},
+	)
 	require.NoError(t, right.SetActor(ctx, []byte{3}))
 	require.NoError(t, right.PutString(ctx, 0, "right", "value"))
 	_, err = right.Commit(ctx, "right", time.Unix(3, 0))

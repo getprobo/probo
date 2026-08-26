@@ -120,8 +120,14 @@ func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 		require.NoError(t, hostState.ReceiveMessage(ctx, peerMessage))
 
 		sent := drainSyncMessages(t, ctx, hostState)
-		require.LessOrEqualf(t, sent, 1,
-			"round %d: host sent %d messages for an unchanging Need", round, sent)
+		require.LessOrEqualf(
+			t,
+			sent,
+			1,
+			"round %d: host sent %d messages for an unchanging Need",
+			round,
+			sent,
+		)
 
 		hostMessage, ok, err := hostState.GenerateMessage(ctx)
 		require.NoError(t, err)

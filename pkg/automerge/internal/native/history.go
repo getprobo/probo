@@ -89,9 +89,12 @@ func (b *Engine) MissingDependencies(
 		result = append(result, dependency)
 	}
 
-	sort.Slice(result, func(i, j int) bool {
-		return bytes.Compare(result[i][:], result[j][:]) < 0
-	})
+	sort.Slice(
+		result,
+		func(i, j int) bool {
+			return bytes.Compare(result[i][:], result[j][:]) < 0
+		},
+	)
 
 	return result, nil
 }

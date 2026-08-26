@@ -209,7 +209,8 @@ func (c *ServerConn) adoptDocumentID(id string) error {
 	if c.documentID != id {
 		return fmt.Errorf(
 			"connection scoped to document %q received a frame for document %q",
-			c.documentID, id,
+			c.documentID,
+			id,
 		)
 	}
 
@@ -237,13 +238,15 @@ func (c *ServerConn) drainSync(ctx context.Context) ([][]byte, error) {
 			return frames, nil
 		}
 
-		frame, err := EncodeMessage(Message{
-			Type:       MessageSync,
-			SenderID:   c.serverPeerID,
-			TargetID:   c.remotePeerID,
-			DocumentID: c.documentID,
-			Data:       message,
-		})
+		frame, err := EncodeMessage(
+			Message{
+				Type:       MessageSync,
+				SenderID:   c.serverPeerID,
+				TargetID:   c.remotePeerID,
+				DocumentID: c.documentID,
+				Data:       message,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}

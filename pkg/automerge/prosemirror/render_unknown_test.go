@@ -381,17 +381,20 @@ func TestRender_MalformedStructureNeverAborts(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			content, err := automergeprosemirror.Render(tt.spans)
-			require.NoError(t, err)
-			assertCanonicalRenderable(t, content)
+				content, err := automergeprosemirror.Render(tt.spans)
+				require.NoError(t, err)
+				assertCanonicalRenderable(t, content)
 
-			node, err := prosemirror.Parse(content)
-			require.NoError(t, err)
-			assert.Equal(t, tt.text, nodeText(node))
-		})
+				node, err := prosemirror.Parse(content)
+				require.NoError(t, err)
+				assert.Equal(t, tt.text, nodeText(node))
+			},
+		)
 	}
 }
 

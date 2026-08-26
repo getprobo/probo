@@ -127,9 +127,12 @@ func changeActorTable(
 		actors = append(actors, actor)
 	}
 
-	sort.Slice(actors, func(i, j int) bool {
-		return actors[i].Compare(actors[j]) < 0
-	})
+	sort.Slice(
+		actors,
+		func(i, j int) bool {
+			return actors[i].Compare(actors[j]) < 0
+		},
+	)
 
 	indexes := map[ActorID]uint64{change.Actor: 0}
 	for i, actor := range actors {
@@ -290,9 +293,12 @@ func encodeScalar(value *Scalar) (optional[uint64], []byte, error) {
 }
 
 func appendColumns(data []byte, columns []encodedColumn) []byte {
-	sort.Slice(columns, func(i, j int) bool {
-		return columns[i].specification < columns[j].specification
-	})
+	sort.Slice(
+		columns,
+		func(i, j int) bool {
+			return columns[i].specification < columns[j].specification
+		},
+	)
 
 	data = appendULEB(data, uint64(len(columns)))
 	for _, column := range columns {

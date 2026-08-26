@@ -538,9 +538,12 @@ func assignOperations(changes []Change, operations []Operation) error {
 	}
 
 	for i := range changes {
-		slices.SortFunc(changes[i].Operations, func(left, right Operation) int {
-			return left.ID.Compare(right.ID)
-		})
+		slices.SortFunc(
+			changes[i].Operations,
+			func(left, right Operation) int {
+				return left.ID.Compare(right.ID)
+			},
+		)
 	}
 
 	// The per-actor bounds above are a permissive lower bound that only has to
@@ -668,16 +671,19 @@ func validateActorSequences(changes []Change) error {
 	}
 
 	for actor, actorChanges := range byActor {
-		slices.SortFunc(actorChanges, func(left, right Change) int {
-			switch {
-			case left.Sequence < right.Sequence:
-				return -1
-			case left.Sequence > right.Sequence:
-				return 1
-			default:
-				return 0
-			}
-		})
+		slices.SortFunc(
+			actorChanges,
+			func(left, right Change) int {
+				switch {
+				case left.Sequence < right.Sequence:
+					return -1
+				case left.Sequence > right.Sequence:
+					return 1
+				default:
+					return 0
+				}
+			},
+		)
 
 		var previousMax uint64
 
@@ -739,9 +745,12 @@ func mergeActors(existing, additions []ActorID) []ActorID {
 		result = append(result, actor)
 	}
 
-	slices.SortFunc(result, func(left, right ActorID) int {
-		return left.Compare(right)
-	})
+	slices.SortFunc(
+		result,
+		func(left, right ActorID) int {
+			return left.Compare(right)
+		},
+	)
 
 	return result
 }
@@ -792,9 +801,12 @@ func validateChangeChunksAfterSnapshot(document *Document) error {
 		}
 	}
 
-	slices.SortFunc(document.Heads, func(left, right ChangeHash) int {
-		return bytes.Compare(left[:], right[:])
-	})
+	slices.SortFunc(
+		document.Heads,
+		func(left, right ChangeHash) int {
+			return bytes.Compare(left[:], right[:])
+		},
+	)
 
 	return validateActorSequences(document.Changes)
 }
@@ -833,9 +845,12 @@ func validateChangeChunkGraph(document *Document) error {
 		}
 	}
 
-	slices.SortFunc(document.Heads, func(left, right ChangeHash) int {
-		return bytes.Compare(left[:], right[:])
-	})
+	slices.SortFunc(
+		document.Heads,
+		func(left, right ChangeHash) int {
+			return bytes.Compare(left[:], right[:])
+		},
+	)
 
 	return validateActorSequences(document.Changes)
 }
