@@ -21,6 +21,7 @@
 import {
   CertificateIcon,
   CheckCircleIcon,
+  CheckIcon,
   CircleIcon,
   ClockIcon,
   EyeIcon,
@@ -39,6 +40,7 @@ export function EventTypeIcon({ eventType }: { eventType: string }) {
     case "FULL_NAME_TYPED":
       return <PencilSimpleIcon aria-hidden />;
     case "SIGNATURE_ACCEPTED":
+      return <CheckIcon aria-hidden />;
     case "SIGNATURE_COMPLETED":
       return <SignatureIcon aria-hidden />;
     case "SEAL_COMPUTED":

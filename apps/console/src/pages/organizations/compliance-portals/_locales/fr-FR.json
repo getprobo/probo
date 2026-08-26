@@ -150,7 +150,7 @@
     "documentViewed": "A consulté le document",
     "consentGiven": "A accepté de signer électroniquement",
     "fullNameTyped": "A saisi son nom",
-    "signatureAccepted": "A accepté la signature",
+    "signatureAccepted": "A accepté de signer",
     "signatureCompleted": "Signature enregistrée",
     "sealComputed": "Document scellé",
     "timestampRequested": "Horodatage appliqué",
