@@ -20,10 +20,7 @@
 
 package core
 
-import (
-	internalencoding "go.probo.inc/probo/pkg/automerge/internal/encoding"
-	internalstorage "go.probo.inc/probo/pkg/automerge/internal/storage"
-)
+import internalstorage "go.probo.inc/probo/pkg/automerge/internal/storage"
 
 var (
 	Decode            = internalstorage.Decode
@@ -32,26 +29,3 @@ var (
 	EncodeChange      = internalstorage.EncodeChange
 	EncodeDocument    = internalstorage.EncodeDocument
 )
-
-func deflate(data []byte) ([]byte, error) { return internalstorage.Deflate(data) }
-
-// Small compatibility wrapper while higher-level engine code migrates to the
-// shared encoding package.
-type reader struct{ inner *internalencoding.Reader }
-
-func newReader(data []byte) *reader { return &reader{inner: internalencoding.NewReader(data)} }
-func newReaderAt(data []byte, offset int) *reader {
-	return &reader{inner: internalencoding.NewReaderAt(data, offset)}
-}
-func (r *reader) remaining() int                      { return r.inner.Remaining() }
-func (r *reader) offset() int                         { return r.inner.Offset() }
-func (r *reader) byte() (byte, error)                 { return r.inner.Byte() }
-func (r *reader) bytes(length uint64) ([]byte, error) { return r.inner.Bytes(length) }
-func (r *reader) uleb() (uint64, error)               { return r.inner.ULEB() }
-func appendULEB(data []byte, value uint64) []byte     { return internalencoding.AppendULEB(data, value) }
-func appendLengthPrefixedNative(data, value []byte) []byte {
-	return internalencoding.AppendLengthPrefixed(data, value)
-}
-func decodeLengthPrefixed(r *reader) ([]byte, error) {
-	return internalencoding.DecodeLengthPrefixed(r.inner)
-}

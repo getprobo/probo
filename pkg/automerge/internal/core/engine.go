@@ -26,6 +26,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	internalencoding "go.probo.inc/probo/pkg/automerge/internal/encoding"
+	internalstorage "go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
 type Engine struct {
@@ -427,19 +430,19 @@ func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
 		return raw
 	}
 
-	reader := newReaderAt(raw, headerSize)
+	reader := internalencoding.NewReaderAt(raw, headerSize)
 
-	bodyLength, err := reader.uleb()
-	if err != nil || reader.offset()+int(bodyLength) > len(raw) {
+	bodyLength, err := reader.ULEB()
+	if err != nil || reader.Offset()+int(bodyLength) > len(raw) {
 		return raw
 	}
 
-	body := raw[reader.offset() : reader.offset()+int(bodyLength)]
+	body := raw[reader.Offset() : reader.Offset()+int(bodyLength)]
 	if len(body) < deflateMinSize {
 		return raw
 	}
 
-	compressed, err := deflate(body)
+	compressed, err := internalstorage.Deflate(body)
 	if err != nil || len(compressed) >= len(body) {
 		return raw
 	}
@@ -447,7 +450,7 @@ func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
 	out := make([]byte, 0, headerSize+len(compressed)+8)
 	out = append(out, raw[:8]...)
 	out = append(out, byte(ChunkCompressedChange))
-	out = appendULEB(out, uint64(len(compressed)))
+	out = internalencoding.AppendULEB(out, uint64(len(compressed)))
 	out = append(out, compressed...)
 
 	return out
