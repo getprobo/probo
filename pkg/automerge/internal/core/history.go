@@ -111,10 +111,6 @@ func (b *Engine) ChangesSince(
 
 	hashes := make([][32]byte, len(changes))
 	for i, change := range changes {
-		if change.Hash == nil {
-			return nil, nil, fmt.Errorf("change %d has no hash", i)
-		}
-
 		raw[i] = append([]byte(nil), change.Raw...)
 		hashes[i] = [32]byte(*change.Hash)
 	}
