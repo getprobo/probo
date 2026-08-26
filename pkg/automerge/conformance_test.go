@@ -35,6 +35,8 @@ import (
 	"github.com/stretchr/testify/require"
 	productionautomerge "go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/automerge/internal/core"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
+	"go.probo.inc/probo/pkg/automerge/internal/sync"
 	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 	"go.probo.inc/probo/pkg/automerge/prosemirror"
 )
@@ -244,7 +246,7 @@ func TestConformance_GoLoadsJavaScriptDocument(t *testing.T) {
 	require.Len(t, heads, 1)
 	assert.Equal(t, response.Heads[0], heads[0].String())
 
-	nativeDocument, err := core.Decode(data)
+	nativeDocument, err := storage.Decode(data)
 	require.NoError(t, err)
 	nativeState, err := core.NewStateFromDocument(nativeDocument)
 	require.NoError(t, err)
@@ -342,7 +344,7 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 
 	data, err := base64.StdEncoding.DecodeString(response.Change)
 	require.NoError(t, err)
-	decoded, err := core.Decode(data)
+	decoded, err := storage.Decode(data)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 1)
 	change := &decoded.Changes[0]
@@ -379,7 +381,7 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Policy", title)
 
-	nativeEncoded, err := core.EncodeChange(change)
+	nativeEncoded, err := storage.EncodeChange(change)
 	require.NoError(t, err)
 	inspection := runOracle(
 		t,
@@ -409,7 +411,7 @@ func TestConformance_NativeParsesJavaScriptEmptyChange(t *testing.T) {
 	)
 	data, err := base64.StdEncoding.DecodeString(response.Change)
 	require.NoError(t, err)
-	decoded, err := core.Decode(data)
+	decoded, err := storage.Decode(data)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 1)
 	change := decoded.Changes[0]
@@ -453,7 +455,7 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 		rawChanges = append(rawChanges, data)
 	}
 
-	decoded, err := core.Decode(combined)
+	decoded, err := storage.Decode(combined)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 3)
 	changes := []*core.Change{
@@ -529,13 +531,13 @@ func TestConformance_NativeSyncMessageRoundTrip(t *testing.T) {
 	data, err := base64.StdEncoding.DecodeString(response.Sync)
 	require.NoError(t, err)
 
-	message, err := core.ParseSyncMessage(data)
+	message, err := sync.ParseMessage(data)
 	require.NoError(t, err)
 	assert.Contains(
 		t,
-		[]core.SyncMessageVersion{
-			core.SyncMessageVersion1,
-			core.SyncMessageVersion2,
+		[]sync.MessageVersion{
+			sync.MessageVersion1,
+			sync.MessageVersion2,
 		},
 		message.Version,
 	)

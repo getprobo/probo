@@ -126,7 +126,7 @@ func NewEngine() (*Engine, error) {
 
 	base := encodeEmptyDocument()
 
-	document, err := Decode(base)
+	document, err := storage.Decode(base)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode native empty document: %w", err)
 	}
@@ -151,7 +151,7 @@ func NewEngine() (*Engine, error) {
 
 func LoadEngine(data []byte) (*Engine, error) {
 
-	document, err := Decode(data)
+	document, err := storage.Decode(data)
 	if err != nil {
 		// A document may retain orphan changes (changes whose dependencies are
 		// not present) that were preserved across a save. Strict decoding
@@ -201,7 +201,7 @@ func loadEngineRetainingOrphans(
 		return nil, false, nil
 	}
 
-	document, err := DecodePartial(data)
+	document, err := storage.DecodePartial(data)
 	if err != nil {
 		return nil, false, nil
 	}
@@ -485,7 +485,7 @@ func (b *Engine) SaveIncremental() ([]byte, error) {
 func (b *Engine) LoadIncremental(
 	data []byte,
 ) (uint64, error) {
-	_, consumed, err := DecodeIncremental(data)
+	_, consumed, err := storage.DecodeIncremental(data)
 	if err != nil {
 		return 0, err
 	}
