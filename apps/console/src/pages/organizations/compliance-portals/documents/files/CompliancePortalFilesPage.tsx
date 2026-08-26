@@ -61,22 +61,16 @@ export default function CompliancePortalFilesPage(props: {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-medium">{t("filesPage.title")}</h3>
-          <p className="text-sm text-txt-tertiary">
-            {t("filesPage.description")}
-          </p>
-        </div>
-        {data.compliancePortal.canCreateCompliancePortalFile && (
+      {data.compliancePortal.canCreateCompliancePortalFile && (
+        <div className="flex justify-end">
           <Button
             icon={IconPlusLarge}
             onClick={() => createDialogRef.current?.open()}
           >
             {t("filesPage.actions.add")}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       <CompliancePortalFileList
         compliancePortalRef={data.compliancePortal}

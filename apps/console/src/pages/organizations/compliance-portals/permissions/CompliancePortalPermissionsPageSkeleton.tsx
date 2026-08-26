@@ -23,14 +23,23 @@ import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
+import { compliancePortalPageHeader } from "../variants";
+
 import { ndaSection, permissionsPageSkeleton } from "./variants";
 
 export function CompliancePortalPermissionsPageSkeleton() {
+  const { root: headerRoot, titleRow } = compliancePortalPageHeader();
   const { root, section, intro } = permissionsPageSkeleton();
   const { grid } = ndaSection();
 
   return (
     <div className={root()}>
+      <div className={headerRoot()}>
+        <div className={titleRow()}>
+          <HeadingSkeleton size={6} className="w-40" />
+        </div>
+        <TextSkeleton size={2} className="w-96" />
+      </div>
       <div className={section()}>
         <div className={intro()}>
           <HeadingSkeleton size={4} className="w-56" />

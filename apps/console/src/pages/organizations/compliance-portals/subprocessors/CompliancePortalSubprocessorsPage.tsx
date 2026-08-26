@@ -18,11 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePortalSubprocessorsPageQuery } from "#/__generated__/core/CompliancePortalSubprocessorsPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 import { CompliancePortalThirdPartyList } from "./_components/CompliancePortalThirdPartyList";
 
@@ -51,6 +54,8 @@ export function CompliancePortalSubprocessorsPage(props: {
   queryRef: PreloadedQuery<CompliancePortalSubprocessorsPageQuery>;
 }) {
   const { t } = useTranslation("organizations/compliance-portals");
+  const title = t("subprocessorsPage.title");
+  usePageTitle(title);
 
   const data = usePreloadedQuery<CompliancePortalSubprocessorsPageQuery>(
     compliancePortalSubprocessorsPageQuery,
@@ -65,14 +70,10 @@ export function CompliancePortalSubprocessorsPage(props: {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-medium">{t("subprocessorsPage.title")}</h3>
-          <p className="text-sm text-txt-tertiary">
-            {t("subprocessorsPage.description")}
-          </p>
-        </div>
-      </div>
+      <CompliancePortalPageHeader
+        title={title}
+        description={t("subprocessorsPage.description")}
+      />
 
       <CompliancePortalThirdPartyList
         organizationKey={data.organization}

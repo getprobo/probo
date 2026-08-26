@@ -15,6 +15,30 @@
     "errors": { "update": "Bijwerken van alias mislukt", "remove": "Verwijderen van alias mislukt" },
     "placeholder": "bijv. privacybeleid"
   },
+  "hostingPage": {
+    "title": "Hosting",
+    "description": "Publiceer uw portaal en koppel een eigen domein."
+  },
+  "permissionsPage": {
+    "title": "Rechten",
+    "description": "Bepaal wie privé-documenten mag lezen en vereis een NDA."
+  },
+  "integrationsPage": {
+    "title": "Integraties",
+    "description": "Koppel Slack zodat uw team meldingen krijgt van toegangsverzoeken."
+  },
+  "brandingPage": {
+    "title": "Huisstijl",
+    "description": "Stel de uitstraling, het profiel en de aangepaste links in die bezoekers eerst zien."
+  },
+  "contentPage": {
+    "title": "Inhoud",
+    "description": "Kies de frameworks, toezeggingen en referenties op de landingspagina."
+  },
+  "rightRequestsPage": {
+    "title": "Rechtenverzoeken",
+    "description": "Laat bezoekers verzoeken om betrokkenenrechten indienen."
+  },
   "accessPage": {
     "title": "Bezoekers",
     "description": "Uw pagina is openbaar. Personen die zich aanmelden om documenten aan te vragen of een NDA te accepteren, verschijnen hier."
@@ -434,6 +458,8 @@
     "description": "Beheer beoordelingen van subverwerkers en informatie over risico's van derden"
   },
   "updatesPage": {
+    "title": "Updates",
+    "description": "Stuur beveiligings- en compliance-updates naar abonnees.",
     "errors": { "update": "Bijwerken van mailinglijst mislukt" },
     "settings": {
       "title": "Instellingen",
@@ -443,11 +469,6 @@
     },
     "tabs": { "updates": "Updates", "subscribers": "Abonnees" },
     "actions": { "addUpdate": "Update toevoegen", "addSubscriber": "Abonnee toevoegen" }
-  },
-  "portalLayout": {
-    "title": "compliancepagina",
-    "description": "Configureer uw publieke compliancepagina om uw beveiligings- en compliancepositie te presenteren.",
-    "open": "Openen"
   },
   "documentsLayout": {
     "tabs": { "audits": "Audits", "documents": "Documenten", "files": "Bestanden" }

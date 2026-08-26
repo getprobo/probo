@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { IconFolder2, IconMedal, IconPageTextLine, TabLink, Tabs } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -27,6 +28,8 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalDocumentsLayoutQuery } from "#/__generated__/core/CompliancePortalDocumentsLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 export const compliancePortalDocumentsLayoutQuery = graphql`
   query CompliancePortalDocumentsLayoutQuery($compliancePortalId: ID!) {
@@ -50,6 +53,12 @@ export function CompliancePortalDocumentsLayout({ queryRef }: CompliancePortalDo
   const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const { pathname } = useLocation();
+  const documentsBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}/documents`;
+  const isAudits = pathname.startsWith(`${documentsBase}/audits`);
+  const isFiles = pathname.startsWith(`${documentsBase}/files`);
+  const pageKey = isAudits ? "auditsPage" : isFiles ? "filesPage" : "documentsPage";
+  const title = t(`${pageKey}.title`);
+  usePageTitle(title);
 
   const { compliancePortal } = usePreloadedQuery<CompliancePortalDocumentsLayoutQuery>(
     compliancePortalDocumentsLayoutQuery,
@@ -58,8 +67,6 @@ export function CompliancePortalDocumentsLayout({ queryRef }: CompliancePortalDo
   if (compliancePortal.__typename !== "CompliancePortal") {
     throw new Error("invalid type for node");
   }
-
-  const documentsBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}/documents`;
 
   if (pathname === documentsBase && !compliancePortal.canListDocuments) {
     if (compliancePortal.canListAudits) {
@@ -70,8 +77,6 @@ export function CompliancePortalDocumentsLayout({ queryRef }: CompliancePortalDo
     }
   }
 
-  const isAudits = pathname.startsWith(`${documentsBase}/audits`);
-  const isFiles = pathname.startsWith(`${documentsBase}/files`);
   if (isAudits && !compliancePortal.canListAudits) {
     throw new NotFoundError("Compliance portal documents not found");
   }
@@ -84,6 +89,10 @@ export function CompliancePortalDocumentsLayout({ queryRef }: CompliancePortalDo
 
   return (
     <div className="space-y-6">
+      <CompliancePortalPageHeader
+        title={title}
+        description={t(`${pageKey}.description`)}
+      />
       <Tabs>
         {compliancePortal.canListDocuments && (
           <TabLink to={documentsBase} end>

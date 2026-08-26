@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { Button, Card, Field, IconPlusLarge, TabItem, Tabs, useDialogRef } from "@probo/ui";
 import type { FocusEvent } from "react";
 import { useState } from "react";
@@ -28,6 +29,8 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import type { CompliancePortalUpdatesPage_updateMailingListMutation } from "#/__generated__/core/CompliancePortalUpdatesPage_updateMailingListMutation.graphql";
 import type { CompliancePortalUpdatesPageQuery } from "#/__generated__/core/CompliancePortalUpdatesPageQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 import { CompliancePortalMailingList } from "./_components/CompliancePortalMailingList";
 import { CompliancePortalUpdatesList, type UpdateNode } from "./_components/CompliancePortalUpdatesList";
@@ -69,6 +72,8 @@ export function CompliancePortalUpdatesPage(props: {
 }) {
   const { queryRef } = props;
   const { t } = useTranslation("organizations/compliance-portals");
+  const title = t("updatesPage.title");
+  usePageTitle(title);
   const subscriberDialogRef = useDialogRef();
   const newUpdateDialogRef = useDialogRef();
   const editUpdateDialogRef = useDialogRef();
@@ -130,6 +135,10 @@ export function CompliancePortalUpdatesPage(props: {
 
   return (
     <div className="space-y-6">
+      <CompliancePortalPageHeader
+        title={title}
+        description={t("updatesPage.description")}
+      />
       {mailingListId && (
         <Card className="p-6 space-y-4">
           <div>

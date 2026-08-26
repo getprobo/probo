@@ -18,34 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 
 import { compliancePortalPageHeader } from "../variants";
 
-import { integrationsPageSkeleton } from "./variants";
+interface CompliancePortalPageHeaderProps {
+  title: string;
+  description: string;
+  actions?: ReactNode;
+}
 
-export function CompliancePortalIntegrationsPageSkeleton() {
-  const { root: headerRoot, titleRow } = compliancePortalPageHeader();
-  const { root, section, intro, grid, card } = integrationsPageSkeleton();
+export function CompliancePortalPageHeader({
+  title,
+  description,
+  actions,
+}: CompliancePortalPageHeaderProps) {
+  const { root, titleRow } = compliancePortalPageHeader();
 
   return (
     <div className={root()}>
-      <div className={headerRoot()}>
-        <div className={titleRow()}>
-          <HeadingSkeleton size={6} className="w-40" />
-        </div>
-        <TextSkeleton size={2} className="w-96" />
+      <div className={titleRow()}>
+        <Heading level={1} size={6} weight="medium" highContrast>
+          {title}
+        </Heading>
+        {actions}
       </div>
-      <div className={section()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-40" />
-        </div>
-        <div className={grid()}>
-          <CardSkeleton size={3} className={card()} />
-        </div>
-      </div>
+      <Text size={2} color="faint">
+        {description}
+      </Text>
     </div>
   );
 }

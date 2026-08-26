@@ -33,6 +33,30 @@
     },
     "placeholder": "e.g. privacy-policy"
   },
+  "hostingPage": {
+    "title": "Hosting",
+    "description": "Publish your portal and serve it on a custom domain."
+  },
+  "permissionsPage": {
+    "title": "Permissions",
+    "description": "Control who can read private documents and require an NDA."
+  },
+  "integrationsPage": {
+    "title": "Integrations",
+    "description": "Connect Slack so your team is notified of access requests."
+  },
+  "brandingPage": {
+    "title": "Branding",
+    "description": "Set the look, profile, and custom links visitors see first."
+  },
+  "contentPage": {
+    "title": "Content",
+    "description": "Choose frameworks, commitments, and references shown on the landing page."
+  },
+  "rightRequestsPage": {
+    "title": "Right Requests",
+    "description": "Let visitors submit data subject rights requests on the portal."
+  },
   "accessPage": {
     "title": "Visitors",
     "description": "Your portal is public. People who sign in to request documents or accept an NDA appear here."
@@ -846,6 +870,8 @@
     "description": "Manage subprocessor assessments and third-party risk information"
   },
   "updatesPage": {
+    "title": "Updates",
+    "description": "Send security and compliance updates to subscribers.",
     "errors": {
       "update": "Failed to update mailing list"
     },
@@ -863,11 +889,6 @@
       "addUpdate": "Add update",
       "addSubscriber": "Add subscriber"
     }
-  },
-  "portalLayout": {
-    "title": "compliance portal",
-    "description": "Configure your public compliance portal to showcase your security and compliance posture.",
-    "open": "Open"
   },
   "documentsLayout": {
     "tabs": {

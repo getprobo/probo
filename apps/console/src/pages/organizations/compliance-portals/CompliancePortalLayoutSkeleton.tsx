@@ -21,19 +21,17 @@
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { compliancePortalLayout } from "./variants";
+import { compliancePortalPageHeader } from "./variants";
 
 export function CompliancePortalLayoutSkeleton() {
-  const { root, header, titleRow } = compliancePortalLayout();
+  const { root, titleRow } = compliancePortalPageHeader();
 
   return (
     <div className={root()}>
-      <div className={header()}>
-        <div className={titleRow()}>
-          <HeadingSkeleton size={6} className="w-40" />
-        </div>
-        <TextSkeleton size={2} className="w-96" />
+      <div className={titleRow()}>
+        <HeadingSkeleton size={6} className="w-40" />
       </div>
+      <TextSkeleton size={2} className="w-96" />
     </div>
   );
 }

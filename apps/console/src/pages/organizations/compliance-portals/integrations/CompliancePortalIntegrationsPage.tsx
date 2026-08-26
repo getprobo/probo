@@ -18,10 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalIntegrationsPageQuery } from "#/__generated__/core/CompliancePortalIntegrationsPageQuery.graphql";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 import { CompliancePortalSlackSection } from "./_components/CompliancePortalSlackSection";
 import { integrationsPage } from "./variants";
@@ -42,6 +46,10 @@ interface CompliancePortalIntegrationsPageProps {
 }
 
 export function CompliancePortalIntegrationsPage({ queryRef }: CompliancePortalIntegrationsPageProps) {
+  const { t } = useTranslation("organizations/compliance-portals");
+  const title = t("integrationsPage.title");
+  usePageTitle(title);
+
   const { compliancePortal } = usePreloadedQuery<CompliancePortalIntegrationsPageQuery>(
     compliancePortalIntegrationsPageQuery,
     queryRef,
@@ -52,6 +60,10 @@ export function CompliancePortalIntegrationsPage({ queryRef }: CompliancePortalI
 
   return (
     <div className={integrationsPage()}>
+      <CompliancePortalPageHeader
+        title={title}
+        description={t("integrationsPage.description")}
+      />
       <CompliancePortalSlackSection compliancePortalKey={compliancePortal} />
     </div>
   );

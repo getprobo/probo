@@ -22,14 +22,23 @@ import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
+import { compliancePortalPageHeader } from "../variants";
+
 import { hostingPageSkeleton, statusSection } from "./variants";
 
 export function CompliancePortalHostingPageSkeleton() {
-  const { root, section, intro } = hostingPageSkeleton();
+  const { root: pageRoot, section, intro } = hostingPageSkeleton();
+  const { root, titleRow } = compliancePortalPageHeader();
   const { grid } = statusSection();
 
   return (
-    <div className={root()}>
+    <div className={pageRoot()}>
+      <div className={root()}>
+        <div className={titleRow()}>
+          <HeadingSkeleton size={6} className="w-32" />
+        </div>
+        <TextSkeleton size={2} className="w-96" />
+      </div>
       <div className={section()}>
         <div className={intro()}>
           <HeadingSkeleton size={4} className="w-20" />

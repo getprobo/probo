@@ -20,16 +20,9 @@
 
 import { tv } from "tailwind-variants/lite";
 
-export const compliancePortalLayout = tv({
+export const compliancePortalPageHeader = tv({
   slots: {
-    root: "flex flex-col gap-8",
-    header: "flex flex-col gap-2",
-    titleRow: "flex flex-wrap items-center gap-2",
-    openLink: [
-      "inline-flex shrink-0 items-center justify-center rounded-2 text-sand-11",
-      "outline-none transition-colors",
-      "hover:text-sand-12",
-      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
-    ],
+    root: "flex flex-col gap-2",
+    titleRow: "flex flex-wrap items-center justify-between gap-2",
   },
 });

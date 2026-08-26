@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -27,6 +28,8 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalPermissionsPageQuery } from "#/__generated__/core/CompliancePortalPermissionsPageQuery.graphql";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
@@ -51,6 +54,8 @@ interface CompliancePortalPermissionsPageProps {
 
 export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPermissionsPageProps) {
   const { t } = useTranslation("organizations/compliance-portals");
+  const title = t("permissionsPage.title");
+  usePageTitle(title);
   const { root, intro } = accessSection();
 
   const { compliancePortal } = usePreloadedQuery<CompliancePortalPermissionsPageQuery>(
@@ -63,6 +68,10 @@ export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPe
 
   return (
     <div className={permissionsPage()}>
+      <CompliancePortalPageHeader
+        title={title}
+        description={t("permissionsPage.description")}
+      />
       {compliancePortal.canGetNDA && (
         <CompliancePortalNDASection compliancePortalKey={compliancePortal} />
       )}

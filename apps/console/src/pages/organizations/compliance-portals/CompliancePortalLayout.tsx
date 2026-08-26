@@ -18,12 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArrowSquareOutIcon } from "@phosphor-icons/react";
-import { externalLinkProps } from "@probo/helpers";
-import { usePageTitle } from "@probo/hooks";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { Navigate, Outlet, useLocation, useParams } from "react-router";
 import { graphql } from "relay-runtime";
@@ -38,7 +32,6 @@ import {
   firstVisibleSection,
   sectionPermissionsFrom,
 } from "./_lib/compliancePortalSections";
-import { compliancePortalLayout } from "./variants";
 
 export const compliancePortalLayoutQuery = graphql`
   query CompliancePortalLayoutQuery($compliancePortalId: ID!) {
@@ -46,9 +39,6 @@ export const compliancePortalLayoutQuery = graphql`
       __typename
       ... on CompliancePortal {
         id
-        entityName
-        active
-        publicUrl
         organization @required(action: THROW) {
           id
         }
@@ -66,9 +56,6 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
   const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const { pathname } = useLocation();
-  const { t } = useTranslation("organizations/compliance-portals");
-
-  usePageTitle(t("portalLayout.title"));
 
   const { compliancePortal } = usePreloadedQuery<CompliancePortalLayoutQuery>(
     compliancePortalLayoutQuery,
@@ -89,7 +76,6 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
   }
 
   const portalBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}`;
-  const compliancePortalUrl = compliancePortal.publicUrl;
   const landingSection = firstVisibleSection(sectionPermissionsFrom(sectionData));
 
   const isPortalRoot = pathname === portalBase || pathname === `${portalBase}/`;
@@ -103,32 +89,5 @@ export function CompliancePortalLayout({ queryRef }: CompliancePortalLayoutProps
     return <Navigate to={`${portalBase}/${landingSection.path}`} replace />;
   }
 
-  const { root, header, titleRow, openLink } = compliancePortalLayout();
-  const publicLink = compliancePortal.active && compliancePortalUrl
-    ? externalLinkProps(compliancePortalUrl)
-    : null;
-
-  return (
-    <div className={root()}>
-      <div className={header()}>
-        <div className={titleRow()}>
-          <Heading level={1} size={6} weight="medium" highContrast>
-            {compliancePortal.entityName}
-          </Heading>
-          {publicLink?.href != null && (
-            <a
-              {...publicLink}
-              className={openLink()}
-              aria-label={t("portalLayout.open")}
-            >
-              <ArrowSquareOutIcon size={24} aria-hidden />
-            </a>
-          )}
-        </div>
-        <Text size={2} color="faint">{t("portalLayout.description")}</Text>
-      </div>
-
-      <Outlet />
-    </div>
-  );
+  return <Outlet />;
 }

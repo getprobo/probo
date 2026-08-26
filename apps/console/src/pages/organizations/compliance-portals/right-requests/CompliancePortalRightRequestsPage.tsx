@@ -18,10 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalRightRequestsPageQuery } from "#/__generated__/core/CompliancePortalRightRequestsPageQuery.graphql";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 import { CompliancePortalRightsRequestsSection } from "./_components/CompliancePortalRightsRequestsSection";
 
@@ -41,6 +45,10 @@ interface CompliancePortalRightRequestsPageProps {
 }
 
 export function CompliancePortalRightRequestsPage({ queryRef }: CompliancePortalRightRequestsPageProps) {
+  const { t } = useTranslation("organizations/compliance-portals");
+  const title = t("rightRequestsPage.title");
+  usePageTitle(title);
+
   const { compliancePortal } = usePreloadedQuery<CompliancePortalRightRequestsPageQuery>(
     compliancePortalRightRequestsPageQuery,
     queryRef,
@@ -50,6 +58,12 @@ export function CompliancePortalRightRequestsPage({ queryRef }: CompliancePortal
   }
 
   return (
-    <CompliancePortalRightsRequestsSection fragmentRef={compliancePortal} />
+    <div className="space-y-6">
+      <CompliancePortalPageHeader
+        title={title}
+        description={t("rightRequestsPage.description")}
+      />
+      <CompliancePortalRightsRequestsSection fragmentRef={compliancePortal} />
+    </div>
   );
 }

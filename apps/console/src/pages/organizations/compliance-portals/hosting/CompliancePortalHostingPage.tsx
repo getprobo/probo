@@ -18,10 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalHostingPageQuery } from "#/__generated__/core/CompliancePortalHostingPageQuery.graphql";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 import { CompliancePortalDomainsSection } from "./_components/CompliancePortalDomainsSection";
 import { CompliancePortalStatusSection } from "./_components/CompliancePortalStatusSection";
@@ -50,6 +54,10 @@ interface CompliancePortalHostingPageProps {
 }
 
 export function CompliancePortalHostingPage({ queryRef }: CompliancePortalHostingPageProps) {
+  const { t } = useTranslation("organizations/compliance-portals");
+  const title = t("hostingPage.title");
+  usePageTitle(title);
+
   const data = usePreloadedQuery<CompliancePortalHostingPageQuery>(
     compliancePortalHostingPageQuery,
     queryRef,
@@ -65,6 +73,10 @@ export function CompliancePortalHostingPage({ queryRef }: CompliancePortalHostin
 
   return (
     <div className={hostingPage()}>
+      <CompliancePortalPageHeader
+        title={title}
+        description={t("hostingPage.description")}
+      />
       <CompliancePortalStatusSection compliancePortalKey={compliancePortal} />
       <CompliancePortalDomainsSection
         organizationKey={organization}

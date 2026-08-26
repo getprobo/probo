@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { CompliancePortalDocumentsPageQuery } from "#/__generated__/core/CompliancePortalDocumentsPageQuery.graphql";
@@ -52,8 +51,6 @@ interface CompliancePortalDocumentsPageProps {
 }
 
 export function CompliancePortalDocumentsPage({ queryRef }: CompliancePortalDocumentsPageProps) {
-  const { t } = useTranslation("organizations/compliance-portals");
-
   const data = usePreloadedQuery<CompliancePortalDocumentsPageQuery>(
     compliancePortalDocumentsPageQuery,
     queryRef,
@@ -66,22 +63,9 @@ export function CompliancePortalDocumentsPage({ queryRef }: CompliancePortalDocu
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-medium">
-            {t("documentsPage.title")}
-          </h3>
-          <p className="text-sm text-txt-tertiary">
-            {t("documentsPage.description")}
-          </p>
-        </div>
-      </div>
-
-      <CompliancePortalDocumentList
-        organizationKey={data.organization}
-        compliancePortalKey={data.compliancePortal}
-      />
-    </div>
+    <CompliancePortalDocumentList
+      organizationKey={data.organization}
+      compliancePortalKey={data.compliancePortal}
+    />
   );
 }

@@ -33,6 +33,30 @@
     },
     "placeholder": "par ex. politique-de-confidentialite"
   },
+  "hostingPage": {
+    "title": "Hébergement",
+    "description": "Publiez votre portail et associez-le à un domaine personnalisé."
+  },
+  "permissionsPage": {
+    "title": "Autorisations",
+    "description": "Contrôlez qui peut lire les documents privés et exigez un NDA."
+  },
+  "integrationsPage": {
+    "title": "Intégrations",
+    "description": "Connectez Slack pour notifier votre équipe des demandes d’accès."
+  },
+  "brandingPage": {
+    "title": "Identité",
+    "description": "Définissez l’apparence, le profil et les liens personnalisés que les visiteurs voient en premier."
+  },
+  "contentPage": {
+    "title": "Contenu",
+    "description": "Choisissez les référentiels, engagements et références affichés sur la page d’accueil."
+  },
+  "rightRequestsPage": {
+    "title": "Demandes de droits",
+    "description": "Permettez aux visiteurs de soumettre des demandes de droits sur le portail."
+  },
   "accessPage": {
     "title": "Visiteurs",
     "description": "Votre portail est public. Les personnes qui se connectent pour demander des documents ou accepter un NDA apparaissent ici."
@@ -846,6 +870,8 @@
     "description": "Gérez les évaluations des sous-traitants et les informations de risque tiers"
   },
   "updatesPage": {
+    "title": "Mises à jour",
+    "description": "Envoyez des mises à jour de sécurité et de conformité aux abonnés.",
     "errors": {
       "update": "Échec de la mise à jour de la liste de diffusion"
     },
@@ -863,11 +889,6 @@
       "addUpdate": "Ajouter une mise à jour",
       "addSubscriber": "Ajouter un abonné"
     }
-  },
-  "portalLayout": {
-    "title": "Portail de conformité",
-    "description": "Configurez votre portail de conformité publique pour présenter votre posture de sécurité et de conformité.",
-    "open": "Ouvrir"
   },
   "documentsLayout": {
     "tabs": {

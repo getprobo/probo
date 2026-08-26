@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { IconBook, IconImage, TabLink, Tabs } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -27,6 +28,8 @@ import { graphql } from "relay-runtime";
 import type { CompliancePortalLandingLayoutQuery } from "#/__generated__/core/CompliancePortalLandingLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
+
+import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 export const compliancePortalLandingLayoutQuery = graphql`
   query CompliancePortalLandingLayoutQuery($compliancePortalId: ID!) {
@@ -52,6 +55,11 @@ export function CompliancePortalLandingLayout({ queryRef }: CompliancePortalLand
   const organizationId = useOrganizationId();
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
   const { pathname } = useLocation();
+  const landingBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}/landing`;
+  const isContent = pathname.startsWith(`${landingBase}/content`);
+  const pageKey = isContent ? "contentPage" : "brandingPage";
+  const title = t(`${pageKey}.title`);
+  usePageTitle(title);
 
   const { compliancePortal } = usePreloadedQuery<CompliancePortalLandingLayoutQuery>(
     compliancePortalLandingLayoutQuery,
@@ -61,15 +69,12 @@ export function CompliancePortalLandingLayout({ queryRef }: CompliancePortalLand
     throw new Error("invalid type for node");
   }
 
-  const landingBase = `/organizations/${organizationId}/compliance-portals/${compliancePortalId}/landing`;
   const canBranding = compliancePortal.canListCustomLinks;
   const canContent
     = compliancePortal.canListFrameworks
       && compliancePortal.canListCommitmentGroups
       && compliancePortal.canListCommitments
       && compliancePortal.canListReferences;
-
-  const isContent = pathname.startsWith(`${landingBase}/content`);
 
   if (!isContent && !canBranding && canContent) {
     return <Navigate to={`${landingBase}/content`} replace />;
@@ -80,6 +85,10 @@ export function CompliancePortalLandingLayout({ queryRef }: CompliancePortalLand
 
   return (
     <div className="space-y-6">
+      <CompliancePortalPageHeader
+        title={title}
+        description={t(`${pageKey}.description`)}
+      />
       <Tabs>
         {canBranding && (
           <TabLink to={landingBase} end>
