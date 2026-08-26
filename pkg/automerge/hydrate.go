@@ -54,17 +54,7 @@ func NewFrom(
 	message string,
 	timestamp time.Time,
 ) (*Document, error) {
-	return newFrom(actorID, value, message, timestamp, New)
-}
-
-func newFrom(
-	actorID ActorID,
-	value map[string]Value,
-	message string,
-	timestamp time.Time,
-	factory func(ActorID) (*Document, error),
-) (*Document, error) {
-	document, err := factory(actorID)
+	document, err := New(actorID)
 	if err != nil {
 		return nil, err
 	}
