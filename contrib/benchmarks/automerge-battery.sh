@@ -24,7 +24,7 @@ set -euo pipefail
 
 # Pin the real upstream battery. Bump this deliberately after reviewing upstream
 # workload/schema changes; never benchmark a moving main branch in CI.
-readonly DEFAULT_REF="e4f9420a63b5ebfd079de7f22a852c2abb6e2774"
+readonly DEFAULT_REF="8feb8be8be203e3b878bf2cb5919601094f3c816"
 readonly REF="${AUTOMERGE_BATTERY_REF:-$DEFAULT_REF}"
 readonly TOOLCHAIN="${AUTOMERGE_BATTERY_RUST_TOOLCHAIN:-1.90.0}"
 readonly CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}/probo/automerge-battery"

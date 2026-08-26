@@ -18,7 +18,7 @@ official [`automerge`](https://crates.io/crates/automerge) Rust crate as an
 independent differential oracle. It is not part of the public API or production
 dependency graph. The adapter:
 
-- pins `automerge` 0.10.0 and every transitive crate in `Cargo.lock`;
+- pins `automerge` 0.11.0 and every transitive crate in `Cargo.lock`;
 - compiles with UTF-16 indexing to match the JavaScript editor;
 - runs in-process through wazero without CGO or native shared libraries; and
 - gives every open document an isolated WASM instance.
@@ -29,7 +29,7 @@ Parity tests access the oracle through `internal/testsupport`; production
 The committed `reference.wasm` is reproducible from reviewed Rust source:
 
 ```sh
-rustup toolchain install 1.89.0 --profile minimal --target wasm32-wasip1
+rustup toolchain install 1.90.0 --profile minimal --target wasm32-wasip1
 make generate-automerge-reference
 ```
 
@@ -96,14 +96,14 @@ authoritative parity ledger. It inventories every active Rust test reported by
 the pinned test harness, every JavaScript leaf test, and every JavaScript
 packaging scenario at the pinned upstream revisions:
 
-- Rust `automerge` 0.10.0, tag `rust/automerge-0.10.0`, commit
-  `a4f584c86358dd07f83f36708573e1c8d1bd8161`; and
-- JavaScript `@automerge/automerge` 3.4.0, tag `js/automerge-3.4.0`, commit
-  `f8b0911dc9d86265dd62934b7dc782571e3a7fcb`.
+- Rust `automerge` 0.11.0, tag `rust/automerge-0.11.0`, commit
+  `8feb8be8be203e3b878bf2cb5919601094f3c816`; and
+- JavaScript `@automerge/automerge` 3.4.1, tag `js/automerge-3.4.1`, commit
+  `8d7b12f8da553afbb325e37a6c66942b8dd4d994`.
 
 The ledger also records all 16 upstream JavaScript packaging scenarios as
 language-specific coverage so they are never confused with Go CRDT semantics.
-The Rust denominator is the 361 active harness tests plus 16 doctests reported
+The Rust denominator is the 456 active harness tests plus 16 doctests reported
 by `cargo test -p automerge --features utf16-indexing -- --list`; dormant and
 feature-disabled source code is not counted as parity debt.
 

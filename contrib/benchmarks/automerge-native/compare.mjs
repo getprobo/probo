@@ -30,10 +30,9 @@ const repository = path.resolve(directory, "../../..");
 const goBinary = path.join(os.tmpdir(), "probo-automerge-go-benchmark");
 const fixture = path.join(os.tmpdir(), "probo-automerge-benchmark-fixture");
 const rustManifest = path.join(directory, "rust", "Cargo.toml");
+const rustTarget = path.join(directory, "rust", "target");
 const rustBinary = path.join(
-  directory,
-  "rust",
-  "target",
+  rustTarget,
   "release",
   "probo-automerge-native-benchmark",
 );
@@ -49,7 +48,7 @@ const scenarios = [
 ];
 const samples = 3;
 const goVersion = execFileSync("go", ["version"], { encoding: "utf8" }).trim();
-const rustVersion = execFileSync("rustc", ["+1.89.0", "--version"], {
+const rustVersion = execFileSync("rustc", ["+1.90.0", "--version"], {
   encoding: "utf8",
 }).trim();
 
@@ -61,14 +60,18 @@ execFileSync(
 execFileSync(
   "cargo",
   [
-    "+1.89.0",
+    "+1.90.0",
     "build",
     "--release",
     "--locked",
     "--manifest-path",
     rustManifest,
   ],
-  { cwd: repository, stdio: "inherit" },
+  {
+    cwd: repository,
+    env: { ...process.env, CARGO_TARGET_DIR: rustTarget },
+    stdio: "inherit",
+  },
 );
 execFileSync(
   goBinary,

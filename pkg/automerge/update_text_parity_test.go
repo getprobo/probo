@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce upstream Rust update_text tests from
-// automerge 0.10 (rust/automerge/tests/text.rs). update_text computes a minimal
+// automerge 0.11 (rust/automerge/tests/text.rs). update_text computes a minimal
 // grapheme-aware diff so concurrent edits to disjoint regions merge cleanly.
 // Each scenario runs identically on the native Go engine and the Rust/WASM
 // reference engine and asserts their materialized text and change history agree.

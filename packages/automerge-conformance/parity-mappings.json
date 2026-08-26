@@ -976,12 +976,12 @@
   {
     "source": "rust",
     "file": "tests/text_encoding.rs",
-    "name": "patch_put_seq",
+    "name": "patch_put_text",
     "classification": "covered",
     "localTests": [
-      "TestRustTextEncoding_PatchPutSeq"
+      "TestRustTextEncoding_PatchPutText"
     ],
-    "rationale": "An in-place text put reported through the incremental diff cursor produces a PutSeq patch at a UTF-16 index."
+    "rationale": "An in-place string put in text produces a UTF-16-addressed deletion followed by a text splice."
   },
   {
     "source": "rust",
@@ -3276,5 +3276,1397 @@
       "TestRustDiff_LargePatchesInLists"
     ],
     "rationale": "A string list element counts as one index, so a run of 500 following objects is indexed identically in the native and reference diff patch streams."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should export RawString and isRawString for backwards compatibility",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should export a predicate to check if something is an immutablestring",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
+  },
+  {
+    "source": "javascript",
+    "file": "basic_test.ts",
+    "name": "should treat any class which has the correct symbol as a ImmutableString",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "JavaScript ImmutableString/RawString wrapper type predicate and backwards-compatibility export; a binding-specific scalar wrapper."
+  },
+  {
+    "source": "javascript",
+    "file": "legacy_tests.ts",
+    "name": "accepts strings as initial values, but treats them as an array of characters",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "Legacy JavaScript Text-as-array-of-characters proxy semantics; superseded by string text and specific to the JS binding."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back empty",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back flag",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back nothing",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back the assigned hasOwnProperty inside and outside change()",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back the assigned toString inside and outside change()",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back the assigned valueOf inside and outside change()",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should read back zero",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should respect `in` and Object.keys for hasOwnProperty",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should respect `in` and Object.keys for toString",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "javascript",
+    "file": "proxies.ts",
+    "name": "should respect `in` and Object.keys for valueOf",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises JavaScript packaging or Proxy object semantics that do not exist in the Go API."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize.rs",
+    "name": "anonymizes_data_while_preserving_history_and_shape",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize.rs",
+    "name": "repeated_numeric_values_receive_varied_replacements",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize.rs",
+    "name": "structural_strings_are_seeded_unique_and_preserve_encoded_lengths",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface."
+  },
+  {
+    "source": "rust",
+    "file": "src/anonymize/fuzz.rs",
+    "name": "randomized_documents_retain_their_shape",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "src/autocommit.rs",
+    "name": "test_autocommit_is_send",
+    "classification": "language-specific",
+    "requirement": "language-specific",
+    "localTests": [],
+    "rationale": "Rust Send auto-trait assertion for AutoCommit; a Rust concurrency property with no cross-engine meaning."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_combined_operations",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_create_list_and_insert",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_create_map_and_put",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_create_text_and_splice",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_conflicted_field",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_list_item",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_map_key",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_object",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_delete_text_range",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_increment_counter",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_increment_counter_conflicted_by_non_counter",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_scoped_transaction_on_conflicted_register",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/automerge/rollback_tests.rs",
+    "name": "rollback_splice_text_multiple_locations",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "bundle_fragments_roundtrips_through_load_incremental",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "bundle_size_is_independent_of_input_hash_order",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragment_deps_reference_known_hashes",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragment_id_and_level_consistent",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragments_cover_all_changes",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragments_filtered_by_levels",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "fragments_work_with_concurrent_actors",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/change_graph.rs",
+    "name": "get_fragment_returns_loose_and_cached",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/hydrate/tests.rs",
+    "name": "simple_hydrate",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust hydrate::Value reader API; document hydration is covered via NewFrom and materialization. Rust-ergonomic reader, not cross-engine interop."
+  },
+  {
+    "source": "rust",
+    "file": "src/iter/doc.rs",
+    "name": "doc_iter",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust document-iterator API; document traversal is covered by current-state and value reads. Rust-ergonomic iterator, not cross-engine interop."
+  },
+  {
+    "source": "rust",
+    "file": "src/marks.rs",
+    "name": "from_query_state_strips_unmark_tombstones",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "empty_column",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "large_column_multi_slab",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "multiple_non_overlapping_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "nested_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "overlapping_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "rich_text_at_every_position",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "single_mark_span",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "undo_preserves_other_marks",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "undo_removes_mark",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/op_set2/op_set/mark_index.rs",
+    "name": "undo_verify_every_position",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a private Rust data structure or algorithm rather than observable Automerge behavior."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync.rs",
+    "name": "switch_to_read_write_with_old_peer",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync/v1_compat_test/mod.rs",
+    "name": "sync_from_v1_to_v2",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync/v1_compat_test/mod.rs",
+    "name": "sync_from_v2_to_v1",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/sync/v1_compat_test/mod.rs",
+    "name": "sync_v1_to_v2_with_compressed_change",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "commit_with_options",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "empty_commit_returns_none_hash",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "get_heads_returns_pre_tx_heads",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "log_patches",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "nested_objects",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "owned_transaction_at",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "pending_ops",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "put_and_get_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "src/transaction/owned_transaction.rs",
+    "name": "read_during_transaction",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_create_object_rejects_map_key_in_text",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_HydrateMatchesReference",
+      "TestDocument_HydrateRollback"
+    ],
+    "rationale": "Recursive map/list/text/scalar hydration, save/load, empty values, deep nesting, and rollback execute against native and Rust engines."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_scalar_fails",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust batch_create_object rejects a scalar target; the Go hydrate API intentionally accepts scalars via PutValue. API-shape contract, not cross-engine interop."
+  },
+  {
+    "source": "rust",
+    "file": "tests/batch_insert.rs",
+    "name": "batch_insert_with_transaction",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust explicit-transaction integration for batch insert; the batch result is covered elsewhere. Rust transaction-object API shape."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "load_rejects_historical_zero_width_mark_end_before_begin",
+    "classification": "covered",
+    "localTests": [
+      "TestRustRichText_LoadRejectsMarkEndBeforeBegin"
+    ],
+    "rationale": "The upstream malformed document fixture is loaded by both engines and both must reject its inverted mark operations."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "mark_within_single_multi_width_element_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "rescue_recovers_snapshot_from_historical_zero_width_mark_order",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises a Rust-only diagnostic API that is not part of the Go document or interoperability surface."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "splice_scalar_into_marked_text",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises Rust Transactable::splice dispatch; Go exposes separate typed text and sequence mutation methods."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "splice_string_into_marked_text",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises Rust Transactable::splice dispatch; Go exposes separate typed text and sequence mutation methods."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "splice_text_at_length_over_conflicted_element_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "zero_width_mark_does_not_leak_to_later_text_object_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "zero_width_mark_on_empty_text_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/rich_text_fuzz_crash.rs",
+    "name": "zero_width_unmark_on_empty_text_sync_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "applying_changes_with_patch_log_from_another_document_returns_error_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "bundle_with_mark_columns_decodes_from_fuzz_trace",
+    "classification": "language-specific",
+    "localTests": [],
+    "rationale": "Exercises the experimental Rust fragment and bundle API, which is not exposed by the Go package."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_exposes_list_object_when_conflict_winner_is_removed",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_from_integrated_to_isolated_heads_reconstructs_target",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_incremental_respects_isolated_heads_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_preserves_conflict_after_winning_value_is_deleted_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_spans_preserve_marks_on_inserted_text",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_spans_skip_losing_conflicting_text_overwrites",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "diff_to_isolated_batch_created_text_applies_to_hydrated_value_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "doc_iter_spans_skip_losing_conflicting_text_overwrites_after_object_shift",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "duplicate_seq_number_changes_are_rejected",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "duplicate_seq_number_in_batch_change_aborts_whole_batch",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "duplicate_seq_number_within_incoming_batch_is_rejected",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "failed_merge_with_duplicate_sequence_number_does_not_corrupt_save_load",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_current_heads_after_interleaved_actor_changes",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_foreign_heads_errors_instead_of_panicking",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_preserves_text_encoding",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_rejects_edit_to_object_outside_isolation_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "fork_at_with_increment_over_conflicted_counter_survives_save_load_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "historical_owned_transaction_omits_patches_for_unreachable_object_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "increment_patch_clears_resolved_map_conflict",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_counter_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_deep_text_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_diff_discards_edits_inside_deleted_map",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_list_conflict_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_load_preserves_text_encoding_for_all_change_chunk_types",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_patches_survive_nested_edit_and_list_shift_across_isolation",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_put_seq_in_text_applies_to_hydrated_value_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_sibling_text_diffs_survive_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "incremental_text_diff_survives_isolate_integrate_roundtrip",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "insert_into_replaced_text_run_with_trailing_zero_width_unmark_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "load_incremental_into_empty_doc_preserves_utf8_text_encoding",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_patches_clear_conflict_after_losing_list_value_is_deleted_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_patches_include_text_element_update_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "merge_patches_replace_multi_character_string_in_text_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "owned_transaction_with_patch_log_from_another_document_does_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "patches_expose_surviving_conflict_after_deleting_other_branch_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "queued_change_does_not_collide_with_later_local_change",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "queued_orphan_need_does_not_block_unrelated_sync_response",
+    "classification": "covered",
+    "localTests": [
+      "TestSyncState_QuiescesWithOrphanedChange",
+      "TestRustSync_AllowSimultaneousMessages"
+    ],
+    "rationale": "Orphaned changes and unrelated simultaneous sync traffic are exercised to quiescence."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "queued_orphan_with_conflicting_actor_seq_rejects_incoming_batch",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "reverse_diff_of_replaced_lists_applies_to_hydrated_value_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "rollback_after_save_load_of_deep_hydrated_root_map_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_RollbackMatchesReference",
+      "TestRustTransaction_RollbackDiscardsOps",
+      "TestRustTransaction_RollbackUndoesWrites"
+    ],
+    "rationale": "Rollback of scalar, object, list, text, counter, conflict, and hydrated operations is exercised against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "round_trip_change_with_extra_bytes",
+    "classification": "covered",
+    "localTests": [
+      "TestConformance_JavaScriptPreservesGoChanges",
+      "TestConformance_NativeParsesJavaScriptChange"
+    ],
+    "rationale": "Cross-language change parsing and byte preservation cover opaque trailing change data."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "should_reload_document_containing_deflated_columns",
+    "classification": "covered",
+    "localTests": [
+      "TestRustTest_CompressedDocCols"
+    ],
+    "rationale": "Compressed document columns are saved, loaded, and compared against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "spans_match_text_after_merge_of_conflicting_text_overwrites_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_at_with_patch_log_from_another_document_does_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_insert_hidden_scalar_into_utf8_text_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_mark_at_normalized_utf8_indexes",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_replace_multi_character_string_in_text_from_fuzz_trace",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_patches_split_block_at_normalized_utf8_index",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "transaction_with_patch_log_from_another_document_does_not_panic",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "unmark_at_end_of_remotely_inserted_conflicted_scalar_in_text_from_fuzz_trace",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust",
+    "file": "tests/test.rs",
+    "name": "update_text_after_marking_text_with_hidden_scalar",
+    "classification": "covered",
+    "localTests": [
+      "TestDocument_IncrementalDiffMatchesReference",
+      "TestRustRichText_SpliceWithMark",
+      "TestRustRichText_SpansConsolidatedWithZeroLengthSpans"
+    ],
+    "rationale": "Rich-text mutation, mark, span, conflict, UTF-16, and patch behavior runs against the Rust reference."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autocommit.rs",
+    "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::commit_with (line 683)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autocommit.rs",
+    "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff (line 238)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autocommit.rs",
+    "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff_incremental (line 334)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/autoserde.rs",
+    "name": "automerge/src/autoserde.rs - autoserde::AutoSerde (line 9)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/patches/patch_log.rs",
+    "name": "automerge/src/patches/patch_log.rs - patches::patch_log::PatchLog (line 29)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/document.rs",
+    "name": "automerge/src/storage/document.rs - storage::document::Document<'a>::parse (line 55)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse (line 17)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse (line 56)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse (line 69)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse::Input<'a>::split (line 264)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse::Split::remaining (line 325)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/storage/parse.rs",
+    "name": "automerge/src/storage/parse.rs - storage::parse::range_of (line 561)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/sync.rs",
+    "name": "automerge/src/sync.rs - sync (line 25)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
+  },
+  {
+    "source": "rust-doc",
+    "file": "automerge/src/transaction/manual_transaction.rs",
+    "name": "automerge/src/transaction/manual_transaction.rs - transaction::manual_transaction::Transaction<'_>::commit_with (line 77)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
+  },
+  {
+    "source": "rust-doc",
+    "file": "unknown",
+    "name": "automerge/src/lib.rs - (line 117)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
+  },
+  {
+    "source": "rust-doc",
+    "file": "unknown",
+    "name": "automerge/src/lib.rs - (line 147)",
+    "classification": "pending",
+    "requirement": "api-convenience",
+    "localTests": [],
+    "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
   }
 ]

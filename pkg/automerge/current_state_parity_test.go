@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce upstream Rust current-state tests from
-// automerge 0.10 (rust/automerge/src/automerge/current_state.rs). Each builds
+// automerge 0.11 (rust/automerge/src/automerge/current_state.rs). Each builds
 // the same document on the native and Rust/WASM reference engines and asserts
 // their materialization patch streams agree.
 

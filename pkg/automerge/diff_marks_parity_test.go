@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce the text-and-mark scenarios from upstream
-// Rust automerge 0.10 (rust/automerge/tests/diff_marks.rs). Each scenario runs
+// Rust automerge 0.11 (rust/automerge/tests/diff_marks.rs). Each scenario runs
 // update_spans identically on the native Go engine and the Rust/WASM reference
 // engine and asserts their materialized spans agree. Block-valued scenarios are
 // tracked separately and excluded here.

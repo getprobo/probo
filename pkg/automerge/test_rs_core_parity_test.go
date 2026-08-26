@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce individual upstream Rust integration tests
-// from automerge 0.10 (rust/automerge/tests/test.rs) against both the native
+// from automerge 0.11 (rust/automerge/tests/test.rs) against both the native
 // Go engine and the Rust/WASM reference engine. Every scenario runs identically
 // on both engines and asserts that the observable materialized state, causal
 // heads, and cross-engine reloads agree. Because both engines produce identical

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce the block-valued update_spans scenarios from
-// upstream Rust automerge 0.10 (rust/automerge/tests/block_tests.rs and
+// upstream Rust automerge 0.11 (rust/automerge/tests/block_tests.rs and
 // diff_marks.rs). Each runs update_spans identically on the native Go engine and
 // the Rust/WASM reference engine and asserts their materialized spans agree.
 

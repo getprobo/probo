@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce upstream Rust synchronization tests from
-// automerge 0.10 (rust/automerge/src/sync.rs) against both the native Go engine
+// automerge 0.11 (rust/automerge/src/sync.rs) against both the native Go engine
 // and the Rust/WASM reference engine. Every scenario drives the same read-only
 // and read-write sync protocol through the public Go API and asserts the same
 // observable outcomes (which changes each peer receives, peer read-only

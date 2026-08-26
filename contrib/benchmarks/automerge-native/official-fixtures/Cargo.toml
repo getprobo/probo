@@ -6,6 +6,6 @@ license = "MIT"
 publish = false
 
 [dependencies]
-benchmark-battery = { git = "https://github.com/automerge/automerge.git", rev = "e4f9420a63b5ebfd079de7f22a852c2abb6e2774" }
+benchmark-battery = { git = "https://github.com/automerge/automerge.git", rev = "8feb8be8be203e3b878bf2cb5919601094f3c816" }
 
 [workspace]

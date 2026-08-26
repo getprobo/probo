@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce upstream Rust orphan-change tests from
-// automerge 0.10 (rust/automerge/tests/test_save_load_orphans.rs) against both
+// automerge 0.11 (rust/automerge/tests/test_save_load_orphans.rs) against both
 // the native Go engine and the Rust/WASM reference engine.
 
 package automerge_test

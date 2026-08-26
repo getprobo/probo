@@ -27,6 +27,7 @@
 package automerge_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +36,23 @@ import (
 	"github.com/stretchr/testify/require"
 	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
+
+// TestRustRichText_LoadRejectsMarkEndBeforeBegin reproduces
+// load_rejects_historical_zero_width_mark_end_before_begin.
+func TestRustRichText_LoadRejectsMarkEndBeforeBegin(t *testing.T) {
+	t.Parallel()
+
+	data, err := os.ReadFile("testdata/fixtures/broken_zero_width_mark.automerge")
+	require.NoError(t, err)
+
+	for _, engine := range rustParityEngines() {
+		document, err := engine.load(data, actor(1))
+		assert.Error(t, err, engine.name)
+		if document != nil {
+			require.NoError(t, document.Close())
+		}
+	}
+}
 
 func markTrue() automerge.Scalar {
 	return automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true}

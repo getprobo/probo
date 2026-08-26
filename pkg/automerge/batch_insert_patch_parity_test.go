@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce the patch-generating batch-insert scenarios
-// from upstream Rust automerge 0.10 (rust/automerge/tests/batch_insert.rs),
+// from upstream Rust automerge 0.11 (rust/automerge/tests/batch_insert.rs),
 // asserting the native Go and Rust/WASM reference engines produce identical
 // patch streams for a hydrated batch insertion.
 

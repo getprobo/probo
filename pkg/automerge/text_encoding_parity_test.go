@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce upstream Rust text-encoding tests from
-// automerge 0.10 (rust/automerge/tests/text_encoding.rs). The reference backend
+// automerge 0.11 (rust/automerge/tests/text_encoding.rs). The reference backend
 // is built with the utf16-indexing feature, so every text index is expressed in
 // UTF-16 code units. Each scenario runs identically on the native Go engine and
 // the Rust/WASM reference engine and asserts their results agree with the
@@ -501,10 +501,10 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 	assert.Equal(t, result["reference"], result["native"])
 }
 
-// TestRustTextEncoding_PatchPutSeq reproduces the utf16 case of patch_put_seq:
-// an in-place text put reported through the incremental diff cursor produces a
-// PutSeq patch addressed by UTF-16 code units.
-func TestRustTextEncoding_PatchPutSeq(t *testing.T) {
+// TestRustTextEncoding_PatchPutText reproduces the utf16 case of patch_put_text:
+// an in-place string put in text is reported as a UTF-16-addressed deletion
+// followed by a text splice.
+func TestRustTextEncoding_PatchPutText(t *testing.T) {
 	t.Parallel()
 
 	result := make(map[string][]automerge.Patch)
@@ -530,11 +530,13 @@ func TestRustTextEncoding_PatchPutSeq(t *testing.T) {
 		result[engine.name] = patches
 	}
 
-	require.Len(t, result["reference"], 1)
-	assert.Equal(t, automerge.PatchPutSeq, result["reference"][0].Action)
+	require.Len(t, result["reference"], 2)
+	assert.Equal(t, automerge.PatchDeleteSeq, result["reference"][0].Action)
 	assert.Equal(t, uint64(13), result["reference"][0].Index)
-	require.NotNil(t, result["reference"][0].Value.Scalar)
-	assert.Equal(t, "L", result["reference"][0].Value.Scalar.String)
+	assert.Equal(t, uint64(1), result["reference"][0].Length)
+	assert.Equal(t, automerge.PatchSpliceText, result["reference"][1].Action)
+	assert.Equal(t, uint64(13), result["reference"][1].Index)
+	assert.Equal(t, "L", result["reference"][1].Text)
 	assert.Equal(t, result["reference"], result["native"])
 }
 

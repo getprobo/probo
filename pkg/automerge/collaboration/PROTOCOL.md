@@ -13,7 +13,7 @@ Go decoder or encoder is trusted until it round-trips those fixtures.
 
 | Package | Version | Role |
 |---|---|---|
-| `@automerge/automerge` | `3.4.1` (`^3.4.0`) | CRDT core; sync message and cursor bytes |
+| `@automerge/automerge` | `3.4.1` (exact) | CRDT core; sync message and cursor bytes |
 | `@automerge/automerge-repo` | `2.6.0-alpha.3` (exact) | repo message union, ephemeral gossip, Presence |
 | `@automerge/automerge-repo-network-websocket` | `2.6.0-alpha.3` (exact) | WebSocket wire framing and join/peer handshake |
 
