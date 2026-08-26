@@ -32,6 +32,10 @@ import { accessSection } from "../variants";
 
 const sortOptions: AccessListSort[] = ["requests", "joined"];
 
+function isAccessListSort(value: string): value is AccessListSort {
+  return value === "requests" || value === "joined";
+}
+
 export function CompliancePortalAccessListSort() {
   const { t } = useTranslation("organizations/compliance-portals");
   const { sort, setSort } = useAccessListSort();
@@ -56,8 +60,8 @@ export function CompliancePortalAccessListSort() {
         <DropdownPopup align="end">
           <DropdownRadioGroup
             value={sort}
-            onValueChange={(value) => {
-              if (value === "requests" || value === "joined") {
+            onValueChange={(value: string) => {
+              if (isAccessListSort(value)) {
                 setSort(value);
               }
             }}

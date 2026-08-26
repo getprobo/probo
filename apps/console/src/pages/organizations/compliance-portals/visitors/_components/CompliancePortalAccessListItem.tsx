@@ -42,7 +42,6 @@ const fragment = graphql`
     profile {
       fullName
       emailAddress
-      state
     }
     pendingRequestCount
     ndaSignature {
@@ -73,9 +72,7 @@ export function CompliancePortalAccessListItem({
     request,
     nda,
     joined,
-  } = accessListItem({
-    inactive: access.profile.state !== "ACTIVE",
-  });
+  } = accessListItem();
   const ndaStatus = access.ndaSignature?.status;
 
   return (

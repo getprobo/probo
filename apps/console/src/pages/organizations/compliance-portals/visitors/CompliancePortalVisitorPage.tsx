@@ -49,7 +49,6 @@ export const compliancePortalVisitorPageQuery = graphql`
         profile {
           fullName
           emailAddress
-          state
         }
         ndaSignature {
           ...ElectronicSignatureSectionFragment
@@ -94,7 +93,7 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
     throw new NotFoundError("Compliance portal not found");
   }
 
-  const canUpdate = data.access.canUpdate && data.access.profile.state === "ACTIVE";
+  const canUpdate = data.access.canUpdate;
   usePageTitle(data.access.profile.fullName);
 
   return (

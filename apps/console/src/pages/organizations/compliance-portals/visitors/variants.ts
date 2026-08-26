@@ -92,16 +92,6 @@ export const accessListItem = tv({
     nda: "flex shrink-0 items-center gap-1.5 whitespace-nowrap [&_svg]:size-4",
     joined: "whitespace-nowrap",
   },
-  variants: {
-    inactive: {
-      true: {
-        item: "opacity-50",
-      },
-    },
-  },
-  defaultVariants: {
-    inactive: false,
-  },
 });
 
 export const accessListEmpty = tv({
