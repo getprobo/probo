@@ -31,7 +31,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
 
 // TestJSMarks_MarksSeenInPatches reproduces "should allow marks that can be seen

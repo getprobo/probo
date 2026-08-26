@@ -30,7 +30,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
 
 // TestRustDiff_LargePatchesInLists reproduces large_patches_in_lists_are_correct:

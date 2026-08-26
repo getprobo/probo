@@ -57,22 +57,6 @@ func NewFrom(
 	return newFrom(actorID, value, message, timestamp, New)
 }
 
-// NewReferenceFrom creates a hydrated document using the Rust/WASM oracle.
-func NewReferenceFrom(
-	actorID ActorID,
-	value map[string]Value,
-	message string,
-	timestamp time.Time,
-) (*Document, error) {
-	return newFrom(
-		actorID,
-		value,
-		message,
-		timestamp,
-		NewReference,
-	)
-}
-
 func newFrom(
 	actorID ActorID,
 	value map[string]Value,

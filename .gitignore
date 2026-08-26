@@ -1,5 +1,5 @@
 bin/
-pkg/automerge/internal/reference/wasm/target/
+pkg/automerge/internal/testsupport/reference/wasm/target/
 node_modules/
 .cache/
 .turbo

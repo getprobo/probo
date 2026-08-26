@@ -35,7 +35,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
 
 func TestRustAutomerge_ObserveCounterChangeApplication(t *testing.T) {

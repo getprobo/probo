@@ -2,9 +2,9 @@
 
 This package is Probo's owned, no-CGO boundary for Automerge documents.
 
-## Engines
+## Implementation
 
-The default backend is a clean-room, pure-Go Automerge 0.10 engine. It:
+The public package uses a clean-room, pure-Go Automerge 0.10 implementation. It:
 
 - decodes document, change, compressed-change, and v1/v2 sync formats;
 - validates checksums, actor ownership, causal frontiers, sequences, and limits;
@@ -13,17 +13,18 @@ The default backend is a clean-room, pure-Go Automerge 0.10 engine. It:
   changes, heads, merges, and synchronization; and
 - emits changes accepted by official Rust and JavaScript implementations.
 
-The package also retains a first-party WASI adapter around the official
-[`automerge`](https://crates.io/crates/automerge) Rust crate as an independent
-differential oracle. The adapter:
+An internal test-support package retains a first-party WASI adapter around the
+official [`automerge`](https://crates.io/crates/automerge) Rust crate as an
+independent differential oracle. It is not part of the public API or production
+dependency graph. The adapter:
 
 - pins `automerge` 0.10.0 and every transitive crate in `Cargo.lock`;
 - compiles with UTF-16 indexing to match the JavaScript editor;
 - runs in-process through wazero without CGO or native shared libraries; and
 - gives every open document an isolated WASM instance.
 
-Use `NewReference` and `LoadReference` only in conformance tests or when
-diagnosing native parity. Production `New` and `Load` use the Go engine.
+Parity tests access the oracle through `internal/testsupport`; production
+`New` and `Load` can only use the Go implementation.
 
 The committed `reference.wasm` is reproducible from reviewed Rust source:
 
@@ -57,7 +58,7 @@ The conformance oracle is deliberately separate from the Go implementation so
 the two paths do not share adapter code.
 
 Neutral interoperability scenarios live in `testdata/scenarios`. The same JSON
-operations are executed independently by native Go, native Rust/WASM, and
+operations are executed independently by Go, Rust/WASM, and
 JavaScript. Independently authored changes may have different hashes when an API
 chooses a different valid operation order; the gate instead requires every
 engine to load, preserve, extend, and semantically materialize every other
@@ -71,7 +72,7 @@ reduced to a deterministic regression seed before its fix is merged.
 make fuzz-automerge AUTOMERGE_FUZZ_TIME=30s
 ```
 
-Native and Rust/WASM benchmarks cover warm document creation, map mutation,
+Go and Rust/WASM benchmarks cover warm document creation, map mutation,
 character-by-character text editing, 10,000-character save/load, and initial
 native/reference synchronization:
 

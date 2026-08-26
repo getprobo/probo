@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"testing"
 
-	"go.probo.inc/probo/pkg/automerge"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
 
 type benchmarkFactory func(automerge.ActorID) (*automerge.Document, error)
