@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"sort"
 
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
@@ -45,7 +46,7 @@ func (b *Engine) HasHeads(
 ) (bool, error) {
 
 	for _, head := range heads {
-		if !b.state.hasChange(ChangeHash(head)) {
+		if !b.state.hasChange(opset.ChangeHash(head)) {
 			return false, nil
 		}
 	}
@@ -60,8 +61,8 @@ func (b *Engine) MissingDependencies(
 	missing := make(map[[32]byte]struct{})
 
 	for _, head := range heads {
-		_, queued := b.queuedChanges[ChangeHash(head)]
-		if !b.state.hasChange(ChangeHash(head)) && !queued {
+		_, queued := b.queuedChanges[opset.ChangeHash(head)]
+		if !b.state.hasChange(opset.ChangeHash(head)) && !queued {
 			missing[head] = struct{}{}
 		}
 	}
@@ -93,9 +94,9 @@ func (b *Engine) ChangesSince(
 	heads [][32]byte,
 ) ([][]byte, [][32]byte, error) {
 
-	knownHeads := make([]ChangeHash, len(heads))
+	knownHeads := make([]opset.ChangeHash, len(heads))
 	for i, head := range heads {
-		knownHeads[i] = ChangeHash(head)
+		knownHeads[i] = opset.ChangeHash(head)
 	}
 
 	// A change in the frontier's ancestry may occasionally be unreachable, for
@@ -195,9 +196,9 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 	return b.Heads()
 }
 
-func (b *Engine) requiresSnapshotMerge(document *Document) bool {
+func (b *Engine) requiresSnapshotMerge(document *opset.Document) bool {
 	if len(document.ChunkTypes) == 0 ||
-		document.ChunkTypes[0] != ChunkDocument {
+		document.ChunkTypes[0] != opset.ChunkDocument {
 		return false
 	}
 
@@ -215,7 +216,7 @@ func (b *Engine) requiresSnapshotMerge(document *Document) bool {
 
 func (b *Engine) mergeDocumentSnapshot(
 	data []byte,
-	document *Document,
+	document *opset.Document,
 ) error {
 	localChanges, ok := b.state.allChanges()
 	if !ok {
@@ -274,7 +275,7 @@ func (b *Engine) mergeDocumentSnapshot(
 	b.base = append([]byte(nil), data...)
 	b.appended = appended
 	b.saveCursor = 0
-	b.queuedChanges = make(map[ChangeHash]*Change)
+	b.queuedChanges = make(map[opset.ChangeHash]*opset.Change)
 	b.queuedBytes = 0
 	b.nextOp = state.maxOpGlobal() + 1
 
@@ -282,10 +283,10 @@ func (b *Engine) mergeDocumentSnapshot(
 }
 
 func documentChangeByActorSequence(
-	document *Document,
-	actor ActorID,
+	document *opset.Document,
+	actor opset.ActorID,
 	sequence uint64,
-) *Change {
+) *opset.Change {
 	for i := range document.Changes {
 		change := &document.Changes[i]
 		if change.Actor == actor && change.Sequence == sequence {
@@ -296,7 +297,7 @@ func documentChangeByActorSequence(
 	return nil
 }
 
-func (b *Engine) applyMergedChanges(changes []Change) error {
+func (b *Engine) applyMergedChanges(changes []opset.Change) error {
 	for i := range changes {
 		change := &changes[i]
 		if change.Hash == nil || b.state.hasChange(*change.Hash) {

@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"go.probo.inc/probo/pkg/automerge/internal/encoding"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 func (b *Engine) PutText(
@@ -40,11 +41,11 @@ func (b *Engine) PutText(
 
 	property := key
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:     b.nextOperationID(),
-		Object: RootObject(),
-		Key:    Key{Property: &property},
-		Action: ActionMakeText,
+		Object: opset.RootObject(),
+		Key:    opset.Key{Property: &property},
+		Action: opset.ActionMakeText,
 	}
 	for _, predecessor := range b.state.visibleMapOperations(key) {
 		operation.Predecessors = append(operation.Predecessors, predecessor.ID)
@@ -54,7 +55,7 @@ func (b *Engine) PutText(
 		return 0, err
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.ID}), nil
+	return b.pushObject(opset.ObjectID{OpID: operation.ID}), nil
 }
 
 func (b *Engine) GetText(
@@ -65,12 +66,12 @@ func (b *Engine) GetText(
 		return 0, err
 	}
 
-	operation, ok := b.state.visibleMapOperation(key, ActionMakeText)
+	operation, ok := b.state.visibleMapOperation(key, opset.ActionMakeText)
 	if !ok {
 		return 0, fmt.Errorf("text property %q does not exist", key)
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.ID}), nil
+	return b.pushObject(opset.ObjectID{OpID: operation.ID}), nil
 }
 
 func (b *Engine) SpliceText(
@@ -104,11 +105,11 @@ func (b *Engine) SpliceText(
 	// so replacement text is positioned against the pre-deletion sequence. That
 	// ordering decides whether text replacing a marked run sits inside or
 	// outside an expanding mark, so it must be preserved here.
-	targets := make([]Operation, end-start)
+	targets := make([]opset.Operation, end-start)
 	copy(targets, sequence[start:end])
 
 	for offset, character := range []rune(value) {
-		key := Key{IsHead: previous == nil}
+		key := opset.Key{IsHead: previous == nil}
 		if previous != nil {
 			key.Element = new(*previous)
 		}
@@ -119,13 +120,13 @@ func (b *Engine) SpliceText(
 			key = b.state.insertAnchorKey(object.OpID, key)
 		}
 
-		operation := Operation{
+		operation := opset.Operation{
 			ID:     b.nextOperationID(),
 			Object: object,
 			Key:    key,
 			Insert: true,
-			Action: ActionSet,
-			Value:  &Scalar{Type: ScalarString, String: string(character)},
+			Action: opset.ActionSet,
+			Value:  &opset.Scalar{Type: opset.ScalarString, String: string(character)},
 		}
 		if err := b.addPending(operation); err != nil {
 			return err
@@ -135,12 +136,12 @@ func (b *Engine) SpliceText(
 	}
 
 	for _, target := range targets {
-		operation := Operation{
+		operation := opset.Operation{
 			ID:           b.nextOperationID(),
 			Object:       object,
-			Key:          Key{Element: new(target.ID)},
-			Action:       ActionDelete,
-			Predecessors: []OpID{target.ID},
+			Key:          opset.Key{Element: new(target.ID)},
+			Action:       opset.ActionDelete,
+			Predecessors: []opset.OpID{target.ID},
 		}
 		if err := b.addPending(operation); err != nil {
 			return err
@@ -165,7 +166,7 @@ type (
 
 	desiredMark struct {
 		name  string
-		value Scalar
+		value opset.Scalar
 		start uint32
 		end   uint32
 	}
@@ -262,7 +263,7 @@ func blockTokens(items []blockOrGrapheme) []string {
 // currentBlockGraphemes materializes the text object as the block/grapheme units
 // the diff operates on: block markers become blocks and text runs are split into
 // grapheme clusters.
-func (b *Engine) currentBlockGraphemes(object ObjectID) []blockOrGrapheme {
+func (b *Engine) currentBlockGraphemes(object opset.ObjectID) []blockOrGrapheme {
 	items := make([]blockOrGrapheme, 0)
 
 	var run strings.Builder
@@ -282,10 +283,10 @@ func (b *Engine) currentBlockGraphemes(object ObjectID) []blockOrGrapheme {
 	for _, value := range b.state.sequenceValues(object.OpID) {
 		operation := value.Operation
 
-		if operation.Action == ActionMakeMap {
+		if operation.Action == opset.ActionMakeMap {
 			flush()
 
-			attributes, err := b.state.mapValue(operation.ID, make(map[OpID]struct{}))
+			attributes, err := b.state.mapValue(operation.ID, make(map[opset.OpID]struct{}))
 			if err != nil || attributes == nil {
 				attributes = map[string]any{}
 			}
@@ -295,7 +296,7 @@ func (b *Engine) currentBlockGraphemes(object ObjectID) []blockOrGrapheme {
 			continue
 		}
 
-		if operation.Value != nil && operation.Value.Type == ScalarString {
+		if operation.Value != nil && operation.Value.Type == opset.ScalarString {
 			run.WriteString(operation.Value.String)
 		}
 	}
@@ -468,7 +469,7 @@ func desiredMarks(spans []updateSpanInput) ([]desiredMark, error) {
 // missing, matching the two-phase reconciliation upstream performs.
 func (b *Engine) reconcileMarks(
 	handle uint32,
-	object ObjectID,
+	object opset.ObjectID,
 	desired []desiredMark,
 	config updateSpansConfigInput,
 ) error {
@@ -495,9 +496,7 @@ func (b *Engine) reconcileMarks(
 			handle,
 			current.Start,
 			current.End,
-			current.Name,
-			Scalar{Type: ScalarNull},
-			config.expandFor(current.Name),
+			current.Name, opset.Scalar{Type: opset.ScalarNull}, config.expandFor(current.Name),
 		); err != nil {
 			return err
 		}
@@ -643,26 +642,26 @@ func (b *Engine) insertListValue(
 
 // hydrateScalar maps a decoded JSON scalar to an Automerge scalar, treating
 // integral numbers as integers to match the reference block hydration.
-func hydrateScalar(value any) (Scalar, error) {
+func hydrateScalar(value any) (opset.Scalar, error) {
 	switch typed := value.(type) {
 	case nil:
-		return Scalar{Type: ScalarNull}, nil
+		return opset.Scalar{Type: opset.ScalarNull}, nil
 	case bool:
 		if typed {
-			return Scalar{Type: ScalarTrue, Bool: true}, nil
+			return opset.Scalar{Type: opset.ScalarTrue, Bool: true}, nil
 		}
 
-		return Scalar{Type: ScalarFalse}, nil
+		return opset.Scalar{Type: opset.ScalarFalse}, nil
 	case string:
-		return Scalar{Type: ScalarString, String: typed}, nil
+		return opset.Scalar{Type: opset.ScalarString, String: typed}, nil
 	case float64:
 		if typed == float64(int64(typed)) {
-			return Scalar{Type: ScalarInt, Int: int64(typed)}, nil
+			return opset.Scalar{Type: opset.ScalarInt, Int: int64(typed)}, nil
 		}
 
-		return Scalar{Type: ScalarFloat64, Float: typed}, nil
+		return opset.Scalar{Type: opset.ScalarFloat64, Float: typed}, nil
 	default:
-		return Scalar{}, fmt.Errorf("unsupported block attribute value %T", value)
+		return opset.Scalar{}, fmt.Errorf("unsupported block attribute value %T", value)
 	}
 }
 
@@ -671,7 +670,7 @@ func (b *Engine) markRange(
 	start uint32,
 	end uint32,
 	name string,
-	value Scalar,
+	value opset.Scalar,
 	expand string,
 ) error {
 	encoded, err := encodeScalarWire(value)
@@ -735,12 +734,12 @@ func (b *Engine) MarkText(
 		return err
 	}
 
-	begin := Operation{
+	begin := opset.Operation{
 		ID:         b.nextOperationID(),
 		Object:     object,
 		Key:        b.state.insertAnchorKey(object.OpID, startKey),
 		Insert:     true,
-		Action:     ActionMark,
+		Action:     opset.ActionMark,
 		Value:      &value,
 		MarkExpand: &expandBefore,
 		MarkName:   &name,
@@ -754,13 +753,13 @@ func (b *Engine) MarkText(
 		return err
 	}
 
-	endOperation := Operation{
+	endOperation := opset.Operation{
 		ID:         b.nextOperationID(),
 		Object:     object,
 		Key:        b.state.insertAnchorKey(object.OpID, endKey),
 		Insert:     true,
-		Action:     ActionMark,
-		Value:      &Scalar{Type: ScalarNull},
+		Action:     opset.ActionMark,
+		Value:      &opset.Scalar{Type: opset.ScalarNull},
 		MarkExpand: &expandAfter,
 	}
 
@@ -784,7 +783,7 @@ func (b *Engine) SplitBlock(
 		return 0, err
 	}
 
-	key := Key{IsHead: previous == nil}
+	key := opset.Key{IsHead: previous == nil}
 	if previous != nil {
 		key.Element = new(*previous)
 	}
@@ -796,18 +795,18 @@ func (b *Engine) SplitBlock(
 	// marks they should or should not carry diverge from the reference.
 	key = b.state.insertAnchorKey(object.OpID, key)
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:     b.nextOperationID(),
 		Object: object,
 		Key:    key,
 		Insert: true,
-		Action: ActionMakeMap,
+		Action: opset.ActionMakeMap,
 	}
 	if err := b.addPending(operation); err != nil {
 		return 0, err
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.ID}), nil
+	return b.pushObject(opset.ObjectID{OpID: operation.ID}), nil
 }
 
 func (b *Engine) JoinBlock(
@@ -827,18 +826,17 @@ func (b *Engine) JoinBlock(
 		return err
 	}
 
-	if target == nil || target.Action != ActionMakeMap {
+	if target == nil || target.Action != opset.ActionMakeMap {
 		return fmt.Errorf("text position %d is not a block", index)
 	}
 
-	return b.addPending(
-		Operation{
-			ID:           b.nextOperationID(),
-			Object:       object,
-			Key:          Key{Element: new(target.ID)},
-			Action:       ActionDelete,
-			Predecessors: []OpID{target.ID},
-		},
+	return b.addPending(opset.Operation{
+		ID:           b.nextOperationID(),
+		Object:       object,
+		Key:          opset.Key{Element: new(target.ID)},
+		Action:       opset.ActionDelete,
+		Predecessors: []opset.OpID{target.ID},
+	},
 	)
 }
 
@@ -866,7 +864,7 @@ func (b *Engine) Text(handle uint32) (string, error) {
 	// a text position replaces the original character, matching the reference.
 	for _, value := range b.state.sequenceValues(object.OpID) {
 		operation := value.Operation
-		if operation.Value != nil && operation.Value.Type == ScalarString {
+		if operation.Value != nil && operation.Value.Type == opset.ScalarString {
 			output.WriteString(operation.Value.String)
 		}
 	}
@@ -892,7 +890,7 @@ func (b *Engine) TextAt(
 	var output strings.Builder
 
 	for _, operation := range historical.sequence(object.OpID) {
-		if operation.Value != nil && operation.Value.Type == ScalarString {
+		if operation.Value != nil && operation.Value.Type == opset.ScalarString {
 			output.WriteString(operation.Value.String)
 		}
 	}
@@ -961,7 +959,7 @@ func encodeMarks(marks []MarkRange) ([]byte, error) {
 	wire := make([]markWire, 0, len(marks))
 
 	for _, mark := range marks {
-		value := &Scalar{Type: ScalarNull}
+		value := &opset.Scalar{Type: opset.ScalarNull}
 		if mark.Value != nil {
 			value = mark.Value
 		}
@@ -1151,10 +1149,10 @@ func (b *Engine) TextCursorPosition(
 }
 
 func (b *Engine) cursorMoveBeforePosition(
-	object OpID,
-	target Operation,
+	object opset.OpID,
+	target opset.Operation,
 ) (uint32, error) {
-	visited := make(map[OpID]struct{})
+	visited := make(map[opset.OpID]struct{})
 
 	for {
 		if target.Key.IsHead {

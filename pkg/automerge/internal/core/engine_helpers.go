@@ -31,10 +31,11 @@ import (
 	"sort"
 
 	"go.probo.inc/probo/pkg/automerge/internal/encoding"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
-func (b *Engine) addPending(operation Operation) error {
-	if err := b.state.applyPending([]Operation{operation}); err != nil {
+func (b *Engine) addPending(operation opset.Operation) error {
+	if err := b.state.applyPending([]opset.Operation{operation}); err != nil {
 		return err
 	}
 
@@ -43,8 +44,8 @@ func (b *Engine) addPending(operation Operation) error {
 	return nil
 }
 
-func (b *Engine) nextOperationID() OpID {
-	id := OpID{
+func (b *Engine) nextOperationID() opset.OpID {
+	id := opset.OpID{
 		Actor:   b.actor,
 		Counter: b.nextOp,
 	}
@@ -67,19 +68,19 @@ func (b *Engine) requireRoot(handle uint32) error {
 	return nil
 }
 
-func (b *Engine) object(handle uint32) (ObjectID, error) {
+func (b *Engine) object(handle uint32) (opset.ObjectID, error) {
 	object, ok := b.objects[handle]
 	if !ok {
-		return ObjectID{}, fmt.Errorf("invalid object handle %d", handle)
+		return opset.ObjectID{}, fmt.Errorf("invalid object handle %d", handle)
 	}
 
 	return object, nil
 }
 
-func (b *Engine) mapObject(handle uint32) (ObjectID, error) {
+func (b *Engine) mapObject(handle uint32) (opset.ObjectID, error) {
 	object, err := b.object(handle)
 	if err != nil {
-		return ObjectID{}, err
+		return opset.ObjectID{}, err
 	}
 
 	if object.IsRoot {
@@ -88,53 +89,53 @@ func (b *Engine) mapObject(handle uint32) (ObjectID, error) {
 
 	operation, ok := b.state.operations[object.OpID]
 	if !ok ||
-		(operation.Action != ActionMakeMap &&
-			operation.Action != ActionMakeTable) {
-		return ObjectID{}, fmt.Errorf("object is not a map")
+		(operation.Action != opset.ActionMakeMap &&
+			operation.Action != opset.ActionMakeTable) {
+		return opset.ObjectID{}, fmt.Errorf("object is not a map")
 	}
 
 	return object, nil
 }
 
-func (b *Engine) sequenceObject(handle uint32) (ObjectID, error) {
+func (b *Engine) sequenceObject(handle uint32) (opset.ObjectID, error) {
 	object, err := b.object(handle)
 	if err != nil {
-		return ObjectID{}, err
+		return opset.ObjectID{}, err
 	}
 
 	if object.IsRoot {
-		return ObjectID{}, fmt.Errorf("root map is not a sequence")
+		return opset.ObjectID{}, fmt.Errorf("root map is not a sequence")
 	}
 
 	operation, ok := b.state.operations[object.OpID]
 	if !ok ||
-		(operation.Action != ActionMakeList &&
-			operation.Action != ActionMakeText) {
-		return ObjectID{}, fmt.Errorf("object is not a sequence")
+		(operation.Action != opset.ActionMakeList &&
+			operation.Action != opset.ActionMakeText) {
+		return opset.ObjectID{}, fmt.Errorf("object is not a sequence")
 	}
 
 	return object, nil
 }
 
-func (b *Engine) textObject(handle uint32) (ObjectID, error) {
+func (b *Engine) textObject(handle uint32) (opset.ObjectID, error) {
 	object, err := b.object(handle)
 	if err != nil {
-		return ObjectID{}, err
+		return opset.ObjectID{}, err
 	}
 
 	if object.IsRoot {
-		return ObjectID{}, fmt.Errorf("root map is not text")
+		return opset.ObjectID{}, fmt.Errorf("root map is not text")
 	}
 
 	operation, ok := b.state.operations[object.OpID]
-	if !ok || operation.Action != ActionMakeText {
-		return ObjectID{}, fmt.Errorf("object is not text")
+	if !ok || operation.Action != opset.ActionMakeText {
+		return opset.ObjectID{}, fmt.Errorf("object is not text")
 	}
 
 	return object, nil
 }
 
-func (b *Engine) pushObject(object ObjectID) uint32 {
+func (b *Engine) pushObject(object opset.ObjectID) uint32 {
 	handle := b.nextHandle
 	b.nextHandle++
 	b.objects[handle] = object
@@ -151,13 +152,13 @@ func (b *Engine) syncState(handle uint32) (*nativeSyncState, error) {
 	return state, nil
 }
 
-func (b *Engine) rootTextObjects() map[string]Operation {
-	objects := make(map[string]Operation)
+func (b *Engine) rootTextObjects() map[string]opset.Operation {
+	objects := make(map[string]opset.Operation)
 
 	for _, operation := range b.state.operations {
 		if operation.Object.IsRoot &&
 			operation.Key.Property != nil &&
-			operation.Action == ActionMakeText &&
+			operation.Action == opset.ActionMakeText &&
 			!b.state.isSuperseded(operation.ID) {
 			property := *operation.Key.Property
 
@@ -174,34 +175,34 @@ func (b *Engine) rootTextObjects() map[string]Operation {
 func (b *Engine) insertSequenceOperation(
 	handle uint32,
 	index uint64,
-	action Action,
-	value *Scalar,
-) (Operation, error) {
+	action opset.Action,
+	value *opset.Scalar,
+) (opset.Operation, error) {
 
 	object, err := b.sequenceObject(handle)
 	if err != nil {
-		return Operation{}, err
+		return opset.Operation{}, err
 	}
 
 	sequence := b.state.sequenceValues(object.OpID)
 
 	element, ok := b.resolveSequenceIndex(object, sequence, index)
 	if !ok || element > uint64(len(sequence)) {
-		return Operation{}, fmt.Errorf(
+		return opset.Operation{}, fmt.Errorf(
 			"sequence index %d is out of bounds for length %d",
 			index,
 			len(sequence),
 		)
 	}
 
-	key := Key{IsHead: element == 0}
+	key := opset.Key{IsHead: element == 0}
 	if element > 0 {
 		key.Element = new(sequence[element-1].Element)
 	}
 
 	key = b.state.insertAnchorKey(object.OpID, key)
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:     b.nextOperationID(),
 		Object: object,
 		Key:    key,
@@ -210,7 +211,7 @@ func (b *Engine) insertSequenceOperation(
 		Value:  value,
 	}
 	if err := b.addPending(operation); err != nil {
-		return Operation{}, err
+		return opset.Operation{}, err
 	}
 
 	return operation, nil
@@ -220,9 +221,9 @@ func (b *Engine) insertSequenceOperation(
 // list element, in ascending order. A put, delete, or increment must reference
 // all of them so that concurrent conflicting values are overwritten identically
 // to upstream Rust.
-func (b *Engine) sequenceElementPredecessors(element OpID) []OpID {
+func (b *Engine) sequenceElementPredecessors(element opset.OpID) []opset.OpID {
 	visible := b.state.visibleSequenceElementOperations(element)
-	predecessors := make([]OpID, 0, len(visible))
+	predecessors := make([]opset.OpID, 0, len(visible))
 
 	for _, operation := range visible {
 		predecessors = append(predecessors, operation.ID)
@@ -263,7 +264,7 @@ func (b *Engine) sequenceOperation(
 // use element indices directly. The boolean reports whether the index resolves
 // to a boundary at or before the end of the sequence.
 func (b *Engine) resolveSequenceIndex(
-	object ObjectID,
+	object opset.ObjectID,
 	sequence []sequenceValue,
 	index uint64,
 ) (uint64, bool) {
@@ -291,49 +292,49 @@ func (b *Engine) resolveSequenceIndex(
 	return 0, false
 }
 
-func (b *Engine) isTextObject(object ObjectID) bool {
+func (b *Engine) isTextObject(object opset.ObjectID) bool {
 	if object.IsRoot {
 		return false
 	}
 
 	operation, ok := b.state.operations[object.OpID]
 
-	return ok && operation.Action == ActionMakeText
+	return ok && operation.Action == opset.ActionMakeText
 }
 
 func sequenceValueUTF16Width(value sequenceValue) uint64 {
 	operation := value.Operation
-	if operation.Value != nil && operation.Value.Type == ScalarString {
+	if operation.Value != nil && operation.Value.Type == opset.ScalarString {
 		return uint64(utf16Width(operation.Value.String))
 	}
 
 	return 1
 }
 
-func objectAction(rawType string) (Action, error) {
+func objectAction(rawType string) (opset.Action, error) {
 	switch rawType {
 	case "map":
-		return ActionMakeMap, nil
+		return opset.ActionMakeMap, nil
 	case "list":
-		return ActionMakeList, nil
+		return opset.ActionMakeList, nil
 	case "text":
-		return ActionMakeText, nil
+		return opset.ActionMakeText, nil
 	case "table":
-		return ActionMakeTable, nil
+		return opset.ActionMakeTable, nil
 	default:
 		return 0, fmt.Errorf("unknown object type %q", rawType)
 	}
 }
 
-func actionObjectType(action Action) (string, error) {
+func actionObjectType(action opset.Action) (string, error) {
 	switch action {
-	case ActionMakeMap:
+	case opset.ActionMakeMap:
 		return "map", nil
-	case ActionMakeList:
+	case opset.ActionMakeList:
 		return "list", nil
-	case ActionMakeText:
+	case opset.ActionMakeText:
 		return "text", nil
-	case ActionMakeTable:
+	case opset.ActionMakeTable:
 		return "table", nil
 	default:
 		return "", fmt.Errorf("operation is not an object")
@@ -341,9 +342,9 @@ func actionObjectType(action Action) (string, error) {
 }
 
 func (b *Engine) textMarkKey(
-	object ObjectID,
+	object opset.ObjectID,
 	index uint32,
-) (Key, error) {
+) (opset.Key, error) {
 	// Mark positions share the unified rich-text index space with splice and
 	// block operations, so block markers occupy a position (length 1) just like
 	// a character. Walk the full element sequence, not the text-only view.
@@ -355,14 +356,14 @@ func (b *Engine) textMarkKey(
 	// computation extends such an unmatched begin to the end of the text.
 	_, previous, err := richTextPosition(sequence, index)
 	if err != nil {
-		return Key{}, err
+		return opset.Key{}, err
 	}
 
 	if previous == nil {
-		return Key{IsHead: true}, nil
+		return opset.Key{IsHead: true}, nil
 	}
 
-	return Key{Element: new(*previous)}, nil
+	return opset.Key{Element: new(*previous)}, nil
 }
 
 func markExpansion(value string) (bool, bool, error) {
@@ -381,12 +382,12 @@ func markExpansion(value string) (bool, bool, error) {
 }
 
 func richTextPosition(
-	sequence []Operation,
+	sequence []opset.Operation,
 	index uint32,
-) (*Operation, *OpID, error) {
+) (*opset.Operation, *opset.OpID, error) {
 	var (
 		position uint32
-		previous *OpID
+		previous *opset.OpID
 	)
 
 	for i := range sequence {
@@ -396,7 +397,7 @@ func richTextPosition(
 		}
 
 		length := uint32(utf16Length(*operation))
-		if operation.Action == ActionMakeMap {
+		if operation.Action == opset.ActionMakeMap {
 			length = 1
 		}
 
@@ -423,11 +424,11 @@ func richTextPosition(
 // one entry per element plus a trailing total, where offsets[i] is the width
 // before element i.
 func sequenceRange(
-	sequence []Operation,
+	sequence []opset.Operation,
 	offsets []uint32,
 	index uint32,
 	deleteCount uint32,
-) (int, int, *OpID, error) {
+) (int, int, *opset.OpID, error) {
 	total := offsets[len(offsets)-1]
 	if index > total {
 		return 0, 0, nil, fmt.Errorf("text index %d is out of bounds", index)
@@ -444,7 +445,7 @@ func sequenceRange(
 		start++
 	}
 
-	var previous *OpID
+	var previous *opset.OpID
 	if start > 0 {
 		previousValue := sequence[start-1].ID
 		previous = &previousValue
@@ -471,16 +472,16 @@ func sequenceRange(
 // elementLength returns the position an operation occupies in the unified
 // rich-text index space: block markers count as a single position, while text
 // characters count by their UTF-16 code-unit length.
-func elementLength(operation Operation) uint32 {
-	if operation.Action == ActionMakeMap {
+func elementLength(operation opset.Operation) uint32 {
+	if operation.Action == opset.ActionMakeMap {
 		return 1
 	}
 
 	return uint32(utf16Length(operation))
 }
 
-func utf16Length(operation Operation) int {
-	if operation.Value == nil || operation.Value.Type != ScalarString {
+func utf16Length(operation opset.Operation) int {
+	if operation.Value == nil || operation.Value.Type != opset.ScalarString {
 		return 0
 	}
 
@@ -497,13 +498,13 @@ func utf16Length(operation Operation) int {
 	return length
 }
 
-func decodeScalarWire(encoded []byte) (Scalar, error) {
+func decodeScalarWire(encoded []byte) (opset.Scalar, error) {
 	var wire scalarWire
 	if err := json.Unmarshal(encoded, &wire); err != nil {
-		return Scalar{}, fmt.Errorf("cannot decode scalar: %w", err)
+		return opset.Scalar{}, fmt.Errorf("cannot decode scalar: %w", err)
 	}
 
-	value := Scalar{
+	value := opset.Scalar{
 		Bool:   wire.Bool,
 		Uint:   wire.Uint,
 		Int:    wire.Int,
@@ -512,42 +513,42 @@ func decodeScalarWire(encoded []byte) (Scalar, error) {
 	}
 	switch wire.Type {
 	case "null":
-		value.Type = ScalarNull
+		value.Type = opset.ScalarNull
 	case "boolean":
 		if wire.Bool {
-			value.Type = ScalarTrue
+			value.Type = opset.ScalarTrue
 		} else {
-			value.Type = ScalarFalse
+			value.Type = opset.ScalarFalse
 		}
 	case "uint":
-		value.Type = ScalarUint
+		value.Type = opset.ScalarUint
 	case "int":
-		value.Type = ScalarInt
+		value.Type = opset.ScalarInt
 	case "float64":
-		value.Type = ScalarFloat64
+		value.Type = opset.ScalarFloat64
 	case "string":
-		value.Type = ScalarString
+		value.Type = opset.ScalarString
 	case "bytes":
-		value.Type = ScalarBytes
+		value.Type = opset.ScalarBytes
 
 		bytes, err := hex.DecodeString(wire.Bytes)
 		if err != nil {
-			return Scalar{}, fmt.Errorf("cannot decode scalar bytes: %w", err)
+			return opset.Scalar{}, fmt.Errorf("cannot decode scalar bytes: %w", err)
 		}
 
 		value.Bytes = bytes
 	case "counter":
-		value.Type = ScalarCounter
+		value.Type = opset.ScalarCounter
 	case "timestamp":
-		value.Type = ScalarTimestamp
+		value.Type = opset.ScalarTimestamp
 	default:
-		return Scalar{}, fmt.Errorf("unknown scalar type %q", wire.Type)
+		return opset.Scalar{}, fmt.Errorf("unknown scalar type %q", wire.Type)
 	}
 
 	return value, nil
 }
 
-func encodeScalarWire(value Scalar) ([]byte, error) {
+func encodeScalarWire(value opset.Scalar) ([]byte, error) {
 	wire := scalarWire{
 		Bool:   value.Bool,
 		Uint:   value.Uint,
@@ -557,24 +558,24 @@ func encodeScalarWire(value Scalar) ([]byte, error) {
 		Bytes:  hex.EncodeToString(value.Bytes),
 	}
 	switch value.Type {
-	case ScalarNull:
+	case opset.ScalarNull:
 		wire.Type = "null"
-	case ScalarFalse, ScalarTrue:
+	case opset.ScalarFalse, opset.ScalarTrue:
 		wire.Type = "boolean"
-		wire.Bool = value.Type == ScalarTrue
-	case ScalarUint:
+		wire.Bool = value.Type == opset.ScalarTrue
+	case opset.ScalarUint:
 		wire.Type = "uint"
-	case ScalarInt:
+	case opset.ScalarInt:
 		wire.Type = "int"
-	case ScalarFloat64:
+	case opset.ScalarFloat64:
 		wire.Type = "float64"
-	case ScalarString:
+	case opset.ScalarString:
 		wire.Type = "string"
-	case ScalarBytes:
+	case opset.ScalarBytes:
 		wire.Type = "bytes"
-	case ScalarCounter:
+	case opset.ScalarCounter:
 		wire.Type = "counter"
-	case ScalarTimestamp:
+	case opset.ScalarTimestamp:
 		wire.Type = "timestamp"
 	default:
 		return nil, fmt.Errorf("unsupported scalar type %d", value.Type)
@@ -588,7 +589,7 @@ func encodeScalarWire(value Scalar) ([]byte, error) {
 	return encoded, nil
 }
 
-func scalarValuesEqual(left, right Scalar) bool {
+func scalarValuesEqual(left, right opset.Scalar) bool {
 	return left.Type == right.Type &&
 		left.Bool == right.Bool &&
 		left.Uint == right.Uint &&
@@ -598,64 +599,64 @@ func scalarValuesEqual(left, right Scalar) bool {
 		bytes.Equal(left.Bytes, right.Bytes)
 }
 
-func randomActorID() (ActorID, error) {
+func randomActorID() (opset.ActorID, error) {
 	var value [16]byte
 	if _, err := rand.Read(value[:]); err != nil {
 		return "", fmt.Errorf("cannot generate native actor ID: %w", err)
 	}
 
-	return NewActorID(value[:])
+	return opset.NewActorID(value[:])
 }
 
 func encodeEmptyDocument() []byte {
 	body := []byte{0, 0, 0, 0}
-	hashInput := []byte{byte(ChunkDocument)}
+	hashInput := []byte{byte(opset.ChunkDocument)}
 	hashInput = encoding.AppendULEB(hashInput, uint64(len(body)))
 	hashInput = append(hashInput, body...)
 	hash := sha256.Sum256(hashInput)
 
 	raw := []byte{0x85, 0x6f, 0x4a, 0x83}
 	raw = append(raw, hash[:4]...)
-	raw = append(raw, byte(ChunkDocument))
+	raw = append(raw, byte(opset.ChunkDocument))
 	raw = encoding.AppendULEB(raw, uint64(len(body)))
 
 	return append(raw, body...)
 }
 
-func decodeCursor(data []byte) (OpID, byte, error) {
+func decodeCursor(data []byte) (opset.OpID, byte, error) {
 	r := encoding.NewReader(data)
 
 	version, err := r.Byte()
 	if err != nil || version != 1 {
-		return OpID{}, 0, fmt.Errorf("invalid cursor version")
+		return opset.OpID{}, 0, fmt.Errorf("invalid cursor version")
 	}
 
 	cursorType, err := r.Byte()
 	if err != nil || cursorType != 3 {
-		return OpID{}, 0, fmt.Errorf("unsupported cursor type")
+		return opset.OpID{}, 0, fmt.Errorf("unsupported cursor type")
 	}
 
 	actorBytes, err := encoding.DecodeLengthPrefixed(r)
 	if err != nil {
-		return OpID{}, 0, fmt.Errorf("cannot decode cursor actor: %w", err)
+		return opset.OpID{}, 0, fmt.Errorf("cannot decode cursor actor: %w", err)
 	}
 
-	actor, err := NewActorID(actorBytes)
+	actor, err := opset.NewActorID(actorBytes)
 	if err != nil {
-		return OpID{}, 0, err
+		return opset.OpID{}, 0, err
 	}
 
 	counter, err := r.ULEB()
 	if err != nil {
-		return OpID{}, 0, fmt.Errorf("cannot decode cursor counter: %w", err)
+		return opset.OpID{}, 0, fmt.Errorf("cannot decode cursor counter: %w", err)
 	}
 
 	move, err := r.Byte()
 	if err != nil || (move != 1 && move != 2) || r.Remaining() != 0 {
-		return OpID{}, 0, fmt.Errorf("invalid cursor movement")
+		return opset.OpID{}, 0, fmt.Errorf("invalid cursor movement")
 	}
 
-	return OpID{Actor: actor, Counter: counter}, move, nil
+	return opset.OpID{Actor: actor, Counter: counter}, move, nil
 }
 
 func equalHashes(left, right [][32]byte) bool {
@@ -672,10 +673,10 @@ func equalHashes(left, right [][32]byte) bool {
 	return true
 }
 
-func nativeHashes(heads [][32]byte) []ChangeHash {
-	result := make([]ChangeHash, len(heads))
+func nativeHashes(heads [][32]byte) []opset.ChangeHash {
+	result := make([]opset.ChangeHash, len(heads))
 	for i, head := range heads {
-		result[i] = ChangeHash(head)
+		result[i] = opset.ChangeHash(head)
 	}
 
 	return result

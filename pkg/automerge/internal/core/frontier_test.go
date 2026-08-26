@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 // committedTextBackend returns a backend with a text object edited `edits` times,
@@ -56,8 +57,8 @@ func committedTextBackend(t *testing.T, id byte, edits int) *Engine {
 	return backend
 }
 
-func snapshotFromBackend(backend *Engine) *Document {
-	document := &Document{}
+func snapshotFromBackend(backend *Engine) *opset.Document {
+	document := &opset.Document{}
 
 	for hash, change := range backend.state.changes {
 		clone := *change
@@ -81,7 +82,7 @@ func TestNewStateFromDocument_RebuildsInconsistentFrontier(t *testing.T) {
 
 	document := snapshotFromBackend(committedTextBackend(t, 1, 3))
 
-	var phantom ChangeHash
+	var phantom opset.ChangeHash
 
 	phantom[0] = 0xAB
 	document.Heads = append(document.Heads, phantom)
@@ -157,10 +158,10 @@ func TestChangesSince_DegradesToReachablePrefix(t *testing.T) {
 	require.Len(t, all, 4)
 
 	// Remove the deep branch's first change, the ancestor of its head.
-	deepActor, err := NewActorID(actorBytes(0x20))
+	deepActor, err := opset.NewActorID(actorBytes(0x20))
 	require.NoError(t, err)
 
-	var removed ChangeHash
+	var removed opset.ChangeHash
 
 	for hash, change := range base.state.changes {
 		if change.Actor == deepActor && change.Sequence == 1 {
@@ -206,11 +207,11 @@ func TestChangesSince_ToleratesUnknownBaseline(t *testing.T) {
 
 	backend := committedTextBackend(t, 2, 3)
 
-	var unknown ChangeHash
+	var unknown opset.ChangeHash
 
 	unknown[0] = 0xCD
 
-	changes, ok := backend.state.changesSince([]ChangeHash{unknown})
+	changes, ok := backend.state.changesSince([]opset.ChangeHash{unknown})
 	require.True(t, ok)
 	assert.Len(t, changes, 3)
 }
@@ -224,7 +225,7 @@ func TestChangesSince_ToleratesFrontierWithMissingChange(t *testing.T) {
 
 	backend := committedTextBackend(t, 3, 2)
 
-	var phantom ChangeHash
+	var phantom opset.ChangeHash
 
 	phantom[0] = 0xEF
 	backend.state.heads[phantom] = struct{}{}

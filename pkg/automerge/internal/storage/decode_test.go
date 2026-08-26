@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/testsupport/reference"
 )
 
@@ -48,11 +49,11 @@ func fixture(t *testing.T, encoded string) []byte {
 	return data
 }
 
-func scalarOperations(document *Document) map[string]Scalar {
-	result := make(map[string]Scalar)
+func scalarOperations(document *opset.Document) map[string]opset.Scalar {
+	result := make(map[string]opset.Scalar)
 
 	for _, operation := range document.Changes[0].Operations {
-		if operation.Action == ActionSet && operation.Key.Property != nil && operation.Value != nil {
+		if operation.Action == opset.ActionSet && operation.Key.Property != nil && operation.Value != nil {
 			result[*operation.Key.Property] = *operation.Value
 		}
 	}
@@ -76,9 +77,9 @@ func TestDecode_OfficialDocumentFixture(t *testing.T) {
 
 	values := scalarOperations(document)
 	require.Len(t, values, 10)
-	assert.Equal(t, ScalarNull, values["nil"].Type)
-	assert.Equal(t, ScalarFalse, values["no"].Type)
-	assert.Equal(t, ScalarTrue, values["yes"].Type)
+	assert.Equal(t, opset.ScalarNull, values["nil"].Type)
+	assert.Equal(t, opset.ScalarFalse, values["no"].Type)
+	assert.Equal(t, opset.ScalarTrue, values["yes"].Type)
 	assert.Equal(t, uint64(42), values["uint"].Uint)
 	assert.Equal(t, int64(-7), values["int"].Int)
 	assert.Equal(t, 1.5, values["float"].Float)
@@ -139,14 +140,14 @@ func TestDecode_CompressedOfficialChangeFixture(t *testing.T) {
 	require.NoError(t, writer.Close())
 
 	data := append([]byte(nil), uncompressed[:8]...)
-	data = append(data, byte(ChunkCompressedChange))
+	data = append(data, byte(opset.ChunkCompressedChange))
 	data = appendULEB(data, uint64(compressed.Len()))
 	data = append(data, compressed.Bytes()...)
 
 	document, err := Decode(data)
 	require.NoError(t, err)
 	require.Len(t, document.Changes, 1)
-	assert.Equal(t, ChunkCompressedChange, document.ChunkTypes[0])
+	assert.Equal(t, opset.ChunkCompressedChange, document.ChunkTypes[0])
 	assert.Equal(t, "99c38e85f3aae8af5fc91b50329124c399d11a23eb834fe148b237280e4ba8a7", document.Heads[0].String())
 }
 
@@ -365,10 +366,10 @@ func TestReaderULEB_RejectsNonCanonicalValue(t *testing.T) {
 func TestValidateSnapshotGraph_RejectsCycle(t *testing.T) {
 	t.Parallel()
 
-	actor, err := NewActorID([]byte{1})
+	actor, err := opset.NewActorID([]byte{1})
 	require.NoError(t, err)
 
-	changes := []Change{
+	changes := []opset.Change{
 		{
 			Actor:             actor,
 			Sequence:          1,
@@ -391,10 +392,10 @@ func TestValidateSnapshotGraph_RejectsCycle(t *testing.T) {
 func TestValidateSnapshotGraph_RejectsSequenceGap(t *testing.T) {
 	t.Parallel()
 
-	actor, err := NewActorID([]byte{1})
+	actor, err := opset.NewActorID([]byte{1})
 	require.NoError(t, err)
 
-	changes := []Change{
+	changes := []opset.Change{
 		{Actor: actor, Sequence: 1, MaxOp: 1},
 		{Actor: actor, Sequence: 3, MaxOp: 2, DependencyIndexes: []uint64{0}},
 	}

@@ -23,6 +23,7 @@ package core
 import (
 	"slices"
 
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
@@ -45,8 +46,8 @@ func (b *Engine) compact(retainOrphans, deflate bool) ([]byte, bool, error) {
 		return nil, false, nil
 	}
 
-	document := &Document{
-		Changes: make([]Change, 0, len(changes)),
+	document := &opset.Document{
+		Changes: make([]opset.Change, 0, len(changes)),
 		Heads:   b.state.Heads(),
 	}
 	for _, change := range changes {
@@ -72,8 +73,8 @@ func (b *Engine) compact(retainOrphans, deflate bool) ([]byte, bool, error) {
 // map's operations grouped by property and a sequence's following the order a
 // reader sees. Deletes are left out because a snapshot records them only as
 // successors of what they removed.
-func (s *State) documentOperationOrder() []OpID {
-	order := make([]OpID, 0, len(s.operations))
+func (s *State) documentOperationOrder() []opset.OpID {
+	order := make([]opset.OpID, 0, len(s.operations))
 
 	for _, object := range s.documentObjects() {
 		if object.IsRoot || isMapObject(s.operations[object.OpID].Action) {
@@ -90,32 +91,32 @@ func (s *State) documentOperationOrder() []OpID {
 
 // documentObjects lists the root map followed by every object the history
 // creates, ordered by the identifier of the operation that made it.
-func (s *State) documentObjects() []ObjectID {
-	objects := make([]ObjectID, 0)
+func (s *State) documentObjects() []opset.ObjectID {
+	objects := make([]opset.ObjectID, 0)
 
 	for id, operation := range s.operations {
 		if isObjectAction(operation.Action) {
-			objects = append(objects, ObjectID{OpID: id})
+			objects = append(objects, opset.ObjectID{OpID: id})
 		}
 	}
 
 	slices.SortFunc(
 		objects,
-		func(left, right ObjectID) int {
+		func(left, right opset.ObjectID) int {
 			return left.OpID.Compare(right.OpID)
 		},
 	)
 
-	return append([]ObjectID{RootObject()}, objects...)
+	return append([]opset.ObjectID{opset.RootObject()}, objects...)
 }
 
-func (s *State) mapObjectOrder(object ObjectID) []OpID {
-	byProperty := make(map[string][]OpID)
+func (s *State) mapObjectOrder(object opset.ObjectID) []opset.OpID {
+	byProperty := make(map[string][]opset.OpID)
 
 	for id, operation := range s.operations {
 		if operation.Object != object ||
 			operation.Key.Property == nil ||
-			operation.Action == ActionDelete {
+			operation.Action == opset.ActionDelete {
 			continue
 		}
 
@@ -130,14 +131,14 @@ func (s *State) mapObjectOrder(object ObjectID) []OpID {
 
 	slices.Sort(properties)
 
-	order := make([]OpID, 0, len(s.operations))
+	order := make([]opset.OpID, 0, len(s.operations))
 
 	for _, property := range properties {
 		identifiers := byProperty[property]
 
 		slices.SortFunc(
 			identifiers,
-			func(left, right OpID) int {
+			func(left, right opset.OpID) int {
 				return left.Compare(right)
 			},
 		)
@@ -148,16 +149,16 @@ func (s *State) mapObjectOrder(object ObjectID) []OpID {
 	return order
 }
 
-func (s *State) sequenceObjectOrder(object ObjectID) []OpID {
+func (s *State) sequenceObjectOrder(object opset.ObjectID) []opset.OpID {
 	// Operations that address an element rather than create it, such as an
 	// overwrite, follow the element they target.
-	byElement := make(map[OpID][]OpID)
+	byElement := make(map[opset.OpID][]opset.OpID)
 
 	for id, operation := range s.operations {
 		if operation.Object != object ||
 			operation.Insert ||
 			operation.Key.Element == nil ||
-			operation.Action == ActionDelete {
+			operation.Action == opset.ActionDelete {
 			continue
 		}
 
@@ -168,17 +169,17 @@ func (s *State) sequenceObjectOrder(object ObjectID) []OpID {
 	for element := range byElement {
 		slices.SortFunc(
 			byElement[element],
-			func(left, right OpID) int {
+			func(left, right opset.OpID) int {
 				return left.Compare(right)
 			},
 		)
 	}
 
 	elements := s.insertOrder(object.OpID)
-	order := make([]OpID, 0, len(elements))
+	order := make([]opset.OpID, 0, len(elements))
 
 	for _, element := range elements {
-		if operation, ok := s.operations[element]; ok && operation.Action != ActionDelete {
+		if operation, ok := s.operations[element]; ok && operation.Action != opset.ActionDelete {
 			order = append(order, element)
 		}
 
@@ -188,15 +189,15 @@ func (s *State) sequenceObjectOrder(object ObjectID) []OpID {
 	return order
 }
 
-func isObjectAction(action Action) bool {
+func isObjectAction(action opset.Action) bool {
 	switch action {
-	case ActionMakeMap, ActionMakeList, ActionMakeText, ActionMakeTable:
+	case opset.ActionMakeMap, opset.ActionMakeList, opset.ActionMakeText, opset.ActionMakeTable:
 		return true
 	default:
 		return false
 	}
 }
 
-func isMapObject(action Action) bool {
-	return action == ActionMakeMap || action == ActionMakeTable
+func isMapObject(action opset.Action) bool {
+	return action == opset.ActionMakeMap || action == opset.ActionMakeTable
 }

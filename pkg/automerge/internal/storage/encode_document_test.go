@@ -25,18 +25,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 // storedOperationOrder reports the operation-set order a document chunk was
 // written in, which is the order the encoder has to be given to reproduce it.
-func storedOperationOrder(t *testing.T, data []byte) []OpID {
+func storedOperationOrder(t *testing.T, data []byte) []opset.OpID {
 	t.Helper()
 
 	r := &reader{data: data}
 
 	chunk, err := decodeChunk(r)
 	require.NoError(t, err)
-	require.Equal(t, ChunkDocument, chunk.kind)
+	require.Equal(t, opset.ChunkDocument, chunk.kind)
 
 	content := &reader{data: chunk.content}
 
@@ -61,7 +62,7 @@ func storedOperationOrder(t *testing.T, data []byte) []OpID {
 	operations, _, err := decodeOperations(operationColumns, actors, false, nil)
 	require.NoError(t, err)
 
-	order := make([]OpID, len(operations))
+	order := make([]opset.OpID, len(operations))
 	for i, operation := range operations {
 		order[i] = operation.ID
 	}

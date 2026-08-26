@@ -24,12 +24,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"slices"
 )
 
 // assembleChunk frames a chunk body: the magic bytes, the first four bytes of
 // the digest covering the typed and length-prefixed body, then that body.
-func assembleChunk(kind ChunkType, body []byte) []byte {
+func assembleChunk(kind opset.ChunkType, body []byte) []byte {
 	length := appendULEB(nil, uint64(len(body)))
 
 	digestInput := make([]byte, 0, 1+len(length)+len(body))
@@ -71,7 +72,7 @@ func assembleChunk(kind ChunkType, body []byte) []byte {
 // threshold; compression is a size optimization, and every column round-trips
 // because the decoder inflates any column whose specification carries the
 // compressed bit.
-func EncodeDocument(document *Document, order []OpID, compress bool) ([]byte, error) {
+func EncodeDocument(document *opset.Document, order []opset.OpID, compress bool) ([]byte, error) {
 	changes, err := documentChangeOrder(document)
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func EncodeDocument(document *Document, order []OpID, compress bool) ([]byte, er
 	}
 
 	actors := documentActorTable(changes, operations)
-	actorIndexes := make(map[ActorID]uint64, len(actors))
+	actorIndexes := make(map[opset.ActorID]uint64, len(actors))
 
 	for i, actor := range actors {
 		actorIndexes[actor] = uint64(i)
@@ -140,15 +141,15 @@ func EncodeDocument(document *Document, order []OpID, compress bool) ([]byte, er
 		body = appendULEB(body, index)
 	}
 
-	return assembleChunk(ChunkDocument, body), nil
+	return assembleChunk(opset.ChunkDocument, body), nil
 }
 
 // documentChangeOrder returns the changes in dependency order. A snapshot may
 // legally store them in any order, but writing ancestors first keeps the index
 // references pointing backwards, which is what every other implementation emits
 // and what makes the result readable in one pass.
-func documentChangeOrder(document *Document) ([]*Change, error) {
-	byHash := make(map[ChangeHash]*Change, len(document.Changes))
+func documentChangeOrder(document *opset.Document) ([]*opset.Change, error) {
+	byHash := make(map[opset.ChangeHash]*opset.Change, len(document.Changes))
 
 	for i := range document.Changes {
 		change := &document.Changes[i]
@@ -159,12 +160,12 @@ func documentChangeOrder(document *Document) ([]*Change, error) {
 		byHash[*change.Hash] = change
 	}
 
-	ordered := make([]*Change, 0, len(document.Changes))
-	placed := make(map[ChangeHash]struct{}, len(document.Changes))
+	ordered := make([]*opset.Change, 0, len(document.Changes))
+	placed := make(map[opset.ChangeHash]struct{}, len(document.Changes))
 
-	var place func(*Change) error
+	var place func(*opset.Change) error
 
-	place = func(change *Change) error {
+	place = func(change *opset.Change) error {
 		if _, ok := placed[*change.Hash]; ok {
 			return nil
 		}
@@ -206,8 +207,8 @@ func documentChangeOrder(document *Document) ([]*Change, error) {
 // each one's successors derived from the predecessors recorded across the whole
 // history. Deletes are dropped: they exist in the result only as the successor
 // entries they contribute.
-func documentOperations(changes []*Change, order []OpID) ([]Operation, error) {
-	sources := make(map[OpID]*Operation)
+func documentOperations(changes []*opset.Change, order []opset.OpID) ([]opset.Operation, error) {
+	sources := make(map[opset.OpID]*opset.Operation)
 
 	for _, change := range changes {
 		for i := range change.Operations {
@@ -224,7 +225,7 @@ func documentOperations(changes []*Change, order []OpID) ([]Operation, error) {
 		}
 	}
 
-	successors := make(map[OpID][]OpID)
+	successors := make(map[opset.OpID][]opset.OpID)
 
 	for _, change := range changes {
 		for _, operation := range change.Operations {
@@ -237,13 +238,13 @@ func documentOperations(changes []*Change, order []OpID) ([]Operation, error) {
 	for identifier := range successors {
 		slices.SortFunc(
 			successors[identifier],
-			func(left, right OpID) int {
+			func(left, right opset.OpID) int {
 				return left.Compare(right)
 			},
 		)
 	}
 
-	operations := make([]Operation, 0, len(order))
+	operations := make([]opset.Operation, 0, len(order))
 
 	for _, identifier := range order {
 		source, ok := sources[identifier]
@@ -255,7 +256,7 @@ func documentOperations(changes []*Change, order []OpID) ([]Operation, error) {
 			)
 		}
 
-		if source.Action == ActionDelete {
+		if source.Action == opset.ActionDelete {
 			return nil, fmt.Errorf(
 				"operation %s@%d is a delete and cannot be stored",
 				identifier.Actor,
@@ -273,10 +274,10 @@ func documentOperations(changes []*Change, order []OpID) ([]Operation, error) {
 	return operations, nil
 }
 
-func documentActorTable(changes []*Change, operations []Operation) []ActorID {
-	seen := make(map[ActorID]struct{})
+func documentActorTable(changes []*opset.Change, operations []opset.Operation) []opset.ActorID {
+	seen := make(map[opset.ActorID]struct{})
 
-	add := func(actor ActorID) {
+	add := func(actor opset.ActorID) {
 		if actor != "" {
 			seen[actor] = struct{}{}
 		}
@@ -302,14 +303,14 @@ func documentActorTable(changes []*Change, operations []Operation) []ActorID {
 		}
 	}
 
-	actors := make([]ActorID, 0, len(seen))
+	actors := make([]opset.ActorID, 0, len(seen))
 	for actor := range seen {
 		actors = append(actors, actor)
 	}
 
 	slices.SortFunc(
 		actors,
-		func(left, right ActorID) int {
+		func(left, right opset.ActorID) int {
 			return left.Compare(right)
 		},
 	)
@@ -319,9 +320,9 @@ func documentActorTable(changes []*Change, operations []Operation) []ActorID {
 
 // documentHeads returns the frontier and the index of each head, which is how a
 // snapshot names its heads.
-func documentHeads(changes []*Change) ([]ChangeHash, []uint64, error) {
-	indexes := make(map[ChangeHash]uint64, len(changes))
-	dependedOn := make(map[ChangeHash]struct{}, len(changes))
+func documentHeads(changes []*opset.Change) ([]opset.ChangeHash, []uint64, error) {
+	indexes := make(map[opset.ChangeHash]uint64, len(changes))
+	dependedOn := make(map[opset.ChangeHash]struct{}, len(changes))
 
 	for i, change := range changes {
 		indexes[*change.Hash] = uint64(i)
@@ -331,7 +332,7 @@ func documentHeads(changes []*Change) ([]ChangeHash, []uint64, error) {
 		}
 	}
 
-	heads := make([]ChangeHash, 0)
+	heads := make([]opset.ChangeHash, 0)
 
 	for _, change := range changes {
 		if _, ok := dependedOn[*change.Hash]; !ok {
@@ -341,7 +342,7 @@ func documentHeads(changes []*Change) ([]ChangeHash, []uint64, error) {
 
 	slices.SortFunc(
 		heads,
-		func(left, right ChangeHash) int {
+		func(left, right opset.ChangeHash) int {
 			return bytes.Compare(left[:], right[:])
 		},
 	)
@@ -355,12 +356,12 @@ func documentHeads(changes []*Change) ([]ChangeHash, []uint64, error) {
 }
 
 func encodeDocumentChangeColumns(
-	changes []*Change,
-	actorIndexes map[ActorID]uint64,
+	changes []*opset.Change,
+	actorIndexes map[opset.ActorID]uint64,
 ) ([]encodedColumn, error) {
 	count := len(changes)
 
-	indexes := make(map[ChangeHash]uint64, count)
+	indexes := make(map[opset.ChangeHash]uint64, count)
 	for i, change := range changes {
 		indexes[*change.Hash] = uint64(i)
 	}
@@ -430,9 +431,9 @@ func encodeDocumentChangeColumns(
 // changeExtra reports the change's extra payload as the scalar a snapshot
 // stores. A change chunk keeps the payload as trailing bytes, so the two forms
 // have to be reconciled in whichever direction carries the value.
-func changeExtra(change *Change) *Scalar {
+func changeExtra(change *opset.Change) *opset.Scalar {
 	if len(change.ExtraBytes) > 0 {
-		return &Scalar{Type: ScalarBytes, Bytes: change.ExtraBytes}
+		return &opset.Scalar{Type: opset.ScalarBytes, Bytes: change.ExtraBytes}
 	}
 
 	if change.Extra != nil {
@@ -441,12 +442,12 @@ func changeExtra(change *Change) *Scalar {
 
 	// The payload is a byte string even when a change carries none, so an absent
 	// one is empty rather than null.
-	return &Scalar{Type: ScalarBytes}
+	return &opset.Scalar{Type: opset.ScalarBytes}
 }
 
 func encodeDocumentOperationColumns(
-	operations []Operation,
-	actorIndexes map[ActorID]uint64,
+	operations []opset.Operation,
+	actorIndexes map[opset.ActorID]uint64,
 ) ([]encodedColumn, error) {
 	count := len(operations)
 
@@ -579,7 +580,7 @@ var (
 // kept, so writing a history back does not quietly drop what a newer version of
 // the format put there. Each retained column is matched to the table it came
 // from by its specification.
-func retainedColumns(document *Document, known []uint32) []encodedColumn {
+func retainedColumns(document *opset.Document, known []uint32) []encodedColumn {
 	retained := make([]encodedColumn, 0)
 
 	for _, column := range document.UnknownColumns {

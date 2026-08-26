@@ -35,6 +35,7 @@ import (
 	"github.com/stretchr/testify/require"
 	productionautomerge "go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/automerge/internal/core"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 	"go.probo.inc/probo/pkg/automerge/internal/sync"
 	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
@@ -359,13 +360,13 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 
 	operations := change.Operations
 	require.Len(t, operations, 7)
-	assert.Equal(t, core.ActionMakeText, operations[0].Action)
+	assert.Equal(t, opset.ActionMakeText, operations[0].Action)
 	assert.True(t, operations[0].Object.IsRoot)
 	require.NotNil(t, operations[0].Key.Property)
 	assert.Equal(t, "title", *operations[0].Key.Property)
 	assert.Equal(t, uint64(1), operations[0].ID.Counter)
-	assert.Equal(t, core.ActorID(string(actorID[:])), operations[0].ID.Actor)
-	assert.Equal(t, core.ActionSet, operations[1].Action)
+	assert.Equal(t, opset.ActorID(string(actorID[:])), operations[0].ID.Actor)
+	assert.Equal(t, opset.ActionSet, operations[1].Action)
 	assert.Equal(t, uint64(1), operations[1].Object.OpID.Counter)
 	assert.True(t, operations[1].Key.IsHead)
 	require.NotNil(t, operations[1].Value)
@@ -458,7 +459,7 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	decoded, err := storage.Decode(combined)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 3)
-	changes := []*core.Change{
+	changes := []*opset.Change{
 		&decoded.Changes[0],
 		&decoded.Changes[1],
 		&decoded.Changes[2],
