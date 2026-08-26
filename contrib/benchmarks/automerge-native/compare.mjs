@@ -26,7 +26,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
-const repository = path.resolve(directory, "../..");
+const repository = path.resolve(directory, "../../..");
 const goBinary = path.join(os.tmpdir(), "probo-automerge-go-benchmark");
 const fixture = path.join(os.tmpdir(), "probo-automerge-benchmark-fixture");
 const rustManifest = path.join(directory, "rust", "Cargo.toml");
@@ -55,7 +55,7 @@ const rustVersion = execFileSync("rustc", ["+1.89.0", "--version"], {
 
 execFileSync(
   "go",
-  ["build", "-trimpath", "-ldflags=-s -w", "-o", goBinary, "./packages/automerge-benchmark/go"],
+  ["build", "-trimpath", "-ldflags=-s -w", "-o", goBinary, "./contrib/benchmarks/automerge-native/go"],
   { cwd: repository, stdio: "inherit" },
 );
 execFileSync(

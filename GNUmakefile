@@ -211,6 +211,71 @@ test-verbose: test ## Run tests with verbose output
 test-short: TEST_FLAGS+=-short
 test-short: test ## Run short tests only
 
+.PHONY: test-automerge-conformance
+test-automerge-conformance: ## Test Go binary compatibility with official Automerge JS
+	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
+		$(GO_BASE) test -count=1 ./pkg/automerge
+
+.PHONY: audit-automerge-parity
+audit-automerge-parity: test-automerge-conformance
+audit-automerge-parity: ## Require every pinned upstream Automerge test to be mapped
+	AUTOMERGE_REQUIRE_FULL_PARITY=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: audit-automerge-interop
+audit-automerge-interop: test-automerge-conformance
+audit-automerge-interop: ## Require complete Rust/JS wire and state interoperability
+	AUTOMERGE_REQUIRE_FULL_INTEROP=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: benchmark-automerge
+benchmark-automerge: ## Benchmark native and Rust/WASM Automerge engines
+	$(GO_BASE) test -run '^$$' -bench . -benchmem ./pkg/automerge
+
+.PHONY: benchmark-automerge-native
+benchmark-automerge-native: ## Compare optimized native Go and native Rust
+	node contrib/benchmarks/automerge-native/compare.mjs
+
+.PHONY: benchmark-automerge-official
+benchmark-automerge-official: ## Run the pinned official Automerge fast benchmark battery
+	@mkdir -p $(dir $(AUTOMERGE_BATTERY_OUTPUT))
+	contrib/benchmarks/automerge-battery.sh run \
+		--tier fast \
+		--output $(AUTOMERGE_BATTERY_OUTPUT)
+
+.PHONY: list-automerge-official-benchmarks
+list-automerge-official-benchmarks: ## List the pinned official Automerge benchmark battery
+	contrib/benchmarks/automerge-battery.sh list --tier all
+
+.PHONY: test-automerge-official-fixtures
+test-automerge-official-fixtures: ## Replay official benchmark-battery documents through Rust and Go
+	rm -rf $(AUTOMERGE_BATTERY_FIXTURES)
+	cargo +1.90.0 run --release --locked \
+		--manifest-path contrib/benchmarks/automerge-native/official-fixtures/Cargo.toml \
+		-- $(AUTOMERGE_BATTERY_FIXTURES)
+	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
+		$(GO_BASE) test -count=1 -run '^TestOfficialBenchmarkBatteryFixtures$$' \
+		./pkg/automerge
+
+.PHONY: generate-automerge-collaboration-fixtures
+generate-automerge-collaboration-fixtures: ## Regenerate automerge-repo protocol fixtures from the pinned JS packages
+	$(NODE) packages/automerge-conformance/generate-collaboration-fixtures.mjs
+
+.PHONY: test-automerge-repo-interop
+test-automerge-repo-interop: ## Sync a real automerge-repo JS client against the Go gateway
+	AUTOMERGE_REPO_INTEROP_CLIENT=$(CURDIR)/packages/automerge-conformance/collaboration-interop-client.mjs \
+		$(GO_BASE) test -count=1 -run '^TestInterop_' ./pkg/automerge/collaboration
+
+.PHONY: fuzz-automerge
+fuzz-automerge: ## Fuzz Automerge public, wire, sync, and projection surfaces
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzLoad$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzCoreOperations$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecode$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzParseSyncMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzRender$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/prosemirror
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodePresence$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodeMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
+
 .PHONY: coverage-report
 coverage-report: test ## Generate HTML coverage report
 	$(GO) tool cover -html=coverage.out -o coverage.html
