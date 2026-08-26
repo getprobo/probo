@@ -29,6 +29,8 @@ import (
 	"fmt"
 	"math"
 	"sort"
+
+	internalencoding "go.probo.inc/probo/pkg/automerge/internal/encoding"
 )
 
 func (b *Engine) addPending(operation Operation) error {
@@ -608,32 +610,32 @@ func randomActorID() (ActorID, error) {
 func encodeEmptyDocument() []byte {
 	body := []byte{0, 0, 0, 0}
 	hashInput := []byte{byte(ChunkDocument)}
-	hashInput = appendULEB(hashInput, uint64(len(body)))
+	hashInput = internalencoding.AppendULEB(hashInput, uint64(len(body)))
 	hashInput = append(hashInput, body...)
 	hash := sha256.Sum256(hashInput)
 
 	raw := []byte{0x85, 0x6f, 0x4a, 0x83}
 	raw = append(raw, hash[:4]...)
 	raw = append(raw, byte(ChunkDocument))
-	raw = appendULEB(raw, uint64(len(body)))
+	raw = internalencoding.AppendULEB(raw, uint64(len(body)))
 
 	return append(raw, body...)
 }
 
 func decodeCursor(data []byte) (OpID, byte, error) {
-	r := newReader(data)
+	r := internalencoding.NewReader(data)
 
-	version, err := r.byte()
+	version, err := r.Byte()
 	if err != nil || version != 1 {
 		return OpID{}, 0, fmt.Errorf("invalid cursor version")
 	}
 
-	cursorType, err := r.byte()
+	cursorType, err := r.Byte()
 	if err != nil || cursorType != 3 {
 		return OpID{}, 0, fmt.Errorf("unsupported cursor type")
 	}
 
-	actorBytes, err := decodeLengthPrefixed(r)
+	actorBytes, err := internalencoding.DecodeLengthPrefixed(r)
 	if err != nil {
 		return OpID{}, 0, fmt.Errorf("cannot decode cursor actor: %w", err)
 	}
@@ -643,13 +645,13 @@ func decodeCursor(data []byte) (OpID, byte, error) {
 		return OpID{}, 0, err
 	}
 
-	counter, err := r.uleb()
+	counter, err := r.ULEB()
 	if err != nil {
 		return OpID{}, 0, fmt.Errorf("cannot decode cursor counter: %w", err)
 	}
 
-	move, err := r.byte()
-	if err != nil || (move != 1 && move != 2) || r.remaining() != 0 {
+	move, err := r.Byte()
+	if err != nil || (move != 1 && move != 2) || r.Remaining() != 0 {
 		return OpID{}, 0, fmt.Errorf("invalid cursor movement")
 	}
 
