@@ -15,11 +15,7 @@ Go decoder or encoder is trusted until it round-trips those fixtures.
 |---|---|---|
 | `@automerge/automerge` | `3.4.1` (`^3.4.0`) | CRDT core; sync message and cursor bytes |
 | `@automerge/automerge-repo` | `2.6.0-alpha.3` (exact) | repo message union, ephemeral gossip, Presence |
-| `@automerge/automerge-repo-network-websocket` | to pin in the transport phase | WebSocket wire framing and join/peer/leave handshake |
-
-The websocket adapter is a separate package and defines the actual on-socket
-framing. It is intentionally out of scope for this first inventory, which covers
-the message layer and Presence; the transport phase pins and inventories it.
+| `@automerge/automerge-repo-network-websocket` | `2.6.0-alpha.3` (exact) | WebSocket wire framing and join/peer handshake |
 
 ## Layering
 
@@ -33,8 +29,8 @@ WebSocket adapter frame        (join / peer / leave + CBOR of the repo message)
               └── ephemeral:    CBOR of the Presence envelope
 ```
 
-Our engine already owns the innermost layer. This package adds the middle layer
-and Presence; the transport phase adds the outermost.
+Our engine owns the innermost layer. This package implements the repo message,
+Presence, and WebSocket framing layers.
 
 ## Repo message union
 
@@ -125,9 +121,8 @@ pinned packages' own CBOR encoder, so they are byte-exact:
   base64 CBOR `data` bytes.
 - `ephemeral-*.json` — a full ephemeral repo message wrapping a presence payload.
 
-Each Go codec change must round-trip these. The wire-framing fixtures (join/peer
-handshake, socket frames) are added in the transport phase alongside the pinned
-websocket adapter.
+Each Go codec change must round-trip these. Wire-framing fixtures cover the
+join/peer handshake and socket frames described below.
 
 ## Transport layer (WebSocket adapter)
 
@@ -218,60 +213,6 @@ CBOR encoder:
 
 - `wire-join.json`, `wire-peer.json`, `wire-error.json` — the handshake frames.
 - `wire-sync.json`, `wire-ephemeral.json` — a framed document message.
-
-## Gateway wiring
-
-The protocol drivers (`ServerConn`, `ClientConn`) are transport-agnostic and
-fully tested. Wiring them into the authenticated production WebSocket endpoint
-reuses the existing collaboration hub rather than duplicating rooms, persistence,
-or cross-instance notification:
-
-- **Auth** — mount the repo route inside the same authenticated router group as
-  `/document-versions/{documentVersionID}/sync` and reuse
-  `documentCollaborationHandler.authorize`. The repo `PeerId` is never trusted as
-  identity.
-- **Document authority & persistence** — `hub.acquire` yields a lease over the
-  shared `*automerge.Document`; each connection uses its own
-  `Document.NewSyncState`. Sync fan-out reuses `lease.NotifyPeers`/`lease.Wake`
-  and persistence reuses `lease.SchedulePersist`/`lease.PersistError`, exactly as
-  the legacy handler does.
-- **Document id** — the frontend chooses the `automerge:<id>` URL, so the gateway
-  uses `NewAdoptingServerConn`: it announces nothing on `Start` and binds to the
-  id in the client's first `sync`/`request` frame, then answers for that id and
-  rejects any other. This removes the need for a server/frontend id-derivation
-  contract.
-- **Ephemeral (presence/cursors)** — repo presence travels as opaque `ephemeral`
-  frames, not the legacy structured snapshots. `ServerConn.Receive` returns a
-  non-duplicate ephemeral frame as `fanout`; the handler publishes it with
-  `lease.BroadcastEphemeral`, and reads other peers' frames from
-  `lease.Ephemeral` to write to its socket. This is scoped to one server
-  instance.
-- **Selections/carets** — a caret or selection is published as a presence
-  `update` whose value is a `TextSelectionValue`: the addressed text field plus a
-  stable Automerge anchor and head cursor (the bytes from `Text.Cursor`), never
-  integer offsets. Offsets drift when anyone types before the caret; a cursor
-  resolves (via `Text.CursorPosition`) to the same character after arbitrary
-  concurrent edits, so remote carets stay anchored. The presence layer only
-  transports the cursor bytes, keeping it independent of the CRDT engine; the
-  server and Go agents create and resolve the cursors.
-
-### Remaining contract decisions before enabling the endpoint
-
-These need the migrated frontend (and a Postgres-backed integration test) to
-settle, so they are intentionally not encoded as untested production code yet:
-
-- **Cross-instance ephemeral** — done. Repo ephemeral gossip is published over
-  the collaboration `NOTIFY` channel in a typed envelope
-  (`realtime.CollaborationEphemeral`) that coexists with the bare version-id
-  "changed" signal; the receiving instance fans it out to local peers and
-  suppresses the publisher's own echo.
-- **Seeding** — the legacy handshake ships `SeedContent` for the client to apply;
-  the repo protocol has no such field. The repo endpoint must instead seed the
-  server-side document (authoritative) before serving, or rely on the first
-  writer. Which of these the frontend expects is undecided.
-- **Auth token transport** — a repo client sets no cookies by default; how the
-  frontend presents the session/bearer credential on the WebSocket upgrade must
-  match `authn` middleware expectations.
 
 ## Deliberately deferred
 

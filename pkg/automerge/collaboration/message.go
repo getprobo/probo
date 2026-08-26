@@ -39,10 +39,9 @@ const (
 	MessageDocUnavailable MessageType = "doc-unavailable"
 )
 
-// Message is one document-scoped repo message. It is the layer between the
-// WebSocket adapter framing (added in the transport phase) and the payload: for
-// sync and request Data is an Automerge sync message our engine owns, and for
-// ephemeral Data is a CBOR presence payload.
+// Message is one document-scoped repo message carried inside the WebSocket
+// adapter framing. For sync and request Data is an Automerge sync message our
+// engine owns, and for ephemeral Data is a CBOR presence payload.
 //
 // Sync bytes are intentionally left opaque here so this package never
 // re-implements the CRDT wire format.
@@ -101,9 +100,8 @@ func (m Message) validate() error {
 	return nil
 }
 
-// EncodeMessage encodes a repo message to CBOR. This is the message object the
-// WebSocket adapter frames; the adapter's own framing and handshake are added
-// in the transport phase.
+// EncodeMessage encodes the repo message object framed by the WebSocket
+// adapter.
 func EncodeMessage(message Message) ([]byte, error) {
 	if err := message.validate(); err != nil {
 		return nil, err
