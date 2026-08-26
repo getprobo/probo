@@ -21,7 +21,6 @@
 package main
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -80,8 +79,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		data, err := document.Save(context.Background())
-		_ = document.Close(context.Background())
+		data, err := document.Save()
+		_ = document.Close()
 
 		if err == nil {
 			err = os.WriteFile(*fixture, data, 0o600)
@@ -150,15 +149,12 @@ func workloadRunner(
 	case "create":
 		return benchmarkWorkload{
 			run: func() error {
-				document, err := automerge.New(
-					context.Background(),
-					benchmarkActor,
-				)
+				document, err := automerge.New(benchmarkActor)
 				if err != nil {
 					return err
 				}
 
-				return document.Close(context.Background())
+				return document.Close()
 			},
 			validate: func() (string, error) {
 				return checksum([]byte("empty")), nil
@@ -173,7 +169,7 @@ func workloadRunner(
 					return err
 				}
 
-				return document.Close(context.Background())
+				return document.Close()
 			},
 			validate: func() (string, error) {
 				document, err := mapDocument(size)
@@ -181,7 +177,7 @@ func workloadRunner(
 					return "", err
 				}
 
-				defer func() { _ = document.Close(context.Background()) }()
+				defer func() { _ = document.Close() }()
 
 				return mapChecksum(document, size)
 			},
@@ -195,7 +191,7 @@ func workloadRunner(
 					return err
 				}
 
-				return document.Close(context.Background())
+				return document.Close()
 			},
 			validate: func() (string, error) {
 				document, err := typedDocument(size)
@@ -203,7 +199,7 @@ func workloadRunner(
 					return "", err
 				}
 
-				defer func() { _ = document.Close(context.Background()) }()
+				defer func() { _ = document.Close() }()
 
 				return textChecksum(document)
 			},
@@ -218,7 +214,6 @@ func workloadRunner(
 		return benchmarkWorkload{
 			run: func() error {
 				loaded, err := automerge.Load(
-					context.Background(),
 					data,
 					benchmarkActor,
 				)
@@ -226,11 +221,10 @@ func workloadRunner(
 					return err
 				}
 
-				return loaded.Close(context.Background())
+				return loaded.Close()
 			},
 			validate: func() (string, error) {
 				loaded, err := automerge.Load(
-					context.Background(),
 					data,
 					benchmarkActor,
 				)
@@ -238,7 +232,7 @@ func workloadRunner(
 					return "", err
 				}
 
-				defer func() { _ = loaded.Close(context.Background()) }()
+				defer func() { _ = loaded.Close() }()
 
 				return textChecksum(loaded)
 			},
@@ -251,7 +245,6 @@ func workloadRunner(
 		}
 
 		document, err := automerge.Load(
-			context.Background(),
 			data,
 			benchmarkActor,
 		)
@@ -261,18 +254,17 @@ func workloadRunner(
 
 		return benchmarkWorkload{
 			run: func() error {
-				_, err := document.Save(context.Background())
+				_, err := document.Save()
 
 				return err
 			},
 			validate: func() (string, error) {
-				data, err := document.Save(context.Background())
+				data, err := document.Save()
 				if err != nil {
 					return "", err
 				}
 
 				loaded, err := automerge.Load(
-					context.Background(),
 					data,
 					benchmarkActor,
 				)
@@ -280,12 +272,12 @@ func workloadRunner(
 					return "", err
 				}
 
-				defer func() { _ = loaded.Close(context.Background()) }()
+				defer func() { _ = loaded.Close() }()
 
 				return textChecksum(loaded)
 			},
 			cleanup: func() {
-				_ = document.Close(context.Background())
+				_ = document.Close()
 			},
 		}, nil
 	default:
@@ -294,39 +286,35 @@ func workloadRunner(
 }
 
 func mapDocument(size int) (*automerge.Document, error) {
-	ctx := context.Background()
-
-	document, err := automerge.New(ctx, benchmarkActor)
+	document, err := automerge.New(benchmarkActor)
 	if err != nil {
 		return nil, err
 	}
 
 	values, err := document.Root().CreateObject(
-		ctx,
 		"values",
 		automerge.ObjectTypeMap,
 	)
 	if err != nil {
-		_ = document.Close(ctx)
+		_ = document.Close()
 		return nil, err
 	}
 
 	for index := range size {
 		if err := values.PutScalar(
-			ctx,
 			strconv.Itoa(index),
 			automerge.Scalar{
 				Type: automerge.ScalarTypeInt,
 				Int:  int64(index),
 			},
 		); err != nil {
-			_ = document.Close(ctx)
+			_ = document.Close()
 			return nil, err
 		}
 	}
 
-	if _, err := document.Commit(ctx, "benchmark", time.Time{}); err != nil {
-		_ = document.Close(ctx)
+	if _, err := document.Commit("benchmark", time.Time{}); err != nil {
+		_ = document.Close()
 		return nil, err
 	}
 
@@ -334,28 +322,26 @@ func mapDocument(size int) (*automerge.Document, error) {
 }
 
 func typedDocument(size int) (*automerge.Document, error) {
-	ctx := context.Background()
-
-	document, err := automerge.New(ctx, benchmarkActor)
+	document, err := automerge.New(benchmarkActor)
 	if err != nil {
 		return nil, err
 	}
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	if err != nil {
-		_ = document.Close(ctx)
+		_ = document.Close()
 		return nil, err
 	}
 
 	for index := range size {
-		if err := text.Splice(ctx, uint32(index), 0, "x"); err != nil {
-			_ = document.Close(ctx)
+		if err := text.Splice(uint32(index), 0, "x"); err != nil {
+			_ = document.Close()
 			return nil, err
 		}
 	}
 
-	if _, err := document.Commit(ctx, "benchmark", time.Time{}); err != nil {
-		_ = document.Close(ctx)
+	if _, err := document.Commit("benchmark", time.Time{}); err != nil {
+		_ = document.Close()
 		return nil, err
 	}
 
@@ -363,26 +349,24 @@ func typedDocument(size int) (*automerge.Document, error) {
 }
 
 func fixtureDocument(size int) (*automerge.Document, error) {
-	ctx := context.Background()
-
-	document, err := automerge.New(ctx, benchmarkActor)
+	document, err := automerge.New(benchmarkActor)
 	if err != nil {
 		return nil, err
 	}
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	if err != nil {
-		_ = document.Close(ctx)
+		_ = document.Close()
 		return nil, err
 	}
 
-	if err := text.Splice(ctx, 0, 0, benchmarkText(size)); err != nil {
-		_ = document.Close(ctx)
+	if err := text.Splice(0, 0, benchmarkText(size)); err != nil {
+		_ = document.Close()
 		return nil, err
 	}
 
-	if _, err := document.Commit(ctx, "benchmark", time.Time{}); err != nil {
-		_ = document.Close(ctx)
+	if _, err := document.Commit("benchmark", time.Time{}); err != nil {
+		_ = document.Close()
 		return nil, err
 	}
 
@@ -399,9 +383,9 @@ func fixtureData(size int, file string) ([]byte, error) {
 		return nil, err
 	}
 
-	defer func() { _ = document.Close(context.Background()) }()
+	defer func() { _ = document.Close() }()
 
-	return document.Save(context.Background())
+	return document.Save()
 }
 
 func benchmarkText(size int) string {
@@ -414,17 +398,14 @@ func benchmarkText(size int) string {
 }
 
 func mapChecksum(document *automerge.Document, size int) (string, error) {
-	values, err := document.Root().Object(context.Background(), "values")
+	values, err := document.Root().Object("values")
 	if err != nil {
 		return "", err
 	}
 
 	normalized := make([]byte, 0, size*16)
 	for index := range size {
-		value, err := values.Scalar(
-			context.Background(),
-			strconv.Itoa(index),
-		)
+		value, err := values.Scalar(strconv.Itoa(index))
 		if err != nil {
 			return "", err
 		}
@@ -437,12 +418,12 @@ func mapChecksum(document *automerge.Document, size int) (string, error) {
 }
 
 func textChecksum(document *automerge.Document) (string, error) {
-	text, err := document.Text(context.Background(), "body")
+	text, err := document.Text("body")
 	if err != nil {
 		return "", err
 	}
 
-	value, err := text.String(context.Background())
+	value, err := text.String()
 	if err != nil {
 		return "", err
 	}

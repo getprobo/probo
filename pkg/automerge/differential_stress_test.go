@@ -31,7 +31,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -52,21 +51,21 @@ var stressMapKeys = []string{"a", "b", "c", "d"}
 // sorted heads, every root map key with its scalar value, the list contents,
 // and the text contents. Nested object identities are excluded because they are
 // engine-specific; their materialized values are what must agree.
-func canonicalDocument(t *testing.T, ctx context.Context, document *automerge.Document) string {
+func canonicalDocument(t *testing.T, document *automerge.Document) string {
 	t.Helper()
 
-	return "heads:" + strings.Join(sortedHeadHex(t, ctx, document), ",") + "\n" +
-		canonicalValues(t, ctx, document)
+	return "heads:" + strings.Join(sortedHeadHex(t, document), ",") + "\n" +
+		canonicalValues(t, document)
 }
 
 // canonicalValues renders the materialized state without heads, for the few
 // assertions that deliberately compare only observable values.
-func canonicalValues(t *testing.T, ctx context.Context, document *automerge.Document) string {
+func canonicalValues(t *testing.T, document *automerge.Document) string {
 	t.Helper()
 
 	var builder strings.Builder
 
-	keys, err := document.Root().Keys(ctx)
+	keys, err := document.Root().Keys()
 	require.NoError(t, err)
 	sort.Strings(keys)
 
@@ -75,21 +74,21 @@ func canonicalValues(t *testing.T, ctx context.Context, document *automerge.Docu
 			continue
 		}
 
-		value, err := document.Root().Scalar(ctx, key)
+		value, err := document.Root().Scalar(key)
 		require.NoError(t, err)
 		fmt.Fprintf(&builder, "map[%s]=%s\n", key, canonicalScalar(value))
 	}
 
-	list, err := document.Root().Object(ctx, stressListKey)
+	list, err := document.Root().Object(stressListKey)
 	require.NoError(t, err)
 
-	length, err := list.Len(ctx)
+	length, err := list.Len()
 	require.NoError(t, err)
 
 	builder.WriteString("list:")
 
 	for index := range length {
-		value, err := list.ScalarAt(ctx, index)
+		value, err := list.ScalarAt(index)
 		require.NoError(t, err)
 		builder.WriteString(canonicalScalar(value))
 		builder.WriteString(",")
@@ -97,10 +96,10 @@ func canonicalValues(t *testing.T, ctx context.Context, document *automerge.Docu
 
 	builder.WriteString("\n")
 
-	text, err := document.Text(ctx, stressTextKey)
+	text, err := document.Text(stressTextKey)
 	require.NoError(t, err)
 
-	content, err := text.String(ctx)
+	content, err := text.String()
 	require.NoError(t, err)
 	fmt.Fprintf(&builder, "text:%q\n", content)
 
@@ -132,20 +131,20 @@ type stressActor struct {
 	text     *automerge.Text
 }
 
-func newStressActor(t *testing.T, ctx context.Context, engine rustParityEngine, id byte) *stressActor {
+func newStressActor(t *testing.T, engine rustParityEngine, id byte) *stressActor {
 	t.Helper()
 
-	document, err := engine.open(ctx, actor(id))
+	document, err := engine.open(actor(id))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	list, err := document.Root().CreateObject(ctx, stressListKey, automerge.ObjectTypeList)
+	list, err := document.Root().CreateObject(stressListKey, automerge.ObjectTypeList)
 	require.NoError(t, err)
 
-	text, err := document.CreateText(ctx, stressTextKey)
+	text, err := document.CreateText(stressTextKey)
 	require.NoError(t, err)
 
-	_, err = document.Commit(ctx, "seed", commitTime)
+	_, err = document.Commit("seed", commitTime)
 	require.NoError(t, err)
 
 	return &stressActor{document: document, list: list, text: text}
@@ -169,7 +168,6 @@ func randomScalar(random *rand.Rand) automerge.Scalar {
 // actors produce identical operations, keeping the engines in lockstep.
 func applyStressOperation(
 	t *testing.T,
-	ctx context.Context,
 	actor *stressActor,
 	op stressOperation,
 ) {
@@ -177,19 +175,19 @@ func applyStressOperation(
 
 	switch op.kind {
 	case opMapPut:
-		require.NoError(t, actor.document.Root().PutScalar(ctx, op.key, op.scalar))
+		require.NoError(t, actor.document.Root().PutScalar(op.key, op.scalar))
 	case opMapDelete:
-		require.NoError(t, actor.document.Root().DeleteKey(ctx, op.key))
+		require.NoError(t, actor.document.Root().DeleteKey(op.key))
 	case opListInsert:
-		require.NoError(t, actor.list.InsertScalar(ctx, op.index, op.scalar))
+		require.NoError(t, actor.list.InsertScalar(op.index, op.scalar))
 	case opListPut:
-		require.NoError(t, actor.list.PutScalarAt(ctx, op.index, op.scalar))
+		require.NoError(t, actor.list.PutScalarAt(op.index, op.scalar))
 	case opListDelete:
-		require.NoError(t, actor.list.DeleteIndex(ctx, op.index))
+		require.NoError(t, actor.list.DeleteIndex(op.index))
 	case opTextInsert:
-		require.NoError(t, actor.text.Splice(ctx, uint32(op.index), 0, op.value))
+		require.NoError(t, actor.text.Splice(uint32(op.index), 0, op.value))
 	case opTextDelete:
-		require.NoError(t, actor.text.Splice(ctx, uint32(op.index), int32(op.count), ""))
+		require.NoError(t, actor.text.Splice(uint32(op.index), int32(op.count), ""))
 	}
 }
 
@@ -268,7 +266,6 @@ func nextStressOperation(random *rand.Rand, listLen, textLen uint64, present map
 func TestDifferentialStress_SingleDocument(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	random := rand.New(rand.NewSource(0x1f2e3d4c5b6a7988))
 
 	const (
@@ -277,13 +274,13 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 	)
 
 	for scenario := range scenarios {
-		native := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
-		reference := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
+		native := newStressActor(t, rustParityEngines()[0], 0x01)
+		reference := newStressActor(t, rustParityEngines()[1], 0x01)
 
 		require.Equal(
 			t,
-			canonicalDocument(t, ctx, reference.document),
-			canonicalDocument(t, ctx, native.document),
+			canonicalDocument(t, reference.document),
+			canonicalDocument(t, native.document),
 			"scenario %d seed diverged",
 			scenario,
 		)
@@ -295,8 +292,8 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 		for step := range steps {
 			op := nextStressOperation(random, listLen, textLen, present)
 
-			applyStressOperation(t, ctx, native, op)
-			applyStressOperation(t, ctx, reference, op)
+			applyStressOperation(t, native, op)
+			applyStressOperation(t, reference, op)
 
 			switch op.kind {
 			case opMapPut:
@@ -305,8 +302,8 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 				delete(present, op.key)
 			}
 
-			nativeCommitted := tolerantCommit(t, ctx, native.document)
-			referenceCommitted := tolerantCommit(t, ctx, reference.document)
+			nativeCommitted := tolerantCommit(t, native.document)
+			referenceCommitted := tolerantCommit(t, reference.document)
 			require.Equal(
 				t,
 				referenceCommitted,
@@ -317,13 +314,13 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 				op,
 			)
 
-			listLen = mustLen(t, ctx, native.list)
-			textLen = mustTextLen(t, ctx, native.text)
+			listLen = mustLen(t, native.list)
+			textLen = mustTextLen(t, native.text)
 
 			require.Equal(
 				t,
-				canonicalDocument(t, ctx, reference.document),
-				canonicalDocument(t, ctx, native.document),
+				canonicalDocument(t, reference.document),
+				canonicalDocument(t, native.document),
 				"scenario %d step %d op %+v diverged",
 				scenario,
 				step,
@@ -333,17 +330,17 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 
 		// A save/load round trip rebuilds every cache from scratch; the reloaded
 		// state must equal the pre-save state and still match the reference.
-		saved, err := native.document.Save(ctx)
+		saved, err := native.document.Save()
 		require.NoError(t, err)
 
-		reloaded, err := automerge.Load(ctx, saved, actor(0x09))
+		reloaded, err := automerge.Load(saved, actor(0x09))
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
 
 		require.Equal(
 			t,
-			canonicalDocument(t, ctx, native.document),
-			canonicalDocument(t, ctx, reloaded),
+			canonicalDocument(t, native.document),
+			canonicalDocument(t, reloaded),
 			"scenario %d reload diverged",
 			scenario,
 		)
@@ -353,10 +350,10 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 // tolerantCommit commits and reports whether a change was produced. A step whose
 // operation was a no-op (for example, a put of the identical value) yields no
 // change on both engines, which is expected and not an error.
-func tolerantCommit(t *testing.T, ctx context.Context, document *automerge.Document) bool {
+func tolerantCommit(t *testing.T, document *automerge.Document) bool {
 	t.Helper()
 
-	_, err := document.Commit(ctx, "step", commitTime)
+	_, err := document.Commit("step", commitTime)
 	if err != nil {
 		require.ErrorContains(t, err, "no operations")
 
@@ -374,7 +371,6 @@ func tolerantCommit(t *testing.T, ctx context.Context, document *automerge.Docum
 func TestDifferentialStress_ConcurrentMerge(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	random := rand.New(rand.NewSource(0x6c5f4e3d2c1b0a99))
 
 	const (
@@ -384,32 +380,32 @@ func TestDifferentialStress_ConcurrentMerge(t *testing.T) {
 	)
 
 	for scenario := range scenarios {
-		nativeLeft := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
-		referenceLeft := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
+		nativeLeft := newStressActor(t, rustParityEngines()[0], 0x01)
+		referenceLeft := newStressActor(t, rustParityEngines()[1], 0x01)
 
 		// Both peers start from the same seeded document so their concurrent
 		// edits build on shared history.
-		seedSaved, err := nativeLeft.document.Save(ctx)
+		seedSaved, err := nativeLeft.document.Save()
 		require.NoError(t, err)
 
-		nativeRight := forkStressActor(t, ctx, rustParityEngines()[0], seedSaved, 0x02)
+		nativeRight := forkStressActor(t, rustParityEngines()[0], seedSaved, 0x02)
 
-		referenceSeed, err := referenceLeft.document.Save(ctx)
+		referenceSeed, err := referenceLeft.document.Save()
 		require.NoError(t, err)
 
-		referenceRight := forkStressActor(t, ctx, rustParityEngines()[1], referenceSeed, 0x02)
+		referenceRight := forkStressActor(t, rustParityEngines()[1], referenceSeed, 0x02)
 
 		for round := range rounds {
-			editStressActor(t, ctx, random, nativeLeft, referenceLeft, roundEdits)
-			editStressActor(t, ctx, random, nativeRight, referenceRight, roundEdits)
+			editStressActor(t, random, nativeLeft, referenceLeft, roundEdits)
+			editStressActor(t, random, nativeRight, referenceRight, roundEdits)
 
-			mergeDocuments(t, ctx, nativeLeft.document, nativeRight.document)
-			mergeDocuments(t, ctx, referenceLeft.document, referenceRight.document)
+			mergeDocuments(t, nativeLeft.document, nativeRight.document)
+			mergeDocuments(t, referenceLeft.document, referenceRight.document)
 
 			require.Equal(
 				t,
-				canonicalDocument(t, ctx, referenceLeft.document),
-				canonicalDocument(t, ctx, nativeLeft.document),
+				canonicalDocument(t, referenceLeft.document),
+				canonicalDocument(t, nativeLeft.document),
 				"scenario %d round %d merged state diverged",
 				scenario,
 				round,
@@ -420,21 +416,20 @@ func TestDifferentialStress_ConcurrentMerge(t *testing.T) {
 
 func forkStressActor(
 	t *testing.T,
-	ctx context.Context,
 	engine rustParityEngine,
 	saved []byte,
 	id byte,
 ) *stressActor {
 	t.Helper()
 
-	document, err := engine.load(ctx, saved, actor(id))
+	document, err := engine.load(saved, actor(id))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	list, err := document.Root().Object(ctx, stressListKey)
+	list, err := document.Root().Object(stressListKey)
 	require.NoError(t, err)
 
-	text, err := document.Text(ctx, stressTextKey)
+	text, err := document.Text(stressTextKey)
 	require.NoError(t, err)
 
 	return &stressActor{document: document, list: list, text: text}
@@ -444,7 +439,6 @@ func forkStressActor(
 // so both engines diverge identically before a merge.
 func editStressActor(
 	t *testing.T,
-	ctx context.Context,
 	random *rand.Rand,
 	native *stressActor,
 	reference *stressActor,
@@ -457,13 +451,13 @@ func editStressActor(
 	for range edits {
 		op := nextStressOperation(
 			random,
-			mustLen(t, ctx, native.list),
-			mustTextLen(t, ctx, native.text),
+			mustLen(t, native.list),
+			mustTextLen(t, native.text),
 			present,
 		)
 
-		applyStressOperation(t, ctx, native, op)
-		applyStressOperation(t, ctx, reference, op)
+		applyStressOperation(t, native, op)
+		applyStressOperation(t, reference, op)
 
 		switch op.kind {
 		case opMapPut:
@@ -473,17 +467,17 @@ func editStressActor(
 		}
 	}
 
-	tolerantCommit(t, ctx, native.document)
-	tolerantCommit(t, ctx, reference.document)
+	tolerantCommit(t, native.document)
+	tolerantCommit(t, reference.document)
 }
 
-func mergeDocuments(t *testing.T, ctx context.Context, left, right *automerge.Document) {
+func mergeDocuments(t *testing.T, left, right *automerge.Document) {
 	t.Helper()
 
-	_, err := left.Merge(ctx, right)
+	_, err := left.Merge(right)
 	require.NoError(t, err)
 
-	_, err = right.Merge(ctx, left)
+	_, err = right.Merge(left)
 	require.NoError(t, err)
 }
 
@@ -497,10 +491,8 @@ func FuzzDifferentialOperations(f *testing.F) {
 
 	f.Fuzz(
 		func(t *testing.T, script []byte) {
-			ctx := context.Background()
-
-			native := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
-			reference := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
+			native := newStressActor(t, rustParityEngines()[0], 0x01)
+			reference := newStressActor(t, rustParityEngines()[1], 0x01)
 
 			present := make(map[string]bool)
 
@@ -508,16 +500,16 @@ func FuzzDifferentialOperations(f *testing.F) {
 				op := scriptOperation(
 					script[cursor],
 					script[cursor+1],
-					mustLen(t, ctx, native.list),
-					mustTextLen(t, ctx, native.text),
+					mustLen(t, native.list),
+					mustTextLen(t, native.text),
 					present,
 				)
 				if op == nil {
 					continue
 				}
 
-				applyStressOperation(t, ctx, native, *op)
-				applyStressOperation(t, ctx, reference, *op)
+				applyStressOperation(t, native, *op)
+				applyStressOperation(t, reference, *op)
 
 				switch op.kind {
 				case opMapPut:
@@ -526,14 +518,14 @@ func FuzzDifferentialOperations(f *testing.F) {
 					delete(present, op.key)
 				}
 
-				nativeCommitted := tolerantCommit(t, ctx, native.document)
-				referenceCommitted := tolerantCommit(t, ctx, reference.document)
+				nativeCommitted := tolerantCommit(t, native.document)
+				referenceCommitted := tolerantCommit(t, reference.document)
 				require.Equal(t, referenceCommitted, nativeCommitted, "commit divergence for %+v", *op)
 
 				require.Equal(
 					t,
-					canonicalValues(t, ctx, reference.document),
-					canonicalValues(t, ctx, native.document),
+					canonicalValues(t, reference.document),
+					canonicalValues(t, native.document),
 					"value divergence after %+v",
 					*op,
 				)
@@ -584,19 +576,19 @@ func scriptOperation(selector, param byte, listLen, textLen uint64, present map[
 	return nil
 }
 
-func mustLen(t *testing.T, ctx context.Context, object *automerge.Object) uint64 {
+func mustLen(t *testing.T, object *automerge.Object) uint64 {
 	t.Helper()
 
-	length, err := object.Len(ctx)
+	length, err := object.Len()
 	require.NoError(t, err)
 
 	return length
 }
 
-func mustTextLen(t *testing.T, ctx context.Context, text *automerge.Text) uint64 {
+func mustTextLen(t *testing.T, text *automerge.Text) uint64 {
 	t.Helper()
 
-	content, err := text.String(ctx)
+	content, err := text.String()
 	require.NoError(t, err)
 
 	return uint64(len([]rune(content)))

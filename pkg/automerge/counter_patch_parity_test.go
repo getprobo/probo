@@ -31,7 +31,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,53 +41,52 @@ import (
 func TestRustAutomerge_ObserveCounterChangeApplication(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		source, err := engine.open(ctx, actor(0xc0))
+		source, err := engine.open(actor(0xc0))
 		require.NoError(t, err)
 		closeDocument(t, source)
 
 		require.NoError(
 			t,
 			source.Root().PutScalar(
-				ctx,
+
 				"counter",
 				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
 			),
 		)
-		require.NoError(t, source.Root().Increment(ctx, "counter", 2))
-		require.NoError(t, source.Root().Increment(ctx, "counter", 5))
+		require.NoError(t, source.Root().Increment("counter", 2))
+		require.NoError(t, source.Root().Increment("counter", 5))
 
-		_, err = source.Commit(ctx, "counter", commitTime)
+		_, err = source.Commit("counter", commitTime)
 		require.NoError(t, err)
 
-		change, err := source.SaveIncremental(ctx)
+		change, err := source.SaveIncremental()
 		require.NoError(t, err)
 
-		document, err := engine.open(ctx, actor(0xd0))
+		document, err := engine.open(actor(0xd0))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
 		require.NoError(
 			t,
 			document.Root().PutScalar(
-				ctx,
+
 				"foo",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "bar"},
 			),
 		)
 
-		_, err = document.Commit(ctx, "foo", commitTime)
+		_, err = document.Commit("foo", commitTime)
 		require.NoError(t, err)
 
-		require.NoError(t, document.UpdateDiffCursor(ctx))
+		require.NoError(t, document.UpdateDiffCursor())
 
-		_, err = document.LoadIncremental(ctx, change)
+		_, err = document.LoadIncremental(change)
 		require.NoError(t, err)
 
-		patches, err := document.DiffIncremental(ctx)
+		patches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		result[engine.name] = patches

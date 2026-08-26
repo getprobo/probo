@@ -22,7 +22,6 @@ package native
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -30,11 +29,10 @@ import (
 )
 
 func (b *Engine) PutText(
-	ctx context.Context,
 	object uint32,
 	key string,
 ) (uint32, error) {
-	if err := b.requireRoot(ctx, object); err != nil {
+	if err := b.requireRoot(object); err != nil {
 		return 0, err
 	}
 
@@ -58,11 +56,10 @@ func (b *Engine) PutText(
 }
 
 func (b *Engine) GetText(
-	ctx context.Context,
 	object uint32,
 	key string,
 ) (uint32, error) {
-	if err := b.requireRoot(ctx, object); err != nil {
+	if err := b.requireRoot(object); err != nil {
 		return 0, err
 	}
 
@@ -75,15 +72,11 @@ func (b *Engine) GetText(
 }
 
 func (b *Engine) SpliceText(
-	ctx context.Context,
 	handle uint32,
 	index uint32,
 	deleteCount int32,
 	value string,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	if deleteCount < 0 {
 		return fmt.Errorf("negative text deletion is unsupported")
@@ -182,14 +175,10 @@ type (
 // the marks named on the spans, honoring the per-mark and default expand config.
 // Block spans are not yet supported.
 func (b *Engine) UpdateSpans(
-	ctx context.Context,
 	handle uint32,
 	spans []byte,
 	config []byte,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -214,7 +203,6 @@ func (b *Engine) UpdateSpans(
 	current := b.currentBlockGraphemes(object)
 
 	hook := &blockDiffHook{
-		ctx:    ctx,
 		engine: b,
 		handle: handle,
 		old:    current,
@@ -231,7 +219,7 @@ func (b *Engine) UpdateSpans(
 		return err
 	}
 
-	return b.reconcileMarks(ctx, handle, object, desired, configuration)
+	return b.reconcileMarks(handle, object, desired, configuration)
 }
 
 // blockOrGrapheme is one unit of the block-aware span diff: either a block
@@ -345,7 +333,6 @@ func targetBlockGraphemes(spans []updateSpanInput) ([]blockOrGrapheme, error) {
 // blockDiffHook applies the block-aware Myers edit script, splicing text and
 // splitting, joining, or rewriting block markers as required.
 type blockDiffHook struct {
-	ctx    context.Context
 	engine *Engine
 	handle uint32
 	old    []blockOrGrapheme
@@ -368,12 +355,12 @@ func (h *blockDiffHook) delete(oldIndex, oldLen, _ int) {
 	for i := 0; i < oldLen && h.err == nil; i++ {
 		item := h.old[oldIndex+i]
 		if item.isBlock {
-			h.err = h.engine.JoinBlock(h.ctx, h.handle, uint32(h.idx))
+			h.err = h.engine.JoinBlock(h.handle, uint32(h.idx))
 
 			continue
 		}
 
-		h.err = h.engine.SpliceText(h.ctx, h.handle, uint32(h.idx), int32(item.width()), "")
+		h.err = h.engine.SpliceText(h.handle, uint32(h.idx), int32(item.width()), "")
 	}
 }
 
@@ -386,7 +373,7 @@ func (h *blockDiffHook) insert(_ int, newIndex, newLen int) {
 		}
 
 		chars := run.String()
-		if err := h.engine.SpliceText(h.ctx, h.handle, uint32(h.idx), 0, chars); err != nil {
+		if err := h.engine.SpliceText(h.handle, uint32(h.idx), 0, chars); err != nil {
 			h.err = err
 
 			return
@@ -411,14 +398,14 @@ func (h *blockDiffHook) insert(_ int, newIndex, newLen int) {
 			return
 		}
 
-		blockHandle, err := h.engine.SplitBlock(h.ctx, h.handle, uint32(h.idx))
+		blockHandle, err := h.engine.SplitBlock(h.handle, uint32(h.idx))
 		if err != nil {
 			h.err = err
 
 			return
 		}
 
-		if err := h.engine.setBlockAttributes(h.ctx, blockHandle, item.block); err != nil {
+		if err := h.engine.setBlockAttributes(blockHandle, item.block); err != nil {
 			h.err = err
 
 			return
@@ -478,7 +465,6 @@ func desiredMarks(spans []updateSpanInput) ([]desiredMark, error) {
 // reconcileMarks removes marks that are not desired and adds the ones that are
 // missing, matching the two-phase reconciliation upstream performs.
 func (b *Engine) reconcileMarks(
-	ctx context.Context,
 	handle uint32,
 	object ObjectID,
 	desired []desiredMark,
@@ -504,7 +490,6 @@ func (b *Engine) reconcileMarks(
 		}
 
 		if err := b.markRange(
-			ctx,
 			handle,
 			current.Start,
 			current.End,
@@ -536,7 +521,6 @@ func (b *Engine) reconcileMarks(
 		}
 
 		if err := b.markRange(
-			ctx,
 			handle,
 			want.start,
 			want.end,
@@ -554,7 +538,6 @@ func (b *Engine) reconcileMarks(
 // setBlockAttributes writes the attribute map onto a freshly created block
 // object, recursing into nested maps and lists.
 func (b *Engine) setBlockAttributes(
-	ctx context.Context,
 	handle uint32,
 	attributes map[string]any,
 ) error {
@@ -566,7 +549,7 @@ func (b *Engine) setBlockAttributes(
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		if err := b.setMapValue(ctx, handle, key, attributes[key]); err != nil {
+		if err := b.setMapValue(handle, key, attributes[key]); err != nil {
 			return err
 		}
 	}
@@ -575,27 +558,26 @@ func (b *Engine) setBlockAttributes(
 }
 
 func (b *Engine) setMapValue(
-	ctx context.Context,
 	handle uint32,
 	key string,
 	value any,
 ) error {
 	switch typed := value.(type) {
 	case map[string]any:
-		child, err := b.PutObject(ctx, handle, key, "map")
+		child, err := b.PutObject(handle, key, "map")
 		if err != nil {
 			return err
 		}
 
-		return b.setBlockAttributes(ctx, child, typed)
+		return b.setBlockAttributes(child, typed)
 	case []any:
-		child, err := b.PutObject(ctx, handle, key, "list")
+		child, err := b.PutObject(handle, key, "list")
 		if err != nil {
 			return err
 		}
 
 		for index, element := range typed {
-			if err := b.insertListValue(ctx, child, uint64(index), element); err != nil {
+			if err := b.insertListValue(child, uint64(index), element); err != nil {
 				return err
 			}
 		}
@@ -612,32 +594,31 @@ func (b *Engine) setMapValue(
 			return err
 		}
 
-		return b.PutScalar(ctx, handle, key, encoded)
+		return b.PutScalar(handle, key, encoded)
 	}
 }
 
 func (b *Engine) insertListValue(
-	ctx context.Context,
 	handle uint32,
 	index uint64,
 	value any,
 ) error {
 	switch typed := value.(type) {
 	case map[string]any:
-		child, err := b.InsertObject(ctx, handle, index, "map")
+		child, err := b.InsertObject(handle, index, "map")
 		if err != nil {
 			return err
 		}
 
-		return b.setBlockAttributes(ctx, child, typed)
+		return b.setBlockAttributes(child, typed)
 	case []any:
-		child, err := b.InsertObject(ctx, handle, index, "list")
+		child, err := b.InsertObject(handle, index, "list")
 		if err != nil {
 			return err
 		}
 
 		for offset, element := range typed {
-			if err := b.insertListValue(ctx, child, uint64(offset), element); err != nil {
+			if err := b.insertListValue(child, uint64(offset), element); err != nil {
 				return err
 			}
 		}
@@ -654,7 +635,7 @@ func (b *Engine) insertListValue(
 			return err
 		}
 
-		return b.InsertScalar(ctx, handle, index, encoded)
+		return b.InsertScalar(handle, index, encoded)
 	}
 }
 
@@ -684,7 +665,6 @@ func hydrateScalar(value any) (Scalar, error) {
 }
 
 func (b *Engine) markRange(
-	ctx context.Context,
 	handle uint32,
 	start uint32,
 	end uint32,
@@ -697,7 +677,7 @@ func (b *Engine) markRange(
 		return err
 	}
 
-	return b.MarkText(ctx, handle, start, end, name, encoded, expand)
+	return b.MarkText(handle, start, end, name, encoded, expand)
 }
 
 func (c updateSpansConfigInput) expandFor(name string) string {
@@ -713,7 +693,6 @@ func (c updateSpansConfigInput) expandFor(name string) string {
 }
 
 func (b *Engine) MarkText(
-	ctx context.Context,
 	handle uint32,
 	start uint32,
 	end uint32,
@@ -721,9 +700,6 @@ func (b *Engine) MarkText(
 	encoded []byte,
 	expand string,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	if start > end {
 		return fmt.Errorf("mark range is inverted")
@@ -790,13 +766,9 @@ func (b *Engine) MarkText(
 }
 
 func (b *Engine) SplitBlock(
-	ctx context.Context,
 	handle uint32,
 	index uint32,
 ) (uint32, error) {
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -837,13 +809,9 @@ func (b *Engine) SplitBlock(
 }
 
 func (b *Engine) JoinBlock(
-	ctx context.Context,
 	handle uint32,
 	index uint32,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -873,21 +841,17 @@ func (b *Engine) JoinBlock(
 }
 
 func (b *Engine) ReplaceBlock(
-	ctx context.Context,
 	handle uint32,
 	index uint32,
 ) (uint32, error) {
-	if err := b.JoinBlock(ctx, handle, index); err != nil {
+	if err := b.JoinBlock(handle, index); err != nil {
 		return 0, err
 	}
 
-	return b.SplitBlock(ctx, handle, index)
+	return b.SplitBlock(handle, index)
 }
 
-func (b *Engine) Text(ctx context.Context, handle uint32) (string, error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
-	}
+func (b *Engine) Text(handle uint32) (string, error) {
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -909,13 +873,9 @@ func (b *Engine) Text(ctx context.Context, handle uint32) (string, error) {
 }
 
 func (b *Engine) TextAt(
-	ctx context.Context,
 	handle uint32,
 	heads [][32]byte,
 ) (string, error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -939,12 +899,8 @@ func (b *Engine) TextAt(
 }
 
 func (b *Engine) TextSpans(
-	ctx context.Context,
 	handle uint32,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -965,13 +921,9 @@ func (b *Engine) TextSpans(
 }
 
 func (b *Engine) TextSpansAt(
-	ctx context.Context,
 	handle uint32,
 	heads [][32]byte,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -1036,10 +988,7 @@ func encodeMarks(marks []MarkRange) ([]byte, error) {
 	return data, nil
 }
 
-func (b *Engine) Marks(ctx context.Context, handle uint32) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func (b *Engine) Marks(handle uint32) ([]byte, error) {
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -1050,13 +999,9 @@ func (b *Engine) Marks(ctx context.Context, handle uint32) ([]byte, error) {
 }
 
 func (b *Engine) MarksAt(
-	ctx context.Context,
 	handle uint32,
 	heads [][32]byte,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -1072,22 +1017,17 @@ func (b *Engine) MarksAt(
 }
 
 func (b *Engine) TextCursor(
-	ctx context.Context,
 	handle uint32,
 	index uint32,
 ) ([]byte, error) {
-	return b.TextCursorMoving(ctx, handle, index, false)
+	return b.TextCursorMoving(handle, index, false)
 }
 
 func (b *Engine) TextCursorMoving(
-	ctx context.Context,
 	handle uint32,
 	index uint32,
 	moveBefore bool,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -1121,15 +1061,11 @@ func (b *Engine) TextCursorMoving(
 }
 
 func (b *Engine) TextCursorMovingAt(
-	ctx context.Context,
 	handle uint32,
 	index uint32,
 	moveBefore bool,
 	heads [][32]byte,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {
@@ -1166,13 +1102,9 @@ func (b *Engine) TextCursorMovingAt(
 }
 
 func (b *Engine) TextCursorPosition(
-	ctx context.Context,
 	handle uint32,
 	cursor []byte,
 ) (uint32, error) {
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
 
 	object, err := b.textObject(handle)
 	if err != nil {

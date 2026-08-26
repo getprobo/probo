@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -34,7 +33,7 @@ import (
 // so a native snapshot can be held against the reference's byte for byte.
 type documentSaveScenario struct {
 	name  string
-	apply func(t *testing.T, ctx context.Context, document *automerge.Document)
+	apply func(t *testing.T, document *automerge.Document)
 }
 
 func documentSaveScenarios() []documentSaveScenario {
@@ -43,24 +42,24 @@ func documentSaveScenarios() []documentSaveScenario {
 	return []documentSaveScenario{
 		{
 			name: "linear text",
-			apply: func(t *testing.T, ctx context.Context, document *automerge.Document) {
-				text, err := document.CreateText(ctx, "body")
+			apply: func(t *testing.T, document *automerge.Document) {
+				text, err := document.CreateText("body")
 				require.NoError(t, err)
 
 				for i := range 5 {
-					require.NoError(t, text.Splice(ctx, uint32(i), 0, "x"))
-					_, err = document.Commit(ctx, "edit", base.Add(time.Duration(i)*time.Second))
+					require.NoError(t, text.Splice(uint32(i), 0, "x"))
+					_, err = document.Commit("edit", base.Add(time.Duration(i)*time.Second))
 					require.NoError(t, err)
 				}
 			},
 		},
 		{
 			name: "map puts and delete",
-			apply: func(t *testing.T, ctx context.Context, document *automerge.Document) {
+			apply: func(t *testing.T, document *automerge.Document) {
 				require.NoError(
 					t,
 					document.PutScalar(
-						ctx,
+
 						"title",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "first"},
 					),
@@ -68,62 +67,62 @@ func documentSaveScenarios() []documentSaveScenario {
 				require.NoError(
 					t,
 					document.PutScalar(
-						ctx,
+
 						"keep",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
 					),
 				)
-				_, err := document.Commit(ctx, "one", base)
+				_, err := document.Commit("one", base)
 				require.NoError(t, err)
 
 				require.NoError(
 					t,
 					document.PutScalar(
-						ctx,
+
 						"title",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "second"},
 					),
 				)
-				_, err = document.Commit(ctx, "two", base.Add(time.Second))
+				_, err = document.Commit("two", base.Add(time.Second))
 				require.NoError(t, err)
 
-				require.NoError(t, document.Root().DeleteKey(ctx, "title"))
-				_, err = document.Commit(ctx, "three", base.Add(2*time.Second))
+				require.NoError(t, document.Root().DeleteKey("title"))
+				_, err = document.Commit("three", base.Add(2*time.Second))
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "counter increment",
-			apply: func(t *testing.T, ctx context.Context, document *automerge.Document) {
+			apply: func(t *testing.T, document *automerge.Document) {
 				require.NoError(
 					t,
 					document.PutScalar(
-						ctx,
+
 						"counter",
 						automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
 					),
 				)
-				_, err := document.Commit(ctx, "create", base)
+				_, err := document.Commit("create", base)
 				require.NoError(t, err)
 
-				require.NoError(t, document.Root().Increment(ctx, "counter", 3))
-				_, err = document.Commit(ctx, "bump", base.Add(time.Second))
+				require.NoError(t, document.Root().Increment("counter", 3))
+				_, err = document.Commit("bump", base.Add(time.Second))
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "marks and unmarks",
-			apply: func(t *testing.T, ctx context.Context, document *automerge.Document) {
-				text, err := document.CreateText(ctx, "body")
+			apply: func(t *testing.T, document *automerge.Document) {
+				text, err := document.CreateText("body")
 				require.NoError(t, err)
-				require.NoError(t, text.Splice(ctx, 0, 0, "hello brave world"))
-				_, err = document.Commit(ctx, "write", base)
+				require.NoError(t, text.Splice(0, 0, "hello brave world"))
+				_, err = document.Commit("write", base)
 				require.NoError(t, err)
 
 				require.NoError(
 					t,
 					text.Mark(
-						ctx,
+
 						0,
 						5,
 						"strong",
@@ -131,25 +130,25 @@ func documentSaveScenarios() []documentSaveScenario {
 						automerge.MarkExpandBoth,
 					),
 				)
-				_, err = document.Commit(ctx, "mark", base.Add(time.Second))
+				_, err = document.Commit("mark", base.Add(time.Second))
 				require.NoError(t, err)
 
-				require.NoError(t, text.Unmark(ctx, 1, 3, "strong", automerge.MarkExpandNone))
-				_, err = document.Commit(ctx, "unmark", base.Add(2*time.Second))
+				require.NoError(t, text.Unmark(1, 3, "strong", automerge.MarkExpandNone))
+				_, err = document.Commit("unmark", base.Add(2*time.Second))
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "text with deletion",
-			apply: func(t *testing.T, ctx context.Context, document *automerge.Document) {
-				text, err := document.CreateText(ctx, "body")
+			apply: func(t *testing.T, document *automerge.Document) {
+				text, err := document.CreateText("body")
 				require.NoError(t, err)
-				require.NoError(t, text.Splice(ctx, 0, 0, "hello brave world"))
-				_, err = document.Commit(ctx, "write", base)
+				require.NoError(t, text.Splice(0, 0, "hello brave world"))
+				_, err = document.Commit("write", base)
 				require.NoError(t, err)
 
-				require.NoError(t, text.Splice(ctx, 5, 6, ""))
-				_, err = document.Commit(ctx, "trim", base.Add(time.Second))
+				require.NoError(t, text.Splice(5, 6, ""))
+				_, err = document.Commit("trim", base.Add(time.Second))
 				require.NoError(t, err)
 			},
 		},
@@ -163,29 +162,27 @@ func documentSaveScenarios() []documentSaveScenario {
 func TestDocumentSave_MatchesReferenceBytes(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, scenario := range documentSaveScenarios() {
 		t.Run(
 			scenario.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				native, err := automerge.New(ctx, actor(41))
+				native, err := automerge.New(actor(41))
 				require.NoError(t, err)
 				closeDocument(t, native)
 
-				reference, err := automerge.NewReference(ctx, actor(41))
+				reference, err := automerge.NewReference(actor(41))
 				require.NoError(t, err)
 				closeDocument(t, reference)
 
-				scenario.apply(t, ctx, native)
-				scenario.apply(t, ctx, reference)
+				scenario.apply(t, native)
+				scenario.apply(t, reference)
 
-				expected, err := reference.Save(ctx)
+				expected, err := reference.Save()
 				require.NoError(t, err)
 
-				actual, err := native.Save(ctx)
+				actual, err := native.Save()
 				require.NoError(t, err)
 
 				assert.Equal(t, expected, actual)
@@ -200,38 +197,36 @@ func TestDocumentSave_MatchesReferenceBytes(t *testing.T) {
 func TestDocumentSave_ReloadsIntoTheSameHistory(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, scenario := range documentSaveScenarios() {
 		t.Run(
 			scenario.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				document, err := automerge.New(ctx, actor(42))
+				document, err := automerge.New(actor(42))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
-				scenario.apply(t, ctx, document)
+				scenario.apply(t, document)
 
-				heads, err := document.Heads(ctx)
+				heads, err := document.Heads()
 				require.NoError(t, err)
 
-				original, err := document.ChangesSince(ctx, nil)
+				original, err := document.ChangesSince(nil)
 				require.NoError(t, err)
 
-				snapshot, err := document.Save(ctx)
+				snapshot, err := document.Save()
 				require.NoError(t, err)
 
-				reloaded, err := automerge.Load(ctx, snapshot, actor(43))
+				reloaded, err := automerge.Load(snapshot, actor(43))
 				require.NoError(t, err)
 				closeDocument(t, reloaded)
 
-				reloadedHeads, err := reloaded.Heads(ctx)
+				reloadedHeads, err := reloaded.Heads()
 				require.NoError(t, err)
 				assert.Equal(t, heads, reloadedHeads)
 
-				changes, err := reloaded.ChangesSince(ctx, nil)
+				changes, err := reloaded.ChangesSince(nil)
 				require.NoError(t, err)
 				require.Len(t, changes, len(original))
 
@@ -240,11 +235,11 @@ func TestDocumentSave_ReloadsIntoTheSameHistory(t *testing.T) {
 					assert.Equal(t, original[i].Bytes, changes[i].Bytes, "change %d bytes", i)
 				}
 
-				adopted, err := automerge.LoadReference(ctx, snapshot, actor(44))
+				adopted, err := automerge.LoadReference(snapshot, actor(44))
 				require.NoError(t, err)
 				closeDocument(t, adopted)
 
-				adoptedHeads, err := adopted.Heads(ctx)
+				adoptedHeads, err := adopted.Heads()
 				require.NoError(t, err)
 				assert.Equal(t, heads, adoptedHeads)
 			},

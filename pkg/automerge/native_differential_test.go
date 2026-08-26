@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -45,17 +44,16 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 
 	for history := range histories {
 		random := rand.New(rand.NewSource(int64(history + 1)))
-		ctx := context.Background()
-		nativeDocument, err := automerge.New(ctx, actor(byte(80+history)))
+		nativeDocument, err := automerge.New(actor(byte(80 + history)))
 		require.NoError(t, err)
 		closeDocument(t, nativeDocument)
-		nativeText, err := nativeDocument.CreateText(ctx, "body")
+		nativeText, err := nativeDocument.CreateText("body")
 		require.NoError(t, err)
 
-		referenceDocument, err := automerge.NewReference(ctx, actor(byte(80+history)))
+		referenceDocument, err := automerge.NewReference(actor(byte(80 + history)))
 		require.NoError(t, err)
 		closeDocument(t, referenceDocument)
-		referenceText, err := referenceDocument.CreateText(ctx, "body")
+		referenceText, err := referenceDocument.CreateText("body")
 		require.NoError(t, err)
 
 		var model []rune
@@ -84,31 +82,31 @@ func TestPureGoDocument_RandomTextParity(t *testing.T) {
 				model[position] = character
 			}
 
-			require.NoError(t, nativeText.Splice(ctx, index, deleteCount, insert))
-			require.NoError(t, referenceText.Splice(ctx, index, deleteCount, insert))
+			require.NoError(t, nativeText.Splice(index, deleteCount, insert))
+			require.NoError(t, referenceText.Splice(index, deleteCount, insert))
 
 			message := fmt.Sprintf("history %d step %d", history, step)
-			_, err = nativeDocument.Commit(ctx, message, commitTime)
+			_, err = nativeDocument.Commit(message, commitTime)
 			require.NoError(t, err)
-			_, err = referenceDocument.Commit(ctx, message, commitTime)
+			_, err = referenceDocument.Commit(message, commitTime)
 			require.NoError(t, err)
 
-			nativeValue, err := nativeText.String(ctx)
+			nativeValue, err := nativeText.String()
 			require.NoError(t, err)
-			referenceValue, err := referenceText.String(ctx)
+			referenceValue, err := referenceText.String()
 			require.NoError(t, err)
 			assert.Equal(t, string(model), nativeValue)
 			assert.Equal(t, referenceValue, nativeValue)
 		}
 
-		data, err := nativeDocument.Save(ctx)
+		data, err := nativeDocument.Save()
 		require.NoError(t, err)
-		loaded, err := automerge.LoadReference(ctx, data, actor(byte(120+history)))
+		loaded, err := automerge.LoadReference(data, actor(byte(120+history)))
 		require.NoError(t, err)
 		closeDocument(t, loaded)
-		loadedText, err := loaded.Text(ctx, "body")
+		loadedText, err := loaded.Text("body")
 		require.NoError(t, err)
-		loadedValue, err := loadedText.String(ctx)
+		loadedValue, err := loadedText.String()
 		require.NoError(t, err)
 		assert.Equal(t, string(model), loadedValue)
 	}
@@ -122,51 +120,49 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 		rounds    = 20
 	)
 
-	ctx := context.Background()
 	characters := []rune("abcXYZ😀é")
 
 	for history := range histories {
 		random := rand.New(rand.NewSource(int64(10_000 + history)))
 		nativeDocument, err := automerge.New(
-			ctx,
-			actor(byte(140+history)),
+
+			actor(byte(140 + history)),
 		)
 		require.NoError(t, err)
 		closeDocument(t, nativeDocument)
-		nativeText, err := nativeDocument.CreateText(ctx, "body")
+		nativeText, err := nativeDocument.CreateText("body")
 		require.NoError(t, err)
-		_, err = nativeDocument.Commit(ctx, "create body", commitTime)
+		_, err = nativeDocument.Commit("create body", commitTime)
 		require.NoError(t, err)
 
 		referenceDocument, err := automerge.NewReference(
-			ctx,
-			actor(byte(160+history)),
+
+			actor(byte(160 + history)),
 		)
 		require.NoError(t, err)
 		closeDocument(t, referenceDocument)
 
-		nativeSync, err := nativeDocument.NewSyncState(ctx)
+		nativeSync, err := nativeDocument.NewSyncState()
 		require.NoError(t, err)
 		closeSyncState(t, nativeSync)
 
-		referenceSync, err := referenceDocument.NewSyncState(ctx)
+		referenceSync, err := referenceDocument.NewSyncState()
 		require.NoError(t, err)
 		closeSyncState(t, referenceSync)
 		synchronize(t, nativeSync, referenceSync)
 
-		referenceText, err := referenceDocument.Text(ctx, "body")
+		referenceText, err := referenceDocument.Text("body")
 		require.NoError(t, err)
 
 		for round := range rounds {
 			randomTextMutation(
 				t,
-				ctx,
 				random,
 				nativeText,
 				characters,
 			)
 			_, err = nativeDocument.Commit(
-				ctx,
+
 				fmt.Sprintf("native history %d round %d", history, round),
 				commitTime.Add(time.Duration(round+1)*time.Second),
 			)
@@ -174,13 +170,12 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 
 			randomTextMutation(
 				t,
-				ctx,
 				random,
 				referenceText,
 				characters,
 			)
 			_, err = referenceDocument.Commit(
-				ctx,
+
 				fmt.Sprintf("reference history %d round %d", history, round),
 				commitTime.Add(time.Duration(round+1)*time.Second),
 			)
@@ -188,9 +183,9 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 
 			synchronize(t, nativeSync, referenceSync)
 
-			nativeValue, err := nativeText.String(ctx)
+			nativeValue, err := nativeText.String()
 			require.NoError(t, err)
-			referenceValue, err := referenceText.String(ctx)
+			referenceValue, err := referenceText.String()
 			require.NoError(t, err)
 			assert.Equal(
 				t,
@@ -201,9 +196,9 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 				round,
 			)
 
-			nativeHeads, err := nativeDocument.Heads(ctx)
+			nativeHeads, err := nativeDocument.Heads()
 			require.NoError(t, err)
-			referenceHeads, err := referenceDocument.Heads(ctx)
+			referenceHeads, err := referenceDocument.Heads()
 			require.NoError(t, err)
 			assert.ElementsMatch(t, referenceHeads, nativeHeads)
 		}
@@ -212,14 +207,13 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 
 func randomTextMutation(
 	t *testing.T,
-	ctx context.Context,
 	random *rand.Rand,
 	text *automerge.Text,
 	characters []rune,
 ) {
 	t.Helper()
 
-	value, err := text.String(ctx)
+	value, err := text.String()
 	require.NoError(t, err)
 
 	runes := []rune(value)
@@ -230,7 +224,7 @@ func randomTextMutation(
 		require.NoError(
 			t,
 			text.Splice(
-				ctx,
+
 				offsets[position],
 				int32(offsets[position+1]-offsets[position]),
 				"",
@@ -244,7 +238,7 @@ func randomTextMutation(
 	require.NoError(
 		t,
 		text.Splice(
-			ctx,
+
 			offsets[position],
 			0,
 			string(characters[random.Intn(len(characters))]),

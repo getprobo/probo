@@ -22,15 +22,11 @@ package native
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"sort"
 )
 
-func (b *Engine) Heads(ctx context.Context) ([][32]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func (b *Engine) Heads() ([][32]byte, error) {
 
 	heads := b.state.Heads()
 
@@ -43,12 +39,8 @@ func (b *Engine) Heads(ctx context.Context) ([][32]byte, error) {
 }
 
 func (b *Engine) HasHeads(
-	ctx context.Context,
 	heads [][32]byte,
 ) (bool, error) {
-	if err := ctx.Err(); err != nil {
-		return false, err
-	}
 
 	for _, head := range heads {
 		if !b.state.hasChange(ChangeHash(head)) {
@@ -60,12 +52,8 @@ func (b *Engine) HasHeads(
 }
 
 func (b *Engine) MissingDependencies(
-	ctx context.Context,
 	heads [][32]byte,
 ) ([][32]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	missing := make(map[[32]byte]struct{})
 
@@ -100,12 +88,8 @@ func (b *Engine) MissingDependencies(
 }
 
 func (b *Engine) ChangesSince(
-	ctx context.Context,
 	heads [][32]byte,
 ) ([][]byte, [][32]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, nil, err
-	}
 
 	knownHeads := make([]ChangeHash, len(heads))
 	for i, head := range heads {
@@ -136,11 +120,10 @@ func (b *Engine) ChangesSince(
 }
 
 func (b *Engine) ApplyChanges(
-	ctx context.Context,
 	changes [][]byte,
 ) error {
 	for i, change := range changes {
-		if _, err := b.Merge(ctx, change); err != nil {
+		if _, err := b.Merge(change); err != nil {
 			return fmt.Errorf("cannot apply native change %d: %w", i, err)
 		}
 	}
@@ -148,10 +131,7 @@ func (b *Engine) ApplyChanges(
 	return nil
 }
 
-func (b *Engine) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 
 	// While isolated, merged changes belong to the full history rather than the
 	// pinned view, so operate on the full state and keep the pinned view intact.
@@ -191,7 +171,7 @@ func (b *Engine) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 		b.appended = nil
 		b.saveCursor = 0
 
-		return b.Heads(ctx)
+		return b.Heads()
 	}
 
 	if b.requiresSnapshotMerge(document) {
@@ -199,7 +179,7 @@ func (b *Engine) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 			return nil, err
 		}
 
-		return b.Heads(ctx)
+		return b.Heads()
 	}
 
 	if err := b.applyMergedChanges(document.Changes); err != nil {
@@ -210,7 +190,7 @@ func (b *Engine) Merge(ctx context.Context, data []byte) ([][32]byte, error) {
 		b.nextOp = next
 	}
 
-	return b.Heads(ctx)
+	return b.Heads()
 }
 
 func (b *Engine) requiresSnapshotMerge(document *Document) bool {

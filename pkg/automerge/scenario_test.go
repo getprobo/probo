@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -84,53 +83,50 @@ func TestInteropScenario_CoreDataModel(t *testing.T) {
 	var actorID automerge.ActorID
 	copy(actorID[:], actorBytes)
 
-	ctx := context.Background()
 	nativeDocument := runInteropScenario(
 		t,
-		ctx,
 		scenario,
-		func(ctx context.Context, actorID automerge.ActorID) (*automerge.Document, error) {
-			return automerge.New(ctx, actorID)
+		func(actorID automerge.ActorID) (*automerge.Document, error) {
+			return automerge.New(actorID)
 		},
 		actorID,
 	)
 	closeDocument(t, nativeDocument)
 	referenceDocument := runInteropScenario(
 		t,
-		ctx,
 		scenario,
 		automerge.NewReference,
 		actorID,
 	)
 	closeDocument(t, referenceDocument)
 
-	nativeHeads, err := nativeDocument.Heads(ctx)
+	nativeHeads, err := nativeDocument.Heads()
 	require.NoError(t, err)
-	referenceHeads, err := referenceDocument.Heads(ctx)
+	referenceHeads, err := referenceDocument.Heads()
 	require.NoError(t, err)
-	nativeData, err := nativeDocument.Save(ctx)
+	nativeData, err := nativeDocument.Save()
 	require.NoError(t, err)
-	referenceData, err := referenceDocument.Save(ctx)
+	referenceData, err := referenceDocument.Save()
 	require.NoError(t, err)
-	assertInteropScenarioResult(t, ctx, nativeDocument)
-	assertInteropScenarioResult(t, ctx, referenceDocument)
+	assertInteropScenarioResult(t, nativeDocument)
+	assertInteropScenarioResult(t, referenceDocument)
 
 	nativeFromReference, err := automerge.Load(
-		ctx,
+
 		referenceData,
 		actor(187),
 	)
 	require.NoError(t, err)
 	closeDocument(t, nativeFromReference)
-	assertInteropScenarioResult(t, ctx, nativeFromReference)
+	assertInteropScenarioResult(t, nativeFromReference)
 	referenceFromNative, err := automerge.LoadReference(
-		ctx,
+
 		nativeData,
 		actor(188),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceFromNative)
-	assertInteropScenarioResult(t, ctx, referenceFromNative)
+	assertInteropScenarioResult(t, referenceFromNative)
 
 	response := runOracle(
 		t,
@@ -168,36 +164,34 @@ func TestInteropScenario_CoreDataModel(t *testing.T) {
 
 	javaScriptData, err := base64.StdEncoding.DecodeString(response.Document)
 	require.NoError(t, err)
-	javaScriptDocument, err := automerge.Load(ctx, javaScriptData, actor(186))
+	javaScriptDocument, err := automerge.Load(javaScriptData, actor(186))
 	require.NoError(t, err)
 	closeDocument(t, javaScriptDocument)
-	assertInteropScenarioResult(t, ctx, javaScriptDocument)
+	assertInteropScenarioResult(t, javaScriptDocument)
 	javaScriptReference, err := automerge.LoadReference(
-		ctx,
+
 		javaScriptData,
 		actor(189),
 	)
 	require.NoError(t, err)
 	closeDocument(t, javaScriptReference)
-	assertInteropScenarioResult(t, ctx, javaScriptReference)
-	javaScriptHeads, err := javaScriptDocument.Heads(ctx)
+	assertInteropScenarioResult(t, javaScriptReference)
+	javaScriptHeads, err := javaScriptDocument.Heads()
 	require.NoError(t, err)
 	require.Equal(t, response.Heads, []string{javaScriptHeads[0].String()})
 }
 
 func runInteropScenario(
 	t *testing.T,
-	ctx context.Context,
 	scenario interopScenario,
 	factory func(
-		context.Context,
 		automerge.ActorID,
 	) (*automerge.Document, error),
 	actorID automerge.ActorID,
 ) *automerge.Document {
 	t.Helper()
 
-	document, err := factory(ctx, actorID)
+	document, err := factory(actorID)
 	require.NoError(t, err)
 
 	objects := map[string]*automerge.Object{"": document.Root()}
@@ -209,7 +203,7 @@ func runInteropScenario(
 		case "createObject":
 			require.NotNil(t, parent, "operation %d parent", index)
 			object, err := parent.CreateObject(
-				ctx,
+
 				operation.Key,
 				operation.ObjectType,
 			)
@@ -222,7 +216,7 @@ func runInteropScenario(
 			require.NotNil(t, parent, "operation %d parent", index)
 			require.NoError(
 				t,
-				parent.PutScalar(ctx, operation.Key, operation.Scalar.value(t)),
+				parent.PutScalar(operation.Key, operation.Scalar.value(t)),
 				"operation %d",
 				index,
 			)
@@ -231,7 +225,7 @@ func runInteropScenario(
 			require.NoError(
 				t,
 				parent.InsertScalar(
-					ctx,
+
 					operation.Index,
 					operation.Scalar.value(t),
 				),
@@ -243,7 +237,7 @@ func runInteropScenario(
 			require.NoError(
 				t,
 				parent.PutScalarAt(
-					ctx,
+
 					operation.Index,
 					operation.Scalar.value(t),
 				),
@@ -254,14 +248,14 @@ func runInteropScenario(
 			require.NotNil(t, parent, "operation %d parent", index)
 			require.NoError(
 				t,
-				parent.DeleteIndex(ctx, operation.Index),
+				parent.DeleteIndex(operation.Index),
 				"operation %d",
 				index,
 			)
 		case "createText":
 			require.NotNil(t, parent, "operation %d parent", index)
 			require.Empty(t, operation.Path)
-			text, err := document.CreateText(ctx, operation.Key)
+			text, err := document.CreateText(operation.Key)
 			require.NoError(t, err, "operation %d", index)
 
 			texts[scenarioPath(
@@ -273,7 +267,7 @@ func runInteropScenario(
 			require.NoError(
 				t,
 				text.Splice(
-					ctx,
+
 					uint32(operation.Index),
 					operation.DeleteCount,
 					operation.Text,
@@ -285,13 +279,13 @@ func runInteropScenario(
 			require.NotNil(t, parent, "operation %d parent", index)
 			require.NoError(
 				t,
-				parent.Increment(ctx, operation.Key, operation.Delta),
+				parent.Increment(operation.Key, operation.Delta),
 				"operation %d",
 				index,
 			)
 		case "commit":
 			_, err := document.Commit(
-				ctx,
+
 				operation.Message,
 				time.Unix(operation.Timestamp, 0),
 			)
@@ -312,12 +306,11 @@ func runInteropScenario(
 
 func assertInteropScenarioResult(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 ) {
 	t.Helper()
 
-	config, err := document.Root().Object(ctx, "config")
+	config, err := document.Root().Object("config")
 	require.NoError(t, err)
 	assertScenarioScalar(
 		t,
@@ -380,19 +373,19 @@ func assertInteropScenarioResult(
 		automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 8},
 	)
 
-	items, err := document.Root().Object(ctx, "items")
+	items, err := document.Root().Object("items")
 	require.NoError(t, err)
-	length, err := items.Len(ctx)
+	length, err := items.Len()
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), length)
 
-	item, err := items.ScalarAt(ctx, 0)
+	item, err := items.ScalarAt(0)
 	require.NoError(t, err)
 	assert.Equal(t, "replaced", item.String)
 
-	text, err := document.Text(ctx, "body")
+	text, err := document.Text("body")
 	require.NoError(t, err)
-	value, err := text.String(ctx)
+	value, err := text.String()
 	require.NoError(t, err)
 	assert.Equal(t, "AXB", value)
 }
@@ -405,7 +398,7 @@ func assertScenarioScalar(
 ) {
 	t.Helper()
 
-	actual, err := object.Scalar(context.Background(), key)
+	actual, err := object.Scalar(key)
 	require.NoError(t, err)
 	assertScalarEqual(t, expected, actual)
 }

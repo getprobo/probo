@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -92,9 +91,8 @@ func TestDocument_HydrateMatchesReference(t *testing.T) {
 		},
 	}
 
-	ctx := context.Background()
 	nativeDocument, err := automerge.NewFrom(
-		ctx,
+
 		actor(163),
 		value,
 		"hydrate",
@@ -104,7 +102,7 @@ func TestDocument_HydrateMatchesReference(t *testing.T) {
 	closeDocument(t, nativeDocument)
 
 	referenceDocument, err := automerge.NewReferenceFrom(
-		ctx,
+
 		actor(163),
 		value,
 		"hydrate",
@@ -113,37 +111,36 @@ func TestDocument_HydrateMatchesReference(t *testing.T) {
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 
-	nativeHeads, err := nativeDocument.Heads(ctx)
+	nativeHeads, err := nativeDocument.Heads()
 	require.NoError(t, err)
-	referenceHeads, err := referenceDocument.Heads(ctx)
+	referenceHeads, err := referenceDocument.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, referenceHeads, nativeHeads)
-	assertHydratedDocument(t, ctx, nativeDocument)
-	assertHydratedDocument(t, ctx, referenceDocument)
+	assertHydratedDocument(t, nativeDocument)
+	assertHydratedDocument(t, referenceDocument)
 
-	nativeData, err := nativeDocument.Save(ctx)
+	nativeData, err := nativeDocument.Save()
 	require.NoError(t, err)
 	referenceFromNative, err := automerge.LoadReference(
-		ctx,
+
 		nativeData,
 		actor(164),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceFromNative)
-	assertHydratedDocument(t, ctx, referenceFromNative)
+	assertHydratedDocument(t, referenceFromNative)
 }
 
 func TestDocument_HydrateRollback(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(165))
+	document, err := automerge.New(actor(165))
 	require.NoError(t, err)
 	closeDocument(t, document)
 	require.NoError(
 		t,
 		document.Root().PutMap(
-			ctx,
+
 			map[string]automerge.Value{
 				"value": {
 					Type: automerge.ValueTypeList,
@@ -160,11 +157,11 @@ func TestDocument_HydrateRollback(t *testing.T) {
 			},
 		),
 	)
-	cancelled, err := document.Rollback(ctx)
+	cancelled, err := document.Rollback()
 	require.NoError(t, err)
 	assert.Positive(t, cancelled)
 
-	_, err = document.Root().Object(ctx, "value")
+	_, err = document.Root().Object("value")
 	require.Error(t, err)
 }
 
@@ -172,7 +169,6 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 	t.Parallel()
 
 	factories := map[string]func(
-		context.Context,
 		automerge.ActorID,
 		map[string]automerge.Value,
 		string,
@@ -188,9 +184,8 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
 				document, err := factory(
-					ctx,
+
 					actor(166),
 					map[string]automerge.Value{
 						"list": {
@@ -207,12 +202,12 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 				)
 				require.NoError(t, err)
 				closeDocument(t, document)
-				list, err := document.Root().Object(ctx, "list")
+				list, err := document.Root().Object("list")
 				require.NoError(t, err)
 				require.NoError(
 					t,
 					list.SpliceValues(
-						ctx,
+
 						1,
 						1,
 						[]automerge.Value{
@@ -229,7 +224,7 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 				require.NoError(
 					t,
 					list.PutValueAt(
-						ctx,
+
 						3,
 						automerge.Value{
 							Type: automerge.ValueTypeList,
@@ -238,37 +233,37 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 					),
 				)
 				_, err = document.Commit(
-					ctx,
+
 					"splice",
 					commitTime.Add(time.Second),
 				)
 				require.NoError(t, err)
 
-				length, err := list.Len(ctx)
+				length, err := list.Len()
 				require.NoError(t, err)
 				assert.Equal(t, uint64(4), length)
 
-				first, err := list.ScalarAt(ctx, 0)
+				first, err := list.ScalarAt(0)
 				require.NoError(t, err)
 				assert.Equal(t, int64(1), first.Int)
 
-				nested, err := list.ObjectAt(ctx, 1)
+				nested, err := list.ObjectAt(1)
 				require.NoError(t, err)
-				nestedValue, err := nested.Scalar(ctx, "value")
+				nestedValue, err := nested.Scalar("value")
 				require.NoError(t, err)
 				assert.Equal(t, int64(4), nestedValue.Int)
 
-				textObject, err := list.ObjectAt(ctx, 2)
+				textObject, err := list.ObjectAt(2)
 				require.NoError(t, err)
-				text, err := textObject.Text(ctx)
+				text, err := textObject.Text()
 				require.NoError(t, err)
-				textValue, err := text.String(ctx)
+				textValue, err := text.String()
 				require.NoError(t, err)
 				assert.Equal(t, "text", textValue)
 
-				nestedList, err := list.ObjectAt(ctx, 3)
+				nestedList, err := list.ObjectAt(3)
 				require.NoError(t, err)
-				last, err := nestedList.ScalarAt(ctx, 0)
+				last, err := nestedList.ScalarAt(0)
 				require.NoError(t, err)
 				assert.Equal(t, int64(5), last.Int)
 			},
@@ -288,44 +283,43 @@ func hydratedInt(value int64) automerge.Value {
 
 func assertHydratedDocument(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 ) {
 	t.Helper()
 
-	config, err := document.Root().Object(ctx, "config")
+	config, err := document.Root().Object("config")
 	require.NoError(t, err)
-	enabled, err := config.Scalar(ctx, "enabled")
+	enabled, err := config.Scalar("enabled")
 	require.NoError(t, err)
 	assert.True(t, enabled.Bool)
 
-	name, err := config.Scalar(ctx, "name")
+	name, err := config.Scalar("name")
 	require.NoError(t, err)
 	assert.Equal(t, "Policy", name.String)
 
-	items, err := document.Root().Object(ctx, "items")
+	items, err := document.Root().Object("items")
 	require.NoError(t, err)
-	length, err := items.Len(ctx)
+	length, err := items.Len()
 	require.NoError(t, err)
 	assert.Equal(t, uint64(3), length)
 
-	first, err := items.ScalarAt(ctx, 0)
+	first, err := items.ScalarAt(0)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), first.Int)
 
-	nestedMap, err := items.ObjectAt(ctx, 1)
+	nestedMap, err := items.ObjectAt(1)
 	require.NoError(t, err)
-	nestedTextObject, err := nestedMap.Object(ctx, "nested")
+	nestedTextObject, err := nestedMap.Object("nested")
 	require.NoError(t, err)
-	nestedText, err := nestedTextObject.Text(ctx)
+	nestedText, err := nestedTextObject.Text()
 	require.NoError(t, err)
-	nestedValue, err := nestedText.String(ctx)
+	nestedValue, err := nestedText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "A😀B", nestedValue)
 
-	text, err := document.Text(ctx, "text")
+	text, err := document.Text("text")
 	require.NoError(t, err)
-	value, err := text.String(ctx)
+	value, err := text.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", value)
 }

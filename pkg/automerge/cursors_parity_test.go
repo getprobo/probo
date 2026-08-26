@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,31 +39,30 @@ import (
 func TestJSCursors_GetCursorRespectsHeads(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	positions := make(map[string][]uint32)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "aaa@bbb")
+		document, _, text := seedText(t, engine, "aaa@bbb")
 
-		frontier, err := document.Heads(ctx)
-		require.NoError(t, err)
-
-		require.NoError(t, text.Splice(ctx, 3, 1, "~~~"))
-		_, err = document.Commit(ctx, "replace", commitTime.Add(1))
+		frontier, err := document.Heads()
 		require.NoError(t, err)
 
-		before, err := text.CursorForAt(ctx, 3, automerge.CursorMoveBefore, frontier)
-		require.NoError(t, err)
-		after, err := text.CursorForAt(ctx, 3, automerge.CursorMoveAfter, frontier)
+		require.NoError(t, text.Splice(3, 1, "~~~"))
+		_, err = document.Commit("replace", commitTime.Add(1))
 		require.NoError(t, err)
 
-		start, err := text.CursorPosition(ctx, automerge.StartCursor())
+		before, err := text.CursorForAt(3, automerge.CursorMoveBefore, frontier)
 		require.NoError(t, err)
-		beforePosition, err := text.CursorPosition(ctx, before)
+		after, err := text.CursorForAt(3, automerge.CursorMoveAfter, frontier)
 		require.NoError(t, err)
-		afterPosition, err := text.CursorPosition(ctx, after)
+
+		start, err := text.CursorPosition(automerge.StartCursor())
 		require.NoError(t, err)
-		end, err := text.CursorPosition(ctx, automerge.EndCursor())
+		beforePosition, err := text.CursorPosition(before)
+		require.NoError(t, err)
+		afterPosition, err := text.CursorPosition(after)
+		require.NoError(t, err)
+		end, err := text.CursorPosition(automerge.EndCursor())
 		require.NoError(t, err)
 
 		positions[engine.name] = []uint32{start, beforePosition, afterPosition, end}

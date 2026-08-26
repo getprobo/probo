@@ -21,7 +21,6 @@
 package native
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -32,19 +31,18 @@ import (
 func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	backend, err := NewEngine(ctx)
+	backend, err := NewEngine()
 	require.NoError(t, err)
-	require.NoError(t, backend.SetActor(ctx, []byte{1}))
-	text, err := backend.PutText(ctx, 0, "body")
+	require.NoError(t, backend.SetActor([]byte{1}))
+	text, err := backend.PutText(0, "body")
 	require.NoError(t, err)
-	require.NoError(t, backend.SpliceText(ctx, text, 0, 0, "A"))
-	_, err = backend.Commit(ctx, "first", time.Unix(1, 0))
+	require.NoError(t, backend.SpliceText(text, 0, 0, "A"))
+	_, err = backend.Commit("first", time.Unix(1, 0))
 	require.NoError(t, err)
 
-	syncHandle, err := backend.NewSyncState(ctx)
+	syncHandle, err := backend.NewSyncState()
 	require.NoError(t, err)
-	firstMessage, ok, err := backend.GenerateSyncMessage(ctx, syncHandle)
+	firstMessage, ok, err := backend.GenerateSyncMessage(syncHandle)
 	require.NoError(t, err)
 	assert.True(t, ok)
 
@@ -61,12 +59,12 @@ func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	}
 	ack, err := ackMessage.Encode()
 	require.NoError(t, err)
-	require.NoError(t, backend.ReceiveSyncMessage(ctx, syncHandle, ack))
+	require.NoError(t, backend.ReceiveSyncMessage(syncHandle, ack))
 
-	require.NoError(t, backend.SpliceText(ctx, text, 1, 0, "B"))
-	_, err = backend.Commit(ctx, "second", time.Unix(2, 0))
+	require.NoError(t, backend.SpliceText(text, 1, 0, "B"))
+	_, err = backend.Commit("second", time.Unix(2, 0))
 	require.NoError(t, err)
-	secondMessage, ok, err := backend.GenerateSyncMessage(ctx, syncHandle)
+	secondMessage, ok, err := backend.GenerateSyncMessage(syncHandle)
 	require.NoError(t, err)
 	assert.True(t, ok)
 
@@ -79,7 +77,7 @@ func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	require.Len(t, secondDocument.Changes, 1)
 	assert.Equal(t, "second", secondDocument.Changes[0].Message)
 
-	fullDocument, err := backend.Save(ctx, true, true)
+	fullDocument, err := backend.Save(true, true)
 	require.NoError(t, err)
 	assert.Less(t, len(secondMessage), len(fullDocument))
 }

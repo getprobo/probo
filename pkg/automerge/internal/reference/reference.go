@@ -65,28 +65,28 @@ var (
 	moduleSequence  atomic.Uint64
 )
 
-func New(ctx context.Context) (*Engine, error) {
-	backend, err := instantiate(ctx)
+func New() (*Engine, error) {
+	backend, err := instantiate()
 	if err != nil {
 		return nil, fmt.Errorf("cannot instantiate Automerge reference backend: %w", err)
 	}
 
-	if err := backend.run(ctx, "am_create"); err != nil {
-		_ = backend.Close(ctx)
+	if err := backend.run("am_create"); err != nil {
+		_ = backend.Close()
 		return nil, fmt.Errorf("cannot create Automerge document: %w", err)
 	}
 
 	return backend, nil
 }
 
-func Load(ctx context.Context, document []byte) (*Engine, error) {
-	backend, err := instantiate(ctx)
+func Load(document []byte) (*Engine, error) {
+	backend, err := instantiate()
 	if err != nil {
 		return nil, fmt.Errorf("cannot instantiate Automerge reference backend: %w", err)
 	}
 
-	if err := backend.runBytes(ctx, "am_load", document); err != nil {
-		_ = backend.Close(ctx)
+	if err := backend.runBytes("am_load", document); err != nil {
+		_ = backend.Close()
 		return nil, fmt.Errorf("cannot load Automerge document: %w", err)
 	}
 
@@ -95,14 +95,14 @@ func Load(ctx context.Context, document []byte) (*Engine, error) {
 
 // LoadConvertingStrings loads a document, converting every string scalar in a
 // map or list into a text object, mirroring StringMigration::ConvertToText.
-func LoadConvertingStrings(ctx context.Context, document []byte) (*Engine, error) {
-	backend, err := instantiate(ctx)
+func LoadConvertingStrings(document []byte) (*Engine, error) {
+	backend, err := instantiate()
 	if err != nil {
 		return nil, fmt.Errorf("cannot instantiate Automerge reference backend: %w", err)
 	}
 
-	if err := backend.runBytes(ctx, "am_load_convert_strings", document); err != nil {
-		_ = backend.Close(ctx)
+	if err := backend.runBytes("am_load_convert_strings", document); err != nil {
+		_ = backend.Close()
 
 		return nil, fmt.Errorf("cannot load Automerge document with string migration: %w", err)
 	}
@@ -110,7 +110,7 @@ func LoadConvertingStrings(ctx context.Context, document []byte) (*Engine, error
 	return backend, nil
 }
 
-func instantiate(ctx context.Context) (*Engine, error) {
+func instantiate() (*Engine, error) {
 	runtimeOnce.Do(
 		func() {
 			fields := strings.Fields(string(wasmChecksum))
@@ -132,18 +132,16 @@ func instantiate(ctx context.Context) (*Engine, error) {
 				return
 			}
 
-			runtimeContext := context.Background()
-
 			runtimeInstance = wazero.NewRuntimeWithConfig(
-				runtimeContext,
+				context.Background(),
 				wazero.NewRuntimeConfig().WithMemoryLimitPages(referenceMemoryLimitPages),
 			)
-			if _, err := wasi_snapshot_preview1.Instantiate(runtimeContext, runtimeInstance); err != nil {
+			if _, err := wasi_snapshot_preview1.Instantiate(context.Background(), runtimeInstance); err != nil {
 				runtimeErr = fmt.Errorf("cannot instantiate WASI: %w", err)
 				return
 			}
 
-			compiledModule, runtimeErr = runtimeInstance.CompileModule(runtimeContext, wasm)
+			compiledModule, runtimeErr = runtimeInstance.CompileModule(context.Background(), wasm)
 			if runtimeErr != nil {
 				runtimeErr = fmt.Errorf("cannot compile reference module: %w", runtimeErr)
 			}
@@ -157,7 +155,7 @@ func instantiate(ctx context.Context) (*Engine, error) {
 	name := fmt.Sprintf("automerge-reference-%d", moduleSequence.Add(1))
 
 	module, err := runtimeInstance.InstantiateModule(
-		ctx,
+		context.Background(),
 		compiledModule,
 		wazero.NewModuleConfig().WithName(name).WithRandSource(rand.Reader),
 	)
@@ -167,14 +165,14 @@ func instantiate(ctx context.Context) (*Engine, error) {
 
 	backend := &Engine{module: module}
 
-	version, err := backend.call(ctx, "am_abi_version")
+	version, err := backend.call("am_abi_version")
 	if err != nil {
-		_ = module.Close(ctx)
+		_ = module.Close(context.Background())
 		return nil, fmt.Errorf("cannot read reference ABI version: %w", err)
 	}
 
 	if version[0] != referenceABIVersion {
-		_ = module.Close(ctx)
+		_ = module.Close(context.Background())
 
 		return nil, fmt.Errorf(
 			"unsupported reference ABI version %d, expected %d",
@@ -186,8 +184,8 @@ func instantiate(ctx context.Context) (*Engine, error) {
 	return backend, nil
 }
 
-func (b *Engine) Close(ctx context.Context) error {
-	if err := b.module.Close(ctx); err != nil {
+func (b *Engine) Close() error {
+	if err := b.module.Close(context.Background()); err != nil {
 		return fmt.Errorf("cannot close reference module: %w", err)
 	}
 
@@ -200,7 +198,6 @@ func (b *Engine) Close(ctx context.Context) error {
 // am_save (retain, compress), am_save_nocompress (retain, no compress), and
 // am_save_no_orphans (discard orphans, which also does not compress).
 func (b *Engine) Save(
-	ctx context.Context,
 	retainOrphans bool,
 	compress bool,
 ) ([]byte, error) {
@@ -213,11 +210,11 @@ func (b *Engine) Save(
 		function = "am_save_nocompress"
 	}
 
-	if err := b.run(ctx, function); err != nil {
+	if err := b.run(function); err != nil {
 		return nil, fmt.Errorf("cannot save reference document: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read saved reference document: %w", err)
 	}
@@ -225,12 +222,12 @@ func (b *Engine) Save(
 	return output, nil
 }
 
-func (b *Engine) SaveIncremental(ctx context.Context) ([]byte, error) {
-	if err := b.run(ctx, "am_save_incremental"); err != nil {
+func (b *Engine) SaveIncremental() ([]byte, error) {
+	if err := b.run("am_save_incremental"); err != nil {
 		return nil, fmt.Errorf("cannot save incremental reference changes: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy incremental reference changes: %w", err)
 	}
@@ -239,17 +236,15 @@ func (b *Engine) SaveIncremental(ctx context.Context) ([]byte, error) {
 }
 
 func (b *Engine) LoadIncremental(
-	ctx context.Context,
 	data []byte,
 ) (uint64, error) {
-	pointer, length, err := b.write(ctx, data)
+	pointer, length, err := b.write(data)
 	if err != nil {
 		return 0, fmt.Errorf("cannot write incremental reference changes: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	result, err := b.call(
-		ctx,
 		"am_load_incremental",
 		uint64(pointer),
 		uint64(length),
@@ -260,15 +255,15 @@ func (b *Engine) LoadIncremental(
 
 	applied := int64(result[0])
 	if applied < 0 {
-		return 0, b.operationError(ctx, "cannot load incremental reference changes")
+		return 0, b.operationError("cannot load incremental reference changes")
 	}
 
 	return uint64(applied), nil
 }
 
 // Isolate pins the document to the given heads, mirroring AutoCommit::isolate.
-func (b *Engine) Isolate(ctx context.Context, heads [][32]byte) error {
-	if err := b.runBytes(ctx, "am_isolate", flattenHashes(heads)); err != nil {
+func (b *Engine) Isolate(heads [][32]byte) error {
+	if err := b.runBytes("am_isolate", flattenHashes(heads)); err != nil {
 		return fmt.Errorf("cannot isolate reference document: %w", err)
 	}
 
@@ -276,37 +271,36 @@ func (b *Engine) Isolate(ctx context.Context, heads [][32]byte) error {
 }
 
 // Integrate ends isolation, mirroring AutoCommit::integrate.
-func (b *Engine) Integrate(ctx context.Context) error {
-	if err := b.run(ctx, "am_integrate"); err != nil {
+func (b *Engine) Integrate() error {
+	if err := b.run("am_integrate"); err != nil {
 		return fmt.Errorf("cannot integrate reference document: %w", err)
 	}
 
 	return nil
 }
 
-func (b *Engine) SetActor(ctx context.Context, actor []byte) error {
-	if err := b.runBytes(ctx, "am_set_actor", actor); err != nil {
+func (b *Engine) SetActor(actor []byte) error {
+	if err := b.runBytes("am_set_actor", actor); err != nil {
 		return fmt.Errorf("cannot set reference actor: %w", err)
 	}
 
 	return nil
 }
 
-func (b *Engine) PutString(ctx context.Context, object Object, key, value string) error {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+func (b *Engine) PutString(object Object, key, value string) error {
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return fmt.Errorf("cannot write map key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
-	valuePointer, valueLength, err := b.write(ctx, []byte(value))
+	valuePointer, valueLength, err := b.write([]byte(value))
 	if err != nil {
 		return fmt.Errorf("cannot write map value: %w", err)
 	}
-	defer b.free(ctx, valuePointer, valueLength)
+	defer b.free(valuePointer, valueLength)
 
 	if err := b.run(
-		ctx,
 		"am_put_string",
 		uint64(object),
 		uint64(keyPointer),
@@ -320,15 +314,14 @@ func (b *Engine) PutString(ctx context.Context, object Object, key, value string
 	return nil
 }
 
-func (b *Engine) GetString(ctx context.Context, object Object, key string) (string, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+func (b *Engine) GetString(object Object, key string) (string, error) {
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return "", fmt.Errorf("cannot write map key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
 	if err := b.run(
-		ctx,
 		"am_get_string",
 		uint64(object),
 		uint64(keyPointer),
@@ -337,7 +330,7 @@ func (b *Engine) GetString(ctx context.Context, object Object, key string) (stri
 		return "", fmt.Errorf("cannot get reference map value: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return "", fmt.Errorf("cannot copy reference map value: %w", err)
 	}
@@ -346,25 +339,23 @@ func (b *Engine) GetString(ctx context.Context, object Object, key string) (stri
 }
 
 func (b *Engine) PutScalar(
-	ctx context.Context,
 	object Object,
 	key string,
 	value []byte,
 ) error {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return fmt.Errorf("cannot write scalar key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
-	valuePointer, valueLength, err := b.write(ctx, value)
+	valuePointer, valueLength, err := b.write(value)
 	if err != nil {
 		return fmt.Errorf("cannot write scalar value: %w", err)
 	}
-	defer b.free(ctx, valuePointer, valueLength)
+	defer b.free(valuePointer, valueLength)
 
 	if err := b.run(
-		ctx,
 		"am_put_scalar",
 		uint64(object),
 		uint64(keyPointer),
@@ -379,18 +370,16 @@ func (b *Engine) PutScalar(
 }
 
 func (b *Engine) GetScalar(
-	ctx context.Context,
 	object Object,
 	key string,
 ) ([]byte, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write scalar key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
 	if err := b.run(
-		ctx,
 		"am_get_scalar",
 		uint64(object),
 		uint64(keyPointer),
@@ -399,7 +388,7 @@ func (b *Engine) GetScalar(
 		return nil, fmt.Errorf("cannot get reference scalar: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference scalar: %w", err)
 	}
@@ -408,25 +397,23 @@ func (b *Engine) GetScalar(
 }
 
 func (b *Engine) GetScalarAtHeads(
-	ctx context.Context,
 	object Object,
 	key string,
 	heads [][32]byte,
 ) ([]byte, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write historical scalar key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
-	headPointer, headLength, err := b.write(ctx, flattenHashes(heads))
+	headPointer, headLength, err := b.write(flattenHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write historical scalar heads: %w", err)
 	}
-	defer b.free(ctx, headPointer, headLength)
+	defer b.free(headPointer, headLength)
 
 	if err := b.run(
-		ctx,
 		"am_get_scalar_at_heads",
 		uint64(object),
 		uint64(keyPointer),
@@ -437,7 +424,7 @@ func (b *Engine) GetScalarAtHeads(
 		return nil, fmt.Errorf("cannot get historical reference scalar: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy historical reference scalar: %w", err)
 	}
@@ -446,18 +433,16 @@ func (b *Engine) GetScalarAtHeads(
 }
 
 func (b *Engine) GetAllScalars(
-	ctx context.Context,
 	object Object,
 	key string,
 ) ([]byte, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write scalar key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
 	if err := b.run(
-		ctx,
 		"am_get_all_scalars",
 		uint64(object),
 		uint64(keyPointer),
@@ -466,7 +451,7 @@ func (b *Engine) GetAllScalars(
 		return nil, fmt.Errorf("cannot get reference scalar conflicts: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference scalar conflicts: %w", err)
 	}
@@ -475,12 +460,10 @@ func (b *Engine) GetAllScalars(
 }
 
 func (b *Engine) GetAllScalarsAt(
-	ctx context.Context,
 	object Object,
 	index uint64,
 ) ([]byte, error) {
 	if err := b.run(
-		ctx,
 		"am_get_all_scalars_at",
 		uint64(object),
 		index,
@@ -488,7 +471,7 @@ func (b *Engine) GetAllScalarsAt(
 		return nil, fmt.Errorf("cannot get reference sequence scalar conflicts: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference sequence scalar conflicts: %w", err)
 	}
@@ -497,25 +480,23 @@ func (b *Engine) GetAllScalarsAt(
 }
 
 func (b *Engine) PutObject(
-	ctx context.Context,
 	object Object,
 	key string,
 	objectType string,
 ) (Object, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write object key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
-	typePointer, typeLength, err := b.write(ctx, []byte(objectType))
+	typePointer, typeLength, err := b.write([]byte(objectType))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write object type: %w", err)
 	}
-	defer b.free(ctx, typePointer, typeLength)
+	defer b.free(typePointer, typeLength)
 
 	result, err := b.call(
-		ctx,
 		"am_put_object",
 		uint64(object),
 		uint64(keyPointer),
@@ -529,25 +510,23 @@ func (b *Engine) PutObject(
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot create reference object")
+		return 0, b.operationError("cannot create reference object")
 	}
 
 	return Object(handle), nil
 }
 
 func (b *Engine) GetObject(
-	ctx context.Context,
 	object Object,
 	key string,
 ) (Object, string, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return 0, "", fmt.Errorf("cannot write object key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
 	result, err := b.call(
-		ctx,
 		"am_get_object",
 		uint64(object),
 		uint64(keyPointer),
@@ -559,10 +538,10 @@ func (b *Engine) GetObject(
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, "", b.operationError(ctx, "cannot get reference object")
+		return 0, "", b.operationError("cannot get reference object")
 	}
 
-	rawType, err := b.output(ctx)
+	rawType, err := b.output()
 	if err != nil {
 		return 0, "", fmt.Errorf("cannot copy reference object type: %w", err)
 	}
@@ -571,19 +550,17 @@ func (b *Engine) GetObject(
 }
 
 func (b *Engine) InsertScalar(
-	ctx context.Context,
 	object Object,
 	index uint64,
 	value []byte,
 ) error {
-	pointer, length, err := b.write(ctx, value)
+	pointer, length, err := b.write(value)
 	if err != nil {
 		return fmt.Errorf("cannot write sequence scalar: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_insert_scalar",
 		uint64(object),
 		index,
@@ -597,19 +574,17 @@ func (b *Engine) InsertScalar(
 }
 
 func (b *Engine) PutScalarAt(
-	ctx context.Context,
 	object Object,
 	index uint64,
 	value []byte,
 ) error {
-	pointer, length, err := b.write(ctx, value)
+	pointer, length, err := b.write(value)
 	if err != nil {
 		return fmt.Errorf("cannot write sequence scalar: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_put_scalar_at",
 		uint64(object),
 		index,
@@ -623,19 +598,17 @@ func (b *Engine) PutScalarAt(
 }
 
 func (b *Engine) InsertObject(
-	ctx context.Context,
 	object Object,
 	index uint64,
 	objectType string,
 ) (Object, error) {
-	pointer, length, err := b.write(ctx, []byte(objectType))
+	pointer, length, err := b.write([]byte(objectType))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write sequence object type: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	result, err := b.call(
-		ctx,
 		"am_insert_object",
 		uint64(object),
 		index,
@@ -648,26 +621,24 @@ func (b *Engine) InsertObject(
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot insert reference object")
+		return 0, b.operationError("cannot insert reference object")
 	}
 
 	return Object(handle), nil
 }
 
 func (b *Engine) PutObjectAt(
-	ctx context.Context,
 	object Object,
 	index uint64,
 	objectType string,
 ) (Object, error) {
-	pointer, length, err := b.write(ctx, []byte(objectType))
+	pointer, length, err := b.write([]byte(objectType))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write replacement object type: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	result, err := b.call(
-		ctx,
 		"am_put_object_at",
 		uint64(object),
 		index,
@@ -680,19 +651,17 @@ func (b *Engine) PutObjectAt(
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot replace reference object")
+		return 0, b.operationError("cannot replace reference object")
 	}
 
 	return Object(handle), nil
 }
 
 func (b *Engine) GetScalarAt(
-	ctx context.Context,
 	object Object,
 	index uint64,
 ) ([]byte, error) {
 	if err := b.run(
-		ctx,
 		"am_get_scalar_at",
 		uint64(object),
 		index,
@@ -700,7 +669,7 @@ func (b *Engine) GetScalarAt(
 		return nil, fmt.Errorf("cannot get reference sequence scalar: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference sequence scalar: %w", err)
 	}
@@ -709,12 +678,10 @@ func (b *Engine) GetScalarAt(
 }
 
 func (b *Engine) GetObjectAt(
-	ctx context.Context,
 	object Object,
 	index uint64,
 ) (Object, string, error) {
 	result, err := b.call(
-		ctx,
 		"am_get_object_at",
 		uint64(object),
 		index,
@@ -725,13 +692,10 @@ func (b *Engine) GetObjectAt(
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, "", b.operationError(
-			ctx,
-			"cannot get reference sequence object",
-		)
+		return 0, "", b.operationError("cannot get reference sequence object")
 	}
 
-	rawType, err := b.output(ctx)
+	rawType, err := b.output()
 	if err != nil {
 		return 0, "", fmt.Errorf("cannot copy reference sequence object type: %w", err)
 	}
@@ -740,18 +704,16 @@ func (b *Engine) GetObjectAt(
 }
 
 func (b *Engine) DeleteMap(
-	ctx context.Context,
 	object Object,
 	key string,
 ) error {
-	pointer, length, err := b.write(ctx, []byte(key))
+	pointer, length, err := b.write([]byte(key))
 	if err != nil {
 		return fmt.Errorf("cannot write deleted map key: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_delete_map",
 		uint64(object),
 		uint64(pointer),
@@ -764,12 +726,10 @@ func (b *Engine) DeleteMap(
 }
 
 func (b *Engine) DeleteSequence(
-	ctx context.Context,
 	object Object,
 	index uint64,
 ) error {
 	if err := b.run(
-		ctx,
 		"am_delete_sequence",
 		uint64(object),
 		index,
@@ -781,19 +741,17 @@ func (b *Engine) DeleteSequence(
 }
 
 func (b *Engine) Increment(
-	ctx context.Context,
 	object Object,
 	key string,
 	delta int64,
 ) error {
-	pointer, length, err := b.write(ctx, []byte(key))
+	pointer, length, err := b.write([]byte(key))
 	if err != nil {
 		return fmt.Errorf("cannot write incremented map key: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_increment",
 		uint64(object),
 		uint64(pointer),
@@ -807,13 +765,11 @@ func (b *Engine) Increment(
 }
 
 func (b *Engine) IncrementAt(
-	ctx context.Context,
 	object Object,
 	index uint64,
 	delta int64,
 ) error {
 	if err := b.run(
-		ctx,
 		"am_increment_at",
 		uint64(object),
 		index,
@@ -826,14 +782,13 @@ func (b *Engine) IncrementAt(
 }
 
 func (b *Engine) Keys(
-	ctx context.Context,
 	object Object,
 ) ([]string, error) {
-	if err := b.run(ctx, "am_keys", uint64(object)); err != nil {
+	if err := b.run("am_keys", uint64(object)); err != nil {
 		return nil, fmt.Errorf("cannot get reference map keys: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference map keys: %w", err)
 	}
@@ -847,31 +802,29 @@ func (b *Engine) Keys(
 }
 
 func (b *Engine) Length(
-	ctx context.Context,
 	object Object,
 ) (uint64, error) {
-	result, err := b.call(ctx, "am_length", uint64(object))
+	result, err := b.call("am_length", uint64(object))
 	if err != nil {
 		return 0, fmt.Errorf("cannot get reference object length: %w", err)
 	}
 
 	length := int64(result[0])
 	if length < 0 {
-		return 0, b.operationError(ctx, "cannot get reference object length")
+		return 0, b.operationError("cannot get reference object length")
 	}
 
 	return uint64(length), nil
 }
 
-func (b *Engine) PutText(ctx context.Context, object Object, key string) (Object, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+func (b *Engine) PutText(object Object, key string) (Object, error) {
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write text key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
 	result, err := b.call(
-		ctx,
 		"am_put_text",
 		uint64(object),
 		uint64(keyPointer),
@@ -883,21 +836,20 @@ func (b *Engine) PutText(ctx context.Context, object Object, key string) (Object
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot create reference text")
+		return 0, b.operationError("cannot create reference text")
 	}
 
 	return Object(handle), nil
 }
 
-func (b *Engine) GetText(ctx context.Context, object Object, key string) (Object, error) {
-	keyPointer, keyLength, err := b.write(ctx, []byte(key))
+func (b *Engine) GetText(object Object, key string) (Object, error) {
+	keyPointer, keyLength, err := b.write([]byte(key))
 	if err != nil {
 		return 0, fmt.Errorf("cannot write text key: %w", err)
 	}
-	defer b.free(ctx, keyPointer, keyLength)
+	defer b.free(keyPointer, keyLength)
 
 	result, err := b.call(
-		ctx,
 		"am_get_text",
 		uint64(object),
 		uint64(keyPointer),
@@ -909,27 +861,25 @@ func (b *Engine) GetText(ctx context.Context, object Object, key string) (Object
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot get reference text")
+		return 0, b.operationError("cannot get reference text")
 	}
 
 	return Object(handle), nil
 }
 
 func (b *Engine) SpliceText(
-	ctx context.Context,
 	object Object,
 	index uint32,
 	deleteCount int32,
 	value string,
 ) error {
-	valuePointer, valueLength, err := b.write(ctx, []byte(value))
+	valuePointer, valueLength, err := b.write([]byte(value))
 	if err != nil {
 		return fmt.Errorf("cannot write splice value: %w", err)
 	}
-	defer b.free(ctx, valuePointer, valueLength)
+	defer b.free(valuePointer, valueLength)
 
 	if err := b.run(
-		ctx,
 		"am_text_splice",
 		uint64(object),
 		uint64(index),
@@ -944,18 +894,16 @@ func (b *Engine) SpliceText(
 }
 
 func (b *Engine) UpdateText(
-	ctx context.Context,
 	object Object,
 	value string,
 ) error {
-	valuePointer, valueLength, err := b.write(ctx, []byte(value))
+	valuePointer, valueLength, err := b.write([]byte(value))
 	if err != nil {
 		return fmt.Errorf("cannot write update value: %w", err)
 	}
-	defer b.free(ctx, valuePointer, valueLength)
+	defer b.free(valuePointer, valueLength)
 
 	if err := b.run(
-		ctx,
 		"am_text_update",
 		uint64(object),
 		uint64(valuePointer),
@@ -968,25 +916,23 @@ func (b *Engine) UpdateText(
 }
 
 func (b *Engine) UpdateSpans(
-	ctx context.Context,
 	object Object,
 	spans []byte,
 	config []byte,
 ) error {
-	spansPointer, spansLength, err := b.write(ctx, spans)
+	spansPointer, spansLength, err := b.write(spans)
 	if err != nil {
 		return fmt.Errorf("cannot write update spans: %w", err)
 	}
-	defer b.free(ctx, spansPointer, spansLength)
+	defer b.free(spansPointer, spansLength)
 
-	configPointer, configLength, err := b.write(ctx, config)
+	configPointer, configLength, err := b.write(config)
 	if err != nil {
 		return fmt.Errorf("cannot write update spans config: %w", err)
 	}
-	defer b.free(ctx, configPointer, configLength)
+	defer b.free(configPointer, configLength)
 
 	if err := b.run(
-		ctx,
 		"am_update_spans",
 		uint64(object),
 		uint64(spansPointer),
@@ -1001,7 +947,6 @@ func (b *Engine) UpdateSpans(
 }
 
 func (b *Engine) MarkText(
-	ctx context.Context,
 	object Object,
 	start uint32,
 	end uint32,
@@ -1009,26 +954,25 @@ func (b *Engine) MarkText(
 	value []byte,
 	expand string,
 ) error {
-	namePointer, nameLength, err := b.write(ctx, []byte(name))
+	namePointer, nameLength, err := b.write([]byte(name))
 	if err != nil {
 		return fmt.Errorf("cannot write mark name: %w", err)
 	}
-	defer b.free(ctx, namePointer, nameLength)
+	defer b.free(namePointer, nameLength)
 
-	valuePointer, valueLength, err := b.write(ctx, value)
+	valuePointer, valueLength, err := b.write(value)
 	if err != nil {
 		return fmt.Errorf("cannot write mark value: %w", err)
 	}
-	defer b.free(ctx, valuePointer, valueLength)
+	defer b.free(valuePointer, valueLength)
 
-	expandPointer, expandLength, err := b.write(ctx, []byte(expand))
+	expandPointer, expandLength, err := b.write([]byte(expand))
 	if err != nil {
 		return fmt.Errorf("cannot write mark expansion: %w", err)
 	}
-	defer b.free(ctx, expandPointer, expandLength)
+	defer b.free(expandPointer, expandLength)
 
 	if err := b.run(
-		ctx,
 		"am_text_mark",
 		uint64(object),
 		uint64(start),
@@ -1047,12 +991,10 @@ func (b *Engine) MarkText(
 }
 
 func (b *Engine) SplitBlock(
-	ctx context.Context,
 	object Object,
 	index uint32,
 ) (Object, error) {
 	result, err := b.call(
-		ctx,
 		"am_split_block",
 		uint64(object),
 		uint64(index),
@@ -1063,19 +1005,17 @@ func (b *Engine) SplitBlock(
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot split reference block")
+		return 0, b.operationError("cannot split reference block")
 	}
 
 	return Object(handle), nil
 }
 
 func (b *Engine) JoinBlock(
-	ctx context.Context,
 	object Object,
 	index uint32,
 ) error {
 	if err := b.run(
-		ctx,
 		"am_join_block",
 		uint64(object),
 		uint64(index),
@@ -1087,12 +1027,10 @@ func (b *Engine) JoinBlock(
 }
 
 func (b *Engine) ReplaceBlock(
-	ctx context.Context,
 	object Object,
 	index uint32,
 ) (Object, error) {
 	result, err := b.call(
-		ctx,
 		"am_replace_block",
 		uint64(object),
 		uint64(index),
@@ -1103,18 +1041,18 @@ func (b *Engine) ReplaceBlock(
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot replace reference block")
+		return 0, b.operationError("cannot replace reference block")
 	}
 
 	return Object(handle), nil
 }
 
-func (b *Engine) Text(ctx context.Context, object Object) (string, error) {
-	if err := b.run(ctx, "am_text", uint64(object)); err != nil {
+func (b *Engine) Text(object Object) (string, error) {
+	if err := b.run("am_text", uint64(object)); err != nil {
 		return "", fmt.Errorf("cannot read reference text: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return "", fmt.Errorf("cannot copy reference text: %w", err)
 	}
@@ -1123,18 +1061,16 @@ func (b *Engine) Text(ctx context.Context, object Object) (string, error) {
 }
 
 func (b *Engine) TextAt(
-	ctx context.Context,
 	object Object,
 	heads [][32]byte,
 ) (string, error) {
-	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	pointer, length, err := b.write(flattenHashes(heads))
 	if err != nil {
 		return "", fmt.Errorf("cannot write historical text heads: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_text_at",
 		uint64(object),
 		uint64(pointer),
@@ -1143,7 +1079,7 @@ func (b *Engine) TextAt(
 		return "", fmt.Errorf("cannot read historical reference text: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return "", fmt.Errorf("cannot copy historical reference text: %w", err)
 	}
@@ -1151,12 +1087,12 @@ func (b *Engine) TextAt(
 	return string(output), nil
 }
 
-func (b *Engine) TextSpans(ctx context.Context, object Object) ([]byte, error) {
-	if err := b.run(ctx, "am_text_spans", uint64(object)); err != nil {
+func (b *Engine) TextSpans(object Object) ([]byte, error) {
+	if err := b.run("am_text_spans", uint64(object)); err != nil {
 		return nil, fmt.Errorf("cannot read reference text spans: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference text spans: %w", err)
 	}
@@ -1165,18 +1101,16 @@ func (b *Engine) TextSpans(ctx context.Context, object Object) ([]byte, error) {
 }
 
 func (b *Engine) TextSpansAt(
-	ctx context.Context,
 	object Object,
 	heads [][32]byte,
 ) ([]byte, error) {
-	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	pointer, length, err := b.write(flattenHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write historical span heads: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_text_spans_at",
 		uint64(object),
 		uint64(pointer),
@@ -1185,7 +1119,7 @@ func (b *Engine) TextSpansAt(
 		return nil, fmt.Errorf("cannot read historical reference text spans: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy historical reference text spans: %w", err)
 	}
@@ -1193,12 +1127,12 @@ func (b *Engine) TextSpansAt(
 	return output, nil
 }
 
-func (b *Engine) Marks(ctx context.Context, object Object) ([]byte, error) {
-	if err := b.run(ctx, "am_marks", uint64(object)); err != nil {
+func (b *Engine) Marks(object Object) ([]byte, error) {
+	if err := b.run("am_marks", uint64(object)); err != nil {
 		return nil, fmt.Errorf("cannot read reference marks: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference marks: %w", err)
 	}
@@ -1207,18 +1141,16 @@ func (b *Engine) Marks(ctx context.Context, object Object) ([]byte, error) {
 }
 
 func (b *Engine) MarksAt(
-	ctx context.Context,
 	object Object,
 	heads [][32]byte,
 ) ([]byte, error) {
-	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	pointer, length, err := b.write(flattenHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write historical mark heads: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_marks_at",
 		uint64(object),
 		uint64(pointer),
@@ -1227,7 +1159,7 @@ func (b *Engine) MarksAt(
 		return nil, fmt.Errorf("cannot read historical reference marks: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy historical reference marks: %w", err)
 	}
@@ -1235,9 +1167,8 @@ func (b *Engine) MarksAt(
 	return output, nil
 }
 
-func (b *Engine) TextCursor(ctx context.Context, object Object, index uint32) ([]byte, error) {
+func (b *Engine) TextCursor(object Object, index uint32) ([]byte, error) {
 	if err := b.run(
-		ctx,
 		"am_text_cursor",
 		uint64(object),
 		uint64(index),
@@ -1245,7 +1176,7 @@ func (b *Engine) TextCursor(ctx context.Context, object Object, index uint32) ([
 		return nil, fmt.Errorf("cannot create reference text cursor: %w", err)
 	}
 
-	cursor, err := b.output(ctx)
+	cursor, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference text cursor: %w", err)
 	}
@@ -1254,7 +1185,6 @@ func (b *Engine) TextCursor(ctx context.Context, object Object, index uint32) ([
 }
 
 func (b *Engine) TextCursorMoving(
-	ctx context.Context,
 	object Object,
 	index uint32,
 	moveBefore bool,
@@ -1265,7 +1195,6 @@ func (b *Engine) TextCursorMoving(
 	}
 
 	if err := b.run(
-		ctx,
 		"am_text_cursor_moving",
 		uint64(object),
 		uint64(index),
@@ -1274,7 +1203,7 @@ func (b *Engine) TextCursorMoving(
 		return nil, fmt.Errorf("cannot create moving reference text cursor: %w", err)
 	}
 
-	cursor, err := b.output(ctx)
+	cursor, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy moving reference text cursor: %w", err)
 	}
@@ -1283,7 +1212,6 @@ func (b *Engine) TextCursorMoving(
 }
 
 func (b *Engine) TextCursorMovingAt(
-	ctx context.Context,
 	object Object,
 	index uint32,
 	moveBefore bool,
@@ -1294,14 +1222,13 @@ func (b *Engine) TextCursorMovingAt(
 		movement = 1
 	}
 
-	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	pointer, length, err := b.write(flattenHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write cursor heads: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_text_cursor_moving_at",
 		uint64(object),
 		uint64(index),
@@ -1312,7 +1239,7 @@ func (b *Engine) TextCursorMovingAt(
 		return nil, fmt.Errorf("cannot create historical reference text cursor: %w", err)
 	}
 
-	cursor, err := b.output(ctx)
+	cursor, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy historical reference text cursor: %w", err)
 	}
@@ -1321,18 +1248,16 @@ func (b *Engine) TextCursorMovingAt(
 }
 
 func (b *Engine) TextCursorPosition(
-	ctx context.Context,
 	object Object,
 	cursor []byte,
 ) (uint32, error) {
-	pointer, length, err := b.write(ctx, cursor)
+	pointer, length, err := b.write(cursor)
 	if err != nil {
 		return 0, fmt.Errorf("cannot write reference text cursor: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	result, err := b.call(
-		ctx,
 		"am_text_cursor_position",
 		uint64(object),
 		uint64(pointer),
@@ -1344,7 +1269,7 @@ func (b *Engine) TextCursorPosition(
 
 	position := int64(result[0])
 	if position < 0 {
-		return 0, b.operationError(ctx, "cannot resolve reference text cursor")
+		return 0, b.operationError("cannot resolve reference text cursor")
 	}
 
 	if position > int64(^uint32(0)) {
@@ -1355,7 +1280,6 @@ func (b *Engine) TextCursorPosition(
 }
 
 func (b *Engine) Commit(
-	ctx context.Context,
 	message string,
 	timestamp time.Time,
 ) ([32]byte, error) {
@@ -1366,14 +1290,13 @@ func (b *Engine) Commit(
 		timestampSeconds = 0
 	}
 
-	messagePointer, messageLength, err := b.write(ctx, []byte(message))
+	messagePointer, messageLength, err := b.write([]byte(message))
 	if err != nil {
 		return hash, fmt.Errorf("cannot write commit message: %w", err)
 	}
-	defer b.free(ctx, messagePointer, messageLength)
+	defer b.free(messagePointer, messageLength)
 
 	if err := b.run(
-		ctx,
 		"am_commit",
 		uint64(messagePointer),
 		uint64(messageLength),
@@ -1382,7 +1305,7 @@ func (b *Engine) Commit(
 		return hash, fmt.Errorf("cannot commit reference document: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return hash, fmt.Errorf("cannot copy reference commit hash: %w", err)
 	}
@@ -1397,7 +1320,6 @@ func (b *Engine) Commit(
 }
 
 func (b *Engine) EmptyCommit(
-	ctx context.Context,
 	message string,
 	timestamp time.Time,
 ) ([32]byte, error) {
@@ -1408,14 +1330,13 @@ func (b *Engine) EmptyCommit(
 		timestampSeconds = 0
 	}
 
-	messagePointer, messageLength, err := b.write(ctx, []byte(message))
+	messagePointer, messageLength, err := b.write([]byte(message))
 	if err != nil {
 		return hash, fmt.Errorf("cannot write empty commit message: %w", err)
 	}
-	defer b.free(ctx, messagePointer, messageLength)
+	defer b.free(messagePointer, messageLength)
 
 	if err := b.run(
-		ctx,
 		"am_empty_commit",
 		uint64(messagePointer),
 		uint64(messageLength),
@@ -1424,7 +1345,7 @@ func (b *Engine) EmptyCommit(
 		return hash, fmt.Errorf("cannot commit empty reference change: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return hash, fmt.Errorf("cannot copy empty reference change hash: %w", err)
 	}
@@ -1438,26 +1359,26 @@ func (b *Engine) EmptyCommit(
 	return hash, nil
 }
 
-func (b *Engine) Rollback(ctx context.Context) (uint64, error) {
-	result, err := b.call(ctx, "am_rollback")
+func (b *Engine) Rollback() (uint64, error) {
+	result, err := b.call("am_rollback")
 	if err != nil {
 		return 0, fmt.Errorf("cannot roll back reference document: %w", err)
 	}
 
 	cancelled := int64(result[0])
 	if cancelled < 0 {
-		return 0, b.operationError(ctx, "cannot roll back reference document")
+		return 0, b.operationError("cannot roll back reference document")
 	}
 
 	return uint64(cancelled), nil
 }
 
-func (b *Engine) Stats(ctx context.Context) ([]byte, error) {
-	if err := b.run(ctx, "am_stats"); err != nil {
+func (b *Engine) Stats() ([]byte, error) {
+	if err := b.run("am_stats"); err != nil {
 		return nil, fmt.Errorf("cannot read reference stats: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference stats: %w", err)
 	}
@@ -1465,12 +1386,12 @@ func (b *Engine) Stats(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Engine) CurrentState(ctx context.Context) ([]byte, error) {
-	if err := b.run(ctx, "am_current_state"); err != nil {
+func (b *Engine) CurrentState() ([]byte, error) {
+	if err := b.run("am_current_state"); err != nil {
 		return nil, fmt.Errorf("cannot read reference current state: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference current state: %w", err)
 	}
@@ -1478,20 +1399,20 @@ func (b *Engine) CurrentState(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Engine) UpdateDiffCursor(ctx context.Context) error {
-	if err := b.run(ctx, "am_update_diff_cursor"); err != nil {
+func (b *Engine) UpdateDiffCursor() error {
+	if err := b.run("am_update_diff_cursor"); err != nil {
 		return fmt.Errorf("cannot update reference diff cursor: %w", err)
 	}
 
 	return nil
 }
 
-func (b *Engine) DiffIncremental(ctx context.Context) ([]byte, error) {
-	if err := b.run(ctx, "am_diff_incremental"); err != nil {
+func (b *Engine) DiffIncremental() ([]byte, error) {
+	if err := b.run("am_diff_incremental"); err != nil {
 		return nil, fmt.Errorf("cannot read reference incremental diff: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference incremental diff: %w", err)
 	}
@@ -1500,24 +1421,22 @@ func (b *Engine) DiffIncremental(ctx context.Context) ([]byte, error) {
 }
 
 func (b *Engine) Diff(
-	ctx context.Context,
 	before [][32]byte,
 	after [][32]byte,
 ) ([]byte, error) {
-	beforePointer, beforeLength, err := b.write(ctx, flattenHashes(before))
+	beforePointer, beforeLength, err := b.write(flattenHashes(before))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write diff before heads: %w", err)
 	}
-	defer b.free(ctx, beforePointer, beforeLength)
+	defer b.free(beforePointer, beforeLength)
 
-	afterPointer, afterLength, err := b.write(ctx, flattenHashes(after))
+	afterPointer, afterLength, err := b.write(flattenHashes(after))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write diff after heads: %w", err)
 	}
-	defer b.free(ctx, afterPointer, afterLength)
+	defer b.free(afterPointer, afterLength)
 
 	if err := b.run(
-		ctx,
 		"am_diff",
 		uint64(beforePointer),
 		uint64(beforeLength),
@@ -1527,7 +1446,7 @@ func (b *Engine) Diff(
 		return nil, fmt.Errorf("cannot read reference diff: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference diff: %w", err)
 	}
@@ -1535,12 +1454,12 @@ func (b *Engine) Diff(
 	return output, nil
 }
 
-func (b *Engine) Heads(ctx context.Context) ([][32]byte, error) {
-	if err := b.run(ctx, "am_heads"); err != nil {
+func (b *Engine) Heads() ([][32]byte, error) {
+	if err := b.run("am_heads"); err != nil {
 		return nil, fmt.Errorf("cannot read reference heads: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference heads: %w", err)
 	}
@@ -1558,17 +1477,15 @@ func (b *Engine) Heads(ctx context.Context) ([][32]byte, error) {
 }
 
 func (b *Engine) HasHeads(
-	ctx context.Context,
 	heads [][32]byte,
 ) (bool, error) {
-	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	pointer, length, err := b.write(flattenHashes(heads))
 	if err != nil {
 		return false, fmt.Errorf("cannot write reference heads: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	result, err := b.call(
-		ctx,
 		"am_has_heads",
 		uint64(pointer),
 		uint64(length),
@@ -1579,7 +1496,7 @@ func (b *Engine) HasHeads(
 
 	value := int32(result[0])
 	if value < 0 {
-		return false, b.operationError(ctx, "cannot inspect reference heads")
+		return false, b.operationError("cannot inspect reference heads")
 	}
 
 	return value != 0, nil
@@ -1590,7 +1507,6 @@ func (b *Engine) HasHeads(
 // false positives, a true result does not guarantee membership; parity tests
 // use this to reproduce the upstream false-positive search deterministically.
 func (b *Engine) BloomContains(
-	ctx context.Context,
 	target [32]byte,
 	seeds [][32]byte,
 ) (bool, error) {
@@ -1598,14 +1514,13 @@ func (b *Engine) BloomContains(
 	input = append(input, target[:]...)
 	input = append(input, flattenHashes(seeds)...)
 
-	pointer, length, err := b.write(ctx, input)
+	pointer, length, err := b.write(input)
 	if err != nil {
 		return false, fmt.Errorf("cannot write bloom hashes: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	result, err := b.call(
-		ctx,
 		"am_bloom_contains",
 		uint64(pointer),
 		uint64(length),
@@ -1616,24 +1531,22 @@ func (b *Engine) BloomContains(
 
 	value := int32(result[0])
 	if value < 0 {
-		return false, b.operationError(ctx, "cannot evaluate reference bloom filter")
+		return false, b.operationError("cannot evaluate reference bloom filter")
 	}
 
 	return value != 0, nil
 }
 
 func (b *Engine) MissingDependencies(
-	ctx context.Context,
 	heads [][32]byte,
 ) ([][32]byte, error) {
-	pointer, length, err := b.write(ctx, flattenHashes(heads))
+	pointer, length, err := b.write(flattenHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot write dependency heads: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_missing_dependencies",
 		uint64(pointer),
 		uint64(length),
@@ -1641,7 +1554,7 @@ func (b *Engine) MissingDependencies(
 		return nil, fmt.Errorf("cannot get reference missing dependencies: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference missing dependencies: %w", err)
 	}
@@ -1661,12 +1574,12 @@ func (b *Engine) MissingDependencies(
 	return result, nil
 }
 
-func (b *Engine) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
-	if err := b.runBytes(ctx, "am_merge", other); err != nil {
+func (b *Engine) Merge(other []byte) ([][32]byte, error) {
+	if err := b.runBytes("am_merge", other); err != nil {
 		return nil, fmt.Errorf("cannot merge reference document: %w", err)
 	}
 
-	output, err := b.output(ctx)
+	output, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy merged reference heads: %w", err)
 	}
@@ -1683,22 +1596,22 @@ func (b *Engine) Merge(ctx context.Context, other []byte) ([][32]byte, error) {
 	return heads, nil
 }
 
-func (b *Engine) NewSyncState(ctx context.Context) (uint32, error) {
-	result, err := b.call(ctx, "am_sync_new")
+func (b *Engine) NewSyncState() (uint32, error) {
+	result, err := b.call("am_sync_new")
 	if err != nil {
 		return 0, fmt.Errorf("cannot create reference sync state: %w", err)
 	}
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot create reference sync state")
+		return 0, b.operationError("cannot create reference sync state")
 	}
 
 	return uint32(handle), nil
 }
 
-func (b *Engine) CloseSyncState(ctx context.Context, handle uint32) error {
-	if err := b.run(ctx, "am_sync_free", uint64(handle)); err != nil {
+func (b *Engine) CloseSyncState(handle uint32) error {
+	if err := b.run("am_sync_free", uint64(handle)); err != nil {
 		return fmt.Errorf("cannot close reference sync state: %w", err)
 	}
 
@@ -1706,7 +1619,6 @@ func (b *Engine) CloseSyncState(ctx context.Context, handle uint32) error {
 }
 
 func (b *Engine) SetSyncReadOnly(
-	ctx context.Context,
 	handle uint32,
 	readOnly bool,
 ) error {
@@ -1716,7 +1628,6 @@ func (b *Engine) SetSyncReadOnly(
 	}
 
 	if err := b.run(
-		ctx,
 		"am_sync_set_read_only",
 		uint64(handle),
 		value,
@@ -1728,11 +1639,9 @@ func (b *Engine) SetSyncReadOnly(
 }
 
 func (b *Engine) SyncPeerReadOnly(
-	ctx context.Context,
 	handle uint32,
 ) (bool, error) {
 	result, err := b.call(
-		ctx,
 		"am_sync_peer_read_only",
 		uint64(handle),
 	)
@@ -1742,24 +1651,20 @@ func (b *Engine) SyncPeerReadOnly(
 
 	value := int32(result[0])
 	if value < 0 {
-		return false, b.operationError(
-			ctx,
-			"cannot get reference peer read-only mode",
-		)
+		return false, b.operationError("cannot get reference peer read-only mode")
 	}
 
 	return value != 0, nil
 }
 
 func (b *Engine) GenerateSyncMessage(
-	ctx context.Context,
 	handle uint32,
 ) ([]byte, bool, error) {
-	if err := b.run(ctx, "am_sync_generate", uint64(handle)); err != nil {
+	if err := b.run("am_sync_generate", uint64(handle)); err != nil {
 		return nil, false, fmt.Errorf("cannot generate reference sync message: %w", err)
 	}
 
-	message, err := b.output(ctx)
+	message, err := b.output()
 	if err != nil {
 		return nil, false, fmt.Errorf("cannot copy reference sync message: %w", err)
 	}
@@ -1767,15 +1672,14 @@ func (b *Engine) GenerateSyncMessage(
 	return message, len(message) > 0, nil
 }
 
-func (b *Engine) ReceiveSyncMessage(ctx context.Context, handle uint32, message []byte) error {
-	pointer, length, err := b.write(ctx, message)
+func (b *Engine) ReceiveSyncMessage(handle uint32, message []byte) error {
+	pointer, length, err := b.write(message)
 	if err != nil {
 		return fmt.Errorf("cannot write reference sync message: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
 	if err := b.run(
-		ctx,
 		"am_sync_receive",
 		uint64(handle),
 		uint64(pointer),
@@ -1787,12 +1691,12 @@ func (b *Engine) ReceiveSyncMessage(ctx context.Context, handle uint32, message 
 	return nil
 }
 
-func (b *Engine) SaveSyncState(ctx context.Context, handle uint32) ([]byte, error) {
-	if err := b.run(ctx, "am_sync_save", uint64(handle)); err != nil {
+func (b *Engine) SaveSyncState(handle uint32) ([]byte, error) {
+	if err := b.run("am_sync_save", uint64(handle)); err != nil {
 		return nil, fmt.Errorf("cannot save reference sync state: %w", err)
 	}
 
-	data, err := b.output(ctx)
+	data, err := b.output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot copy reference sync state: %w", err)
 	}
@@ -1800,55 +1704,55 @@ func (b *Engine) SaveSyncState(ctx context.Context, handle uint32) ([]byte, erro
 	return data, nil
 }
 
-func (b *Engine) LoadSyncState(ctx context.Context, data []byte) (uint32, error) {
-	pointer, length, err := b.write(ctx, data)
+func (b *Engine) LoadSyncState(data []byte) (uint32, error) {
+	pointer, length, err := b.write(data)
 	if err != nil {
 		return 0, fmt.Errorf("cannot write reference sync state: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
-	result, err := b.call(ctx, "am_sync_load", uint64(pointer), uint64(length))
+	result, err := b.call("am_sync_load", uint64(pointer), uint64(length))
 	if err != nil {
 		return 0, fmt.Errorf("cannot load reference sync state: %w", err)
 	}
 
 	handle := int64(result[0])
 	if handle < 0 {
-		return 0, b.operationError(ctx, "cannot load reference sync state")
+		return 0, b.operationError("cannot load reference sync state")
 	}
 
 	return uint32(handle), nil
 }
 
-func (b *Engine) runBytes(ctx context.Context, function string, value []byte) error {
-	pointer, length, err := b.write(ctx, value)
+func (b *Engine) runBytes(function string, value []byte) error {
+	pointer, length, err := b.write(value)
 	if err != nil {
 		return fmt.Errorf("cannot write operation input: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
-	if err := b.run(ctx, function, uint64(pointer), uint64(length)); err != nil {
+	if err := b.run(function, uint64(pointer), uint64(length)); err != nil {
 		return fmt.Errorf("cannot run operation with input: %w", err)
 	}
 
 	return nil
 }
 
-func (b *Engine) run(ctx context.Context, function string, parameters ...uint64) error {
-	result, err := b.call(ctx, function, parameters...)
+func (b *Engine) run(function string, parameters ...uint64) error {
+	result, err := b.call(function, parameters...)
 	if err != nil {
 		return fmt.Errorf("cannot call %s: %w", function, err)
 	}
 
 	if int32(result[0]) != 0 {
-		return b.operationError(ctx, fmt.Sprintf("%s failed", function))
+		return b.operationError(fmt.Sprintf("%s failed", function))
 	}
 
 	return nil
 }
 
-func (b *Engine) operationError(ctx context.Context, fallback string) error {
-	result, err := b.call(ctx, "am_error_len")
+func (b *Engine) operationError(fallback string) error {
+	result, err := b.call("am_error_len")
 	if err != nil {
 		return fmt.Errorf("%s: cannot read error length: %w", fallback, err)
 	}
@@ -1858,13 +1762,13 @@ func (b *Engine) operationError(ctx context.Context, fallback string) error {
 		return fmt.Errorf("%s", fallback)
 	}
 
-	pointer, err := b.alloc(ctx, length)
+	pointer, err := b.alloc(length)
 	if err != nil {
 		return fmt.Errorf("%s: cannot allocate error buffer: %w", fallback, err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
-	if _, err := b.call(ctx, "am_error_copy", uint64(pointer)); err != nil {
+	if _, err := b.call("am_error_copy", uint64(pointer)); err != nil {
 		return fmt.Errorf("%s: cannot copy error: %w", fallback, err)
 	}
 
@@ -1876,8 +1780,8 @@ func (b *Engine) operationError(ctx context.Context, fallback string) error {
 	return fmt.Errorf("%s: %s", fallback, message)
 }
 
-func (b *Engine) output(ctx context.Context) ([]byte, error) {
-	result, err := b.call(ctx, "am_output_len")
+func (b *Engine) output() ([]byte, error) {
+	result, err := b.call("am_output_len")
 	if err != nil {
 		return nil, fmt.Errorf("cannot read output length: %w", err)
 	}
@@ -1887,13 +1791,13 @@ func (b *Engine) output(ctx context.Context) ([]byte, error) {
 		return nil, nil
 	}
 
-	pointer, err := b.alloc(ctx, length)
+	pointer, err := b.alloc(length)
 	if err != nil {
 		return nil, fmt.Errorf("cannot allocate output buffer: %w", err)
 	}
-	defer b.free(ctx, pointer, length)
+	defer b.free(pointer, length)
 
-	if _, err := b.call(ctx, "am_output_copy", uint64(pointer)); err != nil {
+	if _, err := b.call("am_output_copy", uint64(pointer)); err != nil {
 		return nil, fmt.Errorf("cannot copy output: %w", err)
 	}
 
@@ -1905,13 +1809,13 @@ func (b *Engine) output(ctx context.Context) ([]byte, error) {
 	return output, nil
 }
 
-func (b *Engine) call(ctx context.Context, function string, parameters ...uint64) ([]uint64, error) {
+func (b *Engine) call(function string, parameters ...uint64) ([]uint64, error) {
 	exported := b.module.ExportedFunction(function)
 	if exported == nil {
 		return nil, fmt.Errorf("reference module does not export %q", function)
 	}
 
-	result, err := exported.Call(ctx, parameters...)
+	result, err := exported.Call(context.Background(), parameters...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute reference export %q: %w", function, err)
 	}
@@ -1919,8 +1823,8 @@ func (b *Engine) call(ctx context.Context, function string, parameters ...uint64
 	return result, nil
 }
 
-func (b *Engine) alloc(ctx context.Context, length uint32) (uint32, error) {
-	result, err := b.call(ctx, "am_alloc", uint64(length))
+func (b *Engine) alloc(length uint32) (uint32, error) {
+	result, err := b.call("am_alloc", uint64(length))
 	if err != nil {
 		return 0, fmt.Errorf("cannot allocate reference memory: %w", err)
 	}
@@ -1933,27 +1837,27 @@ func (b *Engine) alloc(ctx context.Context, length uint32) (uint32, error) {
 	return pointer, nil
 }
 
-func (b *Engine) free(ctx context.Context, pointer, length uint32) {
+func (b *Engine) free(pointer, length uint32) {
 	if pointer == 0 || length == 0 {
 		return
 	}
 
-	_, _ = b.call(ctx, "am_free", uint64(pointer), uint64(length))
+	_, _ = b.call("am_free", uint64(pointer), uint64(length))
 }
 
-func (b *Engine) write(ctx context.Context, value []byte) (uint32, uint32, error) {
+func (b *Engine) write(value []byte) (uint32, uint32, error) {
 	length := uint32(len(value))
 	if length == 0 {
 		return 0, 0, nil
 	}
 
-	pointer, err := b.alloc(ctx, length)
+	pointer, err := b.alloc(length)
 	if err != nil {
 		return 0, 0, fmt.Errorf("cannot allocate input: %w", err)
 	}
 
 	if !b.module.Memory().Write(pointer, value) {
-		b.free(ctx, pointer, length)
+		b.free(pointer, length)
 		return 0, 0, fmt.Errorf("cannot write %d bytes at reference memory offset %d", length, pointer)
 	}
 

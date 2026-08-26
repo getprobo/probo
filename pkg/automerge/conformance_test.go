@@ -89,8 +89,6 @@ func runOracle(t *testing.T, request oracleRequest) oracleResponse {
 func TestConformance_DatesFlowBetweenDocuments(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	sourceActor := actor(20)
 	created := runOracle(
 		t,
@@ -109,32 +107,32 @@ func TestConformance_DatesFlowBetweenDocuments(t *testing.T) {
 
 	source, err := base64.StdEncoding.DecodeString(created.Document)
 	require.NoError(t, err)
-	sourceDocument, err := automerge.Load(ctx, source, actor(21))
+	sourceDocument, err := automerge.Load(source, actor(21))
 	require.NoError(t, err)
 	closeDocument(t, sourceDocument)
 
-	when, err := sourceDocument.Root().Scalar(ctx, "when")
+	when, err := sourceDocument.Root().Scalar("when")
 	require.NoError(t, err)
 	require.Equal(t, automerge.ScalarTypeTimestamp, when.Type)
 
-	list, err := sourceDocument.Root().Object(ctx, "list")
+	list, err := sourceDocument.Root().Object("list")
 	require.NoError(t, err)
-	listWhen, err := list.ScalarAt(ctx, 0)
+	listWhen, err := list.ScalarAt(0)
 	require.NoError(t, err)
 	require.Equal(t, automerge.ScalarTypeTimestamp, listWhen.Type)
 	require.Equal(t, when.Int, listWhen.Int)
 
 	// Reuse the timestamps read from the source document in a new document.
-	target, err := automerge.New(ctx, actor(22))
+	target, err := automerge.New(actor(22))
 	require.NoError(t, err)
 	closeDocument(t, target)
-	require.NoError(t, target.Root().PutScalar(ctx, "when", when))
-	targetList, err := target.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+	require.NoError(t, target.Root().PutScalar("when", when))
+	targetList, err := target.Root().CreateObject("list", automerge.ObjectTypeList)
 	require.NoError(t, err)
-	require.NoError(t, targetList.InsertScalar(ctx, 0, listWhen))
-	_, err = target.Commit(ctx, "reuse dates", commitTime.Add(time.Second))
+	require.NoError(t, targetList.InsertScalar(0, listWhen))
+	_, err = target.Commit("reuse dates", commitTime.Add(time.Second))
 	require.NoError(t, err)
-	saved, err := target.Save(ctx)
+	saved, err := target.Save()
 	require.NoError(t, err)
 
 	read := runOracle(
@@ -156,17 +154,16 @@ func TestConformance_DatesFlowBetweenDocuments(t *testing.T) {
 func TestConformance_JavaScriptLoadsGoDocument(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(1))
+	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "Hello 😀"))
-	hash, err := document.Commit(ctx, "Create in Go", commitTime)
+	require.NoError(t, text.Splice(0, 0, "Hello 😀"))
+	hash, err := document.Commit("Create in Go", commitTime)
 	require.NoError(t, err)
-	data, err := document.Save(ctx)
+	data, err := document.Save()
 	require.NoError(t, err)
 
 	response := runOracle(
@@ -184,20 +181,19 @@ func TestConformance_JavaScriptLoadsGoDocument(t *testing.T) {
 func TestConformance_JavaScriptPreservesGoChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(2))
+	document, err := automerge.New(actor(2))
 	require.NoError(t, err)
 	closeDocument(t, document)
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "ABC"))
-	hash, err := document.Commit(ctx, "Create in Go", commitTime)
+	require.NoError(t, text.Splice(0, 0, "ABC"))
+	hash, err := document.Commit("Create in Go", commitTime)
 	require.NoError(t, err)
-	changes, err := document.ChangesSince(ctx, nil)
+	changes, err := document.ChangesSince(nil)
 	require.NoError(t, err)
 	require.Len(t, changes, 1)
 
-	data, err := document.Save(ctx)
+	data, err := document.Save()
 	require.NoError(t, err)
 
 	response := runOracle(
@@ -232,17 +228,17 @@ func TestConformance_GoLoadsJavaScriptDocument(t *testing.T) {
 
 	data, err := base64.StdEncoding.DecodeString(response.Document)
 	require.NoError(t, err)
-	document, err := automerge.Load(context.Background(), data, actor(10))
+	document, err := automerge.Load(data, actor(10))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	text, err := document.Text(context.Background(), "body")
+	text, err := document.Text("body")
 	require.NoError(t, err)
-	value, err := text.String(context.Background())
+	value, err := text.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Hello from JavaScript 😀", value)
 
-	heads, err := document.Heads(context.Background())
+	heads, err := document.Heads()
 	require.NoError(t, err)
 	require.Len(t, heads, 1)
 	assert.Equal(t, response.Heads[0], heads[0].String())
@@ -270,10 +266,10 @@ func TestConformance_NativePreservesJavaScriptDataModel(t *testing.T) {
 	data, err := base64.StdEncoding.DecodeString(created.Document)
 	require.NoError(t, err)
 
-	document, err := automerge.Load(context.Background(), data, actor(16))
+	document, err := automerge.Load(data, actor(16))
 	require.NoError(t, err)
 	closeDocument(t, document)
-	saved, err := document.Save(context.Background())
+	saved, err := document.Save()
 	require.NoError(t, err)
 
 	inspected := runOracle(
@@ -301,13 +297,13 @@ func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
 
 	data, err := base64.StdEncoding.DecodeString(response.Document)
 	require.NoError(t, err)
-	document, err := automerge.LoadReference(context.Background(), data, actor(12))
+	document, err := automerge.LoadReference(data, actor(12))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	text, err := document.Text(context.Background(), "body")
+	text, err := document.Text("body")
 	require.NoError(t, err)
-	spans, err := text.Spans(context.Background())
+	spans, err := text.Spans()
 	require.NoError(t, err)
 	require.Len(t, spans, 2)
 	assert.Equal(t, automerge.SpanTypeBlock, spans[0].Type)
@@ -319,12 +315,12 @@ func TestConformance_GoReadsJavaScriptRichTextSpans(t *testing.T) {
 	assert.Equal(t, "Policy", spans[1].Text)
 	assert.Equal(t, true, spans[1].Marks["strong"])
 
-	nativeDocument, err := automerge.Load(context.Background(), data, actor(14))
+	nativeDocument, err := automerge.Load(data, actor(14))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	nativeSpans, err := nativeText.Spans(context.Background())
+	nativeSpans, err := nativeText.Spans()
 	require.NoError(t, err)
 	assert.Equal(t, spans, nativeSpans)
 }
@@ -497,23 +493,23 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	)
 	assert.Equal(t, leftHeads, rightHeads)
 
-	backend, err := native.LoadEngine(context.Background(), rawChanges[0])
+	backend, err := native.LoadEngine(rawChanges[0])
 	require.NoError(t, err)
-	_, err = backend.Merge(context.Background(), rawChanges[1])
-	require.NoError(t, err)
-
-	before, err := backend.Heads(context.Background())
+	_, err = backend.Merge(rawChanges[1])
 	require.NoError(t, err)
 
-	saved, err := backend.Save(context.Background(), true, true)
+	before, err := backend.Heads()
+	require.NoError(t, err)
+
+	saved, err := backend.Save(true, true)
 	require.NoError(t, err)
 
 	// Save now writes a compacted document rather than embedding change bytes, so
 	// the guarantee is that reloading it reproduces the same frontier.
-	reloaded, err := native.LoadEngine(context.Background(), saved)
+	reloaded, err := native.LoadEngine(saved)
 	require.NoError(t, err)
 
-	after, err := reloaded.Heads(context.Background())
+	after, err := reloaded.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, before, after)
 }
@@ -565,23 +561,23 @@ func TestConformance_NativeComplexRichTextSpans(t *testing.T) {
 	require.NoError(t, err)
 
 	referenceDocument, err := automerge.LoadReference(
-		context.Background(),
+
 		data,
 		actor(32),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	referenceSpans, err := referenceText.Spans(context.Background())
+	referenceSpans, err := referenceText.Spans()
 	require.NoError(t, err)
 
-	nativeDocument, err := automerge.Load(context.Background(), data, actor(33))
+	nativeDocument, err := automerge.Load(data, actor(33))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	nativeSpans, err := nativeText.Spans(context.Background())
+	nativeSpans, err := nativeText.Spans()
 	require.NoError(t, err)
 
 	assert.Equal(t, referenceSpans, nativeSpans)
@@ -602,27 +598,27 @@ func TestConformance_NativeBoundaryMarks(t *testing.T) {
 	require.NoError(t, err)
 
 	referenceDocument, err := automerge.LoadReference(
-		context.Background(),
+
 		data,
 		actor(38),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	referenceSpans, err := referenceText.Spans(context.Background())
+	referenceSpans, err := referenceText.Spans()
 	require.NoError(t, err)
 
 	nativeDocument, err := automerge.Load(
-		context.Background(),
+
 		data,
 		actor(39),
 	)
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	nativeSpans, err := nativeText.Spans(context.Background())
+	nativeSpans, err := nativeText.Spans()
 	require.NoError(t, err)
 
 	assert.Equal(t, referenceSpans, nativeSpans)
@@ -643,27 +639,27 @@ func TestConformance_NativeSplitMarks(t *testing.T) {
 	require.NoError(t, err)
 
 	referenceDocument, err := automerge.LoadReference(
-		context.Background(),
+
 		data,
 		actor(41),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	referenceSpans, err := referenceText.Spans(context.Background())
+	referenceSpans, err := referenceText.Spans()
 	require.NoError(t, err)
 
 	nativeDocument, err := automerge.Load(
-		context.Background(),
+
 		data,
 		actor(42),
 	)
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	nativeSpans, err := nativeText.Spans(context.Background())
+	nativeSpans, err := nativeText.Spans()
 	require.NoError(t, err)
 
 	assert.Equal(t, referenceSpans, nativeSpans)
@@ -684,27 +680,27 @@ func TestConformance_NativeUnicodeMarks(t *testing.T) {
 	require.NoError(t, err)
 
 	referenceDocument, err := automerge.LoadReference(
-		context.Background(),
+
 		data,
 		actor(44),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	referenceSpans, err := referenceText.Spans(context.Background())
+	referenceSpans, err := referenceText.Spans()
 	require.NoError(t, err)
 
 	nativeDocument, err := automerge.Load(
-		context.Background(),
+
 		data,
 		actor(45),
 	)
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	nativeSpans, err := nativeText.Spans(context.Background())
+	nativeSpans, err := nativeText.Spans()
 	require.NoError(t, err)
 
 	assert.Equal(t, referenceSpans, nativeSpans)
@@ -725,23 +721,23 @@ func TestConformance_NativeTableRichTextSpans(t *testing.T) {
 	require.NoError(t, err)
 
 	referenceDocument, err := automerge.LoadReference(
-		context.Background(),
+
 		data,
 		actor(35),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(context.Background(), "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	referenceSpans, err := referenceText.Spans(context.Background())
+	referenceSpans, err := referenceText.Spans()
 	require.NoError(t, err)
 
-	nativeDocument, err := automerge.Load(context.Background(), data, actor(36))
+	nativeDocument, err := automerge.Load(data, actor(36))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(context.Background(), "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	nativeSpans, err := nativeText.Spans(context.Background())
+	nativeSpans, err := nativeText.Spans()
 	require.NoError(t, err)
 	assert.Equal(t, referenceSpans, nativeSpans)
 

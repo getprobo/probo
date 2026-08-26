@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -36,23 +35,22 @@ import (
 // successor entries on the operations they removed.
 func buildSnapshotHistory(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 ) {
 	t.Helper()
 
 	base := time.Unix(1786147200, 0).UTC()
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "hello brave world"))
-	_, err = document.Commit(ctx, "write", base)
+	require.NoError(t, text.Splice(0, 0, "hello brave world"))
+	_, err = document.Commit("write", base)
 	require.NoError(t, err)
 
 	require.NoError(
 		t,
 		text.Mark(
-			ctx,
+
 			0,
 			5,
 			"strong",
@@ -60,30 +58,30 @@ func buildSnapshotHistory(
 			automerge.MarkExpandBoth,
 		),
 	)
-	_, err = document.Commit(ctx, "mark", base.Add(time.Second))
+	_, err = document.Commit("mark", base.Add(time.Second))
 	require.NoError(t, err)
 
-	require.NoError(t, text.Unmark(ctx, 1, 3, "strong", automerge.MarkExpandNone))
-	_, err = document.Commit(ctx, "unmark", base.Add(2*time.Second))
+	require.NoError(t, text.Unmark(1, 3, "strong", automerge.MarkExpandNone))
+	_, err = document.Commit("unmark", base.Add(2*time.Second))
 	require.NoError(t, err)
 
-	require.NoError(t, text.Splice(ctx, 5, 6, ""))
-	_, err = document.Commit(ctx, "delete", base.Add(3*time.Second))
+	require.NoError(t, text.Splice(5, 6, ""))
+	_, err = document.Commit("delete", base.Add(3*time.Second))
 	require.NoError(t, err)
 
 	require.NoError(
 		t,
 		document.PutScalar(
-			ctx,
+
 			"counter",
 			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
 		),
 	)
-	_, err = document.Commit(ctx, "counter", base.Add(4*time.Second))
+	_, err = document.Commit("counter", base.Add(4*time.Second))
 	require.NoError(t, err)
 
-	require.NoError(t, document.Root().Increment(ctx, "counter", 3))
-	_, err = document.Commit(ctx, "increment", base.Add(5*time.Second))
+	require.NoError(t, document.Root().Increment("counter", 3))
+	_, err = document.Commit("increment", base.Add(5*time.Second))
 	require.NoError(t, err)
 }
 
@@ -99,43 +97,41 @@ func buildSnapshotHistory(
 func TestLoadedSnapshotExposesEveryChange(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	reference, err := automerge.NewReference(ctx, actor(11))
+	reference, err := automerge.NewReference(actor(11))
 	require.NoError(t, err)
 	closeDocument(t, reference)
 
-	buildSnapshotHistory(t, ctx, reference)
+	buildSnapshotHistory(t, reference)
 
 	// The browser client persists exactly this: a document chunk, not a stream of
 	// change chunks.
-	snapshot, err := reference.Save(ctx)
+	snapshot, err := reference.Save()
 	require.NoError(t, err)
 
-	referenceHeads, err := reference.Heads(ctx)
+	referenceHeads, err := reference.Heads()
 	require.NoError(t, err)
 
-	loaded, err := automerge.Load(ctx, snapshot, actor(12))
+	loaded, err := automerge.Load(snapshot, actor(12))
 	require.NoError(t, err)
 	closeDocument(t, loaded)
 
-	loadedHeads, err := loaded.Heads(ctx)
+	loadedHeads, err := loaded.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, referenceHeads, loadedHeads, "snapshot must load onto the same frontier")
 
-	changes, err := loaded.ChangesSince(ctx, nil)
+	changes, err := loaded.ChangesSince(nil)
 	require.NoError(t, err, "every change in a loaded snapshot must be reachable")
 	assert.Len(t, changes, 6, "each commit must survive as an addressable change")
 
 	// Replaying the rebuilt changes has to land on the same frontier, which only
 	// holds when each one carries the bytes the original writer hashed.
-	replayed, err := automerge.New(ctx, actor(13))
+	replayed, err := automerge.New(actor(13))
 	require.NoError(t, err)
 	closeDocument(t, replayed)
 
-	require.NoError(t, replayed.ApplyChanges(ctx, changes))
+	require.NoError(t, replayed.ApplyChanges(changes))
 
-	replayedHeads, err := replayed.Heads(ctx)
+	replayedHeads, err := replayed.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, referenceHeads, replayedHeads, "rebuilt changes must reproduce the frontier")
 
@@ -146,11 +142,11 @@ func TestLoadedSnapshotExposesEveryChange(t *testing.T) {
 		concatenated = append(concatenated, change.Bytes...)
 	}
 
-	roundTripped, err := automerge.LoadReference(ctx, concatenated, actor(14))
+	roundTripped, err := automerge.LoadReference(concatenated, actor(14))
 	require.NoError(t, err)
 	closeDocument(t, roundTripped)
 
-	roundTrippedHeads, err := roundTripped.Heads(ctx)
+	roundTrippedHeads, err := roundTripped.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, referenceHeads, roundTrippedHeads)
 }
@@ -161,52 +157,50 @@ func TestLoadedSnapshotExposesEveryChange(t *testing.T) {
 func TestSnapshotMergeReportsIncrementalChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	origin, err := automerge.NewReference(ctx, actor(21))
+	origin, err := automerge.NewReference(actor(21))
 	require.NoError(t, err)
 	closeDocument(t, origin)
 
-	buildSnapshotHistory(t, ctx, origin)
+	buildSnapshotHistory(t, origin)
 
-	snapshot, err := origin.Save(ctx)
+	snapshot, err := origin.Save()
 	require.NoError(t, err)
 
-	canonical, err := automerge.Load(ctx, snapshot, actor(22))
+	canonical, err := automerge.Load(snapshot, actor(22))
 	require.NoError(t, err)
 	closeDocument(t, canonical)
 
-	peer, err := automerge.Load(ctx, snapshot, actor(23))
+	peer, err := automerge.Load(snapshot, actor(23))
 	require.NoError(t, err)
 	closeDocument(t, peer)
 
-	peerText, err := peer.Text(ctx, "body")
+	peerText, err := peer.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, peerText.Splice(ctx, 0, 0, "new "))
-	_, err = peer.Commit(ctx, "peer edit", time.Unix(1786147300, 0).UTC())
-	require.NoError(t, err)
-
-	before, err := canonical.Heads(ctx)
+	require.NoError(t, peerText.Splice(0, 0, "new "))
+	_, err = peer.Commit("peer edit", time.Unix(1786147300, 0).UTC())
 	require.NoError(t, err)
 
-	_, err = canonical.Merge(ctx, peer)
+	before, err := canonical.Heads()
 	require.NoError(t, err)
 
-	incremental, err := canonical.ChangesSince(ctx, before)
+	_, err = canonical.Merge(peer)
+	require.NoError(t, err)
+
+	incremental, err := canonical.ChangesSince(before)
 	require.NoError(t, err, "merging a peer must not break incremental reads")
 	assert.Len(t, incremental, 1, "only the peer's commit is new")
 
-	after, err := canonical.Heads(ctx)
+	after, err := canonical.Heads()
 	require.NoError(t, err)
 
-	peerHeads, err := peer.Heads(ctx)
+	peerHeads, err := peer.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, peerHeads, after, "the merge must adopt the peer's frontier")
 
-	canonicalText, err := canonical.Text(ctx, "body")
+	canonicalText, err := canonical.Text("body")
 	require.NoError(t, err)
 
-	value, err := canonicalText.String(ctx)
+	value, err := canonicalText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "new hello world", value)
 }

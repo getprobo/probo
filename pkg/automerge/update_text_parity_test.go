@@ -27,7 +27,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,45 +38,44 @@ import (
 func TestRustText_SimpleUpdateText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	merged := make(map[string]string)
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "Hello, world!"))
-		_, err = document.Commit(ctx, "seed", commitTime)
+		require.NoError(t, text.Splice(0, 0, "Hello, world!"))
+		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
-		other, err := document.Fork(ctx, actor(0xbb))
+		other, err := document.Fork(actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, other)
 
-		otherObject, err := other.Root().Object(ctx, "text")
+		otherObject, err := other.Root().Object("text")
 		require.NoError(t, err)
-		otherText, err := otherObject.Text(ctx)
+		otherText, err := otherObject.Text()
 		require.NoError(t, err)
-		require.NoError(t, otherText.Update(ctx, "Goodbye, world!"))
-		_, err = other.Commit(ctx, "goodbye", commitTime)
-		require.NoError(t, err)
-
-		require.NoError(t, text.Update(ctx, "Hello, friends!"))
-		_, err = document.Commit(ctx, "friends", commitTime)
+		require.NoError(t, otherText.Update("Goodbye, world!"))
+		_, err = other.Commit("goodbye", commitTime)
 		require.NoError(t, err)
 
-		_, err = document.Merge(ctx, other)
+		require.NoError(t, text.Update("Hello, friends!"))
+		_, err = document.Commit("friends", commitTime)
 		require.NoError(t, err)
 
-		result, err := text.String(ctx)
+		_, err = document.Merge(other)
+		require.NoError(t, err)
+
+		result, err := text.String()
 		require.NoError(t, err)
 
 		merged[engine.name] = result
-		heads[engine.name] = sortedHeadHex(t, ctx, document)
+		heads[engine.name] = sortedHeadHex(t, document)
 	}
 
 	assert.Equal(t, "Goodbye, friends!", merged["reference"])
@@ -91,45 +89,44 @@ func TestRustText_SimpleUpdateText(t *testing.T) {
 func TestRustText_UpdateTextBigOleGraphemes(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	merged := make(map[string]string)
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "left👨‍👩‍👦right"))
-		_, err = document.Commit(ctx, "seed", commitTime)
+		require.NoError(t, text.Splice(0, 0, "left👨‍👩‍👦right"))
+		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
-		other, err := document.Fork(ctx, actor(0xbb))
+		other, err := document.Fork(actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, other)
 
-		otherObject, err := other.Root().Object(ctx, "text")
+		otherObject, err := other.Root().Object("text")
 		require.NoError(t, err)
-		otherText, err := otherObject.Text(ctx)
+		otherText, err := otherObject.Text()
 		require.NoError(t, err)
-		require.NoError(t, otherText.Update(ctx, "left👨‍👩‍👧right"))
-		_, err = other.Commit(ctx, "girl", commitTime)
-		require.NoError(t, err)
-
-		require.NoError(t, text.Update(ctx, "left👨‍👩‍👦‍👦right"))
-		_, err = document.Commit(ctx, "boys", commitTime)
+		require.NoError(t, otherText.Update("left👨‍👩‍👧right"))
+		_, err = other.Commit("girl", commitTime)
 		require.NoError(t, err)
 
-		_, err = document.Merge(ctx, other)
+		require.NoError(t, text.Update("left👨‍👩‍👦‍👦right"))
+		_, err = document.Commit("boys", commitTime)
 		require.NoError(t, err)
 
-		result, err := text.String(ctx)
+		_, err = document.Merge(other)
+		require.NoError(t, err)
+
+		result, err := text.String()
 		require.NoError(t, err)
 
 		merged[engine.name] = result
-		heads[engine.name] = sortedHeadHex(t, ctx, document)
+		heads[engine.name] = sortedHeadHex(t, document)
 	}
 
 	assert.Equal(t, "left👨‍👩‍👧👨‍👩‍👦‍👦right", merged["reference"])

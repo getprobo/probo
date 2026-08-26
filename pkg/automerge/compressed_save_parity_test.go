@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,8 +35,6 @@ import (
 
 func TestRustTest_CompressedDocCols(t *testing.T) {
 	t.Parallel()
-
-	ctx := context.Background()
 
 	const items = 200
 
@@ -55,14 +52,14 @@ func TestRustTest_CompressedDocCols(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				document, err := engine.open(ctx, actor(0x01))
+				document, err := engine.open(actor(0x01))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
 				require.NoError(
 					t,
 					document.Root().PutValue(
-						ctx,
+
 						"list",
 						automerge.Value{
 							Type: automerge.ValueTypeList,
@@ -71,13 +68,13 @@ func TestRustTest_CompressedDocCols(t *testing.T) {
 					),
 				)
 
-				_, err = document.Commit(ctx, "list", commitTime)
+				_, err = document.Commit("list", commitTime)
 				require.NoError(t, err)
 
-				uncompressed, err := document.Save(ctx, automerge.NoCompress())
+				uncompressed, err := document.Save(automerge.NoCompress())
 				require.NoError(t, err)
 
-				compressed, err := document.Save(ctx)
+				compressed, err := document.Save()
 				require.NoError(t, err)
 
 				assert.Less(
@@ -87,19 +84,19 @@ func TestRustTest_CompressedDocCols(t *testing.T) {
 					"compressed save should be smaller than uncompressed",
 				)
 
-				loaded, err := engine.load(ctx, compressed, actor(0x02))
+				loaded, err := engine.load(compressed, actor(0x02))
 				require.NoError(t, err)
 				closeDocument(t, loaded)
 
-				list, err := loaded.Root().Object(ctx, "list")
+				list, err := loaded.Root().Object("list")
 				require.NoError(t, err)
 
-				length, err := list.Len(ctx)
+				length, err := list.Len()
 				require.NoError(t, err)
 				require.Equal(t, uint64(items), length)
 
 				for i := range items {
-					value, err := list.ScalarAt(ctx, uint64(i))
+					value, err := list.ScalarAt(uint64(i))
 					require.NoError(t, err)
 					assert.Equal(t, uint64(i), value.Uint)
 				}

@@ -22,16 +22,12 @@ package native
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
 )
 
-func (b *Engine) NewSyncState(ctx context.Context) (uint32, error) {
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
+func (b *Engine) NewSyncState() (uint32, error) {
 
 	handle := b.nextSyncState
 	b.nextSyncState++
@@ -40,10 +36,7 @@ func (b *Engine) NewSyncState(ctx context.Context) (uint32, error) {
 	return handle, nil
 }
 
-func (b *Engine) CloseSyncState(ctx context.Context, handle uint32) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
+func (b *Engine) CloseSyncState(handle uint32) error {
 
 	if _, ok := b.syncStates[handle]; !ok {
 		return fmt.Errorf("invalid sync state %d", handle)
@@ -55,13 +48,9 @@ func (b *Engine) CloseSyncState(ctx context.Context, handle uint32) error {
 }
 
 func (b *Engine) SetSyncReadOnly(
-	ctx context.Context,
 	handle uint32,
 	readOnly bool,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	state, err := b.syncState(handle)
 	if err != nil {
@@ -89,12 +78,8 @@ func (b *Engine) SetSyncReadOnly(
 }
 
 func (b *Engine) SyncPeerReadOnly(
-	ctx context.Context,
 	handle uint32,
 ) (bool, error) {
-	if err := ctx.Err(); err != nil {
-		return false, err
-	}
 
 	state, err := b.syncState(handle)
 	if err != nil {
@@ -105,19 +90,15 @@ func (b *Engine) SyncPeerReadOnly(
 }
 
 func (b *Engine) GenerateSyncMessage(
-	ctx context.Context,
 	handle uint32,
 ) ([]byte, bool, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, false, err
-	}
 
 	state, err := b.syncState(handle)
 	if err != nil {
 		return nil, false, err
 	}
 
-	heads, err := b.Heads(ctx)
+	heads, err := b.Heads()
 	if err != nil {
 		return nil, false, err
 	}
@@ -230,7 +211,7 @@ func (b *Engine) GenerateSyncMessage(
 					)
 				}
 			} else {
-				document, err := b.Save(ctx, true, true)
+				document, err := b.Save(true, true)
 				if err != nil {
 					return nil, false, err
 				}
@@ -261,7 +242,6 @@ func (b *Engine) GenerateSyncMessage(
 }
 
 func (b *Engine) ReceiveSyncMessage(
-	ctx context.Context,
 	handle uint32,
 	data []byte,
 ) error {
@@ -294,7 +274,7 @@ func (b *Engine) ReceiveSyncMessage(
 
 	if !state.ReadOnly {
 		for _, change := range message.Changes {
-			if _, err := b.Merge(ctx, change); err != nil {
+			if _, err := b.Merge(change); err != nil {
 				return fmt.Errorf("cannot merge native sync payload: %w", err)
 			}
 		}
@@ -347,12 +327,8 @@ func (b *Engine) ReceiveSyncMessage(
 }
 
 func (b *Engine) SaveSyncState(
-	ctx context.Context,
 	handle uint32,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	state, err := b.syncState(handle)
 	if err != nil {
@@ -368,12 +344,8 @@ func (b *Engine) SaveSyncState(
 }
 
 func (b *Engine) LoadSyncState(
-	ctx context.Context,
 	data []byte,
 ) (uint32, error) {
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
 
 	var state nativeSyncState
 	if err := json.Unmarshal(data, &state); err != nil {

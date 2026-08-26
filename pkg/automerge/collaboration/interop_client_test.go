@@ -62,14 +62,14 @@ func TestInterop_RealRepoClientLoadsGoDocument(t *testing.T) {
 
 	ctx := context.Background()
 
-	server, err := automerge.New(ctx, actor(1))
+	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
-	defer func() { _ = server.Close(ctx) }()
+	defer func() { _ = server.Close() }()
 
-	text, err := server.CreateText(ctx, "body")
+	text, err := server.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-	_, err = server.Commit(ctx, "seed", commitTime())
+	require.NoError(t, text.Splice(0, 0, "hello world"))
+	_, err = server.Commit("seed", commitTime())
 	require.NoError(t, err)
 
 	httpServer := httptest.NewServer(
@@ -132,12 +132,12 @@ func serveGateway(t *testing.T, w http.ResponseWriter, r *http.Request, document
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	syncState, err := document.NewSyncState(ctx)
+	syncState, err := document.NewSyncState()
 	if err != nil {
 		return
 	}
 
-	defer func() { _ = syncState.Close(context.Background()) }()
+	defer func() { _ = syncState.Close() }()
 
 	conn, err := collaboration.NewServerConn(
 		collaboration.ServerConfig{ServerPeerID: "probo-gateway"},
@@ -164,7 +164,7 @@ func serveGateway(t *testing.T, w http.ResponseWriter, r *http.Request, document
 		return
 	}
 
-	out, accepted, err := conn.Start(ctx, join)
+	out, accepted, err := conn.Start(join)
 	if err != nil {
 		return
 	}
@@ -183,7 +183,7 @@ func serveGateway(t *testing.T, w http.ResponseWriter, r *http.Request, document
 			continue
 		}
 
-		reply, _, err := conn.Receive(ctx, frame)
+		reply, _, err := conn.Receive(frame)
 		if err != nil {
 			return
 		}

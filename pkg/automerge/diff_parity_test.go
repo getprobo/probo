@@ -25,7 +25,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -40,33 +39,32 @@ import (
 func TestRustDiff_LargePatchesInLists(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		before, err := document.Heads(ctx)
+		before, err := document.Heads()
 		require.NoError(t, err)
 
-		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list, err := document.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "123456"}))
+		require.NoError(t, list.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "123456"}))
 
 		for i := 1; i < 501; i++ {
-			inner, err := list.InsertObject(ctx, uint64(i), automerge.ObjectTypeMap)
+			inner, err := list.InsertObject(uint64(i), automerge.ObjectTypeMap)
 			require.NoError(t, err)
-			require.NoError(t, inner.PutScalar(ctx, "a", automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)}))
+			require.NoError(t, inner.PutScalar("a", automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)}))
 		}
 
-		_, err = document.Commit(ctx, "large", commitTime)
+		_, err = document.Commit("large", commitTime)
 		require.NoError(t, err)
-		after, err := document.Heads(ctx)
+		after, err := document.Heads()
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, before, after)
+		patches, err := document.Diff(before, after)
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -86,35 +84,34 @@ func TestRustDiff_LargePatchesInLists(t *testing.T) {
 func TestRustDiff_ReverseDeletionOfObjectInList(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list, err := document.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "a"}))
-		text, err := list.InsertObject(ctx, 1, automerge.ObjectTypeText)
+		require.NoError(t, list.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "a"}))
+		text, err := list.InsertObject(1, automerge.ObjectTypeText)
 		require.NoError(t, err)
-		textValue, err := text.Text(ctx)
+		textValue, err := text.Text()
 		require.NoError(t, err)
-		require.NoError(t, textValue.Splice(ctx, 0, 0, "b"))
-		require.NoError(t, list.InsertScalar(ctx, 2, automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
-		_, err = document.Commit(ctx, "build", commitTime)
-		require.NoError(t, err)
-
-		before, err := document.Heads(ctx)
-		require.NoError(t, err)
-		require.NoError(t, list.DeleteIndex(ctx, 1))
-		_, err = document.Commit(ctx, "delete", commitTime.Add(time.Second))
-		require.NoError(t, err)
-		after, err := document.Heads(ctx)
+		require.NoError(t, textValue.Splice(0, 0, "b"))
+		require.NoError(t, list.InsertScalar(2, automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
+		_, err = document.Commit("build", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, after, before)
+		before, err := document.Heads()
+		require.NoError(t, err)
+		require.NoError(t, list.DeleteIndex(1))
+		_, err = document.Commit("delete", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(after, before)
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -135,37 +132,36 @@ func TestRustDiff_ReverseDeletionOfObjectInList(t *testing.T) {
 func TestRustDiff_ReverseDeletionOfObjectInMap(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		mapObject, err := document.Root().CreateObject(ctx, "map", automerge.ObjectTypeMap)
+		mapObject, err := document.Root().CreateObject("map", automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		_, err = mapObject.CreateObject(ctx, "text", automerge.ObjectTypeText)
+		_, err = mapObject.CreateObject("text", automerge.ObjectTypeText)
 		require.NoError(t, err)
-		require.NoError(t, mapObject.PutScalar(ctx, "a", automerge.Scalar{Type: automerge.ScalarTypeString, String: "a"}))
-		textB, err := mapObject.CreateObject(ctx, "b", automerge.ObjectTypeText)
+		require.NoError(t, mapObject.PutScalar("a", automerge.Scalar{Type: automerge.ScalarTypeString, String: "a"}))
+		textB, err := mapObject.CreateObject("b", automerge.ObjectTypeText)
 		require.NoError(t, err)
-		textBValue, err := textB.Text(ctx)
+		textBValue, err := textB.Text()
 		require.NoError(t, err)
-		require.NoError(t, textBValue.Splice(ctx, 0, 0, "b"))
-		require.NoError(t, mapObject.PutScalar(ctx, "c", automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
-		_, err = document.Commit(ctx, "build", commitTime)
-		require.NoError(t, err)
-
-		before, err := document.Heads(ctx)
-		require.NoError(t, err)
-		require.NoError(t, mapObject.DeleteKey(ctx, "b"))
-		_, err = document.Commit(ctx, "delete", commitTime.Add(time.Second))
-		require.NoError(t, err)
-		after, err := document.Heads(ctx)
+		require.NoError(t, textBValue.Splice(0, 0, "b"))
+		require.NoError(t, mapObject.PutScalar("c", automerge.Scalar{Type: automerge.ScalarTypeString, String: "c"}))
+		_, err = document.Commit("build", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, after, before)
+		before, err := document.Heads()
+		require.NoError(t, err)
+		require.NoError(t, mapObject.DeleteKey("b"))
+		_, err = document.Commit("delete", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(after, before)
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -185,33 +181,32 @@ func TestRustDiff_ReverseDeletionOfObjectInMap(t *testing.T) {
 func TestRustDiff_ReverseDeletionOfBlockInText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "a"))
-		block, err := text.SplitBlock(ctx, 1)
+		require.NoError(t, text.Splice(0, 0, "a"))
+		block, err := text.SplitBlock(1)
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 2, 0, "b"))
-		require.NoError(t, block.PutScalar(ctx, "key", automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"}))
-		_, err = document.Commit(ctx, "build", commitTime)
-		require.NoError(t, err)
-
-		before, err := document.Heads(ctx)
-		require.NoError(t, err)
-		require.NoError(t, text.JoinBlock(ctx, 1))
-		_, err = document.Commit(ctx, "delete", commitTime.Add(time.Second))
-		require.NoError(t, err)
-		after, err := document.Heads(ctx)
+		require.NoError(t, text.Splice(2, 0, "b"))
+		require.NoError(t, block.PutScalar("key", automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"}))
+		_, err = document.Commit("build", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, after, before)
+		before, err := document.Heads()
+		require.NoError(t, err)
+		require.NoError(t, text.JoinBlock(1))
+		_, err = document.Commit("delete", commitTime.Add(time.Second))
+		require.NoError(t, err)
+		after, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(after, before)
 		require.NoError(t, err)
 
 		result[engine.name] = patches

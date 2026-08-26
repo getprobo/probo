@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -39,12 +38,12 @@ func FuzzLoad(f *testing.F) {
 				t.Skip()
 			}
 
-			document, err := automerge.Load(context.Background(), data, actor(255))
+			document, err := automerge.Load(data, actor(255))
 			if err != nil {
 				return
 			}
 
-			_ = document.Close(context.Background())
+			_ = document.Close()
 		},
 	)
 }
@@ -60,23 +59,21 @@ func FuzzCoreOperations(f *testing.F) {
 				t.Skip()
 			}
 
-			ctx := context.Background()
-
-			document, err := automerge.New(ctx, actor(254))
+			document, err := automerge.New(actor(254))
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			defer func() { _ = document.Close(context.Background()) }()
+			defer func() { _ = document.Close() }()
 
 			root := document.Root()
 
-			values, err := root.CreateObject(ctx, "values", automerge.ObjectTypeMap)
+			values, err := root.CreateObject("values", automerge.ObjectTypeMap)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			list, err := root.CreateObject(ctx, "list", automerge.ObjectTypeList)
+			list, err := root.CreateObject("list", automerge.ObjectTypeList)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -93,7 +90,7 @@ func FuzzCoreOperations(f *testing.F) {
 				case 0:
 					mapModel[key] = value
 					err = values.PutScalar(
-						ctx,
+
 						key,
 						automerge.Scalar{
 							Type: automerge.ScalarTypeInt,
@@ -103,7 +100,7 @@ func FuzzCoreOperations(f *testing.F) {
 				case 1:
 					if _, ok := mapModel[key]; ok {
 						delete(mapModel, key)
-						err = values.DeleteKey(ctx, key)
+						err = values.DeleteKey(key)
 					}
 				case 2:
 					position := 0
@@ -115,7 +112,7 @@ func FuzzCoreOperations(f *testing.F) {
 					copy(listModel[position+1:], listModel[position:])
 					listModel[position] = value
 					err = list.InsertScalar(
-						ctx,
+
 						uint64(position),
 						automerge.Scalar{
 							Type: automerge.ScalarTypeInt,
@@ -127,7 +124,7 @@ func FuzzCoreOperations(f *testing.F) {
 						position := int(operation) % len(listModel)
 						listModel[position] = value
 						err = list.PutScalarAt(
-							ctx,
+
 							uint64(position),
 							automerge.Scalar{
 								Type: automerge.ScalarTypeInt,
@@ -142,7 +139,7 @@ func FuzzCoreOperations(f *testing.F) {
 							listModel[:position],
 							listModel[position+1:]...,
 						)
-						err = list.DeleteIndex(ctx, uint64(position))
+						err = list.DeleteIndex(uint64(position))
 					}
 				}
 
@@ -151,29 +148,29 @@ func FuzzCoreOperations(f *testing.F) {
 				}
 			}
 
-			if _, err := document.Commit(ctx, "fuzz operations", commitTime); err != nil {
+			if _, err := document.Commit("fuzz operations", commitTime); err != nil {
 				t.Fatal(err)
 			}
 
-			saved, err := document.Save(ctx)
+			saved, err := document.Save()
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			loaded, err := automerge.Load(ctx, saved, actor(253))
+			loaded, err := automerge.Load(saved, actor(253))
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			defer func() { _ = loaded.Close(context.Background()) }()
+			defer func() { _ = loaded.Close() }()
 
-			loadedValues, err := loaded.Root().Object(ctx, "values")
+			loadedValues, err := loaded.Root().Object("values")
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			for key, expected := range mapModel {
-				value, err := loadedValues.Scalar(ctx, key)
+				value, err := loadedValues.Scalar(key)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -183,12 +180,12 @@ func FuzzCoreOperations(f *testing.F) {
 				}
 			}
 
-			loadedList, err := loaded.Root().Object(ctx, "list")
+			loadedList, err := loaded.Root().Object("list")
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			length, err := loadedList.Len(ctx)
+			length, err := loadedList.Len()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -198,7 +195,7 @@ func FuzzCoreOperations(f *testing.F) {
 			}
 
 			for index, expected := range listModel {
-				value, err := loadedList.ScalarAt(ctx, uint64(index))
+				value, err := loadedList.ScalarAt(uint64(index))
 				if err != nil {
 					t.Fatal(err)
 				}

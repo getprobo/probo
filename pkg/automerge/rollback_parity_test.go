@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -41,39 +40,38 @@ import (
 func TestRustMarkPatches_AtEndOfText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		author, err := engine.open(ctx, actor(0xaa))
+		author, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, author)
 
-		text, err := author.CreateText(ctx, "text")
+		text, err := author.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "sample"))
-		_, err = author.Commit(ctx, "seed", commitTime)
-		require.NoError(t, err)
-
-		saved, err := author.Save(ctx)
+		require.NoError(t, text.Splice(0, 0, "sample"))
+		_, err = author.Commit("seed", commitTime)
 		require.NoError(t, err)
 
-		follower, err := engine.load(ctx, saved, actor(0xbb))
+		saved, err := author.Save()
+		require.NoError(t, err)
+
+		follower, err := engine.load(saved, actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, follower)
 
-		require.NoError(t, text.Mark(ctx, 5, 6, "bold", markBool(), automerge.MarkExpandAfter))
-		_, err = author.Commit(ctx, "mark", commitTime.Add(time.Second))
+		require.NoError(t, text.Mark(5, 6, "bold", markBool(), automerge.MarkExpandAfter))
+		_, err = author.Commit("mark", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		incremental, err := author.SaveIncremental(ctx)
+		incremental, err := author.SaveIncremental()
 		require.NoError(t, err)
 
-		require.NoError(t, follower.UpdateDiffCursor(ctx))
-		_, err = follower.LoadIncremental(ctx, incremental)
+		require.NoError(t, follower.UpdateDiffCursor())
+		_, err = follower.LoadIncremental(incremental)
 		require.NoError(t, err)
 
-		patches, err := follower.DiffIncremental(ctx)
+		patches, err := follower.DiffIncremental()
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -92,32 +90,31 @@ func TestRustMarkPatches_AtEndOfText(t *testing.T) {
 func TestRustTransaction_RollbackDiscardsOps(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	cancelled := make(map[string]uint64)
 	values := make(map[string]string)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
 		require.NoError(
 			t,
 			document.Root().PutScalar(
-				ctx,
+
 				"keep",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "yes"},
 			),
 		)
-		_, err = document.Commit(ctx, "keep", commitTime)
+		_, err = document.Commit("keep", commitTime)
 		require.NoError(t, err)
 
-		count, err := document.Rollback(ctx)
+		count, err := document.Rollback()
 		require.NoError(t, err)
 
 		cancelled[engine.name] = count
 
-		value, err := document.Root().Scalar(ctx, "keep")
+		value, err := document.Root().Scalar("keep")
 		require.NoError(t, err)
 
 		values[engine.name] = value.String
@@ -134,30 +131,29 @@ func TestRustTransaction_RollbackDiscardsOps(t *testing.T) {
 func TestRustTransaction_RollbackUndoesWrites(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	cancelled := make(map[string]uint64)
 	present := make(map[string]bool)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
 		require.NoError(
 			t,
 			document.Root().PutScalar(
-				ctx,
+
 				"gone",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "soon"},
 			),
 		)
 
-		count, err := document.Rollback(ctx)
+		count, err := document.Rollback()
 		require.NoError(t, err)
 
 		cancelled[engine.name] = count
 
-		_, err = document.Root().Scalar(ctx, "gone")
+		_, err = document.Root().Scalar("gone")
 		present[engine.name] = err == nil
 	}
 

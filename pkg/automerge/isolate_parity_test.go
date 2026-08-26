@@ -28,7 +28,6 @@
 package automerge_test
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -37,19 +36,19 @@ import (
 	"go.probo.inc/probo/pkg/automerge"
 )
 
-func textString(t *testing.T, ctx context.Context, text *automerge.Text) string {
+func textString(t *testing.T, text *automerge.Text) string {
 	t.Helper()
 
-	value, err := text.String(ctx)
+	value, err := text.String()
 	require.NoError(t, err)
 
 	return value
 }
 
-func rootInt(t *testing.T, ctx context.Context, document *automerge.Document, key string) int64 {
+func rootInt(t *testing.T, document *automerge.Document, key string) int64 {
 	t.Helper()
 
-	value, err := document.Root().Scalar(ctx, key)
+	value, err := document.Root().Scalar(key)
 	require.NoError(t, err)
 
 	return value.Int
@@ -57,7 +56,6 @@ func rootInt(t *testing.T, ctx context.Context, document *automerge.Document, ke
 
 func putInt64(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 	key string,
 	value int64,
@@ -67,7 +65,7 @@ func putInt64(
 	require.NoError(
 		t,
 		document.Root().PutScalar(
-			ctx,
+
 			key,
 			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
 		),
@@ -91,86 +89,86 @@ type canIsolateObservations struct {
 	finalSize      int64
 }
 
-func runCanIsolate(t *testing.T, ctx context.Context, engine rustParityEngine) canIsolateObservations {
+func runCanIsolate(t *testing.T, engine rustParityEngine) canIsolateObservations {
 	t.Helper()
 
-	doc1, err := engine.open(ctx, actor(0x01))
+	doc1, err := engine.open(actor(0x01))
 	require.NoError(t, err)
 	closeDocument(t, doc1)
 
-	text, err := doc1.CreateText(ctx, "text")
+	text, err := doc1.CreateText("text")
 	require.NoError(t, err)
 
-	putInt64(t, ctx, doc1, "size", 100)
-	require.NoError(t, text.Splice(ctx, 0, 0, "aaabbbccc"))
-	_, err = doc1.Commit(ctx, "seed", commitTime)
+	putInt64(t, doc1, "size", 100)
+	require.NoError(t, text.Splice(0, 0, "aaabbbccc"))
+	_, err = doc1.Commit("seed", commitTime)
 	require.NoError(t, err)
 
-	heads1, err := doc1.Heads(ctx)
+	heads1, err := doc1.Heads()
 	require.NoError(t, err)
 
-	putInt64(t, ctx, doc1, "size", 150)
-	_, err = doc1.Commit(ctx, "size150", commitTime)
+	putInt64(t, doc1, "size", 150)
+	_, err = doc1.Commit("size150", commitTime)
 	require.NoError(t, err)
 
-	require.NoError(t, doc1.Isolate(ctx, heads1))
+	require.NoError(t, doc1.Isolate(heads1))
 
-	doc2, err := doc1.Fork(ctx, actor(0x02))
+	doc2, err := doc1.Fork(actor(0x02))
 	require.NoError(t, err)
 	closeDocument(t, doc2)
 
-	putInt64(t, ctx, doc2, "other", 999)
-	text2, err := doc2.Text(ctx, "text")
+	putInt64(t, doc2, "other", 999)
+	text2, err := doc2.Text("text")
 	require.NoError(t, err)
-	require.NoError(t, text2.Splice(ctx, 9, 0, "111"))
-	_, err = doc2.Commit(ctx, "doc2", commitTime)
+	require.NoError(t, text2.Splice(9, 0, "111"))
+	_, err = doc2.Commit("doc2", commitTime)
 	require.NoError(t, err)
 
 	observations := canIsolateObservations{
-		pinnedText: textString(t, ctx, text),
-		pinnedSize: rootInt(t, ctx, doc1, "size"),
+		pinnedText: textString(t, text),
+		pinnedSize: rootInt(t, doc1, "size"),
 	}
 
-	require.NoError(t, text.Splice(ctx, 3, 3, "QQQ"))
-	putInt64(t, ctx, doc1, "size", 200)
+	require.NoError(t, text.Splice(3, 3, "QQQ"))
+	putInt64(t, doc1, "size", 200)
 
-	observations.editedText = textString(t, ctx, text)
-	observations.editedSize = rootInt(t, ctx, doc1, "size")
+	observations.editedText = textString(t, text)
+	observations.editedSize = rootInt(t, doc1, "size")
 
-	_, err = doc1.Commit(ctx, "qqq", commitTime)
+	_, err = doc1.Commit("qqq", commitTime)
 	require.NoError(t, err)
 
-	_, err = doc1.Merge(ctx, doc2)
+	_, err = doc1.Merge(doc2)
 	require.NoError(t, err)
 
-	observations.afterMergeSize = rootInt(t, ctx, doc1, "size")
-	observations.afterMergeHas = rootHasKey(t, ctx, doc1, "other")
+	observations.afterMergeSize = rootInt(t, doc1, "size")
+	observations.afterMergeHas = rootHasKey(t, doc1, "other")
 
-	require.NoError(t, doc1.Isolate(ctx, heads1))
+	require.NoError(t, doc1.Isolate(heads1))
 
-	observations.rePinnedText = textString(t, ctx, text)
-	observations.rePinnedSize = rootInt(t, ctx, doc1, "size")
+	observations.rePinnedText = textString(t, text)
+	observations.rePinnedSize = rootInt(t, doc1, "size")
 
-	require.NoError(t, text.Splice(ctx, 3, 3, "ZZZ"))
-	putInt64(t, ctx, doc1, "size", 300)
-	_, err = doc1.Commit(ctx, "zzz", commitTime)
+	require.NoError(t, text.Splice(3, 3, "ZZZ"))
+	putInt64(t, doc1, "size", 300)
+	_, err = doc1.Commit("zzz", commitTime)
 	require.NoError(t, err)
 
-	require.NoError(t, doc1.Integrate(ctx))
+	require.NoError(t, doc1.Integrate())
 
-	observations.integratedText = textString(t, ctx, text)
-	observations.integratedHas = rootHasKey(t, ctx, doc1, "other")
+	observations.integratedText = textString(t, text)
+	observations.integratedHas = rootHasKey(t, doc1, "other")
 
-	require.NoError(t, doc1.Isolate(ctx, heads1))
-	require.NoError(t, text.Splice(ctx, 3, 3, "TTT"))
-	putInt64(t, ctx, doc1, "size", 400)
-	_, err = doc1.Commit(ctx, "ttt", commitTime)
+	require.NoError(t, doc1.Isolate(heads1))
+	require.NoError(t, text.Splice(3, 3, "TTT"))
+	putInt64(t, doc1, "size", 400)
+	_, err = doc1.Commit("ttt", commitTime)
 	require.NoError(t, err)
 
-	require.NoError(t, doc1.Integrate(ctx))
+	require.NoError(t, doc1.Integrate())
 
-	observations.finalText = textString(t, ctx, text)
-	observations.finalSize = rootInt(t, ctx, doc1, "size")
+	observations.finalText = textString(t, text)
+	observations.finalSize = rootInt(t, doc1, "size")
 
 	return observations
 }
@@ -183,38 +181,36 @@ func runCanIsolate(t *testing.T, ctx context.Context, engine rustParityEngine) c
 func TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	run := func(engine rustParityEngine) []automerge.Patch {
-		doc, err := engine.open(ctx, actor(0xaa))
+		doc, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, doc)
 
-		beginning, err := doc.Heads(ctx)
+		beginning, err := doc.Heads()
 		require.NoError(t, err)
 
-		name, err := doc.CreateText(ctx, "name")
+		name, err := doc.CreateText("name")
 		require.NoError(t, err)
 
 		newName := strings.Repeat("a", 100)
-		require.NoError(t, name.Splice(ctx, 0, 0, newName))
+		require.NoError(t, name.Splice(0, 0, newName))
 
-		require.NoError(t, doc.Isolate(ctx, beginning))
-		color, err := doc.CreateText(ctx, "color")
+		require.NoError(t, doc.Isolate(beginning))
+		color, err := doc.CreateText("color")
 		require.NoError(t, err)
-		require.NoError(t, color.Splice(ctx, 0, 0, "red"))
-		require.NoError(t, doc.Integrate(ctx))
+		require.NoError(t, color.Splice(0, 0, "red"))
+		require.NoError(t, doc.Integrate())
 
-		_, err = doc.DiffIncremental(ctx)
+		_, err = doc.DiffIncremental()
 		require.NoError(t, err)
 
-		require.NoError(t, doc.Isolate(ctx, beginning))
-		color2, err := doc.CreateText(ctx, "color")
+		require.NoError(t, doc.Isolate(beginning))
+		color2, err := doc.CreateText("color")
 		require.NoError(t, err)
-		require.NoError(t, color2.Splice(ctx, 0, 0, "unset"))
-		require.NoError(t, doc.Integrate(ctx))
+		require.NoError(t, color2.Splice(0, 0, "unset"))
+		require.NoError(t, doc.Integrate())
 
-		patches, err := doc.DiffIncremental(ctx)
+		patches, err := doc.DiffIncremental()
 		require.NoError(t, err)
 
 		return patches
@@ -248,34 +244,32 @@ func TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating(t *testing
 func TestRustText_UpdateTextChangeAt(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	run := func(engine rustParityEngine) string {
-		doc, err := engine.open(ctx, actor(0x01))
+		doc, err := engine.open(actor(0x01))
 		require.NoError(t, err)
 		closeDocument(t, doc)
 
-		text, err := doc.CreateText(ctx, "text")
+		text, err := doc.CreateText("text")
 		require.NoError(t, err)
 
-		require.NoError(t, text.Update(ctx, "a\n"))
-		_, err = doc.Commit(ctx, "a", commitTime)
+		require.NoError(t, text.Update("a\n"))
+		_, err = doc.Commit("a", commitTime)
 		require.NoError(t, err)
 
-		heads, err := doc.Heads(ctx)
+		heads, err := doc.Heads()
 		require.NoError(t, err)
 
-		require.NoError(t, text.Update(ctx, "a\nb\n"))
-		_, err = doc.Commit(ctx, "b", commitTime)
+		require.NoError(t, text.Update("a\nb\n"))
+		_, err = doc.Commit("b", commitTime)
 		require.NoError(t, err)
 
-		require.NoError(t, doc.Isolate(ctx, heads))
-		require.NoError(t, text.Update(ctx, "a\nc\n"))
-		_, err = doc.Commit(ctx, "c", commitTime)
+		require.NoError(t, doc.Isolate(heads))
+		require.NoError(t, text.Update("a\nc\n"))
+		_, err = doc.Commit("c", commitTime)
 		require.NoError(t, err)
-		require.NoError(t, doc.Integrate(ctx))
+		require.NoError(t, doc.Integrate())
 
-		return textString(t, ctx, text)
+		return textString(t, text)
 	}
 
 	native := run(rustParityEngines()[0])
@@ -291,8 +285,6 @@ func TestRustText_UpdateTextChangeAt(t *testing.T) {
 func TestRustTest_CanTransactionAt(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	type observation struct {
 		firstText  string
 		firstSize  int64
@@ -301,47 +293,47 @@ func TestRustTest_CanTransactionAt(t *testing.T) {
 	}
 
 	run := func(engine rustParityEngine) observation {
-		doc, err := engine.open(ctx, actor(0x01))
+		doc, err := engine.open(actor(0x01))
 		require.NoError(t, err)
 		closeDocument(t, doc)
 
-		text, err := doc.CreateText(ctx, "text")
+		text, err := doc.CreateText("text")
 		require.NoError(t, err)
 
-		putInt64(t, ctx, doc, "size", 100)
-		require.NoError(t, text.Splice(ctx, 0, 0, "aaabbbccc"))
-		_, err = doc.Commit(ctx, "seed", commitTime)
+		putInt64(t, doc, "size", 100)
+		require.NoError(t, text.Splice(0, 0, "aaabbbccc"))
+		_, err = doc.Commit("seed", commitTime)
 		require.NoError(t, err)
 
-		heads1, err := doc.Heads(ctx)
+		heads1, err := doc.Heads()
 		require.NoError(t, err)
 
-		require.NoError(t, text.Splice(ctx, 3, 3, "QQQ"))
-		putInt64(t, ctx, doc, "size", 200)
-		_, err = doc.Commit(ctx, "qqq", commitTime)
+		require.NoError(t, text.Splice(3, 3, "QQQ"))
+		putInt64(t, doc, "size", 200)
+		_, err = doc.Commit("qqq", commitTime)
 		require.NoError(t, err)
 
-		require.NoError(t, doc.Isolate(ctx, heads1))
-		require.NoError(t, text.Splice(ctx, 3, 3, "ZZZ"))
-		putInt64(t, ctx, doc, "size", 300)
-		_, err = doc.Commit(ctx, "zzz", commitTime)
+		require.NoError(t, doc.Isolate(heads1))
+		require.NoError(t, text.Splice(3, 3, "ZZZ"))
+		putInt64(t, doc, "size", 300)
+		_, err = doc.Commit("zzz", commitTime)
 		require.NoError(t, err)
-		require.NoError(t, doc.Integrate(ctx))
+		require.NoError(t, doc.Integrate())
 
 		result := observation{
-			firstText: textString(t, ctx, text),
-			firstSize: rootInt(t, ctx, doc, "size"),
+			firstText: textString(t, text),
+			firstSize: rootInt(t, doc, "size"),
 		}
 
-		require.NoError(t, doc.Isolate(ctx, heads1))
-		require.NoError(t, text.Splice(ctx, 3, 3, "TTT"))
-		putInt64(t, ctx, doc, "size", 400)
-		_, err = doc.Commit(ctx, "ttt", commitTime)
+		require.NoError(t, doc.Isolate(heads1))
+		require.NoError(t, text.Splice(3, 3, "TTT"))
+		putInt64(t, doc, "size", 400)
+		_, err = doc.Commit("ttt", commitTime)
 		require.NoError(t, err)
-		require.NoError(t, doc.Integrate(ctx))
+		require.NoError(t, doc.Integrate())
 
-		result.secondText = textString(t, ctx, text)
-		result.secondSize = rootInt(t, ctx, doc, "size")
+		result.secondText = textString(t, text)
+		result.secondSize = rootInt(t, doc, "size")
 
 		return result
 	}
@@ -359,10 +351,8 @@ func TestRustTest_CanTransactionAt(t *testing.T) {
 func TestRustTest_CanIsolate(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	native := runCanIsolate(t, ctx, rustParityEngines()[0])
-	reference := runCanIsolate(t, ctx, rustParityEngines()[1])
+	native := runCanIsolate(t, rustParityEngines()[0])
+	reference := runCanIsolate(t, rustParityEngines()[1])
 
 	require.Equal(t, reference, native)
 

@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"sort"
@@ -55,17 +54,15 @@ func TestOfficialBenchmarkBatteryFixtures(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
-
 				data, err := os.ReadFile(fixture)
 				require.NoError(t, err)
 
-				nativeDocument, err := automerge.Load(ctx, data, actor(byte(0x80+index)))
+				nativeDocument, err := automerge.Load(data, actor(byte(0x80+index)))
 				require.NoError(t, err)
 				closeDocument(t, nativeDocument)
 
 				referenceDocument, err := automerge.LoadReference(
-					ctx,
+
 					data,
 					actor(byte(0x90+index)),
 				)
@@ -74,16 +71,16 @@ func TestOfficialBenchmarkBatteryFixtures(t *testing.T) {
 
 				assert.Equal(
 					t,
-					sortedHeadHex(t, ctx, referenceDocument),
-					sortedHeadHex(t, ctx, nativeDocument),
+					sortedHeadHex(t, referenceDocument),
+					sortedHeadHex(t, nativeDocument),
 				)
 
 				// Rust fixture -> Go save -> Rust load.
-				nativeSaved, err := nativeDocument.Save(ctx)
+				nativeSaved, err := nativeDocument.Save()
 				require.NoError(t, err)
 
 				referenceReloaded, err := automerge.LoadReference(
-					ctx,
+
 					nativeSaved,
 					actor(byte(0xa0+index)),
 				)
@@ -92,16 +89,16 @@ func TestOfficialBenchmarkBatteryFixtures(t *testing.T) {
 
 				assert.Equal(
 					t,
-					sortedHeadHex(t, ctx, referenceDocument),
-					sortedHeadHex(t, ctx, referenceReloaded),
+					sortedHeadHex(t, referenceDocument),
+					sortedHeadHex(t, referenceReloaded),
 				)
 
 				// Rust fixture -> Rust save -> Go load.
-				referenceSaved, err := referenceDocument.Save(ctx)
+				referenceSaved, err := referenceDocument.Save()
 				require.NoError(t, err)
 
 				nativeReloaded, err := automerge.Load(
-					ctx,
+
 					referenceSaved,
 					actor(byte(0xb0+index)),
 				)
@@ -110,8 +107,8 @@ func TestOfficialBenchmarkBatteryFixtures(t *testing.T) {
 
 				assert.Equal(
 					t,
-					sortedHeadHex(t, ctx, nativeDocument),
-					sortedHeadHex(t, ctx, nativeReloaded),
+					sortedHeadHex(t, nativeDocument),
+					sortedHeadHex(t, nativeReloaded),
 				)
 			},
 		)

@@ -21,7 +21,6 @@
 package collaboration_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,22 +36,20 @@ import (
 func TestTextSelectionValue_SurvivesConcurrentInsert(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	document, err := automerge.New(ctx, actor(1))
+	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
-	defer func() { _ = document.Close(ctx) }()
+	defer func() { _ = document.Close() }()
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-	_, err = document.Commit(ctx, "seed", commitTime())
+	require.NoError(t, text.Splice(0, 0, "hello world"))
+	_, err = document.Commit("seed", commitTime())
 	require.NoError(t, err)
 
 	// Put the caret on the "w" of "world".
 	const caretIndex = 6
 
-	cursor, err := text.Cursor(ctx, caretIndex)
+	cursor, err := text.Cursor(caretIndex)
 	require.NoError(t, err)
 
 	selection := collaboration.TextSelectionValue{
@@ -78,24 +75,24 @@ func TestTextSelectionValue_SurvivesConcurrentInsert(t *testing.T) {
 	assert.Equal(t, "body", decoded.Field)
 	assert.True(t, decoded.Collapsed())
 
-	positionBefore, err := text.CursorPosition(ctx, automerge.Cursor(decoded.Head))
+	positionBefore, err := text.CursorPosition(automerge.Cursor(decoded.Head))
 	require.NoError(t, err)
 	assert.Equal(t, uint32(caretIndex), positionBefore)
 
 	// Someone types three characters at the very start of the document.
-	require.NoError(t, text.Splice(ctx, 0, 0, "XX "))
-	_, err = document.Commit(ctx, "insert", commitTime())
+	require.NoError(t, text.Splice(0, 0, "XX "))
+	_, err = document.Commit("insert", commitTime())
 	require.NoError(t, err)
 
 	// The very same cursor bytes now resolve three positions later: the caret
 	// stayed anchored to "w". A stored integer offset of 6 would now point at
 	// the wrong character.
-	positionAfter, err := text.CursorPosition(ctx, automerge.Cursor(decoded.Head))
+	positionAfter, err := text.CursorPosition(automerge.Cursor(decoded.Head))
 	require.NoError(t, err)
 	assert.Equal(t, positionBefore+3, positionAfter)
 
 	// The text is ASCII, so the UTF-16 position equals the byte index.
-	value, err := text.String(ctx)
+	value, err := text.String()
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(value), int(positionAfter)+1)
 	assert.Equal(t, byte('w'), value[positionAfter])

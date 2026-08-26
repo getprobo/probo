@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -73,8 +72,6 @@ func (s markScenarioStep) String() string {
 // sweep including out-of-range marks and every expand mode no longer diverges.
 func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 	t.Parallel()
-
-	ctx := context.Background()
 
 	tests := []struct {
 		name  string
@@ -191,8 +188,8 @@ func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 
 				assert.Equalf(
 					t,
-					runMarkScenario(t, ctx, rustParityEngines()[1], tt.steps),
-					runMarkScenario(t, ctx, rustParityEngines()[0], tt.steps),
+					runMarkScenario(t, rustParityEngines()[1], tt.steps),
+					runMarkScenario(t, rustParityEngines()[0], tt.steps),
 					"steps: %s",
 					renderMarkScenario(tt.steps),
 				)
@@ -211,7 +208,6 @@ func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 func TestRustText_MarkValuesMatchReferenceUnderErrors(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	random := rand.New(rand.NewSource(0x1e3779b97f4a7c15))
 
 	const scenarios = 2000
@@ -219,8 +215,8 @@ func TestRustText_MarkValuesMatchReferenceUnderErrors(t *testing.T) {
 	for scenario := range scenarios {
 		steps := randomDanglingMarkSteps(random)
 
-		reference := runMarkScenario(t, ctx, rustParityEngines()[1], steps)
-		native := runMarkScenario(t, ctx, rustParityEngines()[0], steps)
+		reference := runMarkScenario(t, rustParityEngines()[1], steps)
+		native := runMarkScenario(t, rustParityEngines()[0], steps)
 
 		require.Equalf(
 			t,
@@ -296,17 +292,16 @@ func randomDanglingMarkSteps(random *rand.Rand) []markScenarioStep {
 
 func runMarkScenario(
 	t *testing.T,
-	ctx context.Context,
 	engine rustParityEngine,
 	steps []markScenarioStep,
 ) string {
 	t.Helper()
 
-	document, err := engine.open(ctx, actor(1))
+	document, err := engine.open(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	text, err := document.CreateText(ctx, "text")
+	text, err := document.CreateText("text")
 	require.NoError(t, err)
 
 	// Out-of-range marks are expected to fail on both engines; the divergence is
@@ -314,14 +309,14 @@ func runMarkScenario(
 	for _, step := range steps {
 		switch step.kind {
 		case "insert":
-			_ = text.Splice(ctx, step.index, 0, step.value)
+			_ = text.Splice(step.index, 0, step.value)
 		case "delete":
-			_ = text.Splice(ctx, step.index, step.count, "")
+			_ = text.Splice(step.index, step.count, "")
 		case "split":
-			_, _ = text.SplitBlock(ctx, step.index)
+			_, _ = text.SplitBlock(step.index)
 		case "mark":
 			_ = text.Mark(
-				ctx,
+
 				step.index,
 				step.end,
 				step.name,
@@ -331,9 +326,9 @@ func runMarkScenario(
 		}
 	}
 
-	_, _ = document.Commit(ctx, "scenario", commitTime)
+	_, _ = document.Commit("scenario", commitTime)
 
-	spans, err := text.Spans(ctx)
+	spans, err := text.Spans()
 	require.NoError(t, err)
 
 	return renderMarkedSpans(spans)

@@ -21,7 +21,6 @@
 package automerge
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"time"
@@ -50,25 +49,22 @@ const (
 
 // NewFrom creates and commits a document from a hydrated root map.
 func NewFrom(
-	ctx context.Context,
 	actorID ActorID,
 	value map[string]Value,
 	message string,
 	timestamp time.Time,
 ) (*Document, error) {
-	return newFrom(ctx, actorID, value, message, timestamp, New)
+	return newFrom(actorID, value, message, timestamp, New)
 }
 
 // NewReferenceFrom creates a hydrated document using the Rust/WASM oracle.
 func NewReferenceFrom(
-	ctx context.Context,
 	actorID ActorID,
 	value map[string]Value,
 	message string,
 	timestamp time.Time,
 ) (*Document, error) {
 	return newFrom(
-		ctx,
 		actorID,
 		value,
 		message,
@@ -78,25 +74,24 @@ func NewReferenceFrom(
 }
 
 func newFrom(
-	ctx context.Context,
 	actorID ActorID,
 	value map[string]Value,
 	message string,
 	timestamp time.Time,
-	factory func(context.Context, ActorID) (*Document, error),
+	factory func(ActorID) (*Document, error),
 ) (*Document, error) {
-	document, err := factory(ctx, actorID)
+	document, err := factory(actorID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := document.Root().PutMap(ctx, value); err != nil {
-		_ = document.Close(context.Background())
+	if err := document.Root().PutMap(value); err != nil {
+		_ = document.Close()
 		return nil, err
 	}
 
-	if _, err := document.Commit(ctx, message, timestamp); err != nil {
-		_ = document.Close(context.Background())
+	if _, err := document.Commit(message, timestamp); err != nil {
+		_ = document.Close()
 		return nil, err
 	}
 
@@ -104,7 +99,7 @@ func newFrom(
 }
 
 // PutMap assigns a batch of recursively hydrated map properties.
-func (o *Object) PutMap(ctx context.Context, values map[string]Value) error {
+func (o *Object) PutMap(values map[string]Value) error {
 	keys := make([]string, 0, len(values))
 	for key := range values {
 		keys = append(keys, key)
@@ -113,7 +108,7 @@ func (o *Object) PutMap(ctx context.Context, values map[string]Value) error {
 	slices.Sort(keys)
 
 	for _, key := range keys {
-		if err := o.PutValue(ctx, key, values[key]); err != nil {
+		if err := o.PutValue(key, values[key]); err != nil {
 			return fmt.Errorf("cannot put hydrated property %q: %w", key, err)
 		}
 	}
@@ -122,33 +117,33 @@ func (o *Object) PutMap(ctx context.Context, values map[string]Value) error {
 }
 
 // PutValue assigns one recursively hydrated value to a map property.
-func (o *Object) PutValue(ctx context.Context, key string, value Value) error {
+func (o *Object) PutValue(key string, value Value) error {
 	switch value.Type {
 	case ValueTypeScalar:
-		return o.PutScalar(ctx, key, value.Scalar)
+		return o.PutScalar(key, value.Scalar)
 	case ValueTypeMap:
-		child, err := o.CreateObject(ctx, key, ObjectTypeMap)
+		child, err := o.CreateObject(key, ObjectTypeMap)
 		if err != nil {
 			return err
 		}
 
-		return child.PutMap(ctx, value.Map)
+		return child.PutMap(value.Map)
 	case ValueTypeList:
-		child, err := o.CreateObject(ctx, key, ObjectTypeList)
+		child, err := o.CreateObject(key, ObjectTypeList)
 		if err != nil {
 			return err
 		}
 
-		return child.InsertValues(ctx, 0, value.List)
+		return child.InsertValues(0, value.List)
 	case ValueTypeText:
-		child, err := o.CreateObject(ctx, key, ObjectTypeText)
+		child, err := o.CreateObject(key, ObjectTypeText)
 		if err != nil {
 			return err
 		}
 
 		text := &Text{document: child.document, handle: child.handle}
 
-		return text.Splice(ctx, 0, 0, value.Text)
+		return text.Splice(0, 0, value.Text)
 	default:
 		return fmt.Errorf("unknown hydrated value type %q", value.Type)
 	}
@@ -156,12 +151,11 @@ func (o *Object) PutValue(ctx context.Context, key string, value Value) error {
 
 // InsertValues inserts recursively hydrated values into a list.
 func (o *Object) InsertValues(
-	ctx context.Context,
 	index uint64,
 	values []Value,
 ) error {
 	for offset, value := range values {
-		if err := o.InsertValue(ctx, index+uint64(offset), value); err != nil {
+		if err := o.InsertValue(index+uint64(offset), value); err != nil {
 			return fmt.Errorf("cannot insert hydrated value %d: %w", offset, err)
 		}
 	}
@@ -171,36 +165,35 @@ func (o *Object) InsertValues(
 
 // InsertValue inserts one recursively hydrated value into a list.
 func (o *Object) InsertValue(
-	ctx context.Context,
 	index uint64,
 	value Value,
 ) error {
 	switch value.Type {
 	case ValueTypeScalar:
-		return o.InsertScalar(ctx, index, value.Scalar)
+		return o.InsertScalar(index, value.Scalar)
 	case ValueTypeMap:
-		child, err := o.InsertObject(ctx, index, ObjectTypeMap)
+		child, err := o.InsertObject(index, ObjectTypeMap)
 		if err != nil {
 			return err
 		}
 
-		return child.PutMap(ctx, value.Map)
+		return child.PutMap(value.Map)
 	case ValueTypeList:
-		child, err := o.InsertObject(ctx, index, ObjectTypeList)
+		child, err := o.InsertObject(index, ObjectTypeList)
 		if err != nil {
 			return err
 		}
 
-		return child.InsertValues(ctx, 0, value.List)
+		return child.InsertValues(0, value.List)
 	case ValueTypeText:
-		child, err := o.InsertObject(ctx, index, ObjectTypeText)
+		child, err := o.InsertObject(index, ObjectTypeText)
 		if err != nil {
 			return err
 		}
 
 		text := &Text{document: child.document, handle: child.handle}
 
-		return text.Splice(ctx, 0, 0, value.Text)
+		return text.Splice(0, 0, value.Text)
 	default:
 		return fmt.Errorf("unknown hydrated value type %q", value.Type)
 	}
@@ -208,36 +201,35 @@ func (o *Object) InsertValue(
 
 // PutValueAt replaces a list element with one recursively hydrated value.
 func (o *Object) PutValueAt(
-	ctx context.Context,
 	index uint64,
 	value Value,
 ) error {
 	switch value.Type {
 	case ValueTypeScalar:
-		return o.PutScalarAt(ctx, index, value.Scalar)
+		return o.PutScalarAt(index, value.Scalar)
 	case ValueTypeMap:
-		child, err := o.putObjectAt(ctx, index, ObjectTypeMap)
+		child, err := o.putObjectAt(index, ObjectTypeMap)
 		if err != nil {
 			return err
 		}
 
-		return child.PutMap(ctx, value.Map)
+		return child.PutMap(value.Map)
 	case ValueTypeList:
-		child, err := o.putObjectAt(ctx, index, ObjectTypeList)
+		child, err := o.putObjectAt(index, ObjectTypeList)
 		if err != nil {
 			return err
 		}
 
-		return child.InsertValues(ctx, 0, value.List)
+		return child.InsertValues(0, value.List)
 	case ValueTypeText:
-		child, err := o.putObjectAt(ctx, index, ObjectTypeText)
+		child, err := o.putObjectAt(index, ObjectTypeText)
 		if err != nil {
 			return err
 		}
 
 		text := &Text{document: child.document, handle: child.handle}
 
-		return text.Splice(ctx, 0, 0, value.Text)
+		return text.Splice(0, 0, value.Text)
 	default:
 		return fmt.Errorf("unknown hydrated value type %q", value.Type)
 	}
@@ -245,22 +237,20 @@ func (o *Object) PutValueAt(
 
 // SpliceValues deletes and inserts recursively hydrated list values.
 func (o *Object) SpliceValues(
-	ctx context.Context,
 	index uint64,
 	deleteCount uint64,
 	values []Value,
 ) error {
 	for range deleteCount {
-		if err := o.DeleteIndex(ctx, index); err != nil {
+		if err := o.DeleteIndex(index); err != nil {
 			return err
 		}
 	}
 
-	return o.InsertValues(ctx, index, values)
+	return o.InsertValues(index, values)
 }
 
 func (o *Object) putObjectAt(
-	ctx context.Context,
 	index uint64,
 	objectType ObjectType,
 ) (*Object, error) {
@@ -276,7 +266,6 @@ func (o *Object) putObjectAt(
 	}
 
 	handle, err := o.document.engine.PutObjectAt(
-		ctx,
 		o.handle,
 		index,
 		string(objectType),

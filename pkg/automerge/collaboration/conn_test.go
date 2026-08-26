@@ -21,7 +21,6 @@
 package collaboration
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +34,7 @@ type scriptedSync struct {
 	received [][]byte
 }
 
-func (s *scriptedSync) GenerateMessage(context.Context) ([]byte, bool, error) {
+func (s *scriptedSync) GenerateMessage() ([]byte, bool, error) {
 	if len(s.outbound) == 0 {
 		return nil, false, nil
 	}
@@ -46,7 +45,7 @@ func (s *scriptedSync) GenerateMessage(context.Context) ([]byte, bool, error) {
 	return next, true, nil
 }
 
-func (s *scriptedSync) ReceiveMessage(_ context.Context, message []byte) error {
+func (s *scriptedSync) ReceiveMessage(message []byte) error {
 	s.received = append(s.received, message)
 
 	return nil
@@ -72,11 +71,10 @@ func joinFixture(t *testing.T) []byte {
 func TestServerConn_StartAnnouncesInitialSync(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	sync := &scriptedSync{outbound: [][]byte{{1, 1}, {2, 2}}}
 	conn := newConn(t, sync)
 
-	out, accepted, err := conn.Start(ctx, joinFixture(t))
+	out, accepted, err := conn.Start(joinFixture(t))
 	require.NoError(t, err)
 	require.True(t, accepted)
 	require.Len(t, out, 3) // peer reply + two sync frames
@@ -110,7 +108,7 @@ func TestServerConn_RejectsUnsupportedVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	conn := newConn(t, &scriptedSync{})
-	out, accepted, err := conn.Start(context.Background(), join)
+	out, accepted, err := conn.Start(join)
 	require.NoError(t, err)
 	assert.False(t, accepted)
 	require.Len(t, out, 1)
@@ -124,11 +122,10 @@ func TestServerConn_RejectsUnsupportedVersion(t *testing.T) {
 func TestServerConn_AppliesInboundSyncAndReplies(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	sync := &scriptedSync{}
 	conn := newConn(t, sync)
 
-	_, accepted, err := conn.Start(ctx, joinFixture(t))
+	_, accepted, err := conn.Start(joinFixture(t))
 	require.NoError(t, err)
 	require.True(t, accepted)
 
@@ -143,7 +140,7 @@ func TestServerConn_AppliesInboundSyncAndReplies(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	reply, fanout, err := conn.Receive(ctx, inboundSync)
+	reply, fanout, err := conn.Receive(inboundSync)
 	require.NoError(t, err)
 	assert.Nil(t, fanout)
 	require.Len(t, reply, 1)
@@ -161,10 +158,9 @@ func TestServerConn_AppliesInboundSyncAndReplies(t *testing.T) {
 func TestServerConn_FansOutEphemeralOnce(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	conn := newConn(t, &scriptedSync{})
 
-	_, _, err := conn.Start(ctx, joinFixture(t))
+	_, _, err := conn.Start(joinFixture(t))
 	require.NoError(t, err)
 
 	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
@@ -178,12 +174,12 @@ func TestServerConn_FansOutEphemeralOnce(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	reply, fanout, err := conn.Receive(ctx, ephemeral)
+	reply, fanout, err := conn.Receive(ephemeral)
 	require.NoError(t, err)
 	assert.Nil(t, reply)
 	assert.Equal(t, ephemeral, fanout, "a fresh ephemeral is forwarded unchanged")
 
-	_, fanoutAgain, err := conn.Receive(ctx, ephemeral)
+	_, fanoutAgain, err := conn.Receive(ephemeral)
 	require.NoError(t, err)
 	assert.Nil(t, fanoutAgain, "a duplicate ephemeral is dropped")
 }
@@ -193,15 +189,14 @@ func TestServerConn_FansOutEphemeralOnce(t *testing.T) {
 func TestServerConn_SyncChangedDrains(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	sync := &scriptedSync{}
 	conn := newConn(t, sync)
 
-	_, _, err := conn.Start(ctx, joinFixture(t))
+	_, _, err := conn.Start(joinFixture(t))
 	require.NoError(t, err)
 
 	sync.outbound = [][]byte{{3, 3}}
-	frames, err := conn.SyncChanged(ctx)
+	frames, err := conn.SyncChanged()
 	require.NoError(t, err)
 	require.Len(t, frames, 1)
 
@@ -217,13 +212,12 @@ func TestServerConn_SyncChangedDrains(t *testing.T) {
 func TestAdoptingServerConn_LearnsDocumentIDFromClient(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	sync := &scriptedSync{}
 
 	conn, err := NewAdoptingServerConn(ServerConfig{ServerPeerID: "server"}, sync)
 	require.NoError(t, err)
 
-	out, accepted, err := conn.Start(ctx, joinFixture(t))
+	out, accepted, err := conn.Start(joinFixture(t))
 	require.NoError(t, err)
 	require.True(t, accepted)
 	require.Len(t, out, 1, "an adopting connection announces nothing until the client asks")
@@ -239,7 +233,7 @@ func TestAdoptingServerConn_LearnsDocumentIDFromClient(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	reply, _, err := conn.Receive(ctx, inboundSync)
+	reply, _, err := conn.Receive(inboundSync)
 	require.NoError(t, err)
 	require.Len(t, reply, 1)
 	assert.Equal(t, "client-chosen-doc", conn.DocumentID())
@@ -259,11 +253,10 @@ func TestAdoptingServerConn_LearnsDocumentIDFromClient(t *testing.T) {
 func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	conn, err := NewAdoptingServerConn(ServerConfig{ServerPeerID: "server"}, &scriptedSync{})
 	require.NoError(t, err)
 
-	_, _, err = conn.Start(ctx, joinFixture(t))
+	_, _, err = conn.Start(joinFixture(t))
 	require.NoError(t, err)
 
 	first, err := EncodeMessage(
@@ -273,7 +266,7 @@ func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	_, _, err = conn.Receive(ctx, first)
+	_, _, err = conn.Receive(first)
 	require.NoError(t, err)
 
 	second, err := EncodeMessage(
@@ -283,7 +276,7 @@ func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	_, _, err = conn.Receive(ctx, second)
+	_, _, err = conn.Receive(second)
 	require.Error(t, err)
 }
 
@@ -292,10 +285,9 @@ func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
 func TestServerConn_RejectsForeignDocument(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	conn := newConn(t, &scriptedSync{})
 
-	_, _, err := conn.Start(ctx, joinFixture(t))
+	_, _, err := conn.Start(joinFixture(t))
 	require.NoError(t, err)
 
 	foreign, err := EncodeMessage(
@@ -306,7 +298,7 @@ func TestServerConn_RejectsForeignDocument(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, _, err = conn.Receive(ctx, foreign)
+	_, _, err = conn.Receive(foreign)
 	require.Error(t, err)
 }
 
@@ -315,6 +307,6 @@ func TestServerConn_RequiresStart(t *testing.T) {
 	t.Parallel()
 
 	conn := newConn(t, &scriptedSync{})
-	_, _, err := conn.Receive(context.Background(), []byte{0xa0})
+	_, _, err := conn.Receive([]byte{0xa0})
 	assert.Error(t, err)
 }

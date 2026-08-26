@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -47,54 +46,53 @@ func hydratedList(values ...automerge.Value) automerge.Value {
 func TestRustBatch_MergesCorrectly(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
 		require.NoError(
 			t,
 			doc1.Root().PutValue(
-				ctx,
+
 				"obj1",
 				hydratedMap(map[string]automerge.Value{"from": hydratedString("doc1")}),
 			),
 		)
-		_, err = doc1.Commit(ctx, "obj1", commitTime)
+		_, err = doc1.Commit("obj1", commitTime)
 		require.NoError(t, err)
 
-		doc2, err := doc1.Fork(ctx, actor(2))
+		doc2, err := doc1.Fork(actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
 		require.NoError(
 			t,
 			doc2.Root().PutValue(
-				ctx,
+
 				"obj2",
 				hydratedMap(map[string]automerge.Value{"from": hydratedString("doc2")}),
 			),
 		)
-		_, err = doc2.Commit(ctx, "obj2", commitTime.Add(time.Second))
+		_, err = doc2.Commit("obj2", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
-		obj1, err := doc1.Root().Object(ctx, "obj1")
+		obj1, err := doc1.Root().Object("obj1")
 		require.NoError(t, err)
-		value, err := obj1.Scalar(ctx, "from")
+		value, err := obj1.Scalar("from")
 		require.NoError(t, err)
 		assert.Equal(t, "doc1", value.String)
 
-		obj2, err := doc1.Root().Object(ctx, "obj2")
+		obj2, err := doc1.Root().Object("obj2")
 		require.NoError(t, err)
-		value, err = obj2.Scalar(ctx, "from")
+		value, err = obj2.Scalar("from")
 		require.NoError(t, err)
 		assert.Equal(t, "doc2", value.String)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -104,18 +102,17 @@ func TestRustBatch_MergesCorrectly(t *testing.T) {
 func TestRustBatch_MultipleInserts(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc, err := engine.open(ctx, actor(1))
+		doc, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc)
 
 		require.NoError(
 			t,
 			doc.Root().PutValue(
-				ctx,
+
 				"first",
 				hydratedMap(map[string]automerge.Value{"a": hydratedInt(1)}),
 			),
@@ -123,7 +120,7 @@ func TestRustBatch_MultipleInserts(t *testing.T) {
 		require.NoError(
 			t,
 			doc.Root().PutValue(
-				ctx,
+
 				"second",
 				hydratedMap(map[string]automerge.Value{"b": hydratedInt(2)}),
 			),
@@ -131,12 +128,12 @@ func TestRustBatch_MultipleInserts(t *testing.T) {
 		require.NoError(
 			t,
 			doc.Root().PutValue(
-				ctx,
+
 				"third",
 				hydratedMap(map[string]automerge.Value{"c": hydratedInt(3)}),
 			),
 		)
-		_, err = doc.Commit(ctx, "batches", commitTime)
+		_, err = doc.Commit("batches", commitTime)
 		require.NoError(t, err)
 
 		for key, field := range map[string]struct {
@@ -147,14 +144,14 @@ func TestRustBatch_MultipleInserts(t *testing.T) {
 			"second": {"b", 2},
 			"third":  {"c", 3},
 		} {
-			object, err := doc.Root().Object(ctx, key)
+			object, err := doc.Root().Object(key)
 			require.NoError(t, err)
-			value, err := object.Scalar(ctx, field.name)
+			value, err := object.Scalar(field.name)
 			require.NoError(t, err)
 			assert.Equal(t, field.value, value.Int)
 		}
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+		heads[engine.name] = sortedHeadHex(t, doc)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -164,20 +161,19 @@ func TestRustBatch_MultipleInserts(t *testing.T) {
 func TestRustBatch_InsertIntoExistingMap(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc, err := engine.open(ctx, actor(1))
+		doc, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc)
 
-		parent, err := doc.Root().CreateObject(ctx, "parent", automerge.ObjectTypeMap)
+		parent, err := doc.Root().CreateObject("parent", automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			parent.PutScalar(
-				ctx,
+
 				"existing",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
 			),
@@ -185,7 +181,7 @@ func TestRustBatch_InsertIntoExistingMap(t *testing.T) {
 		require.NoError(
 			t,
 			parent.PutValue(
-				ctx,
+
 				"child",
 				hydratedMap(
 					map[string]automerge.Value{
@@ -195,20 +191,20 @@ func TestRustBatch_InsertIntoExistingMap(t *testing.T) {
 				),
 			),
 		)
-		_, err = doc.Commit(ctx, "batch", commitTime)
+		_, err = doc.Commit("batch", commitTime)
 		require.NoError(t, err)
 
-		existing, err := parent.Scalar(ctx, "existing")
+		existing, err := parent.Scalar("existing")
 		require.NoError(t, err)
 		assert.Equal(t, "value", existing.String)
 
-		child, err := parent.Object(ctx, "child")
+		child, err := parent.Object("child")
 		require.NoError(t, err)
-		x, err := child.Scalar(ctx, "x")
+		x, err := child.Scalar("x")
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), x.Int)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+		heads[engine.name] = sortedHeadHex(t, doc)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -219,20 +215,19 @@ func TestRustBatch_InsertIntoExistingMap(t *testing.T) {
 func TestRustBatch_PutOverwriteWithNestedStructure(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc, err := engine.open(ctx, actor(1))
+		doc, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc)
 
-		list, err := doc.Root().CreateObject(ctx, "items", automerge.ObjectTypeList)
+		list, err := doc.Root().CreateObject("items", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list.InsertValues(
-				ctx,
+
 				0,
 				[]automerge.Value{
 					hydratedString("placeholder"),
@@ -244,7 +239,7 @@ func TestRustBatch_PutOverwriteWithNestedStructure(t *testing.T) {
 		require.NoError(
 			t,
 			list.PutValueAt(
-				ctx,
+
 				0,
 				hydratedMap(
 					map[string]automerge.Value{
@@ -257,36 +252,36 @@ func TestRustBatch_PutOverwriteWithNestedStructure(t *testing.T) {
 				),
 			),
 		)
-		_, err = doc.Commit(ctx, "overwrite", commitTime)
+		_, err = doc.Commit("overwrite", commitTime)
 		require.NoError(t, err)
 
-		length, err := list.Len(ctx)
+		length, err := list.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(2), length)
 
-		object, err := list.ObjectAt(ctx, 0)
+		object, err := list.ObjectAt(0)
 		require.NoError(t, err)
-		name, err := object.Scalar(ctx, "name")
+		name, err := object.Scalar("name")
 		require.NoError(t, err)
 		assert.Equal(t, "complex", name.String)
 
-		children, err := object.Object(ctx, "children")
+		children, err := object.Object("children")
 		require.NoError(t, err)
-		childrenLength, err := children.Len(ctx)
+		childrenLength, err := children.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(2), childrenLength)
 
-		firstChild, err := children.ObjectAt(ctx, 0)
+		firstChild, err := children.ObjectAt(0)
 		require.NoError(t, err)
-		id, err := firstChild.Scalar(ctx, "id")
+		id, err := firstChild.Scalar("id")
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), id.Int)
 
-		keep, err := list.ScalarAt(ctx, 1)
+		keep, err := list.ScalarAt(1)
 		require.NoError(t, err)
 		assert.Equal(t, "keep", keep.String)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+		heads[engine.name] = sortedHeadHex(t, doc)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -296,34 +291,33 @@ func TestRustBatch_PutOverwriteWithNestedStructure(t *testing.T) {
 func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		list1, err := doc1.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list1, err := doc1.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list1.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "shared"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "shared", commitTime)
+		_, err = doc1.Commit("shared", commitTime)
 		require.NoError(t, err)
 
-		doc2, err := doc1.Fork(ctx, actor(2))
+		doc2, err := doc1.Fork(actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
 
 		require.NoError(
 			t,
 			list1.SpliceValues(
-				ctx,
+
 				1,
 				0,
 				[]automerge.Value{
@@ -331,15 +325,15 @@ func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 				},
 			),
 		)
-		_, err = doc1.Commit(ctx, "doc1", commitTime.Add(time.Second))
+		_, err = doc1.Commit("doc1", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		list2, err := doc2.Root().Object(ctx, "list")
+		list2, err := doc2.Root().Object("list")
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list2.SpliceValues(
-				ctx,
+
 				1,
 				0,
 				[]automerge.Value{
@@ -347,21 +341,21 @@ func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 				},
 			),
 		)
-		_, err = doc2.Commit(ctx, "doc2", commitTime.Add(time.Second))
+		_, err = doc2.Commit("doc2", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
-		length, err := list1.Len(ctx)
+		length, err := list1.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(3), length)
 
-		first, err := list1.ScalarAt(ctx, 0)
+		first, err := list1.ScalarAt(0)
 		require.NoError(t, err)
 		assert.Equal(t, "shared", first.String)
 
-		results[engine.name] = sortedHeadHex(t, ctx, doc1)
+		results[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, results["reference"], results["native"])

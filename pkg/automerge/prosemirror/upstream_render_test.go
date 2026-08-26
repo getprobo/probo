@@ -22,7 +22,6 @@ package prosemirror_test
 
 import (
 	"compress/gzip"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -73,15 +72,15 @@ func TestBridge_MatchesUpstreamInBothDirections(t *testing.T) {
 				actorID, err := automerge.NewActorID()
 				require.NoError(t, err)
 
-				document, err := automerge.Load(context.Background(), data, actorID)
+				document, err := automerge.Load(data, actorID)
 				require.NoError(t, err)
 
-				defer func() { _ = document.Close(context.Background()) }()
+				defer func() { _ = document.Close() }()
 
-				text, err := document.Text(context.Background(), "body")
+				text, err := document.Text("body")
 				require.NoError(t, err)
 
-				spans, err := text.Spans(context.Background())
+				spans, err := text.Spans()
 				require.NoError(t, err)
 
 				actualSpans := make([]map[string]any, 0, len(spans))

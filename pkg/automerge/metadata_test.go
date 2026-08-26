@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -35,9 +34,7 @@ import (
 func TestDocument_StatsMatchReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	factories := map[string]func(
-		context.Context,
 		automerge.ActorID,
 	) (*automerge.Document, error){
 		"native":    automerge.New,
@@ -50,33 +47,33 @@ func TestDocument_StatsMatchReference(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				document, err := factory(ctx, actor(1))
+				document, err := factory(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
 				require.NoError(
 					t,
 					document.Root().PutScalar(
-						ctx,
+
 						"a",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
 				)
-				_, err = document.Commit(ctx, "a", commitTime)
+				_, err = document.Commit("a", commitTime)
 				require.NoError(t, err)
 
 				require.NoError(
 					t,
 					document.Root().PutScalar(
-						ctx,
+
 						"b",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 					),
 				)
-				_, err = document.Commit(ctx, "b", commitTime.Add(time.Second))
+				_, err = document.Commit("b", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
-				stats, err := document.Stats(ctx)
+				stats, err := document.Stats()
 				require.NoError(t, err)
 				assert.Equal(t, uint64(2), stats.NumChanges)
 				assert.Equal(t, uint64(2), stats.NumOps)
@@ -90,7 +87,6 @@ func TestDocument_CommitTimeParity(t *testing.T) {
 	t.Parallel()
 
 	factories := map[string]func(
-		context.Context,
 		automerge.ActorID,
 	) (*automerge.Document, error){
 		"native":    automerge.New,
@@ -103,30 +99,29 @@ func TestDocument_CommitTimeParity(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
-				document, err := factory(ctx, actor(149))
+				document, err := factory(actor(149))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
-				require.NoError(t, document.PutString(ctx, "zero", "value"))
-				_, err = document.Commit(ctx, "zero", time.Time{})
+				require.NoError(t, document.PutString("zero", "value"))
+				_, err = document.Commit("zero", time.Time{})
 				require.NoError(t, err)
-				require.NoError(t, document.PutString(ctx, "provided", "value"))
+				require.NoError(t, document.PutString("provided", "value"))
 				_, err = document.Commit(
-					ctx,
+
 					"provided",
 					time.Unix(12_345, 0),
 				)
 				require.NoError(t, err)
-				require.NoError(t, document.PutString(ctx, "current", "value"))
+				require.NoError(t, document.PutString("current", "value"))
 
 				before := time.Now().Unix()
-				_, err = document.CommitNow(ctx, "current")
+				_, err = document.CommitNow("current")
 				after := time.Now().Unix()
 
 				require.NoError(t, err)
 
-				data, err := document.Save(ctx)
+				data, err := document.Save()
 				require.NoError(t, err)
 				decoded, err := native.Decode(data)
 				require.NoError(t, err)
@@ -144,7 +139,6 @@ func TestDocument_EmptyCommitTimeParity(t *testing.T) {
 	t.Parallel()
 
 	factories := map[string]func(
-		context.Context,
 		automerge.ActorID,
 	) (*automerge.Document, error){
 		"native":    automerge.New,
@@ -157,27 +151,26 @@ func TestDocument_EmptyCommitTimeParity(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
-				document, err := factory(ctx, actor(150))
+				document, err := factory(actor(150))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
-				_, err = document.EmptyCommit(ctx, "zero", time.Time{})
+				_, err = document.EmptyCommit("zero", time.Time{})
 				require.NoError(t, err)
 				_, err = document.EmptyCommit(
-					ctx,
+
 					"provided",
 					time.Unix(12_345, 0),
 				)
 				require.NoError(t, err)
 
 				before := time.Now().Unix()
-				_, err = document.EmptyCommitNow(ctx, "current")
+				_, err = document.EmptyCommitNow("current")
 				after := time.Now().Unix()
 
 				require.NoError(t, err)
 
-				data, err := document.Save(ctx)
+				data, err := document.Save()
 				require.NoError(t, err)
 				decoded, err := native.Decode(data)
 				require.NoError(t, err)
@@ -202,27 +195,26 @@ func TestDocument_EmptyCommitTimeParity(t *testing.T) {
 func TestDocument_EmptyCommitChangesSince(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(156))
+	document, err := automerge.New(actor(156))
 	require.NoError(t, err)
 	closeDocument(t, document)
-	hash, err := document.EmptyCommit(ctx, "empty", time.Time{})
+	hash, err := document.EmptyCommit("empty", time.Time{})
 	require.NoError(t, err)
 
-	changes, err := document.ChangesSince(ctx, nil)
+	changes, err := document.ChangesSince(nil)
 	require.NoError(t, err)
 	require.Len(t, changes, 1)
 	assert.Equal(t, hash, changes[0].Hash)
-	changes, err = document.ChangesSince(ctx, []automerge.Hash{hash})
+	changes, err = document.ChangesSince([]automerge.Hash{hash})
 	require.NoError(t, err)
 	assert.Empty(t, changes)
 
-	data, err := document.Save(ctx)
+	data, err := document.Save()
 	require.NoError(t, err)
-	reference, err := automerge.LoadReference(ctx, data, actor(157))
+	reference, err := automerge.LoadReference(data, actor(157))
 	require.NoError(t, err)
 	closeDocument(t, reference)
-	heads, err := reference.Heads(ctx)
+	heads, err := reference.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, []automerge.Hash{hash}, heads)
 }
@@ -231,7 +223,6 @@ func TestDocument_HistoricalReadsMatchReference(t *testing.T) {
 	t.Parallel()
 
 	factories := map[string]func(
-		context.Context,
 		automerge.ActorID,
 	) (*automerge.Document, error){
 		"native":    automerge.New,
@@ -244,71 +235,70 @@ func TestDocument_HistoricalReadsMatchReference(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
-				document, err := factory(ctx, actor(158))
+				document, err := factory(actor(158))
 				require.NoError(t, err)
 				closeDocument(t, document)
 				root := document.Root()
 				require.NoError(
 					t,
 					root.PutScalar(
-						ctx,
+
 						"value",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
 				)
-				text, err := document.CreateText(ctx, "body")
+				text, err := document.CreateText("body")
 				require.NoError(t, err)
-				require.NoError(t, text.Splice(ctx, 0, 0, "A"))
-				first, err := document.Commit(ctx, "first", commitTime)
+				require.NoError(t, text.Splice(0, 0, "A"))
+				first, err := document.Commit("first", commitTime)
 				require.NoError(t, err)
 
 				require.NoError(
 					t,
 					root.PutScalar(
-						ctx,
+
 						"value",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 					),
 				)
-				require.NoError(t, text.Splice(ctx, 1, 0, "B"))
+				require.NoError(t, text.Splice(1, 0, "B"))
 				second, err := document.Commit(
-					ctx,
+
 					"second",
 					commitTime.Add(time.Second),
 				)
 				require.NoError(t, err)
 
 				historicalScalar, err := root.ScalarAtHeads(
-					ctx,
+
 					"value",
 					[]automerge.Hash{first},
 				)
 				require.NoError(t, err)
 				assert.Equal(t, int64(1), historicalScalar.Int)
 
-				currentScalar, err := root.Scalar(ctx, "value")
+				currentScalar, err := root.Scalar("value")
 				require.NoError(t, err)
 				assert.Equal(t, int64(2), currentScalar.Int)
 
 				historicalText, err := text.StringAt(
-					ctx,
+
 					[]automerge.Hash{first},
 				)
 				require.NoError(t, err)
 				assert.Equal(t, "A", historicalText)
 
-				currentText, err := text.String(ctx)
+				currentText, err := text.String()
 				require.NoError(t, err)
 				assert.Equal(t, "AB", currentText)
 
 				hasHeads, err := document.HasHeads(
-					ctx,
+
 					[]automerge.Hash{first, second},
 				)
 				require.NoError(t, err)
 				assert.True(t, hasHeads)
-				hasHeads, err = document.HasHeads(ctx, nil)
+				hasHeads, err = document.HasHeads(nil)
 				require.NoError(t, err)
 				assert.True(t, hasHeads)
 
@@ -316,7 +306,7 @@ func TestDocument_HistoricalReadsMatchReference(t *testing.T) {
 
 				unknown[0] = 1
 				hasHeads, err = document.HasHeads(
-					ctx,
+
 					[]automerge.Hash{unknown},
 				)
 				require.NoError(t, err)
@@ -329,12 +319,11 @@ func TestDocument_HistoricalReadsMatchReference(t *testing.T) {
 func TestDocument_MissingDependenciesMatchReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.New(ctx, actor(159))
+	nativeDocument, err := automerge.New(actor(159))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
 
-	referenceDocument, err := automerge.NewReference(ctx, actor(159))
+	referenceDocument, err := automerge.NewReference(actor(159))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 
@@ -342,12 +331,12 @@ func TestDocument_MissingDependenciesMatchReference(t *testing.T) {
 
 	unknown[0] = 1
 	nativeMissing, err := nativeDocument.MissingDependencies(
-		ctx,
+
 		[]automerge.Hash{unknown},
 	)
 	require.NoError(t, err)
 	referenceMissing, err := referenceDocument.MissingDependencies(
-		ctx,
+
 		[]automerge.Hash{unknown},
 	)
 	require.NoError(t, err)
@@ -358,11 +347,11 @@ func TestDocument_MissingDependenciesMatchReference(t *testing.T) {
 		nativeDocument,
 		referenceDocument,
 	} {
-		require.NoError(t, document.PutString(ctx, "value", "known"))
-		hash, err := document.Commit(ctx, "known", commitTime)
+		require.NoError(t, document.PutString("value", "known"))
+		hash, err := document.Commit("known", commitTime)
 		require.NoError(t, err)
 		missing, err := document.MissingDependencies(
-			ctx,
+
 			[]automerge.Hash{hash},
 		)
 		require.NoError(t, err)

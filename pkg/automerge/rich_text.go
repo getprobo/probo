@@ -21,7 +21,6 @@
 package automerge
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 )
@@ -58,7 +57,6 @@ const (
 
 // Mark applies a typed annotation to a UTF-16 text range.
 func (t *Text) Mark(
-	ctx context.Context,
 	start uint32,
 	end uint32,
 	name string,
@@ -82,7 +80,6 @@ func (t *Text) Mark(
 	}
 
 	if err := t.document.engine.MarkText(
-		ctx,
 		t.handle,
 		start,
 		end,
@@ -115,7 +112,6 @@ type UpdateSpansConfig struct {
 // computing a minimal text diff and then setting the marks to exactly those
 // named on the spans. It mirrors the Rust updateSpans helper.
 func (t *Text) UpdateSpans(
-	ctx context.Context,
 	spans []SpanInput,
 	config UpdateSpansConfig,
 ) error {
@@ -186,7 +182,7 @@ func (t *Text) UpdateSpans(
 		return fmt.Errorf("cannot encode Automerge spans config: %w", err)
 	}
 
-	if err := t.document.engine.UpdateSpans(ctx, t.handle, spansPayload, configPayload); err != nil {
+	if err := t.document.engine.UpdateSpans(t.handle, spansPayload, configPayload); err != nil {
 		return fmt.Errorf("cannot update Automerge spans: %w", err)
 	}
 
@@ -195,14 +191,13 @@ func (t *Text) UpdateSpans(
 
 // Unmark removes a named annotation from a UTF-16 text range.
 func (t *Text) Unmark(
-	ctx context.Context,
 	start uint32,
 	end uint32,
 	name string,
 	expand MarkExpand,
 ) error {
 	return t.Mark(
-		ctx,
+
 		start,
 		end,
 		name,
@@ -212,7 +207,7 @@ func (t *Text) Unmark(
 }
 
 // SplitBlock inserts a block marker at a UTF-16 text position.
-func (t *Text) SplitBlock(ctx context.Context, index uint32) (*Object, error) {
+func (t *Text) SplitBlock(index uint32) (*Object, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -220,7 +215,7 @@ func (t *Text) SplitBlock(ctx context.Context, index uint32) (*Object, error) {
 		return nil, ErrClosed
 	}
 
-	handle, err := t.document.engine.SplitBlock(ctx, t.handle, index)
+	handle, err := t.document.engine.SplitBlock(t.handle, index)
 	if err != nil {
 		return nil, fmt.Errorf("cannot split Automerge block: %w", err)
 	}
@@ -233,7 +228,7 @@ func (t *Text) SplitBlock(ctx context.Context, index uint32) (*Object, error) {
 }
 
 // JoinBlock deletes the block marker at a UTF-16 text position.
-func (t *Text) JoinBlock(ctx context.Context, index uint32) error {
+func (t *Text) JoinBlock(index uint32) error {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -241,7 +236,7 @@ func (t *Text) JoinBlock(ctx context.Context, index uint32) error {
 		return ErrClosed
 	}
 
-	if err := t.document.engine.JoinBlock(ctx, t.handle, index); err != nil {
+	if err := t.document.engine.JoinBlock(t.handle, index); err != nil {
 		return fmt.Errorf("cannot join Automerge block: %w", err)
 	}
 
@@ -249,7 +244,7 @@ func (t *Text) JoinBlock(ctx context.Context, index uint32) error {
 }
 
 // ReplaceBlock replaces a block marker and returns its new map object.
-func (t *Text) ReplaceBlock(ctx context.Context, index uint32) (*Object, error) {
+func (t *Text) ReplaceBlock(index uint32) (*Object, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -257,7 +252,7 @@ func (t *Text) ReplaceBlock(ctx context.Context, index uint32) (*Object, error) 
 		return nil, ErrClosed
 	}
 
-	handle, err := t.document.engine.ReplaceBlock(ctx, t.handle, index)
+	handle, err := t.document.engine.ReplaceBlock(t.handle, index)
 	if err != nil {
 		return nil, fmt.Errorf("cannot replace Automerge block: %w", err)
 	}
@@ -287,7 +282,7 @@ type (
 )
 
 // Marks returns the active marks over the text object as UTF-16 ranges.
-func (t *Text) Marks(ctx context.Context) ([]Mark, error) {
+func (t *Text) Marks() ([]Mark, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -295,7 +290,7 @@ func (t *Text) Marks(ctx context.Context) ([]Mark, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.engine.Marks(ctx, t.handle)
+	data, err := t.document.engine.Marks(t.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge marks: %w", err)
 	}
@@ -304,7 +299,7 @@ func (t *Text) Marks(ctx context.Context) ([]Mark, error) {
 }
 
 // MarksAt returns the active marks over the text object at a historical frontier.
-func (t *Text) MarksAt(ctx context.Context, heads []Hash) ([]Mark, error) {
+func (t *Text) MarksAt(heads []Hash) ([]Mark, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -312,7 +307,7 @@ func (t *Text) MarksAt(ctx context.Context, heads []Hash) ([]Mark, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.engine.MarksAt(ctx, t.handle, engineHashes(heads))
+	data, err := t.document.engine.MarksAt(t.handle, engineHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read historical Automerge marks: %w", err)
 	}
@@ -344,7 +339,7 @@ func decodeMarks(data []byte) ([]Mark, error) {
 	return marks, nil
 }
 
-func (t *Text) Spans(ctx context.Context) ([]Span, error) {
+func (t *Text) Spans() ([]Span, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -352,7 +347,7 @@ func (t *Text) Spans(ctx context.Context) ([]Span, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.engine.TextSpans(ctx, t.handle)
+	data, err := t.document.engine.TextSpans(t.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge rich-text spans: %w", err)
 	}
@@ -361,7 +356,7 @@ func (t *Text) Spans(ctx context.Context) ([]Span, error) {
 }
 
 // SpansAt returns the rich-text spans as they existed at a historical frontier.
-func (t *Text) SpansAt(ctx context.Context, heads []Hash) ([]Span, error) {
+func (t *Text) SpansAt(heads []Hash) ([]Span, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -369,7 +364,7 @@ func (t *Text) SpansAt(ctx context.Context, heads []Hash) ([]Span, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := t.document.engine.TextSpansAt(ctx, t.handle, engineHashes(heads))
+	data, err := t.document.engine.TextSpansAt(t.handle, engineHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read historical Automerge rich-text spans: %w", err)
 	}

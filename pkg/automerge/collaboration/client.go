@@ -20,10 +20,7 @@
 
 package collaboration
 
-import (
-	"context"
-	"fmt"
-)
+import "fmt"
 
 // ClientConfig configures the client side of a collaboration connection, used by
 // Go agents that participate as repo peers.
@@ -104,7 +101,7 @@ type ClientInbound struct {
 // handshake and emits the client's initial sync; on a sync or request it applies
 // the payload and emits the resulting sync; on an ephemeral it de-duplicates and
 // surfaces the payload; it reports an error or doc-unavailable frame.
-func (c *ClientConn) Receive(ctx context.Context, frame []byte) (ClientInbound, error) {
+func (c *ClientConn) Receive(frame []byte) (ClientInbound, error) {
 	kind, err := FrameKind(frame)
 	if err != nil {
 		return ClientInbound{}, err
@@ -127,7 +124,7 @@ func (c *ClientConn) Receive(ctx context.Context, frame []byte) (ClientInbound, 
 		c.joined = true
 		c.serverPeerID = peer.SenderID
 
-		outgoing, err := c.drainSync(ctx)
+		outgoing, err := c.drainSync()
 		if err != nil {
 			return ClientInbound{}, err
 		}
@@ -153,11 +150,11 @@ func (c *ClientConn) Receive(ctx context.Context, frame []byte) (ClientInbound, 
 			return ClientInbound{}, err
 		}
 
-		if err := c.sync.ReceiveMessage(ctx, message.Data); err != nil {
+		if err := c.sync.ReceiveMessage(message.Data); err != nil {
 			return ClientInbound{}, fmt.Errorf("cannot apply inbound sync message: %w", err)
 		}
 
-		outgoing, err := c.drainSync(ctx)
+		outgoing, err := c.drainSync()
 		if err != nil {
 			return ClientInbound{}, err
 		}
@@ -183,12 +180,12 @@ func (c *ClientConn) Receive(ctx context.Context, frame []byte) (ClientInbound, 
 
 // SyncChanged drains sync frames after the local document changed, so local
 // edits propagate to the server.
-func (c *ClientConn) SyncChanged(ctx context.Context) ([][]byte, error) {
+func (c *ClientConn) SyncChanged() ([][]byte, error) {
 	if !c.joined {
 		return nil, fmt.Errorf("cannot sync before the handshake completed")
 	}
 
-	return c.drainSync(ctx)
+	return c.drainSync()
 }
 
 // Ephemeral builds an ephemeral frame carrying an application payload (such as a
@@ -215,11 +212,11 @@ func (c *ClientConn) Ephemeral(sessionID string, count uint64, payload []byte) (
 // drainSync generates sync frames until the client is up to date. The first
 // outbound message is a request when the local document started empty, matching
 // the repo synchronizer; every later message is a sync.
-func (c *ClientConn) drainSync(ctx context.Context) ([][]byte, error) {
+func (c *ClientConn) drainSync() ([][]byte, error) {
 	var frames [][]byte
 
 	for {
-		message, ok, err := c.sync.GenerateMessage(ctx)
+		message, ok, err := c.sync.GenerateMessage()
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate sync message: %w", err)
 		}

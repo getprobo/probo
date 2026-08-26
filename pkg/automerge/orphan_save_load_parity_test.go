@@ -27,7 +27,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -40,44 +39,43 @@ import (
 // it after a save/load round trip.
 func orphanScenario(
 	t *testing.T,
-	ctx context.Context,
 	engine rustParityEngine,
 ) (*automerge.Document, []byte) {
 	t.Helper()
 
-	doc1, err := engine.open(ctx, actor(0x01))
+	doc1, err := engine.open(actor(0x01))
 	require.NoError(t, err)
 
-	putRoot(t, ctx, doc1, "key", "value", "value", commitTime)
+	putRoot(t, doc1, "key", "value", "value", commitTime)
 
-	doc2, err := doc1.Fork(ctx, actor(0x02))
+	doc2, err := doc1.Fork(actor(0x02))
 	require.NoError(t, err)
 	closeDocument(t, doc2)
 
-	_, err = doc2.SaveIncremental(ctx)
+	_, err = doc2.SaveIncremental()
 	require.NoError(t, err)
 
-	putRoot(t, ctx, doc2, "key", "value2", "value2", commitTime)
+	putRoot(t, doc2, "key", "value2", "value2", commitTime)
 
-	missing, err := doc2.SaveIncremental(ctx)
+	missing, err := doc2.SaveIncremental()
 	require.NoError(t, err)
 
-	putRoot(t, ctx, doc2, "key", "value3", "value3", commitTime)
+	putRoot(t, doc2, "key", "value3", "value3", commitTime)
 
-	dependent, err := doc2.SaveIncremental(ctx)
+	dependent, err := doc2.SaveIncremental()
 	require.NoError(t, err)
 
 	// Applying the second remote change orphans it because doc1 lacks the first.
-	_, err = doc1.LoadIncremental(ctx, dependent)
+	_, err = doc1.LoadIncremental(dependent)
 	require.NoError(t, err)
 
 	return doc1, missing
 }
 
-func rootKey(t *testing.T, ctx context.Context, document *automerge.Document) string {
+func rootKey(t *testing.T, document *automerge.Document) string {
 	t.Helper()
 
-	value, err := document.Root().Scalar(ctx, "key")
+	value, err := document.Root().Scalar("key")
 	require.NoError(t, err)
 
 	return value.String
@@ -89,28 +87,26 @@ func rootKey(t *testing.T, ctx context.Context, document *automerge.Document) st
 func TestRustOrphans_SaveOrphanedChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc, missing := orphanScenario(t, ctx, engine)
+				doc, missing := orphanScenario(t, engine)
 				closeDocument(t, doc)
 
-				saved, err := doc.Save(ctx)
+				saved, err := doc.Save()
 				require.NoError(t, err)
 
-				loaded, err := engine.load(ctx, saved, actor(0x03))
+				loaded, err := engine.load(saved, actor(0x03))
 				require.NoError(t, err)
 				closeDocument(t, loaded)
 
-				_, err = loaded.LoadIncremental(ctx, missing)
+				_, err = loaded.LoadIncremental(missing)
 				require.NoError(t, err)
 
-				require.Equal(t, "value3", rootKey(t, ctx, loaded))
+				require.Equal(t, "value3", rootKey(t, loaded))
 			},
 		)
 	}
@@ -122,28 +118,26 @@ func TestRustOrphans_SaveOrphanedChanges(t *testing.T) {
 func TestRustOrphans_DiscardOrphans(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc, missing := orphanScenario(t, ctx, engine)
+				doc, missing := orphanScenario(t, engine)
 				closeDocument(t, doc)
 
-				saved, err := doc.Save(ctx, automerge.DiscardOrphans())
+				saved, err := doc.Save(automerge.DiscardOrphans())
 				require.NoError(t, err)
 
-				loaded, err := engine.load(ctx, saved, actor(0x03))
+				loaded, err := engine.load(saved, actor(0x03))
 				require.NoError(t, err)
 				closeDocument(t, loaded)
 
-				_, err = loaded.LoadIncremental(ctx, missing)
+				_, err = loaded.LoadIncremental(missing)
 				require.NoError(t, err)
 
-				require.Equal(t, "value2", rootKey(t, ctx, loaded))
+				require.Equal(t, "value2", rootKey(t, loaded))
 			},
 		)
 	}

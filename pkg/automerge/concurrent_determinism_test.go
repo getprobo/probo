@@ -22,7 +22,6 @@ package automerge_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -45,8 +44,6 @@ import (
 func TestConcurrentEncodingIsByteIdentical(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	const (
 		scenarios  = 120
 		roundEdits = 12
@@ -56,41 +53,41 @@ func TestConcurrentEncodingIsByteIdentical(t *testing.T) {
 	for scenario := range scenarios {
 		random := rand.New(rand.NewSource(int64(scenario)))
 
-		nativeLeft := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
-		referenceLeft := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
+		nativeLeft := newStressActor(t, rustParityEngines()[0], 0x01)
+		referenceLeft := newStressActor(t, rustParityEngines()[1], 0x01)
 
-		seedSaved, err := nativeLeft.document.Save(ctx)
+		seedSaved, err := nativeLeft.document.Save()
 		require.NoError(t, err)
 
-		referenceSeed, err := referenceLeft.document.Save(ctx)
+		referenceSeed, err := referenceLeft.document.Save()
 		require.NoError(t, err)
 
-		nativeRight := forkStressActor(t, ctx, rustParityEngines()[0], seedSaved, 0x02)
-		referenceRight := forkStressActor(t, ctx, rustParityEngines()[1], referenceSeed, 0x02)
+		nativeRight := forkStressActor(t, rustParityEngines()[0], seedSaved, 0x02)
+		referenceRight := forkStressActor(t, rustParityEngines()[1], referenceSeed, 0x02)
 
 		peers := []*stressActor{nativeLeft, referenceLeft, nativeRight, referenceRight}
-		drainIncremental(t, ctx, peers)
+		drainIncremental(t, peers)
 
 		for round := range rounds {
-			editStressActor(t, ctx, random, nativeLeft, referenceLeft, roundEdits)
-			editStressActor(t, ctx, random, nativeRight, referenceRight, roundEdits)
+			editStressActor(t, random, nativeLeft, referenceLeft, roundEdits)
+			editStressActor(t, random, nativeRight, referenceRight, roundEdits)
 
-			assertIdenticalEncoding(t, ctx, scenario, round, "left", nativeLeft, referenceLeft)
-			assertIdenticalEncoding(t, ctx, scenario, round, "right", nativeRight, referenceRight)
+			assertIdenticalEncoding(t, scenario, round, "left", nativeLeft, referenceLeft)
+			assertIdenticalEncoding(t, scenario, round, "right", nativeRight, referenceRight)
 
-			mergeDocuments(t, ctx, nativeLeft.document, nativeRight.document)
-			mergeDocuments(t, ctx, referenceLeft.document, referenceRight.document)
+			mergeDocuments(t, nativeLeft.document, nativeRight.document)
+			mergeDocuments(t, referenceLeft.document, referenceRight.document)
 
 			assert.Equalf(
 				t,
-				canonicalDocument(t, ctx, referenceLeft.document),
-				canonicalDocument(t, ctx, nativeLeft.document),
+				canonicalDocument(t, referenceLeft.document),
+				canonicalDocument(t, nativeLeft.document),
 				"scenario %d round %d merged document diverged",
 				scenario,
 				round,
 			)
 
-			drainIncremental(t, ctx, peers)
+			drainIncremental(t, peers)
 		}
 	}
 }
@@ -99,8 +96,6 @@ func TestConcurrentEncodingIsByteIdentical(t *testing.T) {
 // discovered, for a map key and a list element holding concurrent values.
 func TestPutMatchesReferenceOnConflictedKey(t *testing.T) {
 	t.Parallel()
-
-	ctx := context.Background()
 
 	tests := []struct {
 		name  string
@@ -117,22 +112,22 @@ func TestPutMatchesReferenceOnConflictedKey(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				native := conflictedMapDocument(t, ctx, rustParityEngines()[0])
-				reference := conflictedMapDocument(t, ctx, rustParityEngines()[1])
+				native := conflictedMapDocument(t, rustParityEngines()[0])
+				reference := conflictedMapDocument(t, rustParityEngines()[1])
 
 				put := automerge.Scalar{Type: automerge.ScalarTypeString, String: tt.value}
-				require.NoError(t, native.Root().PutScalar(ctx, "key", put))
-				require.NoError(t, reference.Root().PutScalar(ctx, "key", put))
+				require.NoError(t, native.Root().PutScalar("key", put))
+				require.NoError(t, reference.Root().PutScalar("key", put))
 
 				assert.Equal(
 					t,
-					commitAndEncode(t, ctx, reference),
-					commitAndEncode(t, ctx, native),
+					commitAndEncode(t, reference),
+					commitAndEncode(t, native),
 				)
 				assert.Equal(
 					t,
-					mapKeySignature(t, ctx, reference, "key"),
-					mapKeySignature(t, ctx, native, "key"),
+					mapKeySignature(t, reference, "key"),
+					mapKeySignature(t, native, "key"),
 				)
 			},
 		)
@@ -142,30 +137,28 @@ func TestPutMatchesReferenceOnConflictedKey(t *testing.T) {
 func TestPutMatchesReferenceOnConflictedListElement(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, value := range []string{"R", "L", "N"} {
 		t.Run(
 			"put "+value,
 			func(t *testing.T) {
 				t.Parallel()
 
-				native, nativeList := conflictedListDocument(t, ctx, rustParityEngines()[0])
-				reference, referenceList := conflictedListDocument(t, ctx, rustParityEngines()[1])
+				native, nativeList := conflictedListDocument(t, rustParityEngines()[0])
+				reference, referenceList := conflictedListDocument(t, rustParityEngines()[1])
 
 				put := automerge.Scalar{Type: automerge.ScalarTypeString, String: value}
-				require.NoError(t, nativeList.PutScalarAt(ctx, 0, put))
-				require.NoError(t, referenceList.PutScalarAt(ctx, 0, put))
+				require.NoError(t, nativeList.PutScalarAt(0, put))
+				require.NoError(t, referenceList.PutScalarAt(0, put))
 
 				assert.Equal(
 					t,
-					commitAndEncode(t, ctx, reference),
-					commitAndEncode(t, ctx, native),
+					commitAndEncode(t, reference),
+					commitAndEncode(t, native),
 				)
 				assert.Equal(
 					t,
-					listElementSignature(t, ctx, reference, referenceList),
-					listElementSignature(t, ctx, native, nativeList),
+					listElementSignature(t, reference, referenceList),
+					listElementSignature(t, native, nativeList),
 				)
 			},
 		)
@@ -176,21 +169,20 @@ func TestPutMatchesReferenceOnConflictedListElement(t *testing.T) {
 // a key, so a put that only appears to work is still caught.
 func mapKeySignature(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 	key string,
 ) string {
 	t.Helper()
 
-	winner, err := document.Root().Scalar(ctx, key)
+	winner, err := document.Root().Scalar(key)
 	require.NoError(t, err)
 
-	conflicts, err := document.Root().Scalars(ctx, key)
+	conflicts, err := document.Root().Scalars(key)
 	require.NoError(t, err)
 
 	return fmt.Sprintf(
 		"heads=%v winner=%s conflicts=%s",
-		sortedHeadHex(t, ctx, document),
+		sortedHeadHex(t, document),
 		canonicalScalar(winner),
 		describeScalars(conflicts),
 	)
@@ -198,21 +190,20 @@ func mapKeySignature(
 
 func listElementSignature(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 	list *automerge.Object,
 ) string {
 	t.Helper()
 
-	winner, err := list.ScalarAt(ctx, 0)
+	winner, err := list.ScalarAt(0)
 	require.NoError(t, err)
 
-	conflicts, err := list.ScalarsAt(ctx, 0)
+	conflicts, err := list.ScalarsAt(0)
 	require.NoError(t, err)
 
 	return fmt.Sprintf(
 		"heads=%v winner=%s conflicts=%s",
-		sortedHeadHex(t, ctx, document),
+		sortedHeadHex(t, document),
 		canonicalScalar(winner),
 		describeScalars(conflicts),
 	)
@@ -229,18 +220,17 @@ func describeScalars(values []automerge.Scalar) string {
 	return strings.Join(rendered, "|")
 }
 
-func drainIncremental(t *testing.T, ctx context.Context, actors []*stressActor) {
+func drainIncremental(t *testing.T, actors []*stressActor) {
 	t.Helper()
 
 	for _, peer := range actors {
-		_, err := peer.document.SaveIncremental(ctx)
+		_, err := peer.document.SaveIncremental()
 		require.NoError(t, err)
 	}
 }
 
 func assertIdenticalEncoding(
 	t *testing.T,
-	ctx context.Context,
 	scenario int,
 	round int,
 	side string,
@@ -249,10 +239,10 @@ func assertIdenticalEncoding(
 ) {
 	t.Helper()
 
-	nativeBytes, err := nativeActor.document.SaveIncremental(ctx)
+	nativeBytes, err := nativeActor.document.SaveIncremental()
 	require.NoError(t, err)
 
-	referenceBytes, err := referenceActor.document.SaveIncremental(ctx)
+	referenceBytes, err := referenceActor.document.SaveIncremental()
 	require.NoError(t, err)
 
 	assert.Truef(
@@ -272,54 +262,53 @@ func assertIdenticalEncoding(
 // second.
 func conflictedMapDocument(
 	t *testing.T,
-	ctx context.Context,
 	engine rustParityEngine,
 ) *automerge.Document {
 	t.Helper()
 
-	base, err := engine.open(ctx, actor(0x01))
+	base, err := engine.open(actor(0x01))
 	require.NoError(t, err)
 	closeDocument(t, base)
 
 	require.NoError(
 		t,
 		base.Root().PutScalar(
-			ctx,
+
 			"key",
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "base"},
 		),
 	)
-	_, err = base.Commit(ctx, "seed", commitTime)
+	_, err = base.Commit("seed", commitTime)
 	require.NoError(t, err)
 
-	left, right := forkPair(t, ctx, engine, base)
+	left, right := forkPair(t, engine, base)
 
 	require.NoError(
 		t,
 		left.Root().PutScalar(
-			ctx,
+
 			"key",
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 		),
 	)
-	_, err = left.Commit(ctx, "left", commitTime)
+	_, err = left.Commit("left", commitTime)
 	require.NoError(t, err)
 
 	require.NoError(
 		t,
 		right.Root().PutScalar(
-			ctx,
+
 			"key",
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "R"},
 		),
 	)
-	_, err = right.Commit(ctx, "right", commitTime)
+	_, err = right.Commit("right", commitTime)
 	require.NoError(t, err)
 
-	_, err = left.Merge(ctx, right)
+	_, err = left.Merge(right)
 	require.NoError(t, err)
 
-	_, err = left.SaveIncremental(ctx)
+	_, err = left.SaveIncremental()
 	require.NoError(t, err)
 
 	return left
@@ -327,60 +316,59 @@ func conflictedMapDocument(
 
 func conflictedListDocument(
 	t *testing.T,
-	ctx context.Context,
 	engine rustParityEngine,
 ) (*automerge.Document, *automerge.Object) {
 	t.Helper()
 
-	base, err := engine.open(ctx, actor(0x01))
+	base, err := engine.open(actor(0x01))
 	require.NoError(t, err)
 	closeDocument(t, base)
 
-	list, err := base.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+	list, err := base.Root().CreateObject("list", automerge.ObjectTypeList)
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		list.InsertScalar(
-			ctx,
+
 			0,
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "base"},
 		),
 	)
-	_, err = base.Commit(ctx, "seed", commitTime)
+	_, err = base.Commit("seed", commitTime)
 	require.NoError(t, err)
 
-	left, right := forkPair(t, ctx, engine, base)
+	left, right := forkPair(t, engine, base)
 
-	leftList, err := left.Root().Object(ctx, "list")
+	leftList, err := left.Root().Object("list")
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		leftList.PutScalarAt(
-			ctx,
+
 			0,
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 		),
 	)
-	_, err = left.Commit(ctx, "left", commitTime)
+	_, err = left.Commit("left", commitTime)
 	require.NoError(t, err)
 
-	rightList, err := right.Root().Object(ctx, "list")
+	rightList, err := right.Root().Object("list")
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		rightList.PutScalarAt(
-			ctx,
+
 			0,
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "R"},
 		),
 	)
-	_, err = right.Commit(ctx, "right", commitTime)
+	_, err = right.Commit("right", commitTime)
 	require.NoError(t, err)
 
-	_, err = left.Merge(ctx, right)
+	_, err = left.Merge(right)
 	require.NoError(t, err)
 
-	_, err = left.SaveIncremental(ctx)
+	_, err = left.SaveIncremental()
 	require.NoError(t, err)
 
 	return left, leftList
@@ -388,20 +376,19 @@ func conflictedListDocument(
 
 func forkPair(
 	t *testing.T,
-	ctx context.Context,
 	engine rustParityEngine,
 	base *automerge.Document,
 ) (*automerge.Document, *automerge.Document) {
 	t.Helper()
 
-	saved, err := base.Save(ctx)
+	saved, err := base.Save()
 	require.NoError(t, err)
 
-	left, err := engine.load(ctx, saved, actor(0x01))
+	left, err := engine.load(saved, actor(0x01))
 	require.NoError(t, err)
 	closeDocument(t, left)
 
-	right, err := engine.load(ctx, saved, actor(0x02))
+	right, err := engine.load(saved, actor(0x02))
 	require.NoError(t, err)
 	closeDocument(t, right)
 
@@ -410,14 +397,14 @@ func forkPair(
 
 // commitAndEncode commits the pending operations and returns the encoded change
 // bytes, or a marker when the engine had nothing to record.
-func commitAndEncode(t *testing.T, ctx context.Context, document *automerge.Document) string {
+func commitAndEncode(t *testing.T, document *automerge.Document) string {
 	t.Helper()
 
-	if _, err := document.Commit(ctx, "put", commitTime); err != nil {
+	if _, err := document.Commit("put", commitTime); err != nil {
 		return "no change: " + err.Error()
 	}
 
-	encoded, err := document.SaveIncremental(ctx)
+	encoded, err := document.SaveIncremental()
 	require.NoError(t, err)
 
 	return fmt.Sprintf("%x", encoded)

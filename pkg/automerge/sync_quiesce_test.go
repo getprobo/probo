@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,11 +31,11 @@ import (
 // drainSyncMessages mirrors the server's sendAvailableSyncMessages: it generates
 // messages until the protocol quiesces, bounded so a non-quiescing state fails
 // loudly instead of looping forever.
-func drainSyncMessages(t *testing.T, ctx context.Context, state *automerge.SyncState) int {
+func drainSyncMessages(t *testing.T, state *automerge.SyncState) int {
 	t.Helper()
 
 	for count := range 100 {
-		_, ok, err := state.GenerateMessage(ctx)
+		_, ok, err := state.GenerateMessage()
 		require.NoError(t, err)
 
 		if !ok {
@@ -57,69 +56,67 @@ func drainSyncMessages(t *testing.T, ctx context.Context, state *automerge.SyncS
 func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	// Build two dependent changes, then apply only the second so its base is
 	// missing and it stays queued as an orphan.
-	source, err := automerge.New(ctx, actor(1))
+	source, err := automerge.New(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, source)
 
-	text, err := source.CreateText(ctx, "body")
+	text, err := source.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "first"))
+	require.NoError(t, text.Splice(0, 0, "first"))
 
-	base, err := source.Commit(ctx, "base", commitTime)
-	require.NoError(t, err)
-
-	require.NoError(t, text.Splice(ctx, 5, 0, " second"))
-	_, err = source.Commit(ctx, "child", commitTime)
+	base, err := source.Commit("base", commitTime)
 	require.NoError(t, err)
 
-	childChanges, err := source.ChangesSince(ctx, []automerge.Hash{base})
+	require.NoError(t, text.Splice(5, 0, " second"))
+	_, err = source.Commit("child", commitTime)
+	require.NoError(t, err)
+
+	childChanges, err := source.ChangesSince([]automerge.Hash{base})
 	require.NoError(t, err)
 	require.Len(t, childChanges, 1)
 
-	orphanHost, err := automerge.New(ctx, actor(2))
+	orphanHost, err := automerge.New(actor(2))
 	require.NoError(t, err)
 	closeDocument(t, orphanHost)
 
 	// Give the host its own history first so the incoming orphan takes the
 	// change-queue path rather than initializing an empty document.
-	hostText, err := orphanHost.CreateText(ctx, "host")
+	hostText, err := orphanHost.CreateText("host")
 	require.NoError(t, err)
-	require.NoError(t, hostText.Splice(ctx, 0, 0, "local"))
-	_, err = orphanHost.Commit(ctx, "host", commitTime)
+	require.NoError(t, hostText.Splice(0, 0, "local"))
+	_, err = orphanHost.Commit("host", commitTime)
 	require.NoError(t, err)
 
 	// The child change depends on the base the host never received, so it is
 	// retained as an orphan rather than applied.
-	require.NoError(t, orphanHost.ApplyChanges(ctx, []automerge.Change{childChanges[0]}))
+	require.NoError(t, orphanHost.ApplyChanges([]automerge.Change{childChanges[0]}))
 
 	// A fresh peer with an empty document handshakes with the orphan host.
-	peer, err := automerge.New(ctx, actor(3))
+	peer, err := automerge.New(actor(3))
 	require.NoError(t, err)
 	closeDocument(t, peer)
 
-	hostState, err := orphanHost.NewSyncState(ctx)
+	hostState, err := orphanHost.NewSyncState()
 	require.NoError(t, err)
 
-	peerState, err := peer.NewSyncState(ctx)
+	peerState, err := peer.NewSyncState()
 	require.NoError(t, err)
 
 	// Exchange a few rounds. Each round the host recomputes the same Need for the
 	// missing base; the send loop must still quiesce every time.
 	for round := range 5 {
-		peerMessage, ok, err := peerState.GenerateMessage(ctx)
+		peerMessage, ok, err := peerState.GenerateMessage()
 		require.NoError(t, err)
 
 		if !ok {
 			break
 		}
 
-		require.NoError(t, hostState.ReceiveMessage(ctx, peerMessage))
+		require.NoError(t, hostState.ReceiveMessage(peerMessage))
 
-		sent := drainSyncMessages(t, ctx, hostState)
+		sent := drainSyncMessages(t, hostState)
 		require.LessOrEqualf(
 			t,
 			sent,
@@ -129,11 +126,11 @@ func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 			sent,
 		)
 
-		hostMessage, ok, err := hostState.GenerateMessage(ctx)
+		hostMessage, ok, err := hostState.GenerateMessage()
 		require.NoError(t, err)
 
 		if ok {
-			require.NoError(t, peerState.ReceiveMessage(ctx, hostMessage))
+			require.NoError(t, peerState.ReceiveMessage(hostMessage))
 		}
 	}
 }
@@ -146,13 +143,11 @@ func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 func TestSyncState_QuiescesWhenReadOnlyPeerRequestsChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	source, err := automerge.New(ctx, actor(4))
+	source, err := automerge.New(actor(4))
 	require.NoError(t, err)
 	closeDocument(t, source)
 
-	sourceState, err := source.NewSyncState(ctx)
+	sourceState, err := source.NewSyncState()
 	require.NoError(t, err)
 
 	var requested [32]byte
@@ -167,8 +162,8 @@ func TestSyncState_QuiescesWhenReadOnlyPeerRequestsChanges(t *testing.T) {
 		Flags:   []byte{2, 0x80 | 0x02 | 0x04},
 	}).Encode()
 	require.NoError(t, err)
-	require.NoError(t, sourceState.ReceiveMessage(ctx, message))
+	require.NoError(t, sourceState.ReceiveMessage(message))
 
-	sent := drainSyncMessages(t, ctx, sourceState)
+	sent := drainSyncMessages(t, sourceState)
 	require.LessOrEqual(t, sent, 1)
 }

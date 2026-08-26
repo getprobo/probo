@@ -21,7 +21,6 @@
 package collaboration_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -52,22 +51,20 @@ func commitTime() time.Time {
 func TestServerConn_ConvergesRealDocument(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	// Server document: the authority, holding "hello" in a text object.
-	server, err := automerge.New(ctx, actor(1))
+	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
-	defer func() { _ = server.Close(ctx) }()
+	defer func() { _ = server.Close() }()
 
-	text, err := server.CreateText(ctx, "body")
+	text, err := server.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "hello"))
-	_, err = server.Commit(ctx, "seed", commitTime())
+	require.NoError(t, text.Splice(0, 0, "hello"))
+	_, err = server.Commit("seed", commitTime())
 	require.NoError(t, err)
 
-	serverSync, err := server.NewSyncState(ctx)
+	serverSync, err := server.NewSyncState()
 	require.NoError(t, err)
-	defer func() { _ = serverSync.Close(ctx) }()
+	defer func() { _ = serverSync.Close() }()
 
 	conn, err := collaboration.NewServerConn(
 		collaboration.ServerConfig{ServerPeerID: "server"},
@@ -77,13 +74,13 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 	require.NoError(t, err)
 
 	// Client document: empty, learning the document over the connection.
-	client, err := automerge.New(ctx, actor(2))
+	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
-	defer func() { _ = client.Close(ctx) }()
+	defer func() { _ = client.Close() }()
 
-	clientSync, err := client.NewSyncState(ctx)
+	clientSync, err := client.NewSyncState()
 	require.NoError(t, err)
-	defer func() { _ = clientSync.Close(ctx) }()
+	defer func() { _ = clientSync.Close() }()
 
 	join, err := collaboration.EncodeJoinFrame(
 		collaboration.NewJoinFrame("peer-a", collaboration.PeerMetadata{}),
@@ -91,7 +88,7 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 	require.NoError(t, err)
 
 	// Frames the client still has to process; seeded with the server's announce.
-	toClient, accepted, err := conn.Start(ctx, join)
+	toClient, accepted, err := conn.Start(join)
 	require.NoError(t, err)
 	require.True(t, accepted)
 
@@ -107,7 +104,7 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 			message, err := collaboration.DecodeMessage(frame)
 			require.NoError(t, err)
 			require.Equal(t, collaboration.MessageSync, message.Type)
-			require.NoError(t, clientSync.ReceiveMessage(ctx, message.Data))
+			require.NoError(t, clientSync.ReceiveMessage(message.Data))
 		}
 	}
 
@@ -117,7 +114,7 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 		deliverToClient(toClient)
 		toClient = nil
 
-		message, ok, err := clientSync.GenerateMessage(ctx)
+		message, ok, err := clientSync.GenerateMessage()
 		require.NoError(t, err)
 
 		if !ok {
@@ -135,24 +132,24 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		reply, fanout, err := conn.Receive(ctx, frame)
+		reply, fanout, err := conn.Receive(frame)
 		require.NoError(t, err)
 		assert.Nil(t, fanout)
 
 		toClient = reply
 	}
 
-	serverHeads, err := server.Heads(ctx)
+	serverHeads, err := server.Heads()
 	require.NoError(t, err)
 
-	clientHeads, err := client.Heads(ctx)
+	clientHeads, err := client.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, serverHeads, clientHeads, "client must converge to the server frontier")
 
-	clientText, err := client.Text(ctx, "body")
+	clientText, err := client.Text("body")
 	require.NoError(t, err)
 
-	value, err := clientText.String(ctx)
+	value, err := clientText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "hello", value)
 }

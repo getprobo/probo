@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,7 +51,6 @@ func stringValue(value string) automerge.Value {
 func TestRustBatchInsert_GeneratesPatches(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	value := automerge.Value{
@@ -64,16 +62,16 @@ func TestRustBatchInsert_GeneratesPatches(t *testing.T) {
 	}
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		require.NoError(t, document.UpdateDiffCursor(ctx))
-		require.NoError(t, document.Root().PutValue(ctx, "data", value))
-		_, err = document.Commit(ctx, "batch", commitTime)
+		require.NoError(t, document.UpdateDiffCursor())
+		require.NoError(t, document.Root().PutValue("data", value))
+		_, err = document.Commit("batch", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.DiffIncremental(ctx)
+		patches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -99,7 +97,6 @@ func TestRustBatchInsert_GeneratesPatches(t *testing.T) {
 func TestRustBatchInsert_TextGeneratesSplicePatch(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	value := automerge.Value{
@@ -110,16 +107,16 @@ func TestRustBatchInsert_TextGeneratesSplicePatch(t *testing.T) {
 	}
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		require.NoError(t, document.UpdateDiffCursor(ctx))
-		require.NoError(t, document.Root().PutValue(ctx, "data", value))
-		_, err = document.Commit(ctx, "batch", commitTime)
+		require.NoError(t, document.UpdateDiffCursor())
+		require.NoError(t, document.Root().PutValue("data", value))
+		_, err = document.Commit("batch", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.DiffIncremental(ctx)
+		patches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -141,7 +138,6 @@ func TestRustBatchInsert_TextGeneratesSplicePatch(t *testing.T) {
 func TestRustBatchInit_MapGeneratesPatches(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	root := map[string]automerge.Value{
@@ -150,18 +146,18 @@ func TestRustBatchInit_MapGeneratesPatches(t *testing.T) {
 	}
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		require.NoError(t, document.Root().PutMap(ctx, root))
-		_, err = document.Commit(ctx, "init", commitTime)
+		require.NoError(t, document.Root().PutMap(root))
+		_, err = document.Commit("init", commitTime)
 		require.NoError(t, err)
 
-		heads, err := document.Heads(ctx)
+		heads, err := document.Heads()
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, nil, heads)
+		patches, err := document.Diff(nil, heads)
 		require.NoError(t, err)
 
 		result[engine.name] = patches

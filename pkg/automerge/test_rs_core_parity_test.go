@@ -30,7 +30,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"sort"
@@ -45,8 +44,8 @@ import (
 
 type rustParityEngine struct {
 	name string
-	open func(context.Context, automerge.ActorID) (*automerge.Document, error)
-	load func(context.Context, []byte, automerge.ActorID, ...automerge.LoadOption) (*automerge.Document, error)
+	open func(automerge.ActorID) (*automerge.Document, error)
+	load func([]byte, automerge.ActorID, ...automerge.LoadOption) (*automerge.Document, error)
 }
 
 func rustParityEngines() []rustParityEngine {
@@ -58,12 +57,11 @@ func rustParityEngines() []rustParityEngine {
 
 func sortedHeadHex(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 ) []string {
 	t.Helper()
 
-	heads, err := document.Heads(ctx)
+	heads, err := document.Heads()
 	require.NoError(t, err)
 
 	hex := make([]string, len(heads))
@@ -78,13 +76,12 @@ func sortedHeadHex(
 
 func sortedCounterValues(
 	t *testing.T,
-	ctx context.Context,
 	object *automerge.Object,
 	key string,
 ) []int64 {
 	t.Helper()
 
-	values, err := object.Scalars(ctx, key)
+	values, err := object.Scalars(key)
 	require.NoError(t, err)
 
 	result := make([]int64, len(values))
@@ -99,13 +96,12 @@ func sortedCounterValues(
 
 func sortedStringValues(
 	t *testing.T,
-	ctx context.Context,
 	object *automerge.Object,
 	key string,
 ) []string {
 	t.Helper()
 
-	values, err := object.Scalars(ctx, key)
+	values, err := object.Scalars(key)
 	require.NoError(t, err)
 
 	result := make([]string, len(values))
@@ -123,67 +119,66 @@ func sortedStringValues(
 func TestRust_RepeatedListAssignmentResolvesConflict(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
 
-		list, err := doc1.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list, err := doc1.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 123},
 			),
 		)
-		_, err = doc1.Commit(ctx, "insert", commitTime)
+		_, err = doc1.Commit("insert", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		list2, err := doc2.Root().Object(ctx, "list")
+		list2, err := doc2.Root().Object("list")
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list2.PutScalarAt(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 456},
 			),
 		)
-		_, err = doc2.Commit(ctx, "put 456", commitTime.Add(time.Second))
+		_, err = doc2.Commit("put 456", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list.PutScalarAt(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 789},
 			),
 		)
-		_, err = doc1.Commit(ctx, "put 789", commitTime.Add(2*time.Second))
+		_, err = doc1.Commit("put 789", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 
-		length, err := list.Len(ctx)
+		length, err := list.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(1), length)
 
-		winner, err := list.ScalarAt(ctx, 0)
+		winner, err := list.ScalarAt(0)
 		require.NoError(t, err)
 		assert.Equal(t, int64(789), winner.Int)
 
-		results[engine.name] = sortedHeadHex(t, ctx, doc1)
+		results[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, results["reference"], results["native"])
@@ -194,46 +189,45 @@ func TestRust_RepeatedListAssignmentResolvesConflict(t *testing.T) {
 func TestRust_AddIncrementsOnlyToPreceededValues(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
 		require.NoError(
 			t,
 			doc1.Root().PutScalar(
-				ctx,
+
 				"counter",
 				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 0},
 			),
 		)
-		require.NoError(t, doc1.Root().Increment(ctx, "counter", 1))
-		_, err = doc1.Commit(ctx, "doc1 counter", commitTime)
+		require.NoError(t, doc1.Root().Increment("counter", 1))
+		_, err = doc1.Commit("doc1 counter", commitTime)
 		require.NoError(t, err)
 
-		doc2, err := engine.open(ctx, actor(2))
+		doc2, err := engine.open(actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
 		require.NoError(
 			t,
 			doc2.Root().PutScalar(
-				ctx,
+
 				"counter",
 				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 0},
 			),
 		)
-		require.NoError(t, doc2.Root().Increment(ctx, "counter", 3))
-		_, err = doc2.Commit(ctx, "doc2 counter", commitTime)
+		require.NoError(t, doc2.Root().Increment("counter", 3))
+		_, err = doc2.Commit("doc2 counter", commitTime)
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
-		assert.Equal(t, []int64{1, 3}, sortedCounterValues(t, ctx, doc1.Root(), "counter"))
+		assert.Equal(t, []int64{1, 3}, sortedCounterValues(t, doc1.Root(), "counter"))
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -244,51 +238,50 @@ func TestRust_AddIncrementsOnlyToPreceededValues(t *testing.T) {
 func TestRust_AssignmentConflictsOfDifferentTypes(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
 		require.NoError(
 			t,
 			doc1.Root().PutScalar(
-				ctx,
+
 				"field",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "string"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "string", commitTime)
+		_, err = doc1.Commit("string", commitTime)
 		require.NoError(t, err)
 
-		doc2, err := engine.open(ctx, actor(2))
+		doc2, err := engine.open(actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		_, err = doc2.Root().CreateObject(ctx, "field", automerge.ObjectTypeList)
+		_, err = doc2.Root().CreateObject("field", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		_, err = doc2.Commit(ctx, "list", commitTime)
+		_, err = doc2.Commit("list", commitTime)
 		require.NoError(t, err)
 
-		doc3, err := engine.open(ctx, actor(3))
+		doc3, err := engine.open(actor(3))
 		require.NoError(t, err)
 		closeDocument(t, doc3)
-		_, err = doc3.Root().CreateObject(ctx, "field", automerge.ObjectTypeMap)
+		_, err = doc3.Root().CreateObject("field", automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		_, err = doc3.Commit(ctx, "map", commitTime)
+		_, err = doc3.Commit("map", commitTime)
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
-		_, err = doc1.Merge(ctx, doc3)
+		_, err = doc1.Merge(doc3)
 		require.NoError(t, err)
 
 		// The highest-actor operation wins; actor(3) created a map.
-		winner, err := doc1.Root().Object(ctx, "field")
+		winner, err := doc1.Root().Object("field")
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeMap, winner.Type)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -299,52 +292,51 @@ func TestRust_AssignmentConflictsOfDifferentTypes(t *testing.T) {
 func TestRust_ChangesWithinConflictingMapField(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
 		require.NoError(
 			t,
 			doc1.Root().PutScalar(
-				ctx,
+
 				"field",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "string"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "string", commitTime)
+		_, err = doc1.Commit("string", commitTime)
 		require.NoError(t, err)
 
-		doc2, err := engine.open(ctx, actor(2))
+		doc2, err := engine.open(actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		inner, err := doc2.Root().CreateObject(ctx, "field", automerge.ObjectTypeMap)
+		inner, err := doc2.Root().CreateObject("field", automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			inner.PutScalar(
-				ctx,
+
 				"innerKey",
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 42},
 			),
 		)
-		_, err = doc2.Commit(ctx, "map", commitTime.Add(time.Second))
+		_, err = doc2.Commit("map", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
 		// actor(2) wins; the winning value is the map with innerKey = 42.
-		winner, err := doc1.Root().Object(ctx, "field")
+		winner, err := doc1.Root().Object("field")
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeMap, winner.Type)
-		value, err := winner.Scalar(ctx, "innerKey")
+		value, err := winner.Scalar("innerKey")
 		require.NoError(t, err)
 		assert.Equal(t, int64(42), value.Int)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -355,38 +347,37 @@ func TestRust_ChangesWithinConflictingMapField(t *testing.T) {
 func TestRust_ChangesWithinConflictingListElement(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		list1, err := doc1.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list1, err := doc1.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list1.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "base", commitTime)
+		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
 
-		map1, err := list1.PutObjectAt(ctx, 0, automerge.ObjectTypeMap)
+		map1, err := list1.PutObjectAt(0, automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			map1.PutScalar(
-				ctx,
+
 				"map1",
 				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
 			),
@@ -394,27 +385,27 @@ func TestRust_ChangesWithinConflictingListElement(t *testing.T) {
 		require.NoError(
 			t,
 			map1.PutScalar(
-				ctx,
+
 				"key",
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 			),
 		)
-		_, err = doc1.Commit(ctx, "doc1 map", commitTime.Add(time.Second))
+		_, err = doc1.Commit("doc1 map", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		list2, err := doc2.Root().Object(ctx, "list")
+		list2, err := doc2.Root().Object("list")
 		require.NoError(t, err)
-		map2, err := list2.PutObjectAt(ctx, 0, automerge.ObjectTypeMap)
+		map2, err := list2.PutObjectAt(0, automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		_, err = doc2.Commit(ctx, "doc2 map", commitTime.Add(time.Second))
+		_, err = doc2.Commit("doc2 map", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			map2.PutScalar(
-				ctx,
+
 				"map2",
 				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
 			),
@@ -422,30 +413,30 @@ func TestRust_ChangesWithinConflictingListElement(t *testing.T) {
 		require.NoError(
 			t,
 			map2.PutScalar(
-				ctx,
+
 				"key",
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 			),
 		)
-		_, err = doc2.Commit(ctx, "doc2 values", commitTime.Add(2*time.Second))
+		_, err = doc2.Commit("doc2 values", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
 		// actor(2)'s map wins with key = 2 and map2 = true.
-		winner, err := list1.ObjectAt(ctx, 0)
+		winner, err := list1.ObjectAt(0)
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeMap, winner.Type)
-		key, err := winner.Scalar(ctx, "key")
+		key, err := winner.Scalar("key")
 		require.NoError(t, err)
 		assert.Equal(t, int64(2), key.Int)
 
-		flag, err := winner.Scalar(ctx, "map2")
+		flag, err := winner.Scalar("map2")
 		require.NoError(t, err)
 		assert.True(t, flag.Bool)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -456,53 +447,52 @@ func TestRust_ChangesWithinConflictingListElement(t *testing.T) {
 func TestRust_ConcurrentlyAssignedNestedMapsShouldNotMerge(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		config1, err := doc1.Root().CreateObject(ctx, "config", automerge.ObjectTypeMap)
+		config1, err := doc1.Root().CreateObject("config", automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			config1.PutScalar(
-				ctx,
+
 				"background",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "blue"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "doc1 config", commitTime)
+		_, err = doc1.Commit("doc1 config", commitTime)
 		require.NoError(t, err)
 
-		doc2, err := engine.open(ctx, actor(2))
+		doc2, err := engine.open(actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		config2, err := doc2.Root().CreateObject(ctx, "config", automerge.ObjectTypeMap)
+		config2, err := doc2.Root().CreateObject("config", automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			config2.PutScalar(
-				ctx,
+
 				"logo_url",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "logo.png"},
 			),
 		)
-		_, err = doc2.Commit(ctx, "doc2 config", commitTime)
+		_, err = doc2.Commit("doc2 config", commitTime)
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
 		// The two maps do not merge; the winning map keeps exactly one key.
-		winner, err := doc1.Root().Object(ctx, "config")
+		winner, err := doc1.Root().Object("config")
 		require.NoError(t, err)
-		keys, err := winner.Keys(ctx)
+		keys, err := winner.Keys()
 		require.NoError(t, err)
 		assert.Len(t, keys, 1)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -513,19 +503,18 @@ func TestRust_ConcurrentlyAssignedNestedMapsShouldNotMerge(t *testing.T) {
 func TestRust_ConcurrentDeletionOfSameListElement(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		list1, err := doc1.Root().CreateObject(ctx, "birds", automerge.ObjectTypeList)
+		list1, err := doc1.Root().CreateObject("birds", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list1.InsertValues(
-				ctx,
+
 				0,
 				[]automerge.Value{
 					hydratedString("albatross"),
@@ -534,28 +523,28 @@ func TestRust_ConcurrentDeletionOfSameListElement(t *testing.T) {
 				},
 			),
 		)
-		_, err = doc1.Commit(ctx, "base", commitTime)
+		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		list2, err := doc2.Root().Object(ctx, "birds")
+		list2, err := doc2.Root().Object("birds")
 		require.NoError(t, err)
 
-		require.NoError(t, list1.DeleteIndex(ctx, 1))
-		_, err = doc1.Commit(ctx, "doc1 delete", commitTime.Add(time.Second))
+		require.NoError(t, list1.DeleteIndex(1))
+		_, err = doc1.Commit("doc1 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
-		require.NoError(t, list2.DeleteIndex(ctx, 1))
-		_, err = doc2.Commit(ctx, "doc2 delete", commitTime.Add(time.Second))
-		require.NoError(t, err)
-
-		_, err = doc1.Merge(ctx, doc2)
+		require.NoError(t, list2.DeleteIndex(1))
+		_, err = doc2.Commit("doc2 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		values := listStrings(t, ctx, list1)
+		_, err = doc1.Merge(doc2)
+		require.NoError(t, err)
+
+		values := listStrings(t, list1)
 		assert.Equal(t, []string{"albatross", "cormorant"}, values)
 
 		results[engine.name] = values
@@ -569,21 +558,20 @@ func TestRust_ConcurrentDeletionOfSameListElement(t *testing.T) {
 func TestRust_ConcurrentUpdatesAtDifferentLevels(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		animals, err := doc1.Root().CreateObject(ctx, "animals", automerge.ObjectTypeMap)
+		animals, err := doc1.Root().CreateObject("animals", automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		birds, err := animals.CreateObject(ctx, "birds", automerge.ObjectTypeMap)
+		birds, err := animals.CreateObject("birds", automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			birds.PutScalar(
-				ctx,
+
 				"pink",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "flamingo"},
 			),
@@ -591,62 +579,62 @@ func TestRust_ConcurrentUpdatesAtDifferentLevels(t *testing.T) {
 		require.NoError(
 			t,
 			birds.PutScalar(
-				ctx,
+
 				"black",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "starling"},
 			),
 		)
-		mammals, err := animals.CreateObject(ctx, "mammals", automerge.ObjectTypeList)
+		mammals, err := animals.CreateObject("mammals", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			mammals.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "badger"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "base", commitTime)
+		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
 
 		require.NoError(
 			t,
 			birds.PutScalar(
-				ctx,
+
 				"brown",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "sparrow"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "doc1 update", commitTime.Add(time.Second))
+		_, err = doc1.Commit("doc1 update", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		animals2, err := doc2.Root().Object(ctx, "animals")
+		animals2, err := doc2.Root().Object("animals")
 		require.NoError(t, err)
-		require.NoError(t, animals2.DeleteKey(ctx, "birds"))
-		_, err = doc2.Commit(ctx, "doc2 delete", commitTime.Add(time.Second))
+		require.NoError(t, animals2.DeleteKey("birds"))
+		_, err = doc2.Commit("doc2 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
 		// birds was deleted concurrently; only mammals remains under animals.
-		mergedAnimals, err := doc1.Root().Object(ctx, "animals")
+		mergedAnimals, err := doc1.Root().Object("animals")
 		require.NoError(t, err)
-		keys, err := mergedAnimals.Keys(ctx)
+		keys, err := mergedAnimals.Keys()
 		require.NoError(t, err)
 		assert.Equal(t, []string{"mammals"}, keys)
 
-		mergedMammals, err := mergedAnimals.Object(ctx, "mammals")
+		mergedMammals, err := mergedAnimals.Object("mammals")
 		require.NoError(t, err)
-		assert.Equal(t, []string{"badger"}, listStrings(t, ctx, mergedMammals))
+		assert.Equal(t, []string{"badger"}, listStrings(t, mergedMammals))
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -657,64 +645,63 @@ func TestRust_ConcurrentUpdatesAtDifferentLevels(t *testing.T) {
 func TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		birds, err := doc1.Root().CreateObject(ctx, "birds", automerge.ObjectTypeMap)
+		birds, err := doc1.Root().CreateObject("birds", automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		blackbird, err := birds.CreateObject(ctx, "blackbird", automerge.ObjectTypeMap)
+		blackbird, err := birds.CreateObject("blackbird", automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			blackbird.PutScalar(
-				ctx,
+
 				"feathers",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "black"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "base", commitTime)
+		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
 
-		require.NoError(t, birds.DeleteKey(ctx, "blackbird"))
-		_, err = doc1.Commit(ctx, "doc1 delete", commitTime.Add(time.Second))
+		require.NoError(t, birds.DeleteKey("blackbird"))
+		_, err = doc1.Commit("doc1 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		birds2, err := doc2.Root().Object(ctx, "birds")
+		birds2, err := doc2.Root().Object("birds")
 		require.NoError(t, err)
-		blackbird2, err := birds2.Object(ctx, "blackbird")
+		blackbird2, err := birds2.Object("blackbird")
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			blackbird2.PutScalar(
-				ctx,
+
 				"beak",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "orange"},
 			),
 		)
-		_, err = doc2.Commit(ctx, "doc2 update", commitTime.Add(time.Second))
+		_, err = doc2.Commit("doc2 update", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
 		// The deletion wins; birds becomes an empty map.
-		mergedBirds, err := doc1.Root().Object(ctx, "birds")
+		mergedBirds, err := doc1.Root().Object("birds")
 		require.NoError(t, err)
-		length, err := mergedBirds.Len(ctx)
+		length, err := mergedBirds.Len()
 		require.NoError(t, err)
 		assert.Zero(t, length)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc1)
+		heads[engine.name] = sortedHeadHex(t, doc1)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -725,71 +712,70 @@ func TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects(t *testing.T) {
 func TestRust_InsertionConsistentWithCausality(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		list1, err := doc1.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list1, err := doc1.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list1.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "four"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "four", commitTime)
+		_, err = doc1.Commit("four", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		list2, err := doc2.Root().Object(ctx, "list")
+		list2, err := doc2.Root().Object("list")
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list2.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "three"},
 			),
 		)
-		_, err = doc2.Commit(ctx, "three", commitTime.Add(time.Second))
+		_, err = doc2.Commit("three", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list1.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "two"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "two", commitTime.Add(2*time.Second))
+		_, err = doc1.Commit("two", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 
-		_, err = doc2.Merge(ctx, doc1)
+		_, err = doc2.Merge(doc1)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list2.InsertScalar(
-				ctx,
+
 				0,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "one"},
 			),
 		)
-		_, err = doc2.Commit(ctx, "one", commitTime.Add(3*time.Second))
+		_, err = doc2.Commit("one", commitTime.Add(3*time.Second))
 		require.NoError(t, err)
 
-		values := listStrings(t, ctx, list2)
+		values := listStrings(t, list2)
 		assert.Equal(t, []string{"one", "two", "three", "four"}, values)
 
 		results[engine.name] = values
@@ -802,21 +788,20 @@ func TestRust_InsertionConsistentWithCausality(t *testing.T) {
 func TestRust_SaveRestoreComplex1(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	titles := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		todos, err := doc1.Root().CreateObject(ctx, "todos", automerge.ObjectTypeList)
+		todos, err := doc1.Root().CreateObject("todos", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		firstTodo, err := todos.InsertObject(ctx, 0, automerge.ObjectTypeMap)
+		firstTodo, err := todos.InsertObject(0, automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			firstTodo.PutScalar(
-				ctx,
+
 				"title",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "water plants"},
 			),
@@ -824,63 +809,63 @@ func TestRust_SaveRestoreComplex1(t *testing.T) {
 		require.NoError(
 			t,
 			firstTodo.PutScalar(
-				ctx,
+
 				"done",
 				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: false},
 			),
 		)
-		_, err = doc1.Commit(ctx, "base", commitTime)
+		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		todos2, err := doc2.Root().Object(ctx, "todos")
+		todos2, err := doc2.Root().Object("todos")
 		require.NoError(t, err)
-		firstTodo2, err := todos2.ObjectAt(ctx, 0)
+		firstTodo2, err := todos2.ObjectAt(0)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			firstTodo2.PutScalar(
-				ctx,
+
 				"title",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "weed plants"},
 			),
 		)
-		_, err = doc2.Commit(ctx, "weed", commitTime.Add(time.Second))
+		_, err = doc2.Commit("weed", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
 		require.NoError(
 			t,
 			firstTodo.PutScalar(
-				ctx,
+
 				"title",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "kill plants"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "kill", commitTime.Add(time.Second))
+		_, err = doc1.Commit("kill", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
-		saved, err := doc1.Save(ctx)
+		saved, err := doc1.Save()
 		require.NoError(t, err)
-		reloaded, err := engine.load(ctx, saved, actor(3))
+		reloaded, err := engine.load(saved, actor(3))
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
 
-		reloadedTodos, err := reloaded.Root().Object(ctx, "todos")
+		reloadedTodos, err := reloaded.Root().Object("todos")
 		require.NoError(t, err)
-		reloadedTodo, err := reloadedTodos.ObjectAt(ctx, 0)
+		reloadedTodo, err := reloadedTodos.ObjectAt(0)
 		require.NoError(t, err)
-		done, err := reloadedTodo.Scalar(ctx, "done")
+		done, err := reloadedTodo.Scalar("done")
 		require.NoError(t, err)
 		assert.False(t, done.Bool)
 
-		values := sortedStringValues(t, ctx, reloadedTodo, "title")
+		values := sortedStringValues(t, reloadedTodo, "title")
 		assert.Equal(t, []string{"kill plants", "weed plants"}, values)
 
 		titles[engine.name] = values
@@ -896,21 +881,20 @@ func TestRust_SaveRestoreComplex1(t *testing.T) {
 func TestRust_SaveRestoreComplexTransactional(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	titles := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		todos, err := doc1.Root().CreateObject(ctx, "todos", automerge.ObjectTypeList)
+		todos, err := doc1.Root().CreateObject("todos", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		firstTodo, err := todos.InsertObject(ctx, 0, automerge.ObjectTypeMap)
+		firstTodo, err := todos.InsertObject(0, automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			firstTodo.PutScalar(
-				ctx,
+
 				"title",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "water plants"},
 			),
@@ -918,63 +902,63 @@ func TestRust_SaveRestoreComplexTransactional(t *testing.T) {
 		require.NoError(
 			t,
 			firstTodo.PutScalar(
-				ctx,
+
 				"done",
 				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: false},
 			),
 		)
-		_, err = doc1.Commit(ctx, "transaction", commitTime)
+		_, err = doc1.Commit("transaction", commitTime)
 		require.NoError(t, err)
 
-		data, err := doc1.Save(ctx)
+		data, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, data, actor(2))
+		doc2, err := engine.load(data, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		todos2, err := doc2.Root().Object(ctx, "todos")
+		todos2, err := doc2.Root().Object("todos")
 		require.NoError(t, err)
-		firstTodo2, err := todos2.ObjectAt(ctx, 0)
+		firstTodo2, err := todos2.ObjectAt(0)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			firstTodo2.PutScalar(
-				ctx,
+
 				"title",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "weed plants"},
 			),
 		)
-		_, err = doc2.Commit(ctx, "transaction", commitTime.Add(time.Second))
+		_, err = doc2.Commit("transaction", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
 		require.NoError(
 			t,
 			firstTodo.PutScalar(
-				ctx,
+
 				"title",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "kill plants"},
 			),
 		)
-		_, err = doc1.Commit(ctx, "transaction", commitTime.Add(time.Second))
+		_, err = doc1.Commit("transaction", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		_, err = doc1.Merge(ctx, doc2)
+		_, err = doc1.Merge(doc2)
 		require.NoError(t, err)
 
-		saved, err := doc1.Save(ctx)
+		saved, err := doc1.Save()
 		require.NoError(t, err)
-		reloaded, err := engine.load(ctx, saved, actor(3))
+		reloaded, err := engine.load(saved, actor(3))
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
 
-		reloadedTodos, err := reloaded.Root().Object(ctx, "todos")
+		reloadedTodos, err := reloaded.Root().Object("todos")
 		require.NoError(t, err)
-		reloadedTodo, err := reloadedTodos.ObjectAt(ctx, 0)
+		reloadedTodo, err := reloadedTodos.ObjectAt(0)
 		require.NoError(t, err)
-		done, err := reloadedTodo.Scalar(ctx, "done")
+		done, err := reloadedTodo.Scalar("done")
 		require.NoError(t, err)
 		assert.False(t, done.Bool)
 
-		values := sortedStringValues(t, ctx, reloadedTodo, "title")
+		values := sortedStringValues(t, reloadedTodo, "title")
 		assert.Equal(t, []string{"kill plants", "weed plants"}, values)
 
 		titles[engine.name] = values
@@ -990,26 +974,24 @@ func TestRust_SaveRestoreComplexTransactional(t *testing.T) {
 func TestRust_BigList(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	const count = 128
 
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc, err := engine.open(ctx, actor(1))
+		doc, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc)
-		list, err := doc.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list, err := doc.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		_, err = doc.Commit(ctx, "create list", commitTime)
+		_, err = doc.Commit("create list", commitTime)
 		require.NoError(t, err)
 
 		for index := range count + 1 {
 			require.NoError(
 				t,
 				list.InsertScalar(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeNull},
 				),
@@ -1017,33 +999,33 @@ func TestRust_BigList(t *testing.T) {
 		}
 
 		for index := range count + 1 {
-			_, err := list.PutObjectAt(ctx, uint64(index), automerge.ObjectTypeMap)
+			_, err := list.PutObjectAt(uint64(index), automerge.ObjectTypeMap)
 			require.NoError(t, err)
 		}
 
-		_, err = doc.Commit(ctx, "populate", commitTime.Add(time.Second))
+		_, err = doc.Commit("populate", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		length, err := list.Len(ctx)
+		length, err := list.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(count+1), length)
 
-		element, err := list.ObjectAt(ctx, count)
+		element, err := list.ObjectAt(count)
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeMap, element.Type)
 
-		saved, err := doc.Save(ctx)
+		saved, err := doc.Save()
 		require.NoError(t, err)
-		reloaded, err := engine.load(ctx, saved, actor(2))
+		reloaded, err := engine.load(saved, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
-		reloadedList, err := reloaded.Root().Object(ctx, "list")
+		reloadedList, err := reloaded.Root().Object("list")
 		require.NoError(t, err)
-		reloadedLength, err := reloadedList.Len(ctx)
+		reloadedLength, err := reloadedList.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(count+1), reloadedLength)
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+		heads[engine.name] = sortedHeadHex(t, doc)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -1053,23 +1035,21 @@ func TestRust_BigList(t *testing.T) {
 func TestRust_InvalidIndex(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc, err := engine.open(ctx, actor(1))
+				doc, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc)
-				list, err := doc.Root().CreateObject(ctx, "a", automerge.ObjectTypeList)
+				list, err := doc.Root().CreateObject("a", automerge.ObjectTypeList)
 				require.NoError(t, err)
 				require.NoError(
 					t,
 					list.InsertScalar(
-						ctx,
+
 						0,
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
@@ -1077,20 +1057,20 @@ func TestRust_InvalidIndex(t *testing.T) {
 				require.NoError(
 					t,
 					list.PutScalarAt(
-						ctx,
+
 						0,
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 					),
 				)
 
-				value, err := list.ScalarAt(ctx, 0)
+				value, err := list.ScalarAt(0)
 				require.NoError(t, err)
 				assert.Equal(t, int64(2), value.Int)
 
 				require.Error(
 					t,
 					list.InsertScalar(
-						ctx,
+
 						2,
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
@@ -1098,7 +1078,7 @@ func TestRust_InvalidIndex(t *testing.T) {
 				require.Error(
 					t,
 					list.PutScalarAt(
-						ctx,
+
 						2,
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 					),
@@ -1106,7 +1086,7 @@ func TestRust_InvalidIndex(t *testing.T) {
 				require.Error(
 					t,
 					list.InsertScalar(
-						ctx,
+
 						100,
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
@@ -1114,7 +1094,7 @@ func TestRust_InvalidIndex(t *testing.T) {
 				require.Error(
 					t,
 					list.PutScalarAt(
-						ctx,
+
 						100,
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 					),
@@ -1129,64 +1109,62 @@ func TestRust_InvalidIndex(t *testing.T) {
 func TestRust_HasOurChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				left, err := engine.open(ctx, actor(1))
+				left, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, left)
 				require.NoError(
 					t,
 					left.Root().PutScalar(
-						ctx,
+
 						"a",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
 				)
-				leftHash, err := left.Commit(ctx, "a", commitTime)
+				leftHash, err := left.Commit("a", commitTime)
 				require.NoError(t, err)
 
-				right, err := engine.open(ctx, actor(2))
+				right, err := engine.open(actor(2))
 				require.NoError(t, err)
 				closeDocument(t, right)
 				require.NoError(
 					t,
 					right.Root().PutScalar(
-						ctx,
+
 						"b",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 					),
 				)
-				rightHash, err := right.Commit(ctx, "b", commitTime)
+				rightHash, err := right.Commit("b", commitTime)
 				require.NoError(t, err)
 
-				leftToRight, err := left.NewSyncState(ctx)
+				leftToRight, err := left.NewSyncState()
 				require.NoError(t, err)
 				closeSyncState(t, leftToRight)
 
-				rightToLeft, err := right.NewSyncState(ctx)
+				rightToLeft, err := right.NewSyncState()
 				require.NoError(t, err)
 				closeSyncState(t, rightToLeft)
 
-				syncBothDirections(t, ctx, leftToRight, rightToLeft)
+				syncBothDirections(t, leftToRight, rightToLeft)
 
-				rightHasLeft, err := right.HasHeads(ctx, []automerge.Hash{leftHash})
+				rightHasLeft, err := right.HasHeads([]automerge.Hash{leftHash})
 				require.NoError(t, err)
 				assert.True(t, rightHasLeft)
 
-				leftHasRight, err := left.HasHeads(ctx, []automerge.Hash{rightHash})
+				leftHasRight, err := left.HasHeads([]automerge.Hash{rightHash})
 				require.NoError(t, err)
 				assert.True(t, leftHasRight)
 
 				assert.Equal(
 					t,
-					sortedHeadHex(t, ctx, left),
-					sortedHeadHex(t, ctx, right),
+					sortedHeadHex(t, left),
+					sortedHeadHex(t, right),
 				)
 			},
 		)
@@ -1198,58 +1176,56 @@ func TestRust_HasOurChanges(t *testing.T) {
 func TestRust_LoadIncrementalWithCommonHead(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(1))
+				doc1, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 				require.NoError(
 					t,
 					doc1.Root().PutScalar(
-						ctx,
+
 						"string",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"},
 					),
 				)
-				_, err = doc1.Commit(ctx, "hello", commitTime)
+				_, err = doc1.Commit("hello", commitTime)
 				require.NoError(t, err)
 
-				base, err := doc1.Save(ctx)
+				base, err := doc1.Save()
 				require.NoError(t, err)
-				doc2, err := engine.load(ctx, base, actor(2))
+				doc2, err := engine.load(base, actor(2))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				doc3, err := engine.load(ctx, base, actor(3))
+				doc3, err := engine.load(base, actor(3))
 				require.NoError(t, err)
 				closeDocument(t, doc3)
 
-				heads1, err := doc1.Heads(ctx)
+				heads1, err := doc1.Heads()
 				require.NoError(t, err)
 				require.Len(t, heads1, 1)
 
 				require.NoError(
 					t,
 					doc1.Root().PutScalar(
-						ctx,
+
 						"concurrent1",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "123"},
 					),
 				)
-				hashB, err := doc1.Commit(ctx, "concurrent1", commitTime.Add(time.Second))
+				hashB, err := doc1.Commit("concurrent1", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
-				saved1, err := doc1.Save(ctx)
+				saved1, err := doc1.Save()
 				require.NoError(t, err)
-				_, err = doc3.LoadIncremental(ctx, saved1)
+				_, err = doc3.LoadIncremental(saved1)
 				require.NoError(t, err)
-				headsC, err := doc3.Heads(ctx)
+				headsC, err := doc3.Heads()
 				require.NoError(t, err)
 				require.Len(t, headsC, 1)
 				assert.Equal(t, hashB.String(), headsC[0].String())
@@ -1257,26 +1233,26 @@ func TestRust_LoadIncrementalWithCommonHead(t *testing.T) {
 				require.NoError(
 					t,
 					doc2.Root().PutScalar(
-						ctx,
+
 						"concurrent2",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "abc"},
 					),
 				)
-				hashD, err := doc2.Commit(ctx, "concurrent2", commitTime.Add(time.Second))
+				hashD, err := doc2.Commit("concurrent2", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
-				_, err = doc2.Merge(ctx, doc1)
+				_, err = doc2.Merge(doc1)
 				require.NoError(t, err)
-				mergedHeads := sortedHeadHex(t, ctx, doc2)
+				mergedHeads := sortedHeadHex(t, doc2)
 				require.Len(t, mergedHeads, 2)
 				assert.Contains(t, mergedHeads, hashB.String())
 				assert.Contains(t, mergedHeads, hashD.String())
 
-				saved2, err := doc2.Save(ctx)
+				saved2, err := doc2.Save()
 				require.NoError(t, err)
-				_, err = doc3.LoadIncremental(ctx, saved2)
+				_, err = doc3.LoadIncremental(saved2)
 				require.NoError(t, err)
-				assert.Equal(t, mergedHeads, sortedHeadHex(t, ctx, doc3))
+				assert.Equal(t, mergedHeads, sortedHeadHex(t, doc3))
 			},
 		)
 	}
@@ -1286,53 +1262,51 @@ func TestRust_LoadIncrementalWithCommonHead(t *testing.T) {
 func TestRust_RegressionNthMiscount(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	const count = 30
 
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc, err := engine.open(ctx, actor(1))
+		doc, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc)
-		list, err := doc.Root().CreateObject(ctx, "listval", automerge.ObjectTypeList)
+		list, err := doc.Root().CreateObject("listval", automerge.ObjectTypeList)
 		require.NoError(t, err)
 
 		for index := range count {
 			require.NoError(
 				t,
 				list.InsertScalar(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeNull},
 				),
 			)
-			element, err := list.PutObjectAt(ctx, uint64(index), automerge.ObjectTypeMap)
+			element, err := list.PutObjectAt(uint64(index), automerge.ObjectTypeMap)
 			require.NoError(t, err)
 			require.NoError(
 				t,
 				element.PutScalar(
-					ctx,
+
 					"test",
 					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(index)},
 				),
 			)
 		}
 
-		_, err = doc.Commit(ctx, "populate", commitTime)
+		_, err = doc.Commit("populate", commitTime)
 		require.NoError(t, err)
 
 		for index := range count {
-			element, err := list.ObjectAt(ctx, uint64(index))
+			element, err := list.ObjectAt(uint64(index))
 			require.NoError(t, err)
 			assert.Equal(t, automerge.ObjectTypeMap, element.Type)
-			value, err := element.Scalar(ctx, "test")
+			value, err := element.Scalar("test")
 			require.NoError(t, err)
 			assert.Equal(t, int64(index), value.Int)
 		}
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+		heads[engine.name] = sortedHeadHex(t, doc)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -1343,24 +1317,22 @@ func TestRust_RegressionNthMiscount(t *testing.T) {
 func TestRust_RegressionNthMiscountSmaller(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	const count = 16 * 4
 
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc, err := engine.open(ctx, actor(1))
+		doc, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc)
-		list, err := doc.Root().CreateObject(ctx, "listval", automerge.ObjectTypeList)
+		list, err := doc.Root().CreateObject("listval", automerge.ObjectTypeList)
 		require.NoError(t, err)
 
 		for index := range count {
 			require.NoError(
 				t,
 				list.InsertScalar(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeNull},
 				),
@@ -1368,23 +1340,23 @@ func TestRust_RegressionNthMiscountSmaller(t *testing.T) {
 			require.NoError(
 				t,
 				list.PutScalarAt(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(index)},
 				),
 			)
 		}
 
-		_, err = doc.Commit(ctx, "populate", commitTime)
+		_, err = doc.Commit("populate", commitTime)
 		require.NoError(t, err)
 
 		for index := range count {
-			value, err := list.ScalarAt(ctx, uint64(index))
+			value, err := list.ScalarAt(uint64(index))
 			require.NoError(t, err)
 			assert.Equal(t, int64(index), value.Int)
 		}
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+		heads[engine.name] = sortedHeadHex(t, doc)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -1396,26 +1368,24 @@ func TestRust_RegressionNthMiscountSmaller(t *testing.T) {
 func TestRust_RegressionInsertOpid(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	const count = 30
 
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc, err := engine.open(ctx, actor(1))
+		doc, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc)
-		list, err := doc.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list, err := doc.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		_, err = doc.Commit(ctx, "create list", commitTime)
+		_, err = doc.Commit("create list", commitTime)
 		require.NoError(t, err)
 
 		for index := range count + 1 {
 			require.NoError(
 				t,
 				list.InsertScalar(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeNull},
 				),
@@ -1423,34 +1393,34 @@ func TestRust_RegressionInsertOpid(t *testing.T) {
 			require.NoError(
 				t,
 				list.PutScalarAt(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(index)},
 				),
 			)
 		}
 
-		_, err = doc.Commit(ctx, "populate", commitTime.Add(time.Second))
+		_, err = doc.Commit("populate", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		saved, err := doc.Save(ctx)
+		saved, err := doc.Save()
 		require.NoError(t, err)
-		reloaded, err := engine.load(ctx, saved, actor(2))
+		reloaded, err := engine.load(saved, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
-		reloadedList, err := reloaded.Root().Object(ctx, "list")
+		reloadedList, err := reloaded.Root().Object("list")
 		require.NoError(t, err)
 
 		for index := range count + 1 {
-			original, err := list.ScalarAt(ctx, uint64(index))
+			original, err := list.ScalarAt(uint64(index))
 			require.NoError(t, err)
-			roundTripped, err := reloadedList.ScalarAt(ctx, uint64(index))
+			roundTripped, err := reloadedList.ScalarAt(uint64(index))
 			require.NoError(t, err)
 			assert.Equal(t, int64(index), original.Int)
 			assert.Equal(t, original.Int, roundTripped.Int)
 		}
 
-		heads[engine.name] = sortedHeadHex(t, ctx, doc)
+		heads[engine.name] = sortedHeadHex(t, doc)
 	}
 
 	assert.Equal(t, heads["reference"], heads["native"])
@@ -1462,34 +1432,32 @@ func TestRust_RegressionInsertOpid(t *testing.T) {
 func TestRust_RollbackWithSeveralActors(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(0xaa))
+				doc1, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
-				text1, err := doc1.CreateText(ctx, "text")
+				text1, err := doc1.CreateText("text")
 				require.NoError(t, err)
 				require.NoError(
 					t,
 					text1.Splice(
-						ctx,
+
 						0,
 						0,
 						"the sly fox jumped over the lazy dog",
 					),
 				)
-				mapA1, err := doc1.Root().CreateObject(ctx, "map_a", automerge.ObjectTypeMap)
+				mapA1, err := doc1.Root().CreateObject("map_a", automerge.ObjectTypeMap)
 				require.NoError(t, err)
 				require.NoError(
 					t,
 					mapA1.PutScalar(
-						ctx,
+
 						"key1",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value1a"},
 					),
@@ -1497,29 +1465,29 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 				require.NoError(
 					t,
 					mapA1.PutScalar(
-						ctx,
+
 						"key2",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value2a"},
 					),
 				)
-				_, err = doc1.Commit(ctx, "doc1", commitTime)
+				_, err = doc1.Commit("doc1", commitTime)
 				require.NoError(t, err)
 
-				doc2, err := doc1.Fork(ctx, actor(0xcc))
+				doc2, err := doc1.Fork(actor(0xcc))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
-				text2, err := doc2.Text(ctx, "text")
+				text2, err := doc2.Text("text")
 				require.NoError(t, err)
-				require.NoError(t, text2.Splice(ctx, 8, 3, "monkey"))
-				require.NoError(t, text2.Splice(ctx, 36, 3, "pig"))
-				mapC2, err := doc2.Root().CreateObject(ctx, "map_c", automerge.ObjectTypeMap)
+				require.NoError(t, text2.Splice(8, 3, "monkey"))
+				require.NoError(t, text2.Splice(36, 3, "pig"))
+				mapC2, err := doc2.Root().CreateObject("map_c", automerge.ObjectTypeMap)
 				require.NoError(t, err)
-				mapA2, err := doc2.Root().Object(ctx, "map_a")
+				mapA2, err := doc2.Root().Object("map_a")
 				require.NoError(t, err)
 				require.NoError(
 					t,
 					mapA2.PutScalar(
-						ctx,
+
 						"key2",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value2c"},
 					),
@@ -1527,7 +1495,7 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 				require.NoError(
 					t,
 					mapA2.PutScalar(
-						ctx,
+
 						"key3",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value3c"},
 					),
@@ -1535,28 +1503,28 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 				require.NoError(
 					t,
 					mapC2.PutScalar(
-						ctx,
+
 						"key1",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
 					),
 				)
-				_, err = doc2.Commit(ctx, "doc2", commitTime.Add(time.Second))
+				_, err = doc2.Commit("doc2", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
-				doc3, err := doc2.Fork(ctx, actor(0xbb))
+				doc3, err := doc2.Fork(actor(0xbb))
 				require.NoError(t, err)
 				closeDocument(t, doc3)
-				text3, err := doc3.Text(ctx, "text")
+				text3, err := doc3.Text("text")
 				require.NoError(t, err)
-				require.NoError(t, text3.Splice(ctx, 8, 5, "zebra"))
-				mapB3, err := doc3.Root().CreateObject(ctx, "map_b", automerge.ObjectTypeMap)
+				require.NoError(t, text3.Splice(8, 5, "zebra"))
+				mapB3, err := doc3.Root().CreateObject("map_b", automerge.ObjectTypeMap)
 				require.NoError(t, err)
-				mapA3, err := doc3.Root().Object(ctx, "map_a")
+				mapA3, err := doc3.Root().Object("map_a")
 				require.NoError(t, err)
 				require.NoError(
 					t,
 					mapA3.PutScalar(
-						ctx,
+
 						"key1",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value3b"},
 					),
@@ -1564,7 +1532,7 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 				require.NoError(
 					t,
 					mapA3.PutScalar(
-						ctx,
+
 						"key3",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value3b"},
 					),
@@ -1572,20 +1540,20 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 				require.NoError(
 					t,
 					mapB3.PutScalar(
-						ctx,
+
 						"key1",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
 					),
 				)
 
-				_, err = doc3.Rollback(ctx)
+				_, err = doc3.Rollback()
 				require.NoError(t, err)
 
-				assert.Equal(t, sortedHeadHex(t, ctx, doc2), sortedHeadHex(t, ctx, doc3))
+				assert.Equal(t, sortedHeadHex(t, doc2), sortedHeadHex(t, doc3))
 
-				doc2Save, err := doc2.Save(ctx)
+				doc2Save, err := doc2.Save()
 				require.NoError(t, err)
-				doc3Save, err := doc3.Save(ctx)
+				doc3Save, err := doc3.Save()
 				require.NoError(t, err)
 				assert.Equal(t, doc2Save, doc3Save)
 			},
@@ -1600,51 +1568,49 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 func TestRust_SaveWithOpsReferencingActorsOnlyViaDelete(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc, err := engine.open(ctx, actor(1))
+				doc, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc)
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"a",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
 				)
-				_, err = doc.Commit(ctx, "put a", commitTime)
+				_, err = doc.Commit("put a", commitTime)
 				require.NoError(t, err)
 
-				forked, err := doc.Fork(ctx, actor(2))
+				forked, err := doc.Fork(actor(2))
 				require.NoError(t, err)
 				closeDocument(t, forked)
-				require.NoError(t, forked.Root().DeleteKey(ctx, "a"))
-				_, err = forked.Commit(ctx, "delete a", commitTime.Add(time.Second))
+				require.NoError(t, forked.Root().DeleteKey("a"))
+				_, err = forked.Commit("delete a", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
-				_, err = doc.Merge(ctx, forked)
+				_, err = doc.Merge(forked)
 				require.NoError(t, err)
 
-				saved, err := doc.Save(ctx)
+				saved, err := doc.Save()
 				require.NoError(t, err)
 
-				nativeReload, err := automerge.Load(ctx, saved, actor(3))
+				nativeReload, err := automerge.Load(saved, actor(3))
 				require.NoError(t, err)
 				closeDocument(t, nativeReload)
 
-				referenceReload, err := automerge.LoadReference(ctx, saved, actor(4))
+				referenceReload, err := automerge.LoadReference(saved, actor(4))
 				require.NoError(t, err)
 				closeDocument(t, referenceReload)
 
 				for _, reloaded := range []*automerge.Document{nativeReload, referenceReload} {
-					length, err := reloaded.Root().Len(ctx)
+					length, err := reloaded.Root().Len()
 					require.NoError(t, err)
 					assert.Zero(t, length)
 				}
@@ -1655,13 +1621,12 @@ func TestRust_SaveWithOpsReferencingActorsOnlyViaDelete(t *testing.T) {
 
 func sortedScalarsAt(
 	t *testing.T,
-	ctx context.Context,
 	object *automerge.Object,
 	index uint64,
 ) []string {
 	t.Helper()
 
-	values, err := object.ScalarsAt(ctx, index)
+	values, err := object.ScalarsAt(index)
 	require.NoError(t, err)
 
 	result := make([]string, len(values))
@@ -1681,20 +1646,19 @@ func sortedScalarsAt(
 func TestRust_ListCounterDel(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	index1 := make(map[string][]string)
 	index2 := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		doc1, err := engine.open(ctx, actor(1))
+		doc1, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		list1, err := doc1.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list1, err := doc1.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			list1.InsertValues(
-				ctx,
+
 				0,
 				[]automerge.Value{
 					hydratedString("a"),
@@ -1703,86 +1667,86 @@ func TestRust_ListCounterDel(t *testing.T) {
 				},
 			),
 		)
-		_, err = doc1.Commit(ctx, "base", commitTime)
+		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
-		base, err := doc1.Save(ctx)
+		base, err := doc1.Save()
 		require.NoError(t, err)
-		doc2, err := engine.load(ctx, base, actor(2))
+		doc2, err := engine.load(base, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		list2, err := doc2.Root().Object(ctx, "list")
+		list2, err := doc2.Root().Object("list")
 		require.NoError(t, err)
-		doc3, err := engine.load(ctx, base, actor(3))
+		doc3, err := engine.load(base, actor(3))
 		require.NoError(t, err)
 		closeDocument(t, doc3)
-		list3, err := doc3.Root().Object(ctx, "list")
+		list3, err := doc3.Root().Object("list")
 		require.NoError(t, err)
 
 		counter := func(value int64) automerge.Scalar {
 			return automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: value}
 		}
 
-		require.NoError(t, list1.PutScalarAt(ctx, 1, counter(0)))
-		require.NoError(t, list2.PutScalarAt(ctx, 1, counter(10)))
-		require.NoError(t, list3.PutScalarAt(ctx, 1, counter(100)))
+		require.NoError(t, list1.PutScalarAt(1, counter(0)))
+		require.NoError(t, list2.PutScalarAt(1, counter(10)))
+		require.NoError(t, list3.PutScalarAt(1, counter(100)))
 
-		require.NoError(t, list1.PutScalarAt(ctx, 2, counter(0)))
-		require.NoError(t, list2.PutScalarAt(ctx, 2, counter(10)))
+		require.NoError(t, list1.PutScalarAt(2, counter(0)))
+		require.NoError(t, list2.PutScalarAt(2, counter(10)))
 		require.NoError(
 			t,
 			list3.PutScalarAt(
-				ctx,
+
 				2,
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 100},
 			),
 		)
 
-		require.NoError(t, list1.IncrementAt(ctx, 1, 1))
-		require.NoError(t, list1.IncrementAt(ctx, 2, 1))
+		require.NoError(t, list1.IncrementAt(1, 1))
+		require.NoError(t, list1.IncrementAt(2, 1))
 
-		_, err = doc1.Commit(ctx, "doc1", commitTime.Add(time.Second))
+		_, err = doc1.Commit("doc1", commitTime.Add(time.Second))
 		require.NoError(t, err)
-		_, err = doc2.Commit(ctx, "doc2", commitTime.Add(time.Second))
+		_, err = doc2.Commit("doc2", commitTime.Add(time.Second))
 		require.NoError(t, err)
-		_, err = doc3.Commit(ctx, "doc3", commitTime.Add(time.Second))
-		require.NoError(t, err)
-
-		_, err = doc1.Merge(ctx, doc2)
-		require.NoError(t, err)
-		_, err = doc1.Merge(ctx, doc3)
+		_, err = doc3.Commit("doc3", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		require.NoError(t, list1.IncrementAt(ctx, 1, 1))
-		require.NoError(t, list1.IncrementAt(ctx, 2, 1))
-		_, err = doc1.Commit(ctx, "increments", commitTime.Add(2*time.Second))
+		_, err = doc1.Merge(doc2)
+		require.NoError(t, err)
+		_, err = doc1.Merge(doc3)
 		require.NoError(t, err)
 
-		index1[engine.name] = sortedScalarsAt(t, ctx, list1, 1)
-		index2[engine.name] = sortedScalarsAt(t, ctx, list1, 2)
-
-		require.NoError(t, list1.DeleteIndex(ctx, 2))
-		_, err = doc1.Commit(ctx, "delete 2", commitTime.Add(3*time.Second))
+		require.NoError(t, list1.IncrementAt(1, 1))
+		require.NoError(t, list1.IncrementAt(2, 1))
+		_, err = doc1.Commit("increments", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
-		length, err := list1.Len(ctx)
+
+		index1[engine.name] = sortedScalarsAt(t, list1, 1)
+		index2[engine.name] = sortedScalarsAt(t, list1, 2)
+
+		require.NoError(t, list1.DeleteIndex(2))
+		_, err = doc1.Commit("delete 2", commitTime.Add(3*time.Second))
+		require.NoError(t, err)
+		length, err := list1.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(2), length)
 
-		saved, err := doc1.Save(ctx)
+		saved, err := doc1.Save()
 		require.NoError(t, err)
-		reloaded, err := engine.load(ctx, saved, actor(4))
+		reloaded, err := engine.load(saved, actor(4))
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
-		reloadedList, err := reloaded.Root().Object(ctx, "list")
+		reloadedList, err := reloaded.Root().Object("list")
 		require.NoError(t, err)
-		reloadedLength, err := reloadedList.Len(ctx)
+		reloadedLength, err := reloadedList.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(2), reloadedLength)
 
-		require.NoError(t, list1.DeleteIndex(ctx, 1))
-		_, err = doc1.Commit(ctx, "delete 1", commitTime.Add(4*time.Second))
+		require.NoError(t, list1.DeleteIndex(1))
+		_, err = doc1.Commit("delete 1", commitTime.Add(4*time.Second))
 		require.NoError(t, err)
-		length, err = list1.Len(ctx)
+		length, err = list1.Len()
 		require.NoError(t, err)
 		assert.Equal(t, uint64(1), length)
 	}
@@ -1799,53 +1763,51 @@ func TestRust_ListCounterDel(t *testing.T) {
 func TestRust_SimpleBadSaveload(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc, err := engine.open(ctx, actor(1))
+				doc, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc)
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"count",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
 					),
 				)
-				_, err = doc.Commit(ctx, "count 0", commitTime)
+				_, err = doc.Commit("count 0", commitTime)
 				require.NoError(t, err)
 
-				_, err = doc.EmptyCommit(ctx, "empty", commitTime.Add(time.Second))
+				_, err = doc.EmptyCommit("empty", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"count",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
 				)
-				_, err = doc.Commit(ctx, "count 1", commitTime.Add(2*time.Second))
+				_, err = doc.Commit("count 1", commitTime.Add(2*time.Second))
 				require.NoError(t, err)
 
-				saved, err := doc.Save(ctx)
+				saved, err := doc.Save()
 				require.NoError(t, err)
 
-				for _, load := range []func(context.Context, []byte, automerge.ActorID, ...automerge.LoadOption) (*automerge.Document, error){
+				for _, load := range []func([]byte, automerge.ActorID, ...automerge.LoadOption) (*automerge.Document, error){
 					automerge.Load,
 					automerge.LoadReference,
 				} {
-					reloaded, err := load(ctx, saved, actor(2))
+					reloaded, err := load(saved, actor(2))
 					require.NoError(t, err)
 					closeDocument(t, reloaded)
-					value, err := reloaded.Root().Scalar(ctx, "count")
+					value, err := reloaded.Root().Scalar("count")
 					require.NoError(t, err)
 					assert.Equal(t, int64(1), value.Int)
 				}
@@ -1861,8 +1823,6 @@ func TestRust_SimpleBadSaveload(t *testing.T) {
 func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	const iterations = 15
 
 	for _, engine := range rustParityEngines() {
@@ -1871,13 +1831,13 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc, err := engine.open(ctx, actor(1))
+				doc, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc)
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"a",
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "z"},
 					),
@@ -1885,7 +1845,7 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"b",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
 					),
@@ -1893,19 +1853,19 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"c",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
 					),
 				)
-				_, err = doc.Commit(ctx, "base", commitTime)
+				_, err = doc.Commit("base", commitTime)
 				require.NoError(t, err)
 
 				for i := range iterations {
 					require.NoError(
 						t,
 						doc.Root().PutScalar(
-							ctx,
+
 							"a",
 							automerge.Scalar{
 								Type:   automerge.ScalarTypeString,
@@ -1916,7 +1876,7 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 					require.NoError(
 						t,
 						doc.Root().PutScalar(
-							ctx,
+
 							"b",
 							automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i + 1)},
 						),
@@ -1924,22 +1884,22 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 					require.NoError(
 						t,
 						doc.Root().PutScalar(
-							ctx,
+
 							"c",
 							automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i + 1)},
 						),
 					)
 					_, err = doc.Commit(
-						ctx,
+
 						"iterate",
 						commitTime.Add(time.Duration(i+1)*time.Second),
 					)
 					require.NoError(t, err)
 				}
 
-				saved, err := doc.Save(ctx)
+				saved, err := doc.Save()
 				require.NoError(t, err)
-				other, err := engine.load(ctx, saved, actor(2))
+				other, err := engine.load(saved, actor(2))
 				require.NoError(t, err)
 				closeDocument(t, other)
 
@@ -1947,7 +1907,7 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"a",
 						automerge.Scalar{
 							Type:   automerge.ScalarTypeString,
@@ -1958,7 +1918,7 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"b",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(final)},
 					),
@@ -1966,27 +1926,27 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 				require.NoError(
 					t,
 					doc.Root().PutScalar(
-						ctx,
+
 						"c",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(final)},
 					),
 				)
-				_, err = doc.Commit(ctx, "final", commitTime.Add(time.Hour))
+				_, err = doc.Commit("final", commitTime.Add(time.Hour))
 				require.NoError(t, err)
 
-				_, err = other.Merge(ctx, doc)
+				_, err = other.Merge(doc)
 				require.NoError(t, err)
 
-				transferred, err := other.Save(ctx)
+				transferred, err := other.Save()
 				require.NoError(t, err)
-				reloaded, err := engine.load(ctx, transferred, actor(3))
+				reloaded, err := engine.load(transferred, actor(3))
 				require.NoError(t, err)
 				closeDocument(t, reloaded)
 
-				value, err := reloaded.Root().Scalar(ctx, "b")
+				value, err := reloaded.Root().Scalar("b")
 				require.NoError(t, err)
 				assert.Equal(t, int64(final), value.Int)
-				assert.Equal(t, sortedHeadHex(t, ctx, doc), sortedHeadHex(t, ctx, other))
+				assert.Equal(t, sortedHeadHex(t, doc), sortedHeadHex(t, other))
 			},
 		)
 	}
@@ -1994,7 +1954,6 @@ func TestRust_BadChangeOnOptreeNodeBoundary(t *testing.T) {
 
 func syncBothDirections(
 	t *testing.T,
-	ctx context.Context,
 	leftToRight *automerge.SyncState,
 	rightToLeft *automerge.SyncState,
 ) {
@@ -2003,22 +1962,22 @@ func syncBothDirections(
 	for range 20 {
 		quiet := true
 
-		message, ok, err := leftToRight.GenerateMessage(ctx)
+		message, ok, err := leftToRight.GenerateMessage()
 		require.NoError(t, err)
 
 		if ok {
 			quiet = false
 
-			require.NoError(t, rightToLeft.ReceiveMessage(ctx, message))
+			require.NoError(t, rightToLeft.ReceiveMessage(message))
 		}
 
-		message, ok, err = rightToLeft.GenerateMessage(ctx)
+		message, ok, err = rightToLeft.GenerateMessage()
 		require.NoError(t, err)
 
 		if ok {
 			quiet = false
 
-			require.NoError(t, leftToRight.ReceiveMessage(ctx, message))
+			require.NoError(t, leftToRight.ReceiveMessage(message))
 		}
 
 		if quiet {
