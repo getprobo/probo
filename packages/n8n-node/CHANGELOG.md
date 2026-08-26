@@ -4,6 +4,19 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.222.0] - 2026-08-26
+
+### Added
+
+- `Treatment Plan` resource (`Create`, `Get`, `Get Many`, `Update`, `Delete`) for plans that hold scores, treatment, and owner per (risk, analysis)
+- Measure `Link Treatment Plan` / `Unlink Treatment Plan`
+- Risk `Get Many`: `Risk Analysis ID` lists unplanned scenario-linked risks on that analysis
+- Risk Analysis `Get` now returns `matrixCells`
+
+### Changed
+
+- Risk Analysis `Update` no longer accepts `Matrix Size`; matrix size is set at create only
+
 ## [0.221.0] - 2026-08-25
 
 ### Added
