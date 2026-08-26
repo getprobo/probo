@@ -21,19 +21,17 @@
 package native
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"slices"
 )
 
 func (b *Engine) PutString(
-	ctx context.Context,
 	object uint32,
 	key string,
 	value string,
 ) error {
-	if err := b.requireRoot(ctx, object); err != nil {
+	if err := b.requireRoot(object); err != nil {
 		return err
 	}
 
@@ -61,11 +59,10 @@ func (b *Engine) PutString(
 }
 
 func (b *Engine) GetString(
-	ctx context.Context,
 	object uint32,
 	key string,
 ) (string, error) {
-	if err := b.requireRoot(ctx, object); err != nil {
+	if err := b.requireRoot(object); err != nil {
 		return "", err
 	}
 
@@ -78,14 +75,10 @@ func (b *Engine) GetString(
 }
 
 func (b *Engine) PutScalar(
-	ctx context.Context,
 	object uint32,
 	key string,
 	encoded []byte,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -145,13 +138,9 @@ func (b *Engine) PutScalar(
 }
 
 func (b *Engine) GetScalar(
-	ctx context.Context,
 	object uint32,
 	key string,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -172,14 +161,10 @@ func (b *Engine) GetScalar(
 }
 
 func (b *Engine) GetScalarAtHeads(
-	ctx context.Context,
 	object uint32,
 	key string,
 	heads [][32]byte,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -205,13 +190,9 @@ func (b *Engine) GetScalarAtHeads(
 }
 
 func (b *Engine) GetAllScalars(
-	ctx context.Context,
 	object uint32,
 	key string,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -251,13 +232,9 @@ func (b *Engine) GetAllScalars(
 }
 
 func (b *Engine) GetAllScalarsAt(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	sequenceObject, err := b.sequenceObject(object)
 	if err != nil {
@@ -298,14 +275,10 @@ func (b *Engine) GetAllScalarsAt(
 }
 
 func (b *Engine) PutObject(
-	ctx context.Context,
 	object uint32,
 	key string,
 	rawType string,
 ) (uint32, error) {
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -337,13 +310,9 @@ func (b *Engine) PutObject(
 }
 
 func (b *Engine) GetObject(
-	ctx context.Context,
 	object uint32,
 	key string,
 ) (uint32, string, error) {
-	if err := ctx.Err(); err != nil {
-		return 0, "", err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -364,7 +333,6 @@ func (b *Engine) GetObject(
 }
 
 func (b *Engine) InsertScalar(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 	encoded []byte,
@@ -374,13 +342,12 @@ func (b *Engine) InsertScalar(
 		return err
 	}
 
-	_, err = b.insertSequenceOperation(ctx, object, index, ActionSet, &value)
+	_, err = b.insertSequenceOperation(object, index, ActionSet, &value)
 
 	return err
 }
 
 func (b *Engine) PutScalarAt(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 	encoded []byte,
@@ -390,7 +357,7 @@ func (b *Engine) PutScalarAt(
 		return err
 	}
 
-	target, err := b.sequenceOperation(ctx, object, index)
+	target, err := b.sequenceOperation(object, index)
 	if err != nil {
 		return err
 	}
@@ -442,7 +409,6 @@ func (b *Engine) PutScalarAt(
 }
 
 func (b *Engine) InsertObject(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 	rawType string,
@@ -453,7 +419,6 @@ func (b *Engine) InsertObject(
 	}
 
 	operation, err := b.insertSequenceOperation(
-		ctx,
 		object,
 		index,
 		action,
@@ -467,7 +432,6 @@ func (b *Engine) InsertObject(
 }
 
 func (b *Engine) PutObjectAt(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 	rawType string,
@@ -477,7 +441,7 @@ func (b *Engine) PutObjectAt(
 		return 0, err
 	}
 
-	target, err := b.sequenceOperation(ctx, object, index)
+	target, err := b.sequenceOperation(object, index)
 	if err != nil {
 		return 0, err
 	}
@@ -502,11 +466,10 @@ func (b *Engine) PutObjectAt(
 }
 
 func (b *Engine) GetScalarAt(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 ) ([]byte, error) {
-	operation, err := b.sequenceOperation(ctx, object, index)
+	operation, err := b.sequenceOperation(object, index)
 	if err != nil {
 		return nil, err
 	}
@@ -520,11 +483,10 @@ func (b *Engine) GetScalarAt(
 }
 
 func (b *Engine) GetObjectAt(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 ) (uint32, string, error) {
-	operation, err := b.sequenceOperation(ctx, object, index)
+	operation, err := b.sequenceOperation(object, index)
 	if err != nil {
 		return 0, "", err
 	}
@@ -538,13 +500,9 @@ func (b *Engine) GetObjectAt(
 }
 
 func (b *Engine) DeleteMap(
-	ctx context.Context,
 	object uint32,
 	key string,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -571,11 +529,10 @@ func (b *Engine) DeleteMap(
 }
 
 func (b *Engine) DeleteSequence(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 ) error {
-	target, err := b.sequenceOperation(ctx, object, index)
+	target, err := b.sequenceOperation(object, index)
 	if err != nil {
 		return err
 	}
@@ -597,14 +554,10 @@ func (b *Engine) DeleteSequence(
 }
 
 func (b *Engine) Increment(
-	ctx context.Context,
 	object uint32,
 	key string,
 	delta int64,
 ) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -639,12 +592,11 @@ func (b *Engine) Increment(
 }
 
 func (b *Engine) IncrementAt(
-	ctx context.Context,
 	object uint32,
 	index uint64,
 	delta int64,
 ) error {
-	target, err := b.sequenceOperation(ctx, object, index)
+	target, err := b.sequenceOperation(object, index)
 	if err != nil {
 		return err
 	}
@@ -679,10 +631,7 @@ func (b *Engine) IncrementAt(
 	)
 }
 
-func (b *Engine) Keys(ctx context.Context, object uint32) ([]string, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func (b *Engine) Keys(object uint32) ([]string, error) {
 
 	objectID, err := b.mapObject(object)
 	if err != nil {
@@ -692,10 +641,7 @@ func (b *Engine) Keys(ctx context.Context, object uint32) ([]string, error) {
 	return b.state.mapKeys(objectID), nil
 }
 
-func (b *Engine) Length(ctx context.Context, object uint32) (uint64, error) {
-	if err := ctx.Err(); err != nil {
-		return 0, err
-	}
+func (b *Engine) Length(object uint32) (uint64, error) {
 
 	objectID, err := b.object(object)
 	if err != nil {

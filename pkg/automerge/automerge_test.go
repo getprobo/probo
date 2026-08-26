@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -45,7 +44,7 @@ func closeDocument(t *testing.T, document *automerge.Document) {
 	t.Helper()
 	t.Cleanup(
 		func() {
-			require.NoError(t, document.Close(context.Background()))
+			require.NoError(t, document.Close())
 		},
 	)
 }
@@ -54,7 +53,7 @@ func closeSyncState(t *testing.T, state *automerge.SyncState) {
 	t.Helper()
 	t.Cleanup(
 		func() {
-			require.NoError(t, state.Close(context.Background()))
+			require.NoError(t, state.Close())
 		},
 	)
 }
@@ -62,25 +61,23 @@ func closeSyncState(t *testing.T, state *automerge.SyncState) {
 func synchronize(t *testing.T, left, right *automerge.SyncState) {
 	t.Helper()
 
-	ctx := context.Background()
-
 	for range 100 {
 		progressed := false
 
-		message, ok, err := left.GenerateMessage(ctx)
+		message, ok, err := left.GenerateMessage()
 		require.NoError(t, err)
 
 		if ok {
-			require.NoError(t, right.ReceiveMessage(ctx, message))
+			require.NoError(t, right.ReceiveMessage(message))
 
 			progressed = true
 		}
 
-		message, ok, err = right.GenerateMessage(ctx)
+		message, ok, err = right.GenerateMessage()
 		require.NoError(t, err)
 
 		if ok {
-			require.NoError(t, left.ReceiveMessage(ctx, message))
+			require.NoError(t, left.ReceiveMessage(message))
 
 			progressed = true
 		}
@@ -96,18 +93,17 @@ func synchronize(t *testing.T, left, right *automerge.SyncState) {
 func newBaseDocument(t *testing.T) []byte {
 	t.Helper()
 
-	ctx := context.Background()
-	document, err := automerge.NewReference(ctx, actor(1))
+	document, err := automerge.NewReference(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "Hello"))
-	_, err = document.Commit(ctx, "Create document", commitTime)
+	require.NoError(t, text.Splice(0, 0, "Hello"))
+	_, err = document.Commit("Create document", commitTime)
 	require.NoError(t, err)
 
-	data, err := document.Save(ctx)
+	data, err := document.Save()
 	require.NoError(t, err)
 
 	return data
@@ -116,34 +112,33 @@ func newBaseDocument(t *testing.T) []byte {
 func TestDocument_SaveAndLoad(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(1))
+	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	require.NoError(t, document.PutString(ctx, "title", "Policy"))
-	text, err := document.CreateText(ctx, "body")
+	require.NoError(t, document.PutString("title", "Policy"))
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "Hello"))
+	require.NoError(t, text.Splice(0, 0, "Hello"))
 
-	hash, err := document.Commit(ctx, "Create policy", commitTime)
+	hash, err := document.Commit("Create policy", commitTime)
 	require.NoError(t, err)
 	assert.Len(t, hash.String(), 64)
 
-	data, err := document.Save(ctx)
+	data, err := document.Save()
 	require.NoError(t, err)
 
-	loaded, err := automerge.Load(ctx, data, actor(2))
+	loaded, err := automerge.Load(data, actor(2))
 	require.NoError(t, err)
 	closeDocument(t, loaded)
 
-	loadedText, err := loaded.Text(ctx, "body")
+	loadedText, err := loaded.Text("body")
 	require.NoError(t, err)
-	value, err := loadedText.String(ctx)
+	value, err := loadedText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", value)
 
-	heads, err := loaded.Heads(ctx)
+	heads, err := loaded.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, []automerge.Hash{hash}, heads)
 }
@@ -151,58 +146,57 @@ func TestDocument_SaveAndLoad(t *testing.T) {
 func TestDocument_ConcurrentChangesConverge(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	base := newBaseDocument(t)
 
-	left, err := automerge.Load(ctx, base, actor(2))
+	left, err := automerge.Load(base, actor(2))
 	require.NoError(t, err)
 	closeDocument(t, left)
-	leftText, err := left.Text(ctx, "body")
+	leftText, err := left.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, leftText.Splice(ctx, 5, 0, " left"))
-	_, err = left.Commit(ctx, "Edit left", commitTime.Add(time.Second))
+	require.NoError(t, leftText.Splice(5, 0, " left"))
+	_, err = left.Commit("Edit left", commitTime.Add(time.Second))
 	require.NoError(t, err)
 
-	right, err := automerge.Load(ctx, base, actor(3))
+	right, err := automerge.Load(base, actor(3))
 	require.NoError(t, err)
 	closeDocument(t, right)
-	rightText, err := right.Text(ctx, "body")
+	rightText, err := right.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, rightText.Splice(ctx, 5, 0, " right"))
-	_, err = right.Commit(ctx, "Edit right", commitTime.Add(2*time.Second))
-	require.NoError(t, err)
-
-	leftData, err := left.Save(ctx)
-	require.NoError(t, err)
-	rightData, err := right.Save(ctx)
+	require.NoError(t, rightText.Splice(5, 0, " right"))
+	_, err = right.Commit("Edit right", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 
-	leftFirst, err := automerge.Load(ctx, leftData, actor(4))
+	leftData, err := left.Save()
+	require.NoError(t, err)
+	rightData, err := right.Save()
+	require.NoError(t, err)
+
+	leftFirst, err := automerge.Load(leftData, actor(4))
 	require.NoError(t, err)
 	closeDocument(t, leftFirst)
 
-	rightFirst, err := automerge.Load(ctx, rightData, actor(5))
+	rightFirst, err := automerge.Load(rightData, actor(5))
 	require.NoError(t, err)
 	closeDocument(t, rightFirst)
 
-	_, err = leftFirst.Merge(ctx, right)
+	_, err = leftFirst.Merge(right)
 	require.NoError(t, err)
-	_, err = rightFirst.Merge(ctx, left)
+	_, err = rightFirst.Merge(left)
 	require.NoError(t, err)
 
-	leftMergedText, err := leftFirst.Text(ctx, "body")
+	leftMergedText, err := leftFirst.Text("body")
 	require.NoError(t, err)
-	rightMergedText, err := rightFirst.Text(ctx, "body")
+	rightMergedText, err := rightFirst.Text("body")
 	require.NoError(t, err)
-	leftValue, err := leftMergedText.String(ctx)
+	leftValue, err := leftMergedText.String()
 	require.NoError(t, err)
-	rightValue, err := rightMergedText.String(ctx)
+	rightValue, err := rightMergedText.String()
 	require.NoError(t, err)
 	assert.Equal(t, leftValue, rightValue)
 
-	leftHeads, err := leftFirst.Heads(ctx)
+	leftHeads, err := leftFirst.Heads()
 	require.NoError(t, err)
-	rightHeads, err := rightFirst.Heads(ctx)
+	rightHeads, err := rightFirst.Heads()
 	require.NoError(t, err)
 	assert.ElementsMatch(t, leftHeads, rightHeads)
 }
@@ -210,17 +204,16 @@ func TestDocument_ConcurrentChangesConverge(t *testing.T) {
 func TestText_SpliceUsesUTF16Offsets(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(1))
+	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "A😀B"))
-	require.NoError(t, text.Splice(ctx, 1, 2, ""))
+	require.NoError(t, text.Splice(0, 0, "A😀B"))
+	require.NoError(t, text.Splice(1, 2, ""))
 
-	value, err := text.String(ctx)
+	value, err := text.String()
 	require.NoError(t, err)
 	assert.Equal(t, "AB", value)
 }
@@ -228,20 +221,19 @@ func TestText_SpliceUsesUTF16Offsets(t *testing.T) {
 func TestText_CursorTracksConcurrentEdits(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.Load(ctx, newBaseDocument(t), actor(2))
+	document, err := automerge.Load(newBaseDocument(t), actor(2))
 	require.NoError(t, err)
 	closeDocument(t, document)
-	text, err := document.Text(ctx, "body")
+	text, err := document.Text("body")
 	require.NoError(t, err)
 
-	cursor, err := text.Cursor(ctx, 4)
+	cursor, err := text.Cursor(4)
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "A"))
-	_, err = document.Commit(ctx, "Insert prefix", commitTime.Add(time.Second))
+	require.NoError(t, text.Splice(0, 0, "A"))
+	_, err = document.Commit("Insert prefix", commitTime.Add(time.Second))
 	require.NoError(t, err)
 
-	position, err := text.CursorPosition(ctx, cursor)
+	position, err := text.CursorPosition(cursor)
 	require.NoError(t, err)
 	assert.Equal(t, uint32(5), position)
 }
@@ -249,47 +241,46 @@ func TestText_CursorTracksConcurrentEdits(t *testing.T) {
 func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	left, err := automerge.Load(ctx, newBaseDocument(t), actor(2))
+	left, err := automerge.Load(newBaseDocument(t), actor(2))
 	require.NoError(t, err)
 	closeDocument(t, left)
 
-	right, err := automerge.New(ctx, actor(3))
+	right, err := automerge.New(actor(3))
 	require.NoError(t, err)
 	closeDocument(t, right)
 
-	leftSync, err := left.NewSyncState(ctx)
+	leftSync, err := left.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
 
-	rightSync, err := right.NewSyncState(ctx)
+	rightSync, err := right.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
 
 	synchronize(t, leftSync, rightSync)
 
-	leftText, err := left.Text(ctx, "body")
+	leftText, err := left.Text("body")
 	require.NoError(t, err)
-	rightText, err := right.Text(ctx, "body")
+	rightText, err := right.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, leftText.Splice(ctx, 5, 0, " left"))
-	_, err = left.Commit(ctx, "Edit left", commitTime.Add(time.Second))
+	require.NoError(t, leftText.Splice(5, 0, " left"))
+	_, err = left.Commit("Edit left", commitTime.Add(time.Second))
 	require.NoError(t, err)
-	require.NoError(t, rightText.Splice(ctx, 5, 0, " right"))
-	_, err = right.Commit(ctx, "Edit right", commitTime.Add(2*time.Second))
+	require.NoError(t, rightText.Splice(5, 0, " right"))
+	_, err = right.Commit("Edit right", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 
 	synchronize(t, leftSync, rightSync)
 
-	leftValue, err := leftText.String(ctx)
+	leftValue, err := leftText.String()
 	require.NoError(t, err)
-	rightValue, err := rightText.String(ctx)
+	rightValue, err := rightText.String()
 	require.NoError(t, err)
 	assert.Equal(t, leftValue, rightValue)
 
-	leftHeads, err := left.Heads(ctx)
+	leftHeads, err := left.Heads()
 	require.NoError(t, err)
-	rightHeads, err := right.Heads(ctx)
+	rightHeads, err := right.Heads()
 	require.NoError(t, err)
 	assert.ElementsMatch(t, leftHeads, rightHeads)
 }
@@ -297,42 +288,40 @@ func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
 func TestSyncState_SaveAndLoad(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(1))
+	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	state, err := document.NewSyncState(ctx)
+	state, err := document.NewSyncState()
 	require.NoError(t, err)
-	data, err := state.Save(ctx)
+	data, err := state.Save()
 	require.NoError(t, err)
-	require.NoError(t, state.Close(ctx))
+	require.NoError(t, state.Close())
 
-	loaded, err := document.LoadSyncState(ctx, data)
+	loaded, err := document.LoadSyncState(data)
 	require.NoError(t, err)
 	closeSyncState(t, loaded)
-	_, _, err = loaded.GenerateMessage(ctx)
+	_, _, err = loaded.GenerateMessage()
 	require.NoError(t, err)
 }
 
 func TestDocument_CloseIsIdempotent(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(1))
+	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
 
-	require.NoError(t, document.Close(ctx))
-	require.NoError(t, document.Close(ctx))
+	require.NoError(t, document.Close())
+	require.NoError(t, document.Close())
 
-	_, err = document.Save(ctx)
+	_, err = document.Save()
 	assert.ErrorIs(t, err, automerge.ErrClosed)
 }
 
 func TestLoad_InvalidDocument(t *testing.T) {
 	t.Parallel()
 
-	document, err := automerge.Load(context.Background(), []byte("invalid"), actor(1))
+	document, err := automerge.Load([]byte("invalid"), actor(1))
 	assert.Nil(t, document)
 	assert.Error(t, err)
 	assert.False(t, errors.Is(err, automerge.ErrClosed))

@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -56,7 +55,7 @@ type blockSpanScenario struct {
 	initial []automerge.SpanInput
 	target  []automerge.SpanInput
 	config  automerge.UpdateSpansConfig
-	post    func(ctx context.Context, t *testing.T, text *automerge.Text)
+	post    func(t *testing.T, text *automerge.Text)
 }
 
 func TestRustBlockSpans(t *testing.T) {
@@ -159,9 +158,9 @@ func TestRustBlockSpans(t *testing.T) {
 				DefaultExpand:  automerge.MarkExpandNone,
 				PerMarkExpands: map[string]automerge.MarkExpand{"bold": automerge.MarkExpandAfter},
 			},
-			post: func(ctx context.Context, t *testing.T, text *automerge.Text) {
-				require.NoError(t, text.Splice(ctx, 5, 0, "!"))
-				require.NoError(t, text.Splice(ctx, 0, 0, "Oh "))
+			post: func(t *testing.T, text *automerge.Text) {
+				require.NoError(t, text.Splice(5, 0, "!"))
+				require.NoError(t, text.Splice(0, 0, "Oh "))
 			},
 		},
 		{
@@ -245,34 +244,33 @@ func TestRustBlockSpans(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
 				result := make(map[string][]automerge.Span)
 
 				for _, engine := range rustParityEngines() {
-					document, err := engine.open(ctx, actor(0xaa))
+					document, err := engine.open(actor(0xaa))
 					require.NoError(t, err)
 					closeDocument(t, document)
 
-					text, err := document.CreateText(ctx, "text")
+					text, err := document.CreateText("text")
 					require.NoError(t, err)
 
 					if scenario.initial != nil {
-						require.NoError(t, text.UpdateSpans(ctx, scenario.initial, scenario.config))
-						_, err = document.Commit(ctx, "initial", commitTime)
+						require.NoError(t, text.UpdateSpans(scenario.initial, scenario.config))
+						_, err = document.Commit("initial", commitTime)
 						require.NoError(t, err)
 					}
 
-					require.NoError(t, text.UpdateSpans(ctx, scenario.target, scenario.config))
-					_, err = document.Commit(ctx, "target", commitTime)
+					require.NoError(t, text.UpdateSpans(scenario.target, scenario.config))
+					_, err = document.Commit("target", commitTime)
 					require.NoError(t, err)
 
 					if scenario.post != nil {
-						scenario.post(ctx, t, text)
-						_, err = document.Commit(ctx, "post", commitTime)
+						scenario.post(t, text)
+						_, err = document.Commit("post", commitTime)
 						require.NoError(t, err)
 					}
 
-					spans, err := text.Spans(ctx)
+					spans, err := text.Spans()
 					require.NoError(t, err)
 
 					result[engine.name] = spans
@@ -290,14 +288,13 @@ func TestRustBlockSpans(t *testing.T) {
 func TestRustText_InsertionsAfterNoexpandSpans(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandNone}
 	heading := map[string]any{"type": "heading", "parents": []any{}, "attrs": map[string]any{}}
 	paragraph := map[string]any{"type": "paragraph", "parents": []any{}, "attrs": map[string]any{}}
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "")
+		document, _, text := seedText(t, engine, "")
 
 		spans := []automerge.SpanInput{
 			blockSpan(heading),
@@ -306,17 +303,17 @@ func TestRustText_InsertionsAfterNoexpandSpans(t *testing.T) {
 			textSpan("a"),
 			blockSpan(paragraph),
 		}
-		require.NoError(t, text.UpdateSpans(ctx, spans, config))
-		_, err := document.Commit(ctx, "spans", commitTime)
+		require.NoError(t, text.UpdateSpans(spans, config))
+		_, err := document.Commit("spans", commitTime)
 		require.NoError(t, err)
 
-		before, err := document.Heads(ctx)
+		before, err := document.Heads()
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 11, 0, "a"))
-		after, err := document.Commit(ctx, "append", commitTime.Add(time.Second))
+		require.NoError(t, text.Splice(11, 0, "a"))
+		after, err := document.Commit("append", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		patches, err := document.Diff(before, []automerge.Hash{after})
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -334,26 +331,25 @@ func TestRustText_InsertionsAfterNoexpandSpans(t *testing.T) {
 func TestRustBlock_MarksOnSpansRespectHeads(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Span)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-		require.NoError(t, text.Mark(ctx, 0, 5, "bold", markBool(), automerge.MarkExpandAfter))
-		heads, err := document.Commit(ctx, "bold", commitTime)
-		require.NoError(t, err)
-
-		require.NoError(t, text.Mark(ctx, 5, 11, "italic", markBool(), automerge.MarkExpandAfter))
-		_, err = document.Commit(ctx, "italic", commitTime.Add(time.Second))
+		require.NoError(t, text.Splice(0, 0, "hello world"))
+		require.NoError(t, text.Mark(0, 5, "bold", markBool(), automerge.MarkExpandAfter))
+		heads, err := document.Commit("bold", commitTime)
 		require.NoError(t, err)
 
-		spans, err := text.SpansAt(ctx, []automerge.Hash{heads})
+		require.NoError(t, text.Mark(5, 11, "italic", markBool(), automerge.MarkExpandAfter))
+		_, err = document.Commit("italic", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		spans, err := text.SpansAt([]automerge.Hash{heads})
 		require.NoError(t, err)
 
 		result[engine.name] = spans
@@ -372,28 +368,27 @@ func TestRustBlock_MarksOnSpansRespectHeads(t *testing.T) {
 func TestRustBlock_DiffEmitsBlockUpdates(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
 
-		block, err := text.SplitBlock(ctx, 0)
+		block, err := text.SplitBlock(0)
 		require.NoError(t, err)
-		_, err = block.CreateObject(ctx, "parents", automerge.ObjectTypeList)
+		_, err = block.CreateObject("parents", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		_, err = document.Commit(ctx, "block", commitTime)
-		require.NoError(t, err)
-
-		heads, err := document.Heads(ctx)
+		_, err = document.Commit("block", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, nil, heads)
+		heads, err := document.Heads()
+		require.NoError(t, err)
+
+		patches, err := document.Diff(nil, heads)
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -427,37 +422,36 @@ func TestRustBlock_DiffEmitsBlockUpdates(t *testing.T) {
 func TestRustBlock_MergeProducesBlockInsertionDiffs(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		_, err = document.Commit(ctx, "seed", commitTime)
+		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
-		other, err := document.Fork(ctx, actor(0xbb))
+		other, err := document.Fork(actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, other)
 
-		_, err = text.SplitBlock(ctx, 0)
+		_, err = text.SplitBlock(0)
 		require.NoError(t, err)
-		_, err = document.Commit(ctx, "block", commitTime.Add(time.Second))
-		require.NoError(t, err)
-
-		require.NoError(t, other.UpdateDiffCursor(ctx))
-		before, err := other.Heads(ctx)
-		require.NoError(t, err)
-		_, err = other.Merge(ctx, document)
-		require.NoError(t, err)
-		after, err := other.Heads(ctx)
+		_, err = document.Commit("block", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		patches, err := other.Diff(ctx, before, after)
+		require.NoError(t, other.UpdateDiffCursor())
+		before, err := other.Heads()
+		require.NoError(t, err)
+		_, err = other.Merge(document)
+		require.NoError(t, err)
+		after, err := other.Heads()
+		require.NoError(t, err)
+
+		patches, err := other.Diff(before, after)
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -476,7 +470,6 @@ func TestRustBlock_MergeProducesBlockInsertionDiffs(t *testing.T) {
 func TestRustBlockSpans_Noop(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandAfter}
 
 	spans := []automerge.SpanInput{
@@ -490,21 +483,21 @@ func TestRustBlockSpans_Noop(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				document, err := engine.open(ctx, actor(0xaa))
+				document, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
-				text, err := document.CreateText(ctx, "text")
+				text, err := document.CreateText("text")
 				require.NoError(t, err)
 
-				require.NoError(t, text.UpdateSpans(ctx, spans, config))
-				_, err = document.Commit(ctx, "seed", commitTime)
+				require.NoError(t, text.UpdateSpans(spans, config))
+				_, err = document.Commit("seed", commitTime)
 				require.NoError(t, err)
 
-				require.NoError(t, document.UpdateDiffCursor(ctx))
-				require.NoError(t, text.UpdateSpans(ctx, spans, config))
+				require.NoError(t, document.UpdateDiffCursor())
+				require.NoError(t, text.UpdateSpans(spans, config))
 
-				patches, err := document.DiffIncremental(ctx)
+				patches, err := document.DiffIncremental()
 				require.NoError(t, err)
 				assert.Empty(t, patches)
 			},

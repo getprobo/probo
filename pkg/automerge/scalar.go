@@ -21,7 +21,6 @@
 package automerge
 
 import (
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -100,7 +99,7 @@ func CounterScalar(value int64) Scalar { return Scalar{Type: ScalarTypeCounter, 
 func TimestampScalar(millis int64) Scalar { return Scalar{Type: ScalarTypeTimestamp, Int: millis} }
 
 // PutScalar assigns a typed scalar at a key in the root map.
-func (d *Document) PutScalar(ctx context.Context, key string, value Scalar) error {
+func (d *Document) PutScalar(key string, value Scalar) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -113,7 +112,7 @@ func (d *Document) PutScalar(ctx context.Context, key string, value Scalar) erro
 		return fmt.Errorf("cannot encode Automerge scalar: %w", err)
 	}
 
-	if err := d.engine.PutScalar(ctx, rootObject, key, encoded); err != nil {
+	if err := d.engine.PutScalar(rootObject, key, encoded); err != nil {
 		return fmt.Errorf("cannot put Automerge scalar: %w", err)
 	}
 
@@ -121,7 +120,7 @@ func (d *Document) PutScalar(ctx context.Context, key string, value Scalar) erro
 }
 
 // Scalar returns a typed scalar from a key in the root map.
-func (d *Document) Scalar(ctx context.Context, key string) (Scalar, error) {
+func (d *Document) Scalar(key string) (Scalar, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -129,7 +128,7 @@ func (d *Document) Scalar(ctx context.Context, key string) (Scalar, error) {
 		return Scalar{}, ErrClosed
 	}
 
-	encoded, err := d.engine.GetScalar(ctx, rootObject, key)
+	encoded, err := d.engine.GetScalar(rootObject, key)
 	if err != nil {
 		return Scalar{}, fmt.Errorf("cannot get Automerge scalar: %w", err)
 	}
@@ -143,7 +142,7 @@ func (d *Document) Scalar(ctx context.Context, key string) (Scalar, error) {
 }
 
 // Scalars returns every concurrent scalar value at a key in the root map.
-func (d *Document) Scalars(ctx context.Context, key string) ([]Scalar, error) {
+func (d *Document) Scalars(key string) ([]Scalar, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -151,7 +150,7 @@ func (d *Document) Scalars(ctx context.Context, key string) ([]Scalar, error) {
 		return nil, ErrClosed
 	}
 
-	encoded, err := d.engine.GetAllScalars(ctx, rootObject, key)
+	encoded, err := d.engine.GetAllScalars(rootObject, key)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge scalar conflicts: %w", err)
 	}

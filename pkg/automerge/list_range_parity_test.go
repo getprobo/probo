@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -42,9 +41,7 @@ import (
 func TestRust_ReproduceClockCacheBug(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	base, err := automerge.New(ctx, actor(1))
+	base, err := automerge.New(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, base)
 
@@ -52,19 +49,19 @@ func TestRust_ReproduceClockCacheBug(t *testing.T) {
 		require.NoError(
 			t,
 			base.Root().PutScalar(
-				ctx,
+
 				"initial_commit",
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)},
 			),
 		)
-		_, err := base.Commit(ctx, "initial", commitTime.Add(time.Duration(i)))
+		_, err := base.Commit("initial", commitTime.Add(time.Duration(i)))
 		require.NoError(t, err)
 	}
 
 	const branches = 20
 
 	for branch := range branches {
-		fork, err := base.Fork(ctx, actor(byte(30+branch)))
+		fork, err := base.Fork(actor(byte(30 + branch)))
 		require.NoError(t, err)
 		closeDocument(t, fork)
 
@@ -72,23 +69,23 @@ func TestRust_ReproduceClockCacheBug(t *testing.T) {
 			require.NoError(
 				t,
 				fork.Root().PutScalar(
-					ctx,
+
 					"branch_value",
 					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(branch*10 + commit)},
 				),
 			)
-			_, err := fork.Commit(ctx, "branch", commitTime.Add(time.Duration(branch*10+commit)))
+			_, err := fork.Commit("branch", commitTime.Add(time.Duration(branch*10+commit)))
 			require.NoError(t, err)
 		}
 
-		_, err = base.Merge(ctx, fork)
+		_, err = base.Merge(fork)
 		require.NoError(t, err)
 	}
 
-	heads, err := base.Heads(ctx)
+	heads, err := base.Heads()
 	require.NoError(t, err)
 
-	changes, err := base.ChangesSince(ctx, heads)
+	changes, err := base.ChangesSince(heads)
 	require.NoError(t, err)
 	assert.Empty(t, changes)
 }
@@ -98,37 +95,36 @@ func TestRust_ReproduceClockCacheBug(t *testing.T) {
 func TestRustListRange_Bounds(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]int64)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list, err := document.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
 
 		for index, value := range []int64{1, 2, 3, 4, 5} {
 			require.NoError(
 				t,
 				list.InsertScalar(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
 				),
 			)
 		}
 
-		_, err = document.Commit(ctx, "list", commitTime)
+		_, err = document.Commit("list", commitTime)
 		require.NoError(t, err)
 
-		length, err := list.Len(ctx)
+		length, err := list.Len()
 		require.NoError(t, err)
 
 		values := make([]int64, 0, length)
 		for index := range length {
-			scalar, err := list.ScalarAt(ctx, index)
+			scalar, err := list.ScalarAt(index)
 			require.NoError(t, err)
 
 			values = append(values, scalar.Int)
@@ -146,62 +142,61 @@ func TestRustListRange_Bounds(t *testing.T) {
 func TestRustListRange_Conflict(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	values := make(map[string][]int64)
 	conflicts := make(map[string][]bool)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+		list, err := document.Root().CreateObject("list", automerge.ObjectTypeList)
 		require.NoError(t, err)
 
 		for index, value := range []int64{1, 2, 3, 4, 5} {
 			require.NoError(
 				t,
 				list.InsertScalar(
-					ctx,
+
 					uint64(index),
 					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
 				),
 			)
 		}
 
-		_, err = document.Commit(ctx, "list", commitTime)
+		_, err = document.Commit("list", commitTime)
 		require.NoError(t, err)
 
-		other, err := document.Fork(ctx, actor(0xbb))
+		other, err := document.Fork(actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, other)
 
-		otherList, err := other.Root().Object(ctx, "list")
+		otherList, err := other.Root().Object("list")
 		require.NoError(t, err)
-		require.NoError(t, otherList.PutScalarAt(ctx, 3, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 11}))
-		_, err = other.Commit(ctx, "other", commitTime.Add(1))
-		require.NoError(t, err)
-
-		require.NoError(t, list.PutScalarAt(ctx, 3, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 10}))
-		_, err = document.Commit(ctx, "mine", commitTime.Add(1))
+		require.NoError(t, otherList.PutScalarAt(3, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 11}))
+		_, err = other.Commit("other", commitTime.Add(1))
 		require.NoError(t, err)
 
-		_, err = other.Merge(ctx, document)
+		require.NoError(t, list.PutScalarAt(3, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 10}))
+		_, err = document.Commit("mine", commitTime.Add(1))
 		require.NoError(t, err)
 
-		length, err := otherList.Len(ctx)
+		_, err = other.Merge(document)
+		require.NoError(t, err)
+
+		length, err := otherList.Len()
 		require.NoError(t, err)
 
 		rowValues := make([]int64, 0, length)
 		rowConflicts := make([]bool, 0, length)
 
 		for index := range length {
-			scalar, err := otherList.ScalarAt(ctx, index)
+			scalar, err := otherList.ScalarAt(index)
 			require.NoError(t, err)
 
 			rowValues = append(rowValues, scalar.Int)
 
-			all, err := otherList.ScalarsAt(ctx, index)
+			all, err := otherList.ScalarsAt(index)
 			require.NoError(t, err)
 
 			rowConflicts = append(rowConflicts, len(all) > 1)

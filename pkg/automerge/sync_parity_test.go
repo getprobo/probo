@@ -28,7 +28,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -39,12 +38,11 @@ import (
 
 func readWriteSyncState(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 ) *automerge.SyncState {
 	t.Helper()
 
-	state, err := document.NewSyncState(ctx)
+	state, err := document.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, state)
 
@@ -53,13 +51,12 @@ func readWriteSyncState(
 
 func readOnlySyncState(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 ) *automerge.SyncState {
 	t.Helper()
 
-	state := readWriteSyncState(t, ctx, document)
-	require.NoError(t, state.SetReadOnly(ctx, true))
+	state := readWriteSyncState(t, document)
+	require.NoError(t, state.SetReadOnly(true))
 
 	return state
 }
@@ -69,7 +66,6 @@ func readOnlySyncState(
 // upstream sync() test helper.
 func syncQuiescent(
 	t *testing.T,
-	ctx context.Context,
 	left *automerge.SyncState,
 	right *automerge.SyncState,
 ) {
@@ -78,9 +74,9 @@ func syncQuiescent(
 	const maxRounds = 50
 
 	for range maxRounds {
-		leftMessage, leftOK, err := left.GenerateMessage(ctx)
+		leftMessage, leftOK, err := left.GenerateMessage()
 		require.NoError(t, err)
-		rightMessage, rightOK, err := right.GenerateMessage(ctx)
+		rightMessage, rightOK, err := right.GenerateMessage()
 		require.NoError(t, err)
 
 		if !leftOK && !rightOK {
@@ -88,11 +84,11 @@ func syncQuiescent(
 		}
 
 		if leftOK {
-			require.NoError(t, right.ReceiveMessage(ctx, leftMessage))
+			require.NoError(t, right.ReceiveMessage(leftMessage))
 		}
 
 		if rightOK {
-			require.NoError(t, left.ReceiveMessage(ctx, rightMessage))
+			require.NoError(t, left.ReceiveMessage(rightMessage))
 		}
 	}
 
@@ -101,20 +97,18 @@ func syncQuiescent(
 
 func rootHasKey(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 	key string,
 ) bool {
 	t.Helper()
 
-	_, err := document.Root().Scalar(ctx, key)
+	_, err := document.Root().Scalar(key)
 
 	return err == nil
 }
 
 func putRoot(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 	key string,
 	value string,
@@ -126,18 +120,17 @@ func putRoot(
 	require.NoError(
 		t,
 		document.Root().PutScalar(
-			ctx,
+
 			key,
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: value},
 		),
 	)
-	_, err := document.Commit(ctx, message, when)
+	_, err := document.Commit(message, when)
 	require.NoError(t, err)
 }
 
 func putInt(
 	t *testing.T,
-	ctx context.Context,
 	document *automerge.Document,
 	key string,
 	value int64,
@@ -149,12 +142,12 @@ func putInt(
 	require.NoError(
 		t,
 		document.Root().PutScalar(
-			ctx,
+
 			key,
 			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
 		),
 	)
-	_, err := document.Commit(ctx, message, when)
+	_, err := document.Commit(message, when)
 	require.NoError(t, err)
 }
 
@@ -165,43 +158,41 @@ func putInt(
 func TestRustSync_FirstMessageNoHeadsSendsWholeDoc(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				empty, err := engine.open(ctx, actor(1))
+				empty, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, empty)
 
-				populated, err := engine.open(ctx, actor(2))
+				populated, err := engine.open(actor(2))
 				require.NoError(t, err)
 				closeDocument(t, populated)
-				putRoot(t, ctx, populated, "foo", "bar", "seed", commitTime)
+				putRoot(t, populated, "foo", "bar", "seed", commitTime)
 
-				emptyState := readWriteSyncState(t, ctx, empty)
-				populatedState := readWriteSyncState(t, ctx, populated)
+				emptyState := readWriteSyncState(t, empty)
+				populatedState := readWriteSyncState(t, populated)
 
-				request, ok, err := emptyState.GenerateMessage(ctx)
+				request, ok, err := emptyState.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
-				require.NoError(t, populatedState.ReceiveMessage(ctx, request))
+				require.NoError(t, populatedState.ReceiveMessage(request))
 
-				response, ok, err := populatedState.GenerateMessage(ctx)
+				response, ok, err := populatedState.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
-				require.NoError(t, emptyState.ReceiveMessage(ctx, response))
+				require.NoError(t, emptyState.ReceiveMessage(response))
 
 				assert.True(
 					t,
-					rootHasKey(t, ctx, empty, "foo"),
+					rootHasKey(t, empty, "foo"),
 					"empty peer should receive the whole document in the first response",
 				)
 
-				value, err := empty.Root().Scalar(ctx, "foo")
+				value, err := empty.Root().Scalar("foo")
 				require.NoError(t, err)
 				assert.Equal(t, "bar", value.String)
 			},
@@ -216,61 +207,59 @@ func TestRustSync_FirstMessageNoHeadsSendsWholeDoc(t *testing.T) {
 func TestRustSync_BranchingAndMerging(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(0x01))
+				doc1, err := engine.open(actor(0x01))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0x89))
+				doc2, err := engine.open(actor(0x89))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				doc3, err := engine.open(ctx, actor(0xfe))
+				doc3, err := engine.open(actor(0xfe))
 				require.NoError(t, err)
 				closeDocument(t, doc3)
 
-				putInt(t, ctx, doc1, "x", 0, "x0", commitTime)
-				_, err = doc2.Merge(ctx, doc1)
+				putInt(t, doc1, "x", 0, "x0", commitTime)
+				_, err = doc2.Merge(doc1)
 				require.NoError(t, err)
-				_, err = doc3.Merge(ctx, doc1)
+				_, err = doc3.Merge(doc1)
 				require.NoError(t, err)
 
-				putInt(t, ctx, doc3, "x", 1, "x1", commitTime.Add(time.Second))
+				putInt(t, doc3, "x", 1, "x1", commitTime.Add(time.Second))
 
 				for i := int64(1); i < 20; i++ {
 					when := commitTime.Add(time.Duration(i+1) * time.Second)
-					putInt(t, ctx, doc1, "n1", i, "n1", when)
-					putInt(t, ctx, doc2, "n2", i, "n2", when)
-					_, err = doc1.Merge(ctx, doc2)
+					putInt(t, doc1, "n1", i, "n1", when)
+					putInt(t, doc2, "n2", i, "n2", when)
+					_, err = doc1.Merge(doc2)
 					require.NoError(t, err)
-					_, err = doc2.Merge(ctx, doc1)
+					_, err = doc2.Merge(doc1)
 					require.NoError(t, err)
 				}
 
-				s1 := readWriteSyncState(t, ctx, doc1)
-				s2 := readWriteSyncState(t, ctx, doc2)
-				syncQuiescent(t, ctx, s1, s2)
+				s1 := readWriteSyncState(t, doc1)
+				s2 := readWriteSyncState(t, doc2)
+				syncQuiescent(t, s1, s2)
 
 				// doc3's change is concurrent to the last sync heads, forcing the
 				// slower reconciliation path on the next synchronization.
-				_, err = doc2.Merge(ctx, doc3)
+				_, err = doc2.Merge(doc3)
 				require.NoError(t, err)
 
-				putInt(t, ctx, doc1, "n1", 100, "n1 final", commitTime.Add(time.Hour))
-				putInt(t, ctx, doc2, "n1", 100, "n1 final", commitTime.Add(time.Hour))
+				putInt(t, doc1, "n1", 100, "n1 final", commitTime.Add(time.Hour))
+				putInt(t, doc2, "n1", 100, "n1 final", commitTime.Add(time.Hour))
 
-				s1 = readWriteSyncState(t, ctx, doc1)
-				s2 = readWriteSyncState(t, ctx, doc2)
-				syncQuiescent(t, ctx, s1, s2)
+				s1 = readWriteSyncState(t, doc1)
+				s2 = readWriteSyncState(t, doc2)
+				syncQuiescent(t, s1, s2)
 
-				assert.Equal(t, sortedHeadHex(t, ctx, doc1), sortedHeadHex(t, ctx, doc2))
+				assert.Equal(t, sortedHeadHex(t, doc1), sortedHeadHex(t, doc2))
 			},
 		)
 	}
@@ -281,32 +270,30 @@ func TestRustSync_BranchingAndMerging(t *testing.T) {
 func TestRustSync_FirstResponseIsSomeEvenIfNoChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(1))
+				doc1, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
-				putRoot(t, ctx, doc1, "key", "value", "put", commitTime)
+				putRoot(t, doc1, "key", "value", "put", commitTime)
 
-				doc2, err := doc1.Fork(ctx, actor(2))
+				doc2, err := doc1.Fork(actor(2))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				s1 := readWriteSyncState(t, ctx, doc1)
-				s2 := readWriteSyncState(t, ctx, doc2)
+				s1 := readWriteSyncState(t, doc1)
+				s2 := readWriteSyncState(t, doc2)
 
-				message, ok, err := s1.GenerateMessage(ctx)
+				message, ok, err := s1.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
-				require.NoError(t, s2.ReceiveMessage(ctx, message))
+				require.NoError(t, s2.ReceiveMessage(message))
 
-				_, ok, err = s2.GenerateMessage(ctx)
+				_, ok, err = s2.GenerateMessage()
 				require.NoError(t, err)
 				assert.True(t, ok, "first response must be sent even with equal heads")
 			},
@@ -319,39 +306,37 @@ func TestRustSync_FirstResponseIsSomeEvenIfNoChanges(t *testing.T) {
 func TestRustSync_ShouldNotReplyIfNoDataAfterFirstRound(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(1))
+				doc1, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(2))
+				doc2, err := engine.open(actor(2))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				s1 := readWriteSyncState(t, ctx, doc1)
-				s2 := readWriteSyncState(t, ctx, doc2)
+				s1 := readWriteSyncState(t, doc1)
+				s2 := readWriteSyncState(t, doc2)
 
-				message, ok, err := s1.GenerateMessage(ctx)
+				message, ok, err := s1.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
-				require.NoError(t, s2.ReceiveMessage(ctx, message))
+				require.NoError(t, s2.ReceiveMessage(message))
 
-				_, ok, err = s2.GenerateMessage(ctx)
+				_, ok, err = s2.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok, "first round response expected")
 
-				_, ok, err = s1.GenerateMessage(ctx)
+				_, ok, err = s1.GenerateMessage()
 				require.NoError(t, err)
 				assert.False(t, ok)
 
-				_, ok, err = s2.GenerateMessage(ctx)
+				_, ok, err = s2.GenerateMessage()
 				require.NoError(t, err)
 				assert.False(t, ok)
 			},
@@ -364,19 +349,17 @@ func TestRustSync_ShouldNotReplyIfNoDataAfterFirstRound(t *testing.T) {
 func TestRustSync_AllowSimultaneousMessages(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(0xab))
+				doc1, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0xcd))
+				doc2, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
@@ -384,32 +367,32 @@ func TestRustSync_AllowSimultaneousMessages(t *testing.T) {
 					require.NoError(
 						t,
 						doc1.Root().PutScalar(
-							ctx,
+
 							"x",
 							automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)},
 						),
 					)
-					_, err = doc1.Commit(ctx, "x", commitTime.Add(time.Duration(i)*time.Second))
+					_, err = doc1.Commit("x", commitTime.Add(time.Duration(i)*time.Second))
 					require.NoError(t, err)
 					require.NoError(
 						t,
 						doc2.Root().PutScalar(
-							ctx,
+
 							"y",
 							automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)},
 						),
 					)
-					_, err = doc2.Commit(ctx, "y", commitTime.Add(time.Duration(i)*time.Second))
+					_, err = doc2.Commit("y", commitTime.Add(time.Duration(i)*time.Second))
 					require.NoError(t, err)
 				}
 
-				s1 := readWriteSyncState(t, ctx, doc1)
-				s2 := readWriteSyncState(t, ctx, doc2)
-				syncQuiescent(t, ctx, s1, s2)
+				s1 := readWriteSyncState(t, doc1)
+				s2 := readWriteSyncState(t, doc2)
+				syncQuiescent(t, s1, s2)
 
-				assert.Equal(t, sortedHeadHex(t, ctx, doc1), sortedHeadHex(t, ctx, doc2))
-				assert.True(t, rootHasKey(t, ctx, doc1, "y"))
-				assert.True(t, rootHasKey(t, ctx, doc2, "x"))
+				assert.Equal(t, sortedHeadHex(t, doc1), sortedHeadHex(t, doc2))
+				assert.True(t, rootHasKey(t, doc1, "y"))
+				assert.True(t, rootHasKey(t, doc2, "x"))
 			},
 		)
 	}
@@ -420,38 +403,36 @@ func TestRustSync_AllowSimultaneousMessages(t *testing.T) {
 func TestRustSync_BothReadOnlyOneMakesLocalChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(1))
+				doc1, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(2))
+				doc2, err := engine.open(actor(2))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				s1 := readOnlySyncState(t, ctx, doc1)
-				s2 := readOnlySyncState(t, ctx, doc2)
-				syncQuiescent(t, ctx, s1, s2)
+				s1 := readOnlySyncState(t, doc1)
+				s2 := readOnlySyncState(t, doc2)
+				syncQuiescent(t, s1, s2)
 
-				putRoot(t, ctx, doc1, "key", "value1", "value1", commitTime)
-				syncQuiescent(t, ctx, s1, s2)
-				assert.False(t, rootHasKey(t, ctx, doc2, "key"))
+				putRoot(t, doc1, "key", "value1", "value1", commitTime)
+				syncQuiescent(t, s1, s2)
+				assert.False(t, rootHasKey(t, doc2, "key"))
 
-				putRoot(t, ctx, doc1, "key", "value2", "value2", commitTime.Add(time.Second))
-				syncQuiescent(t, ctx, s1, s2)
-				assert.False(t, rootHasKey(t, ctx, doc2, "key"))
+				putRoot(t, doc1, "key", "value2", "value2", commitTime.Add(time.Second))
+				syncQuiescent(t, s1, s2)
+				assert.False(t, rootHasKey(t, doc2, "key"))
 
-				_, ok, err := s1.GenerateMessage(ctx)
+				_, ok, err := s1.GenerateMessage()
 				require.NoError(t, err)
 				assert.False(t, ok)
-				_, ok, err = s2.GenerateMessage(ctx)
+				_, ok, err = s2.GenerateMessage()
 				require.NoError(t, err)
 				assert.False(t, ok)
 			},
@@ -464,42 +445,40 @@ func TestRustSync_BothReadOnlyOneMakesLocalChanges(t *testing.T) {
 func TestRustSync_BothReadOnlySimultaneousChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(0xab))
+				doc1, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0xcd))
+				doc2, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				s1 := readOnlySyncState(t, ctx, doc1)
-				s2 := readOnlySyncState(t, ctx, doc2)
+				s1 := readOnlySyncState(t, doc1)
+				s2 := readOnlySyncState(t, doc2)
 
-				putRoot(t, ctx, doc1, "x", "1", "x1", commitTime)
-				putRoot(t, ctx, doc2, "y", "2", "y2", commitTime)
-				syncQuiescent(t, ctx, s1, s2)
+				putRoot(t, doc1, "x", "1", "x1", commitTime)
+				putRoot(t, doc2, "y", "2", "y2", commitTime)
+				syncQuiescent(t, s1, s2)
 
-				putRoot(t, ctx, doc1, "x", "3", "x3", commitTime.Add(time.Second))
-				putRoot(t, ctx, doc2, "y", "4", "y4", commitTime.Add(time.Second))
-				syncQuiescent(t, ctx, s1, s2)
+				putRoot(t, doc1, "x", "3", "x3", commitTime.Add(time.Second))
+				putRoot(t, doc2, "y", "4", "y4", commitTime.Add(time.Second))
+				syncQuiescent(t, s1, s2)
 
-				_, ok, err := s1.GenerateMessage(ctx)
+				_, ok, err := s1.GenerateMessage()
 				require.NoError(t, err)
 				assert.False(t, ok)
-				_, ok, err = s2.GenerateMessage(ctx)
+				_, ok, err = s2.GenerateMessage()
 				require.NoError(t, err)
 				assert.False(t, ok)
 
-				assert.False(t, rootHasKey(t, ctx, doc1, "y"))
-				assert.False(t, rootHasKey(t, ctx, doc2, "x"))
+				assert.False(t, rootHasKey(t, doc1, "y"))
+				assert.False(t, rootHasKey(t, doc2, "x"))
 			},
 		)
 	}
@@ -510,35 +489,33 @@ func TestRustSync_BothReadOnlySimultaneousChanges(t *testing.T) {
 func TestRustSync_ReadOnlyPeerNewChangesBetweenRounds(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(0xab))
+				doc1, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0xcd))
+				doc2, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				putRoot(t, ctx, doc1, "round1", "from_doc1", "r1a", commitTime)
-				putRoot(t, ctx, doc2, "round1", "from_doc2", "r1b", commitTime)
+				putRoot(t, doc1, "round1", "from_doc1", "r1a", commitTime)
+				putRoot(t, doc2, "round1", "from_doc2", "r1b", commitTime)
 
-				s1 := readOnlySyncState(t, ctx, doc1)
-				s2 := readWriteSyncState(t, ctx, doc2)
-				syncQuiescent(t, ctx, s1, s2)
-				assert.True(t, rootHasKey(t, ctx, doc2, "round1"))
+				s1 := readOnlySyncState(t, doc1)
+				s2 := readWriteSyncState(t, doc2)
+				syncQuiescent(t, s1, s2)
+				assert.True(t, rootHasKey(t, doc2, "round1"))
 
-				putRoot(t, ctx, doc1, "round2", "new_from_doc1", "r2a", commitTime.Add(time.Second))
-				putRoot(t, ctx, doc2, "round2", "new_from_doc2", "r2b", commitTime.Add(time.Second))
-				syncQuiescent(t, ctx, s1, s2)
+				putRoot(t, doc1, "round2", "new_from_doc1", "r2a", commitTime.Add(time.Second))
+				putRoot(t, doc2, "round2", "new_from_doc2", "r2b", commitTime.Add(time.Second))
+				syncQuiescent(t, s1, s2)
 
-				values, err := doc2.Root().Scalars(ctx, "round2")
+				values, err := doc2.Root().Scalars("round2")
 				require.NoError(t, err)
 
 				found := make(map[string]bool)
@@ -549,11 +526,11 @@ func TestRustSync_ReadOnlyPeerNewChangesBetweenRounds(t *testing.T) {
 				assert.True(t, found["new_from_doc1"])
 				assert.True(t, found["new_from_doc2"])
 
-				doc1Values, err := doc1.Root().Scalars(ctx, "round2")
+				doc1Values, err := doc1.Root().Scalars("round2")
 				require.NoError(t, err)
 				require.Len(t, doc1Values, 1)
 				assert.Equal(t, "new_from_doc1", doc1Values[0].String)
-				assert.False(t, rootHasKey(t, ctx, doc1, "from_doc2"))
+				assert.False(t, rootHasKey(t, doc1, "from_doc2"))
 			},
 		)
 	}
@@ -564,57 +541,55 @@ func TestRustSync_ReadOnlyPeerNewChangesBetweenRounds(t *testing.T) {
 func TestRustSync_ReadOnlyPeerConcurrentChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(0xab))
+				doc1, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0xcd))
+				doc2, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				s1 := readOnlySyncState(t, ctx, doc1)
-				s2 := readWriteSyncState(t, ctx, doc2)
-				syncQuiescent(t, ctx, s1, s2)
+				s1 := readOnlySyncState(t, doc1)
+				s2 := readWriteSyncState(t, doc2)
+				syncQuiescent(t, s1, s2)
 
 				require.NoError(
 					t,
 					doc2.Root().PutScalar(
-						ctx,
+
 						"x",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 0},
 					),
 				)
-				_, err = doc2.Commit(ctx, "x", commitTime.Add(time.Second))
+				_, err = doc2.Commit("x", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
-				message, ok, err := s2.GenerateMessage(ctx)
+				message, ok, err := s2.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
-				require.NoError(t, s1.ReceiveMessage(ctx, message))
+				require.NoError(t, s1.ReceiveMessage(message))
 
 				require.NoError(
 					t,
 					doc1.Root().PutScalar(
-						ctx,
+
 						"y",
 						automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 					),
 				)
-				_, err = doc1.Commit(ctx, "y", commitTime.Add(2*time.Second))
+				_, err = doc1.Commit("y", commitTime.Add(2*time.Second))
 				require.NoError(t, err)
 
-				syncQuiescent(t, ctx, s1, s2)
+				syncQuiescent(t, s1, s2)
 
-				assert.True(t, rootHasKey(t, ctx, doc2, "y"))
-				assert.False(t, rootHasKey(t, ctx, doc1, "x"))
+				assert.True(t, rootHasKey(t, doc2, "y"))
+				assert.False(t, rootHasKey(t, doc1, "x"))
 			},
 		)
 	}
@@ -625,38 +600,36 @@ func TestRustSync_ReadOnlyPeerConcurrentChanges(t *testing.T) {
 func TestRustSync_SwitchReadWriteToReadOnlyMidSession(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				docA, err := engine.open(ctx, actor(0xab))
+				docA, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, docA)
 
-				docB, err := engine.open(ctx, actor(0xcd))
+				docB, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, docB)
 
-				putRoot(t, ctx, docA, "from_a", "hello", "a", commitTime)
-				putRoot(t, ctx, docB, "from_b", "world", "b", commitTime)
+				putRoot(t, docA, "from_a", "hello", "a", commitTime)
+				putRoot(t, docB, "from_b", "world", "b", commitTime)
 
-				sa := readWriteSyncState(t, ctx, docA)
-				sb := readWriteSyncState(t, ctx, docB)
-				syncQuiescent(t, ctx, sa, sb)
-				assert.Equal(t, sortedHeadHex(t, ctx, docA), sortedHeadHex(t, ctx, docB))
+				sa := readWriteSyncState(t, docA)
+				sb := readWriteSyncState(t, docB)
+				syncQuiescent(t, sa, sb)
+				assert.Equal(t, sortedHeadHex(t, docA), sortedHeadHex(t, docB))
 
-				require.NoError(t, sa.SetReadOnly(ctx, true))
+				require.NoError(t, sa.SetReadOnly(true))
 
-				putRoot(t, ctx, docB, "new_from_b", "secret", "nb", commitTime.Add(time.Second))
-				putRoot(t, ctx, docA, "new_from_a", "published", "na", commitTime.Add(time.Second))
-				syncQuiescent(t, ctx, sa, sb)
+				putRoot(t, docB, "new_from_b", "secret", "nb", commitTime.Add(time.Second))
+				putRoot(t, docA, "new_from_a", "published", "na", commitTime.Add(time.Second))
+				syncQuiescent(t, sa, sb)
 
-				assert.True(t, rootHasKey(t, ctx, docB, "new_from_a"))
-				assert.False(t, rootHasKey(t, ctx, docA, "new_from_b"))
+				assert.True(t, rootHasKey(t, docB, "new_from_a"))
+				assert.False(t, rootHasKey(t, docA, "new_from_b"))
 			},
 		)
 	}
@@ -667,49 +640,46 @@ func TestRustSync_SwitchReadWriteToReadOnlyMidSession(t *testing.T) {
 func TestRustSync_SwitchReadOnlyToReadWriteMultipleRounds(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				docA, err := engine.open(ctx, actor(0xab))
+				docA, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, docA)
 
-				docB, err := engine.open(ctx, actor(0xcd))
+				docB, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, docB)
 
-				putRoot(t, ctx, docA, "from_a", "initial", "a", commitTime)
+				putRoot(t, docA, "from_a", "initial", "a", commitTime)
 
-				sa := readOnlySyncState(t, ctx, docA)
-				sb := readWriteSyncState(t, ctx, docB)
+				sa := readOnlySyncState(t, docA)
+				sb := readWriteSyncState(t, docB)
 
 				for round := 1; round <= 3; round++ {
 					putRoot(
 						t,
-						ctx,
 						docB,
 						roundKey(round),
 						"from_b",
 						"b",
 						commitTime.Add(time.Duration(round)*time.Second),
 					)
-					syncQuiescent(t, ctx, sa, sb)
-					assert.False(t, rootHasKey(t, ctx, docA, roundKey(round)))
+					syncQuiescent(t, sa, sb)
+					assert.False(t, rootHasKey(t, docA, roundKey(round)))
 				}
 
-				require.NoError(t, sa.SetReadOnly(ctx, false))
-				syncQuiescent(t, ctx, sa, sb)
+				require.NoError(t, sa.SetReadOnly(false))
+				syncQuiescent(t, sa, sb)
 
 				for round := 1; round <= 3; round++ {
-					assert.True(t, rootHasKey(t, ctx, docA, roundKey(round)))
+					assert.True(t, rootHasKey(t, docA, roundKey(round)))
 				}
 
-				assert.Equal(t, sortedHeadHex(t, ctx, docA), sortedHeadHex(t, ctx, docB))
+				assert.Equal(t, sortedHeadHex(t, docA), sortedHeadHex(t, docB))
 			},
 		)
 	}
@@ -720,50 +690,48 @@ func TestRustSync_SwitchReadOnlyToReadWriteMultipleRounds(t *testing.T) {
 func TestRustSync_ToggleReadOnlyMultipleTimes(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				docA, err := engine.open(ctx, actor(0xab))
+				docA, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, docA)
 
-				docB, err := engine.open(ctx, actor(0xcd))
+				docB, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, docB)
 
-				sa := readOnlySyncState(t, ctx, docA)
-				sb := readWriteSyncState(t, ctx, docB)
+				sa := readOnlySyncState(t, docA)
+				sb := readWriteSyncState(t, docB)
 
-				putRoot(t, ctx, docB, "b1", "val", "b1", commitTime)
-				putRoot(t, ctx, docA, "a1", "val", "a1", commitTime)
-				syncQuiescent(t, ctx, sa, sb)
-				assert.True(t, rootHasKey(t, ctx, docB, "a1"))
-				assert.False(t, rootHasKey(t, ctx, docA, "b1"))
+				putRoot(t, docB, "b1", "val", "b1", commitTime)
+				putRoot(t, docA, "a1", "val", "a1", commitTime)
+				syncQuiescent(t, sa, sb)
+				assert.True(t, rootHasKey(t, docB, "a1"))
+				assert.False(t, rootHasKey(t, docA, "b1"))
 
-				require.NoError(t, sa.SetReadOnly(ctx, false))
-				putRoot(t, ctx, docB, "b2", "val", "b2", commitTime.Add(time.Second))
-				putRoot(t, ctx, docA, "a2", "val", "a2", commitTime.Add(time.Second))
-				syncQuiescent(t, ctx, sa, sb)
-				assert.True(t, rootHasKey(t, ctx, docA, "b1"))
-				assert.True(t, rootHasKey(t, ctx, docA, "b2"))
-				assert.True(t, rootHasKey(t, ctx, docB, "a2"))
+				require.NoError(t, sa.SetReadOnly(false))
+				putRoot(t, docB, "b2", "val", "b2", commitTime.Add(time.Second))
+				putRoot(t, docA, "a2", "val", "a2", commitTime.Add(time.Second))
+				syncQuiescent(t, sa, sb)
+				assert.True(t, rootHasKey(t, docA, "b1"))
+				assert.True(t, rootHasKey(t, docA, "b2"))
+				assert.True(t, rootHasKey(t, docB, "a2"))
 
-				require.NoError(t, sa.SetReadOnly(ctx, true))
-				putRoot(t, ctx, docB, "b3", "val", "b3", commitTime.Add(2*time.Second))
-				putRoot(t, ctx, docA, "a3", "val", "a3", commitTime.Add(2*time.Second))
-				syncQuiescent(t, ctx, sa, sb)
-				assert.True(t, rootHasKey(t, ctx, docB, "a3"))
-				assert.False(t, rootHasKey(t, ctx, docA, "b3"))
+				require.NoError(t, sa.SetReadOnly(true))
+				putRoot(t, docB, "b3", "val", "b3", commitTime.Add(2*time.Second))
+				putRoot(t, docA, "a3", "val", "a3", commitTime.Add(2*time.Second))
+				syncQuiescent(t, sa, sb)
+				assert.True(t, rootHasKey(t, docB, "a3"))
+				assert.False(t, rootHasKey(t, docA, "b3"))
 
-				require.NoError(t, sa.SetReadOnly(ctx, false))
-				syncQuiescent(t, ctx, sa, sb)
-				assert.True(t, rootHasKey(t, ctx, docA, "b3"))
-				assert.Equal(t, sortedHeadHex(t, ctx, docA), sortedHeadHex(t, ctx, docB))
+				require.NoError(t, sa.SetReadOnly(false))
+				syncQuiescent(t, sa, sb)
+				assert.True(t, rootHasKey(t, docA, "b3"))
+				assert.Equal(t, sortedHeadHex(t, docA), sortedHeadHex(t, docB))
 			},
 		)
 	}
@@ -774,29 +742,26 @@ func TestRustSync_ToggleReadOnlyMultipleTimes(t *testing.T) {
 func TestRustSync_BothToggleAfterMultipleReadOnlyRounds(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc1, err := engine.open(ctx, actor(0xab))
+				doc1, err := engine.open(actor(0xab))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0xcd))
+				doc2, err := engine.open(actor(0xcd))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
-				s1 := readOnlySyncState(t, ctx, doc1)
-				s2 := readOnlySyncState(t, ctx, doc2)
+				s1 := readOnlySyncState(t, doc1)
+				s2 := readOnlySyncState(t, doc2)
 
 				for i := range 5 {
 					putRoot(
 						t,
-						ctx,
 						doc1,
 						doc1Round(i),
 						"v",
@@ -805,31 +770,30 @@ func TestRustSync_BothToggleAfterMultipleReadOnlyRounds(t *testing.T) {
 					)
 					putRoot(
 						t,
-						ctx,
 						doc2,
 						doc2Round(i),
 						"v",
 						"d2",
 						commitTime.Add(time.Duration(i)*time.Second),
 					)
-					syncQuiescent(t, ctx, s1, s2)
+					syncQuiescent(t, s1, s2)
 				}
 
 				for i := range 5 {
-					assert.False(t, rootHasKey(t, ctx, doc1, doc2Round(i)))
-					assert.False(t, rootHasKey(t, ctx, doc2, doc1Round(i)))
+					assert.False(t, rootHasKey(t, doc1, doc2Round(i)))
+					assert.False(t, rootHasKey(t, doc2, doc1Round(i)))
 				}
 
-				require.NoError(t, s1.SetReadOnly(ctx, false))
-				require.NoError(t, s2.SetReadOnly(ctx, false))
-				syncQuiescent(t, ctx, s1, s2)
+				require.NoError(t, s1.SetReadOnly(false))
+				require.NoError(t, s2.SetReadOnly(false))
+				syncQuiescent(t, s1, s2)
 
 				for i := range 5 {
-					assert.True(t, rootHasKey(t, ctx, doc1, doc2Round(i)))
-					assert.True(t, rootHasKey(t, ctx, doc2, doc1Round(i)))
+					assert.True(t, rootHasKey(t, doc1, doc2Round(i)))
+					assert.True(t, rootHasKey(t, doc2, doc1Round(i)))
 				}
 
-				assert.Equal(t, sortedHeadHex(t, ctx, doc1), sortedHeadHex(t, ctx, doc2))
+				assert.Equal(t, sortedHeadHex(t, doc1), sortedHeadHex(t, doc2))
 			},
 		)
 	}
@@ -840,42 +804,40 @@ func TestRustSync_BothToggleAfterMultipleReadOnlyRounds(t *testing.T) {
 func TestRustSync_ReadOnlyPublisherToMultipleConsumers(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				r, err := engine.open(ctx, actor(0xaa))
+				r, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, r)
 
-				a, err := engine.open(ctx, actor(0xbb))
+				a, err := engine.open(actor(0xbb))
 				require.NoError(t, err)
 				closeDocument(t, a)
 
-				b, err := engine.open(ctx, actor(0xcc))
+				b, err := engine.open(actor(0xcc))
 				require.NoError(t, err)
 				closeDocument(t, b)
 
-				putRoot(t, ctx, r, "from_r", "hello", "r", commitTime)
+				putRoot(t, r, "from_r", "hello", "r", commitTime)
 
-				srA := readOnlySyncState(t, ctx, r)
-				saR := readWriteSyncState(t, ctx, a)
-				syncQuiescent(t, ctx, srA, saR)
-				assert.True(t, rootHasKey(t, ctx, a, "from_r"))
+				srA := readOnlySyncState(t, r)
+				saR := readWriteSyncState(t, a)
+				syncQuiescent(t, srA, saR)
+				assert.True(t, rootHasKey(t, a, "from_r"))
 
-				putRoot(t, ctx, a, "from_a", "world", "a", commitTime.Add(time.Second))
-				syncQuiescent(t, ctx, srA, saR)
-				assert.False(t, rootHasKey(t, ctx, r, "from_a"))
+				putRoot(t, a, "from_a", "world", "a", commitTime.Add(time.Second))
+				syncQuiescent(t, srA, saR)
+				assert.False(t, rootHasKey(t, r, "from_a"))
 
-				srB := readOnlySyncState(t, ctx, r)
-				sbR := readWriteSyncState(t, ctx, b)
-				syncQuiescent(t, ctx, srB, sbR)
-				assert.True(t, rootHasKey(t, ctx, b, "from_r"))
-				assert.False(t, rootHasKey(t, ctx, b, "from_a"))
+				srB := readOnlySyncState(t, r)
+				sbR := readWriteSyncState(t, b)
+				syncQuiescent(t, srB, sbR)
+				assert.True(t, rootHasKey(t, b, "from_r"))
+				assert.False(t, rootHasKey(t, b, "from_a"))
 			},
 		)
 	}
@@ -886,56 +848,54 @@ func TestRustSync_ReadOnlyPublisherToMultipleConsumers(t *testing.T) {
 func TestRustSync_ReadOnlyFullyConnectedTriangle(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				r, err := engine.open(ctx, actor(0xaa))
+				r, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, r)
 
-				a, err := engine.open(ctx, actor(0xbb))
+				a, err := engine.open(actor(0xbb))
 				require.NoError(t, err)
 				closeDocument(t, a)
 
-				b, err := engine.open(ctx, actor(0xcc))
+				b, err := engine.open(actor(0xcc))
 				require.NoError(t, err)
 				closeDocument(t, b)
 
-				putRoot(t, ctx, r, "from_r", "r_val", "r", commitTime)
-				putRoot(t, ctx, a, "from_a", "a_val", "a", commitTime)
-				putRoot(t, ctx, b, "from_b", "b_val", "b", commitTime)
-				rHeads := sortedHeadHex(t, ctx, r)
+				putRoot(t, r, "from_r", "r_val", "r", commitTime)
+				putRoot(t, a, "from_a", "a_val", "a", commitTime)
+				putRoot(t, b, "from_b", "b_val", "b", commitTime)
+				rHeads := sortedHeadHex(t, r)
 
-				srA := readOnlySyncState(t, ctx, r)
-				saR := readWriteSyncState(t, ctx, a)
-				syncQuiescent(t, ctx, srA, saR)
+				srA := readOnlySyncState(t, r)
+				saR := readWriteSyncState(t, a)
+				syncQuiescent(t, srA, saR)
 
-				srB := readOnlySyncState(t, ctx, r)
-				sbR := readWriteSyncState(t, ctx, b)
-				syncQuiescent(t, ctx, srB, sbR)
+				srB := readOnlySyncState(t, r)
+				sbR := readWriteSyncState(t, b)
+				syncQuiescent(t, srB, sbR)
 
-				assert.True(t, rootHasKey(t, ctx, a, "from_r"))
-				assert.True(t, rootHasKey(t, ctx, b, "from_r"))
+				assert.True(t, rootHasKey(t, a, "from_r"))
+				assert.True(t, rootHasKey(t, b, "from_r"))
 
-				saB := readWriteSyncState(t, ctx, a)
-				sbA := readWriteSyncState(t, ctx, b)
-				syncQuiescent(t, ctx, saB, sbA)
+				saB := readWriteSyncState(t, a)
+				sbA := readWriteSyncState(t, b)
+				syncQuiescent(t, saB, sbA)
 
 				for _, document := range []*automerge.Document{a, b} {
-					assert.True(t, rootHasKey(t, ctx, document, "from_a"))
-					assert.True(t, rootHasKey(t, ctx, document, "from_b"))
-					assert.True(t, rootHasKey(t, ctx, document, "from_r"))
+					assert.True(t, rootHasKey(t, document, "from_a"))
+					assert.True(t, rootHasKey(t, document, "from_b"))
+					assert.True(t, rootHasKey(t, document, "from_r"))
 				}
 
-				assert.Equal(t, sortedHeadHex(t, ctx, a), sortedHeadHex(t, ctx, b))
-				assert.Equal(t, rHeads, sortedHeadHex(t, ctx, r))
-				assert.False(t, rootHasKey(t, ctx, r, "from_a"))
-				assert.False(t, rootHasKey(t, ctx, r, "from_b"))
+				assert.Equal(t, sortedHeadHex(t, a), sortedHeadHex(t, b))
+				assert.Equal(t, rHeads, sortedHeadHex(t, r))
+				assert.False(t, rootHasKey(t, r, "from_a"))
+				assert.False(t, rootHasKey(t, r, "from_b"))
 			},
 		)
 	}
@@ -946,23 +906,21 @@ func TestRustSync_ReadOnlyFullyConnectedTriangle(t *testing.T) {
 func TestRustSync_StaleSharedHeadsAfterReadOnlySync(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				r, err := engine.open(ctx, actor(0xaa))
+				r, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, r)
 
-				a, err := engine.open(ctx, actor(0xbb))
+				a, err := engine.open(actor(0xbb))
 				require.NoError(t, err)
 				closeDocument(t, a)
 
-				b, err := engine.open(ctx, actor(0xcc))
+				b, err := engine.open(actor(0xcc))
 				require.NoError(t, err)
 				closeDocument(t, b)
 
@@ -970,35 +928,35 @@ func TestRustSync_StaleSharedHeadsAfterReadOnlySync(t *testing.T) {
 					require.NoError(
 						t,
 						r.Root().PutScalar(
-							ctx,
+
 							"counter",
 							automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)},
 						),
 					)
-					_, err = r.Commit(ctx, "counter", commitTime.Add(time.Duration(i)*time.Second))
+					_, err = r.Commit("counter", commitTime.Add(time.Duration(i)*time.Second))
 					require.NoError(t, err)
 				}
 
-				putRoot(t, ctx, a, "from_a", "a_val", "a", commitTime)
+				putRoot(t, a, "from_a", "a_val", "a", commitTime)
 
-				srA := readOnlySyncState(t, ctx, r)
-				saR := readWriteSyncState(t, ctx, a)
-				syncQuiescent(t, ctx, srA, saR)
-				assert.True(t, rootHasKey(t, ctx, a, "counter"))
+				srA := readOnlySyncState(t, r)
+				saR := readWriteSyncState(t, a)
+				syncQuiescent(t, srA, saR)
+				assert.True(t, rootHasKey(t, a, "counter"))
 
-				saB := readWriteSyncState(t, ctx, a)
-				sbA := readWriteSyncState(t, ctx, b)
-				syncQuiescent(t, ctx, saB, sbA)
-				assert.True(t, rootHasKey(t, ctx, b, "counter"))
-				assert.True(t, rootHasKey(t, ctx, b, "from_a"))
+				saB := readWriteSyncState(t, a)
+				sbA := readWriteSyncState(t, b)
+				syncQuiescent(t, saB, sbA)
+				assert.True(t, rootHasKey(t, b, "counter"))
+				assert.True(t, rootHasKey(t, b, "from_a"))
 
-				srB := readOnlySyncState(t, ctx, r)
-				sbR := readWriteSyncState(t, ctx, b)
-				syncQuiescent(t, ctx, srB, sbR)
+				srB := readOnlySyncState(t, r)
+				sbR := readWriteSyncState(t, b)
+				syncQuiescent(t, srB, sbR)
 
-				assert.False(t, rootHasKey(t, ctx, r, "from_a"))
-				assert.True(t, rootHasKey(t, ctx, b, "counter"))
-				assert.True(t, rootHasKey(t, ctx, b, "from_a"))
+				assert.False(t, rootHasKey(t, r, "from_a"))
+				assert.True(t, rootHasKey(t, b, "counter"))
+				assert.True(t, rootHasKey(t, b, "from_a"))
 			},
 		)
 	}
@@ -1009,57 +967,55 @@ func TestRustSync_StaleSharedHeadsAfterReadOnlySync(t *testing.T) {
 func TestRustSync_ReadOnlyPeerReceivesSameChangesFromTwoPeers(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				r, err := engine.open(ctx, actor(0xaa))
+				r, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, r)
 
-				a, err := engine.open(ctx, actor(0xbb))
+				a, err := engine.open(actor(0xbb))
 				require.NoError(t, err)
 				closeDocument(t, a)
 
-				b, err := engine.open(ctx, actor(0xcc))
+				b, err := engine.open(actor(0xcc))
 				require.NoError(t, err)
 				closeDocument(t, b)
 
-				putRoot(t, ctx, r, "from_r", "r_val", "r", commitTime)
-				putRoot(t, ctx, a, "from_a", "a_val", "a", commitTime)
-				putRoot(t, ctx, b, "from_b", "b_val", "b", commitTime)
+				putRoot(t, r, "from_r", "r_val", "r", commitTime)
+				putRoot(t, a, "from_a", "a_val", "a", commitTime)
+				putRoot(t, b, "from_b", "b_val", "b", commitTime)
 
-				saB := readWriteSyncState(t, ctx, a)
-				sbA := readWriteSyncState(t, ctx, b)
-				syncQuiescent(t, ctx, saB, sbA)
-				assert.Equal(t, sortedHeadHex(t, ctx, a), sortedHeadHex(t, ctx, b))
+				saB := readWriteSyncState(t, a)
+				sbA := readWriteSyncState(t, b)
+				syncQuiescent(t, saB, sbA)
+				assert.Equal(t, sortedHeadHex(t, a), sortedHeadHex(t, b))
 
-				rHeads := sortedHeadHex(t, ctx, r)
+				rHeads := sortedHeadHex(t, r)
 
-				srA := readOnlySyncState(t, ctx, r)
-				saR := readWriteSyncState(t, ctx, a)
-				syncQuiescent(t, ctx, srA, saR)
-				assert.True(t, rootHasKey(t, ctx, a, "from_r"))
-				assert.Equal(t, rHeads, sortedHeadHex(t, ctx, r))
+				srA := readOnlySyncState(t, r)
+				saR := readWriteSyncState(t, a)
+				syncQuiescent(t, srA, saR)
+				assert.True(t, rootHasKey(t, a, "from_r"))
+				assert.Equal(t, rHeads, sortedHeadHex(t, r))
 
-				srB := readOnlySyncState(t, ctx, r)
-				sbR := readWriteSyncState(t, ctx, b)
-				syncQuiescent(t, ctx, srB, sbR)
-				assert.True(t, rootHasKey(t, ctx, b, "from_r"))
+				srB := readOnlySyncState(t, r)
+				sbR := readWriteSyncState(t, b)
+				syncQuiescent(t, srB, sbR)
+				assert.True(t, rootHasKey(t, b, "from_r"))
 
-				assert.Equal(t, rHeads, sortedHeadHex(t, ctx, r))
-				assert.False(t, rootHasKey(t, ctx, r, "from_a"))
-				assert.False(t, rootHasKey(t, ctx, r, "from_b"))
+				assert.Equal(t, rHeads, sortedHeadHex(t, r))
+				assert.False(t, rootHasKey(t, r, "from_a"))
+				assert.False(t, rootHasKey(t, r, "from_b"))
 
-				putRoot(t, ctx, r, "from_r_2", "new", "r2", commitTime.Add(time.Second))
-				syncQuiescent(t, ctx, srA, saR)
-				assert.True(t, rootHasKey(t, ctx, a, "from_r_2"))
-				syncQuiescent(t, ctx, srB, sbR)
-				assert.True(t, rootHasKey(t, ctx, b, "from_r_2"))
+				putRoot(t, r, "from_r_2", "new", "r2", commitTime.Add(time.Second))
+				syncQuiescent(t, srA, saR)
+				assert.True(t, rootHasKey(t, a, "from_r_2"))
+				syncQuiescent(t, srB, sbR)
+				assert.True(t, rootHasKey(t, b, "from_r_2"))
 			},
 		)
 	}

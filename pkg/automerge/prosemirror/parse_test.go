@@ -22,7 +22,6 @@ package prosemirror_test
 
 import (
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"os"
 	"testing"
@@ -63,25 +62,23 @@ func TestToSpans_RoundTripsCanonicalDocuments(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
-
 				spans, err := automergeprosemirror.ToSpans(string(fixture.Expected))
 				require.NoError(t, err)
 
 				actorID, err := automerge.NewActorID()
 				require.NoError(t, err)
 
-				document, err := automerge.New(ctx, actorID)
+				document, err := automerge.New(actorID)
 				require.NoError(t, err)
 
-				defer func() { _ = document.Close(ctx) }()
+				defer func() { _ = document.Close() }()
 
-				text, err := document.CreateText(ctx, "body")
+				text, err := document.CreateText("body")
 				require.NoError(t, err)
 
-				require.NoError(t, text.UpdateSpans(ctx, spans, automergeprosemirror.UpdateSpansConfig()))
+				require.NoError(t, text.UpdateSpans(spans, automergeprosemirror.UpdateSpansConfig()))
 
-				readback, err := text.Spans(ctx)
+				readback, err := text.Spans()
 				require.NoError(t, err)
 
 				rendered, err := automergeprosemirror.Render(readback)

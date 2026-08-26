@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -42,27 +41,26 @@ import (
 func TestJSMarks_MarksSeenInPatches(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	markPatches := make(map[string][]automerge.Patch)
 	unmarkPatches := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "the quick fox jumps over the lazy dog")
+		document, _, text := seedText(t, engine, "the quick fox jumps over the lazy dog")
 
-		require.NoError(t, document.UpdateDiffCursor(ctx))
-		require.NoError(t, text.Mark(ctx, 5, 10, "font-weight", markStr("bold"), automerge.MarkExpandNone))
-		_, err := document.Commit(ctx, "mark", commitTime.Add(time.Second))
+		require.NoError(t, document.UpdateDiffCursor())
+		require.NoError(t, text.Mark(5, 10, "font-weight", markStr("bold"), automerge.MarkExpandNone))
+		_, err := document.Commit("mark", commitTime.Add(time.Second))
 		require.NoError(t, err)
-		marked, err := document.DiffIncremental(ctx)
+		marked, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		markPatches[engine.name] = marked
 
-		require.NoError(t, document.UpdateDiffCursor(ctx))
-		require.NoError(t, text.Unmark(ctx, 7, 9, "font-weight", automerge.MarkExpandNone))
-		_, err = document.Commit(ctx, "unmark", commitTime.Add(2*time.Second))
+		require.NoError(t, document.UpdateDiffCursor())
+		require.NoError(t, text.Unmark(7, 9, "font-weight", automerge.MarkExpandNone))
+		_, err = document.Commit("unmark", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
-		unmarked, err := document.DiffIncremental(ctx)
+		unmarked, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		unmarkPatches[engine.name] = unmarked

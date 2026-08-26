@@ -21,7 +21,6 @@
 package native
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -32,58 +31,57 @@ import (
 func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	base, err := NewEngine(ctx)
+	base, err := NewEngine()
 	require.NoError(t, err)
-	require.NoError(t, base.SetActor(ctx, []byte{1}))
-	text, err := base.PutText(ctx, 0, "body")
+	require.NoError(t, base.SetActor([]byte{1}))
+	text, err := base.PutText(0, "body")
 	require.NoError(t, err)
-	require.NoError(t, base.SpliceText(ctx, text, 0, 0, "A"))
-	_, err = base.Commit(ctx, "base", time.Unix(1, 0))
+	require.NoError(t, base.SpliceText(text, 0, 0, "A"))
+	_, err = base.Commit("base", time.Unix(1, 0))
 	require.NoError(t, err)
-	baseData, err := base.Save(ctx, true, true)
+	baseData, err := base.Save(true, true)
 	require.NoError(t, err)
 
-	source, err := LoadEngine(ctx, baseData)
+	source, err := LoadEngine(baseData)
 	require.NoError(t, err)
-	require.NoError(t, source.SetActor(ctx, []byte{2}))
-	sourceText, err := source.GetText(ctx, 0, "body")
+	require.NoError(t, source.SetActor([]byte{2}))
+	sourceText, err := source.GetText(0, "body")
 	require.NoError(t, err)
-	require.NoError(t, source.SpliceText(ctx, sourceText, 1, 0, "B"))
-	_, err = source.Commit(ctx, "parent", time.Unix(2, 0))
+	require.NoError(t, source.SpliceText(sourceText, 1, 0, "B"))
+	_, err = source.Commit("parent", time.Unix(2, 0))
 	require.NoError(t, err)
 
 	parent := append([]byte(nil), source.appended[len(source.appended)-1]...)
 
-	require.NoError(t, source.SpliceText(ctx, sourceText, 2, 0, "C"))
-	_, err = source.Commit(ctx, "child", time.Unix(3, 0))
+	require.NoError(t, source.SpliceText(sourceText, 2, 0, "C"))
+	_, err = source.Commit("child", time.Unix(3, 0))
 	require.NoError(t, err)
 
 	child := append([]byte(nil), source.appended[len(source.appended)-1]...)
 
-	target, err := LoadEngine(ctx, baseData)
+	target, err := LoadEngine(baseData)
 	require.NoError(t, err)
-	_, err = target.Merge(ctx, append(child, parent...))
+	_, err = target.Merge(append(child, parent...))
 	require.NoError(t, err)
-	targetText, err := target.GetText(ctx, 0, "body")
+	targetText, err := target.GetText(0, "body")
 	require.NoError(t, err)
-	value, err := target.Text(ctx, targetText)
+	value, err := target.Text(targetText)
 	require.NoError(t, err)
 	assert.Equal(t, "ABC", value)
 
-	separate, err := LoadEngine(ctx, baseData)
+	separate, err := LoadEngine(baseData)
 	require.NoError(t, err)
-	_, err = separate.Merge(ctx, child)
+	_, err = separate.Merge(child)
 	require.NoError(t, err)
 	assert.Len(t, separate.queuedChanges, 1)
 
-	_, err = separate.Merge(ctx, parent)
+	_, err = separate.Merge(parent)
 	require.NoError(t, err)
 	assert.Empty(t, separate.queuedChanges)
 
-	separateText, err := separate.GetText(ctx, 0, "body")
+	separateText, err := separate.GetText(0, "body")
 	require.NoError(t, err)
-	separateValue, err := separate.Text(ctx, separateText)
+	separateValue, err := separate.Text(separateText)
 	require.NoError(t, err)
 	assert.Equal(t, "ABC", separateValue)
 }

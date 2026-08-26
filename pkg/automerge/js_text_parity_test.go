@@ -25,7 +25,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,17 +34,17 @@ import (
 
 func hydratedFromEngines() []struct {
 	name string
-	from func(context.Context, automerge.ActorID, map[string]automerge.Value, string) (*automerge.Document, error)
+	from func(automerge.ActorID, map[string]automerge.Value, string) (*automerge.Document, error)
 } {
 	return []struct {
 		name string
-		from func(context.Context, automerge.ActorID, map[string]automerge.Value, string) (*automerge.Document, error)
+		from func(automerge.ActorID, map[string]automerge.Value, string) (*automerge.Document, error)
 	}{
-		{"native", func(ctx context.Context, actorID automerge.ActorID, value map[string]automerge.Value, message string) (*automerge.Document, error) {
-			return automerge.NewFrom(ctx, actorID, value, message, commitTime)
+		{"native", func(actorID automerge.ActorID, value map[string]automerge.Value, message string) (*automerge.Document, error) {
+			return automerge.NewFrom(actorID, value, message, commitTime)
 		}},
-		{"reference", func(ctx context.Context, actorID automerge.ActorID, value map[string]automerge.Value, message string) (*automerge.Document, error) {
-			return automerge.NewReferenceFrom(ctx, actorID, value, message, commitTime)
+		{"reference", func(actorID automerge.ActorID, value map[string]automerge.Value, message string) (*automerge.Document, error) {
+			return automerge.NewReferenceFrom(actorID, value, message, commitTime)
 		}},
 	}
 }
@@ -56,17 +55,16 @@ func hydratedFromEngines() []struct {
 func TestJSText_ImplicitAndExplicitDeletion(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string]string)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "abc")
-		require.NoError(t, text.Splice(ctx, 1, 1, ""))
-		require.NoError(t, text.Splice(ctx, 1, 0, ""))
-		_, err := document.Commit(ctx, "edit", commitTime)
+		document, _, text := seedText(t, engine, "abc")
+		require.NoError(t, text.Splice(1, 1, ""))
+		require.NoError(t, text.Splice(1, 0, ""))
+		_, err := document.Commit("edit", commitTime)
 		require.NoError(t, err)
 
-		value, err := text.String(ctx)
+		value, err := text.String()
 		require.NoError(t, err)
 
 		result[engine.name] = value
@@ -81,30 +79,29 @@ func TestJSText_ImplicitAndExplicitDeletion(t *testing.T) {
 func TestJSText_TextAndOtherOpsSameChange(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	foos := make(map[string]string)
 	texts := make(map[string]string)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "")
+		document, _, text := seedText(t, engine, "")
 		require.NoError(
 			t,
 			document.Root().PutScalar(
-				ctx,
+
 				"foo",
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "bar"},
 			),
 		)
-		require.NoError(t, text.Splice(ctx, 0, 0, "a"))
-		_, err := document.Commit(ctx, "mixed", commitTime)
+		require.NoError(t, text.Splice(0, 0, "a"))
+		_, err := document.Commit("mixed", commitTime)
 		require.NoError(t, err)
 
-		foo, err := document.Root().Scalar(ctx, "foo")
+		foo, err := document.Root().Scalar("foo")
 		require.NoError(t, err)
 
 		foos[engine.name] = foo.String
 
-		value, err := text.String(ctx)
+		value, err := text.String()
 		require.NoError(t, err)
 
 		texts[engine.name] = value
@@ -122,7 +119,6 @@ func TestJSText_TextAndOtherOpsSameChange(t *testing.T) {
 func TestJSText_InitializeTextInFrom(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	loaded := make(map[string]string)
 	changes := make(map[string]uint64)
 
@@ -131,23 +127,23 @@ func TestJSText_InitializeTextInFrom(t *testing.T) {
 	}
 
 	for _, engine := range hydratedFromEngines() {
-		document, err := engine.from(ctx, actor(0xaa), root, "init")
+		document, err := engine.from(actor(0xaa), root, "init")
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.Text(ctx, "text")
+		text, err := document.Text("text")
 		require.NoError(t, err)
 
-		value, err := text.String(ctx)
+		value, err := text.String()
 		require.NoError(t, err)
 		assert.Equal(t, "init", value)
 
-		stats, err := document.Stats(ctx)
+		stats, err := document.Stats()
 		require.NoError(t, err)
 
 		changes[engine.name] = stats.NumChanges
 
-		saved, err := document.Save(ctx)
+		saved, err := document.Save()
 		require.NoError(t, err)
 
 		load := automerge.Load
@@ -155,13 +151,13 @@ func TestJSText_InitializeTextInFrom(t *testing.T) {
 			load = automerge.LoadReference
 		}
 
-		reloaded, err := load(ctx, saved, actor(0xcc))
+		reloaded, err := load(saved, actor(0xcc))
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
 
-		reloadedText, err := reloaded.Text(ctx, "text")
+		reloadedText, err := reloaded.Text("text")
 		require.NoError(t, err)
-		loaded[engine.name], err = reloadedText.String(ctx)
+		loaded[engine.name], err = reloadedText.String()
 		require.NoError(t, err)
 	}
 
@@ -176,7 +172,6 @@ func TestJSText_InitializeTextInFrom(t *testing.T) {
 func TestJSText_SplicingIntoArrays(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string]string)
 
 	root := map[string]automerge.Value{
@@ -190,24 +185,24 @@ func TestJSText_SplicingIntoArrays(t *testing.T) {
 	}
 
 	for _, engine := range hydratedFromEngines() {
-		document, err := engine.from(ctx, actor(0xaa), root, "init")
+		document, err := engine.from(actor(0xaa), root, "init")
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		outer, err := document.Root().Object(ctx, "dom")
+		outer, err := document.Root().Object("dom")
 		require.NoError(t, err)
-		inner, err := outer.ObjectAt(ctx, 0)
+		inner, err := outer.ObjectAt(0)
 		require.NoError(t, err)
-		textObject, err := inner.ObjectAt(ctx, 0)
+		textObject, err := inner.ObjectAt(0)
 		require.NoError(t, err)
-		text, err := textObject.Text(ctx)
-		require.NoError(t, err)
-
-		require.NoError(t, text.Splice(ctx, 0, 0, "Hello "))
-		_, err = document.Commit(ctx, "splice", commitTime)
+		text, err := textObject.Text()
 		require.NoError(t, err)
 
-		value, err := text.String(ctx)
+		require.NoError(t, text.Splice(0, 0, "Hello "))
+		_, err = document.Commit("splice", commitTime)
+		require.NoError(t, err)
+
+		value, err := text.String()
 		require.NoError(t, err)
 
 		result[engine.name] = value

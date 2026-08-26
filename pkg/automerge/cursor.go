@@ -21,7 +21,6 @@
 package automerge
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -44,7 +43,6 @@ func EndCursor() Cursor {
 
 // CursorFor returns a stable cursor with JavaScript-compatible index clamping.
 func (t *Text) CursorFor(
-	ctx context.Context,
 	index int64,
 	move CursorMove,
 ) (Cursor, error) {
@@ -63,7 +61,7 @@ func (t *Text) CursorFor(
 		return StartCursor(), nil
 	}
 
-	value, err := t.document.engine.Text(ctx, t.handle)
+	value, err := t.document.engine.Text(t.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge text for cursor: %w", err)
 	}
@@ -74,7 +72,6 @@ func (t *Text) CursorFor(
 	}
 
 	cursor, err := t.document.engine.TextCursorMoving(
-		ctx,
 		t.handle,
 		uint32(index),
 		move == CursorMoveBefore,
@@ -89,7 +86,6 @@ func (t *Text) CursorFor(
 // CursorForAt returns a stable cursor for an index resolved against the text as
 // it existed at a historical frontier, mirroring get_cursor with heads.
 func (t *Text) CursorForAt(
-	ctx context.Context,
 	index int64,
 	move CursorMove,
 	heads []Hash,
@@ -109,7 +105,7 @@ func (t *Text) CursorForAt(
 		return StartCursor(), nil
 	}
 
-	value, err := t.document.engine.TextAt(ctx, t.handle, engineHashes(heads))
+	value, err := t.document.engine.TextAt(t.handle, engineHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot read historical Automerge text for cursor: %w", err)
 	}
@@ -120,7 +116,6 @@ func (t *Text) CursorForAt(
 	}
 
 	cursor, err := t.document.engine.TextCursorMovingAt(
-		ctx,
 		t.handle,
 		uint32(index),
 		move == CursorMoveBefore,
@@ -135,7 +130,6 @@ func (t *Text) CursorForAt(
 
 // SpliceCursor resolves cursor and applies a text splice at its current position.
 func (t *Text) SpliceCursor(
-	ctx context.Context,
 	cursor Cursor,
 	deleteCount int32,
 	value string,
@@ -148,7 +142,6 @@ func (t *Text) SpliceCursor(
 	}
 
 	position, err := t.document.engine.TextCursorPosition(
-		ctx,
 		t.handle,
 		cursor,
 	)
@@ -157,7 +150,6 @@ func (t *Text) SpliceCursor(
 	}
 
 	if err := t.document.engine.SpliceText(
-		ctx,
 		t.handle,
 		position,
 		deleteCount,

@@ -32,7 +32,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -46,10 +45,10 @@ import (
 // bloomOracle returns a reference document used only to evaluate Bloom filter
 // membership. Change hashes are engine-independent, so the same oracle locates
 // the false positive for both the native and reference runs.
-func bloomOracle(t *testing.T, ctx context.Context) *automerge.Document {
+func bloomOracle(t *testing.T) *automerge.Document {
 	t.Helper()
 
-	oracle, err := automerge.NewReference(ctx, actor(0xB0))
+	oracle, err := automerge.NewReference(actor(0xB0))
 	require.NoError(t, err)
 	closeDocument(t, oracle)
 
@@ -74,10 +73,10 @@ func unionSortedHeadHex(left, right []string) []string {
 	return union
 }
 
-func headHashes(t *testing.T, ctx context.Context, document *automerge.Document) []automerge.Hash {
+func headHashes(t *testing.T, document *automerge.Document) []automerge.Hash {
 	t.Helper()
 
-	heads, err := document.Heads(ctx)
+	heads, err := document.Heads()
 	require.NoError(t, err)
 
 	return heads
@@ -90,49 +89,47 @@ func headHashes(t *testing.T, ctx context.Context, document *automerge.Document)
 func TestRustSync_ShouldHandleFalsePositiveHead(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				oracle := bloomOracle(t, ctx)
+				oracle := bloomOracle(t)
 
-				doc1, err := engine.open(ctx, actor(0xa1))
+				doc1, err := engine.open(actor(0xa1))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0xd4))
+				doc2, err := engine.open(actor(0xd4))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
 				for i := range int64(10) {
-					putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
+					putInt(t, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
 				}
 
-				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, doc2))
+				syncQuiescent(t, readWriteSyncState(t, doc1), readWriteSyncState(t, doc2))
 
 				var n1, n2 *automerge.Document
 
 				for i := 0; ; i++ {
 					require.Less(t, i, 10000, "no Bloom false positive found")
 
-					candidate1, err := doc1.Fork(ctx, actor(0x11))
+					candidate1, err := doc1.Fork(actor(0x11))
 					require.NoError(t, err)
 
-					putRoot(t, ctx, candidate1, "x", fmt.Sprintf("%d @ n1", i), "n1", commitTime.Add(time.Hour))
+					putRoot(t, candidate1, "x", fmt.Sprintf("%d @ n1", i), "n1", commitTime.Add(time.Hour))
 
-					candidate2, err := doc1.Fork(ctx, actor(0x22))
+					candidate2, err := doc1.Fork(actor(0x22))
 					require.NoError(t, err)
 
-					putRoot(t, ctx, candidate2, "x", fmt.Sprintf("%d @ n2", i), "n2", commitTime.Add(time.Hour))
+					putRoot(t, candidate2, "x", fmt.Sprintf("%d @ n2", i), "n2", commitTime.Add(time.Hour))
 
-					n1Heads := headHashes(t, ctx, candidate1)
-					n2Heads := headHashes(t, ctx, candidate2)
+					n1Heads := headHashes(t, candidate1)
+					n2Heads := headHashes(t, candidate2)
 
-					falsePositive, err := oracle.ReferenceBloomContains(ctx, n1Heads, n2Heads[0])
+					falsePositive, err := oracle.ReferenceBloomContains(n1Heads, n2Heads[0])
 					require.NoError(t, err)
 
 					if falsePositive {
@@ -145,16 +142,16 @@ func TestRustSync_ShouldHandleFalsePositiveHead(t *testing.T) {
 						break
 					}
 
-					require.NoError(t, candidate1.Close(ctx))
-					require.NoError(t, candidate2.Close(ctx))
+					require.NoError(t, candidate1.Close())
+					require.NoError(t, candidate2.Close())
 				}
 
-				allHeads := unionSortedHeadHex(sortedHeadHex(t, ctx, n1), sortedHeadHex(t, ctx, n2))
+				allHeads := unionSortedHeadHex(sortedHeadHex(t, n1), sortedHeadHex(t, n2))
 
-				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, n1), readWriteSyncState(t, ctx, n2))
+				syncQuiescent(t, readWriteSyncState(t, n1), readWriteSyncState(t, n2))
 
-				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, n1))
-				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, n2))
+				assert.Equal(t, allHeads, sortedHeadHex(t, n1))
+				assert.Equal(t, allHeads, sortedHeadHex(t, n2))
 			},
 		)
 	}
@@ -167,52 +164,50 @@ func TestRustSync_ShouldHandleFalsePositiveHead(t *testing.T) {
 func TestRustSync_ShouldHandleChainsOfFalsePositives(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				oracle := bloomOracle(t, ctx)
+				oracle := bloomOracle(t)
 
-				doc1, err := engine.open(ctx, actor(0xa1))
+				doc1, err := engine.open(actor(0xa1))
 				require.NoError(t, err)
 				closeDocument(t, doc1)
 
-				doc2, err := engine.open(ctx, actor(0xd4))
+				doc2, err := engine.open(actor(0xd4))
 				require.NoError(t, err)
 				closeDocument(t, doc2)
 
 				for i := range int64(10) {
-					putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
+					putInt(t, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
 				}
 
-				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, doc2))
+				syncQuiescent(t, readWriteSyncState(t, doc1), readWriteSyncState(t, doc2))
 
-				putInt(t, ctx, doc1, "x", 5, "x5", commitTime.Add(time.Hour))
-				bloomSeeds := headHashes(t, ctx, doc1)
+				putInt(t, doc1, "x", 5, "x5", commitTime.Add(time.Hour))
+				bloomSeeds := headHashes(t, doc1)
 
 				findFalsePositive := func(base *automerge.Document, label string) *automerge.Document {
 					for i := 0; ; i++ {
 						require.Less(t, i, 10000, "no Bloom false positive found for %s", label)
 
-						candidate, err := base.Fork(ctx, actor(0x8c))
+						candidate, err := base.Fork(actor(0x8c))
 						require.NoError(t, err)
 
-						putRoot(t, ctx, candidate, "x", fmt.Sprintf("%d %s", i, label), label, commitTime.Add(2*time.Hour))
+						putRoot(t, candidate, "x", fmt.Sprintf("%d %s", i, label), label, commitTime.Add(2*time.Hour))
 
-						heads := headHashes(t, ctx, candidate)
+						heads := headHashes(t, candidate)
 
-						falsePositive, err := oracle.ReferenceBloomContains(ctx, bloomSeeds, heads[0])
+						falsePositive, err := oracle.ReferenceBloomContains(bloomSeeds, heads[0])
 						require.NoError(t, err)
 
 						if falsePositive {
 							return candidate
 						}
 
-						require.NoError(t, candidate.Close(ctx))
+						require.NoError(t, candidate.Close())
 					}
 				}
 
@@ -222,14 +217,14 @@ func TestRustSync_ShouldHandleChainsOfFalsePositives(t *testing.T) {
 				chain2 := findFalsePositive(chain1, "again")
 				closeDocument(t, chain2)
 
-				putRoot(t, ctx, chain2, "x", "final @ 89abcdef", "final", commitTime.Add(3*time.Hour))
+				putRoot(t, chain2, "x", "final @ 89abcdef", "final", commitTime.Add(3*time.Hour))
 
-				allHeads := unionSortedHeadHex(sortedHeadHex(t, ctx, doc1), sortedHeadHex(t, ctx, chain2))
+				allHeads := unionSortedHeadHex(sortedHeadHex(t, doc1), sortedHeadHex(t, chain2))
 
-				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, chain2))
+				syncQuiescent(t, readWriteSyncState(t, doc1), readWriteSyncState(t, chain2))
 
-				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, doc1))
-				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, chain2))
+				assert.Equal(t, allHeads, sortedHeadHex(t, doc1))
+				assert.Equal(t, allHeads, sortedHeadHex(t, chain2))
 			},
 		)
 	}

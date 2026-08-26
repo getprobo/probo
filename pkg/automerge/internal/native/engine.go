@@ -22,7 +22,6 @@ package native
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -115,10 +114,7 @@ const (
 	syncFlagMarker        = 0x80
 )
 
-func NewEngine(ctx context.Context) (*Engine, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func NewEngine() (*Engine, error) {
 
 	actor, err := randomActorID()
 	if err != nil {
@@ -150,10 +146,7 @@ func NewEngine(ctx context.Context) (*Engine, error) {
 	}, nil
 }
 
-func LoadEngine(ctx context.Context, data []byte) (*Engine, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func LoadEngine(data []byte) (*Engine, error) {
 
 	document, err := Decode(data)
 	if err != nil {
@@ -303,7 +296,7 @@ func orderedQueuedChanges(queued map[ChangeHash]*Change) []*Change {
 	return changes
 }
 
-func (b *Engine) Close(context.Context) error {
+func (b *Engine) Close() error {
 	return nil
 }
 
@@ -314,20 +307,18 @@ func (b *Engine) Close(context.Context) error {
 // dependencies are still missing so they survive a save/load round trip, and
 // compress DEFLATEs the document columns and any trailing change chunks.
 func (b *Engine) Save(
-	ctx context.Context,
 	retainOrphans bool,
 	compress bool,
 ) ([]byte, error) {
-	return b.save(ctx, retainOrphans, compress)
+	return b.save(retainOrphans, compress)
 }
 
 func (b *Engine) save(
-	ctx context.Context,
 	retainOrphans bool,
 	deflate bool,
 ) ([]byte, error) {
 	if len(b.pending) > 0 {
-		if _, err := b.Commit(ctx, "", time.Time{}); err != nil {
+		if _, err := b.Commit("", time.Time{}); err != nil {
 			return nil, err
 		}
 	}
@@ -462,9 +453,9 @@ func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
 	return out
 }
 
-func (b *Engine) SaveIncremental(ctx context.Context) ([]byte, error) {
+func (b *Engine) SaveIncremental() ([]byte, error) {
 	if len(b.pending) > 0 {
-		if _, err := b.Commit(ctx, "", time.Time{}); err != nil {
+		if _, err := b.Commit("", time.Time{}); err != nil {
 			return nil, err
 		}
 	}
@@ -489,7 +480,6 @@ func (b *Engine) SaveIncremental(ctx context.Context) ([]byte, error) {
 }
 
 func (b *Engine) LoadIncremental(
-	ctx context.Context,
 	data []byte,
 ) (uint64, error) {
 	_, consumed, err := DecodeIncremental(data)
@@ -498,7 +488,7 @@ func (b *Engine) LoadIncremental(
 	}
 
 	before := len(b.state.changes)
-	if _, err := b.Merge(ctx, data[:consumed]); err != nil {
+	if _, err := b.Merge(data[:consumed]); err != nil {
 		return 0, err
 	}
 
@@ -510,10 +500,7 @@ func (b *Engine) LoadIncremental(
 	return uint64(after - before), nil
 }
 
-func (b *Engine) SetActor(ctx context.Context, value []byte) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
+func (b *Engine) SetActor(value []byte) error {
 
 	actor, err := NewActorID(value)
 	if err != nil {

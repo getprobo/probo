@@ -21,7 +21,6 @@
 package collaboration_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,7 +33,6 @@ import (
 // between them until both are quiescent, so a test can assert convergence.
 type clientServerHarness struct {
 	t      *testing.T
-	ctx    context.Context
 	client *collaboration.ClientConn
 	server *collaboration.ServerConn
 }
@@ -47,7 +45,7 @@ func (h *clientServerHarness) pump() {
 	join, err := h.client.Start()
 	require.NoError(h.t, err)
 
-	serverOut, accepted, err := h.server.Start(h.ctx, join)
+	serverOut, accepted, err := h.server.Start(join)
 	require.NoError(h.t, err)
 	require.True(h.t, accepted)
 
@@ -58,7 +56,7 @@ func (h *clientServerHarness) pump() {
 		var nextToServer [][]byte
 
 		for _, frame := range toClient {
-			inbound, err := h.client.Receive(h.ctx, frame)
+			inbound, err := h.client.Receive(frame)
 			require.NoError(h.t, err)
 			nextToServer = append(nextToServer, inbound.Outgoing...)
 		}
@@ -68,7 +66,7 @@ func (h *clientServerHarness) pump() {
 		var nextToClient [][]byte
 
 		for _, frame := range append(toServer, nextToServer...) {
-			reply, _, err := h.server.Receive(h.ctx, frame)
+			reply, _, err := h.server.Receive(frame)
 			require.NoError(h.t, err)
 			nextToClient = append(nextToClient, reply...)
 		}
@@ -87,20 +85,19 @@ func (h *clientServerHarness) pump() {
 
 func newHarness(
 	t *testing.T,
-	ctx context.Context,
 	client *automerge.Document,
 	clientEmpty bool,
 	server *automerge.Document,
 ) *clientServerHarness {
 	t.Helper()
 
-	clientSync, err := client.NewSyncState(ctx)
+	clientSync, err := client.NewSyncState()
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = clientSync.Close(ctx) })
+	t.Cleanup(func() { _ = clientSync.Close() })
 
-	serverSync, err := server.NewSyncState(ctx)
+	serverSync, err := server.NewSyncState()
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = serverSync.Close(ctx) })
+	t.Cleanup(func() { _ = serverSync.Close() })
 
 	clientConn, err := collaboration.NewClientConn(
 		collaboration.ClientConfig{
@@ -119,7 +116,7 @@ func newHarness(
 	)
 	require.NoError(t, err)
 
-	return &clientServerHarness{t: t, ctx: ctx, client: clientConn, server: serverConn}
+	return &clientServerHarness{t: t, client: clientConn, server: serverConn}
 }
 
 // TestClientConn_LearnsServerDocument syncs an empty Go client from a server
@@ -127,33 +124,31 @@ func newHarness(
 func TestClientConn_LearnsServerDocument(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	server, err := automerge.New(ctx, actor(1))
+	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
-	defer func() { _ = server.Close(ctx) }()
+	defer func() { _ = server.Close() }()
 
-	text, err := server.CreateText(ctx, "body")
+	text, err := server.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-	_, err = server.Commit(ctx, "seed", commitTime())
+	require.NoError(t, text.Splice(0, 0, "hello world"))
+	_, err = server.Commit("seed", commitTime())
 	require.NoError(t, err)
 
-	client, err := automerge.New(ctx, actor(2))
+	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
-	defer func() { _ = client.Close(ctx) }()
+	defer func() { _ = client.Close() }()
 
-	newHarness(t, ctx, client, true, server).pump()
+	newHarness(t, client, true, server).pump()
 
-	serverHeads, err := server.Heads(ctx)
+	serverHeads, err := server.Heads()
 	require.NoError(t, err)
-	clientHeads, err := client.Heads(ctx)
+	clientHeads, err := client.Heads()
 	require.NoError(t, err)
 	assert.Equal(t, serverHeads, clientHeads)
 
-	clientText, err := client.Text(ctx, "body")
+	clientText, err := client.Text("body")
 	require.NoError(t, err)
-	value, err := clientText.String(ctx)
+	value, err := clientText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "hello world", value)
 }
@@ -163,27 +158,25 @@ func TestClientConn_LearnsServerDocument(t *testing.T) {
 func TestClientConn_PushesLocalEdits(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	server, err := automerge.New(ctx, actor(1))
+	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
-	defer func() { _ = server.Close(ctx) }()
+	defer func() { _ = server.Close() }()
 
-	client, err := automerge.New(ctx, actor(2))
+	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
-	defer func() { _ = client.Close(ctx) }()
+	defer func() { _ = client.Close() }()
 
-	text, err := client.CreateText(ctx, "body")
+	text, err := client.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "from the agent"))
-	_, err = client.Commit(ctx, "edit", commitTime())
+	require.NoError(t, text.Splice(0, 0, "from the agent"))
+	_, err = client.Commit("edit", commitTime())
 	require.NoError(t, err)
 
-	newHarness(t, ctx, client, false, server).pump()
+	newHarness(t, client, false, server).pump()
 
-	serverText, err := server.Text(ctx, "body")
+	serverText, err := server.Text("body")
 	require.NoError(t, err)
-	value, err := serverText.String(ctx)
+	value, err := serverText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "from the agent", value)
 }
@@ -193,15 +186,13 @@ func TestClientConn_PushesLocalEdits(t *testing.T) {
 func TestClientConn_FirstMessageIsRequestWhenEmpty(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	client, err := automerge.New(ctx, actor(2))
+	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
-	defer func() { _ = client.Close(ctx) }()
+	defer func() { _ = client.Close() }()
 
-	sync, err := client.NewSyncState(ctx)
+	sync, err := client.NewSyncState()
 	require.NoError(t, err)
-	defer func() { _ = sync.Close(ctx) }()
+	defer func() { _ = sync.Close() }()
 
 	conn, err := collaboration.NewClientConn(
 		collaboration.ClientConfig{
@@ -220,7 +211,7 @@ func TestClientConn_FirstMessageIsRequestWhenEmpty(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	inbound, err := conn.Receive(ctx, peer)
+	inbound, err := conn.Receive(peer)
 	require.NoError(t, err)
 	require.NotEmpty(t, inbound.Outgoing)
 
@@ -238,15 +229,13 @@ func TestClientConn_FirstMessageIsRequestWhenEmpty(t *testing.T) {
 func TestClientConn_SurfacesServerError(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	client, err := automerge.New(ctx, actor(2))
+	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
-	defer func() { _ = client.Close(ctx) }()
+	defer func() { _ = client.Close() }()
 
-	sync, err := client.NewSyncState(ctx)
+	sync, err := client.NewSyncState()
 	require.NoError(t, err)
-	defer func() { _ = sync.Close(ctx) }()
+	defer func() { _ = sync.Close() }()
 
 	conn, err := collaboration.NewClientConn(
 		collaboration.ClientConfig{
@@ -264,7 +253,7 @@ func TestClientConn_SurfacesServerError(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	inbound, err := conn.Receive(ctx, errorFrame)
+	inbound, err := conn.Receive(errorFrame)
 	require.NoError(t, err)
 	assert.Equal(t, "unauthorized", inbound.ServerError)
 }

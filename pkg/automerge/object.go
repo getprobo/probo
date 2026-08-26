@@ -21,7 +21,6 @@
 package automerge
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -55,7 +54,6 @@ func (d *Document) Root() *Object {
 
 // CreateObject assigns a new composite value to a map property.
 func (o *Object) CreateObject(
-	ctx context.Context,
 	key string,
 	objectType ObjectType,
 ) (*Object, error) {
@@ -71,7 +69,6 @@ func (o *Object) CreateObject(
 	}
 
 	handle, err := o.document.engine.PutObject(
-		ctx,
 		o.handle,
 		key,
 		string(objectType),
@@ -88,7 +85,7 @@ func (o *Object) CreateObject(
 }
 
 // Object returns a composite value from a map property.
-func (o *Object) Object(ctx context.Context, key string) (*Object, error) {
+func (o *Object) Object(key string) (*Object, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -96,7 +93,7 @@ func (o *Object) Object(ctx context.Context, key string) (*Object, error) {
 		return nil, ErrClosed
 	}
 
-	handle, rawType, err := o.document.engine.GetObject(ctx, o.handle, key)
+	handle, rawType, err := o.document.engine.GetObject(o.handle, key)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge object: %w", err)
 	}
@@ -114,7 +111,7 @@ func (o *Object) Object(ctx context.Context, key string) (*Object, error) {
 }
 
 // PutScalar assigns a typed scalar to a map property.
-func (o *Object) PutScalar(ctx context.Context, key string, value Scalar) error {
+func (o *Object) PutScalar(key string, value Scalar) error {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -127,7 +124,7 @@ func (o *Object) PutScalar(ctx context.Context, key string, value Scalar) error 
 		return fmt.Errorf("cannot encode Automerge scalar: %w", err)
 	}
 
-	if err := o.document.engine.PutScalar(ctx, o.handle, key, encoded); err != nil {
+	if err := o.document.engine.PutScalar(o.handle, key, encoded); err != nil {
 		return fmt.Errorf("cannot put Automerge scalar: %w", err)
 	}
 
@@ -135,7 +132,7 @@ func (o *Object) PutScalar(ctx context.Context, key string, value Scalar) error 
 }
 
 // Scalar returns a typed scalar from a map property.
-func (o *Object) Scalar(ctx context.Context, key string) (Scalar, error) {
+func (o *Object) Scalar(key string) (Scalar, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -143,7 +140,7 @@ func (o *Object) Scalar(ctx context.Context, key string) (Scalar, error) {
 		return Scalar{}, ErrClosed
 	}
 
-	encoded, err := o.document.engine.GetScalar(ctx, o.handle, key)
+	encoded, err := o.document.engine.GetScalar(o.handle, key)
 	if err != nil {
 		return Scalar{}, fmt.Errorf("cannot get Automerge scalar: %w", err)
 	}
@@ -158,7 +155,6 @@ func (o *Object) Scalar(ctx context.Context, key string) (Scalar, error) {
 
 // ScalarAtHeads returns a map scalar at a historical causal frontier.
 func (o *Object) ScalarAtHeads(
-	ctx context.Context,
 	key string,
 	heads []Hash,
 ) (Scalar, error) {
@@ -170,7 +166,6 @@ func (o *Object) ScalarAtHeads(
 	}
 
 	encoded, err := o.document.engine.GetScalarAtHeads(
-		ctx,
 		o.handle,
 		key,
 		engineHashes(heads),
@@ -188,7 +183,7 @@ func (o *Object) ScalarAtHeads(
 }
 
 // Scalars returns every concurrent scalar value at a map property.
-func (o *Object) Scalars(ctx context.Context, key string) ([]Scalar, error) {
+func (o *Object) Scalars(key string) ([]Scalar, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -197,7 +192,6 @@ func (o *Object) Scalars(ctx context.Context, key string) ([]Scalar, error) {
 	}
 
 	encoded, err := o.document.engine.GetAllScalars(
-		ctx,
 		o.handle,
 		key,
 	)
@@ -214,7 +208,7 @@ func (o *Object) Scalars(ctx context.Context, key string) ([]Scalar, error) {
 }
 
 // ScalarsAt returns every concurrent scalar value at a list index.
-func (o *Object) ScalarsAt(ctx context.Context, index uint64) ([]Scalar, error) {
+func (o *Object) ScalarsAt(index uint64) ([]Scalar, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -223,7 +217,6 @@ func (o *Object) ScalarsAt(ctx context.Context, index uint64) ([]Scalar, error) 
 	}
 
 	encoded, err := o.document.engine.GetAllScalarsAt(
-		ctx,
 		o.handle,
 		index,
 	)
@@ -241,7 +234,6 @@ func (o *Object) ScalarsAt(ctx context.Context, index uint64) ([]Scalar, error) 
 
 // InsertScalar inserts a typed scalar at a list index.
 func (o *Object) InsertScalar(
-	ctx context.Context,
 	index uint64,
 	value Scalar,
 ) error {
@@ -258,7 +250,6 @@ func (o *Object) InsertScalar(
 	}
 
 	if err := o.document.engine.InsertScalar(
-		ctx,
 		o.handle,
 		index,
 		encoded,
@@ -271,7 +262,6 @@ func (o *Object) InsertScalar(
 
 // PutScalarAt replaces a list element with a typed scalar.
 func (o *Object) PutScalarAt(
-	ctx context.Context,
 	index uint64,
 	value Scalar,
 ) error {
@@ -288,7 +278,6 @@ func (o *Object) PutScalarAt(
 	}
 
 	if err := o.document.engine.PutScalarAt(
-		ctx,
 		o.handle,
 		index,
 		encoded,
@@ -301,7 +290,6 @@ func (o *Object) PutScalarAt(
 
 // InsertObject inserts a new composite value at a list index.
 func (o *Object) InsertObject(
-	ctx context.Context,
 	index uint64,
 	objectType ObjectType,
 ) (*Object, error) {
@@ -317,7 +305,6 @@ func (o *Object) InsertObject(
 	}
 
 	handle, err := o.document.engine.InsertObject(
-		ctx,
 		o.handle,
 		index,
 		string(objectType),
@@ -335,7 +322,6 @@ func (o *Object) InsertObject(
 
 // PutObjectAt replaces a list element with a new composite value.
 func (o *Object) PutObjectAt(
-	ctx context.Context,
 	index uint64,
 	objectType ObjectType,
 ) (*Object, error) {
@@ -351,7 +337,6 @@ func (o *Object) PutObjectAt(
 	}
 
 	handle, err := o.document.engine.PutObjectAt(
-		ctx,
 		o.handle,
 		index,
 		string(objectType),
@@ -368,7 +353,7 @@ func (o *Object) PutObjectAt(
 }
 
 // ScalarAt returns a typed scalar from a list index.
-func (o *Object) ScalarAt(ctx context.Context, index uint64) (Scalar, error) {
+func (o *Object) ScalarAt(index uint64) (Scalar, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -376,7 +361,7 @@ func (o *Object) ScalarAt(ctx context.Context, index uint64) (Scalar, error) {
 		return Scalar{}, ErrClosed
 	}
 
-	encoded, err := o.document.engine.GetScalarAt(ctx, o.handle, index)
+	encoded, err := o.document.engine.GetScalarAt(o.handle, index)
 	if err != nil {
 		return Scalar{}, fmt.Errorf("cannot get Automerge scalar: %w", err)
 	}
@@ -390,7 +375,7 @@ func (o *Object) ScalarAt(ctx context.Context, index uint64) (Scalar, error) {
 }
 
 // ObjectAt returns a composite value from a list index.
-func (o *Object) ObjectAt(ctx context.Context, index uint64) (*Object, error) {
+func (o *Object) ObjectAt(index uint64) (*Object, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -399,7 +384,6 @@ func (o *Object) ObjectAt(ctx context.Context, index uint64) (*Object, error) {
 	}
 
 	handle, rawType, err := o.document.engine.GetObjectAt(
-		ctx,
 		o.handle,
 		index,
 	)
@@ -420,7 +404,7 @@ func (o *Object) ObjectAt(ctx context.Context, index uint64) (*Object, error) {
 }
 
 // DeleteKey deletes a map property.
-func (o *Object) DeleteKey(ctx context.Context, key string) error {
+func (o *Object) DeleteKey(key string) error {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -428,7 +412,7 @@ func (o *Object) DeleteKey(ctx context.Context, key string) error {
 		return ErrClosed
 	}
 
-	if err := o.document.engine.DeleteMap(ctx, o.handle, key); err != nil {
+	if err := o.document.engine.DeleteMap(o.handle, key); err != nil {
 		return fmt.Errorf("cannot delete Automerge map property: %w", err)
 	}
 
@@ -436,7 +420,7 @@ func (o *Object) DeleteKey(ctx context.Context, key string) error {
 }
 
 // DeleteIndex deletes a list element.
-func (o *Object) DeleteIndex(ctx context.Context, index uint64) error {
+func (o *Object) DeleteIndex(index uint64) error {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -444,7 +428,7 @@ func (o *Object) DeleteIndex(ctx context.Context, index uint64) error {
 		return ErrClosed
 	}
 
-	if err := o.document.engine.DeleteSequence(ctx, o.handle, index); err != nil {
+	if err := o.document.engine.DeleteSequence(o.handle, index); err != nil {
 		return fmt.Errorf("cannot delete Automerge sequence element: %w", err)
 	}
 
@@ -452,7 +436,7 @@ func (o *Object) DeleteIndex(ctx context.Context, index uint64) error {
 }
 
 // Increment adds delta to a counter stored at a map property.
-func (o *Object) Increment(ctx context.Context, key string, delta int64) error {
+func (o *Object) Increment(key string, delta int64) error {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -461,7 +445,6 @@ func (o *Object) Increment(ctx context.Context, key string, delta int64) error {
 	}
 
 	if err := o.document.engine.Increment(
-		ctx,
 		o.handle,
 		key,
 		delta,
@@ -474,7 +457,6 @@ func (o *Object) Increment(ctx context.Context, key string, delta int64) error {
 
 // IncrementAt adds delta to a counter stored at a list index.
 func (o *Object) IncrementAt(
-	ctx context.Context,
 	index uint64,
 	delta int64,
 ) error {
@@ -486,7 +468,6 @@ func (o *Object) IncrementAt(
 	}
 
 	if err := o.document.engine.IncrementAt(
-		ctx,
 		o.handle,
 		index,
 		delta,
@@ -498,7 +479,7 @@ func (o *Object) IncrementAt(
 }
 
 // Len returns the visible length of a list or text object.
-func (o *Object) Len(ctx context.Context) (uint64, error) {
+func (o *Object) Len() (uint64, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -506,7 +487,7 @@ func (o *Object) Len(ctx context.Context) (uint64, error) {
 		return 0, ErrClosed
 	}
 
-	length, err := o.document.engine.Length(ctx, o.handle)
+	length, err := o.document.engine.Length(o.handle)
 	if err != nil {
 		return 0, fmt.Errorf("cannot get Automerge object length: %w", err)
 	}
@@ -515,7 +496,7 @@ func (o *Object) Len(ctx context.Context) (uint64, error) {
 }
 
 // Keys returns visible map property names in lexical order.
-func (o *Object) Keys(ctx context.Context) ([]string, error) {
+func (o *Object) Keys() ([]string, error) {
 	o.document.mu.Lock()
 	defer o.document.mu.Unlock()
 
@@ -523,7 +504,7 @@ func (o *Object) Keys(ctx context.Context) ([]string, error) {
 		return nil, ErrClosed
 	}
 
-	keys, err := o.document.engine.Keys(ctx, o.handle)
+	keys, err := o.document.engine.Keys(o.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge map keys: %w", err)
 	}
@@ -532,11 +513,7 @@ func (o *Object) Keys(ctx context.Context) ([]string, error) {
 }
 
 // Text returns a collaborative text wrapper for a text object.
-func (o *Object) Text(ctx context.Context) (*Text, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
+func (o *Object) Text() (*Text, error) {
 	if o.Type != ObjectTypeText {
 		return nil, fmt.Errorf("automerge object is %q, not text", o.Type)
 	}

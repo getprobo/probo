@@ -27,7 +27,6 @@
 package automerge_test
 
 import (
-	"context"
 	"strings"
 	"testing"
 	"time"
@@ -49,27 +48,26 @@ func markString(value string) automerge.Scalar {
 // engine and returns the resulting span stream keyed by engine name.
 func richTextSpans(
 	t *testing.T,
-	build func(t *testing.T, ctx context.Context, text *automerge.Text),
+	build func(t *testing.T, text *automerge.Text),
 ) map[string][]automerge.Span {
 	t.Helper()
 
-	ctx := context.Background()
 	spans := make(map[string][]automerge.Span)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
 
-		build(t, ctx, text)
+		build(t, text)
 
-		_, err = document.CommitNow(ctx, "rich text")
+		_, err = document.CommitNow("rich text")
 		require.NoError(t, err)
 
-		result, err := text.Spans(ctx)
+		result, err := text.Spans()
 		require.NoError(t, err)
 
 		spans[engine.name] = result
@@ -85,10 +83,10 @@ func TestRustRichText_MarksInSpansCrossBlockMarkers(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "lix"))
-			require.NoError(t, text.Mark(ctx, 0, 3, "bold", markTrue(), automerge.MarkExpandAfter))
-			_, err := text.SplitBlock(ctx, 1)
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "lix"))
+			require.NoError(t, text.Mark(0, 3, "bold", markTrue(), automerge.MarkExpandAfter))
+			_, err := text.SplitBlock(1)
 			require.NoError(t, err)
 		},
 	)
@@ -103,11 +101,11 @@ func TestRustRichText_MarkBehaviorOnDeleteInsert(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "hello"))
-			require.NoError(t, text.Mark(ctx, 0, 5, "bold", markTrue(), automerge.MarkExpandBoth))
-			require.NoError(t, text.Splice(ctx, 0, 5, ""))
-			require.NoError(t, text.Splice(ctx, 0, 0, "hi"))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "hello"))
+			require.NoError(t, text.Mark(0, 5, "bold", markTrue(), automerge.MarkExpandBoth))
+			require.NoError(t, text.Splice(0, 5, ""))
+			require.NoError(t, text.Splice(0, 0, "hi"))
 		},
 	)
 
@@ -124,12 +122,12 @@ func TestRustRichText_SpansConsolidateEmptyDueToDeletedMarks(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "hello middle world"))
-			require.NoError(t, text.Mark(ctx, 0, 9, "bold", markTrue(), automerge.MarkExpandNone))
-			require.NoError(t, text.Mark(ctx, 9, 18, "italic", markTrue(), automerge.MarkExpandNone))
-			require.NoError(t, text.Unmark(ctx, 6, 9, "bold", automerge.MarkExpandNone))
-			require.NoError(t, text.Unmark(ctx, 9, 12, "italic", automerge.MarkExpandNone))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "hello middle world"))
+			require.NoError(t, text.Mark(0, 9, "bold", markTrue(), automerge.MarkExpandNone))
+			require.NoError(t, text.Mark(9, 18, "italic", markTrue(), automerge.MarkExpandNone))
+			require.NoError(t, text.Unmark(6, 9, "bold", automerge.MarkExpandNone))
+			require.NoError(t, text.Unmark(9, 12, "italic", automerge.MarkExpandNone))
 		},
 	)
 
@@ -143,10 +141,10 @@ func TestRustRichText_SpansConsolidateDeletedThenEmptyMarks(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-			require.NoError(t, text.Mark(ctx, 0, 6, "bold", markTrue(), automerge.MarkExpandNone))
-			require.NoError(t, text.Unmark(ctx, 0, 6, "bold", automerge.MarkExpandNone))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "hello world"))
+			require.NoError(t, text.Mark(0, 6, "bold", markTrue(), automerge.MarkExpandNone))
+			require.NoError(t, text.Unmark(0, 6, "bold", automerge.MarkExpandNone))
 		},
 	)
 
@@ -163,10 +161,10 @@ func TestRustRichText_SpansConsolidateEmptyThenDeletedMarks(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-			require.NoError(t, text.Mark(ctx, 6, 11, "bold", markTrue(), automerge.MarkExpandNone))
-			require.NoError(t, text.Unmark(ctx, 6, 11, "bold", automerge.MarkExpandNone))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "hello world"))
+			require.NoError(t, text.Mark(6, 11, "bold", markTrue(), automerge.MarkExpandNone))
+			require.NoError(t, text.Unmark(6, 11, "bold", automerge.MarkExpandNone))
 		},
 	)
 
@@ -181,12 +179,12 @@ func TestRustRichText_SpliceWithMark(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "abc"))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "abc"))
 			require.NoError(
 				t,
 				text.Mark(
-					ctx,
+
 					1,
 					2,
 					"some_nonexpanding_mark_type",
@@ -197,7 +195,7 @@ func TestRustRichText_SpliceWithMark(t *testing.T) {
 			require.NoError(
 				t,
 				text.Mark(
-					ctx,
+
 					1,
 					2,
 					"some_expanding_mark_type",
@@ -205,7 +203,7 @@ func TestRustRichText_SpliceWithMark(t *testing.T) {
 					automerge.MarkExpandBoth,
 				),
 			)
-			require.NoError(t, text.Splice(ctx, 1, 1, "d"))
+			require.NoError(t, text.Splice(1, 1, "d"))
 		},
 	)
 
@@ -214,27 +212,26 @@ func TestRustRichText_SpliceWithMark(t *testing.T) {
 
 func textMarks(
 	t *testing.T,
-	build func(t *testing.T, ctx context.Context, text *automerge.Text),
+	build func(t *testing.T, text *automerge.Text),
 ) map[string][]automerge.Mark {
 	t.Helper()
 
-	ctx := context.Background()
 	marks := make(map[string][]automerge.Mark)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
 
-		build(t, ctx, text)
+		build(t, text)
 
-		_, err = document.CommitNow(ctx, "marks")
+		_, err = document.CommitNow("marks")
 		require.NoError(t, err)
 
-		result, err := text.Marks(ctx)
+		result, err := text.Marks()
 		require.NoError(t, err)
 
 		marks[engine.name] = result
@@ -250,12 +247,12 @@ func TestRustRichText_RemovedMarksNotInGetMarks(t *testing.T) {
 
 	marks := textMarks(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "abcdefg"))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "abcdefg"))
 			require.NoError(
 				t,
 				text.Mark(
-					ctx,
+
 					0,
 					1,
 					"name1",
@@ -263,7 +260,7 @@ func TestRustRichText_RemovedMarksNotInGetMarks(t *testing.T) {
 					automerge.MarkExpandNone,
 				),
 			)
-			require.NoError(t, text.Unmark(ctx, 0, 1, "name1", automerge.MarkExpandNone))
+			require.NoError(t, text.Unmark(0, 1, "name1", automerge.MarkExpandNone))
 		},
 	)
 
@@ -278,13 +275,13 @@ func TestRustRichText_InsertingTextNearDeletedMarks(t *testing.T) {
 
 	marks := textMarks(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-			require.NoError(t, text.Mark(ctx, 2, 8, "bold", markTrue(), automerge.MarkExpandAfter))
-			require.NoError(t, text.Mark(ctx, 3, 6, "link", markTrue(), automerge.MarkExpandNone))
-			require.NoError(t, text.Splice(ctx, 1, 10, ""))
-			require.NoError(t, text.Splice(ctx, 0, 0, "a"))
-			require.NoError(t, text.Splice(ctx, 2, 0, "a"))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "hello world"))
+			require.NoError(t, text.Mark(2, 8, "bold", markTrue(), automerge.MarkExpandAfter))
+			require.NoError(t, text.Mark(3, 6, "link", markTrue(), automerge.MarkExpandNone))
+			require.NoError(t, text.Splice(1, 10, ""))
+			require.NoError(t, text.Splice(0, 0, "a"))
+			require.NoError(t, text.Splice(2, 0, "a"))
 		},
 	)
 
@@ -296,29 +293,28 @@ func TestRustRichText_InsertingTextNearDeletedMarks(t *testing.T) {
 func TestRustRichText_GetMarksAtHeads(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	active := make(map[string]map[string]int64)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
-		require.NoError(t, text.Mark(ctx, 0, 10, "bold", markTrue(), automerge.MarkExpandAfter))
-		_, err = document.Commit(ctx, "bold", commitTime)
-		require.NoError(t, err)
-
-		heads, err := document.Heads(ctx)
+		require.NoError(t, text.Splice(0, 0, "hello world"))
+		require.NoError(t, text.Mark(0, 10, "bold", markTrue(), automerge.MarkExpandAfter))
+		_, err = document.Commit("bold", commitTime)
 		require.NoError(t, err)
 
-		require.NoError(t, text.Unmark(ctx, 0, 10, "bold", automerge.MarkExpandNone))
-		_, err = document.Commit(ctx, "unbold", commitTime.Add(time.Second))
+		heads, err := document.Heads()
 		require.NoError(t, err)
 
-		marks, err := text.MarksAt(ctx, heads)
+		require.NoError(t, text.Unmark(0, 10, "bold", automerge.MarkExpandNone))
+		_, err = document.Commit("unbold", commitTime.Add(time.Second))
+		require.NoError(t, err)
+
+		marks, err := text.MarksAt(heads)
 		require.NoError(t, err)
 
 		atIndex := make(map[string]int64)
@@ -347,22 +343,21 @@ func TestRustRichText_GetMarksAtHeads(t *testing.T) {
 func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 	marks := make(map[string][]automerge.Mark)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "aaabbbccc"))
+		require.NoError(t, text.Splice(0, 0, "aaabbbccc"))
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				3,
 				6,
 				"strong",
@@ -370,30 +365,30 @@ func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
-		_, err = document.Commit(ctx, "seed", commitTime)
+		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
-		require.NoError(t, document.UpdateDiffCursor(ctx))
+		require.NoError(t, document.UpdateDiffCursor())
 
 		var patches []automerge.Patch
 
-		require.NoError(t, text.Splice(ctx, 6, 0, "<"))
-		_, err = document.Commit(ctx, "end", commitTime.Add(time.Second))
+		require.NoError(t, text.Splice(6, 0, "<"))
+		_, err = document.Commit("end", commitTime.Add(time.Second))
 		require.NoError(t, err)
-		endPatches, err := document.DiffIncremental(ctx)
+		endPatches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		patches = append(patches, endPatches...)
 
-		require.NoError(t, text.Splice(ctx, 3, 0, ">"))
-		_, err = document.Commit(ctx, "start", commitTime.Add(2*time.Second))
+		require.NoError(t, text.Splice(3, 0, ">"))
+		_, err = document.Commit("start", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
-		startPatches, err := document.DiffIncremental(ctx)
+		startPatches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		patches = append(patches, startPatches...)
 
 		result[engine.name] = patches
-		marks[engine.name], err = text.Marks(ctx)
+		marks[engine.name], err = text.Marks()
 		require.NoError(t, err)
 	}
 
@@ -423,21 +418,20 @@ func TestRustText_ExpandMarksAreReportedInPatches(t *testing.T) {
 func TestRustText_RemotePatchesForExpandAfter(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		documentA, err := engine.open(ctx, actor(0xaa))
+		documentA, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, documentA)
 
-		textA, err := documentA.CreateText(ctx, "text")
+		textA, err := documentA.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, textA.Splice(ctx, 0, 0, "fox"))
+		require.NoError(t, textA.Splice(0, 0, "fox"))
 		require.NoError(
 			t,
 			textA.Mark(
-				ctx,
+
 				0,
 				3,
 				"strong",
@@ -445,30 +439,30 @@ func TestRustText_RemotePatchesForExpandAfter(t *testing.T) {
 				automerge.MarkExpandAfter,
 			),
 		)
-		_, err = documentA.Commit(ctx, "seed", commitTime)
+		_, err = documentA.Commit("seed", commitTime)
 		require.NoError(t, err)
 
-		documentB, err := documentA.Fork(ctx, actor(0xbb))
+		documentB, err := documentA.Fork(actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, documentB)
 
-		beforeA, err := documentA.Heads(ctx)
+		beforeA, err := documentA.Heads()
 		require.NoError(t, err)
-		require.NoError(t, textA.Splice(ctx, 3, 0, "a"))
-		afterA, err := documentA.Commit(ctx, "append", commitTime.Add(time.Second))
-		require.NoError(t, err)
-
-		require.NoError(t, documentB.UpdateDiffCursor(ctx))
-		beforeB, err := documentB.Heads(ctx)
-		require.NoError(t, err)
-		_, err = documentB.Merge(ctx, documentA)
-		require.NoError(t, err)
-		afterB, err := documentB.Heads(ctx)
+		require.NoError(t, textA.Splice(3, 0, "a"))
+		afterA, err := documentA.Commit("append", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		local, err := documentA.Diff(ctx, beforeA, []automerge.Hash{afterA})
+		require.NoError(t, documentB.UpdateDiffCursor())
+		beforeB, err := documentB.Heads()
 		require.NoError(t, err)
-		remote, err := documentB.Diff(ctx, beforeB, afterB)
+		_, err = documentB.Merge(documentA)
+		require.NoError(t, err)
+		afterB, err := documentB.Heads()
+		require.NoError(t, err)
+
+		local, err := documentA.Diff(beforeA, []automerge.Hash{afterA})
+		require.NoError(t, err)
+		remote, err := documentB.Diff(beforeB, afterB)
 		require.NoError(t, err)
 
 		assert.Equal(t, local, remote)
@@ -491,21 +485,20 @@ func TestRustText_RemotePatchesForExpandAfter(t *testing.T) {
 func TestRustMarks_ExpansionAndUnmark(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Mark)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "hello world"))
+		require.NoError(t, text.Splice(0, 0, "hello world"))
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				0,
 				5,
 				"bold",
@@ -513,22 +506,22 @@ func TestRustMarks_ExpansionAndUnmark(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
-		require.NoError(t, text.Splice(ctx, 5, 0, " cool"))
+		require.NoError(t, text.Splice(5, 0, " cool"))
 		require.NoError(
 			t,
 			text.Unmark(
-				ctx,
+
 				0,
 				5,
 				"bold",
 				automerge.MarkExpandBefore,
 			),
 		)
-		require.NoError(t, text.Splice(ctx, 0, 0, "why "))
-		_, err = document.Commit(ctx, "marks", commitTime)
+		require.NoError(t, text.Splice(0, 0, "why "))
+		_, err = document.Commit("marks", commitTime)
 		require.NoError(t, err)
 
-		result[engine.name], err = text.Marks(ctx)
+		result[engine.name], err = text.Marks()
 		require.NoError(t, err)
 	}
 
@@ -549,26 +542,24 @@ func TestRustText_CrossPageMarksNotDoubleCounted(t *testing.T) {
 
 	const pageSize = 16
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
-				document, err := engine.open(ctx, actor(0xaa))
+				document, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
-				text, err := document.CreateText(ctx, "text")
+				text, err := document.CreateText("text")
 				require.NoError(t, err)
-				textObject, err := document.Root().Object(ctx, "text")
+				textObject, err := document.Root().Object("text")
 				require.NoError(t, err)
 
-				require.NoError(t, text.Splice(ctx, 0, 0, strings.Repeat("a", pageSize*2)))
+				require.NoError(t, text.Splice(0, 0, strings.Repeat("a", pageSize*2)))
 				require.NoError(
 					t,
 					text.Mark(
-						ctx,
+
 						pageSize-1,
 						pageSize+1,
 						"strong",
@@ -576,25 +567,25 @@ func TestRustText_CrossPageMarksNotDoubleCounted(t *testing.T) {
 						automerge.MarkExpandNone,
 					),
 				)
-				_, err = document.Commit(ctx, "seed", commitTime)
+				_, err = document.Commit("seed", commitTime)
 				require.NoError(t, err)
 
 				for iteration := range 100 {
-					length, err := textObject.Len(ctx)
+					length, err := textObject.Len()
 					require.NoError(t, err)
-					_, err = text.SplitBlock(ctx, uint32(length))
+					_, err = text.SplitBlock(uint32(length))
 					require.NoError(t, err)
-					_, err = document.Commit(ctx, "block", commitTime.Add(time.Duration(iteration+1)*time.Second))
+					_, err = document.Commit("block", commitTime.Add(time.Duration(iteration+1)*time.Second))
 					require.NoError(t, err)
-					require.NoError(t, document.UpdateDiffCursor(ctx))
+					require.NoError(t, document.UpdateDiffCursor())
 
-					length, err = textObject.Len(ctx)
+					length, err = textObject.Len()
 					require.NoError(t, err)
-					require.NoError(t, text.Splice(ctx, uint32(length), 0, "a"))
-					_, err = document.Commit(ctx, "append", commitTime.Add(time.Duration(iteration+101)*time.Second))
+					require.NoError(t, text.Splice(uint32(length), 0, "a"))
+					_, err = document.Commit("append", commitTime.Add(time.Duration(iteration+101)*time.Second))
 					require.NoError(t, err)
 
-					patches, err := document.DiffIncremental(ctx)
+					patches, err := document.DiffIncremental()
 					require.NoError(t, err)
 					require.Len(t, patches, 1)
 					assert.Equal(t, automerge.PatchSpliceText, patches[0].Action)
@@ -612,13 +603,13 @@ func TestRustRichText_EmptyMarksBeforeBlockMarker(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			_, err := text.SplitBlock(ctx, 0)
+		func(t *testing.T, text *automerge.Text) {
+			_, err := text.SplitBlock(0)
 			require.NoError(t, err)
-			_, err = text.SplitBlock(ctx, 0)
+			_, err = text.SplitBlock(0)
 			require.NoError(t, err)
-			require.NoError(t, text.Mark(ctx, 1, 1, "strong", markTrue(), automerge.MarkExpandBoth))
-			require.NoError(t, text.Splice(ctx, 2, 0, "a"))
+			require.NoError(t, text.Mark(1, 1, "strong", markTrue(), automerge.MarkExpandBoth))
+			require.NoError(t, text.Splice(2, 0, "a"))
 		},
 	)
 
@@ -637,13 +628,13 @@ func TestRustRichText_ComplexBlockProperties(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			block, err := text.SplitBlock(ctx, 0)
+		func(t *testing.T, text *automerge.Text) {
+			block, err := text.SplitBlock(0)
 			require.NoError(t, err)
 			require.NoError(
 				t,
 				block.PutValue(
-					ctx,
+
 					"type",
 					automerge.Value{
 						Type: automerge.ValueTypeText,
@@ -654,7 +645,7 @@ func TestRustRichText_ComplexBlockProperties(t *testing.T) {
 			require.NoError(
 				t,
 				block.PutValue(
-					ctx,
+
 					"parents",
 					automerge.Value{
 						Type: automerge.ValueTypeList,
@@ -675,10 +666,10 @@ func TestRustRichText_MarkCreatedAfterInsertion(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "12345"))
-			require.NoError(t, text.Mark(ctx, 1, 2, "strong", markTrue(), automerge.MarkExpandBoth))
-			require.NoError(t, text.Mark(ctx, 3, 4, "strong", markTrue(), automerge.MarkExpandBoth))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "12345"))
+			require.NoError(t, text.Mark(1, 2, "strong", markTrue(), automerge.MarkExpandBoth))
+			require.NoError(t, text.Mark(3, 4, "strong", markTrue(), automerge.MarkExpandBoth))
 		},
 	)
 
@@ -692,10 +683,10 @@ func TestRustRichText_SpansConsolidatedWithZeroLengthSpans(t *testing.T) {
 
 	spans := richTextSpans(
 		t,
-		func(t *testing.T, ctx context.Context, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, "1234"))
-			require.NoError(t, text.Mark(ctx, 1, 1, "strong", markTrue(), automerge.MarkExpandBoth))
-			require.NoError(t, text.Mark(ctx, 2, 2, "strong", markTrue(), automerge.MarkExpandBoth))
+		func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, "1234"))
+			require.NoError(t, text.Mark(1, 1, "strong", markTrue(), automerge.MarkExpandBoth))
+			require.NoError(t, text.Mark(2, 2, "strong", markTrue(), automerge.MarkExpandBoth))
 		},
 	)
 
@@ -709,44 +700,43 @@ func TestRustRichText_SpansConsolidatedWithZeroLengthSpans(t *testing.T) {
 func TestRustRichText_DeletingInMiddleOfMultibyteChar(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(1))
+		document, err := engine.open(actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
 
 		var observed []string
 
-		require.NoError(t, text.Splice(ctx, 0, 0, "🐻🐻🐻🐻🐻🐻"))
-		value, err := text.String(ctx)
+		require.NoError(t, text.Splice(0, 0, "🐻🐻🐻🐻🐻🐻"))
+		value, err := text.String()
 		require.NoError(t, err)
 
 		observed = append(observed, value)
 
-		require.NoError(t, text.Splice(ctx, 2, 2, "A🐻A"))
-		value, err = text.String(ctx)
+		require.NoError(t, text.Splice(2, 2, "A🐻A"))
+		value, err = text.String()
 		require.NoError(t, err)
 
 		observed = append(observed, value)
 
-		require.NoError(t, text.Splice(ctx, 4, 1, "X"))
-		value, err = text.String(ctx)
+		require.NoError(t, text.Splice(4, 1, "X"))
+		value, err = text.String()
 		require.NoError(t, err)
 
 		observed = append(observed, value)
 
-		require.NoError(t, text.Splice(ctx, 4, 2, "Y"))
-		value, err = text.String(ctx)
+		require.NoError(t, text.Splice(4, 2, "Y"))
+		value, err = text.String()
 		require.NoError(t, err)
 
 		observed = append(observed, value)
 
-		_, err = document.CommitNow(ctx, "multibyte")
+		_, err = document.CommitNow("multibyte")
 		require.NoError(t, err)
 
 		results[engine.name] = observed

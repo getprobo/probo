@@ -27,7 +27,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -46,10 +45,10 @@ func markStr(value string) automerge.Scalar {
 
 type diffMarksScenario struct {
 	name   string
-	setup  func(ctx context.Context, t *testing.T, text *automerge.Text)
+	setup  func(t *testing.T, text *automerge.Text)
 	spans  []automerge.SpanInput
 	config automerge.UpdateSpansConfig
-	post   func(ctx context.Context, t *testing.T, text *automerge.Text)
+	post   func(t *testing.T, text *automerge.Text)
 }
 
 func TestRustDiffMarks(t *testing.T) {
@@ -57,21 +56,21 @@ func TestRustDiffMarks(t *testing.T) {
 
 	defaultConfig := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandAfter}
 
-	spliceSetup := func(content string) func(context.Context, *testing.T, *automerge.Text) {
-		return func(ctx context.Context, t *testing.T, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, content))
+	spliceSetup := func(content string) func(*testing.T, *automerge.Text) {
+		return func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, content))
 		}
 	}
 
-	markSetup := func(content string, marks ...markSpec) func(context.Context, *testing.T, *automerge.Text) {
-		return func(ctx context.Context, t *testing.T, text *automerge.Text) {
-			require.NoError(t, text.Splice(ctx, 0, 0, content))
+	markSetup := func(content string, marks ...markSpec) func(*testing.T, *automerge.Text) {
+		return func(t *testing.T, text *automerge.Text) {
+			require.NoError(t, text.Splice(0, 0, content))
 
 			for _, mark := range marks {
 				require.NoError(
 					t,
 					text.Mark(
-						ctx,
+
 						mark.start,
 						mark.end,
 						mark.name,
@@ -333,9 +332,9 @@ func TestRustDiffMarks(t *testing.T) {
 				{Text: "text", Marks: marks("mark", markBool())},
 			},
 			config: automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandNone},
-			post: func(ctx context.Context, t *testing.T, text *automerge.Text) {
-				require.NoError(t, text.Splice(ctx, 0, 0, "before "))
-				require.NoError(t, text.Splice(ctx, 11, 0, " after"))
+			post: func(t *testing.T, text *automerge.Text) {
+				require.NoError(t, text.Splice(0, 0, "before "))
+				require.NoError(t, text.Splice(11, 0, " after"))
 			},
 		},
 		{
@@ -352,9 +351,9 @@ func TestRustDiffMarks(t *testing.T) {
 					"none":   automerge.MarkExpandNone,
 				},
 			},
-			post: func(ctx context.Context, t *testing.T, text *automerge.Text) {
-				require.NoError(t, text.Splice(ctx, 0, 0, "a"))
-				require.NoError(t, text.Splice(ctx, 5, 0, "b"))
+			post: func(t *testing.T, text *automerge.Text) {
+				require.NoError(t, text.Splice(0, 0, "a"))
+				require.NoError(t, text.Splice(5, 0, "b"))
 			},
 		},
 		{
@@ -374,32 +373,31 @@ func TestRustDiffMarks(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
 				result := make(map[string][]automerge.Span)
 
 				for _, engine := range rustParityEngines() {
-					document, err := engine.open(ctx, actor(0xaa))
+					document, err := engine.open(actor(0xaa))
 					require.NoError(t, err)
 					closeDocument(t, document)
 
-					text, err := document.CreateText(ctx, "text")
+					text, err := document.CreateText("text")
 					require.NoError(t, err)
 
-					scenario.setup(ctx, t, text)
-					_, err = document.Commit(ctx, "setup", commitTime)
+					scenario.setup(t, text)
+					_, err = document.Commit("setup", commitTime)
 					require.NoError(t, err)
 
-					require.NoError(t, text.UpdateSpans(ctx, scenario.spans, scenario.config))
-					_, err = document.Commit(ctx, "update", commitTime)
+					require.NoError(t, text.UpdateSpans(scenario.spans, scenario.config))
+					_, err = document.Commit("update", commitTime)
 					require.NoError(t, err)
 
 					if scenario.post != nil {
-						scenario.post(ctx, t, text)
-						_, err = document.Commit(ctx, "post", commitTime)
+						scenario.post(t, text)
+						_, err = document.Commit("post", commitTime)
 						require.NoError(t, err)
 					}
 
-					spans, err := text.Spans(ctx)
+					spans, err := text.Spans()
 					require.NoError(t, err)
 
 					result[engine.name] = spans
@@ -416,19 +414,17 @@ func TestRustDiffMarks(t *testing.T) {
 func TestRustDiffMarks_Idempotent(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				document, err := engine.open(ctx, actor(0xaa))
+				document, err := engine.open(actor(0xaa))
 				require.NoError(t, err)
 				closeDocument(t, document)
 
-				text, err := document.CreateText(ctx, "text")
+				text, err := document.CreateText("text")
 				require.NoError(t, err)
 
 				spans := []automerge.SpanInput{
@@ -437,19 +433,19 @@ func TestRustDiffMarks_Idempotent(t *testing.T) {
 				}
 				config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandAfter}
 
-				require.NoError(t, text.UpdateSpans(ctx, spans, config))
-				_, err = document.Commit(ctx, "first", commitTime)
+				require.NoError(t, text.UpdateSpans(spans, config))
+				_, err = document.Commit("first", commitTime)
 				require.NoError(t, err)
 
-				first, err := document.Heads(ctx)
+				first, err := document.Heads()
 				require.NoError(t, err)
 
-				require.NoError(t, text.UpdateSpans(ctx, spans, config))
-				second, err := document.Heads(ctx)
+				require.NoError(t, text.UpdateSpans(spans, config))
+				second, err := document.Heads()
 				require.NoError(t, err)
 
-				require.NoError(t, text.UpdateSpans(ctx, spans, config))
-				third, err := document.Heads(ctx)
+				require.NoError(t, text.UpdateSpans(spans, config))
+				third, err := document.Heads()
 				require.NoError(t, err)
 
 				assert.Equal(t, headHexes(first), headHexes(second))
@@ -464,7 +460,6 @@ func TestRustDiffMarks_Idempotent(t *testing.T) {
 func TestRustDiffMarks_Alternating(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandAfter}
 	result := make(map[string][]automerge.Span)
 
@@ -475,23 +470,23 @@ func TestRustDiffMarks_Alternating(t *testing.T) {
 	}
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "text"))
-		_, err = document.Commit(ctx, "seed", commitTime)
+		require.NoError(t, text.Splice(0, 0, "text"))
+		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
 		for index, round := range rounds {
-			require.NoError(t, text.UpdateSpans(ctx, round, config))
-			_, err = document.Commit(ctx, "round", commitTime.Add(time.Duration(index+1)*time.Second))
+			require.NoError(t, text.UpdateSpans(round, config))
+			_, err = document.Commit("round", commitTime.Add(time.Duration(index+1)*time.Second))
 			require.NoError(t, err)
 		}
 
-		spans, err := text.Spans(ctx)
+		spans, err := text.Spans()
 		require.NoError(t, err)
 
 		result[engine.name] = spans

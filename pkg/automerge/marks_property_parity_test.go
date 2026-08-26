@@ -30,7 +30,6 @@
 package automerge_test
 
 import (
-	"context"
 	"math/rand"
 	"strings"
 	"testing"
@@ -81,7 +80,6 @@ func sameMarkSet(a, b map[string]any) bool {
 func TestRustText_MarksAreOkay(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	random := rand.New(rand.NewSource(0x2545f4914f6cdd1d))
 
 	const scenarios = 300
@@ -94,7 +92,7 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 		var expected []rune
 
 		steps := 3 + random.Intn(18)
-		actions := make([]func(context.Context, *testing.T, *automerge.Text), 0, steps)
+		actions := make([]func(*testing.T, *automerge.Text), 0, steps)
 
 		length := 0
 
@@ -107,8 +105,8 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 
 				actions = append(
 					actions,
-					func(ctx context.Context, t *testing.T, text *automerge.Text) {
-						require.NoError(t, text.Splice(ctx, uint32(index), 0, value))
+					func(t *testing.T, text *automerge.Text) {
+						require.NoError(t, text.Splice(uint32(index), 0, value))
 					},
 				)
 
@@ -124,8 +122,8 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 
 				actions = append(
 					actions,
-					func(ctx context.Context, t *testing.T, text *automerge.Text) {
-						require.NoError(t, text.Splice(ctx, uint32(index), int32(deleteLen), ""))
+					func(t *testing.T, text *automerge.Text) {
+						require.NoError(t, text.Splice(uint32(index), int32(deleteLen), ""))
 					},
 				)
 
@@ -136,8 +134,8 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 
 				actions = append(
 					actions,
-					func(ctx context.Context, t *testing.T, text *automerge.Text) {
-						_, err := text.SplitBlock(ctx, uint32(index))
+					func(t *testing.T, text *automerge.Text) {
+						_, err := text.SplitBlock(uint32(index))
 						require.NoError(t, err)
 					},
 				)
@@ -155,11 +153,11 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 
 				actions = append(
 					actions,
-					func(ctx context.Context, t *testing.T, text *automerge.Text) {
+					func(t *testing.T, text *automerge.Text) {
 						require.NoError(
 							t,
 							text.Mark(
-								ctx,
+
 								uint32(index),
 								uint32(index+markLen),
 								name,
@@ -173,21 +171,21 @@ func TestRustText_MarksAreOkay(t *testing.T) {
 		}
 
 		for _, engine := range rustParityEngines() {
-			document, err := engine.open(ctx, actor(1))
+			document, err := engine.open(actor(1))
 			require.NoError(t, err)
 			closeDocument(t, document)
 
-			text, err := document.CreateText(ctx, "text")
+			text, err := document.CreateText("text")
 			require.NoError(t, err)
 
 			for _, action := range actions {
-				action(ctx, t, text)
+				action(t, text)
 			}
 
-			_, err = document.Commit(ctx, "scenario", commitTime)
+			_, err = document.Commit("scenario", commitTime)
 			require.NoError(t, err)
 
-			spans, err := text.Spans(ctx)
+			spans, err := text.Spans()
 			require.NoError(t, err)
 
 			engineSpans[engine.name] = spans

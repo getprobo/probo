@@ -23,7 +23,6 @@ package storage
 import (
 	"bytes"
 	"compress/flate"
-	"context"
 	"encoding/base64"
 	"strings"
 	"testing"
@@ -263,21 +262,20 @@ func TestDecode_Official64BitObjectIDs(t *testing.T) {
 func TestDecode_ReferenceBackendDocument(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	backend, err := reference.New(ctx)
+	backend, err := reference.New()
 	require.NoError(t, err)
 	t.Cleanup(
 		func() {
-			assert.NoError(t, backend.Close(ctx))
+			assert.NoError(t, backend.Close())
 		},
 	)
 
 	actor := []byte{1, 3, 3, 7}
-	require.NoError(t, backend.SetActor(ctx, actor))
-	require.NoError(t, backend.PutString(ctx, 0, "policy", "approved"))
-	_, err = backend.Commit(ctx, "reference fixture", time.Unix(1_700_000_000, 0))
+	require.NoError(t, backend.SetActor(actor))
+	require.NoError(t, backend.PutString(0, "policy", "approved"))
+	_, err = backend.Commit("reference fixture", time.Unix(1_700_000_000, 0))
 	require.NoError(t, err)
-	data, err := backend.Save(ctx, true, true)
+	data, err := backend.Save(true, true)
 	require.NoError(t, err)
 
 	document, err := Decode(data)
@@ -290,50 +288,49 @@ func TestDecode_ReferenceBackendDocument(t *testing.T) {
 func TestDecode_ReferenceBackendConcurrentGraph(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	base, err := reference.New(ctx)
+	base, err := reference.New()
 	require.NoError(t, err)
 	t.Cleanup(
 		func() {
-			assert.NoError(t, base.Close(ctx))
+			assert.NoError(t, base.Close())
 		},
 	)
-	require.NoError(t, base.SetActor(ctx, []byte{1}))
-	require.NoError(t, base.PutString(ctx, 0, "base", "value"))
-	_, err = base.Commit(ctx, "base", time.Unix(1, 0))
+	require.NoError(t, base.SetActor([]byte{1}))
+	require.NoError(t, base.PutString(0, "base", "value"))
+	_, err = base.Commit("base", time.Unix(1, 0))
 	require.NoError(t, err)
-	baseData, err := base.Save(ctx, true, true)
+	baseData, err := base.Save(true, true)
 	require.NoError(t, err)
 
-	left, err := reference.Load(ctx, baseData)
+	left, err := reference.Load(baseData)
 	require.NoError(t, err)
 	t.Cleanup(
 		func() {
-			assert.NoError(t, left.Close(ctx))
+			assert.NoError(t, left.Close())
 		},
 	)
-	require.NoError(t, left.SetActor(ctx, []byte{2}))
-	require.NoError(t, left.PutString(ctx, 0, "left", "value"))
-	_, err = left.Commit(ctx, "left", time.Unix(2, 0))
+	require.NoError(t, left.SetActor([]byte{2}))
+	require.NoError(t, left.PutString(0, "left", "value"))
+	_, err = left.Commit("left", time.Unix(2, 0))
 	require.NoError(t, err)
 
-	right, err := reference.Load(ctx, baseData)
+	right, err := reference.Load(baseData)
 	require.NoError(t, err)
 	t.Cleanup(
 		func() {
-			assert.NoError(t, right.Close(ctx))
+			assert.NoError(t, right.Close())
 		},
 	)
-	require.NoError(t, right.SetActor(ctx, []byte{3}))
-	require.NoError(t, right.PutString(ctx, 0, "right", "value"))
-	_, err = right.Commit(ctx, "right", time.Unix(3, 0))
+	require.NoError(t, right.SetActor([]byte{3}))
+	require.NoError(t, right.PutString(0, "right", "value"))
+	_, err = right.Commit("right", time.Unix(3, 0))
 	require.NoError(t, err)
-	rightData, err := right.Save(ctx, true, true)
+	rightData, err := right.Save(true, true)
 	require.NoError(t, err)
 
-	_, err = left.Merge(ctx, rightData)
+	_, err = left.Merge(rightData)
 	require.NoError(t, err)
-	mergedData, err := left.Save(ctx, true, true)
+	mergedData, err := left.Save(true, true)
 	require.NoError(t, err)
 
 	document, err := Decode(mergedData)

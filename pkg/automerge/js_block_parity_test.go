@@ -25,7 +25,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -81,8 +80,8 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 				textSpan(" world"),
 			},
 			config: none,
-			post: func(ctx context.Context, t *testing.T, text *automerge.Text) {
-				require.NoError(t, text.Splice(ctx, 5, 0, "!"))
+			post: func(t *testing.T, text *automerge.Text) {
+				require.NoError(t, text.Splice(5, 0, "!"))
 			},
 		},
 		{
@@ -93,8 +92,8 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 				textSpan(" world"),
 			},
 			config: overriding,
-			post: func(ctx context.Context, t *testing.T, text *automerge.Text) {
-				require.NoError(t, text.Splice(ctx, 5, 0, "!"))
+			post: func(t *testing.T, text *automerge.Text) {
+				require.NoError(t, text.Splice(5, 0, "!"))
 			},
 		},
 		{
@@ -108,8 +107,8 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 				textSpan("item"),
 			},
 			config: defaultConfig,
-			post: func(ctx context.Context, t *testing.T, text *automerge.Text) {
-				require.NoError(t, text.Splice(ctx, 0, 1, "A"))
+			post: func(t *testing.T, text *automerge.Text) {
+				require.NoError(t, text.Splice(0, 1, "A"))
 			},
 		},
 		{
@@ -128,34 +127,33 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
 				result := make(map[string][]automerge.Span)
 
 				for _, engine := range rustParityEngines() {
-					document, err := engine.open(ctx, actor(0xaa))
+					document, err := engine.open(actor(0xaa))
 					require.NoError(t, err)
 					closeDocument(t, document)
 
-					text, err := document.CreateText(ctx, "text")
+					text, err := document.CreateText("text")
 					require.NoError(t, err)
 
 					if scenario.initial != nil {
-						require.NoError(t, text.UpdateSpans(ctx, scenario.initial, scenario.config))
-						_, err = document.Commit(ctx, "initial", commitTime)
+						require.NoError(t, text.UpdateSpans(scenario.initial, scenario.config))
+						_, err = document.Commit("initial", commitTime)
 						require.NoError(t, err)
 					}
 
-					require.NoError(t, text.UpdateSpans(ctx, scenario.target, scenario.config))
-					_, err = document.Commit(ctx, "target", commitTime)
+					require.NoError(t, text.UpdateSpans(scenario.target, scenario.config))
+					_, err = document.Commit("target", commitTime)
 					require.NoError(t, err)
 
 					if scenario.post != nil {
-						scenario.post(ctx, t, text)
-						_, err = document.Commit(ctx, "post", commitTime)
+						scenario.post(t, text)
+						_, err = document.Commit("post", commitTime)
 						require.NoError(t, err)
 					}
 
-					spans, err := text.Spans(ctx)
+					spans, err := text.Spans()
 					require.NoError(t, err)
 
 					result[engine.name] = spans
@@ -172,7 +170,6 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 func TestJSBlock_OmittingConfigParts(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Span)
 
 	spans := []automerge.SpanInput{
@@ -186,21 +183,21 @@ func TestJSBlock_OmittingConfigParts(t *testing.T) {
 	}
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
 
 		for _, config := range configs {
-			require.NoError(t, text.UpdateSpans(ctx, spans, config))
+			require.NoError(t, text.UpdateSpans(spans, config))
 		}
 
-		_, err = document.Commit(ctx, "rounds", commitTime)
+		_, err = document.Commit("rounds", commitTime)
 		require.NoError(t, err)
 
-		got, err := text.Spans(ctx)
+		got, err := text.Spans()
 		require.NoError(t, err)
 
 		result[engine.name] = got
@@ -214,20 +211,19 @@ func TestJSBlock_OmittingConfigParts(t *testing.T) {
 func TestJSBlock_ShowHistoricalMarks(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Span)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "hello world")
-		require.NoError(t, text.Mark(ctx, 0, 5, "bold", markBool(), automerge.MarkExpandAfter))
-		heads, err := document.Commit(ctx, "bold", commitTime)
+		document, _, text := seedText(t, engine, "hello world")
+		require.NoError(t, text.Mark(0, 5, "bold", markBool(), automerge.MarkExpandAfter))
+		heads, err := document.Commit("bold", commitTime)
 		require.NoError(t, err)
 
-		require.NoError(t, text.Mark(ctx, 5, 11, "italic", markBool(), automerge.MarkExpandAfter))
-		_, err = document.Commit(ctx, "italic", commitTime.Add(time.Second))
+		require.NoError(t, text.Mark(5, 11, "italic", markBool(), automerge.MarkExpandAfter))
+		_, err = document.Commit("italic", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
-		spans, err := text.SpansAt(ctx, []automerge.Hash{heads})
+		spans, err := text.SpansAt([]automerge.Hash{heads})
 		require.NoError(t, err)
 
 		result[engine.name] = spans

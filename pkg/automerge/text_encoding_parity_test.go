@@ -29,7 +29,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,23 +42,22 @@ const familyEmoji = "👩‍👩‍👧‍👦"
 // committed document together with map- and text-typed handles to it.
 func seedText(
 	t *testing.T,
-	ctx context.Context,
 	engine rustParityEngine,
 	content string,
 ) (*automerge.Document, *automerge.Object, *automerge.Text) {
 	t.Helper()
 
-	document, err := engine.open(ctx, actor(0xaa))
+	document, err := engine.open(actor(0xaa))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	text, err := document.CreateText(ctx, "text")
+	text, err := document.CreateText("text")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, content))
-	_, err = document.Commit(ctx, "seed", commitTime)
+	require.NoError(t, text.Splice(0, 0, content))
+	_, err = document.Commit("seed", commitTime)
 	require.NoError(t, err)
 
-	object, err := document.Root().Object(ctx, "text")
+	object, err := document.Root().Object("text")
 	require.NoError(t, err)
 
 	return document, object, text
@@ -69,13 +67,12 @@ func seedText(
 func TestRustTextEncoding_Length(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	lengths := make(map[string]uint64)
 
 	for _, engine := range rustParityEngines() {
-		_, object, _ := seedText(t, ctx, engine, "hello"+familyEmoji)
+		_, object, _ := seedText(t, engine, "hello"+familyEmoji)
 
-		length, err := object.Len(ctx)
+		length, err := object.Len()
 		require.NoError(t, err)
 
 		lengths[engine.name] = length
@@ -89,21 +86,20 @@ func TestRustTextEncoding_Length(t *testing.T) {
 func TestRustTextEncoding_SpliceText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string]string)
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "hello "+familyEmoji+" world")
-		require.NoError(t, text.Splice(ctx, 18, 0, "beautiful "))
-		_, err := document.Commit(ctx, "splice", commitTime)
+		document, _, text := seedText(t, engine, "hello "+familyEmoji+" world")
+		require.NoError(t, text.Splice(18, 0, "beautiful "))
+		_, err := document.Commit("splice", commitTime)
 		require.NoError(t, err)
 
-		result, err := text.String(ctx)
+		result, err := text.String()
 		require.NoError(t, err)
 
 		results[engine.name] = result
-		heads[engine.name] = sortedHeadHex(t, ctx, document)
+		heads[engine.name] = sortedHeadHex(t, document)
 	}
 
 	assert.Equal(t, "hello "+familyEmoji+" beautiful world", results["reference"])
@@ -115,13 +111,12 @@ func TestRustTextEncoding_SpliceText(t *testing.T) {
 func TestRustTextEncoding_Get(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	values := make(map[string]string)
 
 	for _, engine := range rustParityEngines() {
-		_, object, _ := seedText(t, ctx, engine, "he"+familyEmoji+"lo")
+		_, object, _ := seedText(t, engine, "he"+familyEmoji+"lo")
 
-		scalar, err := object.ScalarAt(ctx, 13)
+		scalar, err := object.ScalarAt(13)
 		require.NoError(t, err)
 		require.Equal(t, automerge.ScalarTypeString, scalar.Type)
 		values[engine.name] = scalar.String
@@ -135,28 +130,27 @@ func TestRustTextEncoding_Get(t *testing.T) {
 func TestRustTextEncoding_Put(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string]string)
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
+		document, object, text := seedText(t, engine, "he"+familyEmoji+"llo")
 		require.NoError(
 			t,
 			object.PutScalarAt(
-				ctx,
+
 				13,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 			),
 		)
-		_, err := document.Commit(ctx, "put", commitTime)
+		_, err := document.Commit("put", commitTime)
 		require.NoError(t, err)
 
-		result, err := text.String(ctx)
+		result, err := text.String()
 		require.NoError(t, err)
 
 		results[engine.name] = result
-		heads[engine.name] = sortedHeadHex(t, ctx, document)
+		heads[engine.name] = sortedHeadHex(t, document)
 	}
 
 	assert.Equal(t, "he"+familyEmoji+"Llo", results["reference"])
@@ -168,28 +162,27 @@ func TestRustTextEncoding_Put(t *testing.T) {
 func TestRustTextEncoding_Insert(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string]string)
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
+		document, object, text := seedText(t, engine, "he"+familyEmoji+"llo")
 		require.NoError(
 			t,
 			object.InsertScalar(
-				ctx,
+
 				13,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 			),
 		)
-		_, err := document.Commit(ctx, "insert", commitTime)
+		_, err := document.Commit("insert", commitTime)
 		require.NoError(t, err)
 
-		result, err := text.String(ctx)
+		result, err := text.String()
 		require.NoError(t, err)
 
 		results[engine.name] = result
-		heads[engine.name] = sortedHeadHex(t, ctx, document)
+		heads[engine.name] = sortedHeadHex(t, document)
 	}
 
 	assert.Equal(t, "he"+familyEmoji+"Lllo", results["reference"])
@@ -201,21 +194,20 @@ func TestRustTextEncoding_Insert(t *testing.T) {
 func TestRustTextEncoding_Delete(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string]string)
 	heads := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
-		require.NoError(t, object.DeleteIndex(ctx, 13))
-		_, err := document.Commit(ctx, "delete", commitTime)
+		document, object, text := seedText(t, engine, "he"+familyEmoji+"llo")
+		require.NoError(t, object.DeleteIndex(13))
+		_, err := document.Commit("delete", commitTime)
 		require.NoError(t, err)
 
-		result, err := text.String(ctx)
+		result, err := text.String()
 		require.NoError(t, err)
 
 		results[engine.name] = result
-		heads[engine.name] = sortedHeadHex(t, ctx, document)
+		heads[engine.name] = sortedHeadHex(t, document)
 	}
 
 	assert.Equal(t, "he"+familyEmoji+"lo", results["reference"])
@@ -227,24 +219,23 @@ func TestRustTextEncoding_Delete(t *testing.T) {
 // between the states before and after the mutation for each engine.
 func diffTextPatches(
 	t *testing.T,
-	ctx context.Context,
 	content string,
-	mutate func(ctx context.Context, object *automerge.Object, text *automerge.Text) error,
+	mutate func(object *automerge.Object, text *automerge.Text) error,
 ) map[string][]automerge.Patch {
 	t.Helper()
 
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, object, text := seedText(t, ctx, engine, content)
+		document, object, text := seedText(t, engine, content)
 
-		before, err := document.Heads(ctx)
+		before, err := document.Heads()
 		require.NoError(t, err)
-		require.NoError(t, mutate(ctx, object, text))
-		after, err := document.Commit(ctx, "mutate", commitTime)
+		require.NoError(t, mutate(object, text))
+		after, err := document.Commit("mutate", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		patches, err := document.Diff(before, []automerge.Hash{after})
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -258,14 +249,12 @@ func diffTextPatches(
 func TestRustTextEncoding_PatchInsert(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	patches := diffTextPatches(
 		t,
-		ctx,
 		"he"+familyEmoji+"llo",
-		func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
+		func(object *automerge.Object, _ *automerge.Text) error {
 			return object.InsertScalar(
-				ctx,
+
 				13,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 			)
@@ -284,13 +273,11 @@ func TestRustTextEncoding_PatchInsert(t *testing.T) {
 func TestRustTextEncoding_PatchSpliceText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	patches := diffTextPatches(
 		t,
-		ctx,
 		"he"+familyEmoji+"llo",
-		func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
-			return text.Splice(ctx, 13, 0, "L")
+		func(_ *automerge.Object, text *automerge.Text) error {
+			return text.Splice(13, 0, "L")
 		},
 	)
 
@@ -306,13 +293,11 @@ func TestRustTextEncoding_PatchSpliceText(t *testing.T) {
 func TestRustTextEncoding_PatchDelete(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	patches := diffTextPatches(
 		t,
-		ctx,
 		"he"+familyEmoji+"llo",
-		func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
-			return object.DeleteIndex(ctx, 13)
+		func(object *automerge.Object, _ *automerge.Text) error {
+			return object.DeleteIndex(13)
 		},
 	)
 
@@ -330,15 +315,14 @@ func TestRustTextEncoding_PatchDelete(t *testing.T) {
 func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "12345")
+		document, _, text := seedText(t, engine, "12345")
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				1,
 				2,
 				"strong",
@@ -346,24 +330,24 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
-		_, err := document.Commit(ctx, "mark", commitTime)
+		_, err := document.Commit("mark", commitTime)
 		require.NoError(t, err)
-		require.NoError(t, document.UpdateDiffCursor(ctx))
+		require.NoError(t, document.UpdateDiffCursor())
 
 		var patches []automerge.Patch
 
-		require.NoError(t, text.Splice(ctx, 1, 0, "-"))
-		_, err = document.Commit(ctx, "s1", commitTime)
+		require.NoError(t, text.Splice(1, 0, "-"))
+		_, err = document.Commit("s1", commitTime)
 		require.NoError(t, err)
-		first, err := document.DiffIncremental(ctx)
+		first, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		patches = append(patches, first...)
 
-		require.NoError(t, text.Splice(ctx, 2, 0, "-"))
-		_, err = document.Commit(ctx, "s2", commitTime)
+		require.NoError(t, text.Splice(2, 0, "-"))
+		_, err = document.Commit("s2", commitTime)
 		require.NoError(t, err)
-		second, err := document.DiffIncremental(ctx)
+		second, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		patches = append(patches, second...)
@@ -391,15 +375,14 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 func TestRustText_NoexpandMarksAtEndOfText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "Hello world")
+		document, _, text := seedText(t, engine, "Hello world")
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				10,
 				11,
 				"strong",
@@ -407,15 +390,15 @@ func TestRustText_NoexpandMarksAtEndOfText(t *testing.T) {
 				automerge.MarkExpandNone,
 			),
 		)
-		_, err := document.Commit(ctx, "mark", commitTime)
+		_, err := document.Commit("mark", commitTime)
 		require.NoError(t, err)
-		require.NoError(t, document.UpdateDiffCursor(ctx))
+		require.NoError(t, document.UpdateDiffCursor())
 
-		require.NoError(t, text.Splice(ctx, 11, 0, "a"))
-		_, err = document.Commit(ctx, "append", commitTime)
+		require.NoError(t, text.Splice(11, 0, "a"))
+		_, err = document.Commit("append", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.DiffIncremental(ctx)
+		patches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -433,21 +416,20 @@ func TestRustText_NoexpandMarksAtEndOfText(t *testing.T) {
 func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.open(ctx, actor(0xaa))
+		document, err := engine.open(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		text, err := document.CreateText(ctx, "text")
+		text, err := document.CreateText("text")
 		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "the quick fox jumps over the lazy dog"))
+		require.NoError(t, text.Splice(0, 0, "the quick fox jumps over the lazy dog"))
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				0,
 				37,
 				"bold",
@@ -458,7 +440,7 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				4,
 				19,
 				"italic",
@@ -469,7 +451,7 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				10,
 				13,
 				"comment:somerandomcommentid",
@@ -477,10 +459,10 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
-		_, err = document.Commit(ctx, "seed", commitTime)
+		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.DiffIncremental(ctx)
+		patches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -525,25 +507,24 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 func TestRustTextEncoding_PatchPutSeq(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, object, _ := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
+		document, object, _ := seedText(t, engine, "he"+familyEmoji+"llo")
 
-		require.NoError(t, document.UpdateDiffCursor(ctx))
+		require.NoError(t, document.UpdateDiffCursor())
 		require.NoError(
 			t,
 			object.PutScalarAt(
-				ctx,
+
 				13,
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 			),
 		)
-		_, err := document.Commit(ctx, "put", commitTime)
+		_, err := document.Commit("put", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.DiffIncremental(ctx)
+		patches, err := document.DiffIncremental()
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -563,27 +544,25 @@ func TestRustTextEncoding_PatchPutSeq(t *testing.T) {
 func TestDocument_IncrementalDiffMatchesReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	scenarios := []struct {
 		name   string
-		mutate func(ctx context.Context, object *automerge.Object, text *automerge.Text) error
+		mutate func(object *automerge.Object, text *automerge.Text) error
 	}{
-		{"text_put", func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
-			return object.PutScalarAt(ctx, 13, automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"})
+		{"text_put", func(object *automerge.Object, _ *automerge.Text) error {
+			return object.PutScalarAt(13, automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"})
 		}},
-		{"text_insert", func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
-			return object.InsertScalar(ctx, 13, automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"})
+		{"text_insert", func(object *automerge.Object, _ *automerge.Text) error {
+			return object.InsertScalar(13, automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"})
 		}},
-		{"text_splice", func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
-			return text.Splice(ctx, 13, 0, "AB")
+		{"text_splice", func(_ *automerge.Object, text *automerge.Text) error {
+			return text.Splice(13, 0, "AB")
 		}},
-		{"text_delete", func(ctx context.Context, object *automerge.Object, _ *automerge.Text) error {
-			return object.DeleteIndex(ctx, 13)
+		{"text_delete", func(object *automerge.Object, _ *automerge.Text) error {
+			return object.DeleteIndex(13)
 		}},
-		{"text_mark", func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
+		{"text_mark", func(_ *automerge.Object, text *automerge.Text) error {
 			return text.Mark(
-				ctx,
+
 				1,
 				13,
 				"bold",
@@ -602,14 +581,14 @@ func TestDocument_IncrementalDiffMatchesReference(t *testing.T) {
 				result := make(map[string][]automerge.Patch)
 
 				for _, engine := range rustParityEngines() {
-					document, object, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
+					document, object, text := seedText(t, engine, "he"+familyEmoji+"llo")
 
-					require.NoError(t, document.UpdateDiffCursor(ctx))
-					require.NoError(t, scenario.mutate(ctx, object, text))
-					_, err := document.Commit(ctx, scenario.name, commitTime)
+					require.NoError(t, document.UpdateDiffCursor())
+					require.NoError(t, scenario.mutate(object, text))
+					_, err := document.Commit(scenario.name, commitTime)
 					require.NoError(t, err)
 
-					patches, err := document.DiffIncremental(ctx)
+					patches, err := document.DiffIncremental()
 					require.NoError(t, err)
 
 					result[engine.name] = patches
@@ -627,14 +606,12 @@ func TestDocument_IncrementalDiffMatchesReference(t *testing.T) {
 func TestRustTextEncoding_PatchMark(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	patches := diffTextPatches(
 		t,
-		ctx,
 		"he"+familyEmoji+"llo",
-		func(ctx context.Context, _ *automerge.Object, text *automerge.Text) error {
+		func(_ *automerge.Object, text *automerge.Text) error {
 			return text.Mark(
-				ctx,
+
 				1,
 				13,
 				"bold",
@@ -658,15 +635,14 @@ func TestRustTextEncoding_PatchMark(t *testing.T) {
 func TestTextDiff_MarkRemovalMatchesReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "hello world")
+		document, _, text := seedText(t, engine, "hello world")
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				0,
 				5,
 				"bold",
@@ -674,16 +650,16 @@ func TestTextDiff_MarkRemovalMatchesReference(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
-		_, err := document.Commit(ctx, "mark", commitTime)
+		_, err := document.Commit("mark", commitTime)
 		require.NoError(t, err)
 
-		before, err := document.Heads(ctx)
+		before, err := document.Heads()
 		require.NoError(t, err)
-		require.NoError(t, text.Unmark(ctx, 0, 5, "bold", automerge.MarkExpandBoth))
-		after, err := document.Commit(ctx, "unmark", commitTime)
+		require.NoError(t, text.Unmark(0, 5, "bold", automerge.MarkExpandBoth))
+		after, err := document.Commit("unmark", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		patches, err := document.Diff(before, []automerge.Hash{after})
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -701,15 +677,14 @@ func TestTextDiff_MarkRemovalMatchesReference(t *testing.T) {
 func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "hello world")
+		document, _, text := seedText(t, engine, "hello world")
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				0,
 				5,
 				"color",
@@ -717,15 +692,15 @@ func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
-		_, err := document.Commit(ctx, "red", commitTime)
+		_, err := document.Commit("red", commitTime)
 		require.NoError(t, err)
 
-		before, err := document.Heads(ctx)
+		before, err := document.Heads()
 		require.NoError(t, err)
 		require.NoError(
 			t,
 			text.Mark(
-				ctx,
+
 				0,
 				5,
 				"color",
@@ -733,10 +708,10 @@ func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
-		after, err := document.Commit(ctx, "blue", commitTime)
+		after, err := document.Commit("blue", commitTime)
 		require.NoError(t, err)
 
-		patches, err := document.Diff(ctx, before, []automerge.Hash{after})
+		patches, err := document.Diff(before, []automerge.Hash{after})
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -752,17 +727,16 @@ func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 func TestRustTextEncoding_SplitBlock(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	results := make(map[string][]string)
 
 	for _, engine := range rustParityEngines() {
-		document, _, text := seedText(t, ctx, engine, "he"+familyEmoji+"llo")
-		_, err := text.SplitBlock(ctx, 13)
+		document, _, text := seedText(t, engine, "he"+familyEmoji+"llo")
+		_, err := text.SplitBlock(13)
 		require.NoError(t, err)
-		_, err = document.Commit(ctx, "split", commitTime)
+		_, err = document.Commit("split", commitTime)
 		require.NoError(t, err)
 
-		spans, err := text.Spans(ctx)
+		spans, err := text.Spans()
 		require.NoError(t, err)
 
 		texts := make([]string, 0, len(spans))

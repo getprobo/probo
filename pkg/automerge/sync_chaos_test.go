@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -50,8 +49,6 @@ type syncChaos struct {
 func TestSyncState_ModelBasedChaos(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	const (
 		scenarios = 20
 		steps     = 120
@@ -64,38 +61,38 @@ func TestSyncState_ModelBasedChaos(t *testing.T) {
 				t.Parallel()
 
 				random := rand.New(rand.NewSource(int64(0x51C00000 + scenario)))
-				chaos := newSyncChaos(t, ctx)
-				t.Cleanup(func() { chaos.close(ctx) })
+				chaos := newSyncChaos(t)
+				t.Cleanup(func() { chaos.close() })
 
 				for step := range steps {
 					switch random.Intn(8) {
 					case 0:
-						chaos.mapEdit(t, ctx, random.Intn(chaosPeers), scenario, step)
+						chaos.mapEdit(t, random.Intn(chaosPeers), scenario, step)
 					case 1:
-						chaos.textEdit(t, ctx, random, random.Intn(chaosPeers), step)
+						chaos.textEdit(t, random, random.Intn(chaosPeers), step)
 					case 2:
-						chaos.send(t, ctx, random, true)
+						chaos.send(t, random, true)
 					case 3:
-						chaos.send(t, ctx, random, false)
+						chaos.send(t, random, false)
 					case 4:
-						chaos.duplicate(t, ctx, random)
+						chaos.duplicate(t, random)
 					case 5:
-						chaos.toggleReadOnly(t, ctx, random)
+						chaos.toggleReadOnly(t, random)
 					case 6:
-						chaos.reload(t, ctx, random.Intn(chaosPeers))
+						chaos.reload(t, random.Intn(chaosPeers))
 					case 7:
-						chaos.assertGenerationQuiesces(t, ctx, random)
+						chaos.assertGenerationQuiesces(t, random)
 					}
 				}
 
-				chaos.converge(t, ctx)
+				chaos.converge(t)
 
-				expected := chaosSignature(t, ctx, chaos.documents[0])
+				expected := chaosSignature(t, chaos.documents[0])
 				for peer := 1; peer < chaosPeers; peer++ {
 					assert.Equalf(
 						t,
 						expected,
-						chaosSignature(t, ctx, chaos.documents[peer]),
+						chaosSignature(t, chaos.documents[peer]),
 						"peer %d did not converge",
 						peer,
 					)
@@ -105,26 +102,26 @@ func TestSyncState_ModelBasedChaos(t *testing.T) {
 	}
 }
 
-func newSyncChaos(t *testing.T, ctx context.Context) *syncChaos {
+func newSyncChaos(t *testing.T) *syncChaos {
 	t.Helper()
 
 	chaos := &syncChaos{}
 
-	seed, err := automerge.New(ctx, actor(0x40))
+	seed, err := automerge.New(actor(0x40))
 	require.NoError(t, err)
 
-	body, err := seed.CreateText(ctx, "body")
+	body, err := seed.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, body.Splice(ctx, 0, 0, "seed"))
-	_, err = seed.Commit(ctx, "seed", commitTime)
+	require.NoError(t, body.Splice(0, 0, "seed"))
+	_, err = seed.Commit("seed", commitTime)
 	require.NoError(t, err)
 
-	saved, err := seed.Save(ctx)
+	saved, err := seed.Save()
 	require.NoError(t, err)
-	require.NoError(t, seed.Close(ctx))
+	require.NoError(t, seed.Close())
 
 	for peer := range chaosPeers {
-		chaos.documents[peer], err = automerge.Load(ctx, saved, actor(byte(0x50+peer)))
+		chaos.documents[peer], err = automerge.Load(saved, actor(byte(0x50+peer)))
 		require.NoError(t, err)
 	}
 
@@ -134,7 +131,7 @@ func newSyncChaos(t *testing.T, ctx context.Context) *syncChaos {
 				continue
 			}
 
-			chaos.states[source][target], err = chaos.documents[source].NewSyncState(ctx)
+			chaos.states[source][target], err = chaos.documents[source].NewSyncState()
 			require.NoError(t, err)
 		}
 	}
@@ -144,7 +141,6 @@ func newSyncChaos(t *testing.T, ctx context.Context) *syncChaos {
 
 func (c *syncChaos) mapEdit(
 	t *testing.T,
-	ctx context.Context,
 	peer int,
 	scenario int,
 	step int,
@@ -155,13 +151,13 @@ func (c *syncChaos) mapEdit(
 	require.NoError(
 		t,
 		c.documents[peer].Root().PutScalar(
-			ctx,
+
 			key,
 			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(step)},
 		),
 	)
 	_, err := c.documents[peer].Commit(
-		ctx,
+
 		"map edit",
 		commitTime.Add(time.Duration(step)*time.Second),
 	)
@@ -170,24 +166,23 @@ func (c *syncChaos) mapEdit(
 
 func (c *syncChaos) textEdit(
 	t *testing.T,
-	ctx context.Context,
 	random *rand.Rand,
 	peer int,
 	step int,
 ) {
 	t.Helper()
 
-	text, err := c.documents[peer].Text(ctx, "body")
+	text, err := c.documents[peer].Text("body")
 	require.NoError(t, err)
 
-	value, err := text.String(ctx)
+	value, err := text.String()
 	require.NoError(t, err)
 
 	index := random.Intn(len(value) + 1)
-	require.NoError(t, text.Splice(ctx, uint32(index), 0, string(rune('a'+peer))))
+	require.NoError(t, text.Splice(uint32(index), 0, string(rune('a'+peer))))
 
 	_, err = c.documents[peer].Commit(
-		ctx,
+
 		"text edit",
 		commitTime.Add(time.Duration(step)*time.Second),
 	)
@@ -196,14 +191,13 @@ func (c *syncChaos) textEdit(
 
 func (c *syncChaos) send(
 	t *testing.T,
-	ctx context.Context,
 	random *rand.Rand,
 	deliver bool,
 ) {
 	t.Helper()
 
 	source, target := randomPair(random)
-	message, ok, err := c.states[source][target].GenerateMessage(ctx)
+	message, ok, err := c.states[source][target].GenerateMessage()
 	require.NoError(t, err)
 
 	if !ok {
@@ -213,11 +207,11 @@ func (c *syncChaos) send(
 	c.last[source][target] = append(c.last[source][target][:0], message...)
 
 	if deliver {
-		require.NoError(t, c.states[target][source].ReceiveMessage(ctx, message))
+		require.NoError(t, c.states[target][source].ReceiveMessage(message))
 	}
 }
 
-func (c *syncChaos) duplicate(t *testing.T, ctx context.Context, random *rand.Rand) {
+func (c *syncChaos) duplicate(t *testing.T, random *rand.Rand) {
 	t.Helper()
 
 	source, target := randomPair(random)
@@ -227,25 +221,24 @@ func (c *syncChaos) duplicate(t *testing.T, ctx context.Context, random *rand.Ra
 		return
 	}
 
-	require.NoError(t, c.states[target][source].ReceiveMessage(ctx, message))
-	require.NoError(t, c.states[target][source].ReceiveMessage(ctx, message))
+	require.NoError(t, c.states[target][source].ReceiveMessage(message))
+	require.NoError(t, c.states[target][source].ReceiveMessage(message))
 }
 
 func (c *syncChaos) toggleReadOnly(
 	t *testing.T,
-	ctx context.Context,
 	random *rand.Rand,
 ) {
 	t.Helper()
 
 	source, target := randomPair(random)
-	require.NoError(t, c.states[source][target].SetReadOnly(ctx, random.Intn(2) == 0))
+	require.NoError(t, c.states[source][target].SetReadOnly(random.Intn(2) == 0))
 }
 
-func (c *syncChaos) reload(t *testing.T, ctx context.Context, peer int) {
+func (c *syncChaos) reload(t *testing.T, peer int) {
 	t.Helper()
 
-	documentData, err := c.documents[peer].Save(ctx)
+	documentData, err := c.documents[peer].Save()
 	require.NoError(t, err)
 
 	var states [chaosPeers][]byte
@@ -255,14 +248,14 @@ func (c *syncChaos) reload(t *testing.T, ctx context.Context, peer int) {
 			continue
 		}
 
-		states[target], err = c.states[peer][target].Save(ctx)
+		states[target], err = c.states[peer][target].Save()
 		require.NoError(t, err)
-		require.NoError(t, c.states[peer][target].Close(ctx))
+		require.NoError(t, c.states[peer][target].Close())
 	}
 
-	require.NoError(t, c.documents[peer].Close(ctx))
+	require.NoError(t, c.documents[peer].Close())
 
-	c.documents[peer], err = automerge.Load(ctx, documentData, actor(byte(0x50+peer)))
+	c.documents[peer], err = automerge.Load(documentData, actor(byte(0x50+peer)))
 	require.NoError(t, err)
 
 	for target := range chaosPeers {
@@ -270,14 +263,13 @@ func (c *syncChaos) reload(t *testing.T, ctx context.Context, peer int) {
 			continue
 		}
 
-		c.states[peer][target], err = c.documents[peer].LoadSyncState(ctx, states[target])
+		c.states[peer][target], err = c.documents[peer].LoadSyncState(states[target])
 		require.NoError(t, err)
 	}
 }
 
 func (c *syncChaos) assertGenerationQuiesces(
 	t *testing.T,
-	ctx context.Context,
 	random *rand.Rand,
 ) {
 	t.Helper()
@@ -285,7 +277,7 @@ func (c *syncChaos) assertGenerationQuiesces(
 	source, target := randomPair(random)
 
 	for count := range 10 {
-		message, ok, err := c.states[source][target].GenerateMessage(ctx)
+		message, ok, err := c.states[source][target].GenerateMessage()
 		require.NoError(t, err)
 
 		if !ok {
@@ -295,7 +287,7 @@ func (c *syncChaos) assertGenerationQuiesces(
 		c.last[source][target] = append(c.last[source][target][:0], message...)
 
 		if count == 9 {
-			encoded, saveErr := c.states[source][target].Save(ctx)
+			encoded, saveErr := c.states[source][target].Save()
 			t.Fatalf(
 				"peer %d -> %d did not quiesce; state=%s saveErr=%v",
 				source,
@@ -307,13 +299,13 @@ func (c *syncChaos) assertGenerationQuiesces(
 	}
 }
 
-func (c *syncChaos) converge(t *testing.T, ctx context.Context) {
+func (c *syncChaos) converge(t *testing.T) {
 	t.Helper()
 
 	for source := range chaosPeers {
 		for target := range chaosPeers {
 			if source != target {
-				require.NoError(t, c.states[source][target].SetReadOnly(ctx, false))
+				require.NoError(t, c.states[source][target].SetReadOnly(false))
 			}
 		}
 	}
@@ -327,7 +319,7 @@ func (c *syncChaos) converge(t *testing.T, ctx context.Context) {
 					continue
 				}
 
-				message, ok, err := c.states[source][target].GenerateMessage(ctx)
+				message, ok, err := c.states[source][target].GenerateMessage()
 				require.NoError(t, err)
 
 				if !ok {
@@ -336,7 +328,7 @@ func (c *syncChaos) converge(t *testing.T, ctx context.Context) {
 
 				sent = true
 
-				require.NoError(t, c.states[target][source].ReceiveMessage(ctx, message))
+				require.NoError(t, c.states[target][source].ReceiveMessage(message))
 			}
 		}
 
@@ -350,16 +342,16 @@ func (c *syncChaos) converge(t *testing.T, ctx context.Context) {
 	}
 }
 
-func (c *syncChaos) close(ctx context.Context) {
+func (c *syncChaos) close() {
 	for source := range chaosPeers {
 		for target := range chaosPeers {
 			if source != target && c.states[source][target] != nil {
-				_ = c.states[source][target].Close(ctx)
+				_ = c.states[source][target].Close()
 			}
 		}
 
 		if c.documents[source] != nil {
-			_ = c.documents[source].Close(ctx)
+			_ = c.documents[source].Close()
 		}
 	}
 }
@@ -375,12 +367,12 @@ func randomPair(random *rand.Rand) (int, int) {
 	return source, target
 }
 
-func chaosSignature(t *testing.T, ctx context.Context, document *automerge.Document) string {
+func chaosSignature(t *testing.T, document *automerge.Document) string {
 	t.Helper()
 
-	heads := sortedHeadHex(t, ctx, document)
+	heads := sortedHeadHex(t, document)
 
-	keys, err := document.Root().Keys(ctx)
+	keys, err := document.Root().Keys()
 	require.NoError(t, err)
 	sort.Strings(keys)
 
@@ -392,15 +384,15 @@ func chaosSignature(t *testing.T, ctx context.Context, document *automerge.Docum
 			continue
 		}
 
-		value, err := document.Root().Scalar(ctx, key)
+		value, err := document.Root().Scalar(key)
 		require.NoError(t, err)
 		fmt.Fprintf(&builder, "%s=%s\n", key, canonicalScalar(value))
 	}
 
-	text, err := document.Text(ctx, "body")
+	text, err := document.Text("body")
 	require.NoError(t, err)
 
-	content, err := text.String(ctx)
+	content, err := text.String()
 	require.NoError(t, err)
 	fmt.Fprintf(&builder, "body=%q", content)
 

@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"testing"
@@ -29,26 +28,21 @@ import (
 	"go.probo.inc/probo/pkg/automerge"
 )
 
-type benchmarkFactory func(
-	context.Context,
-	automerge.ActorID,
-) (*automerge.Document, error)
+type benchmarkFactory func(automerge.ActorID) (*automerge.Document, error)
 
 func BenchmarkDocumentCreation(b *testing.B) {
 	benchmarkEngines(
 		b,
 		func(b *testing.B, factory benchmarkFactory) {
-			ctx := context.Background()
-
 			b.ReportAllocs()
 
 			for b.Loop() {
-				document, err := factory(ctx, actor(200))
+				document, err := factory(actor(200))
 				if err != nil {
 					b.Fatal(err)
 				}
 
-				if err := document.Close(ctx); err != nil {
+				if err := document.Close(); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -64,18 +58,16 @@ func BenchmarkMapMutations(b *testing.B) {
 				benchmarkEngines(
 					b,
 					func(b *testing.B, factory benchmarkFactory) {
-						ctx := context.Background()
-
 						b.ReportAllocs()
 
 						for b.Loop() {
-							document, err := factory(ctx, actor(201))
+							document, err := factory(actor(201))
 							if err != nil {
 								b.Fatal(err)
 							}
 
 							values, err := document.Root().CreateObject(
-								ctx,
+
 								"values",
 								automerge.ObjectTypeMap,
 							)
@@ -85,7 +77,7 @@ func BenchmarkMapMutations(b *testing.B) {
 
 							for index := range size {
 								if err := values.PutScalar(
-									ctx,
+
 									strconv.Itoa(index),
 									automerge.Scalar{
 										Type: automerge.ScalarTypeInt,
@@ -97,14 +89,14 @@ func BenchmarkMapMutations(b *testing.B) {
 							}
 
 							if _, err := document.Commit(
-								ctx,
+
 								"map mutations",
 								commitTime,
 							); err != nil {
 								b.Fatal(err)
 							}
 
-							if err := document.Close(ctx); err != nil {
+							if err := document.Close(); err != nil {
 								b.Fatal(err)
 							}
 						}
@@ -123,24 +115,22 @@ func BenchmarkTextTyping(b *testing.B) {
 				benchmarkEngines(
 					b,
 					func(b *testing.B, factory benchmarkFactory) {
-						ctx := context.Background()
-
 						b.ReportAllocs()
 
 						for b.Loop() {
-							document, err := factory(ctx, actor(202))
+							document, err := factory(actor(202))
 							if err != nil {
 								b.Fatal(err)
 							}
 
-							text, err := document.CreateText(ctx, "body")
+							text, err := document.CreateText("body")
 							if err != nil {
 								b.Fatal(err)
 							}
 
 							for index := range size {
 								if err := text.Splice(
-									ctx,
+
 									uint32(index),
 									0,
 									"x",
@@ -150,14 +140,14 @@ func BenchmarkTextTyping(b *testing.B) {
 							}
 
 							if _, err := document.Commit(
-								ctx,
+
 								"text typing",
 								commitTime,
 							); err != nil {
 								b.Fatal(err)
 							}
 
-							if err := document.Close(ctx); err != nil {
+							if err := document.Close(); err != nil {
 								b.Fatal(err)
 							}
 						}
@@ -169,7 +159,6 @@ func BenchmarkTextTyping(b *testing.B) {
 }
 
 func BenchmarkLoad(b *testing.B) {
-	ctx := context.Background()
 	data := benchmarkDocument(b, 10_000)
 
 	b.Run(
@@ -178,12 +167,12 @@ func BenchmarkLoad(b *testing.B) {
 			b.ReportAllocs()
 
 			for b.Loop() {
-				document, err := automerge.Load(ctx, data, actor(203))
+				document, err := automerge.Load(data, actor(203))
 				if err != nil {
 					b.Fatal(err)
 				}
 
-				if err := document.Close(ctx); err != nil {
+				if err := document.Close(); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -196,12 +185,12 @@ func BenchmarkLoad(b *testing.B) {
 			b.ReportAllocs()
 
 			for b.Loop() {
-				document, err := automerge.LoadReference(ctx, data, actor(203))
+				document, err := automerge.LoadReference(data, actor(203))
 				if err != nil {
 					b.Fatal(err)
 				}
 
-				if err := document.Close(ctx); err != nil {
+				if err := document.Close(); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -210,24 +199,23 @@ func BenchmarkLoad(b *testing.B) {
 }
 
 func BenchmarkSave(b *testing.B) {
-	ctx := context.Background()
 	data := benchmarkDocument(b, 10_000)
 
 	b.Run(
 		"native",
 		func(b *testing.B) {
-			document, err := automerge.Load(ctx, data, actor(204))
+			document, err := automerge.Load(data, actor(204))
 			if err != nil {
 				b.Fatal(err)
 			}
 
-			defer func() { _ = document.Close(ctx) }()
+			defer func() { _ = document.Close() }()
 
 			b.ReportAllocs()
 			b.ResetTimer()
 
 			for b.Loop() {
-				if _, err := document.Save(ctx); err != nil {
+				if _, err := document.Save(); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -238,18 +226,18 @@ func BenchmarkSave(b *testing.B) {
 		func(b *testing.B) {
 			warmReference(b)
 
-			document, err := automerge.LoadReference(ctx, data, actor(204))
+			document, err := automerge.LoadReference(data, actor(204))
 			if err != nil {
 				b.Fatal(err)
 			}
 
-			defer func() { _ = document.Close(ctx) }()
+			defer func() { _ = document.Close() }()
 
 			b.ReportAllocs()
 			b.ResetTimer()
 
 			for b.Loop() {
-				if _, err := document.Save(ctx); err != nil {
+				if _, err := document.Save(); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -284,57 +272,54 @@ func BenchmarkInitialSync(b *testing.B) {
 		b.Run(
 			combination.name,
 			func(b *testing.B) {
-				ctx := context.Background()
-
 				warmReference(b)
 				b.ReportAllocs()
 
 				for b.Loop() {
-					source, err := combination.source(ctx, actor(205))
+					source, err := combination.source(actor(205))
 					if err != nil {
 						b.Fatal(err)
 					}
 
-					text, err := source.CreateText(ctx, "body")
+					text, err := source.CreateText("body")
 					if err != nil {
 						b.Fatal(err)
 					}
 
-					if err := text.Splice(ctx, 0, 0, benchmarkText(1_000)); err != nil {
+					if err := text.Splice(0, 0, benchmarkText(1_000)); err != nil {
 						b.Fatal(err)
 					}
 
-					if _, err := source.Commit(ctx, "sync source", commitTime); err != nil {
+					if _, err := source.Commit("sync source", commitTime); err != nil {
 						b.Fatal(err)
 					}
 
-					target, err := combination.target(ctx, actor(206))
+					target, err := combination.target(actor(206))
 					if err != nil {
 						b.Fatal(err)
 					}
 
-					sourceState, err := source.NewSyncState(ctx)
+					sourceState, err := source.NewSyncState()
 					if err != nil {
 						b.Fatal(err)
 					}
 
-					targetState, err := target.NewSyncState(ctx)
+					targetState, err := target.NewSyncState()
 					if err != nil {
 						b.Fatal(err)
 					}
 
 					if err := benchmarkSynchronize(
-						ctx,
 						sourceState,
 						targetState,
 					); err != nil {
 						b.Fatal(err)
 					}
 
-					_ = sourceState.Close(ctx)
-					_ = targetState.Close(ctx)
-					_ = source.Close(ctx)
-					_ = target.Close(ctx)
+					_ = sourceState.Close()
+					_ = targetState.Close()
+					_ = source.Close()
+					_ = target.Close()
 				}
 			},
 		)
@@ -365,29 +350,27 @@ func benchmarkEngines(
 func benchmarkDocument(b *testing.B, size int) []byte {
 	b.Helper()
 
-	ctx := context.Background()
-
-	document, err := automerge.New(ctx, actor(207))
+	document, err := automerge.New(actor(207))
 	if err != nil {
 		b.Fatal(err)
 	}
 
-	defer func() { _ = document.Close(ctx) }()
+	defer func() { _ = document.Close() }()
 
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	if err != nil {
 		b.Fatal(err)
 	}
 
-	if err := text.Splice(ctx, 0, 0, benchmarkText(size)); err != nil {
+	if err := text.Splice(0, 0, benchmarkText(size)); err != nil {
 		b.Fatal(err)
 	}
 
-	if _, err := document.Commit(ctx, "benchmark fixture", commitTime); err != nil {
+	if _, err := document.Commit("benchmark fixture", commitTime); err != nil {
 		b.Fatal(err)
 	}
 
-	data, err := document.Save(ctx)
+	data, err := document.Save()
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -399,14 +382,12 @@ func warmReference(b *testing.B) {
 	b.Helper()
 	b.StopTimer()
 
-	ctx := context.Background()
-
-	document, err := automerge.NewReference(ctx, actor(208))
+	document, err := automerge.NewReference(actor(208))
 	if err != nil {
 		b.Fatal(err)
 	}
 
-	if err := document.Close(ctx); err != nil {
+	if err := document.Close(); err != nil {
 		b.Fatal(err)
 	}
 
@@ -423,33 +404,32 @@ func benchmarkText(size int) string {
 }
 
 func benchmarkSynchronize(
-	ctx context.Context,
 	left *automerge.SyncState,
 	right *automerge.SyncState,
 ) error {
 	for range 100 {
 		progressed := false
 
-		message, ok, err := left.GenerateMessage(ctx)
+		message, ok, err := left.GenerateMessage()
 		if err != nil {
 			return err
 		}
 
 		if ok {
-			if err := right.ReceiveMessage(ctx, message); err != nil {
+			if err := right.ReceiveMessage(message); err != nil {
 				return err
 			}
 
 			progressed = true
 		}
 
-		message, ok, err = right.GenerateMessage(ctx)
+		message, ok, err = right.GenerateMessage()
 		if err != nil {
 			return err
 		}
 
 		if ok {
-			if err := left.ReceiveMessage(ctx, message); err != nil {
+			if err := left.ReceiveMessage(message); err != nil {
 				return err
 			}
 

@@ -25,7 +25,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -38,30 +37,28 @@ import (
 func TestRustOrphans_LoadIncrementalChangeWithoutDepsThrows(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, engine := range rustParityEngines() {
 		t.Run(
 			engine.name,
 			func(t *testing.T) {
 				t.Parallel()
 
-				doc, err := engine.open(ctx, actor(1))
+				doc, err := engine.open(actor(1))
 				require.NoError(t, err)
 				closeDocument(t, doc)
-				require.NoError(t, doc.PutString(ctx, "key", "value"))
-				_, err = doc.Commit(ctx, "value", commitTime)
+				require.NoError(t, doc.PutString("key", "value"))
+				_, err = doc.Commit("value", commitTime)
 				require.NoError(t, err)
-				_, err = doc.SaveIncremental(ctx)
-				require.NoError(t, err)
-
-				require.NoError(t, doc.PutString(ctx, "key", "value2"))
-				_, err = doc.Commit(ctx, "value2", commitTime.Add(time.Second))
-				require.NoError(t, err)
-				orphan, err := doc.SaveIncremental(ctx)
+				_, err = doc.SaveIncremental()
 				require.NoError(t, err)
 
-				_, err = engine.load(ctx, orphan, actor(2))
+				require.NoError(t, doc.PutString("key", "value2"))
+				_, err = doc.Commit("value2", commitTime.Add(time.Second))
+				require.NoError(t, err)
+				orphan, err := doc.SaveIncremental()
+				require.NoError(t, err)
+
+				_, err = engine.load(orphan, actor(2))
 				require.Error(t, err)
 			},
 		)

@@ -21,7 +21,6 @@
 package automerge_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -33,24 +32,23 @@ import (
 func TestPureGoDocument_ReferenceLoadsNativeHistory(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.New(ctx, actor(40))
+	nativeDocument, err := automerge.New(actor(40))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	text, err := nativeDocument.CreateText(ctx, "body")
+	text, err := nativeDocument.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "Hello 😀"))
-	_, err = nativeDocument.Commit(ctx, "Create native document", commitTime)
+	require.NoError(t, text.Splice(0, 0, "Hello 😀"))
+	_, err = nativeDocument.Commit("Create native document", commitTime)
 	require.NoError(t, err)
-	data, err := nativeDocument.Save(ctx)
+	data, err := nativeDocument.Save()
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.LoadReference(ctx, data, actor(41))
+	referenceDocument, err := automerge.LoadReference(data, actor(41))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	value, err := referenceText.String(ctx)
+	value, err := referenceText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Hello 😀", value)
 }
@@ -58,24 +56,23 @@ func TestPureGoDocument_ReferenceLoadsNativeHistory(t *testing.T) {
 func TestPureGoDocument_ExtendsReferenceSnapshot(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.Load(ctx, newBaseDocument(t), actor(42))
+	nativeDocument, err := automerge.Load(newBaseDocument(t), actor(42))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	text, err := nativeDocument.Text(ctx, "body")
+	text, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 5, 0, " native"))
-	_, err = nativeDocument.Commit(ctx, "Extend in Go", commitTime)
+	require.NoError(t, text.Splice(5, 0, " native"))
+	_, err = nativeDocument.Commit("Extend in Go", commitTime)
 	require.NoError(t, err)
-	data, err := nativeDocument.Save(ctx)
+	data, err := nativeDocument.Save()
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.LoadReference(ctx, data, actor(43))
+	referenceDocument, err := automerge.LoadReference(data, actor(43))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	value, err := referenceText.String(ctx)
+	value, err := referenceText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Hello native", value)
 }
@@ -83,24 +80,23 @@ func TestPureGoDocument_ExtendsReferenceSnapshot(t *testing.T) {
 func TestPureGoDocument_InsertsInsideReferenceText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.Load(ctx, newBaseDocument(t), actor(46))
+	nativeDocument, err := automerge.Load(newBaseDocument(t), actor(46))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	text, err := nativeDocument.Text(ctx, "body")
+	text, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 2, 0, "X"))
-	_, err = nativeDocument.Commit(ctx, "Insert in Go", commitTime)
+	require.NoError(t, text.Splice(2, 0, "X"))
+	_, err = nativeDocument.Commit("Insert in Go", commitTime)
 	require.NoError(t, err)
-	data, err := nativeDocument.Save(ctx)
+	data, err := nativeDocument.Save()
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.LoadReference(ctx, data, actor(47))
+	referenceDocument, err := automerge.LoadReference(data, actor(47))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	value, err := referenceText.String(ctx)
+	value, err := referenceText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "HeXllo", value)
 }
@@ -108,24 +104,23 @@ func TestPureGoDocument_InsertsInsideReferenceText(t *testing.T) {
 func TestPureGoDocument_DeletesReferenceText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.Load(ctx, newBaseDocument(t), actor(48))
+	nativeDocument, err := automerge.Load(newBaseDocument(t), actor(48))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	text, err := nativeDocument.Text(ctx, "body")
+	text, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 2, 2, ""))
-	_, err = nativeDocument.Commit(ctx, "Delete in Go", commitTime)
+	require.NoError(t, text.Splice(2, 2, ""))
+	_, err = nativeDocument.Commit("Delete in Go", commitTime)
 	require.NoError(t, err)
-	data, err := nativeDocument.Save(ctx)
+	data, err := nativeDocument.Save()
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.LoadReference(ctx, data, actor(49))
+	referenceDocument, err := automerge.LoadReference(data, actor(49))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	value, err := referenceText.String(ctx)
+	value, err := referenceText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Heo", value)
 }
@@ -133,17 +128,16 @@ func TestPureGoDocument_DeletesReferenceText(t *testing.T) {
 func TestPureGoDocument_EmptySnapshotLoadsInReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.New(ctx, actor(44))
+	nativeDocument, err := automerge.New(actor(44))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	data, err := nativeDocument.Save(ctx)
+	data, err := nativeDocument.Save()
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.LoadReference(ctx, data, actor(45))
+	referenceDocument, err := automerge.LoadReference(data, actor(45))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	heads, err := referenceDocument.Heads(ctx)
+	heads, err := referenceDocument.Heads()
 	require.NoError(t, err)
 	assert.Empty(t, heads)
 }
@@ -151,36 +145,35 @@ func TestPureGoDocument_EmptySnapshotLoadsInReference(t *testing.T) {
 func TestPureGoDocument_ReusesActorAfterLoad(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	actorID := actor(55)
-	document, err := automerge.New(ctx, actorID)
+	document, err := automerge.New(actorID)
 	require.NoError(t, err)
 	closeDocument(t, document)
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "A"))
-	_, err = document.Commit(ctx, "First change", commitTime)
+	require.NoError(t, text.Splice(0, 0, "A"))
+	_, err = document.Commit("First change", commitTime)
 	require.NoError(t, err)
-	data, err := document.Save(ctx)
+	data, err := document.Save()
 	require.NoError(t, err)
 
-	loaded, err := automerge.Load(ctx, data, actorID)
+	loaded, err := automerge.Load(data, actorID)
 	require.NoError(t, err)
 	closeDocument(t, loaded)
-	loadedText, err := loaded.Text(ctx, "body")
+	loadedText, err := loaded.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, loadedText.Splice(ctx, 1, 0, "B"))
-	_, err = loaded.Commit(ctx, "Second change", commitTime)
+	require.NoError(t, loadedText.Splice(1, 0, "B"))
+	_, err = loaded.Commit("Second change", commitTime)
 	require.NoError(t, err)
-	data, err = loaded.Save(ctx)
+	data, err = loaded.Save()
 	require.NoError(t, err)
 
-	reference, err := automerge.LoadReference(ctx, data, actor(56))
+	reference, err := automerge.LoadReference(data, actor(56))
 	require.NoError(t, err)
 	closeDocument(t, reference)
-	referenceText, err := reference.Text(ctx, "body")
+	referenceText, err := reference.Text("body")
 	require.NoError(t, err)
-	value, err := referenceText.String(ctx)
+	value, err := referenceText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "AB", value)
 }
@@ -188,50 +181,49 @@ func TestPureGoDocument_ReusesActorAfterLoad(t *testing.T) {
 func TestPureGoDocument_ConcurrentChangesConverge(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	base, err := automerge.New(ctx, actor(50))
+	base, err := automerge.New(actor(50))
 	require.NoError(t, err)
 	closeDocument(t, base)
-	baseText, err := base.CreateText(ctx, "body")
+	baseText, err := base.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, baseText.Splice(ctx, 0, 0, "A"))
-	_, err = base.Commit(ctx, "Create body", commitTime)
+	require.NoError(t, baseText.Splice(0, 0, "A"))
+	_, err = base.Commit("Create body", commitTime)
 	require.NoError(t, err)
-	baseData, err := base.Save(ctx)
+	baseData, err := base.Save()
 	require.NoError(t, err)
 
-	left, err := automerge.Load(ctx, baseData, actor(51))
+	left, err := automerge.Load(baseData, actor(51))
 	require.NoError(t, err)
 	closeDocument(t, left)
-	leftText, err := left.Text(ctx, "body")
+	leftText, err := left.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, leftText.Splice(ctx, 1, 0, "L"))
-	_, err = left.Commit(ctx, "Edit left", commitTime)
+	require.NoError(t, leftText.Splice(1, 0, "L"))
+	_, err = left.Commit("Edit left", commitTime)
 	require.NoError(t, err)
 
-	right, err := automerge.Load(ctx, baseData, actor(52))
+	right, err := automerge.Load(baseData, actor(52))
 	require.NoError(t, err)
 	closeDocument(t, right)
-	rightText, err := right.Text(ctx, "body")
+	rightText, err := right.Text("body")
 	require.NoError(t, err)
-	require.NoError(t, rightText.Splice(ctx, 1, 0, "R"))
-	_, err = right.Commit(ctx, "Edit right", commitTime)
-	require.NoError(t, err)
-
-	_, err = left.Merge(ctx, right)
-	require.NoError(t, err)
-	_, err = right.Merge(ctx, left)
+	require.NoError(t, rightText.Splice(1, 0, "R"))
+	_, err = right.Commit("Edit right", commitTime)
 	require.NoError(t, err)
 
-	leftValue, err := leftText.String(ctx)
+	_, err = left.Merge(right)
 	require.NoError(t, err)
-	rightValue, err := rightText.String(ctx)
+	_, err = right.Merge(left)
+	require.NoError(t, err)
+
+	leftValue, err := leftText.String()
+	require.NoError(t, err)
+	rightValue, err := rightText.String()
 	require.NoError(t, err)
 	assert.Equal(t, leftValue, rightValue)
 
-	leftHeads, err := left.Heads(ctx)
+	leftHeads, err := left.Heads()
 	require.NoError(t, err)
-	rightHeads, err := right.Heads(ctx)
+	rightHeads, err := right.Heads()
 	require.NoError(t, err)
 	assert.ElementsMatch(t, leftHeads, rightHeads)
 }
@@ -239,27 +231,26 @@ func TestPureGoDocument_ConcurrentChangesConverge(t *testing.T) {
 func TestPureGoDocument_CursorMatchesReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	baseData := newBaseDocument(t)
-	nativeDocument, err := automerge.Load(ctx, baseData, actor(60))
+	nativeDocument, err := automerge.Load(baseData, actor(60))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(ctx, "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	nativeCursor, err := nativeText.Cursor(ctx, 2)
+	nativeCursor, err := nativeText.Cursor(2)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.LoadReference(ctx, baseData, actor(61))
+	referenceDocument, err := automerge.LoadReference(baseData, actor(61))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	referenceCursor, err := referenceText.Cursor(ctx, 2)
+	referenceCursor, err := referenceText.Cursor(2)
 	require.NoError(t, err)
 	assert.Equal(t, referenceCursor, nativeCursor)
 
-	require.NoError(t, nativeText.Splice(ctx, 0, 0, "X"))
-	position, err := nativeText.CursorPosition(ctx, nativeCursor)
+	require.NoError(t, nativeText.Splice(0, 0, "X"))
+	position, err := nativeText.CursorPosition(nativeCursor)
 	require.NoError(t, err)
 	assert.Equal(t, uint32(3), position)
 }
@@ -267,29 +258,28 @@ func TestPureGoDocument_CursorMatchesReference(t *testing.T) {
 func TestPureGoDocument_DeletedCursorMatchesReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
 	baseData := newBaseDocument(t)
-	nativeDocument, err := automerge.Load(ctx, baseData, actor(62))
+	nativeDocument, err := automerge.Load(baseData, actor(62))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(ctx, "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	cursor, err := nativeText.Cursor(ctx, 2)
+	cursor, err := nativeText.Cursor(2)
 	require.NoError(t, err)
-	require.NoError(t, nativeText.Splice(ctx, 2, 1, ""))
-	_, err = nativeDocument.Commit(ctx, "Delete cursor target", commitTime)
+	require.NoError(t, nativeText.Splice(2, 1, ""))
+	_, err = nativeDocument.Commit("Delete cursor target", commitTime)
 	require.NoError(t, err)
-	nativePosition, err := nativeText.CursorPosition(ctx, cursor)
+	nativePosition, err := nativeText.CursorPosition(cursor)
 	require.NoError(t, err)
 
-	data, err := nativeDocument.Save(ctx)
+	data, err := nativeDocument.Save()
 	require.NoError(t, err)
-	referenceDocument, err := automerge.LoadReference(ctx, data, actor(63))
+	referenceDocument, err := automerge.LoadReference(data, actor(63))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
-	referencePosition, err := referenceText.CursorPosition(ctx, cursor)
+	referencePosition, err := referenceText.CursorPosition(cursor)
 	require.NoError(t, err)
 	assert.Equal(t, referencePosition, nativePosition)
 }
@@ -297,92 +287,90 @@ func TestPureGoDocument_DeletedCursorMatchesReference(t *testing.T) {
 func TestPureGoDocument_UTF16CursorBoundariesMatchReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	base, err := automerge.NewReference(ctx, actor(122))
+	base, err := automerge.NewReference(actor(122))
 	require.NoError(t, err)
 	closeDocument(t, base)
-	baseText, err := base.CreateText(ctx, "body")
+	baseText, err := base.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, baseText.Splice(ctx, 0, 0, "A😀B"))
-	_, err = base.Commit(ctx, "Create emoji text", commitTime)
+	require.NoError(t, baseText.Splice(0, 0, "A😀B"))
+	_, err = base.Commit("Create emoji text", commitTime)
 	require.NoError(t, err)
-	baseData, err := base.Save(ctx)
+	baseData, err := base.Save()
 	require.NoError(t, err)
 
-	nativeDocument, err := automerge.Load(ctx, baseData, actor(123))
+	nativeDocument, err := automerge.Load(baseData, actor(123))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(ctx, "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.LoadReference(ctx, baseData, actor(124))
+	referenceDocument, err := automerge.LoadReference(baseData, actor(124))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
 
-	nativeInside, nativeErr := nativeText.Cursor(ctx, 2)
-	referenceInside, referenceErr := referenceText.Cursor(ctx, 2)
+	nativeInside, nativeErr := nativeText.Cursor(2)
+	referenceInside, referenceErr := referenceText.Cursor(2)
 
 	require.NoError(t, nativeErr)
 	require.NoError(t, referenceErr)
 	require.Equal(t, referenceInside, nativeInside)
-	nativeInsidePosition, err := nativeText.CursorPosition(ctx, nativeInside)
+	nativeInsidePosition, err := nativeText.CursorPosition(nativeInside)
 	require.NoError(t, err)
 	referenceInsidePosition, err := referenceText.CursorPosition(
-		ctx,
+
 		referenceInside,
 	)
 	require.NoError(t, err)
 	assert.Equal(t, referenceInsidePosition, nativeInsidePosition)
 
 	for _, index := range []uint32{1, 3} {
-		nativeCursor, err := nativeText.Cursor(ctx, index)
+		nativeCursor, err := nativeText.Cursor(index)
 		require.NoError(t, err)
-		referenceCursor, err := referenceText.Cursor(ctx, index)
+		referenceCursor, err := referenceText.Cursor(index)
 		require.NoError(t, err)
 		require.Equal(t, referenceCursor, nativeCursor)
 
-		require.NoError(t, nativeText.Splice(ctx, 0, 0, "X"))
-		require.NoError(t, referenceText.Splice(ctx, 0, 0, "X"))
-		nativePosition, err := nativeText.CursorPosition(ctx, nativeCursor)
+		require.NoError(t, nativeText.Splice(0, 0, "X"))
+		require.NoError(t, referenceText.Splice(0, 0, "X"))
+		nativePosition, err := nativeText.CursorPosition(nativeCursor)
 		require.NoError(t, err)
 		referencePosition, err := referenceText.CursorPosition(
-			ctx,
+
 			referenceCursor,
 		)
 		require.NoError(t, err)
 		assert.Equal(t, referencePosition, nativePosition)
 
-		require.NoError(t, nativeText.Splice(ctx, 0, 1, ""))
-		require.NoError(t, referenceText.Splice(ctx, 0, 1, ""))
+		require.NoError(t, nativeText.Splice(0, 1, ""))
+		require.NoError(t, referenceText.Splice(0, 1, ""))
 	}
 }
 
 func TestPureGoDocument_CursorModesMatchReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	base, err := automerge.NewReference(ctx, actor(146))
+	base, err := automerge.NewReference(actor(146))
 	require.NoError(t, err)
 	closeDocument(t, base)
-	baseText, err := base.CreateText(ctx, "body")
+	baseText, err := base.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, baseText.Splice(ctx, 0, 0, "A😀B"))
-	_, err = base.Commit(ctx, "cursor base", commitTime)
+	require.NoError(t, baseText.Splice(0, 0, "A😀B"))
+	_, err = base.Commit("cursor base", commitTime)
 	require.NoError(t, err)
-	data, err := base.Save(ctx)
+	data, err := base.Save()
 	require.NoError(t, err)
 
-	nativeDocument, err := automerge.Load(ctx, data, actor(147))
+	nativeDocument, err := automerge.Load(data, actor(147))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.Text(ctx, "body")
+	nativeText, err := nativeDocument.Text("body")
 	require.NoError(t, err)
-	referenceDocument, err := automerge.LoadReference(ctx, data, actor(148))
+	referenceDocument, err := automerge.LoadReference(data, actor(148))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
 
 	for _, index := range []int64{-1, 0, 1, 2, 3, 4, 100} {
@@ -390,22 +378,22 @@ func TestPureGoDocument_CursorModesMatchReference(t *testing.T) {
 			automerge.CursorMoveBefore,
 			automerge.CursorMoveAfter,
 		} {
-			nativeCursor, err := nativeText.CursorFor(ctx, index, movement)
+			nativeCursor, err := nativeText.CursorFor(index, movement)
 			require.NoError(t, err)
 			referenceCursor, err := referenceText.CursorFor(
-				ctx,
+
 				index,
 				movement,
 			)
 			require.NoError(t, err)
 			assert.Equal(t, referenceCursor, nativeCursor)
 			nativePosition, err := nativeText.CursorPosition(
-				ctx,
+
 				nativeCursor,
 			)
 			require.NoError(t, err)
 			referencePosition, err := referenceText.CursorPosition(
-				ctx,
+
 				referenceCursor,
 			)
 			require.NoError(t, err)
@@ -414,34 +402,34 @@ func TestPureGoDocument_CursorModesMatchReference(t *testing.T) {
 	}
 
 	nativeCursor, err := nativeText.CursorFor(
-		ctx,
+
 		1,
 		automerge.CursorMoveAfter,
 	)
 	require.NoError(t, err)
 	referenceCursor, err := referenceText.CursorFor(
-		ctx,
+
 		1,
 		automerge.CursorMoveAfter,
 	)
 	require.NoError(t, err)
 	nativeBefore, err := nativeText.CursorFor(
-		ctx,
+
 		1,
 		automerge.CursorMoveBefore,
 	)
 	require.NoError(t, err)
 	referenceBefore, err := referenceText.CursorFor(
-		ctx,
+
 		1,
 		automerge.CursorMoveBefore,
 	)
 	require.NoError(t, err)
-	require.NoError(t, nativeText.SpliceCursor(ctx, nativeCursor, 2, "X"))
-	require.NoError(t, referenceText.SpliceCursor(ctx, referenceCursor, 2, "X"))
-	nativeValue, err := nativeText.String(ctx)
+	require.NoError(t, nativeText.SpliceCursor(nativeCursor, 2, "X"))
+	require.NoError(t, referenceText.SpliceCursor(referenceCursor, 2, "X"))
+	nativeValue, err := nativeText.String()
 	require.NoError(t, err)
-	referenceValue, err := referenceText.String(ctx)
+	referenceValue, err := referenceText.String()
 	require.NoError(t, err)
 	assert.Equal(t, referenceValue, nativeValue)
 	assert.Equal(t, "AXB", nativeValue)
@@ -450,9 +438,9 @@ func TestPureGoDocument_CursorModesMatchReference(t *testing.T) {
 		{nativeBefore, referenceBefore},
 		{nativeCursor, referenceCursor},
 	} {
-		nativePosition, err := nativeText.CursorPosition(ctx, cursors[0])
+		nativePosition, err := nativeText.CursorPosition(cursors[0])
 		require.NoError(t, err)
-		referencePosition, err := referenceText.CursorPosition(ctx, cursors[1])
+		referencePosition, err := referenceText.CursorPosition(cursors[1])
 		require.NoError(t, err)
 		assert.Equal(t, referencePosition, nativePosition)
 	}
@@ -461,31 +449,30 @@ func TestPureGoDocument_CursorModesMatchReference(t *testing.T) {
 func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.New(ctx, actor(153))
+	nativeDocument, err := automerge.New(actor(153))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
 
-	referenceDocument, err := automerge.NewReference(ctx, actor(153))
+	referenceDocument, err := automerge.NewReference(actor(153))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 
-	nativeText, err := nativeDocument.CreateText(ctx, "body")
+	nativeText, err := nativeDocument.CreateText("body")
 	require.NoError(t, err)
-	referenceText, err := referenceDocument.CreateText(ctx, "body")
+	referenceText, err := referenceDocument.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, nativeText.Splice(ctx, 0, 0, "ABCD"))
-	require.NoError(t, referenceText.Splice(ctx, 0, 0, "ABCD"))
-	_, err = nativeDocument.Commit(ctx, "create text", commitTime)
+	require.NoError(t, nativeText.Splice(0, 0, "ABCD"))
+	require.NoError(t, referenceText.Splice(0, 0, "ABCD"))
+	_, err = nativeDocument.Commit("create text", commitTime)
 	require.NoError(t, err)
-	_, err = referenceDocument.Commit(ctx, "create text", commitTime)
+	_, err = referenceDocument.Commit("create text", commitTime)
 	require.NoError(t, err)
 
 	strong := automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true}
 	require.NoError(
 		t,
 		nativeText.Mark(
-			ctx,
+
 			0,
 			4,
 			"strong",
@@ -496,7 +483,7 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 	require.NoError(
 		t,
 		referenceText.Mark(
-			ctx,
+
 			0,
 			4,
 			"strong",
@@ -504,20 +491,20 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 			automerge.MarkExpandBoth,
 		),
 	)
-	_, err = nativeDocument.Commit(ctx, "mark", commitTime.Add(time.Second))
+	_, err = nativeDocument.Commit("mark", commitTime.Add(time.Second))
 	require.NoError(t, err)
-	_, err = referenceDocument.Commit(ctx, "mark", commitTime.Add(time.Second))
+	_, err = referenceDocument.Commit("mark", commitTime.Add(time.Second))
 	require.NoError(t, err)
-	nativeMarkedSpans, err := nativeText.Spans(ctx)
+	nativeMarkedSpans, err := nativeText.Spans()
 	require.NoError(t, err)
-	referenceMarkedSpans, err := referenceText.Spans(ctx)
+	referenceMarkedSpans, err := referenceText.Spans()
 	require.NoError(t, err)
 	assert.Equal(t, referenceMarkedSpans, nativeMarkedSpans)
 
 	require.NoError(
 		t,
 		nativeText.Unmark(
-			ctx,
+
 			1,
 			3,
 			"strong",
@@ -527,55 +514,55 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 	require.NoError(
 		t,
 		referenceText.Unmark(
-			ctx,
+
 			1,
 			3,
 			"strong",
 			automerge.MarkExpandNone,
 		),
 	)
-	_, err = nativeDocument.Commit(ctx, "unmark", commitTime.Add(2*time.Second))
+	_, err = nativeDocument.Commit("unmark", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit(
-		ctx,
+
 		"unmark",
 		commitTime.Add(2*time.Second),
 	)
 	require.NoError(t, err)
 
-	nativeSpans, err := nativeText.Spans(ctx)
+	nativeSpans, err := nativeText.Spans()
 	require.NoError(t, err)
-	referenceSpans, err := referenceText.Spans(ctx)
+	referenceSpans, err := referenceText.Spans()
 	require.NoError(t, err)
 	assert.Equal(t, referenceSpans, nativeSpans)
 
-	nativeData, err := nativeDocument.Save(ctx)
+	nativeData, err := nativeDocument.Save()
 	require.NoError(t, err)
 	referenceFromNative, err := automerge.LoadReference(
-		ctx,
+
 		nativeData,
 		actor(154),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceFromNative)
-	referenceFromNativeText, err := referenceFromNative.Text(ctx, "body")
+	referenceFromNativeText, err := referenceFromNative.Text("body")
 	require.NoError(t, err)
-	referenceFromNativeSpans, err := referenceFromNativeText.Spans(ctx)
+	referenceFromNativeSpans, err := referenceFromNativeText.Spans()
 	require.NoError(t, err)
 	assert.Equal(t, nativeSpans, referenceFromNativeSpans)
 
-	referenceData, err := referenceDocument.Save(ctx)
+	referenceData, err := referenceDocument.Save()
 	require.NoError(t, err)
 	nativeFromReference, err := automerge.Load(
-		ctx,
+
 		referenceData,
 		actor(155),
 	)
 	require.NoError(t, err)
 	closeDocument(t, nativeFromReference)
-	nativeFromReferenceText, err := nativeFromReference.Text(ctx, "body")
+	nativeFromReferenceText, err := nativeFromReference.Text("body")
 	require.NoError(t, err)
-	nativeFromReferenceSpans, err := nativeFromReferenceText.Spans(ctx)
+	nativeFromReferenceSpans, err := nativeFromReferenceText.Spans()
 	require.NoError(t, err)
 	assert.Equal(t, referenceSpans, nativeFromReferenceSpans)
 }
@@ -583,79 +570,77 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 func TestPureGoDocument_BlockAuthoringMatchesReference(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.New(ctx, actor(167))
+	nativeDocument, err := automerge.New(actor(167))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
 
-	referenceDocument, err := automerge.NewReference(ctx, actor(167))
+	referenceDocument, err := automerge.NewReference(actor(167))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 
-	nativeText, err := nativeDocument.CreateText(ctx, "body")
+	nativeText, err := nativeDocument.CreateText("body")
 	require.NoError(t, err)
-	referenceText, err := referenceDocument.CreateText(ctx, "body")
+	referenceText, err := referenceDocument.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, nativeText.Splice(ctx, 0, 0, "AB"))
-	require.NoError(t, referenceText.Splice(ctx, 0, 0, "AB"))
+	require.NoError(t, nativeText.Splice(0, 0, "AB"))
+	require.NoError(t, referenceText.Splice(0, 0, "AB"))
 
-	nativeFirst, err := nativeText.SplitBlock(ctx, 0)
+	nativeFirst, err := nativeText.SplitBlock(0)
 	require.NoError(t, err)
-	referenceFirst, err := referenceText.SplitBlock(ctx, 0)
+	referenceFirst, err := referenceText.SplitBlock(0)
 	require.NoError(t, err)
-	setBlockAttributes(t, ctx, nativeFirst, "paragraph")
-	setBlockAttributes(t, ctx, referenceFirst, "paragraph")
-	nativeSecond, err := nativeText.SplitBlock(ctx, 2)
+	setBlockAttributes(t, nativeFirst, "paragraph")
+	setBlockAttributes(t, referenceFirst, "paragraph")
+	nativeSecond, err := nativeText.SplitBlock(2)
 	require.NoError(t, err)
-	referenceSecond, err := referenceText.SplitBlock(ctx, 2)
+	referenceSecond, err := referenceText.SplitBlock(2)
 	require.NoError(t, err)
-	setBlockAttributes(t, ctx, nativeSecond, "heading")
-	setBlockAttributes(t, ctx, referenceSecond, "heading")
-	_, err = nativeDocument.Commit(ctx, "blocks", commitTime)
+	setBlockAttributes(t, nativeSecond, "heading")
+	setBlockAttributes(t, referenceSecond, "heading")
+	_, err = nativeDocument.Commit("blocks", commitTime)
 	require.NoError(t, err)
-	_, err = referenceDocument.Commit(ctx, "blocks", commitTime)
+	_, err = referenceDocument.Commit("blocks", commitTime)
 	require.NoError(t, err)
-	assertTextSpansEqual(t, ctx, nativeText, referenceText)
+	assertTextSpansEqual(t, nativeText, referenceText)
 
-	nativeReplacement, err := nativeText.ReplaceBlock(ctx, 2)
+	nativeReplacement, err := nativeText.ReplaceBlock(2)
 	require.NoError(t, err)
-	referenceReplacement, err := referenceText.ReplaceBlock(ctx, 2)
+	referenceReplacement, err := referenceText.ReplaceBlock(2)
 	require.NoError(t, err)
-	setBlockAttributes(t, ctx, nativeReplacement, "blockquote")
-	setBlockAttributes(t, ctx, referenceReplacement, "blockquote")
-	require.NoError(t, nativeText.JoinBlock(ctx, 0))
-	require.NoError(t, referenceText.JoinBlock(ctx, 0))
+	setBlockAttributes(t, nativeReplacement, "blockquote")
+	setBlockAttributes(t, referenceReplacement, "blockquote")
+	require.NoError(t, nativeText.JoinBlock(0))
+	require.NoError(t, referenceText.JoinBlock(0))
 	_, err = nativeDocument.Commit(
-		ctx,
+
 		"replace and join",
 		commitTime.Add(time.Second),
 	)
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit(
-		ctx,
+
 		"replace and join",
 		commitTime.Add(time.Second),
 	)
 	require.NoError(t, err)
-	assertTextSpansEqual(t, ctx, nativeText, referenceText)
+	assertTextSpansEqual(t, nativeText, referenceText)
 
-	nativeData, err := nativeDocument.Save(ctx)
+	nativeData, err := nativeDocument.Save()
 	require.NoError(t, err)
 	referenceFromNative, err := automerge.LoadReference(
-		ctx,
+
 		nativeData,
 		actor(168),
 	)
 	require.NoError(t, err)
 	closeDocument(t, referenceFromNative)
-	referenceFromNativeText, err := referenceFromNative.Text(ctx, "body")
+	referenceFromNativeText, err := referenceFromNative.Text("body")
 	require.NoError(t, err)
-	assertTextSpansEqual(t, ctx, nativeText, referenceFromNativeText)
+	assertTextSpansEqual(t, nativeText, referenceFromNativeText)
 }
 
 func setBlockAttributes(
 	t *testing.T,
-	ctx context.Context,
 	block *automerge.Object,
 	blockType string,
 ) {
@@ -664,7 +649,7 @@ func setBlockAttributes(
 	require.NoError(
 		t,
 		block.PutScalar(
-			ctx,
+
 			"type",
 			automerge.Scalar{
 				Type:   automerge.ScalarTypeString,
@@ -672,14 +657,14 @@ func setBlockAttributes(
 			},
 		),
 	)
-	_, err := block.CreateObject(ctx, "parents", automerge.ObjectTypeList)
+	_, err := block.CreateObject("parents", automerge.ObjectTypeList)
 	require.NoError(t, err)
-	_, err = block.CreateObject(ctx, "attrs", automerge.ObjectTypeMap)
+	_, err = block.CreateObject("attrs", automerge.ObjectTypeMap)
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		block.PutScalar(
-			ctx,
+
 			"isEmbed",
 			automerge.Scalar{Type: automerge.ScalarTypeBoolean},
 		),
@@ -688,15 +673,14 @@ func setBlockAttributes(
 
 func assertTextSpansEqual(
 	t *testing.T,
-	ctx context.Context,
 	left *automerge.Text,
 	right *automerge.Text,
 ) {
 	t.Helper()
 
-	leftSpans, err := left.Spans(ctx)
+	leftSpans, err := left.Spans()
 	require.NoError(t, err)
-	rightSpans, err := right.Spans(ctx)
+	rightSpans, err := right.Spans()
 	require.NoError(t, err)
 	assert.Equal(t, rightSpans, leftSpans)
 }
@@ -704,33 +688,32 @@ func assertTextSpansEqual(
 func TestPureGoDocument_SynchronizesWithNativePeer(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	left, err := automerge.New(ctx, actor(70))
+	left, err := automerge.New(actor(70))
 	require.NoError(t, err)
 	closeDocument(t, left)
-	text, err := left.CreateText(ctx, "body")
+	text, err := left.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "Native sync"))
-	_, err = left.Commit(ctx, "Create sync body", commitTime)
+	require.NoError(t, text.Splice(0, 0, "Native sync"))
+	_, err = left.Commit("Create sync body", commitTime)
 	require.NoError(t, err)
 
-	right, err := automerge.New(ctx, actor(71))
+	right, err := automerge.New(actor(71))
 	require.NoError(t, err)
 	closeDocument(t, right)
 
-	leftSync, err := left.NewSyncState(ctx)
+	leftSync, err := left.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
 
-	rightSync, err := right.NewSyncState(ctx)
+	rightSync, err := right.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
 
 	synchronize(t, leftSync, rightSync)
 
-	rightText, err := right.Text(ctx, "body")
+	rightText, err := right.Text("body")
 	require.NoError(t, err)
-	value, err := rightText.String(ctx)
+	value, err := rightText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Native sync", value)
 }
@@ -738,25 +721,24 @@ func TestPureGoDocument_SynchronizesWithNativePeer(t *testing.T) {
 func TestPureGoDocument_SyncWaitsForPeerResponse(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	document, err := automerge.New(ctx, actor(78))
+	document, err := automerge.New(actor(78))
 	require.NoError(t, err)
 	closeDocument(t, document)
-	text, err := document.CreateText(ctx, "body")
+	text, err := document.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "Wait"))
-	_, err = document.Commit(ctx, "Create body", commitTime)
+	require.NoError(t, text.Splice(0, 0, "Wait"))
+	_, err = document.Commit("Create body", commitTime)
 	require.NoError(t, err)
 
-	state, err := document.NewSyncState(ctx)
+	state, err := document.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, state)
-	first, ok, err := state.GenerateMessage(ctx)
+	first, ok, err := state.GenerateMessage()
 	require.NoError(t, err)
 	assert.True(t, ok)
 	assert.NotEmpty(t, first)
 
-	second, ok, err := state.GenerateMessage(ctx)
+	second, ok, err := state.GenerateMessage()
 	require.NoError(t, err)
 	assert.False(t, ok)
 	assert.Empty(t, second)
@@ -765,33 +747,32 @@ func TestPureGoDocument_SyncWaitsForPeerResponse(t *testing.T) {
 func TestPureGoDocument_SynchronizesWithReferencePeer(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	left, err := automerge.New(ctx, actor(72))
+	left, err := automerge.New(actor(72))
 	require.NoError(t, err)
 	closeDocument(t, left)
-	text, err := left.CreateText(ctx, "body")
+	text, err := left.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "Reference sync"))
-	_, err = left.Commit(ctx, "Create sync body", commitTime)
+	require.NoError(t, text.Splice(0, 0, "Reference sync"))
+	_, err = left.Commit("Create sync body", commitTime)
 	require.NoError(t, err)
 
-	right, err := automerge.NewReference(ctx, actor(73))
+	right, err := automerge.NewReference(actor(73))
 	require.NoError(t, err)
 	closeDocument(t, right)
 
-	leftSync, err := left.NewSyncState(ctx)
+	leftSync, err := left.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
 
-	rightSync, err := right.NewSyncState(ctx)
+	rightSync, err := right.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
 
 	synchronize(t, leftSync, rightSync)
 
-	rightText, err := right.Text(ctx, "body")
+	rightText, err := right.Text("body")
 	require.NoError(t, err)
-	value, err := rightText.String(ctx)
+	value, err := rightText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "Reference sync", value)
 }
@@ -799,33 +780,32 @@ func TestPureGoDocument_SynchronizesWithReferencePeer(t *testing.T) {
 func TestPureGoDocument_ReceivesReferenceSync(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	left, err := automerge.NewReference(ctx, actor(74))
+	left, err := automerge.NewReference(actor(74))
 	require.NoError(t, err)
 	closeDocument(t, left)
-	text, err := left.CreateText(ctx, "body")
+	text, err := left.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, text.Splice(ctx, 0, 0, "From reference"))
-	_, err = left.Commit(ctx, "Create reference body", commitTime)
+	require.NoError(t, text.Splice(0, 0, "From reference"))
+	_, err = left.Commit("Create reference body", commitTime)
 	require.NoError(t, err)
 
-	right, err := automerge.New(ctx, actor(75))
+	right, err := automerge.New(actor(75))
 	require.NoError(t, err)
 	closeDocument(t, right)
 
-	leftSync, err := left.NewSyncState(ctx)
+	leftSync, err := left.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, leftSync)
 
-	rightSync, err := right.NewSyncState(ctx)
+	rightSync, err := right.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, rightSync)
 
 	synchronize(t, leftSync, rightSync)
 
-	rightText, err := right.Text(ctx, "body")
+	rightText, err := right.Text("body")
 	require.NoError(t, err)
-	value, err := rightText.String(ctx)
+	value, err := rightText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "From reference", value)
 }
@@ -833,69 +813,68 @@ func TestPureGoDocument_ReceivesReferenceSync(t *testing.T) {
 func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	nativeDocument, err := automerge.New(ctx, actor(76))
+	nativeDocument, err := automerge.New(actor(76))
 	require.NoError(t, err)
 	closeDocument(t, nativeDocument)
-	nativeText, err := nativeDocument.CreateText(ctx, "body")
+	nativeText, err := nativeDocument.CreateText("body")
 	require.NoError(t, err)
-	_, err = nativeDocument.Commit(ctx, "Create native body", commitTime)
+	_, err = nativeDocument.Commit("Create native body", commitTime)
 	require.NoError(t, err)
 
-	referenceDocument, err := automerge.NewReference(ctx, actor(77))
+	referenceDocument, err := automerge.NewReference(actor(77))
 	require.NoError(t, err)
 	closeDocument(t, referenceDocument)
 
-	nativeSync, err := nativeDocument.NewSyncState(ctx)
+	nativeSync, err := nativeDocument.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, nativeSync)
 
-	referenceSync, err := referenceDocument.NewSyncState(ctx)
+	referenceSync, err := referenceDocument.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, referenceSync)
 	synchronize(t, nativeSync, referenceSync)
 
-	referenceText, err := referenceDocument.Text(ctx, "body")
+	referenceText, err := referenceDocument.Text("body")
 	require.NoError(t, err)
 
 	for iteration := range 20 {
-		nativeValue, err := nativeText.String(ctx)
+		nativeValue, err := nativeText.String()
 		require.NoError(t, err)
 
 		nativeOffset := utf16Offsets([]rune(nativeValue))
 		require.NoError(
 			t,
 			nativeText.Splice(
-				ctx,
+
 				nativeOffset[len(nativeOffset)-1],
 				0,
 				"N",
 			),
 		)
-		_, err = nativeDocument.Commit(ctx, "Native edit", commitTime)
+		_, err = nativeDocument.Commit("Native edit", commitTime)
 		require.NoError(t, err)
 
-		referenceValue, err := referenceText.String(ctx)
+		referenceValue, err := referenceText.String()
 		require.NoError(t, err)
 
 		referenceOffset := utf16Offsets([]rune(referenceValue))
 		require.NoError(
 			t,
 			referenceText.Splice(
-				ctx,
+
 				referenceOffset[len(referenceOffset)-1],
 				0,
 				"R",
 			),
 		)
-		_, err = referenceDocument.Commit(ctx, "Reference edit", commitTime)
+		_, err = referenceDocument.Commit("Reference edit", commitTime)
 		require.NoError(t, err)
 
 		synchronize(t, nativeSync, referenceSync)
 
-		nativeValue, err = nativeText.String(ctx)
+		nativeValue, err = nativeText.String()
 		require.NoError(t, err)
-		referenceValue, err = referenceText.String(ctx)
+		referenceValue, err = referenceText.String()
 		require.NoError(t, err)
 		assert.Equal(t, referenceValue, nativeValue, "iteration %d", iteration)
 	}
@@ -904,55 +883,54 @@ func TestPureGoDocument_RepeatedMixedPeerSync(t *testing.T) {
 func TestPureGoDocument_ReferenceEditsWhileMessageInFlight(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	client, err := automerge.NewReference(ctx, actor(79))
+	client, err := automerge.NewReference(actor(79))
 	require.NoError(t, err)
 	closeDocument(t, client)
-	clientText, err := client.CreateText(ctx, "body")
+	clientText, err := client.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, clientText.Splice(ctx, 0, 0, "A"))
-	_, err = client.Commit(ctx, "initial", commitTime)
+	require.NoError(t, clientText.Splice(0, 0, "A"))
+	_, err = client.Commit("initial", commitTime)
 	require.NoError(t, err)
 
-	server, err := automerge.New(ctx, actor(80))
+	server, err := automerge.New(actor(80))
 	require.NoError(t, err)
 	closeDocument(t, server)
 
-	clientSync, err := client.NewSyncState(ctx)
+	clientSync, err := client.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, clientSync)
 
-	serverSync, err := server.NewSyncState(ctx)
+	serverSync, err := server.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, serverSync)
 	synchronize(t, clientSync, serverSync)
 
-	require.NoError(t, clientText.Splice(ctx, 1, 0, "B"))
-	_, err = client.Commit(ctx, "first edit", commitTime)
+	require.NoError(t, clientText.Splice(1, 0, "B"))
+	_, err = client.Commit("first edit", commitTime)
 	require.NoError(t, err)
-	first, ok, err := clientSync.GenerateMessage(ctx)
+	first, ok, err := clientSync.GenerateMessage()
 	require.NoError(t, err)
 	require.True(t, ok)
 
-	require.NoError(t, clientText.Splice(ctx, 2, 0, "C"))
-	_, err = client.Commit(ctx, "second edit", commitTime)
+	require.NoError(t, clientText.Splice(2, 0, "C"))
+	_, err = client.Commit("second edit", commitTime)
 	require.NoError(t, err)
 
-	require.NoError(t, serverSync.ReceiveMessage(ctx, first))
-	ack, ok, err := serverSync.GenerateMessage(ctx)
+	require.NoError(t, serverSync.ReceiveMessage(first))
+	ack, ok, err := serverSync.GenerateMessage()
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.NoError(t, clientSync.ReceiveMessage(ctx, ack))
+	require.NoError(t, clientSync.ReceiveMessage(ack))
 
-	second, ok, err := clientSync.GenerateMessage(ctx)
+	second, ok, err := clientSync.GenerateMessage()
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.NoError(t, serverSync.ReceiveMessage(ctx, second))
+	require.NoError(t, serverSync.ReceiveMessage(second))
 	synchronize(t, clientSync, serverSync)
 
-	serverText, err := server.Text(ctx, "body")
+	serverText, err := server.Text("body")
 	require.NoError(t, err)
-	value, err := serverText.String(ctx)
+	value, err := serverText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "ABC", value)
 }
@@ -973,61 +951,59 @@ func TestSyncState_ReadOnlyParity(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
-
 				var (
 					source *automerge.Document
 					target *automerge.Document
 					err    error
 				)
 				if test.sourceReference {
-					source, err = automerge.NewReference(ctx, actor(181))
+					source, err = automerge.NewReference(actor(181))
 					require.NoError(t, err)
-					target, err = automerge.New(ctx, actor(182))
+					target, err = automerge.New(actor(182))
 				} else {
-					source, err = automerge.New(ctx, actor(181))
+					source, err = automerge.New(actor(181))
 					require.NoError(t, err)
-					target, err = automerge.NewReference(ctx, actor(182))
+					target, err = automerge.NewReference(actor(182))
 				}
 
 				require.NoError(t, err)
 				closeDocument(t, source)
 				closeDocument(t, target)
 
-				text, err := source.CreateText(ctx, "body")
+				text, err := source.CreateText("body")
 				require.NoError(t, err)
-				require.NoError(t, text.Splice(ctx, 0, 0, "Published"))
-				_, err = source.Commit(ctx, "publish", commitTime)
+				require.NoError(t, text.Splice(0, 0, "Published"))
+				_, err = source.Commit("publish", commitTime)
 				require.NoError(t, err)
 
-				sourceState, err := source.NewSyncState(ctx)
+				sourceState, err := source.NewSyncState()
 				require.NoError(t, err)
 				closeSyncState(t, sourceState)
 
-				targetState, err := target.NewSyncState(ctx)
+				targetState, err := target.NewSyncState()
 				require.NoError(t, err)
 				closeSyncState(t, targetState)
-				require.NoError(t, targetState.SetReadOnly(ctx, true))
+				require.NoError(t, targetState.SetReadOnly(true))
 
 				synchronize(t, sourceState, targetState)
 
-				peerReadOnly, err := sourceState.PeerReadOnly(ctx)
+				peerReadOnly, err := sourceState.PeerReadOnly()
 				require.NoError(t, err)
 				assert.True(t, peerReadOnly)
 
-				_, err = target.Text(ctx, "body")
+				_, err = target.Text("body")
 				require.Error(t, err)
 
-				require.NoError(t, targetState.SetReadOnly(ctx, false))
+				require.NoError(t, targetState.SetReadOnly(false))
 				synchronize(t, sourceState, targetState)
 
-				peerReadOnly, err = sourceState.PeerReadOnly(ctx)
+				peerReadOnly, err = sourceState.PeerReadOnly()
 				require.NoError(t, err)
 				assert.False(t, peerReadOnly)
 
-				targetText, err := target.Text(ctx, "body")
+				targetText, err := target.Text("body")
 				require.NoError(t, err)
-				value, err := targetText.String(ctx)
+				value, err := targetText.String()
 				require.NoError(t, err)
 				assert.Equal(t, "Published", value)
 			},
@@ -1039,7 +1015,6 @@ func TestSyncState_ReadOnlyModeOverridesInFlight(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]func(
-		context.Context,
 		automerge.ActorID,
 	) (*automerge.Document, error){
 		"native":    automerge.New,
@@ -1052,28 +1027,27 @@ func TestSyncState_ReadOnlyModeOverridesInFlight(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				ctx := context.Background()
-				document, err := factory(ctx, actor(183))
+				document, err := factory(actor(183))
 				require.NoError(t, err)
 				closeDocument(t, document)
-				text, err := document.CreateText(ctx, "body")
+				text, err := document.CreateText("body")
 				require.NoError(t, err)
-				require.NoError(t, text.Splice(ctx, 0, 0, "A"))
-				_, err = document.Commit(ctx, "initial", commitTime)
+				require.NoError(t, text.Splice(0, 0, "A"))
+				_, err = document.Commit("initial", commitTime)
 				require.NoError(t, err)
-				state, err := document.NewSyncState(ctx)
+				state, err := document.NewSyncState()
 				require.NoError(t, err)
 				closeSyncState(t, state)
 
-				_, ok, err := state.GenerateMessage(ctx)
+				_, ok, err := state.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
-				require.NoError(t, state.SetReadOnly(ctx, true))
-				_, ok, err = state.GenerateMessage(ctx)
+				require.NoError(t, state.SetReadOnly(true))
+				_, ok, err = state.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
-				require.NoError(t, state.SetReadOnly(ctx, false))
-				_, ok, err = state.GenerateMessage(ctx)
+				require.NoError(t, state.SetReadOnly(false))
+				_, ok, err = state.GenerateMessage()
 				require.NoError(t, err)
 				require.True(t, ok)
 			},
@@ -1084,60 +1058,59 @@ func TestSyncState_ReadOnlyModeOverridesInFlight(t *testing.T) {
 func TestSyncState_BothReadOnlyResumeConvergence(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-	left, err := automerge.New(ctx, actor(184))
+	left, err := automerge.New(actor(184))
 	require.NoError(t, err)
 	closeDocument(t, left)
-	leftText, err := left.CreateText(ctx, "body")
+	leftText, err := left.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, leftText.Splice(ctx, 0, 0, "L"))
-	_, err = left.Commit(ctx, "left", commitTime)
+	require.NoError(t, leftText.Splice(0, 0, "L"))
+	_, err = left.Commit("left", commitTime)
 	require.NoError(t, err)
 
-	right, err := automerge.NewReference(ctx, actor(185))
+	right, err := automerge.NewReference(actor(185))
 	require.NoError(t, err)
 	closeDocument(t, right)
-	rightText, err := right.CreateText(ctx, "body")
+	rightText, err := right.CreateText("body")
 	require.NoError(t, err)
-	require.NoError(t, rightText.Splice(ctx, 0, 0, "R"))
-	_, err = right.Commit(ctx, "right", commitTime)
+	require.NoError(t, rightText.Splice(0, 0, "R"))
+	_, err = right.Commit("right", commitTime)
 	require.NoError(t, err)
 
-	leftState, err := left.NewSyncState(ctx)
+	leftState, err := left.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, leftState)
 
-	rightState, err := right.NewSyncState(ctx)
+	rightState, err := right.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, rightState)
-	require.NoError(t, leftState.SetReadOnly(ctx, true))
-	require.NoError(t, rightState.SetReadOnly(ctx, true))
+	require.NoError(t, leftState.SetReadOnly(true))
+	require.NoError(t, rightState.SetReadOnly(true))
 	synchronize(t, leftState, rightState)
 
-	leftValue, err := leftText.String(ctx)
+	leftValue, err := leftText.String()
 	require.NoError(t, err)
-	rightValue, err := rightText.String(ctx)
+	rightValue, err := rightText.String()
 	require.NoError(t, err)
 	assert.Equal(t, "L", leftValue)
 	assert.Equal(t, "R", rightValue)
 
-	require.NoError(t, leftState.SetReadOnly(ctx, false))
-	require.NoError(t, rightState.SetReadOnly(ctx, false))
+	require.NoError(t, leftState.SetReadOnly(false))
+	require.NoError(t, rightState.SetReadOnly(false))
 	synchronize(t, leftState, rightState)
 
-	leftHeads, err := left.Heads(ctx)
+	leftHeads, err := left.Heads()
 	require.NoError(t, err)
-	rightHeads, err := right.Heads(ctx)
+	rightHeads, err := right.Heads()
 	require.NoError(t, err)
 	assert.ElementsMatch(t, leftHeads, rightHeads)
 
-	leftText, err = left.Text(ctx, "body")
+	leftText, err = left.Text("body")
 	require.NoError(t, err)
-	leftValue, err = leftText.String(ctx)
+	leftValue, err = leftText.String()
 	require.NoError(t, err)
-	rightText, err = right.Text(ctx, "body")
+	rightText, err = right.Text("body")
 	require.NoError(t, err)
-	rightValue, err = rightText.String(ctx)
+	rightValue, err = rightText.String()
 	require.NoError(t, err)
 	assert.Equal(t, leftValue, rightValue)
 }

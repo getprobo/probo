@@ -21,7 +21,6 @@
 package native
 
 import (
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -29,10 +28,7 @@ import (
 	"strings"
 )
 
-func (b *Engine) Stats(ctx context.Context) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func (b *Engine) Stats() ([]byte, error) {
 
 	actors := make(map[ActorID]struct{})
 	for id := range b.state.operations {
@@ -131,10 +127,7 @@ func patchValueForOperation(state *State, operation Operation) (patchValueOut, e
 // ordered to match upstream Rust: the root first, then other objects by
 // creation operation ID, with map keys in lexical order and sequence elements
 // in index order.
-func (b *Engine) CurrentState(ctx context.Context) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func (b *Engine) CurrentState() ([]byte, error) {
 
 	patches := make([]patchOut, 0)
 
@@ -380,13 +373,9 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 // Diff returns the patches that transform the document state at the before heads
 // into the state at the after heads.
 func (b *Engine) Diff(
-	ctx context.Context,
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
 ) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	patches, err := b.diffPatches(beforeHeads, afterHeads, false)
 	if err != nil {
@@ -403,12 +392,9 @@ func (b *Engine) Diff(
 
 // UpdateDiffCursor records the current heads as the incremental diff cursor so a
 // following DiffIncremental reports only the changes committed since this call.
-func (b *Engine) UpdateDiffCursor(ctx context.Context) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
+func (b *Engine) UpdateDiffCursor() error {
 
-	heads, err := b.Heads(ctx)
+	heads, err := b.Heads()
 	if err != nil {
 		return err
 	}
@@ -422,12 +408,9 @@ func (b *Engine) UpdateDiffCursor(ctx context.Context) error {
 // DiffIncremental returns the patches for the changes committed since the diff
 // cursor (or from an empty document when the cursor is unset) and advances the
 // cursor to the current heads, mirroring the reference diff_incremental helper.
-func (b *Engine) DiffIncremental(ctx context.Context) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+func (b *Engine) DiffIncremental() ([]byte, error) {
 
-	heads, err := b.Heads(ctx)
+	heads, err := b.Heads()
 	if err != nil {
 		return nil, err
 	}

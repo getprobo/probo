@@ -20,10 +20,7 @@
 
 package collaboration
 
-import (
-	"context"
-	"fmt"
-)
+import "fmt"
 
 // SyncSession is the subset of an Automerge sync state the connection driver
 // needs. *automerge.SyncState satisfies it, so the driver never touches the
@@ -31,9 +28,9 @@ import (
 type SyncSession interface {
 	// GenerateMessage returns the next outbound sync message for this peer, or
 	// ok=false when the peer is up to date.
-	GenerateMessage(ctx context.Context) ([]byte, bool, error)
+	GenerateMessage() ([]byte, bool, error)
 	// ReceiveMessage applies an inbound sync message from this peer.
-	ReceiveMessage(ctx context.Context, message []byte) error
+	ReceiveMessage(message []byte) error
 }
 
 // ServerConn is the synchronous, deterministic driver for one collaboration
@@ -103,7 +100,7 @@ func newServerConn(config ServerConfig, documentID string, adopt bool, sync Sync
 // handshake reply, then, when accepted, the initial sync frames that announce
 // the document. When accepted is false the single reply is an error frame and
 // the socket should be closed after sending it.
-func (c *ServerConn) Start(ctx context.Context, joinFrame []byte) (out [][]byte, accepted bool, err error) {
+func (c *ServerConn) Start(joinFrame []byte) (out [][]byte, accepted bool, err error) {
 	if c.started {
 		return nil, false, fmt.Errorf("server connection already started")
 	}
@@ -129,7 +126,7 @@ func (c *ServerConn) Start(ctx context.Context, joinFrame []byte) (out [][]byte,
 	}
 
 	// Announce: drain the initial sync messages the server has for this peer.
-	syncFrames, err := c.drainSync(ctx)
+	syncFrames, err := c.drainSync()
 	if err != nil {
 		return nil, false, err
 	}
@@ -141,7 +138,7 @@ func (c *ServerConn) Start(ctx context.Context, joinFrame []byte) (out [][]byte,
 // and answered with the resulting sync frames (reply). A non-duplicate ephemeral
 // frame is returned in fanout to publish to the room, unchanged. Duplicate
 // ephemerals, doc-unavailable, and unrecognised control frames yield nothing.
-func (c *ServerConn) Receive(ctx context.Context, frame []byte) (reply [][]byte, fanout []byte, err error) {
+func (c *ServerConn) Receive(frame []byte) (reply [][]byte, fanout []byte, err error) {
 	if !c.started {
 		return nil, nil, fmt.Errorf("received a frame before the connection was started")
 	}
@@ -157,11 +154,11 @@ func (c *ServerConn) Receive(ctx context.Context, frame []byte) (reply [][]byte,
 			return nil, nil, err
 		}
 
-		if err := c.sync.ReceiveMessage(ctx, inbound.Message.Data); err != nil {
+		if err := c.sync.ReceiveMessage(inbound.Message.Data); err != nil {
 			return nil, nil, fmt.Errorf("cannot apply inbound sync message: %w", err)
 		}
 
-		frames, err := c.drainSync(ctx)
+		frames, err := c.drainSync()
 		if err != nil {
 			return nil, nil, err
 		}
@@ -183,12 +180,12 @@ func (c *ServerConn) Receive(ctx context.Context, frame []byte) (reply [][]byte,
 // SyncChanged drains any sync messages produced because the document changed
 // from another source (a peer's merge, a server-side edit). The adapter calls it
 // when the room signals the document advanced.
-func (c *ServerConn) SyncChanged(ctx context.Context) ([][]byte, error) {
+func (c *ServerConn) SyncChanged() ([][]byte, error) {
 	if !c.started {
 		return nil, fmt.Errorf("cannot sync a connection before it is started")
 	}
 
-	return c.drainSync(ctx)
+	return c.drainSync()
 }
 
 // adoptDocumentID binds the connection to the document id the client asked for.
@@ -221,7 +218,7 @@ func (c *ServerConn) adoptDocumentID(id string) error {
 // always the document authority, so every generated message is a sync frame,
 // never a request. Before the document id is known (adopt mode, prior to the
 // client's first request) there is nothing to send.
-func (c *ServerConn) drainSync(ctx context.Context) ([][]byte, error) {
+func (c *ServerConn) drainSync() ([][]byte, error) {
 	if c.documentID == "" {
 		return nil, nil
 	}
@@ -229,7 +226,7 @@ func (c *ServerConn) drainSync(ctx context.Context) ([][]byte, error) {
 	var frames [][]byte
 
 	for {
-		message, ok, err := c.sync.GenerateMessage(ctx)
+		message, ok, err := c.sync.GenerateMessage()
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate sync message: %w", err)
 		}

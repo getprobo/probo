@@ -21,7 +21,6 @@
 package native
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -34,26 +33,23 @@ import (
 func committedTextBackend(t *testing.T, id byte, edits int) *Engine {
 	t.Helper()
 
-	ctx := context.Background()
-
-	backend, err := NewEngine(ctx)
+	backend, err := NewEngine()
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		backend.SetActor(
-			ctx,
 			[]byte{
 				id, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 			},
 		),
 	)
 
-	handle, err := backend.PutText(ctx, 0, "body")
+	handle, err := backend.PutText(0, "body")
 	require.NoError(t, err)
 
 	for i := range edits {
-		require.NoError(t, backend.SpliceText(ctx, handle, uint32(i), 0, "x"))
-		_, err = backend.Commit(ctx, "edit", time.Unix(int64(i), 0))
+		require.NoError(t, backend.SpliceText(handle, uint32(i), 0, "x"))
+		_, err = backend.Commit("edit", time.Unix(int64(i), 0))
 		require.NoError(t, err)
 	}
 
@@ -113,49 +109,47 @@ func TestNewStateFromDocument_RebuildsInconsistentFrontier(t *testing.T) {
 func TestChangesSince_DegradesToReachablePrefix(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	actorBytes := func(id byte) []byte {
 		return []byte{id, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
 	}
 
 	// Shared base commit.
-	base, err := NewEngine(ctx)
+	base, err := NewEngine()
 	require.NoError(t, err)
-	require.NoError(t, base.SetActor(ctx, actorBytes(0x10)))
+	require.NoError(t, base.SetActor(actorBytes(0x10)))
 
-	handle, err := base.PutText(ctx, 0, "body")
+	handle, err := base.PutText(0, "body")
 	require.NoError(t, err)
-	require.NoError(t, base.SpliceText(ctx, handle, 0, 0, "a"))
-	_, err = base.Commit(ctx, "base", time.Unix(0, 0))
+	require.NoError(t, base.SpliceText(handle, 0, 0, "a"))
+	_, err = base.Commit("base", time.Unix(0, 0))
 	require.NoError(t, err)
 
-	shared, err := base.Save(ctx, true, true)
+	shared, err := base.Save(true, true)
 	require.NoError(t, err)
 
 	// A branch two commits deep, authored by a second actor.
-	deep, err := LoadEngine(ctx, shared)
+	deep, err := LoadEngine(shared)
 	require.NoError(t, err)
-	require.NoError(t, deep.SetActor(ctx, actorBytes(0x20)))
+	require.NoError(t, deep.SetActor(actorBytes(0x20)))
 
-	deepHandle, _, err := deep.GetObject(ctx, 0, "body")
+	deepHandle, _, err := deep.GetObject(0, "body")
 	require.NoError(t, err)
-	require.NoError(t, deep.SpliceText(ctx, deepHandle, 1, 0, "b"))
-	_, err = deep.Commit(ctx, "deep-1", time.Unix(1, 0))
+	require.NoError(t, deep.SpliceText(deepHandle, 1, 0, "b"))
+	_, err = deep.Commit("deep-1", time.Unix(1, 0))
 	require.NoError(t, err)
-	require.NoError(t, deep.SpliceText(ctx, deepHandle, 2, 0, "c"))
-	_, err = deep.Commit(ctx, "deep-2", time.Unix(2, 0))
+	require.NoError(t, deep.SpliceText(deepHandle, 2, 0, "c"))
+	_, err = deep.Commit("deep-2", time.Unix(2, 0))
 	require.NoError(t, err)
 
-	deepSave, err := deep.Save(ctx, true, true)
+	deepSave, err := deep.Save(true, true)
 	require.NoError(t, err)
 
 	// The base adds its own branch commit, then merges the deep branch, so the
 	// frontier holds two heads: the base branch and the deep branch.
-	require.NoError(t, base.SpliceText(ctx, handle, 1, 0, "z"))
-	_, err = base.Commit(ctx, "base-2", time.Unix(3, 0))
+	require.NoError(t, base.SpliceText(handle, 1, 0, "z"))
+	_, err = base.Commit("base-2", time.Unix(3, 0))
 	require.NoError(t, err)
-	_, err = base.Merge(ctx, deepSave)
+	_, err = base.Merge(deepSave)
 	require.NoError(t, err)
 
 	all, complete := base.state.changesSince(nil)
@@ -198,7 +192,7 @@ func TestChangesSince_DegradesToReachablePrefix(t *testing.T) {
 	}
 
 	// The engine method must not wedge: it returns the reachable prefix.
-	raw, hashes, err := base.ChangesSince(ctx, nil)
+	raw, hashes, err := base.ChangesSince(nil)
 	require.NoError(t, err)
 	assert.Len(t, raw, 2)
 	assert.Len(t, hashes, 2)

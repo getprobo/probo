@@ -21,7 +21,6 @@
 package storage
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -38,15 +37,14 @@ func stringScalar(value string) []byte {
 	return []byte(`{"type":"string","string":"` + value + `"}`)
 }
 
-func newReference(t *testing.T, ctx context.Context, actor byte) *reference.Engine {
+func newReference(t *testing.T, actor byte) *reference.Engine {
 	t.Helper()
 
-	engine, err := reference.New(ctx)
+	engine, err := reference.New()
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		engine.SetActor(
-			ctx,
 			[]byte{
 				actor, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 			},
@@ -77,8 +75,6 @@ func assertSnapshotReencodes(t *testing.T, saved []byte) {
 func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	for _, testCase := range []struct {
 		name  string
 		build func(t *testing.T, engine *reference.Engine) []byte
@@ -86,16 +82,16 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 		{
 			name: "linear text history",
 			build: func(t *testing.T, engine *reference.Engine) []byte {
-				handle, err := engine.PutText(ctx, 0, "body")
+				handle, err := engine.PutText(0, "body")
 				require.NoError(t, err)
 
 				for i := range 5 {
-					require.NoError(t, engine.SpliceText(ctx, handle, uint32(i), 0, "x"))
-					_, err = engine.Commit(ctx, "edit", time.Unix(int64(i+1), 0))
+					require.NoError(t, engine.SpliceText(handle, uint32(i), 0, "x"))
+					_, err = engine.Commit("edit", time.Unix(int64(i+1), 0))
 					require.NoError(t, err)
 				}
 
-				saved, err := engine.Save(ctx, true, true)
+				saved, err := engine.Save(true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -104,21 +100,21 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 		{
 			name: "marks and unmarks",
 			build: func(t *testing.T, engine *reference.Engine) []byte {
-				handle, err := engine.PutText(ctx, 0, "body")
+				handle, err := engine.PutText(0, "body")
 				require.NoError(t, err)
-				require.NoError(t, engine.SpliceText(ctx, handle, 0, 0, "hello brave world"))
-				_, err = engine.Commit(ctx, "write", time.Unix(1, 0))
-				require.NoError(t, err)
-
-				require.NoError(t, engine.MarkText(ctx, handle, 0, 5, "strong", boolScalar(), "both"))
-				_, err = engine.Commit(ctx, "mark", time.Unix(2, 0))
+				require.NoError(t, engine.SpliceText(handle, 0, 0, "hello brave world"))
+				_, err = engine.Commit("write", time.Unix(1, 0))
 				require.NoError(t, err)
 
-				require.NoError(t, engine.MarkText(ctx, handle, 1, 3, "strong", nullScalar(), "none"))
-				_, err = engine.Commit(ctx, "unmark", time.Unix(3, 0))
+				require.NoError(t, engine.MarkText(handle, 0, 5, "strong", boolScalar(), "both"))
+				_, err = engine.Commit("mark", time.Unix(2, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx, true, true)
+				require.NoError(t, engine.MarkText(handle, 1, 3, "strong", nullScalar(), "none"))
+				_, err = engine.Commit("unmark", time.Unix(3, 0))
+				require.NoError(t, err)
+
+				saved, err := engine.Save(true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -127,20 +123,20 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 		{
 			name: "deletes and overwrites",
 			build: func(t *testing.T, engine *reference.Engine) []byte {
-				require.NoError(t, engine.PutString(ctx, 0, "title", "first"))
-				require.NoError(t, engine.PutString(ctx, 0, "keep", "value"))
-				_, err := engine.Commit(ctx, "one", time.Unix(1, 0))
+				require.NoError(t, engine.PutString(0, "title", "first"))
+				require.NoError(t, engine.PutString(0, "keep", "value"))
+				_, err := engine.Commit("one", time.Unix(1, 0))
 				require.NoError(t, err)
 
-				require.NoError(t, engine.PutString(ctx, 0, "title", "second"))
-				_, err = engine.Commit(ctx, "two", time.Unix(2, 0))
+				require.NoError(t, engine.PutString(0, "title", "second"))
+				_, err = engine.Commit("two", time.Unix(2, 0))
 				require.NoError(t, err)
 
-				require.NoError(t, engine.DeleteMap(ctx, 0, "title"))
-				_, err = engine.Commit(ctx, "three", time.Unix(3, 0))
+				require.NoError(t, engine.DeleteMap(0, "title"))
+				_, err = engine.Commit("three", time.Unix(3, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx, true, true)
+				saved, err := engine.Save(true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -149,21 +145,21 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 		{
 			name: "list with deletion and counter",
 			build: func(t *testing.T, engine *reference.Engine) []byte {
-				list, err := engine.PutObject(ctx, 0, "items", "list")
+				list, err := engine.PutObject(0, "items", "list")
 				require.NoError(t, err)
-				require.NoError(t, engine.InsertScalar(ctx, list, 0, stringScalar("a")))
-				require.NoError(t, engine.InsertScalar(ctx, list, 1, stringScalar("b")))
-				require.NoError(t, engine.InsertScalar(ctx, list, 2, stringScalar("c")))
-				require.NoError(t, engine.PutScalar(ctx, 0, "counter", counterScalar()))
-				_, err = engine.Commit(ctx, "build", time.Unix(1, 0))
-				require.NoError(t, err)
-
-				require.NoError(t, engine.DeleteSequence(ctx, list, 1))
-				require.NoError(t, engine.Increment(ctx, 0, "counter", 3))
-				_, err = engine.Commit(ctx, "trim", time.Unix(2, 0))
+				require.NoError(t, engine.InsertScalar(list, 0, stringScalar("a")))
+				require.NoError(t, engine.InsertScalar(list, 1, stringScalar("b")))
+				require.NoError(t, engine.InsertScalar(list, 2, stringScalar("c")))
+				require.NoError(t, engine.PutScalar(0, "counter", counterScalar()))
+				_, err = engine.Commit("build", time.Unix(1, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx, true, true)
+				require.NoError(t, engine.DeleteSequence(list, 1))
+				require.NoError(t, engine.Increment(0, "counter", 3))
+				_, err = engine.Commit("trim", time.Unix(2, 0))
+				require.NoError(t, err)
+
+				saved, err := engine.Save(true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -172,21 +168,21 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 		{
 			name: "nested objects",
 			build: func(t *testing.T, engine *reference.Engine) []byte {
-				outer, err := engine.PutObject(ctx, 0, "outer", "map")
+				outer, err := engine.PutObject(0, "outer", "map")
 				require.NoError(t, err)
 
-				inner, err := engine.PutObject(ctx, outer, "inner", "list")
+				inner, err := engine.PutObject(outer, "inner", "list")
 				require.NoError(t, err)
-				require.NoError(t, engine.InsertScalar(ctx, inner, 0, stringScalar("deep")))
+				require.NoError(t, engine.InsertScalar(inner, 0, stringScalar("deep")))
 
-				text, err := engine.PutText(ctx, outer, "note")
+				text, err := engine.PutText(outer, "note")
 				require.NoError(t, err)
-				require.NoError(t, engine.SpliceText(ctx, text, 0, 0, "nested"))
+				require.NoError(t, engine.SpliceText(text, 0, 0, "nested"))
 
-				_, err = engine.Commit(ctx, "nest", time.Unix(1, 0))
+				_, err = engine.Commit("nest", time.Unix(1, 0))
 				require.NoError(t, err)
 
-				saved, err := engine.Save(ctx, true, true)
+				saved, err := engine.Save(true, true)
 				require.NoError(t, err)
 
 				return saved
@@ -198,7 +194,7 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				assertSnapshotReencodes(t, testCase.build(t, newReference(t, ctx, 0x20)))
+				assertSnapshotReencodes(t, testCase.build(t, newReference(t, 0x20)))
 			},
 		)
 	}
@@ -210,51 +206,48 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 func TestEncodeDocument_MatchesReferenceConcurrentSnapshot(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	first := newReference(t, 0x20)
 
-	first := newReference(t, ctx, 0x20)
+	require.NoError(t, first.PutString(0, "title", "one"))
 
-	require.NoError(t, first.PutString(ctx, 0, "title", "one"))
-
-	body, err := first.PutText(ctx, 0, "body")
+	body, err := first.PutText(0, "body")
 	require.NoError(t, err)
-	require.NoError(t, first.SpliceText(ctx, body, 0, 0, "hello"))
-	_, err = first.Commit(ctx, "first", time.Unix(1, 0))
+	require.NoError(t, first.SpliceText(body, 0, 0, "hello"))
+	_, err = first.Commit("first", time.Unix(1, 0))
 	require.NoError(t, err)
 
-	shared, err := first.Save(ctx, true, true)
+	shared, err := first.Save(true, true)
 	require.NoError(t, err)
 
-	second, err := reference.Load(ctx, shared)
+	second, err := reference.Load(shared)
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		second.SetActor(
-			ctx,
 			[]byte{
 				0x10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 			},
 		),
 	)
 
-	secondBody, _, err := second.GetObject(ctx, 0, "body")
+	secondBody, _, err := second.GetObject(0, "body")
 	require.NoError(t, err)
-	require.NoError(t, second.SpliceText(ctx, secondBody, 5, 0, " there"))
-	require.NoError(t, second.PutString(ctx, 0, "title", "two"))
-	_, err = second.Commit(ctx, "second", time.Unix(2, 0))
-	require.NoError(t, err)
-
-	secondSave, err := second.Save(ctx, true, true)
+	require.NoError(t, second.SpliceText(secondBody, 5, 0, " there"))
+	require.NoError(t, second.PutString(0, "title", "two"))
+	_, err = second.Commit("second", time.Unix(2, 0))
 	require.NoError(t, err)
 
-	_, err = first.Merge(ctx, secondSave)
+	secondSave, err := second.Save(true, true)
 	require.NoError(t, err)
 
-	require.NoError(t, first.SpliceText(ctx, body, 0, 1, ""))
-	_, err = first.Commit(ctx, "third", time.Unix(3, 0))
+	_, err = first.Merge(secondSave)
 	require.NoError(t, err)
 
-	saved, err := first.Save(ctx, true, true)
+	require.NoError(t, first.SpliceText(body, 0, 1, ""))
+	_, err = first.Commit("third", time.Unix(3, 0))
+	require.NoError(t, err)
+
+	saved, err := first.Save(true, true)
 	require.NoError(t, err)
 
 	assertSnapshotReencodes(t, saved)

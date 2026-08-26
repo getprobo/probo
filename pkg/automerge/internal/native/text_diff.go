@@ -21,7 +21,6 @@
 package native
 
 import (
-	"context"
 	"strings"
 
 	"github.com/rivo/uniseg"
@@ -33,16 +32,13 @@ import (
 // current text into value so concurrent edits to untouched regions merge
 // cleanly. Splice positions are expressed in UTF-16 code units, matching the
 // default text encoding used by the reference backend.
-func (b *Engine) UpdateText(ctx context.Context, handle uint32, value string) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
+func (b *Engine) UpdateText(handle uint32, value string) error {
 
 	if _, err := b.textObject(handle); err != nil {
 		return err
 	}
 
-	current, err := b.Text(ctx, handle)
+	current, err := b.Text(handle)
 	if err != nil {
 		return err
 	}
@@ -54,7 +50,7 @@ func (b *Engine) UpdateText(ctx context.Context, handle uint32, value string) er
 	oldGraphemes := graphemeClusters(current)
 	newGraphemes := graphemeClusters(value)
 
-	hook := &textDiffHook{ctx: ctx, engine: b, handle: handle, old: oldGraphemes, new: newGraphemes}
+	hook := &textDiffHook{engine: b, handle: handle, old: oldGraphemes, new: newGraphemes}
 	myersDiff(hook, oldGraphemes, newGraphemes)
 
 	return hook.err
@@ -99,7 +95,6 @@ func utf16Width(text string) int {
 // textDiffHook applies the edits produced by the Myers diff as splice
 // operations on the target text object.
 type textDiffHook struct {
-	ctx    context.Context
 	engine *Engine
 	handle uint32
 	old    []string
@@ -129,7 +124,7 @@ func (h *textDiffHook) delete(oldIndex, oldLen, _ int) {
 		deleted += utf16Width(h.old[oldIndex+i])
 	}
 
-	if err := h.engine.SpliceText(h.ctx, h.handle, uint32(h.idx), int32(deleted), ""); err != nil {
+	if err := h.engine.SpliceText(h.handle, uint32(h.idx), int32(deleted), ""); err != nil {
 		h.err = err
 	}
 }
@@ -146,7 +141,7 @@ func (h *textDiffHook) insert(_ int, newIndex, newLen int) {
 	}
 
 	chars := builder.String()
-	if err := h.engine.SpliceText(h.ctx, h.handle, uint32(h.idx), 0, chars); err != nil {
+	if err := h.engine.SpliceText(h.handle, uint32(h.idx), 0, chars); err != nil {
 		h.err = err
 		return
 	}

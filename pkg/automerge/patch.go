@@ -21,7 +21,6 @@
 package automerge
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 )
@@ -112,7 +111,7 @@ type (
 
 // CurrentState returns the patches that materialize the document's current
 // value from an empty document.
-func (d *Document) CurrentState(ctx context.Context) ([]Patch, error) {
+func (d *Document) CurrentState() ([]Patch, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -120,7 +119,7 @@ func (d *Document) CurrentState(ctx context.Context) ([]Patch, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.CurrentState(ctx)
+	data, err := d.engine.CurrentState()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read Automerge current state: %w", err)
 	}
@@ -130,7 +129,7 @@ func (d *Document) CurrentState(ctx context.Context) ([]Patch, error) {
 
 // UpdateDiffCursor records the current heads as the incremental diff cursor so a
 // following DiffIncremental reports only the changes committed since this call.
-func (d *Document) UpdateDiffCursor(ctx context.Context) error {
+func (d *Document) UpdateDiffCursor() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -138,7 +137,7 @@ func (d *Document) UpdateDiffCursor(ctx context.Context) error {
 		return ErrClosed
 	}
 
-	if err := d.engine.UpdateDiffCursor(ctx); err != nil {
+	if err := d.engine.UpdateDiffCursor(); err != nil {
 		return fmt.Errorf("cannot update Automerge diff cursor: %w", err)
 	}
 
@@ -149,7 +148,7 @@ func (d *Document) UpdateDiffCursor(ctx context.Context) error {
 // cursor and advances the cursor to the current heads. It mirrors the Rust
 // AutoCommit::diff_incremental helper, reporting operations from the recorded
 // patch log so an in-place text replacement is a put rather than a splice.
-func (d *Document) DiffIncremental(ctx context.Context) ([]Patch, error) {
+func (d *Document) DiffIncremental() ([]Patch, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -157,7 +156,7 @@ func (d *Document) DiffIncremental(ctx context.Context) ([]Patch, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.DiffIncremental(ctx)
+	data, err := d.engine.DiffIncremental()
 	if err != nil {
 		return nil, fmt.Errorf("cannot compute Automerge incremental diff: %w", err)
 	}
@@ -168,7 +167,6 @@ func (d *Document) DiffIncremental(ctx context.Context) ([]Patch, error) {
 // Diff returns the patches that transform the document state at the before
 // heads into the state at the after heads.
 func (d *Document) Diff(
-	ctx context.Context,
 	before []Hash,
 	after []Hash,
 ) ([]Patch, error) {
@@ -179,7 +177,7 @@ func (d *Document) Diff(
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.Diff(ctx, engineHashes(before), engineHashes(after))
+	data, err := d.engine.Diff(engineHashes(before), engineHashes(after))
 	if err != nil {
 		return nil, fmt.Errorf("cannot diff Automerge document: %w", err)
 	}

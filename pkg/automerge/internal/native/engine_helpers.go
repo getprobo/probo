@@ -22,7 +22,6 @@ package native
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -52,10 +51,7 @@ func (b *Engine) nextOperationID() OpID {
 	return id
 }
 
-func (b *Engine) requireRoot(ctx context.Context, handle uint32) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
+func (b *Engine) requireRoot(handle uint32) error {
 
 	object, err := b.object(handle)
 	if err != nil {
@@ -174,15 +170,11 @@ func (b *Engine) rootTextObjects() map[string]Operation {
 }
 
 func (b *Engine) insertSequenceOperation(
-	ctx context.Context,
 	handle uint32,
 	index uint64,
 	action Action,
 	value *Scalar,
 ) (Operation, error) {
-	if err := ctx.Err(); err != nil {
-		return Operation{}, err
-	}
 
 	object, err := b.sequenceObject(handle)
 	if err != nil {
@@ -238,13 +230,9 @@ func (b *Engine) sequenceElementPredecessors(element OpID) []OpID {
 }
 
 func (b *Engine) sequenceOperation(
-	ctx context.Context,
 	handle uint32,
 	index uint64,
 ) (sequenceValue, error) {
-	if err := ctx.Err(); err != nil {
-		return sequenceValue{}, err
-	}
 
 	object, err := b.sequenceObject(handle)
 	if err != nil {

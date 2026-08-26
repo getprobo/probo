@@ -26,7 +26,6 @@
 package automerge
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -76,81 +75,81 @@ type (
 	}
 
 	engine interface {
-		Close(context.Context) error
-		Save(context.Context, bool, bool) ([]byte, error)
-		Isolate(context.Context, [][32]byte) error
-		Integrate(context.Context) error
-		Stats(context.Context) ([]byte, error)
-		CurrentState(context.Context) ([]byte, error)
-		Diff(context.Context, [][32]byte, [][32]byte) ([]byte, error)
-		UpdateDiffCursor(context.Context) error
-		DiffIncremental(context.Context) ([]byte, error)
-		SaveIncremental(context.Context) ([]byte, error)
-		LoadIncremental(context.Context, []byte) (uint64, error)
-		SetActor(context.Context, []byte) error
-		PutString(context.Context, uint32, string, string) error
-		GetString(context.Context, uint32, string) (string, error)
-		PutScalar(context.Context, uint32, string, []byte) error
-		GetScalar(context.Context, uint32, string) ([]byte, error)
-		GetScalarAtHeads(context.Context, uint32, string, [][32]byte) ([]byte, error)
-		GetAllScalars(context.Context, uint32, string) ([]byte, error)
-		GetAllScalarsAt(context.Context, uint32, uint64) ([]byte, error)
-		PutObject(context.Context, uint32, string, string) (uint32, error)
-		GetObject(context.Context, uint32, string) (uint32, string, error)
-		InsertObject(context.Context, uint32, uint64, string) (uint32, error)
-		PutObjectAt(context.Context, uint32, uint64, string) (uint32, error)
-		GetObjectAt(context.Context, uint32, uint64) (uint32, string, error)
-		InsertScalar(context.Context, uint32, uint64, []byte) error
-		PutScalarAt(context.Context, uint32, uint64, []byte) error
-		GetScalarAt(context.Context, uint32, uint64) ([]byte, error)
-		DeleteMap(context.Context, uint32, string) error
-		DeleteSequence(context.Context, uint32, uint64) error
-		Increment(context.Context, uint32, string, int64) error
-		IncrementAt(context.Context, uint32, uint64, int64) error
-		Keys(context.Context, uint32) ([]string, error)
-		Length(context.Context, uint32) (uint64, error)
-		PutText(context.Context, uint32, string) (uint32, error)
-		GetText(context.Context, uint32, string) (uint32, error)
-		SpliceText(context.Context, uint32, uint32, int32, string) error
-		UpdateText(context.Context, uint32, string) error
-		UpdateSpans(context.Context, uint32, []byte, []byte) error
-		MarkText(context.Context, uint32, uint32, uint32, string, []byte, string) error
-		SplitBlock(context.Context, uint32, uint32) (uint32, error)
-		JoinBlock(context.Context, uint32, uint32) error
-		ReplaceBlock(context.Context, uint32, uint32) (uint32, error)
-		Text(context.Context, uint32) (string, error)
-		TextAt(context.Context, uint32, [][32]byte) (string, error)
-		TextSpans(context.Context, uint32) ([]byte, error)
-		TextSpansAt(context.Context, uint32, [][32]byte) ([]byte, error)
-		Marks(context.Context, uint32) ([]byte, error)
-		MarksAt(context.Context, uint32, [][32]byte) ([]byte, error)
-		TextCursor(context.Context, uint32, uint32) ([]byte, error)
-		TextCursorMoving(context.Context, uint32, uint32, bool) ([]byte, error)
-		TextCursorMovingAt(context.Context, uint32, uint32, bool, [][32]byte) ([]byte, error)
-		TextCursorPosition(context.Context, uint32, []byte) (uint32, error)
-		Commit(context.Context, string, time.Time) ([32]byte, error)
-		EmptyCommit(context.Context, string, time.Time) ([32]byte, error)
-		Rollback(context.Context) (uint64, error)
-		Heads(context.Context) ([][32]byte, error)
-		HasHeads(context.Context, [][32]byte) (bool, error)
-		MissingDependencies(context.Context, [][32]byte) ([][32]byte, error)
-		Merge(context.Context, []byte) ([][32]byte, error)
-		NewSyncState(context.Context) (uint32, error)
-		CloseSyncState(context.Context, uint32) error
-		GenerateSyncMessage(context.Context, uint32) ([]byte, bool, error)
-		ReceiveSyncMessage(context.Context, uint32, []byte) error
-		SetSyncReadOnly(context.Context, uint32, bool) error
-		SyncPeerReadOnly(context.Context, uint32) (bool, error)
-		SaveSyncState(context.Context, uint32) ([]byte, error)
-		LoadSyncState(context.Context, []byte) (uint32, error)
+		Close() error
+		Save(bool, bool) ([]byte, error)
+		Isolate([][32]byte) error
+		Integrate() error
+		Stats() ([]byte, error)
+		CurrentState() ([]byte, error)
+		Diff([][32]byte, [][32]byte) ([]byte, error)
+		UpdateDiffCursor() error
+		DiffIncremental() ([]byte, error)
+		SaveIncremental() ([]byte, error)
+		LoadIncremental([]byte) (uint64, error)
+		SetActor([]byte) error
+		PutString(uint32, string, string) error
+		GetString(uint32, string) (string, error)
+		PutScalar(uint32, string, []byte) error
+		GetScalar(uint32, string) ([]byte, error)
+		GetScalarAtHeads(uint32, string, [][32]byte) ([]byte, error)
+		GetAllScalars(uint32, string) ([]byte, error)
+		GetAllScalarsAt(uint32, uint64) ([]byte, error)
+		PutObject(uint32, string, string) (uint32, error)
+		GetObject(uint32, string) (uint32, string, error)
+		InsertObject(uint32, uint64, string) (uint32, error)
+		PutObjectAt(uint32, uint64, string) (uint32, error)
+		GetObjectAt(uint32, uint64) (uint32, string, error)
+		InsertScalar(uint32, uint64, []byte) error
+		PutScalarAt(uint32, uint64, []byte) error
+		GetScalarAt(uint32, uint64) ([]byte, error)
+		DeleteMap(uint32, string) error
+		DeleteSequence(uint32, uint64) error
+		Increment(uint32, string, int64) error
+		IncrementAt(uint32, uint64, int64) error
+		Keys(uint32) ([]string, error)
+		Length(uint32) (uint64, error)
+		PutText(uint32, string) (uint32, error)
+		GetText(uint32, string) (uint32, error)
+		SpliceText(uint32, uint32, int32, string) error
+		UpdateText(uint32, string) error
+		UpdateSpans(uint32, []byte, []byte) error
+		MarkText(uint32, uint32, uint32, string, []byte, string) error
+		SplitBlock(uint32, uint32) (uint32, error)
+		JoinBlock(uint32, uint32) error
+		ReplaceBlock(uint32, uint32) (uint32, error)
+		Text(uint32) (string, error)
+		TextAt(uint32, [][32]byte) (string, error)
+		TextSpans(uint32) ([]byte, error)
+		TextSpansAt(uint32, [][32]byte) ([]byte, error)
+		Marks(uint32) ([]byte, error)
+		MarksAt(uint32, [][32]byte) ([]byte, error)
+		TextCursor(uint32, uint32) ([]byte, error)
+		TextCursorMoving(uint32, uint32, bool) ([]byte, error)
+		TextCursorMovingAt(uint32, uint32, bool, [][32]byte) ([]byte, error)
+		TextCursorPosition(uint32, []byte) (uint32, error)
+		Commit(string, time.Time) ([32]byte, error)
+		EmptyCommit(string, time.Time) ([32]byte, error)
+		Rollback() (uint64, error)
+		Heads() ([][32]byte, error)
+		HasHeads([][32]byte) (bool, error)
+		MissingDependencies([][32]byte) ([][32]byte, error)
+		Merge([]byte) ([][32]byte, error)
+		NewSyncState() (uint32, error)
+		CloseSyncState(uint32) error
+		GenerateSyncMessage(uint32) ([]byte, bool, error)
+		ReceiveSyncMessage(uint32, []byte) error
+		SetSyncReadOnly(uint32, bool) error
+		SyncPeerReadOnly(uint32) (bool, error)
+		SaveSyncState(uint32) ([]byte, error)
+		LoadSyncState([]byte) (uint32, error)
 	}
 
 	changeBackend interface {
-		ChangesSince(context.Context, [][32]byte) ([][]byte, [][32]byte, error)
+		ChangesSince([][32]byte) ([][]byte, [][32]byte, error)
 	}
 
 	changeApplier interface {
-		ApplyChanges(context.Context, [][]byte) error
+		ApplyChanges([][]byte) error
 	}
 )
 
@@ -176,14 +175,14 @@ func NewActorID() (ActorID, error) {
 }
 
 // New creates an empty document using the native Go engine.
-func New(ctx context.Context, actorID ActorID) (*Document, error) {
-	b, err := native.NewEngine(ctx)
+func New(actorID ActorID) (*Document, error) {
+	b, err := native.NewEngine()
 	if err != nil {
 		return nil, fmt.Errorf("cannot create native Automerge engine: %w", err)
 	}
 
-	if err := b.SetActor(ctx, actorID[:]); err != nil {
-		_ = b.Close(ctx)
+	if err := b.SetActor(actorID[:]); err != nil {
+		_ = b.Close()
 		return nil, fmt.Errorf("cannot initialize native Automerge actor: %w", err)
 	}
 
@@ -193,14 +192,14 @@ func New(ctx context.Context, actorID ActorID) (*Document, error) {
 // NewReference creates an empty document using the official WASM reference
 // engine. It exists as a differential oracle for the native engine and is
 // intended for tests, not production use.
-func NewReference(ctx context.Context, actorID ActorID) (*Document, error) {
-	b, err := reference.New(ctx)
+func NewReference(actorID ActorID) (*Document, error) {
+	b, err := reference.New()
 	if err != nil {
 		return nil, fmt.Errorf("cannot create Automerge engine: %w", err)
 	}
 
-	if err := b.SetActor(ctx, actorID[:]); err != nil {
-		_ = b.Close(ctx)
+	if err := b.SetActor(actorID[:]); err != nil {
+		_ = b.Close()
 		return nil, fmt.Errorf("cannot initialize Automerge actor: %w", err)
 	}
 
@@ -224,7 +223,6 @@ func ConvertStringsToText() LoadOption {
 // Load creates a document from stored data using the native Go engine and
 // assigns a new writer.
 func Load(
-	ctx context.Context,
 	data []byte,
 	actorID ActorID,
 	options ...LoadOption,
@@ -234,21 +232,21 @@ func Load(
 		option(&config)
 	}
 
-	b, err := native.LoadEngine(ctx, data)
+	b, err := native.LoadEngine(data)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load native Automerge engine: %w", err)
 	}
 
-	if err := b.SetActor(ctx, actorID[:]); err != nil {
-		_ = b.Close(ctx)
+	if err := b.SetActor(actorID[:]); err != nil {
+		_ = b.Close()
 		return nil, fmt.Errorf("cannot assign native Automerge actor: %w", err)
 	}
 
 	document := &Document{engine: b}
 
 	if config.convertStringsToText {
-		if err := document.convertStringsToText(ctx); err != nil {
-			_ = document.Close(ctx)
+		if err := document.convertStringsToText(); err != nil {
+			_ = document.Close()
 
 			return nil, err
 		}
@@ -260,7 +258,6 @@ func Load(
 // LoadReference loads a document using the official WASM reference engine. Like
 // NewReference it is intended for tests, not production use.
 func LoadReference(
-	ctx context.Context,
 	data []byte,
 	actorID ActorID,
 	options ...LoadOption,
@@ -277,13 +274,13 @@ func LoadReference(
 		load = reference.LoadConvertingStrings
 	}
 
-	b, err := load(ctx, data)
+	b, err := load(data)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load Automerge engine: %w", err)
 	}
 
-	if err := b.SetActor(ctx, actorID[:]); err != nil {
-		_ = b.Close(ctx)
+	if err := b.SetActor(actorID[:]); err != nil {
+		_ = b.Close()
 		return nil, fmt.Errorf("cannot assign loaded Automerge actor: %w", err)
 	}
 
@@ -293,8 +290,8 @@ func LoadReference(
 // convertStringsToText replaces every string scalar reachable from the root in
 // a map or list with a text object holding that string, then commits the
 // conversion when anything changed. It backs the string-to-text load migration.
-func (d *Document) convertStringsToText(ctx context.Context) error {
-	changed, err := convertObjectStrings(ctx, d.Root())
+func (d *Document) convertStringsToText() error {
+	changed, err := convertObjectStrings(d.Root())
 	if err != nil {
 		return fmt.Errorf("cannot migrate strings to text: %w", err)
 	}
@@ -303,26 +300,26 @@ func (d *Document) convertStringsToText(ctx context.Context) error {
 		return nil
 	}
 
-	if _, err := d.Commit(ctx, "convert strings to text", time.Unix(0, 0)); err != nil {
+	if _, err := d.Commit("convert strings to text", time.Unix(0, 0)); err != nil {
 		return fmt.Errorf("cannot commit string migration: %w", err)
 	}
 
 	return nil
 }
 
-func convertObjectStrings(ctx context.Context, object *Object) (bool, error) {
+func convertObjectStrings(object *Object) (bool, error) {
 	switch object.Type {
 	case ObjectTypeMap, ObjectTypeTable:
-		return convertMapStrings(ctx, object)
+		return convertMapStrings(object)
 	case ObjectTypeList:
-		return convertListStrings(ctx, object)
+		return convertListStrings(object)
 	default:
 		return false, nil
 	}
 }
 
-func convertMapStrings(ctx context.Context, object *Object) (bool, error) {
-	keys, err := object.Keys(ctx)
+func convertMapStrings(object *Object) (bool, error) {
+	keys, err := object.Keys()
 	if err != nil {
 		return false, err
 	}
@@ -330,22 +327,22 @@ func convertMapStrings(ctx context.Context, object *Object) (bool, error) {
 	changed := false
 
 	for _, key := range keys {
-		if scalar, err := object.Scalar(ctx, key); err == nil {
+		if scalar, err := object.Scalar(key); err == nil {
 			if scalar.Type != ScalarTypeString {
 				continue
 			}
 
-			text, err := object.CreateObject(ctx, key, ObjectTypeText)
+			text, err := object.CreateObject(key, ObjectTypeText)
 			if err != nil {
 				return false, err
 			}
 
-			handle, err := text.Text(ctx)
+			handle, err := text.Text()
 			if err != nil {
 				return false, err
 			}
 
-			if err := handle.Splice(ctx, 0, 0, scalar.String); err != nil {
+			if err := handle.Splice(0, 0, scalar.String); err != nil {
 				return false, err
 			}
 
@@ -354,12 +351,12 @@ func convertMapStrings(ctx context.Context, object *Object) (bool, error) {
 			continue
 		}
 
-		child, err := object.Object(ctx, key)
+		child, err := object.Object(key)
 		if err != nil {
 			continue
 		}
 
-		childChanged, err := convertObjectStrings(ctx, child)
+		childChanged, err := convertObjectStrings(child)
 		if err != nil {
 			return false, err
 		}
@@ -370,8 +367,8 @@ func convertMapStrings(ctx context.Context, object *Object) (bool, error) {
 	return changed, nil
 }
 
-func convertListStrings(ctx context.Context, object *Object) (bool, error) {
-	length, err := object.Len(ctx)
+func convertListStrings(object *Object) (bool, error) {
+	length, err := object.Len()
 	if err != nil {
 		return false, err
 	}
@@ -379,22 +376,22 @@ func convertListStrings(ctx context.Context, object *Object) (bool, error) {
 	changed := false
 
 	for index := range length {
-		if scalar, err := object.ScalarAt(ctx, index); err == nil {
+		if scalar, err := object.ScalarAt(index); err == nil {
 			if scalar.Type != ScalarTypeString {
 				continue
 			}
 
-			text, err := object.PutObjectAt(ctx, index, ObjectTypeText)
+			text, err := object.PutObjectAt(index, ObjectTypeText)
 			if err != nil {
 				return false, err
 			}
 
-			handle, err := text.Text(ctx)
+			handle, err := text.Text()
 			if err != nil {
 				return false, err
 			}
 
-			if err := handle.Splice(ctx, 0, 0, scalar.String); err != nil {
+			if err := handle.Splice(0, 0, scalar.String); err != nil {
 				return false, err
 			}
 
@@ -403,12 +400,12 @@ func convertListStrings(ctx context.Context, object *Object) (bool, error) {
 			continue
 		}
 
-		child, err := object.ObjectAt(ctx, index)
+		child, err := object.ObjectAt(index)
 		if err != nil {
 			continue
 		}
 
-		childChanged, err := convertObjectStrings(ctx, child)
+		childChanged, err := convertObjectStrings(child)
 		if err != nil {
 			return false, err
 		}
@@ -420,7 +417,7 @@ func convertListStrings(ctx context.Context, object *Object) (bool, error) {
 }
 
 // Close releases the engine resources held by the document.
-func (d *Document) Close(ctx context.Context) error {
+func (d *Document) Close() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -430,7 +427,7 @@ func (d *Document) Close(ctx context.Context) error {
 
 	d.closed = true
 
-	if err := d.engine.Close(ctx); err != nil {
+	if err := d.engine.Close(); err != nil {
 		return fmt.Errorf("cannot close Automerge document: %w", err)
 	}
 
@@ -463,7 +460,7 @@ func DiscardOrphans() SaveOption {
 // Save serializes the complete Automerge history as a compacted document. By
 // default it compresses and retains orphan changes; pass NoCompress or
 // DiscardOrphans to change that.
-func (d *Document) Save(ctx context.Context, options ...SaveOption) ([]byte, error) {
+func (d *Document) Save(options ...SaveOption) ([]byte, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -476,7 +473,7 @@ func (d *Document) Save(ctx context.Context, options ...SaveOption) ([]byte, err
 		option(&config)
 	}
 
-	data, err := d.engine.Save(ctx, config.retainOrphans, config.compress)
+	data, err := d.engine.Save(config.retainOrphans, config.compress)
 	if err != nil {
 		return nil, fmt.Errorf("cannot save Automerge document: %w", err)
 	}
@@ -488,7 +485,7 @@ func (d *Document) Save(ctx context.Context, options ...SaveOption) ([]byte, err
 // that frontier plus writes made while isolated, and new changes branch from it.
 // Isolated changes still accumulate in the full history and become visible after
 // Integrate. It mirrors the Rust AutoCommit::isolate API.
-func (d *Document) Isolate(ctx context.Context, heads []Hash) error {
+func (d *Document) Isolate(heads []Hash) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -496,7 +493,7 @@ func (d *Document) Isolate(ctx context.Context, heads []Hash) error {
 		return ErrClosed
 	}
 
-	if err := d.engine.Isolate(ctx, engineHashes(heads)); err != nil {
+	if err := d.engine.Isolate(engineHashes(heads)); err != nil {
 		return fmt.Errorf("cannot isolate Automerge document: %w", err)
 	}
 
@@ -505,7 +502,7 @@ func (d *Document) Isolate(ctx context.Context, heads []Hash) error {
 
 // Integrate ends isolation, returning reads and writes to the full history that
 // includes every isolated and merged change. It mirrors AutoCommit::integrate.
-func (d *Document) Integrate(ctx context.Context) error {
+func (d *Document) Integrate() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -513,7 +510,7 @@ func (d *Document) Integrate(ctx context.Context) error {
 		return ErrClosed
 	}
 
-	if err := d.engine.Integrate(ctx); err != nil {
+	if err := d.engine.Integrate(); err != nil {
 		return fmt.Errorf("cannot integrate Automerge document: %w", err)
 	}
 
@@ -528,7 +525,7 @@ type Stats struct {
 }
 
 // Stats returns the number of changes, operations, and actors in the document.
-func (d *Document) Stats(ctx context.Context) (Stats, error) {
+func (d *Document) Stats() (Stats, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -536,7 +533,7 @@ func (d *Document) Stats(ctx context.Context) (Stats, error) {
 		return Stats{}, ErrClosed
 	}
 
-	data, err := d.engine.Stats(ctx)
+	data, err := d.engine.Stats()
 	if err != nil {
 		return Stats{}, fmt.Errorf("cannot read Automerge stats: %w", err)
 	}
@@ -551,7 +548,6 @@ func (d *Document) Stats(ctx context.Context) (Stats, error) {
 
 // Fork creates an independent writer with the same document history.
 func (d *Document) Fork(
-	ctx context.Context,
 	actorID ActorID,
 ) (*Document, error) {
 	d.mu.Lock()
@@ -560,7 +556,7 @@ func (d *Document) Fork(
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.Save(ctx, true, true)
+	data, err := d.engine.Save(true, true)
 	if err != nil {
 		d.mu.Unlock()
 		return nil, fmt.Errorf("cannot save Automerge fork source: %w", err)
@@ -570,14 +566,14 @@ func (d *Document) Fork(
 	d.mu.Unlock()
 
 	if referenceBackend {
-		return LoadReference(ctx, data, actorID)
+		return LoadReference(data, actorID)
 	}
 
-	return Load(ctx, data, actorID)
+	return Load(data, actorID)
 }
 
 // SaveIncremental serializes changes since the previous save operation.
-func (d *Document) SaveIncremental(ctx context.Context) ([]byte, error) {
+func (d *Document) SaveIncremental() ([]byte, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -585,7 +581,7 @@ func (d *Document) SaveIncremental(ctx context.Context) ([]byte, error) {
 		return nil, ErrClosed
 	}
 
-	data, err := d.engine.SaveIncremental(ctx)
+	data, err := d.engine.SaveIncremental()
 	if err != nil {
 		return nil, fmt.Errorf("cannot save incremental Automerge changes: %w", err)
 	}
@@ -594,7 +590,7 @@ func (d *Document) SaveIncremental(ctx context.Context) ([]byte, error) {
 }
 
 // LoadIncremental applies incrementally encoded Automerge changes.
-func (d *Document) LoadIncremental(ctx context.Context, data []byte) (uint64, error) {
+func (d *Document) LoadIncremental(data []byte) (uint64, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -602,7 +598,7 @@ func (d *Document) LoadIncremental(ctx context.Context, data []byte) (uint64, er
 		return 0, ErrClosed
 	}
 
-	applied, err := d.engine.LoadIncremental(ctx, data)
+	applied, err := d.engine.LoadIncremental(data)
 	if err != nil {
 		return 0, fmt.Errorf("cannot load incremental Automerge changes: %w", err)
 	}
@@ -611,7 +607,7 @@ func (d *Document) LoadIncremental(ctx context.Context, data []byte) (uint64, er
 }
 
 // PutString assigns a string at a key in the root map.
-func (d *Document) PutString(ctx context.Context, key, value string) error {
+func (d *Document) PutString(key, value string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -619,7 +615,7 @@ func (d *Document) PutString(ctx context.Context, key, value string) error {
 		return ErrClosed
 	}
 
-	if err := d.engine.PutString(ctx, rootObject, key, value); err != nil {
+	if err := d.engine.PutString(rootObject, key, value); err != nil {
 		return fmt.Errorf("cannot put Automerge string: %w", err)
 	}
 
@@ -627,7 +623,7 @@ func (d *Document) PutString(ctx context.Context, key, value string) error {
 }
 
 // String returns a string value from a key in the root map.
-func (d *Document) String(ctx context.Context, key string) (string, error) {
+func (d *Document) String(key string) (string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -635,7 +631,7 @@ func (d *Document) String(ctx context.Context, key string) (string, error) {
 		return "", ErrClosed
 	}
 
-	value, err := d.engine.GetString(ctx, rootObject, key)
+	value, err := d.engine.GetString(rootObject, key)
 	if err != nil {
 		return "", fmt.Errorf("cannot get Automerge string: %w", err)
 	}
@@ -644,7 +640,7 @@ func (d *Document) String(ctx context.Context, key string) (string, error) {
 }
 
 // CreateText creates collaborative text at a key in the root map.
-func (d *Document) CreateText(ctx context.Context, key string) (*Text, error) {
+func (d *Document) CreateText(key string) (*Text, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -652,7 +648,7 @@ func (d *Document) CreateText(ctx context.Context, key string) (*Text, error) {
 		return nil, ErrClosed
 	}
 
-	handle, err := d.engine.PutText(ctx, rootObject, key)
+	handle, err := d.engine.PutText(rootObject, key)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create Automerge text: %w", err)
 	}
@@ -661,7 +657,7 @@ func (d *Document) CreateText(ctx context.Context, key string) (*Text, error) {
 }
 
 // Text returns existing collaborative text from the root map.
-func (d *Document) Text(ctx context.Context, key string) (*Text, error) {
+func (d *Document) Text(key string) (*Text, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -669,7 +665,7 @@ func (d *Document) Text(ctx context.Context, key string) (*Text, error) {
 		return nil, ErrClosed
 	}
 
-	handle, err := d.engine.GetText(ctx, rootObject, key)
+	handle, err := d.engine.GetText(rootObject, key)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge text: %w", err)
 	}
@@ -679,7 +675,6 @@ func (d *Document) Text(ctx context.Context, key string) (*Text, error) {
 
 // Commit records pending operations as one Automerge change.
 func (d *Document) Commit(
-	ctx context.Context,
 	message string,
 	timestamp time.Time,
 ) (Hash, error) {
@@ -690,7 +685,7 @@ func (d *Document) Commit(
 		return Hash{}, ErrClosed
 	}
 
-	hash, err := d.engine.Commit(ctx, message, timestamp)
+	hash, err := d.engine.Commit(message, timestamp)
 	if err != nil {
 		return Hash{}, fmt.Errorf("cannot commit Automerge document: %w", err)
 	}
@@ -699,13 +694,12 @@ func (d *Document) Commit(
 }
 
 // CommitNow records pending operations using the current Unix timestamp.
-func (d *Document) CommitNow(ctx context.Context, message string) (Hash, error) {
-	return d.Commit(ctx, message, time.Now())
+func (d *Document) CommitNow(message string) (Hash, error) {
+	return d.Commit(message, time.Now())
 }
 
 // EmptyCommit records a change without document operations.
 func (d *Document) EmptyCommit(
-	ctx context.Context,
 	message string,
 	timestamp time.Time,
 ) (Hash, error) {
@@ -716,7 +710,7 @@ func (d *Document) EmptyCommit(
 		return Hash{}, ErrClosed
 	}
 
-	hash, err := d.engine.EmptyCommit(ctx, message, timestamp)
+	hash, err := d.engine.EmptyCommit(message, timestamp)
 	if err != nil {
 		return Hash{}, fmt.Errorf("cannot commit empty Automerge change: %w", err)
 	}
@@ -725,12 +719,12 @@ func (d *Document) EmptyCommit(
 }
 
 // EmptyCommitNow records an empty change using the current Unix timestamp.
-func (d *Document) EmptyCommitNow(ctx context.Context, message string) (Hash, error) {
-	return d.EmptyCommit(ctx, message, time.Now())
+func (d *Document) EmptyCommitNow(message string) (Hash, error) {
+	return d.EmptyCommit(message, time.Now())
 }
 
 // Rollback discards every operation pending in the current change.
-func (d *Document) Rollback(ctx context.Context) (uint64, error) {
+func (d *Document) Rollback() (uint64, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -738,7 +732,7 @@ func (d *Document) Rollback(ctx context.Context) (uint64, error) {
 		return 0, ErrClosed
 	}
 
-	cancelled, err := d.engine.Rollback(ctx)
+	cancelled, err := d.engine.Rollback()
 	if err != nil {
 		return 0, fmt.Errorf("cannot roll back Automerge document: %w", err)
 	}
@@ -747,7 +741,7 @@ func (d *Document) Rollback(ctx context.Context) (uint64, error) {
 }
 
 // Heads returns the hashes at the document's current frontier.
-func (d *Document) Heads(ctx context.Context) ([]Hash, error) {
+func (d *Document) Heads() ([]Hash, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -755,7 +749,7 @@ func (d *Document) Heads(ctx context.Context) ([]Hash, error) {
 		return nil, ErrClosed
 	}
 
-	engineHeads, err := d.engine.Heads(ctx)
+	engineHeads, err := d.engine.Heads()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge heads: %w", err)
 	}
@@ -775,7 +769,6 @@ func (d *Document) Heads(ctx context.Context) ([]Hash, error) {
 // native engine's V2 sync uses exact head comparison rather than Bloom filters,
 // so native documents return an error.
 func (d *Document) ReferenceBloomContains(
-	ctx context.Context,
 	seeds []Hash,
 	target Hash,
 ) (bool, error) {
@@ -798,11 +791,11 @@ func (d *Document) ReferenceBloomContains(
 		seedArrays[i] = [32]byte(seeds[i])
 	}
 
-	return oracle.BloomContains(ctx, [32]byte(target), seedArrays)
+	return oracle.BloomContains([32]byte(target), seedArrays)
 }
 
 // HasHeads reports whether every hash exists in the document history.
-func (d *Document) HasHeads(ctx context.Context, heads []Hash) (bool, error) {
+func (d *Document) HasHeads(heads []Hash) (bool, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -810,7 +803,7 @@ func (d *Document) HasHeads(ctx context.Context, heads []Hash) (bool, error) {
 		return false, ErrClosed
 	}
 
-	hasHeads, err := d.engine.HasHeads(ctx, engineHashes(heads))
+	hasHeads, err := d.engine.HasHeads(engineHashes(heads))
 	if err != nil {
 		return false, fmt.Errorf("cannot inspect Automerge heads: %w", err)
 	}
@@ -820,7 +813,6 @@ func (d *Document) HasHeads(ctx context.Context, heads []Hash) (bool, error) {
 
 // MissingDependencies returns unknown hashes required to reach heads.
 func (d *Document) MissingDependencies(
-	ctx context.Context,
 	heads []Hash,
 ) ([]Hash, error) {
 	d.mu.Lock()
@@ -830,10 +822,7 @@ func (d *Document) MissingDependencies(
 		return nil, ErrClosed
 	}
 
-	missing, err := d.engine.MissingDependencies(
-		ctx,
-		engineHashes(heads),
-	)
+	missing, err := d.engine.MissingDependencies(engineHashes(heads))
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Automerge missing dependencies: %w", err)
 	}
@@ -848,7 +837,6 @@ func (d *Document) MissingDependencies(
 
 // ChangesSince returns encoded changes not covered by heads.
 func (d *Document) ChangesSince(
-	ctx context.Context,
 	heads []Hash,
 ) ([]Change, error) {
 	d.mu.Lock()
@@ -868,7 +856,7 @@ func (d *Document) ChangesSince(
 		engineHeads[i] = [32]byte(head)
 	}
 
-	raw, hashes, err := changeSource.ChangesSince(ctx, engineHeads)
+	raw, hashes, err := changeSource.ChangesSince(engineHeads)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get incremental Automerge changes: %w", err)
 	}
@@ -895,7 +883,6 @@ func (d *Document) ChangesSince(
 // ApplyChanges applies encoded changes whose dependencies may already exist in
 // the document.
 func (d *Document) ApplyChanges(
-	ctx context.Context,
 	changes []Change,
 ) error {
 	d.mu.Lock()
@@ -915,7 +902,7 @@ func (d *Document) ApplyChanges(
 		raw[i] = change.Bytes
 	}
 
-	if err := applier.ApplyChanges(ctx, raw); err != nil {
+	if err := applier.ApplyChanges(raw); err != nil {
 		return fmt.Errorf("cannot apply incremental Automerge changes: %w", err)
 	}
 
@@ -923,12 +910,12 @@ func (d *Document) ApplyChanges(
 }
 
 // Merge applies all changes from another document.
-func (d *Document) Merge(ctx context.Context, other *Document) ([]Hash, error) {
+func (d *Document) Merge(other *Document) ([]Hash, error) {
 	if d == other {
 		return nil, ErrSameDocument
 	}
 
-	otherData, err := other.Save(ctx)
+	otherData, err := other.Save()
 	if err != nil {
 		return nil, fmt.Errorf("cannot save Automerge merge source: %w", err)
 	}
@@ -940,7 +927,7 @@ func (d *Document) Merge(ctx context.Context, other *Document) ([]Hash, error) {
 		return nil, ErrClosed
 	}
 
-	engineHeads, err := d.engine.Merge(ctx, otherData)
+	engineHeads, err := d.engine.Merge(otherData)
 	if err != nil {
 		return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
 	}
@@ -954,7 +941,7 @@ func (d *Document) Merge(ctx context.Context, other *Document) ([]Hash, error) {
 }
 
 // NewSyncState starts synchronization with a remote peer.
-func (d *Document) NewSyncState(ctx context.Context) (*SyncState, error) {
+func (d *Document) NewSyncState() (*SyncState, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -962,7 +949,7 @@ func (d *Document) NewSyncState(ctx context.Context) (*SyncState, error) {
 		return nil, ErrClosed
 	}
 
-	handle, err := d.engine.NewSyncState(ctx)
+	handle, err := d.engine.NewSyncState()
 	if err != nil {
 		return nil, fmt.Errorf("cannot create Automerge sync state: %w", err)
 	}
@@ -971,7 +958,7 @@ func (d *Document) NewSyncState(ctx context.Context) (*SyncState, error) {
 }
 
 // LoadSyncState resumes a previously serialized remote-peer session.
-func (d *Document) LoadSyncState(ctx context.Context, data []byte) (*SyncState, error) {
+func (d *Document) LoadSyncState(data []byte) (*SyncState, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -979,7 +966,7 @@ func (d *Document) LoadSyncState(ctx context.Context, data []byte) (*SyncState, 
 		return nil, ErrClosed
 	}
 
-	handle, err := d.engine.LoadSyncState(ctx, data)
+	handle, err := d.engine.LoadSyncState(data)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load Automerge sync state: %w", err)
 	}
@@ -988,7 +975,7 @@ func (d *Document) LoadSyncState(ctx context.Context, data []byte) (*SyncState, 
 }
 
 // Splice replaces deleteCount UTF-16 code units at index with value.
-func (t *Text) Splice(ctx context.Context, index uint32, deleteCount int32, value string) error {
+func (t *Text) Splice(index uint32, deleteCount int32, value string) error {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -996,7 +983,7 @@ func (t *Text) Splice(ctx context.Context, index uint32, deleteCount int32, valu
 		return ErrClosed
 	}
 
-	if err := t.document.engine.SpliceText(ctx, t.handle, index, deleteCount, value); err != nil {
+	if err := t.document.engine.SpliceText(t.handle, index, deleteCount, value); err != nil {
 		return fmt.Errorf("cannot splice Automerge text: %w", err)
 	}
 
@@ -1006,7 +993,7 @@ func (t *Text) Splice(ctx context.Context, index uint32, deleteCount int32, valu
 // Update replaces the text content with value using a minimal splice so that
 // concurrent edits to unaffected regions merge cleanly. It mirrors the Rust
 // AutoCommit::update_text and JavaScript updateText helpers.
-func (t *Text) Update(ctx context.Context, value string) error {
+func (t *Text) Update(value string) error {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -1014,7 +1001,7 @@ func (t *Text) Update(ctx context.Context, value string) error {
 		return ErrClosed
 	}
 
-	if err := t.document.engine.UpdateText(ctx, t.handle, value); err != nil {
+	if err := t.document.engine.UpdateText(t.handle, value); err != nil {
 		return fmt.Errorf("cannot update Automerge text: %w", err)
 	}
 
@@ -1022,7 +1009,7 @@ func (t *Text) Update(ctx context.Context, value string) error {
 }
 
 // String returns the current materialized text.
-func (t *Text) String(ctx context.Context) (string, error) {
+func (t *Text) String() (string, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -1030,7 +1017,7 @@ func (t *Text) String(ctx context.Context) (string, error) {
 		return "", ErrClosed
 	}
 
-	value, err := t.document.engine.Text(ctx, t.handle)
+	value, err := t.document.engine.Text(t.handle)
 	if err != nil {
 		return "", fmt.Errorf("cannot read Automerge text: %w", err)
 	}
@@ -1039,7 +1026,7 @@ func (t *Text) String(ctx context.Context) (string, error) {
 }
 
 // StringAt returns text at a historical causal frontier.
-func (t *Text) StringAt(ctx context.Context, heads []Hash) (string, error) {
+func (t *Text) StringAt(heads []Hash) (string, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -1048,7 +1035,6 @@ func (t *Text) StringAt(ctx context.Context, heads []Hash) (string, error) {
 	}
 
 	value, err := t.document.engine.TextAt(
-		ctx,
 		t.handle,
 		engineHashes(heads),
 	)
@@ -1060,7 +1046,7 @@ func (t *Text) StringAt(ctx context.Context, heads []Hash) (string, error) {
 }
 
 // Cursor returns a stable address for the UTF-16 position at index.
-func (t *Text) Cursor(ctx context.Context, index uint32) (Cursor, error) {
+func (t *Text) Cursor(index uint32) (Cursor, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -1068,7 +1054,7 @@ func (t *Text) Cursor(ctx context.Context, index uint32) (Cursor, error) {
 		return nil, ErrClosed
 	}
 
-	cursor, err := t.document.engine.TextCursor(ctx, t.handle, index)
+	cursor, err := t.document.engine.TextCursor(t.handle, index)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create Automerge text cursor: %w", err)
 	}
@@ -1077,7 +1063,7 @@ func (t *Text) Cursor(ctx context.Context, index uint32) (Cursor, error) {
 }
 
 // CursorPosition resolves a stable cursor in the current document.
-func (t *Text) CursorPosition(ctx context.Context, cursor Cursor) (uint32, error) {
+func (t *Text) CursorPosition(cursor Cursor) (uint32, error) {
 	t.document.mu.Lock()
 	defer t.document.mu.Unlock()
 
@@ -1085,7 +1071,7 @@ func (t *Text) CursorPosition(ctx context.Context, cursor Cursor) (uint32, error
 		return 0, ErrClosed
 	}
 
-	position, err := t.document.engine.TextCursorPosition(ctx, t.handle, cursor)
+	position, err := t.document.engine.TextCursorPosition(t.handle, cursor)
 	if err != nil {
 		return 0, fmt.Errorf("cannot resolve Automerge text cursor: %w", err)
 	}
@@ -1094,7 +1080,7 @@ func (t *Text) CursorPosition(ctx context.Context, cursor Cursor) (uint32, error
 }
 
 // Close releases the peer-specific synchronization state.
-func (s *SyncState) Close(ctx context.Context) error {
+func (s *SyncState) Close() error {
 	s.document.mu.Lock()
 	defer s.document.mu.Unlock()
 
@@ -1108,7 +1094,7 @@ func (s *SyncState) Close(ctx context.Context) error {
 		return nil
 	}
 
-	if err := s.document.engine.CloseSyncState(ctx, s.handle); err != nil {
+	if err := s.document.engine.CloseSyncState(s.handle); err != nil {
 		return fmt.Errorf("cannot close Automerge sync state: %w", err)
 	}
 
@@ -1116,7 +1102,7 @@ func (s *SyncState) Close(ctx context.Context) error {
 }
 
 // GenerateMessage returns the next message for the remote peer.
-func (s *SyncState) GenerateMessage(ctx context.Context) ([]byte, bool, error) {
+func (s *SyncState) GenerateMessage() ([]byte, bool, error) {
 	s.document.mu.Lock()
 	defer s.document.mu.Unlock()
 
@@ -1128,7 +1114,7 @@ func (s *SyncState) GenerateMessage(ctx context.Context) ([]byte, bool, error) {
 		return nil, false, ErrSyncStateClosed
 	}
 
-	message, ok, err := s.document.engine.GenerateSyncMessage(ctx, s.handle)
+	message, ok, err := s.document.engine.GenerateSyncMessage(s.handle)
 	if err != nil {
 		return nil, false, fmt.Errorf("cannot generate Automerge sync message: %w", err)
 	}
@@ -1137,7 +1123,7 @@ func (s *SyncState) GenerateMessage(ctx context.Context) ([]byte, bool, error) {
 }
 
 // ReceiveMessage applies a message received from the remote peer.
-func (s *SyncState) ReceiveMessage(ctx context.Context, message []byte) error {
+func (s *SyncState) ReceiveMessage(message []byte) error {
 	s.document.mu.Lock()
 	defer s.document.mu.Unlock()
 
@@ -1149,7 +1135,7 @@ func (s *SyncState) ReceiveMessage(ctx context.Context, message []byte) error {
 		return ErrSyncStateClosed
 	}
 
-	if err := s.document.engine.ReceiveSyncMessage(ctx, s.handle, message); err != nil {
+	if err := s.document.engine.ReceiveSyncMessage(s.handle, message); err != nil {
 		return fmt.Errorf("cannot receive Automerge sync message: %w", err)
 	}
 
@@ -1157,7 +1143,7 @@ func (s *SyncState) ReceiveMessage(ctx context.Context, message []byte) error {
 }
 
 // SetReadOnly controls whether incoming changes are applied by this peer.
-func (s *SyncState) SetReadOnly(ctx context.Context, readOnly bool) error {
+func (s *SyncState) SetReadOnly(readOnly bool) error {
 	s.document.mu.Lock()
 	defer s.document.mu.Unlock()
 
@@ -1170,7 +1156,6 @@ func (s *SyncState) SetReadOnly(ctx context.Context, readOnly bool) error {
 	}
 
 	if err := s.document.engine.SetSyncReadOnly(
-		ctx,
 		s.handle,
 		readOnly,
 	); err != nil {
@@ -1181,7 +1166,7 @@ func (s *SyncState) SetReadOnly(ctx context.Context, readOnly bool) error {
 }
 
 // PeerReadOnly reports whether the remote peer advertised read-only mode.
-func (s *SyncState) PeerReadOnly(ctx context.Context) (bool, error) {
+func (s *SyncState) PeerReadOnly() (bool, error) {
 	s.document.mu.Lock()
 	defer s.document.mu.Unlock()
 
@@ -1193,7 +1178,7 @@ func (s *SyncState) PeerReadOnly(ctx context.Context) (bool, error) {
 		return false, ErrSyncStateClosed
 	}
 
-	readOnly, err := s.document.engine.SyncPeerReadOnly(ctx, s.handle)
+	readOnly, err := s.document.engine.SyncPeerReadOnly(s.handle)
 	if err != nil {
 		return false, fmt.Errorf("cannot get Automerge peer read-only mode: %w", err)
 	}
@@ -1202,7 +1187,7 @@ func (s *SyncState) PeerReadOnly(ctx context.Context) (bool, error) {
 }
 
 // Save serializes the peer-specific synchronization state.
-func (s *SyncState) Save(ctx context.Context) ([]byte, error) {
+func (s *SyncState) Save() ([]byte, error) {
 	s.document.mu.Lock()
 	defer s.document.mu.Unlock()
 
@@ -1214,7 +1199,7 @@ func (s *SyncState) Save(ctx context.Context) ([]byte, error) {
 		return nil, ErrSyncStateClosed
 	}
 
-	data, err := s.document.engine.SaveSyncState(ctx, s.handle)
+	data, err := s.document.engine.SaveSyncState(s.handle)
 	if err != nil {
 		return nil, fmt.Errorf("cannot save Automerge sync state: %w", err)
 	}

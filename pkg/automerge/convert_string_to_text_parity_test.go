@@ -26,7 +26,6 @@
 package automerge_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -41,19 +40,17 @@ import (
 func TestRustCurrentState_LoadChanges(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	data, err := os.ReadFile("testdata/fixtures/counter_value_is_ok.automerge")
 	require.NoError(t, err)
 
 	result := make(map[string][]automerge.Patch)
 
 	for _, engine := range rustParityEngines() {
-		document, err := engine.load(ctx, data, actor(1))
+		document, err := engine.load(data, actor(1))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		patches, err := document.CurrentState(ctx)
+		patches, err := document.CurrentState()
 		require.NoError(t, err)
 
 		result[engine.name] = patches
@@ -71,22 +68,22 @@ func TestRustCurrentState_LoadChanges(t *testing.T) {
 
 func loadConvertingEngines() []struct {
 	name string
-	load func(context.Context, []byte, automerge.ActorID) (*automerge.Document, error)
+	load func([]byte, automerge.ActorID) (*automerge.Document, error)
 } {
 	return []struct {
 		name string
-		load func(context.Context, []byte, automerge.ActorID) (*automerge.Document, error)
+		load func([]byte, automerge.ActorID) (*automerge.Document, error)
 	}{
 		{
 			"native",
-			func(ctx context.Context, data []byte, actorID automerge.ActorID) (*automerge.Document, error) {
-				return automerge.Load(ctx, data, actorID, automerge.ConvertStringsToText())
+			func(data []byte, actorID automerge.ActorID) (*automerge.Document, error) {
+				return automerge.Load(data, actorID, automerge.ConvertStringsToText())
 			},
 		},
 		{
 			"reference",
-			func(ctx context.Context, data []byte, actorID automerge.ActorID) (*automerge.Document, error) {
-				return automerge.LoadReference(ctx, data, actorID, automerge.ConvertStringsToText())
+			func(data []byte, actorID automerge.ActorID) (*automerge.Document, error) {
+				return automerge.LoadReference(data, actorID, automerge.ConvertStringsToText())
 			},
 		},
 	}
@@ -97,37 +94,35 @@ func loadConvertingEngines() []struct {
 func TestRustConvert_StringsInMapsAreConvertedToText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	source, err := automerge.New(ctx, actor(0xaa))
+	source, err := automerge.New(actor(0xaa))
 	require.NoError(t, err)
 	require.NoError(
 		t,
 		source.Root().PutScalar(
-			ctx,
+
 			"somestring",
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"},
 		),
 	)
-	_, err = source.Commit(ctx, "seed", commitTime)
+	_, err = source.Commit("seed", commitTime)
 	require.NoError(t, err)
 
-	saved, err := source.Save(ctx)
+	saved, err := source.Save()
 	require.NoError(t, err)
-	require.NoError(t, source.Close(ctx))
+	require.NoError(t, source.Close())
 
 	for _, engine := range loadConvertingEngines() {
-		document, err := engine.load(ctx, saved, actor(0xbb))
+		document, err := engine.load(saved, actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		object, err := document.Root().Object(ctx, "somestring")
+		object, err := document.Root().Object("somestring")
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeText, object.Type)
 
-		text, err := object.Text(ctx)
+		text, err := object.Text()
 		require.NoError(t, err)
-		value, err := text.String(ctx)
+		value, err := text.String()
 		require.NoError(t, err)
 		assert.Equal(t, "hello", value)
 	}
@@ -138,34 +133,32 @@ func TestRustConvert_StringsInMapsAreConvertedToText(t *testing.T) {
 func TestRustConvert_StringsInListsAreConvertedToText(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	source, err := automerge.New(ctx, actor(0xaa))
+	source, err := automerge.New(actor(0xaa))
 	require.NoError(t, err)
-	list, err := source.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+	list, err := source.Root().CreateObject("list", automerge.ObjectTypeList)
 	require.NoError(t, err)
-	require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"}))
-	_, err = source.Commit(ctx, "seed", commitTime)
+	require.NoError(t, list.InsertScalar(0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"}))
+	_, err = source.Commit("seed", commitTime)
 	require.NoError(t, err)
 
-	saved, err := source.Save(ctx)
+	saved, err := source.Save()
 	require.NoError(t, err)
-	require.NoError(t, source.Close(ctx))
+	require.NoError(t, source.Close())
 
 	for _, engine := range loadConvertingEngines() {
-		document, err := engine.load(ctx, saved, actor(0xbb))
+		document, err := engine.load(saved, actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		listObject, err := document.Root().Object(ctx, "list")
+		listObject, err := document.Root().Object("list")
 		require.NoError(t, err)
-		element, err := listObject.ObjectAt(ctx, 0)
+		element, err := listObject.ObjectAt(0)
 		require.NoError(t, err)
 		assert.Equal(t, automerge.ObjectTypeText, element.Type)
 
-		text, err := element.Text(ctx)
+		text, err := element.Text()
 		require.NoError(t, err)
-		value, err := text.String(ctx)
+		value, err := text.String()
 		require.NoError(t, err)
 		assert.Equal(t, "hello", value)
 	}
@@ -176,21 +169,19 @@ func TestRustConvert_StringsInListsAreConvertedToText(t *testing.T) {
 func TestRustConvert_DoesNotAddSizeWhenStringsAreNotConverted(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
-	empty, err := automerge.New(ctx, actor(0xaa))
+	empty, err := automerge.New(actor(0xaa))
 	require.NoError(t, err)
 
-	saved, err := empty.Save(ctx)
+	saved, err := empty.Save()
 	require.NoError(t, err)
-	require.NoError(t, empty.Close(ctx))
+	require.NoError(t, empty.Close())
 
 	for _, engine := range loadConvertingEngines() {
-		document, err := engine.load(ctx, saved, actor(0xbb))
+		document, err := engine.load(saved, actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		resaved, err := document.Save(ctx)
+		resaved, err := document.Save()
 		require.NoError(t, err)
 		assert.Equal(t, len(saved), len(resaved))
 	}
