@@ -30,7 +30,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
 
 // orphanScenario builds a document that has applied one change ("value") and

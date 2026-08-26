@@ -107,6 +107,9 @@ EMBEDDED= apps/console/dist/index.html \
 	apps/compliance-portal/dist/index.html \
 	@probo/emails
 
+AUTOMERGE_REFERENCE_DIR=	pkg/automerge/internal/testsupport/reference
+AUTOMERGE_REFERENCE_WASM=	$(AUTOMERGE_REFERENCE_DIR)/reference.wasm
+
 PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
 PROBOD_SRC=	cmd/probod/main.go
@@ -229,7 +232,7 @@ audit-automerge-interop: ## Require complete Rust/JS wire and state interoperabi
 		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
 
 .PHONY: benchmark-automerge
-benchmark-automerge: ## Benchmark native and Rust/WASM Automerge engines
+benchmark-automerge: ## Benchmark Go and Rust/WASM Automerge implementations
 	$(GO_BASE) test -run '^$$' -bench . -benchmem ./pkg/automerge
 
 .PHONY: benchmark-automerge-native
@@ -270,8 +273,8 @@ test-automerge-repo-interop: ## Sync a real automerge-repo JS client against the
 fuzz-automerge: ## Fuzz Automerge public, wire, sync, and projection surfaces
 	$(GO_BASE) test -run '^$$' -fuzz '^FuzzLoad$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
 	$(GO_BASE) test -run '^$$' -fuzz '^FuzzCoreOperations$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
-	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecode$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
-	$(GO_BASE) test -run '^$$' -fuzz '^FuzzParseSyncMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/native
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecode$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/core
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzParseSyncMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/core
 	$(GO_BASE) test -run '^$$' -fuzz '^FuzzRender$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/prosemirror
 	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodePresence$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
 	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodeMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
@@ -500,6 +503,18 @@ pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceport
 
 .PHONY: generate
 generate: $(GENERATED)
+
+.PHONY: generate-automerge-reference
+generate-automerge-reference: ## Rebuild the internal Automerge WASM test oracle
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		$(CARGO) +$(RUST_TOOLCHAIN) build --locked --release --target wasm32-wasip1
+	$(CP) $(AUTOMERGE_REFERENCE_DIR)/wasm/target/wasm32-wasip1/release/probo_automerge_reference.wasm $(AUTOMERGE_REFERENCE_WASM)
+	cd $(AUTOMERGE_REFERENCE_DIR) && $(SHA256SUM) reference.wasm > reference.wasm.sha256
+
+.PHONY: audit-automerge-reference
+audit-automerge-reference: ## Audit Automerge Rust advisories, licenses, bans, and sources
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		$(CARGO) +$(RUST_TOOLCHAIN) deny check
 
 .PHONY: embed
 embed: $(EMBEDDED)

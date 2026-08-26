@@ -33,8 +33,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge"
-	"go.probo.inc/probo/pkg/automerge/internal/native"
+	productionautomerge "go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/automerge/internal/core"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 )
 
@@ -243,9 +244,9 @@ func TestConformance_GoLoadsJavaScriptDocument(t *testing.T) {
 	require.Len(t, heads, 1)
 	assert.Equal(t, response.Heads[0], heads[0].String())
 
-	nativeDocument, err := native.Decode(data)
+	nativeDocument, err := core.Decode(data)
 	require.NoError(t, err)
-	nativeState, err := native.NewStateFromDocument(nativeDocument)
+	nativeState, err := core.NewStateFromDocument(nativeDocument)
 	require.NoError(t, err)
 	nativeText, err := nativeState.Text("body")
 	require.NoError(t, err)
@@ -341,7 +342,7 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 
 	data, err := base64.StdEncoding.DecodeString(response.Change)
 	require.NoError(t, err)
-	decoded, err := native.Decode(data)
+	decoded, err := core.Decode(data)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 1)
 	change := &decoded.Changes[0]
@@ -356,13 +357,13 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 
 	operations := change.Operations
 	require.Len(t, operations, 7)
-	assert.Equal(t, native.ActionMakeText, operations[0].Action)
+	assert.Equal(t, core.ActionMakeText, operations[0].Action)
 	assert.True(t, operations[0].Object.IsRoot)
 	require.NotNil(t, operations[0].Key.Property)
 	assert.Equal(t, "title", *operations[0].Key.Property)
 	assert.Equal(t, uint64(1), operations[0].ID.Counter)
-	assert.Equal(t, native.ActorID(string(actorID[:])), operations[0].ID.Actor)
-	assert.Equal(t, native.ActionSet, operations[1].Action)
+	assert.Equal(t, core.ActorID(string(actorID[:])), operations[0].ID.Actor)
+	assert.Equal(t, core.ActionSet, operations[1].Action)
 	assert.Equal(t, uint64(1), operations[1].Object.OpID.Counter)
 	assert.True(t, operations[1].Key.IsHead)
 	require.NotNil(t, operations[1].Value)
@@ -372,13 +373,13 @@ func TestConformance_NativeParsesJavaScriptChange(t *testing.T) {
 	require.NotNil(t, operations[6].Value)
 	assert.Equal(t, "y", operations[6].Value.String)
 
-	state := native.NewState()
+	state := core.NewState()
 	require.NoError(t, state.ApplyChange(change))
 	title, err := state.Text("title")
 	require.NoError(t, err)
 	assert.Equal(t, "Policy", title)
 
-	nativeEncoded, err := native.EncodeChange(change)
+	nativeEncoded, err := core.EncodeChange(change)
 	require.NoError(t, err)
 	inspection := runOracle(
 		t,
@@ -408,7 +409,7 @@ func TestConformance_NativeParsesJavaScriptEmptyChange(t *testing.T) {
 	)
 	data, err := base64.StdEncoding.DecodeString(response.Change)
 	require.NoError(t, err)
-	decoded, err := native.Decode(data)
+	decoded, err := core.Decode(data)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 1)
 	change := decoded.Changes[0]
@@ -452,21 +453,21 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 		rawChanges = append(rawChanges, data)
 	}
 
-	decoded, err := native.Decode(combined)
+	decoded, err := core.Decode(combined)
 	require.NoError(t, err)
 	require.Len(t, decoded.Changes, 3)
-	changes := []*native.Change{
+	changes := []*core.Change{
 		&decoded.Changes[0],
 		&decoded.Changes[1],
 		&decoded.Changes[2],
 	}
 
-	leftFirst := native.NewState()
+	leftFirst := core.NewState()
 	require.NoError(t, leftFirst.ApplyChange(changes[0]))
 	require.NoError(t, leftFirst.ApplyChange(changes[1]))
 	require.NoError(t, leftFirst.ApplyChange(changes[2]))
 
-	rightFirst := native.NewState()
+	rightFirst := core.NewState()
 	require.NoError(t, rightFirst.ApplyChange(changes[0]))
 	require.NoError(t, rightFirst.ApplyChange(changes[2]))
 	require.NoError(t, rightFirst.ApplyChange(changes[1]))
@@ -493,7 +494,7 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 	)
 	assert.Equal(t, leftHeads, rightHeads)
 
-	backend, err := native.LoadEngine(rawChanges[0])
+	backend, err := core.LoadEngine(rawChanges[0])
 	require.NoError(t, err)
 	_, err = backend.Merge(rawChanges[1])
 	require.NoError(t, err)
@@ -506,7 +507,7 @@ func TestConformance_NativeConcurrentChangesConverge(t *testing.T) {
 
 	// Save now writes a compacted document rather than embedding change bytes, so
 	// the guarantee is that reloading it reproduces the same frontier.
-	reloaded, err := native.LoadEngine(saved)
+	reloaded, err := core.LoadEngine(saved)
 	require.NoError(t, err)
 
 	after, err := reloaded.Heads()
@@ -528,13 +529,13 @@ func TestConformance_NativeSyncMessageRoundTrip(t *testing.T) {
 	data, err := base64.StdEncoding.DecodeString(response.Sync)
 	require.NoError(t, err)
 
-	message, err := native.ParseSyncMessage(data)
+	message, err := core.ParseSyncMessage(data)
 	require.NoError(t, err)
 	assert.Contains(
 		t,
-		[]native.SyncMessageVersion{
-			native.SyncMessageVersion1,
-			native.SyncMessageVersion2,
+		[]core.SyncMessageVersion{
+			core.SyncMessageVersion1,
+			core.SyncMessageVersion2,
 		},
 		message.Version,
 	)
@@ -741,7 +742,17 @@ func TestConformance_NativeTableRichTextSpans(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, referenceSpans, nativeSpans)
 
-	content, err := automergeprosemirror.Render(nativeSpans)
+	renderSpans := make([]productionautomerge.Span, len(nativeSpans))
+	for i, span := range nativeSpans {
+		renderSpans[i] = productionautomerge.Span{
+			Type:  productionautomerge.SpanType(span.Type),
+			Text:  span.Text,
+			Marks: span.Marks,
+			Block: span.Block,
+		}
+	}
+
+	content, err := automergeprosemirror.Render(renderSpans)
 	require.NoError(t, err)
 
 	var document struct {

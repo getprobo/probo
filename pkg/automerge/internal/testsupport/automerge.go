@@ -18,8 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// Package automerge provides a pure-Go API for Automerge documents.
-package automerge
+// Package testsupport provides native/reference Automerge differential helpers.
+//
+// It mirrors the public document API so parity tests can execute the same
+// scenario against the Go core and the isolated Rust/WASM oracle.
+package testsupport
 
 import (
 	"crypto/rand"
@@ -31,6 +34,7 @@ import (
 	"time"
 
 	"go.probo.inc/probo/pkg/automerge/internal/core"
+	"go.probo.inc/probo/pkg/automerge/internal/testsupport/reference"
 )
 
 type (
@@ -52,7 +56,7 @@ type (
 	// Document is a concurrency-safe Automerge document.
 	Document struct {
 		mu     sync.Mutex
-		engine *core.Engine
+		engine engine
 		closed bool
 	}
 
@@ -68,12 +72,93 @@ type (
 		handle   uint32
 		closed   bool
 	}
+
+	engine interface {
+		Close() error
+		Save(bool, bool) ([]byte, error)
+		Isolate([][32]byte) error
+		Integrate() error
+		Stats() ([]byte, error)
+		CurrentState() ([]byte, error)
+		Diff([][32]byte, [][32]byte) ([]byte, error)
+		UpdateDiffCursor() error
+		DiffIncremental() ([]byte, error)
+		SaveIncremental() ([]byte, error)
+		LoadIncremental([]byte) (uint64, error)
+		SetActor([]byte) error
+		PutString(uint32, string, string) error
+		GetString(uint32, string) (string, error)
+		PutScalar(uint32, string, []byte) error
+		GetScalar(uint32, string) ([]byte, error)
+		GetScalarAtHeads(uint32, string, [][32]byte) ([]byte, error)
+		GetAllScalars(uint32, string) ([]byte, error)
+		GetAllScalarsAt(uint32, uint64) ([]byte, error)
+		PutObject(uint32, string, string) (uint32, error)
+		GetObject(uint32, string) (uint32, string, error)
+		InsertObject(uint32, uint64, string) (uint32, error)
+		PutObjectAt(uint32, uint64, string) (uint32, error)
+		GetObjectAt(uint32, uint64) (uint32, string, error)
+		InsertScalar(uint32, uint64, []byte) error
+		PutScalarAt(uint32, uint64, []byte) error
+		GetScalarAt(uint32, uint64) ([]byte, error)
+		DeleteMap(uint32, string) error
+		DeleteSequence(uint32, uint64) error
+		Increment(uint32, string, int64) error
+		IncrementAt(uint32, uint64, int64) error
+		Keys(uint32) ([]string, error)
+		Length(uint32) (uint64, error)
+		PutText(uint32, string) (uint32, error)
+		GetText(uint32, string) (uint32, error)
+		SpliceText(uint32, uint32, int32, string) error
+		UpdateText(uint32, string) error
+		UpdateSpans(uint32, []byte, []byte) error
+		MarkText(uint32, uint32, uint32, string, []byte, string) error
+		SplitBlock(uint32, uint32) (uint32, error)
+		JoinBlock(uint32, uint32) error
+		ReplaceBlock(uint32, uint32) (uint32, error)
+		Text(uint32) (string, error)
+		TextAt(uint32, [][32]byte) (string, error)
+		TextSpans(uint32) ([]byte, error)
+		TextSpansAt(uint32, [][32]byte) ([]byte, error)
+		Marks(uint32) ([]byte, error)
+		MarksAt(uint32, [][32]byte) ([]byte, error)
+		TextCursor(uint32, uint32) ([]byte, error)
+		TextCursorMoving(uint32, uint32, bool) ([]byte, error)
+		TextCursorMovingAt(uint32, uint32, bool, [][32]byte) ([]byte, error)
+		TextCursorPosition(uint32, []byte) (uint32, error)
+		Commit(string, time.Time) ([32]byte, error)
+		EmptyCommit(string, time.Time) ([32]byte, error)
+		Rollback() (uint64, error)
+		Heads() ([][32]byte, error)
+		HasHeads([][32]byte) (bool, error)
+		MissingDependencies([][32]byte) ([][32]byte, error)
+		Merge([]byte) ([][32]byte, error)
+		NewSyncState() (uint32, error)
+		CloseSyncState(uint32) error
+		GenerateSyncMessage(uint32) ([]byte, bool, error)
+		ReceiveSyncMessage(uint32, []byte) error
+		SetSyncReadOnly(uint32, bool) error
+		SyncPeerReadOnly(uint32) (bool, error)
+		SaveSyncState(uint32) ([]byte, error)
+		LoadSyncState([]byte) (uint32, error)
+	}
+
+	changeBackend interface {
+		ChangesSince([][32]byte) ([][]byte, [][32]byte, error)
+	}
+
+	changeApplier interface {
+		ApplyChanges([][]byte) error
+	}
 )
 
 var (
 	ErrClosed          = errors.New("automerge document is closed")
 	ErrSameDocument    = errors.New("cannot merge an Automerge document into itself")
 	ErrSyncStateClosed = errors.New("automerge sync state is closed")
+
+	_ engine = (*reference.Engine)(nil)
+	_ engine = (*core.Engine)(nil)
 )
 
 const rootObject uint32 = 0
@@ -88,9 +173,26 @@ func NewActorID() (ActorID, error) {
 	return actorID, nil
 }
 
-// New creates an empty document.
+// New creates an empty document using the native Go engine.
 func New(actorID ActorID) (*Document, error) {
 	b, err := core.NewEngine()
+	if err != nil {
+		return nil, fmt.Errorf("cannot create native Automerge engine: %w", err)
+	}
+
+	if err := b.SetActor(actorID[:]); err != nil {
+		_ = b.Close()
+		return nil, fmt.Errorf("cannot initialize native Automerge actor: %w", err)
+	}
+
+	return &Document{engine: b}, nil
+}
+
+// NewReference creates an empty document using the official WASM reference
+// engine. It exists as a differential oracle for the native engine and is
+// intended for tests, not production use.
+func NewReference(actorID ActorID) (*Document, error) {
+	b, err := reference.New()
 	if err != nil {
 		return nil, fmt.Errorf("cannot create Automerge engine: %w", err)
 	}
@@ -117,7 +219,8 @@ func ConvertStringsToText() LoadOption {
 	return func(c *loadConfig) { c.convertStringsToText = true }
 }
 
-// Load creates a document from stored data and assigns a new writer.
+// Load creates a document from stored data using the native Go engine and
+// assigns a new writer.
 func Load(
 	data []byte,
 	actorID ActorID,
@@ -130,12 +233,12 @@ func Load(
 
 	b, err := core.LoadEngine(data)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load Automerge engine: %w", err)
+		return nil, fmt.Errorf("cannot load native Automerge engine: %w", err)
 	}
 
 	if err := b.SetActor(actorID[:]); err != nil {
 		_ = b.Close()
-		return nil, fmt.Errorf("cannot assign Automerge actor: %w", err)
+		return nil, fmt.Errorf("cannot assign native Automerge actor: %w", err)
 	}
 
 	document := &Document{engine: b}
@@ -149,6 +252,38 @@ func Load(
 	}
 
 	return document, nil
+}
+
+// LoadReference loads a document using the official WASM reference engine. Like
+// NewReference it is intended for tests, not production use.
+func LoadReference(
+	data []byte,
+	actorID ActorID,
+	options ...LoadOption,
+) (*Document, error) {
+	config := loadConfig{}
+	for _, option := range options {
+		option(&config)
+	}
+
+	load := reference.Load
+	if config.convertStringsToText {
+		// The reference applies the migration during load through its own WASM
+		// entry point rather than as a post-load pass.
+		load = reference.LoadConvertingStrings
+	}
+
+	b, err := load(data)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load Automerge engine: %w", err)
+	}
+
+	if err := b.SetActor(actorID[:]); err != nil {
+		_ = b.Close()
+		return nil, fmt.Errorf("cannot assign loaded Automerge actor: %w", err)
+	}
+
+	return &Document{engine: b}, nil
 }
 
 // convertStringsToText replaces every string scalar reachable from the root in
@@ -426,7 +561,12 @@ func (d *Document) Fork(
 		return nil, fmt.Errorf("cannot save Automerge fork source: %w", err)
 	}
 
+	_, referenceBackend := d.engine.(*reference.Engine)
 	d.mu.Unlock()
+
+	if referenceBackend {
+		return LoadReference(data, actorID)
+	}
 
 	return Load(data, actorID)
 }
@@ -621,6 +761,38 @@ func (d *Document) Heads() ([]Hash, error) {
 	return heads, nil
 }
 
+// ReferenceBloomContains reports whether a sync Bloom filter built from the
+// seed change hashes (possibly falsely) contains the target hash. It is only
+// available on reference (WASM) documents and exists so parity tests can
+// reproduce the upstream Bloom false-positive search deterministically; the
+// native engine's V2 sync uses exact head comparison rather than Bloom filters,
+// so native documents return an error.
+func (d *Document) ReferenceBloomContains(
+	seeds []Hash,
+	target Hash,
+) (bool, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return false, ErrClosed
+	}
+
+	oracle, ok := d.engine.(*reference.Engine)
+	if !ok {
+		return false, fmt.Errorf(
+			"bloom filter membership is only available on reference documents",
+		)
+	}
+
+	seedArrays := make([][32]byte, len(seeds))
+	for i := range seeds {
+		seedArrays[i] = [32]byte(seeds[i])
+	}
+
+	return oracle.BloomContains([32]byte(target), seedArrays)
+}
+
 // HasHeads reports whether every hash exists in the document history.
 func (d *Document) HasHeads(heads []Hash) (bool, error) {
 	d.mu.Lock()
@@ -673,12 +845,17 @@ func (d *Document) ChangesSince(
 		return nil, ErrClosed
 	}
 
+	changeSource, ok := d.engine.(changeBackend)
+	if !ok {
+		return nil, fmt.Errorf("automerge engine does not expose incremental changes")
+	}
+
 	engineHeads := make([][32]byte, len(heads))
 	for i, head := range heads {
 		engineHeads[i] = [32]byte(head)
 	}
 
-	raw, hashes, err := d.engine.ChangesSince(engineHeads)
+	raw, hashes, err := changeSource.ChangesSince(engineHeads)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get incremental Automerge changes: %w", err)
 	}
@@ -714,12 +891,17 @@ func (d *Document) ApplyChanges(
 		return ErrClosed
 	}
 
+	applier, ok := d.engine.(changeApplier)
+	if !ok {
+		return fmt.Errorf("automerge engine does not accept incremental changes")
+	}
+
 	raw := make([][]byte, len(changes))
 	for i, change := range changes {
 		raw[i] = change.Bytes
 	}
 
-	if err := d.engine.ApplyChanges(raw); err != nil {
+	if err := applier.ApplyChanges(raw); err != nil {
 		return fmt.Errorf("cannot apply incremental Automerge changes: %w", err)
 	}
 

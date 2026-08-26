@@ -31,7 +31,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge"
+	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
 
 // TestRustMarkPatches_AtEndOfText reproduces mark_patches_at_end_of_text: a mark

@@ -1,6 +1,6 @@
-# Native Automerge engine
+# Core Automerge engine
 
-This package is the pure-Go Automerge engine. It is intentionally internal:
+This package is the pure-Go Automerge core. It is intentionally internal:
 the stable API lives in `pkg/automerge`, and callers must not depend on engine
 types or storage details.
 
@@ -31,8 +31,8 @@ types or storage details.
 | `internal/encoding` | Bounded binary reader, ULEB128 and length-prefixed primitives |
 | `internal/storage` | Automerge chunk/column encoding, decoding and graph validation |
 | `internal/sync` | V1/V2 sync message wire codec and resource limits |
-| `internal/native` | Mutable CRDT engine, materialized state, rich text, patches and sync orchestration |
-| `internal/reference` | Rust/WASM differential oracle used only by parity tests |
+| `internal/core` | Mutable CRDT engine, materialized state, rich text, patches and sync orchestration |
+| `internal/testsupport/reference` | Rust/WASM differential oracle used only by parity tests |
 
 ## Dependency direction
 
@@ -41,7 +41,7 @@ The engine follows this direction:
 ```text
 pkg/automerge public API
         ↓
-native Engine methods
+core Engine methods
         ↓
 State / sequence / rich-text state
         ↓

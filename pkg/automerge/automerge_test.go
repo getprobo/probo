@@ -32,15 +32,15 @@ import (
 
 var commitTime = time.Date(2026, time.August, 7, 12, 0, 0, 0, time.UTC)
 
-func actor(value byte) automerge.ActorID {
-	var actorID automerge.ActorID
+func actor(value byte) [16]byte {
+	var actorID [16]byte
 
 	actorID[0] = value
 
 	return actorID
 }
 
-func closeDocument(t *testing.T, document *automerge.Document) {
+func closeDocument(t *testing.T, document interface{ Close() error }) {
 	t.Helper()
 	t.Cleanup(
 		func() {
@@ -49,7 +49,7 @@ func closeDocument(t *testing.T, document *automerge.Document) {
 	)
 }
 
-func closeSyncState(t *testing.T, state *automerge.SyncState) {
+func closeSyncState(t *testing.T, state interface{ Close() error }) {
 	t.Helper()
 	t.Cleanup(
 		func() {
@@ -58,7 +58,17 @@ func closeSyncState(t *testing.T, state *automerge.SyncState) {
 	)
 }
 
-func synchronize(t *testing.T, left, right *automerge.SyncState) {
+func synchronize(
+	t *testing.T,
+	left interface {
+		GenerateMessage() ([]byte, bool, error)
+		ReceiveMessage([]byte) error
+	},
+	right interface {
+		GenerateMessage() ([]byte, bool, error)
+		ReceiveMessage([]byte) error
+	},
+) {
 	t.Helper()
 
 	for range 100 {
@@ -93,7 +103,7 @@ func synchronize(t *testing.T, left, right *automerge.SyncState) {
 func newBaseDocument(t *testing.T) []byte {
 	t.Helper()
 
-	document, err := automerge.NewReference(actor(1))
+	document, err := automerge.New(actor(1))
 	require.NoError(t, err)
 	closeDocument(t, document)
 
