@@ -20,12 +20,12 @@
 
 package core
 
-import internalstorage "go.probo.inc/probo/pkg/automerge/internal/storage"
+import "go.probo.inc/probo/pkg/automerge/internal/storage"
 
 var (
-	Decode            = internalstorage.Decode
-	DecodePartial     = internalstorage.DecodePartial
-	DecodeIncremental = internalstorage.DecodeIncremental
-	EncodeChange      = internalstorage.EncodeChange
-	EncodeDocument    = internalstorage.EncodeDocument
+	Decode            = storage.Decode
+	DecodePartial     = storage.DecodePartial
+	DecodeIncremental = storage.DecodeIncremental
+	EncodeChange      = storage.EncodeChange
+	EncodeDocument    = storage.EncodeDocument
 )

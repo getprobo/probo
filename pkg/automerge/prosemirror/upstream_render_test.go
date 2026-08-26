@@ -30,7 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
-	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
+	"go.probo.inc/probo/pkg/automerge/prosemirror"
 )
 
 // TestBridge_MatchesUpstreamInBothDirections is the differential parity gate for
@@ -117,7 +117,7 @@ func TestBridge_MatchesUpstreamInBothDirections(t *testing.T) {
 					fixture.Name,
 				)
 
-				rendered, err := automergeprosemirror.Render(spans)
+				rendered, err := prosemirror.Render(spans)
 				require.NoError(t, err)
 
 				assert.JSONEq(t, string(fixture.Expected), rendered)

@@ -20,17 +20,17 @@
 
 package core
 
-import internalsync "go.probo.inc/probo/pkg/automerge/internal/sync"
+import "go.probo.inc/probo/pkg/automerge/internal/sync"
 
 type (
-	SyncMessageVersion = internalsync.MessageVersion
-	SyncHave           = internalsync.Have
-	SyncMessage        = internalsync.Message
+	SyncMessageVersion = sync.MessageVersion
+	SyncHave           = sync.Have
+	SyncMessage        = sync.Message
 )
 
 const (
-	SyncMessageVersion1 = internalsync.MessageVersion1
-	SyncMessageVersion2 = internalsync.MessageVersion2
+	SyncMessageVersion1 = sync.MessageVersion1
+	SyncMessageVersion2 = sync.MessageVersion2
 )
 
-var ParseSyncMessage = internalsync.ParseMessage
+var ParseSyncMessage = sync.ParseMessage

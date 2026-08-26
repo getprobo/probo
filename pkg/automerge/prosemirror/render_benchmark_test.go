@@ -26,7 +26,7 @@ import (
 	"testing"
 
 	"go.probo.inc/probo/pkg/automerge"
-	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
+	"go.probo.inc/probo/pkg/automerge/prosemirror"
 )
 
 func BenchmarkRender(b *testing.B) {
@@ -68,7 +68,7 @@ func BenchmarkRender(b *testing.B) {
 				b.SetBytes(benchmark.bytes)
 
 				for b.Loop() {
-					if _, err := automergeprosemirror.Render(benchmark.spans); err != nil {
+					if _, err := prosemirror.Render(benchmark.spans); err != nil {
 						b.Fatal(err)
 					}
 				}
