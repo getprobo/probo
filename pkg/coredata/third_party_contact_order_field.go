@@ -53,15 +53,7 @@ func ThirdPartyContactOrderFields() []ThirdPartyContactOrderField {
 }
 
 func (v ThirdPartyContactOrderField) IsValid() bool {
-	switch v {
-	case
-		ThirdPartyContactOrderFieldCreatedAt,
-		ThirdPartyContactOrderFieldFullName,
-		ThirdPartyContactOrderFieldEmail:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ThirdPartyContactOrderFields())
 }
 
 func (v ThirdPartyContactOrderField) String() string {
@@ -73,14 +65,7 @@ func (v ThirdPartyContactOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ThirdPartyContactOrderField) UnmarshalText(text []byte) error {
-	val := ThirdPartyContactOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ThirdPartyContactOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ThirdPartyContactOrderFields())
 }
 
 func (p ThirdPartyContactOrderField) Column() string {

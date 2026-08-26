@@ -55,17 +55,7 @@ func TreatmentPlanOrderFields() []TreatmentPlanOrderField {
 }
 
 func (v TreatmentPlanOrderField) IsValid() bool {
-	switch v {
-	case
-		TreatmentPlanOrderFieldCreatedAt,
-		TreatmentPlanOrderFieldTreatment,
-		TreatmentPlanOrderFieldCategory,
-		TreatmentPlanOrderFieldInherentRiskScore,
-		TreatmentPlanOrderFieldResidualRiskScore:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, TreatmentPlanOrderFields())
 }
 
 func (v TreatmentPlanOrderField) String() string {
@@ -77,14 +67,7 @@ func (v TreatmentPlanOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *TreatmentPlanOrderField) UnmarshalText(text []byte) error {
-	val := TreatmentPlanOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid TreatmentPlanOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, TreatmentPlanOrderFields())
 }
 
 func (p TreatmentPlanOrderField) Column() string {

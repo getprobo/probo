@@ -47,13 +47,7 @@ func CookieCategoryOrderFields() []CookieCategoryOrderField {
 }
 
 func (v CookieCategoryOrderField) IsValid() bool {
-	switch v {
-	case
-		CookieCategoryOrderFieldRank:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CookieCategoryOrderFields())
 }
 
 func (v CookieCategoryOrderField) String() string {
@@ -65,14 +59,7 @@ func (v CookieCategoryOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CookieCategoryOrderField) UnmarshalText(text []byte) error {
-	val := CookieCategoryOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CookieCategoryOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CookieCategoryOrderFields())
 }
 
 func (p CookieCategoryOrderField) Column() string {

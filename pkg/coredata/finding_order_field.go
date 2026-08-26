@@ -59,19 +59,7 @@ func FindingOrderFields() []FindingOrderField {
 }
 
 func (v FindingOrderField) IsValid() bool {
-	switch v {
-	case
-		FindingOrderFieldCreatedAt,
-		FindingOrderFieldIdentifiedOn,
-		FindingOrderFieldDueDate,
-		FindingOrderFieldStatus,
-		FindingOrderFieldPriority,
-		FindingOrderFieldReferenceId,
-		FindingOrderFieldKind:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, FindingOrderFields())
 }
 
 func (v FindingOrderField) String() string {
@@ -83,14 +71,7 @@ func (v FindingOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *FindingOrderField) UnmarshalText(text []byte) error {
-	val := FindingOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid FindingOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, FindingOrderFields())
 }
 
 func (p FindingOrderField) Column() string {

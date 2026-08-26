@@ -405,7 +405,7 @@ Collection enum wrappers (`OAuth2Scopes`, `CountryCodes`, etc.) may keep custom 
 
 ## Order fields
 
-Order-field enums follow the same enum rules and additionally implement `Column()` and `page.OrderField`:
+Order-field enums follow the same enum rules and additionally implement `Column()` and `page.OrderField`. Shared `IsValid` / `UnmarshalText` logic lives in `order_field.go` — do not copy a validation switch into each file:
 
 ```go
 type XXXOrderField string
@@ -421,6 +421,29 @@ var (
     _ encoding.TextMarshaler   = XXXOrderField("")
     _ encoding.TextUnmarshaler = (*XXXOrderField)(nil)
 )
+
+func XXXOrderFields() []XXXOrderField {
+    return []XXXOrderField{
+        XXXOrderFieldCreatedAt,
+        XXXOrderFieldName,
+    }
+}
+
+func (v XXXOrderField) IsValid() bool {
+    return isValidOrderField(v, XXXOrderFields())
+}
+
+func (v XXXOrderField) String() string {
+    return string(v)
+}
+
+func (v XXXOrderField) MarshalText() ([]byte, error) {
+    return []byte(v.String()), nil
+}
+
+func (v *XXXOrderField) UnmarshalText(text []byte) error {
+    return unmarshalOrderField(v, text, XXXOrderFields())
+}
 
 func (f XXXOrderField) Column() string {
     return string(f)

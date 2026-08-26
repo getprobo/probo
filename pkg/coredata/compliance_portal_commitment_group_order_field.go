@@ -53,15 +53,7 @@ func CompliancePortalCommitmentGroupOrderFields() []CompliancePortalCommitmentGr
 }
 
 func (v CompliancePortalCommitmentGroupOrderField) IsValid() bool {
-	switch v {
-	case
-		CompliancePortalCommitmentGroupOrderFieldRank,
-		CompliancePortalCommitmentGroupOrderFieldCreatedAt,
-		CompliancePortalCommitmentGroupOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CompliancePortalCommitmentGroupOrderFields())
 }
 
 func (v CompliancePortalCommitmentGroupOrderField) String() string {
@@ -73,14 +65,7 @@ func (v CompliancePortalCommitmentGroupOrderField) MarshalText() ([]byte, error)
 }
 
 func (v *CompliancePortalCommitmentGroupOrderField) UnmarshalText(text []byte) error {
-	val := CompliancePortalCommitmentGroupOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CompliancePortalCommitmentGroupOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CompliancePortalCommitmentGroupOrderFields())
 }
 
 func (p CompliancePortalCommitmentGroupOrderField) Column() string {

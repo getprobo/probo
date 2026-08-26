@@ -49,13 +49,7 @@ func SCIMBridgeOrderFields() []SCIMBridgeOrderField {
 }
 
 func (v SCIMBridgeOrderField) IsValid() bool {
-	switch v {
-	case
-		SCIMBridgeOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, SCIMBridgeOrderFields())
 }
 
 func (v SCIMBridgeOrderField) String() string {
@@ -67,14 +61,7 @@ func (v SCIMBridgeOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *SCIMBridgeOrderField) UnmarshalText(text []byte) error {
-	val := SCIMBridgeOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid SCIMBridgeOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, SCIMBridgeOrderFields())
 }
 
 func (p SCIMBridgeOrderField) Column() string {

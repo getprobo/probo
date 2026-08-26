@@ -49,14 +49,7 @@ func RiskAnalysisNodeOrderFields() []RiskAnalysisNodeOrderField {
 }
 
 func (v RiskAnalysisNodeOrderField) IsValid() bool {
-	switch v {
-	case
-		RiskAnalysisNodeOrderFieldCreatedAt,
-		RiskAnalysisNodeOrderFieldName:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, RiskAnalysisNodeOrderFields())
 }
 
 func (v RiskAnalysisNodeOrderField) String() string {
@@ -68,14 +61,7 @@ func (v RiskAnalysisNodeOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *RiskAnalysisNodeOrderField) UnmarshalText(text []byte) error {
-	val := RiskAnalysisNodeOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid RiskAnalysisNodeOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, RiskAnalysisNodeOrderFields())
 }
 
 func (p RiskAnalysisNodeOrderField) Column() string { return string(p) }

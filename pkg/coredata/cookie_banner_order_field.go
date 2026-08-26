@@ -47,13 +47,7 @@ func CookieBannerOrderFields() []CookieBannerOrderField {
 }
 
 func (v CookieBannerOrderField) IsValid() bool {
-	switch v {
-	case
-		CookieBannerOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CookieBannerOrderFields())
 }
 
 func (v CookieBannerOrderField) String() string {
@@ -65,14 +59,7 @@ func (v CookieBannerOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CookieBannerOrderField) UnmarshalText(text []byte) error {
-	val := CookieBannerOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CookieBannerOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CookieBannerOrderFields())
 }
 
 func (p CookieBannerOrderField) Column() string {

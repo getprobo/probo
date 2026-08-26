@@ -49,13 +49,7 @@ func SCIMEventOrderFields() []SCIMEventOrderField {
 }
 
 func (v SCIMEventOrderField) IsValid() bool {
-	switch v {
-	case
-		SCIMEventOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, SCIMEventOrderFields())
 }
 
 func (v SCIMEventOrderField) String() string {
@@ -67,14 +61,7 @@ func (v SCIMEventOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *SCIMEventOrderField) UnmarshalText(text []byte) error {
-	val := SCIMEventOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid SCIMEventOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, SCIMEventOrderFields())
 }
 
 func (p SCIMEventOrderField) Column() string {

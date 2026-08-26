@@ -47,13 +47,7 @@ func CompliancePortalDocumentAccessOrderFields() []CompliancePortalDocumentAcces
 }
 
 func (v CompliancePortalDocumentAccessOrderField) IsValid() bool {
-	switch v {
-	case
-		CompliancePortalDocumentAccessOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CompliancePortalDocumentAccessOrderFields())
 }
 
 func (v CompliancePortalDocumentAccessOrderField) String() string {
@@ -65,14 +59,7 @@ func (v CompliancePortalDocumentAccessOrderField) MarshalText() ([]byte, error) 
 }
 
 func (v *CompliancePortalDocumentAccessOrderField) UnmarshalText(text []byte) error {
-	val := CompliancePortalDocumentAccessOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CompliancePortalDocumentAccessOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CompliancePortalDocumentAccessOrderFields())
 }
 
 func (tcdaof CompliancePortalDocumentAccessOrderField) Column() string {

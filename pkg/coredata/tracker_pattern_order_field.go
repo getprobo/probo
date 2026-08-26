@@ -55,17 +55,7 @@ func TrackerPatternOrderFields() []TrackerPatternOrderField {
 }
 
 func (v TrackerPatternOrderField) IsValid() bool {
-	switch v {
-	case
-		TrackerPatternOrderFieldCreatedAt,
-		TrackerPatternOrderFieldName,
-		TrackerPatternOrderFieldLastMatchedAt,
-		TrackerPatternOrderFieldUpdatedAt,
-		TrackerPatternOrderFieldSource:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, TrackerPatternOrderFields())
 }
 
 func (v TrackerPatternOrderField) String() string {
@@ -77,14 +67,7 @@ func (v TrackerPatternOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *TrackerPatternOrderField) UnmarshalText(text []byte) error {
-	val := TrackerPatternOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid TrackerPatternOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, TrackerPatternOrderFields())
 }
 
 func (p TrackerPatternOrderField) Column() string {

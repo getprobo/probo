@@ -49,13 +49,7 @@ func AgentExecutionOrderFields() []AgentExecutionOrderField {
 }
 
 func (v AgentExecutionOrderField) IsValid() bool {
-	switch v {
-	case
-		AgentExecutionOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AgentExecutionOrderFields())
 }
 
 func (v AgentExecutionOrderField) String() string {
@@ -67,14 +61,7 @@ func (v AgentExecutionOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *AgentExecutionOrderField) UnmarshalText(text []byte) error {
-	val := AgentExecutionOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AgentExecutionOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AgentExecutionOrderFields())
 }
 
 func (p AgentExecutionOrderField) Column() string {

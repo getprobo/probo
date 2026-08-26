@@ -53,16 +53,7 @@ func ObligationOrderFields() []ObligationOrderField {
 }
 
 func (v ObligationOrderField) IsValid() bool {
-	switch v {
-	case
-		ObligationOrderFieldCreatedAt,
-		ObligationOrderFieldLastReviewDate,
-		ObligationOrderFieldDueDate,
-		ObligationOrderFieldStatus:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ObligationOrderFields())
 }
 
 func (v ObligationOrderField) String() string {
@@ -74,14 +65,7 @@ func (v ObligationOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ObligationOrderField) UnmarshalText(text []byte) error {
-	val := ObligationOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ObligationOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ObligationOrderFields())
 }
 
 func (p ObligationOrderField) Column() string {

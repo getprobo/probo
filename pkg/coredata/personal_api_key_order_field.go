@@ -49,13 +49,7 @@ func PersonalAPIKeyOrderFields() []PersonalAPIKeyOrderField {
 }
 
 func (v PersonalAPIKeyOrderField) IsValid() bool {
-	switch v {
-	case
-		PersonalAPIKeyOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, PersonalAPIKeyOrderFields())
 }
 
 func (v PersonalAPIKeyOrderField) String() string {
@@ -67,14 +61,7 @@ func (v PersonalAPIKeyOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *PersonalAPIKeyOrderField) UnmarshalText(text []byte) error {
-	val := PersonalAPIKeyOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid PersonalAPIKeyOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, PersonalAPIKeyOrderFields())
 }
 
 func (p PersonalAPIKeyOrderField) Column() string {

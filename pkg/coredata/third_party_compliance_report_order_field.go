@@ -51,14 +51,7 @@ func ThirdPartyComplianceReportOrderFields() []ThirdPartyComplianceReportOrderFi
 }
 
 func (v ThirdPartyComplianceReportOrderField) IsValid() bool {
-	switch v {
-	case
-		ThirdPartyComplianceReportOrderFieldReportDate,
-		ThirdPartyComplianceReportOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ThirdPartyComplianceReportOrderFields())
 }
 
 func (v ThirdPartyComplianceReportOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ThirdPartyComplianceReportOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ThirdPartyComplianceReportOrderField) UnmarshalText(text []byte) error {
-	val := ThirdPartyComplianceReportOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ThirdPartyComplianceReportOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ThirdPartyComplianceReportOrderFields())
 }
 
 func (p ThirdPartyComplianceReportOrderField) Column() string {

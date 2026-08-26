@@ -47,13 +47,7 @@ func CookieConsentRecordOrderFields() []CookieConsentRecordOrderField {
 }
 
 func (v CookieConsentRecordOrderField) IsValid() bool {
-	switch v {
-	case
-		CookieConsentRecordOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CookieConsentRecordOrderFields())
 }
 
 func (v CookieConsentRecordOrderField) String() string {
@@ -65,14 +59,7 @@ func (v CookieConsentRecordOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CookieConsentRecordOrderField) UnmarshalText(text []byte) error {
-	val := CookieConsentRecordOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CookieConsentRecordOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CookieConsentRecordOrderFields())
 }
 
 func (p CookieConsentRecordOrderField) Column() string {

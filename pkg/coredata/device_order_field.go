@@ -53,16 +53,7 @@ func DeviceOrderFields() []DeviceOrderField {
 }
 
 func (v DeviceOrderField) IsValid() bool {
-	switch v {
-	case
-		DeviceOrderFieldCreatedAt,
-		DeviceOrderFieldUpdatedAt,
-		DeviceOrderFieldHostname,
-		DeviceOrderFieldLastSeenAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DeviceOrderFields())
 }
 
 func (v DeviceOrderField) String() string {
@@ -74,14 +65,7 @@ func (v DeviceOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DeviceOrderField) UnmarshalText(text []byte) error {
-	val := DeviceOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DeviceOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DeviceOrderFields())
 }
 
 func (f DeviceOrderField) Column() string {

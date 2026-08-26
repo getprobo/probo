@@ -47,13 +47,7 @@ func OAuth2ClientOrderFields() []OAuth2ClientOrderField {
 }
 
 func (v OAuth2ClientOrderField) IsValid() bool {
-	switch v {
-	case
-		OAuth2ClientOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, OAuth2ClientOrderFields())
 }
 
 func (v OAuth2ClientOrderField) String() string {
@@ -65,14 +59,7 @@ func (v OAuth2ClientOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *OAuth2ClientOrderField) UnmarshalText(text []byte) error {
-	val := OAuth2ClientOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid OAuth2ClientOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, OAuth2ClientOrderFields())
 }
 
 func (f OAuth2ClientOrderField) Column() string {

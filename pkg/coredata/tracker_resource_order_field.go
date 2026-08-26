@@ -53,16 +53,7 @@ func TrackerResourceOrderFields() []TrackerResourceOrderField {
 }
 
 func (v TrackerResourceOrderField) IsValid() bool {
-	switch v {
-	case
-		TrackerResourceOrderFieldCreatedAt,
-		TrackerResourceOrderFieldLastDetectedAt,
-		TrackerResourceOrderFieldOrigin,
-		TrackerResourceOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, TrackerResourceOrderFields())
 }
 
 func (v TrackerResourceOrderField) String() string {
@@ -74,14 +65,7 @@ func (v TrackerResourceOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *TrackerResourceOrderField) UnmarshalText(text []byte) error {
-	val := TrackerResourceOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid TrackerResourceOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, TrackerResourceOrderFields())
 }
 
 func (p TrackerResourceOrderField) Column() string {

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,49 +21,28 @@
 package coredata
 
 import (
-	"encoding"
-	"fmt"
+	"testing"
 
-	"go.probo.inc/probo/pkg/page"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type (
-	IdentityOrderField string
-)
+func TestIsValidOrderField(t *testing.T) {
+	t.Parallel()
 
-const (
-	IdentityOrderFieldCreatedAt IdentityOrderField = "CREATED_AT"
-)
-
-var (
-	_ page.OrderField          = IdentityOrderField("")
-	_ fmt.Stringer             = IdentityOrderField("")
-	_ encoding.TextMarshaler   = IdentityOrderField("")
-	_ encoding.TextUnmarshaler = (*IdentityOrderField)(nil)
-)
-
-func IdentityOrderFields() []IdentityOrderField {
-	return []IdentityOrderField{
-		IdentityOrderFieldCreatedAt,
-	}
+	assert.True(t, isValidOrderField(DocumentOrderFieldCreatedAt, DocumentOrderFields()))
+	assert.False(t, isValidOrderField(DocumentOrderField("NOPE"), DocumentOrderFields()))
 }
 
-func (v IdentityOrderField) IsValid() bool {
-	return isValidOrderField(v, IdentityOrderFields())
-}
+func TestUnmarshalOrderField(t *testing.T) {
+	t.Parallel()
 
-func (v IdentityOrderField) String() string {
-	return string(v)
-}
+	var field DocumentOrderField
 
-func (v IdentityOrderField) MarshalText() ([]byte, error) {
-	return []byte(v.String()), nil
-}
+	err := unmarshalOrderField(&field, []byte("TITLE"), DocumentOrderFields())
+	require.NoError(t, err)
+	assert.Equal(t, DocumentOrderFieldTitle, field)
 
-func (v *IdentityOrderField) UnmarshalText(text []byte) error {
-	return unmarshalOrderField(v, text, IdentityOrderFields())
-}
-
-func (p IdentityOrderField) Column() string {
-	return string(p)
+	err = unmarshalOrderField(&field, []byte("NOPE"), DocumentOrderFields())
+	require.EqualError(t, err, `invalid DocumentOrderField value: "NOPE"`)
 }

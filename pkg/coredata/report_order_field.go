@@ -49,13 +49,7 @@ func ReportOrderFields() []ReportOrderField {
 }
 
 func (v ReportOrderField) IsValid() bool {
-	switch v {
-	case
-		ReportOrderFieldID:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ReportOrderFields())
 }
 
 func (v ReportOrderField) String() string {
@@ -67,14 +61,7 @@ func (v ReportOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ReportOrderField) UnmarshalText(text []byte) error {
-	val := ReportOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ReportOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ReportOrderFields())
 }
 
 func (p ReportOrderField) Column() string {

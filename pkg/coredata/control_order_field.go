@@ -51,14 +51,7 @@ func ControlOrderFields() []ControlOrderField {
 }
 
 func (v ControlOrderField) IsValid() bool {
-	switch v {
-	case
-		ControlOrderFieldCreatedAt,
-		ControlOrderFieldSectionTitle:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ControlOrderFields())
 }
 
 func (v ControlOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ControlOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ControlOrderField) UnmarshalText(text []byte) error {
-	val := ControlOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ControlOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ControlOrderFields())
 }
 
 func (p ControlOrderField) Column() string {

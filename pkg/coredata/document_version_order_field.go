@@ -49,13 +49,7 @@ func DocumentVersionOrderFields() []DocumentVersionOrderField {
 }
 
 func (v DocumentVersionOrderField) IsValid() bool {
-	switch v {
-	case
-		DocumentVersionOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DocumentVersionOrderFields())
 }
 
 func (v DocumentVersionOrderField) String() string {
@@ -67,14 +61,7 @@ func (v DocumentVersionOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DocumentVersionOrderField) UnmarshalText(text []byte) error {
-	val := DocumentVersionOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DocumentVersionOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DocumentVersionOrderFields())
 }
 
 func (p DocumentVersionOrderField) Column() string {

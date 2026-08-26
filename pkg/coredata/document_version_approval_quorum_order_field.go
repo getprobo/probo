@@ -49,13 +49,7 @@ func DocumentVersionApprovalQuorumOrderFields() []DocumentVersionApprovalQuorumO
 }
 
 func (v DocumentVersionApprovalQuorumOrderField) IsValid() bool {
-	switch v {
-	case
-		DocumentVersionApprovalQuorumOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DocumentVersionApprovalQuorumOrderFields())
 }
 
 func (v DocumentVersionApprovalQuorumOrderField) String() string {
@@ -67,14 +61,7 @@ func (v DocumentVersionApprovalQuorumOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DocumentVersionApprovalQuorumOrderField) UnmarshalText(text []byte) error {
-	val := DocumentVersionApprovalQuorumOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DocumentVersionApprovalQuorumOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DocumentVersionApprovalQuorumOrderFields())
 }
 
 func (e DocumentVersionApprovalQuorumOrderField) Column() string {

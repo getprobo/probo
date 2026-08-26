@@ -59,19 +59,7 @@ func BusinessFunctionOrderFields() []BusinessFunctionOrderField {
 }
 
 func (v BusinessFunctionOrderField) IsValid() bool {
-	switch v {
-	case
-		BusinessFunctionOrderFieldCreatedAt,
-		BusinessFunctionOrderFieldReferenceID,
-		BusinessFunctionOrderFieldName,
-		BusinessFunctionOrderFieldClassification,
-		BusinessFunctionOrderFieldMTDMinutes,
-		BusinessFunctionOrderFieldRTOMinutes,
-		BusinessFunctionOrderFieldRPOMinutes:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, BusinessFunctionOrderFields())
 }
 
 func (v BusinessFunctionOrderField) String() string {
@@ -83,14 +71,7 @@ func (v BusinessFunctionOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *BusinessFunctionOrderField) UnmarshalText(text []byte) error {
-	val := BusinessFunctionOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid BusinessFunctionOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, BusinessFunctionOrderFields())
 }
 
 func (p BusinessFunctionOrderField) Column() string {

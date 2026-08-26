@@ -47,12 +47,7 @@ func OAuth2AccessTokenOrderFields() []OAuth2AccessTokenOrderField {
 }
 
 func (v OAuth2AccessTokenOrderField) IsValid() bool {
-	switch v {
-	case OAuth2AccessTokenOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, OAuth2AccessTokenOrderFields())
 }
 
 func (v OAuth2AccessTokenOrderField) String() string {
@@ -64,14 +59,7 @@ func (v OAuth2AccessTokenOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *OAuth2AccessTokenOrderField) UnmarshalText(text []byte) error {
-	val := OAuth2AccessTokenOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid OAuth2AccessTokenOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, OAuth2AccessTokenOrderFields())
 }
 
 func (f OAuth2AccessTokenOrderField) Column() string {

@@ -53,15 +53,7 @@ func CompliancePortalCommitmentOrderFields() []CompliancePortalCommitmentOrderFi
 }
 
 func (v CompliancePortalCommitmentOrderField) IsValid() bool {
-	switch v {
-	case
-		CompliancePortalCommitmentOrderFieldRank,
-		CompliancePortalCommitmentOrderFieldCreatedAt,
-		CompliancePortalCommitmentOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, CompliancePortalCommitmentOrderFields())
 }
 
 func (v CompliancePortalCommitmentOrderField) String() string {
@@ -73,14 +65,7 @@ func (v CompliancePortalCommitmentOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *CompliancePortalCommitmentOrderField) UnmarshalText(text []byte) error {
-	val := CompliancePortalCommitmentOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid CompliancePortalCommitmentOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, CompliancePortalCommitmentOrderFields())
 }
 
 func (p CompliancePortalCommitmentOrderField) Column() string {

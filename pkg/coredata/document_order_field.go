@@ -55,16 +55,7 @@ func DocumentOrderFields() []DocumentOrderField {
 }
 
 func (v DocumentOrderField) IsValid() bool {
-	switch v {
-	case
-		DocumentOrderFieldCreatedAt,
-		DocumentOrderFieldUpdatedAt,
-		DocumentOrderFieldTitle,
-		DocumentOrderFieldDocumentType:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DocumentOrderFields())
 }
 
 func (v DocumentOrderField) String() string {
@@ -76,14 +67,7 @@ func (v DocumentOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DocumentOrderField) UnmarshalText(text []byte) error {
-	val := DocumentOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DocumentOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DocumentOrderFields())
 }
 
 func (p DocumentOrderField) Column() string {

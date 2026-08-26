@@ -51,14 +51,7 @@ func ThirdPartyRiskAssessmentOrderFields() []ThirdPartyRiskAssessmentOrderField 
 }
 
 func (v ThirdPartyRiskAssessmentOrderField) IsValid() bool {
-	switch v {
-	case
-		ThirdPartyRiskAssessmentOrderFieldCreatedAt,
-		ThirdPartyRiskAssessmentOrderFieldExpiresAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, ThirdPartyRiskAssessmentOrderFields())
 }
 
 func (v ThirdPartyRiskAssessmentOrderField) String() string {
@@ -70,14 +63,7 @@ func (v ThirdPartyRiskAssessmentOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *ThirdPartyRiskAssessmentOrderField) UnmarshalText(text []byte) error {
-	val := ThirdPartyRiskAssessmentOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid ThirdPartyRiskAssessmentOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, ThirdPartyRiskAssessmentOrderFields())
 }
 
 func (p ThirdPartyRiskAssessmentOrderField) Column() string {

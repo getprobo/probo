@@ -51,14 +51,7 @@ func MeasureOrderFields() []MeasureOrderField {
 }
 
 func (v MeasureOrderField) IsValid() bool {
-	switch v {
-	case
-		MeasureOrderFieldCreatedAt,
-		MeasureOrderFieldName:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, MeasureOrderFields())
 }
 
 func (v MeasureOrderField) String() string {
@@ -70,14 +63,7 @@ func (v MeasureOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *MeasureOrderField) UnmarshalText(text []byte) error {
-	val := MeasureOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid MeasureOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, MeasureOrderFields())
 }
 
 func (p MeasureOrderField) Column() string {

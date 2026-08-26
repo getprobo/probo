@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,49 +21,35 @@
 package coredata
 
 import (
-	"encoding"
 	"fmt"
-
-	"go.probo.inc/probo/pkg/page"
+	"slices"
+	"strings"
 )
 
-type (
-	IdentityOrderField string
-)
+func isValidOrderField[T ~string](v T, values []T) bool {
+	return slices.Contains(values, v)
+}
 
-const (
-	IdentityOrderFieldCreatedAt IdentityOrderField = "CREATED_AT"
-)
-
-var (
-	_ page.OrderField          = IdentityOrderField("")
-	_ fmt.Stringer             = IdentityOrderField("")
-	_ encoding.TextMarshaler   = IdentityOrderField("")
-	_ encoding.TextUnmarshaler = (*IdentityOrderField)(nil)
-)
-
-func IdentityOrderFields() []IdentityOrderField {
-	return []IdentityOrderField{
-		IdentityOrderFieldCreatedAt,
+func unmarshalOrderField[T ~string](dst *T, text []byte, values []T) error {
+	val := T(text)
+	if !isValidOrderField(val, values) {
+		return fmt.Errorf("invalid %s value: %q", orderFieldTypeName[T](), string(text))
 	}
+
+	*dst = val
+
+	return nil
 }
 
-func (v IdentityOrderField) IsValid() bool {
-	return isValidOrderField(v, IdentityOrderFields())
-}
+func orderFieldTypeName[T any]() string {
+	var zero T
 
-func (v IdentityOrderField) String() string {
-	return string(v)
-}
+	name := fmt.Sprintf("%T", zero)
+	_, after, ok := strings.Cut(name, ".")
 
-func (v IdentityOrderField) MarshalText() ([]byte, error) {
-	return []byte(v.String()), nil
-}
+	if ok {
+		return after
+	}
 
-func (v *IdentityOrderField) UnmarshalText(text []byte) error {
-	return unmarshalOrderField(v, text, IdentityOrderFields())
-}
-
-func (p IdentityOrderField) Column() string {
-	return string(p)
+	return name
 }

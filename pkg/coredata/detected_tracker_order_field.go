@@ -49,14 +49,7 @@ func DetectedTrackerOrderFields() []DetectedTrackerOrderField {
 }
 
 func (v DetectedTrackerOrderField) IsValid() bool {
-	switch v {
-	case
-		DetectedTrackerOrderFieldInitiatorURL,
-		DetectedTrackerOrderFieldLastDetectedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, DetectedTrackerOrderFields())
 }
 
 func (v DetectedTrackerOrderField) String() string {
@@ -68,14 +61,7 @@ func (v DetectedTrackerOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *DetectedTrackerOrderField) UnmarshalText(text []byte) error {
-	val := DetectedTrackerOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid DetectedTrackerOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, DetectedTrackerOrderFields())
 }
 
 func (p DetectedTrackerOrderField) Column() string {

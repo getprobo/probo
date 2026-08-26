@@ -49,13 +49,7 @@ func AccessReviewEntryOrderFields() []AccessReviewEntryOrderField {
 }
 
 func (v AccessReviewEntryOrderField) IsValid() bool {
-	switch v {
-	case
-		AccessReviewEntryOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, AccessReviewEntryOrderFields())
 }
 
 func (v AccessReviewEntryOrderField) String() string {
@@ -67,14 +61,7 @@ func (v AccessReviewEntryOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *AccessReviewEntryOrderField) UnmarshalText(text []byte) error {
-	val := AccessReviewEntryOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid AccessReviewEntryOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, AccessReviewEntryOrderFields())
 }
 
 func (p AccessReviewEntryOrderField) Column() string {

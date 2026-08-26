@@ -49,13 +49,7 @@ func WebhookSubscriptionOrderFields() []WebhookSubscriptionOrderField {
 }
 
 func (v WebhookSubscriptionOrderField) IsValid() bool {
-	switch v {
-	case
-		WebhookSubscriptionOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, WebhookSubscriptionOrderFields())
 }
 
 func (v WebhookSubscriptionOrderField) String() string {
@@ -67,14 +61,7 @@ func (v WebhookSubscriptionOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *WebhookSubscriptionOrderField) UnmarshalText(text []byte) error {
-	val := WebhookSubscriptionOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid WebhookSubscriptionOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, WebhookSubscriptionOrderFields())
 }
 
 func (p WebhookSubscriptionOrderField) Column() string {

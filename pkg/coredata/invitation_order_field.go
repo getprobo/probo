@@ -49,13 +49,7 @@ func InvitationOrderFields() []InvitationOrderField {
 }
 
 func (v InvitationOrderField) IsValid() bool {
-	switch v {
-	case
-		InvitationOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
+	return isValidOrderField(v, InvitationOrderFields())
 }
 
 func (v InvitationOrderField) String() string {
@@ -67,14 +61,7 @@ func (v InvitationOrderField) MarshalText() ([]byte, error) {
 }
 
 func (v *InvitationOrderField) UnmarshalText(text []byte) error {
-	val := InvitationOrderField(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid InvitationOrderField value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
+	return unmarshalOrderField(v, text, InvitationOrderFields())
 }
 
 func (p InvitationOrderField) Column() string {
