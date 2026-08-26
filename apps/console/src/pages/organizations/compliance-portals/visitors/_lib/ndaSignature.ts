@@ -18,9 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
-import { useTranslation } from "react-i18next";
-
 export type NdaSignatureStatus = "PENDING" | "ACCEPTED" | "PROCESSING" | "COMPLETED" | "FAILED";
 
 export function ndaSignatureTone(
@@ -39,20 +36,6 @@ export function ndaSignatureTone(
   }
 }
 
-export function ndaSignatureStatusKey(status: NdaSignatureStatus): string {
-  switch (status) {
-    case "COMPLETED":
-      return "ndaSignatureBadge.signed";
-    case "ACCEPTED":
-    case "PROCESSING":
-      return "ndaSignatureBadge.processing";
-    case "PENDING":
-      return "ndaSignatureBadge.pending";
-    case "FAILED":
-      return "ndaSignatureBadge.failed";
-  }
-}
-
 export function ndaSignatureListKey(status: NdaSignatureStatus): string {
   switch (status) {
     case "COMPLETED":
@@ -65,14 +48,4 @@ export function ndaSignatureListKey(status: NdaSignatureStatus): string {
     case "FAILED":
       return "accessListItem.nda.failed";
   }
-}
-
-export function NdaSignatureBadge({ status }: { status: NdaSignatureStatus }) {
-  const { t } = useTranslation("organizations/compliance-portals");
-
-  return (
-    <Badge color={ndaSignatureTone(status)} variant="soft">
-      {t(ndaSignatureStatusKey(status))}
-    </Badge>
-  );
 }

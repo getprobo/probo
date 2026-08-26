@@ -128,7 +128,6 @@ export {
   getMembershipRoles,
 } from "./roles";
 export {
-  getCompliancePortalDocumentAccessStatusBadgeVariant,
   getCompliancePortalDocumentAccessStatusLabel,
   type CompliancePortalDocumentAccessInfo,
 } from "./compliancePortalDocumentAccess";

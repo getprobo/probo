@@ -20,8 +20,6 @@
 
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
-import { Fragment } from "react";
-import { type LoaderFunctionArgs, redirect } from "react-router";
 
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
@@ -29,8 +27,8 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { CompliancePortalLayoutSkeleton } from "./CompliancePortalLayoutSkeleton";
 import { CompliancePortalHostingPageSkeleton } from "./hosting/CompliancePortalHostingPageSkeleton";
 import { CompliancePortalIntegrationsPageSkeleton } from "./integrations/CompliancePortalIntegrationsPageSkeleton";
-import { CompliancePortalPermissionsPageSkeleton } from "./visitors/CompliancePortalPermissionsPageSkeleton";
 import { CompliancePortalVisitorPageSkeleton } from "./visitors/CompliancePortalVisitorPageSkeleton";
+import { CompliancePortalVisitorsPageSkeleton } from "./visitors/CompliancePortalVisitorsPageSkeleton";
 
 export const compliancePortalRoutes = [
   {
@@ -58,8 +56,8 @@ export const compliancePortalRoutes = [
         children: [
           {
             index: true,
-            Fallback: CompliancePortalPermissionsPageSkeleton,
-            Component: lazy(() => import("#/pages/organizations/compliance-portals/visitors/CompliancePortalPermissionsPageLoader")),
+            Fallback: CompliancePortalVisitorsPageSkeleton,
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/visitors/CompliancePortalVisitorsPageLoader")),
           },
           {
             path: ":accessId",

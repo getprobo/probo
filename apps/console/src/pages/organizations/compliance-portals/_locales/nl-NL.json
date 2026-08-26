@@ -40,7 +40,6 @@
     "description": "Laat bezoekers verzoeken om betrokkenenrechten indienen."
   },
   "accessPage": {
-    "title": "Bezoekers",
     "description": "Uw pagina is openbaar. Personen die zich aanmelden om documenten aan te vragen of een NDA te accepteren, verschijnen hier."
   },
   "visitorPage": {
@@ -67,7 +66,6 @@
   },
   "documentAccessList": {
     "title": "Beperkte documenttoegang",
-    "types": { "document": "Document", "report": "Rapport", "file": "Bestand" },
     "actions": {
       "grant": "Toestaan",
       "reject": "Weigeren",
@@ -122,12 +120,6 @@
     "timestampRequested": "Tijdstempel toegepast",
     "certificateGenerated": "Certificaat aangemaakt",
     "processingError": "Verwerking mislukt"
-  },
-  "ndaSignatureBadge": {
-    "signed": "Ondertekend",
-    "processing": "In verwerking",
-    "pending": "In afwachting",
-    "failed": "Mislukt"
   },
   "auditsPage": {
     "title": "Audits",

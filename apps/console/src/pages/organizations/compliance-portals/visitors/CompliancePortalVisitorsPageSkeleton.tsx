@@ -27,7 +27,7 @@ import { compliancePortalPageHeader } from "../variants";
 
 import { ndaSection, visitorsPageSkeleton } from "./variants";
 
-export function CompliancePortalPermissionsPageSkeleton() {
+export function CompliancePortalVisitorsPageSkeleton() {
   const { root: headerRoot, titleRow } = compliancePortalPageHeader();
   const { root, section, intro } = visitorsPageSkeleton();
   const { grid } = ndaSection();

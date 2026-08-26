@@ -93,7 +93,6 @@ export const documentAccessInfoFileFragment = graphql`
 
 export function documentAccessInfoFromDocument(
   fragmentRef: documentAccessInfo_document$key,
-  t: (key: string) => string,
 ): CompliancePortalDocumentAccessInfo | null {
   const node = readInlineData(documentAccessInfoDocumentFragment, fragmentRef);
   if (node.compliancePortalDocument?.visibility !== "RESTRICTED") {
@@ -101,10 +100,8 @@ export function documentAccessInfoFromDocument(
   }
 
   return {
-    variant: "info",
     type: "document",
     name: node.versions?.edges[0]?.node.title ?? "",
-    typeLabel: t("documentAccessList.types.document"),
     category: node.versions?.edges[0]?.node.documentType ?? "",
     id: node.id,
     status: node.compliancePortalDocumentAccess?.status ?? null,
@@ -113,7 +110,6 @@ export function documentAccessInfoFromDocument(
 
 export function documentAccessInfoFromAudit(
   fragmentRef: documentAccessInfo_audit$key,
-  t: (key: string) => string,
 ): CompliancePortalDocumentAccessInfo | null {
   const node = readInlineData(documentAccessInfoAuditFragment, fragmentRef);
   if (node.compliancePortalAudit?.visibility !== "RESTRICTED" || node.reportFile == null) {
@@ -121,10 +117,8 @@ export function documentAccessInfoFromAudit(
   }
 
   return {
-    variant: "success",
     type: "report",
     name: node.reportFile.fileName,
-    typeLabel: t("documentAccessList.types.report"),
     category: node.framework?.name ?? "",
     id: node.reportFile.id,
     status: node.compliancePortalDocumentAccess?.status ?? null,
@@ -133,7 +127,6 @@ export function documentAccessInfoFromAudit(
 
 export function documentAccessInfoFromFile(
   fragmentRef: documentAccessInfo_file$key,
-  t: (key: string) => string,
 ): CompliancePortalDocumentAccessInfo | null {
   const node = readInlineData(documentAccessInfoFileFragment, fragmentRef);
   if (
@@ -144,10 +137,8 @@ export function documentAccessInfoFromFile(
   }
 
   return {
-    variant: "highlight",
     type: "file",
     name: node.name,
-    typeLabel: t("documentAccessList.types.file"),
     category: node.category,
     id: node.id,
     status: node.compliancePortalDocumentAccess?.status ?? null,

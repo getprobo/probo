@@ -37,12 +37,11 @@ import { graphql } from "relay-runtime";
 import type { ElectronicSignatureSectionFragment$key } from "#/__generated__/core/ElectronicSignatureSectionFragment.graphql";
 import { CompliancePortalTonedCard } from "#/pages/organizations/compliance-portals/_components/CompliancePortalTonedCard";
 
+import { type NdaSignatureStatus, ndaSignatureTone } from "../_lib/ndaSignature";
 import { electronicSignatureSection } from "../variants";
 
 import { EventTypeIcon } from "./EventTypeIcon";
 import { EventTypeLabel } from "./EventTypeLabel";
-import type { NdaSignatureStatus } from "./NdaSignatureBadge";
-import { ndaSignatureTone } from "./NdaSignatureBadge";
 
 const signedAtFormat = {
   hour: "2-digit",

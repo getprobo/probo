@@ -22,18 +22,18 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
-import type { CompliancePortalPermissionsPageQuery } from "#/__generated__/core/CompliancePortalPermissionsPageQuery.graphql";
+import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/CompliancePortalVisitorsPageQuery.graphql";
 
 import {
-  CompliancePortalPermissionsPage,
-  compliancePortalPermissionsPageQuery,
-} from "./CompliancePortalPermissionsPage";
-import { CompliancePortalPermissionsPageSkeleton } from "./CompliancePortalPermissionsPageSkeleton";
+  CompliancePortalVisitorsPage,
+  compliancePortalVisitorsPageQuery,
+} from "./CompliancePortalVisitorsPage";
+import { CompliancePortalVisitorsPageSkeleton } from "./CompliancePortalVisitorsPageSkeleton";
 
-export default function CompliancePortalPermissionsPageLoader() {
+export default function CompliancePortalVisitorsPageLoader() {
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalPermissionsPageQuery>(
-    compliancePortalPermissionsPageQuery,
+  const [queryRef, loadQuery] = useQueryLoader<CompliancePortalVisitorsPageQuery>(
+    compliancePortalVisitorsPageQuery,
   );
 
   useEffect(() => {
@@ -43,12 +43,12 @@ export default function CompliancePortalPermissionsPageLoader() {
   }, [loadQuery, compliancePortalId]);
 
   if (!queryRef) {
-    return <CompliancePortalPermissionsPageSkeleton />;
+    return <CompliancePortalVisitorsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<CompliancePortalPermissionsPageSkeleton />}>
-      <CompliancePortalPermissionsPage queryRef={queryRef} />
+    <Suspense fallback={<CompliancePortalVisitorsPageSkeleton />}>
+      <CompliancePortalVisitorsPage queryRef={queryRef} />
     </Suspense>
   );
 }

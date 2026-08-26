@@ -20,18 +20,6 @@
 
 import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 
-export function getCompliancePortalDocumentAccessStatusBadgeVariant(status: CompliancePortalDocumentAccessStatus) {
-  switch (status) {
-    case "REQUESTED":
-      return "warning" as const;
-    case "GRANTED":
-      return "success" as const;
-    case "REJECTED":
-    case "REVOKED":
-      return "danger" as const;
-  }
-}
-
 export function getCompliancePortalDocumentAccessStatusLabel(status: CompliancePortalDocumentAccessStatus, t: (key: string) => string) {
   switch (status) {
     case "REQUESTED":
@@ -45,25 +33,13 @@ export function getCompliancePortalDocumentAccessStatusLabel(status: ComplianceP
   }
 }
 
-interface ICompliancePortalDocumentAccessInfo {
-  variant: string;
-  type: string;
-  name: string,
-  typeLabel: string,
+export type CompliancePortalDocumentAccessInfo = {
+  name: string;
   category: string;
   id: string;
   status: CompliancePortalDocumentAccessStatus | null;
-}
-
-export type CompliancePortalDocumentAccessInfo = ICompliancePortalDocumentAccessInfo & (
-  {
-    variant: "info",
-    type: "document",
-  } | {
-    variant: "success",
-    type: "report",
-  } | {
-    variant: "highlight",
-    type: "file",
-  }
-)
+} & (
+  | { type: "document" }
+  | { type: "report" }
+  | { type: "file" }
+);

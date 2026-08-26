@@ -26,7 +26,7 @@ import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePortalPermissionsPageQuery } from "#/__generated__/core/CompliancePortalPermissionsPageQuery.graphql";
+import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/CompliancePortalVisitorsPageQuery.graphql";
 
 import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
@@ -34,8 +34,8 @@ import { CompliancePortalAccessList } from "./_components/CompliancePortalAccess
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
 import { accessSection, visitorsPage } from "./variants";
 
-export const compliancePortalPermissionsPageQuery = graphql`
-  query CompliancePortalPermissionsPageQuery($compliancePortalId: ID!) {
+export const compliancePortalVisitorsPageQuery = graphql`
+  query CompliancePortalVisitorsPageQuery($compliancePortalId: ID!) {
     compliancePortal: node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
@@ -47,18 +47,18 @@ export const compliancePortalPermissionsPageQuery = graphql`
   }
 `;
 
-interface CompliancePortalPermissionsPageProps {
-  queryRef: PreloadedQuery<CompliancePortalPermissionsPageQuery>;
+interface CompliancePortalVisitorsPageProps {
+  queryRef: PreloadedQuery<CompliancePortalVisitorsPageQuery>;
 }
 
-export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPermissionsPageProps) {
+export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisitorsPageProps) {
   const { t } = useTranslation("organizations/compliance-portals");
   const title = t("visitorsPage.title");
   usePageTitle(title);
   const { root, intro } = accessSection();
 
-  const { compliancePortal } = usePreloadedQuery<CompliancePortalPermissionsPageQuery>(
-    compliancePortalPermissionsPageQuery,
+  const { compliancePortal } = usePreloadedQuery<CompliancePortalVisitorsPageQuery>(
+    compliancePortalVisitorsPageQuery,
     queryRef,
   );
   if (compliancePortal.__typename !== "CompliancePortal") {

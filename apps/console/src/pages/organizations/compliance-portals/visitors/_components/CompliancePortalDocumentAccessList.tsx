@@ -105,15 +105,15 @@ export function CompliancePortalDocumentAccessList({
   const compliancePortal = useFragment(compliancePortalFragment, compliancePortalKey);
   const documentAccesses = [
     ...organization.documents.edges.flatMap((edge) => {
-      const item = documentAccessInfoFromDocument(edge.node, t);
+      const item = documentAccessInfoFromDocument(edge.node);
       return item == null ? [] : [item];
     }),
     ...organization.audits.edges.flatMap((edge) => {
-      const item = documentAccessInfoFromAudit(edge.node, t);
+      const item = documentAccessInfoFromAudit(edge.node);
       return item == null ? [] : [item];
     }),
     ...compliancePortal.compliancePortalFiles.edges.flatMap((edge) => {
-      const item = documentAccessInfoFromFile(edge.node, t);
+      const item = documentAccessInfoFromFile(edge.node);
       return item == null ? [] : [item];
     }),
   ];

@@ -58,7 +58,6 @@
     "description": "Permettez aux visiteurs de soumettre des demandes de droits sur le portail."
   },
   "accessPage": {
-    "title": "Visiteurs",
     "description": "Votre portail est public. Les personnes qui se connectent pour demander des documents ou accepter un NDA apparaissent ici."
   },
   "visitorPage": {
@@ -93,11 +92,6 @@
   },
   "documentAccessList": {
     "title": "Accès aux documents restreints",
-    "types": {
-      "document": "Document",
-      "report": "Rapport",
-      "file": "Fichier"
-    },
     "actions": {
       "grant": "Accorder",
       "reject": "Rejeter",
@@ -154,12 +148,6 @@
     "timestampRequested": "Horodatage appliqué",
     "certificateGenerated": "Certificat créé",
     "processingError": "Échec du traitement"
-  },
-  "ndaSignatureBadge": {
-    "signed": "Signé",
-    "processing": "En cours de traitement",
-    "pending": "En attente",
-    "failed": "Échoué"
   },
   "auditsPage": {
     "title": "Audits",

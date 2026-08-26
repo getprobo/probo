@@ -58,7 +58,6 @@
     "description": "Let visitors submit data subject rights requests on the portal."
   },
   "accessPage": {
-    "title": "Visitors",
     "description": "Your portal is public. People who sign in to request documents or accept an NDA appear here."
   },
   "visitorPage": {
@@ -93,11 +92,6 @@
   },
   "documentAccessList": {
     "title": "Restricted Document Accesses",
-    "types": {
-      "document": "Document",
-      "report": "Report",
-      "file": "File"
-    },
     "actions": {
       "grant": "Grant",
       "reject": "Reject",
@@ -154,12 +148,6 @@
     "timestampRequested": "Timestamp applied",
     "certificateGenerated": "Certificate created",
     "processingError": "Processing failed"
-  },
-  "ndaSignatureBadge": {
-    "signed": "Signed",
-    "processing": "Processing",
-    "pending": "Pending",
-    "failed": "Failed"
   },
   "auditsPage": {
     "title": "Audits",

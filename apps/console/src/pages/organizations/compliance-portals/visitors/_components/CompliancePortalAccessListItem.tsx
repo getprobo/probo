@@ -32,9 +32,8 @@ import { graphql } from "relay-runtime";
 
 import type { CompliancePortalAccessListItemFragment$key } from "#/__generated__/core/CompliancePortalAccessListItemFragment.graphql";
 
+import { ndaSignatureListKey, ndaSignatureTone } from "../_lib/ndaSignature";
 import { accessListItem } from "../variants";
-
-import { ndaSignatureListKey, ndaSignatureTone } from "./NdaSignatureBadge";
 
 const fragment = graphql`
   fragment CompliancePortalAccessListItemFragment on CompliancePortalAccess {
