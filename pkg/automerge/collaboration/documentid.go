@@ -58,7 +58,9 @@ func DecodeDocumentID(documentID string) ([DocumentIDByteLength]byte, error) {
 	if len(payload) != DocumentIDByteLength {
 		return id, fmt.Errorf(
 			"automerge document id %q decodes to %d bytes, want %d",
-			documentID, len(payload), DocumentIDByteLength,
+			documentID,
+			len(payload),
+			DocumentIDByteLength,
 		)
 	}
 

@@ -93,67 +93,70 @@ func TestRustSync_ShouldHandleFalsePositiveHead(t *testing.T) {
 	ctx := context.Background()
 
 	for _, engine := range rustParityEngines() {
-		t.Run(engine.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			oracle := bloomOracle(t, ctx)
+				oracle := bloomOracle(t, ctx)
 
-			doc1, err := engine.open(ctx, actor(0xa1))
-			require.NoError(t, err)
-			closeDocument(t, doc1)
-
-			doc2, err := engine.open(ctx, actor(0xd4))
-			require.NoError(t, err)
-			closeDocument(t, doc2)
-
-			for i := range int64(10) {
-				putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
-			}
-
-			syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, doc2))
-
-			var n1, n2 *automerge.Document
-
-			for i := 0; ; i++ {
-				require.Less(t, i, 10000, "no Bloom false positive found")
-
-				candidate1, err := doc1.Fork(ctx, actor(0x11))
+				doc1, err := engine.open(ctx, actor(0xa1))
 				require.NoError(t, err)
+				closeDocument(t, doc1)
 
-				putRoot(t, ctx, candidate1, "x", fmt.Sprintf("%d @ n1", i), "n1", commitTime.Add(time.Hour))
-
-				candidate2, err := doc1.Fork(ctx, actor(0x22))
+				doc2, err := engine.open(ctx, actor(0xd4))
 				require.NoError(t, err)
+				closeDocument(t, doc2)
 
-				putRoot(t, ctx, candidate2, "x", fmt.Sprintf("%d @ n2", i), "n2", commitTime.Add(time.Hour))
-
-				n1Heads := headHashes(t, ctx, candidate1)
-				n2Heads := headHashes(t, ctx, candidate2)
-
-				falsePositive, err := oracle.ReferenceBloomContains(ctx, n1Heads, n2Heads[0])
-				require.NoError(t, err)
-
-				if falsePositive {
-					n1 = candidate1
-					n2 = candidate2
-
-					closeDocument(t, n1)
-					closeDocument(t, n2)
-
-					break
+				for i := range int64(10) {
+					putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
 				}
 
-				require.NoError(t, candidate1.Close(ctx))
-				require.NoError(t, candidate2.Close(ctx))
-			}
+				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, doc2))
 
-			allHeads := unionSortedHeadHex(sortedHeadHex(t, ctx, n1), sortedHeadHex(t, ctx, n2))
+				var n1, n2 *automerge.Document
 
-			syncQuiescent(t, ctx, readWriteSyncState(t, ctx, n1), readWriteSyncState(t, ctx, n2))
+				for i := 0; ; i++ {
+					require.Less(t, i, 10000, "no Bloom false positive found")
 
-			assert.Equal(t, allHeads, sortedHeadHex(t, ctx, n1))
-			assert.Equal(t, allHeads, sortedHeadHex(t, ctx, n2))
-		})
+					candidate1, err := doc1.Fork(ctx, actor(0x11))
+					require.NoError(t, err)
+
+					putRoot(t, ctx, candidate1, "x", fmt.Sprintf("%d @ n1", i), "n1", commitTime.Add(time.Hour))
+
+					candidate2, err := doc1.Fork(ctx, actor(0x22))
+					require.NoError(t, err)
+
+					putRoot(t, ctx, candidate2, "x", fmt.Sprintf("%d @ n2", i), "n2", commitTime.Add(time.Hour))
+
+					n1Heads := headHashes(t, ctx, candidate1)
+					n2Heads := headHashes(t, ctx, candidate2)
+
+					falsePositive, err := oracle.ReferenceBloomContains(ctx, n1Heads, n2Heads[0])
+					require.NoError(t, err)
+
+					if falsePositive {
+						n1 = candidate1
+						n2 = candidate2
+
+						closeDocument(t, n1)
+						closeDocument(t, n2)
+
+						break
+					}
+
+					require.NoError(t, candidate1.Close(ctx))
+					require.NoError(t, candidate2.Close(ctx))
+				}
+
+				allHeads := unionSortedHeadHex(sortedHeadHex(t, ctx, n1), sortedHeadHex(t, ctx, n2))
+
+				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, n1), readWriteSyncState(t, ctx, n2))
+
+				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, n1))
+				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, n2))
+			},
+		)
 	}
 }
 
@@ -167,64 +170,67 @@ func TestRustSync_ShouldHandleChainsOfFalsePositives(t *testing.T) {
 	ctx := context.Background()
 
 	for _, engine := range rustParityEngines() {
-		t.Run(engine.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			oracle := bloomOracle(t, ctx)
+				oracle := bloomOracle(t, ctx)
 
-			doc1, err := engine.open(ctx, actor(0xa1))
-			require.NoError(t, err)
-			closeDocument(t, doc1)
+				doc1, err := engine.open(ctx, actor(0xa1))
+				require.NoError(t, err)
+				closeDocument(t, doc1)
 
-			doc2, err := engine.open(ctx, actor(0xd4))
-			require.NoError(t, err)
-			closeDocument(t, doc2)
+				doc2, err := engine.open(ctx, actor(0xd4))
+				require.NoError(t, err)
+				closeDocument(t, doc2)
 
-			for i := range int64(10) {
-				putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
-			}
-
-			syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, doc2))
-
-			putInt(t, ctx, doc1, "x", 5, "x5", commitTime.Add(time.Hour))
-			bloomSeeds := headHashes(t, ctx, doc1)
-
-			findFalsePositive := func(base *automerge.Document, label string) *automerge.Document {
-				for i := 0; ; i++ {
-					require.Less(t, i, 10000, "no Bloom false positive found for %s", label)
-
-					candidate, err := base.Fork(ctx, actor(0x8c))
-					require.NoError(t, err)
-
-					putRoot(t, ctx, candidate, "x", fmt.Sprintf("%d %s", i, label), label, commitTime.Add(2*time.Hour))
-
-					heads := headHashes(t, ctx, candidate)
-
-					falsePositive, err := oracle.ReferenceBloomContains(ctx, bloomSeeds, heads[0])
-					require.NoError(t, err)
-
-					if falsePositive {
-						return candidate
-					}
-
-					require.NoError(t, candidate.Close(ctx))
+				for i := range int64(10) {
+					putInt(t, ctx, doc1, "x", i, "x", commitTime.Add(time.Duration(i)*time.Second))
 				}
-			}
 
-			chain1 := findFalsePositive(doc2, "at 89abdef")
-			closeDocument(t, chain1)
+				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, doc2))
 
-			chain2 := findFalsePositive(chain1, "again")
-			closeDocument(t, chain2)
+				putInt(t, ctx, doc1, "x", 5, "x5", commitTime.Add(time.Hour))
+				bloomSeeds := headHashes(t, ctx, doc1)
 
-			putRoot(t, ctx, chain2, "x", "final @ 89abcdef", "final", commitTime.Add(3*time.Hour))
+				findFalsePositive := func(base *automerge.Document, label string) *automerge.Document {
+					for i := 0; ; i++ {
+						require.Less(t, i, 10000, "no Bloom false positive found for %s", label)
 
-			allHeads := unionSortedHeadHex(sortedHeadHex(t, ctx, doc1), sortedHeadHex(t, ctx, chain2))
+						candidate, err := base.Fork(ctx, actor(0x8c))
+						require.NoError(t, err)
 
-			syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, chain2))
+						putRoot(t, ctx, candidate, "x", fmt.Sprintf("%d %s", i, label), label, commitTime.Add(2*time.Hour))
 
-			assert.Equal(t, allHeads, sortedHeadHex(t, ctx, doc1))
-			assert.Equal(t, allHeads, sortedHeadHex(t, ctx, chain2))
-		})
+						heads := headHashes(t, ctx, candidate)
+
+						falsePositive, err := oracle.ReferenceBloomContains(ctx, bloomSeeds, heads[0])
+						require.NoError(t, err)
+
+						if falsePositive {
+							return candidate
+						}
+
+						require.NoError(t, candidate.Close(ctx))
+					}
+				}
+
+				chain1 := findFalsePositive(doc2, "at 89abdef")
+				closeDocument(t, chain1)
+
+				chain2 := findFalsePositive(chain1, "again")
+				closeDocument(t, chain2)
+
+				putRoot(t, ctx, chain2, "x", "final @ 89abcdef", "final", commitTime.Add(3*time.Hour))
+
+				allHeads := unionSortedHeadHex(sortedHeadHex(t, ctx, doc1), sortedHeadHex(t, ctx, chain2))
+
+				syncQuiescent(t, ctx, readWriteSyncState(t, ctx, doc1), readWriteSyncState(t, ctx, chain2))
+
+				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, doc1))
+				assert.Equal(t, allHeads, sortedHeadHex(t, ctx, chain2))
+			},
+		)
 	}
 }

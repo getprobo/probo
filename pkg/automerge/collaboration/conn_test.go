@@ -100,11 +100,13 @@ func TestServerConn_StartAnnouncesInitialSync(t *testing.T) {
 func TestServerConn_RejectsUnsupportedVersion(t *testing.T) {
 	t.Parallel()
 
-	join, err := marshal(JoinFrame{
-		Type:                      FrameJoin,
-		SenderID:                  "peer-a",
-		SupportedProtocolVersions: []string{"999"},
-	})
+	join, err := marshal(
+		JoinFrame{
+			Type:                      FrameJoin,
+			SenderID:                  "peer-a",
+			SupportedProtocolVersions: []string{"999"},
+		},
+	)
 	require.NoError(t, err)
 
 	conn := newConn(t, &scriptedSync{})
@@ -133,10 +135,12 @@ func TestServerConn_AppliesInboundSyncAndReplies(t *testing.T) {
 	// The next generate call yields one reply message.
 	sync.outbound = [][]byte{{9, 9}}
 
-	inboundSync, err := EncodeMessage(Message{
-		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "doc-1", Data: []byte{7, 7},
-	})
+	inboundSync, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "doc-1", Data: []byte{7, 7},
+		},
+	)
 	require.NoError(t, err)
 
 	reply, fanout, err := conn.Receive(ctx, inboundSync)
@@ -166,10 +170,12 @@ func TestServerConn_FansOutEphemeralOnce(t *testing.T) {
 	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
 	require.NoError(t, err)
 
-	ephemeral, err := EncodeMessage(Message{
-		Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "doc-1", SessionID: "s", Count: 1, Data: payload,
-	})
+	ephemeral, err := EncodeMessage(
+		Message{
+			Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "doc-1", SessionID: "s", Count: 1, Data: payload,
+		},
+	)
 	require.NoError(t, err)
 
 	reply, fanout, err := conn.Receive(ctx, ephemeral)
@@ -225,10 +231,12 @@ func TestAdoptingServerConn_LearnsDocumentIDFromClient(t *testing.T) {
 
 	sync.outbound = [][]byte{{9, 9}}
 
-	inboundSync, err := EncodeMessage(Message{
-		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "client-chosen-doc", Data: []byte{7, 7},
-	})
+	inboundSync, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "client-chosen-doc", Data: []byte{7, 7},
+		},
+	)
 	require.NoError(t, err)
 
 	reply, _, err := conn.Receive(ctx, inboundSync)
@@ -238,8 +246,12 @@ func TestAdoptingServerConn_LearnsDocumentIDFromClient(t *testing.T) {
 
 	message, err := DecodeMessage(reply[0])
 	require.NoError(t, err)
-	assert.Equal(t, "client-chosen-doc", message.DocumentID,
-		"the server answers for the id the client requested")
+	assert.Equal(
+		t,
+		"client-chosen-doc",
+		message.DocumentID,
+		"the server answers for the id the client requested",
+	)
 }
 
 // TestAdoptingServerConn_RejectsSecondDocument holds the connection to the first
@@ -254,18 +266,22 @@ func TestAdoptingServerConn_RejectsSecondDocument(t *testing.T) {
 	_, _, err = conn.Start(ctx, joinFixture(t))
 	require.NoError(t, err)
 
-	first, err := EncodeMessage(Message{
-		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "doc-a", Data: []byte{1},
-	})
+	first, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "doc-a", Data: []byte{1},
+		},
+	)
 	require.NoError(t, err)
 	_, _, err = conn.Receive(ctx, first)
 	require.NoError(t, err)
 
-	second, err := EncodeMessage(Message{
-		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "doc-b", Data: []byte{2},
-	})
+	second, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "doc-b", Data: []byte{2},
+		},
+	)
 	require.NoError(t, err)
 	_, _, err = conn.Receive(ctx, second)
 	require.Error(t, err)
@@ -282,10 +298,12 @@ func TestServerConn_RejectsForeignDocument(t *testing.T) {
 	_, _, err := conn.Start(ctx, joinFixture(t))
 	require.NoError(t, err)
 
-	foreign, err := EncodeMessage(Message{
-		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "other-doc", Data: []byte{1},
-	})
+	foreign, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "other-doc", Data: []byte{1},
+		},
+	)
 	require.NoError(t, err)
 
 	_, _, err = conn.Receive(ctx, foreign)

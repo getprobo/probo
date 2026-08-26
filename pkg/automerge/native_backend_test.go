@@ -482,22 +482,28 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 	require.NoError(t, err)
 
 	strong := automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true}
-	require.NoError(t, nativeText.Mark(
-		ctx,
-		0,
-		4,
-		"strong",
-		strong,
-		automerge.MarkExpandBoth,
-	))
-	require.NoError(t, referenceText.Mark(
-		ctx,
-		0,
-		4,
-		"strong",
-		strong,
-		automerge.MarkExpandBoth,
-	))
+	require.NoError(
+		t,
+		nativeText.Mark(
+			ctx,
+			0,
+			4,
+			"strong",
+			strong,
+			automerge.MarkExpandBoth,
+		),
+	)
+	require.NoError(
+		t,
+		referenceText.Mark(
+			ctx,
+			0,
+			4,
+			"strong",
+			strong,
+			automerge.MarkExpandBoth,
+		),
+	)
 	_, err = nativeDocument.Commit(ctx, "mark", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit(ctx, "mark", commitTime.Add(time.Second))
@@ -508,20 +514,26 @@ func TestPureGoDocument_MarkAuthoringMatchesReference(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, referenceMarkedSpans, nativeMarkedSpans)
 
-	require.NoError(t, nativeText.Unmark(
-		ctx,
-		1,
-		3,
-		"strong",
-		automerge.MarkExpandNone,
-	))
-	require.NoError(t, referenceText.Unmark(
-		ctx,
-		1,
-		3,
-		"strong",
-		automerge.MarkExpandNone,
-	))
+	require.NoError(
+		t,
+		nativeText.Unmark(
+			ctx,
+			1,
+			3,
+			"strong",
+			automerge.MarkExpandNone,
+		),
+	)
+	require.NoError(
+		t,
+		referenceText.Unmark(
+			ctx,
+			1,
+			3,
+			"strong",
+			automerge.MarkExpandNone,
+		),
+	)
 	_, err = nativeDocument.Commit(ctx, "unmark", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 	_, err = referenceDocument.Commit(
@@ -649,23 +661,29 @@ func setBlockAttributes(
 ) {
 	t.Helper()
 
-	require.NoError(t, block.PutScalar(
-		ctx,
-		"type",
-		automerge.Scalar{
-			Type:   automerge.ScalarTypeString,
-			String: blockType,
-		},
-	))
+	require.NoError(
+		t,
+		block.PutScalar(
+			ctx,
+			"type",
+			automerge.Scalar{
+				Type:   automerge.ScalarTypeString,
+				String: blockType,
+			},
+		),
+	)
 	_, err := block.CreateObject(ctx, "parents", automerge.ObjectTypeList)
 	require.NoError(t, err)
 	_, err = block.CreateObject(ctx, "attrs", automerge.ObjectTypeMap)
 	require.NoError(t, err)
-	require.NoError(t, block.PutScalar(
-		ctx,
-		"isEmbed",
-		automerge.Scalar{Type: automerge.ScalarTypeBoolean},
-	))
+	require.NoError(
+		t,
+		block.PutScalar(
+			ctx,
+			"isEmbed",
+			automerge.Scalar{Type: automerge.ScalarTypeBoolean},
+		),
+	)
 }
 
 func assertTextSpansEqual(
@@ -950,67 +968,70 @@ func TestSyncState_ReadOnlyParity(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
+				ctx := context.Background()
 
-			var (
-				source *automerge.Document
-				target *automerge.Document
-				err    error
-			)
-			if test.sourceReference {
-				source, err = automerge.NewReference(ctx, actor(181))
+				var (
+					source *automerge.Document
+					target *automerge.Document
+					err    error
+				)
+				if test.sourceReference {
+					source, err = automerge.NewReference(ctx, actor(181))
+					require.NoError(t, err)
+					target, err = automerge.New(ctx, actor(182))
+				} else {
+					source, err = automerge.New(ctx, actor(181))
+					require.NoError(t, err)
+					target, err = automerge.NewReference(ctx, actor(182))
+				}
+
 				require.NoError(t, err)
-				target, err = automerge.New(ctx, actor(182))
-			} else {
-				source, err = automerge.New(ctx, actor(181))
+				closeDocument(t, source)
+				closeDocument(t, target)
+
+				text, err := source.CreateText(ctx, "body")
 				require.NoError(t, err)
-				target, err = automerge.NewReference(ctx, actor(182))
-			}
+				require.NoError(t, text.Splice(ctx, 0, 0, "Published"))
+				_, err = source.Commit(ctx, "publish", commitTime)
+				require.NoError(t, err)
 
-			require.NoError(t, err)
-			closeDocument(t, source)
-			closeDocument(t, target)
+				sourceState, err := source.NewSyncState(ctx)
+				require.NoError(t, err)
+				closeSyncState(t, sourceState)
 
-			text, err := source.CreateText(ctx, "body")
-			require.NoError(t, err)
-			require.NoError(t, text.Splice(ctx, 0, 0, "Published"))
-			_, err = source.Commit(ctx, "publish", commitTime)
-			require.NoError(t, err)
+				targetState, err := target.NewSyncState(ctx)
+				require.NoError(t, err)
+				closeSyncState(t, targetState)
+				require.NoError(t, targetState.SetReadOnly(ctx, true))
 
-			sourceState, err := source.NewSyncState(ctx)
-			require.NoError(t, err)
-			closeSyncState(t, sourceState)
+				synchronize(t, sourceState, targetState)
 
-			targetState, err := target.NewSyncState(ctx)
-			require.NoError(t, err)
-			closeSyncState(t, targetState)
-			require.NoError(t, targetState.SetReadOnly(ctx, true))
+				peerReadOnly, err := sourceState.PeerReadOnly(ctx)
+				require.NoError(t, err)
+				assert.True(t, peerReadOnly)
 
-			synchronize(t, sourceState, targetState)
+				_, err = target.Text(ctx, "body")
+				require.Error(t, err)
 
-			peerReadOnly, err := sourceState.PeerReadOnly(ctx)
-			require.NoError(t, err)
-			assert.True(t, peerReadOnly)
+				require.NoError(t, targetState.SetReadOnly(ctx, false))
+				synchronize(t, sourceState, targetState)
 
-			_, err = target.Text(ctx, "body")
-			require.Error(t, err)
+				peerReadOnly, err = sourceState.PeerReadOnly(ctx)
+				require.NoError(t, err)
+				assert.False(t, peerReadOnly)
 
-			require.NoError(t, targetState.SetReadOnly(ctx, false))
-			synchronize(t, sourceState, targetState)
-
-			peerReadOnly, err = sourceState.PeerReadOnly(ctx)
-			require.NoError(t, err)
-			assert.False(t, peerReadOnly)
-
-			targetText, err := target.Text(ctx, "body")
-			require.NoError(t, err)
-			value, err := targetText.String(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, "Published", value)
-		})
+				targetText, err := target.Text(ctx, "body")
+				require.NoError(t, err)
+				value, err := targetText.String(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, "Published", value)
+			},
+		)
 	}
 }
 
@@ -1026,34 +1047,37 @@ func TestSyncState_ReadOnlyModeOverridesInFlight(t *testing.T) {
 	}
 
 	for name, factory := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			document, err := factory(ctx, actor(183))
-			require.NoError(t, err)
-			closeDocument(t, document)
-			text, err := document.CreateText(ctx, "body")
-			require.NoError(t, err)
-			require.NoError(t, text.Splice(ctx, 0, 0, "A"))
-			_, err = document.Commit(ctx, "initial", commitTime)
-			require.NoError(t, err)
-			state, err := document.NewSyncState(ctx)
-			require.NoError(t, err)
-			closeSyncState(t, state)
+				ctx := context.Background()
+				document, err := factory(ctx, actor(183))
+				require.NoError(t, err)
+				closeDocument(t, document)
+				text, err := document.CreateText(ctx, "body")
+				require.NoError(t, err)
+				require.NoError(t, text.Splice(ctx, 0, 0, "A"))
+				_, err = document.Commit(ctx, "initial", commitTime)
+				require.NoError(t, err)
+				state, err := document.NewSyncState(ctx)
+				require.NoError(t, err)
+				closeSyncState(t, state)
 
-			_, ok, err := state.GenerateMessage(ctx)
-			require.NoError(t, err)
-			require.True(t, ok)
-			require.NoError(t, state.SetReadOnly(ctx, true))
-			_, ok, err = state.GenerateMessage(ctx)
-			require.NoError(t, err)
-			require.True(t, ok)
-			require.NoError(t, state.SetReadOnly(ctx, false))
-			_, ok, err = state.GenerateMessage(ctx)
-			require.NoError(t, err)
-			require.True(t, ok)
-		})
+				_, ok, err := state.GenerateMessage(ctx)
+				require.NoError(t, err)
+				require.True(t, ok)
+				require.NoError(t, state.SetReadOnly(ctx, true))
+				_, ok, err = state.GenerateMessage(ctx)
+				require.NoError(t, err)
+				require.True(t, ok)
+				require.NoError(t, state.SetReadOnly(ctx, false))
+				_, ok, err = state.GenerateMessage(ctx)
+				require.NoError(t, err)
+				require.True(t, ok)
+			},
+		)
 	}
 }
 

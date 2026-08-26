@@ -102,11 +102,14 @@ func newHarness(
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = serverSync.Close(ctx) })
 
-	clientConn, err := collaboration.NewClientConn(collaboration.ClientConfig{
-		ClientPeerID: "agent",
-		DocumentID:   "doc-1",
-		StartsEmpty:  clientEmpty,
-	}, clientSync)
+	clientConn, err := collaboration.NewClientConn(
+		collaboration.ClientConfig{
+			ClientPeerID: "agent",
+			DocumentID:   "doc-1",
+			StartsEmpty:  clientEmpty,
+		},
+		clientSync,
+	)
 	require.NoError(t, err)
 
 	serverConn, err := collaboration.NewServerConn(
@@ -200,16 +203,21 @@ func TestClientConn_FirstMessageIsRequestWhenEmpty(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = sync.Close(ctx) }()
 
-	conn, err := collaboration.NewClientConn(collaboration.ClientConfig{
-		ClientPeerID: "agent", DocumentID: "doc-1", StartsEmpty: true,
-	}, sync)
+	conn, err := collaboration.NewClientConn(
+		collaboration.ClientConfig{
+			ClientPeerID: "agent", DocumentID: "doc-1", StartsEmpty: true,
+		},
+		sync,
+	)
 	require.NoError(t, err)
 
 	// Complete the handshake with a peer frame so the client emits its first sync.
-	peer, err := collaboration.EncodePeerFrame(collaboration.PeerFrame{
-		Type: collaboration.FramePeer, SenderID: "server", TargetID: "agent",
-		SelectedProtocolVersion: collaboration.ProtocolV1,
-	})
+	peer, err := collaboration.EncodePeerFrame(
+		collaboration.PeerFrame{
+			Type: collaboration.FramePeer, SenderID: "server", TargetID: "agent",
+			SelectedProtocolVersion: collaboration.ProtocolV1,
+		},
+	)
 	require.NoError(t, err)
 
 	inbound, err := conn.Receive(ctx, peer)
@@ -218,8 +226,12 @@ func TestClientConn_FirstMessageIsRequestWhenEmpty(t *testing.T) {
 
 	message, err := collaboration.DecodeMessage(inbound.Outgoing[0])
 	require.NoError(t, err)
-	assert.Equal(t, collaboration.MessageRequest, message.Type,
-		"an empty client's first message is a request")
+	assert.Equal(
+		t,
+		collaboration.MessageRequest,
+		message.Type,
+		"an empty client's first message is a request",
+	)
 }
 
 // TestClientConn_SurfacesServerError reports an error frame to the caller.
@@ -236,15 +248,20 @@ func TestClientConn_SurfacesServerError(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = sync.Close(ctx) }()
 
-	conn, err := collaboration.NewClientConn(collaboration.ClientConfig{
-		ClientPeerID: "agent", DocumentID: "doc-1", StartsEmpty: true,
-	}, sync)
+	conn, err := collaboration.NewClientConn(
+		collaboration.ClientConfig{
+			ClientPeerID: "agent", DocumentID: "doc-1", StartsEmpty: true,
+		},
+		sync,
+	)
 	require.NoError(t, err)
 
-	errorFrame, err := collaboration.EncodeErrorFrame(collaboration.ErrorFrame{
-		Type: collaboration.FrameError, SenderID: "server", TargetID: "agent",
-		Message: "unauthorized",
-	})
+	errorFrame, err := collaboration.EncodeErrorFrame(
+		collaboration.ErrorFrame{
+			Type: collaboration.FrameError, SenderID: "server", TargetID: "agent",
+			Message: "unauthorized",
+		},
+	)
 	require.NoError(t, err)
 
 	inbound, err := conn.Receive(ctx, errorFrame)

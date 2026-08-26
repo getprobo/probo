@@ -123,44 +123,47 @@ func TestJSBlock_UpdateSpansScenarios(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			scenario.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			result := make(map[string][]automerge.Span)
+				ctx := context.Background()
+				result := make(map[string][]automerge.Span)
 
-			for _, engine := range rustParityEngines() {
-				document, err := engine.open(ctx, actor(0xaa))
-				require.NoError(t, err)
-				closeDocument(t, document)
-
-				text, err := document.CreateText(ctx, "text")
-				require.NoError(t, err)
-
-				if scenario.initial != nil {
-					require.NoError(t, text.UpdateSpans(ctx, scenario.initial, scenario.config))
-					_, err = document.Commit(ctx, "initial", commitTime)
+				for _, engine := range rustParityEngines() {
+					document, err := engine.open(ctx, actor(0xaa))
 					require.NoError(t, err)
+					closeDocument(t, document)
+
+					text, err := document.CreateText(ctx, "text")
+					require.NoError(t, err)
+
+					if scenario.initial != nil {
+						require.NoError(t, text.UpdateSpans(ctx, scenario.initial, scenario.config))
+						_, err = document.Commit(ctx, "initial", commitTime)
+						require.NoError(t, err)
+					}
+
+					require.NoError(t, text.UpdateSpans(ctx, scenario.target, scenario.config))
+					_, err = document.Commit(ctx, "target", commitTime)
+					require.NoError(t, err)
+
+					if scenario.post != nil {
+						scenario.post(ctx, t, text)
+						_, err = document.Commit(ctx, "post", commitTime)
+						require.NoError(t, err)
+					}
+
+					spans, err := text.Spans(ctx)
+					require.NoError(t, err)
+
+					result[engine.name] = spans
 				}
 
-				require.NoError(t, text.UpdateSpans(ctx, scenario.target, scenario.config))
-				_, err = document.Commit(ctx, "target", commitTime)
-				require.NoError(t, err)
-
-				if scenario.post != nil {
-					scenario.post(ctx, t, text)
-					_, err = document.Commit(ctx, "post", commitTime)
-					require.NoError(t, err)
-				}
-
-				spans, err := text.Spans(ctx)
-				require.NoError(t, err)
-
-				result[engine.name] = spans
-			}
-
-			assert.Equal(t, result["reference"], result["native"])
-		})
+				assert.Equal(t, result["reference"], result["native"])
+			},
+		)
 	}
 }
 

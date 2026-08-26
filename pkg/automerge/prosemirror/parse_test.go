@@ -58,39 +58,43 @@ func TestToSpans_RoundTripsCanonicalDocuments(t *testing.T) {
 	require.NotEmpty(t, fixtures)
 
 	for _, fixture := range fixtures {
-		t.Run(fixture.Name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			fixture.Name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
+				ctx := context.Background()
 
-			spans, err := automergeprosemirror.ToSpans(string(fixture.Expected))
-			require.NoError(t, err)
+				spans, err := automergeprosemirror.ToSpans(string(fixture.Expected))
+				require.NoError(t, err)
 
-			actorID, err := automerge.NewActorID()
-			require.NoError(t, err)
+				actorID, err := automerge.NewActorID()
+				require.NoError(t, err)
 
-			document, err := automerge.New(ctx, actorID)
-			require.NoError(t, err)
+				document, err := automerge.New(ctx, actorID)
+				require.NoError(t, err)
 
-			defer func() { _ = document.Close(ctx) }()
+				defer func() { _ = document.Close(ctx) }()
 
-			text, err := document.CreateText(ctx, "body")
-			require.NoError(t, err)
+				text, err := document.CreateText(ctx, "body")
+				require.NoError(t, err)
 
-			require.NoError(t, text.UpdateSpans(ctx, spans, automergeprosemirror.UpdateSpansConfig()))
+				require.NoError(t, text.UpdateSpans(ctx, spans, automergeprosemirror.UpdateSpansConfig()))
 
-			readback, err := text.Spans(ctx)
-			require.NoError(t, err)
+				readback, err := text.Spans(ctx)
+				require.NoError(t, err)
 
-			rendered, err := automergeprosemirror.Render(readback)
-			require.NoError(t, err)
+				rendered, err := automergeprosemirror.Render(readback)
+				require.NoError(t, err)
 
-			assert.JSONEq(
-				t,
-				string(fixture.Expected),
-				rendered,
-				"seeding %s must round-trip through spans", fixture.Name,
-			)
-		})
+				assert.JSONEq(
+					t,
+					string(fixture.Expected),
+					rendered,
+					"seeding %s must round-trip through spans",
+					fixture.Name,
+				)
+			},
+		)
 	}
 }

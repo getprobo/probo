@@ -72,9 +72,13 @@ func TestInterop_RealRepoClientLoadsGoDocument(t *testing.T) {
 	_, err = server.Commit(ctx, "seed", commitTime())
 	require.NoError(t, err)
 
-	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveGateway(t, w, r, server)
-	}))
+	httpServer := httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				serveGateway(t, w, r, server)
+			},
+		),
+	)
 	defer httpServer.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(httpServer.URL, "http")
@@ -94,8 +98,13 @@ func TestInterop_RealRepoClientLoadsGoDocument(t *testing.T) {
 	}
 
 	document := string(output)
-	assert.Contains(t, document, "hello world",
-		"the real repo client must materialize the server's document; got %s", document)
+	assert.Contains(
+		t,
+		document,
+		"hello world",
+		"the real repo client must materialize the server's document; got %s",
+		document,
+	)
 }
 
 // serveGateway is a minimal repo gateway for the interop test: it accepts a
@@ -105,9 +114,13 @@ func TestInterop_RealRepoClientLoadsGoDocument(t *testing.T) {
 func serveGateway(t *testing.T, w http.ResponseWriter, r *http.Request, document *automerge.Document) {
 	t.Helper()
 
-	connection, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		InsecureSkipVerify: true, // test-only: the Node client sends no Origin
-	})
+	connection, err := websocket.Accept(
+		w,
+		r,
+		&websocket.AcceptOptions{
+			InsecureSkipVerify: true, // test-only: the Node client sends no Origin
+		},
+	)
 	if err != nil {
 		return
 	}

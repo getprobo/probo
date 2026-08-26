@@ -92,24 +92,27 @@ func TestRustOrphans_SaveOrphanedChanges(t *testing.T) {
 	ctx := context.Background()
 
 	for _, engine := range rustParityEngines() {
-		t.Run(engine.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			doc, missing := orphanScenario(t, ctx, engine)
-			closeDocument(t, doc)
+				doc, missing := orphanScenario(t, ctx, engine)
+				closeDocument(t, doc)
 
-			saved, err := doc.Save(ctx)
-			require.NoError(t, err)
+				saved, err := doc.Save(ctx)
+				require.NoError(t, err)
 
-			loaded, err := engine.load(ctx, saved, actor(0x03))
-			require.NoError(t, err)
-			closeDocument(t, loaded)
+				loaded, err := engine.load(ctx, saved, actor(0x03))
+				require.NoError(t, err)
+				closeDocument(t, loaded)
 
-			_, err = loaded.LoadIncremental(ctx, missing)
-			require.NoError(t, err)
+				_, err = loaded.LoadIncremental(ctx, missing)
+				require.NoError(t, err)
 
-			require.Equal(t, "value3", rootKey(t, ctx, loaded))
-		})
+				require.Equal(t, "value3", rootKey(t, ctx, loaded))
+			},
+		)
 	}
 }
 
@@ -122,23 +125,26 @@ func TestRustOrphans_DiscardOrphans(t *testing.T) {
 	ctx := context.Background()
 
 	for _, engine := range rustParityEngines() {
-		t.Run(engine.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			doc, missing := orphanScenario(t, ctx, engine)
-			closeDocument(t, doc)
+				doc, missing := orphanScenario(t, ctx, engine)
+				closeDocument(t, doc)
 
-			saved, err := doc.Save(ctx, automerge.DiscardOrphans())
-			require.NoError(t, err)
+				saved, err := doc.Save(ctx, automerge.DiscardOrphans())
+				require.NoError(t, err)
 
-			loaded, err := engine.load(ctx, saved, actor(0x03))
-			require.NoError(t, err)
-			closeDocument(t, loaded)
+				loaded, err := engine.load(ctx, saved, actor(0x03))
+				require.NoError(t, err)
+				closeDocument(t, loaded)
 
-			_, err = loaded.LoadIncremental(ctx, missing)
-			require.NoError(t, err)
+				_, err = loaded.LoadIncremental(ctx, missing)
+				require.NoError(t, err)
 
-			require.Equal(t, "value2", rootKey(t, ctx, loaded))
-		})
+				require.Equal(t, "value2", rootKey(t, ctx, loaded))
+			},
+		)
 	}
 }

@@ -455,9 +455,12 @@ func (s *State) visibleMapObjectOperations(
 		operations = append(operations, operation)
 	}
 
-	sort.Slice(operations, func(i, j int) bool {
-		return operations[i].ID.Compare(operations[j].ID) < 0
-	})
+	sort.Slice(
+		operations,
+		func(i, j int) bool {
+			return operations[i].ID.Compare(operations[j].ID) < 0
+		},
+	)
 
 	return operations
 }

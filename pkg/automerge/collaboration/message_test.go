@@ -54,33 +54,37 @@ func TestEphemeralFixtureCarriesPresence(t *testing.T) {
 		"ephemeral-heartbeat.json",
 		"ephemeral-goodbye.json",
 	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			fixture := readFixture[ephemeralFixture](t, name)
+				fixture := readFixture[ephemeralFixture](t, name)
 
-			message := Message{
-				Type:       MessageType(fixture.Message.Type),
-				SenderID:   fixture.Message.SenderID,
-				TargetID:   fixture.Message.TargetID,
-				DocumentID: fixture.Message.DocumentID,
-				SessionID:  fixture.Message.SessionID,
-				Count:      fixture.Message.Count,
-				Data:       decodeBase64(t, fixture.Message.Data),
-			}
+				message := Message{
+					Type:       MessageType(fixture.Message.Type),
+					SenderID:   fixture.Message.SenderID,
+					TargetID:   fixture.Message.TargetID,
+					DocumentID: fixture.Message.DocumentID,
+					SessionID:  fixture.Message.SessionID,
+					Count:      fixture.Message.Count,
+					Data:       decodeBase64(t, fixture.Message.Data),
+				}
 
-			require.NoError(t, message.validate())
-			assert.Equal(t, MessageEphemeral, message.Type)
-			assert.Equal(t, DedupeKey{SessionID: "session-a", Count: 1}, message.DedupeKey())
+				require.NoError(t, message.validate())
+				assert.Equal(t, MessageEphemeral, message.Type)
+				assert.Equal(t, DedupeKey{SessionID: "session-a", Count: 1}, message.DedupeKey())
 
-			// The ephemeral payload is a presence message the presence codec reads.
-			presence, err := DecodePresence(message.Data)
-			require.NoError(t, err)
-			assert.Contains(t,
-				[]PresenceType{PresenceUpdate, PresenceSnapshot, PresenceHeartbeat, PresenceGoodbye},
-				presence.Type,
-			)
-		})
+				// The ephemeral payload is a presence message the presence codec reads.
+				presence, err := DecodePresence(message.Data)
+				require.NoError(t, err)
+				assert.Contains(
+					t,
+					[]PresenceType{PresenceUpdate, PresenceSnapshot, PresenceHeartbeat, PresenceGoodbye},
+					presence.Type,
+				)
+			},
+		)
 	}
 }
 
@@ -94,20 +98,23 @@ func TestMessage_RoundTrip(t *testing.T) {
 		{Type: MessageEphemeral, SenderID: "a", TargetID: "b", DocumentID: "doc", SessionID: "s", Count: 7, Data: []byte{6}},
 		{Type: MessageDocUnavailable, SenderID: "a", TargetID: "b", DocumentID: "doc"},
 	} {
-		t.Run(string(message.Type), func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			string(message.Type),
+			func(t *testing.T) {
+				t.Parallel()
 
-			encoded, err := EncodeMessage(message)
-			require.NoError(t, err)
+				encoded, err := EncodeMessage(message)
+				require.NoError(t, err)
 
-			decoded, err := DecodeMessage(encoded)
-			require.NoError(t, err)
-			assert.Equal(t, message.Type, decoded.Type)
-			assert.Equal(t, message.DocumentID, decoded.DocumentID)
-			assert.Equal(t, message.Data, decoded.Data)
-			assert.Equal(t, message.SessionID, decoded.SessionID)
-			assert.Equal(t, message.Count, decoded.Count)
-		})
+				decoded, err := DecodeMessage(encoded)
+				require.NoError(t, err)
+				assert.Equal(t, message.Type, decoded.Type)
+				assert.Equal(t, message.DocumentID, decoded.DocumentID)
+				assert.Equal(t, message.Data, decoded.Data)
+				assert.Equal(t, message.SessionID, decoded.SessionID)
+				assert.Equal(t, message.Count, decoded.Count)
+			},
+		)
 	}
 }
 

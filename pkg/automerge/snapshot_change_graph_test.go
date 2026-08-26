@@ -49,14 +49,17 @@ func buildSnapshotHistory(
 	_, err = document.Commit(ctx, "write", base)
 	require.NoError(t, err)
 
-	require.NoError(t, text.Mark(
-		ctx,
-		0,
-		5,
-		"strong",
-		automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
-		automerge.MarkExpandBoth,
-	))
+	require.NoError(
+		t,
+		text.Mark(
+			ctx,
+			0,
+			5,
+			"strong",
+			automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+			automerge.MarkExpandBoth,
+		),
+	)
 	_, err = document.Commit(ctx, "mark", base.Add(time.Second))
 	require.NoError(t, err)
 
@@ -68,11 +71,14 @@ func buildSnapshotHistory(
 	_, err = document.Commit(ctx, "delete", base.Add(3*time.Second))
 	require.NoError(t, err)
 
-	require.NoError(t, document.PutScalar(
-		ctx,
-		"counter",
-		automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
-	))
+	require.NoError(
+		t,
+		document.PutScalar(
+			ctx,
+			"counter",
+			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 5},
+		),
+	)
 	_, err = document.Commit(ctx, "counter", base.Add(4*time.Second))
 	require.NoError(t, err)
 

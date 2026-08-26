@@ -95,9 +95,12 @@ func (s *State) documentObjects() []ObjectID {
 		}
 	}
 
-	slices.SortFunc(objects, func(left, right ObjectID) int {
-		return left.OpID.Compare(right.OpID)
-	})
+	slices.SortFunc(
+		objects,
+		func(left, right ObjectID) int {
+			return left.OpID.Compare(right.OpID)
+		},
+	)
 
 	return append([]ObjectID{RootObject()}, objects...)
 }
@@ -128,9 +131,12 @@ func (s *State) mapObjectOrder(object ObjectID) []OpID {
 	for _, property := range properties {
 		identifiers := byProperty[property]
 
-		slices.SortFunc(identifiers, func(left, right OpID) int {
-			return left.Compare(right)
-		})
+		slices.SortFunc(
+			identifiers,
+			func(left, right OpID) int {
+				return left.Compare(right)
+			},
+		)
 
 		order = append(order, identifiers...)
 	}
@@ -156,9 +162,12 @@ func (s *State) sequenceObjectOrder(object ObjectID) []OpID {
 	}
 
 	for element := range byElement {
-		slices.SortFunc(byElement[element], func(left, right OpID) int {
-			return left.Compare(right)
-		})
+		slices.SortFunc(
+			byElement[element],
+			func(left, right OpID) int {
+				return left.Compare(right)
+			},
+		)
 	}
 
 	elements := s.insertOrder(object.OpID)

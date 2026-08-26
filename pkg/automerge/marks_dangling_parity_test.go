@@ -184,15 +184,20 @@ func TestRustText_DanglingMarkBoundaries(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			assert.Equalf(t,
-				runMarkScenario(t, ctx, rustParityEngines()[1], tt.steps),
-				runMarkScenario(t, ctx, rustParityEngines()[0], tt.steps),
-				"steps: %s", renderMarkScenario(tt.steps),
-			)
-		})
+				assert.Equalf(
+					t,
+					runMarkScenario(t, ctx, rustParityEngines()[1], tt.steps),
+					runMarkScenario(t, ctx, rustParityEngines()[0], tt.steps),
+					"steps: %s",
+					renderMarkScenario(tt.steps),
+				)
+			},
+		)
 	}
 }
 
@@ -217,8 +222,14 @@ func TestRustText_MarkValuesMatchReferenceUnderErrors(t *testing.T) {
 		reference := runMarkScenario(t, ctx, rustParityEngines()[1], steps)
 		native := runMarkScenario(t, ctx, rustParityEngines()[0], steps)
 
-		require.Equalf(t, reference, native,
-			"scenario %d diverged; steps: %s", scenario, renderMarkScenario(steps))
+		require.Equalf(
+			t,
+			reference,
+			native,
+			"scenario %d diverged; steps: %s",
+			scenario,
+			renderMarkScenario(steps),
+		)
 	}
 }
 
@@ -267,13 +278,16 @@ func randomDanglingMarkSteps(random *rand.Rand) []markScenarioStep {
 			index := random.Intn(length)
 			// end may exceed the length so the dangling-begin path is covered.
 			end := index + 1 + random.Intn(length+2-index)
-			out = append(out, markScenarioStep{
-				kind:   "mark",
-				index:  uint32(index),
-				end:    uint32(end),
-				name:   names[random.Intn(len(names))],
-				expand: expands[random.Intn(len(expands))],
-			})
+			out = append(
+				out,
+				markScenarioStep{
+					kind:   "mark",
+					index:  uint32(index),
+					end:    uint32(end),
+					name:   names[random.Intn(len(names))],
+					expand: expands[random.Intn(len(expands))],
+				},
+			)
 		}
 	}
 
@@ -306,8 +320,14 @@ func runMarkScenario(
 		case "split":
 			_, _ = text.SplitBlock(ctx, step.index)
 		case "mark":
-			_ = text.Mark(ctx, step.index, step.end, step.name,
-				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true}, step.expand)
+			_ = text.Mark(
+				ctx,
+				step.index,
+				step.end,
+				step.name,
+				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: true},
+				step.expand,
+			)
 		}
 	}
 

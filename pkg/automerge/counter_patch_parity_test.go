@@ -50,11 +50,14 @@ func TestRustAutomerge_ObserveCounterChangeApplication(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, source)
 
-		require.NoError(t, source.Root().PutScalar(
-			ctx,
-			"counter",
-			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
-		))
+		require.NoError(
+			t,
+			source.Root().PutScalar(
+				ctx,
+				"counter",
+				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
+			),
+		)
 		require.NoError(t, source.Root().Increment(ctx, "counter", 2))
 		require.NoError(t, source.Root().Increment(ctx, "counter", 5))
 
@@ -68,11 +71,14 @@ func TestRustAutomerge_ObserveCounterChangeApplication(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		require.NoError(t, document.Root().PutScalar(
-			ctx,
-			"foo",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "bar"},
-		))
+		require.NoError(
+			t,
+			document.Root().PutScalar(
+				ctx,
+				"foo",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "bar"},
+			),
+		)
 
 		_, err = document.Commit(ctx, "foo", commitTime)
 		require.NoError(t, err)

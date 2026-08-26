@@ -104,12 +104,18 @@ func EncodeDocument(document *Document, order []OpID, compress bool) ([]byte, er
 		return nil, err
 	}
 
-	changeColumns = compressColumns(sortColumns(
-		append(changeColumns, retainedColumns(document, changeColumnSpecifications)...),
-	), compress)
-	operationColumns = compressColumns(sortColumns(
-		append(operationColumns, retainedColumns(document, operationColumnSpecifications)...),
-	), compress)
+	changeColumns = compressColumns(
+		sortColumns(
+			append(changeColumns, retainedColumns(document, changeColumnSpecifications)...),
+		),
+		compress,
+	)
+	operationColumns = compressColumns(
+		sortColumns(
+			append(operationColumns, retainedColumns(document, operationColumnSpecifications)...),
+		),
+		compress,
+	)
 
 	var body []byte
 
@@ -207,8 +213,11 @@ func documentOperations(changes []*Change, order []OpID) ([]Operation, error) {
 		for i := range change.Operations {
 			operation := &change.Operations[i]
 			if _, ok := sources[operation.ID]; ok {
-				return nil, fmt.Errorf("operation %s@%d occurs twice",
-					operation.ID.Actor, operation.ID.Counter)
+				return nil, fmt.Errorf(
+					"operation %s@%d occurs twice",
+					operation.ID.Actor,
+					operation.ID.Counter,
+				)
 			}
 
 			sources[operation.ID] = operation
@@ -226,9 +235,12 @@ func documentOperations(changes []*Change, order []OpID) ([]Operation, error) {
 	}
 
 	for identifier := range successors {
-		slices.SortFunc(successors[identifier], func(left, right OpID) int {
-			return left.Compare(right)
-		})
+		slices.SortFunc(
+			successors[identifier],
+			func(left, right OpID) int {
+				return left.Compare(right)
+			},
+		)
 	}
 
 	operations := make([]Operation, 0, len(order))
@@ -295,9 +307,12 @@ func documentActorTable(changes []*Change, operations []Operation) []ActorID {
 		actors = append(actors, actor)
 	}
 
-	slices.SortFunc(actors, func(left, right ActorID) int {
-		return left.Compare(right)
-	})
+	slices.SortFunc(
+		actors,
+		func(left, right ActorID) int {
+			return left.Compare(right)
+		},
+	)
 
 	return actors
 }
@@ -324,9 +339,12 @@ func documentHeads(changes []*Change) ([]ChangeHash, []uint64, error) {
 		}
 	}
 
-	slices.SortFunc(heads, func(left, right ChangeHash) int {
-		return bytes.Compare(left[:], right[:])
-	})
+	slices.SortFunc(
+		heads,
+		func(left, right ChangeHash) int {
+			return bytes.Compare(left[:], right[:])
+		},
+	)
 
 	headIndexes := make([]uint64, len(heads))
 	for i, head := range heads {
@@ -570,10 +588,13 @@ func retainedColumns(document *Document, known []uint32) []encodedColumn {
 			continue
 		}
 
-		retained = append(retained, encodedColumn{
-			specification: normalized,
-			data:          append([]byte(nil), column.Data...),
-		})
+		retained = append(
+			retained,
+			encodedColumn{
+				specification: normalized,
+				data:          append([]byte(nil), column.Data...),
+			},
+		)
 	}
 
 	return retained
@@ -584,19 +605,22 @@ func retainedColumns(document *Document, known []uint32) []encodedColumn {
 // normalized specification so a column keeps its place whether or not it carries
 // the compressed bit.
 func sortColumns(columns []encodedColumn) []encodedColumn {
-	slices.SortFunc(columns, func(left, right encodedColumn) int {
-		leftSpec := left.specification &^ compressedColumnBit
-		rightSpec := right.specification &^ compressedColumnBit
+	slices.SortFunc(
+		columns,
+		func(left, right encodedColumn) int {
+			leftSpec := left.specification &^ compressedColumnBit
+			rightSpec := right.specification &^ compressedColumnBit
 
-		switch {
-		case leftSpec < rightSpec:
-			return -1
-		case leftSpec > rightSpec:
-			return 1
-		default:
-			return 0
-		}
-	})
+			switch {
+			case leftSpec < rightSpec:
+				return -1
+			case leftSpec > rightSpec:
+				return 1
+			default:
+				return 0
+			}
+		},
+	)
 
 	return columns
 }

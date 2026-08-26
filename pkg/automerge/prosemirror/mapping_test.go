@@ -65,54 +65,63 @@ func TestSchemaMappingLedger(t *testing.T) {
 
 	ledger := loadSchemaMappingLedger(t)
 
-	t.Run("blocks match", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"blocks match",
+		func(t *testing.T) {
+			t.Parallel()
 
-		want := make(map[string]string, len(ledger.Blocks))
-		for _, entry := range ledger.Blocks {
-			want[entry.Automerge] = entry.ProseMirror
-		}
+			want := make(map[string]string, len(ledger.Blocks))
+			for _, entry := range ledger.Blocks {
+				want[entry.Automerge] = entry.ProseMirror
+			}
 
-		got := make(map[string]string, len(blockMappings))
-		for _, mapping := range blockMappings {
-			got[mapping.Automerge] = mapping.ProseMirror
-		}
+			got := make(map[string]string, len(blockMappings))
+			for _, mapping := range blockMappings {
+				got[mapping.Automerge] = mapping.ProseMirror
+			}
 
-		assert.Equal(t, want, got)
-		assert.Equal(t, want, blockNodeNames)
-	})
+			assert.Equal(t, want, got)
+			assert.Equal(t, want, blockNodeNames)
+		},
+	)
 
-	t.Run("marks match", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"marks match",
+		func(t *testing.T) {
+			t.Parallel()
 
-		want := make(map[string]string, len(ledger.Marks))
-		for _, entry := range ledger.Marks {
-			want[entry.Automerge] = entry.ProseMirror
-		}
+			want := make(map[string]string, len(ledger.Marks))
+			for _, entry := range ledger.Marks {
+				want[entry.Automerge] = entry.ProseMirror
+			}
 
-		got := make(map[string]string, len(markMappings))
-		for _, mapping := range markMappings {
-			got[mapping.Automerge] = mapping.ProseMirror
-		}
+			got := make(map[string]string, len(markMappings))
+			for _, mapping := range markMappings {
+				got[mapping.Automerge] = mapping.ProseMirror
+			}
 
-		assert.Equal(t, want, got)
-		assert.Equal(t, want, markNodeNames)
-	})
+			assert.Equal(t, want, got)
+			assert.Equal(t, want, markNodeNames)
+		},
+	)
 
-	t.Run("mark order matches schema rank", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"mark order matches schema rank",
+		func(t *testing.T) {
+			t.Parallel()
 
-		for index, entry := range ledger.Marks {
-			assert.Equalf(
-				t,
-				index,
-				markRenderOrder[entry.Automerge],
-				"mark %q must render at schema rank %d",
-				entry.Automerge,
-				index,
-			)
-		}
+			for index, entry := range ledger.Marks {
+				assert.Equalf(
+					t,
+					index,
+					markRenderOrder[entry.Automerge],
+					"mark %q must render at schema rank %d",
+					entry.Automerge,
+					index,
+				)
+			}
 
-		assert.Len(t, markRenderOrder, len(ledger.Marks))
-	})
+			assert.Len(t, markRenderOrder, len(ledger.Marks))
+		},
+	)
 }

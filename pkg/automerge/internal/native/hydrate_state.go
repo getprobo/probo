@@ -53,9 +53,12 @@ func (s *State) mapValue(
 
 	result := make(map[string]any, len(properties))
 	for property, operations := range properties {
-		sort.Slice(operations, func(i, j int) bool {
-			return operations[i].ID.Compare(operations[j].ID) > 0
-		})
+		sort.Slice(
+			operations,
+			func(i, j int) bool {
+				return operations[i].ID.Compare(operations[j].ID) > 0
+			},
+		)
 
 		operation := operations[0]
 		switch operation.Action {

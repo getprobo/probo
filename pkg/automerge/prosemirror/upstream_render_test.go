@@ -62,64 +62,67 @@ func TestBridge_MatchesUpstreamInBothDirections(t *testing.T) {
 	require.NotEmpty(t, fixtures)
 
 	for _, fixture := range fixtures {
-		t.Run(fixture.Name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			fixture.Name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			data, err := base64.StdEncoding.DecodeString(fixture.Document)
-			require.NoError(t, err)
+				data, err := base64.StdEncoding.DecodeString(fixture.Document)
+				require.NoError(t, err)
 
-			actorID, err := automerge.NewActorID()
-			require.NoError(t, err)
+				actorID, err := automerge.NewActorID()
+				require.NoError(t, err)
 
-			document, err := automerge.Load(context.Background(), data, actorID)
-			require.NoError(t, err)
+				document, err := automerge.Load(context.Background(), data, actorID)
+				require.NoError(t, err)
 
-			defer func() { _ = document.Close(context.Background()) }()
+				defer func() { _ = document.Close(context.Background()) }()
 
-			text, err := document.Text(context.Background(), "body")
-			require.NoError(t, err)
+				text, err := document.Text(context.Background(), "body")
+				require.NoError(t, err)
 
-			spans, err := text.Spans(context.Background())
-			require.NoError(t, err)
+				spans, err := text.Spans(context.Background())
+				require.NoError(t, err)
 
-			actualSpans := make([]map[string]any, 0, len(spans))
-			for _, span := range spans {
-				switch span.Type {
-				case automerge.SpanTypeBlock:
-					actualSpans = append(
-						actualSpans,
-						map[string]any{
+				actualSpans := make([]map[string]any, 0, len(spans))
+				for _, span := range spans {
+					switch span.Type {
+					case automerge.SpanTypeBlock:
+						actualSpans = append(
+							actualSpans,
+							map[string]any{
+								"type":  string(span.Type),
+								"value": span.Block,
+							},
+						)
+					case automerge.SpanTypeText:
+						actual := map[string]any{
 							"type":  string(span.Type),
-							"value": span.Block,
-						},
-					)
-				case automerge.SpanTypeText:
-					actual := map[string]any{
-						"type":  string(span.Type),
-						"value": span.Text,
-					}
-					if len(span.Marks) > 0 {
-						actual["marks"] = span.Marks
-					}
+							"value": span.Text,
+						}
+						if len(span.Marks) > 0 {
+							actual["marks"] = span.Marks
+						}
 
-					actualSpans = append(actualSpans, actual)
+						actualSpans = append(actualSpans, actual)
+					}
 				}
-			}
 
-			encodedSpans, err := json.Marshal(actualSpans)
-			require.NoError(t, err)
-			assert.JSONEq(
-				t,
-				string(fixture.Spans),
-				string(encodedSpans),
-				"native spans must match pmNodeToSpans for %s",
-				fixture.Name,
-			)
+				encodedSpans, err := json.Marshal(actualSpans)
+				require.NoError(t, err)
+				assert.JSONEq(
+					t,
+					string(fixture.Spans),
+					string(encodedSpans),
+					"native spans must match pmNodeToSpans for %s",
+					fixture.Name,
+				)
 
-			rendered, err := automergeprosemirror.Render(spans)
-			require.NoError(t, err)
+				rendered, err := automergeprosemirror.Render(spans)
+				require.NoError(t, err)
 
-			assert.JSONEq(t, string(fixture.Expected), rendered)
-		})
+				assert.JSONEq(t, string(fixture.Expected), rendered)
+			},
+		)
 	}
 }

@@ -101,11 +101,14 @@ func TestRustConvert_StringsInMapsAreConvertedToText(t *testing.T) {
 
 	source, err := automerge.New(ctx, actor(0xaa))
 	require.NoError(t, err)
-	require.NoError(t, source.Root().PutScalar(
-		ctx,
-		"somestring",
-		automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"},
-	))
+	require.NoError(
+		t,
+		source.Root().PutScalar(
+			ctx,
+			"somestring",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"},
+		),
+	)
 	_, err = source.Commit(ctx, "seed", commitTime)
 	require.NoError(t, err)
 

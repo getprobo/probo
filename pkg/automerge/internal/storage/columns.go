@@ -266,15 +266,21 @@ func reserveItems(existing int, additional uint64) error {
 }
 
 func decodeULEBColumn(data []byte) ([]optional[uint64], error) {
-	return decodeRLE(data, func(r *reader) (uint64, error) {
-		return r.uleb()
-	})
+	return decodeRLE(
+		data,
+		func(r *reader) (uint64, error) {
+			return r.uleb()
+		},
+	)
 }
 
 func decodeDeltaColumn(data []byte) ([]optional[uint64], error) {
-	deltas, err := decodeRLE(data, func(r *reader) (int64, error) {
-		return r.leb()
-	})
+	deltas, err := decodeRLE(
+		data,
+		func(r *reader) (int64, error) {
+			return r.leb()
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -301,9 +307,12 @@ func decodeDeltaColumn(data []byte) ([]optional[uint64], error) {
 }
 
 func decodeSignedDeltaColumn(data []byte) ([]optional[int64], error) {
-	deltas, err := decodeRLE(data, func(r *reader) (int64, error) {
-		return r.leb()
-	})
+	deltas, err := decodeRLE(
+		data,
+		func(r *reader) (int64, error) {
+			return r.leb()
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -360,23 +369,26 @@ func addSigned(value uint64, delta int64) (uint64, error) {
 }
 
 func decodeStringColumn(data []byte) ([]optional[string], error) {
-	return decodeRLE(data, func(r *reader) (string, error) {
-		length, err := r.uleb()
-		if err != nil {
-			return "", err
-		}
+	return decodeRLE(
+		data,
+		func(r *reader) (string, error) {
+			length, err := r.uleb()
+			if err != nil {
+				return "", err
+			}
 
-		value, err := r.bytes(length)
-		if err != nil {
-			return "", err
-		}
+			value, err := r.bytes(length)
+			if err != nil {
+				return "", err
+			}
 
-		if !utf8.Valid(value) {
-			return "", fmt.Errorf("string is not valid UTF-8")
-		}
+			if !utf8.Valid(value) {
+				return "", fmt.Errorf("string is not valid UTF-8")
+			}
 
-		return string(value), nil
-	})
+			return string(value), nil
+		},
+	)
 }
 
 func decodeBooleanColumn(data []byte, expected int) ([]bool, error) {

@@ -34,32 +34,34 @@ func FuzzDecodePresence(f *testing.F) {
 		f.Add(seed)
 	}
 
-	f.Fuzz(func(t *testing.T, data []byte) {
-		message, err := DecodePresence(data)
-		if err != nil {
-			return
-		}
+	f.Fuzz(
+		func(t *testing.T, data []byte) {
+			message, err := DecodePresence(data)
+			if err != nil {
+				return
+			}
 
-		// A returned message must satisfy the type invariants, and re-encoding it
-		// must succeed and decode back to the same type.
-		if err := message.validate(); err != nil {
-			t.Fatalf("decoded presence message is invalid: %v", err)
-		}
+			// A returned message must satisfy the type invariants, and re-encoding it
+			// must succeed and decode back to the same type.
+			if err := message.validate(); err != nil {
+				t.Fatalf("decoded presence message is invalid: %v", err)
+			}
 
-		encoded, err := EncodePresence(message)
-		if err != nil {
-			t.Fatalf("cannot re-encode a decoded presence message: %v", err)
-		}
+			encoded, err := EncodePresence(message)
+			if err != nil {
+				t.Fatalf("cannot re-encode a decoded presence message: %v", err)
+			}
 
-		again, err := DecodePresence(encoded)
-		if err != nil {
-			t.Fatalf("cannot decode a re-encoded presence message: %v", err)
-		}
+			again, err := DecodePresence(encoded)
+			if err != nil {
+				t.Fatalf("cannot decode a re-encoded presence message: %v", err)
+			}
 
-		if again.Type != message.Type {
-			t.Fatalf("re-encoded type %q != %q", again.Type, message.Type)
-		}
-	})
+			if again.Type != message.Type {
+				t.Fatalf("re-encoded type %q != %q", again.Type, message.Type)
+			}
+		},
+	)
 }
 
 // FuzzDecodeMessage checks that decoding arbitrary bytes as a repo message never
@@ -68,14 +70,16 @@ func FuzzDecodeMessage(f *testing.F) {
 	f.Add([]byte{0xa0})
 	f.Add([]byte("garbage"))
 
-	f.Fuzz(func(t *testing.T, data []byte) {
-		message, err := DecodeMessage(data)
-		if err != nil {
-			return
-		}
+	f.Fuzz(
+		func(t *testing.T, data []byte) {
+			message, err := DecodeMessage(data)
+			if err != nil {
+				return
+			}
 
-		if err := message.validate(); err != nil {
-			t.Fatalf("decoded repo message is invalid: %v", err)
-		}
-	})
+			if err := message.validate(); err != nil {
+				t.Fatalf("decoded repo message is invalid: %v", err)
+			}
+		},
+	)
 }

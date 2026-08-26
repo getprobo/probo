@@ -54,22 +54,28 @@ func TestRustBatch_MergesCorrectly(t *testing.T) {
 		doc1, err := engine.open(ctx, actor(1))
 		require.NoError(t, err)
 		closeDocument(t, doc1)
-		require.NoError(t, doc1.Root().PutValue(
-			ctx,
-			"obj1",
-			hydratedMap(map[string]automerge.Value{"from": hydratedString("doc1")}),
-		))
+		require.NoError(
+			t,
+			doc1.Root().PutValue(
+				ctx,
+				"obj1",
+				hydratedMap(map[string]automerge.Value{"from": hydratedString("doc1")}),
+			),
+		)
 		_, err = doc1.Commit(ctx, "obj1", commitTime)
 		require.NoError(t, err)
 
 		doc2, err := doc1.Fork(ctx, actor(2))
 		require.NoError(t, err)
 		closeDocument(t, doc2)
-		require.NoError(t, doc2.Root().PutValue(
-			ctx,
-			"obj2",
-			hydratedMap(map[string]automerge.Value{"from": hydratedString("doc2")}),
-		))
+		require.NoError(
+			t,
+			doc2.Root().PutValue(
+				ctx,
+				"obj2",
+				hydratedMap(map[string]automerge.Value{"from": hydratedString("doc2")}),
+			),
+		)
 		_, err = doc2.Commit(ctx, "obj2", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -106,21 +112,30 @@ func TestRustBatch_MultipleInserts(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, doc)
 
-		require.NoError(t, doc.Root().PutValue(
-			ctx,
-			"first",
-			hydratedMap(map[string]automerge.Value{"a": hydratedInt(1)}),
-		))
-		require.NoError(t, doc.Root().PutValue(
-			ctx,
-			"second",
-			hydratedMap(map[string]automerge.Value{"b": hydratedInt(2)}),
-		))
-		require.NoError(t, doc.Root().PutValue(
-			ctx,
-			"third",
-			hydratedMap(map[string]automerge.Value{"c": hydratedInt(3)}),
-		))
+		require.NoError(
+			t,
+			doc.Root().PutValue(
+				ctx,
+				"first",
+				hydratedMap(map[string]automerge.Value{"a": hydratedInt(1)}),
+			),
+		)
+		require.NoError(
+			t,
+			doc.Root().PutValue(
+				ctx,
+				"second",
+				hydratedMap(map[string]automerge.Value{"b": hydratedInt(2)}),
+			),
+		)
+		require.NoError(
+			t,
+			doc.Root().PutValue(
+				ctx,
+				"third",
+				hydratedMap(map[string]automerge.Value{"c": hydratedInt(3)}),
+			),
+		)
 		_, err = doc.Commit(ctx, "batches", commitTime)
 		require.NoError(t, err)
 
@@ -159,19 +174,27 @@ func TestRustBatch_InsertIntoExistingMap(t *testing.T) {
 
 		parent, err := doc.Root().CreateObject(ctx, "parent", automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		require.NoError(t, parent.PutScalar(
-			ctx,
-			"existing",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-		))
-		require.NoError(t, parent.PutValue(
-			ctx,
-			"child",
-			hydratedMap(map[string]automerge.Value{
-				"x": hydratedInt(1),
-				"y": hydratedInt(2),
-			}),
-		))
+		require.NoError(
+			t,
+			parent.PutScalar(
+				ctx,
+				"existing",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+			),
+		)
+		require.NoError(
+			t,
+			parent.PutValue(
+				ctx,
+				"child",
+				hydratedMap(
+					map[string]automerge.Value{
+						"x": hydratedInt(1),
+						"y": hydratedInt(2),
+					},
+				),
+			),
+		)
 		_, err = doc.Commit(ctx, "batch", commitTime)
 		require.NoError(t, err)
 
@@ -206,18 +229,34 @@ func TestRustBatch_PutOverwriteWithNestedStructure(t *testing.T) {
 
 		list, err := doc.Root().CreateObject(ctx, "items", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertValues(ctx, 0, []automerge.Value{
-			hydratedString("placeholder"),
-			hydratedString("keep"),
-		}))
-
-		require.NoError(t, list.PutValueAt(ctx, 0, hydratedMap(map[string]automerge.Value{
-			"name": hydratedString("complex"),
-			"children": hydratedList(
-				hydratedMap(map[string]automerge.Value{"id": hydratedInt(1)}),
-				hydratedMap(map[string]automerge.Value{"id": hydratedInt(2)}),
+		require.NoError(
+			t,
+			list.InsertValues(
+				ctx,
+				0,
+				[]automerge.Value{
+					hydratedString("placeholder"),
+					hydratedString("keep"),
+				},
 			),
-		})))
+		)
+
+		require.NoError(
+			t,
+			list.PutValueAt(
+				ctx,
+				0,
+				hydratedMap(
+					map[string]automerge.Value{
+						"name": hydratedString("complex"),
+						"children": hydratedList(
+							hydratedMap(map[string]automerge.Value{"id": hydratedInt(1)}),
+							hydratedMap(map[string]automerge.Value{"id": hydratedInt(2)}),
+						),
+					},
+				),
+			),
+		)
 		_, err = doc.Commit(ctx, "overwrite", commitTime)
 		require.NoError(t, err)
 
@@ -266,11 +305,14 @@ func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 		closeDocument(t, doc1)
 		list1, err := doc1.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		require.NoError(t, list1.InsertScalar(
-			ctx,
-			0,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "shared"},
-		))
+		require.NoError(
+			t,
+			list1.InsertScalar(
+				ctx,
+				0,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "shared"},
+			),
+		)
 		_, err = doc1.Commit(ctx, "shared", commitTime)
 		require.NoError(t, err)
 
@@ -278,17 +320,33 @@ func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, doc2)
 
-		require.NoError(t, list1.SpliceValues(ctx, 1, 0, []automerge.Value{
-			hydratedMap(map[string]automerge.Value{"from": hydratedString("doc1")}),
-		}))
+		require.NoError(
+			t,
+			list1.SpliceValues(
+				ctx,
+				1,
+				0,
+				[]automerge.Value{
+					hydratedMap(map[string]automerge.Value{"from": hydratedString("doc1")}),
+				},
+			),
+		)
 		_, err = doc1.Commit(ctx, "doc1", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
 		list2, err := doc2.Root().Object(ctx, "list")
 		require.NoError(t, err)
-		require.NoError(t, list2.SpliceValues(ctx, 1, 0, []automerge.Value{
-			hydratedMap(map[string]automerge.Value{"from": hydratedString("doc2")}),
-		}))
+		require.NoError(
+			t,
+			list2.SpliceValues(
+				ctx,
+				1,
+				0,
+				[]automerge.Value{
+					hydratedMap(map[string]automerge.Value{"from": hydratedString("doc2")}),
+				},
+			),
+		)
 		_, err = doc2.Commit(ctx, "doc2", commitTime.Add(time.Second))
 		require.NoError(t, err)
 

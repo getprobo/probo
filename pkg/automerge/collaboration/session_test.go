@@ -63,11 +63,13 @@ func TestServerSession_AcceptsJavaScriptJoin(t *testing.T) {
 func TestServerSession_RejectsUnsupportedVersion(t *testing.T) {
 	t.Parallel()
 
-	join, err := marshal(JoinFrame{
-		Type:                      FrameJoin,
-		SenderID:                  "peer-a",
-		SupportedProtocolVersions: []string{"999"},
-	})
+	join, err := marshal(
+		JoinFrame{
+			Type:                      FrameJoin,
+			SenderID:                  "peer-a",
+			SupportedProtocolVersions: []string{"999"},
+		},
+	)
 	require.NoError(t, err)
 
 	session := newTestSession(t)
@@ -85,10 +87,12 @@ func TestServerSession_RejectsUnsupportedVersion(t *testing.T) {
 func TestServerSession_RequiresHandshakeFirst(t *testing.T) {
 	t.Parallel()
 
-	sync, err := EncodeMessage(Message{
-		Type: MessageSync, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "doc", Data: []byte{1},
-	})
+	sync, err := EncodeMessage(
+		Message{
+			Type: MessageSync, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "doc", Data: []byte{1},
+		},
+	)
 	require.NoError(t, err)
 
 	session := newTestSession(t)
@@ -131,10 +135,12 @@ func TestServerSession_DeduplicatesEphemeral(t *testing.T) {
 	require.NoError(t, err)
 
 	frame := func(count uint64) []byte {
-		data, err := EncodeMessage(Message{
-			Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
-			DocumentID: "doc", SessionID: "s", Count: count, Data: payload,
-		})
+		data, err := EncodeMessage(
+			Message{
+				Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
+				DocumentID: "doc", SessionID: "s", Count: count, Data: payload,
+			},
+		)
 		require.NoError(t, err)
 
 		return data
@@ -158,10 +164,12 @@ func TestServerSession_DeduplicatesEphemeral(t *testing.T) {
 	assert.True(t, older.Duplicate, "a lower count is already covered")
 
 	// A different session with the same count is not a duplicate.
-	otherSession, err := EncodeMessage(Message{
-		Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
-		DocumentID: "doc", SessionID: "s2", Count: 1, Data: payload,
-	})
+	otherSession, err := EncodeMessage(
+		Message{
+			Type: MessageEphemeral, SenderID: "peer-a", TargetID: "server",
+			DocumentID: "doc", SessionID: "s2", Count: 1, Data: payload,
+		},
+	)
 	require.NoError(t, err)
 
 	other, err := session.Receive(otherSession)
@@ -176,11 +184,13 @@ func TestServerSession_IgnoresRemoteHeads(t *testing.T) {
 
 	session := acceptedSession(t)
 
-	frame, err := marshal(map[string]any{
-		"type":     "remote-heads-changed",
-		"senderId": "peer-a",
-		"targetId": "server",
-	})
+	frame, err := marshal(
+		map[string]any{
+			"type":     "remote-heads-changed",
+			"senderId": "peer-a",
+			"targetId": "server",
+		},
+	)
 	require.NoError(t, err)
 
 	inbound, err := session.Receive(frame)

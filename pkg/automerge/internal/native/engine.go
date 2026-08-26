@@ -293,9 +293,12 @@ func orderedQueuedChanges(queued map[ChangeHash]*Change) []*Change {
 		changes = append(changes, change)
 	}
 
-	sort.Slice(changes, func(i, j int) bool {
-		return bytes.Compare(changes[i].Hash[:], changes[j].Hash[:]) < 0
-	})
+	sort.Slice(
+		changes,
+		func(i, j int) bool {
+			return bytes.Compare(changes[i].Hash[:], changes[j].Hash[:]) < 0
+		},
+	)
 
 	return changes
 }

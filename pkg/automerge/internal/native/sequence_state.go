@@ -279,10 +279,13 @@ func (s *State) updateSequenceValues(operation Operation) {
 	}
 
 	if cached, ok := s.sequenceValuesCache[object]; ok {
-		s.sequenceValuesCache[object] = append(cached, sequenceValue{
-			Element:   operation.ID,
-			Operation: operation,
-		})
+		s.sequenceValuesCache[object] = append(
+			cached,
+			sequenceValue{
+				Element:   operation.ID,
+				Operation: operation,
+			},
+		)
 	}
 
 	if cached, ok := s.sequenceElementsCache[object]; ok {
@@ -388,9 +391,12 @@ func (s *State) visibleSequenceElementOperations(element OpID) []Operation {
 		result = append(result, operation)
 	}
 
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].ID.Compare(result[j].ID) < 0
-	})
+	sort.Slice(
+		result,
+		func(i, j int) bool {
+			return result[i].ID.Compare(result[j].ID) < 0
+		},
+	)
 
 	return result
 }

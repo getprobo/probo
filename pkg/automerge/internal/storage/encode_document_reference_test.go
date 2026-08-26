@@ -43,9 +43,15 @@ func newReference(t *testing.T, ctx context.Context, actor byte) *reference.Engi
 
 	engine, err := reference.New(ctx)
 	require.NoError(t, err)
-	require.NoError(t, engine.SetActor(ctx, []byte{
-		actor, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-	}))
+	require.NoError(
+		t,
+		engine.SetActor(
+			ctx,
+			[]byte{
+				actor, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+			},
+		),
+	)
 
 	return engine
 }
@@ -187,11 +193,14 @@ func TestEncodeDocument_MatchesReferenceSnapshots(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			assertSnapshotReencodes(t, testCase.build(t, newReference(t, ctx, 0x20)))
-		})
+				assertSnapshotReencodes(t, testCase.build(t, newReference(t, ctx, 0x20)))
+			},
+		)
 	}
 }
 
@@ -218,9 +227,15 @@ func TestEncodeDocument_MatchesReferenceConcurrentSnapshot(t *testing.T) {
 
 	second, err := reference.Load(ctx, shared)
 	require.NoError(t, err)
-	require.NoError(t, second.SetActor(ctx, []byte{
-		0x10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-	}))
+	require.NoError(
+		t,
+		second.SetActor(
+			ctx,
+			[]byte{
+				0x10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+			},
+		),
+	)
 
 	secondBody, _, err := second.GetObject(ctx, 0, "body")
 	require.NoError(t, err)

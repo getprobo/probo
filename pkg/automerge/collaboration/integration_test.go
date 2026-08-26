@@ -124,13 +124,15 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 			break
 		}
 
-		frame, err := collaboration.EncodeMessage(collaboration.Message{
-			Type:       collaboration.MessageSync,
-			SenderID:   "peer-a",
-			TargetID:   "server",
-			DocumentID: "doc-1",
-			Data:       message,
-		})
+		frame, err := collaboration.EncodeMessage(
+			collaboration.Message{
+				Type:       collaboration.MessageSync,
+				SenderID:   "peer-a",
+				TargetID:   "server",
+				DocumentID: "doc-1",
+				Data:       message,
+			},
+		)
 		require.NoError(t, err)
 
 		reply, fanout, err := conn.Receive(ctx, frame)

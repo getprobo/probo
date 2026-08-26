@@ -37,43 +37,52 @@ type wireFixture struct {
 func TestDecodeHandshakeFrames_MatchJavaScriptBytes(t *testing.T) {
 	t.Parallel()
 
-	t.Run("join", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"join",
+		func(t *testing.T) {
+			t.Parallel()
 
-		data := decodeBase64(t, readFixture[wireFixture](t, "wire-join.json").FrameCBORBase64)
+			data := decodeBase64(t, readFixture[wireFixture](t, "wire-join.json").FrameCBORBase64)
 
-		kind, err := FrameKind(data)
-		require.NoError(t, err)
-		assert.Equal(t, FrameJoin, kind)
+			kind, err := FrameKind(data)
+			require.NoError(t, err)
+			assert.Equal(t, FrameJoin, kind)
 
-		frame, err := DecodeJoinFrame(data)
-		require.NoError(t, err)
-		assert.Equal(t, "peer-a", frame.SenderID)
-		assert.True(t, frame.SupportsV1())
-		assert.False(t, frame.PeerMetadata.IsEphemeral)
-	})
+			frame, err := DecodeJoinFrame(data)
+			require.NoError(t, err)
+			assert.Equal(t, "peer-a", frame.SenderID)
+			assert.True(t, frame.SupportsV1())
+			assert.False(t, frame.PeerMetadata.IsEphemeral)
+		},
+	)
 
-	t.Run("peer", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"peer",
+		func(t *testing.T) {
+			t.Parallel()
 
-		data := decodeBase64(t, readFixture[wireFixture](t, "wire-peer.json").FrameCBORBase64)
+			data := decodeBase64(t, readFixture[wireFixture](t, "wire-peer.json").FrameCBORBase64)
 
-		frame, err := DecodePeerFrame(data)
-		require.NoError(t, err)
-		assert.Equal(t, "server", frame.SenderID)
-		assert.Equal(t, "peer-a", frame.TargetID)
-		assert.Equal(t, ProtocolV1, frame.SelectedProtocolVersion)
-	})
+			frame, err := DecodePeerFrame(data)
+			require.NoError(t, err)
+			assert.Equal(t, "server", frame.SenderID)
+			assert.Equal(t, "peer-a", frame.TargetID)
+			assert.Equal(t, ProtocolV1, frame.SelectedProtocolVersion)
+		},
+	)
 
-	t.Run("error", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"error",
+		func(t *testing.T) {
+			t.Parallel()
 
-		data := decodeBase64(t, readFixture[wireFixture](t, "wire-error.json").FrameCBORBase64)
+			data := decodeBase64(t, readFixture[wireFixture](t, "wire-error.json").FrameCBORBase64)
 
-		frame, err := DecodeErrorFrame(data)
-		require.NoError(t, err)
-		assert.Equal(t, "unauthorized", frame.Message)
-	})
+			frame, err := DecodeErrorFrame(data)
+			require.NoError(t, err)
+			assert.Equal(t, "unauthorized", frame.Message)
+		},
+	)
 }
 
 // TestDecodeFramedMessages_MatchJavaScriptBytes decodes the framed document
@@ -82,35 +91,41 @@ func TestDecodeHandshakeFrames_MatchJavaScriptBytes(t *testing.T) {
 func TestDecodeFramedMessages_MatchJavaScriptBytes(t *testing.T) {
 	t.Parallel()
 
-	t.Run("sync", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"sync",
+		func(t *testing.T) {
+			t.Parallel()
 
-		data := decodeBase64(t, readFixture[wireFixture](t, "wire-sync.json").FrameCBORBase64)
+			data := decodeBase64(t, readFixture[wireFixture](t, "wire-sync.json").FrameCBORBase64)
 
-		kind, err := FrameKind(data)
-		require.NoError(t, err)
-		assert.Equal(t, string(MessageSync), kind)
+			kind, err := FrameKind(data)
+			require.NoError(t, err)
+			assert.Equal(t, string(MessageSync), kind)
 
-		message, err := DecodeMessage(data)
-		require.NoError(t, err)
-		assert.Equal(t, MessageSync, message.Type)
-		assert.Equal(t, "4NMNnkMhL2wRfvHYuG1uxN", message.DocumentID)
-		assert.Equal(t, []byte{0, 1, 2, 3}, message.Data)
-	})
+			message, err := DecodeMessage(data)
+			require.NoError(t, err)
+			assert.Equal(t, MessageSync, message.Type)
+			assert.Equal(t, "4NMNnkMhL2wRfvHYuG1uxN", message.DocumentID)
+			assert.Equal(t, []byte{0, 1, 2, 3}, message.Data)
+		},
+	)
 
-	t.Run("ephemeral carries presence", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"ephemeral carries presence",
+		func(t *testing.T) {
+			t.Parallel()
 
-		data := decodeBase64(t, readFixture[wireFixture](t, "wire-ephemeral.json").FrameCBORBase64)
+			data := decodeBase64(t, readFixture[wireFixture](t, "wire-ephemeral.json").FrameCBORBase64)
 
-		message, err := DecodeMessage(data)
-		require.NoError(t, err)
-		assert.Equal(t, MessageEphemeral, message.Type)
+			message, err := DecodeMessage(data)
+			require.NoError(t, err)
+			assert.Equal(t, MessageEphemeral, message.Type)
 
-		presence, err := DecodePresence(message.Data)
-		require.NoError(t, err)
-		assert.Equal(t, PresenceHeartbeat, presence.Type)
-	})
+			presence, err := DecodePresence(message.Data)
+			require.NoError(t, err)
+			assert.Equal(t, PresenceHeartbeat, presence.Type)
+		},
+	)
 }
 
 // TestHandshakeFrames_RoundTrip encodes then decodes each handshake frame.
@@ -125,12 +140,14 @@ func TestHandshakeFrames_RoundTrip(t *testing.T) {
 	assert.True(t, decodedJoin.SupportsV1())
 	assert.True(t, decodedJoin.PeerMetadata.IsEphemeral)
 
-	peer, err := EncodePeerFrame(PeerFrame{
-		Type:                    FramePeer,
-		SenderID:                "server",
-		TargetID:                "peer-a",
-		SelectedProtocolVersion: ProtocolV1,
-	})
+	peer, err := EncodePeerFrame(
+		PeerFrame{
+			Type:                    FramePeer,
+			SenderID:                "server",
+			TargetID:                "peer-a",
+			SelectedProtocolVersion: ProtocolV1,
+		},
+	)
 	require.NoError(t, err)
 
 	decodedPeer, err := DecodePeerFrame(peer)

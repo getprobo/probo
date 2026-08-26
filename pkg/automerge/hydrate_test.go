@@ -140,23 +140,26 @@ func TestDocument_HydrateRollback(t *testing.T) {
 	document, err := automerge.New(ctx, actor(165))
 	require.NoError(t, err)
 	closeDocument(t, document)
-	require.NoError(t, document.Root().PutMap(
-		ctx,
-		map[string]automerge.Value{
-			"value": {
-				Type: automerge.ValueTypeList,
-				List: []automerge.Value{
-					{
-						Type: automerge.ValueTypeScalar,
-						Scalar: automerge.Scalar{
-							Type: automerge.ScalarTypeInt,
-							Int:  1,
+	require.NoError(
+		t,
+		document.Root().PutMap(
+			ctx,
+			map[string]automerge.Value{
+				"value": {
+					Type: automerge.ValueTypeList,
+					List: []automerge.Value{
+						{
+							Type: automerge.ValueTypeScalar,
+							Scalar: automerge.Scalar{
+								Type: automerge.ScalarTypeInt,
+								Int:  1,
+							},
 						},
 					},
 				},
 			},
-		},
-	))
+		),
+	)
 	cancelled, err := document.Rollback(ctx)
 	require.NoError(t, err)
 	assert.Positive(t, cancelled)
@@ -180,87 +183,96 @@ func TestDocument_HydrateSpliceMatchesReference(t *testing.T) {
 	}
 
 	for name, factory := range factories {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			ctx := context.Background()
-			document, err := factory(
-				ctx,
-				actor(166),
-				map[string]automerge.Value{
-					"list": {
-						Type: automerge.ValueTypeList,
-						List: []automerge.Value{
-							hydratedInt(1),
-							hydratedInt(2),
-							hydratedInt(3),
+				ctx := context.Background()
+				document, err := factory(
+					ctx,
+					actor(166),
+					map[string]automerge.Value{
+						"list": {
+							Type: automerge.ValueTypeList,
+							List: []automerge.Value{
+								hydratedInt(1),
+								hydratedInt(2),
+								hydratedInt(3),
+							},
 						},
 					},
-				},
-				"initial",
-				commitTime,
-			)
-			require.NoError(t, err)
-			closeDocument(t, document)
-			list, err := document.Root().Object(ctx, "list")
-			require.NoError(t, err)
-			require.NoError(t, list.SpliceValues(
-				ctx,
-				1,
-				1,
-				[]automerge.Value{
-					{
-						Type: automerge.ValueTypeMap,
-						Map: map[string]automerge.Value{
-							"value": hydratedInt(4),
+					"initial",
+					commitTime,
+				)
+				require.NoError(t, err)
+				closeDocument(t, document)
+				list, err := document.Root().Object(ctx, "list")
+				require.NoError(t, err)
+				require.NoError(
+					t,
+					list.SpliceValues(
+						ctx,
+						1,
+						1,
+						[]automerge.Value{
+							{
+								Type: automerge.ValueTypeMap,
+								Map: map[string]automerge.Value{
+									"value": hydratedInt(4),
+								},
+							},
+							{Type: automerge.ValueTypeText, Text: "text"},
 						},
-					},
-					{Type: automerge.ValueTypeText, Text: "text"},
-				},
-			))
-			require.NoError(t, list.PutValueAt(
-				ctx,
-				3,
-				automerge.Value{
-					Type: automerge.ValueTypeList,
-					List: []automerge.Value{hydratedInt(5)},
-				},
-			))
-			_, err = document.Commit(
-				ctx,
-				"splice",
-				commitTime.Add(time.Second),
-			)
-			require.NoError(t, err)
+					),
+				)
+				require.NoError(
+					t,
+					list.PutValueAt(
+						ctx,
+						3,
+						automerge.Value{
+							Type: automerge.ValueTypeList,
+							List: []automerge.Value{hydratedInt(5)},
+						},
+					),
+				)
+				_, err = document.Commit(
+					ctx,
+					"splice",
+					commitTime.Add(time.Second),
+				)
+				require.NoError(t, err)
 
-			length, err := list.Len(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, uint64(4), length)
+				length, err := list.Len(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, uint64(4), length)
 
-			first, err := list.ScalarAt(ctx, 0)
-			require.NoError(t, err)
-			assert.Equal(t, int64(1), first.Int)
+				first, err := list.ScalarAt(ctx, 0)
+				require.NoError(t, err)
+				assert.Equal(t, int64(1), first.Int)
 
-			nested, err := list.ObjectAt(ctx, 1)
-			require.NoError(t, err)
-			nestedValue, err := nested.Scalar(ctx, "value")
-			require.NoError(t, err)
-			assert.Equal(t, int64(4), nestedValue.Int)
+				nested, err := list.ObjectAt(ctx, 1)
+				require.NoError(t, err)
+				nestedValue, err := nested.Scalar(ctx, "value")
+				require.NoError(t, err)
+				assert.Equal(t, int64(4), nestedValue.Int)
 
-			textObject, err := list.ObjectAt(ctx, 2)
-			require.NoError(t, err)
-			text, err := textObject.Text(ctx)
-			require.NoError(t, err)
-			textValue, err := text.String(ctx)
-			require.NoError(t, err)
-			assert.Equal(t, "text", textValue)
+				textObject, err := list.ObjectAt(ctx, 2)
+				require.NoError(t, err)
+				text, err := textObject.Text(ctx)
+				require.NoError(t, err)
+				textValue, err := text.String(ctx)
+				require.NoError(t, err)
+				assert.Equal(t, "text", textValue)
 
-			nestedList, err := list.ObjectAt(ctx, 3)
-			require.NoError(t, err)
-			last, err := nestedList.ScalarAt(ctx, 0)
-			require.NoError(t, err)
-			assert.Equal(t, int64(5), last.Int)
-		})
+				nestedList, err := list.ObjectAt(ctx, 3)
+				require.NoError(t, err)
+				last, err := nestedList.ScalarAt(ctx, 0)
+				require.NoError(t, err)
+				assert.Equal(t, int64(5), last.Int)
+			},
+		)
 	}
 }
 

@@ -118,13 +118,15 @@ func (b *Engine) PutScalar(
 				return nil
 			}
 
-			return b.addPending(Operation{
-				ID:           b.nextOperationID(),
-				Object:       objectID,
-				Key:          Key{Property: &property},
-				Action:       ActionDelete,
-				Predecessors: losing,
-			})
+			return b.addPending(
+				Operation{
+					ID:           b.nextOperationID(),
+					Object:       objectID,
+					Key:          Key{Property: &property},
+					Action:       ActionDelete,
+					Predecessors: losing,
+				},
+			)
 		}
 	}
 
@@ -416,23 +418,27 @@ func (b *Engine) PutScalarAt(
 			return nil
 		}
 
-		return b.addPending(Operation{
+		return b.addPending(
+			Operation{
+				ID:           b.nextOperationID(),
+				Object:       objectID,
+				Key:          Key{Element: new(target.Element)},
+				Action:       ActionDelete,
+				Predecessors: losing,
+			},
+		)
+	}
+
+	return b.addPending(
+		Operation{
 			ID:           b.nextOperationID(),
 			Object:       objectID,
 			Key:          Key{Element: new(target.Element)},
-			Action:       ActionDelete,
-			Predecessors: losing,
-		})
-	}
-
-	return b.addPending(Operation{
-		ID:           b.nextOperationID(),
-		Object:       objectID,
-		Key:          Key{Element: new(target.Element)},
-		Action:       ActionSet,
-		Value:        &value,
-		Predecessors: b.sequenceElementPredecessors(target.Element),
-	})
+			Action:       ActionSet,
+			Value:        &value,
+			Predecessors: b.sequenceElementPredecessors(target.Element),
+		},
+	)
 }
 
 func (b *Engine) InsertObject(
@@ -579,13 +585,15 @@ func (b *Engine) DeleteSequence(
 		return err
 	}
 
-	return b.addPending(Operation{
-		ID:           b.nextOperationID(),
-		Object:       objectID,
-		Key:          Key{Element: new(target.Element)},
-		Action:       ActionDelete,
-		Predecessors: b.sequenceElementPredecessors(target.Element),
-	})
+	return b.addPending(
+		Operation{
+			ID:           b.nextOperationID(),
+			Object:       objectID,
+			Key:          Key{Element: new(target.Element)},
+			Action:       ActionDelete,
+			Predecessors: b.sequenceElementPredecessors(target.Element),
+		},
+	)
 }
 
 func (b *Engine) Increment(
@@ -618,14 +626,16 @@ func (b *Engine) Increment(
 		predecessors = append(predecessors, operation.ID)
 	}
 
-	return b.addPending(Operation{
-		ID:           b.nextOperationID(),
-		Object:       objectID,
-		Key:          Key{Property: &property},
-		Action:       ActionIncrement,
-		Value:        &Scalar{Type: ScalarInt, Int: delta},
-		Predecessors: predecessors,
-	})
+	return b.addPending(
+		Operation{
+			ID:           b.nextOperationID(),
+			Object:       objectID,
+			Key:          Key{Property: &property},
+			Action:       ActionIncrement,
+			Value:        &Scalar{Type: ScalarInt, Int: delta},
+			Predecessors: predecessors,
+		},
+	)
 }
 
 func (b *Engine) IncrementAt(
@@ -657,14 +667,16 @@ func (b *Engine) IncrementAt(
 		predecessors = append(predecessors, operation.ID)
 	}
 
-	return b.addPending(Operation{
-		ID:           b.nextOperationID(),
-		Object:       objectID,
-		Key:          Key{Element: new(target.Element)},
-		Action:       ActionIncrement,
-		Value:        &Scalar{Type: ScalarInt, Int: delta},
-		Predecessors: predecessors,
-	})
+	return b.addPending(
+		Operation{
+			ID:           b.nextOperationID(),
+			Object:       objectID,
+			Key:          Key{Element: new(target.Element)},
+			Action:       ActionIncrement,
+			Value:        &Scalar{Type: ScalarInt, Int: delta},
+			Predecessors: predecessors,
+		},
+	)
 }
 
 func (b *Engine) Keys(ctx context.Context, object uint32) ([]string, error) {

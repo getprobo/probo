@@ -64,11 +64,14 @@ func putInt64(
 ) {
 	t.Helper()
 
-	require.NoError(t, document.Root().PutScalar(
-		ctx,
-		key,
-		automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
-	))
+	require.NoError(
+		t,
+		document.Root().PutScalar(
+			ctx,
+			key,
+			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
+		),
+	)
 }
 
 // canIsolateObservations records the values observed at each checkpoint of the

@@ -49,11 +49,14 @@ func TestRust_ReproduceClockCacheBug(t *testing.T) {
 	closeDocument(t, base)
 
 	for i := range 20 {
-		require.NoError(t, base.Root().PutScalar(
-			ctx,
-			"initial_commit",
-			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)},
-		))
+		require.NoError(
+			t,
+			base.Root().PutScalar(
+				ctx,
+				"initial_commit",
+				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(i)},
+			),
+		)
 		_, err := base.Commit(ctx, "initial", commitTime.Add(time.Duration(i)))
 		require.NoError(t, err)
 	}
@@ -66,11 +69,14 @@ func TestRust_ReproduceClockCacheBug(t *testing.T) {
 		closeDocument(t, fork)
 
 		for commit := range 2 {
-			require.NoError(t, fork.Root().PutScalar(
-				ctx,
-				"branch_value",
-				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(branch*10 + commit)},
-			))
+			require.NoError(
+				t,
+				fork.Root().PutScalar(
+					ctx,
+					"branch_value",
+					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(branch*10 + commit)},
+				),
+			)
 			_, err := fork.Commit(ctx, "branch", commitTime.Add(time.Duration(branch*10+commit)))
 			require.NoError(t, err)
 		}
@@ -104,11 +110,14 @@ func TestRustListRange_Bounds(t *testing.T) {
 		require.NoError(t, err)
 
 		for index, value := range []int64{1, 2, 3, 4, 5} {
-			require.NoError(t, list.InsertScalar(
-				ctx,
-				uint64(index),
-				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
-			))
+			require.NoError(
+				t,
+				list.InsertScalar(
+					ctx,
+					uint64(index),
+					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
+				),
+			)
 		}
 
 		_, err = document.Commit(ctx, "list", commitTime)
@@ -150,11 +159,14 @@ func TestRustListRange_Conflict(t *testing.T) {
 		require.NoError(t, err)
 
 		for index, value := range []int64{1, 2, 3, 4, 5} {
-			require.NoError(t, list.InsertScalar(
-				ctx,
-				uint64(index),
-				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
-			))
+			require.NoError(
+				t,
+				list.InsertScalar(
+					ctx,
+					uint64(index),
+					automerge.Scalar{Type: automerge.ScalarTypeInt, Int: value},
+				),
+			)
 		}
 
 		_, err = document.Commit(ctx, "list", commitTime)

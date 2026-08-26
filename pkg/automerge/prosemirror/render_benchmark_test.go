@@ -61,16 +61,19 @@ func BenchmarkRender(b *testing.B) {
 	}
 
 	for _, benchmark := range benchmarks {
-		b.Run(benchmark.name, func(b *testing.B) {
-			b.ReportAllocs()
-			b.SetBytes(benchmark.bytes)
+		b.Run(
+			benchmark.name,
+			func(b *testing.B) {
+				b.ReportAllocs()
+				b.SetBytes(benchmark.bytes)
 
-			for b.Loop() {
-				if _, err := automergeprosemirror.Render(benchmark.spans); err != nil {
-					b.Fatal(err)
+				for b.Loop() {
+					if _, err := automergeprosemirror.Render(benchmark.spans); err != nil {
+						b.Fatal(err)
+					}
 				}
-			}
-		})
+			},
+		)
 	}
 }
 

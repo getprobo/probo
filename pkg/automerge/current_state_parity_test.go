@@ -46,27 +46,36 @@ func basicStateDocument(
 	require.NoError(t, err)
 	closeDocument(t, document)
 
-	require.NoError(t, document.Root().PutScalar(
-		ctx,
-		"key",
-		automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-	))
+	require.NoError(
+		t,
+		document.Root().PutScalar(
+			ctx,
+			"key",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+		),
+	)
 
 	mapObject, err := document.Root().CreateObject(ctx, "map", automerge.ObjectTypeMap)
 	require.NoError(t, err)
-	require.NoError(t, mapObject.PutScalar(
-		ctx,
-		"nested_key",
-		automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-	))
+	require.NoError(
+		t,
+		mapObject.PutScalar(
+			ctx,
+			"nested_key",
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+		),
+	)
 
 	list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
 	require.NoError(t, err)
-	require.NoError(t, list.InsertScalar(
-		ctx,
-		0,
-		automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-	))
+	require.NoError(
+		t,
+		list.InsertScalar(
+			ctx,
+			0,
+			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+		),
+	)
 
 	text, err := document.CreateText(ctx, "text")
 	require.NoError(t, err)
@@ -110,13 +119,16 @@ func currentStateParity(
 func TestRustCurrentState_TextSpliced(t *testing.T) {
 	t.Parallel()
 
-	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
-		text, err := document.CreateText(ctx, "text")
-		require.NoError(t, err)
-		require.NoError(t, text.Splice(ctx, 0, 0, "a"))
-		require.NoError(t, text.Splice(ctx, 1, 0, "bcdef"))
-		require.NoError(t, text.Splice(ctx, 2, 2, "g"))
-	})
+	patches := currentStateParity(
+		t,
+		func(t *testing.T, ctx context.Context, document *automerge.Document) {
+			text, err := document.CreateText(ctx, "text")
+			require.NoError(t, err)
+			require.NoError(t, text.Splice(ctx, 0, 0, "a"))
+			require.NoError(t, text.Splice(ctx, 1, 0, "bcdef"))
+			require.NoError(t, text.Splice(ctx, 2, 2, "g"))
+		},
+	)
 
 	assert.Equal(t, patches["reference"], patches["native"])
 	require.Len(t, patches["native"], 2)
@@ -129,12 +141,15 @@ func TestRustCurrentState_TextSpliced(t *testing.T) {
 func TestRustCurrentState_MultipleListInsertions(t *testing.T) {
 	t.Parallel()
 
-	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
-		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
-		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1}))
-		require.NoError(t, list.InsertScalar(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2}))
-	})
+	patches := currentStateParity(
+		t,
+		func(t *testing.T, ctx context.Context, document *automerge.Document) {
+			list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+			require.NoError(t, err)
+			require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1}))
+			require.NoError(t, list.InsertScalar(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2}))
+		},
+	)
 
 	assert.Equal(t, patches["reference"], patches["native"])
 }
@@ -186,17 +201,23 @@ func TestRustCurrentState_ConcurrentInsertions(t *testing.T) {
 func TestRustCurrentState_InsertObjects(t *testing.T) {
 	t.Parallel()
 
-	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
-		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
-		require.NoError(t, err)
-		mapObject, err := list.InsertObject(ctx, 0, automerge.ObjectTypeMap)
-		require.NoError(t, err)
-		require.NoError(t, mapObject.PutScalar(
-			ctx,
-			"key",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-		))
-	})
+	patches := currentStateParity(
+		t,
+		func(t *testing.T, ctx context.Context, document *automerge.Document) {
+			list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+			require.NoError(t, err)
+			mapObject, err := list.InsertObject(ctx, 0, automerge.ObjectTypeMap)
+			require.NoError(t, err)
+			require.NoError(
+				t,
+				mapObject.PutScalar(
+					ctx,
+					"key",
+					automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+				),
+			)
+		},
+	)
 
 	assert.Equal(t, patches["reference"], patches["native"])
 }
@@ -205,14 +226,17 @@ func TestRustCurrentState_InsertObjects(t *testing.T) {
 func TestRustCurrentState_InsertAndUpdate(t *testing.T) {
 	t.Parallel()
 
-	patches := currentStateParity(t, func(t *testing.T, ctx context.Context, document *automerge.Document) {
-		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
-		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "one"}))
-		require.NoError(t, list.InsertScalar(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeString, String: "two"}))
-		require.NoError(t, list.PutScalarAt(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "three"}))
-		require.NoError(t, list.PutScalarAt(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeString, String: "four"}))
-	})
+	patches := currentStateParity(
+		t,
+		func(t *testing.T, ctx context.Context, document *automerge.Document) {
+			list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
+			require.NoError(t, err)
+			require.NoError(t, list.InsertScalar(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "one"}))
+			require.NoError(t, list.InsertScalar(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeString, String: "two"}))
+			require.NoError(t, list.PutScalarAt(ctx, 0, automerge.Scalar{Type: automerge.ScalarTypeString, String: "three"}))
+			require.NoError(t, list.PutScalarAt(ctx, 1, automerge.Scalar{Type: automerge.ScalarTypeString, String: "four"}))
+		},
+	)
 
 	assert.Equal(t, patches["reference"], patches["native"])
 }
@@ -228,11 +252,14 @@ func TestRustCurrentState_Counters(t *testing.T) {
 		document, err := engine.open(ctx, actor(0xbb))
 		require.NoError(t, err)
 		closeDocument(t, document)
-		require.NoError(t, document.Root().PutScalar(
-			ctx,
-			"key",
-			automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
-		))
+		require.NoError(
+			t,
+			document.Root().PutScalar(
+				ctx,
+				"key",
+				automerge.Scalar{Type: automerge.ScalarTypeCounter, Int: 1},
+			),
+		)
 		require.NoError(t, document.Root().Increment(ctx, "key", 2))
 		require.NoError(t, document.Root().Increment(ctx, "key", 3))
 		_, err = document.Commit(ctx, "counter", commitTime)
@@ -242,11 +269,14 @@ func TestRustCurrentState_Counters(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, other)
 		// Fork copies history; give the conflicting value its own change.
-		require.NoError(t, other.Root().PutScalar(
-			ctx,
-			"other",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "someval"},
-		))
+		require.NoError(
+			t,
+			other.Root().PutScalar(
+				ctx,
+				"other",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "someval"},
+			),
+		)
 		_, err = other.Commit(ctx, "someval", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -320,29 +350,38 @@ func TestRustCurrentState_DeletedOpsOmitted(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, document)
 
-		require.NoError(t, document.Root().PutScalar(
-			ctx,
-			"key",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-		))
+		require.NoError(
+			t,
+			document.Root().PutScalar(
+				ctx,
+				"key",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+			),
+		)
 		require.NoError(t, document.Root().DeleteKey(ctx, "key"))
 
 		mapObject, err := document.Root().CreateObject(ctx, "map", automerge.ObjectTypeMap)
 		require.NoError(t, err)
-		require.NoError(t, mapObject.PutScalar(
-			ctx,
-			"nested_key",
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-		))
+		require.NoError(
+			t,
+			mapObject.PutScalar(
+				ctx,
+				"nested_key",
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+			),
+		)
 		require.NoError(t, mapObject.DeleteKey(ctx, "nested_key"))
 
 		list, err := document.Root().CreateObject(ctx, "list", automerge.ObjectTypeList)
 		require.NoError(t, err)
-		require.NoError(t, list.InsertScalar(
-			ctx,
-			0,
-			automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
-		))
+		require.NoError(
+			t,
+			list.InsertScalar(
+				ctx,
+				0,
+				automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
+			),
+		)
 		require.NoError(t, list.DeleteIndex(ctx, 0))
 
 		_, err = document.Commit(ctx, "deleted", commitTime)

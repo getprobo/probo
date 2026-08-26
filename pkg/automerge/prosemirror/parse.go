@@ -232,10 +232,12 @@ func convertMarks(marks []pmMark) map[string]automerge.Scalar {
 		}
 
 		if name == "link" {
-			payload, err := json.Marshal(map[string]any{
-				"href":  stringAttribute(mark.Attrs, "href"),
-				"title": nullableStringAttribute(mark.Attrs, "title"),
-			})
+			payload, err := json.Marshal(
+				map[string]any{
+					"href":  stringAttribute(mark.Attrs, "href"),
+					"title": nullableStringAttribute(mark.Attrs, "title"),
+				},
+			)
 			if err != nil {
 				continue
 			}

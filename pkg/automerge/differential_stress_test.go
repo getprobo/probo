@@ -280,10 +280,12 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 		native := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
 		reference := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
 
-		require.Equal(t,
+		require.Equal(
+			t,
 			canonicalDocument(t, ctx, reference.document),
 			canonicalDocument(t, ctx, native.document),
-			"scenario %d seed diverged", scenario,
+			"scenario %d seed diverged",
+			scenario,
 		)
 
 		var listLen, textLen uint64
@@ -305,16 +307,27 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 
 			nativeCommitted := tolerantCommit(t, ctx, native.document)
 			referenceCommitted := tolerantCommit(t, ctx, reference.document)
-			require.Equal(t, referenceCommitted, nativeCommitted,
-				"scenario %d step %d op %+v commit divergence", scenario, step, op)
+			require.Equal(
+				t,
+				referenceCommitted,
+				nativeCommitted,
+				"scenario %d step %d op %+v commit divergence",
+				scenario,
+				step,
+				op,
+			)
 
 			listLen = mustLen(t, ctx, native.list)
 			textLen = mustTextLen(t, ctx, native.text)
 
-			require.Equal(t,
+			require.Equal(
+				t,
 				canonicalDocument(t, ctx, reference.document),
 				canonicalDocument(t, ctx, native.document),
-				"scenario %d step %d op %+v diverged", scenario, step, op,
+				"scenario %d step %d op %+v diverged",
+				scenario,
+				step,
+				op,
 			)
 		}
 
@@ -327,10 +340,12 @@ func TestDifferentialStress_SingleDocument(t *testing.T) {
 		require.NoError(t, err)
 		closeDocument(t, reloaded)
 
-		require.Equal(t,
+		require.Equal(
+			t,
 			canonicalDocument(t, ctx, native.document),
 			canonicalDocument(t, ctx, reloaded),
-			"scenario %d reload diverged", scenario,
+			"scenario %d reload diverged",
+			scenario,
 		)
 	}
 }
@@ -391,10 +406,13 @@ func TestDifferentialStress_ConcurrentMerge(t *testing.T) {
 			mergeDocuments(t, ctx, nativeLeft.document, nativeRight.document)
 			mergeDocuments(t, ctx, referenceLeft.document, referenceRight.document)
 
-			require.Equal(t,
+			require.Equal(
+				t,
 				canonicalDocument(t, ctx, referenceLeft.document),
 				canonicalDocument(t, ctx, nativeLeft.document),
-				"scenario %d round %d merged state diverged", scenario, round,
+				"scenario %d round %d merged state diverged",
+				scenario,
+				round,
 			)
 		}
 	}
@@ -428,7 +446,8 @@ func editStressActor(
 	t *testing.T,
 	ctx context.Context,
 	random *rand.Rand,
-	native, reference *stressActor,
+	native *stressActor,
+	reference *stressActor,
 	edits int,
 ) {
 	t.Helper()
@@ -476,47 +495,51 @@ func FuzzDifferentialOperations(f *testing.F) {
 	f.Add([]byte{0x05, 0x41, 0x05, 0x42, 0x02, 0x10, 0x00, 0x03, 0x00, 0x20})
 	f.Add([]byte{0x02, 0x00, 0x11, 0x02, 0x01, 0x22, 0x06, 0x00, 0x33, 0x05, 0x00})
 
-	f.Fuzz(func(t *testing.T, script []byte) {
-		ctx := context.Background()
+	f.Fuzz(
+		func(t *testing.T, script []byte) {
+			ctx := context.Background()
 
-		native := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
-		reference := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
+			native := newStressActor(t, ctx, rustParityEngines()[0], 0x01)
+			reference := newStressActor(t, ctx, rustParityEngines()[1], 0x01)
 
-		present := make(map[string]bool)
+			present := make(map[string]bool)
 
-		for cursor := 0; cursor+1 < len(script); cursor += 2 {
-			op := scriptOperation(
-				script[cursor],
-				script[cursor+1],
-				mustLen(t, ctx, native.list),
-				mustTextLen(t, ctx, native.text),
-				present,
-			)
-			if op == nil {
-				continue
+			for cursor := 0; cursor+1 < len(script); cursor += 2 {
+				op := scriptOperation(
+					script[cursor],
+					script[cursor+1],
+					mustLen(t, ctx, native.list),
+					mustTextLen(t, ctx, native.text),
+					present,
+				)
+				if op == nil {
+					continue
+				}
+
+				applyStressOperation(t, ctx, native, *op)
+				applyStressOperation(t, ctx, reference, *op)
+
+				switch op.kind {
+				case opMapPut:
+					present[op.key] = true
+				case opMapDelete:
+					delete(present, op.key)
+				}
+
+				nativeCommitted := tolerantCommit(t, ctx, native.document)
+				referenceCommitted := tolerantCommit(t, ctx, reference.document)
+				require.Equal(t, referenceCommitted, nativeCommitted, "commit divergence for %+v", *op)
+
+				require.Equal(
+					t,
+					canonicalValues(t, ctx, reference.document),
+					canonicalValues(t, ctx, native.document),
+					"value divergence after %+v",
+					*op,
+				)
 			}
-
-			applyStressOperation(t, ctx, native, *op)
-			applyStressOperation(t, ctx, reference, *op)
-
-			switch op.kind {
-			case opMapPut:
-				present[op.key] = true
-			case opMapDelete:
-				delete(present, op.key)
-			}
-
-			nativeCommitted := tolerantCommit(t, ctx, native.document)
-			referenceCommitted := tolerantCommit(t, ctx, reference.document)
-			require.Equal(t, referenceCommitted, nativeCommitted, "commit divergence for %+v", *op)
-
-			require.Equal(t,
-				canonicalValues(t, ctx, reference.document),
-				canonicalValues(t, ctx, native.document),
-				"value divergence after %+v", *op,
-			)
-		}
-	})
+		},
+	)
 }
 
 // scriptOperation decodes a two-byte instruction into a valid operation for the

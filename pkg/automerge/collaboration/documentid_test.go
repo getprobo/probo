@@ -42,8 +42,12 @@ func TestDocumentID_DecodesRealRepoID(t *testing.T) {
 	id, err := DecodeDocumentID(realRepoDocumentID)
 	require.NoError(t, err)
 
-	assert.Equal(t, realRepoDocumentID, EncodeDocumentID(id),
-		"a real repo id must round-trip byte-identically")
+	assert.Equal(
+		t,
+		realRepoDocumentID,
+		EncodeDocumentID(id),
+		"a real repo id must round-trip byte-identically",
+	)
 	assert.True(t, ValidDocumentID(realRepoDocumentID))
 }
 
@@ -61,16 +65,19 @@ func TestDocumentID_RoundTrip(t *testing.T) {
 	}
 
 	for name, id := range cases {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
 
-			encoded := EncodeDocumentID(id)
-			assert.True(t, ValidDocumentID(encoded))
+				encoded := EncodeDocumentID(id)
+				assert.True(t, ValidDocumentID(encoded))
 
-			decoded, err := DecodeDocumentID(encoded)
-			require.NoError(t, err)
-			assert.Equal(t, id, decoded)
-		})
+				decoded, err := DecodeDocumentID(encoded)
+				require.NoError(t, err)
+				assert.Equal(t, id, decoded)
+			},
+		)
 	}
 }
 
@@ -108,8 +115,12 @@ func TestDeriveDocumentID_StableAndValid(t *testing.T) {
 
 	assert.Equal(t, first, second, "derivation must be deterministic")
 	assert.True(t, ValidDocumentID(first))
-	assert.NotEqual(t, first, DeriveDocumentID(seed+"x"),
-		"different seeds must derive different ids")
+	assert.NotEqual(
+		t,
+		first,
+		DeriveDocumentID(seed+"x"),
+		"different seeds must derive different ids",
+	)
 }
 
 // TestAutomergeURL_RoundTrip wraps and unwraps the automerge: scheme and

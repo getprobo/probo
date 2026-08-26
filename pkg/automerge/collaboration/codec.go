@@ -83,8 +83,11 @@ func init() {
 // bounding the payload size.
 func unmarshal(data []byte, value any) error {
 	if len(data) > maxDecodedPayload {
-		return fmt.Errorf("collaboration payload of %d bytes exceeds the %d byte limit",
-			len(data), maxDecodedPayload)
+		return fmt.Errorf(
+			"collaboration payload of %d bytes exceeds the %d byte limit",
+			len(data),
+			maxDecodedPayload,
+		)
 	}
 
 	return decMode.Unmarshal(data, value)

@@ -58,42 +58,50 @@ func TestSyncState_ModelBasedChaos(t *testing.T) {
 	)
 
 	for scenario := range scenarios {
-		t.Run(fmt.Sprintf("seed-%d", scenario), func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			fmt.Sprintf("seed-%d", scenario),
+			func(t *testing.T) {
+				t.Parallel()
 
-			random := rand.New(rand.NewSource(int64(0x51C00000 + scenario)))
-			chaos := newSyncChaos(t, ctx)
-			t.Cleanup(func() { chaos.close(ctx) })
+				random := rand.New(rand.NewSource(int64(0x51C00000 + scenario)))
+				chaos := newSyncChaos(t, ctx)
+				t.Cleanup(func() { chaos.close(ctx) })
 
-			for step := range steps {
-				switch random.Intn(8) {
-				case 0:
-					chaos.mapEdit(t, ctx, random.Intn(chaosPeers), scenario, step)
-				case 1:
-					chaos.textEdit(t, ctx, random, random.Intn(chaosPeers), step)
-				case 2:
-					chaos.send(t, ctx, random, true)
-				case 3:
-					chaos.send(t, ctx, random, false)
-				case 4:
-					chaos.duplicate(t, ctx, random)
-				case 5:
-					chaos.toggleReadOnly(t, ctx, random)
-				case 6:
-					chaos.reload(t, ctx, random.Intn(chaosPeers))
-				case 7:
-					chaos.assertGenerationQuiesces(t, ctx, random)
+				for step := range steps {
+					switch random.Intn(8) {
+					case 0:
+						chaos.mapEdit(t, ctx, random.Intn(chaosPeers), scenario, step)
+					case 1:
+						chaos.textEdit(t, ctx, random, random.Intn(chaosPeers), step)
+					case 2:
+						chaos.send(t, ctx, random, true)
+					case 3:
+						chaos.send(t, ctx, random, false)
+					case 4:
+						chaos.duplicate(t, ctx, random)
+					case 5:
+						chaos.toggleReadOnly(t, ctx, random)
+					case 6:
+						chaos.reload(t, ctx, random.Intn(chaosPeers))
+					case 7:
+						chaos.assertGenerationQuiesces(t, ctx, random)
+					}
 				}
-			}
 
-			chaos.converge(t, ctx)
+				chaos.converge(t, ctx)
 
-			expected := chaosSignature(t, ctx, chaos.documents[0])
-			for peer := 1; peer < chaosPeers; peer++ {
-				assert.Equalf(t, expected, chaosSignature(t, ctx, chaos.documents[peer]),
-					"peer %d did not converge", peer)
-			}
-		})
+				expected := chaosSignature(t, ctx, chaos.documents[0])
+				for peer := 1; peer < chaosPeers; peer++ {
+					assert.Equalf(
+						t,
+						expected,
+						chaosSignature(t, ctx, chaos.documents[peer]),
+						"peer %d did not converge",
+						peer,
+					)
+				}
+			},
+		)
 	}
 }
 
@@ -137,16 +145,21 @@ func newSyncChaos(t *testing.T, ctx context.Context) *syncChaos {
 func (c *syncChaos) mapEdit(
 	t *testing.T,
 	ctx context.Context,
-	peer, scenario, step int,
+	peer int,
+	scenario int,
+	step int,
 ) {
 	t.Helper()
 
 	key := fmt.Sprintf("p%d-s%d-%d", peer, scenario, step)
-	require.NoError(t, c.documents[peer].Root().PutScalar(
-		ctx,
-		key,
-		automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(step)},
-	))
+	require.NoError(
+		t,
+		c.documents[peer].Root().PutScalar(
+			ctx,
+			key,
+			automerge.Scalar{Type: automerge.ScalarTypeInt, Int: int64(step)},
+		),
+	)
 	_, err := c.documents[peer].Commit(
 		ctx,
 		"map edit",
@@ -159,7 +172,8 @@ func (c *syncChaos) textEdit(
 	t *testing.T,
 	ctx context.Context,
 	random *rand.Rand,
-	peer, step int,
+	peer int,
+	step int,
 ) {
 	t.Helper()
 
