@@ -34,7 +34,7 @@ func (b *Engine) NewSyncState() (uint32, error) {
 
 	handle := b.nextSyncState
 	b.nextSyncState++
-	b.syncStates[handle] = &nativeSyncState{}
+	b.syncStates[handle] = &syncSessionState{}
 
 	return handle, nil
 }
@@ -66,7 +66,7 @@ func (b *Engine) SetSyncReadOnly(
 
 	if state.ReadOnly && !readOnly {
 		peerSupportsReset := state.PeerSupportsReset
-		*state = nativeSyncState{
+		*state = syncSessionState{
 			PeerSupportsReset: peerSupportsReset,
 			NeedsReset:        true,
 			ModeChanged:       true,
@@ -278,7 +278,7 @@ func (b *Engine) ReceiveSyncMessage(
 	if !state.ReadOnly {
 		for _, change := range message.Changes {
 			if _, err := b.Merge(change); err != nil {
-				return fmt.Errorf("cannot merge native sync payload: %w", err)
+				return fmt.Errorf("cannot merge sync payload: %w", err)
 			}
 		}
 	}
@@ -340,7 +340,7 @@ func (b *Engine) SaveSyncState(
 
 	data, err := json.Marshal(state)
 	if err != nil {
-		return nil, fmt.Errorf("cannot encode native sync state: %w", err)
+		return nil, fmt.Errorf("cannot encode sync state: %w", err)
 	}
 
 	return data, nil
@@ -350,9 +350,9 @@ func (b *Engine) LoadSyncState(
 	data []byte,
 ) (uint32, error) {
 
-	var state nativeSyncState
+	var state syncSessionState
 	if err := json.Unmarshal(data, &state); err != nil {
-		return 0, fmt.Errorf("cannot decode native sync state: %w", err)
+		return 0, fmt.Errorf("cannot decode sync state: %w", err)
 	}
 
 	// A serialized state cannot retain an in-flight transport message. Allow
