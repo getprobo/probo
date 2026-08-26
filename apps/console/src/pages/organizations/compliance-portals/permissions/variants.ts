@@ -70,17 +70,16 @@ export const accessSection = tv({
 
 export const accessListItem = tv({
   slots: {
-    item: "hover:bg-sand-2",
-    hit: [
-      "flex min-w-0 flex-1 items-center gap-4 text-inherit no-underline",
-      "outline-none focus-visible:bg-sand-2",
-    ],
+    item: "relative hover:bg-sand-2",
+    hit: "absolute inset-0 z-0 outline-none focus-visible:bg-sand-2",
+    body: "relative z-1 flex min-w-0 flex-1 items-center gap-4 pointer-events-none",
     avatar: "shrink-0",
     main: "flex min-w-0 flex-1 items-center gap-3",
     identity: "min-w-0",
     name: "min-w-0 truncate",
     email: "min-w-0 truncate",
-    trailing: "flex shrink-0 items-center gap-3",
+    trailing: "relative z-1 flex shrink-0 items-center gap-3 pointer-events-none",
+    request: "pointer-events-auto",
     nda: "flex shrink-0 items-center gap-1.5 whitespace-nowrap [&_svg]:size-4",
     joined: "whitespace-nowrap",
   },

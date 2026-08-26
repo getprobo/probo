@@ -64,12 +64,14 @@ export function CompliancePortalAccessListItem({
   const {
     item,
     hit,
+    body,
     avatar,
     main,
     identity,
     name,
     email,
     trailing,
+    request,
     nda,
     joined,
   } = accessListItem({
@@ -79,7 +81,12 @@ export function CompliancePortalAccessListItem({
 
   return (
     <ListItem className={item()}>
-      <Link to={access.id} className={hit()}>
+      <Link
+        to={access.id}
+        className={hit()}
+        aria-label={t("accessListItem.actions.open")}
+      />
+      <div className={body()}>
         <Avatar
           size={3}
           variant="soft"
@@ -105,7 +112,7 @@ export function CompliancePortalAccessListItem({
             </Text>
           )}
         </div>
-      </Link>
+      </div>
       <div className={trailing()}>
         {access.pendingRequestCount > 0 && (
           <ButtonLink
@@ -113,6 +120,7 @@ export function CompliancePortalAccessListItem({
             size={2}
             variant="soft"
             color="amber"
+            className={request()}
             iconStart={<FileTextIcon aria-hidden />}
           >
             {t("accessListItem.requested", { count: access.pendingRequestCount })}
