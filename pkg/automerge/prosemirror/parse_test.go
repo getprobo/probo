@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
-	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
+	"go.probo.inc/probo/pkg/automerge/prosemirror"
 )
 
 // TestToSpans_RoundTripsCanonicalDocuments is the seeding-correctness gate: for
@@ -62,7 +62,7 @@ func TestToSpans_RoundTripsCanonicalDocuments(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				spans, err := automergeprosemirror.ToSpans(string(fixture.Expected))
+				spans, err := prosemirror.ToSpans(string(fixture.Expected))
 				require.NoError(t, err)
 
 				actorID, err := automerge.NewActorID()
@@ -76,12 +76,12 @@ func TestToSpans_RoundTripsCanonicalDocuments(t *testing.T) {
 				text, err := document.CreateText("body")
 				require.NoError(t, err)
 
-				require.NoError(t, text.UpdateSpans(spans, automergeprosemirror.UpdateSpansConfig()))
+				require.NoError(t, text.UpdateSpans(spans, prosemirror.UpdateSpansConfig()))
 
 				readback, err := text.Spans()
 				require.NoError(t, err)
 
-				rendered, err := automergeprosemirror.Render(readback)
+				rendered, err := prosemirror.Render(readback)
 				require.NoError(t, err)
 
 				assert.JSONEq(

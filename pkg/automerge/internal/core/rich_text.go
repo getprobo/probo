@@ -27,7 +27,7 @@ import (
 	"sort"
 	"strings"
 
-	internalencoding "go.probo.inc/probo/pkg/automerge/internal/encoding"
+	"go.probo.inc/probo/pkg/automerge/internal/encoding"
 )
 
 func (b *Engine) PutText(
@@ -1044,9 +1044,9 @@ func (b *Engine) TextCursorMoving(
 		length := uint32(utf16Length(operation))
 		if index >= position && index < position+length {
 			data := []byte{1, 3}
-			data = internalencoding.AppendLengthPrefixed(data, operation.ID.Actor.Bytes())
+			data = encoding.AppendLengthPrefixed(data, operation.ID.Actor.Bytes())
 
-			data = internalencoding.AppendULEB(data, operation.ID.Counter)
+			data = encoding.AppendULEB(data, operation.ID.Counter)
 			if moveBefore {
 				data = append(data, 1)
 			} else {
@@ -1085,8 +1085,8 @@ func (b *Engine) TextCursorMovingAt(
 		length := uint32(utf16Length(operation))
 		if index >= position && index < position+length {
 			data := []byte{1, 3}
-			data = internalencoding.AppendLengthPrefixed(data, operation.ID.Actor.Bytes())
-			data = internalencoding.AppendULEB(data, operation.ID.Counter)
+			data = encoding.AppendLengthPrefixed(data, operation.ID.Actor.Bytes())
+			data = encoding.AppendULEB(data, operation.ID.Counter)
 
 			if moveBefore {
 				data = append(data, 1)

@@ -36,7 +36,7 @@ import (
 	productionautomerge "go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/automerge/internal/core"
 	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
-	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
+	"go.probo.inc/probo/pkg/automerge/prosemirror"
 )
 
 type (
@@ -752,7 +752,7 @@ func TestConformance_NativeTableRichTextSpans(t *testing.T) {
 		}
 	}
 
-	content, err := automergeprosemirror.Render(renderSpans)
+	content, err := prosemirror.Render(renderSpans)
 	require.NoError(t, err)
 
 	var document struct {
