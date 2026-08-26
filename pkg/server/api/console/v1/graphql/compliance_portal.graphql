@@ -280,6 +280,10 @@ input CompliancePortalAccessOrder
     field: CompliancePortalAccessOrderField!
 }
 
+input CompliancePortalAccessFilter {
+    query: String
+}
+
 input CompliancePortalReferenceOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalReferenceOrderBy"
@@ -379,6 +383,7 @@ type CompliancePortal implements Node {
         last: Int
         before: CursorKey
         orderBy: CompliancePortalAccessOrder
+        filter: CompliancePortalAccessFilter
     ): CompliancePortalAccessConnection! @goField(forceResolver: true)
 
     references(

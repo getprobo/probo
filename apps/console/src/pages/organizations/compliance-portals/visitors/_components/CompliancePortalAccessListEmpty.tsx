@@ -19,13 +19,16 @@
 // SOFTWARE.
 
 import { UsersThreeIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
+import { useAccessListFilters } from "../_lib/useAccessListFilters";
 import { accessListEmpty } from "../variants";
 
 export function CompliancePortalAccessListEmpty() {
   const { t } = useTranslation("organizations/compliance-portals");
+  const { hasActiveFilters, clear } = useAccessListFilters();
   const { root, icon, body } = accessListEmpty();
 
   return (
@@ -35,12 +38,17 @@ export function CompliancePortalAccessListEmpty() {
       </span>
       <div className={body()}>
         <Text size={2} weight="medium" color="faint">
-          {t("accessList.empty")}
+          {hasActiveFilters ? t("accessList.emptyFiltered") : t("accessList.empty")}
         </Text>
         <Text size={2} color="faint">
-          {t("accessList.emptyDescription")}
+          {hasActiveFilters ? t("accessList.emptyFilteredDescription") : t("accessList.emptyDescription")}
         </Text>
       </div>
+      {hasActiveFilters && (
+        <Button variant="ghost" color="neutral" onClick={clear}>
+          {t("accessList.actions.clearSearch")}
+        </Button>
+      )}
     </div>
   );
 }

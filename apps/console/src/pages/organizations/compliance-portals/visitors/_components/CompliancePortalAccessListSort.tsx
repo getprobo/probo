@@ -27,7 +27,7 @@ import { DropdownRadioItem } from "@probo/ui/src/v2/Dropdown/DropdownRadioItem";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { useTranslation } from "react-i18next";
 
-import { type AccessListSort, useAccessListSort } from "../_lib/useAccessListSort";
+import { type AccessListSort, useAccessListFilters } from "../_lib/useAccessListFilters";
 import { accessSection } from "../variants";
 
 const sortOptions: AccessListSort[] = ["requests", "joined"];
@@ -38,7 +38,7 @@ function isAccessListSort(value: string): value is AccessListSort {
 
 export function CompliancePortalAccessListSort() {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { sort, setSort } = useAccessListSort();
+  const { sort, setSort } = useAccessListFilters();
   const { sort: sortClass } = accessSection();
 
   return (

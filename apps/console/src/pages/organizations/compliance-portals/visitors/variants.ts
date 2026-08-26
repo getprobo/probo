@@ -28,7 +28,9 @@ export const visitorsPageSkeleton = tv({
   slots: {
     root: "flex flex-col gap-6",
     section: "flex flex-col gap-4",
-    intro: "flex items-start justify-between gap-4 max-sm:flex-col",
+    intro: "flex flex-col gap-3",
+    tools: "flex w-full items-center justify-between gap-2",
+    search: "w-60 max-sm:min-w-0 max-sm:flex-1",
   },
 });
 
@@ -63,7 +65,9 @@ export const ndaCard = tv({
 export const accessSection = tv({
   slots: {
     root: "flex flex-col gap-4",
-    intro: "flex items-start justify-between gap-4 max-sm:flex-col",
+    intro: "flex flex-col gap-3",
+    tools: "flex w-full items-center justify-between gap-2",
+    search: "w-60 max-sm:min-w-0 max-sm:flex-1",
     sort: "shrink-0",
     more: "flex justify-center",
     results: "transition-opacity",

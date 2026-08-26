@@ -20,6 +20,7 @@
 
 import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
@@ -30,7 +31,7 @@ import { ndaSection, visitorsPageSkeleton } from "./variants";
 
 export function CompliancePortalVisitorsPageSkeleton() {
   const { root: headerRoot, titleRow } = compliancePortalPageHeader();
-  const { root, section, intro } = visitorsPageSkeleton();
+  const { root, section, intro, tools, search } = visitorsPageSkeleton();
   const { grid } = ndaSection();
 
   return (
@@ -52,7 +53,12 @@ export function CompliancePortalVisitorsPageSkeleton() {
       <div className={section()}>
         <div className={intro()}>
           <TextSkeleton size={2} className="w-80" />
-          <ButtonSkeleton size={2} className="w-36" />
+          <div className={tools()}>
+            <div className={search()}>
+              <TextFieldSkeleton />
+            </div>
+            <ButtonSkeleton size={2} className="w-36" />
+          </div>
         </div>
         <ListSkeleton count={4} />
       </div>

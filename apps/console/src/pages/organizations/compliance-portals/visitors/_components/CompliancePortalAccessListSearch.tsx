@@ -18,41 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback } from "react";
-import { useSearchParams } from "react-router";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { useTranslation } from "react-i18next";
 
-export type AccessListSort = "requests" | "joined";
+import { useAccessListSearch } from "../_lib/useAccessListSearch";
+import { accessSection } from "../variants";
 
-const orders = {
-  requests: { field: "PENDING_REQUEST_COUNT", direction: "DESC" },
-  joined: { field: "CREATED_AT", direction: "DESC" },
-} as const;
+export function CompliancePortalAccessListSearch() {
+  const { t } = useTranslation("organizations/compliance-portals");
+  const [queryInput, setQueryInput] = useAccessListSearch();
+  const { search } = accessSection();
 
-export interface AccessListSortState {
-  sort: AccessListSort;
-  order: (typeof orders)[AccessListSort];
-  setSort: (value: AccessListSort) => void;
-}
-
-export function useAccessListSort(): AccessListSortState {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const sort: AccessListSort = searchParams.get("sort") === "joined" ? "joined" : "requests";
-
-  const setSort = useCallback((value: AccessListSort) => {
-    setSearchParams((previous) => {
-      const next = new URLSearchParams(previous);
-      if (value === "requests") {
-        next.delete("sort");
-      } else {
-        next.set("sort", value);
-      }
-      return next;
-    }, { replace: true });
-  }, [setSearchParams]);
-
-  return {
-    sort,
-    order: orders[sort],
-    setSort,
-  };
+  return (
+    <div className={search()}>
+      <TextField
+        icon={<MagnifyingGlassIcon />}
+        value={queryInput}
+        onValueChange={setQueryInput}
+        placeholder={t("accessList.search.placeholder")}
+        aria-label={t("accessList.search.placeholder")}
+      />
+    </div>
+  );
 }

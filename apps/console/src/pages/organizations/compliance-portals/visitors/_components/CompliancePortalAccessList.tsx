@@ -29,7 +29,7 @@ import type { CompliancePortalAccessListFragment$key } from "#/__generated__/cor
 import type { CompliancePortalAccessListQuery } from "#/__generated__/core/CompliancePortalAccessListQuery.graphql";
 import type { CompliancePortalAccessListRootQuery } from "#/__generated__/core/CompliancePortalAccessListRootQuery.graphql";
 
-import { useAccessListSort } from "../_lib/useAccessListSort";
+import { useAccessListFilters } from "../_lib/useAccessListFilters";
 import { accessSection } from "../variants";
 
 import { CompliancePortalAccessListEmpty } from "./CompliancePortalAccessListEmpty";
@@ -39,11 +39,12 @@ const accessListQuery = graphql`
   query CompliancePortalAccessListRootQuery(
     $compliancePortalId: ID!
     $order: CompliancePortalAccessOrder
+    $filter: CompliancePortalAccessFilter
   ) {
     node(id: $compliancePortalId) {
       __typename
       ... on CompliancePortal {
-        ...CompliancePortalAccessListFragment @arguments(order: $order)
+        ...CompliancePortalAccessListFragment @arguments(order: $order, filter: $filter)
       }
     }
   }
@@ -55,13 +56,15 @@ const fragment = graphql`
     first: { type: Int, defaultValue: 10 }
     after: { type: CursorKey, defaultValue: null }
     order: { type: CompliancePortalAccessOrder, defaultValue: { field: PENDING_REQUEST_COUNT, direction: DESC } }
+    filter: { type: CompliancePortalAccessFilter, defaultValue: null }
   )
   @refetchable(queryName: "CompliancePortalAccessListQuery") {
     accesses(
       first: $first
       after: $after
       orderBy: $order
-    ) @connection(key: "CompliancePortalAccessList_accesses" filters: ["orderBy"]) {
+      filter: $filter
+    ) @connection(key: "CompliancePortalAccessList_accesses" filters: ["orderBy", "filter"]) {
       pageInfo {
         hasNextPage
         hasPreviousPage
@@ -81,8 +84,11 @@ const fragment = graphql`
 export function CompliancePortalAccessList() {
   const { t } = useTranslation("organizations/compliance-portals");
   const { compliancePortalId } = useParams<{ compliancePortalId: string }>();
-  const { order } = useAccessListSort();
-  const [queryOrder] = useState(order);
+  const { order, query } = useAccessListFilters();
+  const [queryVars] = useState({
+    order,
+    filter: { query },
+  });
   const [isPending, startTransition] = useTransition();
   const { more, results } = accessSection({ pending: isPending });
   const skipFirstRefetch = useRef(true);
@@ -90,7 +96,8 @@ export function CompliancePortalAccessList() {
     accessListQuery,
     {
       compliancePortalId: compliancePortalId ?? "",
-      order: queryOrder,
+      order: queryVars.order,
+      filter: queryVars.filter,
     },
   );
   const portalKey = node?.__typename === "CompliancePortal" ? node : null;
@@ -112,9 +119,9 @@ export function CompliancePortalAccessList() {
     }
 
     startTransition(() => {
-      refetch({ order }, { fetchPolicy: "store-or-network" });
+      refetch({ order, filter: { query } }, { fetchPolicy: "store-or-network" });
     });
-  }, [order, refetch]);
+  }, [order, query, refetch]);
 
   if (compliancePortalId == null || data == null) {
     throw new Error("invalid type for node");
@@ -127,32 +134,34 @@ export function CompliancePortalAccessList() {
       aria-busy={isPending}
       className={results()}
     >
-      {accesses.edges.length === 0 ? (
-        <CompliancePortalAccessListEmpty />
-      ) : (
-        <>
-          <List>
-            {accesses.edges.map(({ node: access }) => (
-              <CompliancePortalAccessListItem
-                key={access.id}
-                accessKey={access}
-              />
-            ))}
-          </List>
-          {hasNext && (
-            <div className={more()}>
-              <Button
-                variant="ghost"
-                color="neutral"
-                loading={isLoadingNext}
-                onClick={() => loadNext(10)}
-              >
-                {t("accessList.actions.showMore")}
-              </Button>
-            </div>
+      {accesses.edges.length === 0
+        ? (
+            <CompliancePortalAccessListEmpty />
+          )
+        : (
+            <>
+              <List>
+                {accesses.edges.map(({ node: access }) => (
+                  <CompliancePortalAccessListItem
+                    key={access.id}
+                    accessKey={access}
+                  />
+                ))}
+              </List>
+              {hasNext && (
+                <div className={more()}>
+                  <Button
+                    variant="ghost"
+                    color="neutral"
+                    loading={isLoadingNext}
+                    onClick={() => loadNext(10)}
+                  >
+                    {t("accessList.actions.showMore")}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
     </div>
   );
 }

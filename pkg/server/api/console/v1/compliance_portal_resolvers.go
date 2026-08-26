@@ -172,7 +172,7 @@ func (r *compliancePortalResolver) SlackbotNotificationChannel(ctx context.Conte
 }
 
 // Accesses is the resolver for the accesses field.
-func (r *compliancePortalResolver) Accesses(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalAccessOrderField]) (*types.CompliancePortalAccessConnection, error) {
+func (r *compliancePortalResolver) Accesses(ctx context.Context, obj *types.CompliancePortal, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.CompliancePortalAccessOrderField], filter *types.CompliancePortalAccessFilter) (*types.CompliancePortalAccessConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessList)
 	if err != nil {
 		return nil, err
@@ -192,7 +192,12 @@ func (r *compliancePortalResolver) Accesses(ctx context.Context, obj *types.Comp
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.management.ListAccesses(ctx, scope, obj.ID, cursor)
+	accessFilter := coredata.NewCompliancePortalAccessFilter(nil)
+	if filter != nil {
+		accessFilter = coredata.NewCompliancePortalAccessFilter(filter.Query)
+	}
+
+	result, err := r.management.ListAccesses(ctx, scope, obj.ID, cursor, accessFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal accesses", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

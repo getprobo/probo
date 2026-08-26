@@ -73,13 +73,19 @@
   "accessList": {
     "empty": "No visitors yet",
     "emptyDescription": "People who sign in on your portal will appear here.",
+    "emptyFiltered": "No matching visitors",
+    "emptyFilteredDescription": "Try a different name or email, or clear the search.",
+    "search": {
+      "placeholder": "Search by name or email"
+    },
     "sort": {
       "label": "Sort by",
       "requests": "By request count",
       "joined": "By join date"
     },
     "actions": {
-      "showMore": "Show More"
+      "showMore": "Show More",
+      "clearSearch": "Clear search"
     }
   },
   "accessListItem": {

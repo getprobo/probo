@@ -73,13 +73,19 @@
   "accessList": {
     "empty": "Aucun visiteur pour le moment",
     "emptyDescription": "Les personnes qui se connectent sur votre portail apparaîtront ici.",
+    "emptyFiltered": "Aucun visiteur correspondant",
+    "emptyFilteredDescription": "Essayez un autre nom ou e-mail, ou effacez la recherche.",
+    "search": {
+      "placeholder": "Rechercher par nom ou e-mail"
+    },
     "sort": {
       "label": "Trier par",
       "requests": "Par nombre de demandes",
       "joined": "Par date d’inscription"
     },
     "actions": {
-      "showMore": "Afficher plus"
+      "showMore": "Afficher plus",
+      "clearSearch": "Effacer la recherche"
     }
   },
   "accessListItem": {

@@ -51,12 +51,17 @@
   "accessList": {
     "empty": "Nog geen bezoekers",
     "emptyDescription": "Personen die zich op uw portal aanmelden, verschijnen hier.",
+    "emptyFiltered": "Geen overeenkomende bezoekers",
+    "emptyFilteredDescription": "Probeer een andere naam of e-mailadres, of wis de zoekopdracht.",
+    "search": {
+      "placeholder": "Zoeken op naam of e-mail"
+    },
     "sort": {
       "label": "Sorteren op",
       "requests": "Op aantal aanvragen",
       "joined": "Op aanmelddatum"
     },
-    "actions": { "showMore": "Meer weergeven" }
+    "actions": { "showMore": "Meer weergeven", "clearSearch": "Zoekopdracht wissen" }
   },
   "accessListItem": {
     "requested_one": "Bekijk {{count}} aanvraag",

@@ -118,13 +118,14 @@ func (s *Service) ListAccesses(
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
 	cursor *page.Cursor[coredata.CompliancePortalAccessOrderField],
+	filter *coredata.CompliancePortalAccessFilter,
 ) (*page.Page[*coredata.CompliancePortalAccess, coredata.CompliancePortalAccessOrderField], error) {
 	var accesses coredata.CompliancePortalAccesses
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return accesses.LoadByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor)
+			return accesses.LoadByCompliancePortalID(ctx, conn, scope, compliancePageID, cursor, filter)
 		},
 	)
 	if err != nil {
