@@ -25,11 +25,11 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { compliancePortalPageHeader } from "../variants";
 
-import { ndaSection, permissionsPageSkeleton } from "./variants";
+import { ndaSection, visitorsPageSkeleton } from "./variants";
 
 export function CompliancePortalPermissionsPageSkeleton() {
   const { root: headerRoot, titleRow } = compliancePortalPageHeader();
-  const { root, section, intro } = permissionsPageSkeleton();
+  const { root, section, intro } = visitorsPageSkeleton();
   const { grid } = ndaSection();
 
   return (

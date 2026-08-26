@@ -37,7 +37,7 @@
     "title": "Hosting",
     "description": "Publish your portal and serve it on a custom domain."
   },
-  "permissionsPage": {
+  "visitorsPage": {
     "title": "Visitors",
     "description": "Control who can read private documents and require an NDA."
   },

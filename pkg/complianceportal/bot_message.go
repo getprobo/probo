@@ -27,6 +27,7 @@ import (
 	"net/url"
 
 	"go.probo.inc/probo/pkg/bot"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 )
@@ -49,6 +50,7 @@ type (
 		RequesterName      string            `json:"requester_name"`
 		RequesterEmail     string            `json:"requester_email"`
 		CompliancePortalID string            `json:"compliance_portal_id"`
+		AccessID           string            `json:"compliance_portal_access_id"`
 		Documents          []MessageResource `json:"documents"`
 		Reports            []MessageResource `json:"reports"`
 		Files              []MessageResource `json:"files"`
@@ -78,7 +80,8 @@ func (r *Renderer) RenderMessage(
 		url.PathEscape(message.OrganizationID.String()),
 		"compliance-portals",
 		url.PathEscape(attributes.CompliancePortalID),
-		"permissions",
+		"visitors",
+		url.PathEscape(attributes.AccessID),
 	)
 	if err != nil {
 		return bot.MessageIntent{}, fmt.Errorf("cannot build access request URL: %w", err)
@@ -257,6 +260,11 @@ func DecodeMessageAttributes(attributes map[string]any) (MessageAttributes, erro
 
 	if _, err := gid.ParseGID(decoded.CompliancePortalID); err != nil {
 		return MessageAttributes{}, fmt.Errorf("invalid compliance portal ID")
+	}
+
+	accessID, err := gid.ParseGID(decoded.AccessID)
+	if err != nil || accessID.EntityType() != coredata.CompliancePortalAccessEntityType {
+		return MessageAttributes{}, fmt.Errorf("invalid compliance portal access ID")
 	}
 
 	if decoded.RequesterEmail != "" {

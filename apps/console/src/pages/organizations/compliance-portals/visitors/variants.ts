@@ -20,11 +20,11 @@
 
 import { tv } from "tailwind-variants/lite";
 
-export const permissionsPage = tv({
+export const visitorsPage = tv({
   base: "flex flex-col gap-6",
 });
 
-export const permissionsPageSkeleton = tv({
+export const visitorsPageSkeleton = tv({
   slots: {
     root: "flex flex-col gap-6",
     section: "flex flex-col gap-4",

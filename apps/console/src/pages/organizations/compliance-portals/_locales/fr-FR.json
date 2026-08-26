@@ -37,7 +37,7 @@
     "title": "Hébergement",
     "description": "Publiez votre portail et associez-le à un domaine personnalisé."
   },
-  "permissionsPage": {
+  "visitorsPage": {
     "title": "Visiteurs",
     "description": "Contrôlez qui peut lire les documents privés et exigez un NDA."
   },

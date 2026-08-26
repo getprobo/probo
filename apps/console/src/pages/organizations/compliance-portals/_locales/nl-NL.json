@@ -19,7 +19,7 @@
     "title": "Hosting",
     "description": "Publiceer uw portaal en koppel een eigen domein."
   },
-  "permissionsPage": {
+  "visitorsPage": {
     "title": "Bezoekers",
     "description": "Bepaal wie privé-documenten mag lezen en vereis een NDA."
   },

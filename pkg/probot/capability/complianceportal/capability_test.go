@@ -753,6 +753,7 @@ func TestCapability_RenderMessageProducesChannelNeutralIntent(t *testing.T) {
 	messageID := gid.New(tenantID, coredata.CompliancePortalAccessEntityType)
 	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 	compliancePortalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
+	accessID := gid.New(tenantID, coredata.CompliancePortalAccessEntityType)
 	capability := NewCapability(
 		&fakeAccessService{renderer: portal.NewRenderer("https://app.example.com")},
 		nil,
@@ -766,9 +767,10 @@ func TestCapability_RenderMessageProducesChannelNeutralIntent(t *testing.T) {
 			OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 			Type:           portal.AccessMessageType,
 			Attributes: map[string]any{
-				"requester_name":       "Jane Requester",
-				"requester_email":      "jane@example.com",
-				"compliance_portal_id": compliancePortalID.String(),
+				"requester_name":              "Jane Requester",
+				"requester_email":             "jane@example.com",
+				"compliance_portal_id":        compliancePortalID.String(),
+				"compliance_portal_access_id": accessID.String(),
 				"documents": []any{
 					map[string]any{
 						"ID":     documentID.String(),
@@ -790,7 +792,11 @@ func TestCapability_RenderMessageProducesChannelNeutralIntent(t *testing.T) {
 	assert.Equal(t, "compliance_access.approve_all", intent.Actions[0].ID)
 	assert.Empty(t, intent.Actions[0].Value)
 	assert.Equal(t, "compliance_access.deny_all", intent.Actions[1].ID)
-	assert.Contains(t, intent.Actions[2].URL, "/compliance-portals/"+compliancePortalID.String()+"/permissions")
+	assert.Contains(
+		t,
+		intent.Actions[2].URL,
+		"/compliance-portals/"+compliancePortalID.String()+"/visitors/"+accessID.String(),
+	)
 
 	require.Len(t, intent.Groups, 1)
 	assert.Equal(t, "Documents (1)", intent.Groups[0].Title)

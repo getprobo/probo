@@ -20,6 +20,8 @@
 
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
+import { Fragment } from "react";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
@@ -27,8 +29,8 @@ import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { CompliancePortalLayoutSkeleton } from "./CompliancePortalLayoutSkeleton";
 import { CompliancePortalHostingPageSkeleton } from "./hosting/CompliancePortalHostingPageSkeleton";
 import { CompliancePortalIntegrationsPageSkeleton } from "./integrations/CompliancePortalIntegrationsPageSkeleton";
-import { CompliancePortalPermissionsPageSkeleton } from "./permissions/CompliancePortalPermissionsPageSkeleton";
-import { CompliancePortalVisitorPageSkeleton } from "./permissions/CompliancePortalVisitorPageSkeleton";
+import { CompliancePortalPermissionsPageSkeleton } from "./visitors/CompliancePortalPermissionsPageSkeleton";
+import { CompliancePortalVisitorPageSkeleton } from "./visitors/CompliancePortalVisitorPageSkeleton";
 
 export const compliancePortalRoutes = [
   {
@@ -52,17 +54,17 @@ export const compliancePortalRoutes = [
         Component: lazy(() => import("#/pages/organizations/compliance-portals/hosting/CompliancePortalHostingPageLoader")),
       },
       {
-        path: "permissions",
+        path: "visitors",
         children: [
           {
             index: true,
             Fallback: CompliancePortalPermissionsPageSkeleton,
-            Component: lazy(() => import("#/pages/organizations/compliance-portals/permissions/CompliancePortalPermissionsPageLoader")),
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/visitors/CompliancePortalPermissionsPageLoader")),
           },
           {
             path: ":accessId",
             Fallback: CompliancePortalVisitorPageSkeleton,
-            Component: lazy(() => import("#/pages/organizations/compliance-portals/permissions/CompliancePortalVisitorPageLoader")),
+            Component: lazy(() => import("#/pages/organizations/compliance-portals/visitors/CompliancePortalVisitorPageLoader")),
           },
         ],
       },

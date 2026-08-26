@@ -32,7 +32,7 @@ import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageH
 
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
-import { accessSection, permissionsPage } from "./variants";
+import { accessSection, visitorsPage } from "./variants";
 
 export const compliancePortalPermissionsPageQuery = graphql`
   query CompliancePortalPermissionsPageQuery($compliancePortalId: ID!) {
@@ -53,7 +53,7 @@ interface CompliancePortalPermissionsPageProps {
 
 export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPermissionsPageProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const title = t("permissionsPage.title");
+  const title = t("visitorsPage.title");
   usePageTitle(title);
   const { root, intro } = accessSection();
 
@@ -66,10 +66,10 @@ export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPe
   }
 
   return (
-    <div className={permissionsPage()}>
+    <div className={visitorsPage()}>
       <CompliancePortalPageHeader
         title={title}
-        description={t("permissionsPage.description")}
+        description={t("visitorsPage.description")}
       />
       {compliancePortal.canGetNDA && (
         <CompliancePortalNDASection compliancePortalKey={compliancePortal} />

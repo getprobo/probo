@@ -429,7 +429,7 @@ func (s *Service) QueueWelcome(
 		url.PathEscape(organizationID.String()),
 		"compliance-portals",
 		url.PathEscape(compliancePortalID.String()),
-		"permissions",
+		"visitors",
 	)
 	if err != nil {
 		return fmt.Errorf("cannot build compliance portal access URL: %w", err)

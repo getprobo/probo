@@ -35,6 +35,7 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 
 	tenantID := gid.NewTenantID()
 	portalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
+	accessID := gid.New(tenantID, coredata.CompliancePortalAccessEntityType)
 	messageID := gid.New(tenantID, coredata.AgentExecutionEntityType)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	documentID := gid.New(tenantID, coredata.DocumentEntityType)
@@ -46,6 +47,7 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 			Type:           AccessMessageType,
 			Attributes: map[string]any{
 				CompliancePortalIDAttribute: portalID.String(),
+				AccessIDAttribute:           accessID.String(),
 				RequesterEmailAttribute:     "requester@example.com",
 				DocumentsAttribute: []MessageResource{{
 					ID:     documentID.String(),
@@ -58,10 +60,10 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, intent.Actions, 3)
 	assert.Equal(t, AccessCapability+".approve_all", intent.Actions[0].ID)
-	assert.Contains(
+	assert.Equal(
 		t,
+		"https://app.example.com/organizations/"+organizationID.String()+"/compliance-portals/"+portalID.String()+"/visitors/"+accessID.String(),
 		intent.Actions[2].URL,
-		"/compliance-portals/"+portalID.String()+"/permissions",
 	)
 
 	require.Len(t, intent.Groups, 1)
@@ -103,6 +105,7 @@ func TestRenderer_AuditURLUsesGovernancePath(t *testing.T) {
 			Type:           AccessMessageType,
 			Attributes: map[string]any{
 				CompliancePortalIDAttribute: gid.New(tenantID, coredata.CompliancePortalEntityType).String(),
+				AccessIDAttribute:           gid.New(tenantID, coredata.CompliancePortalAccessEntityType).String(),
 				RequesterEmailAttribute:     "requester@example.com",
 				ReportsAttribute: []MessageResource{{
 					ID:      reportID.String(),

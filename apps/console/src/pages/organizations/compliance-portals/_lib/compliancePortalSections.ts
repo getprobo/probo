@@ -51,7 +51,7 @@ export const compliancePortalSectionsFragment = graphql`
 
 export type CompliancePortalSectionId
   = | "hosting"
-    | "permissions"
+    | "visitors"
     | "integrations"
     | "landing"
     | "documents"
@@ -99,9 +99,9 @@ export const COMPLIANCE_PORTAL_SECTIONS: CompliancePortalSection[] = [
     isVisible: permissions => permissions.canGetCustomDomain,
   },
   {
-    id: "permissions",
-    path: "permissions",
-    labelKey: "nav.compliancePortalsPermissions",
+    id: "visitors",
+    path: "visitors",
+    labelKey: "nav.compliancePortalsVisitors",
     group: "settings",
     isVisible: permissions => permissions.canGetNDA || permissions.canListAccesses,
   },
