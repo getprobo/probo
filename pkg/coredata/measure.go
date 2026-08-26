@@ -63,12 +63,48 @@ func (m Measure) CursorKey(orderBy MeasureOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
+// Deleted measures fall back to the latest measure event so as-of nested fields
+// can still authorize against the organization they belonged to.
 func (m *Measure) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM measures WHERE id = ANY(@resource_ids::text[])`
+	q := `
+SELECT DISTINCT ON (id)
+	id,
+	organization_id
+FROM (
+	SELECT
+		id,
+		organization_id,
+		0 AS rank
+	FROM
+		measures
+	WHERE
+		id = ANY(@resource_ids::text[])
+	UNION ALL
+	SELECT
+		measure_id,
+		organization_id,
+		1 AS rank
+	FROM (
+		SELECT DISTINCT ON (measure_id)
+			measure_id,
+			organization_id
+		FROM
+			measure_events
+		WHERE
+			measure_id = ANY(@resource_ids::text[])
+		ORDER BY
+			measure_id,
+			created_at DESC
+	) events
+) candidates
+ORDER BY
+	id,
+	rank
+`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -324,6 +360,179 @@ WHERE %s
 	*m = measures
 
 	return nil
+}
+
+func (m *Measures) LoadByIDsAsOf(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureIDs []gid.GID,
+	asOf time.Time,
+	cursor *page.Cursor[MeasureOrderField],
+	filter *MeasureFilter,
+) error {
+	if len(measureIDs) == 0 {
+		*m = nil
+		return nil
+	}
+
+	q := `
+WITH latest AS (
+	SELECT DISTINCT ON (measure_id)
+		tenant_id,
+		organization_id,
+		measure_id,
+		event_type,
+		name,
+		category,
+		state,
+		measure_created_at,
+		created_at
+	FROM
+		measure_events
+	WHERE
+		%s
+		AND measure_id = ANY(@measure_ids)
+		AND created_at < @as_of
+	ORDER BY
+		measure_id,
+		created_at DESC
+),
+msrs AS (
+	SELECT
+		latest.measure_id AS id,
+		latest.tenant_id,
+		latest.organization_id,
+		latest.category,
+		latest.name,
+		CAST(NULL AS text) AS description,
+		latest.state,
+		'' AS reference_id,
+		latest.measure_created_at AS created_at,
+		latest.created_at AS updated_at
+	FROM
+		latest
+	WHERE
+		latest.event_type <> @deleted
+)
+SELECT
+	id,
+	organization_id,
+	category,
+	name,
+	description,
+	state,
+	reference_id,
+	created_at,
+	updated_at
+FROM
+	msrs
+WHERE
+	%s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(
+		q,
+		scope.SQLFragment(),
+		scope.SQLFragment(),
+		filter.EventSQLFragment(),
+		cursor.SQLFragment(),
+	)
+
+	args := pgx.StrictNamedArgs{
+		"measure_ids": measureIDs,
+		"as_of":       asOf,
+		"deleted":     MeasureEventTypeDeleted,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query measures as of: %w", err)
+	}
+
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
+	if err != nil {
+		return fmt.Errorf("cannot collect measures as of: %w", err)
+	}
+
+	*m = measures
+
+	return nil
+}
+
+func (m *Measures) CountByIDsAsOf(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureIDs []gid.GID,
+	asOf time.Time,
+	filter *MeasureFilter,
+) (int, error) {
+	if len(measureIDs) == 0 {
+		return 0, nil
+	}
+
+	q := `
+WITH latest AS (
+	SELECT DISTINCT ON (measure_id)
+		tenant_id,
+		measure_id,
+		event_type,
+		name,
+		category,
+		state
+	FROM
+		measure_events
+	WHERE
+		%s
+		AND measure_id = ANY(@measure_ids)
+		AND created_at < @as_of
+	ORDER BY
+		measure_id,
+		created_at DESC
+),
+msrs AS (
+	SELECT
+		latest.measure_id AS id,
+		latest.tenant_id,
+		latest.name,
+		latest.category,
+		latest.state
+	FROM
+		latest
+	WHERE
+		latest.event_type <> @deleted
+)
+SELECT
+	COUNT(id)
+FROM
+	msrs
+WHERE
+	%s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), filter.EventSQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"measure_ids": measureIDs,
+		"as_of":       asOf,
+		"deleted":     MeasureEventTypeDeleted,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan measures as of count: %w", err)
+	}
+
+	return count, nil
 }
 
 func (m *Measures) CountByControlID(
@@ -817,9 +1026,16 @@ WHERE %s
 
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update measure: %w", err)
+	}
 
-	return err
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (m *Measure) Delete(

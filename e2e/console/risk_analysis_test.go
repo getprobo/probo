@@ -22,6 +22,7 @@ package console_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1064,4 +1065,467 @@ func TestRiskAnalysisNode_WithBoundary(t *testing.T) {
 	}, &updateResult)
 	require.NoError(t, err)
 	assert.Nil(t, updateResult.UpdateRiskAnalysisNode.RiskAnalysisNode.BoundaryID)
+}
+
+func TestRiskAnalysis_MatrixAsOf(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	riskID := factory.CreateRisk(owner)
+	analysisID := factory.CreateRiskAnalysis(owner)
+	factory.LinkRiskToAnalysis(owner, riskID, analysisID)
+	factory.CreateTreatmentPlan(owner, riskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 4,
+		"inherentImpact":     4,
+		"residualLikelihood": 1,
+		"residualImpact":     2,
+	})
+
+	queryPlans := func(asOf *string, first int) asOfPlansResult {
+		t.Helper()
+
+		return queryRiskAnalysisPlansAsOf(t, owner, analysisID, asOf, first, nil)
+	}
+
+	live := queryPlans(nil, 1)
+	require.Equal(t, 1, live.Node.TreatmentPlans.TotalCount)
+	require.Len(t, live.Node.TreatmentPlans.Edges, 1)
+	livePlan := live.Node.TreatmentPlans.Edges[0].Node
+	assert.Nil(t, livePlan.AsOf)
+	assert.Equal(t, 4, livePlan.NetLikelihood)
+	assert.Equal(t, 4, livePlan.NetImpact)
+	require.NotNil(t, livePlan.Owner)
+	assert.NotEmpty(t, livePlan.Owner.FullName)
+	assert.True(t, livePlan.CanUpdate)
+	assert.True(t, livePlan.CanDelete)
+	assert.Equal(t, 0, livePlan.Progress.Total)
+	assert.Equal(t, 1, asOfMatrixCellCount(live.Node.MatrixCells, "NET", 4, 4))
+
+	asOf := time.Now().UTC().Format(time.RFC3339Nano)
+	asOfResult := queryPlans(&asOf, 1)
+	require.Equal(t, 1, asOfResult.Node.TreatmentPlans.TotalCount)
+	require.Len(t, asOfResult.Node.TreatmentPlans.Edges, 1)
+	asOfPlan := asOfResult.Node.TreatmentPlans.Edges[0].Node
+	require.NotNil(t, asOfPlan.AsOf)
+	assert.Equal(t, 4, asOfPlan.NetLikelihood)
+	assert.Equal(t, 4, asOfPlan.NetImpact)
+	assert.False(t, asOfPlan.CanUpdate)
+	assert.False(t, asOfPlan.CanDelete)
+	assert.Equal(t, 1, asOfMatrixCellCount(asOfResult.Node.MatrixCells, "NET", 4, 4))
+
+	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Matrix mitigation"})
+	createdPlanID := livePlan.ID
+	factory.LinkTreatmentPlanMeasure(owner, createdPlanID, measureID)
+	updateMeasureState(t, owner, measureID, "IMPLEMENTED")
+
+	afterImplement := queryPlans(nil, 10)
+	require.Len(t, afterImplement.Node.TreatmentPlans.Edges, 1)
+	afterPlan := afterImplement.Node.TreatmentPlans.Edges[0].Node
+	assert.Equal(t, 1, afterPlan.NetLikelihood)
+	assert.Equal(t, 2, afterPlan.NetImpact)
+	require.Len(t, afterPlan.Measures.Edges, 1)
+	assert.Equal(t, measureID, afterPlan.Measures.Edges[0].Node.ID)
+	assert.Equal(t, "Matrix mitigation", afterPlan.Measures.Edges[0].Node.Name)
+	assert.Equal(t, "IMPLEMENTED", afterPlan.Measures.Edges[0].Node.State)
+	assert.Equal(t, 1, afterPlan.Progress.Total)
+	assert.Equal(t, 1, afterPlan.Progress.Done)
+	assert.Equal(t, 1, asOfMatrixCellCount(afterImplement.Node.MatrixCells, "NET", 1, 2))
+	assert.Equal(t, 0, asOfMatrixCellCount(afterImplement.Node.MatrixCells, "NET", 4, 4))
+
+	implementedAsOf := time.Now().UTC().Format(time.RFC3339Nano)
+
+	var deleteResult struct {
+		DeleteTreatmentPlan struct {
+			DeletedTreatmentPlanID string `json:"deletedTreatmentPlanId"`
+		} `json:"deleteTreatmentPlan"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: DeleteTreatmentPlanInput!) {
+			deleteTreatmentPlan(input: $input) {
+				deletedTreatmentPlanId
+			}
+		}
+	`, map[string]any{"input": map[string]any{"treatmentPlanId": createdPlanID}}, &deleteResult)
+	require.NoError(t, err)
+
+	empty := queryPlans(nil, 10)
+	assert.Equal(t, 0, empty.Node.TreatmentPlans.TotalCount)
+	assert.Empty(t, empty.Node.TreatmentPlans.Edges)
+	assert.Equal(t, 0, asOfMatrixCellCount(empty.Node.MatrixCells, "NET", 1, 2))
+
+	restored := queryPlans(&implementedAsOf, 10)
+	require.Equal(t, 1, restored.Node.TreatmentPlans.TotalCount)
+	require.Len(t, restored.Node.TreatmentPlans.Edges, 1)
+	restoredPlan := restored.Node.TreatmentPlans.Edges[0].Node
+	assert.Equal(t, createdPlanID, restoredPlan.ID)
+	assert.Equal(t, 1, restoredPlan.NetLikelihood)
+	assert.Equal(t, 2, restoredPlan.NetImpact)
+	require.NotNil(t, restoredPlan.Owner)
+	assert.NotEmpty(t, restoredPlan.Owner.FullName)
+	assert.False(t, restoredPlan.CanUpdate)
+	assert.False(t, restoredPlan.CanDelete)
+	require.Len(t, restoredPlan.Measures.Edges, 1)
+	assert.Equal(t, measureID, restoredPlan.Measures.Edges[0].Node.ID)
+	assert.Equal(t, "IMPLEMENTED", restoredPlan.Measures.Edges[0].Node.State)
+	assert.Equal(t, 1, restoredPlan.Progress.Total)
+	assert.Equal(t, 1, restoredPlan.Progress.Done)
+	assert.Equal(t, 1, asOfMatrixCellCount(restored.Node.MatrixCells, "NET", 1, 2))
+}
+
+func TestRiskAnalysis_ListMeasuresAsOfViaNode(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	riskID := factory.CreateRisk(owner)
+	analysisID := factory.CreateRiskAnalysis(owner)
+	factory.LinkRiskToAnalysis(owner, riskID, analysisID)
+	planID := factory.CreateTreatmentPlan(owner, riskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 3,
+		"inherentImpact":     3,
+	})
+	olderMeasureID := factory.CreateMeasure(owner, factory.Attrs{
+		"name":     "Older as-of measure",
+		"category": "POLICY",
+	})
+	newerMeasureID := factory.CreateMeasure(owner, factory.Attrs{
+		"name":     "Newer as-of measure",
+		"category": "TECHNICAL",
+	})
+	factory.LinkTreatmentPlanMeasure(owner, planID, olderMeasureID)
+	factory.LinkTreatmentPlanMeasure(owner, planID, newerMeasureID)
+	updateMeasureState(t, owner, olderMeasureID, "IMPLEMENTED")
+
+	asOf := time.Now().UTC().Format(time.RFC3339Nano)
+
+	updateMeasureState(t, owner, olderMeasureID, "NOT_IMPLEMENTED")
+	_, err := owner.Do(`
+		mutation($input: UpdateMeasureInput!) {
+			updateMeasure(input: $input) { measure { id } }
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":       olderMeasureID,
+			"category": "TRAINING",
+		},
+	})
+	require.NoError(t, err)
+
+	queryMeasures := func(asOf *string, first int, after *string, filter map[string]any) asOfMeasureConnection {
+		t.Helper()
+
+		result := queryTreatmentPlanMeasuresAsOf(t, owner, planID, asOf, first, after, filter)
+		assert.Equal(t, "TreatmentPlan", result.Typename)
+		assert.Nil(t, result.AsOf)
+
+		return result.Measures
+	}
+
+	firstPage := queryMeasures(&asOf, 1, nil, nil)
+	require.True(t, firstPage.PageInfo.HasNextPage)
+	require.NotNil(t, firstPage.PageInfo.EndCursor)
+	require.Len(t, firstPage.Edges, 1)
+
+	secondPage := queryMeasures(&asOf, 1, firstPage.PageInfo.EndCursor, nil)
+	require.Len(t, secondPage.Edges, 1)
+	assert.False(t, secondPage.PageInfo.HasNextPage)
+
+	historical := map[string]struct{ State, Category string }{
+		firstPage.Edges[0].Node.ID: {
+			State:    firstPage.Edges[0].Node.State,
+			Category: firstPage.Edges[0].Node.Category,
+		},
+		secondPage.Edges[0].Node.ID: {
+			State:    secondPage.Edges[0].Node.State,
+			Category: secondPage.Edges[0].Node.Category,
+		},
+	}
+	assert.Contains(t, historical, olderMeasureID)
+	assert.Contains(t, historical, newerMeasureID)
+	assert.Equal(t, "IMPLEMENTED", historical[olderMeasureID].State)
+	assert.Equal(t, "POLICY", historical[olderMeasureID].Category)
+	assert.Equal(t, "TECHNICAL", historical[newerMeasureID].Category)
+
+	filtered := queryMeasures(&asOf, 10, nil, map[string]any{"category": "POLICY"})
+	require.Len(t, filtered.Edges, 1)
+	assert.Equal(t, olderMeasureID, filtered.Edges[0].Node.ID)
+
+	filteredByState := queryMeasures(&asOf, 10, nil, map[string]any{"state": "IMPLEMENTED"})
+	require.Len(t, filteredByState.Edges, 1)
+	assert.Equal(t, olderMeasureID, filteredByState.Edges[0].Node.ID)
+
+	live := queryMeasures(nil, 10, nil, nil)
+	require.Len(t, live.Edges, 2)
+	states := map[string]string{
+		live.Edges[0].Node.ID: live.Edges[0].Node.State,
+		live.Edges[1].Node.ID: live.Edges[1].Node.State,
+	}
+	categories := map[string]string{
+		live.Edges[0].Node.ID: live.Edges[0].Node.Category,
+		live.Edges[1].Node.ID: live.Edges[1].Node.Category,
+	}
+
+	assert.Equal(t, "NOT_IMPLEMENTED", states[olderMeasureID])
+	assert.Equal(t, "TRAINING", categories[olderMeasureID])
+}
+
+func TestRiskAnalysis_DeleteMeasureKeepsAsOfHistory(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	riskID := factory.CreateRisk(owner)
+	analysisID := factory.CreateRiskAnalysis(owner)
+	factory.LinkRiskToAnalysis(owner, riskID, analysisID)
+	planID := factory.CreateTreatmentPlan(owner, riskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 3,
+		"inherentImpact":     3,
+	})
+	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Keep after delete"})
+	factory.LinkTreatmentPlanMeasure(owner, planID, measureID)
+
+	asOf := time.Now().UTC().Format(time.RFC3339Nano)
+
+	_, err := owner.Do(`
+		mutation($input: UpdateMeasureInput!) {
+			updateMeasure(input: $input) { measure { id name } }
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":   measureID,
+			"name": "Gone live",
+		},
+	})
+	require.NoError(t, err)
+
+	var deleted struct {
+		DeleteMeasure struct {
+			DeletedMeasureID string `json:"deletedMeasureId"`
+		} `json:"deleteMeasure"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: DeleteMeasureInput!) {
+			deleteMeasure(input: $input) { deletedMeasureId }
+		}
+	`, map[string]any{
+		"input": map[string]any{"measureId": measureID},
+	}, &deleted)
+	require.NoError(t, err)
+	assert.Equal(t, measureID, deleted.DeleteMeasure.DeletedMeasureID)
+
+	queryMeasures := func(asOf *string) []asOfMeasureNode {
+		t.Helper()
+
+		return asOfMeasureNodes(
+			queryTreatmentPlanMeasuresAsOf(t, owner, planID, asOf, 10, nil, nil).Measures,
+		)
+	}
+
+	assert.Empty(t, queryMeasures(nil))
+
+	historical := queryMeasures(&asOf)
+	require.Len(t, historical, 1)
+	assert.Equal(t, measureID, historical[0].ID)
+	assert.Equal(t, "Keep after delete", historical[0].Name)
+	require.NotNil(t, historical[0].AsOf)
+	assert.Equal(t, 1, historical[0].TreatmentPlans.TotalCount)
+	require.Len(t, historical[0].TreatmentPlans.Edges, 1)
+	assert.Equal(t, planID, historical[0].TreatmentPlans.Edges[0].Node.ID)
+	require.NotNil(t, historical[0].TreatmentPlans.Edges[0].Node.AsOf)
+
+	afterDelete := time.Now().UTC().Format(time.RFC3339Nano)
+	assert.Empty(t, queryMeasures(&afterDelete))
+}
+
+func TestRiskAnalysis_TreatmentPlanCategoryAsOf(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	analysisID := factory.CreateRiskAnalysis(owner)
+	alphaRiskID := factory.CreateRisk(owner, factory.Attrs{"category": "AlphaCat"})
+	zuluRiskID := factory.CreateRisk(owner, factory.Attrs{"category": "ZuluCat"})
+	factory.LinkRiskToAnalysis(owner, alphaRiskID, analysisID)
+	factory.LinkRiskToAnalysis(owner, zuluRiskID, analysisID)
+	alphaPlanID := factory.CreateTreatmentPlan(owner, alphaRiskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 2,
+		"inherentImpact":     2,
+	})
+	zuluPlanID := factory.CreateTreatmentPlan(owner, zuluRiskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 3,
+		"inherentImpact":     3,
+	})
+
+	asOf := time.Now().UTC().Format(time.RFC3339Nano)
+
+	var updateRisk struct {
+		UpdateRisk struct {
+			Risk struct {
+				ID       string `json:"id"`
+				Category string `json:"category"`
+			} `json:"risk"`
+		} `json:"updateRisk"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: UpdateRiskInput!) {
+			updateRisk(input: $input) {
+				risk { id category }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":       alphaRiskID,
+			"category": "ZzzCat",
+		},
+	}, &updateRisk)
+	require.NoError(t, err)
+	assert.Equal(t, "ZzzCat", updateRisk.UpdateRisk.Risk.Category)
+
+	queryPlans := func(asOf *string) []asOfPlanNode {
+		t.Helper()
+
+		return asOfPlanNodes(
+			queryRiskAnalysisPlansAsOf(
+				t,
+				owner,
+				analysisID,
+				asOf,
+				10,
+				map[string]any{"field": "CATEGORY", "direction": "ASC"},
+			),
+		)
+	}
+
+	live := queryPlans(nil)
+	historical := queryPlans(&asOf)
+
+	assert.Equal(t, []string{zuluPlanID, alphaPlanID}, asOfPlanIDs(live))
+	assert.Equal(t, []string{alphaPlanID, zuluPlanID}, asOfPlanIDs(historical))
+
+	liveAlpha := asOfPlanByID(t, live, alphaPlanID)
+	assert.Equal(t, "ZzzCat", liveAlpha.Category)
+	assert.Equal(t, "ZzzCat", liveAlpha.Risk.Category)
+
+	historicalAlpha := asOfPlanByID(t, historical, alphaPlanID)
+	assert.Equal(t, "AlphaCat", historicalAlpha.Category)
+	assert.Equal(t, "ZzzCat", historicalAlpha.Risk.Category)
+}
+
+func TestRiskAnalysis_NestedTreatmentPlansAsOf(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	historicalRiskID := factory.CreateRisk(owner)
+	liveRiskID := factory.CreateRisk(owner)
+	analysisID := factory.CreateRiskAnalysis(owner)
+	factory.LinkRiskToAnalysis(owner, historicalRiskID, analysisID)
+	factory.LinkRiskToAnalysis(owner, liveRiskID, analysisID)
+	historicalPlanID := factory.CreateTreatmentPlan(owner, historicalRiskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 2,
+		"inherentImpact":     2,
+	})
+	livePlanID := factory.CreateTreatmentPlan(owner, liveRiskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 4,
+		"inherentImpact":     4,
+	})
+	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Nested as-of plans"})
+	factory.LinkTreatmentPlanMeasure(owner, historicalPlanID, measureID)
+
+	asOf := time.Now().UTC().Format(time.RFC3339Nano)
+
+	factory.UnlinkTreatmentPlanMeasure(owner, historicalPlanID, measureID)
+	factory.LinkTreatmentPlanMeasure(owner, livePlanID, measureID)
+
+	historical := queryTreatmentPlanMeasuresAsOf(t, owner, historicalPlanID, &asOf, 10, nil, nil)
+	require.Len(t, historical.Measures.Edges, 1)
+
+	historicalMeasure := historical.Measures.Edges[0].Node
+	assert.Equal(t, measureID, historicalMeasure.ID)
+	require.NotNil(t, historicalMeasure.AsOf)
+	assert.Equal(t, 1, historicalMeasure.TreatmentPlans.TotalCount)
+	require.Len(t, historicalMeasure.TreatmentPlans.Edges, 1)
+	assert.Equal(t, historicalPlanID, historicalMeasure.TreatmentPlans.Edges[0].Node.ID)
+	require.NotNil(t, historicalMeasure.TreatmentPlans.Edges[0].Node.AsOf)
+
+	live := queryMeasureTreatmentPlansAsOf(t, owner, measureID, nil)
+	assert.Equal(t, 1, live.TotalCount)
+	require.Len(t, live.Edges, 1)
+	assert.Equal(t, livePlanID, live.Edges[0].Node.ID)
+	assert.Nil(t, live.Edges[0].Node.AsOf)
+}
+
+func TestRiskAnalysis_DeleteRiskRequiresTreatmentPlanHistory(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	riskID := factory.CreateRisk(owner)
+	analysisID := factory.CreateRiskAnalysis(owner)
+	diagramID := factory.CreateRiskAnalysisDiagram(owner, analysisID)
+	scenarioID := factory.CreateRiskAnalysisScenario(owner, diagramID)
+	factory.LinkRiskAnalysisScenarioRisk(owner, scenarioID, riskID)
+	planID := factory.CreateTreatmentPlan(owner, riskID, analysisID, factory.Attrs{
+		"treatment":          "MITIGATED",
+		"inherentLikelihood": 3,
+		"inherentImpact":     3,
+	})
+
+	deleteRisk := func() error {
+		t.Helper()
+
+		_, err := owner.Do(`
+			mutation($input: DeleteRiskInput!) {
+				deleteRisk(input: $input) { deletedRiskId }
+			}
+		`, map[string]any{"input": map[string]any{"riskId": riskID}})
+
+		return err
+	}
+
+	var deleteScenario struct {
+		DeleteRiskAnalysisScenario struct {
+			DeletedRiskAnalysisScenarioID string `json:"deletedRiskAnalysisScenarioId"`
+		} `json:"deleteRiskAnalysisScenario"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: DeleteRiskAnalysisScenarioInput!) {
+			deleteRiskAnalysisScenario(input: $input) {
+				deletedRiskAnalysisScenarioId
+			}
+		}
+	`, map[string]any{"input": map[string]any{"riskAnalysisScenarioId": scenarioID}}, &deleteScenario)
+	require.NoError(t, err)
+
+	testutil.RequireConflictError(t, deleteRisk())
+
+	asOf := time.Now().UTC().Format(time.RFC3339Nano)
+
+	var deletePlan struct {
+		DeleteTreatmentPlan struct {
+			DeletedTreatmentPlanID string `json:"deletedTreatmentPlanId"`
+		} `json:"deleteTreatmentPlan"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: DeleteTreatmentPlanInput!) {
+			deleteTreatmentPlan(input: $input) { deletedTreatmentPlanId }
+		}
+	`, map[string]any{"input": map[string]any{"treatmentPlanId": planID}}, &deletePlan)
+	require.NoError(t, err)
+	assert.Equal(t, planID, deletePlan.DeleteTreatmentPlan.DeletedTreatmentPlanID)
+
+	testutil.RequireConflictError(t, deleteRisk())
+
+	restored := queryRiskAnalysisPlansAsOf(t, owner, analysisID, &asOf, 10, nil)
+	require.Len(t, restored.Node.TreatmentPlans.Edges, 1)
+	assert.Equal(t, planID, restored.Node.TreatmentPlans.Edges[0].Node.ID)
+	assert.Equal(t, riskID, restored.Node.TreatmentPlans.Edges[0].Node.Risk.ID)
+	assert.NotEmpty(t, restored.Node.TreatmentPlans.Edges[0].Node.Risk.Name)
 }

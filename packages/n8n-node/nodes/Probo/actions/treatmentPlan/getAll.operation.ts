@@ -24,6 +24,7 @@ import { proboApiRequestAllItems } from '../../GenericFunctions';
 const treatmentPlanNodeFields = `
 	id
 	treatment
+	category
 	inherentLikelihood
 	inherentImpact
 	inherentRiskScore
@@ -51,11 +52,14 @@ const treatmentPlanNodeFields = `
 `;
 
 function treatmentPlansQuery(parentType: 'Organization' | 'Risk' | 'RiskAnalysis'): string {
+	const asOfArg = parentType === 'RiskAnalysis' ? ', $asOf: Datetime' : '';
+	const asOfField = parentType === 'RiskAnalysis' ? ', asOf: $asOf' : '';
+
 	return `
-		query GetTreatmentPlans($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter) {
+		query GetTreatmentPlans($id: ID!, $first: Int, $after: CursorKey, $orderBy: TreatmentPlanOrder, $filter: TreatmentPlanFilter${asOfArg}) {
 			node(id: $id) {
 				... on ${parentType} {
-					treatmentPlans(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
+					treatmentPlans(first: $first, after: $after, orderBy: $orderBy, filter: $filter${asOfField}) {
 						edges {
 							node {
 								${treatmentPlanNodeFields}
@@ -226,6 +230,20 @@ export const description: INodeProperties[] = [
 		default: 0,
 		description: 'Filter by impact. Requires Score Type and Likelihood.',
 	},
+	{
+		displayName: 'As Of',
+		name: 'asOf',
+		type: 'dateTime',
+		displayOptions: {
+			show: {
+				resource: ['treatmentPlan'],
+				operation: ['getAll'],
+			},
+		},
+		default: '',
+		description:
+			'Reconstruct plans as of this instant. Only valid with Risk Analysis ID. Leave empty to use live tables.',
+	},
 ];
 
 export async function execute(
@@ -242,9 +260,14 @@ export async function execute(
 	const scoreType = this.getNodeParameter('scoreType', itemIndex, '') as string;
 	const likelihood = this.getNodeParameter('likelihood', itemIndex, 0) as number;
 	const impact = this.getNodeParameter('impact', itemIndex, 0) as number;
+	const asOf = this.getNodeParameter('asOf', itemIndex, '') as string;
 
 	if (riskId !== '' && riskAnalysisId !== '') {
 		throw new Error('Risk ID and Risk Analysis ID cannot be set together');
+	}
+
+	if (asOf !== '' && riskAnalysisId === '') {
+		throw new Error('As Of can only be set together with Risk Analysis ID');
 	}
 
 	const hasCell = scoreType !== '' || likelihood > 0 || impact > 0;
@@ -268,6 +291,9 @@ export async function execute(
 	}
 	if (hasCell) {
 		variables.filter = { scoreType, likelihood, impact };
+	}
+	if (asOf !== '') {
+		variables.asOf = asOf;
 	}
 
 	const treatmentPlans = await proboApiRequestAllItems.call(

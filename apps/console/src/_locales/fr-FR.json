@@ -5140,6 +5140,7 @@
     "unplannedWarning_one": "{{count}} risque lié n’a pas encore de plan de traitement.",
     "unplannedWarning_other": "{{count}} risques liés n’ont pas encore de plan de traitement.",
     "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "asOf": "En date du",
     "search": "Rechercher des risques",
     "states": {
       "inherent": "Inhérent",
@@ -5168,7 +5169,6 @@
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
     "progressEmpty": "Aucune mesure",
-    "unassigned": "Non attribué",
     "actions": {
       "tasks": "Tâches",
       "edit": "Modifier",
@@ -5189,7 +5189,6 @@
   "riskTreatmentPlanListItem": {
     "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
-    "unassigned": "Non attribué",
     "actions": {
       "measures": "Mesures",
       "edit": "Modifier",
@@ -5199,6 +5198,7 @@
   "treatmentPlanMeasureList": {
     "title": "Mesures",
     "empty": "Aucune mesure liée pour le moment.",
+    "deleted": "Mesure supprimée",
     "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de mesures liées.",
     "actions": {
       "create": "Nouvelle mesure",

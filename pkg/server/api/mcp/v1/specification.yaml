@@ -2199,6 +2199,7 @@ components:
         - risk_id
         - risk_analysis_id
         - treatment
+        - category
         - inherent_likelihood
         - inherent_impact
         - inherent_risk_score
@@ -2231,6 +2232,9 @@ components:
         treatment:
           $ref: "#/components/schemas/RiskTreatment"
           description: Risk treatment
+        category:
+          type: string
+          description: Risk category stored on the treatment plan
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner profile ID
@@ -2273,6 +2277,11 @@ components:
         measures_not_implemented:
           type: integer
           description: Number of not-implemented linked measures
+        measures:
+          type: array
+          description: Linked measures as of the requested instant. Present when listing with as_of.
+          items:
+            $ref: "#/components/schemas/TreatmentPlanMeasure"
         created_at:
           type: string
           format: date-time
@@ -2308,6 +2317,11 @@ components:
         filter:
           $ref: "#/components/schemas/TreatmentPlanFilter"
           description: Filter treatment plans by matrix cell. All three fields are required when set.
+        as_of:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Reconstruct plans as of this instant. Only valid with risk_analysis_id. Omit to use live tables.
 
     ListTreatmentPlansOutput:
       type: object
@@ -2438,6 +2452,22 @@ components:
         deleted_treatment_plan_id:
           $ref: "#/components/schemas/GID"
           description: Deleted treatment plan ID
+
+    TreatmentPlanMeasure:
+      type: object
+      required:
+        - id
+        - state
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        name:
+          type: string
+          description: Measure name. Absent when the measure has been deleted.
+        state:
+          $ref: "#/components/schemas/MeasureState"
+          description: Measure state as of the requested instant
 
     MeasureState:
       type: string
@@ -13789,6 +13819,11 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Risk analysis ID
+        as_of:
+          type: string
+          format: date-time
+          go.probo.inc/mcpgen/type: time.Time
+          description: Reconstruct matrix cells as of this instant. Omit to use live tables.
 
     GetRiskAnalysisOutput:
       type: object
@@ -18587,7 +18622,7 @@ tools:
       $ref: "#/components/schemas/ListRiskAnalysesOutput"
   - name: getRiskAnalysis
     title: Get Risk Analysis
-    description: Get a risk assessment by ID
+    description: Get a risk assessment by ID. Optionally reconstruct matrix cells as of a given instant.
     hints:
       readonly: true
       destructive: false

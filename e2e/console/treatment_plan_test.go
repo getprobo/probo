@@ -848,6 +848,12 @@ func TestTreatmentPlan_FilterByMatrixCell(t *testing.T) {
 	assertFilteredPlanIDs(t, owner, analysisID, "NET", 1, 2, highPlanID)
 	assertFilteredPlanIDs(t, owner, analysisID, "NET", 4, 4)
 	assertFilteredPlanIDs(t, owner, analysisID, "INHERENT", 4, 4, highPlanID)
+
+	openMeasureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Still in progress"})
+	factory.LinkTreatmentPlanMeasure(owner, highPlanID, openMeasureID)
+
+	assertFilteredPlanIDs(t, owner, analysisID, "NET", 4, 4, highPlanID)
+	assertFilteredPlanIDs(t, owner, analysisID, "NET", 1, 2)
 }
 
 func TestTreatmentPlan_RejectIncompleteFilter(t *testing.T) {
@@ -987,6 +993,16 @@ func TestTreatmentPlan_MatrixCounts(t *testing.T) {
 	assert.Equal(t, 1, matrixCellCount(counts, "NET", 1, 2))
 	assert.Equal(t, 1, matrixCellCount(counts, "NET", 2, 3))
 	assert.Equal(t, 0, matrixCellCount(counts, "NET", 4, 4))
+
+	openMeasureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Still in progress"})
+	factory.LinkTreatmentPlanMeasure(owner, highPlanID, openMeasureID)
+
+	counts = queryMatrixCells(t, owner, analysisID)
+	assert.Equal(t, 1, matrixCellCount(counts, "INHERENT", 4, 4))
+	assert.Equal(t, 1, matrixCellCount(counts, "RESIDUAL", 1, 2))
+	assert.Equal(t, 1, matrixCellCount(counts, "NET", 4, 4))
+	assert.Equal(t, 1, matrixCellCount(counts, "NET", 2, 3))
+	assert.Equal(t, 0, matrixCellCount(counts, "NET", 1, 2))
 }
 
 type matrixCellCountRow struct {

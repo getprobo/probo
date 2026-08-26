@@ -25,6 +25,7 @@ import { graphql, useFragment, usePaginationFragment } from "react-relay";
 import { Link } from "react-router";
 
 import type { TreatmentPlanMeasureList_measure$key } from "#/__generated__/core/TreatmentPlanMeasureList_measure.graphql";
+import type { TreatmentPlanMeasureList_meta$key } from "#/__generated__/core/TreatmentPlanMeasureList_meta.graphql";
 import type { TreatmentPlanMeasureList_treatmentPlan$key } from "#/__generated__/core/TreatmentPlanMeasureList_treatmentPlan.graphql";
 import type { TreatmentPlanMeasureListCreateMutation } from "#/__generated__/core/TreatmentPlanMeasureListCreateMutation.graphql";
 import type { TreatmentPlanMeasureListDetachMutation } from "#/__generated__/core/TreatmentPlanMeasureListDetachMutation.graphql";
@@ -36,22 +37,30 @@ import MeasureFormDialog from "#/pages/organizations/measures/dialog/MeasureForm
 
 const PAGE_SIZE = 50;
 
-export const treatmentPlanMeasureListFragment = graphql`
-  fragment TreatmentPlanMeasureList_treatmentPlan on TreatmentPlan
-  @refetchable(queryName: "TreatmentPlanMeasureListPaginationQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
-    after: { type: "CursorKey", defaultValue: null }
-  ) {
+export const treatmentPlanMeasureListMetaFragment = graphql`
+  fragment TreatmentPlanMeasureList_meta on TreatmentPlan {
     id
     treatment
     canUpdate: permission(action: "risk-management:treatment-plan:update")
     organization {
       canCreateMeasure: permission(action: "core:measure:create")
     }
-    measures(first: $first, after: $after)
-      @connection(key: "TreatmentPlanMeasureList_measures", filters: []) {
+  }
+`;
+
+export const treatmentPlanMeasureListFragment = graphql`
+  fragment TreatmentPlanMeasureList_treatmentPlan on TreatmentPlan
+  @refetchable(queryName: "TreatmentPlanMeasureListPaginationQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    after: { type: "CursorKey", defaultValue: null }
+    asOf: { type: "Datetime", defaultValue: null }
+  ) {
+    id
+    measures(first: $first, after: $after, asOf: $asOf)
+      @connection(key: "TreatmentPlanMeasureList_measures", filters: ["asOf"]) {
       __id
+      asOf
       edges {
         node {
           id
@@ -149,7 +158,7 @@ const detachMeasureMutation = graphql`
 `;
 
 interface TreatmentPlanMeasureListProps {
-  treatmentPlanKey: TreatmentPlanMeasureList_treatmentPlan$key;
+  treatmentPlanKey: TreatmentPlanMeasureList_treatmentPlan$key & TreatmentPlanMeasureList_meta$key;
   onChanged?: () => void;
 }
 
@@ -158,11 +167,18 @@ export function TreatmentPlanMeasureList({
   onChanged,
 }: TreatmentPlanMeasureListProps) {
   const { t } = useTranslation();
+  const meta = useFragment(
+    treatmentPlanMeasureListMetaFragment,
+    treatmentPlanKey as TreatmentPlanMeasureList_meta$key,
+  );
   const { data: treatmentPlan, hasNext, isLoadingNext, loadNext }
     = usePaginationFragment<
       TreatmentPlanMeasureListPaginationQuery,
       TreatmentPlanMeasureList_treatmentPlan$key
-    >(treatmentPlanMeasureListFragment, treatmentPlanKey);
+    >(
+      treatmentPlanMeasureListFragment,
+      treatmentPlanKey as TreatmentPlanMeasureList_treatmentPlan$key,
+    );
   const measures = treatmentPlan.measures?.edges?.map(edge => edge.node) ?? [];
   const connectionId = treatmentPlan.measures?.__id ?? "";
   const [attachMeasure, isAttaching] = useMutation<TreatmentPlanMeasureListCreateMutation>(
@@ -173,8 +189,10 @@ export function TreatmentPlanMeasureList({
   );
   const isLoading = isAttaching || isDetaching;
   const inFlightRef = useRef(false);
-  const accepted = treatmentPlan.treatment === "ACCEPTED";
-  const readOnly = !treatmentPlan.canUpdate || accepted;
+  const accepted = meta.treatment === "ACCEPTED";
+  const hasAsOf = treatmentPlan.measures?.asOf != null;
+  const readOnly = !meta.canUpdate || accepted || hasAsOf;
+  const canCreateMeasure = meta.organization.canCreateMeasure;
 
   const onAttach = async (measureId: string) => {
     if (inFlightRef.current || isLoading) {
@@ -228,7 +246,7 @@ export function TreatmentPlanMeasureList({
         </h3>
         {!readOnly && (
           <div className="flex items-center gap-3">
-            {treatmentPlan.organization.canCreateMeasure && (
+            {canCreateMeasure && (
               <MeasureFormDialog onCreated={onAttach}>
                 <button
                   type="button"
@@ -283,6 +301,7 @@ export function TreatmentPlanMeasureList({
               key={measure.id}
               measureKey={measure}
               readOnly={readOnly}
+              hasAsOf={hasAsOf}
               disabled={isLoading}
               onDetach={(measureId) => {
                 void onDetach(measureId);
@@ -309,26 +328,43 @@ export function TreatmentPlanMeasureList({
 function MeasureRow({
   measureKey,
   readOnly,
+  hasAsOf,
   disabled,
   onDetach,
 }: {
   measureKey: TreatmentPlanMeasureList_measure$key & { id: string };
   readOnly: boolean;
+  hasAsOf: boolean;
   disabled: boolean;
   onDetach: (measureId: string) => void;
 }) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const measure = useFragment(measureFragment, measureKey);
+  const deleted = measure.name === "";
 
   return (
     <li className="col-span-full grid grid-cols-subgrid items-center py-2.5">
-      <Link
-        to={`/organizations/${organizationId}/governance/measures/${measure.id}`}
-        className="min-w-0 truncate text-sm text-txt-primary hover:underline"
-      >
-        {measure.name}
-      </Link>
+      {deleted
+        ? (
+            <span className="min-w-0 truncate text-sm text-txt-secondary">
+              {t("treatmentPlanMeasureList.deleted")}
+            </span>
+          )
+        : hasAsOf
+          ? (
+              <span className="min-w-0 truncate text-sm text-txt-primary">
+                {measure.name}
+              </span>
+            )
+          : (
+              <Link
+                to={`/organizations/${organizationId}/governance/measures/${measure.id}`}
+                className="min-w-0 truncate text-sm text-txt-primary hover:underline"
+              >
+                {measure.name}
+              </Link>
+            )}
       <MeasureBadge state={measure.state} />
       {!readOnly && (
         <button

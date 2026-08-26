@@ -36,6 +36,7 @@ func NewTreatmentPlan(tp *coredata.TreatmentPlan, progress riskmanagement.Treatm
 		RiskID:                 tp.RiskID,
 		RiskAnalysisID:         tp.RiskAnalysisID,
 		Treatment:              tp.Treatment,
+		Category:               tp.Category,
 		OwnerID:                tp.OwnerID,
 		InherentLikelihood:     tp.InherentLikelihood,
 		InherentImpact:         tp.InherentImpact,
@@ -55,12 +56,51 @@ func NewTreatmentPlan(tp *coredata.TreatmentPlan, progress riskmanagement.Treatm
 	}
 }
 
+func NewTreatmentPlanAsOf(
+	tp *coredata.TreatmentPlan,
+	progress riskmanagement.TreatmentProgress,
+	measures []riskmanagement.RiskAnalysisMatrixMeasure,
+) *TreatmentPlan {
+	plan := NewTreatmentPlan(tp, progress)
+	plan.Measures = newTreatmentPlanMeasures(measures)
+
+	return plan
+}
+
+func newTreatmentPlanMeasures(
+	measures []riskmanagement.RiskAnalysisMatrixMeasure,
+) []*TreatmentPlanMeasure {
+	items := make([]*TreatmentPlanMeasure, 0, len(measures))
+	for _, measure := range measures {
+		items = append(items, &TreatmentPlanMeasure{
+			ID:    measure.ID,
+			Name:  measure.Name,
+			State: measure.State,
+		})
+	}
+
+	return items
+}
+
 func NewListTreatmentPlansOutput(
 	p *page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField],
 	progressByID map[gid.GID]riskmanagement.TreatmentProgress,
 ) ListTreatmentPlansOutput {
+	return NewListTreatmentPlansAsOfOutput(p, progressByID, nil)
+}
+
+func NewListTreatmentPlansAsOfOutput(
+	p *page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField],
+	progressByID map[gid.GID]riskmanagement.TreatmentProgress,
+	measuresByID map[gid.GID][]riskmanagement.RiskAnalysisMatrixMeasure,
+) ListTreatmentPlansOutput {
 	items := make([]*TreatmentPlan, 0, len(p.Data))
 	for _, v := range p.Data {
+		if measuresByID != nil {
+			items = append(items, NewTreatmentPlanAsOf(v, progressByID[v.ID], measuresByID[v.ID]))
+			continue
+		}
+
 		items = append(items, NewTreatmentPlan(v, progressByID[v.ID]))
 	}
 

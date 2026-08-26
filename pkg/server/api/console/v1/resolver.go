@@ -250,6 +250,14 @@ func (r *Resolver) treatmentPlanNetScores(
 	ctx context.Context,
 	obj *types.TreatmentPlan,
 ) (int, int, int, error) {
+	if obj.AsOf != nil {
+		if _, err := r.authorize(ctx, obj.RiskAnalysis.ID, riskmanagement.ActionTreatmentPlanList); err != nil {
+			return 0, 0, 0, err
+		}
+
+		return obj.NetLikelihood, obj.NetImpact, obj.NetRiskScore, nil
+	}
+
 	if _, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanGet); err != nil {
 		return 0, 0, 0, err
 	}

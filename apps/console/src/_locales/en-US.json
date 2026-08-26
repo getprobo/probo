@@ -2659,6 +2659,7 @@
     "unplannedWarning_one": "{{count}} linked risk has no treatment plan yet.",
     "unplannedWarning_other": "{{count}} linked risks have no treatment plan yet.",
     "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "asOf": "As of",
     "search": "Search risks",
     "states": { "inherent": "Inherent", "net": "Net", "residual": "Residual" },
     "axes": { "likelihood": "Likelihood", "impact": "Impact" },
@@ -2678,7 +2679,6 @@
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
     "progressEmpty": "No measures",
-    "unassigned": "Unassigned",
     "actions": {
       "tasks": "Tasks",
       "edit": "Edit",
@@ -2694,12 +2694,12 @@
   "riskTreatmentPlanListItem": {
     "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
-    "unassigned": "Unassigned",
     "actions": { "measures": "Measures", "edit": "Edit", "delete": "Delete" }
   },
   "treatmentPlanMeasureList": {
     "title": "Measures",
     "empty": "No measures linked yet.",
+    "deleted": "Deleted measure",
     "acceptedEmpty": "Accepted risks cannot have linked measures.",
     "actions": { "create": "New measure", "link": "Link measure", "unlink": "Unlink", "showMore": "Show more" }
   },

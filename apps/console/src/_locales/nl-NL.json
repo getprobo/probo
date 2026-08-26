@@ -5130,6 +5130,7 @@
     "unplannedWarning_one": "{{count}} gekoppeld risico heeft nog geen behandelplan.",
     "unplannedWarning_other": "{{count}} gekoppelde risico’s hebben nog geen behandelplan.",
     "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "asOf": "Per",
     "search": "Zoek risico's",
     "states": {
       "inherent": "Inherent",
@@ -5158,7 +5159,6 @@
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
     "progressEmpty": "Geen maatregelen",
-    "unassigned": "Niet toegewezen",
     "actions": {
       "tasks": "Taken",
       "edit": "Bewerken",
@@ -5179,7 +5179,6 @@
   "riskTreatmentPlanListItem": {
     "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
-    "unassigned": "Niet toegewezen",
     "actions": {
       "measures": "Maatregelen",
       "edit": "Bewerken",
@@ -5189,6 +5188,7 @@
   "treatmentPlanMeasureList": {
     "title": "Maatregelen",
     "empty": "Nog geen maatregelen gekoppeld.",
+    "deleted": "Verwijderde maatregel",
     "acceptedEmpty": "Geaccepteerde risico's kunnen geen maatregelen hebben.",
     "actions": {
       "create": "Nieuwe maatregel",

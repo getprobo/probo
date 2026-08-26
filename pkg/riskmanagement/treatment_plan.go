@@ -22,6 +22,7 @@ package riskmanagement
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -280,12 +281,25 @@ func (s *Service) CreateTreatmentPlan(
 				InherentImpact:     req.InherentImpact,
 				ResidualLikelihood: residualLikelihood,
 				ResidualImpact:     residualImpact,
+				Category:           risk.Category,
 				CreatedAt:          now,
 				UpdatedAt:          now,
 			}
 
 			if err := tp.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert treatment plan: %w", err)
+			}
+
+			if err := insertTreatmentPlanEvent(
+				ctx,
+				tx,
+				scope,
+				tp,
+				coredata.TreatmentPlanEventTypeCreated,
+				nil,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot record treatment plan created event: %w", err)
 			}
 
 			return nil
@@ -336,7 +350,7 @@ func (s *Service) UpdateTreatmentPlan(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := tp.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := tp.LoadByIDForUpdate(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load treatment plan: %w", err)
 			}
 
@@ -426,6 +440,23 @@ func (s *Service) UpdateTreatmentPlan(
 				return fmt.Errorf("cannot persist treatment plan: %w", err)
 			}
 
+			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+			}
+
+			if err := insertTreatmentPlanEvent(
+				ctx,
+				tx,
+				scope,
+				tp,
+				coredata.TreatmentPlanEventTypeUpdated,
+				measureIDs,
+				tp.UpdatedAt,
+			); err != nil {
+				return fmt.Errorf("cannot record treatment plan updated event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -441,6 +472,31 @@ func (s *Service) DeleteTreatmentPlan(ctx context.Context, scope coredata.Scoper
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			tp := &coredata.TreatmentPlan{}
+			if err := tp.LoadByIDForUpdate(ctx, tx, scope, id); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load treatment plan: %w", err)
+			}
+
+			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+			}
+
+			if err := insertTreatmentPlanEvent(
+				ctx,
+				tx,
+				scope,
+				tp,
+				coredata.TreatmentPlanEventTypeDeleted,
+				measureIDs,
+				time.Now(),
+			); err != nil {
+				return fmt.Errorf("cannot record treatment plan deleted event: %w", err)
+			}
+
 			if err := tp.Delete(ctx, tx, scope, id); err != nil {
 				return fmt.Errorf("cannot delete treatment plan row: %w", err)
 			}
@@ -669,7 +725,7 @@ func (s *Service) CreateMeasureMapping(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := tp.LoadByID(ctx, tx, scope, treatmentPlanID); err != nil {
+			if err := tp.LoadByIDForUpdate(ctx, tx, scope, treatmentPlanID); err != nil {
 				return fmt.Errorf("cannot load treatment plan: %w", err)
 			}
 
@@ -685,15 +741,33 @@ func (s *Service) CreateMeasureMapping(
 				return fmt.Errorf("cannot verify measure organization: %w", coredata.ErrResourceNotFound)
 			}
 
+			now := time.Now()
 			mapping := &coredata.TreatmentPlanMeasure{
 				TreatmentPlanID: tp.ID,
 				MeasureID:       measure.ID,
 				OrganizationID:  tp.OrganizationID,
-				CreatedAt:       time.Now(),
+				CreatedAt:       now,
 			}
 
 			if err := mapping.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert treatment plan measure: %w", err)
+			}
+
+			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+			}
+
+			if err := insertTreatmentPlanEvent(
+				ctx,
+				tx,
+				scope,
+				tp,
+				coredata.TreatmentPlanEventTypeMeasureLinked,
+				measureIDs,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot record treatment plan measure linked event: %w", err)
 			}
 
 			return nil
@@ -718,7 +792,7 @@ func (s *Service) DeleteMeasureMapping(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := tp.LoadByID(ctx, tx, scope, treatmentPlanID); err != nil {
+			if err := tp.LoadByIDForUpdate(ctx, tx, scope, treatmentPlanID); err != nil {
 				return fmt.Errorf("cannot load treatment plan: %w", err)
 			}
 
@@ -727,8 +801,31 @@ func (s *Service) DeleteMeasureMapping(
 			}
 
 			mapping := coredata.TreatmentPlanMeasure{}
-			if err := mapping.Delete(ctx, tx, scope, tp.ID, measure.ID); err != nil {
+
+			deleted, err := mapping.Delete(ctx, tx, scope, tp.ID, measure.ID)
+			if err != nil {
 				return fmt.Errorf("cannot delete treatment plan measure: %w", err)
+			}
+
+			if !deleted {
+				return nil
+			}
+
+			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+			}
+
+			if err := insertTreatmentPlanEvent(
+				ctx,
+				tx,
+				scope,
+				tp,
+				coredata.TreatmentPlanEventTypeMeasureUnlinked,
+				measureIDs,
+				time.Now(),
+			); err != nil {
+				return fmt.Errorf("cannot record treatment plan measure unlinked event: %w", err)
 			}
 
 			return nil
@@ -809,7 +906,17 @@ func (s *Service) GetRiskAnalysisMatrixCells(
 	ctx context.Context,
 	scope coredata.Scoper,
 	riskAnalysisID gid.GID,
+	asOf *time.Time,
 ) ([]*coredata.RiskAnalysisMatrixCell, error) {
+	if asOf != nil {
+		cells, err := s.loadMatrixCellsAsOf(ctx, scope, riskAnalysisID, *asOf)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get risk analysis matrix cells: %w", err)
+		}
+
+		return cells, nil
+	}
+
 	var counts []*coredata.RiskAnalysisMatrixCell
 
 	err := s.pg.WithConn(

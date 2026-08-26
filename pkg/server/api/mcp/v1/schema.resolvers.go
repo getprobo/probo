@@ -6531,7 +6531,7 @@ func (r *Resolver) GetRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		}
 	}
 
-	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, listScope, ra.ID)
+	counts, err := r.riskManagement.GetRiskAnalysisMatrixCells(ctx, listScope, ra.ID, input.AsOf)
 	if err != nil {
 		return nil, types.GetRiskAnalysisOutput{}, fmt.Errorf("failed to get risk analysis matrix cells: %w", err)
 	}
@@ -9122,6 +9122,16 @@ func (r *Resolver) ListTreatmentPlansTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
+	if input.AsOf != nil && input.RiskAnalysisID == nil {
+		return nil, types.ListTreatmentPlansOutput{}, validator.ValidationErrors{
+			{
+				Field:   "as_of",
+				Code:    validator.ErrorCodeCustom,
+				Message: "can only be set together with risk_analysis_id",
+			},
+		}
+	}
+
 	scope, err := r.Authorize(ctx, input.OrganizationID, riskmanagement.ActionTreatmentPlanList)
 	if err != nil {
 		return nil, types.ListTreatmentPlansOutput{}, err
@@ -9154,6 +9164,25 @@ func (r *Resolver) ListTreatmentPlansTool(ctx context.Context, req *mcp.CallTool
 	switch {
 	case input.RiskID != nil:
 		p, err = r.riskManagement.ListTreatmentPlansForRiskID(ctx, scope, *input.RiskID, cursor, planFilter)
+	case input.RiskAnalysisID != nil && input.AsOf != nil:
+		asOfPage, listErr := r.riskManagement.ListTreatmentPlansAsOf(
+			ctx,
+			scope,
+			*input.RiskAnalysisID,
+			*input.AsOf,
+			cursor,
+			planFilter,
+			true,
+		)
+		if listErr != nil {
+			return nil, types.ListTreatmentPlansOutput{}, mapTreatmentPlanError(ctx, r.logger, "list", listErr)
+		}
+
+		return nil, types.NewListTreatmentPlansAsOfOutput(
+			asOfPage.Page,
+			asOfPage.ProgressByID,
+			asOfPage.MeasuresByID,
+		), nil
 	case input.RiskAnalysisID != nil:
 		p, err = r.riskManagement.ListTreatmentPlansForRiskAnalysisID(ctx, scope, *input.RiskAnalysisID, cursor, planFilter)
 	default:

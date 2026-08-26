@@ -463,8 +463,25 @@ func (s MeasureService) Import(
 
 				importedMeasures = append(importedMeasures, measure)
 
+				originalID := measure.ID
 				if err := measure.Upsert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot upsert measure: %w", err)
+				}
+
+				eventType := coredata.MeasureEventTypeCreated
+				if originalID != measure.ID {
+					eventType = coredata.MeasureEventTypeUpdated
+				}
+
+				if err := insertMeasureEvent(
+					ctx,
+					tx,
+					scope,
+					measure,
+					eventType,
+					now,
+				); err != nil {
+					return fmt.Errorf("cannot record measure event: %w", err)
 				}
 
 				for j := range req.Measures[i].Tasks {
@@ -571,6 +588,10 @@ func (s MeasureService) Update(
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
+			previousName := measure.Name
+			previousState := measure.State
+			previousCategory := measure.Category
+
 			if req.Name != nil {
 				measure.Name = *req.Name
 			}
@@ -591,6 +612,19 @@ func (s MeasureService) Update(
 
 			if err := measure.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update measure: %w", err)
+			}
+
+			if measure.Name != previousName || measure.State != previousState || measure.Category != previousCategory {
+				if err := insertMeasureEvent(
+					ctx,
+					conn,
+					scope,
+					measure,
+					coredata.MeasureEventTypeUpdated,
+					measure.UpdatedAt,
+				); err != nil {
+					return fmt.Errorf("cannot record measure event: %w", err)
+				}
 			}
 
 			return nil
@@ -645,6 +679,17 @@ func (s MeasureService) Create(
 				return fmt.Errorf("cannot insert measure: %w", err)
 			}
 
+			if err := insertMeasureEvent(
+				ctx,
+				conn,
+				scope,
+				measure,
+				coredata.MeasureEventTypeCreated,
+				now,
+			); err != nil {
+				return fmt.Errorf("cannot record measure event: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -661,6 +706,25 @@ func (s MeasureService) Delete(
 ) error {
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		measure := &coredata.Measure{}
+		if err := measure.LoadByID(ctx, conn, scope, measureID); err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil
+			}
+
+			return fmt.Errorf("cannot load measure: %w", err)
+		}
+
+		now := time.Now()
+		if err := insertMeasureEvent(
+			ctx,
+			conn,
+			scope,
+			measure,
+			coredata.MeasureEventTypeDeleted,
+			now,
+		); err != nil {
+			return fmt.Errorf("cannot record measure event: %w", err)
+		}
 
 		if err := measure.Delete(ctx, conn, scope, measureID); err != nil {
 			return fmt.Errorf("cannot delete measure: %w", err)
@@ -877,4 +941,20 @@ func (s MeasureService) DeleteDocumentMapping(
 	}
 
 	return measure, document, nil
+}
+
+func insertMeasureEvent(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	measure *coredata.Measure,
+	eventType coredata.MeasureEventType,
+	now time.Time,
+) error {
+	event := coredata.NewMeasureEvent(measure, eventType, now)
+	if err := event.Insert(ctx, conn, scope); err != nil {
+		return fmt.Errorf("cannot insert measure event: %w", err)
+	}
+
+	return nil
 }

@@ -51,6 +51,7 @@ type Measure implements Node {
     name: String!
     description: String
     state: MeasureState!
+    asOf: Datetime
 
     evidences(
         first: Int
@@ -110,6 +111,7 @@ type Measure implements Node {
         before: CursorKey
         orderBy: TreatmentPlanOrder
         filter: TreatmentPlanFilter
+        asOf: Datetime
     ): TreatmentPlanConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
@@ -125,6 +127,7 @@ type MeasureConnection
     totalCount: Int! @goField(forceResolver: true)
     edges: [MeasureEdge!]!
     pageInfo: PageInfo!
+    asOf: Datetime
 }
 
 type MeasureEdge {

@@ -18,14 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams, useSearchParams } from "react-router";
 
 import type { RiskAnalysisTreatmentPlansPageQuery } from "#/__generated__/core/RiskAnalysisTreatmentPlansPageQuery.graphql";
 import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 
-import { parseMatrixCell, treatmentPlanFilterFromCell } from "../_lib/matrixCell";
+import { matrixAsOf, parseAsOfDate } from "../_lib/matrixAsOf";
+import {
+  parseMatrixCell,
+  treatmentPlanFilterFromCell,
+  type TreatmentPlanFilterInput,
+} from "../_lib/matrixCell";
 
 import RiskAnalysisTreatmentPlansPage, {
   riskAnalysisTreatmentPlansPageQuery,
@@ -34,25 +39,36 @@ import RiskAnalysisTreatmentPlansPage, {
 export default function RiskAnalysisTreatmentPlansPageLoader() {
   const { riskAnalysisId } = useParams<{ riskAnalysisId: string }>();
   const [params] = useSearchParams();
-  const paramsRef = useRef(params);
+  const search = params.toString();
   const [queryRef, loadQuery]
     = useQueryLoader<RiskAnalysisTreatmentPlansPageQuery>(riskAnalysisTreatmentPlansPageQuery);
+  const { asOf, filter, includeUnplanned } = useMemo(() => {
+    const parsed = new URLSearchParams(search);
+    const nextAsOf = matrixAsOf(parseAsOfDate(parsed));
 
-  useEffect(() => {
-    paramsRef.current = params;
-  });
+    return {
+      asOf: nextAsOf,
+      filter: treatmentPlanFilterFromCell(parseMatrixCell(parsed)),
+      includeUnplanned: nextAsOf == null,
+    };
+  }, [search]);
 
   useEffect(() => {
     if (riskAnalysisId) {
       loadQuery({
         riskAnalysisId,
-        filter: treatmentPlanFilterFromCell(parseMatrixCell(paramsRef.current)),
+        filter,
+        asOf,
+        includeUnplanned,
       });
     }
-  }, [loadQuery, riskAnalysisId]);
+  }, [asOf, filter, includeUnplanned, loadQuery, riskAnalysisId]);
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.riskAnalysisId === riskAnalysisId
+    && queryRef.variables.asOf === asOf
+    && queryRef.variables.includeUnplanned === includeUnplanned
+    && sameTreatmentPlanFilter(queryRef.variables.filter, filter)
     ? queryRef
     : null;
 
@@ -65,4 +81,18 @@ export default function RiskAnalysisTreatmentPlansPageLoader() {
       <RiskAnalysisTreatmentPlansPage queryRef={currentQueryRef} />
     </Suspense>
   );
+}
+
+function sameTreatmentPlanFilter(
+  loaded: RiskAnalysisTreatmentPlansPageQuery["variables"]["filter"],
+  wanted: TreatmentPlanFilterInput | null,
+): boolean {
+  if (wanted == null) {
+    return loaded == null;
+  }
+
+  return loaded != null
+    && loaded.scoreType === wanted.scoreType
+    && loaded.likelihood === wanted.likelihood
+    && loaded.impact === wanted.impact;
 }
