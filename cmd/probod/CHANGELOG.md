@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.269.0] - 2026-08-26
+
+### Added
+
+- Visitors get a dedicated page in the compliance portal permissions zone, replacing the Edit Access dialog: document grants have their own table and URL, changes save immediately, and multi-select with a bulk bar grants or rejects several documents at once
+- NDA card accepts a PDF drop directly, with download and delete controls in its header and the signature audit trail behind an activity popover
+
+### Changed
+
+- Migrated the compliance portal permissions zone to UI v2, including a new native Table in `@probo/ui`, visitors restyled as a list showing NDA status and join date, and pending requests surfaced as a button
+- Renamed the portal permissions route to `visitors`, so the URL, navigation, and Slack action links match the page name
+- PDF watermarks now show the document's own classification instead of a hardcoded "Confidential"
+- Each compliance portal page owns its H1, description, and document title instead of repeating the portal name
+
+### Fixed
+
+- Compliance portal document access reused source GIDs for rows that did not exist yet, so Relay saw conflicting typenames on the access list; grant and reject now upsert a real row and leave sibling documents untouched
+- Visitor list row edges were not clickable because list padding sat outside the link
+
 ## [0.268.0] - 2026-08-26
 
 ### Added
