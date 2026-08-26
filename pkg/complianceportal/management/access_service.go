@@ -155,6 +155,76 @@ func (s *Service) GetAccess(
 	return &access, nil
 }
 
+func (s *Service) ListAccessResources(
+	ctx context.Context,
+	scope coredata.Scoper,
+	accessID gid.GID,
+	cursor *page.Cursor[coredata.CompliancePortalAccessResourceOrderField],
+) (*page.Page[*coredata.CompliancePortalAccessResource, coredata.CompliancePortalAccessResourceOrderField], error) {
+	var resources coredata.CompliancePortalAccessResources
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var access coredata.CompliancePortalAccess
+			if err := access.LoadByID(ctx, conn, scope, accessID); err != nil {
+				return fmt.Errorf("cannot load compliance portal access: %w", err)
+			}
+
+			return resources.LoadByCompliancePortalAccessID(
+				ctx,
+				conn,
+				scope,
+				access.ID,
+				access.OrganizationID,
+				access.CompliancePortalID,
+				cursor,
+			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(resources, cursor), nil
+}
+
+func (s *Service) CountAccessResources(
+	ctx context.Context,
+	scope coredata.Scoper,
+	accessID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var access coredata.CompliancePortalAccess
+			if err := access.LoadByID(ctx, conn, scope, accessID); err != nil {
+				return fmt.Errorf("cannot load compliance portal access: %w", err)
+			}
+
+			var resources coredata.CompliancePortalAccessResources
+			var err error
+			count, err = resources.CountByCompliancePortalAccessID(
+				ctx,
+				conn,
+				scope,
+				access.ID,
+				access.OrganizationID,
+				access.CompliancePortalID,
+			)
+
+			return err
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *Service) GetDocumentAccess(
 	ctx context.Context,
 	scope coredata.Scoper,

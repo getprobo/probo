@@ -527,9 +527,66 @@ func (r *compliancePortalAccessResolver) Profile(ctx context.Context, obj *types
 	return types.NewProfile(profile), nil
 }
 
+// Resources is the resolver for the resources field.
+func (r *compliancePortalAccessResolver) Resources(
+	ctx context.Context,
+	obj *types.CompliancePortalAccess,
+	first *int,
+	after *page.CursorKey,
+	last *int,
+	before *page.CursorKey,
+	orderBy *types.CompliancePortalAccessResourceOrderBy,
+) (*types.CompliancePortalAccessResourceConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CompliancePortalAccessResourceOrderField]{
+		Field:     coredata.CompliancePortalAccessResourceOrderFieldAccessStatus,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CompliancePortalAccessResourceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := r.management.ListAccessResources(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list compliance portal access resources", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCompliancePortalAccessResourceConnection(result, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *compliancePortalAccessResolver) Permission(ctx context.Context, obj *types.CompliancePortalAccess, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *compliancePortalAccessResourceConnectionResolver) TotalCount(
+	ctx context.Context,
+	obj *types.CompliancePortalAccessResourceConnection,
+) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, management.ActionCompliancePortalAccessGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.management.CountAccessResources(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count compliance portal access resources", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // Audit is the resolver for the audit field.
@@ -2090,6 +2147,11 @@ func (r *Resolver) CompliancePortalAccess() schema.CompliancePortalAccessResolve
 	return &compliancePortalAccessResolver{r}
 }
 
+// CompliancePortalAccessResourceConnection returns schema.CompliancePortalAccessResourceConnectionResolver implementation.
+func (r *Resolver) CompliancePortalAccessResourceConnection() schema.CompliancePortalAccessResourceConnectionResolver {
+	return &compliancePortalAccessResourceConnectionResolver{r}
+}
+
 // CompliancePortalAudit returns schema.CompliancePortalAuditResolver implementation.
 func (r *Resolver) CompliancePortalAudit() schema.CompliancePortalAuditResolver {
 	return &compliancePortalAuditResolver{r}
@@ -2163,6 +2225,7 @@ type (
 	complianceFrameworkResolver                       struct{ *Resolver }
 	compliancePortalResolver                          struct{ *Resolver }
 	compliancePortalAccessResolver                    struct{ *Resolver }
+	compliancePortalAccessResourceConnectionResolver  struct{ *Resolver }
 	compliancePortalAuditResolver                     struct{ *Resolver }
 	compliancePortalCommitmentResolver                struct{ *Resolver }
 	compliancePortalCommitmentConnectionResolver      struct{ *Resolver }

@@ -34,11 +34,7 @@ import { ElectronicSignatureSection } from "./_components/ElectronicSignatureSec
 import { visitorPage } from "./variants";
 
 export const compliancePortalVisitorPageQuery = graphql`
-  query CompliancePortalVisitorPageQuery(
-    $organizationId: ID!
-    $compliancePortalId: ID!
-    $accessId: ID!
-  ) {
+  query CompliancePortalVisitorPageQuery($accessId: ID!) {
     access: node(id: $accessId) {
       __typename
       ... on CompliancePortalAccess {
@@ -53,20 +49,7 @@ export const compliancePortalVisitorPageQuery = graphql`
         ndaSignature {
           ...ElectronicSignatureSectionFragment
         }
-      }
-    }
-    organization: node(id: $organizationId) {
-      __typename
-      ... on Organization {
-        ...CompliancePortalDocumentAccessList_organization
-          @arguments(compliancePortalId: $compliancePortalId, accessId: $accessId)
-      }
-    }
-    compliancePortal: node(id: $compliancePortalId) {
-      __typename
-      ... on CompliancePortal {
-        ...CompliancePortalDocumentAccessList_compliancePortal
-          @arguments(accessId: $accessId)
+        ...CompliancePortalDocumentAccessList_access
       }
     }
   }
@@ -85,12 +68,6 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
   );
   if (data.access?.__typename !== "CompliancePortalAccess" || !data.access.canGet) {
     throw new NotFoundError("Visitor not found");
-  }
-  if (data.organization?.__typename !== "Organization") {
-    throw new NotFoundError("Organization not found");
-  }
-  if (data.compliancePortal?.__typename !== "CompliancePortal") {
-    throw new NotFoundError("Compliance portal not found");
   }
 
   const canUpdate = data.access.canUpdate;
@@ -112,8 +89,7 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
         )}
       </div>
       <CompliancePortalDocumentAccessList
-        organizationKey={data.organization}
-        compliancePortalKey={data.compliancePortal}
+        accessKey={data.access}
         accessId={data.access.id}
         canUpdate={canUpdate}
       />

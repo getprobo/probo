@@ -27,34 +27,13 @@ import { useMutation } from "#/lib/relay/useMutation";
 const updateAccessMutation = graphql`
   mutation useUpdateCompliancePortalAccessMutation(
     $input: UpdateCompliancePortalAccessInput!
-    $accessId: ID!
   ) {
     updateCompliancePortalAccess(input: $input) {
       compliancePortalAccess {
         id
         pendingRequestCount
         activeCount
-      }
-      documents {
-        id
-        compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
-          id
-          status
-        }
-      }
-      audits {
-        id
-        compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
-          id
-          status
-        }
-      }
-      compliancePortalFiles {
-        id
-        compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
-          id
-          status
-        }
+        ...CompliancePortalDocumentAccessList_access
       }
     }
   }

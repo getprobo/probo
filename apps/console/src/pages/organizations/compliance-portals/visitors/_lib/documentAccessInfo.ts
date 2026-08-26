@@ -20,128 +20,26 @@
 
 import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
-import { graphql, readInlineData } from "relay-runtime";
 
-import type { documentAccessInfo_audit$key } from "#/__generated__/core/documentAccessInfo_audit.graphql";
-import type { documentAccessInfo_document$key } from "#/__generated__/core/documentAccessInfo_document.graphql";
-import type { documentAccessInfo_file$key } from "#/__generated__/core/documentAccessInfo_file.graphql";
+const resourceKindToType = {
+  DOCUMENT: "document",
+  REPORT: "report",
+  FILE: "file",
+} as const;
 
-export const documentAccessInfoDocumentFragment = graphql`
-  fragment documentAccessInfo_document on Document
-  @inline
-  @argumentDefinitions(
-    compliancePortalId: { type: "ID!" }
-    accessId: { type: "ID!" }
-  ) {
-    id
-    versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-      edges {
-        node {
-          title
-          documentType
-        }
-      }
-    }
-    compliancePortalDocument(compliancePortalId: $compliancePortalId) {
-      visibility
-    }
-    compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
-      id
-      status
-    }
-  }
-`;
-
-export const documentAccessInfoAuditFragment = graphql`
-  fragment documentAccessInfo_audit on Audit
-  @inline
-  @argumentDefinitions(
-    compliancePortalId: { type: "ID!" }
-    accessId: { type: "ID!" }
-  ) {
-    reportFile {
-      id
-      fileName
-    }
-    framework {
-      name
-    }
-    compliancePortalAudit(compliancePortalId: $compliancePortalId) {
-      visibility
-    }
-    compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
-      id
-      status
-    }
-  }
-`;
-
-export const documentAccessInfoFileFragment = graphql`
-  fragment documentAccessInfo_file on CompliancePortalFile
-  @inline
-  @argumentDefinitions(accessId: { type: "ID!" }) {
-    id
-    name
-    category
-    compliancePortalVisibility
-    compliancePortalDocumentAccess(compliancePortalAccessId: $accessId) {
-      id
-      status
-    }
-  }
-`;
-
-export function documentAccessInfoFromDocument(
-  fragmentRef: documentAccessInfo_document$key,
-): CompliancePortalDocumentAccessInfo | null {
-  const node = readInlineData(documentAccessInfoDocumentFragment, fragmentRef);
-  if (node.compliancePortalDocument?.visibility !== "RESTRICTED") {
-    return null;
-  }
-
+export function documentAccessInfoFromResource(resource: {
+  kind: keyof typeof resourceKindToType;
+  resourceId: string;
+  name: string;
+  category: string;
+  status: CompliancePortalDocumentAccessStatus | null | undefined;
+}): CompliancePortalDocumentAccessInfo {
   return {
-    type: "document",
-    name: node.versions?.edges[0]?.node.title ?? "",
-    category: node.versions?.edges[0]?.node.documentType ?? "",
-    id: node.id,
-    status: node.compliancePortalDocumentAccess?.status ?? null,
-  };
-}
-
-export function documentAccessInfoFromAudit(
-  fragmentRef: documentAccessInfo_audit$key,
-): CompliancePortalDocumentAccessInfo | null {
-  const node = readInlineData(documentAccessInfoAuditFragment, fragmentRef);
-  if (node.compliancePortalAudit?.visibility !== "RESTRICTED" || node.reportFile == null) {
-    return null;
-  }
-
-  return {
-    type: "report",
-    name: node.reportFile.fileName,
-    category: node.framework?.name ?? "",
-    id: node.reportFile.id,
-    status: node.compliancePortalDocumentAccess?.status ?? null,
-  };
-}
-
-export function documentAccessInfoFromFile(
-  fragmentRef: documentAccessInfo_file$key,
-): CompliancePortalDocumentAccessInfo | null {
-  const node = readInlineData(documentAccessInfoFileFragment, fragmentRef);
-  if (
-    node.compliancePortalVisibility !== "RESTRICTED"
-    && node.compliancePortalVisibility !== "NONE"
-  ) {
-    return null;
-  }
-
-  return {
-    type: "file",
-    name: node.name,
-    category: node.category,
-    id: node.id,
-    status: node.compliancePortalDocumentAccess?.status ?? null,
+    type: resourceKindToType[resource.kind],
+    id: resource.resourceId,
+    name: resource.name,
+    category: resource.category,
+    status: resource.status ?? null,
   };
 }
 

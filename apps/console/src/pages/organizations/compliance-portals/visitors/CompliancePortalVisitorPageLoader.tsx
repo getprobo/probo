@@ -23,7 +23,6 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CompliancePortalVisitorPageQuery } from "#/__generated__/core/CompliancePortalVisitorPageQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   CompliancePortalVisitorPage,
@@ -32,24 +31,19 @@ import {
 import { CompliancePortalVisitorPageSkeleton } from "./CompliancePortalVisitorPageSkeleton";
 
 export default function CompliancePortalVisitorPageLoader() {
-  const organizationId = useOrganizationId();
-  const { accessId, compliancePortalId } = useParams<{
+  const { accessId } = useParams<{
     accessId: string;
-    compliancePortalId: string;
   }>();
   if (accessId == null) {
     throw new Error(":accessId missing in route params");
-  }
-  if (compliancePortalId == null) {
-    throw new Error(":compliancePortalId missing in route params");
   }
   const [queryRef, loadQuery] = useQueryLoader<CompliancePortalVisitorPageQuery>(
     compliancePortalVisitorPageQuery,
   );
 
   useEffect(() => {
-    loadQuery({ accessId, compliancePortalId, organizationId });
-  }, [accessId, compliancePortalId, loadQuery, organizationId]);
+    loadQuery({ accessId });
+  }, [accessId, loadQuery]);
 
   if (queryRef == null) {
     return <CompliancePortalVisitorPageSkeleton />;

@@ -76,6 +76,34 @@ enum CompliancePortalAccessOrderField
         )
 }
 
+enum CompliancePortalAccessResourceKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKind"
+    ) {
+    DOCUMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKindDocument"
+        )
+    REPORT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKindReport"
+        )
+    FILE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceKindFile"
+        )
+}
+
+enum CompliancePortalAccessResourceOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceOrderField"
+    ) {
+    ACCESS_STATUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessResourceOrderFieldAccessStatus"
+        )
+}
+
 enum CompliancePortalAccessState
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessState"
@@ -284,6 +312,14 @@ input CompliancePortalAccessFilter {
     query: String
 }
 
+input CompliancePortalAccessResourceOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAccessResourceOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CompliancePortalAccessResourceOrderField!
+}
+
 input CompliancePortalReferenceOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalReferenceOrderBy"
@@ -480,6 +516,14 @@ type CompliancePortalAccess implements Node {
 
     profile: Profile! @goField(forceResolver: true)
 
+    resources(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CompliancePortalAccessResourceOrder
+    ): CompliancePortalAccessResourceConnection! @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -500,6 +544,28 @@ type CompliancePortalAccessConnection {
 type CompliancePortalAccessEdge {
     cursor: CursorKey!
     node: CompliancePortalAccess!
+}
+
+type CompliancePortalAccessResource {
+    kind: CompliancePortalAccessResourceKind!
+    resourceId: ID!
+    name: String!
+    category: String!
+    status: CompliancePortalDocumentAccessStatus
+}
+
+type CompliancePortalAccessResourceConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CompliancePortalAccessResourceConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CompliancePortalAccessResourceEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CompliancePortalAccessResourceEdge {
+    cursor: CursorKey!
+    node: CompliancePortalAccessResource!
 }
 
 type CompliancePortalReference implements Node {
