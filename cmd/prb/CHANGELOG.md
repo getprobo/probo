@@ -4,6 +4,18 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.220.0] - 2026-08-26
+
+### Added
+
+- `treatment-plan` command group (`create`, `list`, `view`, `update`, `delete`) for plans that hold scores, treatment, and owner per (risk, analysis)
+- `measure link-treatment-plan` / `unlink-treatment-plan` to attach measures that drive plan progress
+- `prb risk list --risk-analysis` lists unplanned scenario-linked risks on an analysis
+
+### Changed
+
+- `prb risk-analysis update` no longer accepts `--matrix-rows` / `--matrix-cols`; matrix size is fixed at create
+
 ## [0.219.0] - 2026-08-25
 
 ### Added
