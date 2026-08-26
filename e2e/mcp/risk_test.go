@@ -199,3 +199,49 @@ func TestMCP_Risk_ListMeasures(t *testing.T) {
 	}, &deleteResult)
 	assert.Equal(t, riskResult.Risk.ID, deleteResult.DeletedRiskID)
 }
+
+func TestMCP_Risk_ListScenarioRisks(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	plannedRiskID := factory.CreateRisk(owner)
+	unplannedRiskID := factory.CreateRisk(owner, factory.Attrs{"name": "FilterableScenarioRiskAlpha"})
+	otherUnplannedID := factory.CreateRisk(owner, factory.Attrs{"name": "UnrelatedScenarioRiskBeta"})
+	analysisID := factory.CreateRiskAnalysis(owner)
+	factory.LinkRiskToAnalysis(owner, plannedRiskID, analysisID)
+	factory.LinkRiskToAnalysis(owner, unplannedRiskID, analysisID)
+	factory.LinkRiskToAnalysis(owner, otherUnplannedID, analysisID)
+	factory.CreateTreatmentPlan(owner, plannedRiskID, analysisID)
+
+	var listResult struct {
+		Risks []struct {
+			ID string `json:"id"`
+		} `json:"risks"`
+	}
+	mc.CallToolInto("listRisks", map[string]any{
+		"organization_id":  orgID,
+		"risk_analysis_id": analysisID,
+	}, &listResult)
+	require.Len(t, listResult.Risks, 2)
+	ids := []string{listResult.Risks[0].ID, listResult.Risks[1].ID}
+	assert.Contains(t, ids, unplannedRiskID)
+	assert.Contains(t, ids, otherUnplannedID)
+	assert.NotContains(t, ids, plannedRiskID)
+
+	var filtered struct {
+		Risks []struct {
+			ID string `json:"id"`
+		} `json:"risks"`
+	}
+	mc.CallToolInto("listRisks", map[string]any{
+		"organization_id":  orgID,
+		"risk_analysis_id": analysisID,
+		"filter": map[string]any{
+			"query": "FilterableScenarioRiskAlpha",
+		},
+	}, &filtered)
+	require.Len(t, filtered.Risks, 1)
+	assert.Equal(t, unplannedRiskID, filtered.Risks[0].ID)
+}

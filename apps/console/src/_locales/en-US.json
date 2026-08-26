@@ -1042,6 +1042,18 @@
       "probable": "Probable",
       "frequent": "Frequent"
     },
+    "riskScales": {
+      "impact": {
+        "2": { "1": "Low", "2": "High" },
+        "3": { "1": "Low", "2": "Medium", "3": "High" },
+        "4": { "1": "Low", "2": "Medium", "3": "High", "4": "Critical" }
+      },
+      "likelihood": {
+        "2": { "1": "Unlikely", "2": "Likely" },
+        "3": { "1": "Unlikely", "2": "Possible", "3": "Likely" },
+        "4": { "1": "Unlikely", "2": "Possible", "3": "Likely", "4": "Almost certain" }
+      }
+    },
     "riskSeverity": { "critical": "Critical", "high": "High", "low": "Low" },
     "trackerType": {
       "cookie": "Cookie",
@@ -1127,6 +1139,7 @@
     },
     "risk": {
       "initial": "Initial Risk",
+      "net": "Net Risk",
       "residual": "Residual Risk",
       "score": "Score",
       "numberOfRisks": "Number of risks",
@@ -1143,7 +1156,8 @@
       },
       "likelihood": {
         "label": "Likelihood"
-      }
+      },
+      "cell": "{{count}} at likelihood {{likelihood}}, impact {{impact}}"
     }
   },
   "common": {
@@ -1469,7 +1483,8 @@
     "slackBot": "SlackBot",
     "tasks": "Tasks",
     "measures": "Measures",
-    "risks": "All Risks",
+    "risks": "Risks",
+    "allRisks": "All Risks",
     "riskAnalyses": "Risk Analyses",
     "frameworks": "Frameworks",
     "iam": "IAM",
@@ -1852,7 +1867,7 @@
     "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
   "addAccessReviewSourceDialog": {
-    "actions": { "connectWithOAuth": "OAuth", "connectWithGitHubApp": "GitHub App", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "open": "Open" },
+    "actions": { "connectWithOAuth": "OAuth", "connectWithGitHubApp": "GitHub App", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "connectWithWorkloadIdentity": "Workload Identity", "chooseAnotherMethod": "Choose another connection method", "open": "Open" },
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {
@@ -2437,14 +2452,17 @@
   "riskDetailLayout": {
     "deleteConfirmation": "This will permanently delete the risk \"{{name}}\". This action cannot be undone.",
     "actions": { "edit": "Edit", "delete": "Delete" },
-    "tabs": { "overview": "Overview", "measures": "Measures", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios" },
-    "fields": { "owner": "Owner", "treatment": "Treatment", "initialRiskScore": "Initial Risk Score", "residualRiskScore": "Residual Risk Score", "note": "Note" },
-    "treatments": { "mitigated": "Mitigate", "accepted": "Accept", "transferred": "Transfer", "avoided": "Avoid", "unknown": "Unknown" }
+    "tabs": { "overview": "Overview", "measures": "Measures", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
   },
   "risksPage": {
     "description": "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
     "actions": { "document": "Document", "publish": "Publish", "newRisk": "New Risk" },
     "columns": { "name": "Risk name", "category": "Category", "treatment": "Treatment", "initialRisk": "Initial Risk", "residualRisk": "Residual Risk", "owner": "Owner" }
+  },
+  "riskOverviewPage": {
+    "emptyScores": "Scores are set on a treatment plan in a risk analysis.",
+    "fields": { "owner": "Owner", "treatment": "Treatment", "initialRiskScore": "Initial score", "residualRiskScore": "Residual score", "note": "Note" },
+    "treatments": { "mitigated": "Mitigate", "accepted": "Accept", "transferred": "Transfer", "avoided": "Avoid", "unknown": "Unknown" }
   },
   "formRiskDialog": {
     "breadcrumb": { "risks": "Risks", "edit": "Edit Risk", "new": "New Risk" },
@@ -2489,18 +2507,21 @@
   "riskAnalysisDetailPage": {
     "title": "Risk Analysis",
     "messages": { "error": "Error" },
-    "errors": { "delete": "Failed to delete risk assessment" },
-    "deleteConfirmation": "This will permanently delete this risk assessment and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
-    "actions": { "edit": "Edit", "delete": "Delete" },
+    "errors": { "delete": "Failed to delete risk analysis" },
+    "deleteConfirmation": "This will permanently delete this risk analysis and all its diagrams, nodes, processes, and threats. This action cannot be undone.",
+    "actions": { "edit": "Edit", "delete": "Delete", "showMore": "Show more" },
     "details": "Details",
     "fields": { "period": "Period", "matrixSize": "Matrix size", "createdAt": "Created at", "updatedAt": "Updated at" },
     "diagrams": "Diagrams",
-    "emptyDiagrams": "No diagrams yet. Create a diagram to start defining nodes, processes, and threats."
+    "treatmentPlans": "Risks and Treatment Plans",
+    "emptyDiagrams": "No diagrams yet. Create a diagram to start defining nodes, processes, and threats.",
+    "tabs": { "diagrams": "Diagrams", "treatmentPlans": "Risks and Treatment Plans" }
   },
   "riskAnalysesPage": {
     "title": "Risk Analyses",
     "description": "Manage risk analyses with diagrams, nodes, processes, threats, and scenarios.",
-    "columns": { "name": "Name", "description": "Description", "period": "Period", "matrixSize": "Matrix", "created": "Created" }
+    "columns": { "name": "Name", "description": "Description", "period": "Period", "matrixSize": "Matrix", "created": "Created" },
+    "empty": "No risk analyses yet."
   },
   "riskAnalysisBoundaryActions": {
     "breadcrumb": { "boundaries": "Boundaries" },
@@ -2580,6 +2601,100 @@
     "placeholders": { "process": "Select process", "name": "e.g. SQL injection", "category": "e.g. Confidentiality" },
     "actions": { "add": "Add" }
   },
+  "createTreatmentPlanDialog": {
+    "breadcrumb": { "treatmentPlans": "Risks and Treatment Plans", "new": "New treatment plan" },
+    "fields": {
+      "risk": "Risk",
+      "treatment": "Treatment",
+      "owner": "Owner",
+      "inherentRisk": "Inherent risk",
+      "residualRisk": "Residual risk",
+      "inherentLikelihood": "Inherent likelihood",
+      "inherentImpact": "Inherent impact",
+      "residualLikelihood": "Residual likelihood",
+      "residualImpact": "Residual impact"
+    },
+    "placeholders": { "treatment": "Select a treatment", "risk": "Select a risk" },
+    "validation": { "riskRequired": "Select a risk", "ownerRequired": "Select an owner" },
+    "properties": "Properties",
+    "hint": "Only risks linked to a scenario on this analysis.",
+    "emptyEligible": "Link a risk to a scenario on a diagram first.",
+    "actions": { "add": "Add treatment plan", "create": "Create treatment plan" }
+  },
+  "updateTreatmentPlanDialog": {
+    "breadcrumb": { "treatmentPlans": "Risks and Treatment Plans", "edit": "Edit treatment plan" },
+    "fields": {
+      "risk": "Risk",
+      "treatment": "Treatment",
+      "owner": "Owner",
+      "inherentRisk": "Inherent risk",
+      "residualRisk": "Residual risk",
+      "inherentLikelihood": "Inherent likelihood",
+      "inherentImpact": "Inherent impact",
+      "residualLikelihood": "Residual likelihood",
+      "residualImpact": "Residual impact"
+    },
+    "placeholders": { "treatment": "Select a treatment" },
+    "validation": { "ownerRequired": "Select an owner" },
+    "properties": "Properties",
+    "actions": { "update": "Update treatment plan" }
+  },
+  "riskAnalysisTreatmentPlansPage": {
+    "columns": { "risk": "Risk", "category": "Category", "treatment": "Treatment", "owner": "Owner", "scores": "Inherent / Residual", "progress": "Progress" },
+    "empty": "No risks are linked to a scenario on this analysis yet.",
+    "emptyFilter": "No linked risks match this matrix cell.",
+    "unplannedWarning_one": "{{count}} linked risk has no treatment plan yet.",
+    "unplannedWarning_other": "{{count}} linked risks have no treatment plan yet.",
+    "filter": "{{state}} · L{{likelihood}} × I{{impact}}",
+    "search": "Search risks",
+    "states": { "inherent": "Inherent", "net": "Net", "residual": "Residual" },
+    "axes": { "likelihood": "Likelihood", "impact": "Impact" },
+    "legend": {
+      "impact": "Impact: {{levels}}",
+      "likelihood": "Likelihood: {{levels}}",
+      "level": "{{value}} {{label}}"
+    },
+    "cell": "{{count}} at likelihood {{likelihood}}, impact {{impact}}"
+  },
+  "linkedRiskListItem": {
+    "empty": "No treatment plan yet",
+    "actions": { "create": "Add plan" }
+  },
+  "treatmentPlanListItem": {
+    "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "progress": "{{done}}/{{total}}",
+    "progressEmpty": "No measures",
+    "unassigned": "Unassigned",
+    "actions": {
+      "tasks": "Tasks",
+      "edit": "Edit",
+      "delete": "Delete",
+      "expand": "Show measures",
+      "collapse": "Hide measures"
+    }
+  },
+  "riskTreatmentPlansPage": {
+    "columns": { "analysis": "Risk analysis", "treatment": "Treatment", "owner": "Owner", "scores": "Inherent / Residual" },
+    "empty": "This risk has no treatment plans yet."
+  },
+  "riskTreatmentPlanListItem": {
+    "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "unassigned": "Unassigned",
+    "actions": { "measures": "Measures", "edit": "Edit", "delete": "Delete" }
+  },
+  "treatmentPlanMeasureList": {
+    "title": "Measures",
+    "empty": "No measures linked yet.",
+    "acceptedEmpty": "Accepted risks cannot have linked measures.",
+    "actions": { "create": "New measure", "link": "Link measure", "unlink": "Unlink", "showMore": "Show more" }
+  },
+  "treatmentPlanMeasuresDialog": {
+    "title": "Treatment plan measures",
+    "loading": "Loading measures…",
+    "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
+  },
   "riskAnalysisNodeActions": {
     "breadcrumb": { "nodes": "Nodes" },
     "deleteConfirmation": "Delete this node?",
@@ -2636,7 +2751,11 @@
       "scenarios": "Risk scenarios linking threats to risks."
     },
     "columns": { "name": "Name", "type": "Type", "boundary": "Boundary", "from": "From", "to": "To", "parent": "Parent", "threat": "Threat", "category": "Category", "process": "Process", "scenario": "Scenario", "risks": "Risks", "threats": "Threats" },
-    "empty": { "nodes": "No nodes", "processes": "No processes", "boundaries": "No boundaries", "threats": "No threats", "scenarios": "No scenarios" }
+    "empty": { "nodes": "No nodes", "processes": "No processes", "boundaries": "No boundaries", "threats": "No threats", "scenarios": "No scenarios" },
+    "schema": {
+      "title": "Diagram structure",
+      "hint": "Nodes, processes, boundaries, and threats used to update the diagram."
+    }
   },
   "diagramChart": {
     "empty": "Add nodes and processes to see the diagram.",

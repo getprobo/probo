@@ -1,0 +1,203 @@
+# Copyright (c) 2026 Probo Inc <hello@probo.com>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+enum TreatmentPlanOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderFieldCreatedAt"
+        )
+    TREATMENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderFieldTreatment"
+        )
+    CATEGORY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderFieldCategory"
+        )
+    INHERENT_RISK_SCORE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderFieldInherentRiskScore"
+        )
+    RESIDUAL_RISK_SCORE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanOrderFieldResidualRiskScore"
+        )
+}
+
+input TreatmentPlanOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TreatmentPlanOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: TreatmentPlanOrderField!
+}
+
+enum TreatmentPlanScoreType
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.TreatmentPlanScoreType"
+    ) {
+    INHERENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanScoreTypeInherent"
+        )
+    NET
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanScoreTypeNet"
+        )
+    RESIDUAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TreatmentPlanScoreTypeResidual"
+        )
+}
+
+input TreatmentPlanFilter {
+    "Score type of the matrix cell. Must be set together with likelihood and impact."
+    scoreType: TreatmentPlanScoreType
+    "Likelihood axis of the cell. Must be set together with scoreType and impact."
+    likelihood: Int
+    "Impact axis of the cell. Must be set together with scoreType and likelihood."
+    impact: Int
+}
+
+type TreatmentPlan implements Node {
+    id: ID!
+    treatment: RiskTreatment!
+    inherentLikelihood: Int!
+    inherentImpact: Int!
+    inherentRiskScore: Int!
+    residualLikelihood: Int!
+    residualImpact: Int!
+    residualRiskScore: Int!
+    netLikelihood: Int! @goField(forceResolver: true)
+    netImpact: Int! @goField(forceResolver: true)
+    netRiskScore: Int! @goField(forceResolver: true)
+
+    owner: Profile! @goField(forceResolver: true)
+    risk: Risk! @goField(forceResolver: true)
+    riskAnalysis: RiskAnalysis! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+
+    measures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MeasureOrder
+        filter: MeasureFilter
+    ): MeasureConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TreatmentPlanConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TreatmentPlanConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TreatmentPlanEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TreatmentPlanEdge {
+    cursor: CursorKey!
+    node: TreatmentPlan!
+}
+
+extend type Mutation {
+    createTreatmentPlan(
+        input: CreateTreatmentPlanInput!
+    ): CreateTreatmentPlanPayload!
+    updateTreatmentPlan(
+        input: UpdateTreatmentPlanInput!
+    ): UpdateTreatmentPlanPayload!
+    deleteTreatmentPlan(
+        input: DeleteTreatmentPlanInput!
+    ): DeleteTreatmentPlanPayload!
+    createTreatmentPlanMeasureMapping(
+        input: CreateTreatmentPlanMeasureMappingInput!
+    ): CreateTreatmentPlanMeasureMappingPayload!
+    deleteTreatmentPlanMeasureMapping(
+        input: DeleteTreatmentPlanMeasureMappingInput!
+    ): DeleteTreatmentPlanMeasureMappingPayload!
+}
+
+input CreateTreatmentPlanInput {
+    riskId: ID!
+    riskAnalysisId: ID!
+    treatment: RiskTreatment!
+    ownerId: ID!
+    inherentLikelihood: Int!
+    inherentImpact: Int!
+    residualLikelihood: Int
+    residualImpact: Int
+}
+
+input UpdateTreatmentPlanInput {
+    id: ID!
+    treatment: RiskTreatment
+    ownerId: ID @goField(omittable: true)
+    inherentLikelihood: Int
+    inherentImpact: Int
+    residualLikelihood: Int
+    residualImpact: Int
+}
+
+input DeleteTreatmentPlanInput {
+    treatmentPlanId: ID!
+}
+
+input CreateTreatmentPlanMeasureMappingInput {
+    treatmentPlanId: ID!
+    measureId: ID!
+}
+
+input DeleteTreatmentPlanMeasureMappingInput {
+    treatmentPlanId: ID!
+    measureId: ID!
+}
+
+type CreateTreatmentPlanPayload {
+    treatmentPlanEdge: TreatmentPlanEdge!
+}
+
+type UpdateTreatmentPlanPayload {
+    treatmentPlan: TreatmentPlan!
+}
+
+type DeleteTreatmentPlanPayload {
+    deletedTreatmentPlanId: ID!
+}
+
+type CreateTreatmentPlanMeasureMappingPayload {
+    treatmentPlanEdge: TreatmentPlanEdge!
+    measureEdge: MeasureEdge!
+}
+
+type DeleteTreatmentPlanMeasureMappingPayload {
+    deletedTreatmentPlanId: ID!
+    deletedMeasureId: ID!
+    treatmentPlan: TreatmentPlan!
+}

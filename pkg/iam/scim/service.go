@@ -62,7 +62,7 @@ type (
 		TracerProvider    trace.TracerProvider
 		Registerer        prometheus.Registerer
 		EncryptionKey     cipher.EncryptionKey
-		ConnectorRegistry *connector.ConnectorRegistry
+		ConnectorRegistry *connector.Registry
 		BridgeRunner      BridgeRunnerConfig
 	}
 )

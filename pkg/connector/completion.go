@@ -46,7 +46,7 @@ type CompletionState struct {
 // historically (and often still) land on CallbackPath rather than
 // GitHubAppCallbackPath, because the callback URL is configured on the
 // GitHub App itself. Sniffing the token type keeps both URLs working.
-func (r *ConnectorRegistry) CompleteFromState(
+func (r *Registry) CompleteFromState(
 	ctx context.Context,
 	req *http.Request,
 ) (*CompletionState, error) {
@@ -62,7 +62,7 @@ func (r *ConnectorRegistry) CompleteFromState(
 	return r.completeOAuth2FromState(ctx, req, stateToken)
 }
 
-func (r *ConnectorRegistry) CompleteOAuth2FromRequest(
+func (r *Registry) CompleteOAuth2FromRequest(
 	ctx context.Context,
 	req *http.Request,
 ) (*CompletionState, error) {
@@ -74,7 +74,7 @@ func (r *ConnectorRegistry) CompleteOAuth2FromRequest(
 	return r.completeOAuth2FromState(ctx, req, stateToken)
 }
 
-func (r *ConnectorRegistry) CompleteGitHubAppFromRequest(
+func (r *Registry) CompleteGitHubAppFromRequest(
 	ctx context.Context,
 	req *http.Request,
 ) (*CompletionState, error) {
@@ -86,7 +86,7 @@ func (r *ConnectorRegistry) CompleteGitHubAppFromRequest(
 	return r.completeGitHubAppFromState(ctx, req)
 }
 
-func (r *ConnectorRegistry) ValidateGitHubAppState(stateToken string) (*GitHubAppState, error) {
+func (r *Registry) ValidateGitHubAppState(stateToken string) (*GitHubAppState, error) {
 	registered, err := r.GetProtocol(GitHubProvider, ProtocolGitHubApp)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get github app connector: %w", err)
@@ -109,7 +109,7 @@ func (r *ConnectorRegistry) ValidateGitHubAppState(stateToken string) (*GitHubAp
 	return &payload.Data, nil
 }
 
-func (r *ConnectorRegistry) completeGitHubAppFromState(
+func (r *Registry) completeGitHubAppFromState(
 	ctx context.Context,
 	req *http.Request,
 ) (*CompletionState, error) {
@@ -134,7 +134,7 @@ func (r *ConnectorRegistry) completeGitHubAppFromState(
 	}, nil
 }
 
-func (r *ConnectorRegistry) completeOAuth2FromState(
+func (r *Registry) completeOAuth2FromState(
 	ctx context.Context,
 	req *http.Request,
 	stateToken string,

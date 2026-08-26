@@ -26,8 +26,10 @@ import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as linkDocumentOp from './linkDocument.operation';
 import * as linkThirdPartyOp from './linkThirdParty.operation';
+import * as linkTreatmentPlanOp from './linkTreatmentPlan.operation';
 import * as unlinkDocumentOp from './unlinkDocument.operation';
 import * as unlinkThirdPartyOp from './unlinkThirdParty.operation';
+import * as unlinkTreatmentPlanOp from './unlinkTreatmentPlan.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -78,6 +80,12 @@ export const description: INodeProperties[] = [
 				action: 'Link a third party to a measure',
 			},
 			{
+				name: 'Link Treatment Plan',
+				value: 'linkTreatmentPlan',
+				description: 'Link a treatment plan to a measure',
+				action: 'Link a treatment plan to a measure',
+			},
+			{
 				name: 'Unlink Document',
 				value: 'unlinkDocument',
 				description: 'Unlink a document from a measure',
@@ -88,6 +96,12 @@ export const description: INodeProperties[] = [
 				value: 'unlinkThirdParty',
 				description: 'Unlink a third party from a measure',
 				action: 'Unlink a third party from a measure',
+			},
+			{
+				name: 'Unlink Treatment Plan',
+				value: 'unlinkTreatmentPlan',
+				description: 'Unlink a treatment plan from a measure',
+				action: 'Unlink a treatment plan from a measure',
 			},
 			{
 				name: 'Update',
@@ -104,9 +118,11 @@ export const description: INodeProperties[] = [
 	...getOp.description,
 	...getAllOp.description,
 	...linkDocumentOp.description,
-	...unlinkDocumentOp.description,
 	...linkThirdPartyOp.description,
+	...linkTreatmentPlanOp.description,
+	...unlinkDocumentOp.description,
 	...unlinkThirdPartyOp.description,
+	...unlinkTreatmentPlanOp.description,
 ];
 
 export {
@@ -118,5 +134,7 @@ export {
 	linkDocumentOp as linkDocument,
 	unlinkDocumentOp as unlinkDocument,
 	linkThirdPartyOp as linkThirdParty,
+	linkTreatmentPlanOp as linkTreatmentPlan,
 	unlinkThirdPartyOp as unlinkThirdParty,
+	unlinkTreatmentPlanOp as unlinkTreatmentPlan,
 };

@@ -38,6 +38,22 @@ func NewRiskAnalysis(ra *coredata.RiskAnalysis) *RiskAnalysis {
 	}
 }
 
+func NewRiskAnalysisMatrixCells(
+	counts []*coredata.RiskAnalysisMatrixCell,
+) []*RiskAnalysisMatrixCell {
+	items := make([]*RiskAnalysisMatrixCell, 0, len(counts))
+	for _, count := range counts {
+		items = append(items, &RiskAnalysisMatrixCell{
+			Type:       count.Type,
+			Likelihood: count.Likelihood,
+			Impact:     count.Impact,
+			Count:      count.Count,
+		})
+	}
+
+	return items
+}
+
 func NewListRiskAnalysesOutput(
 	p *page.Page[*coredata.RiskAnalysis, coredata.RiskAnalysisOrderField],
 ) ListRiskAnalysesOutput {

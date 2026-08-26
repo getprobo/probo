@@ -41,7 +41,7 @@ func handleConnectorInitiate(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")

@@ -50,26 +50,34 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 
 	c.AuthURL = reg.Endpoints.Auth
 	c.TokenURL = reg.Endpoints.Token
-	c.TokenEndpointAuth = reg.TokenEndpointAuth
-	c.SupportsIncrementalAuth = reg.SupportsIncrementalAuth
-	c.ExclusiveScopes = reg.ExclusiveScopes
-	c.RegisteredScopes = reg.OAuth2Scopes
-	c.RequiresPKCE = reg.RequiresPKCE
-	c.BuildAuthURLForSite = reg.BuildAuthURLForSite
-	c.BuildTokenURLForDomain = reg.BuildTokenURLForDomain
-	c.BuildTokenURLForSite = reg.BuildTokenURLForSite
+
+	// A provider with no OAuth2 path has no metadata to apply; the endpoints
+	// above are all an OAuth2Connector can take from it.
+	oauth2 := reg.OAuth2
+	if oauth2 == nil {
+		return nil
+	}
+
+	c.TokenEndpointAuth = oauth2.TokenEndpointAuth
+	c.SupportsIncrementalAuth = oauth2.SupportsIncrementalAuth
+	c.ExclusiveScopes = oauth2.ExclusiveScopes
+	c.RegisteredScopes = oauth2.Scopes
+	c.RequiresPKCE = oauth2.RequiresPKCE
+	c.BuildAuthURLForSite = oauth2.BuildAuthURLForSite
+	c.BuildTokenURLForDomain = oauth2.BuildTokenURLForDomain
+	c.BuildTokenURLForSite = oauth2.BuildTokenURLForSite
 
 	// Deep copy ExtraAuthParams so per-connector mutations (e.g.
 	// incremental auth, scope overrides) cannot alias back into the
 	// shared registry map.
-	if len(reg.ExtraAuthParams) > 0 {
-		extra := make(map[string]string, len(reg.ExtraAuthParams))
-		maps.Copy(extra, reg.ExtraAuthParams)
+	if len(oauth2.ExtraAuthParams) > 0 {
+		extra := make(map[string]string, len(oauth2.ExtraAuthParams))
+		maps.Copy(extra, oauth2.ExtraAuthParams)
 		c.ExtraAuthParams = extra
 	}
 
-	if reg.BuildAuthURL != nil && c.IntegrationSlug != "" {
-		authURL, err := reg.BuildAuthURL(c.IntegrationSlug)
+	if oauth2.BuildAuthURL != nil && c.IntegrationSlug != "" {
+		authURL, err := oauth2.BuildAuthURL(c.IntegrationSlug)
 		if err != nil {
 			return fmt.Errorf("cannot build %s auth URL: %w", p, err)
 		}
@@ -80,34 +88,28 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 	return nil
 }
 
-// ApplyManagedAPIKey injects the Probo-held API key into a freshly loaded
-// ManagedAPIKey connector's connection, so the credential is resolved at
-// use time — surviving key rotation and never persisted on the connection
-// row (only the extra settings, e.g. a Crisp Website ID, are stored). It is
-// a no-op for every non-managed provider, so callers may invoke it
-// unconditionally before building a connection's HTTP client. It errors
-// when a managed provider's key is unconfigured (the connector was
-// deactivated after the connection was created) or when the connection is
-// not an API-key connection.
-func (r *Registry) ApplyManagedAPIKey(dbConnector *coredata.Connector) error {
-	reg, ok := r.Get(dbConnector.Provider)
-	if !ok || !reg.ManagedAPIKey {
-		return nil
+// APIKeyFor returns the API key to present on outbound requests. For a
+// ManagedAPIKey provider it is the Probo-held key resolved at use time, so
+// rotation takes effect without rewriting the connection row. For every
+// other provider it is the key stored on conn.
+//
+// It errors when a managed provider's key is unconfigured (the connector
+// was deactivated after the connection was created).
+func (r *Registry) APIKeyFor(
+	provider coredata.ConnectorProvider,
+	conn *connector.APIKeyConnection,
+) (string, error) {
+	reg, ok := r.Get(provider)
+	if !ok || !reg.IsManagedAPIKey() {
+		return conn.APIKey, nil
 	}
 
-	apiKeyConn, ok := dbConnector.Connection.(*connector.APIKeyConnection)
+	key, ok := r.ManagedAPIKey(provider)
 	if !ok {
-		return fmt.Errorf("cannot apply managed api key for provider %q: connection is not an api-key connection", dbConnector.Provider)
+		return "", fmt.Errorf("cannot resolve managed API key for provider %q: not configured", provider)
 	}
 
-	key, ok := r.ManagedAPIKey(dbConnector.Provider)
-	if !ok {
-		return fmt.Errorf("cannot apply managed api key for provider %q: not configured", dbConnector.Provider)
-	}
-
-	apiKeyConn.APIKey = key
-
-	return nil
+	return key, nil
 }
 
 // ProbeURL returns the registered probe URL for provider p, or the

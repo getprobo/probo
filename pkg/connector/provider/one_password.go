@@ -48,19 +48,21 @@ func onePasswordRegistration() *Registration {
 		Endpoints: Endpoints{
 			Probe: "https://events.1password.com/api/v1/auditevents",
 		},
-		SupportsAPIKey:            true,
-		SupportsClientCredentials: true,
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
+			},
+		},
+		ClientCredentials: &ClientCredentialsConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "accountId", Label: "Account ID", Required: true},
+				{Key: "region", Label: "Region", Required: true},
+			},
+		},
 		// Two settings shapes, one per connect path, because a different
 		// driver sits behind each:
 		//  - API key:            SCIMBridgeURL      (SCIM-bridge driver).
 		//  - Client credentials: AccountID + Region (Users API driver).
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
-		},
-		ClientCredentialsExtraSettings: []ExtraSetting{
-			{Key: "accountId", Label: "Account ID", Required: true},
-			{Key: "region", Label: "Region", Required: true},
-		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			// The client-credentials grant uses the Users API driver.
 			// Everything else is the API-key connection, whose

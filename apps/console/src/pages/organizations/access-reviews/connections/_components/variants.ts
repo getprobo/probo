@@ -29,7 +29,7 @@ export const accessReviewSourceSection = tv({
     list: "list-none overflow-hidden rounded-[10px] border border-border-low bg-level-1",
     item: "flex flex-wrap items-center gap-4 border-b border-border-low px-4 py-3 last:border-b-0",
     content: "flex min-w-48 flex-1 flex-col gap-0.5 sm:max-w-64",
-    trailing: "ml-auto flex min-w-64 flex-1 flex-wrap items-center justify-end gap-3",
+    trailing: "ml-auto flex min-w-40 flex-1 items-center justify-end",
     issue: "flex min-w-0 flex-1 flex-wrap items-center gap-2.5",
     issueIcon: "shrink-0 text-txt-danger",
     issueContent: "min-w-48 flex-1 space-y-0.5",

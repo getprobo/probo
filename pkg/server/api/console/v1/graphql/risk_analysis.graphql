@@ -196,6 +196,16 @@ input RiskAnalysisScenarioOrder
 
 # Types
 
+type RiskAnalysisMatrixCell
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAnalysisMatrixCell"
+    ) {
+    type: TreatmentPlanScoreType!
+    likelihood: Int!
+    impact: Int!
+    count: Int!
+}
+
 type RiskAnalysis implements Node {
     id: ID!
     name: String!
@@ -203,6 +213,27 @@ type RiskAnalysis implements Node {
     period: Period
     matrixSize: MatrixSize!
     organization: Organization @goField(forceResolver: true)
+
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+        filter: TreatmentPlanFilter
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
+    matrixCells: [RiskAnalysisMatrixCell!]!
+        @goField(forceResolver: true)
+
+    scenarioRisks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+        filter: RiskFilter
+    ): RiskConnection! @goField(forceResolver: true)
 
     diagrams(
         first: Int
@@ -537,7 +568,6 @@ input UpdateRiskAnalysisInput {
     name: String
     description: String @goField(omittable: true)
     period: PeriodInput
-    matrixSize: MatrixSizeInput
 }
 
 input DeleteRiskAnalysisInput {

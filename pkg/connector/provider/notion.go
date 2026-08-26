@@ -39,9 +39,11 @@ func notionRegistration() *Registration {
 			Probe:   "https://api.notion.com/v1/users/me",
 			APIBase: "https://api.notion.com/v1",
 		},
-		ExtraAuthParams:   map[string]string{"owner": "user"},
-		TokenEndpointAuth: "basic-json",
-		SupportsAPIKey:    true,
+		OAuth2: &OAuth2Config{
+			ExtraAuthParams:   map[string]string{"owner": "user"},
+			TokenEndpointAuth: "basic-json",
+		},
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewNotionDriver(c, ep.APIBase), nil
 		},

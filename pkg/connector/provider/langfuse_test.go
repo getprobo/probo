@@ -41,15 +41,17 @@ func TestLangfuseRegistrationMetadata(t *testing.T) {
 	require.True(t, ok, "langfuse provider must be registered")
 
 	assert.Equal(t, "Langfuse", reg.DisplayName)
-	assert.True(t, reg.SupportsAPIKey)
+	assert.True(t, reg.SupportsAPIKey())
 	// Langfuse presents publicKey:secretKey as a full HTTP Basic credential.
-	assert.True(t, reg.APIKeyBasicAuthUserPass)
-	assert.Empty(t, reg.APIKeyHeader)
-	assert.Empty(t, reg.APIKeyAuthScheme)
-	require.Len(t, reg.APIKeyExtraSettings, 1)
-	assert.Equal(t, "baseUrl", reg.APIKeyExtraSettings[0].Key)
-	assert.Equal(t, "Base URL", reg.APIKeyExtraSettings[0].Label)
-	assert.True(t, reg.APIKeyExtraSettings[0].Required)
+	assert.Equal(
+		t,
+		provider.APIKeyAuth{Mode: provider.APIKeyAuthBasicUserPass},
+		reg.APIKey.Auth,
+	)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	assert.Equal(t, "baseUrl", reg.APIKeyExtraSettings()[0].Key)
+	assert.Equal(t, "Base URL", reg.APIKeyExtraSettings()[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings()[0].Required)
 	// Single-tenant API-key provider: no picker, no name resolver.
 	assert.Nil(t, reg.NewNameResolver, "langfuse must not wire a name resolver")
 	assert.Nil(t, reg.SetOrganizationSettings, "langfuse must not wire a picker store")

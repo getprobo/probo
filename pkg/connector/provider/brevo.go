@@ -34,14 +34,15 @@ func brevoRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderBrevo,
 		DisplayName:      "Brevo",
 		DocumentationURL: accessReviewDocsURL("brevo"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "api-key"},
+		},
 		// Brevo authenticates with an API key sent in the api-key header
 		// rather than Authorization: Bearer. APIKeyHeader makes the
 		// APIKeyConnection send api-key instead and omit Authorization. There
 		// is no OAuth2 flow needed: the key is bound to one Brevo account, so
 		// there is nothing to pick (Pattern 3): no settings struct, no
 		// picker.
-		APIKeyHeader: "api-key",
 		Endpoints: Endpoints{
 			APIBase: "https://api.brevo.com/v3",
 			// ProbeURL lets the connection-status check confirm the key with a

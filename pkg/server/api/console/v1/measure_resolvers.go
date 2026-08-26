@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -217,6 +218,46 @@ func (r *measureResolver) ThirdParties(ctx context.Context, obj *types.Measure, 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
 }
 
+// TreatmentPlans is the resolver for the treatmentPlans field.
+func (r *measureResolver) TreatmentPlans(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TreatmentPlanOrderBy, filter *types.TreatmentPlanFilter) (*types.TreatmentPlanConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, riskmanagement.ActionTreatmentPlanList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TreatmentPlanOrderField]{
+		Field:     coredata.TreatmentPlanOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TreatmentPlanOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	planFilter := coredata.NewTreatmentPlanFilter(nil, nil, nil)
+	if filter != nil {
+		planFilter = coredata.NewTreatmentPlanFilter(filter.ScoreType, filter.Likelihood, filter.Impact)
+	}
+
+	page, err := r.riskManagement.ListTreatmentPlansForMeasureID(ctx, scope, obj.ID, cursor, planFilter)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list measure treatment plans", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTreatmentPlanConnection(page, r, obj.ID, planFilter), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *measureResolver) Permission(ctx context.Context, obj *types.Measure, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -256,6 +297,14 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 		return count, nil
 	case *thirdPartyResolver:
 		count, err := r.probo.Measures.CountForThirdPartyID(ctx, scope, obj.ParentID, obj.Filters)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *treatmentPlanResolver:
+		count, err := r.probo.Measures.CountForTreatmentPlanID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

@@ -35,11 +35,12 @@ func grafanaRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderGrafana,
 		DisplayName:      "Grafana",
 		DocumentationURL: accessReviewDocsURL("grafana"),
-		SupportsAPIKey:   true,
-		BuildProbeURL:    buildGrafanaProbeURL,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "baseUrl", Label: "Base URL", Required: true},
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "baseUrl", Label: "Base URL", Required: true},
+			},
 		},
+		BuildProbeURL: buildGrafanaProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GrafanaConnectorSettings](conn)
 			if err != nil {

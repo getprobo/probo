@@ -45,19 +45,21 @@ func googleAnalyticsRegistration() *Registration {
 			// must not be derived from this.
 			APIBase: "https://analyticsadmin.googleapis.com/v1alpha",
 		},
-		ExtraAuthParams: map[string]string{
-			"access_type": "offline",
-			"prompt":      "consent",
+		OAuth2: &OAuth2Config{
+			ExtraAuthParams: map[string]string{
+				"access_type": "offline",
+				"prompt":      "consent",
+			},
+			SupportsIncrementalAuth: true,
+			Scopes: []string{
+				"https://www.googleapis.com/auth/analytics.readonly",
+				"https://www.googleapis.com/auth/analytics.manage.users.readonly",
+			},
 		},
-		SupportsIncrementalAuth: true,
 		// analytics.readonly is required to LIST accounts and properties (the
 		// picker and the probe); analytics.manage.users.readonly is required to
 		// read the access bindings. The manage.users scope alone cannot list
 		// accounts (it returns 403), so both are requested.
-		OAuth2Scopes: []string{
-			"https://www.googleapis.com/auth/analytics.readonly",
-			"https://www.googleapis.com/auth/analytics.manage.users.readonly",
-		},
 		// BuildProbeURL targets the selected account's accessBindings rather
 		// than the accounts list: listing accounts only needs
 		// analytics.readonly, so a non-Administrator connection (or one where

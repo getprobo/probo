@@ -34,5 +34,5 @@ func TestGitHubScopes_ExcludeEnterpriseOnlyAuditLog(t *testing.T) {
 
 	registration, ok := provider.NewBuiltinRegistry().Get(coredata.ConnectorProviderGitHub)
 	require.True(t, ok)
-	assert.Equal(t, []string{"read:org"}, registration.OAuth2Scopes)
+	assert.Equal(t, []string{"read:org"}, registration.OAuth2.Scopes)
 }

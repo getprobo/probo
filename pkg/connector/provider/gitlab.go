@@ -42,7 +42,9 @@ func gitlabRegistration() *Registration {
 			// prefix, so the version segment stays in APIBase.
 			APIBase: "https://gitlab.com/api/v4",
 		},
-		OAuth2Scopes: []string{"read_api"},
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"read_api"},
+		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](conn)
 			if err != nil {

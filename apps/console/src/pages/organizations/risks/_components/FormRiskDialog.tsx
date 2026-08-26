@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
 import { useToggle } from "@probo/hooks";
 import {
   Breadcrumb,
@@ -35,20 +34,16 @@ import {
   Select,
   Textarea,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
 import { type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useFragment, useMutation } from "react-relay";
+import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { FormRiskDialog_risk$key } from "#/__generated__/core/FormRiskDialog_risk.graphql";
 import type { FormRiskDialogMutation } from "#/__generated__/core/FormRiskDialogMutation.graphql";
 import type { FormRiskDialogUpdateRiskMutation } from "#/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
-import {
-  ControlledField,
-  ControlledSelect,
-} from "#/components/form/ControlledField";
+import { ControlledField, ControlledSelect } from "#/components/form/ControlledField";
 import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import {
   type RiskData,
@@ -57,6 +52,7 @@ import {
 } from "#/hooks/forms/useRiskForm";
 import { useFetchQuery } from "#/hooks/useFetchQuery";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 
 interface FormRiskDialogProps {
   trigger?: ReactNode;
@@ -125,7 +121,6 @@ export function FormRiskDialog({
   onSuccess,
 }: FormRiskDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const ref = refProps ?? dialogRef;
@@ -162,70 +157,47 @@ export function FormRiskDialog({
     setValue("description", template.description);
   };
 
-  const onSubmit = (data: RiskData) => {
-    if (risk) {
-      updateRisk({
-        variables: {
-          input: {
-            id: risk.id,
-            ...data,
-            description: data.description || null,
+  const onSubmit = async (data: RiskData) => {
+    try {
+      if (risk) {
+        await updateRisk(
+          {
+            variables: {
+              input: {
+                id: risk.id,
+                ...data,
+                description: data.description || null,
+              },
+            },
+          },
+          { successMessage: t("formRiskDialog.messages.updated"), errorToast: t("formRiskDialog.errors.update") },
+        );
+        ref?.current?.close();
+        return;
+      }
+
+      await createRisk(
+        {
+          variables: {
+            input: {
+              ...data,
+              description: data.description || null,
+              organizationId,
+            },
+            connections: [connection!],
           },
         },
-        onCompleted() {
-          toast({
-            title: t("formRiskDialog.messages.success"),
-            description: t("formRiskDialog.messages.updated"),
-            variant: "success",
-          });
-          ref?.current?.close();
-        },
-        onError(error) {
-          toast({
-            title: t("formRiskDialog.messages.error"),
-            description: formatError(
-              t("formRiskDialog.errors.update"),
-              error,
-            ),
-            variant: "error",
-          });
-        },
-      });
-      return;
+        { successMessage: t("formRiskDialog.messages.created"), errorToast: t("formRiskDialog.errors.create") },
+      );
+      ref?.current?.close();
+      reset();
+      onSuccess?.();
+    } catch {
+      // Error toast is handled by useMutation.
     }
-    createRisk({
-      variables: {
-        input: {
-          ...data,
-          description: data.description || null,
-          organizationId,
-        },
-        connections: [connection!],
-      },
-      onCompleted() {
-        toast({
-          title: t("formRiskDialog.messages.success"),
-          description: t("formRiskDialog.messages.created"),
-          variant: "success",
-        });
-        ref?.current?.close();
-        reset();
-        onSuccess?.();
-      },
-      onError(error) {
-        toast({
-          title: t("formRiskDialog.messages.error"),
-          description: formatError(
-            t("formRiskDialog.errors.create"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
-    });
   };
 
-  const [showNote, toggleNote] = useToggle(false);
+  const [showNote, toggleNote] = useToggle(Boolean(risk?.note));
 
   return (
     <Dialog
@@ -366,7 +338,10 @@ function ImpactAndLikelihood({
         >
           {[1, 2, 3, 4, 5].map(value => (
             <Option key={value} value={value.toString()}>
-              {t("formRiskDialog.scoreOption", { value, label: t(`formRiskDialog.impacts.${value}`) })}
+              {t("formRiskDialog.scoreOption", {
+                value,
+                label: t(`formRiskDialog.impacts.${value}`),
+              })}
             </Option>
           ))}
         </ControlledField>
@@ -380,7 +355,10 @@ function ImpactAndLikelihood({
         >
           {[1, 2, 3, 4, 5].map(value => (
             <Option key={value} value={value.toString()}>
-              {t("formRiskDialog.scoreOption", { value, label: t(`formRiskDialog.likelihoods.${value}`) })}
+              {t("formRiskDialog.scoreOption", {
+                value,
+                label: t(`formRiskDialog.likelihoods.${value}`),
+              })}
             </Option>
           ))}
         </ControlledField>

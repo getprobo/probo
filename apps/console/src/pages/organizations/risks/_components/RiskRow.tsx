@@ -52,8 +52,8 @@ const riskRowFragment = graphql`
     }
     inherentRiskScore
     residualRiskScore
-    canUpdate: permission(action: "core:risk:update")
-    canDelete: permission(action: "core:risk:delete")
+    canUpdate: permission(action: "risk-management:risk:update")
+    canDelete: permission(action: "risk-management:risk:delete")
     ...FormRiskDialog_risk
   }
 `;
@@ -127,12 +127,20 @@ export function RiskRow(props: RiskRowProps) {
       <Tr to={riskUrl}>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>
-        <Td>{t(`riskRow.treatments.${(risk.treatment ?? "UNKNOWN").toLowerCase()}`)}</Td>
         <Td>
-          <SeverityBadge score={risk.inherentRiskScore} />
+          {risk.treatment
+            ? t(`riskRow.treatments.${risk.treatment.toLowerCase()}`)
+            : "—"}
         </Td>
         <Td>
-          <SeverityBadge score={risk.residualRiskScore} />
+          {risk.inherentRiskScore != null
+            ? <SeverityBadge score={risk.inherentRiskScore} />
+            : "—"}
+        </Td>
+        <Td>
+          {risk.residualRiskScore != null
+            ? <SeverityBadge score={risk.residualRiskScore} />
+            : "—"}
         </Td>
         <Td>{risk.owner?.fullName || t("riskRow.unassigned")}</Td>
         {props.hasAnyAction && (

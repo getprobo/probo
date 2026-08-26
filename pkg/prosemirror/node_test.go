@@ -560,3 +560,105 @@ func TestNodeWithNoAttrs(t *testing.T) {
 	require.NotNil(t, n.Content[0].Text)
 	assert.Equal(t, "Hello", *n.Content[0].Text)
 }
+
+func TestAttrs_SchemaDefaults(t *testing.T) {
+	t.Parallel()
+
+	// The renderer only emits colspan/rowspan above 1, so nothing else in the
+	// tree tells a defaulted cell from a zero-valued one.
+	for _, tc := range []struct {
+		name  string
+		raw   string
+		check func(*testing.T, Node)
+	}{
+		{
+			name: "heading",
+			raw:  `{"type":"heading","content":[{"type":"text","text":"X"}]}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.HeadingAttrs()
+				require.NoError(t, err)
+				assert.Equal(t, 1, attrs.Level)
+			},
+		},
+		{
+			name: "heading with empty attrs",
+			raw:  `{"type":"heading","attrs":{},"content":[{"type":"text","text":"X"}]}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.HeadingAttrs()
+				require.NoError(t, err)
+				assert.Equal(t, 1, attrs.Level)
+			},
+		},
+		{
+			name: "ordered list",
+			raw:  `{"type":"orderedList"}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.OrderedListAttrs()
+				require.NoError(t, err)
+				assert.Equal(t, 1, attrs.Start)
+				assert.Nil(t, attrs.Type)
+			},
+		},
+		{
+			name: "ordered list with empty attrs",
+			raw:  `{"type":"orderedList","attrs":{}}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.OrderedListAttrs()
+				require.NoError(t, err)
+				assert.Equal(t, 1, attrs.Start)
+			},
+		},
+		{
+			name: "table cell",
+			raw:  `{"type":"tableCell"}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.TableCellAttrs()
+				require.NoError(t, err)
+				assert.Equal(t, 1, attrs.Colspan)
+				assert.Equal(t, 1, attrs.Rowspan)
+				assert.Nil(t, attrs.Colwidth)
+			},
+		},
+		{
+			name: "table header with empty attrs",
+			raw:  `{"type":"tableHeader","attrs":{}}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.TableCellAttrs()
+				require.NoError(t, err)
+				assert.Equal(t, 1, attrs.Colspan)
+				assert.Equal(t, 1, attrs.Rowspan)
+			},
+		},
+		{
+			name: "code block",
+			raw:  `{"type":"codeBlock"}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.CodeBlockAttrs()
+				require.NoError(t, err)
+				assert.Nil(t, attrs.Language)
+			},
+		},
+		{
+			name: "image",
+			raw:  `{"type":"image"}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.ImageAttrs()
+				require.NoError(t, err)
+				assert.Empty(t, attrs.Src)
+				assert.Nil(t, attrs.Alt)
+			},
+		},
+	} {
+		t.Run(
+			tc.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				var n Node
+				require.NoError(t, json.Unmarshal([]byte(tc.raw), &n))
+
+				tc.check(t, n)
+			},
+		)
+	}
+}

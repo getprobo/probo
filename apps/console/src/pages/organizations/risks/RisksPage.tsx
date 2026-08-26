@@ -72,8 +72,8 @@ const risksFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    canCreateRisk: permission(action: "core:risk:create")
-    canPublishRisk: permission(action: "core:risk:publish")
+    canCreateRisk: permission(action: "risk-management:risk:create")
+    canPublishRisk: permission(action: "risk-management:risk:publish")
     risksDocument {
       id
       defaultApprovers {
@@ -96,8 +96,8 @@ const risksFragment = graphql`
           inherentImpact
           residualLikelihood
           residualImpact
-          canUpdate: permission(action: "core:risk:update")
-          canDelete: permission(action: "core:risk:delete")
+          canUpdate: permission(action: "risk-management:risk:update")
+          canDelete: permission(action: "risk-management:risk:delete")
           ...RiskRow_risk
         }
       }
@@ -128,21 +128,32 @@ export default function RisksPage(props: RisksPageProps) {
   const risks = fragmentData.risks?.edges.map(edge => edge.node) ?? [];
   const connectionId = fragmentData.risks.__id;
 
-  const chartRisks = risks.map(({
+  const chartRisks = risks.flatMap(({
     id,
     name,
     inherentLikelihood,
     inherentImpact,
     residualLikelihood,
     residualImpact,
-  }) => ({
-    id,
-    name,
-    inherentLikelihood,
-    inherentImpact,
-    residualLikelihood,
-    residualImpact,
-  }));
+  }) => {
+    if (
+      inherentLikelihood == null
+      || inherentImpact == null
+      || residualLikelihood == null
+      || residualImpact == null
+    ) {
+      return [];
+    }
+
+    return [{
+      id,
+      name,
+      inherentLikelihood,
+      inherentImpact,
+      residualLikelihood,
+      residualImpact,
+    }];
+  });
 
   const refetch = ({
     order,

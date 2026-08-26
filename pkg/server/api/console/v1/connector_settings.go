@@ -42,8 +42,8 @@ import (
 
 // resolveAPIKeyConnectorCredential returns the API key to persist on a new
 // API-key connection. For ManagedAPIKey providers (Model B, e.g. Crisp) it
-// persists NOTHING (empty string): the Probo-held key is injected fresh at
-// use time by (*provider.Registry).ApplyManagedAPIKey, so it survives key
+// persists NOTHING (empty string): the Probo-held key is resolved at
+// use time by (*provider.Registry).APIKeyFor, so it survives key
 // rotation and is not duplicated across tenant rows. It still requires the
 // key to be configured, which is what keeps the provider deactivated, and
 // ignores any client-supplied value. For all other providers it requires
@@ -51,7 +51,7 @@ import (
 // client via gqlutils.Invalid, so it contains only provider/field names,
 // never the key itself.
 func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorProvider, clientKey *string) (string, error) {
-	if reg, ok := r.providerRegistry.Get(provider); ok && reg.ManagedAPIKey {
+	if reg, ok := r.providerRegistry.Get(provider); ok && reg.IsManagedAPIKey() {
 		if _, ok := r.providerRegistry.ManagedAPIKey(provider); !ok {
 			return "", fmt.Errorf("connector is not configured for this deployment")
 		}
@@ -74,13 +74,7 @@ func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorP
 // as the persisted connector will: a new auth flag cannot be added to one path
 // and silently missed on the other.
 func (r *Resolver) newAPIKeyConnection(provider coredata.ConnectorProvider, key string) *connector.APIKeyConnection {
-	return &connector.APIKeyConnection{
-		APIKey:            key,
-		Header:            r.providerRegistry.APIKeyHeader(provider),
-		BasicAuth:         r.providerRegistry.APIKeyUsesBasicAuth(provider),
-		BasicAuthUserPass: r.providerRegistry.APIKeyUsesBasicAuthUserPass(provider),
-		Scheme:            r.providerRegistry.APIKeyAuthScheme(provider),
-	}
+	return r.providerRegistry.NewAPIKeyConnection(provider, key)
 }
 
 // tallyUserFetcher fetches the Tally user profile bound to an API key. It

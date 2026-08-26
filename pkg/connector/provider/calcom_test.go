@@ -44,8 +44,8 @@ func TestCalComRegistration(t *testing.T) {
 	reg, ok := r.Get(coredata.ConnectorProviderCalCom)
 	require.True(t, ok)
 
-	assert.True(t, reg.SupportsAPIKey)
-	assert.Equal(t, expectedScopes, reg.OAuth2Scopes)
+	assert.True(t, reg.SupportsAPIKey())
+	assert.Equal(t, expectedScopes, reg.OAuth2.Scopes)
 
 	oauthConnector := &connector.OAuth2Connector{}
 	require.NoError(t, r.ApplyOAuth2Defaults(

@@ -34,7 +34,9 @@ func anthropicRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderAnthropic,
 		DisplayName:      "Anthropic",
 		DocumentationURL: accessReviewDocsURL("anthropic"),
-		SupportsAPIKey:   true,
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthHeader, Name: "x-api-key"},
+		},
 		Endpoints: Endpoints{
 			// Every Admin API endpoint the driver calls shares the /v1
 			// prefix, so the version segment stays in APIBase.
@@ -46,8 +48,7 @@ func anthropicRegistration() *Registration {
 		// APIKeyConnection send x-api-key instead of Bearer. There is no
 		// third-party OAuth2 flow for the Admin API, so this is API-key
 		// only and takes a single admin key (sk-ant-admin...) per org.
-		APIKeyHeader: "x-api-key",
-		Probe:        probeAnthropic,
+		Probe: probeAnthropic,
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewAnthropicDriver(c, ep.APIBase), nil
 		},

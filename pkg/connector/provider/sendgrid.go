@@ -38,7 +38,7 @@ func sendgridRegistration() *Registration {
 			Probe:   "https://api.sendgrid.com/v3/teammates?limit=1&offset=0",
 			APIBase: "https://api.sendgrid.com/v3",
 		},
-		SupportsAPIKey: true,
+		APIKey: &APIKeyConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, logger *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewSendGridDriver(c, logger.Named("sendgrid"), ep.APIBase), nil
 		},

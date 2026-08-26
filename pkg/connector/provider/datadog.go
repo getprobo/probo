@@ -39,13 +39,15 @@ func datadogRegistration() *Registration {
 	// BuildProbeURL targets the stored API domain. Confidential client + PKCE map
 	// to the default post-form token-endpoint auth.
 	return &Registration{
-		Provider:               coredata.ConnectorProviderDatadog,
-		DisplayName:            "Datadog",
-		OAuth2Scopes:           []string{"user_access_read"},
-		RequiresPKCE:           true,
-		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
-		BuildTokenURLForDomain: connector.DatadogTokenURL,
-		BuildProbeURL:          buildDatadogProbeURL,
+		Provider:    coredata.ConnectorProviderDatadog,
+		DisplayName: "Datadog",
+		OAuth2: &OAuth2Config{
+			Scopes:                 []string{"user_access_read"},
+			RequiresPKCE:           true,
+			BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
+			BuildTokenURLForDomain: connector.DatadogTokenURL,
+		},
+		BuildProbeURL: buildDatadogProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
 			if err != nil {

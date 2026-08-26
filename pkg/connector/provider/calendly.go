@@ -31,17 +31,19 @@ import (
 
 func calendlyRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderCalendly,
-		DisplayName:    "Calendly",
-		SupportsAPIKey: true,
+		Provider:    coredata.ConnectorProviderCalendly,
+		DisplayName: "Calendly",
+		APIKey:      &APIKeyConfig{},
 		Endpoints: Endpoints{
 			Auth:    "https://auth.calendly.com/oauth/authorize",
 			Token:   "https://auth.calendly.com/oauth/token",
 			APIBase: "https://api.calendly.com",
 			Probe:   "https://api.calendly.com/users/me",
 		},
-		OAuth2Scopes: []string{"users:read", "organizations:read"},
-		RequiresPKCE: true,
+		OAuth2: &OAuth2Config{
+			Scopes:       []string{"users:read", "organizations:read"},
+			RequiresPKCE: true,
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewCalendlyDriver(c, ep.APIBase), nil
 		},

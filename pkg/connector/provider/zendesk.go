@@ -44,12 +44,14 @@ func zendeskRegistration() *Registration {
 	// client carries a client_secret, which both authenticates the token
 	// exchange (default post-form) and signs the state.
 	return &Registration{
-		Provider:             coredata.ConnectorProviderZendesk,
-		DisplayName:          "Zendesk",
-		OAuth2Scopes:         []string{"users:read"},
-		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
-		BuildTokenURLForSite: connector.ZendeskTokenURL,
-		BuildProbeURL:        buildZendeskProbeURL,
+		Provider:    coredata.ConnectorProviderZendesk,
+		DisplayName: "Zendesk",
+		OAuth2: &OAuth2Config{
+			Scopes:               []string{"users:read"},
+			BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
+			BuildTokenURLForSite: connector.ZendeskTokenURL,
+		},
+		BuildProbeURL: buildZendeskProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
 			if err != nil {

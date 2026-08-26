@@ -39,7 +39,9 @@ func slackRegistration() *Registration {
 			Probe:   "https://slack.com/api/users.list?limit=1",
 			APIBase: "https://slack.com/api",
 		},
-		OAuth2Scopes: []string{"users:read", "users:read.email"},
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"users:read", "users:read.email"},
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewSlackDriver(c, ep.APIBase), nil
 		},

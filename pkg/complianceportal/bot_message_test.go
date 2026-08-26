@@ -36,17 +36,19 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 	tenantID := gid.NewTenantID()
 	portalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
 	messageID := gid.New(tenantID, coredata.AgentExecutionEntityType)
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 	intent, err := NewRenderer("https://app.example.com").RenderMessage(
 		t.Context(),
 		bot.Message{
 			ID:             messageID,
-			OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
+			OrganizationID: organizationID,
 			Type:           AccessMessageType,
 			Attributes: map[string]any{
 				CompliancePortalIDAttribute: portalID.String(),
 				RequesterEmailAttribute:     "requester@example.com",
 				DocumentsAttribute: []MessageResource{{
-					ID:     gid.New(tenantID, coredata.DocumentEntityType).String(),
+					ID:     documentID.String(),
 					Title:  "Security policy",
 					Status: "REQUESTED",
 				}},
@@ -68,6 +70,11 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 	require.Len(t, intent.Groups[0].Items, 1)
 	item := intent.Groups[0].Items[0]
 	assert.Equal(t, "Security policy", item.Label)
+	assert.Equal(
+		t,
+		"https://app.example.com/organizations/"+organizationID.String()+"/governance/documents/"+documentID.String(),
+		item.URL,
+	)
 	assert.Empty(t, item.Status)
 
 	require.NotNil(t, item.Action)
@@ -79,5 +86,39 @@ func TestRendererOwnsAccessRequestPresentation(t *testing.T) {
 			{Label: "Reject", Value: "reject/" + item.ID},
 		},
 		item.Action.Options,
+	)
+}
+
+func TestRenderer_AuditURLUsesGovernancePath(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	auditID := gid.New(tenantID, coredata.AuditEntityType)
+	reportID := gid.New(tenantID, coredata.FileEntityType)
+	intent, err := NewRenderer("https://app.example.com").RenderMessage(
+		t.Context(),
+		bot.Message{
+			OrganizationID: organizationID,
+			Type:           AccessMessageType,
+			Attributes: map[string]any{
+				CompliancePortalIDAttribute: gid.New(tenantID, coredata.CompliancePortalEntityType).String(),
+				RequesterEmailAttribute:     "requester@example.com",
+				ReportsAttribute: []MessageResource{{
+					ID:      reportID.String(),
+					Title:   "SOC 2 - 2026",
+					AuditID: auditID.String(),
+					Status:  "REQUESTED",
+				}},
+			},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, intent.Groups, 1)
+	require.Len(t, intent.Groups[0].Items, 1)
+	assert.Equal(
+		t,
+		"https://app.example.com/organizations/"+organizationID.String()+"/governance/audits/"+auditID.String(),
+		intent.Groups[0].Items[0].URL,
 	)
 }

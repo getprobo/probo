@@ -218,6 +218,52 @@ LIMIT 1;
 	return nil
 }
 
+func (ra *RiskAnalyses) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskAnalysisIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	description,
+	period_start,
+	period_end,
+	matrix_rows,
+	matrix_cols,
+	created_at,
+	updated_at
+FROM risk_analyses
+WHERE %s
+	AND id = ANY(@risk_analysis_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_analysis_ids": riskAnalysisIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risk analyses: %w", err)
+	}
+
+	analyses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAnalysis])
+	if err != nil {
+		return fmt.Errorf("cannot collect risk analyses: %w", err)
+	}
+
+	*ra = analyses
+
+	if len(analyses) != len(gid.NewSet(riskAnalysisIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (ra *RiskAnalysis) Insert(
 	ctx context.Context,
 	conn pg.Tx,

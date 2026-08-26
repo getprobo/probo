@@ -150,6 +150,11 @@ func RequireForbiddenError(t *testing.T, err error, msgAndArgs ...any) {
 	RequireErrorCode(t, err, "FORBIDDEN", msgAndArgs...)
 }
 
+func RequireConflictError(t *testing.T, err error, msgAndArgs ...any) {
+	t.Helper()
+	RequireErrorCode(t, err, "CONFLICT", msgAndArgs...)
+}
+
 func RequireMembershipRequiredError(t *testing.T, err error, msgAndArgs ...any) {
 	t.Helper()
 	RequireErrorCode(t, err, "MEMBERSHIP_REQUIRED", msgAndArgs...)

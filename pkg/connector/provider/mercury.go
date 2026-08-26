@@ -34,7 +34,7 @@ func mercuryRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderMercury,
 		DisplayName:      "Mercury",
 		DocumentationURL: accessReviewDocsURL("mercury"),
-		SupportsAPIKey:   true,
+		APIKey:           &APIKeyConfig{},
 		Endpoints: Endpoints{
 			APIBase: "https://api.mercury.com/api/v1",
 			// Mercury authenticates with a self-serve API token presented as

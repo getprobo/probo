@@ -31,10 +31,10 @@ export const riskMeasuresPageQuery = graphql`
       ... on Risk {
         id
         canCreateMeasureMapping: permission(
-          action: "core:risk:create-measure-mapping"
+          action: "risk-management:risk:create-measure-mapping"
         )
         canDeleteMeasureMapping: permission(
-          action: "core:risk:delete-measure-mapping"
+          action: "risk-management:risk:delete-measure-mapping"
         )
         measures(first: 100) @connection(key: "RiskMeasuresPage_measures") {
           __id

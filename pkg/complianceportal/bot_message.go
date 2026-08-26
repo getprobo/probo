@@ -95,6 +95,7 @@ func (r *Renderer) RenderMessage(
 			r.baseURL,
 			"organizations",
 			url.PathEscape(message.OrganizationID.String()),
+			"governance",
 			"documents",
 			url.PathEscape(resource.ID),
 		)
@@ -111,6 +112,7 @@ func (r *Renderer) RenderMessage(
 			r.baseURL,
 			"organizations",
 			url.PathEscape(message.OrganizationID.String()),
+			"governance",
 			"audits",
 			url.PathEscape(resource.AuditID),
 		)

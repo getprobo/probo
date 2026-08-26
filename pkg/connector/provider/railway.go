@@ -34,7 +34,7 @@ func railwayRegistration() *Registration {
 		Provider:         coredata.ConnectorProviderRailway,
 		DisplayName:      "Railway",
 		DocumentationURL: accessReviewDocsURL("railway"),
-		SupportsAPIKey:   true,
+		APIKey:           &APIKeyConfig{},
 		Endpoints: Endpoints{
 			// Railway's data API is a single GraphQL endpoint, so APIBase is
 			// that endpoint (note the .com TLD — the legacy

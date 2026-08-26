@@ -145,22 +145,22 @@ WHERE
 
 type (
 	Risk struct {
-		ID                 gid.GID       `db:"id"`
-		OrganizationID     gid.GID       `db:"organization_id"`
-		Name               string        `db:"name"`
-		Description        *string       `db:"description"`
-		Category           string        `db:"category"`
-		Treatment          RiskTreatment `db:"treatment"`
-		Note               string        `db:"note"`
-		OwnerID            *gid.GID      `db:"owner_profile_id"`
-		InherentLikelihood int           `db:"inherent_likelihood"`
-		InherentImpact     int           `db:"inherent_impact"`
-		InherentRiskScore  int           `db:"inherent_risk_score"`
-		ResidualLikelihood int           `db:"residual_likelihood"`
-		ResidualImpact     int           `db:"residual_impact"`
-		ResidualRiskScore  int           `db:"residual_risk_score"`
-		CreatedAt          time.Time     `db:"created_at"`
-		UpdatedAt          time.Time     `db:"updated_at"`
+		ID                 gid.GID        `db:"id"`
+		OrganizationID     gid.GID        `db:"organization_id"`
+		Name               string         `db:"name"`
+		Description        *string        `db:"description"`
+		Category           string         `db:"category"`
+		Treatment          *RiskTreatment `db:"treatment"`
+		Note               string         `db:"note"`
+		OwnerID            *gid.GID       `db:"owner_profile_id"`
+		InherentLikelihood *int           `db:"inherent_likelihood"`
+		InherentImpact     *int           `db:"inherent_impact"`
+		InherentRiskScore  *int           `db:"inherent_risk_score"`
+		ResidualLikelihood *int           `db:"residual_likelihood"`
+		ResidualImpact     *int           `db:"residual_impact"`
+		ResidualRiskScore  *int           `db:"residual_risk_score"`
+		CreatedAt          time.Time      `db:"created_at"`
+		UpdatedAt          time.Time      `db:"updated_at"`
 
 		// Ordering only
 		OwnerFullName *string `db:"owner_full_name"`
@@ -574,6 +574,103 @@ WHERE %s
 	if len(risks) != len(gid.NewSet(riskIDs...)) {
 		return ErrResourceNotFound
 	}
+
+	return nil
+}
+
+func (r *Risks) CountByRiskIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskIDs []gid.GID,
+	filter *RiskFilter,
+) (int, error) {
+	if len(riskIDs) == 0 {
+		return 0, nil
+	}
+
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	risks
+WHERE
+	%s
+	AND id = ANY(@risk_ids)
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_ids": riskIDs}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r *Risks) LoadByRiskIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	riskIDs []gid.GID,
+	cursor *page.Cursor[RiskOrderField],
+	filter *RiskFilter,
+) error {
+	if len(riskIDs) == 0 {
+		*r = nil
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	description,
+	category,
+	treatment,
+	inherent_likelihood,
+	inherent_impact,
+	inherent_risk_score,
+	residual_likelihood,
+	residual_impact,
+	residual_risk_score,
+	owner_profile_id,
+	NULL AS owner_full_name,
+	note,
+	created_at,
+	updated_at
+FROM
+	risks
+WHERE
+	%s
+	AND id = ANY(@risk_ids)
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_ids": riskIDs}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query risks: %w", err)
+	}
+
+	risks, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Risk])
+	if err != nil {
+		return fmt.Errorf("cannot collect risks: %w", err)
+	}
+
+	*r = risks
 
 	return nil
 }

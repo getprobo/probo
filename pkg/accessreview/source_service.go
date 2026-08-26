@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -338,77 +339,97 @@ func (s *Service) CountSourcesForOrganizationID(
 	return count, nil
 }
 
-// ConnectorHTTPClient loads a connector by ID with decrypted credentials
-// and returns an HTTP client with token refresh support. If the token was
-// refreshed during client creation, the updated credentials are persisted.
-func (s *Service) ConnectorHTTPClient(
+// loadConfiguredConnector loads a connector by ID with its connection decrypted
+// and the deployment's runtime configuration injected. The raw
+// ErrResourceNotFound is propagated so callers can decide how to treat a missing
+// connector.
+func (s *Service) loadConfiguredConnector(
 	ctx context.Context,
 	scope coredata.Scoper,
 	connectorID gid.GID,
-) (*http.Client, *coredata.Connector, error) {
-	var dbConnector coredata.Connector
+) (*coredata.Connector, error) {
+	dbConnector := &coredata.Connector{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey); err != nil {
-				return fmt.Errorf("cannot load connector: %w", err)
-			}
-
-			return nil
+			return dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey)
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.connectorRegistry.ConfigureConnection(
+		string(dbConnector.Provider),
+		dbConnector.Connection,
+	); err != nil {
+		return nil, fmt.Errorf("cannot configure connector connection: %w", err)
+	}
+
+	return dbConnector, nil
+}
+
+// BuildHTTPClient loads a connector by ID with decrypted credentials
+// and returns an HTTP client with token refresh support. If the token was
+// refreshed during client creation, the updated credentials are persisted.
+//
+// It fails for a connector whose credential does not ride on HTTP (workload
+// identity). Callers that must handle both kinds should branch on the protocol
+// from loadConnectorMetadata first, as ProbeConnector does.
+func (s *Service) BuildHTTPClient(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (*http.Client, *coredata.Connector, error) {
+	dbConnector, err := s.loadConfiguredConnector(ctx, scope, connectorID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if s.connectorRegistry != nil {
-		if err := s.connectorRegistry.ConfigureConnection(
-			string(dbConnector.Provider),
-			dbConnector.Connection,
-		); err != nil {
-			return nil, nil, err
-		}
+	conn, ok := dbConnector.Connection.(connector.HTTPConnection)
+	if !ok {
+		return nil, nil, fmt.Errorf(
+			"cannot create HTTP client for %s connector: credential does not ride on HTTP",
+			dbConnector.Provider,
+		)
 	}
 
+	httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return httpClient, dbConnector, nil
+}
+
+// httpClientFor builds the client for an already-loaded HTTP connection,
+// persisting an OAuth2 access token the refresh replaced so later calls and
+// other workers use it.
+func (s *Service) httpClientFor(
+	ctx context.Context,
+	scope coredata.Scoper,
+	dbConnector *coredata.Connector,
+	conn connector.HTTPConnection,
+) (*http.Client, error) {
 	var tokenBefore string
 
-	oauth2Conn, isOAuth2 := dbConnector.Connection.(*connector.OAuth2Connection)
+	oauth2Conn, isOAuth2 := conn.(*connector.OAuth2Connection)
 	if isOAuth2 {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
-	var httpClient *http.Client
-
-	if isOAuth2 && s.connectorRegistry != nil {
-		refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
-		if refreshCfg != nil {
-			var err error
-
-			httpClient, err = oauth2Conn.RefreshableClient(ctx, *refreshCfg)
-			if err != nil {
-				return nil, nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
-			}
-		}
+	httpClient, err := buildHTTPClient(
+		ctx,
+		s.connectorRegistry,
+		s.providerRegistry,
+		dbConnector.Provider,
+		conn,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 	}
 
-	if httpClient == nil {
-		// Inject the Probo-held key for ManagedAPIKey providers (no-op
-		// otherwise), resolving it fresh at use time rather than from the
-		// connection row.
-		if err := s.providerRegistry.ApplyManagedAPIKey(&dbConnector); err != nil {
-			return nil, nil, err
-		}
-
-		var err error
-
-		httpClient, err = dbConnector.Connection.Client(ctx)
-		if err != nil {
-			return nil, nil, fmt.Errorf("cannot create HTTP client: %w", err)
-		}
-	}
-
-	// Persist refreshed token if it changed.
 	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
 
@@ -418,11 +439,11 @@ func (s *Service) ConnectorHTTPClient(
 				return dbConnector.Update(ctx, tx, scope, s.encryptionKey)
 			},
 		); err != nil {
-			return nil, nil, fmt.Errorf("cannot persist refreshed token: %w", err)
+			return nil, fmt.Errorf("cannot persist refreshed token: %w", err)
 		}
 	}
 
-	return httpClient, &dbConnector, nil
+	return httpClient, nil
 }
 
 func (s *Service) ConfigureAccessReviewSource(
@@ -519,6 +540,77 @@ func (s *Service) loadConnectorMetadata(
 	return dbConnector, nil
 }
 
+// ProbeConnector verifies the connector's credential is still accepted by the
+// provider, taking the HTTP or the cloud path according to the connection's own
+// credential model. A nil return means connected (or that the provider
+// registers no probe); coredata.ErrResourceNotFound means the connector is
+// gone. Keeping the branch here rather than in the resolver is what stops a
+// healthy workload identity connector from reporting itself disconnected.
+func (s *Service) ProbeConnector(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	dbConnector, err := s.loadConfiguredConnector(ctx, scope, connectorID)
+	if err != nil {
+		return err
+	}
+
+	switch conn := dbConnector.Connection.(type) {
+	case *connector.WorkloadIdentityConnection:
+		session, err := s.buildCloudSession(ctx, dbConnector)
+		if err != nil {
+			return err
+		}
+
+		return s.providerRegistry.ProbeCloudConnection(ctx, session, dbConnector)
+
+	case connector.HTTPConnection:
+		httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
+		if err != nil {
+			return err
+		}
+
+		return s.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector)
+
+	default:
+		return fmt.Errorf(
+			"cannot probe %s connector: credential is of no known kind",
+			dbConnector.Provider,
+		)
+	}
+}
+
+// buildCloudSession opens authenticated access to the cloud account a workload
+// identity connector points at, delegating to the provider that knows which
+// role and region its settings name.
+func (s *Service) buildCloudSession(
+	ctx context.Context,
+	dbConnector *coredata.Connector,
+) (cloud.Session, error) {
+	if s.federation == nil {
+		return nil, fmt.Errorf(
+			"cannot reach %s connector: identity federation is not configured in this deployment",
+			dbConnector.Provider,
+		)
+	}
+
+	reg, ok := s.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.WorkloadIdentity == nil {
+		return nil, fmt.Errorf(
+			"cannot reach %s connector: provider offers no workload identity path",
+			dbConnector.Provider,
+		)
+	}
+
+	session, err := reg.WorkloadIdentity.NewSession(ctx, s.federation, dbConnector)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open cloud session for %s connector: %w", dbConnector.Provider, err)
+	}
+
+	return session, nil
+}
+
 // ProviderOrganizations lists the orgs/workspaces the connector backing the
 // source can be scoped to, for the picker UI. Returns an empty list when the
 // connector is gone or the provider has no picker.
@@ -527,18 +619,31 @@ func (s *Service) ProviderOrganizations(
 	scope coredata.Scoper,
 	connectorID gid.GID,
 ) ([]drivers.Organization, error) {
-	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, connectorID)
+	// Resolve the picker from cheap metadata first. Only a provider that has one
+	// should pay for the connector decrypt, token refresh, and HTTP-client build
+	// below — and a workload identity connector, which has no picker and no HTTP
+	// credential, must not reach them at all.
+	dbMeta, err := s.loadConnectorMetadata(ctx, scope, connectorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load connector metadata: %w", err)
+	}
+
+	cfg, ok := providerOrgConfigs[dbMeta.Provider]
+	if !ok || !ProviderSupportsOrganizationPicker(dbMeta.Provider, dbMeta.Protocol) {
+		return nil, nil
+	}
+
+	httpClient, dbConnector, err := s.BuildHTTPClient(ctx, scope, connectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
 
 		return nil, fmt.Errorf("cannot get connector HTTP client: %w", err)
-	}
-
-	cfg, ok := providerOrgConfigs[dbConnector.Provider]
-	if !ok || !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
-		return nil, nil
 	}
 
 	orgs, err := cfg.ListOrgs(ctx, httpClient, s.providerListBaseURL(dbConnector.Provider))
@@ -750,7 +855,7 @@ func (s *Service) AutoSelectDefaultOrganization(
 		return
 	}
 
-	httpClient, dbConnector, err := s.ConnectorHTTPClient(ctx, scope, *source.ConnectorID)
+	httpClient, dbConnector, err := s.BuildHTTPClient(ctx, scope, *source.ConnectorID)
 	if err != nil {
 		if !errors.Is(err, coredata.ErrResourceNotFound) {
 			s.logger.WarnCtx(ctx, "cannot load connector for default organization", log.Error(err))

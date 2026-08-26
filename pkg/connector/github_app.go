@@ -120,6 +120,7 @@ var (
 	_ Connector                    = (*GitHubAppConnector)(nil)
 	_ ConnectionConfigurer         = (*GitHubAppConnector)(nil)
 	_ Connection                   = (*GitHubAppConnection)(nil)
+	_ HTTPConnection               = (*GitHubAppConnection)(nil)
 	_ RuntimeConfigurationRequired = (*GitHubAppConnection)(nil)
 
 	// ErrGitHubAppInstallationRequired is returned when the user authorized

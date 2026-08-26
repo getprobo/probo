@@ -60,7 +60,7 @@ func NewGraphQLHandler(
 	agentExecutionSvc *agentexecution.Service,
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
 	customDomainCname string,
 	tokenSecret string,

@@ -104,7 +104,7 @@ type (
 		Logger                         *log.Logger
 		TracerProvider                 trace.TracerProvider
 		Registerer                     prometheus.Registerer
-		ConnectorRegistry              *connector.ConnectorRegistry
+		ConnectorRegistry              *connector.Registry
 		DomainVerificationInterval     time.Duration
 		DomainVerificationResolverAddr string
 		SCIMBridgeSyncInterval         time.Duration

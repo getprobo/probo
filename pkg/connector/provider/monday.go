@@ -41,8 +41,10 @@ func mondayRegistration() *Registration {
 			// it verbatim rather than joining a path onto it.
 			APIBase: "https://api.monday.com/v2",
 		},
-		Probe:        probeMonday,
-		OAuth2Scopes: []string{"users:read", "account:read"},
+		Probe: probeMonday,
+		OAuth2: &OAuth2Config{
+			Scopes: []string{"users:read", "account:read"},
+		},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewMondayDriver(c, ep.APIBase), nil
 		},

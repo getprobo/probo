@@ -48,7 +48,13 @@ func posthogRegistration() *Registration {
 		// authenticated by PKCE. probod auto-registers this connector with
 		// the deployment's hosted CIMD client_id; no operator OAuth app or
 		// credentials are required.
-		PublicClient: true,
+		OAuth2: &OAuth2Config{
+			PublicClient:      true,
+			TokenEndpointAuth: "none",
+			RequiresPKCE:      true,
+			Scopes:            []string{"organization:read", "organization_member:read"},
+			ExtraAuthParams:   map[string]string{"required_access_level": "organization"},
+		},
 		// See Registration.EndpointOverrideUnsupported: cloud region discovery
 		// (resolveBaseURL) probes us.posthog.com / eu.posthog.com directly, never
 		// Endpoints, so no override can move the data host it resolves.
@@ -57,23 +63,20 @@ func posthogRegistration() *Registration {
 			Auth:  "https://oauth.posthog.com/oauth/authorize/",
 			Token: "https://oauth.posthog.com/oauth/token/",
 		},
-		TokenEndpointAuth: "none",
-		RequiresPKCE:      true,
-		OAuth2Scopes:      []string{"organization:read", "organization_member:read"},
 		// required_access_level=organization makes consent org-scoped so
 		// organization_member:read applies org-wide and the org endpoints
 		// resolve @current to the granted organization.
-		ExtraAuthParams: map[string]string{"required_access_level": "organization"},
-		Probe:           probePostHog,
-		SupportsAPIKey:  true,
+		Probe: probePostHog,
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "region", Label: "Region"},
+				{Key: "instanceUrl", Label: "Instance URL"},
+			},
+		},
 		// API-key connections are either PostHog Cloud (a region, us/eu) or
 		// self-hosted (an instance URL). The two are mutually exclusive, so
 		// neither is individually Required; apiKeyConnectorSettings enforces
 		// that exactly one is supplied.
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "region", Label: "Region"},
-			{Key: "instanceUrl", Label: "Instance URL"},
-		},
 
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)

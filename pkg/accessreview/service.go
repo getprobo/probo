@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/identityfederation"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,8 +39,9 @@ type (
 	Service struct {
 		pg                *pg.Client
 		encryptionKey     cipher.EncryptionKey
-		connectorRegistry *connector.ConnectorRegistry
+		connectorRegistry *connector.Registry
 		providerRegistry  *provider.Registry
+		federation        *identityfederation.Issuer
 		logger            *log.Logger
 
 		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
@@ -50,6 +52,7 @@ type (
 
 	options struct {
 		fetchInterval time.Duration
+		federation    *identityfederation.Issuer
 	}
 )
 
@@ -59,10 +62,21 @@ func WithFetchInterval(interval time.Duration) Option {
 	}
 }
 
+// WithIdentityFederation supplies the issuer that mints the assertion a
+// workload identity connector exchanges for cloud credentials. It is nil in a
+// deployment that configures no issuer, and the cloud paths report that as a
+// failure rather than fetching nothing: an empty account list would read as
+// "nobody has access", which is the wrong answer to give a reviewer.
+func WithIdentityFederation(issuer *identityfederation.Issuer) Option {
+	return func(o *options) {
+		o.federation = issuer
+	}
+}
+
 func NewService(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 	providerRegistry *provider.Registry,
 	logger *log.Logger,
 	opts ...Option,
@@ -77,6 +91,7 @@ func NewService(
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
 		providerRegistry:  providerRegistry,
+		federation:        o.federation,
 		logger:            logger,
 	}
 

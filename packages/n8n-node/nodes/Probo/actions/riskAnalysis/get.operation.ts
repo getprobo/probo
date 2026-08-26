@@ -59,6 +59,12 @@ export async function execute(
 						rows
 						cols
 					}
+					matrixCells {
+						type
+						likelihood
+						impact
+						count
+					}
 					createdAt
 					updatedAt
 				}

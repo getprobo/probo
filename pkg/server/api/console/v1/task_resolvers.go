@@ -47,6 +47,10 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -84,6 +88,10 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}

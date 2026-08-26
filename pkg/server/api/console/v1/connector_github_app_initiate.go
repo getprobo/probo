@@ -39,7 +39,7 @@ func handleConnectorGitHubAppInitiate(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
-	connectorRegistry *connector.ConnectorRegistry,
+	connectorRegistry *connector.Registry,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))

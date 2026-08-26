@@ -101,6 +101,30 @@ func (a Attrs) getInt(key string, defaultVal int) int {
 	return defaultVal
 }
 
+func (a Attrs) getIntPtr(key string) *int {
+	if a == nil {
+		return nil
+	}
+
+	v, ok := a[key]
+	if !ok {
+		return nil
+	}
+
+	switch val := v.(type) {
+	case int:
+		return &val
+	case int64:
+		i := int(val)
+		return &i
+	case float64:
+		i := int(val)
+		return &i
+	default:
+		return nil
+	}
+}
+
 func (a Attrs) getBool(key string, defaultVal bool) bool {
 	if a == nil {
 		return defaultVal
@@ -1658,6 +1682,85 @@ func CreateRiskAnalysis(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateRiskAnalysis.RiskAnalysisEdge.Node.ID
 }
 
+func CreateTreatmentPlan(c *testutil.Client, riskID, riskAnalysisID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateTreatmentPlanInput!) {
+			createTreatmentPlan(input: $input) {
+				treatmentPlanEdge { node { id } }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"riskId":             riskID,
+		"riskAnalysisId":     riskAnalysisID,
+		"treatment":          a.getString("treatment", "MITIGATED"),
+		"ownerId":            a.getString("ownerId", c.GetProfileID().String()),
+		"inherentLikelihood": a.getInt("inherentLikelihood", 2),
+		"inherentImpact":     a.getInt("inherentImpact", 3),
+	}
+
+	if residualLikelihood := a.getIntPtr("residualLikelihood"); residualLikelihood != nil {
+		input["residualLikelihood"] = *residualLikelihood
+	}
+
+	if residualImpact := a.getIntPtr("residualImpact"); residualImpact != nil {
+		input["residualImpact"] = *residualImpact
+	}
+
+	var result struct {
+		CreateTreatmentPlan struct {
+			TreatmentPlanEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"treatmentPlanEdge"`
+		} `json:"createTreatmentPlan"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createTreatmentPlan mutation failed")
+
+	return result.CreateTreatmentPlan.TreatmentPlanEdge.Node.ID
+}
+
+func LinkTreatmentPlanMeasure(c *testutil.Client, treatmentPlanID, measureID string) {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: CreateTreatmentPlanMeasureMappingInput!) {
+			createTreatmentPlanMeasureMapping(input: $input) {
+				measureEdge { node { id } }
+			}
+		}
+	`
+
+	var result struct {
+		CreateTreatmentPlanMeasureMapping struct {
+			MeasureEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"measureEdge"`
+		} `json:"createTreatmentPlanMeasureMapping"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"treatmentPlanId": treatmentPlanID,
+			"measureId":       measureID,
+		},
+	}, &result)
+	require.NoError(c.T, err, "createTreatmentPlanMeasureMapping mutation failed")
+}
+
 func CreateRiskAnalysisDiagram(c *testutil.Client, riskAnalysisID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -1914,6 +2017,13 @@ func LinkRiskAnalysisScenarioThreat(c *testutil.Client, scenarioID, threatID str
 		},
 	})
 	require.NoError(c.T, err, "linkRiskAnalysisScenarioThreat mutation failed")
+}
+
+func LinkRiskToAnalysis(c *testutil.Client, riskID, riskAnalysisID string) {
+	c.T.Helper()
+	diagramID := CreateRiskAnalysisDiagram(c, riskAnalysisID)
+	scenarioID := CreateRiskAnalysisScenario(c, diagramID)
+	LinkRiskAnalysisScenarioRisk(c, scenarioID, riskID)
 }
 
 func LinkRiskAnalysisScenarioRisk(c *testutil.Client, scenarioID, riskID string) {

@@ -37,6 +37,7 @@ func TestConnectionCapabilities(t *testing.T) {
 		wantPicker      bool
 		wantScopeGrant  bool
 		wantReconnect   bool
+		wantHTTP        bool
 		wantProbeSuffix string
 	}{
 		{
@@ -45,6 +46,7 @@ func TestConnectionCapabilities(t *testing.T) {
 			wantPicker:     true,
 			wantScopeGrant: true,
 			wantReconnect:  true,
+			wantHTTP:       true,
 		},
 		{
 			name: "oauth2 client credentials",
@@ -54,6 +56,7 @@ func TestConnectionCapabilities(t *testing.T) {
 			wantPicker:     true,
 			wantScopeGrant: true,
 			wantReconnect:  false,
+			wantHTTP:       true,
 		},
 		{
 			name:           "api key",
@@ -61,6 +64,7 @@ func TestConnectionCapabilities(t *testing.T) {
 			wantPicker:     true,
 			wantScopeGrant: false,
 			wantReconnect:  false,
+			wantHTTP:       true,
 		},
 		{
 			name:            "github app",
@@ -68,7 +72,24 @@ func TestConnectionCapabilities(t *testing.T) {
 			wantPicker:      false,
 			wantScopeGrant:  false,
 			wantReconnect:   true,
+			wantHTTP:        true,
 			wantProbeSuffix: "/installation/repositories",
+		},
+		{
+			name:           "slack",
+			conn:           &connector.SlackConnection{},
+			wantPicker:     true,
+			wantScopeGrant: true,
+			wantReconnect:  true,
+			wantHTTP:       true,
+		},
+		{
+			name:           "workload identity",
+			conn:           &connector.WorkloadIdentityConnection{},
+			wantPicker:     false,
+			wantScopeGrant: false,
+			wantReconnect:  false,
+			wantHTTP:       false,
 		},
 	}
 
@@ -79,6 +100,11 @@ func TestConnectionCapabilities(t *testing.T) {
 			assert.Equal(t, tt.wantPicker, connector.SupportsOrganizationPicker(tt.conn))
 			assert.Equal(t, tt.wantScopeGrant, connector.SupportsScopeGrantCheck(tt.conn))
 			assert.Equal(t, tt.wantReconnect, connector.SupportsReconnect(tt.conn))
+
+			// Whether a credential rides on HTTP is answered by the type, not
+			// by a capability method: only an HTTPConnection has a Client.
+			_, isHTTP := tt.conn.(connector.HTTPConnection)
+			assert.Equal(t, tt.wantHTTP, isHTTP)
 
 			probeURL, err := connector.ResolveProbeURL(
 				tt.conn,
@@ -105,4 +131,6 @@ func TestCapabilityProbeMatchesProtocol(t *testing.T) {
 	assert.False(t, connector.SupportsReconnectFor(nil, connector.ProtocolOAuth2))
 	assert.True(t, connector.SupportsReconnectFor(nil, connector.ProtocolGitHubApp))
 	assert.False(t, connector.SupportsScopeGrantCheckFor(nil, connector.ProtocolGitHubApp))
+	assert.False(t, connector.SupportsOrganizationPickerForProtocol(connector.ProtocolWorkloadIdentity))
+	assert.False(t, connector.SupportsReconnectFor(nil, connector.ProtocolWorkloadIdentity))
 }

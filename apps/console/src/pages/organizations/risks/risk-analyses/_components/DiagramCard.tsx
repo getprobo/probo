@@ -30,7 +30,7 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
@@ -38,6 +38,7 @@ import { Link } from "react-router";
 import type { DiagramCardFragment$key } from "#/__generated__/core/DiagramCardFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { AnalysisSectionError } from "./AnalysisSectionError";
 import { BoundaryActions } from "./BoundaryActions";
 import { CreateBoundaryDialog } from "./CreateBoundaryDialog";
 import { CreateNodeDialog } from "./CreateNodeDialog";
@@ -46,6 +47,7 @@ import { CreateScenarioInDiagramDialog } from "./CreateScenarioInDiagramDialog";
 import { CreateThreatDialog } from "./CreateThreatDialog";
 import { DiagramActions } from "./DiagramActions";
 import { DiagramChart } from "./DiagramChart";
+import { DiagramSectionHeader } from "./DiagramSectionHeader";
 import { NodeActions } from "./NodeActions";
 import { ProcessActions } from "./ProcessActions";
 import { ScenarioInDiagramActions } from "./ScenarioInDiagramActions";
@@ -102,27 +104,25 @@ export const diagramCardFragment = graphql`
   }
 `;
 
-function SectionHeader(props: { title: string; hint?: string; children: ReactNode }) {
+export function DiagramCard(props: {
+  diagramRef: DiagramCardFragment$key;
+  diagramsConnectionId: string;
+}) {
   return (
-    <div className="mb-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{props.title}</h3>
-        {props.children}
-      </div>
-      {props.hint && (
-        <p className="text-xs text-txt-tertiary mt-1">{props.hint}</p>
-      )}
-    </div>
+    <AnalysisSectionError>
+      <DiagramCardContent {...props} />
+    </AnalysisSectionError>
   );
 }
 
-export function DiagramCard(props: {
+function DiagramCardContent(props: {
   diagramRef: DiagramCardFragment$key;
   diagramsConnectionId: string;
 }) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const [isOpen, setIsOpen] = useState(true);
+  const [schemaOpen, setSchemaOpen] = useState(false);
   const diagram = useFragment(diagramCardFragment, props.diagramRef);
   const { diagramsConnectionId } = props;
 
@@ -178,205 +178,17 @@ export function DiagramCard(props: {
         <div className="border-t border-border-low px-4 py-4 space-y-6">
           <DiagramChart diagramKey={diagram} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <SectionHeader
-                title={t("diagramCard.sectionTitle.nodes", { count: nodes.length })}
-                hint={t("diagramCard.hints.nodes")}
-              >
-                <CreateNodeDialog diagramId={diagram.id} connectionId={nodesConnId} boundaries={boundaryOptions} />
-              </SectionHeader>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t("diagramCard.columns.name")}</Th>
-                    <Th>{t("diagramCard.columns.type")}</Th>
-                    <Th>{t("diagramCard.columns.boundary")}</Th>
-                    <Th className="w-12" />
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {nodes.map(node => (
-                    <Tr key={node.id}>
-                      <Td className="font-medium">{node.name}</Td>
-                      <Td><Badge>{node.nodeType}</Badge></Td>
-                      <Td className="text-txt-secondary">{node.boundaryId ? boundaryMap.get(node.boundaryId)?.name ?? "—" : "—"}</Td>
-                      <Td>
-                        <NodeActions
-                          node={{
-                            id: node.id,
-                            name: node.name,
-                            nodeType: node.nodeType,
-                            boundaryId: node.boundaryId ?? null,
-                          }}
-                          boundaries={boundaryOptions}
-                          connectionId={nodesConnId}
-                        />
-                      </Td>
-                    </Tr>
-                  ))}
-                  {nodes.length === 0 && (
-                    <Tr>
-                      <Td colSpan={4} className="text-center text-txt-secondary">{t("diagramCard.empty.nodes")}</Td>
-                    </Tr>
-                  )}
-                </Tbody>
-              </Table>
-            </div>
-
-            <div>
-              <SectionHeader
-                title={t("diagramCard.sectionTitle.processes", { count: processes.length })}
-                hint={t("diagramCard.hints.processes")}
-              >
-                <CreateProcessDialog
-                  diagramId={diagram.id}
-                  nodes={nodes.map(n => ({ id: n.id, name: n.name }))}
-                  connectionId={processesConnId}
-                />
-              </SectionHeader>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t("diagramCard.columns.name")}</Th>
-                    <Th>{t("diagramCard.columns.from")}</Th>
-                    <Th>{t("diagramCard.columns.to")}</Th>
-                    <Th className="w-12" />
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {processes.map(process => (
-                    <Tr key={process.id}>
-                      <Td className="font-medium">{process.name}</Td>
-                      <Td className="text-txt-secondary">{nodeMap.get(process.sourceNodeId)?.name ?? "—"}</Td>
-                      <Td className="text-txt-secondary">{nodeMap.get(process.targetNodeId)?.name ?? "—"}</Td>
-                      <Td>
-                        <ProcessActions
-                          process={{
-                            id: process.id,
-                            name: process.name,
-                            sourceNodeId: process.sourceNodeId,
-                            targetNodeId: process.targetNodeId,
-                          }}
-                          nodes={nodes.map(n => ({ id: n.id, name: n.name }))}
-                          connectionId={processesConnId}
-                        />
-                      </Td>
-                    </Tr>
-                  ))}
-                  {processes.length === 0 && (
-                    <Tr>
-                      <Td colSpan={4} className="text-center text-txt-secondary">{t("diagramCard.empty.processes")}</Td>
-                    </Tr>
-                  )}
-                </Tbody>
-              </Table>
-            </div>
-          </div>
-
           <div>
-            <SectionHeader
-              title={t("diagramCard.sectionTitle.boundaries", { count: boundaries.length })}
-              hint={t("diagramCard.hints.boundaries")}
-            >
-              <CreateBoundaryDialog
-                diagramId={diagram.id}
-                connectionId={boundariesConnId}
-                boundaries={boundaryOptions}
-              />
-            </SectionHeader>
-            <Table>
-              <Thead>
-                <Tr>
-                  <Th>{t("diagramCard.columns.name")}</Th>
-                  <Th>{t("diagramCard.columns.parent")}</Th>
-                  <Th className="w-12" />
-                </Tr>
-              </Thead>
-              <Tbody>
-                {boundaries.map(boundary => (
-                  <Tr key={boundary.id}>
-                    <Td className="font-medium">{boundary.name}</Td>
-                    <Td className="text-txt-secondary">{boundary.parentBoundaryId ? boundaryMap.get(boundary.parentBoundaryId)?.name ?? "—" : "—"}</Td>
-                    <Td>
-                      <BoundaryActions
-                        boundary={{
-                          id: boundary.id,
-                          name: boundary.name,
-                          parentBoundaryId: boundary.parentBoundaryId ?? null,
-                        }}
-                        boundaries={boundaryOptions}
-                        connectionId={boundariesConnId}
-                      />
-                    </Td>
-                  </Tr>
-                ))}
-                {boundaries.length === 0 && (
-                  <Tr>
-                    <Td colSpan={3} className="text-center text-txt-secondary">{t("diagramCard.empty.boundaries")}</Td>
-                  </Tr>
-                )}
-              </Tbody>
-            </Table>
-          </div>
-
-          <div>
-            <SectionHeader
-              title={t("diagramCard.sectionTitle.threats", { count: threats.length })}
-              hint={t("diagramCard.hints.threats")}
-            >
-              <CreateThreatDialog
-                diagramId={diagram.id}
-                processes={processes.map(p => ({ id: p.id, name: p.name }))}
-                connectionId={threatsConnId}
-              />
-            </SectionHeader>
-            <Table>
-              <Thead>
-                <Tr>
-                  <Th>{t("diagramCard.columns.threat")}</Th>
-                  <Th>{t("diagramCard.columns.category")}</Th>
-                  <Th>{t("diagramCard.columns.process")}</Th>
-                  <Th className="w-12" />
-                </Tr>
-              </Thead>
-              <Tbody>
-                {threats.map((threat) => {
-                  const process = processes.find(p => p.id === threat.processId);
-                  return (
-                    <Tr key={threat.id}>
-                      <Td className="font-medium">{threat.name}</Td>
-                      <Td><Badge>{threat.category}</Badge></Td>
-                      <Td className="text-txt-secondary">{process?.name ?? "—"}</Td>
-                      <Td>
-                        <ThreatActions
-                          threat={{ id: threat.id, name: threat.name, category: threat.category }}
-                          connectionId={threatsConnId}
-                        />
-                      </Td>
-                    </Tr>
-                  );
-                })}
-                {threats.length === 0 && (
-                  <Tr>
-                    <Td colSpan={4} className="text-center text-txt-secondary">{t("diagramCard.empty.threats")}</Td>
-                  </Tr>
-                )}
-              </Tbody>
-            </Table>
-          </div>
-
-          <div>
-            <SectionHeader
+            <DiagramSectionHeader
               title={t("diagramCard.sectionTitle.scenarios", { count: scenarios.length })}
               hint={t("diagramCard.hints.scenarios")}
             >
               <CreateScenarioInDiagramDialog
                 diagramId={diagram.id}
-                threats={threats.map(t => ({ id: t.id, name: t.name }))}
+                threats={threats.map(threat => ({ id: threat.id, name: threat.name }))}
                 connectionId={scenariosConnId}
               />
-            </SectionHeader>
+            </DiagramSectionHeader>
             <Table>
               <Thead>
                 <Tr>
@@ -410,7 +222,7 @@ export function DiagramCard(props: {
                       </Td>
                       <Td className="text-txt-secondary">
                         {scenarioThreats.length > 0
-                          ? scenarioThreats.map(t => t.name).join(", ")
+                          ? scenarioThreats.map(threat => threat.name).join(", ")
                           : "—"}
                       </Td>
                       <Td>
@@ -422,7 +234,7 @@ export function DiagramCard(props: {
                             risks: scenarioRisks,
                             threats: scenarioThreats,
                           }}
-                          diagramThreats={threats.map(t => ({ id: t.id, name: t.name }))}
+                          diagramThreats={threats.map(threat => ({ id: threat.id, name: threat.name }))}
                           connectionId={scenariosConnId}
                         />
                       </Td>
@@ -436,6 +248,218 @@ export function DiagramCard(props: {
                 )}
               </Tbody>
             </Table>
+          </div>
+
+          <div className="border-t border-border-low pt-4">
+            <button
+              type="button"
+              aria-expanded={schemaOpen}
+              className="flex w-full items-center justify-between text-left"
+              onClick={() => setSchemaOpen(open => !open)}
+            >
+              <div>
+                <h3 className="text-sm font-semibold">{t("diagramCard.schema.title")}</h3>
+                <p className="mt-1 text-xs text-txt-tertiary">{t("diagramCard.schema.hint")}</p>
+              </div>
+              {schemaOpen
+                ? <IconChevronDown size={16} className="shrink-0 text-txt-tertiary" />
+                : <IconChevronRight size={16} className="shrink-0 text-txt-tertiary" />}
+            </button>
+            {schemaOpen && (
+              <div className="mt-4 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <DiagramSectionHeader
+                      title={t("diagramCard.sectionTitle.nodes", { count: nodes.length })}
+                      hint={t("diagramCard.hints.nodes")}
+                    >
+                      <CreateNodeDialog
+                        diagramId={diagram.id}
+                        connectionId={nodesConnId}
+                        boundaries={boundaryOptions}
+                      />
+                    </DiagramSectionHeader>
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>{t("diagramCard.columns.name")}</Th>
+                          <Th>{t("diagramCard.columns.type")}</Th>
+                          <Th>{t("diagramCard.columns.boundary")}</Th>
+                          <Th className="w-12" />
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {nodes.map(node => (
+                          <Tr key={node.id}>
+                            <Td className="font-medium">{node.name}</Td>
+                            <Td><Badge>{node.nodeType}</Badge></Td>
+                            <Td className="text-txt-secondary">{node.boundaryId ? boundaryMap.get(node.boundaryId)?.name ?? "—" : "—"}</Td>
+                            <Td>
+                              <NodeActions
+                                node={{
+                                  id: node.id,
+                                  name: node.name,
+                                  nodeType: node.nodeType,
+                                  boundaryId: node.boundaryId ?? null,
+                                }}
+                                boundaries={boundaryOptions}
+                                connectionId={nodesConnId}
+                              />
+                            </Td>
+                          </Tr>
+                        ))}
+                        {nodes.length === 0 && (
+                          <Tr>
+                            <Td colSpan={4} className="text-center text-txt-secondary">{t("diagramCard.empty.nodes")}</Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  </div>
+
+                  <div>
+                    <DiagramSectionHeader
+                      title={t("diagramCard.sectionTitle.processes", { count: processes.length })}
+                      hint={t("diagramCard.hints.processes")}
+                    >
+                      <CreateProcessDialog
+                        diagramId={diagram.id}
+                        nodes={nodes.map(n => ({ id: n.id, name: n.name }))}
+                        connectionId={processesConnId}
+                      />
+                    </DiagramSectionHeader>
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>{t("diagramCard.columns.name")}</Th>
+                          <Th>{t("diagramCard.columns.from")}</Th>
+                          <Th>{t("diagramCard.columns.to")}</Th>
+                          <Th className="w-12" />
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {processes.map(process => (
+                          <Tr key={process.id}>
+                            <Td className="font-medium">{process.name}</Td>
+                            <Td className="text-txt-secondary">{nodeMap.get(process.sourceNodeId)?.name ?? "—"}</Td>
+                            <Td className="text-txt-secondary">{nodeMap.get(process.targetNodeId)?.name ?? "—"}</Td>
+                            <Td>
+                              <ProcessActions
+                                process={{
+                                  id: process.id,
+                                  name: process.name,
+                                  sourceNodeId: process.sourceNodeId,
+                                  targetNodeId: process.targetNodeId,
+                                }}
+                                nodes={nodes.map(n => ({ id: n.id, name: n.name }))}
+                                connectionId={processesConnId}
+                              />
+                            </Td>
+                          </Tr>
+                        ))}
+                        {processes.length === 0 && (
+                          <Tr>
+                            <Td colSpan={4} className="text-center text-txt-secondary">{t("diagramCard.empty.processes")}</Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  </div>
+                </div>
+
+                <div>
+                  <DiagramSectionHeader
+                    title={t("diagramCard.sectionTitle.boundaries", { count: boundaries.length })}
+                    hint={t("diagramCard.hints.boundaries")}
+                  >
+                    <CreateBoundaryDialog
+                      diagramId={diagram.id}
+                      connectionId={boundariesConnId}
+                      boundaries={boundaryOptions}
+                    />
+                  </DiagramSectionHeader>
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>{t("diagramCard.columns.name")}</Th>
+                        <Th>{t("diagramCard.columns.parent")}</Th>
+                        <Th className="w-12" />
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {boundaries.map(boundary => (
+                        <Tr key={boundary.id}>
+                          <Td className="font-medium">{boundary.name}</Td>
+                          <Td className="text-txt-secondary">{boundary.parentBoundaryId ? boundaryMap.get(boundary.parentBoundaryId)?.name ?? "—" : "—"}</Td>
+                          <Td>
+                            <BoundaryActions
+                              boundary={{
+                                id: boundary.id,
+                                name: boundary.name,
+                                parentBoundaryId: boundary.parentBoundaryId ?? null,
+                              }}
+                              boundaries={boundaryOptions}
+                              connectionId={boundariesConnId}
+                            />
+                          </Td>
+                        </Tr>
+                      ))}
+                      {boundaries.length === 0 && (
+                        <Tr>
+                          <Td colSpan={3} className="text-center text-txt-secondary">{t("diagramCard.empty.boundaries")}</Td>
+                        </Tr>
+                      )}
+                    </Tbody>
+                  </Table>
+                </div>
+
+                <div>
+                  <DiagramSectionHeader
+                    title={t("diagramCard.sectionTitle.threats", { count: threats.length })}
+                    hint={t("diagramCard.hints.threats")}
+                  >
+                    <CreateThreatDialog
+                      diagramId={diagram.id}
+                      processes={processes.map(p => ({ id: p.id, name: p.name }))}
+                      connectionId={threatsConnId}
+                    />
+                  </DiagramSectionHeader>
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>{t("diagramCard.columns.threat")}</Th>
+                        <Th>{t("diagramCard.columns.category")}</Th>
+                        <Th>{t("diagramCard.columns.process")}</Th>
+                        <Th className="w-12" />
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {threats.map((threat) => {
+                        const process = processes.find(p => p.id === threat.processId);
+                        return (
+                          <Tr key={threat.id}>
+                            <Td className="font-medium">{threat.name}</Td>
+                            <Td><Badge>{threat.category}</Badge></Td>
+                            <Td className="text-txt-secondary">{process?.name ?? "—"}</Td>
+                            <Td>
+                              <ThreatActions
+                                threat={{ id: threat.id, name: threat.name, category: threat.category }}
+                                connectionId={threatsConnId}
+                              />
+                            </Td>
+                          </Tr>
+                        );
+                      })}
+                      {threats.length === 0 && (
+                        <Tr>
+                          <Td colSpan={4} className="text-center text-txt-secondary">{t("diagramCard.empty.threats")}</Td>
+                        </Tr>
+                      )}
+                    </Tbody>
+                  </Table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

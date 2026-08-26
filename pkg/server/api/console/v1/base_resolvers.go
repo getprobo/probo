@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -136,7 +137,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRisk(risk), nil
 		}
 	case coredata.RiskAnalysisEntityType:
-		action = probo.ActionRiskAnalysisGet
+		action = riskmanagement.ActionRiskAnalysisGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			ra, err := r.riskManagement.Get(ctx, scope, id)
 			if err != nil {
@@ -145,8 +146,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewRiskAnalysis(ra), nil
 		}
+	case coredata.TreatmentPlanEntityType:
+		action = riskmanagement.ActionTreatmentPlanGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			tp, err := r.riskManagement.GetTreatmentPlan(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewTreatmentPlan(tp), nil
+		}
 	case coredata.RiskAnalysisNodeEntityType:
-		action = probo.ActionRiskAnalysisNodeGet
+		action = riskmanagement.ActionRiskAnalysisNodeGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			n, err := r.riskManagement.GetNode(ctx, scope, id)
 			if err != nil {
@@ -156,7 +167,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisNode(n), nil
 		}
 	case coredata.RiskAnalysisProcessEntityType:
-		action = probo.ActionRiskAnalysisProcessGet
+		action = riskmanagement.ActionRiskAnalysisProcessGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			p, err := r.riskManagement.GetProcess(ctx, scope, id)
 			if err != nil {
@@ -166,7 +177,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisProcess(p), nil
 		}
 	case coredata.RiskAnalysisThreatEntityType:
-		action = probo.ActionRiskAnalysisThreatGet
+		action = riskmanagement.ActionRiskAnalysisThreatGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			t, err := r.riskManagement.GetThreat(ctx, scope, id)
 			if err != nil {
@@ -176,7 +187,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisThreat(t), nil
 		}
 	case coredata.RiskAnalysisDiagramEntityType:
-		action = probo.ActionRiskAnalysisDiagramGet
+		action = riskmanagement.ActionRiskAnalysisDiagramGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			s, err := r.riskManagement.GetDiagram(ctx, scope, id)
 			if err != nil {
@@ -186,7 +197,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisDiagram(s), nil
 		}
 	case coredata.RiskAnalysisBoundaryEntityType:
-		action = probo.ActionRiskAnalysisBoundaryGet
+		action = riskmanagement.ActionRiskAnalysisBoundaryGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			b, err := r.riskManagement.GetBoundary(ctx, scope, id)
 			if err != nil {
@@ -196,7 +207,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewRiskAnalysisBoundary(b), nil
 		}
 	case coredata.RiskAnalysisScenarioEntityType:
-		action = probo.ActionRiskAnalysisScenarioGet
+		action = riskmanagement.ActionRiskAnalysisScenarioGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			s, err := r.riskManagement.GetScenario(ctx, scope, id)
 			if err != nil {
@@ -638,7 +649,10 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 	infos := make([]*types.ConnectorProviderInfo, 0, len(registrations))
 
 	for _, reg := range registrations {
-		if reg == nil || reg.NewDriver == nil {
+		// A workload identity provider builds its driver from a cloud session
+		// rather than an HTTP client, so it registers NewCloudDriver and leaves
+		// NewDriver nil.
+		if reg == nil || (reg.NewDriver == nil && !reg.SupportsWorkloadIdentity()) {
 			continue
 		}
 
@@ -646,8 +660,8 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 		configuredProtocols := connectorProtocols(
 			r.connectorRegistry.ConfiguredProtocols(string(provider)),
 		)
-		apiKeySupported := reg.SupportsAPIKey
-		clientCredentialsSupported := reg.SupportsClientCredentials
+		apiKeySupported := reg.SupportsAPIKey()
+		clientCredentialsSupported := reg.SupportsClientCredentials()
 
 		// ManagedAPIKey (Model B, e.g. Crisp) providers are connectable only
 		// once the operator configures the Probo-held key (and any required
@@ -659,11 +673,15 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 
 		// Skip providers that cannot be connected in this deployment: no
 		// connector protocol configured and no key-based fallback (API key,
-		// managed API key, or client credentials) supported.
+		// managed API key, or client credentials) supported. A workload
+		// identity provider needs no operator configuration at all — the
+		// customer grants access in their own cloud account — so it is
+		// connectable everywhere and never skipped here.
 		if len(configuredProtocols) == 0 &&
 			!apiKeySupported &&
 			!clientCredentialsSupported &&
-			!apiKeyManaged {
+			!apiKeyManaged &&
+			!reg.SupportsWorkloadIdentity() {
 			continue
 		}
 
@@ -691,8 +709,8 @@ func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.Conne
 			APIKeyManaged:                  apiKeyManaged,
 			ClientCredentialsSupported:     clientCredentialsSupported,
 			Oauth2Scopes:                   scopes,
-			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings),
-			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings),
+			APIKeyExtraSettings:            connectorProviderSettingInfos(reg.APIKeyExtraSettings()),
+			ClientCredentialsExtraSettings: connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings()),
 		})
 	}
 

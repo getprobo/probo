@@ -39,9 +39,10 @@ func supabaseRegistration() *Registration {
 			APIBase: "https://api.supabase.com/v1",
 			Probe:   "https://api.supabase.com/v1/organizations",
 		},
-		SupportsAPIKey: true,
-		APIKeyExtraSettings: []ExtraSetting{
-			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+		APIKey: &APIKeyConfig{
+			ExtraSettings: []ExtraSetting{
+				{Key: "organizationSlug", Label: "Organization Slug", Required: true},
+			},
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)

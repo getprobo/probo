@@ -134,6 +134,10 @@ enum ConnectorProtocol
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolGitHubApp"
         )
+    WORKLOAD_IDENTITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProtocolWorkloadIdentity"
+        )
 }
 
 type ConnectorProviderInfo {

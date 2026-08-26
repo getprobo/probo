@@ -411,7 +411,7 @@ func (impl *Implm) Run(
 			p := coredata.ConnectorProvider(connectorCfg.Provider)
 
 			reg, ok := providerRegistry.Get(p)
-			if !ok || !reg.ManagedAPIKey {
+			if !ok || !reg.IsManagedAPIKey() {
 				return fmt.Errorf("cannot configure api_key connector %q: not a managed-api-key provider", connectorCfg.Provider)
 			}
 
@@ -589,7 +589,8 @@ func (impl *Implm) Run(
 		Register(agentexecution.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
-		Register(itam.OAuth2ScopeMappings)
+		Register(itam.OAuth2ScopeMappings).
+		Register(riskmanagement.OAuth2ScopeMappings)
 
 	var acmeService *certmanager.ACMEService
 
@@ -804,6 +805,7 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		providerRegistry,
 		l.Named("access-review"),
+		accessreview.WithIdentityFederation(identityFederationIssuer),
 	)
 
 	agentExecutionService := agentexecution.NewService(pgClient)
@@ -812,6 +814,7 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
