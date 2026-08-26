@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.268.0] - 2026-08-26
+
+### Added
+
+- Treatment plans on risk analyses: scores, treatment, and owner live on a plan unique to one risk and one analysis (the risk must already sit on a scenario), so the same catalog risk can evolve across periods; linked measures drive progress from inherent to residual except Accepted which stays inherent
+- Risk analysis pages split heatmap and plan table from diagrams
+- WORKLOAD_IDENTITY connector protocol: Probo mints a short-lived OIDC assertion and the customer's STS exchanges it for temporary credentials against a role they own, so the connection stores no credential
+
+### Changed
+
+- Matrix size is chosen when creating a risk analysis and cannot be changed later
+- Access-review connect actions use a split button when a source supports more than one method (GitHub App, OAuth, API key)
+
+### Fixed
+
+- Slack access-request cards still linked to pre-`/governance` document and audit paths, so reviewers hit 404s
+- PDF exports of documents with omitted ProseMirror node attributes (for example a table cell without colspan) showed raw JSON instead of the rendered document
+
 ## [0.267.0] - 2026-08-25
 
 ### Added
