@@ -73,6 +73,11 @@
   "accessList": {
     "empty": "Aucun visiteur pour le moment",
     "emptyDescription": "Les personnes qui se connectent sur votre portail apparaîtront ici.",
+    "sort": {
+      "label": "Trier par",
+      "requests": "Par nombre de demandes",
+      "joined": "Par date d’inscription"
+    },
     "actions": {
       "showMore": "Afficher plus"
     }

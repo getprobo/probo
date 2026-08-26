@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
@@ -51,6 +52,7 @@ export function CompliancePortalVisitorsPageSkeleton() {
       <div className={section()}>
         <div className={intro()}>
           <TextSkeleton size={2} className="w-80" />
+          <ButtonSkeleton size={2} className="w-36" />
         </div>
         <ListSkeleton count={4} />
       </div>

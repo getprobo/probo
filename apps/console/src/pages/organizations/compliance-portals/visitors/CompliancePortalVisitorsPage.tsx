@@ -31,6 +31,7 @@ import type { CompliancePortalVisitorsPageQuery } from "#/__generated__/core/Com
 import { CompliancePortalPageHeader } from "../_components/CompliancePortalPageHeader";
 
 import { CompliancePortalAccessList } from "./_components/CompliancePortalAccessList";
+import { CompliancePortalAccessListSort } from "./_components/CompliancePortalAccessListSort";
 import { CompliancePortalNDASection } from "./_components/CompliancePortalNDASection";
 import { accessSection, visitorsPage } from "./variants";
 
@@ -81,6 +82,7 @@ export function CompliancePortalVisitorsPage({ queryRef }: CompliancePortalVisit
             <Text size={2} color="neutral">
               {t("accessPage.description")}
             </Text>
+            <CompliancePortalAccessListSort />
           </div>
           <Suspense fallback={<ListSkeleton count={4} />}>
             <CompliancePortalAccessList />

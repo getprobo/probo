@@ -70,6 +70,10 @@ enum CompliancePortalAccessOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessOrderFieldCreatedAt"
         )
+    PENDING_REQUEST_COUNT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalAccessOrderFieldPendingRequestCount"
+        )
 }
 
 enum CompliancePortalAccessState

@@ -30,7 +30,8 @@ import (
 type CompliancePortalAccessOrderField string
 
 const (
-	CompliancePortalAccessOrderFieldCreatedAt CompliancePortalAccessOrderField = "CREATED_AT"
+	CompliancePortalAccessOrderFieldCreatedAt           CompliancePortalAccessOrderField = "CREATED_AT"
+	CompliancePortalAccessOrderFieldPendingRequestCount CompliancePortalAccessOrderField = "PENDING_REQUEST_COUNT"
 )
 
 var (
@@ -43,6 +44,7 @@ var (
 func CompliancePortalAccessOrderFields() []CompliancePortalAccessOrderField {
 	return []CompliancePortalAccessOrderField{
 		CompliancePortalAccessOrderFieldCreatedAt,
+		CompliancePortalAccessOrderFieldPendingRequestCount,
 	}
 }
 
@@ -66,6 +68,13 @@ func (tcaof CompliancePortalAccessOrderField) Column() string {
 	switch tcaof {
 	case CompliancePortalAccessOrderFieldCreatedAt:
 		return "created_at"
+	case CompliancePortalAccessOrderFieldPendingRequestCount:
+		return `(
+			SELECT COUNT(*)
+			FROM cp_document_accesses
+			WHERE compliance_portal_access_id = cp_accesses.id
+			AND status = 'REQUESTED'::compliance_portal_document_access_status
+		)`
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", tcaof))

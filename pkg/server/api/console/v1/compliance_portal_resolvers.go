@@ -179,7 +179,7 @@ func (r *compliancePortalResolver) Accesses(ctx context.Context, obj *types.Comp
 	}
 
 	pageOrderBy := page.OrderBy[coredata.CompliancePortalAccessOrderField]{
-		Field:     coredata.CompliancePortalAccessOrderFieldCreatedAt,
+		Field:     coredata.CompliancePortalAccessOrderFieldPendingRequestCount,
 		Direction: page.OrderDirectionDesc,
 	}
 

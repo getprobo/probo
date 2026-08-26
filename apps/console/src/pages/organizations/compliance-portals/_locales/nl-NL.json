@@ -51,6 +51,11 @@
   "accessList": {
     "empty": "Nog geen bezoekers",
     "emptyDescription": "Personen die zich op uw portal aanmelden, verschijnen hier.",
+    "sort": {
+      "label": "Sorteren op",
+      "requests": "Op aantal aanvragen",
+      "joined": "Op aanmelddatum"
+    },
     "actions": { "showMore": "Meer weergeven" }
   },
   "accessListItem": {

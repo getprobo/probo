@@ -45,15 +45,23 @@ type (
 		ElectronicSignatureID *gid.GID     `db:"electronic_signature_id"`
 		CreatedAt             time.Time    `db:"created_at"`
 		UpdatedAt             time.Time    `db:"updated_at"`
+		PendingRequestCount   int          `db:"-"`
 	}
 
 	CompliancePortalAccesses []*CompliancePortalAccess
+
+	listedCompliancePortalAccess struct {
+		CompliancePortalAccess
+		Count int `db:"pending_request_count"`
+	}
 )
 
 func (tca *CompliancePortalAccess) CursorKey(orderBy CompliancePortalAccessOrderField) page.CursorKey {
 	switch orderBy {
 	case CompliancePortalAccessOrderFieldCreatedAt:
 		return page.NewCursorKey(tca.ID, tca.CreatedAt)
+	case CompliancePortalAccessOrderFieldPendingRequestCount:
+		return page.NewCursorKey(tca.ID, tca.PendingRequestCount)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -373,7 +381,13 @@ SELECT
 	compliance_portal_id,
 	electronic_signature_id,
 	created_at,
-	updated_at
+	updated_at,
+	(
+		SELECT COUNT(*)
+		FROM cp_document_accesses
+		WHERE compliance_portal_access_id = cp_accesses.id
+		AND status = 'REQUESTED'::compliance_portal_document_access_status
+	) AS pending_request_count
 FROM
 	cp_accesses
 WHERE
@@ -395,9 +409,16 @@ WHERE
 		return fmt.Errorf("cannot query compliance portal accesses: %w", err)
 	}
 
-	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalAccess])
+	listed, err := pgx.CollectRows(rows, pgx.RowToStructByName[listedCompliancePortalAccess])
 	if err != nil {
 		return fmt.Errorf("cannot collect compliance portal accesses: %w", err)
+	}
+
+	accesses := make(CompliancePortalAccesses, len(listed))
+	for i := range listed {
+		access := listed[i].CompliancePortalAccess
+		access.PendingRequestCount = listed[i].Count
+		accesses[i] = &access
 	}
 
 	*tcas = accesses

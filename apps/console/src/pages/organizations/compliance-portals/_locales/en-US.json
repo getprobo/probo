@@ -73,6 +73,11 @@
   "accessList": {
     "empty": "No visitors yet",
     "emptyDescription": "People who sign in on your portal will appear here.",
+    "sort": {
+      "label": "Sort by",
+      "requests": "By request count",
+      "joined": "By join date"
+    },
     "actions": {
       "showMore": "Show More"
     }
