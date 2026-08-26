@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// The tests in this file reproduce upstream Rust diff tests from automerge 0.10
+// The tests in this file reproduce upstream Rust diff tests from automerge 0.11
 // (rust/automerge/tests/test.rs). Each builds the same document on the native
 // and Rust/WASM reference engines and asserts their diff patch streams agree.
 

@@ -151,6 +151,10 @@ func NewStateFromDocument(document *opset.Document) (*State, error) {
 		}
 	}
 
+	if err := state.validateMarkOrder(); err != nil {
+		return nil, err
+	}
+
 	consistent := true
 
 	for _, head := range document.Heads {
@@ -188,6 +192,50 @@ func NewStateFromDocument(document *opset.Document) (*State, error) {
 	}
 
 	return state, nil
+}
+
+func (s *State) validateMarkOrder() error {
+	objects := make(map[opset.OpID]struct{})
+	for _, operation := range s.operations {
+		if operation.Action == opset.ActionMark && !operation.Object.IsRoot {
+			objects[operation.Object.OpID] = struct{}{}
+		}
+	}
+
+	for object := range objects {
+		seen := make(map[opset.OpID]struct{})
+		for _, id := range s.insertOrder(object) {
+			operation, ok := s.operations[id]
+			if !ok || operation.Action != opset.ActionMark {
+				continue
+			}
+
+			if operation.MarkName != nil {
+				seen[id] = struct{}{}
+
+				continue
+			}
+
+			if id.Counter == 0 {
+				continue
+			}
+
+			beginID := opset.OpID{Actor: id.Actor, Counter: id.Counter - 1}
+			begin, ok := s.operations[beginID]
+			if !ok ||
+				begin.Action != opset.ActionMark ||
+				begin.MarkName == nil ||
+				begin.Object != operation.Object {
+				continue
+			}
+
+			if _, ok := seen[beginID]; !ok {
+				return fmt.Errorf("invalid mark operation order: end %v precedes begin %v", id, beginID)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *State) ApplyChange(change *opset.Change) error {

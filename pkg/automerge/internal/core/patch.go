@@ -378,7 +378,7 @@ func (b *Engine) Diff(
 	afterHeads [][32]byte,
 ) ([]byte, error) {
 
-	patches, err := b.diffPatches(beforeHeads, afterHeads, false)
+	patches, err := b.diffPatches(beforeHeads, afterHeads)
 	if err != nil {
 		return nil, err
 	}
@@ -465,13 +465,12 @@ func (b *Engine) incrementalPatches(
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
 ) ([]patchOut, error) {
-	return b.diffPatches(beforeHeads, afterHeads, true)
+	return b.diffPatches(beforeHeads, afterHeads)
 }
 
 func (b *Engine) diffPatches(
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
-	incremental bool,
 ) ([]patchOut, error) {
 	source, ok := b.state.at(nativeHashes(beforeHeads))
 	if !ok {
@@ -492,7 +491,7 @@ func (b *Engine) diffPatches(
 		)
 
 		if objectVisibleInState(source, object) {
-			objectPatches, err = diffObjectPatches(source, target, object, incremental)
+			objectPatches, err = diffObjectPatches(source, target, object)
 		} else {
 			objectPatches, err = materializeObjectPatches(target, object)
 		}
@@ -509,7 +508,7 @@ func (b *Engine) diffPatches(
 
 // diffObjectPatches emits patches transforming an object from the source state
 // into the target state, for an object present in both.
-func diffObjectPatches(source, target *State, object opset.ObjectID, incremental bool) ([]patchOut, error) {
+func diffObjectPatches(source, target *State, object opset.ObjectID) ([]patchOut, error) {
 	objectType, err := objectTypeInState(target, object)
 	if err != nil {
 		return nil, err
@@ -521,9 +520,9 @@ func diffObjectPatches(source, target *State, object opset.ObjectID, incremental
 	case "map", "table":
 		return diffMapPatches(source, target, object, identifier)
 	case "list":
-		return diffSequencePatches(source, target, object, objectType, identifier, incremental)
+		return diffSequencePatches(source, target, object, objectType, identifier)
 	case "text":
-		patches, err := diffSequencePatches(source, target, object, objectType, identifier, incremental)
+		patches, err := diffSequencePatches(source, target, object, objectType, identifier)
 		if err != nil {
 			return nil, err
 		}
@@ -837,7 +836,6 @@ func diffSequencePatches(
 	object opset.ObjectID,
 	objectType string,
 	identifier string,
-	incremental bool,
 ) ([]patchOut, error) {
 	sourceValues := source.sequenceValues(object.OpID)
 	targetValues := target.sequenceValues(object.OpID)
@@ -877,11 +875,13 @@ func diffSequencePatches(
 				continue
 			}
 
-			// Same element, different winning value. A state-comparison diff of
-			// text cannot express an in-place replacement, so it becomes a
-			// delete followed by a splice; the incremental patch log and every
-			// list report a put_seq instead, mirroring the reference.
-			if objectType == "text" && !incremental {
+			// Same element, different winning value. Text string replacements
+			// become a delete followed by a splice in both state-comparison and
+			// incremental diffs; lists and non-string text values use put_seq.
+			replacement := targetValues[j].Operation
+			if objectType == "text" &&
+				replacement.Value != nil &&
+				replacement.Value.Type == opset.ScalarString {
 				patches = append(
 					patches,
 					patchOut{
@@ -894,30 +894,27 @@ func diffSequencePatches(
 					},
 				)
 
-				operation := targetValues[j].Operation
-				if operation.Value != nil && operation.Value.Type == opset.ScalarString {
-					runs, err := textRunsWithMarks(target, object, position, operation.Value.String)
-					if err != nil {
-						return nil, err
-					}
-
-					for _, run := range runs {
-						patches = append(
-							patches,
-							patchOut{
-								Obj: identifier,
-								Action: patchActionOut{
-									Type:  "splice_text",
-									Index: run.index,
-									Text:  run.text,
-									Marks: run.marks,
-								},
-							},
-						)
-					}
-
-					position += width(targetValues[j])
+				runs, err := textRunsWithMarks(target, object, position, replacement.Value.String)
+				if err != nil {
+					return nil, err
 				}
+
+				for _, run := range runs {
+					patches = append(
+						patches,
+						patchOut{
+							Obj: identifier,
+							Action: patchActionOut{
+								Type:  "splice_text",
+								Index: run.index,
+								Text:  run.text,
+								Marks: run.marks,
+							},
+						},
+					)
+				}
+
+				position += width(targetValues[j])
 			} else {
 				value, err := patchValueForOperation(target, targetValues[j].Operation)
 				if err != nil {

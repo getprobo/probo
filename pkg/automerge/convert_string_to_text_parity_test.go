@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce the string-to-text load migration from
-// upstream Rust automerge 0.10 (rust/automerge/tests/convert_string_to_text.rs),
+// upstream Rust automerge 0.11 (rust/automerge/tests/convert_string_to_text.rs),
 // asserting the native Go and Rust/WASM reference engines both convert string
 // scalars into text objects when loading with the migration enabled.
 

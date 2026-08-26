@@ -30,11 +30,11 @@ const mappings = loadMappings(optionalArgument("--mappings"));
 
 verifyGitCheckout(
   rustRoot,
-  "a4f584c86358dd07f83f36708573e1c8d1bd8161",
+  "8feb8be8be203e3b878bf2cb5919601094f3c816",
 );
 verifyGitCheckout(
   javascriptRoot,
-  "f8b0911dc9d86265dd62934b7dc782571e3a7fcb",
+  "8d7b12f8da553afbb325e37a6c66942b8dd4d994",
 );
 
 const inventory = {
@@ -42,17 +42,17 @@ const inventory = {
   sources: {
     rust: {
       package: "automerge",
-      version: "0.10.0",
-      gitTag: "rust/automerge-0.10.0",
-      gitCommit: "a4f584c86358dd07f83f36708573e1c8d1bd8161",
-      crateChecksum: "09b78abcbba93428b9465b26cb2816a5b4654cce507f099a84a8c1b311cb3633",
+      version: "0.11.0",
+      gitTag: "rust/automerge-0.11.0",
+      gitCommit: "8feb8be8be203e3b878bf2cb5919601094f3c816",
+      crateChecksum: "c1b59cbd9e7685a1ac6bf6046ddcd8acb550fa5bf03c09f6c1056728a742b40d",
     },
     javascript: {
       package: "@automerge/automerge",
-      version: "3.4.0",
-      gitTag: "js/automerge-3.4.0",
-      gitCommit: "f8b0911dc9d86265dd62934b7dc782571e3a7fcb",
-      npmIntegrity: "sha512-THmghtTNGGt2xsI0pM3o1i3PM8oZKcYFgOj25FOzW7l6e94SQOivNtCwy6xc0I8hVJsQSSotoBNs+yk/9hM2dg==",
+      version: "3.4.1",
+      gitTag: "js/automerge-3.4.1",
+      gitCommit: "8d7b12f8da553afbb325e37a6c66942b8dd4d994",
+      npmIntegrity: "sha512-zsZpbs/iDPvp+ZojIYd+gxmbcPVz2Xbkcx778G8zrt3E0zS+6saHJOm666lOuZyNRlTV4wHw9qzGTKueedeCsQ==",
     },
   },
   tests: [
@@ -232,7 +232,7 @@ function testEntry(source, file, line, name) {
     classification,
     requirement: classification === "language-specific"
       ? "language-specific"
-      : interoperabilityRequirement(source, file, name),
+      : mapping?.requirement ?? interoperabilityRequirement(source, file, name),
     localTests: mapping?.localTests ?? [],
     rationale: mapping?.rationale ?? languageSpecific,
   };

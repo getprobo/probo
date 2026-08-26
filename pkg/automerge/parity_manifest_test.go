@@ -70,26 +70,26 @@ func TestUpstreamParityManifest(t *testing.T) {
 	var manifest parityManifest
 	require.NoError(t, json.Unmarshal(data, &manifest))
 	assert.Equal(t, 1, manifest.SchemaVersion)
-	assert.Equal(t, "0.10.0", manifest.Sources.Rust.Version)
+	assert.Equal(t, "0.11.0", manifest.Sources.Rust.Version)
 	assert.Equal(
 		t,
-		"a4f584c86358dd07f83f36708573e1c8d1bd8161",
+		"8feb8be8be203e3b878bf2cb5919601094f3c816",
 		manifest.Sources.Rust.GitCommit,
 	)
 	assert.Equal(
 		t,
-		"09b78abcbba93428b9465b26cb2816a5b4654cce507f099a84a8c1b311cb3633",
+		"c1b59cbd9e7685a1ac6bf6046ddcd8acb550fa5bf03c09f6c1056728a742b40d",
 		manifest.Sources.Rust.CrateChecksum,
 	)
-	assert.Equal(t, "3.4.0", manifest.Sources.JavaScript.Version)
+	assert.Equal(t, "3.4.1", manifest.Sources.JavaScript.Version)
 	assert.Equal(
 		t,
-		"f8b0911dc9d86265dd62934b7dc782571e3a7fcb",
+		"8d7b12f8da553afbb325e37a6c66942b8dd4d994",
 		manifest.Sources.JavaScript.GitCommit,
 	)
 	assert.Equal(
 		t,
-		"sha512-THmghtTNGGt2xsI0pM3o1i3PM8oZKcYFgOj25FOzW7l6e94SQOivNtCwy6xc0I8hVJsQSSotoBNs+yk/9hM2dg==",
+		"sha512-zsZpbs/iDPvp+ZojIYd+gxmbcPVz2Xbkcx778G8zrt3E0zS+6saHJOm666lOuZyNRlTV4wHw9qzGTKueedeCsQ==",
 		manifest.Sources.JavaScript.PackageIntegrity,
 	)
 
@@ -161,9 +161,9 @@ func TestUpstreamParityManifest(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, 361, sourceCounts["rust"])
+	assert.Equal(t, 456, sourceCounts["rust"])
 	assert.Equal(t, 16, sourceCounts["rust-doc"])
-	assert.Equal(t, 319, sourceCounts["javascript"])
+	assert.Equal(t, 329, sourceCounts["javascript"])
 	assert.Equal(t, 16, sourceCounts["javascript-packaging"])
 
 	if os.Getenv("AUTOMERGE_REQUIRE_FULL_PARITY") == "1" {

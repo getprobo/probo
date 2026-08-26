@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce upstream Rust batch-insertion tests from
-// automerge 0.10 (rust/automerge/tests/batch_insert.rs) against both the native
+// automerge 0.11 (rust/automerge/tests/batch_insert.rs) against both the native
 // Go engine and the Rust/WASM reference engine, driving the public hydration
 // API (PutValue, PutValueAt, SpliceValues) that mirrors batch_create_object.
 

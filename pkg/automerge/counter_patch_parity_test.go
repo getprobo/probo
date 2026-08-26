@@ -22,7 +22,7 @@
 // (rust/automerge/src/automerge/tests.rs). The upstream test applies a change
 // that creates and then increments a counter and expects diff_incremental to
 // replay per-operation patches (a put of the base value followed by two
-// increment patches). The pinned reference engine (automerge 0.10.0 embedded as
+// increment patches). The pinned reference engine (automerge 0.11.0 embedded as
 // WASM) instead collapses that applied change into a single put through
 // diff_incremental, and the native engine matches the reference exactly. Because
 // the parity gate is native-matches-reference observable behavior, this test

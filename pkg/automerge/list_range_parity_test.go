@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 // The tests in this file reproduce the list-range behaviors from upstream Rust
-// automerge 0.10 (rust/automerge/src/iter/list_range.rs), asserting the native
+// automerge 0.11 (rust/automerge/src/iter/list_range.rs), asserting the native
 // Go and Rust/WASM reference engines expose the same list values and per-element
 // conflict flags.
 

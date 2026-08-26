@@ -146,8 +146,8 @@ func (d *Document) UpdateDiffCursor() error {
 
 // DiffIncremental returns the patches for the changes committed since the diff
 // cursor and advances the cursor to the current heads. It mirrors the Rust
-// AutoCommit::diff_incremental helper, reporting operations from the recorded
-// patch log so an in-place text replacement is a put rather than a splice.
+// AutoCommit::diff_incremental helper. An in-place string replacement in text
+// is reported as a deletion followed by a text splice.
 func (d *Document) DiffIncremental() ([]Patch, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()

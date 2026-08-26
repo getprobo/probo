@@ -2,6 +2,7 @@ NPROC ?=	$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || getconf _
 MAKEFLAGS := --jobs=$(NPROC)
 
 CAT ?=	cat
+CARGO ?=	cargo
 CP ?=	cp
 DOCKER ?=	docker
 GO ?=	go
@@ -13,6 +14,7 @@ NPM ?=	npm
 NPX ?=	npx
 OPENSSL ?=	openssl
 SED ?= sed
+SHA256SUM ?= shasum -a 256
 SYFT ?=	syft
 TAIL ?= tail
 ECHO ?= echo
@@ -28,6 +30,7 @@ swift_sources = $(shell find $(SWIFT_ENROLL_UI) \( -name '*.swift' ! -name '*.ge
 SHELLCHECKCMD ?= shellcheck
 SHFMTCMD ?= shfmt
 SHFMTFLAGS ?= -i 2 -ci -bn
+RUST_TOOLCHAIN ?= 1.90.0
 
 # First-party shell scripts linted by lint-shell / fmt-shell (CI).
 # Add every new first-party *.sh here; do not include vendored/submodule scripts.
@@ -109,6 +112,8 @@ EMBEDDED= apps/console/dist/index.html \
 
 AUTOMERGE_REFERENCE_DIR=	pkg/automerge/internal/testsupport/reference
 AUTOMERGE_REFERENCE_WASM=	$(AUTOMERGE_REFERENCE_DIR)/reference.wasm
+AUTOMERGE_BATTERY_OUTPUT?=	/tmp/probo-automerge-battery.json
+AUTOMERGE_BATTERY_FIXTURES?=	/tmp/probo-automerge-battery-fixtures
 
 PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
@@ -507,7 +512,7 @@ generate: $(GENERATED)
 .PHONY: generate-automerge-reference
 generate-automerge-reference: ## Rebuild the internal Automerge WASM test oracle
 	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
-		$(CARGO) +$(RUST_TOOLCHAIN) build --locked --release --target wasm32-wasip1
+		CARGO_TARGET_DIR=target $(CARGO) +$(RUST_TOOLCHAIN) build --locked --release --target wasm32-wasip1
 	$(CP) $(AUTOMERGE_REFERENCE_DIR)/wasm/target/wasm32-wasip1/release/probo_automerge_reference.wasm $(AUTOMERGE_REFERENCE_WASM)
 	cd $(AUTOMERGE_REFERENCE_DIR) && $(SHA256SUM) reference.wasm > reference.wasm.sha256
 
