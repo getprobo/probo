@@ -24,6 +24,8 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
 func (b *Engine) Heads() ([][32]byte, error) {
@@ -144,9 +146,9 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 		}()
 	}
 
-	document, err := Decode(data)
+	document, err := storage.Decode(data)
 	if err != nil {
-		document, err = DecodePartial(data)
+		document, err = storage.DecodePartial(data)
 	}
 
 	if err != nil {

@@ -25,6 +25,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
+	"go.probo.inc/probo/pkg/automerge/internal/sync"
 )
 
 const (
@@ -73,17 +75,17 @@ func FuzzDecode(f *testing.F) {
 				t.Skip()
 			}
 
-			_, _ = Decode(data)
+			_, _ = storage.Decode(data)
 		},
 	)
 }
 
 func FuzzParseSyncMessage(f *testing.F) {
-	message, err := (SyncMessage{
-		Version: SyncMessageVersion2,
+	message, err := (sync.Message{
+		Version: sync.MessageVersion2,
 		Heads:   [][32]byte{{1}},
 		Need:    [][32]byte{{2}},
-		Have: []SyncHave{
+		Have: []sync.Have{
 			{
 				LastSync: [][32]byte{{3}},
 				Bloom:    []byte{4, 5, 6},
@@ -95,8 +97,8 @@ func FuzzParseSyncMessage(f *testing.F) {
 
 	f.Add(message)
 	f.Add([]byte{})
-	f.Add([]byte{byte(SyncMessageVersion1)})
-	f.Add([]byte{byte(SyncMessageVersion2)})
+	f.Add([]byte{byte(sync.MessageVersion1)})
+	f.Add([]byte{byte(sync.MessageVersion2)})
 
 	f.Fuzz(
 		func(t *testing.T, data []byte) {
@@ -104,7 +106,7 @@ func FuzzParseSyncMessage(f *testing.F) {
 				t.Skip()
 			}
 
-			parsed, err := ParseSyncMessage(data)
+			parsed, err := sync.ParseMessage(data)
 			if err != nil {
 				return
 			}
@@ -114,7 +116,7 @@ func FuzzParseSyncMessage(f *testing.F) {
 				return
 			}
 
-			_, _ = ParseSyncMessage(encoded)
+			_, _ = sync.ParseMessage(encoded)
 		},
 	)
 }

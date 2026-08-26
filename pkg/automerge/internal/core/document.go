@@ -20,7 +20,11 @@
 
 package core
 
-import "slices"
+import (
+	"slices"
+
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
+)
 
 // compact serializes the whole history as one document chunk, the form save()
 // produces in the other implementations, followed by any retained orphan changes
@@ -49,7 +53,7 @@ func (b *Engine) compact(retainOrphans, deflate bool) ([]byte, bool, error) {
 		document.Changes = append(document.Changes, *change)
 	}
 
-	data, err := EncodeDocument(document, b.state.documentOperationOrder(), deflate)
+	data, err := storage.EncodeDocument(document, b.state.documentOperationOrder(), deflate)
 	if err != nil {
 		return nil, false, err
 	}

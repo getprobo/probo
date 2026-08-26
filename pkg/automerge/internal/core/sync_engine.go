@@ -25,6 +25,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+
+	"go.probo.inc/probo/pkg/automerge/internal/sync"
 )
 
 func (b *Engine) NewSyncState() (uint32, error) {
@@ -174,8 +176,8 @@ func (b *Engine) GenerateSyncMessage(
 		}
 	}
 
-	message := SyncMessage{
-		Version: SyncMessageVersion2,
+	message := sync.Message{
+		Version: sync.MessageVersion2,
 		Heads:   messageHeads,
 		Need:    append([][32]byte(nil), state.Need...),
 		Flags:   []byte{2, syncFlagMarker | flags},
@@ -250,7 +252,7 @@ func (b *Engine) ReceiveSyncMessage(
 		return err
 	}
 
-	message, err := ParseSyncMessage(data)
+	message, err := sync.ParseMessage(data)
 	if err != nil {
 		return err
 	}

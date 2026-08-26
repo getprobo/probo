@@ -26,6 +26,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
+	"go.probo.inc/probo/pkg/automerge/internal/sync"
 )
 
 func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
@@ -46,15 +48,15 @@ func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, ok)
 
-	first, err := ParseSyncMessage(firstMessage)
+	first, err := sync.ParseMessage(firstMessage)
 	require.NoError(t, err)
 	require.Len(t, first.Changes, 1)
-	firstDocument, err := Decode(first.Changes[0])
+	firstDocument, err := storage.Decode(first.Changes[0])
 	require.NoError(t, err)
 	assert.Equal(t, []ChunkType{ChunkChange}, firstDocument.ChunkTypes)
 
-	ackMessage := SyncMessage{
-		Version: SyncMessageVersion2,
+	ackMessage := sync.Message{
+		Version: sync.MessageVersion2,
 		Heads:   first.Heads,
 	}
 	ack, err := ackMessage.Encode()
@@ -68,11 +70,11 @@ func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, ok)
 
-	second, err := ParseSyncMessage(secondMessage)
+	second, err := sync.ParseMessage(secondMessage)
 	require.NoError(t, err)
 	require.Len(t, second.Changes, 1)
 
-	secondDocument, err := DecodePartial(second.Changes[0])
+	secondDocument, err := storage.DecodePartial(second.Changes[0])
 	require.NoError(t, err)
 	require.Len(t, secondDocument.Changes, 1)
 	assert.Equal(t, "second", secondDocument.Changes[0].Message)

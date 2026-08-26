@@ -26,6 +26,8 @@ import (
 	"slices"
 	"sort"
 	"time"
+
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
 // changeDependencies computes the dependency set for a new change authored by
@@ -175,7 +177,7 @@ func (b *Engine) Commit(
 		change.Time = 0
 	}
 
-	raw, err := EncodeChange(change)
+	raw, err := storage.EncodeChange(change)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("cannot encode native change: %w", err)
 	}
@@ -189,7 +191,7 @@ func (b *Engine) Commit(
 	// change alongside merges. Decode a fresh copy from the encoded bytes so the
 	// two states never share mutable operation state.
 	if b.isolationActive && b.fullState != nil {
-		document, err := DecodePartial(raw)
+		document, err := storage.DecodePartial(raw)
 		if err != nil || len(document.Changes) == 0 {
 			return [32]byte{}, fmt.Errorf("cannot decode isolated change for full history: %w", err)
 		}
@@ -238,7 +240,7 @@ func (b *Engine) EmptyCommit(
 		change.Time = 0
 	}
 
-	raw, err := EncodeChange(change)
+	raw, err := storage.EncodeChange(change)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("cannot encode native empty change: %w", err)
 	}
@@ -264,7 +266,7 @@ func (b *Engine) Rollback() (uint64, error) {
 		data = append(data, change...)
 	}
 
-	document, err := Decode(data)
+	document, err := storage.Decode(data)
 	if err != nil {
 		return 0, fmt.Errorf("cannot decode committed state during rollback: %w", err)
 	}

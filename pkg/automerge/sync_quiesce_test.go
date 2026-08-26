@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
-	"go.probo.inc/probo/pkg/automerge/internal/core"
+	"go.probo.inc/probo/pkg/automerge/internal/sync"
 )
 
 // drainSyncMessages mirrors the server's sendAvailableSyncMessages: it generates
@@ -156,8 +156,8 @@ func TestSyncState_QuiescesWhenReadOnlyPeerRequestsChanges(t *testing.T) {
 
 	// Model the message found by the chaos test: a peer advertises read-only and
 	// still carries a stale Need from its previous writable mode.
-	message, err := (core.SyncMessage{
-		Version: core.SyncMessageVersion2,
+	message, err := (sync.Message{
+		Version: sync.MessageVersion2,
 		Need:    [][32]byte{requested},
 		Flags:   []byte{2, 0x80 | 0x02 | 0x04},
 	}).Encode()

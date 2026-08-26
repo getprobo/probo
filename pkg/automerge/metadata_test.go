@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/automerge/internal/core"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 	automerge "go.probo.inc/probo/pkg/automerge/internal/testsupport"
 )
 
@@ -123,7 +123,7 @@ func TestDocument_CommitTimeParity(t *testing.T) {
 
 				data, err := document.Save()
 				require.NoError(t, err)
-				decoded, err := core.Decode(data)
+				decoded, err := storage.Decode(data)
 				require.NoError(t, err)
 				require.Len(t, decoded.Changes, 3)
 				assert.Equal(t, int64(0), decoded.Changes[0].Time)
@@ -172,7 +172,7 @@ func TestDocument_EmptyCommitTimeParity(t *testing.T) {
 
 				data, err := document.Save()
 				require.NoError(t, err)
-				decoded, err := core.Decode(data)
+				decoded, err := storage.Decode(data)
 				require.NoError(t, err)
 				require.Len(t, decoded.Changes, 3)
 
