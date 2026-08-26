@@ -20,7 +20,7 @@
     "description": "Publiceer uw portaal en koppel een eigen domein."
   },
   "permissionsPage": {
-    "title": "Rechten",
+    "title": "Bezoekers",
     "description": "Bepaal wie privé-documenten mag lezen en vereis een NDA."
   },
   "integrationsPage": {
@@ -52,12 +52,17 @@
   "accessList": {
     "empty": "Nog geen bezoekers",
     "emptyDescription": "Personen die zich op uw portal aanmelden, verschijnen hier.",
-    "columns": { "name": "Naam", "email": "E-mail", "joinedOn": "Aangemeld op", "access": "Toegang", "requests": "Aanvragen", "nda": "NDA" },
     "actions": { "showMore": "Meer weergeven" }
   },
   "accessListItem": {
-    "granted": "{{count}} verleend",
-    "pending": "{{count}} in behandeling",
+    "requested_one": "Bekijk {{count}} aanvraag",
+    "requested_other": "Bekijk {{count}} aanvragen",
+    "nda": {
+      "signed": "NDA ondertekend",
+      "processing": "NDA in verwerking",
+      "pending": "NDA in afwachting",
+      "failed": "NDA mislukt"
+    },
     "actions": { "open": "Bezoeker openen" }
   },
   "documentAccessList": {

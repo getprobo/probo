@@ -19,8 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
@@ -79,14 +78,11 @@ export function CompliancePortalPermissionsPage({ queryRef }: CompliancePortalPe
       {compliancePortal.canListAccesses && (
         <section className={root()}>
           <div className={intro()}>
-            <Heading level={2} size={4} weight="medium" highContrast>
-              {t("accessPage.title")}
-            </Heading>
             <Text size={2} color="neutral">
               {t("accessPage.description")}
             </Text>
           </div>
-          <Suspense fallback={<TableSkeleton variant="surface" count={4} columns={7} />}>
+          <Suspense fallback={<ListSkeleton count={4} />}>
             <CompliancePortalAccessList />
           </Suspense>
         </section>

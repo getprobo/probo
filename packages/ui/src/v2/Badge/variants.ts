@@ -23,18 +23,25 @@ import { tv } from "tailwind-variants/lite";
 // Small status label (Radix "Badge"). A non-interactive <span>. The
 // variant × color surface treatment resolves in the compound variants below.
 export const badge = tv({
-  base: "inline-flex w-fit items-center justify-center border border-transparent font-medium whitespace-nowrap align-middle",
+  base: "inline-flex w-fit items-center justify-center border font-medium whitespace-nowrap align-middle",
   variants: {
     // Corner radius is bound to size (per the Figma, radius is global/theme,
     // not a per-instance prop).
     size: {
-      1: "gap-1 rounded-1 px-1.5 py-0.5 text-1 [&_svg]:size-3",
-      2: "gap-1 rounded-2 px-2 py-0.5 text-2 [&_svg]:size-4",
-      3: "gap-1.5 rounded-2 px-2.5 py-1 text-3 [&_svg]:size-4",
+      1: "gap-1 rounded-1 px-1.5 py-0.5 [&_svg]:size-3",
+      2: "gap-1 rounded-2 px-2 py-0.5 [&_svg]:size-4",
+      3: "gap-1.5 rounded-2 px-2.5 py-1 [&_svg]:size-4",
+    },
+    // Type scale is independent of chrome size so a size-3 badge can carry
+    // text-2 (or any other step) without fighting size's text-* class.
+    textSize: {
+      1: "text-1",
+      2: "text-2",
+      3: "text-3",
     },
     variant: {
-      solid: "",
-      soft: "",
+      solid: "border-transparent",
+      soft: "border-transparent",
       surface: "",
       outline: "",
     },
@@ -103,6 +110,7 @@ export const badge = tv({
   ],
   defaultVariants: {
     size: 1,
+    textSize: 1,
     variant: "soft",
     color: "neutral",
     highContrast: false,

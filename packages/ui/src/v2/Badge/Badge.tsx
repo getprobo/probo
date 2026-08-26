@@ -33,10 +33,20 @@ export type BadgeProps
 // Small status label (Radix "Badge"). Renders a non-interactive <span>. See
 // contrib/claude/ui.md.
 export function Badge(props: BadgeProps) {
-  const { size, variant, color, highContrast, className, iconStart, children, ...rest } = props;
+  const { size, textSize, variant, color, highContrast, className, iconStart, children, ...rest } = props;
 
   return (
-    <span className={badge({ size, variant, color, highContrast, className })} {...rest}>
+    <span
+      className={badge({
+        size,
+        textSize: textSize ?? size,
+        variant,
+        color,
+        highContrast,
+        className,
+      })}
+      {...rest}
+    >
       {iconStart}
       {children}
     </span>

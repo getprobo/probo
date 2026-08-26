@@ -50,6 +50,7 @@ export const Sizes: Story = {
       {sizes.map(size => (
         <Badge key={size} size={size}>Badge</Badge>
       ))}
+      <Badge size={3} textSize={2}>size 3 / text 2</Badge>
     </div>
   ),
 };

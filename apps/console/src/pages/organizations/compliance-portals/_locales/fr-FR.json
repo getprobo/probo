@@ -38,7 +38,7 @@
     "description": "Publiez votre portail et associez-le à un domaine personnalisé."
   },
   "permissionsPage": {
-    "title": "Autorisations",
+    "title": "Visiteurs",
     "description": "Contrôlez qui peut lire les documents privés et exigez un NDA."
   },
   "integrationsPage": {
@@ -74,21 +74,19 @@
   "accessList": {
     "empty": "Aucun visiteur pour le moment",
     "emptyDescription": "Les personnes qui se connectent sur votre portail apparaîtront ici.",
-    "columns": {
-      "name": "Nom",
-      "email": "E-mail",
-      "joinedOn": "Inscrit le",
-      "access": "Accès",
-      "requests": "Demandes",
-      "nda": "NDA"
-    },
     "actions": {
       "showMore": "Afficher plus"
     }
   },
   "accessListItem": {
-    "granted": "{{count}} accès",
-    "pending": "{{count}} en attente",
+    "requested_one": "Examiner {{count}} demande",
+    "requested_other": "Examiner {{count}} demandes",
+    "nda": {
+      "signed": "NDA signé",
+      "processing": "NDA en cours",
+      "pending": "NDA en attente",
+      "failed": "NDA échoué"
+    },
     "actions": {
       "open": "Ouvrir le visiteur"
     }

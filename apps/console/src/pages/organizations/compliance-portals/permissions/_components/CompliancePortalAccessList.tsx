@@ -19,12 +19,7 @@
 // SOFTWARE.
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Table } from "@probo/ui/src/v2/Table/Table";
-import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
-import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
-import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
-import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
-import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { List } from "@probo/ui/src/v2/List/List";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { useParams } from "react-router";
@@ -37,8 +32,6 @@ import { accessSection } from "../variants";
 
 import { CompliancePortalAccessListEmpty } from "./CompliancePortalAccessListEmpty";
 import { CompliancePortalAccessListItem } from "./CompliancePortalAccessListItem";
-
-const COLUMN_COUNT = 7;
 
 const accessListQuery = graphql`
   query CompliancePortalAccessListRootQuery($compliancePortalId: ID!) {
@@ -80,26 +73,6 @@ const fragment = graphql`
   }
 `;
 
-function AccessListHeader() {
-  const { t } = useTranslation("organizations/compliance-portals");
-
-  return (
-    <TableHeader>
-      <TableRow>
-        <TableColumnHeaderCell>{t("accessList.columns.name")}</TableColumnHeaderCell>
-        <TableColumnHeaderCell>{t("accessList.columns.email")}</TableColumnHeaderCell>
-        <TableColumnHeaderCell>{t("accessList.columns.joinedOn")}</TableColumnHeaderCell>
-        <TableColumnHeaderCell>{t("accessList.columns.access")}</TableColumnHeaderCell>
-        <TableColumnHeaderCell>{t("accessList.columns.requests")}</TableColumnHeaderCell>
-        <TableColumnHeaderCell>{t("accessList.columns.nda")}</TableColumnHeaderCell>
-        <TableColumnHeaderCell>
-          <span className="sr-only">{t("accessListItem.actions.open")}</span>
-        </TableColumnHeaderCell>
-      </TableRow>
-    </TableHeader>
-  );
-}
-
 export function CompliancePortalAccessList() {
   const { t } = useTranslation("organizations/compliance-portals");
   const { more } = accessSection();
@@ -123,29 +96,20 @@ export function CompliancePortalAccessList() {
   }
 
   const { accesses } = data;
-  const isEmpty = accesses.edges.length === 0;
+  if (accesses.edges.length === 0) {
+    return <CompliancePortalAccessListEmpty />;
+  }
 
   return (
     <>
-      <Table size={2} variant="surface">
-        <AccessListHeader />
-        <TableBody>
-          {isEmpty
-            ? (
-                <TableRow>
-                  <TableCell colSpan={COLUMN_COUNT} justify="center">
-                    <CompliancePortalAccessListEmpty />
-                  </TableCell>
-                </TableRow>
-              )
-            : accesses.edges.map(({ node: access }) => (
-                <CompliancePortalAccessListItem
-                  key={access.id}
-                  accessKey={access}
-                />
-              ))}
-        </TableBody>
-      </Table>
+      <List>
+        {accesses.edges.map(({ node: access }) => (
+          <CompliancePortalAccessListItem
+            key={access.id}
+            accessKey={access}
+          />
+        ))}
+      </List>
       {hasNext && (
         <div className={more()}>
           <Button

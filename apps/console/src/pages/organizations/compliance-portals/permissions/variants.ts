@@ -70,24 +70,28 @@ export const accessSection = tv({
 
 export const accessListItem = tv({
   slots: {
-    row: "",
-    person: "flex min-w-0 items-center gap-3",
-    personCopy: "min-w-0 truncate",
+    item: "hover:bg-sand-2",
+    hit: [
+      "flex min-w-0 flex-1 items-center gap-4 text-inherit no-underline",
+      "outline-none focus-visible:bg-sand-2",
+    ],
+    avatar: "shrink-0",
+    main: "flex min-w-0 flex-1 items-center gap-3",
+    identity: "min-w-0",
+    name: "min-w-0 truncate",
+    email: "min-w-0 truncate",
+    trailing: "flex shrink-0 items-center gap-3",
+    nda: "flex shrink-0 items-center gap-1.5 whitespace-nowrap [&_svg]:size-4",
+    joined: "whitespace-nowrap",
   },
   variants: {
-    interactive: {
-      true: {
-        row: "cursor-pointer hover:bg-sand-2",
-      },
-    },
     inactive: {
       true: {
-        row: "opacity-50",
+        item: "opacity-50",
       },
     },
   },
   defaultVariants: {
-    interactive: false,
     inactive: false,
   },
 });

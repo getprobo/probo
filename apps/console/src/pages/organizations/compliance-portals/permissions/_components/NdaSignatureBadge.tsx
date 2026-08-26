@@ -53,6 +53,20 @@ export function ndaSignatureStatusKey(status: NdaSignatureStatus): string {
   }
 }
 
+export function ndaSignatureListKey(status: NdaSignatureStatus): string {
+  switch (status) {
+    case "COMPLETED":
+      return "accessListItem.nda.signed";
+    case "ACCEPTED":
+    case "PROCESSING":
+      return "accessListItem.nda.processing";
+    case "PENDING":
+      return "accessListItem.nda.pending";
+    case "FAILED":
+      return "accessListItem.nda.failed";
+  }
+}
+
 export function NdaSignatureBadge({ status }: { status: NdaSignatureStatus }) {
   const { t } = useTranslation("organizations/compliance-portals");
 

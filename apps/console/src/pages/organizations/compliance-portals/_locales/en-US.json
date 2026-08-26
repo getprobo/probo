@@ -38,7 +38,7 @@
     "description": "Publish your portal and serve it on a custom domain."
   },
   "permissionsPage": {
-    "title": "Permissions",
+    "title": "Visitors",
     "description": "Control who can read private documents and require an NDA."
   },
   "integrationsPage": {
@@ -74,21 +74,19 @@
   "accessList": {
     "empty": "No visitors yet",
     "emptyDescription": "People who sign in on your portal will appear here.",
-    "columns": {
-      "name": "Name",
-      "email": "Email",
-      "joinedOn": "Joined on",
-      "access": "Access",
-      "requests": "Requests",
-      "nda": "NDA"
-    },
     "actions": {
       "showMore": "Show More"
     }
   },
   "accessListItem": {
-    "granted": "{{count}} granted",
-    "pending": "{{count}} pending",
+    "requested_one": "Review {{count}} request",
+    "requested_other": "Review {{count}} requests",
+    "nda": {
+      "signed": "NDA signed",
+      "processing": "NDA processing",
+      "pending": "NDA pending",
+      "failed": "NDA failed"
+    },
     "actions": {
       "open": "Open visitor"
     }

@@ -18,26 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PencilSimpleIcon } from "@phosphor-icons/react";
+import { FileTextIcon, SignatureIcon } from "@phosphor-icons/react";
 import { dateFormat } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
-import { Link } from "@probo/ui/src/v2/Link/Link";
-import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
-import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
-import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
+import { ListItem } from "@probo/ui/src/v2/List/ListItem";
+import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalAccessListItemFragment$key } from "#/__generated__/core/CompliancePortalAccessListItemFragment.graphql";
 
 import { accessListItem } from "../variants";
 
-import { NdaSignatureBadge } from "./NdaSignatureBadge";
+import { ndaSignatureListKey, ndaSignatureTone } from "./NdaSignatureBadge";
 
 const fragment = graphql`
   fragment CompliancePortalAccessListItemFragment on CompliancePortalAccess {
@@ -48,7 +45,6 @@ const fragment = graphql`
       emailAddress
       state
     }
-    activeCount
     pendingRequestCount
     ndaSignature {
       status
@@ -64,86 +60,68 @@ export function CompliancePortalAccessListItem({
   accessKey,
 }: CompliancePortalAccessListItemProps) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
-  const navigate = useNavigate();
   const access = useFragment(fragment, accessKey);
-  const isActive = access.profile.state === "ACTIVE";
-  const { row, person, personCopy } = accessListItem({
-    interactive: true,
-    inactive: !isActive,
+  const {
+    item,
+    hit,
+    avatar,
+    main,
+    identity,
+    name,
+    email,
+    trailing,
+    nda,
+    joined,
+  } = accessListItem({
+    inactive: access.profile.state !== "ACTIVE",
   });
-
-  function handleRowClick() {
-    void navigate(access.id);
-  }
-
-  function handleLinkClick(event: MouseEvent) {
-    event.stopPropagation();
-  }
+  const ndaStatus = access.ndaSignature?.status;
 
   return (
-    <TableRow
-      align="center"
-      className={row()}
-      onClick={handleRowClick}
-    >
-      <TableRowHeaderCell minWidth="12rem">
-        <div className={person()}>
-          <Avatar
-            size={2}
-            variant="soft"
-            color="gold"
-            fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
-          />
-          <Link
+    <ListItem className={item()}>
+      <Link to={access.id} className={hit()}>
+        <Avatar
+          size={3}
+          variant="soft"
+          color="gold"
+          className={avatar()}
+          fallback={access.profile.fullName.charAt(0).toUpperCase() || "?"}
+        />
+        <div className={main()}>
+          <div className={identity()}>
+            <ListItemContent>
+              <Text size={2} weight="medium" color="neutral" highContrast className={name()}>
+                {access.profile.fullName}
+              </Text>
+              <Text size={1} color="gold" className={email()}>
+                {access.profile.emailAddress}
+              </Text>
+            </ListItemContent>
+          </div>
+          {ndaStatus != null && (
+            <Text size={2} color={ndaSignatureTone(ndaStatus)} className={nda()}>
+              <SignatureIcon aria-hidden />
+              {t(ndaSignatureListKey(ndaStatus))}
+            </Text>
+          )}
+        </div>
+      </Link>
+      <div className={trailing()}>
+        {access.pendingRequestCount > 0 && (
+          <ButtonLink
             to={access.id}
             size={2}
-            color="neutral"
-            highContrast
-            underline={false}
-            onClick={handleLinkClick}
-            className={personCopy()}
+            variant="soft"
+            color="amber"
+            iconStart={<FileTextIcon aria-hidden />}
           >
-            {access.profile.fullName}
-          </Link>
-        </div>
-      </TableRowHeaderCell>
-      <TableCell>
-        <Text size={1} color="gold" className="truncate">
-          {access.profile.emailAddress}
+            {t("accessListItem.requested", { count: access.pendingRequestCount })}
+          </ButtonLink>
+        )}
+        <Text size={1} color="faint" className={joined()}>
+          {t("visitorPage.joinedOn", { date: dateFormat(i18n.language, access.createdAt) })}
         </Text>
-      </TableCell>
-      <TableCell>
-        <Text size={1} color="faint">
-          {dateFormat(i18n.language, access.createdAt)}
-        </Text>
-      </TableCell>
-      <TableCell>
-        <Text size={1} color="faint">
-          {access.activeCount}
-        </Text>
-      </TableCell>
-      <TableCell>
-        <Text size={1} color="faint">
-          {access.pendingRequestCount}
-        </Text>
-      </TableCell>
-      <TableCell>
-        {access.ndaSignature
-          ? <NdaSignatureBadge status={access.ndaSignature.status} />
-          : null}
-      </TableCell>
-      <TableCell>
-        <ButtonLink
-          to={access.id}
-          size={1}
-          variant="ghost"
-          color="neutral"
-          aria-label={t("accessListItem.actions.open")}
-          onClick={handleLinkClick}
-        >
-          <PencilSimpleIcon />
-        </ButtonLink>
-      </TableCell>
-    </TableRow>
+      </div>
+    </ListItem>
   );
 }
