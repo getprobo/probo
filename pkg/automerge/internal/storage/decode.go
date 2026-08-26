@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"math"
 	"slices"
 	"unicode/utf8"
@@ -32,9 +33,9 @@ import (
 var magic = [4]byte{0x85, 0x6f, 0x4a, 0x83}
 
 type decodedChunk struct {
-	kind    ChunkType
+	kind    opset.ChunkType
 	content []byte
-	hash    *ChangeHash
+	hash    *opset.ChangeHash
 	raw     []byte
 }
 
@@ -45,20 +46,20 @@ type implicitOperationIDs struct {
 
 // Decode parses all chunks in data and validates the resulting dependency
 // graph. It accepts document, change, and compressed change chunks.
-func Decode(data []byte) (*Document, error) {
+func Decode(data []byte) (*opset.Document, error) {
 	return decode(data, true)
 }
 
 // DecodePartial parses chunks whose causal dependencies may already exist in
 // another document. Column and operation ownership validation still happens
 // while whole-history frontier validation is deferred to the caller.
-func DecodePartial(data []byte) (*Document, error) {
+func DecodePartial(data []byte) (*opset.Document, error) {
 	return decode(data, false)
 }
 
 // DecodeIncremental parses the complete chunk prefix and ignores an incomplete
 // or corrupt trailing fragment after at least one valid chunk.
-func DecodeIncremental(data []byte) (*Document, int, error) {
+func DecodeIncremental(data []byte) (*opset.Document, int, error) {
 	r := &reader{data: data}
 	consumed := 0
 
@@ -83,13 +84,13 @@ func DecodeIncremental(data []byte) (*Document, int, error) {
 	return document, consumed, err
 }
 
-func decode(data []byte, validateHistory bool) (*Document, error) {
+func decode(data []byte, validateHistory bool) (*opset.Document, error) {
 	if len(data) == 0 {
 		return nil, fmt.Errorf("automerge file is empty")
 	}
 
 	r := &reader{data: data}
-	document := &Document{}
+	document := &opset.Document{}
 
 	for r.remaining() > 0 {
 		chunk, err := decodeChunk(r)
@@ -100,7 +101,7 @@ func decode(data []byte, validateHistory bool) (*Document, error) {
 		document.ChunkTypes = append(document.ChunkTypes, chunk.kind)
 
 		switch chunk.kind {
-		case ChunkDocument:
+		case opset.ChunkDocument:
 			if len(document.ChunkTypes) != 1 {
 				return nil, fmt.Errorf("only the first chunk may be a document chunk")
 			}
@@ -108,7 +109,7 @@ func decode(data []byte, validateHistory bool) (*Document, error) {
 			if err := decodeDocumentChunk(document, chunk.content); err != nil {
 				return nil, fmt.Errorf("cannot decode document chunk: %w", err)
 			}
-		case ChunkChange, ChunkCompressedChange:
+		case opset.ChunkChange, opset.ChunkCompressedChange:
 			change, actors, unknown, err := decodeChangeChunk(chunk.content, *chunk.hash)
 			if err != nil {
 				return nil, fmt.Errorf("cannot decode change chunk: %w", err)
@@ -155,8 +156,8 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 		return decodedChunk{}, fmt.Errorf("cannot read chunk type: %w", err)
 	}
 
-	kind := ChunkType(rawType)
-	if kind > ChunkCompressedChange {
+	kind := opset.ChunkType(rawType)
+	if kind > opset.ChunkCompressedChange {
 		return decodedChunk{}, fmt.Errorf("unknown chunk type %d", kind)
 	}
 
@@ -178,8 +179,8 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 	hashKind := kind
 	hashContent := content
 
-	if kind == ChunkCompressedChange {
-		hashKind = ChunkChange
+	if kind == opset.ChunkCompressedChange {
+		hashKind = opset.ChunkChange
 
 		hashContent, err = inflate(content)
 		if err != nil {
@@ -207,8 +208,8 @@ func decodeChunk(r *reader) (decodedChunk, error) {
 		content: hashContent,
 		raw:     append([]byte(nil), r.data[start:r.offset]...),
 	}
-	if kind == ChunkChange || kind == ChunkCompressedChange {
-		hash := ChangeHash(digest)
+	if kind == opset.ChunkChange || kind == opset.ChunkCompressedChange {
+		hash := opset.ChangeHash(digest)
 		chunk.hash = &hash
 	}
 
@@ -231,7 +232,7 @@ func appendULEB(destination []byte, value uint64) []byte {
 	}
 }
 
-func decodeDocumentChunk(document *Document, data []byte) error {
+func decodeDocumentChunk(document *opset.Document, data []byte) error {
 	r := &reader{data: data}
 
 	actors, err := decodeActorArray(r, true)
@@ -334,13 +335,13 @@ func decodeDocumentChunk(document *Document, data []byte) error {
 //
 // Successors are left in place: the engine materializes a loaded snapshot from
 // them, and re-encoding a change only ever reads predecessors.
-func restoreChangeOperations(operations []Operation) ([]Operation, error) {
-	stored := make(map[OpID]struct{}, len(operations))
+func restoreChangeOperations(operations []opset.Operation) ([]opset.Operation, error) {
+	stored := make(map[opset.OpID]struct{}, len(operations))
 	for _, operation := range operations {
 		stored[operation.ID] = struct{}{}
 	}
 
-	predecessors := make(map[OpID][]OpID)
+	predecessors := make(map[opset.OpID][]opset.OpID)
 	for _, operation := range operations {
 		for _, successor := range operation.Successors {
 			predecessors[successor] = append(predecessors[successor], operation.ID)
@@ -350,7 +351,7 @@ func restoreChangeOperations(operations []Operation) ([]Operation, error) {
 	for identifier := range predecessors {
 		slices.SortFunc(
 			predecessors[identifier],
-			func(left, right OpID) int {
+			func(left, right opset.OpID) int {
 				return left.Compare(right)
 			},
 		)
@@ -360,7 +361,7 @@ func restoreChangeOperations(operations []Operation) ([]Operation, error) {
 		operations[i].Predecessors = predecessors[operations[i].ID]
 	}
 
-	deletes := make([]Operation, 0)
+	deletes := make([]opset.Operation, 0)
 
 	for identifier, superseded := range predecessors {
 		if _, ok := stored[identifier]; ok {
@@ -379,12 +380,11 @@ func restoreChangeOperations(operations []Operation) ([]Operation, error) {
 		}
 
 		deletes = append(
-			deletes,
-			Operation{
+			deletes, opset.Operation{
 				ID:           identifier,
 				Object:       source.Object,
 				Key:          supersededKey(source),
-				Action:       ActionDelete,
+				Action:       opset.ActionDelete,
 				Predecessors: superseded,
 			},
 		)
@@ -392,7 +392,7 @@ func restoreChangeOperations(operations []Operation) ([]Operation, error) {
 
 	slices.SortFunc(
 		deletes,
-		func(left, right Operation) int {
+		func(left, right opset.Operation) int {
 			return left.ID.Compare(right.ID)
 		},
 	)
@@ -405,17 +405,17 @@ func restoreChangeOperations(operations []Operation) ([]Operation, error) {
 // property, while a sequence operation is addressed by the element identifier:
 // an insertion creates the element it is named by, and any later operation on
 // that element already carries it.
-func supersededKey(operation *Operation) Key {
+func supersededKey(operation *opset.Operation) opset.Key {
 	if operation.Key.Property != nil || !operation.Insert {
 		return operation.Key
 	}
 
 	element := operation.ID
 
-	return Key{Element: &element}
+	return opset.Key{Element: &element}
 }
 
-func operationByID(operations []Operation, identifier OpID) *Operation {
+func operationByID(operations []opset.Operation, identifier opset.OpID) *opset.Operation {
 	for i := range operations {
 		if operations[i].ID == identifier {
 			return &operations[i]
@@ -435,7 +435,7 @@ func operationByID(operations []Operation, identifier OpID) *Operation {
 // Dependencies are rebuilt in the stored index order because the encoder writes
 // dependency hashes in slice order, so that order is what the original hash was
 // computed over.
-func reconstructSnapshotChanges(changes []Change) error {
+func reconstructSnapshotChanges(changes []opset.Change) error {
 	resolved := make([]bool, len(changes))
 	remaining := len(changes)
 
@@ -449,7 +449,7 @@ func reconstructSnapshotChanges(changes []Change) error {
 				continue
 			}
 
-			change.Dependencies = make([]ChangeHash, 0, len(change.DependencyIndexes))
+			change.Dependencies = make([]opset.ChangeHash, 0, len(change.DependencyIndexes))
 			for _, index := range change.DependencyIndexes {
 				change.Dependencies = append(change.Dependencies, *changes[index].Hash)
 			}
@@ -486,7 +486,7 @@ func reconstructSnapshotChanges(changes []Change) error {
 	return nil
 }
 
-func dependenciesResolved(change *Change, resolved []bool) bool {
+func dependenciesResolved(change *opset.Change, resolved []bool) bool {
 	for _, index := range change.DependencyIndexes {
 		if !resolved[index] {
 			return false
@@ -498,8 +498,8 @@ func dependenciesResolved(change *Change, resolved []bool) bool {
 
 func decodeDocumentChanges(
 	columns map[uint32]column,
-	actors []ActorID,
-) ([]Change, []RawColumn, error) {
+	actors []opset.ActorID,
+) ([]opset.Change, []opset.RawColumn, error) {
 	if len(columns) == 0 {
 		return nil, nil, nil
 	}
@@ -581,7 +581,7 @@ func decodeDocumentChanges(
 		return nil, nil, fmt.Errorf("cannot decode change extras: %w", err)
 	}
 
-	changes := make([]Change, count)
+	changes := make([]opset.Change, count)
 	dependencyOffset := 0
 
 	for i := range changes {
@@ -590,7 +590,7 @@ func decodeDocumentChanges(
 			return nil, nil, fmt.Errorf("change %d actor index %d is out of bounds", i, actorIndex)
 		}
 
-		changes[i] = Change{
+		changes[i] = opset.Change{
 			Actor:    actors[actorIndex],
 			Sequence: sequence[i].value,
 			MaxOp:    maxOps[i].value,
@@ -625,77 +625,77 @@ func decodeDocumentChanges(
 
 func decodeChangeChunk(
 	data []byte,
-	hash ChangeHash,
-) (Change, []ActorID, []RawColumn, error) {
+	hash opset.ChangeHash,
+) (opset.Change, []opset.ActorID, []opset.RawColumn, error) {
 	r := &reader{data: data}
 
 	dependencies, err := decodeHashArray(r, false)
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode dependencies: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode dependencies: %w", err)
 	}
 
 	actorBytes, err := decodeLengthPrefixed(r)
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode actor: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode actor: %w", err)
 	}
 
-	actor, err := NewActorID(actorBytes)
+	actor, err := opset.NewActorID(actorBytes)
 	if err != nil {
-		return Change{}, nil, nil, err
+		return opset.Change{}, nil, nil, err
 	}
 
 	sequence, err := r.uleb()
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode sequence: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode sequence: %w", err)
 	}
 
 	if sequence == 0 {
-		return Change{}, nil, nil, fmt.Errorf("sequence is zero")
+		return opset.Change{}, nil, nil, fmt.Errorf("sequence is zero")
 	}
 
 	startOp, err := r.uleb()
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode start op: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode start op: %w", err)
 	}
 
 	if startOp == 0 {
-		return Change{}, nil, nil, fmt.Errorf("start op is zero")
+		return opset.Change{}, nil, nil, fmt.Errorf("start op is zero")
 	}
 
 	timestamp, err := r.leb()
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode time: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode time: %w", err)
 	}
 
 	messageBytes, err := decodeLengthPrefixed(r)
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode message: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode message: %w", err)
 	}
 
 	if !utf8.Valid(messageBytes) {
-		return Change{}, nil, nil, fmt.Errorf("message is not valid UTF-8")
+		return opset.Change{}, nil, nil, fmt.Errorf("message is not valid UTF-8")
 	}
 
 	otherActors, err := decodeActorArray(r, true)
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode other actors: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode other actors: %w", err)
 	}
 
 	if slices.Contains(otherActors, actor) {
-		return Change{}, nil, nil, fmt.Errorf("other actors contains the change actor")
+		return opset.Change{}, nil, nil, fmt.Errorf("other actors contains the change actor")
 	}
 
 	metadata, err := parseColumnMetadata(r, false)
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode operation metadata: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode operation metadata: %w", err)
 	}
 
 	columns, err := readColumns(r, metadata)
 	if err != nil {
-		return Change{}, nil, nil, fmt.Errorf("cannot decode operation columns: %w", err)
+		return opset.Change{}, nil, nil, fmt.Errorf("cannot decode operation columns: %w", err)
 	}
 
-	actors := append([]ActorID{actor}, otherActors...)
+	actors := append([]opset.ActorID{actor}, otherActors...)
 
 	operations, unknown, err := decodeOperations(
 		columns,
@@ -704,13 +704,13 @@ func decodeChangeChunk(
 		&implicitOperationIDs{actorIndex: 0, startOp: startOp},
 	)
 	if err != nil {
-		return Change{}, nil, nil, err
+		return opset.Change{}, nil, nil, err
 	}
 
 	maxOp := startOp - 1
 	if len(operations) > 0 {
 		if startOp > math.MaxUint64-uint64(len(operations))+1 {
-			return Change{}, nil, nil, fmt.Errorf("operation range overflows uint64")
+			return opset.Change{}, nil, nil, fmt.Errorf("operation range overflows uint64")
 		}
 
 		maxOp = startOp + uint64(len(operations)) - 1
@@ -719,7 +719,7 @@ func decodeChangeChunk(
 	for i, operation := range operations {
 		expected := startOp + uint64(i)
 		if operation.ID.Actor != actor || operation.ID.Counter != expected {
-			return Change{}, nil, nil, fmt.Errorf(
+			return opset.Change{}, nil, nil, fmt.Errorf(
 				"operation %d has ID %s@%d, expected %s@%d",
 				i,
 				operation.ID.Actor,
@@ -730,7 +730,7 @@ func decodeChangeChunk(
 		}
 	}
 
-	change := Change{
+	change := opset.Change{
 		Hash:         new(hash),
 		Actor:        actor,
 		Sequence:     sequence,
@@ -750,10 +750,10 @@ func decodeChangeChunk(
 
 func decodeOperations(
 	columns map[uint32]column,
-	actors []ActorID,
+	actors []opset.ActorID,
 	changeChunk bool,
 	implicitIDs *implicitOperationIDs,
-) ([]Operation, []RawColumn, error) {
+) ([]opset.Operation, []opset.RawColumn, error) {
 	if len(columns) == 0 {
 		return nil, nil, nil
 	}
@@ -854,7 +854,7 @@ func decodeOperations(
 		return nil, nil, fmt.Errorf("cannot decode values: %w", err)
 	}
 
-	var related [][]OpID
+	var related [][]opset.OpID
 	if changeChunk {
 		related, err = decodeGroupedOpIDs(columns, actors, 112, 113, 115, count, "predecessor")
 	} else {
@@ -875,7 +875,7 @@ func decodeOperations(
 		return nil, nil, fmt.Errorf("cannot decode mark name: %w", err)
 	}
 
-	operations := make([]Operation, count)
+	operations := make([]opset.Operation, count)
 	for i := range operations {
 		id, err := opIDFromIndexes(idActors[i], idCounters[i], actors)
 		if err != nil {
@@ -904,12 +904,12 @@ func decodeOperations(
 			)
 		}
 
-		operations[i] = Operation{
+		operations[i] = opset.Operation{
 			ID:     id,
 			Object: object,
 			Key:    key,
 			Insert: inserts[i],
-			Action: Action(actions[i].value),
+			Action: opset.Action(actions[i].value),
 		}
 		if values[i].valid {
 			value := values[i].value
@@ -920,7 +920,7 @@ func decodeOperations(
 			operations[i].Predecessors = related[i]
 		} else {
 			operations[i].Successors = related[i]
-			if operations[i].Action == ActionDelete {
+			if operations[i].Action == opset.ActionDelete {
 				return nil, nil, fmt.Errorf("document operation %d explicitly encodes a delete", i)
 			}
 		}
@@ -929,7 +929,7 @@ func decodeOperations(
 		// cannot be null. A document chunk shares one column across every change,
 		// so keeping the flag on ordinary operations would make a change that never
 		// carried an expand column re-encode with one and hash differently.
-		if markExpand[i].valid && operations[i].Action == ActionMark {
+		if markExpand[i].valid && operations[i].Action == opset.ActionMark {
 			value := markExpand[i].value
 			operations[i].MarkExpand = &value
 		}

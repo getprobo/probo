@@ -27,6 +27,7 @@ import (
 	"sort"
 	"time"
 
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
@@ -35,7 +36,7 @@ import (
 // current heads plus, matching upstream Rust, the actor's own previous change
 // hash when it is not already a head (so that direct causal succession from the
 // author's prior change is always recorded explicitly).
-func (b *Engine) changeDependencies(sequence uint64) []ChangeHash {
+func (b *Engine) changeDependencies(sequence uint64) []opset.ChangeHash {
 	dependencies := b.state.Heads()
 
 	if sequence > 1 {
@@ -54,7 +55,7 @@ func (b *Engine) changeDependencies(sequence uint64) []ChangeHash {
 	return dependencies
 }
 
-func containsHash(hashes []ChangeHash, target ChangeHash) bool {
+func containsHash(hashes []opset.ChangeHash, target opset.ChangeHash) bool {
 	return slices.Contains(hashes, target)
 }
 
@@ -105,7 +106,7 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 
 // nativeToArrayHeads converts change hashes to the [32]byte head form used by
 // the incremental diff cursor.
-func nativeToArrayHeads(heads []ChangeHash) [][32]byte {
+func nativeToArrayHeads(heads []opset.ChangeHash) [][32]byte {
 	result := make([][32]byte, len(heads))
 	for i, hash := range heads {
 		result[i] = [32]byte(hash)
@@ -142,7 +143,7 @@ func (b *Engine) Integrate() error {
 // of its operations are already covered by the isolation heads, otherwise the
 // lowest-level derived concurrency actor whose operations are covered, matching
 // Rust's isolate_actor.
-func isolationActor(full, pinned *State, base ActorID) ActorID {
+func isolationActor(full, pinned *State, base opset.ActorID) opset.ActorID {
 	for level := uint64(0); ; level++ {
 		candidate := base.WithConcurrency(level)
 		if full.maxOpForActor(candidate) == pinned.maxOpForActor(candidate) {
@@ -163,7 +164,7 @@ func (b *Engine) Commit(
 	sequence := b.state.sequenceForActor(b.actor) + 1
 	dependencies := b.changeDependencies(sequence)
 
-	change := &Change{
+	change := &opset.Change{
 		Actor:        b.actor,
 		Sequence:     sequence,
 		StartOp:      b.pending[0].ID.Counter,
@@ -171,7 +172,7 @@ func (b *Engine) Commit(
 		Time:         timestamp.Unix(),
 		Message:      message,
 		Dependencies: dependencies,
-		Operations:   append([]Operation(nil), b.pending...),
+		Operations:   append([]opset.Operation(nil), b.pending...),
 	}
 	if timestamp.IsZero() {
 		change.Time = 0
@@ -227,7 +228,7 @@ func (b *Engine) EmptyCommit(
 
 	sequence := b.state.sequenceForActor(b.actor) + 1
 
-	change := &Change{
+	change := &opset.Change{
 		Actor:        b.actor,
 		Sequence:     sequence,
 		StartOp:      b.nextOp,
@@ -280,7 +281,7 @@ func (b *Engine) Rollback() (uint64, error) {
 	b.state = state
 	b.nextOp = state.maxOpGlobal() + 1
 	b.pending = nil
-	b.objects = map[uint32]ObjectID{0: RootObject()}
+	b.objects = map[uint32]opset.ObjectID{0: opset.RootObject()}
 	b.nextHandle = 1
 	b.revision++
 

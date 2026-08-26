@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 	"go.probo.inc/probo/pkg/automerge/internal/sync"
 )
@@ -53,7 +54,7 @@ func TestBackendSync_SendsOnlyChangesSinceRemoteHeads(t *testing.T) {
 	require.Len(t, first.Changes, 1)
 	firstDocument, err := storage.Decode(first.Changes[0])
 	require.NoError(t, err)
-	assert.Equal(t, []ChunkType{ChunkChange}, firstDocument.ChunkTypes)
+	assert.Equal(t, []opset.ChunkType{opset.ChunkChange}, firstDocument.ChunkTypes)
 
 	ackMessage := sync.Message{
 		Version: sync.MessageVersion2,

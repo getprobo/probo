@@ -22,13 +22,14 @@ package core
 
 import (
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"sort"
 	"strings"
 )
 
 func (s *State) mapValue(
-	object OpID,
-	visited map[OpID]struct{},
+	object opset.OpID,
+	visited map[opset.OpID]struct{},
 ) (map[string]any, error) {
 	if _, ok := visited[object]; ok {
 		return nil, fmt.Errorf("object cycle detected")
@@ -37,7 +38,7 @@ func (s *State) mapValue(
 	visited[object] = struct{}{}
 	defer delete(visited, object)
 
-	properties := make(map[string][]Operation)
+	properties := make(map[string][]opset.Operation)
 
 	for _, operation := range s.operations {
 		if operation.Object.IsRoot ||
@@ -62,31 +63,31 @@ func (s *State) mapValue(
 
 		operation := operations[0]
 		switch operation.Action {
-		case ActionMakeMap:
+		case opset.ActionMakeMap:
 			value, err := s.mapValue(operation.ID, visited)
 			if err != nil {
 				return nil, err
 			}
 
 			result[property] = value
-		case ActionMakeList:
+		case opset.ActionMakeList:
 			value, err := s.listValue(operation.ID, visited)
 			if err != nil {
 				return nil, err
 			}
 
 			result[property] = value
-		case ActionMakeText:
+		case opset.ActionMakeText:
 			var value strings.Builder
 
 			for _, element := range s.sequence(operation.ID) {
-				if element.Value != nil && element.Value.Type == ScalarString {
+				if element.Value != nil && element.Value.Type == opset.ScalarString {
 					value.WriteString(element.Value.String)
 				}
 			}
 
 			result[property] = value.String()
-		case ActionSet:
+		case opset.ActionSet:
 			result[property] = scalarMaterializedValue(operation.Value)
 		}
 	}
@@ -95,8 +96,8 @@ func (s *State) mapValue(
 }
 
 func (s *State) listValue(
-	object OpID,
-	visited map[OpID]struct{},
+	object opset.OpID,
+	visited map[opset.OpID]struct{},
 ) ([]any, error) {
 	if _, ok := visited[object]; ok {
 		return nil, fmt.Errorf("object cycle detected")
@@ -110,32 +111,32 @@ func (s *State) listValue(
 
 	for _, element := range elements {
 		switch element.Action {
-		case ActionMakeMap:
+		case opset.ActionMakeMap:
 			value, err := s.mapValue(element.ID, visited)
 			if err != nil {
 				return nil, err
 			}
 
 			result = append(result, value)
-		case ActionMakeList:
+		case opset.ActionMakeList:
 			value, err := s.listValue(element.ID, visited)
 			if err != nil {
 				return nil, err
 			}
 
 			result = append(result, value)
-		case ActionMakeText:
+		case opset.ActionMakeText:
 			var value strings.Builder
 
 			for _, textElement := range s.sequence(element.ID) {
 				if textElement.Value != nil &&
-					textElement.Value.Type == ScalarString {
+					textElement.Value.Type == opset.ScalarString {
 					value.WriteString(textElement.Value.String)
 				}
 			}
 
 			result = append(result, value.String())
-		case ActionSet:
+		case opset.ActionSet:
 			result = append(result, scalarMaterializedValue(element.Value))
 		}
 	}
@@ -143,27 +144,27 @@ func (s *State) listValue(
 	return result, nil
 }
 
-func scalarMaterializedValue(value *Scalar) any {
+func scalarMaterializedValue(value *opset.Scalar) any {
 	if value == nil {
 		return nil
 	}
 
 	switch value.Type {
-	case ScalarNull:
+	case opset.ScalarNull:
 		return nil
-	case ScalarFalse:
+	case opset.ScalarFalse:
 		return false
-	case ScalarTrue:
+	case opset.ScalarTrue:
 		return true
-	case ScalarUint:
+	case opset.ScalarUint:
 		return value.Uint
-	case ScalarInt, ScalarCounter, ScalarTimestamp:
+	case opset.ScalarInt, opset.ScalarCounter, opset.ScalarTimestamp:
 		return value.Int
-	case ScalarFloat64:
+	case opset.ScalarFloat64:
 		return value.Float
-	case ScalarString:
+	case opset.ScalarString:
 		return value.String
-	case ScalarBytes:
+	case opset.ScalarBytes:
 		return append([]byte(nil), value.Bytes...)
 	default:
 		return append([]byte(nil), value.Raw...)

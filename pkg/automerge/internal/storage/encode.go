@@ -24,6 +24,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"math"
 	"sort"
 )
@@ -33,7 +34,7 @@ type encodedColumn struct {
 	data          []byte
 }
 
-func EncodeChange(change *Change) ([]byte, error) {
+func EncodeChange(change *opset.Change) ([]byte, error) {
 	if len(change.Actor) == 0 {
 		return nil, fmt.Errorf("change actor cannot be empty")
 	}
@@ -69,15 +70,15 @@ func EncodeChange(change *Change) ([]byte, error) {
 	body = appendColumns(body, columns)
 	body = append(body, change.ExtraBytes...)
 
-	hashInput := []byte{byte(ChunkChange)}
+	hashInput := []byte{byte(opset.ChunkChange)}
 	hashInput = appendULEB(hashInput, uint64(len(body)))
 	hashInput = append(hashInput, body...)
-	hash := ChangeHash(sha256.Sum256(hashInput))
+	hash := opset.ChangeHash(sha256.Sum256(hashInput))
 	change.Hash = new(hash)
 
 	raw := []byte{0x85, 0x6f, 0x4a, 0x83}
 	raw = append(raw, hash[:4]...)
-	raw = append(raw, byte(ChunkChange))
+	raw = append(raw, byte(opset.ChunkChange))
 	raw = appendULEB(raw, uint64(len(body)))
 	raw = append(raw, body...)
 	change.Raw = append([]byte(nil), raw...)
@@ -86,17 +87,17 @@ func EncodeChange(change *Change) ([]byte, error) {
 }
 
 func changeActorTable(
-	change *Change,
-) ([]ActorID, map[ActorID]uint64, error) {
-	actorSet := make(map[ActorID]struct{})
-	add := func(actor ActorID) {
+	change *opset.Change,
+) ([]opset.ActorID, map[opset.ActorID]uint64, error) {
+	actorSet := make(map[opset.ActorID]struct{})
+	add := func(actor opset.ActorID) {
 		if actor != "" && actor != change.Actor {
 			actorSet[actor] = struct{}{}
 		}
 	}
 
 	for i, operation := range change.Operations {
-		expectedID := OpID{
+		expectedID := opset.OpID{
 			Actor:   change.Actor,
 			Counter: change.StartOp + uint64(i),
 		}
@@ -122,7 +123,7 @@ func changeActorTable(
 		}
 	}
 
-	actors := make([]ActorID, 0, len(actorSet))
+	actors := make([]opset.ActorID, 0, len(actorSet))
 	for actor := range actorSet {
 		actors = append(actors, actor)
 	}
@@ -134,7 +135,7 @@ func changeActorTable(
 		},
 	)
 
-	indexes := map[ActorID]uint64{change.Actor: 0}
+	indexes := map[opset.ActorID]uint64{change.Actor: 0}
 	for i, actor := range actors {
 		indexes[actor] = uint64(i + 1)
 	}
@@ -143,8 +144,8 @@ func changeActorTable(
 }
 
 func encodeOperationColumns(
-	change *Change,
-	actorIndexes map[ActorID]uint64,
+	change *opset.Change,
+	actorIndexes map[opset.ActorID]uint64,
 ) ([]encodedColumn, error) {
 	count := len(change.Operations)
 	objActors := make([]optional[uint64], count)
@@ -261,27 +262,27 @@ func encodeOperationColumns(
 	return filtered, nil
 }
 
-func encodeScalar(value *Scalar) (optional[uint64], []byte, error) {
+func encodeScalar(value *opset.Scalar) (optional[uint64], []byte, error) {
 	if value == nil {
-		return some(uint64(ScalarNull)), nil, nil
+		return some(uint64(opset.ScalarNull)), nil, nil
 	}
 
 	var data []byte
 
 	switch value.Type {
-	case ScalarNull:
-	case ScalarFalse, ScalarTrue:
-	case ScalarUint:
+	case opset.ScalarNull:
+	case opset.ScalarFalse, opset.ScalarTrue:
+	case opset.ScalarUint:
 		data = appendULEB(data, value.Uint)
-	case ScalarInt, ScalarCounter, ScalarTimestamp:
+	case opset.ScalarInt, opset.ScalarCounter, opset.ScalarTimestamp:
 		data = appendLEB(data, value.Int)
-	case ScalarFloat64:
+	case opset.ScalarFloat64:
 		var encoded [8]byte
 		binary.LittleEndian.PutUint64(encoded[:], math.Float64bits(value.Float))
 		data = encoded[:]
-	case ScalarString:
+	case opset.ScalarString:
 		data = []byte(value.String)
-	case ScalarBytes:
+	case opset.ScalarBytes:
 		data = append([]byte(nil), value.Bytes...)
 	default:
 		data = append([]byte(nil), value.Raw...)
@@ -447,7 +448,7 @@ func appendLEB(data []byte, value int64) []byte {
 	}
 }
 
-func appendHashesNative(data []byte, hashes []ChangeHash) []byte {
+func appendHashesNative(data []byte, hashes []opset.ChangeHash) []byte {
 	data = appendULEB(data, uint64(len(hashes)))
 	for _, hash := range hashes {
 		data = append(data, hash[:]...)

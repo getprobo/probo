@@ -25,6 +25,7 @@ import (
 	"compress/flate"
 	"encoding/binary"
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"io"
 	"math"
 	"slices"
@@ -538,7 +539,7 @@ func inflate(data []byte) ([]byte, error) {
 	return output, nil
 }
 
-func decodeScalars(metaData, rawData []byte, expected int) ([]optional[Scalar], error) {
+func decodeScalars(metaData, rawData []byte, expected int) ([]optional[opset.Scalar], error) {
 	metadata, err := decodeULEBColumn(metaData)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode value metadata: %w", err)
@@ -549,14 +550,14 @@ func decodeScalars(metaData, rawData []byte, expected int) ([]optional[Scalar], 
 	}
 
 	raw := &reader{data: rawData}
-	values := make([]optional[Scalar], expected)
+	values := make([]optional[opset.Scalar], expected)
 
 	for i, item := range metadata {
 		if !item.valid {
 			continue
 		}
 
-		scalarType := ScalarType(item.value & 0x0f)
+		scalarType := opset.ScalarType(item.value & 0x0f)
 		length := item.value >> 4
 
 		valueBytes, err := raw.bytes(length)
@@ -569,7 +570,7 @@ func decodeScalars(metaData, rawData []byte, expected int) ([]optional[Scalar], 
 			return nil, fmt.Errorf("cannot decode scalar %d: %w", i, err)
 		}
 
-		values[i] = optional[Scalar]{value: scalar, valid: true}
+		values[i] = optional[opset.Scalar]{value: scalar, valid: true}
 	}
 
 	if raw.remaining() != 0 {
@@ -579,50 +580,50 @@ func decodeScalars(metaData, rawData []byte, expected int) ([]optional[Scalar], 
 	return values, nil
 }
 
-func decodeScalar(scalarType ScalarType, data []byte) (Scalar, error) {
-	scalar := Scalar{Type: scalarType}
+func decodeScalar(scalarType opset.ScalarType, data []byte) (opset.Scalar, error) {
+	scalar := opset.Scalar{Type: scalarType}
 	switch scalarType {
-	case ScalarNull:
+	case opset.ScalarNull:
 		if len(data) != 0 {
-			return Scalar{}, fmt.Errorf("null has length %d, expected 0", len(data))
+			return opset.Scalar{}, fmt.Errorf("null has length %d, expected 0", len(data))
 		}
-	case ScalarFalse, ScalarTrue:
+	case opset.ScalarFalse, opset.ScalarTrue:
 		if len(data) != 0 {
-			return Scalar{}, fmt.Errorf("boolean has length %d, expected 0", len(data))
+			return opset.Scalar{}, fmt.Errorf("boolean has length %d, expected 0", len(data))
 		}
 
-		scalar.Bool = scalarType == ScalarTrue
-	case ScalarUint:
+		scalar.Bool = scalarType == opset.ScalarTrue
+	case opset.ScalarUint:
 		r := &reader{data: data}
 
 		value, err := r.uleb()
 		if err != nil || r.remaining() != 0 {
-			return Scalar{}, fmt.Errorf("invalid unsigned integer scalar")
+			return opset.Scalar{}, fmt.Errorf("invalid unsigned integer scalar")
 		}
 
 		scalar.Uint = value
-	case ScalarInt, ScalarCounter, ScalarTimestamp:
+	case opset.ScalarInt, opset.ScalarCounter, opset.ScalarTimestamp:
 		r := &reader{data: data}
 
 		value, err := r.leb()
 		if err != nil || r.remaining() != 0 {
-			return Scalar{}, fmt.Errorf("invalid signed integer scalar")
+			return opset.Scalar{}, fmt.Errorf("invalid signed integer scalar")
 		}
 
 		scalar.Int = value
-	case ScalarFloat64:
+	case opset.ScalarFloat64:
 		if len(data) != 8 {
-			return Scalar{}, fmt.Errorf("float has length %d, expected 8", len(data))
+			return opset.Scalar{}, fmt.Errorf("float has length %d, expected 8", len(data))
 		}
 
 		scalar.Float = math.Float64frombits(binary.LittleEndian.Uint64(data))
-	case ScalarString:
+	case opset.ScalarString:
 		if !utf8.Valid(data) {
-			return Scalar{}, fmt.Errorf("string scalar is not valid UTF-8")
+			return opset.Scalar{}, fmt.Errorf("string scalar is not valid UTF-8")
 		}
 
 		scalar.String = string(data)
-	case ScalarBytes:
+	case opset.ScalarBytes:
 		scalar.Bytes = append([]byte(nil), data...)
 	default:
 		scalar.Raw = append([]byte(nil), data...)
@@ -671,8 +672,8 @@ func requireItems[T any](name string, values []optional[T], expected int, nullab
 	return nil
 }
 
-func copyHash(data []byte) ChangeHash {
-	var hash ChangeHash
+func copyHash(data []byte) opset.ChangeHash {
+	var hash opset.ChangeHash
 	copy(hash[:], data)
 
 	return hash

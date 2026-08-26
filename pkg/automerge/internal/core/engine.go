@@ -28,22 +28,23 @@ import (
 	"time"
 
 	"go.probo.inc/probo/pkg/automerge/internal/encoding"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
 type Engine struct {
 	state         *State
-	actor         ActorID
+	actor         opset.ActorID
 	nextOp        uint64
 	base          []byte
 	appended      [][]byte
 	saveCursor    int
-	pending       []Operation
-	objects       map[uint32]ObjectID
+	pending       []opset.Operation
+	objects       map[uint32]opset.ObjectID
 	nextHandle    uint32
 	syncStates    map[uint32]*nativeSyncState
 	nextSyncState uint32
-	queuedChanges map[ChangeHash]*Change
+	queuedChanges map[opset.ChangeHash]*opset.Change
 	queuedBytes   int
 	diffCursor    [][32]byte
 
@@ -53,7 +54,7 @@ type Engine struct {
 	// merged changes are applied only to fullState.
 	isolationActive bool
 	fullState       *State
-	baseActor       ActorID
+	baseActor       opset.ActorID
 
 	// isolationDiffTargets records the frontiers isolated to since the diff
 	// cursor was last set. When present, an incremental diff replays the
@@ -141,11 +142,11 @@ func NewEngine() (*Engine, error) {
 		actor:         actor,
 		nextOp:        state.maxOpGlobal() + 1,
 		base:          base,
-		objects:       map[uint32]ObjectID{0: RootObject()},
+		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
 		nextHandle:    1,
 		syncStates:    make(map[uint32]*nativeSyncState),
 		nextSyncState: 1,
-		queuedChanges: make(map[ChangeHash]*Change),
+		queuedChanges: make(map[opset.ChangeHash]*opset.Change),
 	}, nil
 }
 
@@ -180,11 +181,11 @@ func LoadEngine(data []byte) (*Engine, error) {
 		actor:         actor,
 		nextOp:        state.maxOpGlobal() + 1,
 		base:          append([]byte(nil), data...),
-		objects:       map[uint32]ObjectID{0: RootObject()},
+		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
 		nextHandle:    1,
 		syncStates:    make(map[uint32]*nativeSyncState),
 		nextSyncState: 1,
-		queuedChanges: make(map[ChangeHash]*Change),
+		queuedChanges: make(map[opset.ChangeHash]*opset.Change),
 	}, nil
 }
 
@@ -207,7 +208,7 @@ func loadEngineRetainingOrphans(
 	}
 
 	state := NewState()
-	queued := make(map[ChangeHash]*Change, len(document.Changes))
+	queued := make(map[opset.ChangeHash]*opset.Change, len(document.Changes))
 
 	for i := range document.Changes {
 		change := &document.Changes[i]
@@ -218,7 +219,7 @@ func loadEngineRetainingOrphans(
 		queued[*change.Hash] = change
 	}
 
-	applied := make([]*Change, 0, len(document.Changes))
+	applied := make([]*opset.Change, 0, len(document.Changes))
 
 	for {
 		progressed := false
@@ -257,7 +258,7 @@ func loadEngineRetainingOrphans(
 		base = append(base, change.Raw...)
 	}
 
-	queuedClone := make(map[ChangeHash]*Change, len(queued))
+	queuedClone := make(map[opset.ChangeHash]*opset.Change, len(queued))
 	queuedBytes := 0
 
 	for hash, change := range queued {
@@ -272,7 +273,7 @@ func loadEngineRetainingOrphans(
 		actor:         actor,
 		nextOp:        state.maxOpGlobal() + 1,
 		base:          base,
-		objects:       map[uint32]ObjectID{0: RootObject()},
+		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
 		nextHandle:    1,
 		syncStates:    make(map[uint32]*nativeSyncState),
 		nextSyncState: 1,
@@ -283,8 +284,8 @@ func loadEngineRetainingOrphans(
 
 // orderedQueuedChanges returns queued changes in a deterministic order (by hash)
 // so tolerant loading applies and re-serializes changes reproducibly.
-func orderedQueuedChanges(queued map[ChangeHash]*Change) []*Change {
-	changes := make([]*Change, 0, len(queued))
+func orderedQueuedChanges(queued map[opset.ChangeHash]*opset.Change) []*opset.Change {
+	changes := make([]*opset.Change, 0, len(queued))
 	for _, change := range queued {
 		changes = append(changes, change)
 	}
@@ -426,7 +427,7 @@ const deflateMinSize = 250
 func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
 	const headerSize = 9 // 4 magic + 4 checksum + 1 type
 
-	if !deflateEnabled || len(raw) <= headerSize || ChunkType(raw[8]) != ChunkChange {
+	if !deflateEnabled || len(raw) <= headerSize || opset.ChunkType(raw[8]) != opset.ChunkChange {
 		return raw
 	}
 
@@ -449,7 +450,7 @@ func maybeCompressChangeChunk(raw []byte, deflateEnabled bool) []byte {
 
 	out := make([]byte, 0, headerSize+len(compressed)+8)
 	out = append(out, raw[:8]...)
-	out = append(out, byte(ChunkCompressedChange))
+	out = append(out, byte(opset.ChunkCompressedChange))
 	out = encoding.AppendULEB(out, uint64(len(compressed)))
 	out = append(out, compressed...)
 
@@ -505,7 +506,7 @@ func (b *Engine) LoadIncremental(
 
 func (b *Engine) SetActor(value []byte) error {
 
-	actor, err := NewActorID(value)
+	actor, err := opset.NewActorID(value)
 	if err != nil {
 		return err
 	}

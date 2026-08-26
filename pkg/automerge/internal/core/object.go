@@ -23,6 +23,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"slices"
 )
 
@@ -35,21 +36,21 @@ func (b *Engine) PutString(
 		return err
 	}
 
-	if existing, ok := b.state.visibleMapOperation(key, ActionSet); ok &&
+	if existing, ok := b.state.visibleMapOperation(key, opset.ActionSet); ok &&
 		existing.Value != nil &&
-		existing.Value.Type == ScalarString &&
+		existing.Value.Type == opset.ScalarString &&
 		existing.Value.String == value {
 		return nil
 	}
 
 	property := key
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:     b.nextOperationID(),
-		Object: RootObject(),
-		Key:    Key{Property: &property},
-		Action: ActionSet,
-		Value:  &Scalar{Type: ScalarString, String: value},
+		Object: opset.RootObject(),
+		Key:    opset.Key{Property: &property},
+		Action: opset.ActionSet,
+		Value:  &opset.Scalar{Type: opset.ScalarString, String: value},
 	}
 	for _, predecessor := range b.state.visibleMapOperations(key) {
 		operation.Predecessors = append(operation.Predecessors, predecessor.ID)
@@ -66,8 +67,8 @@ func (b *Engine) GetString(
 		return "", err
 	}
 
-	operation, ok := b.state.visibleMapOperation(key, ActionSet)
-	if !ok || operation.Value == nil || operation.Value.Type != ScalarString {
+	operation, ok := b.state.visibleMapOperation(key, opset.ActionSet)
+	if !ok || operation.Value == nil || operation.Value.Type != opset.ScalarString {
 		return "", fmt.Errorf("string property %q does not exist", key)
 	}
 
@@ -99,7 +100,7 @@ func (b *Engine) PutScalar(
 			// nothing, so an unconflicted key records no operation. A conflicted
 			// key still has to collapse: the reference deletes the losing
 			// siblings and keeps the winner rather than writing the value again.
-			losing := make([]OpID, 0)
+			losing := make([]opset.OpID, 0)
 
 			for _, operation := range b.state.visibleMapObjectOperations(objectID, key) {
 				if operation.ID != existing.ID {
@@ -111,23 +112,22 @@ func (b *Engine) PutScalar(
 				return nil
 			}
 
-			return b.addPending(
-				Operation{
-					ID:           b.nextOperationID(),
-					Object:       objectID,
-					Key:          Key{Property: &property},
-					Action:       ActionDelete,
-					Predecessors: losing,
-				},
+			return b.addPending(opset.Operation{
+				ID:           b.nextOperationID(),
+				Object:       objectID,
+				Key:          opset.Key{Property: &property},
+				Action:       opset.ActionDelete,
+				Predecessors: losing,
+			},
 			)
 		}
 	}
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:     b.nextOperationID(),
 		Object: objectID,
-		Key:    Key{Property: &property},
-		Action: ActionSet,
+		Key:    opset.Key{Property: &property},
+		Action: opset.ActionSet,
 		Value:  &value,
 	}
 	for _, predecessor := range b.state.visibleMapObjectOperations(objectID, key) {
@@ -202,7 +202,7 @@ func (b *Engine) GetAllScalars(
 	var values []json.RawMessage
 
 	for _, operation := range b.state.visibleMapObjectOperations(objectID, key) {
-		if operation.Action == ActionIncrement {
+		if operation.Action == opset.ActionIncrement {
 			continue
 		}
 
@@ -292,10 +292,10 @@ func (b *Engine) PutObject(
 
 	property := key
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:     b.nextOperationID(),
 		Object: objectID,
-		Key:    Key{Property: &property},
+		Key:    opset.Key{Property: &property},
 		Action: action,
 	}
 	for _, predecessor := range b.state.visibleMapObjectOperations(objectID, key) {
@@ -306,7 +306,7 @@ func (b *Engine) PutObject(
 		return 0, err
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.ID}), nil
+	return b.pushObject(opset.ObjectID{OpID: operation.ID}), nil
 }
 
 func (b *Engine) GetObject(
@@ -329,7 +329,7 @@ func (b *Engine) GetObject(
 		return 0, "", err
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.ID}), rawType, nil
+	return b.pushObject(opset.ObjectID{OpID: operation.ID}), rawType, nil
 }
 
 func (b *Engine) InsertScalar(
@@ -342,7 +342,7 @@ func (b *Engine) InsertScalar(
 		return err
 	}
 
-	_, err = b.insertSequenceOperation(object, index, ActionSet, &value)
+	_, err = b.insertSequenceOperation(object, index, opset.ActionSet, &value)
 
 	return err
 }
@@ -373,7 +373,7 @@ func (b *Engine) PutScalarAt(
 	// the winner rather than writing the same value again.
 	if existingValue, scalar := b.state.scalarValue(target.Operation); scalar &&
 		scalarValuesEqual(existingValue, value) {
-		losing := make([]OpID, 0)
+		losing := make([]opset.OpID, 0)
 
 		for _, operation := range b.state.visibleSequenceElementOperations(target.Element) {
 			if operation.ID != target.Operation.ID {
@@ -385,26 +385,24 @@ func (b *Engine) PutScalarAt(
 			return nil
 		}
 
-		return b.addPending(
-			Operation{
-				ID:           b.nextOperationID(),
-				Object:       objectID,
-				Key:          Key{Element: new(target.Element)},
-				Action:       ActionDelete,
-				Predecessors: losing,
-			},
+		return b.addPending(opset.Operation{
+			ID:           b.nextOperationID(),
+			Object:       objectID,
+			Key:          opset.Key{Element: new(target.Element)},
+			Action:       opset.ActionDelete,
+			Predecessors: losing,
+		},
 		)
 	}
 
-	return b.addPending(
-		Operation{
-			ID:           b.nextOperationID(),
-			Object:       objectID,
-			Key:          Key{Element: new(target.Element)},
-			Action:       ActionSet,
-			Value:        &value,
-			Predecessors: b.sequenceElementPredecessors(target.Element),
-		},
+	return b.addPending(opset.Operation{
+		ID:           b.nextOperationID(),
+		Object:       objectID,
+		Key:          opset.Key{Element: new(target.Element)},
+		Action:       opset.ActionSet,
+		Value:        &value,
+		Predecessors: b.sequenceElementPredecessors(target.Element),
+	},
 	)
 }
 
@@ -428,7 +426,7 @@ func (b *Engine) InsertObject(
 		return 0, err
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.ID}), nil
+	return b.pushObject(opset.ObjectID{OpID: operation.ID}), nil
 }
 
 func (b *Engine) PutObjectAt(
@@ -451,10 +449,10 @@ func (b *Engine) PutObjectAt(
 		return 0, err
 	}
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:           b.nextOperationID(),
 		Object:       objectID,
-		Key:          Key{Element: new(target.Element)},
+		Key:          opset.Key{Element: new(target.Element)},
 		Action:       action,
 		Predecessors: b.sequenceElementPredecessors(target.Element),
 	}
@@ -462,7 +460,7 @@ func (b *Engine) PutObjectAt(
 		return 0, err
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.ID}), nil
+	return b.pushObject(opset.ObjectID{OpID: operation.ID}), nil
 }
 
 func (b *Engine) GetScalarAt(
@@ -496,7 +494,7 @@ func (b *Engine) GetObjectAt(
 		return 0, "", err
 	}
 
-	return b.pushObject(ObjectID{OpID: operation.Operation.ID}), rawType, nil
+	return b.pushObject(opset.ObjectID{OpID: operation.Operation.ID}), rawType, nil
 }
 
 func (b *Engine) DeleteMap(
@@ -511,11 +509,11 @@ func (b *Engine) DeleteMap(
 
 	property := key
 
-	operation := Operation{
+	operation := opset.Operation{
 		ID:     b.nextOperationID(),
 		Object: objectID,
-		Key:    Key{Property: &property},
-		Action: ActionDelete,
+		Key:    opset.Key{Property: &property},
+		Action: opset.ActionDelete,
 	}
 	for _, predecessor := range b.state.visibleMapObjectOperations(objectID, key) {
 		operation.Predecessors = append(operation.Predecessors, predecessor.ID)
@@ -542,14 +540,13 @@ func (b *Engine) DeleteSequence(
 		return err
 	}
 
-	return b.addPending(
-		Operation{
-			ID:           b.nextOperationID(),
-			Object:       objectID,
-			Key:          Key{Element: new(target.Element)},
-			Action:       ActionDelete,
-			Predecessors: b.sequenceElementPredecessors(target.Element),
-		},
+	return b.addPending(opset.Operation{
+		ID:           b.nextOperationID(),
+		Object:       objectID,
+		Key:          opset.Key{Element: new(target.Element)},
+		Action:       opset.ActionDelete,
+		Predecessors: b.sequenceElementPredecessors(target.Element),
+	},
 	)
 }
 
@@ -574,20 +571,19 @@ func (b *Engine) Increment(
 
 	property := key
 
-	predecessors := make([]OpID, 0, len(visible))
+	predecessors := make([]opset.OpID, 0, len(visible))
 	for _, operation := range visible {
 		predecessors = append(predecessors, operation.ID)
 	}
 
-	return b.addPending(
-		Operation{
-			ID:           b.nextOperationID(),
-			Object:       objectID,
-			Key:          Key{Property: &property},
-			Action:       ActionIncrement,
-			Value:        &Scalar{Type: ScalarInt, Int: delta},
-			Predecessors: predecessors,
-		},
+	return b.addPending(opset.Operation{
+		ID:           b.nextOperationID(),
+		Object:       objectID,
+		Key:          opset.Key{Property: &property},
+		Action:       opset.ActionIncrement,
+		Value:        &opset.Scalar{Type: opset.ScalarInt, Int: delta},
+		Predecessors: predecessors,
+	},
 	)
 }
 
@@ -614,20 +610,19 @@ func (b *Engine) IncrementAt(
 		return err
 	}
 
-	predecessors := make([]OpID, 0, len(visible))
+	predecessors := make([]opset.OpID, 0, len(visible))
 	for _, operation := range visible {
 		predecessors = append(predecessors, operation.ID)
 	}
 
-	return b.addPending(
-		Operation{
-			ID:           b.nextOperationID(),
-			Object:       objectID,
-			Key:          Key{Element: new(target.Element)},
-			Action:       ActionIncrement,
-			Value:        &Scalar{Type: ScalarInt, Int: delta},
-			Predecessors: predecessors,
-		},
+	return b.addPending(opset.Operation{
+		ID:           b.nextOperationID(),
+		Object:       objectID,
+		Key:          opset.Key{Element: new(target.Element)},
+		Action:       opset.ActionIncrement,
+		Value:        &opset.Scalar{Type: opset.ScalarInt, Int: delta},
+		Predecessors: predecessors,
+	},
 	)
 }
 
@@ -657,19 +652,19 @@ func (b *Engine) Length(object uint32) (uint64, error) {
 		return 0, fmt.Errorf("object does not exist")
 	}
 
-	if operation.Action == ActionMakeMap ||
-		operation.Action == ActionMakeTable {
+	if operation.Action == opset.ActionMakeMap ||
+		operation.Action == opset.ActionMakeTable {
 		return b.state.mapLength(objectID), nil
 	}
 
-	if operation.Action != ActionMakeList &&
-		operation.Action != ActionMakeText {
+	if operation.Action != opset.ActionMakeList &&
+		operation.Action != opset.ActionMakeText {
 		return 0, fmt.Errorf("object does not have a length")
 	}
 
 	sequence := b.state.sequenceValues(objectID.OpID)
 
-	if operation.Action == ActionMakeText {
+	if operation.Action == opset.ActionMakeText {
 		total := uint64(0)
 		for _, value := range sequence {
 			total += sequenceValueUTF16Width(value)

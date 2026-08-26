@@ -24,13 +24,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"sort"
 	"strings"
 )
 
 func (b *Engine) Stats() ([]byte, error) {
 
-	actors := make(map[ActorID]struct{})
+	actors := make(map[opset.ActorID]struct{})
 	for id := range b.state.operations {
 		actors[id.Actor] = struct{}{}
 	}
@@ -90,7 +91,7 @@ type (
 	}
 )
 
-func objectIDString(object ObjectID) string {
+func objectIDString(object opset.ObjectID) string {
 	if object.IsRoot {
 		return "_root"
 	}
@@ -102,11 +103,11 @@ func objectIDString(object ObjectID) string {
 	)
 }
 
-func patchValueForOperation(state *State, operation Operation) (patchValueOut, error) {
+func patchValueForOperation(state *State, operation opset.Operation) (patchValueOut, error) {
 	if objectType, err := actionObjectType(operation.Action); err == nil {
 		return patchValueOut{
 			Object: objectType,
-			ID:     objectIDString(ObjectID{OpID: operation.ID}),
+			ID:     objectIDString(opset.ObjectID{OpID: operation.ID}),
 		}, nil
 	}
 
@@ -150,10 +151,10 @@ func (b *Engine) CurrentState() ([]byte, error) {
 
 // orderedObjectsInState returns the visible objects in a state, the root first
 // and then every non-deleted composite object ordered by its creation ID.
-func orderedObjectsInState(state *State) []ObjectID {
-	objects := []ObjectID{RootObject()}
+func orderedObjectsInState(state *State) []opset.ObjectID {
+	objects := []opset.ObjectID{opset.RootObject()}
 
-	makers := make([]Operation, 0)
+	makers := make([]opset.Operation, 0)
 
 	for _, operation := range state.operations {
 		if _, err := actionObjectType(operation.Action); err != nil {
@@ -186,13 +187,13 @@ func orderedObjectsInState(state *State) []ObjectID {
 	)
 
 	for _, operation := range makers {
-		objects = append(objects, ObjectID{OpID: operation.ID})
+		objects = append(objects, opset.ObjectID{OpID: operation.ID})
 	}
 
 	return objects
 }
 
-func objectTypeInState(state *State, object ObjectID) (string, error) {
+func objectTypeInState(state *State, object opset.ObjectID) (string, error) {
 	if object.IsRoot {
 		return "map", nil
 	}
@@ -205,7 +206,7 @@ func objectTypeInState(state *State, object ObjectID) (string, error) {
 	return actionObjectType(operation.Action)
 }
 
-func objectVisibleInState(state *State, object ObjectID) bool {
+func objectVisibleInState(state *State, object opset.ObjectID) bool {
 	if object.IsRoot {
 		return true
 	}
@@ -218,7 +219,7 @@ func objectVisibleInState(state *State, object ObjectID) bool {
 }
 
 // materializeObjectPatches emits the patches that build an object from empty.
-func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error) {
+func materializeObjectPatches(state *State, object opset.ObjectID) ([]patchOut, error) {
 	objectType, err := objectTypeInState(state, object)
 	if err != nil {
 		return nil, err
@@ -324,7 +325,7 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 		for _, value := range state.sequenceValues(object.OpID) {
 			operation := value.Operation
 
-			if operation.Action == ActionMakeMap {
+			if operation.Action == opset.ActionMakeMap {
 				if err := flush(); err != nil {
 					return nil, err
 				}
@@ -350,7 +351,7 @@ func materializeObjectPatches(state *State, object ObjectID) ([]patchOut, error)
 				continue
 			}
 
-			if operation.Value != nil && operation.Value.Type == ScalarString {
+			if operation.Value != nil && operation.Value.Type == opset.ScalarString {
 				if run.Len() == 0 {
 					runStart = position
 				}
@@ -508,7 +509,7 @@ func (b *Engine) diffPatches(
 
 // diffObjectPatches emits patches transforming an object from the source state
 // into the target state, for an object present in both.
-func diffObjectPatches(source, target *State, object ObjectID, incremental bool) ([]patchOut, error) {
+func diffObjectPatches(source, target *State, object opset.ObjectID, incremental bool) ([]patchOut, error) {
 	objectType, err := objectTypeInState(target, object)
 	if err != nil {
 		return nil, err
@@ -541,7 +542,7 @@ func diffObjectPatches(source, target *State, object ObjectID, incremental bool)
 func mergeTextMarkPatches(
 	source *State,
 	target *State,
-	object ObjectID,
+	object opset.ObjectID,
 	identifier string,
 	patches []patchOut,
 ) ([]patchOut, error) {
@@ -594,11 +595,11 @@ func mergeTextMarkPatches(
 // operation identifier so they appear in application order. Each entry carries
 // the operation's literal UTF-16 range and value (null for an unmark), matching
 // the reference's operation-based diff rather than a state comparison.
-func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, error) {
-	begins := make([]Operation, 0)
+func diffMarkPatches(source, target *State, object opset.ObjectID) ([]markPatchOut, error) {
+	begins := make([]opset.Operation, 0)
 
 	for id, operation := range target.operations {
-		if operation.Action != ActionMark ||
+		if operation.Action != opset.ActionMark ||
 			operation.Object != object ||
 			operation.MarkName == nil {
 			continue
@@ -621,7 +622,7 @@ func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, er
 	out := make([]markPatchOut, 0, len(begins))
 
 	for _, begin := range begins {
-		end, ok := target.operations[OpID{Actor: begin.ID.Actor, Counter: begin.ID.Counter + 1}]
+		end, ok := target.operations[opset.OpID{Actor: begin.ID.Actor, Counter: begin.ID.Counter + 1}]
 		if !ok {
 			continue
 		}
@@ -631,7 +632,7 @@ func diffMarkPatches(source, target *State, object ObjectID) ([]markPatchOut, er
 			continue
 		}
 
-		value := Scalar{Type: ScalarNull}
+		value := opset.Scalar{Type: opset.ScalarNull}
 		if begin.Value != nil {
 			value = *begin.Value
 		}
@@ -667,7 +668,7 @@ type textRun struct {
 // one splice_text patch per mark run.
 func textRunsWithMarks(
 	state *State,
-	object ObjectID,
+	object opset.ObjectID,
 	startPosition uint64,
 	text string,
 ) ([]textRun, error) {
@@ -681,7 +682,7 @@ func textRunsWithMarks(
 				continue
 			}
 
-			value := Scalar{Type: ScalarNull}
+			value := opset.Scalar{Type: opset.ScalarNull}
 			if candidate.Value != nil {
 				value = *candidate.Value
 			}
@@ -772,7 +773,7 @@ func textRunsWithMarks(
 func diffMapPatches(
 	source *State,
 	target *State,
-	object ObjectID,
+	object opset.ObjectID,
 	identifier string,
 ) ([]patchOut, error) {
 	keys := make(map[string]struct{})
@@ -833,7 +834,7 @@ func diffMapPatches(
 func diffSequencePatches(
 	source *State,
 	target *State,
-	object ObjectID,
+	object opset.ObjectID,
 	objectType string,
 	identifier string,
 	incremental bool,
@@ -841,12 +842,12 @@ func diffSequencePatches(
 	sourceValues := source.sequenceValues(object.OpID)
 	targetValues := target.sequenceValues(object.OpID)
 
-	sourceElements := make(map[OpID]struct{}, len(sourceValues))
+	sourceElements := make(map[opset.OpID]struct{}, len(sourceValues))
 	for _, value := range sourceValues {
 		sourceElements[value.Element] = struct{}{}
 	}
 
-	targetElements := make(map[OpID]struct{}, len(targetValues))
+	targetElements := make(map[opset.OpID]struct{}, len(targetValues))
 	for _, value := range targetValues {
 		targetElements[value.Element] = struct{}{}
 	}
@@ -894,7 +895,7 @@ func diffSequencePatches(
 				)
 
 				operation := targetValues[j].Operation
-				if operation.Value != nil && operation.Value.Type == ScalarString {
+				if operation.Value != nil && operation.Value.Type == opset.ScalarString {
 					runs, err := textRunsWithMarks(target, object, position, operation.Value.String)
 					if err != nil {
 						return nil, err
@@ -984,7 +985,7 @@ func diffSequencePatches(
 				}
 
 				operation := targetValues[j].Operation
-				if operation.Value == nil || operation.Value.Type != ScalarString {
+				if operation.Value == nil || operation.Value.Type != opset.ScalarString {
 					break
 				}
 

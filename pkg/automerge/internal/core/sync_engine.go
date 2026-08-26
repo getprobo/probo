@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"sort"
 
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/sync"
 )
 
@@ -186,7 +187,7 @@ func (b *Engine) GenerateSyncMessage(
 		switch {
 		case len(state.Requested) > 0:
 			for _, requested := range state.Requested {
-				change, ok := b.state.changes[ChangeHash(requested)]
+				change, ok := b.state.changes[opset.ChangeHash(requested)]
 				if !ok || len(change.Raw) == 0 {
 					continue
 				}
@@ -199,9 +200,9 @@ func (b *Engine) GenerateSyncMessage(
 
 			state.Requested = nil
 		case len(state.Need) == 0:
-			remoteHeads := make([]ChangeHash, len(state.RemoteHeads))
+			remoteHeads := make([]opset.ChangeHash, len(state.RemoteHeads))
 			for i, head := range state.RemoteHeads {
-				remoteHeads[i] = ChangeHash(head)
+				remoteHeads[i] = opset.ChangeHash(head)
 			}
 
 			changes, incremental := b.state.changesSince(remoteHeads)
@@ -297,7 +298,7 @@ func (b *Engine) ReceiveSyncMessage(
 
 	if !state.ReadOnly {
 		for _, head := range message.Heads {
-			if _, ok := b.state.changes[ChangeHash(head)]; !ok {
+			if _, ok := b.state.changes[opset.ChangeHash(head)]; !ok {
 				needed[head] = struct{}{}
 			}
 		}

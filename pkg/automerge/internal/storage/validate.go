@@ -23,11 +23,12 @@ package storage
 import (
 	"bytes"
 	"fmt"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"math"
 	"slices"
 )
 
-func decodeActorArray(r *reader, sorted bool) ([]ActorID, error) {
+func decodeActorArray(r *reader, sorted bool) ([]opset.ActorID, error) {
 	count, err := r.uleb()
 	if err != nil {
 		return nil, err
@@ -37,14 +38,14 @@ func decodeActorArray(r *reader, sorted bool) ([]ActorID, error) {
 		return nil, fmt.Errorf("actor count %d exceeds limit", count)
 	}
 
-	actors := make([]ActorID, 0, count)
+	actors := make([]opset.ActorID, 0, count)
 	for i := range count {
 		value, err := decodeLengthPrefixed(r)
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode actor %d: %w", i, err)
 		}
 
-		actor, err := NewActorID(value)
+		actor, err := opset.NewActorID(value)
 		if err != nil {
 			return nil, fmt.Errorf("actor %d: %w", i, err)
 		}
@@ -68,7 +69,7 @@ func decodeLengthPrefixed(r *reader) ([]byte, error) {
 	return r.bytes(length)
 }
 
-func decodeHashArray(r *reader, sorted bool) ([]ChangeHash, error) {
+func decodeHashArray(r *reader, sorted bool) ([]opset.ChangeHash, error) {
 	count, err := r.uleb()
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func decodeHashArray(r *reader, sorted bool) ([]ChangeHash, error) {
 		return nil, fmt.Errorf("hash count %d exceeds limit", count)
 	}
 
-	hashes := make([]ChangeHash, 0, count)
+	hashes := make([]opset.ChangeHash, 0, count)
 	for i := range count {
 		value, err := r.bytes(32)
 		if err != nil {
@@ -263,7 +264,7 @@ func decodeOptionalScalars(
 	metaSpecification uint32,
 	rawSpecification uint32,
 	expected int,
-) ([]optional[Scalar], error) {
+) ([]optional[opset.Scalar], error) {
 	meta := optionalColumn(columns, metaSpecification)
 
 	raw := optionalColumn(columns, rawSpecification)
@@ -272,7 +273,7 @@ func decodeOptionalScalars(
 			return nil, fmt.Errorf("raw value column is missing metadata")
 		}
 
-		return make([]optional[Scalar], expected), nil
+		return make([]optional[opset.Scalar], expected), nil
 	}
 
 	return decodeScalars(meta, raw, expected)
@@ -301,14 +302,14 @@ func sumGroups(groups []optional[uint64]) (int, error) {
 
 func decodeGroupedOpIDs(
 	columns map[uint32]column,
-	actors []ActorID,
+	actors []opset.ActorID,
 	groupSpec uint32,
 	actorSpec uint32,
 	counterSpec uint32,
 	expected int,
 	name string,
-) ([][]OpID, error) {
-	result := make([][]OpID, expected)
+) ([][]opset.OpID, error) {
+	result := make([][]opset.OpID, expected)
 
 	groupData := optionalColumn(columns, groupSpec)
 	if groupData == nil {
@@ -355,7 +356,7 @@ func decodeGroupedOpIDs(
 	offset := 0
 
 	for i, group := range groups {
-		result[i] = make([]OpID, int(group.value))
+		result[i] = make([]opset.OpID, int(group.value))
 		for j := range result[i] {
 			id, err := opIDFromIndexes(actorIndexes[offset+j], counters[offset+j], actors)
 			if err != nil {
@@ -374,70 +375,70 @@ func decodeGroupedOpIDs(
 func opIDFromIndexes(
 	actorIndex optional[uint64],
 	counter optional[uint64],
-	actors []ActorID,
-) (OpID, error) {
+	actors []opset.ActorID,
+) (opset.OpID, error) {
 	if !actorIndex.valid || !counter.valid {
-		return OpID{}, fmt.Errorf("actor or counter is null")
+		return opset.OpID{}, fmt.Errorf("actor or counter is null")
 	}
 
 	if actorIndex.value >= uint64(len(actors)) {
-		return OpID{}, fmt.Errorf("actor index %d is out of bounds", actorIndex.value)
+		return opset.OpID{}, fmt.Errorf("actor index %d is out of bounds", actorIndex.value)
 	}
 
 	if counter.value == 0 {
-		return OpID{}, fmt.Errorf("counter is zero")
+		return opset.OpID{}, fmt.Errorf("counter is zero")
 	}
 
-	return OpID{Actor: actors[actorIndex.value], Counter: counter.value}, nil
+	return opset.OpID{Actor: actors[actorIndex.value], Counter: counter.value}, nil
 }
 
 func objectIDFromIndexes(
 	actorIndex optional[uint64],
 	counter optional[uint64],
-	actors []ActorID,
-) (ObjectID, error) {
+	actors []opset.ActorID,
+) (opset.ObjectID, error) {
 	if !actorIndex.valid && !counter.valid {
-		return RootObject(), nil
+		return opset.RootObject(), nil
 	}
 
 	id, err := opIDFromIndexes(actorIndex, counter, actors)
 	if err != nil {
-		return ObjectID{}, err
+		return opset.ObjectID{}, err
 	}
 
-	return ObjectID{OpID: id}, nil
+	return opset.ObjectID{OpID: id}, nil
 }
 
 func keyFromColumns(
 	actorIndex optional[uint64],
 	counter optional[uint64],
 	property optional[string],
-	actors []ActorID,
+	actors []opset.ActorID,
 	insert bool,
-) (Key, error) {
+) (opset.Key, error) {
 	if property.valid {
 		if actorIndex.valid || counter.valid {
-			return Key{}, fmt.Errorf("property key also has an element ID")
+			return opset.Key{}, fmt.Errorf("property key also has an element ID")
 		}
 
 		value := property.value
 
-		return Key{Property: &value}, nil
+		return opset.Key{Property: &value}, nil
 	}
 
 	if !actorIndex.valid && insert && (!counter.valid || counter.value == 0) {
-		return Key{IsHead: true}, nil
+		return opset.Key{IsHead: true}, nil
 	}
 
 	id, err := opIDFromIndexes(actorIndex, counter, actors)
 	if err != nil {
-		return Key{}, err
+		return opset.Key{}, err
 	}
 
-	return Key{Element: &id}, nil
+	return opset.Key{Element: &id}, nil
 }
 
-func collectUnknown(columns map[uint32]column) []RawColumn {
+func collectUnknown(columns map[uint32]column) []opset.RawColumn {
 	specifications := make([]uint32, 0, len(columns))
 	for specification := range columns {
 		specifications = append(specifications, specification)
@@ -445,12 +446,11 @@ func collectUnknown(columns map[uint32]column) []RawColumn {
 
 	slices.Sort(specifications)
 
-	result := make([]RawColumn, 0, len(columns))
+	result := make([]opset.RawColumn, 0, len(columns))
 	for _, specification := range specifications {
 		value := columns[specification]
 		result = append(
-			result,
-			RawColumn{
+			result, opset.RawColumn{
 				Specification: value.specification,
 				Data:          append([]byte(nil), value.data...),
 			},
@@ -460,8 +460,8 @@ func collectUnknown(columns map[uint32]column) []RawColumn {
 	return result
 }
 
-func assignOperations(changes []Change, operations []Operation) error {
-	byActor := make(map[ActorID][]int)
+func assignOperations(changes []opset.Change, operations []opset.Operation) error {
+	byActor := make(map[opset.ActorID][]int)
 	for i := range changes {
 		byActor[changes[i].Actor] = append(byActor[changes[i].Actor], i)
 	}
@@ -496,7 +496,7 @@ func assignOperations(changes []Change, operations []Operation) error {
 	// of loading a large single-change document.
 	for i := range changes {
 		size := changes[i].MaxOp - changes[i].StartOp + 1
-		changes[i].Operations = make([]Operation, 0, size)
+		changes[i].Operations = make([]opset.Operation, 0, size)
 	}
 
 	for _, operation := range operations {
@@ -540,7 +540,7 @@ func assignOperations(changes []Change, operations []Operation) error {
 	for i := range changes {
 		slices.SortFunc(
 			changes[i].Operations,
-			func(left, right Operation) int {
+			func(left, right opset.Operation) int {
 				return left.ID.Compare(right.ID)
 			},
 		)
@@ -567,7 +567,7 @@ func assignOperations(changes []Change, operations []Operation) error {
 	return nil
 }
 
-func validateSnapshotGraph(changes []Change, heads []uint64) error {
+func validateSnapshotGraph(changes []opset.Change, heads []uint64) error {
 	dependedOn := make([]bool, len(changes))
 	for i, change := range changes {
 		seen := make(map[uint64]struct{}, len(change.DependencyIndexes))
@@ -617,7 +617,7 @@ func validateSnapshotGraph(changes []Change, heads []uint64) error {
 	return validateActorSequences(changes)
 }
 
-func detectIndexCycle(changes []Change) error {
+func detectIndexCycle(changes []opset.Change) error {
 	state := make([]uint8, len(changes))
 
 	var visit func(int) error
@@ -664,8 +664,8 @@ func mapsEqual[K comparable](left, right map[K]struct{}) bool {
 	return true
 }
 
-func validateActorSequences(changes []Change) error {
-	byActor := make(map[ActorID][]Change)
+func validateActorSequences(changes []opset.Change) error {
+	byActor := make(map[opset.ActorID][]opset.Change)
 	for _, change := range changes {
 		byActor[change.Actor] = append(byActor[change.Actor], change)
 	}
@@ -673,7 +673,7 @@ func validateActorSequences(changes []Change) error {
 	for actor, actorChanges := range byActor {
 		slices.SortFunc(
 			actorChanges,
-			func(left, right Change) int {
+			func(left, right opset.Change) int {
 				switch {
 				case left.Sequence < right.Sequence:
 					return -1
@@ -730,8 +730,8 @@ func validateActorSequences(changes []Change) error {
 	return nil
 }
 
-func mergeActors(existing, additions []ActorID) []ActorID {
-	set := make(map[ActorID]struct{}, len(existing)+len(additions))
+func mergeActors(existing, additions []opset.ActorID) []opset.ActorID {
+	set := make(map[opset.ActorID]struct{}, len(existing)+len(additions))
 	for _, actor := range existing {
 		set[actor] = struct{}{}
 	}
@@ -740,14 +740,14 @@ func mergeActors(existing, additions []ActorID) []ActorID {
 		set[actor] = struct{}{}
 	}
 
-	result := make([]ActorID, 0, len(set))
+	result := make([]opset.ActorID, 0, len(set))
 	for actor := range set {
 		result = append(result, actor)
 	}
 
 	slices.SortFunc(
 		result,
-		func(left, right ActorID) int {
+		func(left, right opset.ActorID) int {
 			return left.Compare(right)
 		},
 	)
@@ -755,7 +755,7 @@ func mergeActors(existing, additions []ActorID) []ActorID {
 	return result
 }
 
-func validateDocument(document *Document) error {
+func validateDocument(document *opset.Document) error {
 	if len(document.Changes) == 0 {
 		if len(document.Heads) != 0 {
 			return fmt.Errorf("empty history has heads")
@@ -764,16 +764,16 @@ func validateDocument(document *Document) error {
 		return nil
 	}
 
-	if len(document.ChunkTypes) > 0 && document.ChunkTypes[0] == ChunkDocument {
+	if len(document.ChunkTypes) > 0 && document.ChunkTypes[0] == opset.ChunkDocument {
 		return validateChangeChunksAfterSnapshot(document)
 	}
 
 	return validateChangeChunkGraph(document)
 }
 
-func validateChangeChunksAfterSnapshot(document *Document) error {
-	known := make(map[ChangeHash]struct{})
-	dependedOn := make(map[ChangeHash]struct{})
+func validateChangeChunksAfterSnapshot(document *opset.Document) error {
+	known := make(map[opset.ChangeHash]struct{})
+	dependedOn := make(map[opset.ChangeHash]struct{})
 
 	// A change may legitimately appear both inside the snapshot and as a trailing
 	// change chunk, so repeats identify the same change rather than a conflict.
@@ -803,7 +803,7 @@ func validateChangeChunksAfterSnapshot(document *Document) error {
 
 	slices.SortFunc(
 		document.Heads,
-		func(left, right ChangeHash) int {
+		func(left, right opset.ChangeHash) int {
 			return bytes.Compare(left[:], right[:])
 		},
 	)
@@ -811,9 +811,9 @@ func validateChangeChunksAfterSnapshot(document *Document) error {
 	return validateActorSequences(document.Changes)
 }
 
-func validateChangeChunkGraph(document *Document) error {
-	changes := make(map[ChangeHash]Change, len(document.Changes))
-	dependedOn := make(map[ChangeHash]struct{})
+func validateChangeChunkGraph(document *opset.Document) error {
+	changes := make(map[opset.ChangeHash]opset.Change, len(document.Changes))
+	dependedOn := make(map[opset.ChangeHash]struct{})
 
 	for _, change := range document.Changes {
 		if change.Hash == nil {
@@ -847,7 +847,7 @@ func validateChangeChunkGraph(document *Document) error {
 
 	slices.SortFunc(
 		document.Heads,
-		func(left, right ChangeHash) int {
+		func(left, right opset.ChangeHash) int {
 			return bytes.Compare(left[:], right[:])
 		},
 	)
