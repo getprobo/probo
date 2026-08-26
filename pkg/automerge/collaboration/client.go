@@ -65,10 +65,6 @@ func NewClientConn(config ClientConfig, sync SyncSession) (*ClientConn, error) {
 		return nil, fmt.Errorf("client connection requires a document id")
 	}
 
-	if sync == nil {
-		return nil, fmt.Errorf("client connection requires a sync session")
-	}
-
 	return &ClientConn{
 		config:       config,
 		sync:         sync,

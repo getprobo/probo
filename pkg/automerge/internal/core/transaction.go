@@ -183,9 +183,7 @@ func (b *Engine) Commit(
 		return [32]byte{}, fmt.Errorf("cannot encode native change: %w", err)
 	}
 
-	if err := b.state.recordAppliedChange(change); err != nil {
-		return [32]byte{}, err
-	}
+	b.state.recordAppliedChange(change)
 
 	// While isolated, the pinned view holds the change for subsequent reads, but
 	// the full history must also record it so integration sees every isolated
@@ -246,9 +244,7 @@ func (b *Engine) EmptyCommit(
 		return [32]byte{}, fmt.Errorf("cannot encode native empty change: %w", err)
 	}
 
-	if err := b.state.recordAppliedChange(change); err != nil {
-		return [32]byte{}, err
-	}
+	b.state.recordAppliedChange(change)
 
 	b.appended = append(b.appended, raw)
 	b.revision++

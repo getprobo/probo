@@ -153,10 +153,6 @@ func documentChangeOrder(document *opset.Document) ([]*opset.Change, error) {
 
 	for i := range document.Changes {
 		change := &document.Changes[i]
-		if change.Hash == nil {
-			return nil, fmt.Errorf("change %d cannot be written without a hash", i)
-		}
-
 		byHash[*change.Hash] = change
 	}
 

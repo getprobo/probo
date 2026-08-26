@@ -83,10 +83,6 @@ func newServerConn(config ServerConfig, documentID string, adopt bool, sync Sync
 		return nil, err
 	}
 
-	if sync == nil {
-		return nil, fmt.Errorf("server connection requires a sync session")
-	}
-
 	return &ServerConn{
 		session:      session,
 		sync:         sync,

@@ -37,6 +37,33 @@ type clientServerHarness struct {
 	server *collaboration.ServerConn
 }
 
+func TestNewClientConn_NilSyncPanicsOnUse(t *testing.T) {
+	t.Parallel()
+
+	conn, err := collaboration.NewClientConn(
+		collaboration.ClientConfig{
+			ClientPeerID: "agent",
+			DocumentID:   "doc-1",
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	peer, err := collaboration.EncodePeerFrame(
+		collaboration.PeerFrame{
+			Type:                    collaboration.FramePeer,
+			SenderID:                "server",
+			TargetID:                "agent",
+			SelectedProtocolVersion: collaboration.ProtocolV1,
+		},
+	)
+	require.NoError(t, err)
+
+	require.Panics(t, func() {
+		_, _ = conn.Receive(peer)
+	})
+}
+
 // pump exchanges frames until neither side produces more, starting from the
 // client's join. It bounds the rounds so a protocol bug fails instead of hangs.
 func (h *clientServerHarness) pump() {

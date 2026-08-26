@@ -562,11 +562,7 @@ func (s *State) applyPending(operations []opset.Operation) error {
 	return nil
 }
 
-func (s *State) recordAppliedChange(change *opset.Change) error {
-	if change.Hash == nil {
-		return fmt.Errorf("change hash is required")
-	}
-
+func (s *State) recordAppliedChange(change *opset.Change) {
 	for _, dependency := range change.Dependencies {
 		delete(s.heads, dependency)
 	}
@@ -574,8 +570,6 @@ func (s *State) recordAppliedChange(change *opset.Change) error {
 	s.heads[*change.Hash] = struct{}{}
 	s.changes[*change.Hash] = change
 	s.actorSequence[change.Actor] = change.Sequence
-
-	return nil
 }
 
 func (s *State) hasChange(hash opset.ChangeHash) bool {
