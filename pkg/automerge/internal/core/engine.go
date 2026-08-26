@@ -42,7 +42,7 @@ type Engine struct {
 	pending       []opset.Operation
 	objects       map[uint32]opset.ObjectID
 	nextHandle    uint32
-	syncStates    map[uint32]*nativeSyncState
+	syncStates    map[uint32]*syncSessionState
 	nextSyncState uint32
 	queuedChanges map[opset.ChangeHash]*opset.Change
 	queuedBytes   int
@@ -81,7 +81,7 @@ type saveCacheEntry struct {
 	data          []byte
 }
 
-type nativeSyncState struct {
+type syncSessionState struct {
 	RemoteHeads       [][32]byte `json:"remoteHeads"`
 	LastSentHeads     [][32]byte `json:"lastSentHeads"`
 	LastSentNeed      [][32]byte `json:"lastSentNeed"`
@@ -144,7 +144,7 @@ func NewEngine() (*Engine, error) {
 		base:          base,
 		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
 		nextHandle:    1,
-		syncStates:    make(map[uint32]*nativeSyncState),
+		syncStates:    make(map[uint32]*syncSessionState),
 		nextSyncState: 1,
 		queuedChanges: make(map[opset.ChangeHash]*opset.Change),
 	}, nil
@@ -183,7 +183,7 @@ func LoadEngine(data []byte) (*Engine, error) {
 		base:          append([]byte(nil), data...),
 		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
 		nextHandle:    1,
-		syncStates:    make(map[uint32]*nativeSyncState),
+		syncStates:    make(map[uint32]*syncSessionState),
 		nextSyncState: 1,
 		queuedChanges: make(map[opset.ChangeHash]*opset.Change),
 	}, nil
@@ -275,7 +275,7 @@ func loadEngineRetainingOrphans(
 		base:          base,
 		objects:       map[uint32]opset.ObjectID{0: opset.RootObject()},
 		nextHandle:    1,
-		syncStates:    make(map[uint32]*nativeSyncState),
+		syncStates:    make(map[uint32]*syncSessionState),
 		nextSyncState: 1,
 		queuedChanges: queuedClone,
 		queuedBytes:   queuedBytes,

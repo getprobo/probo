@@ -91,10 +91,8 @@ make benchmark-automerge-native
 
 ## Upstream parity ledger
 
-The complete implementation backlog, execution order, and acceptance criteria
-are maintained in [`PARITY_PLAN.md`](PARITY_PLAN.md).
-
-`testdata/upstream-parity.json` inventories every active Rust test reported by
+[`testdata/upstream-parity.json`](testdata/upstream-parity.json) is the
+authoritative parity ledger. It inventories every active Rust test reported by
 the pinned test harness, every JavaScript leaf test, and every JavaScript
 packaging scenario at the pinned upstream revisions:
 

@@ -143,7 +143,7 @@ func (b *Engine) pushObject(object opset.ObjectID) uint32 {
 	return handle
 }
 
-func (b *Engine) syncState(handle uint32) (*nativeSyncState, error) {
+func (b *Engine) syncState(handle uint32) (*syncSessionState, error) {
 	state, ok := b.syncStates[handle]
 	if !ok {
 		return nil, fmt.Errorf("invalid sync state %d", handle)
