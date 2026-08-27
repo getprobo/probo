@@ -19,12 +19,21 @@
 // SOFTWARE.
 
 import { useEffect } from "react";
-import { graphql } from "react-relay";
+import { graphql, useLazyLoadQuery } from "react-relay";
 import { useParams } from "react-router";
 
 import type { AssumeOrganizationSessionMutation } from "#/__generated__/iam/AssumeOrganizationSessionMutation.graphql";
+import type { AssumeOrganizationSessionQuery } from "#/__generated__/iam/AssumeOrganizationSessionQuery.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
+
+const assumeOrganizationSessionQuery = graphql`
+  query AssumeOrganizationSessionQuery @throwOnFieldError {
+    viewer @required(action: THROW) {
+      ssoLoginURL
+    }
+  }
+`;
 
 const assumeMutation = graphql`
   mutation AssumeOrganizationSessionMutation(
@@ -33,21 +42,43 @@ const assumeMutation = graphql`
     assumeOrganizationSession(input: $input) {
       result {
         __typename
+        ... on PasswordRequired {
+          reason
+        }
+        ... on SAMLAuthenticationRequired {
+          reason
+        }
       }
     }
   }
 `;
 
-function redirectToLogin() {
-  window.location.href = `/auth/login?continue=${encodeURIComponent(window.location.href)}`;
+function authSearch(organizationId: string): URLSearchParams {
+  const search = new URLSearchParams();
+  search.set("organization-id", organizationId);
+  search.set("continue", window.location.href);
+  return search;
+}
+
+function redirectToLogin(organizationId?: string) {
+  const search = organizationId
+    ? authSearch(organizationId)
+    : new URLSearchParams({ continue: window.location.href });
+  window.location.href = `/auth/login?${search.toString()}`;
 }
 
 export function AssumeOrganizationSession() {
   const { organizationId } = useParams();
+  const { viewer } = useLazyLoadQuery<AssumeOrganizationSessionQuery>(
+    assumeOrganizationSessionQuery,
+    {},
+    { fetchPolicy: "network-only" },
+  );
   const [assume] = useMutation<AssumeOrganizationSessionMutation>(assumeMutation);
 
   useEffect(() => {
     if (organizationId == null) {
+      redirectToLogin();
       return;
     }
 
@@ -60,15 +91,34 @@ export function AssumeOrganizationSession() {
       },
     }).then((response) => {
       const result = response.assumeOrganizationSession?.result;
-      if (result?.__typename === "OrganizationSessionCreated") {
-        window.location.reload();
+      if (result == null) {
+        redirectToLogin(organizationId);
         return;
       }
-      redirectToLogin();
+
+      switch (result.__typename) {
+        case "PasswordRequired":
+          redirectToLogin(organizationId);
+          return;
+        case "SAMLAuthenticationRequired": {
+          if (!viewer.ssoLoginURL) {
+            throw new Error("missing SSO login URL for user email");
+          }
+          const samlURL = new URL(viewer.ssoLoginURL);
+          const search = authSearch(organizationId);
+          for (const [key, value] of search) {
+            samlURL.searchParams.set(key, value);
+          }
+          window.location.href = samlURL.toString();
+          return;
+        }
+        default:
+          window.location.reload();
+      }
     }).catch(() => {
       // UnAuthenticatedError is consumed by useMutation (full redirect).
     });
-  }, [organizationId, assume]);
+  }, [organizationId, assume, viewer.ssoLoginURL]);
 
   return <MainLayoutSkeleton />;
 }

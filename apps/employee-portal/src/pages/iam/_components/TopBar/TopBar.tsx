@@ -36,7 +36,11 @@ const topBarFragment = graphql`
     logo {
       downloadUrl
     }
-    ...TopBarUserMenu_organization
+    viewer @required(action: THROW) {
+      identity @required(action: THROW) {
+        ...TopBarUserMenu_identity
+      }
+    }
   }
 `;
 
@@ -46,7 +50,10 @@ interface TopBarProps {
 
 export function TopBar({ organizationKey }: TopBarProps) {
   const { t } = useTranslation();
-  const organization = useFragment(topBarFragment, organizationKey);
+  const organization = useFragment<TopBar_organization$key>(
+    topBarFragment,
+    organizationKey,
+  );
   const slots = topBar();
   const tagline = t("topBar.tagline");
 
@@ -77,7 +84,7 @@ export function TopBar({ organizationKey }: TopBarProps) {
           </span>
         </Link>
 
-        <TopBarUserMenu organizationKey={organization} />
+        <TopBarUserMenu identityKey={organization.viewer.identity} />
       </div>
     </header>
   );

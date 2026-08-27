@@ -18,39 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import { type AppRoute, routeFromAppRoute } from "@probo/routes";
-import { createBrowserRouter } from "react-router";
+import { TextFieldSkeleton } from "@probo/ui/src/v2/form/TextFieldSkeleton";
+import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 
-import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
-import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
-import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
+import { TopBarSkeleton } from "#/pages/iam/_components/TopBar/TopBarSkeleton";
 
-const routes = [
-  {
-    index: true,
-    Fallback: OrganizationsPageSkeleton,
-    Component: lazy(() => import("#/pages/iam/OrganizationsPageLoader")),
-    ErrorBoundary: RootErrorBoundary,
-  },
-  {
-    path: ":organizationId",
-    Fallback: MainLayoutSkeleton,
-    Component: lazy(() => import("#/pages/iam/MainLayoutLoader")),
-    ErrorBoundary: RootErrorBoundary,
-    children: [
-      {
-        index: true,
-        Component: lazy(() => import("#/pages/HomePage")),
-      },
-    ],
-  },
-  {
-    path: "*",
-    Component: lazy(() => import("#/pages/NotFoundPage")),
-  },
-] satisfies AppRoute[];
-
-export const router = createBrowserRouter(routes.map(routeFromAppRoute), {
-  basename: "/employee-portal",
-});
+export function OrganizationsPageSkeleton() {
+  return (
+    <div className="flex min-h-dvh flex-col bg-sand-2">
+      <TopBarSkeleton />
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-8 py-8">
+        <HeadingSkeleton size={6} className="w-64" />
+        <TextFieldSkeleton size={2} />
+        <ListSkeleton count={4} />
+      </div>
+    </div>
+  );
+}

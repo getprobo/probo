@@ -39,24 +39,20 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import type { TopBarUserMenu_organization$key } from "#/__generated__/iam/TopBarUserMenu_organization.graphql";
+import type { TopBarUserMenu_identity$key } from "#/__generated__/iam/TopBarUserMenu_identity.graphql";
 import type { TopBarUserMenuSignOutMutation } from "#/__generated__/iam/TopBarUserMenuSignOutMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { topBarUserMenuTrigger } from "./variants";
 
 const topBarUserMenuFragment = graphql`
-  fragment TopBarUserMenu_organization on Organization {
-    viewer @required(action: THROW) {
-      fullName
-      identity @required(action: THROW) {
-        email
-        canListAPIKeys: permission(action: "iam:personal-api-key:list")
-        canListOAuth2AccessTokens: permission(
-          action: "iam:oauth2-access-token:list"
-        )
-      }
-    }
+  fragment TopBarUserMenu_identity on Identity {
+    email
+    fullName
+    canListAPIKeys: permission(action: "iam:personal-api-key:list")
+    canListOAuth2AccessTokens: permission(
+      action: "iam:oauth2-access-token:list"
+    )
   }
 `;
 
@@ -69,19 +65,15 @@ const signOutMutation = graphql`
 `;
 
 interface TopBarUserMenuProps {
-  organizationKey: TopBarUserMenu_organization$key;
+  identityKey: TopBarUserMenu_identity$key;
 }
 
-export function TopBarUserMenu({ organizationKey }: TopBarUserMenuProps) {
+export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
   const { t } = useTranslation();
   const { displayMode, toggleDisplayMode } = useDisplayMode();
 
-  const {
-    viewer: {
-      fullName,
-      identity: { canListAPIKeys, canListOAuth2AccessTokens, email },
-    },
-  } = useFragment(topBarUserMenuFragment, organizationKey);
+  const { canListAPIKeys, canListOAuth2AccessTokens, email, fullName }
+    = useFragment(topBarUserMenuFragment, identityKey);
   const [signOut, isSigningOut] = useMutation<TopBarUserMenuSignOutMutation>(
     signOutMutation,
     { errorToast: t("userMenu.signOutFailed") },

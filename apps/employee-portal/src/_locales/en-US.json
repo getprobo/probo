@@ -11,6 +11,21 @@
     "signOut": "Sign out",
     "signOutFailed": "Cannot sign out"
   },
+  "organizationsPage": {
+    "title": "Your organizations",
+    "searchPlaceholder": "Search organizations",
+    "empty": "You do not have access to any employee portals yet.",
+    "emptySearch": "No organizations match that search.",
+    "status": {
+      "authenticated": "Authenticated",
+      "sessionExpired": "Session expired",
+      "authenticationRequired": "Authentication required"
+    },
+    "actions": {
+      "open": "Open",
+      "continue": "Continue"
+    }
+  },
   "common": {
     "error": "Something went wrong"
   },

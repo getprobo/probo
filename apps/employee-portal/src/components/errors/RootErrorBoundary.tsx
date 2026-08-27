@@ -21,11 +21,13 @@
 import { AssumptionRequiredError, UnAuthenticatedError } from "@probo/relay";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ErrorState } from "@probo/ui/src/v2/ErrorState/ErrorState";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouteError } from "react-router";
 
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
 import { AssumeOrganizationSession } from "#/pages/iam/_components/errors/AssumeOrganizationSession";
+import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 
 export function RootErrorBoundary() {
   const error = useRouteError();
@@ -42,7 +44,9 @@ export function RootErrorBoundary() {
   if (error instanceof AssumptionRequiredError) {
     return (
       <IAMRelayProvider>
-        <AssumeOrganizationSession />
+        <Suspense fallback={<MainLayoutSkeleton />}>
+          <AssumeOrganizationSession />
+        </Suspense>
       </IAMRelayProvider>
     );
   }

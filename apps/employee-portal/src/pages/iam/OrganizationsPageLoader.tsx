@@ -18,39 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import { type AppRoute, routeFromAppRoute } from "@probo/routes";
-import { createBrowserRouter } from "react-router";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
-import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
-import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
+import type { OrganizationsPageQuery } from "#/__generated__/iam/OrganizationsPageQuery.graphql";
+import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
 
-const routes = [
-  {
-    index: true,
-    Fallback: OrganizationsPageSkeleton,
-    Component: lazy(() => import("#/pages/iam/OrganizationsPageLoader")),
-    ErrorBoundary: RootErrorBoundary,
-  },
-  {
-    path: ":organizationId",
-    Fallback: MainLayoutSkeleton,
-    Component: lazy(() => import("#/pages/iam/MainLayoutLoader")),
-    ErrorBoundary: RootErrorBoundary,
-    children: [
-      {
-        index: true,
-        Component: lazy(() => import("#/pages/HomePage")),
-      },
-    ],
-  },
-  {
-    path: "*",
-    Component: lazy(() => import("#/pages/NotFoundPage")),
-  },
-] satisfies AppRoute[];
+import { OrganizationsPage, organizationsPageQuery } from "./OrganizationsPage";
+import { OrganizationsPageSkeleton } from "./OrganizationsPageSkeleton";
 
-export const router = createBrowserRouter(routes.map(routeFromAppRoute), {
-  basename: "/employee-portal",
-});
+function OrganizationsPageQueryLoader() {
+  const [queryRef, loadQuery]
+    = useQueryLoader<OrganizationsPageQuery>(organizationsPageQuery);
+
+  useEffect(() => {
+    loadQuery({});
+  }, [loadQuery]);
+
+  if (!queryRef) {
+    return <OrganizationsPageSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<OrganizationsPageSkeleton />}>
+      <OrganizationsPage queryRef={queryRef} />
+    </Suspense>
+  );
+}
+
+export default function OrganizationsPageLoader() {
+  return (
+    <IAMRelayProvider>
+      <OrganizationsPageQueryLoader />
+    </IAMRelayProvider>
+  );
+}
