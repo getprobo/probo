@@ -265,6 +265,55 @@ LEFT JOIN
 	return nil
 }
 
+// LoadByIDForUpdate is LoadByID under FOR UPDATE, without the bridge
+// join. Returns ErrResourceNotFound when the configuration does not
+// exist.
+func (s *SCIMConfiguration) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	configID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    NULL AS bridge_id,
+    hashed_token,
+    created_at,
+    updated_at
+FROM
+    iam_scim_configurations
+WHERE
+    %s
+    AND id = @id
+LIMIT 1
+FOR UPDATE;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": configID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query iam_scim_configurations: %w", err)
+	}
+
+	config, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SCIMConfiguration])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect scim_configuration: %w", err)
+	}
+
+	*s = config
+
+	return nil
+}
+
 func (s *SCIMConfiguration) Insert(
 	ctx context.Context,
 	conn pg.Tx,

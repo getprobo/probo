@@ -1734,7 +1734,21 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	}, &deleteResult)
 	require.NoError(t, err)
 
-	// The deleted source's connector is garbage-collected; the other
-	// source's connector is the survivor.
+	// The deleted source's connector dies with it; the other source's
+	// connector is the survivor.
 	assert.Equal(t, []string{secondConnector}, listBrexConnectorIDs())
+
+	// Relinking a source to a fresh connector deletes the abandoned one:
+	// the relink removed its only owner.
+	thirdConnector := createConnector("test-key-brex-c")
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewSourceId": secondSource,
+			"connectorId":          thirdConnector,
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{thirdConnector}, listBrexConnectorIDs())
 }

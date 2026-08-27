@@ -694,7 +694,7 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		return nil, err
 	}
 
-	source, created, err := r.accessReview.CreateSource(
+	source, created, err := r.accessReview.EnsureSource(
 		ctx,
 		scope,
 		accessreview.CreateAccessReviewSourceRequest{

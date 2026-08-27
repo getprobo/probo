@@ -3796,7 +3796,7 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 		return nil, types.CreateAccessReviewSourceOutput{}, err
 	}
 
-	source, created, err := r.accessReview.CreateSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
+	source, created, err := r.accessReview.EnsureSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
 		OrganizationID: input.OrganizationID,
 		ConnectorID:    input.ConnectorID,
 		Name:           input.Name,

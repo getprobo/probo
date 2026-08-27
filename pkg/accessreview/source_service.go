@@ -96,12 +96,13 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 	return v.Error()
 }
 
-// CreateSource creates an access source. Creation is idempotent per
-// connector: when a source already references req.ConnectorID, it is
-// returned with created=false instead of inserting a duplicate. The
-// connector row lock serializes concurrent callers so exactly one
-// creates.
-func (s *Service) CreateSource(
+// EnsureSource returns the access source for req.ConnectorID,
+// creating it when absent; an existing source is returned untouched
+// with created=false. The partial unique index on connector_id
+// arbitrates concurrent callers, so exactly one inserts and the
+// others load the winner. CSV sources (no connector) are always
+// created.
+func (s *Service) EnsureSource(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CreateAccessReviewSourceRequest,
@@ -128,14 +129,14 @@ func (s *Service) CreateSource(
 		func(ctx context.Context, conn pg.Tx) error {
 			if req.ConnectorID != nil {
 				connector := &coredata.Connector{}
-				if err := connector.LockForUpdate(ctx, conn, scope, *req.ConnectorID); err != nil {
-					return fmt.Errorf("cannot serialize source creation: %w", err)
-				}
-
 				if err := connector.LoadMetadataByID(ctx, conn, scope, *req.ConnectorID); err != nil {
 					return fmt.Errorf("cannot load connector: %w", err)
 				}
 
+				// Unlocked read: a concurrent bridge bind could in theory
+				// race this check. Organic flows only ever bind their own
+				// freshly created connector, so the race is accepted
+				// rather than serialized.
 				bridges := &coredata.SCIMBridges{}
 
 				bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, *req.ConnectorID)
@@ -146,25 +147,24 @@ func (s *Service) CreateSource(
 				if bridgeCount > 0 {
 					return fmt.Errorf("cannot create access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
 				}
-
-				existing := &coredata.AccessReviewSource{}
-
-				err = existing.LoadByConnectorID(ctx, conn, scope, *req.ConnectorID)
-				if err == nil {
-					*source = *existing
-					return nil
-				}
-
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load access source by connector: %w", err)
-				}
 			}
 
-			if err := source.Insert(ctx, conn, scope); err != nil {
+			inserted, err := source.Insert(ctx, conn, scope)
+			if err != nil {
 				return fmt.Errorf("cannot insert access source: %w", err)
 			}
 
-			created = true
+			if inserted {
+				created = true
+				return nil
+			}
+
+			existing := &coredata.AccessReviewSource{}
+			if err := existing.LoadByConnectorID(ctx, conn, scope, *req.ConnectorID); err != nil {
+				return fmt.Errorf("cannot load access source by connector: %w", err)
+			}
+
+			*source = *existing
 
 			return nil
 		},
@@ -210,9 +210,13 @@ func (s *Service) UpdateSource(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := source.LoadByID(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
+			// The row lock keeps the connector handoff below stable
+			// against a concurrent relink or delete.
+			if err := source.LoadByIDForUpdate(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
 			}
+
+			previousConnectorID := source.ConnectorID
 
 			if req.Name != nil {
 				if *req.Name != nil {
@@ -223,10 +227,6 @@ func (s *Service) UpdateSource(
 			if req.ConnectorID != nil {
 				if *req.ConnectorID != nil {
 					connector := &coredata.Connector{}
-					if err := connector.LockForUpdate(ctx, conn, scope, **req.ConnectorID); err != nil {
-						return fmt.Errorf("cannot serialize source relink: %w", err)
-					}
-
 					if err := connector.LoadMetadataByID(ctx, conn, scope, **req.ConnectorID); err != nil {
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
@@ -242,6 +242,9 @@ func (s *Service) UpdateSource(
 						return fmt.Errorf("cannot update access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
 					}
 
+					// The partial unique index on connector_id is the
+					// guard; this pre-check only produces a clearer
+					// error than its 23505.
 					other := &coredata.AccessReviewSource{}
 
 					err = other.LoadByConnectorID(ctx, conn, scope, **req.ConnectorID)
@@ -272,6 +275,16 @@ func (s *Service) UpdateSource(
 				return fmt.Errorf("cannot update access source: %w", err)
 			}
 
+			// A relink took the previous connector's only owner with it;
+			// delete the credential in the same transaction.
+			if req.ConnectorID != nil && previousConnectorID != nil &&
+				(source.ConnectorID == nil || *source.ConnectorID != *previousConnectorID) {
+				abandoned := &coredata.Connector{ID: *previousConnectorID}
+				if err := abandoned.Delete(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot delete abandoned connector: %w", err)
+				}
+			}
+
 			return nil
 		},
 	)
@@ -287,29 +300,27 @@ func (s *Service) DeleteSource(
 	scope coredata.Scoper,
 	accessSourceID gid.GID,
 ) error {
-	source := &coredata.AccessReviewSource{}
+	source := &coredata.AccessReviewSource{ID: accessSourceID}
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := source.LoadByID(ctx, conn, scope, accessSourceID); err != nil {
-				return fmt.Errorf("cannot load access source: %w", err)
-			}
-
-			if err := source.Delete(ctx, conn, scope); err != nil {
+			// RETURNING reads the connector under the DELETE's own row
+			// lock, so a concurrent relink cannot swap it unobserved.
+			connectorID, err := source.DeleteReturningConnectorID(ctx, conn, scope)
+			if err != nil {
 				return fmt.Errorf("cannot delete access source: %w", err)
 			}
 
-			// Garbage-collect the underlying connector once nothing else
-			// references it, so deleting a source does not strand a live
-			// credential that nothing displays or manages.
-			if source.ConnectorID == nil {
+			// The source was the connector's only owner; the credential
+			// dies with it in the same transaction.
+			if connectorID == nil {
 				return nil
 			}
 
-			cnnctr := &coredata.Connector{}
-			if err := cnnctr.DeleteIfUnreferenced(ctx, conn, scope, *source.ConnectorID); err != nil {
-				return fmt.Errorf("cannot garbage-collect connector: %w", err)
+			cnnctr := &coredata.Connector{ID: *connectorID}
+			if err := cnnctr.Delete(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot delete connector: %w", err)
 			}
 
 			return nil

@@ -1639,7 +1639,10 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SCIMConfiguration{}
 
-			err := config.LoadByID(ctx, tx, scope, configID)
+			// A concurrent bridge insert FK-blocks on this row lock, so
+			// no bridge can appear after the lookup below and die via
+			// the cascade with its connector stranded.
+			err := config.LoadByIDForUpdate(ctx, tx, scope, configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return scim.NewSCIMConfigurationNotFoundError(configID)
@@ -1659,7 +1662,6 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 				return fmt.Errorf("cannot reset user sources: %w", err)
 			}
 
-			// Delete SCIM bridge and its connector if they exist
 			bridge := &coredata.SCIMBridge{}
 
 			err = bridge.LoadBySCIMConfigurationID(ctx, tx, scope, configID)
@@ -1668,19 +1670,17 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			}
 
 			if err == nil {
-				// Delete the bridge first, then garbage-collect its
-				// connector once nothing references it — the bridge's FK
-				// is ON DELETE SET NULL, so removing the bridge alone
-				// already unbinds SCIM from the connector.
+				// The bridge FK restricts the connector delete: bridge
+				// first, then its connector, in the same transaction.
 				err = bridge.Delete(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot delete SCIM bridge: %w", err)
 				}
 
 				if bridge.ConnectorID != nil {
-					connector := &coredata.Connector{}
-					if err := connector.DeleteIfUnreferenced(ctx, tx, scope, *bridge.ConnectorID); err != nil {
-						return fmt.Errorf("cannot garbage-collect connector: %w", err)
+					connector := &coredata.Connector{ID: *bridge.ConnectorID}
+					if err := connector.Delete(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot delete connector: %w", err)
 					}
 				}
 			}
@@ -2222,44 +2222,6 @@ func (s OrganizationService) CreateSCIMBridge(
 	}
 
 	return bridge, nil
-}
-
-func (s OrganizationService) DeleteSCIMBridge(ctx context.Context, organizationID gid.GID, bridgeID gid.GID) error {
-	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
-		bridge = &coredata.SCIMBridge{}
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			organization := &coredata.Organization{}
-
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
-			if err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			if err := bridge.LoadByID(ctx, tx, scope, bridgeID); err != nil {
-				return fmt.Errorf("cannot load SCIM bridge: %w", err)
-			}
-
-			if bridge.OrganizationID != organizationID {
-				return NewSCIMBridgeNotFoundError(bridgeID)
-			}
-
-			if err := bridge.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete SCIM bridge: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (s *OrganizationService) GetAuditLogEntry(
