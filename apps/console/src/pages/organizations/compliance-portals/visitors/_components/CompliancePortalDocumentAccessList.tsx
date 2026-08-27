@@ -20,6 +20,7 @@
 
 import type { CompliancePortalDocumentAccessStatus } from "@probo/coredata";
 import type { CompliancePortalDocumentAccessInfo } from "@probo/helpers";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { List } from "@probo/ui/src/v2/List/List";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
@@ -27,8 +28,7 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useRefetchableFragment } from "react-relay";
-import { graphql } from "relay-runtime";
+import { graphql, usePaginationFragment } from "react-relay";
 
 import type { CompliancePortalDocumentAccessList_access$key } from "#/__generated__/core/CompliancePortalDocumentAccessList_access.graphql";
 import type { CompliancePortalDocumentAccessListRefetchQuery } from "#/__generated__/core/CompliancePortalDocumentAccessListRefetchQuery.graphql";
@@ -52,10 +52,19 @@ import { CompliancePortalDocumentAccessSelectionBar } from "./CompliancePortalDo
 const accessFragment = graphql`
   fragment CompliancePortalDocumentAccessList_access on CompliancePortalAccess
   @argumentDefinitions(
+    first: { type: Int, defaultValue: 25 }
+    after: { type: CursorKey, defaultValue: null }
     filter: { type: "CompliancePortalAccessResourceFilter", defaultValue: null }
   )
   @refetchable(queryName: "CompliancePortalDocumentAccessListRefetchQuery") {
-    resources(first: 100, filter: $filter) {
+    resources(first: $first, after: $after, filter: $filter)
+      @connection(key: "CompliancePortalDocumentAccessList_resources", filters: ["filter"]) {
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
       edges {
         node {
           kind
@@ -83,8 +92,14 @@ export function CompliancePortalDocumentAccessList({
   const { t } = useTranslation("organizations/compliance-portals");
   const { status, hasActiveFilters } = useDocumentAccessListFilters();
   const [isPending, startTransition] = useTransition();
-  const { root, heading, results } = documentAccessList({ pending: isPending });
-  const [access, refetch] = useRefetchableFragment<
+  const { root, heading, results, more } = documentAccessList({ pending: isPending });
+  const {
+    data: access,
+    hasNext,
+    loadNext,
+    isLoadingNext,
+    refetch,
+  } = usePaginationFragment<
     CompliancePortalDocumentAccessListRefetchQuery,
     CompliancePortalDocumentAccessList_access$key
   >(accessFragment, accessKey);
@@ -192,6 +207,18 @@ export function CompliancePortalDocumentAccessList({
                 );
               })}
         </List>
+        {hasNext && (
+          <div className={more()}>
+            <Button
+              variant="ghost"
+              color="neutral"
+              loading={isLoadingNext}
+              onClick={() => loadNext(25)}
+            >
+              {t("documentAccessList.actions.showMore")}
+            </Button>
+          </div>
+        )}
       </div>
       {canUpdate && (
         <CompliancePortalDocumentAccessSelectionBar

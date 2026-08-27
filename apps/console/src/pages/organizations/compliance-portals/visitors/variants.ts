@@ -146,6 +146,7 @@ export const documentAccessList = tv({
     heading: "flex flex-col items-start gap-2",
     filter: "w-56 shrink-0",
     results: "transition-opacity",
+    more: "flex justify-center",
     titleRow: "flex min-w-0 items-center gap-2",
     title: "min-w-0 truncate",
     meta: "truncate",

@@ -108,7 +108,8 @@
       "reject": "Rejeter",
       "revoke": "Révoquer",
       "rejectOrRevoke": "Rejeter ou révoquer",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "showMore": "Afficher plus"
     },
     "selection": {
       "count": "{{count}} sélectionnés",

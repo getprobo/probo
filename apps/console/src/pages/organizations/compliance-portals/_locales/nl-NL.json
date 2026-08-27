@@ -81,7 +81,8 @@
       "reject": "Weigeren",
       "revoke": "Intrekken",
       "rejectOrRevoke": "Weigeren of intrekken",
-      "cancel": "Annuleren"
+      "cancel": "Annuleren",
+      "showMore": "Meer weergeven"
     },
     "selection": {
       "count": "{{count}} geselecteerd",
