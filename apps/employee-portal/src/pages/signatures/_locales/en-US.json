@@ -1,0 +1,26 @@
+{
+  "title": "Signatures",
+  "breadcrumb": "Signatures",
+  "pending": {
+    "heading": "Waiting for your signature ({{count}})",
+    "summaryTitle_one": "{{count}} document to sign",
+    "summaryTitle_other": "{{count}} documents to sign",
+    "summaryDescription": "Review and sign the documents required to complete your employee setup.",
+    "action": "Start signing",
+    "itemAction": "Sign"
+  },
+  "history": {
+    "heading": "Signed ({{count}})"
+  },
+  "empty": {
+    "none": {
+      "title": "No signature requests yet",
+      "description": "Documents that need your signature will appear here."
+    },
+    "allDone": {
+      "title": "You're all done",
+      "description": "You're up to date. Previously signed documents are listed below."
+    }
+  },
+  "loadMore": "Show more"
+}
