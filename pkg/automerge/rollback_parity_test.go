@@ -164,3 +164,70 @@ func TestRustTransaction_RollbackUndoesWrites(t *testing.T) {
 	assert.Equal(t, cancelled["reference"], cancelled["native"])
 	assert.Equal(t, present["reference"], present["native"])
 }
+
+func TestRustTransaction_RollbackPreservesValidObjectHandles(t *testing.T) {
+	t.Parallel()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				document, err := engine.open(actor(0xcc))
+				require.NoError(t, err)
+				closeDocument(t, document)
+
+				stable, err := document.Root().CreateObject("stable", automerge.ObjectTypeMap)
+				require.NoError(t, err)
+				require.NoError(t, stable.PutScalar("before", automerge.StringScalar("yes")))
+				_, err = document.Commit("stable", commitTime)
+				require.NoError(t, err)
+
+				transient, err := document.Root().CreateObject("transient", automerge.ObjectTypeMap)
+				require.NoError(t, err)
+				cancelled, err := document.Rollback()
+				require.NoError(t, err)
+				assert.Positive(t, cancelled)
+
+				require.NoError(t, stable.PutScalar("after", automerge.StringScalar("still valid")))
+				value, err := stable.Scalar("after")
+				require.NoError(t, err)
+				assert.Equal(t, "still valid", value.String)
+
+				err = transient.PutScalar("invalid", automerge.StringScalar("no"))
+				require.Error(t, err)
+
+				replacement, err := document.Root().CreateObject(
+					"replacement",
+					automerge.ObjectTypeMap,
+				)
+				require.NoError(t, err)
+				require.NoError(t, replacement.PutScalar("valid", automerge.StringScalar("yes")))
+
+				err = transient.PutScalar("still-invalid", automerge.StringScalar("no"))
+				require.Error(t, err)
+			},
+		)
+	}
+}
+
+func TestDocument_MergeRejectsNilSourceAcrossEngines(t *testing.T) {
+	t.Parallel()
+
+	for _, engine := range rustParityEngines() {
+		t.Run(
+			engine.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				document, err := engine.open(actor(0xcd))
+				require.NoError(t, err)
+				closeDocument(t, document)
+
+				_, err = document.Merge(nil)
+				require.ErrorIs(t, err, automerge.ErrNilDocument)
+			},
+		)
+	}
+}

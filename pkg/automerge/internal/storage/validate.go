@@ -23,12 +23,17 @@ package storage
 import (
 	"bytes"
 	"fmt"
-	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"math"
 	"slices"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
-func decodeActorArray(r *reader, sorted bool) ([]opset.ActorID, error) {
+func decodeActorArray(
+	r *reader,
+	sorted bool,
+	budget *decodeBudget,
+) ([]opset.ActorID, error) {
 	count, err := r.uleb()
 	if err != nil {
 		return nil, err
@@ -37,6 +42,9 @@ func decodeActorArray(r *reader, sorted bool) ([]opset.ActorID, error) {
 	if count > maxDecodedItems {
 		return nil, fmt.Errorf("actor count %d exceeds limit", count)
 	}
+	if err := chargeDecoded[opset.ActorID](budget, count); err != nil {
+		return nil, err
+	}
 
 	actors := make([]opset.ActorID, 0, count)
 	for i := range count {
@@ -44,13 +52,18 @@ func decodeActorArray(r *reader, sorted bool) ([]opset.ActorID, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode actor %d: %w", i, err)
 		}
+		if err := chargeDecodedBytes(budget, uint64(len(value))); err != nil {
+			return nil, err
+		}
 
 		actor, err := opset.NewActorID(value)
 		if err != nil {
 			return nil, fmt.Errorf("actor %d: %w", i, err)
 		}
 
-		if sorted && len(actors) > 0 && actors[len(actors)-1].Compare(actor) >= 0 {
+		if sorted &&
+			len(actors) > 0 &&
+			string(actors[len(actors)-1]) >= string(actor) {
 			return nil, fmt.Errorf("actor IDs are not strictly sorted at index %d", i)
 		}
 
@@ -69,7 +82,11 @@ func decodeLengthPrefixed(r *reader) ([]byte, error) {
 	return r.bytes(length)
 }
 
-func decodeHashArray(r *reader, sorted bool) ([]opset.ChangeHash, error) {
+func decodeHashArray(
+	r *reader,
+	sorted bool,
+	budget *decodeBudget,
+) ([]opset.ChangeHash, error) {
 	count, err := r.uleb()
 	if err != nil {
 		return nil, err
@@ -77,6 +94,9 @@ func decodeHashArray(r *reader, sorted bool) ([]opset.ChangeHash, error) {
 
 	if count > maxDecodedItems {
 		return nil, fmt.Errorf("hash count %d exceeds limit", count)
+	}
+	if err := chargeDecoded[opset.ChangeHash](budget, count); err != nil {
+		return nil, err
 	}
 
 	hashes := make([]opset.ChangeHash, 0, count)
@@ -102,13 +122,14 @@ func decodeRequiredDelta(
 	specification uint32,
 	name string,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[uint64], error) {
 	data, err := requireColumn(columns, specification)
 	if err != nil {
 		return nil, err
 	}
 
-	values, err := decodeDeltaColumn(data)
+	values, err := decodeDeltaColumnWithBudget(data, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s: %w", name, err)
 	}
@@ -125,13 +146,18 @@ func decodeOptionalDelta(
 	specification uint32,
 	name string,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[uint64], error) {
 	data := optionalColumn(columns, specification)
 	if data == nil {
+		if err := chargeDecoded[optional[uint64]](budget, uint64(expected)); err != nil {
+			return nil, err
+		}
+
 		return make([]optional[uint64], expected), nil
 	}
 
-	values, err := decodeDeltaColumn(data)
+	values, err := decodeDeltaColumnWithBudget(data, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s: %w", name, err)
 	}
@@ -148,13 +174,18 @@ func decodeOptionalSignedDelta(
 	specification uint32,
 	name string,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[int64], error) {
 	data := optionalColumn(columns, specification)
 	if data == nil {
+		if err := chargeDecoded[optional[int64]](budget, uint64(expected)); err != nil {
+			return nil, err
+		}
+
 		return make([]optional[int64], expected), nil
 	}
 
-	values, err := decodeSignedDeltaColumn(data)
+	values, err := decodeSignedDeltaColumnWithBudget(data, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s: %w", name, err)
 	}
@@ -171,13 +202,14 @@ func decodeRequiredULEB(
 	specification uint32,
 	name string,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[uint64], error) {
 	data, err := requireColumn(columns, specification)
 	if err != nil {
 		return nil, err
 	}
 
-	values, err := decodeULEBColumn(data)
+	values, err := decodeULEBColumnWithBudget(data, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s: %w", name, err)
 	}
@@ -194,13 +226,18 @@ func decodeOptionalULEB(
 	specification uint32,
 	name string,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[uint64], error) {
 	data := optionalColumn(columns, specification)
 	if data == nil {
+		if err := chargeDecoded[optional[uint64]](budget, uint64(expected)); err != nil {
+			return nil, err
+		}
+
 		return make([]optional[uint64], expected), nil
 	}
 
-	values, err := decodeULEBColumn(data)
+	values, err := decodeULEBColumnWithBudget(data, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s: %w", name, err)
 	}
@@ -217,13 +254,18 @@ func decodeOptionalStrings(
 	specification uint32,
 	name string,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[string], error) {
 	data := optionalColumn(columns, specification)
 	if data == nil {
+		if err := chargeDecoded[optional[string]](budget, uint64(expected)); err != nil {
+			return nil, err
+		}
+
 		return make([]optional[string], expected), nil
 	}
 
-	values, err := decodeStringColumn(data)
+	values, err := decodeStringColumnWithBudget(data, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s: %w", name, err)
 	}
@@ -239,7 +281,12 @@ func decodeOptionalBooleans(
 	columns map[uint32]column,
 	specification uint32,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[bool], error) {
+	if err := chargeDecoded[optional[bool]](budget, uint64(expected)); err != nil {
+		return nil, err
+	}
+
 	data := optionalColumn(columns, specification)
 
 	values := make([]optional[bool], expected)
@@ -247,7 +294,7 @@ func decodeOptionalBooleans(
 		return values, nil
 	}
 
-	decoded, err := decodeBooleanColumn(data, expected)
+	decoded, err := decodeBooleanColumnWithBudget(data, expected, budget)
 	if err != nil {
 		return nil, err
 	}
@@ -264,6 +311,7 @@ func decodeOptionalScalars(
 	metaSpecification uint32,
 	rawSpecification uint32,
 	expected int,
+	budget *decodeBudget,
 ) ([]optional[opset.Scalar], error) {
 	meta := optionalColumn(columns, metaSpecification)
 
@@ -273,10 +321,41 @@ func decodeOptionalScalars(
 			return nil, fmt.Errorf("raw value column is missing metadata")
 		}
 
+		if err := chargeDecoded[optional[opset.Scalar]](budget, uint64(expected)); err != nil {
+			return nil, err
+		}
+
 		return make([]optional[opset.Scalar], expected), nil
 	}
 
-	return decodeScalars(meta, raw, expected)
+	values, _, err := decodeScalarsInternal(meta, raw, expected, budget, false)
+
+	return values, err
+}
+
+func decodeSnapshotExtras(
+	columns map[uint32]column,
+	expected int,
+	budget *decodeBudget,
+) ([]optional[opset.Scalar], [][]byte, error) {
+	meta := optionalColumn(columns, 86)
+	raw := optionalColumn(columns, 87)
+	if meta == nil {
+		if raw != nil {
+			return nil, nil, fmt.Errorf("raw value column is missing metadata")
+		}
+
+		if err := chargeDecoded[optional[opset.Scalar]](budget, uint64(expected)); err != nil {
+			return nil, nil, err
+		}
+		if err := chargeDecoded[[]byte](budget, uint64(expected)); err != nil {
+			return nil, nil, err
+		}
+
+		return make([]optional[opset.Scalar], expected), make([][]byte, expected), nil
+	}
+
+	return decodeScalarsWithRaw(meta, raw, expected, budget)
 }
 
 func sumGroups(groups []optional[uint64]) (int, error) {
@@ -308,7 +387,12 @@ func decodeGroupedOpIDs(
 	counterSpec uint32,
 	expected int,
 	name string,
+	budget *decodeBudget,
 ) ([][]opset.OpID, error) {
+	if err := chargeDecoded[[]opset.OpID](budget, uint64(expected)); err != nil {
+		return nil, err
+	}
+
 	result := make([][]opset.OpID, expected)
 
 	groupData := optionalColumn(columns, groupSpec)
@@ -316,7 +400,7 @@ func decodeGroupedOpIDs(
 		return result, nil
 	}
 
-	groups, err := decodeULEBColumn(groupData)
+	groups, err := decodeULEBColumnWithBudget(groupData, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s groups: %w", name, err)
 	}
@@ -339,7 +423,7 @@ func decodeGroupedOpIDs(
 		return nil, err
 	}
 
-	actorIndexes, err := decodeULEBColumn(actorData)
+	actorIndexes, err := decodeULEBColumnWithBudget(actorData, budget)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %s actors: %w", name, err)
 	}
@@ -348,7 +432,13 @@ func decodeGroupedOpIDs(
 		return nil, err
 	}
 
-	counters, err := decodeRequiredDelta(columns, counterSpec, name+" counter", count)
+	counters, err := decodeRequiredDelta(
+		columns,
+		counterSpec,
+		name+" counter",
+		count,
+		budget,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -356,6 +446,10 @@ func decodeGroupedOpIDs(
 	offset := 0
 
 	for i, group := range groups {
+		if err := chargeDecoded[opset.OpID](budget, group.value); err != nil {
+			return nil, err
+		}
+
 		result[i] = make([]opset.OpID, int(group.value))
 		for j := range result[i] {
 			id, err := opIDFromIndexes(actorIndexes[offset+j], counters[offset+j], actors)
@@ -438,7 +532,17 @@ func keyFromColumns(
 	return opset.Key{Element: &id}, nil
 }
 
-func collectUnknown(columns map[uint32]column) []opset.RawColumn {
+func collectUnknown(
+	columns map[uint32]column,
+	budget *decodeBudget,
+) ([]opset.RawColumn, error) {
+	if err := chargeDecoded[uint32](budget, uint64(len(columns))); err != nil {
+		return nil, err
+	}
+	if err := chargeDecoded[opset.RawColumn](budget, uint64(len(columns))); err != nil {
+		return nil, err
+	}
+
 	specifications := make([]uint32, 0, len(columns))
 	for specification := range columns {
 		specifications = append(specifications, specification)
@@ -449,92 +553,167 @@ func collectUnknown(columns map[uint32]column) []opset.RawColumn {
 	result := make([]opset.RawColumn, 0, len(columns))
 	for _, specification := range specifications {
 		value := columns[specification]
+
 		result = append(
 			result, opset.RawColumn{
 				Specification: value.specification,
-				Data:          append([]byte(nil), value.data...),
+				Data:          value.data,
 			},
 		)
 	}
 
-	return result
+	return result, nil
 }
 
-func assignOperations(changes []opset.Change, operations []opset.Operation) error {
+func assignOperations(
+	changes []opset.Change,
+	operations []opset.Operation,
+	budget *decodeBudget,
+) error {
+	const (
+		visiting uint8 = 1
+		visited  uint8 = 2
+	)
+
+	type traversalFrame struct {
+		index          int
+		nextDependency int
+		dependencyMax  uint64
+	}
+
+	if err := chargeDecoded[uint8](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+	if err := chargeDecoded[traversalFrame](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+
+	states := make([]uint8, len(changes))
+	stack := make([]traversalFrame, 0, len(changes))
+
+	for root := range changes {
+		if states[root] == visited {
+			continue
+		}
+
+		states[root] = visiting
+		stack = append(stack, traversalFrame{index: root})
+
+		for len(stack) > 0 {
+			frame := &stack[len(stack)-1]
+			dependencies := changes[frame.index].DependencyIndexes
+
+			if frame.nextDependency < len(dependencies) {
+				dependency := dependencies[frame.nextDependency]
+				frame.nextDependency++
+
+				if dependency >= uint64(len(changes)) {
+					return fmt.Errorf(
+						"change %d dependency %d is out of bounds",
+						frame.index,
+						dependency,
+					)
+				}
+
+				dependencyIndex := int(dependency)
+				switch states[dependencyIndex] {
+				case visiting:
+					return fmt.Errorf(
+						"snapshot dependency cycle includes change %d",
+						dependency,
+					)
+				case visited:
+					frame.dependencyMax = max(
+						frame.dependencyMax,
+						changes[dependencyIndex].MaxOp,
+					)
+				default:
+					states[dependencyIndex] = visiting
+					stack = append(stack, traversalFrame{index: dependencyIndex})
+				}
+
+				continue
+			}
+
+			if frame.dependencyMax == math.MaxUint64 {
+				return fmt.Errorf("change %d start operation overflows uint64", frame.index)
+			}
+
+			changes[frame.index].StartOp = frame.dependencyMax + 1
+			states[frame.index] = visited
+			completedMax := changes[frame.index].MaxOp
+			stack = stack[:len(stack)-1]
+
+			if len(stack) > 0 {
+				parent := &stack[len(stack)-1]
+				parent.dependencyMax = max(parent.dependencyMax, completedMax)
+			}
+		}
+	}
+
+	if err := chargeDecodedMap[opset.ActorID, []int](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+	if err := chargeDecodedSliceGrowth[int](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+
 	byActor := make(map[opset.ActorID][]int)
 	for i := range changes {
 		byActor[changes[i].Actor] = append(byActor[changes[i].Actor], i)
 	}
 
-	for actor, indexes := range byActor {
-		slices.SortFunc(
-			indexes,
-			func(left, right int) int {
-				switch {
-				case changes[left].MaxOp < changes[right].MaxOp:
-					return -1
-				case changes[left].MaxOp > changes[right].MaxOp:
-					return 1
-				default:
-					return 0
-				}
-			},
-		)
-
-		var previous uint64
-		for _, index := range indexes {
-			changes[index].StartOp = previous + 1
-			previous = changes[index].MaxOp
-		}
-
-		byActor[actor] = indexes
+	if err := chargeDecoded[int](budget, uint64(len(operations))); err != nil {
+		return err
+	}
+	if err := chargeDecoded[int](budget, uint64(len(changes))); err != nil {
+		return err
 	}
 
-	// Each change holds exactly the operations whose counter falls in its
-	// [StartOp, MaxOp] range, so its operation slice can be sized once here.
-	// Growing it by append instead reallocated repeatedly and dominated the cost
-	// of loading a large single-change document.
-	for i := range changes {
-		size := changes[i].MaxOp - changes[i].StartOp + 1
-		changes[i].Operations = make([]opset.Operation, 0, size)
-	}
+	owners := make([]int, len(operations))
+	counts := make([]int, len(changes))
 
-	for _, operation := range operations {
-		indexes := byActor[operation.ID.Actor]
+	for i, operation := range operations {
+		owner := -1
 
-		index, found := slices.BinarySearchFunc(
-			indexes,
-			operation.ID.Counter,
-			func(index int, counter uint64) int {
-				switch {
-				case changes[index].MaxOp < counter:
-					return -1
-				case changes[index].MaxOp > counter:
-					return 1
-				default:
-					return 0
-				}
-			},
-		)
-		if !found {
-			if index >= len(indexes) {
+		for _, candidate := range byActor[operation.ID.Actor] {
+			change := &changes[candidate]
+			if operation.ID.Counter < change.StartOp || operation.ID.Counter > change.MaxOp {
+				continue
+			}
+			if owner >= 0 {
 				return fmt.Errorf(
-					"operation %s@%d has no containing change",
+					"operation %s@%d belongs to multiple changes",
 					operation.ID.Actor,
 					operation.ID.Counter,
 				)
 			}
 
-			// BinarySearchFunc returns the insertion point, which is the first
-			// change whose maxOp is greater than this counter.
+			owner = candidate
 		}
 
-		changeIndex := indexes[index]
-		if operation.ID.Counter < changes[changeIndex].StartOp {
-			return fmt.Errorf("operation counter precedes containing change start")
+		if owner < 0 {
+			return fmt.Errorf(
+				"operation %s@%d has no containing change",
+				operation.ID.Actor,
+				operation.ID.Counter,
+			)
 		}
 
-		changes[changeIndex].Operations = append(changes[changeIndex].Operations, operation)
+		owners[i] = owner
+		counts[owner]++
+	}
+
+	if err := chargeDecoded[opset.Operation](budget, uint64(len(operations))); err != nil {
+		return err
+	}
+
+	for i := range changes {
+		changes[i].Operations = make([]opset.Operation, 0, counts[i])
+	}
+	for i, operation := range operations {
+		owner := owners[i]
+		changes[owner].Operations = append(changes[owner].Operations, operation)
 	}
 
 	for i := range changes {
@@ -544,32 +723,44 @@ func assignOperations(changes []opset.Change, operations []opset.Operation) erro
 				return left.ID.Compare(right.ID)
 			},
 		)
-	}
 
-	// The per-actor bounds above are a permissive lower bound that only has to
-	// locate operations. A change's operations carry consecutive counters ending
-	// at maxOp, so the real start operation follows from the operation count, and
-	// re-encoding the change depends on it being exact.
-	for i := range changes {
-		count := uint64(len(changes[i].Operations))
-		if count > changes[i].MaxOp {
+		expected := uint64(0)
+		if changes[i].MaxOp >= changes[i].StartOp {
+			expected = changes[i].MaxOp - changes[i].StartOp + 1
+		}
+		if uint64(len(changes[i].Operations)) != expected {
 			return fmt.Errorf(
-				"change %d holds %d operations but ends at operation %d",
+				"change %d holds %d operations, expected %d for range %d..%d",
 				i,
-				count,
+				len(changes[i].Operations),
+				expected,
+				changes[i].StartOp,
 				changes[i].MaxOp,
 			)
 		}
-
-		changes[i].StartOp = changes[i].MaxOp - count + 1
 	}
 
 	return nil
 }
 
-func validateSnapshotGraph(changes []opset.Change, heads []uint64) error {
+func validateSnapshotGraph(
+	changes []opset.Change,
+	heads []uint64,
+	budget *decodeBudget,
+) error {
+	if err := chargeDecoded[bool](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+
 	dependedOn := make([]bool, len(changes))
 	for i, change := range changes {
+		if err := chargeDecodedMap[uint64, struct{}](
+			budget,
+			uint64(len(change.DependencyIndexes)),
+		); err != nil {
+			return err
+		}
+
 		seen := make(map[uint64]struct{}, len(change.DependencyIndexes))
 		for _, dependency := range change.DependencyIndexes {
 			if dependency >= uint64(len(changes)) {
@@ -589,7 +780,11 @@ func validateSnapshotGraph(changes []opset.Change, heads []uint64) error {
 		}
 	}
 
-	if err := detectIndexCycle(changes); err != nil {
+	if err := detectIndexCycle(changes, budget); err != nil {
+		return err
+	}
+
+	if err := chargeDecodedMap[uint64, struct{}](budget, uint64(len(changes))); err != nil {
 		return err
 	}
 
@@ -599,6 +794,10 @@ func validateSnapshotGraph(changes []opset.Change, heads []uint64) error {
 		if !isDependedOn {
 			expectedHeads[uint64(i)] = struct{}{}
 		}
+	}
+
+	if err := chargeDecodedMap[uint64, struct{}](budget, uint64(len(heads))); err != nil {
+		return err
 	}
 
 	actualHeads := make(map[uint64]struct{}, len(heads))
@@ -614,36 +813,56 @@ func validateSnapshotGraph(changes []opset.Change, heads []uint64) error {
 		return fmt.Errorf("head indexes do not match graph frontier")
 	}
 
-	return validateActorSequences(changes)
+	return validateActorSequences(changes, budget)
 }
 
-func detectIndexCycle(changes []opset.Change) error {
-	state := make([]uint8, len(changes))
-
-	var visit func(int) error
-
-	visit = func(index int) error {
-		switch state[index] {
-		case 1:
-			return fmt.Errorf("dependency cycle includes change %d", index)
-		case 2:
-			return nil
-		}
-
-		state[index] = 1
-		for _, dependency := range changes[index].DependencyIndexes {
-			if err := visit(int(dependency)); err != nil {
-				return err
-			}
-		}
-
-		state[index] = 2
-
-		return nil
+func detectIndexCycle(changes []opset.Change, budget *decodeBudget) error {
+	type traversalFrame struct {
+		index          int
+		nextDependency int
 	}
-	for i := range changes {
-		if err := visit(i); err != nil {
-			return err
+
+	if err := chargeDecoded[uint8](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+	if err := chargeDecoded[traversalFrame](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+
+	state := make([]uint8, len(changes))
+	stack := make([]traversalFrame, 0, len(changes))
+
+	for root := range changes {
+		if state[root] == 2 {
+			continue
+		}
+
+		state[root] = 1
+		stack = append(stack, traversalFrame{index: root})
+
+		for len(stack) > 0 {
+			frame := &stack[len(stack)-1]
+			dependencies := changes[frame.index].DependencyIndexes
+
+			if frame.nextDependency >= len(dependencies) {
+				state[frame.index] = 2
+				stack = stack[:len(stack)-1]
+
+				continue
+			}
+
+			dependency := int(dependencies[frame.nextDependency])
+			frame.nextDependency++
+
+			switch state[dependency] {
+			case 1:
+				return fmt.Errorf("dependency cycle includes change %d", dependency)
+			case 2:
+				continue
+			default:
+				state[dependency] = 1
+				stack = append(stack, traversalFrame{index: dependency})
+			}
 		}
 	}
 
@@ -664,7 +883,20 @@ func mapsEqual[K comparable](left, right map[K]struct{}) bool {
 	return true
 }
 
-func validateActorSequences(changes []opset.Change) error {
+func validateActorSequences(
+	changes []opset.Change,
+	budget *decodeBudget,
+) error {
+	if err := chargeDecodedMap[opset.ActorID, []opset.Change](
+		budget,
+		uint64(len(changes)),
+	); err != nil {
+		return err
+	}
+	if err := chargeDecodedSliceGrowth[opset.Change](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+
 	byActor := make(map[opset.ActorID][]opset.Change)
 	for _, change := range changes {
 		byActor[change.Actor] = append(byActor[change.Actor], change)
@@ -730,7 +962,16 @@ func validateActorSequences(changes []opset.Change) error {
 	return nil
 }
 
-func mergeActors(existing, additions []opset.ActorID) []opset.ActorID {
+func mergeActors(
+	existing []opset.ActorID,
+	additions []opset.ActorID,
+	budget *decodeBudget,
+) ([]opset.ActorID, error) {
+	count := uint64(len(existing) + len(additions))
+	if err := chargeDecodedMap[opset.ActorID, struct{}](budget, count); err != nil {
+		return nil, err
+	}
+
 	set := make(map[opset.ActorID]struct{}, len(existing)+len(additions))
 	for _, actor := range existing {
 		set[actor] = struct{}{}
@@ -738,6 +979,10 @@ func mergeActors(existing, additions []opset.ActorID) []opset.ActorID {
 
 	for _, actor := range additions {
 		set[actor] = struct{}{}
+	}
+
+	if err := chargeDecoded[opset.ActorID](budget, uint64(len(set))); err != nil {
+		return nil, err
 	}
 
 	result := make([]opset.ActorID, 0, len(set))
@@ -748,14 +993,21 @@ func mergeActors(existing, additions []opset.ActorID) []opset.ActorID {
 	slices.SortFunc(
 		result,
 		func(left, right opset.ActorID) int {
-			return left.Compare(right)
+			switch {
+			case string(left) < string(right):
+				return -1
+			case string(left) > string(right):
+				return 1
+			default:
+				return 0
+			}
 		},
 	)
 
-	return result
+	return result, nil
 }
 
-func validateDocument(document *opset.Document) error {
+func validateDocument(document *opset.Document, budget *decodeBudget) error {
 	if len(document.Changes) == 0 {
 		if len(document.Heads) != 0 {
 			return fmt.Errorf("empty history has heads")
@@ -765,13 +1017,29 @@ func validateDocument(document *opset.Document) error {
 	}
 
 	if len(document.ChunkTypes) > 0 && document.ChunkTypes[0] == opset.ChunkDocument {
-		return validateChangeChunksAfterSnapshot(document)
+		return validateChangeChunksAfterSnapshot(document, budget)
 	}
 
-	return validateChangeChunkGraph(document)
+	return validateChangeChunkGraph(document, budget)
 }
 
-func validateChangeChunksAfterSnapshot(document *opset.Document) error {
+func validateChangeChunksAfterSnapshot(
+	document *opset.Document,
+	budget *decodeBudget,
+) error {
+	if err := chargeDecodedMap[opset.ChangeHash, struct{}](
+		budget,
+		uint64(len(document.Changes)),
+	); err != nil {
+		return err
+	}
+	if err := chargeDecodedMap[opset.ChangeHash, struct{}](
+		budget,
+		uint64(len(document.Changes)),
+	); err != nil {
+		return err
+	}
+
 	known := make(map[opset.ChangeHash]struct{})
 	dependedOn := make(map[opset.ChangeHash]struct{})
 
@@ -794,6 +1062,12 @@ func validateChangeChunksAfterSnapshot(document *opset.Document) error {
 	}
 
 	document.Heads = document.Heads[:0]
+	if cap(document.Heads) < len(known) {
+		if err := chargeDecoded[opset.ChangeHash](budget, uint64(len(known))); err != nil {
+			return err
+		}
+		document.Heads = make([]opset.ChangeHash, 0, len(known))
+	}
 
 	for hash := range known {
 		if _, ok := dependedOn[hash]; !ok {
@@ -808,10 +1082,26 @@ func validateChangeChunksAfterSnapshot(document *opset.Document) error {
 		},
 	)
 
-	return validateActorSequences(document.Changes)
+	return validateActorSequences(document.Changes, budget)
 }
 
-func validateChangeChunkGraph(document *opset.Document) error {
+func validateChangeChunkGraph(
+	document *opset.Document,
+	budget *decodeBudget,
+) error {
+	if err := chargeDecodedMap[opset.ChangeHash, opset.Change](
+		budget,
+		uint64(len(document.Changes)),
+	); err != nil {
+		return err
+	}
+	if err := chargeDecodedMap[opset.ChangeHash, struct{}](
+		budget,
+		uint64(len(document.Changes)),
+	); err != nil {
+		return err
+	}
+
 	changes := make(map[opset.ChangeHash]opset.Change, len(document.Changes))
 	dependedOn := make(map[opset.ChangeHash]struct{})
 
@@ -838,6 +1128,12 @@ func validateChangeChunkGraph(document *opset.Document) error {
 	}
 
 	document.Heads = document.Heads[:0]
+	if cap(document.Heads) < len(changes) {
+		if err := chargeDecoded[opset.ChangeHash](budget, uint64(len(changes))); err != nil {
+			return err
+		}
+		document.Heads = make([]opset.ChangeHash, 0, len(changes))
+	}
 
 	for hash := range changes {
 		if _, ok := dependedOn[hash]; !ok {
@@ -852,5 +1148,5 @@ func validateChangeChunkGraph(document *opset.Document) error {
 		},
 	)
 
-	return validateActorSequences(document.Changes)
+	return validateActorSequences(document.Changes, budget)
 }

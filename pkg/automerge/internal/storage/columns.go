@@ -25,11 +25,13 @@ import (
 	"compress/flate"
 	"encoding/binary"
 	"fmt"
-	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"io"
 	"math"
 	"slices"
 	"unicode/utf8"
+	"unsafe"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 type (
@@ -54,11 +56,16 @@ type (
 		value T
 		valid bool
 	}
+
+	decodeBudget struct {
+		used uint64
+	}
 )
 
 const (
-	maxDecodedItems  = 100_000_000
-	maxInflatedBytes = 512 << 20
+	maxDecodedItems       = 100_000_000
+	maxDecodedMemoryBytes = 512 << 20
+	maxInflatedBytes      = 512 << 20
 )
 
 func (r *reader) remaining() int {
@@ -181,7 +188,11 @@ func (r *reader) leb() (int64, error) {
 	return 0, fmt.Errorf("LEB at offset %d exceeds 10 bytes", start)
 }
 
-func decodeRLE[T any](data []byte, decodeValue func(*reader) (T, error)) ([]optional[T], error) {
+func decodeRLE[T any](
+	data []byte,
+	decodeValue func(*reader) (T, error),
+	budget *decodeBudget,
+) ([]optional[T], error) {
 	r := &reader{data: data}
 	values := make([]optional[T], 0)
 
@@ -198,7 +209,12 @@ func decodeRLE[T any](data []byte, decodeValue func(*reader) (T, error)) ([]opti
 				return nil, fmt.Errorf("cannot decode repeated value: %w", err)
 			}
 
-			if err := appendRepeated(&values, optional[T]{value: value, valid: true}, uint64(run)); err != nil {
+			if err := appendRepeated(
+				&values,
+				optional[T]{value: value, valid: true},
+				uint64(run),
+				budget,
+			); err != nil {
 				return nil, err
 			}
 		case run == 0:
@@ -211,7 +227,7 @@ func decodeRLE[T any](data []byte, decodeValue func(*reader) (T, error)) ([]opti
 				return nil, fmt.Errorf("null run cannot be empty")
 			}
 
-			if err := appendRepeated(&values, optional[T]{}, count); err != nil {
+			if err := appendRepeated(&values, optional[T]{}, count, budget); err != nil {
 				return nil, err
 			}
 		default:
@@ -221,6 +237,9 @@ func decodeRLE[T any](data []byte, decodeValue func(*reader) (T, error)) ([]opti
 
 			count := uint64(-run)
 			if err := reserveItems(len(values), count); err != nil {
+				return nil, err
+			}
+			if err := chargeDecodedSliceGrowth[optional[T]](budget, count); err != nil {
 				return nil, err
 			}
 
@@ -240,8 +259,16 @@ func decodeRLE[T any](data []byte, decodeValue func(*reader) (T, error)) ([]opti
 	return values, nil
 }
 
-func appendRepeated[T any](values *[]optional[T], value optional[T], count uint64) error {
+func appendRepeated[T any](
+	values *[]optional[T],
+	value optional[T],
+	count uint64,
+	budget *decodeBudget,
+) error {
 	if err := reserveItems(len(*values), count); err != nil {
+		return err
+	}
+	if err := chargeDecodedSliceGrowth[optional[T]](budget, count); err != nil {
 		return err
 	}
 
@@ -258,6 +285,79 @@ func appendRepeated[T any](values *[]optional[T], value optional[T], count uint6
 	return nil
 }
 
+func chargeDecoded[T any](budget *decodeBudget, count uint64) error {
+	if budget == nil || count == 0 {
+		return nil
+	}
+
+	size := uint64(unsafe.Sizeof(*new(T)))
+	if size != 0 && count > math.MaxUint64/size {
+		return fmt.Errorf("decoded memory size overflows uint64")
+	}
+
+	bytes := size * count
+	if budget.used > maxDecodedMemoryBytes ||
+		bytes > maxDecodedMemoryBytes-budget.used {
+		return fmt.Errorf("decoded columns exceed %d bytes", maxDecodedMemoryBytes)
+	}
+
+	budget.used += bytes
+
+	return nil
+}
+
+func chargeDecodedSliceGrowth[T any](budget *decodeBudget, count uint64) error {
+	if count > math.MaxUint64/2 {
+		return fmt.Errorf("decoded slice growth overflows uint64")
+	}
+
+	// append and slices.Grow may reserve more than the requested logical length.
+	// Charging twice the added elements bounds Go's geometric slice growth.
+	return chargeDecoded[T](budget, count*2)
+}
+
+func chargeDecodedBytes(budget *decodeBudget, bytes uint64) error {
+	if budget == nil || bytes == 0 {
+		return nil
+	}
+	if budget.used > maxDecodedMemoryBytes ||
+		bytes > maxDecodedMemoryBytes-budget.used {
+		return fmt.Errorf("decoded columns exceed %d bytes", maxDecodedMemoryBytes)
+	}
+
+	budget.used += bytes
+
+	return nil
+}
+
+func releaseDecodedBytes(budget *decodeBudget, bytes uint64) {
+	if budget == nil {
+		return
+	}
+	if bytes > budget.used {
+		panic("decoded memory budget underflow")
+	}
+
+	budget.used -= bytes
+}
+
+func chargeDecodedMap[K comparable, V any](budget *decodeBudget, count uint64) error {
+	type entry struct {
+		key   K
+		value V
+	}
+
+	size := uint64(unsafe.Sizeof(entry{}))
+	if size != 0 && count > math.MaxUint64/size/2 {
+		return fmt.Errorf("decoded map size overflows uint64")
+	}
+
+	// Go maps allocate buckets, overflow storage, and bookkeeping in addition to
+	// their logical entries. Charging twice the entry size is a conservative
+	// bound for the maps used by the decoder.
+	return chargeDecodedBytes(budget, size*count*2)
+}
+
 func reserveItems(existing int, additional uint64) error {
 	if additional > maxDecodedItems || uint64(existing)+additional > maxDecodedItems {
 		return fmt.Errorf("decoded column exceeds %d items", maxDecodedItems)
@@ -267,22 +367,42 @@ func reserveItems(existing int, additional uint64) error {
 }
 
 func decodeULEBColumn(data []byte) ([]optional[uint64], error) {
+	return decodeULEBColumnWithBudget(data, nil)
+}
+
+func decodeULEBColumnWithBudget(
+	data []byte,
+	budget *decodeBudget,
+) ([]optional[uint64], error) {
 	return decodeRLE(
 		data,
 		func(r *reader) (uint64, error) {
 			return r.uleb()
 		},
+		budget,
 	)
 }
 
 func decodeDeltaColumn(data []byte) ([]optional[uint64], error) {
+	return decodeDeltaColumnWithBudget(data, nil)
+}
+
+func decodeDeltaColumnWithBudget(
+	data []byte,
+	budget *decodeBudget,
+) ([]optional[uint64], error) {
 	deltas, err := decodeRLE(
 		data,
 		func(r *reader) (int64, error) {
 			return r.leb()
 		},
+		budget,
 	)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := chargeDecoded[optional[uint64]](budget, uint64(len(deltas))); err != nil {
 		return nil, err
 	}
 
@@ -308,13 +428,25 @@ func decodeDeltaColumn(data []byte) ([]optional[uint64], error) {
 }
 
 func decodeSignedDeltaColumn(data []byte) ([]optional[int64], error) {
+	return decodeSignedDeltaColumnWithBudget(data, nil)
+}
+
+func decodeSignedDeltaColumnWithBudget(
+	data []byte,
+	budget *decodeBudget,
+) ([]optional[int64], error) {
 	deltas, err := decodeRLE(
 		data,
 		func(r *reader) (int64, error) {
 			return r.leb()
 		},
+		budget,
 	)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := chargeDecoded[optional[int64]](budget, uint64(len(deltas))); err != nil {
 		return nil, err
 	}
 
@@ -370,6 +502,13 @@ func addSigned(value uint64, delta int64) (uint64, error) {
 }
 
 func decodeStringColumn(data []byte) ([]optional[string], error) {
+	return decodeStringColumnWithBudget(data, nil)
+}
+
+func decodeStringColumnWithBudget(
+	data []byte,
+	budget *decodeBudget,
+) ([]optional[string], error) {
 	return decodeRLE(
 		data,
 		func(r *reader) (string, error) {
@@ -386,14 +525,29 @@ func decodeStringColumn(data []byte) ([]optional[string], error) {
 			if !utf8.Valid(value) {
 				return "", fmt.Errorf("string is not valid UTF-8")
 			}
+			if err := chargeDecodedBytes(budget, uint64(len(value))); err != nil {
+				return "", err
+			}
 
 			return string(value), nil
 		},
+		budget,
 	)
 }
 
 func decodeBooleanColumn(data []byte, expected int) ([]bool, error) {
+	return decodeBooleanColumnWithBudget(data, expected, nil)
+}
+
+func decodeBooleanColumnWithBudget(
+	data []byte,
+	expected int,
+	budget *decodeBudget,
+) ([]bool, error) {
 	r := &reader{data: data}
+	if err := chargeDecoded[bool](budget, uint64(expected)); err != nil {
+		return nil, err
+	}
 	values := make([]bool, 0, expected)
 	current := false
 
@@ -403,8 +557,8 @@ func decodeBooleanColumn(data []byte, expected int) ([]bool, error) {
 			return nil, fmt.Errorf("cannot decode boolean run: %w", err)
 		}
 
-		if err := reserveItems(len(values), count); err != nil {
-			return nil, err
+		if count > uint64(expected-len(values)) {
+			return nil, fmt.Errorf("boolean column exceeds expected %d items", expected)
 		}
 
 		for range count {
@@ -421,7 +575,11 @@ func decodeBooleanColumn(data []byte, expected int) ([]bool, error) {
 	return values, nil
 }
 
-func parseColumnMetadata(r *reader, allowCompressed bool) ([]columnMeta, error) {
+func parseColumnMetadata(
+	r *reader,
+	allowCompressed bool,
+	budget *decodeBudget,
+) ([]columnMeta, error) {
 	count, err := r.uleb()
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode column count: %w", err)
@@ -429,6 +587,9 @@ func parseColumnMetadata(r *reader, allowCompressed bool) ([]columnMeta, error) 
 
 	if count > maxDecodedItems {
 		return nil, fmt.Errorf("column count %d exceeds limit", count)
+	}
+	if err := chargeDecoded[columnMeta](budget, count); err != nil {
+		return nil, err
 	}
 
 	metadata := make([]columnMeta, 0, count)
@@ -478,7 +639,15 @@ func parseColumnMetadata(r *reader, allowCompressed bool) ([]columnMeta, error) 
 	return metadata, nil
 }
 
-func readColumns(r *reader, metadata []columnMeta) (map[uint32]column, error) {
+func readColumns(
+	r *reader,
+	metadata []columnMeta,
+	budget *decodeBudget,
+) (map[uint32]column, error) {
+	if err := chargeDecodedMap[uint32, column](budget, uint64(len(metadata))); err != nil {
+		return nil, err
+	}
+
 	columns := make(map[uint32]column, len(metadata))
 	for i, meta := range metadata {
 		data, err := r.bytes(meta.length)
@@ -487,7 +656,7 @@ func readColumns(r *reader, metadata []columnMeta) (map[uint32]column, error) {
 		}
 
 		if meta.compressed {
-			data, err = inflate(data)
+			data, err = inflate(data, budget)
 			if err != nil {
 				return nil, fmt.Errorf("cannot inflate column %d: %w", i, err)
 			}
@@ -495,7 +664,7 @@ func readColumns(r *reader, metadata []columnMeta) (map[uint32]column, error) {
 
 		columns[meta.normalized] = column{
 			specification: meta.specification,
-			data:          append([]byte(nil), data...),
+			data:          data,
 		}
 	}
 
@@ -523,34 +692,101 @@ func deflate(data []byte) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func inflate(data []byte) ([]byte, error) {
+func inflate(data []byte, budget *decodeBudget) ([]byte, error) {
 	compressed := flate.NewReader(bytes.NewReader(data))
 	defer func() { _ = compressed.Close() }()
 
-	output, err := io.ReadAll(io.LimitReader(compressed, maxInflatedBytes+1))
-	if err != nil {
-		return nil, fmt.Errorf("cannot read DEFLATE stream: %w", err)
+	const readSize = 32 << 10
+	if err := chargeDecodedBytes(budget, readSize); err != nil {
+		return nil, err
 	}
+	buffer := make([]byte, readSize)
+	defer releaseDecodedBytes(budget, readSize)
 
-	if len(output) > maxInflatedBytes {
-		return nil, fmt.Errorf("inflated data exceeds %d bytes", maxInflatedBytes)
+	var output []byte
+	for {
+		count, err := compressed.Read(buffer)
+		if count > 0 {
+			if len(output) > maxInflatedBytes-count {
+				return nil, fmt.Errorf("inflated data exceeds %d bytes", maxInflatedBytes)
+			}
+
+			required := len(output) + count
+			if required > cap(output) {
+				capacity := max(required, max(readSize, cap(output)*2))
+				capacity = min(capacity, maxInflatedBytes)
+				if err := chargeDecodedBytes(budget, uint64(capacity)); err != nil {
+					return nil, err
+				}
+
+				grown := make([]byte, len(output), capacity)
+				copy(grown, output)
+				releaseDecodedBytes(budget, uint64(cap(output)))
+				output = grown
+			}
+
+			output = append(output, buffer[:count]...)
+		}
+
+		if err == io.EOF {
+			return output, nil
+		}
+		if err != nil {
+			return nil, fmt.Errorf("cannot read DEFLATE stream: %w", err)
+		}
 	}
-
-	return output, nil
 }
 
 func decodeScalars(metaData, rawData []byte, expected int) ([]optional[opset.Scalar], error) {
-	metadata, err := decodeULEBColumn(metaData)
+	values, _, err := decodeScalarsInternal(metaData, rawData, expected, nil, false)
+
+	return values, err
+}
+
+func decodeScalarsWithRaw(
+	metaData []byte,
+	rawData []byte,
+	expected int,
+	budget *decodeBudget,
+) ([]optional[opset.Scalar], [][]byte, error) {
+	return decodeScalarsInternal(metaData, rawData, expected, budget, true)
+}
+
+func decodeScalarsInternal(
+	metaData []byte,
+	rawData []byte,
+	expected int,
+	budget *decodeBudget,
+	retainRaw bool,
+) ([]optional[opset.Scalar], [][]byte, error) {
+	metadata, err := decodeULEBColumnWithBudget(metaData, budget)
 	if err != nil {
-		return nil, fmt.Errorf("cannot decode value metadata: %w", err)
+		return nil, nil, fmt.Errorf("cannot decode value metadata: %w", err)
 	}
 
 	if len(metadata) != expected {
-		return nil, fmt.Errorf("value metadata has %d items, expected %d", len(metadata), expected)
+		return nil, nil, fmt.Errorf(
+			"value metadata has %d items, expected %d",
+			len(metadata),
+			expected,
+		)
 	}
 
 	raw := &reader{data: rawData}
+	if err := chargeDecoded[optional[opset.Scalar]](budget, uint64(expected)); err != nil {
+		return nil, nil, err
+	}
+	if retainRaw {
+		if err := chargeDecoded[[]byte](budget, uint64(expected)); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	values := make([]optional[opset.Scalar], expected)
+	var rawValues [][]byte
+	if retainRaw {
+		rawValues = make([][]byte, expected)
+	}
 
 	for i, item := range metadata {
 		if !item.valid {
@@ -562,25 +798,36 @@ func decodeScalars(metaData, rawData []byte, expected int) ([]optional[opset.Sca
 
 		valueBytes, err := raw.bytes(length)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read scalar %d: %w", i, err)
+			return nil, nil, fmt.Errorf("cannot read scalar %d: %w", i, err)
 		}
 
-		scalar, err := decodeScalar(scalarType, valueBytes)
+		scalar, err := decodeScalarWithBudget(scalarType, valueBytes, budget)
 		if err != nil {
-			return nil, fmt.Errorf("cannot decode scalar %d: %w", i, err)
+			return nil, nil, fmt.Errorf("cannot decode scalar %d: %w", i, err)
 		}
 
 		values[i] = optional[opset.Scalar]{value: scalar, valid: true}
+		if retainRaw {
+			rawValues[i] = valueBytes
+		}
 	}
 
 	if raw.remaining() != 0 {
-		return nil, fmt.Errorf("value column has %d trailing bytes", raw.remaining())
+		return nil, nil, fmt.Errorf("value column has %d trailing bytes", raw.remaining())
 	}
 
-	return values, nil
+	return values, rawValues, nil
 }
 
 func decodeScalar(scalarType opset.ScalarType, data []byte) (opset.Scalar, error) {
+	return decodeScalarWithBudget(scalarType, data, nil)
+}
+
+func decodeScalarWithBudget(
+	scalarType opset.ScalarType,
+	data []byte,
+	budget *decodeBudget,
+) (opset.Scalar, error) {
 	scalar := opset.Scalar{Type: scalarType}
 	switch scalarType {
 	case opset.ScalarNull:
@@ -621,12 +868,15 @@ func decodeScalar(scalarType opset.ScalarType, data []byte) (opset.Scalar, error
 		if !utf8.Valid(data) {
 			return opset.Scalar{}, fmt.Errorf("string scalar is not valid UTF-8")
 		}
+		if err := chargeDecodedBytes(budget, uint64(len(data))); err != nil {
+			return opset.Scalar{}, err
+		}
 
 		scalar.String = string(data)
 	case opset.ScalarBytes:
-		scalar.Bytes = append([]byte(nil), data...)
+		scalar.Bytes = data
 	default:
-		scalar.Raw = append([]byte(nil), data...)
+		scalar.Raw = data
 	}
 
 	return scalar, nil

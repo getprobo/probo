@@ -24,9 +24,11 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
+	"math"
 	"strings"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -384,7 +386,7 @@ func TestValidateSnapshotGraph_RejectsCycle(t *testing.T) {
 		},
 	}
 
-	err = validateSnapshotGraph(changes, nil)
+	err = validateSnapshotGraph(changes, nil, &decodeBudget{})
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "dependency cycle")
 }
@@ -400,7 +402,256 @@ func TestValidateSnapshotGraph_RejectsSequenceGap(t *testing.T) {
 		{Actor: actor, Sequence: 3, MaxOp: 2, DependencyIndexes: []uint64{0}},
 	}
 
-	err = validateSnapshotGraph(changes, []uint64{1})
+	err = validateSnapshotGraph(changes, []uint64{1}, &decodeBudget{})
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "sequence 3, expected 2")
+}
+
+func TestAssignOperations_UsesDependencyClock(t *testing.T) {
+	t.Parallel()
+
+	firstActor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+	secondActor, err := opset.NewActorID([]byte{2})
+	require.NoError(t, err)
+
+	changes := []opset.Change{
+		{Actor: firstActor, Sequence: 1, MaxOp: 1},
+		{
+			Actor:             secondActor,
+			Sequence:          1,
+			MaxOp:             2,
+			DependencyIndexes: []uint64{0},
+		},
+		{
+			Actor:             firstActor,
+			Sequence:          2,
+			MaxOp:             3,
+			DependencyIndexes: []uint64{1},
+		},
+	}
+	operations := []opset.Operation{
+		{ID: opset.OpID{Actor: firstActor, Counter: 1}},
+		{ID: opset.OpID{Actor: secondActor, Counter: 2}},
+		{ID: opset.OpID{Actor: firstActor, Counter: 3}},
+	}
+
+	err = assignOperations(changes, operations, &decodeBudget{})
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), changes[0].StartOp)
+	assert.Equal(t, uint64(2), changes[1].StartOp)
+	assert.Equal(t, uint64(3), changes[2].StartOp)
+	require.Len(t, changes[2].Operations, 1)
+	assert.Equal(t, uint64(3), changes[2].Operations[0].ID.Counter)
+}
+
+func TestAssignOperations_DoesNotAllocateFromEncodedRange(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	changes := []opset.Change{{Actor: actor, Sequence: 1, MaxOp: math.MaxUint32}}
+
+	err = assignOperations(changes, nil, &decodeBudget{})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "expected")
+	assert.Empty(t, changes[0].Operations)
+}
+
+func TestDecodeColumns_SharesMemoryBudget(t *testing.T) {
+	t.Parallel()
+
+	itemSize := uint64(unsafe.Sizeof(optional[uint64]{}))
+	budget := &decodeBudget{used: maxDecodedMemoryBytes - itemSize*2}
+
+	_, err := decodeULEBColumnWithBudget([]byte{1, 1}, budget)
+	require.NoError(t, err)
+
+	_, err = decodeULEBColumnWithBudget([]byte{1, 1}, budget)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "decoded columns exceed")
+}
+
+func TestDecodeOptionalColumns_ChargeAbsentDefaults(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		size   uint64
+		decode func(*decodeBudget) error
+	}{
+		"delta": {
+			size: uint64(unsafe.Sizeof(optional[uint64]{})),
+			decode: func(budget *decodeBudget) error {
+				_, err := decodeOptionalDelta(nil, 1, "value", 1, budget)
+
+				return err
+			},
+		},
+		"signed delta": {
+			size: uint64(unsafe.Sizeof(optional[int64]{})),
+			decode: func(budget *decodeBudget) error {
+				_, err := decodeOptionalSignedDelta(nil, 1, "value", 1, budget)
+
+				return err
+			},
+		},
+		"ULEB": {
+			size: uint64(unsafe.Sizeof(optional[uint64]{})),
+			decode: func(budget *decodeBudget) error {
+				_, err := decodeOptionalULEB(nil, 1, "value", 1, budget)
+
+				return err
+			},
+		},
+		"string": {
+			size: uint64(unsafe.Sizeof(optional[string]{})),
+			decode: func(budget *decodeBudget) error {
+				_, err := decodeOptionalStrings(nil, 1, "value", 1, budget)
+
+				return err
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				budget := &decodeBudget{
+					used: maxDecodedMemoryBytes - test.size + 1,
+				}
+				err := test.decode(budget)
+				require.Error(t, err)
+				assert.ErrorContains(t, err, "decoded columns exceed")
+			},
+		)
+	}
+}
+
+func TestDecodeStringColumn_ChargesPayloadCopy(t *testing.T) {
+	t.Parallel()
+
+	headerSize := uint64(unsafe.Sizeof(optional[string]{})) * 2
+	budget := &decodeBudget{
+		used: maxDecodedMemoryBytes - headerSize - 2,
+	}
+
+	_, err := decodeStringColumnWithBudget([]byte{1, 3, 'a', 'b', 'c'}, budget)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "decoded columns exceed")
+}
+
+func TestAssignOperations_HandlesDeepDependencyGraphIteratively(t *testing.T) {
+	t.Parallel()
+
+	const count = 100_000
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	changes := make([]opset.Change, count)
+	for i := range changes {
+		changes[i] = opset.Change{
+			Actor:    actor,
+			Sequence: uint64(i + 1),
+		}
+		if i > 0 {
+			changes[i].DependencyIndexes = []uint64{uint64(i - 1)}
+		}
+	}
+
+	err = assignOperations(changes, nil, &decodeBudget{})
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), changes[len(changes)-1].StartOp)
+}
+
+func TestDecodeDocumentChanges_RejectsSequenceOutsideUint32Domain(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	columns := map[uint32]column{
+		1:  {specification: 1, data: encodeRLE([]optional[uint64]{some(uint64(0))}, appendULEB)},
+		3:  {specification: 3, data: encodeDelta([]optional[int64]{some(int64(math.MaxUint32) + 1)})},
+		19: {specification: 19, data: encodeDelta([]optional[int64]{some(int64(0))})},
+		64: {specification: 64, data: encodeRLE([]optional[uint64]{some(uint64(0))}, appendULEB)},
+	}
+
+	_, _, err = decodeDocumentChanges(columns, []opset.ActorID{actor}, &decodeBudget{})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "sequence")
+	assert.ErrorContains(t, err, "uint32")
+}
+
+func TestDecode_OwnsRetainedPayloads(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	property := "payload"
+	identifier := opset.OpID{Actor: actor, Counter: 1}
+	change := opset.Change{
+		Actor:      actor,
+		Sequence:   1,
+		StartOp:    1,
+		MaxOp:      1,
+		ExtraBytes: []byte{4, 5},
+		Operations: []opset.Operation{
+			{
+				ID:     identifier,
+				Object: opset.RootObject(),
+				Key:    opset.Key{Property: &property},
+				Action: opset.ActionSet,
+				Value:  &opset.Scalar{Type: opset.ScalarBytes, Bytes: []byte{1, 2, 3}},
+			},
+		},
+	}
+
+	changeData, err := EncodeChange(&change)
+	require.NoError(t, err)
+	expectedRaw := append([]byte(nil), changeData...)
+
+	decodedChange, err := Decode(changeData)
+	require.NoError(t, err)
+	clear(changeData)
+
+	require.Len(t, decodedChange.Changes, 1)
+	require.Len(t, decodedChange.Changes[0].Operations, 1)
+	require.NotNil(t, decodedChange.Changes[0].Operations[0].Value)
+	assert.Equal(t, []byte{1, 2, 3}, decodedChange.Changes[0].Operations[0].Value.Bytes)
+	assert.Equal(t, []byte{4, 5}, decodedChange.Changes[0].ExtraBytes)
+	assert.Equal(t, expectedRaw, decodedChange.Changes[0].Raw)
+
+	document := &opset.Document{
+		Heads:   []opset.ChangeHash{*change.Hash},
+		Changes: []opset.Change{change},
+		UnknownColumns: []opset.RawColumn{
+			{Specification: 200, Data: []byte{6, 7}},
+		},
+	}
+	snapshotData, err := EncodeDocument(document, []opset.OpID{identifier}, false)
+	require.NoError(t, err)
+
+	decodedSnapshot, err := Decode(snapshotData)
+	require.NoError(t, err)
+	clear(snapshotData)
+
+	require.Len(t, decodedSnapshot.Changes, 1)
+	require.Len(t, decodedSnapshot.Changes[0].Operations, 1)
+	require.NotNil(t, decodedSnapshot.Changes[0].Operations[0].Value)
+	assert.Equal(t, []byte{1, 2, 3}, decodedSnapshot.Changes[0].Operations[0].Value.Bytes)
+	assert.Equal(t, []byte{4, 5}, decodedSnapshot.Changes[0].ExtraBytes)
+
+	foundUnknown := false
+	for _, column := range decodedSnapshot.UnknownColumns {
+		if bytes.Equal(column.Data, []byte{6, 7}) {
+			foundUnknown = true
+		}
+	}
+	assert.True(t, foundUnknown)
 }

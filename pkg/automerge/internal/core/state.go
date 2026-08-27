@@ -23,10 +23,11 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"slices"
 	"sort"
 	"strings"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 type (
@@ -624,6 +625,86 @@ func (s *State) applyPending(operations []opset.Operation) error {
 	}
 
 	return nil
+}
+
+// undoPending removes operations in reverse transaction order. Removing the
+// newest operation first mirrors Rust's transaction rollback and lets each
+// predecessor become visible again as soon as its last superseding operation is
+// removed.
+func (s *State) undoPending(operations []opset.Operation) {
+	for i := len(operations) - 1; i >= 0; i-- {
+		operation := operations[i]
+
+		delete(s.operations, operation.ID)
+		s.removeMapKeyOperation(operation)
+		s.invalidateObjectCaches(operation.Object)
+
+		for _, predecessor := range operation.Predecessors {
+			if !s.isSupersededByRemainingOperation(predecessor) {
+				delete(s.superseded, predecessor)
+			}
+		}
+	}
+}
+
+func (s *State) removeMapKeyOperation(operation opset.Operation) {
+	if !s.mapKeyIndexBuilt || operation.Key.Property == nil {
+		return
+	}
+
+	properties, ok := s.mapKeyIndex[operation.Object]
+	if !ok {
+		return
+	}
+
+	property := *operation.Key.Property
+	identifiers := properties[property]
+
+	for i, identifier := range identifiers {
+		if identifier == operation.ID {
+			properties[property] = append(identifiers[:i], identifiers[i+1:]...)
+
+			break
+		}
+	}
+
+	if len(properties[property]) == 0 {
+		delete(properties, property)
+	}
+	if len(properties) == 0 {
+		delete(s.mapKeyIndex, operation.Object)
+	}
+}
+
+func (s *State) invalidateObjectCaches(object opset.ObjectID) {
+	if object.IsRoot {
+		return
+	}
+
+	delete(s.sequenceCache, object.OpID)
+	delete(s.insertOrderCache, object.OpID)
+	delete(s.insertOrderPositionCache, object.OpID)
+	delete(s.sequenceValuesCache, object.OpID)
+	delete(s.sequenceElementsCache, object.OpID)
+	delete(s.sequenceOffsetCache, object.OpID)
+}
+
+func (s *State) isSupersededByRemainingOperation(identifier opset.OpID) bool {
+	predecessor, ok := s.operations[identifier]
+
+	for _, operation := range s.operations {
+		if !slices.Contains(operation.Predecessors, identifier) {
+			continue
+		}
+
+		if operation.Action != opset.ActionIncrement ||
+			!ok ||
+			!isCounterOperation(predecessor) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *State) recordAppliedChange(change *opset.Change) {

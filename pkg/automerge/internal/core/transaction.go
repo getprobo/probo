@@ -253,27 +253,30 @@ func (b *Engine) Rollback() (uint64, error) {
 		return 0, nil
 	}
 
-	data := append([]byte(nil), b.base...)
-	for _, change := range b.appended {
-		data = append(data, change...)
-	}
-
-	document, err := storage.Decode(data)
-	if err != nil {
-		return 0, fmt.Errorf("cannot decode committed state during rollback: %w", err)
-	}
-
-	state, err := NewStateFromDocument(document)
-	if err != nil {
-		return 0, fmt.Errorf("cannot restore committed state during rollback: %w", err)
-	}
-
 	cancelled := uint64(len(b.pending))
-	b.state = state
-	b.nextOp = state.maxOpGlobal() + 1
+	rolledBack := make(map[opset.OpID]struct{}, len(b.pending))
+	for _, operation := range b.pending {
+		rolledBack[operation.ID] = struct{}{}
+	}
+
+	b.state.undoPending(b.pending)
+
+	for handle, object := range b.objects {
+		if object.IsRoot {
+			continue
+		}
+
+		if _, ok := rolledBack[object.OpID]; ok {
+			delete(b.objects, handle)
+		}
+	}
+
+	b.nextOp = b.state.maxOpGlobal() + 1
+	if b.isolationActive && b.fullState != nil {
+		b.nextOp = max(b.nextOp, b.fullState.maxOpGlobal()+1)
+	}
+
 	b.pending = nil
-	b.objects = map[uint32]opset.ObjectID{0: opset.RootObject()}
-	b.nextHandle = 1
 	b.revision++
 
 	return cancelled, nil

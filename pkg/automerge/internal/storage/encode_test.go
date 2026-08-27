@@ -25,6 +25,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
 
 // TestChangeEncodingExpandedRoundTrip reproduces the upstream
@@ -109,4 +111,25 @@ func TestEncodeRLE_CanonicalRuns(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestEncodeScalar_ValidatesWireTypeAndUTF8(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := encodeScalar(
+		&opset.Scalar{Type: opset.ScalarString, String: string([]byte{0xff})},
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "valid UTF-8")
+
+	_, _, err = encodeScalar(&opset.Scalar{Type: opset.ScalarType(0x10)})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "exceeds 0x0f")
+
+	metadata, data, err := encodeScalar(
+		&opset.Scalar{Type: opset.ScalarType(0x0f), Raw: []byte{1, 2, 3}},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, some(uint64(0x3f)), metadata)
+	assert.Equal(t, []byte{1, 2, 3}, data)
 }
