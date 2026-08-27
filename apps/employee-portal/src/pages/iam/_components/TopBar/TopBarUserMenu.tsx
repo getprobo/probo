@@ -87,6 +87,8 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
       // survives the session it belonged to. Site-root path — basename
       // would prefix /employee-portal.
       window.location.href = "/auth/login";
+    }).catch(() => {
+      // errorToast already handles user-facing feedback.
     });
   }
 

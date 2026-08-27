@@ -23,7 +23,7 @@ import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
-import { Link, matchPath, useLocation, useNavigate } from "react-router";
+import { Link, matchPath, useLocation, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { PasswordSignInPageMutation } from "#/__generated__/iam/PasswordSignInPageMutation.graphql";
@@ -42,6 +42,7 @@ const signInMutation = graphql`
 export default function PasswordSignInPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
   const { t } = useTranslation();
@@ -62,14 +63,15 @@ export default function PasswordSignInPage() {
       { path: "/organizations/:organizationId", caseSensitive: false, end: false },
       new URL(postAuthRedirectUrl, window.location.origin).pathname,
     );
+    const organizationId
+      = match?.params.organizationId ?? searchParams.get("organization-id") ?? undefined;
 
     signIn({
       variables: {
         input: {
           email: emailValue,
           password: passwordValue,
-          // Assume when signing in
-          organizationId: match && match.params.organizationId,
+          organizationId,
         },
       },
       onCompleted: (_, error) => {

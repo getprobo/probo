@@ -44,13 +44,18 @@ function MainLayoutQueryLoader() {
     throw new NotFoundError("organizationId is required");
   }
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <MainLayoutSkeleton />;
   }
 
   return (
-    <Suspense fallback={<MainLayoutSkeleton />}>
-      <MainLayout queryRef={queryRef} />
+    <Suspense key={organizationId} fallback={<MainLayoutSkeleton />}>
+      <MainLayout queryRef={currentQueryRef} />
     </Suspense>
   );
 }

@@ -28,7 +28,7 @@ import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
 
 export const mainLayoutQuery = graphql`
   query MainLayoutQuery($organizationId: ID!) @throwOnFieldError {
-    organization: node(id: $organizationId) @required(action: THROW) {
+    organization: node(id: $organizationId) {
       __typename
       ... on Organization {
         ...TopBar_organization
@@ -44,7 +44,7 @@ interface MainLayoutProps {
 export function MainLayout({ queryRef }: MainLayoutProps) {
   const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
 
-  if (data.organization.__typename !== "Organization") {
+  if (data.organization == null || data.organization.__typename !== "Organization") {
     throw new NotFoundError("invalid type for organization node");
   }
 

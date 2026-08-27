@@ -124,6 +124,7 @@ export function OrganizationsPage({ queryRef }: OrganizationsPageProps) {
                   size={2}
                   icon={<MagnifyingGlassIcon />}
                   placeholder={t("organizationsPage.searchPlaceholder")}
+                  aria-label={t("organizationsPage.searchPlaceholder")}
                   value={search}
                   onValueChange={setSearch}
                 />
