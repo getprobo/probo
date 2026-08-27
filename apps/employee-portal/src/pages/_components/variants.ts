@@ -106,7 +106,7 @@ export const documentQueueSummary = tv({
     frame: "relative flex flex-col items-center justify-center gap-6 overflow-hidden border-b border-sand-a2 px-8 py-12",
     wash: [
       "pointer-events-none absolute inset-x-0 top-0 z-0 h-full",
-      "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
+      "bg-[radial-gradient(ellipse_70%_52%_at_50%_-8%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
       "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
     ],
     content: "relative z-1 flex w-full flex-col items-center gap-6",
