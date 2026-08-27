@@ -70,6 +70,27 @@
   "common": {
     "error": "Something went wrong"
   },
+  "documents": {
+    "lastUpdated": "Last updated",
+    "types": {
+      "other": "Other",
+      "governance": "Governance",
+      "policy": "Policy",
+      "procedure": "Procedure",
+      "plan": "Plan",
+      "register": "Register",
+      "record": "Record",
+      "report": "Report",
+      "template": "Template",
+      "statement_of_applicability": "Statement of applicability"
+    },
+    "classifications": {
+      "public": "Public",
+      "internal": "Internal",
+      "confidential": "Confidential",
+      "secret": "Secret"
+    }
+  },
   "errors": {
     "notFound": {
       "title": "Page not found",

@@ -92,3 +92,68 @@ export const dashboardCard = tv({
     wash: false,
   },
 });
+
+export const pageHeader = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    crumbs: "flex items-center gap-3",
+    chevron: "size-3 shrink-0 text-sand-11",
+  },
+});
+
+export const documentQueueSummary = tv({
+  slots: {
+    frame: "relative flex flex-col items-center justify-center gap-6 overflow-hidden border-b border-sand-a2 px-8 py-12",
+    wash: [
+      "pointer-events-none absolute inset-x-0 top-0 z-0 h-full",
+      "bg-[radial-gradient(ellipse_85%_55%_at_50%_0%,rgb(230_255_3_/_0.72)_0%,rgb(230_255_3_/_0.28)_35%,transparent_62%)]",
+      "mask-[linear-gradient(to_bottom,black_0%,black_40%,transparent_100%)]",
+    ],
+    content: "relative z-1 flex w-full flex-col items-center gap-6",
+    copy: "flex w-full flex-col items-center gap-4",
+    icon: "size-8 shrink-0 text-sand-a9 [&_svg]:size-8",
+  },
+});
+
+export const employeeDocumentListItem = tv({
+  slots: {
+    item: "h-12 gap-8 border-sand-a2 px-8 py-0 last:border-b-0",
+    title: "min-w-0 flex-1 truncate",
+    meta: "flex shrink-0 items-center gap-4",
+    timestamp: "flex items-center gap-[3px]",
+    timestampLabel: "text-sand-a8 whitespace-nowrap",
+    timestampValue: "w-32 truncate text-sand-a11",
+    chip: "w-24 truncate text-sand-a11",
+    chevron: "size-4 shrink-0 text-sand-11",
+    hit: "absolute inset-0 z-0 cursor-pointer outline-none focus-visible:bg-sand-2",
+    body: "relative z-1 flex min-w-0 flex-1 items-center gap-8",
+  },
+  variants: {
+    trailing: {
+      action: {},
+      chevron: {
+        item: "relative cursor-pointer",
+        body: "pointer-events-none",
+      },
+    },
+  },
+});
+
+export const documentEmpty = tv({
+  slots: {
+    frame: "flex h-[200px] flex-col items-center justify-center gap-6",
+    icon: "size-8 text-sand-a9 [&_svg]:size-8",
+    copy: "flex flex-col items-center gap-2 text-center",
+    label: "text-sand-9",
+  },
+});
+
+export const documentListSection = tv({
+  slots: {
+    root: "flex flex-col gap-9",
+    heading: "flex items-center gap-1",
+    frame: "overflow-hidden rounded-5 border border-sand-a3 bg-sand-1",
+    list: "rounded-none border-0",
+    more: "flex justify-center pt-4",
+  },
+});
