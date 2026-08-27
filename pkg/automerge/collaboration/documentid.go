@@ -166,6 +166,7 @@ func base58Encode(input []byte) string {
 	zero := new(big.Int)
 
 	var reversed []byte
+
 	for value.Cmp(zero) > 0 {
 		value.DivMod(value, radix, remainder)
 		reversed = append(reversed, base58Alphabet[remainder.Int64()])

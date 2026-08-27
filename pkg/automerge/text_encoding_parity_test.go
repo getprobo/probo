@@ -54,6 +54,7 @@ func seedText(
 	text, err := document.CreateText("text")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, content))
+
 	_, err = document.Commit("seed", commitTime)
 	require.NoError(t, err)
 
@@ -92,6 +93,7 @@ func TestRustTextEncoding_SpliceText(t *testing.T) {
 	for _, engine := range rustParityEngines() {
 		document, _, text := seedText(t, engine, "hello "+familyEmoji+" world")
 		require.NoError(t, text.Splice(18, 0, "beautiful "))
+
 		_, err := document.Commit("splice", commitTime)
 		require.NoError(t, err)
 
@@ -143,6 +145,7 @@ func TestRustTextEncoding_Put(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 			),
 		)
+
 		_, err := document.Commit("put", commitTime)
 		require.NoError(t, err)
 
@@ -175,6 +178,7 @@ func TestRustTextEncoding_Insert(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 			),
 		)
+
 		_, err := document.Commit("insert", commitTime)
 		require.NoError(t, err)
 
@@ -200,6 +204,7 @@ func TestRustTextEncoding_Delete(t *testing.T) {
 	for _, engine := range rustParityEngines() {
 		document, object, text := seedText(t, engine, "he"+familyEmoji+"llo")
 		require.NoError(t, object.DeleteIndex(13))
+
 		_, err := document.Commit("delete", commitTime)
 		require.NoError(t, err)
 
@@ -232,6 +237,7 @@ func diffTextPatches(
 		before, err := document.Heads()
 		require.NoError(t, err)
 		require.NoError(t, mutate(object, text))
+
 		after, err := document.Commit("mutate", commitTime)
 		require.NoError(t, err)
 
@@ -330,6 +336,7 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
+
 		_, err := document.Commit("mark", commitTime)
 		require.NoError(t, err)
 		require.NoError(t, document.UpdateDiffCursor())
@@ -337,6 +344,7 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 		var patches []automerge.Patch
 
 		require.NoError(t, text.Splice(1, 0, "-"))
+
 		_, err = document.Commit("s1", commitTime)
 		require.NoError(t, err)
 		first, err := document.DiffIncremental()
@@ -345,6 +353,7 @@ func TestRustText_IncrementalSplicePatchesIncludeMarks(t *testing.T) {
 		patches = append(patches, first...)
 
 		require.NoError(t, text.Splice(2, 0, "-"))
+
 		_, err = document.Commit("s2", commitTime)
 		require.NoError(t, err)
 		second, err := document.DiffIncremental()
@@ -390,11 +399,13 @@ func TestRustText_NoexpandMarksAtEndOfText(t *testing.T) {
 				automerge.MarkExpandNone,
 			),
 		)
+
 		_, err := document.Commit("mark", commitTime)
 		require.NoError(t, err)
 		require.NoError(t, document.UpdateDiffCursor())
 
 		require.NoError(t, text.Splice(11, 0, "a"))
+
 		_, err = document.Commit("append", commitTime)
 		require.NoError(t, err)
 
@@ -459,6 +470,7 @@ func TestRustText_LocalPatchesCreatedForMarks(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
+
 		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
@@ -521,6 +533,7 @@ func TestRustTextEncoding_PatchPutText(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 			),
 		)
+
 		_, err := document.Commit("put", commitTime)
 		require.NoError(t, err)
 
@@ -652,12 +665,14 @@ func TestTextDiff_MarkRemovalMatchesReference(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
+
 		_, err := document.Commit("mark", commitTime)
 		require.NoError(t, err)
 
 		before, err := document.Heads()
 		require.NoError(t, err)
 		require.NoError(t, text.Unmark(0, 5, "bold", automerge.MarkExpandBoth))
+
 		after, err := document.Commit("unmark", commitTime)
 		require.NoError(t, err)
 
@@ -694,6 +709,7 @@ func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
+
 		_, err := document.Commit("red", commitTime)
 		require.NoError(t, err)
 
@@ -710,6 +726,7 @@ func TestTextDiff_MarkValueChangeMatchesReference(t *testing.T) {
 				automerge.MarkExpandBoth,
 			),
 		)
+
 		after, err := document.Commit("blue", commitTime)
 		require.NoError(t, err)
 

@@ -90,6 +90,7 @@ func (s *State) hydratedMapValue(
 	}
 
 	properties := make(map[string][]opset.Operation)
+
 	for _, operation := range s.operations {
 		if operation.Object != object ||
 			operation.Key.Property == nil ||

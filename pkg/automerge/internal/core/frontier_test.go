@@ -182,6 +182,7 @@ func TestChangesSince_DegradesToReachablePrefix(t *testing.T) {
 		// Every emitted change's dependencies precede it, so the prefix replays.
 		for _, dependency := range change.Dependencies {
 			found := false
+
 			for _, earlier := range changes[:i] {
 				if earlier.Hash != nil && *earlier.Hash == dependency {
 					found = true

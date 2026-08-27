@@ -110,6 +110,7 @@ func newBaseDocument(t *testing.T) []byte {
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "Hello"))
+
 	_, err = document.Commit("Create document", commitTime)
 	require.NoError(t, err)
 
@@ -164,6 +165,7 @@ func TestDocument_ConcurrentChangesConverge(t *testing.T) {
 	leftText, err := left.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, leftText.Splice(5, 0, " left"))
+
 	_, err = left.Commit("Edit left", commitTime.Add(time.Second))
 	require.NoError(t, err)
 
@@ -173,6 +175,7 @@ func TestDocument_ConcurrentChangesConverge(t *testing.T) {
 	rightText, err := right.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, rightText.Splice(5, 0, " right"))
+
 	_, err = right.Commit("Edit right", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 
@@ -240,6 +243,7 @@ func TestText_CursorTracksConcurrentEdits(t *testing.T) {
 	cursor, err := text.Cursor(4)
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "A"))
+
 	_, err = document.Commit("Insert prefix", commitTime.Add(time.Second))
 	require.NoError(t, err)
 
@@ -274,9 +278,11 @@ func TestSyncState_ExchangesConcurrentChanges(t *testing.T) {
 	rightText, err := right.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, leftText.Splice(5, 0, " left"))
+
 	_, err = left.Commit("Edit left", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	require.NoError(t, rightText.Splice(5, 0, " right"))
+
 	_, err = right.Commit("Edit right", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 

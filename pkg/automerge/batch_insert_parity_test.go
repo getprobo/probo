@@ -191,6 +191,7 @@ func TestRustBatch_InsertIntoExistingMap(t *testing.T) {
 				),
 			),
 		)
+
 		_, err = doc.Commit("batch", commitTime)
 		require.NoError(t, err)
 
@@ -252,6 +253,7 @@ func TestRustBatch_PutOverwriteWithNestedStructure(t *testing.T) {
 				),
 			),
 		)
+
 		_, err = doc.Commit("overwrite", commitTime)
 		require.NoError(t, err)
 
@@ -307,6 +309,7 @@ func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "shared"},
 			),
 		)
+
 		_, err = doc1.Commit("shared", commitTime)
 		require.NoError(t, err)
 
@@ -325,6 +328,7 @@ func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 				},
 			),
 		)
+
 		_, err = doc1.Commit("doc1", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -341,6 +345,7 @@ func TestRustBatch_SpliceMergesCorrectly(t *testing.T) {
 				},
 			),
 		)
+
 		_, err = doc2.Commit("doc2", commitTime.Add(time.Second))
 		require.NoError(t, err)
 

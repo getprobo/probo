@@ -38,6 +38,7 @@ func TestDocument_AppliesDependentChangesInAnyOrder(t *testing.T) {
 	baseText, err := base.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, baseText.Splice(0, 0, "A"))
+
 	_, err = base.Commit("base", commitTime)
 	require.NoError(t, err)
 	baseHeads, err := base.Heads()
@@ -51,9 +52,11 @@ func TestDocument_AppliesDependentChangesInAnyOrder(t *testing.T) {
 	sourceText, err := source.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, sourceText.Splice(1, 0, "B"))
+
 	parentHash, err := source.Commit("parent", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	require.NoError(t, sourceText.Splice(2, 0, "C"))
+
 	childHash, err := source.Commit("child", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 
@@ -116,6 +119,7 @@ func TestDocument_InvalidChangesDoNotMutateState(t *testing.T) {
 	text, err := document.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "Stable"))
+
 	_, err = document.Commit("initial", commitTime)
 	require.NoError(t, err)
 	headsBefore, err := document.Heads()
@@ -187,6 +191,7 @@ func TestDocument_IncrementalSaveLoadParity(t *testing.T) {
 				text, err := source.CreateText("body")
 				require.NoError(t, err)
 				require.NoError(t, text.Splice(0, 0, "A"))
+
 				_, err = source.Commit("first", commitTime)
 				require.NoError(t, err)
 				first, err := source.SaveIncremental()
@@ -212,6 +217,7 @@ func TestDocument_IncrementalSaveLoadParity(t *testing.T) {
 				assert.Zero(t, applied)
 
 				require.NoError(t, text.Splice(1, 0, "B"))
+
 				_, err = source.Commit("second", commitTime.Add(time.Second))
 				require.NoError(t, err)
 				second, err := source.SaveIncremental()
@@ -297,6 +303,7 @@ func TestDocument_MergedChangesForwardToThirdPeer(t *testing.T) {
 	sourceText, err := source.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, sourceText.Splice(5, 0, " forwarded"))
+
 	_, err = source.Commit("source edit", commitTime.Add(time.Second))
 	require.NoError(t, err)
 
@@ -339,6 +346,7 @@ func TestSyncState_DuplicateMessagesAreIdempotent(t *testing.T) {
 	sourceText, err := source.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, sourceText.Splice(0, 0, "Once"))
+
 	_, err = source.Commit("create body", commitTime)
 	require.NoError(t, err)
 
@@ -383,6 +391,7 @@ func TestSyncState_ResumesPersistedSession(t *testing.T) {
 	leftText, err := left.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, leftText.Splice(0, 0, "A"))
+
 	_, err = left.Commit("initial", commitTime)
 	require.NoError(t, err)
 
@@ -413,6 +422,7 @@ func TestSyncState_ResumesPersistedSession(t *testing.T) {
 	closeSyncState(t, resumedRight)
 
 	require.NoError(t, leftText.Splice(1, 0, "B"))
+
 	_, err = left.Commit("incremental", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	synchronize(t, resumedLeft, resumedRight)
@@ -433,6 +443,7 @@ func TestSyncState_ResendsInFlightMessageAfterRestore(t *testing.T) {
 	sourceText, err := source.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, sourceText.Splice(0, 0, "Recovered"))
+
 	_, err = source.Commit("initial", commitTime)
 	require.NoError(t, err)
 
@@ -558,6 +569,7 @@ func TestSyncState_ThreePeerRelayConvergesWithReference(t *testing.T) {
 	firstText, err := first.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, firstText.Splice(0, 0, "A"))
+
 	_, err = first.Commit("initial", commitTime)
 	require.NoError(t, err)
 
@@ -592,12 +604,15 @@ func TestSyncState_ThreePeerRelayConvergesWithReference(t *testing.T) {
 	thirdText, err := third.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, firstText.Splice(1, 0, "1"))
+
 	_, err = first.Commit("first edit", commitTime.Add(time.Second))
 	require.NoError(t, err)
 	require.NoError(t, secondText.Splice(1, 0, "2"))
+
 	_, err = second.Commit("second edit", commitTime.Add(2*time.Second))
 	require.NoError(t, err)
 	require.NoError(t, thirdText.Splice(1, 0, "3"))
+
 	_, err = third.Commit("third edit", commitTime.Add(3*time.Second))
 	require.NoError(t, err)
 

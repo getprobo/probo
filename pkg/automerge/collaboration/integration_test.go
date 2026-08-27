@@ -35,6 +35,7 @@ var _ collaboration.SyncSession = (*automerge.SyncState)(nil)
 
 func actor(value byte) automerge.ActorID {
 	var actorID automerge.ActorID
+
 	actorID[0] = value
 
 	return actorID
@@ -54,16 +55,19 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 	// Server document: the authority, holding "hello" in a text object.
 	server, err := automerge.New(actor(1))
 	require.NoError(t, err)
+
 	defer func() { _ = server.Close() }()
 
 	text, err := server.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "hello"))
+
 	_, err = server.Commit("seed", commitTime())
 	require.NoError(t, err)
 
 	serverSync, err := server.NewSyncState()
 	require.NoError(t, err)
+
 	defer func() { _ = serverSync.Close() }()
 
 	conn, err := collaboration.NewServerConn(
@@ -76,10 +80,12 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 	// Client document: empty, learning the document over the connection.
 	client, err := automerge.New(actor(2))
 	require.NoError(t, err)
+
 	defer func() { _ = client.Close() }()
 
 	clientSync, err := client.NewSyncState()
 	require.NoError(t, err)
+
 	defer func() { _ = clientSync.Close() }()
 
 	join, err := collaboration.EncodeJoinFrame(
@@ -112,7 +118,6 @@ func TestServerConn_ConvergesRealDocument(t *testing.T) {
 	// protocol bug from hanging the test.
 	for range 20 {
 		deliverToClient(toClient)
-		toClient = nil
 
 		message, ok, err := clientSync.GenerateMessage()
 		require.NoError(t, err)

@@ -33,7 +33,6 @@ import (
 // cleanly. Splice positions are expressed in UTF-16 code units, matching the
 // default text encoding used by the reference backend.
 func (b *Engine) UpdateText(handle uint32, value string) error {
-
 	if _, err := b.textObject(handle); err != nil {
 		return err
 	}

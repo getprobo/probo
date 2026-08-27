@@ -48,6 +48,7 @@ func TestDocument_AnonymizePreservesPendingSource(t *testing.T) {
 	sourceValue, err := document.String("private-key")
 	require.NoError(t, err)
 	assert.Equal(t, "private value", sourceValue)
+
 	cancelled, err := document.Rollback()
 	require.NoError(t, err)
 	assert.Equal(t, uint64(1), cancelled)

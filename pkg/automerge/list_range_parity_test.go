@@ -174,10 +174,12 @@ func TestRustListRange_Conflict(t *testing.T) {
 		otherList, err := other.Root().Object("list")
 		require.NoError(t, err)
 		require.NoError(t, otherList.PutScalarAt(3, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 11}))
+
 		_, err = other.Commit("other", commitTime.Add(1))
 		require.NoError(t, err)
 
 		require.NoError(t, list.PutScalarAt(3, automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 10}))
+
 		_, err = document.Commit("mine", commitTime.Add(1))
 		require.NoError(t, err)
 

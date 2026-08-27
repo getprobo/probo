@@ -48,6 +48,7 @@ func TestJSCursors_GetCursorRespectsHeads(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, text.Splice(3, 1, "~~~"))
+
 		_, err = document.Commit("replace", commitTime.Add(1))
 		require.NoError(t, err)
 

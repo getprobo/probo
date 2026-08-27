@@ -406,6 +406,7 @@ func encodeDocumentChangeColumns(
 		}
 
 		extraMetadata[i] = metadata
+
 		extraData = append(extraData, data...)
 	}
 
@@ -512,6 +513,7 @@ func encodeDocumentOperationColumns(
 		}
 
 		valueMetadata[i] = metadata
+
 		valueData = append(valueData, data...)
 
 		successorSize[i] = some(uint64(len(operation.Successors)))

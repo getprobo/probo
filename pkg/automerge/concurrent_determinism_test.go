@@ -278,6 +278,7 @@ func conflictedMapDocument(
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "base"},
 		),
 	)
+
 	_, err = base.Commit("seed", commitTime)
 	require.NoError(t, err)
 
@@ -334,6 +335,7 @@ func conflictedListDocument(
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "base"},
 		),
 	)
+
 	_, err = base.Commit("seed", commitTime)
 	require.NoError(t, err)
 
@@ -349,6 +351,7 @@ func conflictedListDocument(
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "L"},
 		),
 	)
+
 	_, err = left.Commit("left", commitTime)
 	require.NoError(t, err)
 
@@ -362,6 +365,7 @@ func conflictedListDocument(
 			automerge.Scalar{Type: automerge.ScalarTypeString, String: "R"},
 		),
 	)
+
 	_, err = right.Commit("right", commitTime)
 	require.NoError(t, err)
 

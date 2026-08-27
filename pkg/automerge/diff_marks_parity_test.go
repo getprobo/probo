@@ -384,15 +384,18 @@ func TestRustDiffMarks(t *testing.T) {
 					require.NoError(t, err)
 
 					scenario.setup(t, text)
+
 					_, err = document.Commit("setup", commitTime)
 					require.NoError(t, err)
 
 					require.NoError(t, text.UpdateSpans(scenario.spans, scenario.config))
+
 					_, err = document.Commit("update", commitTime)
 					require.NoError(t, err)
 
 					if scenario.post != nil {
 						scenario.post(t, text)
+
 						_, err = document.Commit("post", commitTime)
 						require.NoError(t, err)
 					}
@@ -434,6 +437,7 @@ func TestRustDiffMarks_Idempotent(t *testing.T) {
 				config := automerge.UpdateSpansConfig{DefaultExpand: automerge.MarkExpandAfter}
 
 				require.NoError(t, text.UpdateSpans(spans, config))
+
 				_, err = document.Commit("first", commitTime)
 				require.NoError(t, err)
 
@@ -441,10 +445,12 @@ func TestRustDiffMarks_Idempotent(t *testing.T) {
 				require.NoError(t, err)
 
 				require.NoError(t, text.UpdateSpans(spans, config))
+
 				second, err := document.Heads()
 				require.NoError(t, err)
 
 				require.NoError(t, text.UpdateSpans(spans, config))
+
 				third, err := document.Heads()
 				require.NoError(t, err)
 
@@ -477,11 +483,13 @@ func TestRustDiffMarks_Alternating(t *testing.T) {
 		text, err := document.CreateText("text")
 		require.NoError(t, err)
 		require.NoError(t, text.Splice(0, 0, "text"))
+
 		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
 		for index, round := range rounds {
 			require.NoError(t, text.UpdateSpans(round, config))
+
 			_, err = document.Commit("round", commitTime.Add(time.Duration(index+1)*time.Second))
 			require.NoError(t, err)
 		}

@@ -161,6 +161,7 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 				nativeText,
 				characters,
 			)
+
 			_, err = nativeDocument.Commit(
 
 				fmt.Sprintf("native history %d round %d", history, round),
@@ -174,6 +175,7 @@ func TestPureGoDocument_RandomConcurrentSyncParity(t *testing.T) {
 				referenceText,
 				characters,
 			)
+
 			_, err = referenceDocument.Commit(
 
 				fmt.Sprintf("reference history %d round %d", history, round),

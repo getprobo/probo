@@ -49,6 +49,7 @@ func TestRustText_SimpleUpdateText(t *testing.T) {
 		text, err := document.CreateText("text")
 		require.NoError(t, err)
 		require.NoError(t, text.Splice(0, 0, "Hello, world!"))
+
 		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
@@ -61,10 +62,12 @@ func TestRustText_SimpleUpdateText(t *testing.T) {
 		otherText, err := otherObject.Text()
 		require.NoError(t, err)
 		require.NoError(t, otherText.Update("Goodbye, world!"))
+
 		_, err = other.Commit("goodbye", commitTime)
 		require.NoError(t, err)
 
 		require.NoError(t, text.Update("Hello, friends!"))
+
 		_, err = document.Commit("friends", commitTime)
 		require.NoError(t, err)
 
@@ -100,6 +103,7 @@ func TestRustText_UpdateTextBigOleGraphemes(t *testing.T) {
 		text, err := document.CreateText("text")
 		require.NoError(t, err)
 		require.NoError(t, text.Splice(0, 0, "left👨‍👩‍👦right"))
+
 		_, err = document.Commit("seed", commitTime)
 		require.NoError(t, err)
 
@@ -112,10 +116,12 @@ func TestRustText_UpdateTextBigOleGraphemes(t *testing.T) {
 		otherText, err := otherObject.Text()
 		require.NoError(t, err)
 		require.NoError(t, otherText.Update("left👨‍👩‍👧right"))
+
 		_, err = other.Commit("girl", commitTime)
 		require.NoError(t, err)
 
 		require.NoError(t, text.Update("left👨‍👩‍👦‍👦right"))
+
 		_, err = document.Commit("boys", commitTime)
 		require.NoError(t, err)
 

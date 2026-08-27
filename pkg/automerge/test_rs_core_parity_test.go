@@ -136,6 +136,7 @@ func TestRust_RepeatedListAssignmentResolvesConflict(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 123},
 			),
 		)
+
 		_, err = doc1.Commit("insert", commitTime)
 		require.NoError(t, err)
 
@@ -154,6 +155,7 @@ func TestRust_RepeatedListAssignmentResolvesConflict(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 456},
 			),
 		)
+
 		_, err = doc2.Commit("put 456", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -167,6 +169,7 @@ func TestRust_RepeatedListAssignmentResolvesConflict(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 789},
 			),
 		)
+
 		_, err = doc1.Commit("put 789", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 
@@ -322,6 +325,7 @@ func TestRust_ChangesWithinConflictingMapField(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 42},
 			),
 		)
+
 		_, err = doc2.Commit("map", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -363,6 +367,7 @@ func TestRust_ChangesWithinConflictingListElement(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "hello"},
 			),
 		)
+
 		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -390,6 +395,7 @@ func TestRust_ChangesWithinConflictingListElement(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 1},
 			),
 		)
+
 		_, err = doc1.Commit("doc1 map", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -418,6 +424,7 @@ func TestRust_ChangesWithinConflictingListElement(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeInt, Int: 2},
 			),
 		)
+
 		_, err = doc2.Commit("doc2 values", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 
@@ -463,6 +470,7 @@ func TestRust_ConcurrentlyAssignedNestedMapsShouldNotMerge(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "blue"},
 			),
 		)
+
 		_, err = doc1.Commit("doc1 config", commitTime)
 		require.NoError(t, err)
 
@@ -479,6 +487,7 @@ func TestRust_ConcurrentlyAssignedNestedMapsShouldNotMerge(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "logo.png"},
 			),
 		)
+
 		_, err = doc2.Commit("doc2 config", commitTime)
 		require.NoError(t, err)
 
@@ -523,6 +532,7 @@ func TestRust_ConcurrentDeletionOfSameListElement(t *testing.T) {
 				},
 			),
 		)
+
 		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -535,9 +545,11 @@ func TestRust_ConcurrentDeletionOfSameListElement(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, list1.DeleteIndex(1))
+
 		_, err = doc1.Commit("doc1 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 		require.NoError(t, list2.DeleteIndex(1))
+
 		_, err = doc2.Commit("doc2 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -584,6 +596,7 @@ func TestRust_ConcurrentUpdatesAtDifferentLevels(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "starling"},
 			),
 		)
+
 		mammals, err := animals.CreateObject("mammals", automerge.ObjectTypeList)
 		require.NoError(t, err)
 		require.NoError(
@@ -594,6 +607,7 @@ func TestRust_ConcurrentUpdatesAtDifferentLevels(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "badger"},
 			),
 		)
+
 		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -611,12 +625,14 @@ func TestRust_ConcurrentUpdatesAtDifferentLevels(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "sparrow"},
 			),
 		)
+
 		_, err = doc1.Commit("doc1 update", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
 		animals2, err := doc2.Root().Object("animals")
 		require.NoError(t, err)
 		require.NoError(t, animals2.DeleteKey("birds"))
+
 		_, err = doc2.Commit("doc2 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -663,6 +679,7 @@ func TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "black"},
 			),
 		)
+
 		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -673,6 +690,7 @@ func TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects(t *testing.T) {
 		closeDocument(t, doc2)
 
 		require.NoError(t, birds.DeleteKey("blackbird"))
+
 		_, err = doc1.Commit("doc1 delete", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -688,6 +706,7 @@ func TestRust_ConcurrentUpdatesOfConcurrentlyDeletedObjects(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "orange"},
 			),
 		)
+
 		_, err = doc2.Commit("doc2 update", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -728,6 +747,7 @@ func TestRust_InsertionConsistentWithCausality(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "four"},
 			),
 		)
+
 		_, err = doc1.Commit("four", commitTime)
 		require.NoError(t, err)
 
@@ -746,6 +766,7 @@ func TestRust_InsertionConsistentWithCausality(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "three"},
 			),
 		)
+
 		_, err = doc2.Commit("three", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -759,6 +780,7 @@ func TestRust_InsertionConsistentWithCausality(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "two"},
 			),
 		)
+
 		_, err = doc1.Commit("two", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 
@@ -772,6 +794,7 @@ func TestRust_InsertionConsistentWithCausality(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "one"},
 			),
 		)
+
 		_, err = doc2.Commit("one", commitTime.Add(3*time.Second))
 		require.NoError(t, err)
 
@@ -814,6 +837,7 @@ func TestRust_SaveRestoreComplex1(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: false},
 			),
 		)
+
 		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -834,6 +858,7 @@ func TestRust_SaveRestoreComplex1(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "weed plants"},
 			),
 		)
+
 		_, err = doc2.Commit("weed", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -845,6 +870,7 @@ func TestRust_SaveRestoreComplex1(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "kill plants"},
 			),
 		)
+
 		_, err = doc1.Commit("kill", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -907,6 +933,7 @@ func TestRust_SaveRestoreComplexTransactional(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeBoolean, Bool: false},
 			),
 		)
+
 		_, err = doc1.Commit("transaction", commitTime)
 		require.NoError(t, err)
 
@@ -927,6 +954,7 @@ func TestRust_SaveRestoreComplexTransactional(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "weed plants"},
 			),
 		)
+
 		_, err = doc2.Commit("transaction", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -938,6 +966,7 @@ func TestRust_SaveRestoreComplexTransactional(t *testing.T) {
 				automerge.Scalar{Type: automerge.ScalarTypeString, String: "kill plants"},
 			),
 		)
+
 		_, err = doc1.Commit("transaction", commitTime.Add(time.Second))
 		require.NoError(t, err)
 
@@ -1452,6 +1481,7 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 						"the sly fox jumped over the lazy dog",
 					),
 				)
+
 				mapA1, err := doc1.Root().CreateObject("map_a", automerge.ObjectTypeMap)
 				require.NoError(t, err)
 				require.NoError(
@@ -1470,6 +1500,7 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value2a"},
 					),
 				)
+
 				_, err = doc1.Commit("doc1", commitTime)
 				require.NoError(t, err)
 
@@ -1480,6 +1511,7 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 				require.NoError(t, err)
 				require.NoError(t, text2.Splice(8, 3, "monkey"))
 				require.NoError(t, text2.Splice(36, 3, "pig"))
+
 				mapC2, err := doc2.Root().CreateObject("map_c", automerge.ObjectTypeMap)
 				require.NoError(t, err)
 				mapA2, err := doc2.Root().Object("map_a")
@@ -1508,6 +1540,7 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 						automerge.Scalar{Type: automerge.ScalarTypeString, String: "value"},
 					),
 				)
+
 				_, err = doc2.Commit("doc2", commitTime.Add(time.Second))
 				require.NoError(t, err)
 
@@ -1517,6 +1550,7 @@ func TestRust_RollbackWithSeveralActors(t *testing.T) {
 				text3, err := doc3.Text("text")
 				require.NoError(t, err)
 				require.NoError(t, text3.Splice(8, 5, "zebra"))
+
 				mapB3, err := doc3.Root().CreateObject("map_b", automerge.ObjectTypeMap)
 				require.NoError(t, err)
 				mapA3, err := doc3.Root().Object("map_a")
@@ -1667,6 +1701,7 @@ func TestRust_ListCounterDel(t *testing.T) {
 				},
 			),
 		)
+
 		_, err = doc1.Commit("base", commitTime)
 		require.NoError(t, err)
 
@@ -1719,6 +1754,7 @@ func TestRust_ListCounterDel(t *testing.T) {
 
 		require.NoError(t, list1.IncrementAt(1, 1))
 		require.NoError(t, list1.IncrementAt(2, 1))
+
 		_, err = doc1.Commit("increments", commitTime.Add(2*time.Second))
 		require.NoError(t, err)
 
@@ -1726,6 +1762,7 @@ func TestRust_ListCounterDel(t *testing.T) {
 		index2[engine.name] = sortedScalarsAt(t, list1, 2)
 
 		require.NoError(t, list1.DeleteIndex(2))
+
 		_, err = doc1.Commit("delete 2", commitTime.Add(3*time.Second))
 		require.NoError(t, err)
 		length, err := list1.Len()
@@ -1744,6 +1781,7 @@ func TestRust_ListCounterDel(t *testing.T) {
 		assert.Equal(t, uint64(2), reloadedLength)
 
 		require.NoError(t, list1.DeleteIndex(1))
+
 		_, err = doc1.Commit("delete 1", commitTime.Add(4*time.Second))
 		require.NoError(t, err)
 		length, err = list1.Len()

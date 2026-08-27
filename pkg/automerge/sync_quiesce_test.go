@@ -70,6 +70,7 @@ func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, text.Splice(5, 0, " second"))
+
 	_, err = source.Commit("child", commitTime)
 	require.NoError(t, err)
 
@@ -86,6 +87,7 @@ func TestSyncState_QuiescesWithOrphanedChange(t *testing.T) {
 	hostText, err := orphanHost.CreateText("host")
 	require.NoError(t, err)
 	require.NoError(t, hostText.Splice(0, 0, "local"))
+
 	_, err = orphanHost.Commit("host", commitTime)
 	require.NoError(t, err)
 
