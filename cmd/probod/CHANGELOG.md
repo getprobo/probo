@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.270.0] - 2026-08-27
+
+### Added
+
+- AWS connector on the WORKLOAD_IDENTITY protocol: one connector covers a whole AWS organization, the customer grants access in their own account so there is no credential to paste or configure, and the accounts beneath it are tracked as cloud accounts
+- Search on the compliance portal visitors list, matching membership name and identity email so people who have not recorded a name still show up
+- Fork a risk analysis, copying diagrams, treatment plans, and their relations into a new analysis so a later period reuses the graph; matrix size stays on the source and the period starts empty
+- Versioned IAB GVL catalog tables storing immutable vendor-list snapshots, so TCF resolves IAB vendor IDs without folding them into the common third-party register
+
+### Changed
+
+- Visitors sort by pending request count by default instead of newest join, with the list toolbar switching to join date and announcing the active sort to screen readers
+- Visitor documents are ordered and filtered by access status on the server through a unified resources connection, with the filter kept in the URL
+- Visitors and document access lists paginate with Show more, fetching 50 rows at a time instead of a fixed first page
+- Validity, audit, and contract ranges use the GraphQL `Period` type, sharing one shape across console, connect, MCP, CLI, n8n, and the UI
+
+### Fixed
+
+- Deactivated portal visitors were dimmed and their grant actions disabled, though membership deactivation blocks console sessions rather than portal sign-in
+
 ## [0.269.0] - 2026-08-26
 
 ### Added
