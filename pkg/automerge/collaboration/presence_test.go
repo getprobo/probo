@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -184,7 +185,18 @@ func TestEncodePresence_RejectsCrossTypeFields(t *testing.T) {
 	t.Parallel()
 
 	_, err := EncodePresence(PresenceMessage{Type: PresenceUpdate})
-	assert.Error(t, err, "update without a channel must be rejected")
+	assert.Error(t, err, "update without a channel and value must be rejected")
+
+	_, err = EncodePresence(
+		PresenceMessage{
+			Type:    PresenceUpdate,
+			Channel: "cursor",
+		},
+	)
+	assert.Error(t, err, "update without a value must be rejected")
+
+	_, err = EncodePresence(PresenceMessage{Type: PresenceSnapshot})
+	assert.Error(t, err, "snapshot without state must be rejected")
 
 	state, err := MarshalPresenceValue(map[string]int{"n": 1})
 	require.NoError(t, err)
@@ -194,6 +206,29 @@ func TestEncodePresence_RejectsCrossTypeFields(t *testing.T) {
 
 	_, err = EncodePresence(PresenceMessage{Type: PresenceType("bogus")})
 	assert.Error(t, err, "unknown type must be rejected")
+}
+
+func TestPresence_ExplicitNullIsPresent(t *testing.T) {
+	t.Parallel()
+
+	null := cbor.RawMessage{0xf6}
+
+	for _, message := range []PresenceMessage{
+		{Type: PresenceUpdate, Channel: "cursor", Value: null},
+		{Type: PresenceSnapshot, State: null},
+	} {
+		encoded, err := EncodePresence(message)
+		require.NoError(t, err)
+
+		decoded, err := DecodePresence(encoded)
+		require.NoError(t, err)
+
+		if message.Type == PresenceUpdate {
+			assert.Equal(t, null, decoded.Value)
+		} else {
+			assert.Equal(t, null, decoded.State)
+		}
+	}
 }
 
 // TestDecodePresence_RejectsNonPresencePayload ensures a well-formed CBOR map

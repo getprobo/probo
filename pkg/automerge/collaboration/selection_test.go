@@ -21,6 +21,7 @@
 package collaboration_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,7 +60,7 @@ func TestTextSelectionValue_SurvivesConcurrentInsert(t *testing.T) {
 		Anchor: cursor,
 		Head:   cursor,
 	}
-	assert.True(t, selection.Collapsed())
+	assert.True(t, bytes.Equal(selection.Anchor, selection.Head))
 
 	message, err := collaboration.NewTextSelectionPresence("", selection)
 	require.NoError(t, err)
@@ -75,7 +76,7 @@ func TestTextSelectionValue_SurvivesConcurrentInsert(t *testing.T) {
 	decoded, err := decodedMessage.TextSelection()
 	require.NoError(t, err)
 	assert.Equal(t, "body", decoded.Field)
-	assert.True(t, decoded.Collapsed())
+	assert.True(t, bytes.Equal(decoded.Anchor, decoded.Head))
 
 	positionBefore, err := text.CursorPosition(automerge.Cursor(decoded.Head))
 	require.NoError(t, err)

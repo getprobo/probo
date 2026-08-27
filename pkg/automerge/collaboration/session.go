@@ -22,6 +22,8 @@ package collaboration
 
 import "fmt"
 
+const maxEphemeralSessions = 4096
+
 // ServerConfig configures one server side of a collaboration connection.
 type ServerConfig struct {
 	// ServerPeerID is the peer id the server advertises in its peer reply. It is
@@ -156,6 +158,13 @@ type Inbound struct {
 // frames are de-duplicated by session and count; the remote-heads control
 // messages are ignored by a single-authority gateway.
 func (s *ServerSession) Receive(frameData []byte) (Inbound, error) {
+	return s.receive(frameData, nil)
+}
+
+func (s *ServerSession) receive(
+	frameData []byte,
+	validateDocument func(Message) error,
+) (Inbound, error) {
 	if !s.joined {
 		return Inbound{}, fmt.Errorf("received a document frame before the handshake completed")
 	}
@@ -172,6 +181,16 @@ func (s *ServerSession) Receive(frameData []byte) (Inbound, error) {
 			return Inbound{}, err
 		}
 
+		if err := s.validateRoute(message); err != nil {
+			return Inbound{}, err
+		}
+
+		if validateDocument != nil {
+			if err := validateDocument(message); err != nil {
+				return Inbound{}, err
+			}
+		}
+
 		return Inbound{Kind: InboundSync, Message: message}, nil
 	case MessageEphemeral:
 		message, err := DecodeMessage(frameData)
@@ -179,15 +198,40 @@ func (s *ServerSession) Receive(frameData []byte) (Inbound, error) {
 			return Inbound{}, err
 		}
 
+		if err := s.validateRoute(message); err != nil {
+			return Inbound{}, err
+		}
+
+		if validateDocument != nil {
+			if err := validateDocument(message); err != nil {
+				return Inbound{}, err
+			}
+		}
+
+		duplicate, err := s.seenEphemeral(message)
+		if err != nil {
+			return Inbound{}, err
+		}
+
 		return Inbound{
 			Kind:      InboundEphemeral,
 			Message:   message,
-			Duplicate: s.seenEphemeral(message),
+			Duplicate: duplicate,
 		}, nil
 	case MessageDocUnavailable:
 		message, err := DecodeMessage(frameData)
 		if err != nil {
 			return Inbound{}, err
+		}
+
+		if err := s.validateRoute(message); err != nil {
+			return Inbound{}, err
+		}
+
+		if validateDocument != nil {
+			if err := validateDocument(message); err != nil {
+				return Inbound{}, err
+			}
 		}
 
 		return Inbound{Kind: InboundDocUnavailable, Message: message}, nil
@@ -198,18 +242,45 @@ func (s *ServerSession) Receive(frameData []byte) (Inbound, error) {
 	}
 }
 
+func (s *ServerSession) validateRoute(message Message) error {
+	if message.SenderID != s.remotePeerID {
+		return fmt.Errorf(
+			"repo message sender %q does not match negotiated peer %q",
+			message.SenderID,
+			s.remotePeerID,
+		)
+	}
+
+	if message.TargetID != s.config.ServerPeerID {
+		return fmt.Errorf(
+			"repo message target %q does not match server peer %q",
+			message.TargetID,
+			s.config.ServerPeerID,
+		)
+	}
+
+	return nil
+}
+
 // seenEphemeral records an ephemeral message and reports whether it is a gossip
 // duplicate. A message whose count is at or below the highest already recorded
 // for its session has been seen; the protocol guarantees counts increase.
-func (s *ServerSession) seenEphemeral(message Message) bool {
+func (s *ServerSession) seenEphemeral(message Message) (bool, error) {
 	highest, ok := s.highestCount[message.SessionID]
 	if ok && message.Count <= highest {
-		return true
+		return true, nil
+	}
+
+	if !ok && len(s.highestCount) >= maxEphemeralSessions {
+		return false, fmt.Errorf(
+			"ephemeral session limit of %d exceeded",
+			maxEphemeralSessions,
+		)
 	}
 
 	s.highestCount[message.SessionID] = message.Count
 
-	return false
+	return false, nil
 }
 
 // RemotePeerID returns the client's peer id once the handshake has completed.

@@ -164,4 +164,20 @@ func TestEncodeFrames_Validation(t *testing.T) {
 
 	_, err = EncodePeerFrame(PeerFrame{Type: FramePeer, SenderID: "s", TargetID: "c"})
 	assert.Error(t, err, "peer without a selected version must be rejected")
+
+	_, err = EncodePeerFrame(
+		PeerFrame{
+			Type:                    FramePeer,
+			SenderID:                "s",
+			TargetID:                "c",
+			SelectedProtocolVersion: "2",
+		},
+	)
+	assert.Error(t, err, "peer selecting a protocol other than v1 must be rejected")
+
+	_, err = EncodeErrorFrame(ErrorFrame{Type: FrameError, SenderID: "s", TargetID: "c"})
+	assert.Error(t, err, "error without a message must be rejected")
+
+	_, err = EncodeErrorFrame(ErrorFrame{Type: FrameError, Message: "failed"})
+	assert.Error(t, err, "error without sender and target ids must be rejected")
 }

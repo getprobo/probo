@@ -38,6 +38,8 @@ const DocumentIDByteLength = 16
 // base58Alphabet is the Bitcoin base58 alphabet automerge-repo's bs58check uses.
 const base58Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
+const maxDocumentIDLength = 28
+
 // EncodeDocumentID encodes a 16-byte identifier as an automerge-repo document id
 // using base58check (base58 of the payload followed by the first four bytes of
 // its double SHA-256), matching @automerge/automerge-repo's binaryToDocumentId.
@@ -189,6 +191,14 @@ func base58Encode(input []byte) string {
 }
 
 func base58Decode(encoded string) ([]byte, error) {
+	if len(encoded) > maxDocumentIDLength {
+		return nil, fmt.Errorf(
+			"base58 value is %d characters, exceeding the %d character limit",
+			len(encoded),
+			maxDocumentIDLength,
+		)
+	}
+
 	value := new(big.Int)
 	radix := big.NewInt(58)
 

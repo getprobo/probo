@@ -95,6 +95,10 @@ func EncodePresence(message PresenceMessage) ([]byte, error) {
 		return nil, fmt.Errorf("cannot encode presence message: %w", err)
 	}
 
+	if err := validateApplicationSize(data); err != nil {
+		return nil, fmt.Errorf("invalid presence message: %w", err)
+	}
+
 	return data, nil
 }
 
@@ -102,6 +106,10 @@ func EncodePresence(message PresenceMessage) ([]byte, error) {
 // presence message, rejecting a payload that is not a presence envelope or whose
 // fields do not match its type.
 func DecodePresence(data []byte) (PresenceMessage, error) {
+	if err := validateApplicationSize(data); err != nil {
+		return PresenceMessage{}, fmt.Errorf("invalid presence message: %w", err)
+	}
+
 	var envelope presenceEnvelope
 	if err := unmarshal(data, &envelope); err != nil {
 		return PresenceMessage{}, fmt.Errorf("cannot decode presence envelope: %w", err)
@@ -135,12 +143,20 @@ func (m PresenceMessage) validate() error {
 			return fmt.Errorf("presence update requires a channel")
 		}
 
+		if m.Value == nil {
+			return fmt.Errorf("presence update requires a value")
+		}
+
 		if m.State != nil {
 			return fmt.Errorf("presence update must not carry snapshot state")
 		}
 	case PresenceSnapshot:
 		if m.Channel != "" || m.Value != nil {
 			return fmt.Errorf("presence snapshot must not carry a channel or value")
+		}
+
+		if m.State == nil {
+			return fmt.Errorf("presence snapshot requires state")
 		}
 	case PresenceHeartbeat, PresenceGoodbye:
 		if m.Channel != "" || m.Value != nil || m.State != nil {
@@ -159,6 +175,10 @@ func MarshalPresenceValue(value any) (cbor.RawMessage, error) {
 	data, err := marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode presence value: %w", err)
+	}
+
+	if err := validateApplicationSize(data); err != nil {
+		return nil, fmt.Errorf("invalid presence value: %w", err)
 	}
 
 	return data, nil

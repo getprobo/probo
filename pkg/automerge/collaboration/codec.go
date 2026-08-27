@@ -38,10 +38,10 @@ import (
 // Resource limits guard the decoder against hostile payloads. Presence values
 // are application-defined, so the bounds are generous but finite.
 const (
-	maxNestedLevels   = 64
-	maxMapPairs       = 4096
-	maxArrayElements  = 65536
-	maxDecodedPayload = 1 << 20 // 1 MiB per ephemeral payload
+	maxNestedLevels     = 64
+	maxMapPairs         = 4096
+	maxArrayElements    = 65536
+	maxApplicationBytes = 1 << 20
 )
 
 var (
@@ -79,18 +79,21 @@ func init() {
 	encMode = encoder
 }
 
-// unmarshal decodes CBOR into value using the strict shared decode mode, after
-// bounding the payload size.
+// unmarshal decodes CBOR into value using the strict shared decode mode.
 func unmarshal(data []byte, value any) error {
-	if len(data) > maxDecodedPayload {
+	return decMode.Unmarshal(data, value)
+}
+
+func validateApplicationSize(data []byte) error {
+	if len(data) > maxApplicationBytes {
 		return fmt.Errorf(
-			"collaboration payload of %d bytes exceeds the %d byte limit",
+			"application payload of %d bytes exceeds the %d byte limit",
 			len(data),
-			maxDecodedPayload,
+			maxApplicationBytes,
 		)
 	}
 
-	return decMode.Unmarshal(data, value)
+	return nil
 }
 
 // marshal encodes value as deterministic CBOR using the shared encode mode.
