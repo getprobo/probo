@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.223.0] - 2026-08-27
+
+### Added
+
+- Risk Analysis `Fork`, copying diagrams, treatment plans, and their relations into a new analysis; matrix size stays on the source and the period starts empty
+
+### Changed
+
+- Date ranges are returned as nested `Period` objects: Audit `validity` / `auditDates` replace `validFrom`, `validUntil`, `auditStartDate`, `auditEndDate`, and Vendor `contract` replaces `contractStartDate` / `contractEndDate`. Operation input fields are unchanged
+
 ## [0.222.0] - 2026-08-26
 
 ### Added
