@@ -182,7 +182,9 @@ export class ProboCookieBannerRoot extends ProboElement implements ProboRootElem
 
     this.scheduleValidation(() => this.validateSettingsLink());
 
-    if (this._client.hasConsent) {
+    // gpcApplied covers the opt-out being in effect without a stored consent,
+    // which is the gpcRecord: false case.
+    if (this._client.hasConsent || this._client.gpcApplied) {
       this.setState("hidden");
     } else {
       this.setState(resolveLayout(this._config).initial_state);

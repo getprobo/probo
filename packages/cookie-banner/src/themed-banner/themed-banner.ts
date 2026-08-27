@@ -120,7 +120,9 @@ export class ProboThemedBanner extends HTMLElement {
 
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
       root.setState(
-        root.client.hasConsent ? "hidden" : (root.layout?.initial_state ?? "banner"),
+        root.client.hasConsent || root.client.gpcApplied
+          ? "hidden"
+          : (root.layout?.initial_state ?? "banner"),
       );
     });
 
