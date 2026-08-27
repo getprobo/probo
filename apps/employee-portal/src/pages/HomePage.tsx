@@ -26,7 +26,7 @@ export default function HomePage() {
   const { organizationId } = useParams();
 
   return (
-    <main className="flex flex-col items-start gap-2 p-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-col items-start gap-2 px-8 py-8">
       <Heading level={1} size={7} weight="medium" highContrast>
         Employee portal
       </Heading>

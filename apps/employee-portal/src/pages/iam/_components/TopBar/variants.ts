@@ -21,15 +21,15 @@
 import { tv } from "tailwind-variants/lite";
 
 // Employee Portal top bar. Slots are shared by the live TopBar and its
-// skeleton so the loading placeholder is structurally identical. Below lg
-// (<1024px) the brand shows logo only — name + tagline return at lg+.
-// justify-between keeps the user menu right-aligned.
+// skeleton so the loading placeholder is structurally identical. Inner
+// width matches the page content column (1024px / max-w-5xl). No
+// breakpoint hides brand or menu — there is no competing nav.
 export const topBar = tv({
   slots: {
-    bar: "flex h-14 items-center bg-sand-1 px-8 max-md:px-4",
-    inner: "flex w-full items-center justify-between gap-6 max-md:gap-3",
+    bar: "flex h-14 items-center bg-sand-1",
+    inner: "mx-auto flex w-full max-w-5xl items-center justify-between gap-6 px-8",
     brand: "flex min-w-0 items-center gap-2",
-    brandText: "flex min-w-0 flex-col max-lg:hidden",
+    brandText: "flex min-w-0 flex-col",
     brandName: "truncate",
     tagline: "truncate",
     logo: "shrink-0",
